@@ -1,0 +1,258 @@
+plugins {
+    id 'groovy'
+    id 'java'
+
+    // Test reporting :
+    id 'jacoco'
+
+    // Public deployment :
+    id 'java-library'
+    id 'maven-publish'
+    id 'signing'
+    id('io.github.gradle-nexus.publish-plugin') version '1.1.0'
+}
+
+
+String GROUP_ID = "io.github.globaltcad"
+String PROJECT  = "sprouts"
+String VERSION  = "0.2.0"
+
+group GROUP_ID
+version VERSION
+
+sourceCompatibility = 8
+targetCompatibility = 8
+
+repositories {
+    mavenCentral()
+    maven { url 'https://jitpack.io' }
+}
+
+dependencies {
+
+    // Main dependencies:
+    api group: 'com.miglayout', name: 'miglayout-swing', version: '5.3' // https://mvnrepository.com/artifact/com.miglayout/miglayout-swing
+    api 'com.alexandriasoftware.swing:jsplitbutton:1.3.1' // JSplitButton
+
+    // Logging :
+    implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.36'
+
+    // Testing :
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.2'    // mandatory dependencies for using Spock
+
+    testImplementation 'org.codehaus.groovy:groovy:3.0.12'
+    testImplementation platform('org.spockframework:spock-bom:2.1-groovy-3.0')
+    testImplementation 'org.spockframework:spock-core:2.1-groovy-3.0'
+    testImplementation 'com.athaydes:spock-reports:2.3.2-groovy-3.0'
+
+    // if you don't already have slf4j-api and an implementation of it in the classpath, add this! (needed for reports)
+    testImplementation 'org.slf4j:slf4j-api:1.7.30'
+    testCompileOnly 'org.slf4j:slf4j-simple:1.7.30'
+
+    testRuntimeOnly group: 'net.bytebuddy', name: 'byte-buddy', version: '1.11.15' // allows mocking of classes (in addition to interfaces)
+    testRuntimeOnly group: 'org.objenesis', name: 'objenesis', version: '3.2'      // allows mocking of classes without default constructor (together with ByteBuddy or CGLIB)
+
+
+    testImplementation 'com.formdev:flatlaf-intellij-themes:2.2'
+    testImplementation 'com.formdev:flatlaf:2.2' // Looks better than regular swing :)
+    testImplementation group: 'com.metsci.ext.com.kitfox.svg', name: 'svg-salamander', version: '0.1.19'
+
+}
+
+test {
+    useJUnitPlatform()
+}
+
+// CONFIGURING TEST REPORTING :
+
+jacoco {
+    toolVersion = "0.8.5"
+    reportsDir = file("docs/coverage")
+}
+
+jacocoTestReport {
+    reports {
+        xml.enabled true
+        csv.enabled false
+    }
+}
+check.dependsOn jacocoTestReport
+
+// CUSTOM DEPLOYMENT TASKS :
+
+def deleteFilesIn(String path) {
+    var file = new File(path)
+    if ( file.exists() && file.listFiles() != null && file.listFiles().length > 0 )
+        delete file
+}
+
+// 1: Cleanup
+task cleanForDeployment(type: Delete) {
+    delete "$rootDir/build"
+    deleteFilesIn("$rootDir/docs/jdocs")
+    deleteFilesIn("$rootDir/docs/spock/reports" )
+}
+
+// 2:
+task deploy() {
+
+    // Expected before : dependsOn 'cleanForDeployment'
+
+    dependsOn 'check'
+    dependsOn 'jar'
+    dependsOn 'javadoc'
+    dependsOn 'releaseJDocs'
+
+}
+// 3:
+//     execute publishToSonatype
+//     go to https://s01.oss.sonatype.org/#stagingRepositories
+//     close and release the repository
+
+
+task releaseJDocs(type: Copy) {
+    from "$rootDir/build/docs/javadoc"
+    into "$rootDir/docs/jdocs"
+}
+
+// JAR CREATION :
+
+task sourcesJar(type: Jar) {
+    classifier "sources"
+    from sourceSets.main.allSource
+}
+
+task javadocJar(type: Jar) {
+    classifier "javadoc"
+    from javadoc
+}
+
+// JDOC CREATION:
+
+task createJDocs(type: Javadoc){
+    destinationDir = new File("$projectDir/docs/jdocs")
+    if(JavaVersion.current().isJava9Compatible()) {
+        options.addBooleanOption('html5', true)
+    }
+}
+
+// MAVEN DEPLOYMENT CONFIGURATION: 
+
+artifacts {
+    archives javadocJar, sourcesJar
+}
+
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
+
+ext.genOutputDir = file("$buildDir/generated-resources")
+
+task generateVersionTxt()  {
+    ext.outputFile = file("$genOutputDir/version.txt")
+    outputs.file(outputFile)
+    doLast {
+        outputFile.text = """GroupId: ${project.group}
+Name: ${project.name}
+Version: $version
+Build-time: ${java.time.LocalDateTime.now()}
+"""
+    }
+}
+
+sourceSets.main.output.dir genOutputDir, builtBy: generateVersionTxt
+
+
+signing {
+    required { !VERSION.startsWith("0.") && gradle.taskGraph.hasTask("publish") }
+    sign configurations.archives
+    sign publishing.publications
+}
+
+nexusPublishing {
+    packageGroup = GROUP_ID
+    repositories {
+        sonatype {  //only for projects registered in Sonatype after 24 Feb 2021
+            nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
+            snapshotRepositoryUrl.set(uri("https://s01.oss.sonatype.org/content/repositories/snapshots/"))
+        }
+    }
+    transitionCheckOptions {
+        // closing checks take some time so increase the retries
+        // total time is maxRetries(180) * delayBetween(10s) = 30m
+        maxRetries.set(180)
+    }
+}
+
+publishing {
+
+    repositories {
+    /*
+    // Possible alternatives:
+
+        maven {
+            name = "OSSRH"
+            url = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
+            credentials {
+                username = findProperty('sonatypeUsername') ?: findProperty('ossrhUsername') ?: System.getenv('sonatypeUsername') ?: System.getenv('ossrhUsername')
+                password = findProperty('sonatypePassword') ?: findProperty('ossrhPassword') ?: System.getenv('sonatypePassword') ?: System.getenv('ossrhPassword')
+                // Expected to be in ~/.gradle/gradle.properties
+                // Or on windows in %USERPROFILE%\.gradle\gradle.properties
+                // Example: C:\Users\JohnDoe\.gradle\gradle.properties
+            }
+        }
+
+        */
+        maven {
+            name = "GitHubPackages"
+            url = "https://maven.pkg.github.com/globaltcad/" + PROJECT
+            credentials {
+                username = System.getenv("GITHUB_ACTOR")
+                password = System.getenv("GITHUB_TOKEN")
+            }
+        }
+    }
+    publications {
+        mavenJava(MavenPublication) {
+            from(components.java)
+            pom {
+                name = PROJECT
+                description = 'A property API for MVVM.'
+                url = 'https://globaltcad.github.io/'+PROJECT+'/index.html'
+                organization {
+                    name = 'Global TCAD Solutions'
+                    url = 'https://www.globaltcad.com/'
+                }
+                issueManagement {
+                    system = 'Github'
+                    url = 'https://github.com/globaltcad/'+PROJECT+'/issues'
+                }
+                licenses {
+                    license {
+                        name = 'MIT License'
+                        url = "https://raw.githubusercontent.com/globaltcad/"+PROJECT+"/master/LICENSE"
+                    }
+                }
+                developers {
+                    developer {
+                        id = "dnepp"
+                        name = "Daniel Nepp"
+                        email = "d.nepp@globaltcad.com"
+                    }
+                    developer {
+                        id = "hdemel"
+                        name = "Harald Demel"
+                        email = "h.demel@globaltcad.com"
+                    }
+                }
+                scm {
+                    url = 'https://github.com/globaltcad/'+PROJECT+''
+                    connection = 'scm:git:git://github.com/globaltcad/'+PROJECT+'.git'
+                    developerConnection = 'scm:git:ssh://git@github.com:globaltcad/'+PROJECT+'.git'
+                }
+            }
+        }
+    }
+}

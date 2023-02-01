@@ -1,0 +1,58 @@
+
+# Sprouts - A MVVM Property API [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) ![Java Version](https://img.shields.io/static/v1.svg?label=Java&message=8%2B&color=blue) #
+
+Null-safe, functional and event based properties.
+
+- [Motivation](docs/markdown/Motivation.md)
+- [Documentation](https://globaltcad.github.io/sprouts/)
+
+---
+## Getting started with Apache Maven ##
+
+```
+<dependency>
+  <groupId>io.github.globaltcad</groupId>
+  <artifactId>sprouts</artifactId>
+  <version>0.0.0</version>
+</dependency>
+```
+
+---
+
+## Getting started with Gradle ##
+Groovy DSL:
+```
+implementation 'io.github.globaltcad:sprouts:0.0.0'
+```
+Kotlin DSL:
+```
+implementation("io.github.globaltcad:sprouts:0.0.0")
+```
+---
+
+## Getting started with [![](https://jitpack.io/v/globaltcad/sprouts.svg)](https://jitpack.io/#globaltcad/sprouts) ##
+**1. Add the JitPack url in your root `build.gradle` at the end of `repositories`**
+```
+allprojects {
+	repositories {
+		//...
+		maven { url 'https://jitpack.io' }
+	}
+}
+```
+**2. Add sprouts as dependency**
+
+...either by specifiying the version tag:
+```
+dependencies {
+	implementation 'com.github.globaltcad:sprouts:v0.0.1'
+}
+```
+...or by using a custom commit hash instead:
+```
+dependencies {
+	implementation 'com.github.globaltcad:sprouts:7c74811'//Any commit hash...
+}
+```
+---
+

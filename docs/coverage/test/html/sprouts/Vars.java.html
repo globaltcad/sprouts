@@ -1,0 +1,385 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Vars.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sprouts</a> &gt; <a href="index.source.html" class="el_package">sprouts</a> &gt; <span class="el_source">Vars.java</span></div><h1>Vars.java</h1><pre class="source lang-java linenums">package sprouts;
+
+import java.util.*;
+import java.util.function.Function;
+import java.util.function.Predicate;
+
+/**
+ *  A list of mutable properties.
+ *
+ * @param &lt;T&gt; The type of the properties.
+ */
+public interface Vars&lt;T&gt; extends Vals&lt;T&gt;
+{
+    /**
+     *  Creates a list of non-nullable properties from the supplied type and vararg values.
+     *  This factory method requires that the type be specified because the
+     *  compiler cannot infer the type from a potentially empty vararg array.
+     *  @param type The type of the properties.
+     *  @param vars The properties to add to the new Vars instance.
+     *  @param &lt;T&gt; The type of the properties.
+     *  @return A new Vars instance.
+     */
+    @SuppressWarnings(&quot;unchecked&quot;)
+    static &lt;T&gt; Vars&lt;T&gt; of( Class&lt;T&gt; type, Var&lt;T&gt;... vars ) {
+<span class="fc" id="L25">        return AbstractVariables.of( false, type, vars );</span>
+    }
+
+    /**
+     *  Creates an empty list of non-nullable properties from the supplied type.
+     *  This factory method requires that the type be specified because the
+     *  compiler cannot infer the type from a potentially empty vararg array.
+     *  @param type The type of the properties.
+     *              This is used to check if the item is of the correct type.
+     *  @param &lt;T&gt; The type of the properties.
+     *  @return A new Vars instance.
+     */
+    static &lt;T&gt; Vars&lt;T&gt; of( Class&lt;T&gt; type ) {
+<span class="nc" id="L38">        return AbstractVariables.of( false, type );</span>
+    }
+
+    /**
+     *  Creates a list of non-nullable properties from one or more non-nullable properties.
+     *  @param first The first property to add to the new Vars instance.
+     *  @param rest The remaining properties to add to the new Vars instance.
+     *  @param &lt;T&gt; The type of the properties.
+     *  @return A new Vars instance.
+     */
+    @SuppressWarnings(&quot;unchecked&quot;)
+    static &lt;T&gt; Vars&lt;T&gt; of( Var&lt;T&gt; first, Var&lt;T&gt;... rest ) {
+<span class="fc" id="L50">        return AbstractVariables.of( false, first, rest );</span>
+    }
+
+    /**
+     *  Creates a list of non-nullable properties from one or more non-null values.
+     *  @param first The first value to add to the new Vars instance.
+     *  @param rest The remaining values to add to the new Vars instance.
+     *  @param &lt;T&gt; The type of the values.
+     *  @return A new Vars instance.
+     */
+    @SuppressWarnings(&quot;unchecked&quot;)
+    static &lt;T&gt; Vars&lt;T&gt; of( T first, T... rest ) {
+<span class="fc" id="L62">        return AbstractVariables.of( false, first, rest );</span>
+    }
+
+    /**
+     *  Creates a list of non-nullable properties from the supplied type and iterable of values.
+     *  This factory method requires that the type be specified because the
+     *  compiler cannot infer the type from a potentially empty iterable.
+     *  @param type The type of the properties.
+     *  @param vars The iterable of values.
+     *  @param &lt;T&gt; The type of the properties.
+     *  @return A new Vars instance.
+     */
+    static &lt;T&gt; Vars&lt;T&gt; of( Class&lt;T&gt; type, Iterable&lt;Var&lt;T&gt;&gt; vars ) {
+<span class="fc" id="L75">        return AbstractVariables.of( false, type, vars );</span>
+    }
+
+    /**
+     *  Creates a list of nullable properties from the supplied type and varargs properties.
+     *  This factory method requires that the type be specified because the
+     *  compiler cannot infer the type from the null values.
+     *  @param type The type of the properties.
+     *  @param vars The properties to add to the new Vars instance.
+     *              The properties may be nullable properties, but they may not be null themselves.
+     *  @param &lt;T&gt; The type of the properties.
+     *  @return A new Vars instance.
+     */
+    @SuppressWarnings(&quot;unchecked&quot;)
+    static &lt;T&gt; Vars&lt;T&gt; ofNullable( Class&lt;T&gt; type, Var&lt;T&gt;... vars ) {
+<span class="nc" id="L90">        return AbstractVariables.ofNullable( false, type, vars );</span>
+    }
+
+    /**
+     *  Creates an empty list of nullable properties from the supplied type.
+     *  This factory method requires that the type be specified because the
+     *  compiler cannot infer the type from a potentially empty vararg array.
+     *  @param type The type of the properties.
+     *              This is used to check if the item is of the correct type.
+     *  @param &lt;T&gt; The type of the properties.
+     *  @return A new Vars instance.
+     */
+    static &lt;T&gt; Vars&lt;T&gt; ofNullable( Class&lt;T&gt; type ) {
+<span class="nc" id="L103">        return AbstractVariables.ofNullable( false, type );</span>
+    }
+
+    /**
+     *  Creates a list of nullable properties from the supplied type and values.
+     *  This factory method requires that the type be specified because the
+     *  compiler cannot infer the type from the null values.
+     *  @param values The values to be wrapped by properties and then added to the new Vars instance.
+     *                The values may be null.
+     * @param &lt;T&gt; The type of the values.
+     * @return A new Vars instance.
+     */
+    @SuppressWarnings(&quot;unchecked&quot;)
+    static &lt;T&gt; Vars&lt;T&gt; ofNullable( Class&lt;T&gt; type, T... values ) {
+<span class="nc" id="L117">        return AbstractVariables.ofNullable( false, type, values );</span>
+    }
+
+    /**
+     *  Creates a list of nullable properties from the supplied properties.
+     * @param first The first property to add to the new Vars instance.
+     * @param rest The remaining properties to add to the new Vars instance.
+     * @param &lt;T&gt; The type of the properties.
+     * @return A new Vars instance.
+     */
+    @SuppressWarnings(&quot;unchecked&quot;)
+    static &lt;T&gt; Vars&lt;T&gt; ofNullable( Var&lt;T&gt; first, Var&lt;T&gt;... rest ) {
+<span class="nc" id="L129">        return AbstractVariables.ofNullable( false, first, rest );</span>
+    }
+
+    /** {@inheritDoc} */
+    @Override Var&lt;T&gt; at( int index );
+
+    /** {@inheritDoc} */
+<span class="fc" id="L136">    @Override default Var&lt;T&gt; first() { return at(0); }</span>
+
+    /** {@inheritDoc} */
+<span class="fc" id="L139">    @Override default Var&lt;T&gt; last() { return at(size() - 1); }</span>
+
+    /**
+     *  Wraps the provided value in a {@link Var} property and adds it to the list.
+     *
+     * @param value The value to add.
+     * @return This list of properties.
+     */
+<span class="fc" id="L147">    default Vars&lt;T&gt; add( T value ) { return add( Var.of(value) ); }</span>
+
+    /**
+     *  Adds the provided property to the list.
+     *
+     * @param var The property to add.
+     * @return This list of properties.
+     */
+<span class="fc" id="L155">    default Vars&lt;T&gt; add( Var&lt;T&gt; var ) { return addAt( size(), var ); }</span>
+
+    /**
+     *  Removes the property at the specified index.
+     *
+     * @param index The index of the property to remove.
+     * @return This list of properties.
+     */
+    Vars&lt;T&gt; removeAt( int index );
+
+    /**
+     *  Removes the property containing the provided value from the list.
+     *  If the value is not found, the list is unchanged.
+     *  @param value The value to remove.
+     *  @return This list of properties.
+     */
+<span class="fc" id="L171">    default Vars&lt;T&gt; remove( T value ) { return removeAt( indexOf(Var.of(value)) ); }</span>
+
+    /**
+     *  Removes the provided property from the list.
+     *  If the property is not found, the list is unchanged.
+     *  @param var The property to remove.
+     *  @return This list of properties.
+     */
+<span class="nc" id="L179">    default Vars&lt;T&gt; remove( Var&lt;T&gt; var ) { return removeAt( indexOf(var) ); }</span>
+
+    /**
+     *  Removes the first property from the list.
+     *
+     * @return This list of properties.
+     */
+<span class="fc" id="L186">    default Vars&lt;T&gt; removeFirst() { return removeAt(0); }</span>
+
+    /**
+     *  Removes the last property from the list.
+     *
+     * @return This list of properties.
+     */
+<span class="fc" id="L193">    default Vars&lt;T&gt; removeLast() { return removeAt(size() - 1); }</span>
+
+    /**
+     *  Removes {@code count} number of properties from the end
+     *  of the list.
+     *  @param count The number of properties to remove.
+     *  @return This list of properties.
+     */
+    default Vars&lt;T&gt; removeLast( int count )
+    {
+<span class="fc bfc" id="L203" title="All 2 branches covered.">        for ( int i = 0; i &lt; count; i++ ) removeLast();</span>
+<span class="fc" id="L204">        return this;</span>
+    }
+
+    /**
+     *  Removes the first {@code count} number of properties from the list.
+     *  @param count The number of properties to remove.
+     *  @return This list of properties.
+     */
+    default Vars&lt;T&gt; removeFirst( int count )
+    {
+<span class="fc bfc" id="L214" title="All 2 branches covered.">        for ( int i = 0; i &lt; count; i++ ) removeFirst();</span>
+<span class="fc" id="L215">        return this;</span>
+    }
+
+    /**
+     *  Removes all properties from the list for which the provided predicate
+     *  returns true.
+     *
+     * @param predicate The predicate to test each property.
+     * @return This list of properties.
+     */
+    default Vars&lt;T&gt; removeIf( Predicate&lt;Var&lt;T&gt;&gt; predicate )
+    {
+<span class="nc bnc" id="L227" title="All 2 branches missed.">        for ( int i = size() - 1; i &gt;= 0; i-- )</span>
+<span class="nc bnc" id="L228" title="All 2 branches missed.">            if ( predicate.test(at(i)) ) removeAt(i);</span>
+<span class="nc" id="L229">        return this;</span>
+    }
+
+    /**
+     *  Removes all properties from the list for whose items the provided predicate
+     *  returns true.
+     *
+     *  @param predicate The predicate to test each property item.
+     *  @return This list of properties.
+     */
+    default Vars&lt;T&gt; removeIfItem( Predicate&lt;T&gt; predicate )
+    {
+<span class="nc bnc" id="L241" title="All 2 branches missed.">        for ( int i = size() - 1; i &gt;= 0; i-- )</span>
+<span class="nc bnc" id="L242" title="All 2 branches missed.">            if ( predicate.test(at(i).get()) ) removeAt(i);</span>
+<span class="nc" id="L243">        return this;</span>
+    }
+
+    /**
+     *  Wraps the provided value in a {@link Var} property and adds it to the list
+     *  at the specified index.
+     *  @param index The index at which to add the property.
+     *  @param item The value to add as a property item.
+     *  @return This list of properties.
+     */
+<span class="fc" id="L253">    default Vars&lt;T&gt; addAt( int index, T item ) { return addAt(index, Var.of(item)); }</span>
+
+    /**
+     *  Adds the provided property to the list at the specified index.
+     *  @param index The index at which to add the property.
+     *  @param var The property to add.
+     *  @return This list of properties.
+     */
+    Vars&lt;T&gt; addAt( int index, Var&lt;T&gt; var );
+
+    /**
+     *  Wraps the provided value in a property and sets it at the specified index
+     *  effectively replacing the property at that index.
+     *  @param index The index at which to set the property.
+     *  @param item The value to set.
+     *  @return This list of properties.
+     */
+<span class="fc" id="L270">    default Vars&lt;T&gt; setAt( int index, T item ) { return setAt(index, Var.of(item)); }</span>
+
+    /**
+     *  Places the provided property at the specified index, effectively replacing the property
+     *  at that index.
+     *  @param index The index at which to set the property.
+     *  @param var The property to set.
+     *  @return This list of properties.
+     */
+    Vars&lt;T&gt; setAt( int index, Var&lt;T&gt; var );
+
+    /**
+     *  Wraps each provided value in a property and appends it to this
+     *  list of properties.
+     *  @param items The array of values to add as property items.
+     *  @return This list of properties.
+     */
+    @SuppressWarnings(&quot;unchecked&quot;)
+    default Vars&lt;T&gt; addAll( T... items )
+    {
+<span class="nc bnc" id="L290" title="All 2 branches missed.">        for ( T v : items ) add(v);</span>
+<span class="nc" id="L291">        return this;</span>
+    }
+
+
+    /**
+     *  Iterates over the supplied values, and appends
+     *  them to this list as properties.
+     *  @param items The values to add as property items.
+     *  @return This list of properties.
+     */
+    default Vars&lt;T&gt; addAll( Iterable&lt;T&gt; items )
+    {
+<span class="nc bnc" id="L303" title="All 2 branches missed.">        for ( T v : items ) add(v);</span>
+<span class="nc" id="L304">        return this;</span>
+    }
+
+    /**
+     *  Iterates over the supplied property list, and appends
+     *  them to this list.
+     *  @param vals The properties to add.
+     *  @return This list of properties.
+     */
+    default Vars&lt;T&gt; addAll( Vals&lt;T&gt; vals )
+    {
+<span class="fc bfc" id="L315" title="All 2 branches covered.">        for ( T v : vals ) add(v);</span>
+<span class="fc" id="L316">        return this;</span>
+    }
+
+    /**
+     *  Removes all properties from this list.
+     *  This is conceptually equivalent to calling {@link List#clear()}
+     *  on a regular list.
+     *
+     * @return This list.
+     */
+    Vars&lt;T&gt; clear();
+
+    /**
+     *  Use this for mapping a list of properties to another list of properties.
+     */
+    @Override default Vars&lt;T&gt; map( Function&lt;T,T&gt; mapper ) {
+<span class="fc" id="L332">        Objects.requireNonNull(mapper);</span>
+        @SuppressWarnings(&quot;unchecked&quot;)
+<span class="fc" id="L334">        Var&lt;T&gt;[] vars = new Var[size()];</span>
+<span class="fc" id="L335">        int i = 0;</span>
+<span class="fc bfc" id="L336" title="All 2 branches covered.">        for ( T v : this ) vars[i++] = Var.of( mapper.apply(v) );</span>
+<span class="fc" id="L337">        return Vars.of( type(), vars );</span>
+    }
+
+    /**
+     *  Use this for mapping a list of properties to another list of properties.
+     */
+    @Override default &lt;U&gt; Vars&lt;U&gt; mapTo( Class&lt;U&gt; type, Function&lt;T,U&gt; mapper ) {
+<span class="fc" id="L344">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L345">        Objects.requireNonNull(mapper);</span>
+        @SuppressWarnings(&quot;unchecked&quot;)
+<span class="fc" id="L347">        Var&lt;U&gt;[] vars = new Var[size()];</span>
+<span class="fc bfc" id="L348" title="All 2 branches covered.">        for ( int i = 0; i &lt; size(); i++ )</span>
+<span class="fc" id="L349">            vars[i] = this.at( i ).mapTo( type, mapper );</span>
+<span class="fc" id="L350">        return Vars.of( type, vars );</span>
+    }
+
+<span class="fc" id="L353">    default Vals&lt;T&gt; toVals() { return Vals.of( type(), this ); }</span>
+
+    /**
+     *  Use this for sorting the list of properties.
+     *
+     * @param comparator The comparator to use for sorting.
+     */
+    void sort( Comparator&lt;T&gt; comparator );
+
+    /**
+     * Sorts the list of properties using the natural ordering of the
+     * properties.
+     * Note that this method expected the wrapped values to be
+     * {@link Comparable}.
+     */
+    default void sort() {
+        // First we have to check if the type is comparable:
+<span class="pc bpc" id="L370" title="1 of 2 branches missed.">        if ( Comparable.class.isAssignableFrom(type()) ) {</span>
+            @SuppressWarnings(&quot;unchecked&quot;)
+<span class="fc" id="L372">            Comparator&lt;T&gt; comparator = (Comparator&lt;T&gt;) Comparator.naturalOrder();</span>
+<span class="fc" id="L373">            sort( comparator );</span>
+<span class="fc" id="L374">        }</span>
+        else
+<span class="nc" id="L376">            throw new UnsupportedOperationException(&quot;Cannot sort a list of non-comparable types.&quot;);</span>
+<span class="fc" id="L377">    }</span>
+
+    /**
+     *  Removes all duplicate properties from this list of properties.
+     */
+    void makeDistinct();
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>
