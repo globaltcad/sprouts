@@ -38,7 +38,7 @@ abstract class AbstractValue<T> implements Val<T>
     /** {@inheritDoc} */
     @Override public final Class<T> type() { return _type; }
 
-    /** @inheritDoc} */
+    /** {@inheritDoc} */
     @Override public final String id() { return _id; }
 
     /** {@inheritDoc} */
