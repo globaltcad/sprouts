@@ -1,5 +1,7 @@
 package sprouts;
 
+import sprouts.impl.AbstractVariables;
+
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;

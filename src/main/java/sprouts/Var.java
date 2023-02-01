@@ -1,5 +1,7 @@
 package sprouts;
 
+import sprouts.impl.AbstractVariable;
+
 import java.util.Optional;
 import java.util.function.Function;
 

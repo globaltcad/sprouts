@@ -1,4 +1,7 @@
-package sprouts;
+package sprouts.impl;
+
+import sprouts.Action;
+import sprouts.Val;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -98,7 +98,7 @@
     {
       "id":"The \"withID(..)\" method produces a new property with all bindings inherited.",
       "result":"PASS",
-      "duration":"0",
+      "duration":"0.001 seconds",
       "iterations":{
       "tags":{},"see":[],"extraInfo":["\n            The wither methods on properties are used to create new property instances\n            with the same value and bindings as the original property\n            but without side effects of the original property.\n            So if you add bindings to a withered property they will not affect the original property.\n        "]
       },
@@ -348,7 +348,7 @@
     {
       "id":"Conveniently compare the item of a property with another item using \"is\", \"isOneOf\" or \"isNot\"",
       "result":"PASS",
-      "duration":"0",
+      "duration":"0.001 seconds",
       "iterations":{
       "tags":{},"see":[],"extraInfo":["\n            Properties are all about the item they hold, so there needs to be a convenient way\n            to check whether the item of a property is equal to another item.\n            The \"is\" method is used to check if the item of a property is equal to another item\n            and the \"isNot\" method is the exact opposite, it checks if the item of a property\n            is NOT equal to another item.\n            The \"isOneOf\" method is used to check if the item of a property is equal to one of the\n            items in a varargs list.\n        "]
       },

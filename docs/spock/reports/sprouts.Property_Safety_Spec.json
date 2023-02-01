@@ -1,7 +1,7 @@
 {
   "className":"sprouts.Property_Safety_Spec",
   "title":"Property Null and Mutability Safety",
-  "narrative":"Properties are a core concept in Sprouts. They are in essence\n    just wrapper classes used to represent the state of your views.\n    Because of this, it is important that properties are\n    are nullable only when they need to be, and that they are\n    immutable only when they need to be.",
+  "narrative":"Properties are a core concept in Sprouts. They are in essence\n    just wrapper classes used to represent the state of your views.\n    Because of this, it is important that properties are\n    are nullable only when they need to be, and that they are\n    mutable only when they need to be.",
   "subjects":["sprouts.Val","sprouts.Var","sprouts.Vals","sprouts.Vars"],
   "statistics":{
     "runs":"7",

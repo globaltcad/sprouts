@@ -1,4 +1,8 @@
-package sprouts;
+package sprouts.impl;
+
+import sprouts.Action;
+import sprouts.Val;
+import sprouts.Var;
 
 import javax.swing.border.Border;
 import java.util.ArrayList;
@@ -16,20 +20,20 @@ import java.util.function.Consumer;
  */
 public abstract class AbstractVariable<T> extends AbstractValue<T> implements Var<T>
 {
-	static <T> Var<T> ofNullable( boolean immutable, Class<T> type, T value ) {
+	public static <T> Var<T> ofNullable( boolean immutable, Class<T> type, T value ) {
 		return new AbstractVariable<T>( immutable, type, value, NO_ID, Collections.emptyList(), true ){};
 	}
 
-	static <T> Var<T> of( boolean immutable, Class<T> type, T value ) {
+	public static <T> Var<T> of( boolean immutable, Class<T> type, T value ) {
 		return new AbstractVariable<T>( immutable, type, value, NO_ID, Collections.emptyList(), false ){};
 	}
 
-	static <T> Var<T> of( boolean immutable, T iniValue ) {
+	public static <T> Var<T> of( boolean immutable, T iniValue ) {
 		Objects.requireNonNull(iniValue);
 		return new AbstractVariable<T>( immutable, (Class<T>) iniValue.getClass(), iniValue, NO_ID, Collections.emptyList(), false ){};
 	}
 
-	static Var<Border> of( boolean immutable, Border iniValue ) {
+	public static Var<Border> of( boolean immutable, Border iniValue ) {
 		Objects.requireNonNull(iniValue);
 		return new AbstractVariable<Border>( immutable, Border.class, iniValue, NO_ID, Collections.emptyList(), false ){};
 	}

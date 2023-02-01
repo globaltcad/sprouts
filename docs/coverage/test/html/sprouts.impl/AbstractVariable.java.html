@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AbstractVariable.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sprouts</a> &gt; <a href="index.source.html" class="el_package">sprouts.impl</a> &gt; <span class="el_source">AbstractVariable.java</span></div><h1>AbstractVariable.java</h1><pre class="source lang-java linenums">package sprouts.impl;
+
+import sprouts.Action;
+import sprouts.Val;
+import sprouts.Var;
+
+import javax.swing.border.Border;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.Consumer;
+
+/**
+ * 	The base implementation for both {@link Var} and {@link Val} interfaces.
+ * 	This also serves as a reference implementation for the concept of
+ *  {@link Var}/{@link Val} properties in general.
+ * 
+ * @param &lt;T&gt; The type of the value wrapped by a given property...
+ */
+public abstract class AbstractVariable&lt;T&gt; extends AbstractValue&lt;T&gt; implements Var&lt;T&gt;
+{
+	public static &lt;T&gt; Var&lt;T&gt; ofNullable( boolean immutable, Class&lt;T&gt; type, T value ) {
+<span class="fc" id="L24">		return new AbstractVariable&lt;T&gt;( immutable, type, value, NO_ID, Collections.emptyList(), true ){};</span>
+	}
+
+	public static &lt;T&gt; Var&lt;T&gt; of( boolean immutable, Class&lt;T&gt; type, T value ) {
+<span class="nc" id="L28">		return new AbstractVariable&lt;T&gt;( immutable, type, value, NO_ID, Collections.emptyList(), false ){};</span>
+	}
+
+	public static &lt;T&gt; Var&lt;T&gt; of( boolean immutable, T iniValue ) {
+<span class="fc" id="L32">		Objects.requireNonNull(iniValue);</span>
+<span class="fc" id="L33">		return new AbstractVariable&lt;T&gt;( immutable, (Class&lt;T&gt;) iniValue.getClass(), iniValue, NO_ID, Collections.emptyList(), false ){};</span>
+	}
+
+	public static Var&lt;Border&gt; of( boolean immutable, Border iniValue ) {
+<span class="nc" id="L37">		Objects.requireNonNull(iniValue);</span>
+<span class="nc" id="L38">		return new AbstractVariable&lt;Border&gt;( immutable, Border.class, iniValue, NO_ID, Collections.emptyList(), false ){};</span>
+	}
+
+	private final boolean _isImmutable;
+<span class="fc" id="L42">	private final List&lt;Val&lt;T&gt;&gt; _history = new ArrayList&lt;&gt;(17);</span>
+<span class="fc" id="L43">	protected final List&lt;Action&lt;Val&lt;T&gt;&gt;&gt; _actions = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L44">	private final List&lt;Consumer&lt;T&gt;&gt; _viewers = new ArrayList&lt;&gt;(0);</span>
+
+
+
+	protected AbstractVariable(
+			boolean immutable,
+			Class&lt;T&gt; type,
+			T iniValue,
+			String name,
+			List&lt;Action&lt;Val&lt;T&gt;&gt;&gt; actions,
+			boolean allowsNull
+	) {
+<span class="fc" id="L56">		this( immutable, type, iniValue, name, actions, Collections.emptyList(), allowsNull );</span>
+<span class="fc" id="L57">	}</span>
+
+	protected AbstractVariable(
+		boolean immutable,
+		Class&lt;T&gt; type,
+		T iniValue,
+		String id,
+		List&lt;Action&lt;Val&lt;T&gt;&gt;&gt; actions,
+		List&lt;Action&lt;Val&lt;T&gt;&gt;&gt; viewActions,
+		boolean allowsNull
+	) {
+<span class="fc" id="L68">		super( type, id, allowsNull, iniValue );</span>
+<span class="fc" id="L69">		Objects.requireNonNull(id);</span>
+<span class="fc" id="L70">		Objects.requireNonNull(actions);</span>
+<span class="fc" id="L71">		_isImmutable = immutable;</span>
+<span class="fc" id="L72">		_viewActions.addAll(viewActions);</span>
+<span class="fc" id="L73">		_actions.addAll(actions);</span>
+<span class="fc" id="L74">	}</span>
+
+	/** {@inheritDoc} */
+	@Override public Var&lt;T&gt; withId( String id ) {
+<span class="fc" id="L78">		AbstractVariable&lt;T&gt; newVar = new AbstractVariable&lt;T&gt;( _isImmutable, _type, _value, id, _actions, _allowsNull ){};</span>
+<span class="fc" id="L79">		newVar._viewActions.addAll(_viewActions);</span>
+<span class="fc" id="L80">		return newVar;</span>
+	}
+
+	/** {@inheritDoc} */
+	@Override public Var&lt;T&gt; onAct( Action&lt;Val&lt;T&gt;&gt; action ) {
+<span class="fc" id="L85">		Objects.requireNonNull(action);</span>
+<span class="fc" id="L86">		_actions.add(action);</span>
+<span class="fc" id="L87">		return this;</span>
+	}
+
+	/** {@inheritDoc} */
+	@Override public Var&lt;T&gt; fireAct() {
+<span class="fc" id="L92">		_triggerActions( _actions);</span>
+<span class="fc" id="L93">		_viewers.forEach( v -&gt; v.accept(_value) );</span>
+<span class="fc" id="L94">		return this;</span>
+	}
+
+	/** {@inheritDoc} */
+	@Override public Var&lt;T&gt; act( T newValue ) {
+<span class="fc bfc" id="L99" title="All 2 branches covered.">		if ( _isImmutable )</span>
+<span class="fc" id="L100">			throw new UnsupportedOperationException(&quot;This variable is immutable!&quot;);</span>
+<span class="pc bpc" id="L101" title="1 of 2 branches missed.">		if ( _setInternal(newValue) )</span>
+<span class="fc" id="L102">			return fireAct();</span>
+<span class="nc" id="L103">		return this;</span>
+	}
+
+	/** {@inheritDoc} */
+	@Override
+	public Var&lt;T&gt; set( T newItem) {
+<span class="fc bfc" id="L109" title="All 2 branches covered.">		if ( _isImmutable )</span>
+<span class="fc" id="L110">			throw new UnsupportedOperationException(&quot;This variable is immutable!&quot;);</span>
+<span class="fc bfc" id="L111" title="All 2 branches covered.">		if ( _setInternal(newItem) ) this.fireSet();</span>
+<span class="fc" id="L112">		return this;</span>
+	}
+
+	private boolean _setInternal( T newValue ) {
+<span class="fc bfc" id="L116" title="All 4 branches covered.">		if ( !_allowsNull &amp;&amp; newValue == null )</span>
+<span class="fc" id="L117">			throw new NullPointerException(</span>
+					&quot;This property is configured to not allow null values! &quot; +
+					&quot;If you want your property to allow null values, use the 'ofNullable(Class, T)' factory method.&quot;
+				);
+
+<span class="fc bfc" id="L122" title="All 2 branches covered.">		if ( !Objects.equals( _value, newValue ) ) {</span>
+			// First we check if the value is compatible with the type
+<span class="pc bpc" id="L124" title="1 of 4 branches missed.">			if ( newValue != null &amp;&amp; !_type.isAssignableFrom(newValue.getClass()) )</span>
+<span class="nc" id="L125">				throw new IllegalArgumentException(</span>
+<span class="nc" id="L126">						&quot;The provided type '&quot;+newValue.getClass()+&quot;' of the new value is not compatible &quot; +</span>
+						&quot;with the type '&quot;+_type+&quot;' of this property&quot;
+					);
+
+<span class="fc" id="L130">			_history.add(Val.ofNullable(this.type(), _value).withId(this.id()));</span>
+<span class="pc bpc" id="L131" title="1 of 2 branches missed.">			if ( _history.size() &gt; 16 )</span>
+<span class="nc" id="L132">				_history.remove(0);</span>
+<span class="fc" id="L133">			_value = newValue;</span>
+<span class="fc" id="L134">			return true;</span>
+		}
+<span class="fc" id="L136">		return false;</span>
+	}
+
+	/** {@inheritDoc} */
+	@Override public final &lt;U&gt; Val&lt;U&gt; viewAs( Class&lt;U&gt; type, java.util.function.Function&lt;T, U&gt; mapper ) {
+<span class="fc" id="L141">		Var&lt;U&gt; var = mapTo(type, mapper);</span>
+		// Now we register a live update listener to this property
+<span class="fc" id="L143">		this.onSet(v -&gt; var.set( mapper.apply( v.orElseNull() ) ));</span>
+<span class="fc" id="L144">		_viewers.add( v -&gt; var.act( mapper.apply( v ) ) );</span>
+<span class="fc" id="L145">		return var;</span>
+	}
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

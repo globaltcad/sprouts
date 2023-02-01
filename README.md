@@ -3,8 +3,8 @@
 
 Null-safe, functional and event based properties.
 
-- [Motivation](docs/markdown/Motivation.md)
 - [Documentation](https://globaltcad.github.io/sprouts/)
+- [Motivation](docs/markdown/Motivation.md)
 
 ---
 ## Getting started with Apache Maven ##

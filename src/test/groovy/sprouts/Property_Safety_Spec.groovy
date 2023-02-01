@@ -14,7 +14,7 @@ import java.util.function.Consumer
     just wrapper classes used to represent the state of your views.
     Because of this, it is important that properties are
     are nullable only when they need to be, and that they are
-    immutable only when they need to be.
+    mutable only when they need to be.
     
 ''')
 @Subject([Val, Var, Vals, Vars])
