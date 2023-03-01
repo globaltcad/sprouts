@@ -8,6 +8,7 @@ import java.util.function.Predicate;
 
 /**
  *  A list of mutable properties.
+ *  Use the {@link #onChange(Action)} method to register a listener for changes to the list.
  *
  * @param <T> The type of the properties.
  */
@@ -165,12 +166,42 @@ public interface Vars<T> extends Vals<T>
     Vars<T> removeAt( int index );
 
     /**
+     *  Removes and returns the property at the specified index.
+     *
+     * @param index The index of the property to remove.
+     * @return The removed property.
+     */
+    default Var<T> popAt( int index ) {
+        Var<T> var = at(index);
+        removeAt(index);
+        return var;
+    }
+
+    /**
      *  Removes the property containing the provided value from the list.
      *  If the value is not found, the list is unchanged.
      *  @param value The value to remove.
      *  @return This list of properties.
      */
-    default Vars<T> remove( T value ) { return removeAt( indexOf(Var.of(value)) ); }
+    default Vars<T> remove( T value ) {
+        int index = indexOf(Var.of(value));
+        return index < 0 ? this : removeAt( index );
+    }
+
+    /**
+     *  Removes the property containing the provided value from the list.
+     *  If the value is not found, a {@link NoSuchElementException} is thrown.
+     *  @param value The value to remove.
+     *  @return This list of properties.
+     * @throws NoSuchElementException if the value is not found.
+     */
+    default Vars<T> removeOrThrow( T value ) {
+        int index = indexOf(Var.of(value));
+        if (index < 0) {
+            throw new NoSuchElementException("No such element: " + value);
+        }
+        return removeAt( index );
+    }
 
     /**
      *  Removes the provided property from the list.
@@ -178,21 +209,61 @@ public interface Vars<T> extends Vals<T>
      *  @param var The property to remove.
      *  @return This list of properties.
      */
-    default Vars<T> remove( Var<T> var ) { return removeAt( indexOf(var) ); }
+    default Vars<T> remove( Var<T> var ) {
+        int index = indexOf(var);
+        return index < 0 ? this : removeAt( index );
+    }
+
+    /**
+     *  Removes the provided property from the list.
+     *  If the property is not found, a {@link NoSuchElementException} is thrown.
+     *  @param var The property to remove.
+     *  @return This list of properties.
+     * @throws NoSuchElementException if the property is not found.
+     */
+    default Vars<T> removeOrThrow( Var<T> var ) {
+        int index = indexOf(var);
+        if (index < 0) {
+            throw new NoSuchElementException("No such element: " + var);
+        }
+        return removeAt( index );
+    }
 
     /**
      *  Removes the first property from the list.
      *
      * @return This list of properties.
      */
-    default Vars<T> removeFirst() { return removeAt(0); }
+    default Vars<T> removeFirst() { return size() > 0 ? removeAt(0) : this; }
+
+    /**
+     *  Removes the first property from the list and returns it.
+     *
+     * @return The removed property.
+     */
+    default Var<T> popFirst() {
+        Var<T> var = first();
+        removeFirst();
+        return var;
+    }
 
     /**
      *  Removes the last property from the list.
      *
      * @return This list of properties.
      */
-    default Vars<T> removeLast() { return removeAt(size() - 1); }
+    default Vars<T> removeLast() { return size() > 0 ? removeAt(size() - 1) : this; }
+
+    /**
+     *  Removes the last property from the list and returns it.
+     *
+     * @return The removed property.
+     */
+    default Var<T> popLast() {
+        Var<T> var = last();
+        removeLast();
+        return var;
+    }
 
     /**
      *  Removes {@code count} number of properties from the end
@@ -202,8 +273,23 @@ public interface Vars<T> extends Vals<T>
      */
     default Vars<T> removeLast( int count )
     {
+        count = Math.min( count, size() );
         for ( int i = 0; i < count; i++ ) removeLast();
         return this;
+    }
+
+    /**
+     *  Removes {@code count} number of properties from the end
+     *  of the list and returns them in a new list.
+     *  @param count The number of properties to remove.
+     *  @return A new list of properties.
+     */
+    default Vars<T> popLast( int count )
+    {
+        count = Math.min( count, size() );
+        Vars<T> vars = Vars.of(type());
+        for ( int i = 0; i < count; i++ ) vars.add(popLast());
+        return vars;
     }
 
     /**
@@ -213,8 +299,23 @@ public interface Vars<T> extends Vals<T>
      */
     default Vars<T> removeFirst( int count )
     {
+        count = Math.min( count, size() );
         for ( int i = 0; i < count; i++ ) removeFirst();
         return this;
+    }
+
+    /**
+     *  Removes the first {@code count} number of properties from the list
+     *  and returns them in a new list.
+     *  @param count The number of properties to remove.
+     *  @return A new list of properties.
+     */
+    default Vars<T> popFirst( int count )
+    {
+        count = Math.min( count, size() );
+        Vars<T> vars = Vars.of(type());
+        for ( int i = 0; i < count; i++ ) vars.add(popFirst());
+        return vars;
     }
 
     /**
@@ -232,6 +333,21 @@ public interface Vars<T> extends Vals<T>
     }
 
     /**
+     *  Removes all properties from the list for which the provided predicate
+     *  returns true and returns them in a new list.
+     *
+     * @param predicate The predicate to test each property.
+     * @return A new list of properties.
+     */
+    default Vars<T> popIf( Predicate<Var<T>> predicate )
+    {
+        Vars<T> vars = Vars.of(type());
+        for ( int i = size() - 1; i >= 0; i-- )
+            if ( predicate.test(at(i)) ) vars.add(popAt(i));
+        return vars;
+    }
+
+    /**
      *  Removes all properties from the list for whose items the provided predicate
      *  returns true.
      *
@@ -243,6 +359,21 @@ public interface Vars<T> extends Vals<T>
         for ( int i = size() - 1; i >= 0; i-- )
             if ( predicate.test(at(i).get()) ) removeAt(i);
         return this;
+    }
+
+    /**
+     *  Removes all properties from the list for whose items the provided predicate
+     *  returns true and returns them in a new list.
+     *
+     *  @param predicate The predicate to test each property item.
+     *  @return A new list of properties.
+     */
+    default Vars<T> popIfItem( Predicate<T> predicate )
+    {
+        Vars<T> vars = Vars.of(type());
+        for ( int i = size() - 1; i >= 0; i-- )
+            if ( predicate.test(at(i).get()) ) vars.add(popAt(i));
+        return vars;
     }
 
     /**
@@ -292,7 +423,6 @@ public interface Vars<T> extends Vals<T>
         for ( T v : items ) add(v);
         return this;
     }
-
 
     /**
      *  Iterates over the supplied values, and appends
