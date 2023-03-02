@@ -2,6 +2,7 @@
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  *  This represents an occurrence that can be observed as well as triggered.
@@ -22,9 +23,9 @@ public interface Event extends Noticeable
      * @return A new {@link Event}.
      */
     static Event of( Listener listener ) {
-<span class="nc" id="L25">        Event event = of();</span>
-<span class="nc" id="L26">        event.subscribe( listener );</span>
-<span class="nc" id="L27">        return event;</span>
+<span class="nc" id="L26">        Event event = of();</span>
+<span class="nc" id="L27">        event.subscribe( listener );</span>
+<span class="nc" id="L28">        return event;</span>
     }
 
     /**
@@ -32,11 +33,10 @@ public interface Event extends Noticeable
      * @return A new {@link Event}.
      */
     static Event of() {
-<span class="nc" id="L35">        return new Event() {</span>
-<span class="nc" id="L36">            private final List&lt;Listener&gt; listeners = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L36">        return new Event() {</span>
+<span class="nc" id="L37">            private final List&lt;Listener&gt; listeners = new ArrayList&lt;&gt;();</span>
 
-            @Override
-<span class="nc" id="L39">            public void fire() { listeners.forEach( Listener::run ); }</span>
+<span class="nc" id="L39">            @Override public void fire() { listeners.forEach( Listener::run ); }</span>
             @Override
             public Noticeable subscribe( Listener listener ) {
 <span class="nc" id="L42">                listeners.add( listener );</span>
@@ -46,6 +46,32 @@ public interface Event extends Noticeable
             public Noticeable unsubscribe( Listener listener ) {
 <span class="nc" id="L47">                listeners.remove( listener );</span>
 <span class="nc" id="L48">                return this;</span>
+            }
+        };
+    }
+
+    /**
+     * Creates a new {@link Event} that can be observed, triggered and executed asynchronously
+     * on a custom event queue, thread pool or any other executor.
+     *
+     * @param executor A {@link Consumer} of {@link Runnable}s that will be used to execute the {@link #fire()} method.
+     * @return A new {@link Event}.
+     */
+    static Event of( Consumer&lt;Runnable&gt; executor ) {
+<span class="nc" id="L61">        return new Event() {</span>
+<span class="nc" id="L62">            private final List&lt;Listener&gt; listeners = new ArrayList&lt;&gt;();</span>
+
+            @Override
+<span class="nc" id="L65">            public void fire() { executor.accept( () -&gt; listeners.forEach( Listener::run ) ); }</span>
+            @Override
+            public Noticeable subscribe( Listener listener ) {
+<span class="nc" id="L68">                listeners.add( listener );</span>
+<span class="nc" id="L69">                return this;</span>
+            }
+            @Override
+            public Noticeable unsubscribe( Listener listener ) {
+<span class="nc" id="L73">                listeners.remove( listener );</span>
+<span class="nc" id="L74">                return this;</span>
             }
         };
     }
