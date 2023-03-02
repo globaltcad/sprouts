@@ -420,4 +420,128 @@ class Properties_List_Spec extends Specification
             changes == [Change.DISTINCT]
     }
 
+    def 'Leading and trailing items can be popped off a property list.'()
+    {
+        reportInfo """
+            Methods with a "pop" prefix allow you to remove and then get the removed properties from a property list.
+            This is useful when you want to remove a property from a list and then use it in some other way.
+            In this feature we will look at the "popFirst" and "popLast" methods.
+        """
+        given : 'A "Vars" instance having 12 properties.'
+            var vars = Vars.of(-42, 666, 1, -16, 8, 73, -9, 0, 42, 1, 2, 8)
+        when : 'We pop the first and last property from the list.'
+            var first = vars.popFirst()
+            var last = vars.popLast()
+        then : 'The first and last properties have been removed from the list.'
+            vars == Vars.of(666, 1, -16, 8, 73, -9, 0, 42, 1, 2)
+        and : 'We removed properties have the correct values.'
+            first.get() == -42
+            last.get() == 8
+
+        when : 'We pop the first and last 2 properties from the list.'
+            var first2 = vars.popFirst(2)
+            var last2 = vars.popLast(2)
+        then : 'The first and last 2 properties have been removed from the list.'
+            vars == Vars.of(-16, 8, 73, -9, 0, 42)
+        and : 'We removed properties have the correct values.'
+            first2 == Vars.of(666, 1)
+            last2 == Vars.of(1, 2)
+    }
+
+    def 'The "popAt" method return the removed property.'()
+    {
+        reportInfo """
+            The "popAt" method removes the property at the given index and returns it.
+            If the index is out of bounds, an exception is thrown.
+        """
+        given : 'A "Vars" instance having a few properties.'
+            var vars = Vars.of("seitan", "tofu", "tempeh", "mock duck")
+        when : 'We pop the property at index 2.'
+            var popped = vars.popAt(2)
+        then : 'The property at index 2 has been removed from the list.'
+            vars == Vars.of("seitan", "tofu", "mock duck")
+        and : 'The removed property has the correct value.'
+            popped.get() == "tempeh"
+    }
+
+    def 'Use "removeOrThrow" to to guarantee the removal of a property.'()
+    {
+        reportInfo """
+            The "removeOrThrow" method removes the given property from the list.
+            If the property is not in the list, an exception is thrown.
+        """
+        given : 'A "Vars" instance having a few properties.'
+            var vars = Vars.of("poha", "idli", "dosa", "upma")
+        when : 'We remove the property at index 2.'
+            vars.removeOrThrow("dosa")
+        then : 'No exception is thrown.'
+            noExceptionThrown()
+        and : 'The property at index 2 has been removed from the list.'
+            vars == Vars.of("poha", "idli", "upma")
+
+        when : 'We try to remove a property that is not in the list.'
+            vars.removeOrThrow("dosa")
+        then : 'An exception is thrown.'
+            thrown(NoSuchElementException)
+    }
+
+    def 'Properties can be removed from a property list using a predicate.'()
+    {
+        reportInfo """
+            The "removeIf" method removes all properties from the list that match the given predicate.
+            The method returns the original list to allow for chaining.
+        """
+        given : 'A "Vars" instance having a few properties.'
+            var vars = Vars.of("poha", "idli", "dosa", "upma", "poori")
+        when : 'We remove all properties that start with "p".'
+            vars.removeIf({ it.get().startsWith("p") })
+        then : 'The properties that start with "p" have been removed from the list.'
+            vars == Vars.of("idli", "dosa", "upma")
+    }
+
+    def 'Properties can be popped off a property list using a predicate.'()
+    {
+        reportInfo """
+            The "popIf" method removes all properties from the list that match the given predicate.
+            The method returns a list of the removed properties.
+        """
+        given : 'A "Vars" instance having a few properties.'
+            var vars = Vars.of("poha", "idli", "dosa", "upma", "poori")
+        when : 'We remove all properties that start with "p".'
+            var popped = vars.popIf({ it.get().startsWith("p") })
+        then : 'The properties that start with "p" have been removed from the list.'
+            vars == Vars.of("idli", "dosa", "upma")
+        and : 'The removed properties have the correct values.'
+            popped == Vars.of("poha", "poori")
+    }
+
+    def 'Items can be popped off a property list using a predicate.'()
+    {
+        reportInfo """
+            The "popIfItem" method removes all items from the list that match the given predicate.
+            The method returns a list of the removed properties.
+        """
+        given : 'A "Vars" instance having a few properties.'
+            var vars = Vars.of("poha", "idli", "dosa", "upma", "poori")
+        when : 'We remove all properties that start with "p".'
+            var popped = vars.popIfItem({ it.startsWith("p") })
+        then : 'The properties that start with "p" have been removed from the list.'
+            vars == Vars.of("idli", "dosa", "upma")
+        and : 'The removed properties have the correct values.'
+            popped == Vars.of("poha", "poori")
+    }
+
+    def 'Items can be removed from a property list using a predicate.'()
+    {
+        reportInfo """
+            The "removeIfItem" method removes all items from the list that match the given predicate.
+            The method returns the original list to allow for chaining.
+        """
+        given : 'A "Vars" instance having a few properties.'
+            var vars = Vars.of("poha", "idli", "dosa", "upma", "poori")
+        when : 'We remove all properties that start with "p".'
+            vars.removeIfItem({ it.startsWith("p") })
+        then : 'The properties that start with "p" have been removed from the list.'
+            vars == Vars.of("idli", "dosa", "upma")
+    }
 }

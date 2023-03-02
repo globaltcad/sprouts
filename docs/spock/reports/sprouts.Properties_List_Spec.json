@@ -4,19 +4,19 @@
   "narrative":"Just like properties you can create lists of properties\n    and then bind them to UI components.\n    They are a powerful tool to model the state \n    as well as business logic of your UI without actually depending on it.\n    This is especially useful for testing your UIs logic.\n    This specification shows how to use the various\n    methods exposed by the property lists classes, \n    namely \"Vals\" (immutable) and \"Vars\" (mutable).",
   "subjects":["sprouts.Vals","sprouts.Vars"],
   "statistics":{
-    "runs":"18",
+    "runs":"25",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
     "skipped":"0",
-    "duration":"0.077 seconds"
+    "duration":"0.068 seconds"
   },
   "headers":[],"tags":{},"see":[],
   "features":[ 
     {
       "id":"Multiple properties can be modelled through the \"Vars\" and \"Vals\" classes.",
       "result":"PASS",
-      "duration":"0.017 seconds",
+      "duration":"0.014 seconds",
       "iterations":{
       "tags":{},"see":[],"extraInfo":[]
       },
@@ -51,7 +51,7 @@
     {
       "id":"You can remove n leading or trailing entries from a property list.",
       "result":"PASS",
-      "duration":"0.001 seconds",
+      "duration":"0.002 seconds",
       "iterations":{
       "tags":{},"see":[],"extraInfo":["\n            A very common use case is to remove the first or last entry from a list.\n            Not only can you do this with the \"removeFirst()\" and \"removeLast()\" methods,\n            but you can also remove n entries from the start or end of the list\n            through the \"removeFirst(int)\" and \"removeLast(int)\" methods.\n        "]
       },
@@ -88,7 +88,7 @@
     {
       "id":"The properties of one property list can be added to another property list.",
       "result":"PASS",
-      "duration":"0.001 seconds",
+      "duration":"0",
       "iterations":{
       "tags":{},"see":[],"extraInfo":["\n            The properties of one property list can be added to another property list.\n            This is useful when you want to combine two property lists into one.\n        "]
       },
@@ -111,7 +111,7 @@
     {
       "id":"The \"Vars\" is a list of properties which can grow and shrink.",
       "result":"PASS",
-      "duration":"0.001 seconds",
+      "duration":"0",
       "iterations":{
       "tags":{},"see":[],"extraInfo":[]
       },
@@ -153,7 +153,7 @@
     {
       "id":"Map a \"Vals\" instance from one type of properties to another.",
       "result":"PASS",
-      "duration":"0.001 seconds",
+      "duration":"0",
       "iterations":{
       "tags":{},"see":[],"extraInfo":[]
       },
@@ -187,7 +187,7 @@
     {
       "id":"You can create the \"Vars\"/\"Vals\" property lists from property instances.",
       "result":"PASS",
-      "duration":"0.004 seconds",
+      "duration":"0",
       "iterations":{
       "tags":{},"see":[],"extraInfo":[]
       },
@@ -206,7 +206,7 @@
     {
       "id":"Just like a regular \"Var\" property you can register change listeners on \"Vars\".",
       "result":"PASS",
-      "duration":"0.006 seconds",
+      "duration":"0.003 seconds",
       "iterations":{
       "tags":{},"see":[],"extraInfo":[]
       },
@@ -229,7 +229,7 @@
     {
       "id":"The display action of a property or list of properties will not be called if they report \"canBeRemoved()\"",
       "result":"PASS",
-      "duration":"0.005 seconds",
+      "duration":"0.004 seconds",
       "iterations":{
       "tags":{},"see":[],"extraInfo":[]
       },
@@ -273,7 +273,7 @@
     {
       "id":"Lists of properties can be sorted based on their natural order through the \"sort\" method.",
       "result":"PASS",
-      "duration":"0.001 seconds",
+      "duration":"0",
       "iterations":{
       "tags":{},"see":[],"extraInfo":[]
       },
@@ -290,7 +290,7 @@
     {
       "id":"Lists of properties can be sorted using a custom comparator through the \"sort\" method.",
       "result":"PASS",
-      "duration":"0.002 seconds",
+      "duration":"0.003 seconds",
       "iterations":{
       "tags":{},"see":[],"extraInfo":[]
       },
@@ -307,7 +307,7 @@
     {
       "id":"Change listeners registered on a property list will be called when the list is sorted.",
       "result":"PASS",
-      "duration":"0.001 seconds",
+      "duration":"0",
       "iterations":{
       "tags":{},"see":[],"extraInfo":[]
       },
@@ -330,7 +330,7 @@
     {
       "id":"You can create a \"Vars\" list from a regular List of properties.",
       "result":"PASS",
-      "duration":"0.003 seconds",
+      "duration":"0.002 seconds",
       "iterations":{
       "tags":{},"see":[],"extraInfo":[]
       },
@@ -347,7 +347,7 @@
     {
       "id":"A list of properties can be turned into lists, sets or maps using various convenience methods.",
       "result":"PASS",
-      "duration":"0.006 seconds",
+      "duration":"0.005 seconds",
       "iterations":{
       "tags":{},"see":[],"extraInfo":["\n            The \"Vals\" class has a number of convenience methods for turning the list of properties into\n            immutable lists, sets or maps. \n            These methods make property lists more compatible with the rest of the Java ecosystem.\n        "]
       },
@@ -366,7 +366,7 @@
     {
       "id":"A list of properties can be turned into an immutable \"Vals\" list using the \"toVals\" method.",
       "result":"PASS",
-      "duration":"0.001 seconds",
+      "duration":"0",
       "iterations":{
       "tags":{},"see":[],"extraInfo":[]
       },
@@ -397,6 +397,145 @@
         {"kind":"then","text":"The list has been modified in-place.","code":["vars.size() == 3","vars == Vars.of(Var.of(3.1415f), Var.of(2.7182f), Var.of(1.6180f))"]},
 
         {"kind":"and","text":"The \"show\" listeners have been called.","code":["changes == [Change.DISTINCT]"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Leading and trailing items can be popped off a property list.",
+      "result":"PASS",
+      "duration":"0.001 seconds",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Methods with a \"pop\" prefix allow you to remove and then get the removed properties from a property list.\n            This is useful when you want to remove a property from a list and then use it in some other way.\n            In this feature we will look at the \"popFirst\" and \"popLast\" methods.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A \"Vars\" instance having 12 properties.","code":["var vars = Vars.of(-42, 666, 1, -16, 8, 73, -9, 0, 42, 1, 2, 8)"]},
+
+        {"kind":"when","text":"We pop the first and last property from the list.","code":["var first = vars.popFirst()","var last = vars.popLast()"]},
+
+        {"kind":"then","text":"The first and last properties have been removed from the list.","code":["vars == Vars.of(666, 1, -16, 8, 73, -9, 0, 42, 1, 2)"]},
+
+        {"kind":"and","text":"We removed properties have the correct values.","code":["first.get() == -42","last.get() == 8"]},
+
+        {"kind":"when","text":"We pop the first and last 2 properties from the list.","code":["var first2 = vars.popFirst(2)","var last2 = vars.popLast(2)"]},
+
+        {"kind":"then","text":"The first and last 2 properties have been removed from the list.","code":["vars == Vars.of(-16, 8, 73, -9, 0, 42)"]},
+
+        {"kind":"and","text":"We removed properties have the correct values.","code":["first2 == Vars.of(666, 1)","last2 == Vars.of(1, 2)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The \"popAt\" method return the removed property.",
+      "result":"PASS",
+      "duration":"0",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The \"popAt\" method removes the property at the given index and returns it.\n            If the index is out of bounds, an exception is thrown.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A \"Vars\" instance having a few properties.","code":["var vars = Vars.of(\"seitan\", \"tofu\", \"tempeh\", \"mock duck\")"]},
+
+        {"kind":"when","text":"We pop the property at index 2.","code":["var popped = vars.popAt(2)"]},
+
+        {"kind":"then","text":"The property at index 2 has been removed from the list.","code":["vars == Vars.of(\"seitan\", \"tofu\", \"mock duck\")"]},
+
+        {"kind":"and","text":"The removed property has the correct value.","code":["popped.get() == \"tempeh\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use \"removeOrThrow\" to to guarantee the removal of a property.",
+      "result":"PASS",
+      "duration":"0.001 seconds",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The \"removeOrThrow\" method removes the given property from the list.\n            If the property is not in the list, an exception is thrown.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A \"Vars\" instance having a few properties.","code":["var vars = Vars.of(\"poha\", \"idli\", \"dosa\", \"upma\")"]},
+
+        {"kind":"when","text":"We remove the property at index 2.","code":["vars.removeOrThrow(\"dosa\")"]},
+
+        {"kind":"then","text":"No exception is thrown.","code":["noExceptionThrown()"]},
+
+        {"kind":"and","text":"The property at index 2 has been removed from the list.","code":["vars == Vars.of(\"poha\", \"idli\", \"upma\")"]},
+
+        {"kind":"when","text":"We try to remove a property that is not in the list.","code":["vars.removeOrThrow(\"dosa\")"]},
+
+        {"kind":"then","text":"An exception is thrown.","code":["thrown(NoSuchElementException)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Properties can be removed from a property list using a predicate.",
+      "result":"PASS",
+      "duration":"0.001 seconds",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The \"removeIf\" method removes all properties from the list that match the given predicate.\n            The method returns the original list to allow for chaining.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A \"Vars\" instance having a few properties.","code":["var vars = Vars.of(\"poha\", \"idli\", \"dosa\", \"upma\", \"poori\")"]},
+
+        {"kind":"when","text":"We remove all properties that start with \"p\".","code":["vars.removeIf({ it.get().startsWith(\"p\") })"]},
+
+        {"kind":"then","text":"The properties that start with \"p\" have been removed from the list.","code":["vars == Vars.of(\"idli\", \"dosa\", \"upma\")"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Properties can be popped off a property list using a predicate.",
+      "result":"PASS",
+      "duration":"0",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The \"popIf\" method removes all properties from the list that match the given predicate.\n            The method returns a list of the removed properties.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A \"Vars\" instance having a few properties.","code":["var vars = Vars.of(\"poha\", \"idli\", \"dosa\", \"upma\", \"poori\")"]},
+
+        {"kind":"when","text":"We remove all properties that start with \"p\".","code":["var popped = vars.popIf({ it.get().startsWith(\"p\") })"]},
+
+        {"kind":"then","text":"The properties that start with \"p\" have been removed from the list.","code":["vars == Vars.of(\"idli\", \"dosa\", \"upma\")"]},
+
+        {"kind":"and","text":"The removed properties have the correct values.","code":["popped == Vars.of(\"poha\", \"poori\")"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Items can be popped off a property list using a predicate.",
+      "result":"PASS",
+      "duration":"0",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The \"popIfItem\" method removes all items from the list that match the given predicate.\n            The method returns a list of the removed properties.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A \"Vars\" instance having a few properties.","code":["var vars = Vars.of(\"poha\", \"idli\", \"dosa\", \"upma\", \"poori\")"]},
+
+        {"kind":"when","text":"We remove all properties that start with \"p\".","code":["var popped = vars.popIfItem({ it.startsWith(\"p\") })"]},
+
+        {"kind":"then","text":"The properties that start with \"p\" have been removed from the list.","code":["vars == Vars.of(\"idli\", \"dosa\", \"upma\")"]},
+
+        {"kind":"and","text":"The removed properties have the correct values.","code":["popped == Vars.of(\"poha\", \"poori\")"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Items can be removed from a property list using a predicate.",
+      "result":"PASS",
+      "duration":"0",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The \"removeIfItem\" method removes all items from the list that match the given predicate.\n            The method returns the original list to allow for chaining.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A \"Vars\" instance having a few properties.","code":["var vars = Vars.of(\"poha\", \"idli\", \"dosa\", \"upma\", \"poori\")"]},
+
+        {"kind":"when","text":"We remove all properties that start with \"p\".","code":["vars.removeIfItem({ it.startsWith(\"p\") })"]},
+
+        {"kind":"then","text":"The properties that start with \"p\" have been removed from the list.","code":["vars == Vars.of(\"idli\", \"dosa\", \"upma\")"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }

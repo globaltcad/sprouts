@@ -24,9 +24,7 @@ public interface Vars<T> extends Vals<T>
      *  @return A new Vars instance.
      */
     @SuppressWarnings("unchecked")
-    static <T> Vars<T> of( Class<T> type, Var<T>... vars ) {
-        return AbstractVariables.of( false, type, vars );
-    }
+    static <T> Vars<T> of( Class<T> type, Var<T>... vars ) { return AbstractVariables.of( false, type, vars ); }
 
     /**
      *  Creates an empty list of non-nullable properties from the supplied type.
@@ -37,9 +35,7 @@ public interface Vars<T> extends Vals<T>
      *  @param <T> The type of the properties.
      *  @return A new Vars instance.
      */
-    static <T> Vars<T> of( Class<T> type ) {
-        return AbstractVariables.of( false, type );
-    }
+    static <T> Vars<T> of( Class<T> type ) { return AbstractVariables.of( false, type ); }
 
     /**
      *  Creates a list of non-nullable properties from one or more non-nullable properties.
@@ -49,9 +45,7 @@ public interface Vars<T> extends Vals<T>
      *  @return A new Vars instance.
      */
     @SuppressWarnings("unchecked")
-    static <T> Vars<T> of( Var<T> first, Var<T>... rest ) {
-        return AbstractVariables.of( false, first, rest );
-    }
+    static <T> Vars<T> of( Var<T> first, Var<T>... rest ) { return AbstractVariables.of( false, first, rest ); }
 
     /**
      *  Creates a list of non-nullable properties from one or more non-null values.
@@ -61,9 +55,7 @@ public interface Vars<T> extends Vals<T>
      *  @return A new Vars instance.
      */
     @SuppressWarnings("unchecked")
-    static <T> Vars<T> of( T first, T... rest ) {
-        return AbstractVariables.of( false, first, rest );
-    }
+    static <T> Vars<T> of( T first, T... rest ) { return AbstractVariables.of( false, first, rest ); }
 
     /**
      *  Creates a list of non-nullable properties from the supplied type and iterable of values.
@@ -74,9 +66,7 @@ public interface Vars<T> extends Vals<T>
      *  @param <T> The type of the properties.
      *  @return A new Vars instance.
      */
-    static <T> Vars<T> of( Class<T> type, Iterable<Var<T>> vars ) {
-        return AbstractVariables.of( false, type, vars );
-    }
+    static <T> Vars<T> of( Class<T> type, Iterable<Var<T>> vars ) { return AbstractVariables.of( false, type, vars ); }
 
     /**
      *  Creates a list of nullable properties from the supplied type and varargs properties.
@@ -102,9 +92,7 @@ public interface Vars<T> extends Vals<T>
      *  @param <T> The type of the properties.
      *  @return A new Vars instance.
      */
-    static <T> Vars<T> ofNullable( Class<T> type ) {
-        return AbstractVariables.ofNullable( false, type );
-    }
+    static <T> Vars<T> ofNullable( Class<T> type ) { return AbstractVariables.ofNullable( false, type ); }
 
     /**
      *  Creates a list of nullable properties from the supplied type and values.
@@ -197,9 +185,8 @@ public interface Vars<T> extends Vals<T>
      */
     default Vars<T> removeOrThrow( T value ) {
         int index = indexOf(Var.of(value));
-        if (index < 0) {
+        if ( index < 0 )
             throw new NoSuchElementException("No such element: " + value);
-        }
         return removeAt( index );
     }
 
@@ -223,9 +210,8 @@ public interface Vars<T> extends Vals<T>
      */
     default Vars<T> removeOrThrow( Var<T> var ) {
         int index = indexOf(var);
-        if (index < 0) {
+        if ( index < 0 )
             throw new NoSuchElementException("No such element: " + var);
-        }
         return removeAt( index );
     }
 
@@ -289,6 +275,7 @@ public interface Vars<T> extends Vals<T>
         count = Math.min( count, size() );
         Vars<T> vars = Vars.of(type());
         for ( int i = 0; i < count; i++ ) vars.add(popLast());
+        vars.revert();
         return vars;
     }
 
@@ -344,7 +331,7 @@ public interface Vars<T> extends Vals<T>
         Vars<T> vars = Vars.of(type());
         for ( int i = size() - 1; i >= 0; i-- )
             if ( predicate.test(at(i)) ) vars.add(popAt(i));
-        return vars;
+        return vars.revert();
     }
 
     /**
@@ -373,7 +360,7 @@ public interface Vars<T> extends Vals<T>
         Vars<T> vars = Vars.of(type());
         for ( int i = size() - 1; i >= 0; i-- )
             if ( predicate.test(at(i).get()) ) vars.add(popAt(i));
-        return vars;
+        return vars.revert();
     }
 
     /**
@@ -513,4 +500,18 @@ public interface Vars<T> extends Vals<T>
      */
     void makeDistinct();
 
+    /**
+     *  Reverse the order of the properties in this list.
+     *
+     * @return This list.
+     */
+    default Vars<T> revert() {
+        int size = size();
+        for ( int i = 0; i < size / 2; i++ ) {
+            Var<T> tmp = at(i);
+            setAt( i, at(size - i - 1) );
+            setAt( size - i - 1, tmp );
+        }
+        return this;
+    }
 }

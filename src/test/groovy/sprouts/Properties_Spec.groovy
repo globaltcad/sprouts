@@ -382,7 +382,7 @@ class Properties_Spec extends Specification
             property = Var.ofNullable(String, null)
             optional = property.toOptional()
         then : 'The Optional is empty.'
-            optional.isEmpty()
+            !optional.isPresent()
     }
 
     def 'Conveniently compare the item of a property with another item using "is", "isOneOf" or "isNot"'()
