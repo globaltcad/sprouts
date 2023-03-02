@@ -102,8 +102,8 @@ public class AbstractVariables<T> implements Vars<T>
     public Vars<T> addAt( int index, Var<T> value ) {
         if ( _isImmutable ) throw new UnsupportedOperationException("This is an immutable list.");
         _checkNullSafetyOf(value);
-        _triggerAction( Change.ADD, index, value, null );
         _variables.add(index, value);
+        _triggerAction( Change.ADD, index, value, null );
         return this;
     }
 
@@ -113,8 +113,9 @@ public class AbstractVariables<T> implements Vars<T>
         if ( _isImmutable ) throw new UnsupportedOperationException("This is an immutable list.");
         if ( index < 0 || index >= _variables.size() )
             throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + _variables.size());
-        _triggerAction( Change.REMOVE, index, null, _variables.get(index) );
+        Var<T> old = _variables.get(index);
         _variables.remove(index);
+        _triggerAction( Change.REMOVE, index, null, old );
         return this;
     }
 
@@ -130,8 +131,8 @@ public class AbstractVariables<T> implements Vars<T>
         Var<T> old = _variables.get(index);
 
         if ( !old.equals(value) ) {
-            _triggerAction(Change.SET, index, value, at(index));
             _variables.set(index, value);
+            _triggerAction(Change.SET, index, value, old);
         }
         return this;
     }
@@ -140,8 +141,8 @@ public class AbstractVariables<T> implements Vars<T>
     @Override
     public Vars<T> clear() {
         if ( _isImmutable ) throw new UnsupportedOperationException("This is an immutable list.");
-        _triggerAction( Change.CLEAR, -1, null, null );
         _variables.clear();
+        _triggerAction( Change.CLEAR, -1, null, null );
         return this;
     }
 

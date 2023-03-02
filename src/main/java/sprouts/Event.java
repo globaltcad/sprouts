@@ -2,6 +2,7 @@ package sprouts;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  *  This represents an occurrence that can be observed as well as triggered.
@@ -35,8 +36,33 @@ public interface Event extends Noticeable
         return new Event() {
             private final List<Listener> listeners = new ArrayList<>();
 
+            @Override public void fire() { listeners.forEach( Listener::run ); }
             @Override
-            public void fire() { listeners.forEach( Listener::run ); }
+            public Noticeable subscribe( Listener listener ) {
+                listeners.add( listener );
+                return this;
+            }
+            @Override
+            public Noticeable unsubscribe( Listener listener ) {
+                listeners.remove( listener );
+                return this;
+            }
+        };
+    }
+
+    /**
+     * Creates a new {@link Event} that can be observed, triggered and executed asynchronously
+     * on a custom event queue, thread pool or any other executor.
+     *
+     * @param executor A {@link Consumer} of {@link Runnable}s that will be used to execute the {@link #fire()} method.
+     * @return A new {@link Event}.
+     */
+    static Event of( Consumer<Runnable> executor ) {
+        return new Event() {
+            private final List<Listener> listeners = new ArrayList<>();
+
+            @Override
+            public void fire() { executor.accept( () -> listeners.forEach( Listener::run ) ); }
             @Override
             public Noticeable subscribe( Listener listener ) {
                 listeners.add( listener );
