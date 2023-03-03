@@ -138,6 +138,26 @@ public class AbstractVariables<T> implements Vars<T>
     }
 
     /** {@inheritDoc} */
+    @Override public Vars<T> addAll( Vals<T> vals )
+    {
+        if ( _isImmutable ) throw new UnsupportedOperationException("This is an immutable list.");
+        for ( int i = 0; i < vals.size(); i++ ) {
+            Val<T> val = vals.at(i);
+            if ( val instanceof Var )
+                _variables.add((Var<T>) val);
+            else
+                _variables.add(Var.of(val.get()));
+        }
+        if ( vals.size() > 0 ) {
+            if ( vals.size() > 1 )
+                _triggerAction( Change.ADD, -1, null, null );
+            else
+                _triggerAction( Change.ADD, _variables.size() - 1, Var.of(vals.at(0).orElseNull()), null );
+        }
+        return this;
+    }
+
+    /** {@inheritDoc} */
     @Override
     public Vars<T> clear() {
         if ( _isImmutable ) throw new UnsupportedOperationException("This is an immutable list.");

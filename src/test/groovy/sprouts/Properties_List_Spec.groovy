@@ -544,4 +544,25 @@ class Properties_List_Spec extends Specification
         then : 'The properties that start with "p" have been removed from the list.'
             vars == Vars.of("idli", "dosa", "upma")
     }
+
+    def 'Using "addAll" to add multiple things to a property list will only trigger the change listeners once!'()
+    {
+        reportInfo """
+            The "addAll" method adds all the given properties to the list.
+            The method returns the original list to allow for method chaining.
+            Although the method adds multiple properties, causing multiple changes to the list,
+            it will only trigger the change listeners once.
+        """
+        given : 'A "Vars" instance having a few properties.'
+            var vars = Vars.of("poha", "idli", "dosa", "upma", "poori")
+        and : 'A change listener that counts the number of changes.'
+            var changeCount = 0
+            vars.onChange { changeCount++ }
+        when : 'We add multiple properties to the list.'
+            vars.addAll("vada", "samosa", "pakora")
+        then : 'The properties have been added to the list.'
+            vars == Vars.of("poha", "idli", "dosa", "upma", "poori", "vada", "samosa", "pakora")
+        and : 'The change listener has only been triggered once.'
+            changeCount == 1
+    }
 }

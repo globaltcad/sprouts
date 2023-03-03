@@ -407,8 +407,9 @@ public interface Vars<T> extends Vals<T>
     @SuppressWarnings("unchecked")
     default Vars<T> addAll( T... items )
     {
-        for ( T v : items ) add(v);
-        return this;
+        Vars<T> vars = Vars.of(this.type());
+        for ( T v : items ) vars.add(v);
+        return this.addAll(vars);
     }
 
     /**
@@ -419,8 +420,9 @@ public interface Vars<T> extends Vals<T>
      */
     default Vars<T> addAll( Iterable<T> items )
     {
-        for ( T v : items ) add(v);
-        return this;
+        Vars<T> vars = Vars.of(this.type());
+        for ( T v : items ) vars.add(v);
+        return this.addAll(vars);
     }
 
     /**
