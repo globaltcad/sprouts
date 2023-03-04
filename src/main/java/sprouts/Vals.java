@@ -208,16 +208,23 @@ public interface Vals<T> extends Iterable<T>
 
     /**
      *  Similar to {@link Var#fireSet()} but for a list of properties.
+     * @return This list of properties to allow chaining.
      */
     Vals<T> fireChange();
 
     /**
      *  Use this for mapping a list of properties to another list of properties.
+     * @param mapper The mapper function.
+     * @return A new list of properties.
      */
     Vals<T> map( Function<T,T> mapper );
 
     /**
      *  Use this for mapping a list of properties to another list of properties.
+     * @param type The type of the items in the new list of properties.
+     * @param mapper The mapper function.
+     * @param <U> The type of the items in the new list of properties.
+     * @return A new list of properties.
      */
     <U> Vals<U> mapTo( Class<U> type, Function<T,U> mapper );
 

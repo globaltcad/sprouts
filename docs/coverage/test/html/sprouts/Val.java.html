@@ -327,7 +327,7 @@ public interface Val&lt;T&gt;
 	 *
 	 * @return The {@link String} representation of the item wrapped by an implementation of this interface.
 	 */
-<span class="nc" id="L330">	default String itemAsString() { return this.mapTo(String.class, String::valueOf).orElseNullable(EMPTY); }</span>
+<span class="fc" id="L330">	default String itemAsString() { return this.mapTo(String.class, String::valueOf).orElseNullable(EMPTY); }</span>
 
 	/**
 	 *  This method returns a {@link String} representation of the type of the wrapped item.
@@ -423,7 +423,7 @@ public interface Val&lt;T&gt;
 	/**
 	 * @return The truth value determining if this property has been assigned an id.
 	 */
-<span class="nc bnc" id="L426" title="All 2 branches missed.">	default boolean hasID() { return !NO_ID.equals(id()); }</span>
+<span class="pc bpc" id="L426" title="1 of 2 branches missed.">	default boolean hasID() { return !NO_ID.equals(id()); }</span>
 
 	/**
 	 *  This returns the type of the item wrapped by this {@link Var}

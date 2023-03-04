@@ -1,14 +1,14 @@
 {
   "project": "Swing-Tree",
   "version": "0.2.0",
-  "created": "Thu Mar 02 16:57:50 CET 2023",
+  "created": "Sat Mar 04 11:50:43 CET 2023",
   "statistics":{
     "runs":"5",
     "passed":"4",
     "failed":"1",
     "featureFailures":"0",
     "successRate":"0.8",
-    "duration":"263.0"
+    "duration":"321.0"
   },
   "specifications": [{
       "className":"sprouts.MVVM_Unit_Test_Spec",
@@ -19,20 +19,20 @@
       "errors":"0",
       "skipped":"0" ,
       "successRate":"1.0",
-      "duration":"11",
+      "duration":"10",
       "executedFeatures":[{"id":"The register button does nothing if the inputs are not all valid.","extraInfo":[]},{"id":"The registration view model will display feedback about invalid inputs.","extraInfo":[]}],
       "ignoredFeatures":[]
     },{
       "className":"sprouts.Properties_List_Spec",
       "title":"Lists of Properties",
       "narrative":"Just like properties you can create lists of properties\n    and then bind them to UI components.\n    They are a powerful tool to model the state \n    as well as business logic of your UI without actually depending on it.\n    This is especially useful for testing your UIs logic.\n    This specification shows how to use the various\n    methods exposed by the property lists classes, \n    namely \"Vals\" (immutable) and \"Vars\" (mutable).",
-      "featureCount":"25",
+      "featureCount":"30",
       "failures":"0",
       "errors":"0",
       "skipped":"0" ,
       "successRate":"1.0",
-      "duration":"107",
-      "executedFeatures":[{"id":"A list of properties can be turned into an immutable \"Vals\" list using the \"toVals\" method.","extraInfo":[]},{"id":"A list of properties can be turned into lists, sets or maps using various convenience methods.","extraInfo":[]},{"id":"Both the \"Vars\" and immutable \"Vals\" types can be used for functional programming.","extraInfo":[]},{"id":"Change listeners registered on a property list will be called when the list is sorted.","extraInfo":[]},{"id":"Items can be popped off a property list using a predicate.","extraInfo":[]},{"id":"Items can be removed from a property list using a predicate.","extraInfo":[]},{"id":"Just like a regular \"Var\" property you can register change listeners on \"Vars\".","extraInfo":[]},{"id":"Leading and trailing items can be popped off a property list.","extraInfo":[]},{"id":"Lists of properties can be sorted based on their natural order through the \"sort\" method.","extraInfo":[]},{"id":"Lists of properties can be sorted using a custom comparator through the \"sort\" method.","extraInfo":[]},{"id":"Map a \"Vals\" instance from one type of properties to another.","extraInfo":[]},{"id":"Map a \"Vars\" instance from one type of properties to another.","extraInfo":[]},{"id":"Multiple properties can be modelled through the \"Vars\" and \"Vals\" classes.","extraInfo":[]},{"id":"Properties can be popped off a property list using a predicate.","extraInfo":[]},{"id":"Properties can be removed from a property list using a predicate.","extraInfo":[]},{"id":"The \"Vars\" is a list of properties which can grow and shrink.","extraInfo":[]},{"id":"The \"makeDistinct\" method on a mutable list of properties modifies the list in-place.","extraInfo":[]},{"id":"The \"popAt\" method return the removed property.","extraInfo":[]},{"id":"The display action of a property or list of properties will not be called if they report \"canBeRemoved()\"","extraInfo":[]},{"id":"The listeners registered in property lists will be informed what type of modification occurred.","extraInfo":[]},{"id":"The properties of one property list can be added to another property list.","extraInfo":[]},{"id":"Use \"removeOrThrow\" to to guarantee the removal of a property.","extraInfo":[]},{"id":"You can create a \"Vars\" list from a regular List of properties.","extraInfo":[]},{"id":"You can create the \"Vars\"/\"Vals\" property lists from property instances.","extraInfo":[]},{"id":"You can remove n leading or trailing entries from a property list.","extraInfo":[]}],
+      "duration":"152",
+      "executedFeatures":[{"id":"A list of properties can be turned into an immutable \"Vals\" list using the \"toVals\" method.","extraInfo":[]},{"id":"A list of properties can be turned into lists, sets or maps using various convenience methods.","extraInfo":[]},{"id":"Both the \"Vars\" and immutable \"Vals\" types can be used for functional programming.","extraInfo":[]},{"id":"Change listeners registered on a property list will be called when the list is sorted.","extraInfo":[]},{"id":"Checkout these cool one liners!","extraInfo":[]},{"id":"Items can be popped off a property list using a predicate.","extraInfo":[]},{"id":"Items can be removed from a property list using a predicate.","extraInfo":[]},{"id":"Just like a regular \"Var\" property you can register change listeners on \"Vars\".","extraInfo":[]},{"id":"Leading and trailing items can be popped off a property list.","extraInfo":[]},{"id":"Lists of properties can be sorted based on their natural order through the \"sort\" method.","extraInfo":[]},{"id":"Lists of properties can be sorted using a custom comparator through the \"sort\" method.","extraInfo":[]},{"id":"Map a \"Vals\" instance from one type of properties to another.","extraInfo":[]},{"id":"Map a \"Vars\" instance from one type of properties to another.","extraInfo":[]},{"id":"Multiple properties can be modelled through the \"Vars\" and \"Vals\" classes.","extraInfo":[]},{"id":"Properties can be popped off a property list using a predicate.","extraInfo":[]},{"id":"Properties can be removed from a property list using a predicate.","extraInfo":[]},{"id":"The \"Vals\" and \"Vars\" instances have descriptive String representations.","extraInfo":[]},{"id":"The \"Vars\" is a list of properties which can grow and shrink.","extraInfo":[]},{"id":"The \"makeDistinct\" method on a mutable list of properties modifies the list in-place.","extraInfo":[]},{"id":"The \"popAt\" method return the removed property.","extraInfo":[]},{"id":"The \"retainAll\" method does not trigger an \"onChange\" event if the list is not changed.","extraInfo":[]},{"id":"The display action of a property or list of properties will not be called if they report \"canBeRemoved()\"","extraInfo":[]},{"id":"The listeners registered in property lists will be informed what type of modification occurred.","extraInfo":[]},{"id":"The properties of one property list can be added to another property list.","extraInfo":[]},{"id":"Use \"removeOrThrow\" to to guarantee the removal of a property.","extraInfo":[]},{"id":"Using \"addAll\" to add multiple things to a property list will only trigger the change listeners once!","extraInfo":[]},{"id":"Various kinds of methods that mutate a property list will only trigger an \"onChange\" event once, even if multiple items are affected.","extraInfo":[]},{"id":"You can create a \"Vars\" list from a regular List of properties.","extraInfo":[]},{"id":"You can create the \"Vars\"/\"Vals\" property lists from property instances.","extraInfo":[]},{"id":"You can remove n leading or trailing entries from a property list.","extraInfo":[]}],
       "ignoredFeatures":[]
     },{
       "className":"sprouts.Properties_Spec",
@@ -67,7 +67,7 @@
       "errors":"0",
       "skipped":"0" ,
       "successRate":"1.0",
-      "duration":"84",
+      "duration":"98",
       "executedFeatures":[{"id":"\"Vals\", a list of properties, is immutable.","extraInfo":[]},{"id":"A \"Val\" instance is immutable.","extraInfo":[]},{"id":"A \"Var\" may only wrap null if it is created as nullable.","extraInfo":[]},{"id":"A property can only wrap null if we specify a type class.","extraInfo":[]},{"id":"An empty property will throw an exception if you try to access its value.","extraInfo":[]},{"id":"The \"get\" method of a property throws an exception if the property is null.","extraInfo":[]},{"id":"The \"orElseNull\" method should be used instead of \"orElseThrow\" if you are fine with null items.","extraInfo":[]}],
       "ignoredFeatures":[]
     }

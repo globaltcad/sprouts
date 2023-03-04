@@ -78,6 +78,7 @@ public interface Var<T> extends Val<T>
 	 * @param type The type of the item wrapped by the property.
 	 * @param item The initial item of the property which must not be null.
 	 * @param <T> The type of the item held by the {@link Var}!
+	 * @param <V> The type of the item which is wrapped by the returned {@link Var}!
 	 * @return A new {@link Var} instance wrapping the given item.
 	 */
 	static <T, V extends T> Var<T> of( Class<T> type, V item ) { return AbstractVariable.of( false, type, item ); }

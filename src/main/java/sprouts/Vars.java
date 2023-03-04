@@ -98,10 +98,11 @@ public interface Vars<T> extends Vals<T>
      *  Creates a list of nullable properties from the supplied type and values.
      *  This factory method requires that the type be specified because the
      *  compiler cannot infer the type from the null values.
+     *  @param type The type of the properties.
      *  @param values The values to be wrapped by properties and then added to the new Vars instance.
      *                The values may be null.
-     * @param <T> The type of the values.
-     * @return A new Vars instance.
+     *  @param <T> The type of the values.
+     *  @return A new Vars instance.
      */
     @SuppressWarnings("unchecked")
     static <T> Vars<T> ofNullable( Class<T> type, T... values ) {
@@ -455,7 +456,7 @@ public interface Vars<T> extends Vals<T>
     Vars<T> retainAll( Vars<T> vars );
 
     /**
-     *  The {@link #retainAll(T...)} method removes all properties from this list
+     *  This method removes all properties from this list
      *  whose items are not contained in the provided array of items.
      *  @param items The array of items, whose properties to retain.
      *               All other properties will be removed.
