@@ -5,6 +5,9 @@ import sprouts.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ *  A base class for {@link Vars} implementations.
+ */
 public class AbstractVariables<T> implements Vars<T>
 {
 
@@ -79,6 +82,7 @@ public class AbstractVariables<T> implements Vars<T>
 
     private final List<Action<ValsDelegate<T>>> _viewActions = new ArrayList<>();
 
+
     @SafeVarargs
     protected AbstractVariables( boolean isImmutable, Class<T> type, boolean allowsNull, Var<T>... vals ) {
         _isImmutable = isImmutable;
@@ -96,6 +100,86 @@ public class AbstractVariables<T> implements Vars<T>
 
     /** {@inheritDoc} */
     @Override public final int size() { return _variables.size(); }
+
+    /** {@inheritDoc} */
+    @Override public Vars<T> removeLast( int count )
+    {
+        if ( _isImmutable ) throw new UnsupportedOperationException( "This list is immutable." );
+        count = Math.min( count, size() );
+        if ( count == 0 ) return this;
+        if ( count == 1 ) return removeLast();
+        for ( int i = 0; i < count; i++ ) _variables.remove( size() - 1 );
+        _triggerAction( Change.REMOVE, -1, null, null );
+        return this;
+    }
+
+    /**
+     *  Removes {@code count} number of properties from the end
+     *  of the list and returns them in a new list.
+     *  @param count The number of properties to remove.
+     *  @return A new list of properties.
+     */
+    @Override public Vars<T> popLast( int count )
+    {
+        if ( _isImmutable ) throw new UnsupportedOperationException( "This list is immutable." );
+        count = Math.min( count, size() );
+        if ( count == 0 ) return Vars.of(type());
+        if ( count == 1 ) return Vars.of(popLast());
+        Vars<T> vars = Vars.of(type());
+        List<Var<T>> subList = _variables.subList( size() - count, size() );
+        for ( Var<T> var : subList ) vars.add(var);
+        subList.clear();
+        _triggerAction( Change.REMOVE, -1, null, null );
+        return vars;
+    }
+
+    /**
+     *  Removes the first {@code count} number of properties from the list.
+     *  @param count The number of properties to remove.
+     *  @return This list of properties.
+     */
+    @Override public Vars<T> removeFirst( int count )
+    {
+        if ( _isImmutable ) throw new UnsupportedOperationException( "This list is immutable." );
+        count = Math.min( count, size() );
+        if ( count == 0 ) return this;
+        if ( count == 1 ) return removeFirst();
+        if ( count > 0 ) _variables.subList(0, count).clear();
+        _triggerAction( Change.REMOVE, -1, null, null );
+        return this;
+    }
+
+    /**
+     *  Removes the first {@code count} number of properties from the list
+     *  and returns them in a new list.
+     *  @param count The number of properties to remove.
+     *  @return A new list of properties.
+     */
+    @Override public Vars<T> popFirst( int count )
+    {
+        if ( _isImmutable ) throw new UnsupportedOperationException( "This list is immutable." );
+        count = Math.min( count, size() );
+        if ( count == 0 ) return Vars.of(type());
+        if ( count == 1 ) return Vars.of(popFirst());
+        Vars<T> vars = Vars.of(type());
+        List<Var<T>> subList = _variables.subList( 0, count );
+        for ( Var<T> var : subList ) vars.add(var);
+        subList.clear();
+        _triggerAction( Change.REMOVE, -1, null, null );
+        return vars;
+    }
+
+    /** {@inheritDoc} */
+    @Override public Vars<T> removeAll( Vars<T> vars )
+    {
+        if ( _isImmutable ) throw new UnsupportedOperationException("This is an immutable list.");
+        for ( int i = size() - 1; i >= 0; i-- )
+            if ( vars.contains(at(i)) )
+                _variables.remove(i);
+
+        _triggerAction( Change.REMOVE, -1, null, null );
+        return this;
+    }
 
     /** {@inheritDoc} */
     @Override
@@ -159,6 +243,18 @@ public class AbstractVariables<T> implements Vars<T>
 
     /** {@inheritDoc} */
     @Override
+    public Vars<T> retainAll(Vars<T> vars) {
+        if ( _isImmutable ) throw new UnsupportedOperationException("This is an immutable list.");
+
+        boolean changed = _variables.retainAll(vars.toValList());
+        if ( changed )
+            _triggerAction( Change.REMOVE, -1, null, null );
+
+        return this;
+    }
+
+    /** {@inheritDoc} */
+    @Override
     public Vars<T> clear() {
         if ( _isImmutable ) throw new UnsupportedOperationException("This is an immutable list.");
         _variables.clear();
@@ -186,6 +282,18 @@ public class AbstractVariables<T> implements Vars<T>
         _variables.clear();
         _variables.addAll(list);
         _triggerAction( Change.DISTINCT, -1, null, null );
+    }
+
+    @Override
+    public Vars<T> revert() {
+        int size = size();
+        for ( int i = 0; i < size / 2; i++ ) {
+            Var<T> tmp = at(i);
+            _variables.set( i, at(size - i - 1) );
+            _variables.set( size - i - 1, tmp );
+        }
+        _triggerAction( Change.REVERT, -1, null, null );
+        return this;
     }
 
     /** {@inheritDoc} */
@@ -244,7 +352,13 @@ public class AbstractVariables<T> implements Vars<T>
     /** {@inheritDoc} */
     @Override
     public final String toString() {
-        return "Vars[" + _variables.stream().map(Object::toString).collect(Collectors.joining(",")) + "]";
+        String entries = _variables.stream()
+                                    .map( o -> o.itemAsString() + ( o.hasID() ? "(" + o.id() + ")" : "" ) )
+                                    .collect(Collectors.joining(", "));
+
+        String prefix = _isImmutable ? "Vals" : "Vars";
+
+        return prefix + "<" + _type.getSimpleName() + ">[" + entries + "]";
     }
 
     /** {@inheritDoc} */

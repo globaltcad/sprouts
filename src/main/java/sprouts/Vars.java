@@ -257,12 +257,7 @@ public interface Vars<T> extends Vals<T>
      *  @param count The number of properties to remove.
      *  @return This list of properties.
      */
-    default Vars<T> removeLast( int count )
-    {
-        count = Math.min( count, size() );
-        for ( int i = 0; i < count; i++ ) removeLast();
-        return this;
-    }
+    Vars<T> removeLast( int count );
 
     /**
      *  Removes {@code count} number of properties from the end
@@ -270,26 +265,14 @@ public interface Vars<T> extends Vals<T>
      *  @param count The number of properties to remove.
      *  @return A new list of properties.
      */
-    default Vars<T> popLast( int count )
-    {
-        count = Math.min( count, size() );
-        Vars<T> vars = Vars.of(type());
-        for ( int i = 0; i < count; i++ ) vars.add(popLast());
-        vars.revert();
-        return vars;
-    }
+    Vars<T> popLast( int count );
 
     /**
      *  Removes the first {@code count} number of properties from the list.
      *  @param count The number of properties to remove.
      *  @return This list of properties.
      */
-    default Vars<T> removeFirst( int count )
-    {
-        count = Math.min( count, size() );
-        for ( int i = 0; i < count; i++ ) removeFirst();
-        return this;
-    }
+    Vars<T> removeFirst( int count );
 
     /**
      *  Removes the first {@code count} number of properties from the list
@@ -297,13 +280,7 @@ public interface Vars<T> extends Vals<T>
      *  @param count The number of properties to remove.
      *  @return A new list of properties.
      */
-    default Vars<T> popFirst( int count )
-    {
-        count = Math.min( count, size() );
-        Vars<T> vars = Vars.of(type());
-        for ( int i = 0; i < count; i++ ) vars.add(popFirst());
-        return vars;
-    }
+    Vars<T> popFirst( int count );
 
     /**
      *  Removes all properties from the list for which the provided predicate
@@ -314,8 +291,11 @@ public interface Vars<T> extends Vals<T>
      */
     default Vars<T> removeIf( Predicate<Var<T>> predicate )
     {
+        Vars<T> vars = Vars.of(type());
         for ( int i = size() - 1; i >= 0; i-- )
-            if ( predicate.test(at(i)) ) removeAt(i);
+            if ( predicate.test(this.at(i)) ) vars.add(this.at(i));
+
+        this.removeAll(vars); // remove from this list at once and trigger events only once!
         return this;
     }
 
@@ -330,7 +310,9 @@ public interface Vars<T> extends Vals<T>
     {
         Vars<T> vars = Vars.of(type());
         for ( int i = size() - 1; i >= 0; i-- )
-            if ( predicate.test(at(i)) ) vars.add(popAt(i));
+            if ( predicate.test(this.at(i)) ) vars.add(this.at(i));
+
+        this.removeAll(vars); // remove from this list at once and trigger events only once!
         return vars.revert();
     }
 
@@ -343,8 +325,11 @@ public interface Vars<T> extends Vals<T>
      */
     default Vars<T> removeIfItem( Predicate<T> predicate )
     {
+        Vars<T> vars = Vars.of(type());
         for ( int i = size() - 1; i >= 0; i-- )
-            if ( predicate.test(at(i).get()) ) removeAt(i);
+            if ( predicate.test(this.at(i).get()) ) vars.add(this.at(i));
+
+        this.removeAll(vars); // remove from this list at once and trigger events only once!
         return this;
     }
 
@@ -359,8 +344,31 @@ public interface Vars<T> extends Vals<T>
     {
         Vars<T> vars = Vars.of(type());
         for ( int i = size() - 1; i >= 0; i-- )
-            if ( predicate.test(at(i).get()) ) vars.add(popAt(i));
+            if ( predicate.test(at(i).get()) ) vars.add(at(i));
+
+        this.removeAll(vars); // remove from this list at once and trigger events only once!
         return vars.revert();
+    }
+
+    /**
+     *  Removes all properties from the list that are contained in the provided
+     *  list of properties.
+     *  @param vars The list of properties to remove.
+     *  @return This list of properties.
+     */
+    Vars<T> removeAll( Vars<T> vars );
+
+    /**
+     *  Removes all properties from the list whose items are contained in the provided
+     *  array of properties and returns them in a new list.
+     *  @param items The list of properties to remove.
+     *  @return This list of properties.
+     */
+    default Vars<T> removeAll( T... items )
+    {
+        Vars<T> vars = Vars.of(type());
+        for ( T item : items ) vars.add(Var.of(item));
+        return removeAll(vars);
     }
 
     /**
@@ -399,7 +407,7 @@ public interface Vars<T> extends Vals<T>
     Vars<T> setAt( int index, Var<T> var );
 
     /**
-     *  Wraps each provided value in a property and appends it to this
+     *  Wraps each provided item in a property and appends it to this
      *  list of properties.
      *  @param items The array of values to add as property items.
      *  @return This list of properties.
@@ -435,6 +443,29 @@ public interface Vars<T> extends Vals<T>
     {
         for ( T v : vals ) add(v);
         return this;
+    }
+
+    /**
+     *  The {@link #retainAll(Vars)} method removes all properties from this list
+     *  that are not contained in the provided list of properties.
+     *  @param vars The list of properties to retain.
+     *              All other properties will be removed.
+     *  @return This list of properties.
+     */
+    Vars<T> retainAll( Vars<T> vars );
+
+    /**
+     *  The {@link #retainAll(T...)} method removes all properties from this list
+     *  whose items are not contained in the provided array of items.
+     *  @param items The array of items, whose properties to retain.
+     *               All other properties will be removed.
+     *  @return This list of properties.
+     */
+    default Vars<T> retainAll( T... items )
+    {
+        Vars<T> vars = Vars.of(type());
+        for ( T item : items ) vars.add(Var.of(item));
+        return retainAll(vars);
     }
 
     /**
@@ -507,13 +538,5 @@ public interface Vars<T> extends Vals<T>
      *
      * @return This list.
      */
-    default Vars<T> revert() {
-        int size = size();
-        for ( int i = 0; i < size / 2; i++ ) {
-            Var<T> tmp = at(i);
-            setAt( i, at(size - i - 1) );
-            setAt( size - i - 1, tmp );
-        }
-        return this;
-    }
+    Vars<T> revert();
 }

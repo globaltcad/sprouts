@@ -4,6 +4,7 @@ import sprouts.impl.AbstractVariables;
 
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -231,6 +232,11 @@ public interface Vals<T> extends Iterable<T>
     default List<T> toList() { return Collections.unmodifiableList(stream().collect(Collectors.toList())); }
 
     /**
+     * @return An immutable {@link List} of properties in this {@link Vals} instance.
+     */
+    default List<Val<T>> toValList() { return Collections.unmodifiableList(stream().map(Val::of).collect(Collectors.toList())); }
+
+    /**
      * @return An immutable set of the items in this list of properties.
      */
     default Set<T> toSet() { return Collections.unmodifiableSet(stream().collect(Collectors.toSet())); }
@@ -259,4 +265,30 @@ public interface Vals<T> extends Iterable<T>
         return Collections.unmodifiableMap(map);
     }
 
+    /**
+     *  Check if any of the properties in this list match the given predicate.
+     *  @param predicate The predicate to check.
+     *  @return True if any of the properties in this list of properties match the given predicate.
+     */
+    default boolean any( Predicate<Val<T>> predicate ) { return toValList().stream().anyMatch( predicate ); }
+
+    /**
+     *  Check if all the properties in this list match the given predicate.
+     *  @param predicate The predicate to check.
+     *  @return True if all the properties in this list of properties match the given predicate.
+     */
+    default boolean all( Predicate<Val<T>> predicate ) { return toValList().stream().allMatch( predicate ); }
+
+    /**
+     *  Check if none of the properties in this list match the given predicate.
+     *  @param predicate The predicate to check.
+     *  @return True if none of the properties in this list of properties match the given predicate.
+     */
+    default boolean none( Predicate<Val<T>> predicate ) { return toValList().stream().noneMatch( predicate ); }
+
+    /**
+     *  Check if any of the properties in this list is empty.
+     *  @return True if any of the properties in this list of properties is empty.
+     */
+    default boolean anyEmpty() { return any( Val::isEmpty ); }
 }

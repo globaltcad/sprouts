@@ -5,6 +5,8 @@ import spock.lang.Specification
 import spock.lang.Subject
 import spock.lang.Title
 
+import java.util.function.Consumer
+
 @Title("Lists of Properties")
 @Narrative('''
 
@@ -565,4 +567,104 @@ class Properties_List_Spec extends Specification
         and : 'The change listener has only been triggered once.'
             changeCount == 1
     }
+
+    def 'Checkout these cool one liners!'()
+    {
+        reportInfo """
+             The "Vars" class has a nice API with many useful methods whose
+             usage can be demonstrated in a single line of code.
+             Let's have a look at some of them.
+        """
+        expect :
+            Vars.of(0.1f, 0.2f, 0.3f).removeAll(0.1f, 0.3f) == Vars.of(0.2f)
+            Vars.of(3, 4, 5).removeFirst() == Vars.of(4, 5)
+            Vars.of(3, 4, 5).removeLast() == Vars.of(3, 4)
+            Vars.of(3, 4, 5).popFirst() == Var.of(3)
+            Vars.of(3, 4, 5).popLast() == Var.of(5)
+            Vars.of(1, 2, 3, 4, 5, 6, 7).removeLast(4) == Vars.of(1, 2, 3)
+            Vars.of(1, 2, 3, 4, 5, 6, 7).removeFirst(4) == Vars.of(5, 6, 7)
+            Vars.of(1, 2, 3, 4, 5, 6, 7).popLast(4) == Vars.of(4, 5, 6, 7)
+            Vars.of(1, 2, 3, 4, 5, 6, 7).popFirst(4) == Vars.of(1, 2, 3, 4)
+            Vars.of(1, 2, 3, 4, 5, 6, 7).removeAt(2) == Vars.of(1, 2, 4, 5, 6, 7)
+            Vars.of(1, 2, 3, 4, 5, 6, 7).popAt(2) == Var.of(3)
+            Vars.of(1, 2, 3, 4, 5).removeIf({ it.get() % 2 == 0 }) == Vars.of(1, 3, 5)
+            Vars.of(1, 2, 3, 4, 5).popIf({ it.get() % 2 == 0 }) == Vars.of(2, 4)
+            Vars.of(1, 2, 3, 4, 5).removeIfItem({ it % 2 == 0 }) == Vars.of(1, 3, 5)
+            Vars.of(1, 2, 3, 4, 5).popIfItem({ it % 2 == 0 }) == Vars.of(2, 4)
+            Vars.of("a", "b", "c").addAll("d", "e", "f") == Vars.of("a", "b", "c", "d", "e", "f")
+            Vars.of("x", "y").addAll(Vars.of("z")) == Vars.of("x", "y", "z")
+            Vars.of("x", "y").addAll(Vars.of("z", "a", "b")) == Vars.of("x", "y", "z", "a", "b")
+            Vars.of(1, 2, 3, 4, 5).retainAll(1, 0, 3, 5, 42) == Vars.of(1, 3, 5)
+            Vars.of(1, 2, 3, 4, 5).retainAll(Vars.of(1, 0, 3, 5, 42)) == Vars.of(1, 3, 5)
+
+    }
+
+    def 'Various kinds of methods that mutate a property list will only trigger an "onChange" event once, even if multiple items are affected.'(
+        Consumer<Vars<Integer>> mutator
+    ) {
+        reportInfo """
+            The purpose of the "onChange" event is to notify listeners that the list has changed.
+            Typically, a listener will update the UI to reflect the new state of the list.
+            However, if many items are changed at once, it is wasteful to update the UI multiple times.
+            Therefore, the "onChange" event is only triggered once, even if multiple items are changed.
+        """
+        given : 'A "Vars" instance having a few properties.'
+            var vars = Vars.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+        and : 'A change listener that counts the number of changes.'
+            var changeCount = 0
+            vars.onChange { changeCount++ }
+        when : 'We mutate the list using the given mutator.'
+            mutator.accept(vars)
+        then : 'The change listener has only been triggered once.'
+            changeCount == 1
+        where :
+            mutator << [
+                { it.removeFirst() },
+                { it.removeLast() },
+                { it.popFirst() },
+                { it.popLast() },
+                { it.removeLast(4) },
+                { it.removeFirst(4) },
+                { it.popLast(4) },
+                { it.popFirst(4) },
+                { it.removeAt(2) },
+                { it.popAt(2) },
+                { it.removeIf({ it.get() % 2 == 0 }) },
+                { it.popIf({ it.get() % 2 == 0 }) },
+                { it.removeIfItem({ it % 2 == 0 }) },
+                { it.popIfItem({ it % 2 == 0 }) },
+                { it.addAll(14, 25, 8) },
+                { it.addAll(Vars.of(42)) },
+                { it.addAll(Vars.of(-1, -2, -3)) },
+                { it.removeAll(4, 5, 6) },
+                { it.removeAll(Vars.of(7)) },
+                { it.removeAll(Vars.of(8, 9, 10)) },
+                { it.retainAll(1, 2, 3) },
+                { it.retainAll(Vars.of(1)) },
+                { it.retainAll(Vars.of(2, 3)) },
+                { it.clear() },
+                { it.revert() }
+            ]
+    }
+
+    def 'The "retainAll" method does not trigger an "onChange" event if the list is not changed.'() {
+        given : 'A "Vars" instance having a few properties.'
+            var vars = Vars.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+        and : 'A change listener that counts the number of changes.'
+            var changeCount = 0
+            vars.onChange { changeCount++ }
+        when : 'We call "retainAll" with a list that contains all items.'
+            vars.retainAll(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+        then : 'The change listener has not been triggered.'
+            changeCount == 0
+    }
+
+    def 'The "Vals" and "Vars" instances have descriptive String representations.'()
+    {
+        expect : 'The "Vals" instance has a descriptive String representation.'
+            Vals.of(1, 2, 3).toString() == 'Vals<Integer>[1, 2, 3]'
+        and : 'The "Vars" instance has a descriptive String representation.'
+            Vars.of(1, 2, 3).toString() == 'Vars<Integer>[1, 2, 3]'
+    }
+
 }

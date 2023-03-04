@@ -5,5 +5,5 @@ package sprouts;
  */
 public enum Change
 {
-    ADD, REMOVE, SET, CLEAR, SORT, DISTINCT, NONE
+    ADD, REMOVE, SET, CLEAR, SORT, DISTINCT, REVERT, NONE
 }
