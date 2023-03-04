@@ -15,7 +15,7 @@ plugins {
 
 String GROUP_ID = "io.github.globaltcad"
 String PROJECT  = "sprouts"
-String VERSION  = "0.0.2"
+String VERSION  = "0.0.3"
 
 group GROUP_ID
 version VERSION
