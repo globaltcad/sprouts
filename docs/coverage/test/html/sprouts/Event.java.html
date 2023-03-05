@@ -2,6 +2,7 @@
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ForkJoinPool;
 import java.util.function.Consumer;
 
 /**
@@ -18,35 +19,48 @@ public interface Event extends Noticeable
     void fire();
 
     /**
+     * Subscribes the given listener to this {@link Event}.
+     * @param listener The listener to subscribe.
+     * @return This {@link Event}, to allow for method chaining.
+     */
+    @Override Event subscribe( Listener listener );
+
+    /**
+     * Unsubscribes all listeners from this {@link Event}.
+     */
+    void unsubscribeAll();
+
+    /**
      * Creates a new {@link Event} that can be observed and triggered.
      * @param listener The first listener to subscribe to the new {@link Event}.
      * @return A new {@link Event}.
      */
     static Event of( Listener listener ) {
-<span class="nc" id="L26">        Event event = of();</span>
-<span class="nc" id="L27">        event.subscribe( listener );</span>
-<span class="nc" id="L28">        return event;</span>
+<span class="fc" id="L39">        Event event = create();</span>
+<span class="fc" id="L40">        event.subscribe( listener );</span>
+<span class="fc" id="L41">        return event;</span>
     }
 
     /**
      * Creates a new empty {@link Event} that can be observed and triggered.
      * @return A new {@link Event}.
      */
-    static Event of() {
-<span class="nc" id="L36">        return new Event() {</span>
-<span class="nc" id="L37">            private final List&lt;Listener&gt; listeners = new ArrayList&lt;&gt;();</span>
+    static Event create() {
+<span class="fc" id="L49">        return new Event() {</span>
+<span class="fc" id="L50">            private final List&lt;Listener&gt; listeners = new ArrayList&lt;&gt;();</span>
 
-<span class="nc" id="L39">            @Override public void fire() { listeners.forEach( Listener::run ); }</span>
+<span class="fc" id="L52">            @Override public void fire() { listeners.forEach( Listener::notice); }</span>
             @Override
-            public Noticeable subscribe( Listener listener ) {
-<span class="nc" id="L42">                listeners.add( listener );</span>
-<span class="nc" id="L43">                return this;</span>
+            public Event subscribe( Listener listener ) {
+<span class="fc" id="L55">                listeners.add( listener );</span>
+<span class="fc" id="L56">                return this;</span>
             }
             @Override
             public Noticeable unsubscribe( Listener listener ) {
-<span class="nc" id="L47">                listeners.remove( listener );</span>
-<span class="nc" id="L48">                return this;</span>
+<span class="nc" id="L60">                listeners.remove( listener );</span>
+<span class="nc" id="L61">                return this;</span>
             }
+<span class="nc" id="L63">            @Override public void unsubscribeAll() { listeners.clear(); }</span>
         };
     }
 
@@ -57,23 +71,44 @@ public interface Event extends Noticeable
      * @param executor A {@link Consumer} of {@link Runnable}s that will be used to execute the {@link #fire()} method.
      * @return A new {@link Event}.
      */
-    static Event of( Consumer&lt;Runnable&gt; executor ) {
-<span class="nc" id="L61">        return new Event() {</span>
-<span class="nc" id="L62">            private final List&lt;Listener&gt; listeners = new ArrayList&lt;&gt;();</span>
+    static Event using( Executor executor ) {
+<span class="fc" id="L75">        return new Event() {</span>
+<span class="fc" id="L76">            private final List&lt;Listener&gt; listeners = new ArrayList&lt;&gt;();</span>
 
             @Override
-<span class="nc" id="L65">            public void fire() { executor.accept( () -&gt; listeners.forEach( Listener::run ) ); }</span>
+<span class="fc" id="L79">            public void fire() { executor.execute( () -&gt; listeners.forEach( Listener::notice) ); }</span>
             @Override
-            public Noticeable subscribe( Listener listener ) {
-<span class="nc" id="L68">                listeners.add( listener );</span>
-<span class="nc" id="L69">                return this;</span>
+            public Event subscribe( Listener listener ) {
+<span class="fc" id="L82">                listeners.add( listener );</span>
+<span class="fc" id="L83">                return this;</span>
             }
             @Override
             public Noticeable unsubscribe( Listener listener ) {
-<span class="nc" id="L73">                listeners.remove( listener );</span>
-<span class="nc" id="L74">                return this;</span>
+<span class="nc" id="L87">                listeners.remove( listener );</span>
+<span class="nc" id="L88">                return this;</span>
             }
+<span class="nc" id="L90">            @Override public void unsubscribeAll() { listeners.clear(); }</span>
         };
+    }
+
+
+    /**
+     *  The event executor is responsible for executing the given {@link Runnable} when an {@link Event} is triggered.
+     *  It is used to execute the {@link Event#fire()} method asynchronously or on a
+     *  custom event queue, thread pool or any other executor.
+     *  @see Event#using(Executor)
+     */
+    interface Executor
+    {
+<span class="fc" id="L103">        Executor SAME_THREAD = Runnable::run;</span>
+<span class="pc" id="L104">        Executor NEW_THREAD = runnable -&gt; new Thread( runnable ).start();</span>
+<span class="fc" id="L105">        Executor FORK_JOIN_POOL = ForkJoinPool.commonPool()::execute;</span>
+
+        /**
+         *  Executes the given {@link Runnable}.
+         *  @param runnable The {@link Runnable} to execute.
+         */
+        void execute( Runnable runnable );
     }
 
 }

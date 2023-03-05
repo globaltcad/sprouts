@@ -15,7 +15,7 @@ plugins {
 
 String GROUP_ID = "io.github.globaltcad"
 String PROJECT  = "sprouts"
-String VERSION  = "0.0.3"
+String VERSION  = "0.1.0"
 
 group GROUP_ID
 version VERSION
@@ -175,24 +175,7 @@ nexusPublishing {
 }
 
 publishing {
-
     repositories {
-    /*
-    // Possible alternatives:
-
-        maven {
-            name = "OSSRH"
-            url = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
-            credentials {
-                username = findProperty('sonatypeUsername') ?: findProperty('ossrhUsername') ?: System.getenv('sonatypeUsername') ?: System.getenv('ossrhUsername')
-                password = findProperty('sonatypePassword') ?: findProperty('ossrhPassword') ?: System.getenv('sonatypePassword') ?: System.getenv('ossrhPassword')
-                // Expected to be in ~/.gradle/gradle.properties
-                // Or on windows in %USERPROFILE%\.gradle\gradle.properties
-                // Example: C:\Users\JohnDoe\.gradle\gradle.properties
-            }
-        }
-
-        */
         maven {
             name = "GitHubPackages"
             url = "https://maven.pkg.github.com/globaltcad/" + PROJECT

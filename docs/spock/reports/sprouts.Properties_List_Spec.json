@@ -9,7 +9,7 @@
     "failures":"0",
     "errors":"0",
     "skipped":"0",
-    "duration":"0.152 seconds"
+    "duration":"0.145 seconds"
   },
   "headers":[],"tags":{},"see":[],
   "features":[ 
@@ -134,7 +134,7 @@
     {
       "id":"Both the \"Vars\" and immutable \"Vals\" types can be used for functional programming.",
       "result":"PASS",
-      "duration":"0.002 seconds",
+      "duration":"0.001 seconds",
       "iterations":{
       "tags":{},"see":[],"extraInfo":[]
       },
@@ -206,7 +206,7 @@
     {
       "id":"Just like a regular \"Var\" property you can register change listeners on \"Vars\".",
       "result":"PASS",
-      "duration":"0.007 seconds",
+      "duration":"0.006 seconds",
       "iterations":{
       "tags":{},"see":[],"extraInfo":[]
       },
@@ -250,7 +250,7 @@
     {
       "id":"The listeners registered in property lists will be informed what type of modification occurred.",
       "result":"PASS",
-      "duration":"0.002 seconds",
+      "duration":"0.003 seconds",
       "iterations":{
       "tags":{},"see":[],"extraInfo":[]
       },
@@ -273,7 +273,7 @@
     {
       "id":"Lists of properties can be sorted based on their natural order through the \"sort\" method.",
       "result":"PASS",
-      "duration":"0",
+      "duration":"0.001 seconds",
       "iterations":{
       "tags":{},"see":[],"extraInfo":[]
       },
@@ -330,7 +330,7 @@
     {
       "id":"You can create a \"Vars\" list from a regular List of properties.",
       "result":"PASS",
-      "duration":"0.003 seconds",
+      "duration":"0.004 seconds",
       "iterations":{
       "tags":{},"see":[],"extraInfo":[]
       },
@@ -347,7 +347,7 @@
     {
       "id":"A list of properties can be turned into lists, sets or maps using various convenience methods.",
       "result":"PASS",
-      "duration":"0.007 seconds",
+      "duration":"0.009 seconds",
       "iterations":{
       "tags":{},"see":[],"extraInfo":["\n            The \"Vals\" class has a number of convenience methods for turning the list of properties into\n            immutable lists, sets or maps. \n            These methods make property lists more compatible with the rest of the Java ecosystem.\n        "]
       },
@@ -404,7 +404,7 @@
     {
       "id":"Leading and trailing items can be popped off a property list.",
       "result":"PASS",
-      "duration":"0.001 seconds",
+      "duration":"0.002 seconds",
       "iterations":{
       "tags":{},"see":[],"extraInfo":["\n            Methods with a \"pop\" prefix allow you to remove and then get the removed properties from a property list.\n            This is useful when you want to remove a property from a list and then use it in some other way.\n            In this feature we will look at the \"popFirst\" and \"popLast\" methods.\n        "]
       },
@@ -429,7 +429,7 @@
     {
       "id":"The \"popAt\" method return the removed property.",
       "result":"PASS",
-      "duration":"0",
+      "duration":"0.001 seconds",
       "iterations":{
       "tags":{},"see":[],"extraInfo":["\n            The \"popAt\" method removes the property at the given index and returns it.\n            If the index is out of bounds, an exception is thrown.\n        "]
       },
@@ -488,7 +488,7 @@
     {
       "id":"Properties can be popped off a property list using a predicate.",
       "result":"PASS",
-      "duration":"0.001 seconds",
+      "duration":"0",
       "iterations":{
       "tags":{},"see":[],"extraInfo":["\n            The \"popIf\" method removes all properties from the list that match the given predicate.\n            The method returns a list of the removed properties.\n        "]
       },
@@ -577,7 +577,7 @@
     {
       "id":"Various kinds of methods that mutate a property list will only trigger an \"onChange\" event once, even if multiple items are affected.",
       "result":"PASS",
-      "duration":"0.007 seconds",
+      "duration":"0.004 seconds",
       "iterations":{
       "tags":{},"see":[],"extraInfo":["\n            The purpose of the \"onChange\" event is to notify listeners that the list has changed.\n            Typically, a listener will update the UI to reflect the new state of the list.\n            However, if many items are changed at once, it is wasteful to update the UI multiple times.\n            Therefore, the \"onChange\" event is only triggered once, even if multiple items are changed.\n        ","\n            The purpose of the \"onChange\" event is to notify listeners that the list has changed.\n            Typically, a listener will update the UI to reflect the new state of the list.\n            However, if many items are changed at once, it is wasteful to update the UI multiple times.\n            Therefore, the \"onChange\" event is only triggered once, even if multiple items are changed.\n        ","\n            The purpose of the \"onChange\" event is to notify listeners that the list has changed.\n            Typically, a listener will update the UI to reflect the new state of the list.\n            However, if many items are changed at once, it is wasteful to update the UI multiple times.\n            Therefore, the \"onChange\" event is only triggered once, even if multiple items are changed.\n        ","\n            The purpose of the \"onChange\" event is to notify listeners that the list has changed.\n            Typically, a listener will update the UI to reflect the new state of the list.\n            However, if many items are changed at once, it is wasteful to update the UI multiple times.\n            Therefore, the \"onChange\" event is only triggered once, even if multiple items are changed.\n        ","\n            The purpose of the \"onChange\" event is to notify listeners that the list has changed.\n            Typically, a listener will update the UI to reflect the new state of the list.\n            However, if many items are changed at once, it is wasteful to update the UI multiple times.\n            Therefore, the \"onChange\" event is only triggered once, even if multiple items are changed.\n        ","\n            The purpose of the \"onChange\" event is to notify listeners that the list has changed.\n            Typically, a listener will update the UI to reflect the new state of the list.\n            However, if many items are changed at once, it is wasteful to update the UI multiple times.\n            Therefore, the \"onChange\" event is only triggered once, even if multiple items are changed.\n        ","\n            The purpose of the \"onChange\" event is to notify listeners that the list has changed.\n            Typically, a listener will update the UI to reflect the new state of the list.\n            However, if many items are changed at once, it is wasteful to update the UI multiple times.\n            Therefore, the \"onChange\" event is only triggered once, even if multiple items are changed.\n        ","\n            The purpose of the \"onChange\" event is to notify listeners that the list has changed.\n            Typically, a listener will update the UI to reflect the new state of the list.\n            However, if many items are changed at once, it is wasteful to update the UI multiple times.\n            Therefore, the \"onChange\" event is only triggered once, even if multiple items are changed.\n        ","\n            The purpose of the \"onChange\" event is to notify listeners that the list has changed.\n            Typically, a listener will update the UI to reflect the new state of the list.\n            However, if many items are changed at once, it is wasteful to update the UI multiple times.\n            Therefore, the \"onChange\" event is only triggered once, even if multiple items are changed.\n        ","\n            The purpose of the \"onChange\" event is to notify listeners that the list has changed.\n            Typically, a listener will update the UI to reflect the new state of the list.\n            However, if many items are changed at once, it is wasteful to update the UI multiple times.\n            Therefore, the \"onChange\" event is only triggered once, even if multiple items are changed.\n        ","\n            The purpose of the \"onChange\" event is to notify listeners that the list has changed.\n            Typically, a listener will update the UI to reflect the new state of the list.\n            However, if many items are changed at once, it is wasteful to update the UI multiple times.\n            Therefore, the \"onChange\" event is only triggered once, even if multiple items are changed.\n        ","\n            The purpose of the \"onChange\" event is to notify listeners that the list has changed.\n            Typically, a listener will update the UI to reflect the new state of the list.\n            However, if many items are changed at once, it is wasteful to update the UI multiple times.\n            Therefore, the \"onChange\" event is only triggered once, even if multiple items are changed.\n        ","\n            The purpose of the \"onChange\" event is to notify listeners that the list has changed.\n            Typically, a listener will update the UI to reflect the new state of the list.\n            However, if many items are changed at once, it is wasteful to update the UI multiple times.\n            Therefore, the \"onChange\" event is only triggered once, even if multiple items are changed.\n        ","\n            The purpose of the \"onChange\" event is to notify listeners that the list has changed.\n            Typically, a listener will update the UI to reflect the new state of the list.\n            However, if many items are changed at once, it is wasteful to update the UI multiple times.\n            Therefore, the \"onChange\" event is only triggered once, even if multiple items are changed.\n        ","\n            The purpose of the \"onChange\" event is to notify listeners that the list has changed.\n            Typically, a listener will update the UI to reflect the new state of the list.\n            However, if many items are changed at once, it is wasteful to update the UI multiple times.\n            Therefore, the \"onChange\" event is only triggered once, even if multiple items are changed.\n        ","\n            The purpose of the \"onChange\" event is to notify listeners that the list has changed.\n            Typically, a listener will update the UI to reflect the new state of the list.\n            However, if many items are changed at once, it is wasteful to update the UI multiple times.\n            Therefore, the \"onChange\" event is only triggered once, even if multiple items are changed.\n        ","\n            The purpose of the \"onChange\" event is to notify listeners that the list has changed.\n            Typically, a listener will update the UI to reflect the new state of the list.\n            However, if many items are changed at once, it is wasteful to update the UI multiple times.\n            Therefore, the \"onChange\" event is only triggered once, even if multiple items are changed.\n        ","\n            The purpose of the \"onChange\" event is to notify listeners that the list has changed.\n            Typically, a listener will update the UI to reflect the new state of the list.\n            However, if many items are changed at once, it is wasteful to update the UI multiple times.\n            Therefore, the \"onChange\" event is only triggered once, even if multiple items are changed.\n        ","\n            The purpose of the \"onChange\" event is to notify listeners that the list has changed.\n            Typically, a listener will update the UI to reflect the new state of the list.\n            However, if many items are changed at once, it is wasteful to update the UI multiple times.\n            Therefore, the \"onChange\" event is only triggered once, even if multiple items are changed.\n        ","\n            The purpose of the \"onChange\" event is to notify listeners that the list has changed.\n            Typically, a listener will update the UI to reflect the new state of the list.\n            However, if many items are changed at once, it is wasteful to update the UI multiple times.\n            Therefore, the \"onChange\" event is only triggered once, even if multiple items are changed.\n        ","\n            The purpose of the \"onChange\" event is to notify listeners that the list has changed.\n            Typically, a listener will update the UI to reflect the new state of the list.\n            However, if many items are changed at once, it is wasteful to update the UI multiple times.\n            Therefore, the \"onChange\" event is only triggered once, even if multiple items are changed.\n        ","\n            The purpose of the \"onChange\" event is to notify listeners that the list has changed.\n            Typically, a listener will update the UI to reflect the new state of the list.\n            However, if many items are changed at once, it is wasteful to update the UI multiple times.\n            Therefore, the \"onChange\" event is only triggered once, even if multiple items are changed.\n        ","\n            The purpose of the \"onChange\" event is to notify listeners that the list has changed.\n            Typically, a listener will update the UI to reflect the new state of the list.\n            However, if many items are changed at once, it is wasteful to update the UI multiple times.\n            Therefore, the \"onChange\" event is only triggered once, even if multiple items are changed.\n        ","\n            The purpose of the \"onChange\" event is to notify listeners that the list has changed.\n            Typically, a listener will update the UI to reflect the new state of the list.\n            However, if many items are changed at once, it is wasteful to update the UI multiple times.\n            Therefore, the \"onChange\" event is only triggered once, even if multiple items are changed.\n        ","\n            The purpose of the \"onChange\" event is to notify listeners that the list has changed.\n            Typically, a listener will update the UI to reflect the new state of the list.\n            However, if many items are changed at once, it is wasteful to update the UI multiple times.\n            Therefore, the \"onChange\" event is only triggered once, even if multiple items are changed.\n        "]
       },
@@ -598,7 +598,7 @@
     {
       "id":"The \"retainAll\" method does not trigger an \"onChange\" event if the list is not changed.",
       "result":"PASS",
-      "duration":"0",
+      "duration":"0.001 seconds",
       "iterations":{
       "tags":{},"see":[],"extraInfo":[]
       },
@@ -617,7 +617,7 @@
     {
       "id":"The \"Vals\" and \"Vars\" instances have descriptive String representations.",
       "result":"PASS",
-      "duration":"0.001 seconds",
+      "duration":"0",
       "iterations":{
       "tags":{},"see":[],"extraInfo":[]
       },

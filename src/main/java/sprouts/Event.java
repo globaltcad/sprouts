@@ -2,6 +2,7 @@ package sprouts;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ForkJoinPool;
 import java.util.function.Consumer;
 
 /**
@@ -18,12 +19,24 @@ public interface Event extends Noticeable
     void fire();
 
     /**
+     * Subscribes the given listener to this {@link Event}.
+     * @param listener The listener to subscribe.
+     * @return This {@link Event}, to allow for method chaining.
+     */
+    @Override Event subscribe( Listener listener );
+
+    /**
+     * Unsubscribes all listeners from this {@link Event}.
+     */
+    void unsubscribeAll();
+
+    /**
      * Creates a new {@link Event} that can be observed and triggered.
      * @param listener The first listener to subscribe to the new {@link Event}.
      * @return A new {@link Event}.
      */
     static Event of( Listener listener ) {
-        Event event = of();
+        Event event = create();
         event.subscribe( listener );
         return event;
     }
@@ -32,13 +45,13 @@ public interface Event extends Noticeable
      * Creates a new empty {@link Event} that can be observed and triggered.
      * @return A new {@link Event}.
      */
-    static Event of() {
+    static Event create() {
         return new Event() {
             private final List<Listener> listeners = new ArrayList<>();
 
-            @Override public void fire() { listeners.forEach( Listener::run ); }
+            @Override public void fire() { listeners.forEach( Listener::notice); }
             @Override
-            public Noticeable subscribe( Listener listener ) {
+            public Event subscribe( Listener listener ) {
                 listeners.add( listener );
                 return this;
             }
@@ -47,6 +60,7 @@ public interface Event extends Noticeable
                 listeners.remove( listener );
                 return this;
             }
+            @Override public void unsubscribeAll() { listeners.clear(); }
         };
     }
 
@@ -57,14 +71,14 @@ public interface Event extends Noticeable
      * @param executor A {@link Consumer} of {@link Runnable}s that will be used to execute the {@link #fire()} method.
      * @return A new {@link Event}.
      */
-    static Event of( Consumer<Runnable> executor ) {
+    static Event using( Executor executor ) {
         return new Event() {
             private final List<Listener> listeners = new ArrayList<>();
 
             @Override
-            public void fire() { executor.accept( () -> listeners.forEach( Listener::run ) ); }
+            public void fire() { executor.execute( () -> listeners.forEach( Listener::notice) ); }
             @Override
-            public Noticeable subscribe( Listener listener ) {
+            public Event subscribe( Listener listener ) {
                 listeners.add( listener );
                 return this;
             }
@@ -73,7 +87,28 @@ public interface Event extends Noticeable
                 listeners.remove( listener );
                 return this;
             }
+            @Override public void unsubscribeAll() { listeners.clear(); }
         };
+    }
+
+
+    /**
+     *  The event executor is responsible for executing the given {@link Runnable} when an {@link Event} is triggered.
+     *  It is used to execute the {@link Event#fire()} method asynchronously or on a
+     *  custom event queue, thread pool or any other executor.
+     *  @see Event#using(Executor)
+     */
+    interface Executor
+    {
+        Executor SAME_THREAD = Runnable::run;
+        Executor NEW_THREAD = runnable -> new Thread( runnable ).start();
+        Executor FORK_JOIN_POOL = ForkJoinPool.commonPool()::execute;
+
+        /**
+         *  Executes the given {@link Runnable}.
+         *  @param runnable The {@link Runnable} to execute.
+         */
+        void execute( Runnable runnable );
     }
 
 }

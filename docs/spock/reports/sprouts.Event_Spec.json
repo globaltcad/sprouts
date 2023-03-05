@@ -1,0 +1,79 @@
+{
+  "className":"sprouts.Event_Spec",
+  "title":"Events",
+  "narrative":"Sprouts models events using 2 simple interfaces, \n    the observable `Noticeable` interface\n    and the fireable `Event` interface which is a sub type of `Noticeable`.\n    The `Event` interface is used to fire events, and the `Noticeable` interface\n    is used to listen for events by registering `Listener` instances.\n\n    The `Event` interface is a sub type of `Noticeable` and as such\n    can be used to listen for events as well as fire them.\n\n    `Event`s can be created using various factory methods on the `Events` class,\n    one of which even allows the specification of a custom `Event.Executor`\n    which can be used to control on which thread(s) the event is fired.",
+  "subjects":["sprouts.Event","sprouts.Listener","sprouts.Noticeable"],
+  "statistics":{
+    "runs":"3",
+    "successRate":"100.0%",
+    "failures":"0",
+    "errors":"0",
+    "skipped":"0",
+    "duration":"0.034 seconds"
+  },
+  "headers":[],"tags":{},"see":[],
+  "features":[ 
+    {
+      "id":"We can create an event using the \"Event.create\" factory method.",
+      "result":"PASS",
+      "duration":"0.025 seconds",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"A listener.","code":["def listener = Mock(Listener)"]},
+
+        {"kind":"and","text":"An event.","code":["def event = Event.create()"]},
+
+        {"kind":"when","text":"We register the listener with the event.","code":["event.subscribe(listener)"]},
+
+        {"kind":"and","text":"We fire the event.","code":["event.fire()"]},
+
+        {"kind":"then","text":"The listener is notified.","code":["1 * listener.notice()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"We can create an event using the \"Event.using\" factory method with a custom executor.",
+      "result":"PASS",
+      "duration":"0.004 seconds",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"A listener.","code":["def listener = Mock(Listener)"]},
+
+        {"kind":"and","text":"An event.","code":["def event = Event.using(Event.Executor.SAME_THREAD)"]},
+
+        {"kind":"when","text":"We register the listener with the event.","code":["event.subscribe(listener)"]},
+
+        {"kind":"and","text":"We fire the event.","code":["event.fire()"]},
+
+        {"kind":"then","text":"The listener is notified.","code":["1 * listener.notice()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The \"Event.of\" factory method is a shortcut for creating an event with an initial listener.",
+      "result":"PASS",
+      "duration":"0.001 seconds",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"A listener.","code":["def listener = Mock(Listener)"]},
+
+        {"kind":"and","text":"An event with the mock listener set.","code":["def event = Event.of(listener)"]},
+
+        {"kind":"when","text":"We fire the event.","code":["event.fire()"]},
+
+        {"kind":"then","text":"The listener is notified.","code":["1 * listener.notice()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    }
+  
+  ],
+  "generator":"https://github.com/renatoathaydes/spock-reports"
+}

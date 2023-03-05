@@ -7,6 +7,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ *  This is the base class for all {@link Val} implementations.
+ *  It provides the basic functionality and state, like the id, the type, the value, etc.
+ *
+ *  @param <T> The type of the value.
+ */
 abstract class AbstractValue<T> implements Val<T>
 {
     protected final List<Action<Val<T>>> _viewActions = new ArrayList<>();
