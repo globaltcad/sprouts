@@ -9,48 +9,129 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * 	Similar to an {@link Optional}, meaning that it can either contain a value or not.
- * 	Also, if the result is not present, there will most likely be a list of {@link Problem}s
- * 	explaining what went wrong...
+ * 	A result is very similar to an {@link Optional} in that it can either contain a value or not,
+ * 	with the difference being that a result can also contain a list of {@link Problem}s
+ * 	which describe what went wrong in the process of obtaining the value wrapped by the result.
+ * 	So usually, if the result is not present, there will most likely be a list of {@link Problem}s
+ * 	explaining why the value is not present and what went wrong.
  */
 public interface Result<V> extends Val<V>
 {
-	List<Problem> problems();
+	String ID = "Result";
 
-	default boolean hasProblems() { return !problems().isEmpty(); }
+	/**
+	 *  A factory method for creating an empty result
+	 *  without a value and no problems.
+	 *
+	 * @param type The type of the value, which may not be null.
+	 * @return An empty result.
+	 * @param <V> The type of the value.
+	 */
+	static <V> Result<V> of(Class<V> type) { return new ResultImpl<>(ID, type, Collections.emptyList(), null); }
 
+	/**
+	 *  A factory method for creating a result with a non-null value and no problems.
+	 * @param value The value to wrap in the result.
+	 * @return A result with the given value and no problems.
+	 * @param <V> The type of the value.
+	 */
 	static <V> Result<V> of(V value) {
 		Objects.requireNonNull(value);
 		return of(value, Collections.emptyList());
 	}
 
+	/**
+	 *  A factory method for creating a result with a potentially null value but no problems.
+	 *  Some results may be empty without that being a problem, so this method is useful for
+	 *  creating results that may be empty but are not necessarily problematic.
+	 *
+	 * @param type The type of the value, which may not be null.
+	 * @param value The value to wrap in the result or null.
+	 * @return A result with the given value and no problems.
+	 * @param <V> The type of the value.
+	 */
 	static <V> Result<V> of(Class<V> type, V value) {
 		return of(type, value, Collections.emptyList());
 	}
 
+	/**
+	 *  A factory method for creating a result with a non-null value and a list of problems.
+	 * @param value The value to wrap in the result, which may not be null.
+	 * @param problems The list of problems associated with the result.
+	 * @return A result with the given value and problems.
+	 * @param <V> The type of the value.
+	 */
 	static <V> Result<V> of(V value, List<Problem> problems) {
-		return new ResultImpl<>("Result", (Class<V>) Object.class, problems, value);
+		Objects.requireNonNull(value);
+		return new ResultImpl<>(ID, (Class<V>) value.getClass(), problems, value);
 	}
 
+	/**
+	 *  A factory method for creating an empty result and a list of problems.
+	 * @param type The type of the value, which may not be null.
+	 * @param problems The list of problems associated with the result.
+	 * @return An empty result with the given problems.
+	 * @param <V> The type of the value.
+	 */
 	static <V> Result<V> of(Class<V> type, List<Problem> problems) {
-		return new ResultImpl<>("Result", type, problems, null);
+		return new ResultImpl<>(ID, type, problems, null);
 	}
 
+	/**
+	 *  A factory method for creating a result with a potentially null value and a list of problems.
+	 * @param type The type of the value, which may not be null.
+	 * @param value The value to wrap in the result or null.
+	 * @param problems The list of problems associated with the result.
+	 * @return A result with the given value and problems.
+	 * @param <V> The type of the value.
+	 */
 	static <V> Result<V> of(Class<V> type, V value, List<Problem> problems) {
-		return new ResultImpl<>("Result", type, problems, value);
+		return new ResultImpl<>(ID, type, problems, value);
 	}
 
+	/**
+	 *  A factory method for creating a result with a single problem.
+	 * @param type The type of the value, which may not be null.
+	 * @param problem The problem associated with the result.
+	 * @return A result with the given problem.
+	 * @param <V> The type of the value.
+	 */
 	static <V> Result<V> of(Class<V> type, Problem problem) {
-		return new ResultImpl<>("Result", type, Collections.singletonList(problem), null);
+		return new ResultImpl<>(ID, type, Collections.singletonList(problem), null);
 	}
 
+	/**
+	 *  A factory method for creating a list based result with a single problem.
+	 * @param type The type of the list value, which may not be null.
+	 * @param problem The problem associated with the result.
+	 * @return A result with the given problem.
+	 * @param <V> The type of the value.
+	 */
 	static <V> Result<List<V>> ofList(Class<V> type, Problem problem) {
-		return (Result<List<V>>) (Result) new ResultImpl<>("Result", List.class, Collections.singletonList(problem), null);
+		return (Result<List<V>>) (Result) new ResultImpl<>(ID, List.class, Collections.singletonList(problem), null);
 	}
 
+	/**
+	 *  A factory method for creating a list based result from the given list.
+	 *  The list may be empty but not null.
+	 * @param type The type of the list value, which may not be null.
+	 *             This is the type of the list elements, not the type of the list itself.
+	 * @param list The list to wrap in the result.
+	 * @return A result with the given list.
+	 */
 	static <V> Result<List<V>> ofList(Class<V> type, List<V> list) {
-		return (Result<List<V>>) (Result) new ResultImpl<>("Result", List.class, Collections.emptyList(), list);
+		Objects.requireNonNull(list);
+		return (Result<List<V>>) (Result) new ResultImpl<>(ID, List.class, Collections.emptyList(), list);
 	}
 
-	static <V> Result<V> of(Class<V> type) { return new ResultImpl<>("Result", type, Collections.emptyList(), null); }
+
+	/**
+	 * 	@return The list of {@link Problem}s associated with this result item.
+	 */
+	List<Problem> problems();
+
+	/**
+	 * 	@return {@code true} if this result is present, {@code false} otherwise.
+	 */
+	default boolean hasProblems() { return !problems().isEmpty(); }
 }

@@ -16,6 +16,7 @@ public class ResultImpl<V> implements Result<V>
 	private final V value;
 	private final List<Problem> problems;
 
+
 	public ResultImpl(String id, Class<V> type, List<Problem> problems, V value) {
 		Objects.requireNonNull(type);
 		Objects.requireNonNull(id);
@@ -26,39 +27,43 @@ public class ResultImpl<V> implements Result<V>
 		this.value = value;
 	}
 
-	@Override public List<Problem> problems() { return problems; }
+	/** {@inheritDoc} */
+	@Override public Class<V> type() { return type; }
 
-	@Override
-	public V orElseNullable(V other) {
-		return value == null ? other : value;
-	}
-
-	@Override public V orElseNull() { return value; }
-
-	@Override
-	public Val<V> map(Function<V, V> mapper) {
-		if ( this.allowsNull() )
-			return Val.ofNullable(type(), mapper.apply(value));
-		else
-			return Val.of(mapper.apply(value));
-	}
-
-	@Override
-	public <U> Val<U> mapTo(Class<U> type, Function<V, U> mapper) {
-		return Val.of(mapper.apply(value));
-	}
-
-	@Override
-	public <U> Val<U> viewAs(Class<U> type, Function<V, U> mapper) {
-		throw new UnsupportedOperationException("Not yet implemented");
-	}
-
+	/** {@inheritDoc} */
 	@Override public String id() { return id; }
 
+	/** {@inheritDoc} */
 	@Override
-	public Val<V> withId(String id) { return new ResultImpl<>(id, type, problems, value); }
+	public Val<V> withId( String id ) { return new ResultImpl<>(id, type, problems, value); }
 
-	@Override public Class<V> type() { return type; }
+	/** {@inheritDoc} */
+	@Override public List<Problem> problems() { return problems; }
+
+	/** {@inheritDoc} */
+	@Override
+	public V orElseNullable(V other) { return value == null ? other : value; }
+
+	/** {@inheritDoc} */
+	@Override public V orElseNull() { return value; }
+
+	/** {@inheritDoc} */
+	@Override
+	public Val<V> map(Function<V, V> mapper) {
+		return Val.ofNullable(type(), mapper.apply(value));
+	}
+
+	/** {@inheritDoc} */
+	@Override
+	public <U> Val<U> mapTo(Class<U> type, Function<V, U> mapper) {
+		return Val.ofNullable(type, mapper.apply(value));
+	}
+
+	/** {@inheritDoc} */
+	@Override
+	public <U> Val<U> viewAs(Class<U> type, Function<V, U> mapper) {
+		return Val.ofNullable(this.type, this.value).viewAs(type, mapper);
+	}
 
 	@Override
 	public Val<V> onSet(Action<Val<V>> displayAction) {
@@ -70,5 +75,6 @@ public class ResultImpl<V> implements Result<V>
 		throw new UnsupportedOperationException("Not implemented yet");
 	}
 
-	@Override public boolean allowsNull() { return true;}
+	/** {@inheritDoc} */
+	@Override public boolean allowsNull() { return true; }
 }
