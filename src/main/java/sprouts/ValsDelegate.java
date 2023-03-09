@@ -41,4 +41,8 @@ public interface ValsDelegate<T>
      */
     Val<T> newValue();
 
+    /**
+     * @return An immutable copy of the property list after the change has been applied.
+     */
+    Vals<T> vals();
 }

@@ -48,6 +48,15 @@ public class AbstractVariables<T> implements Vars<T>
         return new AbstractVariables<T>( immutable, type, false, list.toArray(array) ){};
     }
 
+    public static <T> Vals<T> of( boolean immutable, Class<T> type, Vals<T> vals ) {
+        if ( vals instanceof AbstractVariables )
+            return new AbstractVariables<>( immutable, type, false, ((AbstractVariables<T>) vals)._variables );
+
+        List<Val<T>> list = new ArrayList<>();
+        for ( int i = 0; i < vals.size(); i++ ) list.add( vals.at(i) );
+        return AbstractVariables.of( immutable, type, (Iterable) list );
+    }
+
     public static <T> Vars<T> ofNullable( boolean immutable, Class<T> type ){
         Objects.requireNonNull(type);
         return new AbstractVariables<T>( immutable, type, true, new Var[0] ){};
@@ -65,8 +74,7 @@ public class AbstractVariables<T> implements Vars<T>
         Objects.requireNonNull(type);
         Objects.requireNonNull(vars);
         Var<T>[] array = new Var[vars.length];
-        for ( int i = 0; i < vars.length; i++ )
-            array[i] = Var.ofNullable(type, vars[i]);
+        for ( int i = 0; i < vars.length; i++ ) array[i] = Var.ofNullable(type, vars[i]);
         return new AbstractVariables<T>( immutable, type, true, array ){};
     }
 
@@ -95,6 +103,14 @@ public class AbstractVariables<T> implements Vars<T>
         _type = type;
         _allowsNull = allowsNull;
         _variables.addAll(Arrays.asList(vals));
+        _checkNullSafety();
+    }
+
+    protected AbstractVariables( boolean isImmutable, Class<T> type, boolean allowsNull, List<Var<T>> vals ) {
+        _isImmutable = isImmutable;
+        _type = type;
+        _allowsNull = allowsNull;
+        _variables.addAll(vals);
         _checkNullSafety();
     }
 
@@ -319,11 +335,21 @@ public class AbstractVariables<T> implements Vars<T>
     private ValsDelegate<T> _createDelegate(
             int index, Change type, Var<T> newVal, Var<T> oldVal
     ) {
+        Var[] cloned = _variables.stream().map(Val::ofNullable).toArray(Var[]::new);
+        Vals<T> clone = Vals.ofNullable(_type, cloned);
+        /*
+            Note that we just created a deep copy of the property list, so we can safely
+            pass the clone to the delegate. This is important because the delegate
+            is passed to the action which might be executed on a different thread.
+        */
+        Val<T> clonedNewValue = ( newVal != null ? Val.ofNullable(newVal) : Val.ofNullable(_type, null) );
+        Val<T> clonedOldValue = ( oldVal != null ? Val.ofNullable(oldVal) : Val.ofNullable(_type, null) );
         return new ValsDelegate<T>() {
             @Override public int index() { return index; }
             @Override public Change changeType() { return type; }
-            @Override public Val<T> newValue() { return newVal != null ? newVal : Val.ofNullable(_type, null); }
-            @Override public Val<T> oldValue() { return oldVal != null ? oldVal : Val.ofNullable(_type, null); }
+            @Override public Val<T> newValue() { return clonedNewValue; }
+            @Override public Val<T> oldValue() { return clonedOldValue; }
+            @Override public Vals<T> vals() { return clone; }
         };
     }
 
@@ -331,13 +357,13 @@ public class AbstractVariables<T> implements Vars<T>
             Change type, int index, Var<T> newVal, Var<T> oldVal
     ) {
         List<Action<ValsDelegate<T>>> removableActions = new ArrayList<>();
-        ValsDelegate<T> showAction = _createDelegate(index, type, newVal, oldVal);
+        ValsDelegate<T> listChangeDelegate = _createDelegate(index, type, newVal, oldVal);
         for ( Action<ValsDelegate<T>> action : _viewActions ) {
             try {
                 if ( action.canBeRemoved() )
                     removableActions.add(action);
                 else
-                    action.accept(showAction);
+                    action.accept(listChangeDelegate);
             } catch ( Exception e ) {
                 e.printStackTrace();
             }

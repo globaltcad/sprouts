@@ -60,6 +60,34 @@ public interface Val<T>
 	static <T> Val<T> of( T item ) { return AbstractVariable.of( true, item ); }
 
 	/**
+	 *  A factory method for creating a new {@link Val} instance
+	 *  which is effectively an immutable copy of the given {@link Val}.
+	 *  The provided {@link Val} must not contain a null item.
+	 *
+	 * @param toBeCopied The {@link Val} to be copied.
+	 * @return A new {@link Val} instance.
+	 * @param <T> The type of the item held by the {@link Val}!
+	 */
+	static <T> Val<T> of( Val<T> toBeCopied ) {
+		Objects.requireNonNull(toBeCopied);
+		return Val.of( toBeCopied.get() ).withId( toBeCopied.id() );
+	}
+
+	/**
+	 *  A factory method for creating a new {@link Val} instance
+	 *  which is effectively an immutable copy of the given {@link Val}.
+	 *  The provided {@link Val} may contain a null item.
+	 *
+	 * @param toBeCopied The {@link Val} to be copied.
+	 * @return A new {@link Val} instance.
+	 * @param <T> The type of the item held by the {@link Val}!
+	 */
+	static <T> Val<T> ofNullable( Val<T> toBeCopied ) {
+		Objects.requireNonNull(toBeCopied);
+		return Val.ofNullable( toBeCopied.type(), toBeCopied.orElseNull() ).withId( toBeCopied.id() );
+	}
+
+	/**
 	 * This method is intended to be used for when you want to wrap non-nullable types.
 	 * So if an item is present (not null), it returns the item, otherwise however
 	 * {@code NoSuchElementException} will be thrown.
