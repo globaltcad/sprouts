@@ -3,10 +3,7 @@ package sprouts;
 
 import sprouts.impl.ResultImpl;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * 	A result is very similar to an {@link Optional} in that it can either contain a value or not,
@@ -51,6 +48,7 @@ public interface Result<V> extends Val<V>
 	 * @param <V> The type of the value.
 	 */
 	static <V> Result<V> of(Class<V> type, V value) {
+		Objects.requireNonNull(type);
 		return of(type, value, Collections.emptyList());
 	}
 
@@ -63,6 +61,7 @@ public interface Result<V> extends Val<V>
 	 */
 	static <V> Result<V> of(V value, List<Problem> problems) {
 		Objects.requireNonNull(value);
+		problems = Collections.unmodifiableList(new ArrayList<>(Objects.requireNonNull(problems)));
 		return new ResultImpl<>(ID, (Class<V>) value.getClass(), problems, value);
 	}
 
@@ -74,6 +73,8 @@ public interface Result<V> extends Val<V>
 	 * @param <V> The type of the value.
 	 */
 	static <V> Result<V> of(Class<V> type, List<Problem> problems) {
+		Objects.requireNonNull(type);
+		problems = Collections.unmodifiableList(new ArrayList<>(Objects.requireNonNull(problems)));
 		return new ResultImpl<>(ID, type, problems, null);
 	}
 
@@ -86,6 +87,8 @@ public interface Result<V> extends Val<V>
 	 * @param <V> The type of the value.
 	 */
 	static <V> Result<V> of(Class<V> type, V value, List<Problem> problems) {
+		Objects.requireNonNull(type);
+		problems = Collections.unmodifiableList(new ArrayList<>(Objects.requireNonNull(problems)));
 		return new ResultImpl<>(ID, type, problems, value);
 	}
 
@@ -97,6 +100,8 @@ public interface Result<V> extends Val<V>
 	 * @param <V> The type of the value.
 	 */
 	static <V> Result<V> of(Class<V> type, Problem problem) {
+		Objects.requireNonNull(type);
+		Objects.requireNonNull(problem);
 		return new ResultImpl<>(ID, type, Collections.singletonList(problem), null);
 	}
 
@@ -108,6 +113,8 @@ public interface Result<V> extends Val<V>
 	 * @param <V> The type of the value.
 	 */
 	static <V> Result<List<V>> ofList(Class<V> type, Problem problem) {
+		Objects.requireNonNull(type);
+		Objects.requireNonNull(problem);
 		return (Result<List<V>>) (Result) new ResultImpl<>(ID, List.class, Collections.singletonList(problem), null);
 	}
 
@@ -120,10 +127,26 @@ public interface Result<V> extends Val<V>
 	 * @return A result with the given list.
 	 */
 	static <V> Result<List<V>> ofList(Class<V> type, List<V> list) {
+		Objects.requireNonNull(type);
 		Objects.requireNonNull(list);
 		return (Result<List<V>>) (Result) new ResultImpl<>(ID, List.class, Collections.emptyList(), list);
 	}
 
+	/**
+	 *  A factory method for creating a list based result from the given list and problems.
+	 *  The list may be empty but not null.
+	 * @param type The type of the list value, which may not be null.
+	 *             This is the type of the list elements, not the type of the list itself.
+	 * @param list The list to wrap in the result.
+	 * @param problems The list of problems associated with the result.
+	 * @return A result with the given list and problems.
+	 */
+	static <V> Result<List<V>> ofList(Class<V> type, List<V> list, List<Problem> problems) {
+		Objects.requireNonNull(type);
+		Objects.requireNonNull(list);
+		problems = Collections.unmodifiableList(new ArrayList<>(Objects.requireNonNull(problems)));
+		return (Result<List<V>>) (Result) new ResultImpl<>(ID, List.class, problems, list);
+	}
 
 	/**
 	 * 	@return The list of {@link Problem}s associated with this result item.
