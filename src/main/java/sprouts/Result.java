@@ -23,14 +23,19 @@ public interface Result<V> extends Val<V>
 	 * @param type The type of the value, which may not be null.
 	 * @return An empty result.
 	 * @param <V> The type of the value.
+	 * @throws NullPointerException if the type is null.
 	 */
-	static <V> Result<V> of(Class<V> type) { return new ResultImpl<>(ID, type, Collections.emptyList(), null); }
+	static <V> Result<V> of(Class<V> type) {
+		Objects.requireNonNull(type);
+		return new ResultImpl<>(ID, type, Collections.emptyList(), null);
+	}
 
 	/**
 	 *  A factory method for creating a result with a non-null value and no problems.
 	 * @param value The value to wrap in the result.
 	 * @return A result with the given value and no problems.
 	 * @param <V> The type of the value.
+	 * @throws NullPointerException if the value is null.
 	 */
 	static <V> Result<V> of(V value) {
 		Objects.requireNonNull(value);
@@ -43,9 +48,10 @@ public interface Result<V> extends Val<V>
 	 *  creating results that may be empty but are not necessarily problematic.
 	 *
 	 * @param type The type of the value, which may not be null.
-	 * @param value The value to wrap in the result or null.
+	 * @param value The value to wrap in the result or null to create an empty result.
 	 * @return A result with the given value and no problems.
 	 * @param <V> The type of the value.
+	 * @throws NullPointerException if the type is null.
 	 */
 	static <V> Result<V> of(Class<V> type, V value) {
 		Objects.requireNonNull(type);
@@ -58,6 +64,7 @@ public interface Result<V> extends Val<V>
 	 * @param problems The list of problems associated with the result.
 	 * @return A result with the given value and problems.
 	 * @param <V> The type of the value.
+	 * @throws NullPointerException if the value or problems are null.
 	 */
 	static <V> Result<V> of(V value, List<Problem> problems) {
 		Objects.requireNonNull(value);
@@ -71,6 +78,7 @@ public interface Result<V> extends Val<V>
 	 * @param problems The list of problems associated with the result.
 	 * @return An empty result with the given problems.
 	 * @param <V> The type of the value.
+	 * @throws NullPointerException if the type or problems are null.
 	 */
 	static <V> Result<V> of(Class<V> type, List<Problem> problems) {
 		Objects.requireNonNull(type);
@@ -85,6 +93,7 @@ public interface Result<V> extends Val<V>
 	 * @param problems The list of problems associated with the result.
 	 * @return A result with the given value and problems.
 	 * @param <V> The type of the value.
+	 * @throws NullPointerException if the type or problems are null.
 	 */
 	static <V> Result<V> of(Class<V> type, V value, List<Problem> problems) {
 		Objects.requireNonNull(type);
@@ -98,6 +107,7 @@ public interface Result<V> extends Val<V>
 	 * @param problem The problem associated with the result.
 	 * @return A result with the given problem.
 	 * @param <V> The type of the value.
+	 * @throws NullPointerException if any of the parameters are null.
 	 */
 	static <V> Result<V> of(Class<V> type, Problem problem) {
 		Objects.requireNonNull(type);
@@ -111,6 +121,7 @@ public interface Result<V> extends Val<V>
 	 * @param problem The problem associated with the result.
 	 * @return A result with the given problem.
 	 * @param <V> The type of the value.
+	 * @throws NullPointerException if any of the parameters are null.
 	 */
 	static <V> Result<List<V>> ofList(Class<V> type, Problem problem) {
 		Objects.requireNonNull(type);
@@ -124,7 +135,9 @@ public interface Result<V> extends Val<V>
 	 * @param type The type of the list value, which may not be null.
 	 *             This is the type of the list elements, not the type of the list itself.
 	 * @param list The list to wrap in the result.
+	 * @param <V> The type of the list elements.
 	 * @return A result with the given list.
+	 * @throws NullPointerException if any of the parameters are null.
 	 */
 	static <V> Result<List<V>> ofList(Class<V> type, List<V> list) {
 		Objects.requireNonNull(type);
@@ -139,7 +152,9 @@ public interface Result<V> extends Val<V>
 	 *             This is the type of the list elements, not the type of the list itself.
 	 * @param list The list to wrap in the result.
 	 * @param problems The list of problems associated with the result.
+	 * @param <V> The type of the list elements.
 	 * @return A result with the given list and problems.
+	 * @throws NullPointerException if any of the parameters are null.
 	 */
 	static <V> Result<List<V>> ofList(Class<V> type, List<V> list, List<Problem> problems) {
 		Objects.requireNonNull(type);

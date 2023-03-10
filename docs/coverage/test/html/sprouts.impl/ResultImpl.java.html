@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ResultImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sprouts</a> &gt; <a href="index.source.html" class="el_package">sprouts.impl</a> &gt; <span class="el_source">ResultImpl.java</span></div><h1>ResultImpl.java</h1><pre class="source lang-java linenums">package sprouts.impl;
+
+import sprouts.Action;
+import sprouts.Problem;
+import sprouts.Result;
+import sprouts.Val;
+
+import java.util.List;
+import java.util.Objects;
+import java.util.function.Function;
+
+public class ResultImpl&lt;V&gt; implements Result&lt;V&gt;
+{
+	private final String id;
+	private final Class&lt;V&gt; type;
+	private final V value;
+	private final List&lt;Problem&gt; problems;
+
+
+<span class="fc" id="L20">	public ResultImpl(String id, Class&lt;V&gt; type, List&lt;Problem&gt; problems, V value) {</span>
+<span class="fc" id="L21">		Objects.requireNonNull(type);</span>
+<span class="fc" id="L22">		Objects.requireNonNull(id);</span>
+<span class="fc" id="L23">		Objects.requireNonNull(problems);</span>
+<span class="fc" id="L24">		this.id = id;</span>
+<span class="fc" id="L25">		this.type = type;</span>
+<span class="fc" id="L26">		this.problems = problems;</span>
+<span class="fc" id="L27">		this.value = value;</span>
+<span class="fc" id="L28">	}</span>
+
+	/** {@inheritDoc} */
+<span class="fc" id="L31">	@Override public Class&lt;V&gt; type() { return type; }</span>
+
+	/** {@inheritDoc} */
+<span class="fc" id="L34">	@Override public String id() { return id; }</span>
+
+	/** {@inheritDoc} */
+	@Override
+<span class="nc" id="L38">	public Val&lt;V&gt; withId( String id ) { return new ResultImpl&lt;&gt;(id, type, problems, value); }</span>
+
+	/** {@inheritDoc} */
+<span class="fc" id="L41">	@Override public List&lt;Problem&gt; problems() { return problems; }</span>
+
+	/** {@inheritDoc} */
+	@Override
+<span class="nc bnc" id="L45" title="All 2 branches missed.">	public V orElseNullable(V other) { return value == null ? other : value; }</span>
+
+	/** {@inheritDoc} */
+<span class="fc" id="L48">	@Override public V orElseNull() { return value; }</span>
+
+	/** {@inheritDoc} */
+	@Override
+	public Val&lt;V&gt; map(Function&lt;V, V&gt; mapper) {
+<span class="fc" id="L53">		return Val.ofNullable(type(), mapper.apply(value));</span>
+	}
+
+	/** {@inheritDoc} */
+	@Override
+	public &lt;U&gt; Val&lt;U&gt; mapTo(Class&lt;U&gt; type, Function&lt;V, U&gt; mapper) {
+<span class="nc" id="L59">		return Val.ofNullable(type, mapper.apply(value));</span>
+	}
+
+	/** {@inheritDoc} */
+	@Override
+	public &lt;U&gt; Val&lt;U&gt; viewAs(Class&lt;U&gt; type, Function&lt;V, U&gt; mapper) {
+<span class="nc" id="L65">		return Val.ofNullable(this.type, this.value).viewAs(type, mapper);</span>
+	}
+
+	@Override
+	public Val&lt;V&gt; onSet(Action&lt;Val&lt;V&gt;&gt; displayAction) {
+<span class="nc" id="L70">		throw new UnsupportedOperationException(&quot;Not implemented yet&quot;);</span>
+	}
+
+	@Override
+	public Val&lt;V&gt; fireSet() {
+<span class="nc" id="L75">		throw new UnsupportedOperationException(&quot;Not implemented yet&quot;);</span>
+	}
+
+	/** {@inheritDoc} */
+<span class="nc" id="L79">	@Override public boolean allowsNull() { return true; }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

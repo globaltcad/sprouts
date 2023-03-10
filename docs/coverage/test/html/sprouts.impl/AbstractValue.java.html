@@ -64,13 +64,13 @@ abstract class AbstractValue&lt;T&gt; implements Val&lt;T&gt;
         List&lt;Action&lt;Val&lt;T&gt;&gt;&gt; actions
     ) {
 <span class="fc" id="L66">        List&lt;Action&lt;Val&lt;T&gt;&gt;&gt; removableActions = new ArrayList&lt;&gt;();</span>
-<span class="fc bfc" id="L67" title="All 2 branches covered.">        for ( Action&lt;Val&lt;T&gt;&gt; action : new ArrayList&lt;&gt;(actions) ) // We copy the list to avoid concurrent modification</span>
+<span class="fc" id="L67">        Val&lt;T&gt; clone = Val.ofNullable(this); // We clone this property to avoid concurrent modification</span>
+<span class="fc bfc" id="L68" title="All 2 branches covered.">        for ( Action&lt;Val&lt;T&gt;&gt; action : new ArrayList&lt;&gt;(actions) ) // We copy the list to avoid concurrent modification</span>
             try {
-<span class="fc bfc" id="L69" title="All 2 branches covered.">                if ( action.canBeRemoved() )</span>
-<span class="fc" id="L70">                    removableActions.add(action);</span>
-                else {
-<span class="fc" id="L72">                    action.accept(this);</span>
-                }
+<span class="fc bfc" id="L70" title="All 2 branches covered.">                if ( action.canBeRemoved() )</span>
+<span class="fc" id="L71">                    removableActions.add(action);</span>
+                else
+<span class="fc" id="L73">                    action.accept(clone);</span>
 <span class="nc" id="L74">            } catch ( Exception e ) {</span>
 <span class="nc" id="L75">                e.printStackTrace();</span>
 <span class="fc" id="L76">            }</span>

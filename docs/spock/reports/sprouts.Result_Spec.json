@@ -1,0 +1,105 @@
+{
+  "className":"sprouts.Result_Spec",
+  "title":"Results",
+  "narrative":"The `Result` interface is used to represent the optional result of an operation\n    as well as a list of problems that occurred during the operation.\n\n    It is a sub type of the `Val` property and as such can be used to represent a value\n    that is immutable and can be observed for changes.\n\n    The default result implementation indirectly exposed by its factory methods\n    is immutable and thread safe, effectively making it a monadic value\n    similar to the `Optional` type in Java 8.",
+  "subjects":["sprouts.Result","sprouts.Val","sprouts.Problem"],
+  "statistics":{
+    "runs":"5",
+    "successRate":"100.0%",
+    "failures":"0",
+    "errors":"0",
+    "skipped":"0",
+    "duration":"0.012 seconds"
+  },
+  "headers":[],"tags":{},"see":[],
+  "features":[ 
+    {
+      "id":"We can create a result from any kind of value.",
+      "result":"PASS",
+      "duration":"0.004 seconds",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"expect","text":"","code":["Result.of(42).get() == 42","Result.of(\"foo\").get() == \"foo\"","Result.of([1, 2, 3]).get() == [1, 2, 3]"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A result can be created from multiple problems.",
+      "result":"PASS",
+      "duration":"0.003 seconds",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"A list of problems.","code":["def problems = [","            Problem.of(\"too large\"),","            Problem.of(\"too even\"),","            Problem.of(\"not a prime\")","        ]"]},
+
+        {"kind":"when","text":"We create a result from the problems.","code":["def result = Result.of(Integer, problems)"]},
+
+        {"kind":"then","text":"The result has the problems.","code":["result.problems() == problems"]},
+
+        {"kind":"and","text":"Although they are the same problems, they are not the same instances.","code":["result.problems() !== problems"]},
+
+        {"kind":"when","text":"We try to mutate the problems.","code":["result.problems().add(null)"]},
+
+        {"kind":"then","text":"An exception is thrown.","code":["thrown(UnsupportedOperationException)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Results can be mapped to a property.",
+      "result":"PASS",
+      "duration":"0",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"A result.","code":["def result = Result.of(42)"]},
+
+        {"kind":"when","text":"We map the result to a property.","code":["def mapped = result.map { it + 1 }"]},
+
+        {"kind":"then","text":"The mapped property has the value of the result plus one.","code":["mapped.get() == 43"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Results can be turned into an Optional.",
+      "result":"PASS",
+      "duration":"0",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"A result.","code":["def result = Result.of(42)"]},
+
+        {"kind":"when","text":"We turn the result into an Optional.","code":["def optional = result.toOptional()"]},
+
+        {"kind":"then","text":"The optional has the value of the result.","code":["optional.get() == 42"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Just like a `Val` property, a Result has a type and id.",
+      "result":"PASS",
+      "duration":"0",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"A result.","code":["def result = Result.of(42)"]},
+
+        {"kind":"expect","text":"The result has a type.","code":["result.type() == Integer"]},
+
+        {"kind":"and","text":"The result has an id.","code":["result.id() == \"Result\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    }
+  
+  ],
+  "generator":"https://github.com/renatoathaydes/spock-reports"
+}
