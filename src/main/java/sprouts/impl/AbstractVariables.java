@@ -350,6 +350,15 @@ public class AbstractVariables<T> implements Vars<T>
             @Override public Val<T> newValue() { return clonedNewValue; }
             @Override public Val<T> oldValue() { return clonedOldValue; }
             @Override public Vals<T> vals() { return clone; }
+            @Override public String toString() {
+                return "ValsDelegate[" +
+                            "index="      + index  + ", " +
+                            "changeType=" + type   + ", " +
+                            "newValue="   + newVal + ", " +
+                            "oldValue="   + oldVal + ", " +
+                            "vals="       + clone  +
+                        ']';
+            }
         };
     }
 
