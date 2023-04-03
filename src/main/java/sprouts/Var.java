@@ -6,9 +6,9 @@ import java.util.Optional;
 import java.util.function.Function;
 
 /**
- * 	A mutable wrapper for an item which can be observed by the UI (or other application layers)
- * 	to then dynamically update the UI components for you, as well
- * 	as trigger an action inside your view model.
+ * 	A mutable wrapper for an item which can be observed by the frontend (or other application layers)
+ * 	to then dynamically update itself for you, as well
+ * 	as trigger a possible change action inside your view model.
  *  <p>
  * 	So for example if you have a {@link Var} which represents the username
  * 	of a form, in your UI you can register a callback which will update the UI
@@ -29,7 +29,7 @@ import java.util.function.Function;
  * 	to be shown in the UI:
  * 	<pre>{@code
  * 	    // Initially empty username:
- * 		username.set( "" ) // triggers 'fireSet()';
+ * 		username.set( "" ) // triggers 'fireSet()'
  * 	}</pre>
  * 	<p>
  * 	<b>Please take a look at the <a href="https://globaltcad.github.io/sprouts/">living sprouts documentation</a>
