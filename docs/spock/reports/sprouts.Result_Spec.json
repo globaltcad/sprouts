@@ -4,7 +4,7 @@
   "narrative":"The `Result` interface is used to represent the optional result of an operation\n    as well as a list of problems that occurred during the operation.\n\n    It is a sub type of the `Val` property and as such can be used to represent a value\n    that is immutable and can be observed for changes.\n\n    The default result implementation indirectly exposed by its factory methods\n    is immutable and thread safe, effectively making it a monadic value\n    similar to the `Optional` type in Java 8.",
   "subjects":["sprouts.Result","sprouts.Val","sprouts.Problem"],
   "statistics":{
-    "runs":"5",
+    "runs":"7",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -16,7 +16,7 @@
     {
       "id":"We can create a result from any kind of value.",
       "result":"PASS",
-      "duration":"0.004 seconds",
+      "duration":"0.002 seconds",
       "iterations":{
       "tags":{},"see":[],"extraInfo":[]
       },
@@ -29,7 +29,7 @@
     {
       "id":"A result can be created from multiple problems.",
       "result":"PASS",
-      "duration":"0.003 seconds",
+      "duration":"0.001 seconds",
       "iterations":{
       "tags":{},"see":[],"extraInfo":[]
       },
@@ -96,6 +96,46 @@
         {"kind":"expect","text":"The result has a type.","code":["result.type() == Integer"]},
 
         {"kind":"and","text":"The result has an id.","code":["result.id() == \"Result\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You can create a Result from a list.",
+      "result":"PASS",
+      "duration":"0.002 seconds",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A result can be created from a list of values which\n            is useful when an operation has multiple result values.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A list of values.","code":["def values = [1, 2, 3]"]},
+
+        {"kind":"when","text":"We create a result from the list.","code":["def result = Result.ofList(Integer, values)"]},
+
+        {"kind":"then","text":"The result has the list as its value.","code":["result.get() == values"]},
+
+        {"kind":"and","text":"The result has no problems.","code":["result.problems().isEmpty()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Create a Result from a list with some problems.",
+      "result":"PASS",
+      "duration":"0.001 seconds",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A result can be created from a list of values which\n            is useful when an operation has multiple result values.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A list of values.","code":["def values = [1, 2, 3]"]},
+
+        {"kind":"and","text":"A list of problems.","code":["def problems = [","            Problem.of(\"too large\"),","            Problem.of(\"too even\"),","            Problem.of(\"not a prime\")","        ]"]},
+
+        {"kind":"when","text":"We create a result from the list.","code":["def result = Result.ofList(Integer, values, problems)"]},
+
+        {"kind":"then","text":"The result has the list as its value.","code":["result.get() == values"]},
+
+        {"kind":"and","text":"The result has the problems.","code":["result.problems() == problems"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }

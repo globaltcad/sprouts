@@ -9,14 +9,14 @@
     "failures":"0",
     "errors":"0",
     "skipped":"0",
-    "duration":"0.021 seconds"
+    "duration":"0.030 seconds"
   },
   "headers":[],"tags":{},"see":[],
   "features":[ 
     {
       "id":"The delegate of a property change action exposes a property that is an immutable clone.",
       "result":"PASS",
-      "duration":"0.005 seconds",
+      "duration":"0.007 seconds",
       "iterations":{
       "tags":{},"see":[],"extraInfo":["\n            The delegate of the a property is basically an immutable clone of the property,\n            conceptually a snapshot of the property at the time of the change.\n            The reason for this is because the change action might be executed on a different thread\n            than the thread that changed the property.\n            This means that the property might have changed again before the change action is executed\n            causing the change action to receive a delegate that is not representative of true change\n            that occurred.\n        "]
       },
@@ -39,7 +39,7 @@
     {
       "id":"The delegate of a property user action exposes a property that is an immutable clone.",
       "result":"PASS",
-      "duration":"0.001 seconds",
+      "duration":"0.002 seconds",
       "iterations":{
       "tags":{},"see":[],"extraInfo":["\n            The delegate of the a property is basically an immutable clone of the property,\n            conceptually a snapshot of the property at the time of the change.\n            The reason for this is because the change action might be executed on a different thread\n            than the thread that changed the property.\n            This means that the property might have changed again before the change action is executed\n            causing the change action to receive a delegate that is not representative of true change\n            that occurred.\n        "]
       },
@@ -62,7 +62,7 @@
     {
       "id":"The delegate of a property list change action exposes a list that is an immutable clone.",
       "result":"PASS",
-      "duration":"0.006 seconds",
+      "duration":"0.008 seconds",
       "iterations":{
       "tags":{},"see":[],"extraInfo":["\n            The delegate of the a property list not only exposes various kinds of \n            information describing how the list changed, it also exposes \n            an immutable clone of the property list after the change.\n            This clone is conceptually a snapshot of the property list at the time of the change.\n            The reason for this is because the change action might be executed on a different thread\n            than the thread that changed the property list.\n            This means that the property list might have changed again before the change action is executed\n            causing the change action to receive a delegate that is not representative of true change\n            that occurred.\n        ","\n            The delegate of the a property list not only exposes various kinds of \n            information describing how the list changed, it also exposes \n            an immutable clone of the property list after the change.\n            This clone is conceptually a snapshot of the property list at the time of the change.\n            The reason for this is because the change action might be executed on a different thread\n            than the thread that changed the property list.\n            This means that the property list might have changed again before the change action is executed\n            causing the change action to receive a delegate that is not representative of true change\n            that occurred.\n        "]
       },
@@ -97,7 +97,7 @@
     {
       "id":"The delegate of a property list change action exposes a list that is an immutable clone.",
       "result":"PASS",
-      "duration":"0.001 seconds",
+      "duration":"0.002 seconds",
       "iterations":{
       "tags":{},"see":[],"extraInfo":[]
       },
@@ -132,7 +132,7 @@
     {
       "id":"The delegate of a property list change action has a descriptive string representation.",
       "result":"PASS",
-      "duration":"0.001 seconds",
+      "duration":"0.002 seconds",
       "iterations":{
       "tags":{},"see":[],"extraInfo":[]
       },
