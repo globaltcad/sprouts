@@ -78,4 +78,42 @@ class Result_Spec extends Specification
             result.id() == "Result"
     }
 
+    def 'You can create a Result from a list.'()
+    {
+        reportInfo """
+            A result can be created from a list of values which
+            is useful when an operation has multiple result values.
+        """
+        given : 'A list of values.'
+            def values = [1, 2, 3]
+        when : 'We create a result from the list.'
+            def result = Result.ofList(Integer, values)
+        then : 'The result has the list as its value.'
+            result.get() == values
+        and : 'The result has no problems.'
+            result.problems().isEmpty()
+    }
+
+    def 'Create a Result from a list with some problems.'()
+    {
+        reportInfo """
+            A result can be created from a list of values which
+            is useful when an operation has multiple result values.
+        """
+        given : 'A list of values.'
+            def values = [1, 2, 3]
+        and : 'A list of problems.'
+            def problems = [
+                        Problem.of("too large"),
+                        Problem.of("too even"),
+                        Problem.of("not a prime")
+                    ]
+        when : 'We create a result from the list.'
+            def result = Result.ofList(Integer, values, problems)
+        then : 'The result has the list as its value.'
+            result.get() == values
+        and : 'The result has the problems.'
+            result.problems() == problems
+    }
+
 }

@@ -157,6 +157,10 @@ public interface Result<V> extends Val<V>
 	static <V> Result<List<V>> ofList( Class<V> type, List<V> list ) {
 		Objects.requireNonNull(type);
 		Objects.requireNonNull(list);
+		// We check the types of the list elements are of the correct type.
+		boolean matches = list.stream().filter(Objects::nonNull).allMatch(e -> type.isAssignableFrom(e.getClass()));
+		if ( !matches )
+			throw new IllegalArgumentException("List elements must be of type " + type.getName());
 		return (Result<List<V>>) (Result) new ResultImpl<>(ID, List.class, Collections.emptyList(), list);
 	}
 
@@ -174,6 +178,9 @@ public interface Result<V> extends Val<V>
 	static <V> Result<List<V>> ofList( Class<V> type, List<V> list, List<Problem> problems ) {
 		Objects.requireNonNull(type);
 		Objects.requireNonNull(list);
+		boolean matches = list.stream().filter(Objects::nonNull).allMatch(e -> type.isAssignableFrom(e.getClass()));
+		if ( !matches )
+			throw new IllegalArgumentException("List elements must be of type " + type.getName());
 		problems = Collections.unmodifiableList(new ArrayList<>(Objects.requireNonNull(problems)));
 		return (Result<List<V>>) (Result) new ResultImpl<>(ID, List.class, problems, list);
 	}
