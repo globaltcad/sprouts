@@ -25,7 +25,7 @@ public interface Result<V> extends Val<V>
 	 * @param <V> The type of the value.
 	 * @throws NullPointerException if the type is null.
 	 */
-	static <V> Result<V> of(Class<V> type) {
+	static <V> Result<V> of( Class<V> type ) {
 		Objects.requireNonNull(type);
 		return new ResultImpl<>(ID, type, Collections.emptyList(), null);
 	}
@@ -37,7 +37,7 @@ public interface Result<V> extends Val<V>
 	 * @param <V> The type of the value.
 	 * @throws NullPointerException if the value is null.
 	 */
-	static <V> Result<V> of(V value) {
+	static <V> Result<V> of( V value ) {
 		Objects.requireNonNull(value);
 		return of(value, Collections.emptyList());
 	}
@@ -53,7 +53,7 @@ public interface Result<V> extends Val<V>
 	 * @param <V> The type of the value.
 	 * @throws NullPointerException if the type is null.
 	 */
-	static <V> Result<V> of(Class<V> type, V value) {
+	static <V> Result<V> of( Class<V> type, V value ) {
 		Objects.requireNonNull(type);
 		return of(type, value, Collections.emptyList());
 	}
@@ -66,7 +66,7 @@ public interface Result<V> extends Val<V>
 	 * @param <V> The type of the value.
 	 * @throws NullPointerException if the value or problems are null.
 	 */
-	static <V> Result<V> of(V value, List<Problem> problems) {
+	static <V> Result<V> of( V value, List<Problem> problems ) {
 		Objects.requireNonNull(value);
 		problems = Collections.unmodifiableList(new ArrayList<>(Objects.requireNonNull(problems)));
 		return new ResultImpl<>(ID, (Class<V>) value.getClass(), problems, value);
@@ -80,7 +80,7 @@ public interface Result<V> extends Val<V>
 	 * @param <V> The type of the value.
 	 * @throws NullPointerException if the type or problems are null.
 	 */
-	static <V> Result<V> of(Class<V> type, List<Problem> problems) {
+	static <V> Result<V> of( Class<V> type, List<Problem> problems ) {
 		Objects.requireNonNull(type);
 		problems = Collections.unmodifiableList(new ArrayList<>(Objects.requireNonNull(problems)));
 		return new ResultImpl<>(ID, type, problems, null);
@@ -95,10 +95,25 @@ public interface Result<V> extends Val<V>
 	 * @param <V> The type of the value.
 	 * @throws NullPointerException if the type or problems are null.
 	 */
-	static <V> Result<V> of(Class<V> type, V value, List<Problem> problems) {
+	static <V> Result<V> of( Class<V> type, V value, List<Problem> problems ) {
 		Objects.requireNonNull(type);
 		problems = Collections.unmodifiableList(new ArrayList<>(Objects.requireNonNull(problems)));
 		return new ResultImpl<>(ID, type, problems, value);
+	}
+
+	/**
+	 *  A factory method for creating an optional result with a single problem.
+	 * @param type The type of the value, which may not be null.
+	 * @param value The value to wrap in the result, which may be null.
+	 * @param problem The problem associated with the result.
+	 * @return A result with the given problem.
+	 * @param <V> The type of the value.
+	 * @throws NullPointerException if any of the parameters are null.
+	 */
+	static <V> Result<V> of( Class<V> type, V value, Problem problem ) {
+		Objects.requireNonNull(type);
+		Objects.requireNonNull(problem);
+		return new ResultImpl<>(ID, type, Collections.singletonList(problem), value);
 	}
 
 	/**
@@ -109,7 +124,7 @@ public interface Result<V> extends Val<V>
 	 * @param <V> The type of the value.
 	 * @throws NullPointerException if any of the parameters are null.
 	 */
-	static <V> Result<V> of(Class<V> type, Problem problem) {
+	static <V> Result<V> of( Class<V> type, Problem problem ) {
 		Objects.requireNonNull(type);
 		Objects.requireNonNull(problem);
 		return new ResultImpl<>(ID, type, Collections.singletonList(problem), null);
@@ -123,7 +138,7 @@ public interface Result<V> extends Val<V>
 	 * @param <V> The type of the value.
 	 * @throws NullPointerException if any of the parameters are null.
 	 */
-	static <V> Result<List<V>> ofList(Class<V> type, Problem problem) {
+	static <V> Result<List<V>> ofList( Class<V> type, Problem problem ) {
 		Objects.requireNonNull(type);
 		Objects.requireNonNull(problem);
 		return (Result<List<V>>) (Result) new ResultImpl<>(ID, List.class, Collections.singletonList(problem), null);
@@ -139,7 +154,7 @@ public interface Result<V> extends Val<V>
 	 * @return A result with the given list.
 	 * @throws NullPointerException if any of the parameters are null.
 	 */
-	static <V> Result<List<V>> ofList(Class<V> type, List<V> list) {
+	static <V> Result<List<V>> ofList( Class<V> type, List<V> list ) {
 		Objects.requireNonNull(type);
 		Objects.requireNonNull(list);
 		return (Result<List<V>>) (Result) new ResultImpl<>(ID, List.class, Collections.emptyList(), list);
@@ -156,7 +171,7 @@ public interface Result<V> extends Val<V>
 	 * @return A result with the given list and problems.
 	 * @throws NullPointerException if any of the parameters are null.
 	 */
-	static <V> Result<List<V>> ofList(Class<V> type, List<V> list, List<Problem> problems) {
+	static <V> Result<List<V>> ofList( Class<V> type, List<V> list, List<Problem> problems ) {
 		Objects.requireNonNull(type);
 		Objects.requireNonNull(list);
 		problems = Collections.unmodifiableList(new ArrayList<>(Objects.requireNonNull(problems)));
