@@ -39,7 +39,6 @@ public abstract class AbstractVariable<T> extends AbstractValue<T> implements Va
 	}
 
 	private final boolean _isImmutable;
-	private final List<Val<T>> _history = new ArrayList<>(17);
 	protected final List<Action<Val<T>>> _actions = new ArrayList<>();
 	private final List<Consumer<T>> _viewers = new ArrayList<>(0);
 
@@ -127,9 +126,6 @@ public abstract class AbstractVariable<T> extends AbstractValue<T> implements Va
 						"with the type '"+_type+"' of this property"
 					);
 
-			_history.add(Val.ofNullable(this.type(), _value).withId(this.id()));
-			if ( _history.size() > 16 )
-				_history.remove(0);
 			_value = newValue;
 			return true;
 		}

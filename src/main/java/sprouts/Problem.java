@@ -66,12 +66,12 @@ public interface Problem
 	/**
 	 *  A factory method for creating a problem with a title, a description and a reporter.
 	 *
-	 * @param title The title of the problem, which may not be null.
+	 * @param reporter    The reporter of the problem, which may not be null.
+	 * @param title       The title of the problem, which may not be null.
 	 * @param description The description of the problem, which may not be null.
-	 * @param reporter The reporter of the problem, which may not be null.
 	 * @return A problem with the given title and description.
 	 */
-	static Problem of(String title, String description, Object reporter) {
+	static Problem of( Object reporter, String title, String description ) {
 		Objects.requireNonNull(reporter);
 		Objects.requireNonNull(title);
 		Objects.requireNonNull(description);

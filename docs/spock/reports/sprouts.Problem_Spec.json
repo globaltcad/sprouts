@@ -1,0 +1,56 @@
+{
+  "className":"sprouts.Problem_Spec",
+  "title":"Nothing but Problems",
+  "narrative":"`Problem` instances are part of `Result` instances \n    which are used to represent the optional result of an operation\n    as well as a list of problems that occurred during the operation.\n\n    `Problem` instances tell us what went wrong and why\n    in various situations where we need to know.\n    They are immutable and thread safe and\n    are intended to be used in functional designs.",
+  "subjects":["sprouts.Problem"],
+  "statistics":{
+    "runs":"2",
+    "successRate":"100.0%",
+    "failures":"0",
+    "errors":"0",
+    "skipped":"0",
+    "duration":"0.008 seconds"
+  },
+  "headers":[],"tags":{},"see":[],
+  "features":[ 
+    {
+      "id":"We can create a problem from a title.",
+      "result":"PASS",
+      "duration":"0.003 seconds",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The most basic type of problem is a problem with a title,\n            it does not have any other information, but it is still a problem.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A title.","code":["def title = \"simple problem\""]},
+
+        {"kind":"when","text":"We create a problem from the title string.","code":["def problem = Problem.of(title)"]},
+
+        {"kind":"then","text":"The problem has the title.","code":["problem.title() == title"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A Problem can be created from an exception.",
+      "result":"PASS",
+      "duration":"0.003 seconds",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A problem can be created from an exception.\n            The exception is stored in the problem\n            and can be retrieved later.\n            The title as well as description of the problem\n            are derived from the exception.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"An exception.","code":["def exception = new RuntimeException(\"something went wrong\")"]},
+
+        {"kind":"when","text":"We create a problem from the exception.","code":["def problem = Problem.of(exception)"]},
+
+        {"kind":"then","text":"The problem has the exception.","code":["problem.exception().isPresent()","problem.exception().get() == exception"]},
+
+        {"kind":"and","text":"The problem has the title of the exception.","code":["problem.title() == \"RuntimeException\""]},
+
+        {"kind":"and","text":"The problem has the description of the exception.","code":["problem.description() == exception.message"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    }
+  
+  ],
+  "generator":"https://github.com/renatoathaydes/spock-reports"
+}

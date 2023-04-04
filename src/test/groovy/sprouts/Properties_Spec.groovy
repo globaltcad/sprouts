@@ -414,4 +414,35 @@ class Properties_Spec extends Specification
             !isOneOf2
     }
 
+    def 'Conveniently compare properties with another item using "is", "isOneOf" or "isNot"'()
+    {
+        reportInfo """
+            Properties represent the items that they hold, so when comparing them with each other
+            you are actually comparing the items they hold.
+            The "is" method can be used to check if the item of a property is equal to the item of another property
+            and the "isNot" method is the exact opposite, it checks if the item of a property
+            is NOT equal to the item of another property.
+            The "isOneOf" method is used to check if the item of a property is equal to one of the
+            items in a varargs list of properties.
+        """
+        given : 'We create a property with a non-null item.'
+            var property1 = Var.of("Hello World")
+            var property2 = Var.of("Hello World!")
+            var property3 = Var.of("Goodbye World")
+        when : 'We compare the item of the property with another item using the above mentioned methods.'
+            var is1 = property1.is(Var.of("Hello World"))
+            var is2 = property1.is(property3)
+            var isNot1 = property1.isNot(Var.of("Hello World"))
+            var isNot2 = property1.isNot(property3)
+            var isOneOf1 = property1.isOneOf(property2, property3)
+            var isOneOf2 = property1.isOneOf(property3, Var.of("Hello World"), property2)
+        then : 'The results are as expected.'
+            is1
+            !is2
+            !isNot1
+            isNot2
+            !isOneOf1
+            isOneOf2
+    }
+
 }

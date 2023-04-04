@@ -65,11 +65,7 @@ public interface Vals<T> extends Iterable<T>
     }
 
     static <T> Vals<T> of( Class<T> type, Vals<T> vals ) {
-        List<Val<T>> list = new ArrayList<>();
-        for ( int i = 0; i < vals.size(); i++ ) {
-            list.add( vals.at(i) );
-        }
-        return AbstractVariables.of( true, type, (Iterable) list );
+        return AbstractVariables.of( true, type, vals );
     }
 
     /**

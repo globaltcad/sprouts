@@ -12,12 +12,13 @@ import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 /**
- * 	A read only view on an item which can be observed by the Swing-Tree UI
- * 	to dynamically update UI components for you.
+ * 	A read only view on an item which can be observed by any kind of frontend
+ * 	so that it can be notified and updated when the item changes.
  * 	The API of this is very similar to the {@link Optional} API in the
  * 	sense that it is a wrapper around a single item, which may also be missing (null).
  * 	Use the {@link #onSet(Action)} method to register a callbacks which
- * 	will be called when the {@link #fireSet()} method is called.
+ * 	will be called when the {@link #fireSet()} method is called or the item is
+ * 	changed (typically by the {@link Var#set(Object)} method).
  * 	<p>
  * 	<b>Please take a look at the <a href="https://globaltcad.github.io/sprouts/">living sprouts documentation</a>
  * 	where you can browse a large collection of examples demonstrating how to use the API of this class.</b>
@@ -58,6 +59,34 @@ public interface Val<T>
 	 * @return A new {@link Val} instance wrapping the given item.
 	 */
 	static <T> Val<T> of( T item ) { return AbstractVariable.of( true, item ); }
+
+	/**
+	 *  A factory method for creating a new {@link Val} instance
+	 *  which is effectively an immutable copy of the given {@link Val}.
+	 *  The provided {@link Val} must not contain a null item.
+	 *
+	 * @param toBeCopied The {@link Val} to be copied.
+	 * @return A new {@link Val} instance.
+	 * @param <T> The type of the item held by the {@link Val}!
+	 */
+	static <T> Val<T> of( Val<T> toBeCopied ) {
+		Objects.requireNonNull(toBeCopied);
+		return Val.of( toBeCopied.get() ).withId( toBeCopied.id() );
+	}
+
+	/**
+	 *  A factory method for creating a new {@link Val} instance
+	 *  which is effectively an immutable copy of the given {@link Val}.
+	 *  The provided {@link Val} may contain a null item.
+	 *
+	 * @param toBeCopied The {@link Val} to be copied.
+	 * @return A new {@link Val} instance.
+	 * @param <T> The type of the item held by the {@link Val}!
+	 */
+	static <T> Val<T> ofNullable( Val<T> toBeCopied ) {
+		Objects.requireNonNull(toBeCopied);
+		return Val.ofNullable( toBeCopied.type(), toBeCopied.orElseNull() ).withId( toBeCopied.id() );
+	}
 
 	/**
 	 * This method is intended to be used for when you want to wrap non-nullable types.
@@ -392,6 +421,23 @@ public interface Val<T>
 		if ( this.is(first) ) return true;
 		if ( this.is(second) ) return true;
 		for ( T otherValue : otherValues )
+			if ( this.is(otherValue) ) return true;
+		return false;
+	}
+
+	/**
+	 *  This method check if at least one of the items of the provided properties
+	 *  is equal to the item wrapped by this {@link Var} instance.
+	 *
+	 * @param first The first property of the same type as is wrapped by this.
+	 * @param second The second property of the same type as is wrapped by this.
+	 * @param otherValues The other properties of the same type as is wrapped by this.
+	 * @return The truth value determining if the item of the supplied property is equal to the wrapped item.
+	 */
+	default boolean isOneOf( Val<T> first, Val<T> second, Val<T>... otherValues ) {
+		if ( this.is(first) ) return true;
+		if ( this.is(second) ) return true;
+		for ( Val<T> otherValue : otherValues )
 			if ( this.is(otherValue) ) return true;
 		return false;
 	}

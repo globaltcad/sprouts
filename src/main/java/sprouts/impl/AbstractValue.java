@@ -64,13 +64,13 @@ abstract class AbstractValue<T> implements Val<T>
         List<Action<Val<T>>> actions
     ) {
         List<Action<Val<T>>> removableActions = new ArrayList<>();
+        Val<T> clone = Val.ofNullable(this); // We clone this property to avoid concurrent modification
         for ( Action<Val<T>> action : new ArrayList<>(actions) ) // We copy the list to avoid concurrent modification
             try {
                 if ( action.canBeRemoved() )
                     removableActions.add(action);
-                else {
-                    action.accept(this);
-                }
+                else
+                    action.accept(clone);
             } catch ( Exception e ) {
                 e.printStackTrace();
             }
