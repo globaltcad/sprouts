@@ -80,6 +80,12 @@ public abstract class AbstractVariable<T> extends AbstractValue<T> implements Va
 	}
 
 	/** {@inheritDoc} */
+	@Override public Var<T> onSet(Action<Val<T>> displayAction ) {
+		_viewActions.add(displayAction);
+		return this;
+	}
+
+	/** {@inheritDoc} */
 	@Override public Var<T> onAct( Action<Val<T>> action ) {
 		Objects.requireNonNull(action);
 		_actions.add(action);

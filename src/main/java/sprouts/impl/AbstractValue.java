@@ -39,6 +39,8 @@ abstract class AbstractValue<T> implements Val<T>
 		}
         if ( !ID_PATTERN.matcher(_id).matches() )
             throw new IllegalArgumentException("The provided id '"+_id+"' is not valid!");
+        if ( !allowsNull && iniValue == null )
+            throw new IllegalArgumentException("The provided initial value is null, but the property does not allow null values!");
     }
 
     /** {@inheritDoc} */
@@ -50,12 +52,6 @@ abstract class AbstractValue<T> implements Val<T>
     /** {@inheritDoc} */
     @Override
     public final T orElseNull() { return _value; }
-
-    /** {@inheritDoc} */
-    @Override public Val<T> onSet(Action<Val<T>> displayAction ) {
-        _viewActions.add(displayAction);
-        return this;
-    }
 
     /** {@inheritDoc} */
     @Override public Val<T> fireSet() { _triggerActions( _viewActions ); return this; }
