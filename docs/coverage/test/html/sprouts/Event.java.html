@@ -57,10 +57,10 @@ public interface Event extends Noticeable
             }
             @Override
             public Noticeable unsubscribe( Listener listener ) {
-<span class="nc" id="L60">                listeners.remove( listener );</span>
-<span class="nc" id="L61">                return this;</span>
+<span class="fc" id="L60">                listeners.remove( listener );</span>
+<span class="fc" id="L61">                return this;</span>
             }
-<span class="nc" id="L63">            @Override public void unsubscribeAll() { listeners.clear(); }</span>
+<span class="fc" id="L63">            @Override public void unsubscribeAll() { listeners.clear(); }</span>
         };
     }
 

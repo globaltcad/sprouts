@@ -507,7 +507,16 @@ public interface Val&lt;T&gt;
 	Val&lt;T&gt; fireSet();
 
 	/**
-	 * @return If this property can contain null.
+	 *  A property will only allow null items if it was constructed with a &quot;ofNullable(..)&quot; factory method.
+	 *  Otherwise, it will throw an {@link IllegalArgumentException} when trying to set a {@code null} reference.
+	 *  This flag cannot be changed after the property has been constructed!
+	 *  &lt;br&gt;
+	 *  The purpose of this method is to warn the UI that this property can contain null items,
+	 *  so that it may throw an exception or do something else to handle this case.
+	 *  For many types of properties {@code null} is simply nonsensical, like {@link String} for example,
+	 *  where the absence of a value is represented by an empty string.
+	 *
+	 * @return {@code true}, if this property can contain null, {@code false} otherwise.
 	 */
 	boolean allowsNull();
 
@@ -527,16 +536,16 @@ public interface Val&lt;T&gt;
 	 * @return The truth value determining if the objects are equal in terms of their state!
 	 */
 	static boolean equals( Object o1, Object o2 ) {
-<span class="pc bpc" id="L530" title="1 of 2 branches missed.">		if ( o1 instanceof float[]   ) return Arrays.equals( (float[] )  o1, (float[] )  o2 );</span>
-<span class="fc bfc" id="L531" title="All 2 branches covered.">		if ( o1 instanceof int[]     ) return Arrays.equals( (int[]   )  o1, (int[]   )  o2 );</span>
-<span class="pc bpc" id="L532" title="1 of 2 branches missed.">		if ( o1 instanceof char[]    ) return Arrays.equals( (char[]  )  o1, (char[]  )  o2 );</span>
-<span class="pc bpc" id="L533" title="1 of 2 branches missed.">		if ( o1 instanceof double[]  ) return Arrays.equals( (double[])  o1, (double[])  o2 );</span>
-<span class="pc bpc" id="L534" title="1 of 2 branches missed.">		if ( o1 instanceof long[]    ) return Arrays.equals( (long[]  )  o1, (long[]  )  o2 );</span>
-<span class="pc bpc" id="L535" title="1 of 2 branches missed.">		if ( o1 instanceof byte[]    ) return Arrays.equals( (byte[]  )  o1, (byte[]  )  o2 );</span>
-<span class="pc bpc" id="L536" title="1 of 2 branches missed.">		if ( o1 instanceof short[]   ) return Arrays.equals( (short[] )  o1, (short[] )  o2 );</span>
-<span class="pc bpc" id="L537" title="1 of 2 branches missed.">		if ( o1 instanceof boolean[] ) return Arrays.equals( (boolean[]) o1, (boolean[]) o2 );</span>
-<span class="pc bpc" id="L538" title="1 of 2 branches missed.">		if ( o1 instanceof Object[]  ) return Arrays.equals( (Object[])  o1, (Object[])  o2 );</span>
-<span class="fc" id="L539">		return Objects.equals( o1, o2 );</span>
+<span class="pc bpc" id="L539" title="1 of 2 branches missed.">		if ( o1 instanceof float[]   ) return Arrays.equals( (float[] )  o1, (float[] )  o2 );</span>
+<span class="fc bfc" id="L540" title="All 2 branches covered.">		if ( o1 instanceof int[]     ) return Arrays.equals( (int[]   )  o1, (int[]   )  o2 );</span>
+<span class="pc bpc" id="L541" title="1 of 2 branches missed.">		if ( o1 instanceof char[]    ) return Arrays.equals( (char[]  )  o1, (char[]  )  o2 );</span>
+<span class="pc bpc" id="L542" title="1 of 2 branches missed.">		if ( o1 instanceof double[]  ) return Arrays.equals( (double[])  o1, (double[])  o2 );</span>
+<span class="pc bpc" id="L543" title="1 of 2 branches missed.">		if ( o1 instanceof long[]    ) return Arrays.equals( (long[]  )  o1, (long[]  )  o2 );</span>
+<span class="pc bpc" id="L544" title="1 of 2 branches missed.">		if ( o1 instanceof byte[]    ) return Arrays.equals( (byte[]  )  o1, (byte[]  )  o2 );</span>
+<span class="pc bpc" id="L545" title="1 of 2 branches missed.">		if ( o1 instanceof short[]   ) return Arrays.equals( (short[] )  o1, (short[] )  o2 );</span>
+<span class="pc bpc" id="L546" title="1 of 2 branches missed.">		if ( o1 instanceof boolean[] ) return Arrays.equals( (boolean[]) o1, (boolean[]) o2 );</span>
+<span class="pc bpc" id="L547" title="1 of 2 branches missed.">		if ( o1 instanceof Object[]  ) return Arrays.equals( (Object[])  o1, (Object[])  o2 );</span>
+<span class="fc" id="L548">		return Objects.equals( o1, o2 );</span>
 	}
 
 	/**
@@ -550,16 +559,16 @@ public interface Val&lt;T&gt;
 	 * @return The hash code of the object.
 	 */
 	static int hashCode( Object o ) {
-<span class="pc bpc" id="L553" title="1 of 2 branches missed.">		if ( o instanceof float[]   ) return Arrays.hashCode( (float[] )  o );</span>
-<span class="fc bfc" id="L554" title="All 2 branches covered.">		if ( o instanceof int[]     ) return Arrays.hashCode( (int[]   )  o );</span>
-<span class="pc bpc" id="L555" title="1 of 2 branches missed.">		if ( o instanceof char[]    ) return Arrays.hashCode( (char[]  )  o );</span>
-<span class="pc bpc" id="L556" title="1 of 2 branches missed.">		if ( o instanceof double[]  ) return Arrays.hashCode( (double[])  o );</span>
-<span class="pc bpc" id="L557" title="1 of 2 branches missed.">		if ( o instanceof long[]    ) return Arrays.hashCode( (long[]  )  o );</span>
-<span class="pc bpc" id="L558" title="1 of 2 branches missed.">		if ( o instanceof byte[]    ) return Arrays.hashCode( (byte[]  )  o );</span>
-<span class="pc bpc" id="L559" title="1 of 2 branches missed.">		if ( o instanceof short[]   ) return Arrays.hashCode( (short[] )  o );</span>
-<span class="pc bpc" id="L560" title="1 of 2 branches missed.">		if ( o instanceof boolean[] ) return Arrays.hashCode( (boolean[]) o );</span>
-<span class="pc bpc" id="L561" title="1 of 2 branches missed.">		if ( o instanceof Object[]  ) return Arrays.hashCode( (Object[])  o );</span>
-<span class="fc" id="L562">		return Objects.hashCode( o );</span>
+<span class="pc bpc" id="L562" title="1 of 2 branches missed.">		if ( o instanceof float[]   ) return Arrays.hashCode( (float[] )  o );</span>
+<span class="fc bfc" id="L563" title="All 2 branches covered.">		if ( o instanceof int[]     ) return Arrays.hashCode( (int[]   )  o );</span>
+<span class="pc bpc" id="L564" title="1 of 2 branches missed.">		if ( o instanceof char[]    ) return Arrays.hashCode( (char[]  )  o );</span>
+<span class="pc bpc" id="L565" title="1 of 2 branches missed.">		if ( o instanceof double[]  ) return Arrays.hashCode( (double[])  o );</span>
+<span class="pc bpc" id="L566" title="1 of 2 branches missed.">		if ( o instanceof long[]    ) return Arrays.hashCode( (long[]  )  o );</span>
+<span class="pc bpc" id="L567" title="1 of 2 branches missed.">		if ( o instanceof byte[]    ) return Arrays.hashCode( (byte[]  )  o );</span>
+<span class="pc bpc" id="L568" title="1 of 2 branches missed.">		if ( o instanceof short[]   ) return Arrays.hashCode( (short[] )  o );</span>
+<span class="pc bpc" id="L569" title="1 of 2 branches missed.">		if ( o instanceof boolean[] ) return Arrays.hashCode( (boolean[]) o );</span>
+<span class="pc bpc" id="L570" title="1 of 2 branches missed.">		if ( o instanceof Object[]  ) return Arrays.hashCode( (Object[])  o );</span>
+<span class="fc" id="L571">		return Objects.hashCode( o );</span>
 	}
 
 }

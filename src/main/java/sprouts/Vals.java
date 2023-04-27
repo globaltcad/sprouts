@@ -238,7 +238,11 @@ public interface Vals<T> extends Iterable<T>
     /**
      * @return An immutable {@link List} of properties in this {@link Vals} instance.
      */
-    default List<Val<T>> toValList() { return Collections.unmodifiableList(stream().map(Val::of).collect(Collectors.toList())); }
+    default List<Val<T>> toValList() {
+        return Collections.unmodifiableList(
+                stream().map( v -> v == null ? Val.ofNullable(type(), null) : Val.of(v) ).collect(Collectors.toList())
+            );
+    }
 
     /**
      * @return An immutable set of the items in this list of properties.

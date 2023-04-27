@@ -388,7 +388,7 @@ public class AbstractVariables<T> implements Vars<T>
         return new java.util.Iterator<T>() {
             private int index = 0;
             @Override public boolean hasNext() { return index < size(); }
-            @Override public T next() { return at(index++).get(); }
+            @Override public T next() { return at(index++).orElseNull(); }
         };
     }
 

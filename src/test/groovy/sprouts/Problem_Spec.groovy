@@ -56,4 +56,26 @@ class Problem_Spec extends Specification
         and : 'The problem has the description of the exception.'
             problem.description() == exception.message
     }
+
+    def 'A Problem may have a reporter.'()
+    {
+        reportInfo """
+            A problem may have a reporter, a reference to the object
+            that reported the problem.
+            The reporter is stored in the problem
+            and can be retrieved safely through an optional.
+        """
+        given : 'A reporter.'
+            def reporter = "some reporter"
+        when : 'We create a problem from the reporter.'
+            def problem = Problem.of(reporter, "some problem", "some description")
+        then : 'The problem has the reporter.'
+            problem.reporter().isPresent()
+            problem.reporter().get() == reporter
+
+        when : 'We create a problem without a reporter.'
+            problem = Problem.of("some problem", "some description")
+        then : 'The problem does not have a reporter.'
+            !problem.reporter().isPresent()
+    }
 }

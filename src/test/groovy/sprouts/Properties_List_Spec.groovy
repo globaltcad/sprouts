@@ -667,4 +667,26 @@ class Properties_List_Spec extends Specification
             Vars.of(1, 2, 3).toString() == 'Vars<Integer>[1, 2, 3]'
     }
 
+    def 'Use "anyEmpty" to check if any of the properties are empty.'() {
+        given : 'A "Vars" instance having a few properties.'
+            var vars = Vars.ofNullable(String, "a", "b", "c")
+        expect : 'The "anyEmpty" method returns false if none of the properties are empty.'
+            !vars.anyEmpty()
+        when : 'We set one of the properties to null.'
+            vars.at(1).set(null)
+        then : 'The "anyEmpty" method returns true if any of the properties are empty.'
+            vars.anyEmpty()
+    }
+
+    def 'Use "none" to check if none of the properties match the given predicate.'() {
+        given : 'A "Vars" instance having a few properties.'
+            var vars = Vars.ofNullable(Integer, 1, 2, 3, 4, 5)
+        expect : 'The "none" method returns false if any of the properties match the given predicate.'
+            !vars.none({ it.get() % 2 == 0 })
+        when : 'We set one of the properties to null.'
+            vars.at(1).set(null)
+        then : 'The "none" method returns true if none of the properties match the given predicate.'
+            vars.none({ it.isNot(null) && it.get() == 2 })
+    }
+
 }

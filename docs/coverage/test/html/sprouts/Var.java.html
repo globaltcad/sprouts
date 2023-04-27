@@ -11,8 +11,10 @@ import java.util.function.Function;
  * 	as trigger a possible change action inside your view model.
  *  &lt;p&gt;
  * 	So for example if you have a {@link Var} which represents the username
- * 	of a form, in your UI you can register a callback which will update the UI
- * 	accordingly or trigger a view model action. &lt;br&gt;
+ * 	of a form, in your UI you can register a callback using {@link #onSet(Action)} which
+ * 	will update the UI accordingly when {@link #set(Object)} is called inside you view model.
+ * 	On the other hand, when the UI changes the property through the {@link #act(Object)}
+ * 	method, all {@link #onAct(Action)} listeners will be notified. &lt;br&gt;
  * 	Consider the following example property in your view model:
  * 	&lt;pre&gt;{@code
  * 	    // A username property with a validation action:
@@ -21,7 +23,7 @@ import java.util.function.Function;
  * 	And the following Swing-Tree example UI:
  * 	&lt;pre&gt;{@code
  * 	    UI.textField()
- * 	    .peek( ta -&gt; vm.getUsername().onSet( t -&gt; ta.setText(t.get()) ) )
+ * 	    .peek( tf -&gt; vm.getUsername().onSet( t -&gt; tf.setText(t.get()) ) )
  * 	    .onKeyReleased( e -&gt; vm.getUsername().act( ta.getText() ) );
  * 	}&lt;/pre&gt;
  * 	Your view will automatically update the text field with the item of the property
@@ -41,7 +43,9 @@ public interface Var&lt;T&gt; extends Val&lt;T&gt;
 {
 	/**
 	 *  Use this factory method to create a new {@link Var} instance
-	 *  whose item may or may not be null.
+	 *  whose item may or may not be null. &lt;br&gt;
+	 *  {@link Var} instances returned by this method will also report {@code true}
+	 *  for {@link #allowsNull()}.
 	 *  &lt;p&gt;
 	 *  &lt;b&gt;Example:&lt;/b&gt;
 	 *  &lt;pre&gt;{@code
@@ -49,39 +53,50 @@ public interface Var&lt;T&gt; extends Val&lt;T&gt;
 	 *  }&lt;/pre&gt;
 	 *  &lt;p&gt;
 	 * @param type The type of the item wrapped by the property.
-	 *             This is used to check if the item is of the correct type.
-	 * @param item The initial item of the property.
-	 *              This may be null.
+	 *             This is not only used to check if the item is of the correct type,
+	 *             but also so that the property knows its type, even if the
+	 * 	           item is null.
+	 * @param item The initial item of the property, which may be null.
 	 * @param &lt;T&gt; The type of the wrapped item.
 	 * @return A new {@link Var} instance.
 	 */
 	static &lt;T&gt; Var&lt;T&gt; ofNullable( Class&lt;T&gt; type, T item ) {
-<span class="fc" id="L59">		return AbstractVariable.ofNullable( false, type, item );</span>
+<span class="fc" id="L64">		return AbstractVariable.ofNullable( false, type, item );</span>
 	}
 
 	/**
 	 * 	This factory method returns a {@code Var} describing the given non-{@code null}
 	 * 	item similar to {@link Optional#of(Object)}, but specifically
-	 * 	designed for use with Swing-Tree.
+	 * 	designed to be used for MVVM. &lt;br&gt;
+	 * 	{@link Var} instances returned by this method will report {@code false}
+	 * 	for {@link #allowsNull()}, because &lt;b&gt;the item is guaranteed to be non-null&lt;/b&gt;.
 	 *
 	 * @param item The initial item of the property which must not be null.
 	 * @param &lt;T&gt; The type of the item held by the {@link Var}!
 	 * @return A new {@link Var} instance wrapping the given item.
+	 * @throws IllegalArgumentException If the given item is null.
 	 */
-<span class="fc" id="L71">	static &lt;T&gt; Var&lt;T&gt; of( T item ) { return AbstractVariable.of( false, item ); }</span>
+<span class="fc" id="L79">	static &lt;T&gt; Var&lt;T&gt; of( T item ) { return AbstractVariable.of( false, item ); }</span>
 
 	/**
 	 * 	This factory method returns a {@code Var} describing the given non-{@code null}
 	 * 	item similar to {@link Optional#of(Object)} and its type which
-	 * 	may also be a super type of the item.
+	 * 	may also be a super type of the supplied item. &lt;br&gt;
+	 * 	{@link Var} instances returned by this method will report {@code false}
+	 * 	for {@link #allowsNull()}, because &lt;b&gt;the item is guaranteed to be non-null&lt;/b&gt;.
 	 *
-	 * @param type The type of the item wrapped by the property.
+	 * @param type The type of the item wrapped by the property, or a super type of it.
 	 * @param item The initial item of the property which must not be null.
 	 * @param &lt;T&gt; The type of the item held by the {@link Var}!
 	 * @param &lt;V&gt; The type of the item which is wrapped by the returned {@link Var}!
 	 * @return A new {@link Var} instance wrapping the given item.
+	 * @throws IllegalArgumentException If the given item is null.
 	 */
-<span class="nc" id="L84">	static &lt;T, V extends T&gt; Var&lt;T&gt; of( Class&lt;T&gt; type, V item ) { return AbstractVariable.of( false, type, item ); }</span>
+<span class="nc" id="L95">	static &lt;T, V extends T&gt; Var&lt;T&gt; of( Class&lt;T&gt; type, V item ) { return AbstractVariable.of( false, type, item ); }</span>
+
+
+	/** {@inheritDoc} */
+	@Override Var&lt;T&gt; onSet( Action&lt;Val&lt;T&gt;&gt; action );
 
 	/**
 	 *  This method provides the ability to change the state of the wrapper.
@@ -145,14 +160,14 @@ public interface Var&lt;T&gt; extends Val&lt;T&gt;
 	 * @return the result of applying an {@code Optional}-bearing mapping
 	 */
 	@Override default Var&lt;T&gt; map( java.util.function.Function&lt;T, T&gt; mapper ) {
-<span class="nc bnc" id="L148" title="All 2 branches missed.">		if ( !isPresent() )</span>
-<span class="nc" id="L149">			return Var.ofNullable( type(), null );</span>
+<span class="nc bnc" id="L163" title="All 2 branches missed.">		if ( !isPresent() )</span>
+<span class="nc" id="L164">			return Var.ofNullable( type(), null );</span>
 
-<span class="nc" id="L151">		T newValue = mapper.apply( orElseNull() );</span>
-<span class="nc bnc" id="L152" title="All 2 branches missed.">		if ( newValue == null )</span>
-<span class="nc" id="L153">			return Var.ofNullable( type(), null );</span>
+<span class="nc" id="L166">		T newValue = mapper.apply( orElseNull() );</span>
+<span class="nc bnc" id="L167" title="All 2 branches missed.">		if ( newValue == null )</span>
+<span class="nc" id="L168">			return Var.ofNullable( type(), null );</span>
 
-<span class="nc" id="L155">		return Var.of( newValue );</span>
+<span class="nc" id="L170">		return Var.of( newValue );</span>
 	}
 
 	/**
@@ -162,13 +177,13 @@ public interface Var&lt;T&gt; extends Val&lt;T&gt;
 	 * @param &lt;U&gt; The type of the item returned from the mapping function
 	 */
 	@Override default &lt;U&gt; Var&lt;U&gt; mapTo( Class&lt;U&gt; type, java.util.function.Function&lt;T, U&gt; mapper ) {
-<span class="fc bfc" id="L165" title="All 2 branches covered.">		if ( !isPresent() )</span>
-<span class="fc" id="L166">			return Var.ofNullable( type, null );</span>
+<span class="fc bfc" id="L180" title="All 2 branches covered.">		if ( !isPresent() )</span>
+<span class="fc" id="L181">			return Var.ofNullable( type, null );</span>
 
-<span class="fc" id="L168">		U newValue = mapper.apply( orElseNull() );</span>
-<span class="pc bpc" id="L169" title="1 of 2 branches missed.">		if ( newValue == null )</span>
-<span class="nc" id="L170">			return Var.ofNullable( type, null );</span>
-<span class="fc" id="L171">		return Var.of( newValue );</span>
+<span class="fc" id="L183">		U newValue = mapper.apply( orElseNull() );</span>
+<span class="pc bpc" id="L184" title="1 of 2 branches missed.">		if ( newValue == null )</span>
+<span class="nc" id="L185">			return Var.ofNullable( type, null );</span>
+<span class="fc" id="L186">		return Var.of( newValue );</span>
 	}
 
 }

@@ -80,65 +80,71 @@ public abstract class AbstractVariable&lt;T&gt; extends AbstractValue&lt;T&gt; i
 	}
 
 	/** {@inheritDoc} */
+	@Override public Var&lt;T&gt; onSet(Action&lt;Val&lt;T&gt;&gt; displayAction ) {
+<span class="fc" id="L84">		_viewActions.add(displayAction);</span>
+<span class="fc" id="L85">		return this;</span>
+	}
+
+	/** {@inheritDoc} */
 	@Override public Var&lt;T&gt; onAct( Action&lt;Val&lt;T&gt;&gt; action ) {
-<span class="fc" id="L84">		Objects.requireNonNull(action);</span>
-<span class="fc" id="L85">		_actions.add(action);</span>
-<span class="fc" id="L86">		return this;</span>
+<span class="fc" id="L90">		Objects.requireNonNull(action);</span>
+<span class="fc" id="L91">		_actions.add(action);</span>
+<span class="fc" id="L92">		return this;</span>
 	}
 
 	/** {@inheritDoc} */
 	@Override public Var&lt;T&gt; fireAct() {
-<span class="fc" id="L91">		_triggerActions( _actions);</span>
-<span class="fc" id="L92">		_viewers.forEach( v -&gt; v.accept(_value) );</span>
-<span class="fc" id="L93">		return this;</span>
+<span class="fc" id="L97">		_triggerActions( _actions);</span>
+<span class="fc" id="L98">		_viewers.forEach( v -&gt; v.accept(_value) );</span>
+<span class="fc" id="L99">		return this;</span>
 	}
 
 	/** {@inheritDoc} */
 	@Override public Var&lt;T&gt; act( T newValue ) {
-<span class="fc bfc" id="L98" title="All 2 branches covered.">		if ( _isImmutable )</span>
-<span class="fc" id="L99">			throw new UnsupportedOperationException(&quot;This variable is immutable!&quot;);</span>
-<span class="pc bpc" id="L100" title="1 of 2 branches missed.">		if ( _setInternal(newValue) )</span>
-<span class="fc" id="L101">			return fireAct();</span>
-<span class="nc" id="L102">		return this;</span>
+<span class="fc bfc" id="L104" title="All 2 branches covered.">		if ( _isImmutable )</span>
+<span class="fc" id="L105">			throw new UnsupportedOperationException(&quot;This variable is immutable!&quot;);</span>
+<span class="pc bpc" id="L106" title="1 of 2 branches missed.">		if ( _setInternal(newValue) )</span>
+<span class="fc" id="L107">			return fireAct();</span>
+<span class="nc" id="L108">		return this;</span>
 	}
 
 	/** {@inheritDoc} */
 	@Override
 	public Var&lt;T&gt; set( T newItem) {
-<span class="fc bfc" id="L108" title="All 2 branches covered.">		if ( _isImmutable )</span>
-<span class="fc" id="L109">			throw new UnsupportedOperationException(&quot;This variable is immutable!&quot;);</span>
-<span class="fc bfc" id="L110" title="All 2 branches covered.">		if ( _setInternal(newItem) ) this.fireSet();</span>
-<span class="fc" id="L111">		return this;</span>
+<span class="fc bfc" id="L114" title="All 2 branches covered.">		if ( _isImmutable )</span>
+<span class="fc" id="L115">			throw new UnsupportedOperationException(&quot;This variable is immutable!&quot;);</span>
+<span class="fc bfc" id="L116" title="All 2 branches covered.">		if ( _setInternal(newItem) ) this.fireSet();</span>
+<span class="fc" id="L117">		return this;</span>
 	}
 
 	private boolean _setInternal( T newValue ) {
-<span class="fc bfc" id="L115" title="All 4 branches covered.">		if ( !_allowsNull &amp;&amp; newValue == null )</span>
-<span class="fc" id="L116">			throw new NullPointerException(</span>
+<span class="fc bfc" id="L121" title="All 4 branches covered.">		if ( !_allowsNull &amp;&amp; newValue == null )</span>
+<span class="fc" id="L122">			throw new NullPointerException(</span>
 					&quot;This property is configured to not allow null values! &quot; +
 					&quot;If you want your property to allow null values, use the 'ofNullable(Class, T)' factory method.&quot;
 				);
 
-<span class="fc bfc" id="L121" title="All 2 branches covered.">		if ( !Objects.equals( _value, newValue ) ) {</span>
+<span class="fc bfc" id="L127" title="All 2 branches covered.">		if ( !Objects.equals( _value, newValue ) ) {</span>
 			// First we check if the value is compatible with the type
-<span class="pc bpc" id="L123" title="1 of 4 branches missed.">			if ( newValue != null &amp;&amp; !_type.isAssignableFrom(newValue.getClass()) )</span>
-<span class="nc" id="L124">				throw new IllegalArgumentException(</span>
-<span class="nc" id="L125">						&quot;The provided type '&quot;+newValue.getClass()+&quot;' of the new value is not compatible &quot; +</span>
+<span class="pc bpc" id="L129" title="1 of 4 branches missed.">			if ( newValue != null &amp;&amp; !_type.isAssignableFrom(newValue.getClass()) )</span>
+<span class="nc" id="L130">				throw new IllegalArgumentException(</span>
+<span class="nc" id="L131">						&quot;The provided type '&quot;+newValue.getClass()+&quot;' of the new value is not compatible &quot; +</span>
 						&quot;with the type '&quot;+_type+&quot;' of this property&quot;
 					);
 
-<span class="fc" id="L129">			_value = newValue;</span>
-<span class="fc" id="L130">			return true;</span>
+<span class="fc" id="L135">			_value = newValue;</span>
+<span class="fc" id="L136">			return true;</span>
 		}
-<span class="fc" id="L132">		return false;</span>
+<span class="fc" id="L138">		return false;</span>
 	}
 
 	/** {@inheritDoc} */
 	@Override public final &lt;U&gt; Val&lt;U&gt; viewAs( Class&lt;U&gt; type, java.util.function.Function&lt;T, U&gt; mapper ) {
-<span class="fc" id="L137">		Var&lt;U&gt; var = mapTo(type, mapper);</span>
+<span class="fc" id="L143">		Var&lt;U&gt; var = mapTo(type, mapper);</span>
 		// Now we register a live update listener to this property
-<span class="fc" id="L139">		this.onSet(v -&gt; var.set( mapper.apply( v.orElseNull() ) ));</span>
-<span class="fc" id="L140">		_viewers.add( v -&gt; var.act( mapper.apply( v ) ) );</span>
-<span class="fc" id="L141">		return var;</span>
+<span class="fc" id="L145">		this.onSet(v -&gt; var.set( mapper.apply( v.orElseNull() ) ));</span>
+<span class="fc" id="L146">		_viewers.add( v -&gt; var.act( mapper.apply( v ) ) );</span>
+<span class="fc" id="L147">		return var;</span>
 	}
 
 }

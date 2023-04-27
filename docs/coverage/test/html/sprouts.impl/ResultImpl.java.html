@@ -11,71 +11,79 @@ import java.util.function.Function;
 
 public class ResultImpl&lt;V&gt; implements Result&lt;V&gt;
 {
-	private final String id;
-	private final Class&lt;V&gt; type;
-	private final V value;
-	private final List&lt;Problem&gt; problems;
+	private final String _id;
+	private final Class&lt;V&gt; _type;
+	private final V _value;
+	private final List&lt;Problem&gt; _problems;
 
 
 <span class="fc" id="L20">	public ResultImpl(String id, Class&lt;V&gt; type, List&lt;Problem&gt; problems, V value) {</span>
 <span class="fc" id="L21">		Objects.requireNonNull(type);</span>
 <span class="fc" id="L22">		Objects.requireNonNull(id);</span>
 <span class="fc" id="L23">		Objects.requireNonNull(problems);</span>
-<span class="fc" id="L24">		this.id = id;</span>
-<span class="fc" id="L25">		this.type = type;</span>
-<span class="fc" id="L26">		this.problems = problems;</span>
-<span class="fc" id="L27">		this.value = value;</span>
+<span class="fc" id="L24">		_id = id;</span>
+<span class="fc" id="L25">		_type = type;</span>
+<span class="fc" id="L26">		_problems = problems;</span>
+<span class="fc" id="L27">		_value = value;</span>
 <span class="fc" id="L28">	}</span>
 
 	/** {@inheritDoc} */
-<span class="fc" id="L31">	@Override public Class&lt;V&gt; type() { return type; }</span>
+<span class="fc" id="L31">	@Override public Class&lt;V&gt; type() { return _type; }</span>
 
 	/** {@inheritDoc} */
-<span class="fc" id="L34">	@Override public String id() { return id; }</span>
-
-	/** {@inheritDoc} */
-	@Override
-<span class="nc" id="L38">	public Val&lt;V&gt; withId( String id ) { return new ResultImpl&lt;&gt;(id, type, problems, value); }</span>
-
-	/** {@inheritDoc} */
-<span class="fc" id="L41">	@Override public List&lt;Problem&gt; problems() { return problems; }</span>
+<span class="fc" id="L34">	@Override public String id() { return _id; }</span>
 
 	/** {@inheritDoc} */
 	@Override
-<span class="nc bnc" id="L45" title="All 2 branches missed.">	public V orElseNullable(V other) { return value == null ? other : value; }</span>
+<span class="nc" id="L38">	public Val&lt;V&gt; withId( String id ) { return new ResultImpl&lt;&gt;(id, _type, _problems, _value); }</span>
 
 	/** {@inheritDoc} */
-<span class="fc" id="L48">	@Override public V orElseNull() { return value; }</span>
+<span class="fc" id="L41">	@Override public List&lt;Problem&gt; problems() { return _problems; }</span>
+
+	/** {@inheritDoc} */
+	@Override
+<span class="nc bnc" id="L45" title="All 2 branches missed.">	public V orElseNullable(V other) { return _value == null ? other : _value; }</span>
+
+	/** {@inheritDoc} */
+<span class="fc" id="L48">	@Override public V orElseNull() { return _value; }</span>
 
 	/** {@inheritDoc} */
 	@Override
 	public Val&lt;V&gt; map(Function&lt;V, V&gt; mapper) {
-<span class="fc" id="L53">		return Val.ofNullable(type(), mapper.apply(value));</span>
+<span class="fc" id="L53">		Objects.requireNonNull(mapper);</span>
+<span class="fc" id="L54">		return Val.ofNullable(type(), mapper.apply(_value));</span>
 	}
 
 	/** {@inheritDoc} */
 	@Override
 	public &lt;U&gt; Val&lt;U&gt; mapTo(Class&lt;U&gt; type, Function&lt;V, U&gt; mapper) {
-<span class="nc" id="L59">		return Val.ofNullable(type, mapper.apply(value));</span>
+<span class="nc" id="L60">		Objects.requireNonNull(type);</span>
+<span class="nc" id="L61">		Objects.requireNonNull(mapper);</span>
+<span class="nc" id="L62">		return Val.ofNullable(type, mapper.apply(_value));</span>
 	}
 
 	/** {@inheritDoc} */
 	@Override
 	public &lt;U&gt; Val&lt;U&gt; viewAs(Class&lt;U&gt; type, Function&lt;V, U&gt; mapper) {
-<span class="nc" id="L65">		return Val.ofNullable(this.type, this.value).viewAs(type, mapper);</span>
+<span class="nc" id="L68">		Objects.requireNonNull(type);</span>
+<span class="nc" id="L69">		Objects.requireNonNull(mapper);</span>
+<span class="nc" id="L70">		return Val.ofNullable(this._type, this._value).viewAs(type, mapper);</span>
 	}
 
 	@Override
-	public Val&lt;V&gt; onSet(Action&lt;Val&lt;V&gt;&gt; displayAction) {
-<span class="nc" id="L70">		throw new UnsupportedOperationException(&quot;Not implemented yet&quot;);</span>
+	public Val&lt;V&gt; onSet( Action&lt;Val&lt;V&gt;&gt; displayAction ) {
+<span class="nc" id="L75">		Objects.requireNonNull(displayAction);</span>
+		/* A Result is immutable, so this method is not supported */
+<span class="nc" id="L77">		return this;</span>
 	}
 
 	@Override
 	public Val&lt;V&gt; fireSet() {
-<span class="nc" id="L75">		throw new UnsupportedOperationException(&quot;Not implemented yet&quot;);</span>
+		/* A Result is immutable, so this method is not supported */
+<span class="nc" id="L83">		return this;</span>
 	}
 
 	/** {@inheritDoc} */
-<span class="nc" id="L79">	@Override public boolean allowsNull() { return true; }</span>
+<span class="nc" id="L87">	@Override public boolean allowsNull() { return true; }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>
