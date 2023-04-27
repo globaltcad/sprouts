@@ -15,7 +15,7 @@ plugins {
 
 String GROUP_ID = "io.github.globaltcad"
 String PROJECT  = "sprouts"
-String VERSION  = "0.1.2"
+String VERSION  = "0.2.0"
 
 group GROUP_ID
 version VERSION
@@ -86,10 +86,8 @@ task cleanForDeployment(type: Delete) {
 task deploy() {
 
     // Expected before : dependsOn 'cleanForDeployment'
-
     dependsOn 'check'
     dependsOn 'jar'
-    dependsOn 'javadoc'
     dependsOn 'releaseJDocs'
 
 }
@@ -98,8 +96,9 @@ task deploy() {
 //     go to https://s01.oss.sonatype.org/#stagingRepositories
 //     close and release the repository
 
-
+// Depends on javadocs Task
 task releaseJDocs(type: Copy) {
+    dependsOn 'javadoc'
     from "$rootDir/build/docs/javadoc"
     into "$rootDir/docs/jdocs"
 }
