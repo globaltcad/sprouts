@@ -7,8 +7,9 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
- *  A list of mutable properties.
- *  Use the {@link #onChange(Action)} method to register a listener for changes to the list.
+ *  A list of mutable list of properties that can be observed for changes.
+ *  Contrary to the supertype {@link Vals}, this interface provides methods for mutating the list.
+ *  Use the {@link #onChange(Action)} method to register change listeners to the list. <br>
  *
  * @param <T> The type of the properties.
  */

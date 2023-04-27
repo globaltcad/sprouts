@@ -7,7 +7,7 @@ import java.util.Optional;
  *  A problem is an issue that can be reported and attached to a {@link Result}.
  *  It is used to describe what went wrong in the process of obtaining a value
  *  and is usually attached to a {@link Result} that does not contain a value.
- *  The {@link Problem} exposes various properties that describe the problem,
+ *  The {@link Problem} exposes various properties that describe what went wrong,
  *  such as a title, a description, an optional reporter object and an
  *  optional {@link Exception} that was thrown while obtaining the value.
  */
@@ -56,7 +56,6 @@ public interface Problem
 		Objects.requireNonNull(title);
 		Objects.requireNonNull(description);
 		return new Problem() {
-			@Override public Optional<Object> reporter() { return Optional.empty(); }
 			@Override public String title() { return title; }
 			@Override public String description() { return description; }
 			@Override public String toString() { return String.format("%s:\n%s", title, description); }

@@ -11,68 +11,76 @@ import java.util.function.Function;
 
 public class ResultImpl<V> implements Result<V>
 {
-	private final String id;
-	private final Class<V> type;
-	private final V value;
-	private final List<Problem> problems;
+	private final String _id;
+	private final Class<V> _type;
+	private final V _value;
+	private final List<Problem> _problems;
 
 
 	public ResultImpl(String id, Class<V> type, List<Problem> problems, V value) {
 		Objects.requireNonNull(type);
 		Objects.requireNonNull(id);
 		Objects.requireNonNull(problems);
-		this.id = id;
-		this.type = type;
-		this.problems = problems;
-		this.value = value;
+		_id = id;
+		_type = type;
+		_problems = problems;
+		_value = value;
 	}
 
 	/** {@inheritDoc} */
-	@Override public Class<V> type() { return type; }
+	@Override public Class<V> type() { return _type; }
 
 	/** {@inheritDoc} */
-	@Override public String id() { return id; }
-
-	/** {@inheritDoc} */
-	@Override
-	public Val<V> withId( String id ) { return new ResultImpl<>(id, type, problems, value); }
-
-	/** {@inheritDoc} */
-	@Override public List<Problem> problems() { return problems; }
+	@Override public String id() { return _id; }
 
 	/** {@inheritDoc} */
 	@Override
-	public V orElseNullable(V other) { return value == null ? other : value; }
+	public Val<V> withId( String id ) { return new ResultImpl<>(id, _type, _problems, _value); }
 
 	/** {@inheritDoc} */
-	@Override public V orElseNull() { return value; }
+	@Override public List<Problem> problems() { return _problems; }
+
+	/** {@inheritDoc} */
+	@Override
+	public V orElseNullable(V other) { return _value == null ? other : _value; }
+
+	/** {@inheritDoc} */
+	@Override public V orElseNull() { return _value; }
 
 	/** {@inheritDoc} */
 	@Override
 	public Val<V> map(Function<V, V> mapper) {
-		return Val.ofNullable(type(), mapper.apply(value));
+		Objects.requireNonNull(mapper);
+		return Val.ofNullable(type(), mapper.apply(_value));
 	}
 
 	/** {@inheritDoc} */
 	@Override
 	public <U> Val<U> mapTo(Class<U> type, Function<V, U> mapper) {
-		return Val.ofNullable(type, mapper.apply(value));
+		Objects.requireNonNull(type);
+		Objects.requireNonNull(mapper);
+		return Val.ofNullable(type, mapper.apply(_value));
 	}
 
 	/** {@inheritDoc} */
 	@Override
 	public <U> Val<U> viewAs(Class<U> type, Function<V, U> mapper) {
-		return Val.ofNullable(this.type, this.value).viewAs(type, mapper);
+		Objects.requireNonNull(type);
+		Objects.requireNonNull(mapper);
+		return Val.ofNullable(this._type, this._value).viewAs(type, mapper);
 	}
 
 	@Override
-	public Val<V> onSet(Action<Val<V>> displayAction) {
-		throw new UnsupportedOperationException("Not implemented yet");
+	public Val<V> onSet( Action<Val<V>> displayAction ) {
+		Objects.requireNonNull(displayAction);
+		/* A Result is immutable, so this method is not supported */
+		return this;
 	}
 
 	@Override
 	public Val<V> fireSet() {
-		throw new UnsupportedOperationException("Not implemented yet");
+		/* A Result is immutable, so this method is not supported */
+		return this;
 	}
 
 	/** {@inheritDoc} */

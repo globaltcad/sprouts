@@ -10,7 +10,8 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 /**
- *  An immutable list of immutable MVVM properties.
+ *  An immutable view of a list of immutably viewed properties that can be observed,
+ *  iterated over, mapped, filtered, turned into a stream, and more.
  *
  * @param <T> The type of the properties.
  */
@@ -160,8 +161,8 @@ public interface Vals<T> extends Iterable<T>
     default int indexOf( T value )
     {
         int index = 0;
-        for( T v : this ) {
-            if( Val.equals(v,value) ) return index;
+        for ( T v : this ) {
+            if ( Val.equals(v,value) ) return index;
             index++;
         }
         return -1;
@@ -188,9 +189,9 @@ public interface Vals<T> extends Iterable<T>
     default boolean is( Vals<T> other )
     {
         if ( size() != other.size() ) return false;
-        for ( int i = 0; i < size(); i++ ) {
-            if( !this.at(i).is(other.at(i)) ) return false;
-        }
+        for ( int i = 0; i < size(); i++ )
+            if ( !this.at(i).is(other.at(i)) ) return false;
+
         return true;
     }
 

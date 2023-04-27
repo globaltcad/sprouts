@@ -10,9 +10,8 @@ import java.util.stream.Collectors;
  */
 public class AbstractVariables<T> implements Vars<T>
 {
-
     @SafeVarargs
-    public static <T> Vars<T> of(boolean immutable, Class<T> type, Var<T>... vars) {
+    public static <T> Vars<T> of( boolean immutable, Class<T> type, Var<T>... vars ) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(vars);
         return new AbstractVariables<T>( immutable, type, false, vars ){};
@@ -249,6 +248,8 @@ public class AbstractVariables<T> implements Vars<T>
         if ( _isImmutable ) throw new UnsupportedOperationException("This is an immutable list.");
         for ( int i = 0; i < vals.size(); i++ ) {
             Val<T> val = vals.at(i);
+            _checkNullSafetyOf(val);
+
             if ( val instanceof Var )
                 _variables.add((Var<T>) val);
             else
@@ -265,7 +266,7 @@ public class AbstractVariables<T> implements Vars<T>
 
     /** {@inheritDoc} */
     @Override
-    public Vars<T> retainAll(Vars<T> vars) {
+    public Vars<T> retainAll( Vars<T> vars ) {
         if ( _isImmutable ) throw new UnsupportedOperationException("This is an immutable list.");
 
         boolean changed = _variables.retainAll(vars.toValList());
@@ -367,7 +368,8 @@ public class AbstractVariables<T> implements Vars<T>
     ) {
         List<Action<ValsDelegate<T>>> removableActions = new ArrayList<>();
         ValsDelegate<T> listChangeDelegate = _createDelegate(index, type, newVal, oldVal);
-        for ( Action<ValsDelegate<T>> action : _viewActions ) {
+
+        for ( Action<ValsDelegate<T>> action : _viewActions )
             try {
                 if ( action.canBeRemoved() )
                     removableActions.add(action);
@@ -376,7 +378,7 @@ public class AbstractVariables<T> implements Vars<T>
             } catch ( Exception e ) {
                 e.printStackTrace();
             }
-        }
+
         _viewActions.removeAll(removableActions);
     }
 
@@ -410,10 +412,10 @@ public class AbstractVariables<T> implements Vars<T>
         if( obj instanceof Vals ) {
             @SuppressWarnings("unchecked")
             Vals<T> other = (Vals<T>) obj;
-            if( size() != other.size() ) return false;
-            for( int i = 0; i < size(); i++ ) {
-                if( !this.at(i).equals(other.at(i)) ) return false;
-            }
+            if ( size() != other.size() ) return false;
+            for ( int i = 0; i < size(); i++ )
+                if ( !this.at(i).equals(other.at(i)) ) return false;
+
             return true;
         }
         return false;
@@ -425,7 +427,7 @@ public class AbstractVariables<T> implements Vars<T>
                 _checkNullSafetyOf(val);
     }
 
-    private void _checkNullSafetyOf(Val<T> value) {
+    private void _checkNullSafetyOf( Val<T> value ) {
         Objects.requireNonNull(value);
         if ( !_allowsNull && value.allowsNull() )
             throw new IllegalArgumentException("Null values are not allowed in this property list.");

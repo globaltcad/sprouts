@@ -11,8 +11,10 @@ import java.util.function.Function;
  * 	as trigger a possible change action inside your view model.
  *  <p>
  * 	So for example if you have a {@link Var} which represents the username
- * 	of a form, in your UI you can register a callback which will update the UI
- * 	accordingly or trigger a view model action. <br>
+ * 	of a form, in your UI you can register a callback using {@link #onSet(Action)} which
+ * 	will update the UI accordingly when {@link #set(Object)} is called inside you view model.
+ * 	On the other hand, when the UI changes the property through the {@link #act(Object)}
+ * 	method, all {@link #onAct(Action)} listeners will be notified. <br>
  * 	Consider the following example property in your view model:
  * 	<pre>{@code
  * 	    // A username property with a validation action:
@@ -21,7 +23,7 @@ import java.util.function.Function;
  * 	And the following Swing-Tree example UI:
  * 	<pre>{@code
  * 	    UI.textField()
- * 	    .peek( ta -> vm.getUsername().onSet( t -> ta.setText(t.get()) ) )
+ * 	    .peek( tf -> vm.getUsername().onSet( t -> tf.setText(t.get()) ) )
  * 	    .onKeyReleased( e -> vm.getUsername().act( ta.getText() ) );
  * 	}</pre>
  * 	Your view will automatically update the text field with the item of the property
@@ -41,7 +43,9 @@ public interface Var<T> extends Val<T>
 {
 	/**
 	 *  Use this factory method to create a new {@link Var} instance
-	 *  whose item may or may not be null.
+	 *  whose item may or may not be null. <br>
+	 *  {@link Var} instances returned by this method will also report {@code true}
+	 *  for {@link #allowsNull()}.
 	 *  <p>
 	 *  <b>Example:</b>
 	 *  <pre>{@code
@@ -49,9 +53,10 @@ public interface Var<T> extends Val<T>
 	 *  }</pre>
 	 *  <p>
 	 * @param type The type of the item wrapped by the property.
-	 *             This is used to check if the item is of the correct type.
-	 * @param item The initial item of the property.
-	 *              This may be null.
+	 *             This is not only used to check if the item is of the correct type,
+	 *             but also so that the property knows its type, even if the
+	 * 	           item is null.
+	 * @param item The initial item of the property, which may be null.
 	 * @param <T> The type of the wrapped item.
 	 * @return A new {@link Var} instance.
 	 */
@@ -62,7 +67,9 @@ public interface Var<T> extends Val<T>
 	/**
 	 * 	This factory method returns a {@code Var} describing the given non-{@code null}
 	 * 	item similar to {@link Optional#of(Object)}, but specifically
-	 * 	designed for use with Swing-Tree.
+	 * 	designed to be used for MVVM. <br>
+	 * 	{@link Var} instances returned by this method will report {@code false}
+	 * 	for {@link #allowsNull()}, because <b>the item is guaranteed to be non-null</b>.
 	 *
 	 * @param item The initial item of the property which must not be null.
 	 * @param <T> The type of the item held by the {@link Var}!
@@ -74,9 +81,11 @@ public interface Var<T> extends Val<T>
 	/**
 	 * 	This factory method returns a {@code Var} describing the given non-{@code null}
 	 * 	item similar to {@link Optional#of(Object)} and its type which
-	 * 	may also be a super type of the item.
+	 * 	may also be a super type of the supplied item. <br>
+	 * 	{@link Var} instances returned by this method will report {@code false}
+	 * 	for {@link #allowsNull()}, because <b>the item is guaranteed to be non-null</b>.
 	 *
-	 * @param type The type of the item wrapped by the property.
+	 * @param type The type of the item wrapped by the property, or a super type of it.
 	 * @param item The initial item of the property which must not be null.
 	 * @param <T> The type of the item held by the {@link Var}!
 	 * @param <V> The type of the item which is wrapped by the returned {@link Var}!

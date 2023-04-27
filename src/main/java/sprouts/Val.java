@@ -507,7 +507,16 @@ public interface Val<T>
 	Val<T> fireSet();
 
 	/**
-	 * @return If this property can contain null.
+	 *  A property will only allow null items if it was constructed with a "ofNullable(..)" factory method.
+	 *  Otherwise, it will throw an {@link IllegalArgumentException} when trying to set a {@code null} reference.
+	 *  This flag cannot be changed after the property has been constructed!
+	 *  <br>
+	 *  The purpose of this method is to warn the UI that this property can contain null items,
+	 *  so that it may throw an exception or do something else to handle this case.
+	 *  For many types of properties {@code null} is simply nonsensical, like {@link String} for example,
+	 *  where the absence of a value is represented by an empty string.
+	 *
+	 * @return {@code true}, if this property can contain null, {@code false} otherwise.
 	 */
 	boolean allowsNull();
 
