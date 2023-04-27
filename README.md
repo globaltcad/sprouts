@@ -13,7 +13,7 @@ Null-safe, functional and event based properties.
 <dependency>
   <groupId>io.github.globaltcad</groupId>
   <artifactId>sprouts</artifactId>
-  <version>0.0.2</version>
+  <version>0.2.0</version>
 </dependency>
 ```
 
@@ -22,11 +22,11 @@ Null-safe, functional and event based properties.
 ## Getting started with Gradle ##
 Groovy DSL:
 ```
-implementation 'io.github.globaltcad:sprouts:0.0.2'
+implementation 'io.github.globaltcad:sprouts:0.2.0'
 ```
 Kotlin DSL:
 ```
-implementation("io.github.globaltcad:sprouts:0.0.2")
+implementation("io.github.globaltcad:sprouts:0.2.0")
 ```
 ---
 
@@ -45,13 +45,13 @@ allprojects {
 ...either by specifiying the version tag:
 ```
 dependencies {
-	implementation 'com.github.globaltcad:sprouts:0.0.2'
+	implementation 'com.github.globaltcad:sprouts:0.2.0'
 }
 ```
 ...or by using a custom commit hash instead:
 ```
 dependencies {
-	implementation 'com.github.globaltcad:sprouts:7c74811'//Any commit hash...
+	implementation 'com.github.globaltcad:sprouts:52f9e5e'//Any commit hash...
 }
 ```
 ---
