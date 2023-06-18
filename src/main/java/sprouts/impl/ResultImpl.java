@@ -1,9 +1,6 @@
 package sprouts.impl;
 
-import sprouts.Action;
-import sprouts.Problem;
-import sprouts.Result;
-import sprouts.Val;
+import sprouts.*;
 
 import java.util.List;
 import java.util.Objects;
@@ -85,4 +82,18 @@ public class ResultImpl<V> implements Result<V>
 
 	/** {@inheritDoc} */
 	@Override public boolean allowsNull() { return true; }
+
+	@Override
+	public Noticeable subscribe(Listener listener) {
+		Objects.requireNonNull(listener);
+		/* A Result is immutable, so this method is not supported */
+		return this;
+	}
+
+	@Override
+	public Noticeable unsubscribe(Listener listener) {
+		Objects.requireNonNull(listener);
+		/* A Result is immutable, so this method is not supported */
+		return this;
+	}
 }

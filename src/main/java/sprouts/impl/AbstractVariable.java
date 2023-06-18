@@ -1,8 +1,6 @@
 package sprouts.impl;
 
-import sprouts.Action;
-import sprouts.Val;
-import sprouts.Var;
+import sprouts.*;
 
 import javax.swing.border.Border;
 import java.util.ArrayList;
@@ -18,24 +16,24 @@ import java.util.function.Consumer;
  * 
  * @param <T> The type of the value wrapped by a given property...
  */
-public abstract class AbstractVariable<T> extends AbstractValue<T> implements Var<T>
+public class AbstractVariable<T> extends AbstractValue<T> implements Var<T>
 {
 	public static <T> Var<T> ofNullable( boolean immutable, Class<T> type, T value ) {
-		return new AbstractVariable<T>( immutable, type, value, NO_ID, Collections.emptyList(), true ){};
+		return new AbstractVariable<T>( immutable, type, value, NO_ID, Collections.emptyList(), true );
 	}
 
 	public static <T> Var<T> of( boolean immutable, Class<T> type, T value ) {
-		return new AbstractVariable<T>( immutable, type, value, NO_ID, Collections.emptyList(), false ){};
+		return new AbstractVariable<T>( immutable, type, value, NO_ID, Collections.emptyList(), false );
 	}
 
 	public static <T> Var<T> of( boolean immutable, T iniValue ) {
 		Objects.requireNonNull(iniValue);
-		return new AbstractVariable<T>( immutable, (Class<T>) iniValue.getClass(), iniValue, NO_ID, Collections.emptyList(), false ){};
+		return new AbstractVariable<T>( immutable, (Class<T>) iniValue.getClass(), iniValue, NO_ID, Collections.emptyList(), false );
 	}
 
 	public static Var<Border> of( boolean immutable, Border iniValue ) {
 		Objects.requireNonNull(iniValue);
-		return new AbstractVariable<Border>( immutable, Border.class, iniValue, NO_ID, Collections.emptyList(), false ){};
+		return new AbstractVariable<Border>( immutable, Border.class, iniValue, NO_ID, Collections.emptyList(), false );
 	}
 
 	private final boolean _isImmutable;
@@ -74,13 +72,13 @@ public abstract class AbstractVariable<T> extends AbstractValue<T> implements Va
 
 	/** {@inheritDoc} */
 	@Override public Var<T> withId( String id ) {
-		AbstractVariable<T> newVar = new AbstractVariable<T>( _isImmutable, _type, _value, id, _actions, _allowsNull ){};
+		AbstractVariable<T> newVar = new AbstractVariable<T>( _isImmutable, _type, _value, id, _actions, _allowsNull );
 		newVar._viewActions.addAll(_viewActions);
 		return newVar;
 	}
 
 	/** {@inheritDoc} */
-	@Override public Var<T> onSet(Action<Val<T>> displayAction ) {
+	@Override public Var<T> onSet( Action<Val<T>> displayAction ) {
 		_viewActions.add(displayAction);
 		return this;
 	}
@@ -147,4 +145,22 @@ public abstract class AbstractVariable<T> extends AbstractValue<T> implements Va
 		return var;
 	}
 
+	@Override
+	public Noticeable subscribe( Listener listener ) {
+		return onSet( new SproutChangeListener<>(listener) );
+	}
+
+	@Override
+	public Noticeable unsubscribe(Listener listener) {
+		for ( Action<?> a : _viewActions )
+			if ( a instanceof SproutChangeListener ) {
+				SproutChangeListener<?> pcl = (SproutChangeListener<?>) a;
+				if ( pcl.listener() == listener ) {
+					_viewActions.remove(a);
+					return this;
+				}
+			}
+
+		return this;
+	}
 }
