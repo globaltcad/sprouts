@@ -9,14 +9,14 @@
     "failures":"0",
     "errors":"0",
     "skipped":"0",
-    "duration":"0.011 seconds"
+    "duration":"?"
   },
   "headers":[],"tags":{},"see":[],
   "features":[ 
     {
       "id":"We can create a problem from a title.",
       "result":"PASS",
-      "duration":"0.004 seconds",
+      "duration":"?",
       "iterations":{
       "tags":{},"see":[],"extraInfo":["\n            The most basic type of problem is a problem with a title,\n            it does not have any other information, but it is still a problem.\n        "]
       },
@@ -33,7 +33,7 @@
     {
       "id":"A Problem can be created from an exception.",
       "result":"PASS",
-      "duration":"0.003 seconds",
+      "duration":"?",
       "iterations":{
       "tags":{},"see":[],"extraInfo":["\n            A problem can be created from an exception.\n            The exception is stored in the problem\n            and can be retrieved later.\n            The title as well as description of the problem\n            are derived from the exception.\n        "]
       },
@@ -54,7 +54,7 @@
     {
       "id":"A Problem may have a reporter.",
       "result":"PASS",
-      "duration":"0.001 seconds",
+      "duration":"?",
       "iterations":{
       "tags":{},"see":[],"extraInfo":["\n            A problem may have a reporter, a reference to the object\n            that reported the problem.\n            The reporter is stored in the problem\n            and can be retrieved safely through an optional.\n        "]
       },

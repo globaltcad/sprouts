@@ -9,14 +9,14 @@
     "failures":"0",
     "errors":"0",
     "skipped":"0",
-    "duration":"0.062 seconds"
+    "duration":"?"
   },
   "headers":[],"tags":{},"see":[],
   "features":[ 
     {
       "id":"We can create an event using the \"Event.create\" factory method.",
       "result":"PASS",
-      "duration":"0.027 seconds",
+      "duration":"?",
       "iterations":{
       "tags":{},"see":[],"extraInfo":[]
       },
@@ -37,7 +37,7 @@
     {
       "id":"We can create an event using the \"Event.using\" factory method with a custom executor.",
       "result":"PASS",
-      "duration":"0.005 seconds",
+      "duration":"?",
       "iterations":{
       "tags":{},"see":[],"extraInfo":[]
       },
@@ -58,7 +58,7 @@
     {
       "id":"The \"Event.of\" factory method is a shortcut for creating an event with an initial listener.",
       "result":"PASS",
-      "duration":"0.001 seconds",
+      "duration":"?",
       "iterations":{
       "tags":{},"see":[],"extraInfo":[]
       },
@@ -77,7 +77,7 @@
     {
       "id":"A listener can be unsubscribed from an Event.",
       "result":"PASS",
-      "duration":"0.001 seconds",
+      "duration":"?",
       "iterations":{
       "tags":{},"see":[],"extraInfo":[]
       },
@@ -104,7 +104,7 @@
     {
       "id":"We can unsubscribe all Listeners from an Event!",
       "result":"PASS",
-      "duration":"0.001 seconds",
+      "duration":"?",
       "iterations":{
       "tags":{},"see":[],"extraInfo":[]
       },
