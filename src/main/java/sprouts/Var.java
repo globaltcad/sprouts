@@ -65,6 +65,22 @@ public interface Var<T> extends Val<T>
 	}
 
 	/**
+	 *  A more concise version of {@link #ofNullable(Class, Object)}
+	 *  which is equivalent to {@code Var.ofNullable(type, null)}. <br>
+	 *  The {@link Var} instances returned by this factory method, are nullable, which
+	 *  means their {@link #allowsNull()} method will always yield {@code true}
+	 *  and they will not throw an {@link IllegalArgumentException} when
+	 *  {@link #set(Object)} is called with a null item.
+	 *
+	 * @param type The type of the item wrapped by the property.
+	 * @return A new {@link Var} instance.
+	 * @param <T> The type of the wrapped item.
+	 */
+	static <T> Var<T> ofNull( Class<T> type ) {
+		return AbstractVariable.ofNullable( false, type, null );
+	}
+
+	/**
 	 * 	This factory method returns a {@code Var} describing the given non-{@code null}
 	 * 	item similar to {@link Optional#of(Object)}, but specifically
 	 * 	designed to be used for MVVM. <br>

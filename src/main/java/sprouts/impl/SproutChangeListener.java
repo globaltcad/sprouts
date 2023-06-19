@@ -2,11 +2,10 @@ package sprouts.impl;
 
 import sprouts.Action;
 import sprouts.Listener;
-import sprouts.Val;
 
 import java.util.Objects;
 
-final class SproutChangeListener<T> implements Action<Val<T>>
+final class SproutChangeListener<D> implements Action<D>
 {
     private final Listener _listener;
 
@@ -18,5 +17,5 @@ final class SproutChangeListener<T> implements Action<Val<T>>
     Listener listener() { return _listener; }
 
     @Override
-    public void accept( Val<T> delegate ) { _listener.notice(); }
+    public void accept( D delegate ) { _listener.notice(); }
 }

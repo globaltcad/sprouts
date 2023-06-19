@@ -15,7 +15,7 @@ import java.util.stream.StreamSupport;
  *
  * @param <T> The type of the properties.
  */
-public interface Vals<T> extends Iterable<T>
+public interface Vals<T> extends Iterable<T>, Noticeable
 {
     /**
      *  Create a new {@link Vals} instance from the given varargs of properties.

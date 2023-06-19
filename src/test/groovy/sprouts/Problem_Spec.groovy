@@ -17,6 +17,20 @@ import spock.lang.Title
     They are immutable and thread safe and
     are intended to be used in functional designs.
     
+    You might wonder, "Why are exceptions not enough?".
+    Exceptions are great for us developers, because they halt
+    the current execution and give us a stack trace we can debug,
+    but they do not always fail as gracefully as a user might expect.
+    In a complex system where lots of things can go wrong
+    you want to catch your exceptions and then collect 
+    them in a list of problems like so: 
+    
+    `thingsThatWentWrong.add(Problem.of(myException));`
+    
+    This way you can continue to execute your program
+    and collect all the problems that occurred so that
+    they can either be logged or presented to the user.
+    
 ''')
 @Subject([Problem])
 class Problem_Spec extends Specification

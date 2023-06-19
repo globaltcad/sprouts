@@ -433,4 +433,22 @@ public class AbstractVariables<T> implements Vars<T>
             throw new IllegalArgumentException("Null values are not allowed in this property list.");
     }
 
+    @Override
+    public Noticeable subscribe(Listener listener) {
+        return this.onChange( new SproutChangeListener<>(listener) );
+    }
+
+    @Override
+    public Noticeable unsubscribe(Listener listener) {
+        for ( Action<?> a : _viewActions )
+            if ( a instanceof SproutChangeListener ) {
+                SproutChangeListener<?> pcl = (SproutChangeListener<?>) a;
+                if ( pcl.listener() == listener ) {
+                    _viewActions.remove(a);
+                    return this;
+                }
+            }
+
+        return this;
+    }
 }

@@ -4,20 +4,37 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- *  A problem is an issue that can be reported and attached to a {@link Result}.
- *  It is used to describe what went wrong in the process of obtaining a value
- *  and is usually attached to a {@link Result} that does not contain a value.
+ *  A problem is a wrapper for information describing an issue
+ *  that can be reported and attached to a {@link Result}.
+ *  It is used to describe what went wrong in a process.
+ *  Like for example the process of obtaining a value,
+ *  which is why it is also part of a {@link Result} that does not contain a value (null). <br>
  *  The {@link Problem} exposes various properties that describe what went wrong,
  *  such as a title, a description, an optional reporter object and an
- *  optional {@link Exception} that was thrown while obtaining the value.
+ *  optional {@link Exception} that was thrown while obtaining the value. <br>
+ *  <br>
+ *  This type has been designed to complement Java exceptions.
+ *  Exceptions are great for us developers, because they halt
+ *  the current execution and give us a stack trace we can debug,
+ *  but they do not always fail as gracefully as a user might expect.
+ *  In a complex system where lots of things can go wrong
+ *  you want to catch exceptions and then collect
+ *  them in a list of problems like so:
+ *  <pre>{@code
+ *  	thingsThatWentWrong.add(Problem.of(myException));
+ *  }</pre>
+ *  This way your application continues to run
+ *  and collect all the relevant problems that occurred so that
+ *  they can then either be logged or presented to the user
+ *  in a more graceful way.
  */
 public interface Problem
 {
 	/**
 	 *  A factory method for creating a problem from an {@link Exception}.
 	 *  The title of the problem will be the name of the exception class,
-	 *  the description will be the message of the exception (or cause if there is no message),
-	 *  and the exception will be the exception itself.
+	 *  the description will be the message of the exception (or cause if there is no message).
+	 *  The exception will be stored in the problem and can be retrieved with {@link #exception()}.
 	 *
 	 * @param e The exception to create a problem from.
 	 * @return A problem that describes the given exception.
