@@ -4,36 +4,53 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- *  A problem is an issue that can be reported and attached to a {@link Result}.
- *  It is used to describe what went wrong in the process of obtaining a value
- *  and is usually attached to a {@link Result} that does not contain a value.
+ *  A problem is a wrapper for information describing an issue
+ *  that can be reported and attached to a {@link Result}.
+ *  It is used to describe what went wrong in a process.
+ *  Like for example the process of obtaining a value,
+ *  which is why it is also part of a {@link Result} that does not contain a value (null). &lt;br&gt;
  *  The {@link Problem} exposes various properties that describe what went wrong,
  *  such as a title, a description, an optional reporter object and an
- *  optional {@link Exception} that was thrown while obtaining the value.
+ *  optional {@link Exception} that was thrown while obtaining the value. &lt;br&gt;
+ *  &lt;br&gt;
+ *  This type has been designed to complement Java exceptions.
+ *  Exceptions are great for us developers, because they halt
+ *  the current execution and give us a stack trace we can debug,
+ *  but they do not always fail as gracefully as a user might expect.
+ *  In a complex system where lots of things can go wrong
+ *  you want to catch exceptions and then collect
+ *  them in a list of problems like so:
+ *  &lt;pre&gt;{@code
+ *  	thingsThatWentWrong.add(Problem.of(myException));
+ *  }&lt;/pre&gt;
+ *  This way your application continues to run
+ *  and collect all the relevant problems that occurred so that
+ *  they can then either be logged or presented to the user
+ *  in a more graceful way.
  */
 public interface Problem
 {
 	/**
 	 *  A factory method for creating a problem from an {@link Exception}.
 	 *  The title of the problem will be the name of the exception class,
-	 *  the description will be the message of the exception (or cause if there is no message),
-	 *  and the exception will be the exception itself.
+	 *  the description will be the message of the exception (or cause if there is no message).
+	 *  The exception will be stored in the problem and can be retrieved with {@link #exception()}.
 	 *
 	 * @param e The exception to create a problem from.
 	 * @return A problem that describes the given exception.
 	 */
 	static Problem of( Exception e ) {
-<span class="fc" id="L26">		Objects.requireNonNull(e);</span>
-<span class="fc" id="L27">		String message = e.getMessage();</span>
-<span class="pc bpc" id="L28" title="2 of 4 branches missed.">		if ( message == null || message.isEmpty() ) message = String.valueOf(e.getCause());</span>
-<span class="pc bpc" id="L29" title="2 of 4 branches missed.">		if ( message == null || message.isEmpty() ) message = e.toString();</span>
-<span class="fc" id="L30">		Objects.requireNonNull(message);</span>
-<span class="fc" id="L31">		String finalMessage = message;</span>
-<span class="fc" id="L32">		return new Problem() {</span>
-<span class="fc" id="L33">			@Override public Optional&lt;Exception&gt; exception() { return Optional.of(e); }</span>
-<span class="fc" id="L34">			@Override public String title() { return e.getClass().getSimpleName(); }</span>
-<span class="fc" id="L35">			@Override public String description() { return finalMessage; }</span>
-<span class="nc" id="L36">			@Override public String toString() { return String.format(&quot;%s:\n%s&quot;, title(), description()); }</span>
+<span class="fc" id="L43">		Objects.requireNonNull(e);</span>
+<span class="fc" id="L44">		String message = e.getMessage();</span>
+<span class="pc bpc" id="L45" title="2 of 4 branches missed.">		if ( message == null || message.isEmpty() ) message = String.valueOf(e.getCause());</span>
+<span class="pc bpc" id="L46" title="2 of 4 branches missed.">		if ( message == null || message.isEmpty() ) message = e.toString();</span>
+<span class="fc" id="L47">		Objects.requireNonNull(message);</span>
+<span class="fc" id="L48">		String finalMessage = message;</span>
+<span class="fc" id="L49">		return new Problem() {</span>
+<span class="fc" id="L50">			@Override public Optional&lt;Exception&gt; exception() { return Optional.of(e); }</span>
+<span class="fc" id="L51">			@Override public String title() { return e.getClass().getSimpleName(); }</span>
+<span class="fc" id="L52">			@Override public String description() { return finalMessage; }</span>
+<span class="nc" id="L53">			@Override public String toString() { return String.format(&quot;%s:\n%s&quot;, title(), description()); }</span>
 		};
 	}
 
@@ -43,7 +60,7 @@ public interface Problem
 	 * @param title The title of the problem, which may not be null.
 	 * @return A problem with the given title and description.
 	 */
-<span class="fc" id="L46">	static Problem of( String title ) { return of(title, &quot;&quot;); }</span>
+<span class="fc" id="L63">	static Problem of( String title ) { return of(title, &quot;&quot;); }</span>
 
 	/**
 	 *  A factory method for creating a problem with a title and a description.
@@ -53,12 +70,12 @@ public interface Problem
 	 * @return A problem with the given title and description.
 	 */
 	static Problem of( String title, String description ) {
-<span class="fc" id="L56">		Objects.requireNonNull(title);</span>
-<span class="fc" id="L57">		Objects.requireNonNull(description);</span>
-<span class="fc" id="L58">		return new Problem() {</span>
-<span class="fc" id="L59">			@Override public String title() { return title; }</span>
-<span class="nc" id="L60">			@Override public String description() { return description; }</span>
-<span class="nc" id="L61">			@Override public String toString() { return String.format(&quot;%s:\n%s&quot;, title, description); }</span>
+<span class="fc" id="L73">		Objects.requireNonNull(title);</span>
+<span class="fc" id="L74">		Objects.requireNonNull(description);</span>
+<span class="fc" id="L75">		return new Problem() {</span>
+<span class="fc" id="L76">			@Override public String title() { return title; }</span>
+<span class="nc" id="L77">			@Override public String description() { return description; }</span>
+<span class="nc" id="L78">			@Override public String toString() { return String.format(&quot;%s:\n%s&quot;, title, description); }</span>
 		};
 	}
 
@@ -71,14 +88,14 @@ public interface Problem
 	 * @return A problem with the given title and description.
 	 */
 	static Problem of( Object reporter, String title, String description ) {
-<span class="fc" id="L74">		Objects.requireNonNull(reporter);</span>
-<span class="fc" id="L75">		Objects.requireNonNull(title);</span>
-<span class="fc" id="L76">		Objects.requireNonNull(description);</span>
-<span class="fc" id="L77">		return new Problem() {</span>
-<span class="fc" id="L78">			@Override public Optional&lt;Object&gt; reporter() { return Optional.of(reporter); }</span>
-<span class="nc" id="L79">			@Override public String title() { return title; }</span>
-<span class="nc" id="L80">			@Override public String description() { return description; }</span>
-<span class="nc" id="L81">			@Override public String toString() { return String.format(&quot;%s:\n%s&quot;, title, description); }</span>
+<span class="fc" id="L91">		Objects.requireNonNull(reporter);</span>
+<span class="fc" id="L92">		Objects.requireNonNull(title);</span>
+<span class="fc" id="L93">		Objects.requireNonNull(description);</span>
+<span class="fc" id="L94">		return new Problem() {</span>
+<span class="fc" id="L95">			@Override public Optional&lt;Object&gt; reporter() { return Optional.of(reporter); }</span>
+<span class="nc" id="L96">			@Override public String title() { return title; }</span>
+<span class="nc" id="L97">			@Override public String description() { return description; }</span>
+<span class="nc" id="L98">			@Override public String toString() { return String.format(&quot;%s:\n%s&quot;, title, description); }</span>
 		};
 	}
 
@@ -95,12 +112,12 @@ public interface Problem
 	/**
 	 * @return The exception that was thrown while obtaining the value, if any.
 	 */
-<span class="nc" id="L98">	default Optional&lt;Exception&gt; exception() { return Optional.empty(); }</span>
+<span class="nc" id="L115">	default Optional&lt;Exception&gt; exception() { return Optional.empty(); }</span>
 
 	/**
 	 * @return The object that reported the problem, if any.
 	 */
-<span class="fc" id="L103">	default Optional&lt;Object&gt; reporter() { return Optional.empty(); }</span>
+<span class="fc" id="L120">	default Optional&lt;Object&gt; reporter() { return Optional.empty(); }</span>
 
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

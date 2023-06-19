@@ -433,5 +433,23 @@ public class AbstractVariables&lt;T&gt; implements Vars&lt;T&gt;
 <span class="nc" id="L433">            throw new IllegalArgumentException(&quot;Null values are not allowed in this property list.&quot;);</span>
 <span class="fc" id="L434">    }</span>
 
+    @Override
+    public Noticeable subscribe(Listener listener) {
+<span class="fc" id="L438">        return this.onChange( new SproutChangeListener&lt;&gt;(listener) );</span>
+    }
+
+    @Override
+    public Noticeable unsubscribe(Listener listener) {
+<span class="pc bpc" id="L443" title="1 of 2 branches missed.">        for ( Action&lt;?&gt; a : _viewActions )</span>
+<span class="pc bpc" id="L444" title="1 of 2 branches missed.">            if ( a instanceof SproutChangeListener ) {</span>
+<span class="fc" id="L445">                SproutChangeListener&lt;?&gt; pcl = (SproutChangeListener&lt;?&gt;) a;</span>
+<span class="pc bpc" id="L446" title="1 of 2 branches missed.">                if ( pcl.listener() == listener ) {</span>
+<span class="fc" id="L447">                    _viewActions.remove(a);</span>
+<span class="fc" id="L448">                    return this;</span>
+                }
+            }
+
+<span class="nc" id="L452">        return this;</span>
+    }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>
