@@ -16,7 +16,7 @@ import java.util.regex.Pattern;
  * 	so that it can be notified and updated when the item changes.
  * 	The API of this is very similar to the {@link Optional} API in the
  * 	sense that it is a wrapper around a single item, which may also be missing (null).
- * 	Use the {@link #onSet(Action)} method to register a callbacks which
+ * 	Use the {@link #onSet(Action)} method to register callbacks which
  * 	will be called when the {@link #fireSet()} method is called or the item is
  * 	changed (typically by the {@link Var#set(Object)} method).
  * 	<p>
