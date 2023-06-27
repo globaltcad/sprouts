@@ -14,14 +14,14 @@ public class ResultImpl<V> implements Result<V>
 	private final List<Problem> _problems;
 
 
-	public ResultImpl(String id, Class<V> type, List<Problem> problems, V value) {
+	public ResultImpl( String id, Class<V> type, List<Problem> problems, V value ) {
 		Objects.requireNonNull(type);
 		Objects.requireNonNull(id);
 		Objects.requireNonNull(problems);
-		_id = id;
-		_type = type;
+		_id       = id;
+		_type     = type;
 		_problems = problems;
-		_value = value;
+		_value    = value;
 	}
 
 	/** {@inheritDoc} */
@@ -39,24 +39,35 @@ public class ResultImpl<V> implements Result<V>
 
 	/** {@inheritDoc} */
 	@Override
-	public V orElseNullable(V other) { return _value == null ? other : _value; }
+	public V orElseNullable( V other ) { return _value == null ? other : _value; }
 
 	/** {@inheritDoc} */
 	@Override public V orElseNull() { return _value; }
 
 	/** {@inheritDoc} */
 	@Override
-	public Val<V> map(Function<V, V> mapper) {
+	public Val<V> map( Function<V, V> mapper ) {
 		Objects.requireNonNull(mapper);
-		return Val.ofNullable(type(), mapper.apply(_value));
+		if ( !isPresent() )
+			return Var.ofNullable( type(), null );
+
+		V newValue = mapper.apply( orElseNull() );
+
+		if ( newValue == null )
+			return Var.ofNullable( type(), null );
+		else
+			return Val.of( newValue );
 	}
 
 	/** {@inheritDoc} */
 	@Override
-	public <U> Val<U> mapTo(Class<U> type, Function<V, U> mapper) {
+	public <U> Val<U> mapTo( Class<U> type, Function<V, U> mapper ) {
 		Objects.requireNonNull(type);
 		Objects.requireNonNull(mapper);
-		return Val.ofNullable(type, mapper.apply(_value));
+		if ( !isPresent() )
+			return Var.ofNullable( type, null );
+		else
+			return Val.ofNullable(type, mapper.apply(_value));
 	}
 
 	/** {@inheritDoc} */

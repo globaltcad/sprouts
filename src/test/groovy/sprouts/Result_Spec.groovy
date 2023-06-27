@@ -116,4 +116,21 @@ class Result_Spec extends Specification
             result.problems() == problems
     }
 
+    def 'An empty `Result` can be mapped to any property type without an exception being thrown.'()
+    {
+        reportInfo """
+            An empty `Result` is similar to an empty `Optional` in that
+            it does not have a value. However, unlike an empty `Optional`,
+            a `Result` instance also has a type.
+            So when you want to map it to some other type, using `mapTo`, you need to
+            also provide the target type.
+        """
+        given : 'An empty result.'
+            def result = Result.of(Integer, null)
+        when : 'We map the result to a property.'
+            def mapped = result.mapTo(String, it -> "foo $it" )
+        then : 'The resulting property is also empty.'
+            mapped.isEmpty()
+    }
+
 }

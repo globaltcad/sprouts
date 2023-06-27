@@ -4,7 +4,7 @@
   "narrative":"The `Result` interface is used to represent the optional result of an operation\n    as well as a list of problems that occurred during the operation.\n\n    It is a sub type of the `Val` property and as such can be used to represent a value\n    that is immutable and can be observed for changes.\n\n    The default result implementation indirectly exposed by its factory methods\n    is immutable and thread safe, effectively making it a monadic value\n    similar to the `Optional` type in Java 8.",
   "subjects":["sprouts.Result","sprouts.Val","sprouts.Problem"],
   "statistics":{
-    "runs":"7",
+    "runs":"8",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -136,6 +136,23 @@
         {"kind":"then","text":"The result has the list as its value.","code":["result.get() == values"]},
 
         {"kind":"and","text":"The result has the problems.","code":["result.problems() == problems"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"An empty `Result` can be mapped to any property type without an exception being thrown.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            An empty `Result` is similar to an empty `Optional` in that\n            it does not have a value. However, unlike an empty `Optional`,\n            a `Result` instance also has a type.\n            So when you want to map it to some other type, using `mapTo`, you need to\n            also provide the target type.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"An empty result.","code":["def result = Result.of(Integer, null)"]},
+
+        {"kind":"when","text":"We map the result to a property.","code":["def mapped = result.mapTo(String, it -> \"foo $it\" )"]},
+
+        {"kind":"then","text":"The resulting property is also empty.","code":["mapped.isEmpty()"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }
