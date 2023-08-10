@@ -8,7 +8,7 @@ import java.util.function.Consumer;
 /**
  *  This represents an occurrence that can be observed as well as triggered.
  *  It is used to register listeners so that they can be notified when the {@link #fire()} method is called.
- *  Contrary to events received by property observers, observing a {@link Event}
+ *  Contrary to events received by property observers, observing an {@link Event}
  *  does not involve any state.
  */
 public interface Event extends Noticeable
