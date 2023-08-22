@@ -14,14 +14,14 @@ public class ResultImpl&lt;V&gt; implements Result&lt;V&gt;
 	private final List&lt;Problem&gt; _problems;
 
 
-<span class="fc" id="L17">	public ResultImpl(String id, Class&lt;V&gt; type, List&lt;Problem&gt; problems, V value) {</span>
+<span class="fc" id="L17">	public ResultImpl( String id, Class&lt;V&gt; type, List&lt;Problem&gt; problems, V value ) {</span>
 <span class="fc" id="L18">		Objects.requireNonNull(type);</span>
 <span class="fc" id="L19">		Objects.requireNonNull(id);</span>
 <span class="fc" id="L20">		Objects.requireNonNull(problems);</span>
-<span class="fc" id="L21">		_id = id;</span>
-<span class="fc" id="L22">		_type = type;</span>
+<span class="fc" id="L21">		_id       = id;</span>
+<span class="fc" id="L22">		_type     = type;</span>
 <span class="fc" id="L23">		_problems = problems;</span>
-<span class="fc" id="L24">		_value = value;</span>
+<span class="fc" id="L24">		_value    = value;</span>
 <span class="fc" id="L25">	}</span>
 
 	/** {@inheritDoc} */
@@ -39,62 +39,73 @@ public class ResultImpl&lt;V&gt; implements Result&lt;V&gt;
 
 	/** {@inheritDoc} */
 	@Override
-<span class="nc bnc" id="L42" title="All 2 branches missed.">	public V orElseNullable(V other) { return _value == null ? other : _value; }</span>
+<span class="nc bnc" id="L42" title="All 2 branches missed.">	public V orElseNullable( V other ) { return _value == null ? other : _value; }</span>
 
 	/** {@inheritDoc} */
 <span class="fc" id="L45">	@Override public V orElseNull() { return _value; }</span>
 
 	/** {@inheritDoc} */
 	@Override
-	public Val&lt;V&gt; map(Function&lt;V, V&gt; mapper) {
+	public Val&lt;V&gt; map( Function&lt;V, V&gt; mapper ) {
 <span class="fc" id="L50">		Objects.requireNonNull(mapper);</span>
-<span class="fc" id="L51">		return Val.ofNullable(type(), mapper.apply(_value));</span>
+<span class="pc bpc" id="L51" title="1 of 2 branches missed.">		if ( !isPresent() )</span>
+<span class="nc" id="L52">			return Var.ofNullable( type(), null );</span>
+
+<span class="fc" id="L54">		V newValue = mapper.apply( orElseNull() );</span>
+
+<span class="pc bpc" id="L56" title="1 of 2 branches missed.">		if ( newValue == null )</span>
+<span class="nc" id="L57">			return Var.ofNullable( type(), null );</span>
+		else
+<span class="fc" id="L59">			return Val.of( newValue );</span>
 	}
 
 	/** {@inheritDoc} */
 	@Override
-	public &lt;U&gt; Val&lt;U&gt; mapTo(Class&lt;U&gt; type, Function&lt;V, U&gt; mapper) {
-<span class="nc" id="L57">		Objects.requireNonNull(type);</span>
-<span class="nc" id="L58">		Objects.requireNonNull(mapper);</span>
-<span class="nc" id="L59">		return Val.ofNullable(type, mapper.apply(_value));</span>
+	public &lt;U&gt; Val&lt;U&gt; mapTo( Class&lt;U&gt; type, Function&lt;V, U&gt; mapper ) {
+<span class="fc" id="L65">		Objects.requireNonNull(type);</span>
+<span class="fc" id="L66">		Objects.requireNonNull(mapper);</span>
+<span class="pc bpc" id="L67" title="1 of 2 branches missed.">		if ( !isPresent() )</span>
+<span class="fc" id="L68">			return Var.ofNullable( type, null );</span>
+		else
+<span class="nc" id="L70">			return Val.ofNullable(type, mapper.apply(_value));</span>
 	}
 
 	/** {@inheritDoc} */
 	@Override
 	public &lt;U&gt; Val&lt;U&gt; viewAs(Class&lt;U&gt; type, Function&lt;V, U&gt; mapper) {
-<span class="nc" id="L65">		Objects.requireNonNull(type);</span>
-<span class="nc" id="L66">		Objects.requireNonNull(mapper);</span>
-<span class="nc" id="L67">		return Val.ofNullable(this._type, this._value).viewAs(type, mapper);</span>
+<span class="nc" id="L76">		Objects.requireNonNull(type);</span>
+<span class="nc" id="L77">		Objects.requireNonNull(mapper);</span>
+<span class="nc" id="L78">		return Val.ofNullable(this._type, this._value).viewAs(type, mapper);</span>
 	}
 
 	@Override
 	public Val&lt;V&gt; onSet( Action&lt;Val&lt;V&gt;&gt; displayAction ) {
-<span class="nc" id="L72">		Objects.requireNonNull(displayAction);</span>
+<span class="nc" id="L83">		Objects.requireNonNull(displayAction);</span>
 		/* A Result is immutable, so this method is not supported */
-<span class="nc" id="L74">		return this;</span>
+<span class="nc" id="L85">		return this;</span>
 	}
 
 	@Override
 	public Val&lt;V&gt; fireSet() {
 		/* A Result is immutable, so this method is not supported */
-<span class="nc" id="L80">		return this;</span>
+<span class="nc" id="L91">		return this;</span>
 	}
 
 	/** {@inheritDoc} */
-<span class="nc" id="L84">	@Override public boolean allowsNull() { return true; }</span>
+<span class="nc" id="L95">	@Override public boolean allowsNull() { return true; }</span>
 
 	@Override
 	public Noticeable subscribe(Listener listener) {
-<span class="nc" id="L88">		Objects.requireNonNull(listener);</span>
+<span class="nc" id="L99">		Objects.requireNonNull(listener);</span>
 		/* A Result is immutable, so this method is not supported */
-<span class="nc" id="L90">		return this;</span>
+<span class="nc" id="L101">		return this;</span>
 	}
 
 	@Override
 	public Noticeable unsubscribe(Listener listener) {
-<span class="nc" id="L95">		Objects.requireNonNull(listener);</span>
+<span class="nc" id="L106">		Objects.requireNonNull(listener);</span>
 		/* A Result is immutable, so this method is not supported */
-<span class="nc" id="L97">		return this;</span>
+<span class="nc" id="L108">		return this;</span>
 	}
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

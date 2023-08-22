@@ -54,8 +54,8 @@ public interface Result&lt;V&gt; extends Val&lt;V&gt;
 	 * @throws NullPointerException if the type is null.
 	 */
 	static &lt;V&gt; Result&lt;V&gt; of( Class&lt;V&gt; type, V value ) {
-<span class="nc" id="L57">		Objects.requireNonNull(type);</span>
-<span class="nc" id="L58">		return of(type, value, Collections.emptyList());</span>
+<span class="fc" id="L57">		Objects.requireNonNull(type);</span>
+<span class="fc" id="L58">		return of(type, value, Collections.emptyList());</span>
 	}
 
 	/**
@@ -96,9 +96,9 @@ public interface Result&lt;V&gt; extends Val&lt;V&gt;
 	 * @throws NullPointerException if the type or problems are null.
 	 */
 	static &lt;V&gt; Result&lt;V&gt; of( Class&lt;V&gt; type, V value, List&lt;Problem&gt; problems ) {
-<span class="nc" id="L99">		Objects.requireNonNull(type);</span>
-<span class="nc" id="L100">		problems = Collections.unmodifiableList(new ArrayList&lt;&gt;(Objects.requireNonNull(problems)));</span>
-<span class="nc" id="L101">		return new ResultImpl&lt;&gt;(ID, type, problems, value);</span>
+<span class="fc" id="L99">		Objects.requireNonNull(type);</span>
+<span class="fc" id="L100">		problems = Collections.unmodifiableList(new ArrayList&lt;&gt;(Objects.requireNonNull(problems)));</span>
+<span class="fc" id="L101">		return new ResultImpl&lt;&gt;(ID, type, problems, value);</span>
 	}
 
 	/**
