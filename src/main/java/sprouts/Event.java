@@ -8,7 +8,7 @@ import java.util.function.Consumer;
 /**
  *  An event is something that can be observed as well as triggered,
  *  and it is used to inform a set of subscribers that something has happened.
- *  It allows for the registration of {@Observer} which are invoked when the {@link #fire()} method is called.
+ *  It allows for the registration of {@link Observer} which are invoked when the {@link #fire()} method is called.
  *  Contrary to events received by property observers, observing an {@link Event}
  *  does not involve any state.
  */

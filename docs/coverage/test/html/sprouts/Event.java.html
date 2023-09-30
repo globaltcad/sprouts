@@ -6,39 +6,41 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.function.Consumer;
 
 /**
- *  This represents an occurrence that can be observed as well as triggered.
- *  It is used to register observers so that they can be notified when the {@link #fire()} method is called.
+ *  An event is something that can be observed as well as triggered,
+ *  and it is used to inform a set of subscribers that something has happened.
+ *  It allows for the registration of {@link Observer} which are invoked when the {@link #fire()} method is called.
  *  Contrary to events received by property observers, observing an {@link Event}
  *  does not involve any state.
  */
-public interface Event extends Noticeable
+public interface Event extends Observable
 {
     /**
-     * Triggers this {@link Event}, which means that all registered observers will be notified.
+     * Triggers this {@link Event}, which means that all registered listeners will be notified.
      */
     void fire();
 
     /**
-     * Subscribes the given observer to this {@link Event}.
-     * @param observer The observer to subscribe.
+     * Subscribes the given listener to this {@link Event}.
+     * @param observer The listener to subscribe.
      * @return This {@link Event}, to allow for method chaining.
      */
-    @Override Event subscribe( Listener observer );
+    @Override
+    Event subscribe( Observer observer);
 
     /**
-     * Unsubscribes all observers from this {@link Event}.
+     * Unsubscribes all listeners from this {@link Event}.
      */
     void unsubscribeAll();
 
     /**
      * Creates a new {@link Event} that can be observed and triggered.
-     * @param observer The first observer to subscribe to the new {@link Event}.
+     * @param observer The first listener to subscribe to the new {@link Event}.
      * @return A new {@link Event}.
      */
-    static Event of( Listener observer ) {
-<span class="fc" id="L39">        Event occurrence = create();</span>
-<span class="fc" id="L40">        occurrence.subscribe( observer );</span>
-<span class="fc" id="L41">        return occurrence;</span>
+    static Event of( Observer observer) {
+<span class="fc" id="L41">        Event event = create();</span>
+<span class="fc" id="L42">        event.subscribe(observer);</span>
+<span class="fc" id="L43">        return event;</span>
     }
 
     /**
@@ -46,63 +48,63 @@ public interface Event extends Noticeable
      * @return A new {@link Event}.
      */
     static Event create() {
-<span class="fc" id="L49">        return new Event() {</span>
-<span class="fc" id="L50">            private final List&lt;Listener&gt; observers = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L51">        return new Event() {</span>
+<span class="fc" id="L52">            private final List&lt;Observer&gt; observers = new ArrayList&lt;&gt;();</span>
 
-<span class="fc" id="L52">            @Override public void fire() { observers.forEach( Listener::notice); }</span>
+<span class="fc" id="L54">            @Override public void fire() { observers.forEach( Observer::invoke); }</span>
             @Override
-            public Event subscribe( Listener observer ) {
-<span class="fc" id="L55">                observers.add( observer );</span>
-<span class="fc" id="L56">                return this;</span>
+            public Event subscribe( Observer observer) {
+<span class="fc" id="L57">                observers.add(observer);</span>
+<span class="fc" id="L58">                return this;</span>
             }
             @Override
-            public Noticeable unsubscribe( Listener observer ) {
-<span class="fc" id="L60">                observers.remove( observer );</span>
-<span class="fc" id="L61">                return this;</span>
+            public Observable unsubscribe( Observer observer) {
+<span class="fc" id="L62">                observers.remove(observer);</span>
+<span class="fc" id="L63">                return this;</span>
             }
-<span class="fc" id="L63">            @Override public void unsubscribeAll() { observers.clear(); }</span>
+<span class="fc" id="L65">            @Override public void unsubscribeAll() { observers.clear(); }</span>
         };
     }
 
     /**
      * Creates a new {@link Event} that can be observed, triggered and executed asynchronously
-     * on a custom occurrence queue, thread pool or any other executor.
+     * on a custom event queue, thread pool or any other executor.
      *
      * @param executor A {@link Consumer} of {@link Runnable}s that will be used to execute the {@link #fire()} method.
      * @return A new {@link Event}.
      */
     static Event using( Executor executor ) {
-<span class="fc" id="L75">        return new Event() {</span>
-<span class="fc" id="L76">            private final List&lt;Listener&gt; observers = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L77">        return new Event() {</span>
+<span class="fc" id="L78">            private final List&lt;Observer&gt; observers = new ArrayList&lt;&gt;();</span>
 
             @Override
-<span class="fc" id="L79">            public void fire() { executor.execute( () -&gt; observers.forEach( Listener::notice) ); }</span>
+<span class="fc" id="L81">            public void fire() { executor.execute( () -&gt; observers.forEach( Observer::invoke) ); }</span>
             @Override
-            public Event subscribe( Listener observer ) {
-<span class="fc" id="L82">                observers.add( observer );</span>
-<span class="fc" id="L83">                return this;</span>
+            public Event subscribe(Observer observer) {
+<span class="fc" id="L84">                observers.add(observer);</span>
+<span class="fc" id="L85">                return this;</span>
             }
             @Override
-            public Noticeable unsubscribe( Listener observer ) {
-<span class="nc" id="L87">                observers.remove( observer );</span>
-<span class="nc" id="L88">                return this;</span>
+            public Observable unsubscribe(Observer observer) {
+<span class="nc" id="L89">                observers.remove(observer);</span>
+<span class="nc" id="L90">                return this;</span>
             }
-<span class="nc" id="L90">            @Override public void unsubscribeAll() { observers.clear(); }</span>
+<span class="nc" id="L92">            @Override public void unsubscribeAll() { observers.clear(); }</span>
         };
     }
 
 
     /**
-     *  The occurrence executor is responsible for executing the given {@link Runnable} when an {@link Event} is triggered.
+     *  The &quot;event executor&quot; is responsible for executing a given {@link Runnable} when an {@link Event} is triggered.
      *  It is used to execute the {@link Event#fire()} method asynchronously or on a
-     *  custom occurrence queue, thread pool or any other executor.
+     *  custom event queue, thread pool or any other executor of your choice.
      *  @see Event#using(Executor)
      */
     interface Executor
     {
-<span class="fc" id="L103">        Executor SAME_THREAD = Runnable::run;</span>
-<span class="pc" id="L104">        Executor NEW_THREAD = runnable -&gt; new Thread( runnable ).start();</span>
-<span class="fc" id="L105">        Executor FORK_JOIN_POOL = ForkJoinPool.commonPool()::execute;</span>
+<span class="fc" id="L105">        Executor SAME_THREAD = Runnable::run;</span>
+<span class="pc" id="L106">        Executor NEW_THREAD = runnable -&gt; new Thread( runnable ).start();</span>
+<span class="fc" id="L107">        Executor FORK_JOIN_POOL = ForkJoinPool.commonPool()::execute;</span>
 
         /**
          *  Executes the given {@link Runnable}.
