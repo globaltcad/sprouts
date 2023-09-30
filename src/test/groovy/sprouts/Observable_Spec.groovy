@@ -12,8 +12,8 @@ import spock.lang.Title
     through the registration of `Observer` implementations 
     which will be invoked by the `Observable` in case specific situations.
     
-    It is the super type of various sprout types, like for example the generic `Occurrence`,
-    defining something that can be triggered so that the `Observer` may be informed,
+    It is the super type of various sprout types, like for example the generic `Event`,
+    defining something that can be triggered so that the `Observer`s may be informed,
     or the `Val` and `Var` properties, as well as the `Vals` and `Vars`
     property list types, which allow for the observation of state changes.
     

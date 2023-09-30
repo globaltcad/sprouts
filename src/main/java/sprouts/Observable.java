@@ -1,14 +1,14 @@
 package sprouts;
 
 /**
- *  This represents an occurrence that can be observed but not triggered.
+ *  This represents an event that can be observed but not triggered.
  *  It is used to register {@link Observer}s to, so that they can be notified when
  *  something happens.
  *  Contrary to events received by property observers, observing a {@link Observable}
  *  does not involve any state.
  *  <br>
  *  This is a super type of many other important sprouts classes, like
- *  {@link Occurrence}, {@link Val}, {@link Var}, {@link Vals} and {@link Vars}.
+ *  {@link Event}, {@link Val}, {@link Var}, {@link Vals} and {@link Vars}.
  */
 public interface Observable
 {

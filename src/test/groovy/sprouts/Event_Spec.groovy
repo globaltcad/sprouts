@@ -10,28 +10,28 @@ import spock.lang.Title
 
     Sprouts models events using 2 simple interfaces, 
     the `sprouts.Observable` interface
-    and the trigger-able `Occurrence` interface where `Occurrence` is a sub type of `Observable`.
-    The `Occurrence` interface is used to fire events, and because it extends the `Observable` interface
+    and the trigger-able `Event` interface where `Event` is a sub type of `Observable`.
+    The `Event` interface is used to fire events, and because it extends the `Observable` interface
     it allows you to listen to an event through the registration of `Observer` instances.
     
-    `Occurrence`s can be created using various factory methods (like for example `Occurrence.create()`),
-    one of which even allows the specification of a custom `Occurrence.Executor`
+    `Event`s can be created using various factory methods (like for example `Event.create()`),
+    one of which even allows the specification of a custom `Event.Executor`
     which can be used to control on which thread(s) the event is fired.
 
 ''')
-@Subject([Occurrence, Observer, Observable])
-class Occurrence_Spec extends Specification
+@Subject([Event, Observer, Observable])
+class Event_Spec extends Specification
 {
     def 'We can create an event using the "Event.create" factory method.'()
     {
         given : 'A mocked observer.'
             var observer = Mock(Observer)
         and : 'An event.'
-            var occurrence = Occurrence.create()
+            var event = Event.create()
         when : 'We register the observer with the event.'
-            occurrence.subscribe(observer)
+            event.subscribe(observer)
         and : 'We fire the event.'
-            occurrence.trigger()
+            event.fire()
         then : 'The listener is notified.'
             1 * observer.invoke()
     }
@@ -41,11 +41,11 @@ class Occurrence_Spec extends Specification
         given : 'A listener.'
             var listener = Mock(Observer)
         and : 'An event.'
-            var event = Occurrence.using(Occurrence.Executor.SAME_THREAD)
+            var event = Event.using(Event.Executor.SAME_THREAD)
         when : 'We register the listener with the event.'
             event.subscribe(listener)
         and : 'We fire the event.'
-            event.trigger()
+            event.fire()
         then : 'The listener is notified.'
             1 * listener.invoke()
     }
@@ -55,9 +55,9 @@ class Occurrence_Spec extends Specification
         given : 'A listener.'
             var listener = Mock(Observer)
         and : 'An event with the mock listener set.'
-            var event = Occurrence.of(listener)
+            var event = Event.of(listener)
         when : 'We fire the event.'
-            event.trigger()
+            event.fire()
         then : 'The listener is notified.'
             1 * listener.invoke()
     }
@@ -67,17 +67,17 @@ class Occurrence_Spec extends Specification
         given : 'A listener.'
             var listener = Mock(Observer)
         and : 'An event.'
-            var event = Occurrence.create()
+            var event = Event.create()
         when : 'We register the listener with the event.'
             event.subscribe(listener)
         and : 'We fire the event.'
-            event.trigger()
+            event.fire()
         then : 'The listener is notified.'
             1 * listener.invoke()
         when : 'We unsubscribe the listener from the event.'
             event.unsubscribe(listener)
         and : 'We fire the event.'
-            event.trigger()
+            event.fire()
         then : 'The listener is not notified again.'
             0 * listener.invoke()
     }
@@ -89,13 +89,13 @@ class Occurrence_Spec extends Specification
             var listener2 = Mock(Observer)
             var listener3 = Mock(Observer)
         and : 'An event.'
-            var event = Occurrence.create()
+            var event = Event.create()
         when : 'We register the listeners with the event.'
             event.subscribe(listener1)
             event.subscribe(listener2)
             event.subscribe(listener3)
         and : 'We fire the event.'
-            event.trigger()
+            event.fire()
         then : 'The listeners are notified.'
             1 * listener1.invoke()
             1 * listener2.invoke()
@@ -103,7 +103,7 @@ class Occurrence_Spec extends Specification
         when : 'We unsubscribe all listeners from the event.'
             event.unsubscribeAll()
         and : 'We fire the event again.'
-            event.trigger()
+            event.fire()
         then : 'The listeners are not notified again.'
             0 * listener1.invoke()
             0 * listener2.invoke()
