@@ -95,15 +95,15 @@ public class ResultImpl<V> implements Result<V>
 	@Override public boolean allowsNull() { return true; }
 
 	@Override
-	public Noticeable subscribe(Listener listener) {
-		Objects.requireNonNull(listener);
+	public Observable subscribe( Observer observer ) {
+		Objects.requireNonNull(observer);
 		/* A Result is immutable, so this method is not supported */
 		return this;
 	}
 
 	@Override
-	public Noticeable unsubscribe(Listener listener) {
-		Objects.requireNonNull(listener);
+	public Observable unsubscribe( Observer observer ) {
+		Objects.requireNonNull(observer);
 		/* A Result is immutable, so this method is not supported */
 		return this;
 	}

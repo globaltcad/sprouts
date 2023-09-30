@@ -1,6 +1,8 @@
 package sprouts.impl;
 
 import sprouts.*;
+import sprouts.Observable;
+import sprouts.Observer;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -434,16 +436,16 @@ public class AbstractVariables<T> implements Vars<T>
     }
 
     @Override
-    public Noticeable subscribe(Listener listener) {
-        return this.onChange( new SproutChangeListener<>(listener) );
+    public Observable subscribe( Observer observer ) {
+        return this.onChange( new SproutChangeListener<>(observer) );
     }
 
     @Override
-    public Noticeable unsubscribe(Listener listener) {
+    public Observable unsubscribe( Observer observer ) {
         for ( Action<?> a : _viewActions )
             if ( a instanceof SproutChangeListener ) {
                 SproutChangeListener<?> pcl = (SproutChangeListener<?>) a;
-                if ( pcl.listener() == listener ) {
+                if ( pcl.listener() == observer) {
                     _viewActions.remove(a);
                     return this;
                 }

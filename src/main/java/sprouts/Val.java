@@ -25,7 +25,7 @@ import java.util.regex.Pattern;
  *
  * @param <T> The type of the item held by this {@link Val}.
  */
-public interface Val<T> extends Noticeable
+public interface Val<T> extends Observable
 {
 	String NO_ID = ""; // This is the default id for properties
 	String EMPTY = "EMPTY"; // This is the default string for empty properties

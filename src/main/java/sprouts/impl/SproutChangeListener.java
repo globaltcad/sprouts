@@ -1,21 +1,21 @@
 package sprouts.impl;
 
 import sprouts.Action;
-import sprouts.Listener;
+import sprouts.Observer;
 
 import java.util.Objects;
 
 final class SproutChangeListener<D> implements Action<D>
 {
-    private final Listener _listener;
+    private final Observer _observer;
 
 
-    SproutChangeListener( Listener listener ) {
-        _listener = Objects.requireNonNull(listener);
+    SproutChangeListener( Observer observer) {
+        _observer = Objects.requireNonNull(observer);
     }
 
-    Listener listener() { return _listener; }
+    Observer listener() { return _observer; }
 
     @Override
-    public void accept( D delegate ) { _listener.notice(); }
+    public void accept( D delegate ) { _observer.invoke(); }
 }
