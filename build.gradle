@@ -86,9 +86,10 @@ task cleanForDeployment(type: Delete) {
 task deploy() {
 
     // Expected before : dependsOn 'cleanForDeployment'
-    dependsOn 'check'
+    dependsOn 'clean'
     dependsOn 'jar'
     dependsOn 'releaseJDocs'
+    dependsOn 'check'
 
 }
 // 3:
