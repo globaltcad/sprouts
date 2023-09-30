@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Occurrence.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sprouts</a> &gt; <a href="index.source.html" class="el_package">sprouts</a> &gt; <span class="el_source">Occurrence.java</span></div><h1>Occurrence.java</h1><pre class="source lang-java linenums">package sprouts;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ForkJoinPool;
+import java.util.function.Consumer;
+
+/**
+ *  This represents an occurrence that can be observed as well as triggered.
+ *  It allows for the registration of listeners which are invoked when the {@link #trigger()} method is called.
+ *  Contrary to events received by property observers, observing an {@link Occurrence}
+ *  does not involve any state.
+ */
+public interface Occurrence extends Observable
+{
+    /**
+     * Triggers this {@link Occurrence}, which means that all registered listeners will be notified.
+     */
+    void trigger();
+
+    /**
+     * Subscribes the given listener to this {@link Occurrence}.
+     * @param observer The listener to subscribe.
+     * @return This {@link Occurrence}, to allow for method chaining.
+     */
+    @Override
+    Occurrence subscribe( Observer observer);
+
+    /**
+     * Unsubscribes all listeners from this {@link Occurrence}.
+     */
+    void unsubscribeAll();
+
+    /**
+     * Creates a new {@link Occurrence} that can be observed and triggered.
+     * @param observer The first listener to subscribe to the new {@link Occurrence}.
+     * @return A new {@link Occurrence}.
+     */
+    static Occurrence of( Observer observer) {
+<span class="fc" id="L40">        Occurrence occurrence = create();</span>
+<span class="fc" id="L41">        occurrence.subscribe(observer);</span>
+<span class="fc" id="L42">        return occurrence;</span>
+    }
+
+    /**
+     * Creates a new empty {@link Occurrence} that can be observed and triggered.
+     * @return A new {@link Occurrence}.
+     */
+    static Occurrence create() {
+<span class="fc" id="L50">        return new Occurrence() {</span>
+<span class="fc" id="L51">            private final List&lt;Observer&gt; observers = new ArrayList&lt;&gt;();</span>
+
+<span class="fc" id="L53">            @Override public void trigger() { observers.forEach( Observer::invoke); }</span>
+            @Override
+            public Occurrence subscribe( Observer observer) {
+<span class="fc" id="L56">                observers.add(observer);</span>
+<span class="fc" id="L57">                return this;</span>
+            }
+            @Override
+            public Observable unsubscribe( Observer observer) {
+<span class="fc" id="L61">                observers.remove(observer);</span>
+<span class="fc" id="L62">                return this;</span>
+            }
+<span class="fc" id="L64">            @Override public void unsubscribeAll() { observers.clear(); }</span>
+        };
+    }
+
+    /**
+     * Creates a new {@link Occurrence} that can be observed, triggered and executed asynchronously
+     * on a custom event queue, thread pool or any other executor.
+     *
+     * @param executor A {@link Consumer} of {@link Runnable}s that will be used to execute the {@link #trigger()} method.
+     * @return A new {@link Occurrence}.
+     */
+    static Occurrence using( Executor executor ) {
+<span class="fc" id="L76">        return new Occurrence() {</span>
+<span class="fc" id="L77">            private final List&lt;Observer&gt; observers = new ArrayList&lt;&gt;();</span>
+
+            @Override
+<span class="fc" id="L80">            public void trigger() { executor.execute( () -&gt; observers.forEach( Observer::invoke) ); }</span>
+            @Override
+            public Occurrence subscribe(Observer observer) {
+<span class="fc" id="L83">                observers.add(observer);</span>
+<span class="fc" id="L84">                return this;</span>
+            }
+            @Override
+            public Observable unsubscribe(Observer observer) {
+<span class="nc" id="L88">                observers.remove(observer);</span>
+<span class="nc" id="L89">                return this;</span>
+            }
+<span class="nc" id="L91">            @Override public void unsubscribeAll() { observers.clear(); }</span>
+        };
+    }
+
+
+    /**
+     *  The &quot;occurrence executor&quot; is responsible for executing a given {@link Runnable} when an {@link Occurrence} is triggered.
+     *  It is used to execute the {@link Occurrence#trigger()} method asynchronously or on a
+     *  custom event queue, thread pool or any other executor of your choice.
+     *  @see Occurrence#using(Executor)
+     */
+    interface Executor
+    {
+<span class="fc" id="L104">        Executor SAME_THREAD = Runnable::run;</span>
+<span class="pc" id="L105">        Executor NEW_THREAD = runnable -&gt; new Thread( runnable ).start();</span>
+<span class="fc" id="L106">        Executor FORK_JOIN_POOL = ForkJoinPool.commonPool()::execute;</span>
+
+        /**
+         *  Executes the given {@link Runnable}.
+         *  @param runnable The {@link Runnable} to execute.
+         */
+        void execute( Runnable runnable );
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

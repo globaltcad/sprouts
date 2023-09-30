@@ -146,16 +146,16 @@ public class AbstractVariable&lt;T&gt; extends AbstractValue&lt;T&gt; implements
 	}
 
 	@Override
-	public Noticeable subscribe( Listener listener ) {
-<span class="fc" id="L150">		return onSet( new SproutChangeListener&lt;&gt;(listener) );</span>
+	public Observable subscribe( Observer observer ) {
+<span class="fc" id="L150">		return onSet( new SproutChangeListener&lt;&gt;(observer) );</span>
 	}
 
 	@Override
-	public Noticeable unsubscribe(Listener listener) {
+	public Observable unsubscribe( Observer observer ) {
 <span class="pc bpc" id="L155" title="1 of 2 branches missed.">		for ( Action&lt;?&gt; a : _viewActions )</span>
 <span class="pc bpc" id="L156" title="1 of 2 branches missed.">			if ( a instanceof SproutChangeListener ) {</span>
 <span class="fc" id="L157">				SproutChangeListener&lt;?&gt; pcl = (SproutChangeListener&lt;?&gt;) a;</span>
-<span class="pc bpc" id="L158" title="1 of 2 branches missed.">				if ( pcl.listener() == listener ) {</span>
+<span class="pc bpc" id="L158" title="1 of 2 branches missed.">				if ( pcl.listener() == observer) {</span>
 <span class="fc" id="L159">					_viewActions.remove(a);</span>
 <span class="fc" id="L160">					return this;</span>
 				}

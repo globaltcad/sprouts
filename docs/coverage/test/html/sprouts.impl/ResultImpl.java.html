@@ -95,15 +95,15 @@ public class ResultImpl&lt;V&gt; implements Result&lt;V&gt;
 <span class="nc" id="L95">	@Override public boolean allowsNull() { return true; }</span>
 
 	@Override
-	public Noticeable subscribe(Listener listener) {
-<span class="nc" id="L99">		Objects.requireNonNull(listener);</span>
+	public Observable subscribe( Observer observer ) {
+<span class="nc" id="L99">		Objects.requireNonNull(observer);</span>
 		/* A Result is immutable, so this method is not supported */
 <span class="nc" id="L101">		return this;</span>
 	}
 
 	@Override
-	public Noticeable unsubscribe(Listener listener) {
-<span class="nc" id="L106">		Objects.requireNonNull(listener);</span>
+	public Observable unsubscribe( Observer observer ) {
+<span class="nc" id="L106">		Objects.requireNonNull(observer);</span>
 		/* A Result is immutable, so this method is not supported */
 <span class="nc" id="L108">		return this;</span>
 	}

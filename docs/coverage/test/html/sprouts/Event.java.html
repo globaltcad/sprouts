@@ -7,38 +7,38 @@ import java.util.function.Consumer;
 
 /**
  *  This represents an occurrence that can be observed as well as triggered.
- *  It is used to register listeners so that they can be notified when the {@link #fire()} method is called.
+ *  It is used to register observers so that they can be notified when the {@link #fire()} method is called.
  *  Contrary to events received by property observers, observing an {@link Event}
  *  does not involve any state.
  */
 public interface Event extends Noticeable
 {
     /**
-     * Triggers this {@link Event}, which means that all registered listeners will be notified.
+     * Triggers this {@link Event}, which means that all registered observers will be notified.
      */
     void fire();
 
     /**
-     * Subscribes the given listener to this {@link Event}.
-     * @param listener The listener to subscribe.
+     * Subscribes the given observer to this {@link Event}.
+     * @param observer The observer to subscribe.
      * @return This {@link Event}, to allow for method chaining.
      */
-    @Override Event subscribe( Listener listener );
+    @Override Event subscribe( Listener observer );
 
     /**
-     * Unsubscribes all listeners from this {@link Event}.
+     * Unsubscribes all observers from this {@link Event}.
      */
     void unsubscribeAll();
 
     /**
      * Creates a new {@link Event} that can be observed and triggered.
-     * @param listener The first listener to subscribe to the new {@link Event}.
+     * @param observer The first observer to subscribe to the new {@link Event}.
      * @return A new {@link Event}.
      */
-    static Event of( Listener listener ) {
-<span class="fc" id="L39">        Event event = create();</span>
-<span class="fc" id="L40">        event.subscribe( listener );</span>
-<span class="fc" id="L41">        return event;</span>
+    static Event of( Listener observer ) {
+<span class="fc" id="L39">        Event occurrence = create();</span>
+<span class="fc" id="L40">        occurrence.subscribe( observer );</span>
+<span class="fc" id="L41">        return occurrence;</span>
     }
 
     /**
@@ -47,55 +47,55 @@ public interface Event extends Noticeable
      */
     static Event create() {
 <span class="fc" id="L49">        return new Event() {</span>
-<span class="fc" id="L50">            private final List&lt;Listener&gt; listeners = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L50">            private final List&lt;Listener&gt; observers = new ArrayList&lt;&gt;();</span>
 
-<span class="fc" id="L52">            @Override public void fire() { listeners.forEach( Listener::notice); }</span>
+<span class="fc" id="L52">            @Override public void fire() { observers.forEach( Listener::notice); }</span>
             @Override
-            public Event subscribe( Listener listener ) {
-<span class="fc" id="L55">                listeners.add( listener );</span>
+            public Event subscribe( Listener observer ) {
+<span class="fc" id="L55">                observers.add( observer );</span>
 <span class="fc" id="L56">                return this;</span>
             }
             @Override
-            public Noticeable unsubscribe( Listener listener ) {
-<span class="fc" id="L60">                listeners.remove( listener );</span>
+            public Noticeable unsubscribe( Listener observer ) {
+<span class="fc" id="L60">                observers.remove( observer );</span>
 <span class="fc" id="L61">                return this;</span>
             }
-<span class="fc" id="L63">            @Override public void unsubscribeAll() { listeners.clear(); }</span>
+<span class="fc" id="L63">            @Override public void unsubscribeAll() { observers.clear(); }</span>
         };
     }
 
     /**
      * Creates a new {@link Event} that can be observed, triggered and executed asynchronously
-     * on a custom event queue, thread pool or any other executor.
+     * on a custom occurrence queue, thread pool or any other executor.
      *
      * @param executor A {@link Consumer} of {@link Runnable}s that will be used to execute the {@link #fire()} method.
      * @return A new {@link Event}.
      */
     static Event using( Executor executor ) {
 <span class="fc" id="L75">        return new Event() {</span>
-<span class="fc" id="L76">            private final List&lt;Listener&gt; listeners = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L76">            private final List&lt;Listener&gt; observers = new ArrayList&lt;&gt;();</span>
 
             @Override
-<span class="fc" id="L79">            public void fire() { executor.execute( () -&gt; listeners.forEach( Listener::notice) ); }</span>
+<span class="fc" id="L79">            public void fire() { executor.execute( () -&gt; observers.forEach( Listener::notice) ); }</span>
             @Override
-            public Event subscribe( Listener listener ) {
-<span class="fc" id="L82">                listeners.add( listener );</span>
+            public Event subscribe( Listener observer ) {
+<span class="fc" id="L82">                observers.add( observer );</span>
 <span class="fc" id="L83">                return this;</span>
             }
             @Override
-            public Noticeable unsubscribe( Listener listener ) {
-<span class="nc" id="L87">                listeners.remove( listener );</span>
+            public Noticeable unsubscribe( Listener observer ) {
+<span class="nc" id="L87">                observers.remove( observer );</span>
 <span class="nc" id="L88">                return this;</span>
             }
-<span class="nc" id="L90">            @Override public void unsubscribeAll() { listeners.clear(); }</span>
+<span class="nc" id="L90">            @Override public void unsubscribeAll() { observers.clear(); }</span>
         };
     }
 
 
     /**
-     *  The event executor is responsible for executing the given {@link Runnable} when an {@link Event} is triggered.
+     *  The occurrence executor is responsible for executing the given {@link Runnable} when an {@link Event} is triggered.
      *  It is used to execute the {@link Event#fire()} method asynchronously or on a
-     *  custom event queue, thread pool or any other executor.
+     *  custom occurrence queue, thread pool or any other executor.
      *  @see Event#using(Executor)
      */
     interface Executor
