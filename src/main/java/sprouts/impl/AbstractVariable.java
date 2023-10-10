@@ -55,11 +55,14 @@ public class AbstractVariable<T> extends AbstractValue<T> implements Var<T>
         return new AbstractVariable<T>( _isImmutable, _type, _value, id, _deepCopy, _allowsNull );
 	}
 
+	/** {@inheritDoc} */
 	@Override
 	public Var<T> onChange( Channel channel, Action<Val<T>> action ) {
 		Objects.requireNonNull(channel);
 		Objects.requireNonNull(action);
 		_actions.computeIfAbsent(channel, k->new ArrayList<>()).add(action);
+		if ( channel != From.ANY )
+			_actions.computeIfAbsent(From.ANY, k->new ArrayList<>()).add(action);
 		return this;
 	}
 
