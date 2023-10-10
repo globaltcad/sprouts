@@ -1,5 +1,6 @@
 package example;
 
+import sprouts.From;
 import sprouts.Val;
 import sprouts.Var;
 
@@ -7,8 +8,8 @@ import java.awt.*;
 
 public class LoginViewModel
 {
-    private final Var<String> username = Var.of( "" ).onAct(v -> validate() );
-    private final Var<String> password = Var.of( "" ).onAct(v -> validate() );
+    private final Var<String> username = Var.of( "" ).onChange(From.VIEW, v -> validate() );
+    private final Var<String> password = Var.of( "" ).onChange(From.VIEW, v -> validate() );
     private final Var<String> feedback = Var.of( "" );
     private final Var<Boolean> buttonEnabled = Var.of( false );
     private final Var<String> buttonText = Var.of( "Login" );

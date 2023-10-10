@@ -1,11 +1,10 @@
 package sprouts.impl;
 
 import sprouts.Action;
+import sprouts.Channel;
 import sprouts.Val;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  *  This is the base class for all {@link Val} implementations.
@@ -15,7 +14,7 @@ import java.util.Objects;
  */
 abstract class AbstractValue<T> implements Val<T>
 {
-    protected final List<Action<Val<T>>> _viewActions = new ArrayList<>();
+    protected final Map<Channel, List<Action<Val<T>>>> _actions = new LinkedHashMap<>();
 
     protected T _value;
     protected final Class<T> _type;
@@ -54,7 +53,10 @@ abstract class AbstractValue<T> implements Val<T>
     public final T orElseNull() { return _value; }
 
     /** {@inheritDoc} */
-    @Override public Val<T> fireSet() { _triggerActions( _viewActions ); return this; }
+    @Override public Val<T> fire(Channel channel) {
+        _triggerActions( _actions.computeIfAbsent(channel, k->new ArrayList<>()) );
+        return this;
+    }
 
     protected void _triggerActions(
         List<Action<Val<T>>> actions

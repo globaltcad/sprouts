@@ -79,14 +79,14 @@ public class ResultImpl<V> implements Result<V>
 	}
 
 	@Override
-	public Val<V> onSet( Action<Val<V>> displayAction ) {
+	public Val<V> onChange( Channel channel, Action<Val<V>> displayAction ) {
 		Objects.requireNonNull(displayAction);
 		/* A Result is immutable, so this method is not supported */
 		return this;
 	}
 
 	@Override
-	public Val<V> fireSet() {
+	public Val<V> fire(Channel channel) {
 		/* A Result is immutable, so this method is not supported */
 		return this;
 	}

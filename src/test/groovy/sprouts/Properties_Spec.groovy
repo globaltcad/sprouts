@@ -77,13 +77,13 @@ class Properties_Spec extends Specification
         and : 'Something we want to have a side effect on:'
             var list = []
         when : 'We subscribe to the property using the "onSetItem(..)" method.'
-            mutable.onSet { list.add(it.orElseNull()) }
+            mutable.onChange(From.VIEW_MODEL, it -> list.add(it.orElseNull()) )
         and : 'We change the value of the property.'
             mutable.set("Tofu")
         then : 'The side effect is executed.'
             list == ["Tofu"]
         when : 'We trigger the side effect manually.'
-            mutable.fireSet()
+            mutable.fire(From.VIEW_MODEL)
         then : 'The side effect is executed again.'
             list.size() == 2
             list[0] == "Tofu"
@@ -104,8 +104,8 @@ class Properties_Spec extends Specification
     {
         reportInfo """
             The wither methods on properties are used to create new property instances
-            with the same value and bindings as the original property
-            but without side effects of the original property.
+            with the same value and bindings (observer) as the original property
+            but without any side effects of the original property (the bindings).
             So if you add bindings to a withered property they will not affect the original property.
         """
 
@@ -113,12 +113,12 @@ class Properties_Spec extends Specification
             Var<String> property = Var.of("Hello World")
         and : 'we bind 1 subscriber to the property.'
             var list1 = []
-            property.onSet { list1.add(it.orElseNull()) }
+            property.onChange(From.VIEW_MODEL, it -> list1.add(it.orElseNull()) )
         and : 'We create a new property with a different id.'
             Val<String> property2 = property.withId("XY")
         and : 'Another subscriber to the new property.'
             var list2 = []
-            property2.onSet { list2.add(it.orElseNull()) }
+            property2.onChange(From.VIEW_MODEL, it -> list2.add(it.orElseNull()) )
 
         when : 'We change the value of the original property.'
             property.set("Tofu")
@@ -215,7 +215,7 @@ class Properties_Spec extends Specification
             words.get() == 2
 
         when : 'We change the value of the food property through the "act" method.'
-            food.act("Faster Than Light")
+            food.set(From.VIEW, "Faster Than Light")
         then : 'The view is updated.'
             words.get() == 3
     }
@@ -300,10 +300,10 @@ class Properties_Spec extends Specification
             var showListener = []
             var modelListener = []
             var property = Var.of(":)")
-                                .onAct(it ->{
+                                .onChange(From.VIEW, it ->{
                                     modelListener << it.orElseThrow()
                                 })
-            property.onSet(it -> showListener << it.orElseNull() )
+            property.onChange(From.VIEW_MODEL, it -> showListener << it.orElseNull() )
 
         when : 'We change the state of the property using the "set(T)" method.'
             property.set(":(")
@@ -313,7 +313,7 @@ class Properties_Spec extends Specification
             modelListener == []
 
         when : 'We change the state of the property using the "act(T)" method.'
-            property.act(":|")
+            property.set(From.VIEW, ":|")
         then : 'The "onSet" actions are NOT triggered, because the "act" method performs an "act on your view model"!'
             showListener == [":("]
         and : 'The view model actions are triggered.'

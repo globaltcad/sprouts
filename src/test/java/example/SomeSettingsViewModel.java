@@ -1,5 +1,6 @@
 package example;
 
+import sprouts.From;
 import sprouts.Var;
 
 public class SomeSettingsViewModel
@@ -14,7 +15,7 @@ public class SomeSettingsViewModel
         CLOCKWISE, COUNTER_CLOCKWISE
     }
 
-    private final Var<Boolean> hasType = Var.of(false).onAct(it-> verifyEnabled());
+    private final Var<Boolean> hasType = Var.of(false).onChange(From.VIEW, it-> verifyEnabled());
     private final Var<Type> type = Var.of(Type.Z);
     private final Var<Boolean> somethingEnabled = Var.of(false);
 

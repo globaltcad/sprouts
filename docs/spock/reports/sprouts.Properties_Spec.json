@@ -65,13 +65,13 @@
 
         {"kind":"and","text":"Something we want to have a side effect on:","code":["var list = []"]},
 
-        {"kind":"when","text":"We subscribe to the property using the \"onSetItem(..)\" method.","code":["mutable.onSet { list.add(it.orElseNull()) }"]},
+        {"kind":"when","text":"We subscribe to the property using the \"onSetItem(..)\" method.","code":["mutable.onChange(From.VIEW_MODEL, it -> list.add(it.orElseNull()) )"]},
 
         {"kind":"and","text":"We change the value of the property.","code":["mutable.set(\"Tofu\")"]},
 
         {"kind":"then","text":"The side effect is executed.","code":["list == [\"Tofu\"]"]},
 
-        {"kind":"when","text":"We trigger the side effect manually.","code":["mutable.fireSet()"]},
+        {"kind":"when","text":"We trigger the side effect manually.","code":["mutable.fire(From.VIEW_MODEL)"]},
 
         {"kind":"then","text":"The side effect is executed again.","code":["list.size() == 2","list[0] == \"Tofu\"","list[1] == \"Tofu\""]}
       ],
@@ -100,16 +100,16 @@
       "result":"PASS",
       "duration":"?",
       "iterations":{
-      "tags":{},"see":[],"extraInfo":["\n            The wither methods on properties are used to create new property instances\n            with the same value and bindings as the original property\n            but without side effects of the original property.\n            So if you add bindings to a withered property they will not affect the original property.\n        "]
+      "tags":{},"see":[],"extraInfo":["\n            The wither methods on properties are used to create new property instances\n            with the same value and bindings (observer) as the original property\n            but without any side effects of the original property (the bindings).\n            So if you add bindings to a withered property they will not affect the original property.\n        "]
       },
       "blocks":[
         {"kind":"given","text":"We create a property...","code":["Var<String> property = Var.of(\"Hello World\")"]},
 
-        {"kind":"and","text":"we bind 1 subscriber to the property.","code":["var list1 = []","property.onSet { list1.add(it.orElseNull()) }"]},
+        {"kind":"and","text":"we bind 1 subscriber to the property.","code":["var list1 = []","property.onChange(From.VIEW_MODEL, it -> list1.add(it.orElseNull()) )"]},
 
         {"kind":"and","text":"We create a new property with a different id.","code":["Val<String> property2 = property.withId(\"XY\")"]},
 
-        {"kind":"and","text":"Another subscriber to the new property.","code":["var list2 = []","property2.onSet { list2.add(it.orElseNull()) }"]},
+        {"kind":"and","text":"Another subscriber to the new property.","code":["var list2 = []","property2.onChange(From.VIEW_MODEL, it -> list2.add(it.orElseNull()) )"]},
 
         {"kind":"when","text":"We change the value of the original property.","code":["property.set(\"Tofu\")"]},
 
@@ -199,7 +199,7 @@
 
         {"kind":"expect","text":"The view has the expected value.","code":["words.get() == 2"]},
 
-        {"kind":"when","text":"We change the value of the food property through the \"act\" method.","code":["food.act(\"Faster Than Light\")"]},
+        {"kind":"when","text":"We change the value of the food property through the \"act\" method.","code":["food.set(From.VIEW, \"Faster Than Light\")"]},
 
         {"kind":"then","text":"The view is updated.","code":["words.get() == 3"]}
       ],
@@ -271,7 +271,7 @@
       "tags":{},"see":[],"extraInfo":["\n            Sprouts was designed to support MVVM for Swing,\n            unfortunately however Swing does not allow us to implement models \n            for all types of its UI components.\n            A JButton for example does not have a model that we can use to bind to a property.\n            Instead Sprouts has to perform precise updates to the UI components without\n            triggering any looping event callbacks.\n            Therefore the method \"act(T)\" exists, which is intended to be used by the UI \n            to change the property state and triggers the \"onAct(T)\"\n            actions of a property. On the other hand the \"set(T)\" method is used to change the state\n            of a property without triggering the actions, the \"onSet\" actions / listeners\n            of the property instead, which is intended to allow the UI to update itself \n            when the user changes the\n            state of a property.\n        "]
       },
       "blocks":[
-        {"kind":"given","text":"A simple property with a view and model actions.","code":["var showListener = []","var modelListener = []","var property = Var.of(\":)\")","                    .onAct(it ->{","                        modelListener << it.orElseThrow()","                    })","property.onSet(it -> showListener << it.orElseNull() )"]},
+        {"kind":"given","text":"A simple property with a view and model actions.","code":["var showListener = []","var modelListener = []","var property = Var.of(\":)\")","                    .onChange(From.VIEW, it ->{","                        modelListener << it.orElseThrow()","                    })","property.onChange(From.VIEW_MODEL, it -> showListener << it.orElseNull() )"]},
 
         {"kind":"when","text":"We change the state of the property using the \"set(T)\" method.","code":["property.set(\":(\")"]},
 
@@ -279,7 +279,7 @@
 
         {"kind":"and","text":"The view model actions are not triggered.","code":["modelListener == []"]},
 
-        {"kind":"when","text":"We change the state of the property using the \"act(T)\" method.","code":["property.act(\":|\")"]},
+        {"kind":"when","text":"We change the state of the property using the \"act(T)\" method.","code":["property.set(From.VIEW, \":|\")"]},
 
         {"kind":"then","text":"The \"onSet\" actions are NOT triggered, because the \"act\" method performs an \"act on your view model\"!","code":["showListener == [\":(\"]"]},
 

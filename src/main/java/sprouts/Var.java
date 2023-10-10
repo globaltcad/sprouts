@@ -11,19 +11,21 @@ import java.util.function.Function;
  * 	as trigger a possible change action inside your view model.
  *  <p>
  * 	So for example if you have a {@link Var} which represents the username
- * 	of a form, in your UI you can register a callback using {@link #onSet(Action)} which
+ * 	of a form, in your UI you can register a callback using {@link #onChange(Channel, Action)}
+ * 	using the channel {@link From#VIEW_MODEL} which
  * 	will update the UI accordingly when {@link #set(Object)} is called inside you view model.
- * 	On the other hand, when the UI changes the property through the {@link #act(Object)}
- * 	method, all {@link #onAct(Action)} listeners will be notified. <br>
+ * 	On the other hand, when the UI changes the property through the {@code #set(From.View, object)}
+ * 	method, all {@link #onChange(Channel, Action)} with the channel {@link From#VIEW} listeners
+ * 	will be notified. <br>
  * 	Consider the following example property in your view model:
  * 	<pre>{@code
  * 	    // A username property with a validation action:
- * 		private final Var<String> username = Var.of("").onAct( v -> validateUser(v) );
+ * 		private final Var<String> username = Var.of("").onChange(From.VIEW v -> validateUser(v) );
  * 	}</pre>
  * 	And the following Swing-Tree example UI:
  * 	<pre>{@code
  * 	    UI.textField()
- * 	    .peek( tf -> vm.getUsername().onSet( t -> tf.setText(t.get()) ) )
+ * 	    .peek( tf -> vm.getUsername().onChange(From.VIEW_MODEL t -> tf.setText(t.get()) ) )
  * 	    .onKeyReleased( e -> vm.getUsername().act( ta.getText() ) );
  * 	}</pre>
  * 	Your view will automatically update the text field with the item of the property
@@ -31,7 +33,7 @@ import java.util.function.Function;
  * 	to be shown in the UI:
  * 	<pre>{@code
  * 	    // Initially empty username:
- * 		username.set( "" ) // triggers 'fireSet()'
+ * 		username.set( "" ) // triggers 'fire(From.VIEW_MODEL)'
  * 	}</pre>
  * 	<p>
  * 	<b>Please take a look at the <a href="https://globaltcad.github.io/sprouts/">living sprouts documentation</a>
@@ -110,18 +112,29 @@ public interface Var<T> extends Val<T>
 	 */
 	static <T, V extends T> Var<T> of( Class<T> type, V item ) { return AbstractVariable.of( false, type, item ); }
 
-
-	/** {@inheritDoc} */
-	@Override Var<T> onSet( Action<Val<T>> action );
-
 	/**
-	 *  This method provides the ability to change the state of the wrapper.
-	 *  It might have several side effects depending on the implementation.
+	 *  This method provides the ability to modify the state of the wrapper
+	 *  from the view model channel (see {@link From#VIEW_MODEL}).
+	 *  It might have several effects depending on the implementation.
 	 *
 	 * @param newItem The new item which ought to replace the old one.
 	 * @return This very wrapper instance, in order to enable method chaining.
 	 */
-	Var<T> set( T newItem );
+	default Var<T> set( T newItem ) {
+		return this.set(DEFAULT_CHANNEL, newItem);
+	}
+
+	/**
+	 *  This method provides the ability to modify the state of the wrapper
+	 *  from a custom channel of your choice, usually one of the channels
+	 *  defined in {@link From}.
+	 *  It might have several effects depending on the implementation.
+	 *
+	 * @param channel The channel from which the item is set.
+	 * @param newItem The new item which ought to replace the old one.
+	 * @return This very wrapper instance, in order to enable method chaining.
+	 */
+	Var<T> set( Channel channel, T newItem );
 
 	/**
 	 *  Use this method to create a new property with an id.
@@ -135,39 +148,9 @@ public interface Var<T> extends Val<T>
 	@Override Var<T> withId( String id );
 
 	/**
-	 *  Use this method to add an action to this property which is supposed to be triggered
-	 *  when the UI changes the item of this property through
-	 *  the {@code Var::act(T)} method, or simply when it is explicitly
-	 *  triggered by the {@code Var::act(T)} method.
-	 *
-	 * @param action The action to be triggered when {@code Var::act(T)} or {@code Var::fireAct()} is called.
-	 * @return This very property instance, in order to enable method chaining.
+	 * {@inheritDoc}
 	 */
-	Var<T> onAct( Action<Val<T>> action );
-
-	/**
-	 *  Triggers the action associated with this property, if one was
-	 *  set using {@link #onAct(Action)}.
-	 *  This method is intended to be used in the UI
-	 *  to indicate that the user has changed the item of the property
-	 *  not your view model.
-	 *
-	 * @return This very wrapper instance, in order to enable method chaining.
-	 */
-	Var<T> fireAct();
-
-	/**
-	 *  Updates the state of this property and then, if the state has changed,
-	 *  trigger its action using the {@link #fireAct()} method but not the {@link #fireSet()}.
-	 *  <br>
-	 *  This method is intended to be used in the UI.
-	 *  If you want to modify the state of the property from the view model,
-	 *  as part of your business logic, you should use the {@code Var::set(T)} method instead.
-	 *
-	 * @param newValue The new item which ought to replace the old one.
-	 * @return This very wrapper instance, in order to enable method chaining.
-	 */
-	Var<T> act( T newValue );
+	@Override Var<T> onChange( Channel channel, Action<Val<T>> action );
 
 	/**
 	 *  Essentially the same as {@link Optional#map(Function)}. but with a {@link Val} as return type.

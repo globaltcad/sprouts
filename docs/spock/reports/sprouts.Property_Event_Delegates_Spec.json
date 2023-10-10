@@ -21,7 +21,7 @@
       "tags":{},"see":[],"extraInfo":["\n            The delegate of the a property is basically an immutable clone of the property,\n            conceptually a snapshot of the property at the time of the change.\n            The reason for this is because the change action might be executed on a different thread\n            than the thread that changed the property.\n            This means that the property might have changed again before the change action is executed\n            causing the change action to receive a delegate that is not representative of true change\n            that occurred.\n        "]
       },
       "blocks":[
-        {"kind":"given","text":"A property.","code":["var property = Var.of(1)","var delegate = null","property.onSet( it -> delegate = it )"]},
+        {"kind":"given","text":"A property.","code":["var property = Var.of(1)","var delegate = null","property.onChange(From.VIEW_MODEL,  it -> delegate = it )"]},
 
         {"kind":"when","text":"We change the property.","code":["property.set(42)"]},
 
@@ -44,15 +44,15 @@
       "tags":{},"see":[],"extraInfo":["\n            The delegate of the a property is basically an immutable clone of the property,\n            conceptually a snapshot of the property at the time of the change.\n            The reason for this is because the change action might be executed on a different thread\n            than the thread that changed the property.\n            This means that the property might have changed again before the change action is executed\n            causing the change action to receive a delegate that is not representative of true change\n            that occurred.\n        "]
       },
       "blocks":[
-        {"kind":"given","text":"A property.","code":["var property = Var.of(1)","var delegate = null","property.onAct( it -> delegate = it )"]},
+        {"kind":"given","text":"A property.","code":["var property = Var.of(1)","var delegate = null","property.onChange(From.VIEW, it -> delegate = it )"]},
 
-        {"kind":"when","text":"We change the property.","code":["property.act(7)"]},
+        {"kind":"when","text":"We change the property.","code":["property.set(From.VIEW, 7)"]},
 
         {"kind":"then","text":"The exposed delegate is equal to the property.","code":["delegate == property"]},
 
         {"kind":"and","text":"The delegate is however not identical to the property.","code":["delegate !== property"]},
 
-        {"kind":"when","text":"We try to mutate the delegate...","code":["delegate.act(0)"]},
+        {"kind":"when","text":"We try to mutate the delegate...","code":["delegate.set(From.VIEW, 0)"]},
 
         {"kind":"then","text":"...we get an exception.","code":["thrown(UnsupportedOperationException)"]}
       ],

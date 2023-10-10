@@ -54,13 +54,13 @@
 
         {"kind":"and","text":"Finally we make sure that we can track changes to the property.","code":["var observables = Mock(Observer)","observable.subscribe(observables)"]},
 
-        {"kind":"when","text":"We change the property.","code":["property.fireSet()"]},
+        {"kind":"when","text":"We change the property.","code":["property.fire(From.VIEW_MODEL)"]},
 
         {"kind":"then","text":"The listener is notified.","code":["1 * observables.invoke()"]},
 
         {"kind":"when","text":"We unsubscribe the mocked listener from the property...","code":["observable.unsubscribe(observables)"]},
 
-        {"kind":"and","text":"...and change the property again.","code":["property.fireSet()"]},
+        {"kind":"and","text":"...and change the property again.","code":["property.fire(From.VIEW_MODEL)"]},
 
         {"kind":"then","text":"The listener is not notified.","code":["0 * observables.invoke()"]}
       ],
@@ -81,7 +81,7 @@
 
         {"kind":"and","text":"Finally we make sure that we can track changes to the property.","code":["var observer = Mock(Observer)","observable.subscribe(observer)"]},
 
-        {"kind":"when","text":"We change the property.","code":["property.act(\"World\")"]},
+        {"kind":"when","text":"We change the property.","code":["property.set(From.VIEW, \"World\")"]},
 
         {"kind":"then","text":"The observer is not notified.","code":["0 * observer.invoke()"]}
       ],

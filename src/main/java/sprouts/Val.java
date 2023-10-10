@@ -16,8 +16,9 @@ import java.util.regex.Pattern;
  * 	so that it can be notified and updated when the item changes.
  * 	The API of this is very similar to the {@link Optional} API in the
  * 	sense that it is a wrapper around a single item, which may also be missing (null).
- * 	Use the {@link #onSet(Action)} method to register callbacks which
- * 	will be called when the {@link #fireSet()} method is called or the item is
+ * 	Use the {@link #onChange(Channel, Action)} method and pass {@link From#VIEW_MODEL}
+ * 	to register callbacks which
+ * 	will be called when the {@link #fire(Channel)} method is called or the item is
  * 	changed (typically by the {@link Var#set(Object)} method).
  * 	<p>
  * 	<b>Please take a look at the <a href="https://globaltcad.github.io/sprouts/">living sprouts documentation</a>
@@ -30,6 +31,7 @@ public interface Val<T> extends Observable
 	String NO_ID = ""; // This is the default id for properties
 	String EMPTY = "EMPTY"; // This is the default string for empty properties
 	Pattern ID_PATTERN = Pattern.compile("[a-zA-Z0-9_]*");
+	From DEFAULT_CHANNEL = From.VIEW_MODEL;
 
 	/**
 	 *  Use this factory method to create a new {@link Val} instance
@@ -499,24 +501,30 @@ public interface Val<T> extends Observable
 	default Optional<T> toOptional() { return Optional.ofNullable(this.orElseNull()); }
 
 	/**
-	 *  Use this to register an observer lambda which will be called whenever the item
-	 *  wrapped by this {@link Val} changes through the {@code Var::set(T)} method.
+	 *  Use this to register an observer lambda for a particular {@link Channel},
+	 *  which will be called whenever the item
+	 *  wrapped by this {@link Val} changes through the {@link Var#set(Channel, T)} method.
 	 *  The lambda will receive the current item of this property.
+	 *  The default channel is {@link From#VIEW_MODEL}, so if you use the {@link Var#set(T)} method
+	 *  then the observer lambdas registered through this method will be called.
 	 *
+	 * @param channel The channel from which the item is set.
 	 * @param action The lambda which will be called whenever the item wrapped by this {@link Var} changes.
 	 * @return The {@link Val} instance itself.
 	 */
-	Val<T> onSet( Action<Val<T>> action );
+	Val<T> onChange( Channel channel, Action<Val<T>> action );
 
 	/**
-	 *  Triggers the observer lambdas registered through the {@link #onSet(Action)} method.
-	 *  This method is called automatically by the {@code Var::set(T)} method,
-	 *  and it is supposed to be used by the UI to update the UI components.
+	 *  Triggers all observer lambdas for the given {@link Channel}.
+	 *  Change listeners may be registered using the {@link #onChange(Channel, Action)} method.
+	 *  Note that when the {@code Var::set(T)} method is called
+	 *  then this will automatically translate to {@code fire(From.VIEW_MODEL)}.
+	 *  So it is supposed to be used by the view to update the UI components.
 	 *  This is in essence how binding works in Swing-Tree.
 	 *
 	 * @return The {@link Val} instance itself.
 	 */
-	Val<T> fireSet();
+	Val<T> fire( Channel channel );
 
 	/**
 	 *  A property will only allow null items if it was constructed with a "ofNullable(..)" factory method.

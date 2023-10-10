@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AbstractValue.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sprouts</a> &gt; <a href="index.source.html" class="el_package">sprouts.impl</a> &gt; <span class="el_source">AbstractValue.java</span></div><h1>AbstractValue.java</h1><pre class="source lang-java linenums">package sprouts.impl;
 
 import sprouts.Action;
+import sprouts.Channel;
 import sprouts.Val;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  *  This is the base class for all {@link Val} implementations.
@@ -15,7 +14,7 @@ import java.util.Objects;
  */
 abstract class AbstractValue&lt;T&gt; implements Val&lt;T&gt;
 {
-<span class="fc" id="L18">    protected final List&lt;Action&lt;Val&lt;T&gt;&gt;&gt; _viewActions = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L17">    protected final Map&lt;Channel, List&lt;Action&lt;Val&lt;T&gt;&gt;&gt;&gt; _actions = new LinkedHashMap&lt;&gt;();</span>
 
     protected T _value;
     protected final Class&lt;T&gt; _type;
@@ -24,68 +23,71 @@ abstract class AbstractValue&lt;T&gt; implements Val&lt;T&gt;
     protected final boolean _allowsNull;
 
 
-<span class="fc" id="L27">    protected AbstractValue( Class&lt;T&gt; type, String id, boolean allowsNull, T iniValue ) {</span>
-<span class="fc" id="L28">        Objects.requireNonNull(id);</span>
-<span class="pc bpc" id="L29" title="1 of 4 branches missed.">        _type = ( iniValue == null || type != null ? type : (Class&lt;T&gt;) iniValue.getClass());</span>
-<span class="fc" id="L30">        _id = id;</span>
-<span class="fc" id="L31">        _allowsNull = allowsNull;</span>
-<span class="fc" id="L32">        _value = iniValue;</span>
-<span class="fc bfc" id="L33" title="All 2 branches covered.">        if ( _value != null ) {</span>
+<span class="fc" id="L26">    protected AbstractValue( Class&lt;T&gt; type, String id, boolean allowsNull, T iniValue ) {</span>
+<span class="fc" id="L27">        Objects.requireNonNull(id);</span>
+<span class="pc bpc" id="L28" title="1 of 4 branches missed.">        _type = ( iniValue == null || type != null ? type : (Class&lt;T&gt;) iniValue.getClass());</span>
+<span class="fc" id="L29">        _id = id;</span>
+<span class="fc" id="L30">        _allowsNull = allowsNull;</span>
+<span class="fc" id="L31">        _value = iniValue;</span>
+<span class="fc bfc" id="L32" title="All 2 branches covered.">        if ( _value != null ) {</span>
 			// We check if the type is correct
-<span class="pc bpc" id="L35" title="1 of 2 branches missed.">			if ( !_type.isAssignableFrom(_value.getClass()) )</span>
-<span class="nc" id="L36">				throw new IllegalArgumentException(</span>
+<span class="pc bpc" id="L34" title="1 of 2 branches missed.">			if ( !_type.isAssignableFrom(_value.getClass()) )</span>
+<span class="nc" id="L35">				throw new IllegalArgumentException(</span>
 						&quot;The provided type of the initial value is not compatible with the actual type of the variable&quot;
 					);
 		}
-<span class="pc bpc" id="L40" title="1 of 2 branches missed.">        if ( !ID_PATTERN.matcher(_id).matches() )</span>
-<span class="nc" id="L41">            throw new IllegalArgumentException(&quot;The provided id '&quot;+_id+&quot;' is not valid!&quot;);</span>
-<span class="pc bpc" id="L42" title="1 of 4 branches missed.">        if ( !allowsNull &amp;&amp; iniValue == null )</span>
-<span class="nc" id="L43">            throw new IllegalArgumentException(&quot;The provided initial value is null, but the property does not allow null values!&quot;);</span>
-<span class="fc" id="L44">    }</span>
+<span class="pc bpc" id="L39" title="1 of 2 branches missed.">        if ( !ID_PATTERN.matcher(_id).matches() )</span>
+<span class="nc" id="L40">            throw new IllegalArgumentException(&quot;The provided id '&quot;+_id+&quot;' is not valid!&quot;);</span>
+<span class="pc bpc" id="L41" title="1 of 4 branches missed.">        if ( !allowsNull &amp;&amp; iniValue == null )</span>
+<span class="nc" id="L42">            throw new IllegalArgumentException(&quot;The provided initial value is null, but the property does not allow null values!&quot;);</span>
+<span class="fc" id="L43">    }</span>
 
     /** {@inheritDoc} */
-<span class="fc" id="L47">    @Override public final Class&lt;T&gt; type() { return _type; }</span>
+<span class="fc" id="L46">    @Override public final Class&lt;T&gt; type() { return _type; }</span>
 
     /** {@inheritDoc} */
-<span class="fc" id="L50">    @Override public final String id() { return _id; }</span>
+<span class="fc" id="L49">    @Override public final String id() { return _id; }</span>
 
     /** {@inheritDoc} */
     @Override
-<span class="fc" id="L54">    public final T orElseNull() { return _value; }</span>
+<span class="fc" id="L53">    public final T orElseNull() { return _value; }</span>
 
     /** {@inheritDoc} */
-<span class="fc" id="L57">    @Override public Val&lt;T&gt; fireSet() { _triggerActions( _viewActions ); return this; }</span>
+    @Override public Val&lt;T&gt; fire(Channel channel) {
+<span class="nc" id="L57">        _triggerActions( _actions.computeIfAbsent(channel, k-&gt;new ArrayList&lt;&gt;()) );</span>
+<span class="nc" id="L58">        return this;</span>
+    }
 
     protected void _triggerActions(
         List&lt;Action&lt;Val&lt;T&gt;&gt;&gt; actions
     ) {
-<span class="fc" id="L62">        List&lt;Action&lt;Val&lt;T&gt;&gt;&gt; removableActions = new ArrayList&lt;&gt;();</span>
-<span class="fc" id="L63">        Val&lt;T&gt; clone = Val.ofNullable(this); // We clone this property to avoid concurrent modification</span>
-<span class="fc bfc" id="L64" title="All 2 branches covered.">        for ( Action&lt;Val&lt;T&gt;&gt; action : new ArrayList&lt;&gt;(actions) ) // We copy the list to avoid concurrent modification</span>
+<span class="fc" id="L64">        List&lt;Action&lt;Val&lt;T&gt;&gt;&gt; removableActions = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L65">        Val&lt;T&gt; clone = Val.ofNullable(this); // We clone this property to avoid concurrent modification</span>
+<span class="fc bfc" id="L66" title="All 2 branches covered.">        for ( Action&lt;Val&lt;T&gt;&gt; action : new ArrayList&lt;&gt;(actions) ) // We copy the list to avoid concurrent modification</span>
             try {
-<span class="fc bfc" id="L66" title="All 2 branches covered.">                if ( action.canBeRemoved() )</span>
-<span class="fc" id="L67">                    removableActions.add(action);</span>
+<span class="fc bfc" id="L68" title="All 2 branches covered.">                if ( action.canBeRemoved() )</span>
+<span class="fc" id="L69">                    removableActions.add(action);</span>
                 else
-<span class="fc" id="L69">                    action.accept(clone);</span>
-<span class="nc" id="L70">            } catch ( Exception e ) {</span>
-<span class="nc" id="L71">                e.printStackTrace();</span>
-<span class="fc" id="L72">            }</span>
-<span class="fc" id="L73">        actions.removeAll(removableActions);</span>
-<span class="fc" id="L74">    }</span>
+<span class="fc" id="L71">                    action.accept(clone);</span>
+<span class="nc" id="L72">            } catch ( Exception e ) {</span>
+<span class="nc" id="L73">                e.printStackTrace();</span>
+<span class="fc" id="L74">            }</span>
+<span class="fc" id="L75">        actions.removeAll(removableActions);</span>
+<span class="fc" id="L76">    }</span>
 
     /** {@inheritDoc} */
-<span class="fc" id="L77">    @Override public final boolean allowsNull() { return _allowsNull; }</span>
+<span class="fc" id="L79">    @Override public final boolean allowsNull() { return _allowsNull; }</span>
 
     @Override
     public final String toString() {
-<span class="fc" id="L81">        String value = this.mapTo(String.class, Object::toString).orElse(&quot;null&quot;);</span>
-<span class="pc bpc" id="L82" title="1 of 2 branches missed.">        String id = this.id() == null ? &quot;?&quot; : this.id();</span>
-<span class="fc bfc" id="L83" title="All 2 branches covered.">        if ( id.equals(NO_ID) ) id = &quot;?&quot;;</span>
-<span class="pc bpc" id="L84" title="1 of 2 branches missed.">        String type = ( type() == null ? &quot;?&quot; : type().getSimpleName() );</span>
-<span class="pc bpc" id="L85" title="1 of 2 branches missed.">        if ( type.equals(&quot;Object&quot;) ) type = &quot;?&quot;;</span>
-<span class="fc bfc" id="L86" title="All 4 branches covered.">        if ( type.equals(&quot;String&quot;) &amp;&amp; this.isPresent() ) value = &quot;\&quot;&quot; + value + &quot;\&quot;&quot;;</span>
-<span class="fc bfc" id="L87" title="All 2 branches covered.">        if ( _allowsNull ) type = type + &quot;?&quot;;</span>
-<span class="fc" id="L88">        return value + &quot; ( &quot; +</span>
+<span class="fc" id="L83">        String value = this.mapTo(String.class, Object::toString).orElse(&quot;null&quot;);</span>
+<span class="pc bpc" id="L84" title="1 of 2 branches missed.">        String id = this.id() == null ? &quot;?&quot; : this.id();</span>
+<span class="fc bfc" id="L85" title="All 2 branches covered.">        if ( id.equals(NO_ID) ) id = &quot;?&quot;;</span>
+<span class="pc bpc" id="L86" title="1 of 2 branches missed.">        String type = ( type() == null ? &quot;?&quot; : type().getSimpleName() );</span>
+<span class="pc bpc" id="L87" title="1 of 2 branches missed.">        if ( type.equals(&quot;Object&quot;) ) type = &quot;?&quot;;</span>
+<span class="fc bfc" id="L88" title="All 4 branches covered.">        if ( type.equals(&quot;String&quot;) &amp;&amp; this.isPresent() ) value = &quot;\&quot;&quot; + value + &quot;\&quot;&quot;;</span>
+<span class="fc bfc" id="L89" title="All 2 branches covered.">        if ( _allowsNull ) type = type + &quot;?&quot;;</span>
+<span class="fc" id="L90">        return value + &quot; ( &quot; +</span>
                             &quot;type = &quot;+type+&quot;, &quot; +
                             &quot;id = \&quot;&quot;+ id+&quot;\&quot; &quot; +
                         &quot;)&quot;;
@@ -93,24 +95,24 @@ abstract class AbstractValue&lt;T&gt; implements Val&lt;T&gt;
 
     @Override
     public final boolean equals( Object obj ) {
-<span class="pc bpc" id="L96" title="1 of 2 branches missed.">        if ( obj == null ) return false;</span>
-<span class="pc bpc" id="L97" title="1 of 2 branches missed.">        if ( obj == this ) return true;</span>
-<span class="pc bpc" id="L98" title="1 of 2 branches missed.">        if ( obj instanceof Val ) {</span>
-<span class="fc" id="L99">            Val&lt;?&gt; other = (Val&lt;?&gt;) obj;</span>
-<span class="fc bfc" id="L100" title="All 2 branches covered.">            if ( other.type() != _type) return false;</span>
-<span class="pc bpc" id="L101" title="1 of 4 branches missed.">            if ( other.orElseNull() == null ) return _value == null;</span>
-<span class="fc" id="L102">            return Val.equals( other.orElseThrow(), _value); // Arrays are compared with Arrays.equals</span>
+<span class="pc bpc" id="L98" title="1 of 2 branches missed.">        if ( obj == null ) return false;</span>
+<span class="pc bpc" id="L99" title="1 of 2 branches missed.">        if ( obj == this ) return true;</span>
+<span class="pc bpc" id="L100" title="1 of 2 branches missed.">        if ( obj instanceof Val ) {</span>
+<span class="fc" id="L101">            Val&lt;?&gt; other = (Val&lt;?&gt;) obj;</span>
+<span class="fc bfc" id="L102" title="All 2 branches covered.">            if ( other.type() != _type) return false;</span>
+<span class="pc bpc" id="L103" title="1 of 4 branches missed.">            if ( other.orElseNull() == null ) return _value == null;</span>
+<span class="fc" id="L104">            return Val.equals( other.orElseThrow(), _value); // Arrays are compared with Arrays.equals</span>
         }
-<span class="nc" id="L104">        return false;</span>
+<span class="nc" id="L106">        return false;</span>
     }
 
     @Override
     public final int hashCode() {
-<span class="fc" id="L109">        int hash = 7;</span>
-<span class="fc bfc" id="L110" title="All 2 branches covered.">        hash = 31 * hash + ( _value == null ? 0 : Val.hashCode(_value) );</span>
-<span class="pc bpc" id="L111" title="1 of 2 branches missed.">        hash = 31 * hash + ( _type == null ? 0 : _type.hashCode() );</span>
-<span class="pc bpc" id="L112" title="1 of 2 branches missed.">        hash = 31 * hash + ( _id == null ? 0 : _id.hashCode() );</span>
-<span class="fc" id="L113">        return hash;</span>
+<span class="fc" id="L111">        int hash = 7;</span>
+<span class="fc bfc" id="L112" title="All 2 branches covered.">        hash = 31 * hash + ( _value == null ? 0 : Val.hashCode(_value) );</span>
+<span class="pc bpc" id="L113" title="1 of 2 branches missed.">        hash = 31 * hash + ( _type == null ? 0 : _type.hashCode() );</span>
+<span class="pc bpc" id="L114" title="1 of 2 branches missed.">        hash = 31 * hash + ( _id == null ? 0 : _id.hashCode() );</span>
+<span class="fc" id="L115">        return hash;</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

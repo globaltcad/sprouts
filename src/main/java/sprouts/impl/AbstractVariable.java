@@ -1,12 +1,10 @@
 package sprouts.impl;
 
+import sprouts.Observable;
+import sprouts.Observer;
 import sprouts.*;
 
-import javax.swing.border.Border;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Consumer;
 
 /**
@@ -19,99 +17,67 @@ import java.util.function.Consumer;
 public class AbstractVariable<T> extends AbstractValue<T> implements Var<T>
 {
 	public static <T> Var<T> ofNullable( boolean immutable, Class<T> type, T value ) {
-		return new AbstractVariable<T>( immutable, type, value, NO_ID, Collections.emptyList(), true );
+		return new AbstractVariable<T>( immutable, type, value, NO_ID, Collections.emptyMap(), true );
 	}
 
 	public static <T> Var<T> of( boolean immutable, Class<T> type, T value ) {
-		return new AbstractVariable<T>( immutable, type, value, NO_ID, Collections.emptyList(), false );
+		return new AbstractVariable<T>( immutable, type, value, NO_ID, Collections.emptyMap(), false );
 	}
 
 	public static <T> Var<T> of( boolean immutable, T iniValue ) {
 		Objects.requireNonNull(iniValue);
-		return new AbstractVariable<T>( immutable, (Class<T>) iniValue.getClass(), iniValue, NO_ID, Collections.emptyList(), false );
-	}
-
-	public static Var<Border> of( boolean immutable, Border iniValue ) {
-		Objects.requireNonNull(iniValue);
-		return new AbstractVariable<Border>( immutable, Border.class, iniValue, NO_ID, Collections.emptyList(), false );
+		return new AbstractVariable<T>( immutable, (Class<T>) iniValue.getClass(), iniValue, NO_ID, Collections.emptyMap(), false );
 	}
 
 	private final boolean _isImmutable;
-	protected final List<Action<Val<T>>> _actions = new ArrayList<>();
 	private final List<Consumer<T>> _viewers = new ArrayList<>(0);
 
-
-
-	protected AbstractVariable(
-			boolean immutable,
-			Class<T> type,
-			T iniValue,
-			String name,
-			List<Action<Val<T>>> actions,
-			boolean allowsNull
-	) {
-		this( immutable, type, iniValue, name, actions, Collections.emptyList(), allowsNull );
-	}
 
 	protected AbstractVariable(
 		boolean immutable,
 		Class<T> type,
 		T iniValue,
 		String id,
-		List<Action<Val<T>>> actions,
-		List<Action<Val<T>>> viewActions,
+		Map<Channel, List<Action<Val<T>>>> actions,
 		boolean allowsNull
 	) {
 		super( type, id, allowsNull, iniValue );
 		Objects.requireNonNull(id);
 		Objects.requireNonNull(actions);
 		_isImmutable = immutable;
-		_viewActions.addAll(viewActions);
-		_actions.addAll(actions);
+		_actions.putAll(actions);
 	}
 
 	/** {@inheritDoc} */
 	@Override public Var<T> withId( String id ) {
-		AbstractVariable<T> newVar = new AbstractVariable<T>( _isImmutable, _type, _value, id, _actions, _allowsNull );
-		newVar._viewActions.addAll(_viewActions);
-		return newVar;
+		Map<Channel, List<Action<Val<T>>>> _deepCopy = new HashMap<>( _actions.size() );
+		_actions.forEach( (k,v) -> _deepCopy.put(k, new ArrayList<>(v)) );
+        return new AbstractVariable<T>( _isImmutable, _type, _value, id, _deepCopy, _allowsNull );
 	}
 
-	/** {@inheritDoc} */
-	@Override public Var<T> onSet( Action<Val<T>> displayAction ) {
-		_viewActions.add(displayAction);
-		return this;
-	}
-
-	/** {@inheritDoc} */
-	@Override public Var<T> onAct( Action<Val<T>> action ) {
+	@Override
+	public Var<T> onChange( Channel channel, Action<Val<T>> action ) {
+		Objects.requireNonNull(channel);
 		Objects.requireNonNull(action);
-		_actions.add(action);
+		_actions.computeIfAbsent(channel, k->new ArrayList<>()).add(action);
 		return this;
 	}
 
 	/** {@inheritDoc} */
-	@Override public Var<T> fireAct() {
-		_triggerActions( _actions);
+	@Override public Var<T> fire( Channel channel ) {
+		_triggerActions( _actions.computeIfAbsent(channel, k->new ArrayList<>()) );
 		_viewers.forEach( v -> v.accept(_value) );
 		return this;
 	}
 
 	/** {@inheritDoc} */
-	@Override public Var<T> act( T newValue ) {
-		if ( _isImmutable )
-			throw new UnsupportedOperationException("This variable is immutable!");
-		if ( _setInternal(newValue) )
-			return fireAct();
-		return this;
-	}
-
-	/** {@inheritDoc} */
 	@Override
-	public Var<T> set( T newItem) {
+	public Var<T> set( Channel channel, T newItem) {
+		Objects.requireNonNull(channel);
 		if ( _isImmutable )
 			throw new UnsupportedOperationException("This variable is immutable!");
-		if ( _setInternal(newItem) ) this.fireSet();
+		if ( _setInternal(newItem) )
+			this.fire(channel);
 		return this;
 	}
 
@@ -140,26 +106,27 @@ public class AbstractVariable<T> extends AbstractValue<T> implements Var<T>
 	@Override public final <U> Val<U> viewAs( Class<U> type, java.util.function.Function<T, U> mapper ) {
 		Var<U> var = mapTo(type, mapper);
 		// Now we register a live update listener to this property
-		this.onSet(v -> var.set( mapper.apply( v.orElseNull() ) ));
-		_viewers.add( v -> var.act( mapper.apply( v ) ) );
+		this.onChange( DEFAULT_CHANNEL, v -> var.set( mapper.apply( v.orElseNull() ) ));
+		_viewers.add( v -> var.set(From.VIEW, mapper.apply( v ) ) );
 		return var;
 	}
 
 	@Override
 	public Observable subscribe( Observer observer ) {
-		return onSet( new SproutChangeListener<>(observer) );
+		return onChange(DEFAULT_CHANNEL, new SproutChangeListener<>(observer) );
 	}
 
 	@Override
 	public Observable unsubscribe( Observer observer ) {
-		for ( Action<?> a : _viewActions )
-			if ( a instanceof SproutChangeListener ) {
-				SproutChangeListener<?> pcl = (SproutChangeListener<?>) a;
-				if ( pcl.listener() == observer) {
-					_viewActions.remove(a);
-					return this;
+		for ( List<Action<Val<T>>> actions : _actions.values() )
+			for ( Action<?> a : actions )
+				if ( a instanceof SproutChangeListener ) {
+					SproutChangeListener<?> pcl = (SproutChangeListener<?>) a;
+					if ( pcl.listener() == observer) {
+						actions.remove(a);
+						return this;
+					}
 				}
-			}
 
 		return this;
 	}

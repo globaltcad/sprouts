@@ -32,7 +32,7 @@ class Property_Event_Delegates_Spec extends Specification
         given : 'A property.'
             var property = Var.of(1)
             var delegate = null
-            property.onSet( it -> delegate = it )
+            property.onChange(From.VIEW_MODEL,  it -> delegate = it )
         when : 'We change the property.'
             property.set(42)
         then : 'The exposed delegate is equal to the property.'
@@ -59,15 +59,15 @@ class Property_Event_Delegates_Spec extends Specification
         given : 'A property.'
             var property = Var.of(1)
             var delegate = null
-            property.onAct( it -> delegate = it )
+            property.onChange(From.VIEW, it -> delegate = it )
         when : 'We change the property.'
-            property.act(7)
+            property.set(From.VIEW, 7)
         then : 'The exposed delegate is equal to the property.'
             delegate == property
         and : 'The delegate is however not identical to the property.'
             delegate !== property
         when : 'We try to mutate the delegate...'
-            delegate.act(0)
+            delegate.set(From.VIEW, 0)
         then : '...we get an exception.'
             thrown(UnsupportedOperationException)
     }
