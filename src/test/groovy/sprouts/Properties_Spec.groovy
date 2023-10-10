@@ -64,11 +64,12 @@ class Properties_Spec extends Specification
     def 'Properties can be bound by subscribing to them using the "onSetItem(..)" method.'()
     {
         reportInfo"""
-            Note that bound Sprouts properties have side effects
-            when their state is changed through the "set" method, or
-            they are deliberately triggered to execute their side effects.
-            using the "show()" method.
-            This is important to allow you to decide yourself when
+            A bound property inform a set observers
+            when their state is changed through the `set(T)` method. 
+            However, it may also inform when `fire(From.VIEW_MODEL)` 
+            is called explicitly on a particular property.
+            This *rebroadcasting* is often useful
+            as it allows you to manually decide yourself when
             the state of a property is "ready" for display in the UI.
         """
 
@@ -198,12 +199,17 @@ class Properties_Spec extends Specification
             lastWord.get() == "Saitan"
     }
 
-    def 'Changing the value of a property through the "act" method will also affect its views'()
+    def 'Changing the value of a property through the `.set(From.VIEW, T)` method will also affect its views'()
     {
         reportInfo """
-            Note that the "act" method is used by the view to change the value of the original property.
-            It is conceptually similar to the "set" method with the simple difference
-            that it represents a user action.
+            Note that you should use `.set(From.VIEW, T)` inside your view to change 
+            the value of the original property.
+            It is different from a regular `set(T)` (=`.set(From.VIEW_MODEL, T)`) in 
+            that the `set(T)` method
+            runs the mutation through the `From.VIEW_MODEL` channel.
+            This the difference here is the purpose and origin of the mutation,
+            `VIEW` changes are usually caused by user actions and `VIEW_MODEL`
+            changes are caused by the application logic.
             Irrespective as to how the value of the original property is changed,
             the views will be updated.
         """
@@ -214,7 +220,7 @@ class Properties_Spec extends Specification
         expect : 'The view has the expected value.'
             words.get() == 2
 
-        when : 'We change the value of the food property through the "act" method.'
+        when : 'We change the value of the food property through the `.set(From.VIEW, T)` method.'
             food.set(From.VIEW, "Faster Than Light")
         then : 'The view is updated.'
             words.get() == 3
@@ -314,7 +320,7 @@ class Properties_Spec extends Specification
 
         when : 'We change the state of the property using the "act(T)" method.'
             property.set(From.VIEW, ":|")
-        then : 'The "onSet" actions are NOT triggered, because the "act" method performs an "act on your view model"!'
+        then : 'The "onSet" actions are NOT triggered, because the `.set(From.VIEW, T)` method performs an "act on your view model"!'
             showListener == [":("]
         and : 'The view model actions are triggered.'
             modelListener == [":|"]
@@ -352,15 +358,15 @@ class Properties_Spec extends Specification
             var v8 = Var.ofNullable(Integer, 7).withId("maybe_int")
 
         expect :
-            v1.toString() == '"Apple" ( type = String, id = "?" )'
-            v2.toString() == '"Berry" ( type = String, id = "fruit" )'
-            v3.toString() == '42 ( type = Integer, id = "?" )'
-            v4.toString() == '42 ( type = Integer, id = "number" )'
-            v5.toString() == '99.0 ( type = Float, id = "ninety_nine" )'
+            v1.toString() == 'Var<String>["Apple"]'
+            v2.toString() == 'Var<String>[fruit="Berry"]'
+            v3.toString() == 'Var<Integer>[42]'
+            v4.toString() == 'Var<Integer>[number=42]'
+            v5.toString() == 'Var<Float>[ninety_nine=99.0]'
         and : 'Nullable properties have a "?" in the type:'
-            v6.toString() == 'null ( type = String?, id = "?" )'
-            v7.toString() == '5 ( type = Long?, id = "maybe_long" )'
-            v8.toString() == '7 ( type = Integer?, id = "maybe_int" )'
+            v6.toString() == 'Var<String?>[null]'
+            v7.toString() == 'Var<Long?>[maybe_long=5]'
+            v8.toString() == 'Var<Integer?>[maybe_int=7]'
 
     }
 

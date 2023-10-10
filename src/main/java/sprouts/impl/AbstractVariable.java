@@ -43,16 +43,15 @@ public class AbstractVariable<T> extends AbstractValue<T> implements Var<T>
 	) {
 		super( type, id, allowsNull, iniValue );
 		Objects.requireNonNull(id);
+		Objects.requireNonNull(type);
 		Objects.requireNonNull(actions);
 		_isImmutable = immutable;
-		_actions.putAll(actions);
+		actions.forEach( (k,v) -> _actions.put(k, new ArrayList<>(v)) );
 	}
 
 	/** {@inheritDoc} */
 	@Override public Var<T> withId( String id ) {
-		Map<Channel, List<Action<Val<T>>>> _deepCopy = new HashMap<>( _actions.size() );
-		_actions.forEach( (k,v) -> _deepCopy.put(k, new ArrayList<>(v)) );
-        return new AbstractVariable<T>( _isImmutable, _type, _value, id, _deepCopy, _allowsNull );
+        return new AbstractVariable<T>( _isImmutable, _type, _value, id, _actions, _nullable);
 	}
 
 	/** {@inheritDoc} */
@@ -85,7 +84,7 @@ public class AbstractVariable<T> extends AbstractValue<T> implements Var<T>
 	}
 
 	private boolean _setInternal( T newValue ) {
-		if ( !_allowsNull && newValue == null )
+		if ( !_nullable && newValue == null )
 			throw new NullPointerException(
 					"This property is configured to not allow null values! " +
 					"If you want your property to allow null values, use the 'ofNullable(Class, T)' factory method."

@@ -16,19 +16,27 @@ abstract class AbstractValue<T> implements Val<T>
 {
     protected final Map<Channel, List<Action<Val<T>>>> _actions = new LinkedHashMap<>();
 
-    protected T _value;
-    protected final Class<T> _type;
     protected final String _id;
+    protected final boolean _nullable;
+    protected final Class<T> _type;
 
-    protected final boolean _allowsNull;
+    protected T _value;
 
 
-    protected AbstractValue( Class<T> type, String id, boolean allowsNull, T iniValue ) {
+
+    protected AbstractValue(
+        Class<T> type,
+        String id,
+        boolean allowsNull,
+        T iniValue
+    ) {
         Objects.requireNonNull(id);
-        _type = ( iniValue == null || type != null ? type : (Class<T>) iniValue.getClass());
-        _id = id;
-        _allowsNull = allowsNull;
-        _value = iniValue;
+        Objects.requireNonNull(type);
+        _type     = type;
+        _id       = id;
+        _nullable = allowsNull;
+        _value    = iniValue;
+
         if ( _value != null ) {
 			// We check if the type is correct
 			if ( !_type.isAssignableFrom(_value.getClass()) )
@@ -76,7 +84,7 @@ abstract class AbstractValue<T> implements Val<T>
     }
 
     /** {@inheritDoc} */
-    @Override public final boolean allowsNull() { return _allowsNull; }
+    @Override public final boolean allowsNull() { return _nullable; }
 
     @Override
     public final String toString() {
@@ -86,11 +94,10 @@ abstract class AbstractValue<T> implements Val<T>
         String type = ( type() == null ? "?" : type().getSimpleName() );
         if ( type.equals("Object") ) type = "?";
         if ( type.equals("String") && this.isPresent() ) value = "\"" + value + "\"";
-        if ( _allowsNull ) type = type + "?";
-        return value + " ( " +
-                            "type = "+type+", " +
-                            "id = \""+ id+"\" " +
-                        ")";
+        if (_nullable) type = type + "?";
+        String name = ( this instanceof  AbstractVariable ? "Var" : "Val" );
+        String content = ( id.equals("?") ? value : id + "=" + value );
+        return name + "<" + type + ">" + "[" + content + "]";
     }
 
     @Override
@@ -110,8 +117,8 @@ abstract class AbstractValue<T> implements Val<T>
     public final int hashCode() {
         int hash = 7;
         hash = 31 * hash + ( _value == null ? 0 : Val.hashCode(_value) );
-        hash = 31 * hash + ( _type == null ? 0 : _type.hashCode() );
-        hash = 31 * hash + ( _id == null ? 0 : _id.hashCode() );
+        hash = 31 * hash + ( _type  == null ? 0 : _type.hashCode()     );
+        hash = 31 * hash + ( _id    == null ? 0 : _id.hashCode()       );
         return hash;
     }
 }

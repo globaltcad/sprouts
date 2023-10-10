@@ -23,11 +23,13 @@ class MVVM_Unit_Test_Spec extends Specification
     def 'The registration view model will display feedback about invalid inputs.'()
     {
         reportInfo """
-            Note that when changing the value of a property we
-            use the "act" method instead of the "set" method.
-            This is because the "set" method is used to set the
-            value of the property without triggering any
-            validation logic. The "act" method represents
+            Note that in this example, when changing the value of a property, we
+            use the `VIEW` event channel by calling `.set(From.VIEW, T)`.
+            This is because the regular 
+            `set` method sends the change event through the `VIEW_MODEL`
+            channel, which is intended to be used for updating the view
+            without triggering validation logic. 
+            The `.set(From.VIEW, T)` method call represents
             a user action that triggers validation logic.
         """
         given : 'We create the view model.'

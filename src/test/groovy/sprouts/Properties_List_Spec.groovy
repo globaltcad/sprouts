@@ -46,7 +46,7 @@ class Properties_List_Spec extends Specification
             vars.type() == String
             vals.type() == String
 
-        and : 'The "Vals" class has no methods for mutation, it is read only (basically a tuple).'
+        and : 'The `Vals` class has no methods for mutation, it is read only (basically a tuple).'
             Vals.metaClass.getMethods().findAll{ it.name == "set" }.size() == 0
             Vals.metaClass.getMethods().findAll{ it.name == "add" }.size() == 0
             Vals.metaClass.getMethods().findAll{ it.name == "remove" }.size() == 0
