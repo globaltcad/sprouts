@@ -5,7 +5,7 @@ import spock.lang.Specification
 import spock.lang.Subject
 import spock.lang.Title
 
-@Title("Observable Events")
+@Title("Observable Events and Properties")
 @Narrative('''
 
     The `sprouts.Observable` interface defines something that may be observed
@@ -15,7 +15,7 @@ import spock.lang.Title
     It is the super type of various sprout types, like for example the generic `Event`,
     defining something that can be triggered so that the `Observer`s may be informed,
     or the `Val` and `Var` properties, as well as the `Vals` and `Vars`
-    property list types, which allow for the observation of state changes.
+    property list types, which also allow for the observation of state changes.
     
     You can listen to all of these types
     through the common `Observable` interface, hiding the implementation details
@@ -23,12 +23,12 @@ import spock.lang.Title
     
 ''')
 @Subject([Val, Var, Vals, Vars, Observer, Observable])
-class Observable_Spec extends Specification
+class Observable_Properties_and_Events_Spec extends Specification
 {
-    def 'You can treat a property as a noticeable, and register `Listeners`s on it.'()
+    def 'You can treat a property as an observable, and register `Observer` on it.'()
     {
         reportInfo """
-            Note that the `Observer` will only be notified that something happen,
+            Note that the `Observer` will only be notified that something happened,
             it will not be given information about what happened.
             So no state is passed to the observer.
         """
@@ -56,7 +56,7 @@ class Observable_Spec extends Specification
             0 * observer.invoke()
     }
 
-    def 'The `fireSet` method will also lead to registered `Observer` instances to be notified.'()
+    def 'Calling `fire(From.VIEW_MODEL)` method will also lead to `Observer` instances being notified.'()
     {
         reportInfo """
             Using the `fireSet` you not only trigger the regular change listeners,
@@ -86,14 +86,17 @@ class Observable_Spec extends Specification
             0 * observables.invoke()
     }
 
-    def 'Changing a property through the `act` method will not trigger `Observer` instances to be called.'()
+    def 'Mutating a property using `set(From.VIEW,..)` will not trigger `onChange(From.VIEW_MODEL,..)` observer to be called.'()
     {
         reportInfo """
-            The `act` method of a property is in essence a simple setter, just like the `set` method,
-            with the only distinction that it triggers the `onAct(..)` registered action listeners, 
-            instead of the regular change listeners registered through `onSet(..)`.
+            The enum instance `From.VIEW` is a `Channel` that is used to distinguish between
+            changes that are triggered by the view, and changes that are triggered by the view model.
+            Mutating a property through the view channel by calling `set(From.VIEW,..)` 
+            will mutate the property just like the regular `set` method does,
+            with the only distinction that it triggers all `onChange(From.VIEW, ..)` observers
+            instead of the regular `onChange(From.VIEW_MODEL, ..)` observers.
             This distinction exists to allow for a clear separation between events dispatched
-            from the UI and events dispatched from the model. 
+            from the UI and events dispatched from the model (the application logic).
             
             `Observer` implementations are also considered to be part of the model,
             and as such should not be triggered by UI events.
@@ -117,7 +120,8 @@ class Observable_Spec extends Specification
     {
         reportInfo """
             The `Vals` and `Vars` property list types are also `Observable` types.
-            This means that you can listen to changes in the list through the `Observable` interface.
+            This means that you can listen to any changes in the list through instances of 
+            the `Observer` interface.
         """
         given : 'We create a simple String property list.'
             var list = Vars.of("Hello", "World")
@@ -139,7 +143,7 @@ class Observable_Spec extends Specification
         and : '...and change the list again.'
             list.add("!!")
 
-        then : 'The observer is not notified.'
+        then : 'The observer is not notified, because it is no longer subscribed.'
             0 * observer.invoke()
     }
 }

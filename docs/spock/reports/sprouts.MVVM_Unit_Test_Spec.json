@@ -18,7 +18,7 @@
       "result":"PASS",
       "duration":"?",
       "iterations":{
-      "tags":{},"see":[],"extraInfo":["\n            Note that when changing the value of a property we\n            use the \"act\" method instead of the \"set\" method.\n            This is because the \"set\" method is used to set the\n            value of the property without triggering any\n            validation logic. The \"act\" method represents\n            a user action that triggers validation logic.\n        "]
+      "tags":{},"see":[],"extraInfo":["\n            Note that in this example, when changing the value of a property, we\n            use the `VIEW` event channel by calling `.set(From.VIEW, T)`.\n            This is because the regular \n            `set` method sends the change event through the `VIEW_MODEL`\n            channel, which is intended to be used for updating the view\n            without triggering validation logic. \n            The `.set(From.VIEW, T)` method call represents\n            a user action that triggers validation logic.\n        "]
       },
       "blocks":[
         {"kind":"given","text":"We create the view model.","code":["var vm = new UserRegistrationViewModel()"]},

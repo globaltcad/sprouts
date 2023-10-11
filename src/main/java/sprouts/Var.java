@@ -6,9 +6,16 @@ import java.util.Optional;
 import java.util.function.Function;
 
 /**
- * 	A mutable wrapper for an item which can be observed by the frontend (or other application layers)
- * 	to then dynamically update itself for you, as well
- * 	as trigger a possible change action inside your view model.
+ * 	A mutable wrapper for an item which can be observed through {@link Channel}s,
+ * 	usually by the frontend to then dynamically update itself for you.
+ * 	<p>
+ * 	Use the {@link #onChange(Channel, Action)} method to register an {@link Action} callback
+ * 	for a particular {@link Channel} constant
+ * 	(like for example {@link From#VIEW_MODEL} or {@link From#VIEW}) which
+ * 	will be invoked when the {@link #fire(Channel)} method or the {@link Var#set(Channel, Object)}
+ * 	method is called using the same {@link Channel}.
+ * 	Note that {@link Var#set(Object)} method defaults to the {@link From#VIEW_MODEL} channel,
+ * 	which is intended to be used for state changes as part of your core business logic.
  *  <p>
  * 	So for example if you have a {@link Var} which represents the username
  * 	of a form, in your UI you can register a callback using {@link #onChange(Channel, Action)}

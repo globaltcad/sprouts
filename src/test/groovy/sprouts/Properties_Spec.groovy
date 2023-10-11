@@ -12,13 +12,10 @@ import java.util.function.Consumer
 
     Properties are a powerful tool to model the state 
     as well as business logic of your UI without actually depending on it.
-    This is especially useful for testing your UIs logic.
-    Therefore properties are a root concept in the Sprouts library.
-    The decoupling between your UI and the UIs state and logic 
-    is achieved by binding properties to UI components.
-    This specification shows you how to model UI state 
-    and business logic using properties 
-    and how to bind them to UI components.
+    This is especially useful for testing your UIs logic (in a view model for example).
+    This is the core motivation behind the creation of the Sprouts library.
+    
+    This specification introduces you to their API and shows you how to use them.
     
 ''')
 @Subject([Val, Var])
@@ -61,36 +58,6 @@ class Properties_Spec extends Specification
             immutable.orElseNull() == 69
     }
 
-    def 'Properties can be bound by subscribing to them using the "onSetItem(..)" method.'()
-    {
-        reportInfo"""
-            A bound property inform a set observers
-            when their state is changed through the `set(T)` method. 
-            However, it may also inform when `fire(From.VIEW_MODEL)` 
-            is called explicitly on a particular property.
-            This *rebroadcasting* is often useful
-            as it allows you to manually decide yourself when
-            the state of a property is "ready" for display in the UI.
-        """
-
-        given : 'We create a mutable property...'
-            Var<String> mutable = Var.of("Tempeh")
-        and : 'Something we want to have a side effect on:'
-            var list = []
-        when : 'We subscribe to the property using the "onSetItem(..)" method.'
-            mutable.onChange(From.VIEW_MODEL, it -> list.add(it.orElseNull()) )
-        and : 'We change the value of the property.'
-            mutable.set("Tofu")
-        then : 'The side effect is executed.'
-            list == ["Tofu"]
-        when : 'We trigger the side effect manually.'
-            mutable.fire(From.VIEW_MODEL)
-        then : 'The side effect is executed again.'
-            list.size() == 2
-            list[0] == "Tofu"
-            list[1] == "Tofu"
-    }
-
     def 'Properties not only have a value but also a type and id!'()
     {
         given : 'We create a property with an id...'
@@ -101,40 +68,7 @@ class Properties_Spec extends Specification
             property.type() == String.class
     }
 
-    def 'The "withID(..)" method produces a new property with all bindings inherited.'()
-    {
-        reportInfo """
-            The wither methods on properties are used to create new property instances
-            with the same value and bindings (observer) as the original property
-            but without any side effects of the original property (the bindings).
-            So if you add bindings to a withered property they will not affect the original property.
-        """
-
-        given : 'We create a property...'
-            Var<String> property = Var.of("Hello World")
-        and : 'we bind 1 subscriber to the property.'
-            var list1 = []
-            property.onChange(From.VIEW_MODEL, it -> list1.add(it.orElseNull()) )
-        and : 'We create a new property with a different id.'
-            Val<String> property2 = property.withId("XY")
-        and : 'Another subscriber to the new property.'
-            var list2 = []
-            property2.onChange(From.VIEW_MODEL, it -> list2.add(it.orElseNull()) )
-
-        when : 'We change the value of the original property.'
-            property.set("Tofu")
-        then : 'The subscriber of the original property is triggered but not the subscriber of the new property.'
-            list1 == ["Tofu"]
-            list2 == []
-
-        when : 'We change the value of the new property.'
-            property2.set("Tempeh")
-        then : 'Both subscribers are receive the effect.'
-            list1 == ["Tofu", "Tempeh"]
-            list2 == ["Tempeh"]
-    }
-
-    def 'Properties are similar to the "Optional" class, you can map them and see if they are empty or not.'()
+    def 'Properties are similar to the `Optional` class, you can map them and see if they are empty or not.'()
     {
         given : 'We create a property...'
             Val<String> property = Val.of("Hello World")
@@ -174,12 +108,12 @@ class Properties_Spec extends Specification
         given : 'We create a property...'
             Var<String> food = Var.of("Channa Masala")
         and : 'Different kinds of views:'
-            Var<Integer> words = food.viewAsInt( f -> f.split(" ").length )
-            Var<Integer> words2 = words.view({it * 2})
-            Var<Double> average = food.viewAsDouble( f -> f.chars().average().orElse(0) )
-            Var<Boolean> isLong = food.viewAs(Boolean, f -> f.length() > 14 )
+            Var<Integer> words    = food.viewAsInt( f -> f.split(" ").length )
+            Var<Integer> words2   = words.view({it * 2})
+            Var<Double>  average  = food.viewAsDouble( f -> f.chars().average().orElse(0) )
+            Var<Boolean> isLong   = food.viewAs(Boolean, f -> f.length() > 14 )
             Var<String> firstWord = food.view( f -> f.split(" ")[0] )
-            Var<String> lastWord = food.view( f -> f.split(" ")[f.split(" ").length-1] )
+            Var<String> lastWord  = food.view( f -> f.split(" ")[f.split(" ").length-1] )
         expect : 'The views have the expected values.'
             words.get() == 2
             words2.get() == 4
@@ -199,33 +133,6 @@ class Properties_Spec extends Specification
             lastWord.get() == "Saitan"
     }
 
-    def 'Changing the value of a property through the `.set(From.VIEW, T)` method will also affect its views'()
-    {
-        reportInfo """
-            Note that you should use `.set(From.VIEW, T)` inside your view to change 
-            the value of the original property.
-            It is different from a regular `set(T)` (=`.set(From.VIEW_MODEL, T)`) in 
-            that the `set(T)` method
-            runs the mutation through the `From.VIEW_MODEL` channel.
-            This the difference here is the purpose and origin of the mutation,
-            `VIEW` changes are usually caused by user actions and `VIEW_MODEL`
-            changes are caused by the application logic.
-            Irrespective as to how the value of the original property is changed,
-            the views will be updated.
-        """
-        given : 'We create a property...'
-            Var<String> food = Var.of("Animal Crossing")
-        and : 'We create a view of the property.'
-            Var<Integer> words = food.viewAsInt( f -> f.split(" ").length )
-        expect : 'The view has the expected value.'
-            words.get() == 2
-
-        when : 'We change the value of the food property through the `.set(From.VIEW, T)` method.'
-            food.set(From.VIEW, "Faster Than Light")
-        then : 'The view is updated.'
-            words.get() == 3
-    }
-
     def 'The "ifPresent" method allows us to see if a property has a value or not.'()
     {
         given : 'We create a property...'
@@ -239,12 +146,12 @@ class Properties_Spec extends Specification
             list == ["Hello World"]
     }
 
-    def 'The "get" method will throw an exception if there is no element present.'()
+    def 'The `get()` method will throw an exception if there is no element present.'()
     {
         reportInfo """
-            Note that accessing the value of an empty property using the "get" method
+            Note that accessing the value of an empty property using the `get()` method
             will throw an exception.
-            It is recommended to use the "orElseNull" method instead, because the "get"
+            It is recommended to use the `orElseNull()` method instead, because the `get()`
             method is intended to be used for non-nullable types, or when it
             is clear that the property is not empty!
         """
@@ -285,51 +192,10 @@ class Properties_Spec extends Specification
             arr1.hashCode() == arr2.hashCode()
     }
 
-    def 'The UI uses the "act(T)" method to change the property state to avoid feedback looping.'()
+    def 'A property constructed using the `of` factory method, does not allow null items.'()
     {
         reportInfo """
-            Sprouts was designed to support MVVM for Swing,
-            unfortunately however Swing does not allow us to implement models 
-            for all types of its UI components.
-            A JButton for example does not have a model that we can use to bind to a property.
-            Instead Sprouts has to perform precise updates to the UI components without
-            triggering any looping event callbacks.
-            Therefore the method "act(T)" exists, which is intended to be used by the UI 
-            to change the property state and triggers the "onAct(T)"
-            actions of a property. On the other hand the "set(T)" method is used to change the state
-            of a property without triggering the actions, the "onSet" actions / listeners
-            of the property instead, which is intended to allow the UI to update itself 
-            when the user changes the
-            state of a property.
-        """
-        given : 'A simple property with a view and model actions.'
-            var showListener = []
-            var modelListener = []
-            var property = Var.of(":)")
-                                .onChange(From.VIEW, it ->{
-                                    modelListener << it.orElseThrow()
-                                })
-            property.onChange(From.VIEW_MODEL, it -> showListener << it.orElseNull() )
-
-        when : 'We change the state of the property using the "set(T)" method.'
-            property.set(":(")
-        then : 'The "onSet" actions are triggered.'
-            showListener == [":("]
-        and : 'The view model actions are not triggered.'
-            modelListener == []
-
-        when : 'We change the state of the property using the "act(T)" method.'
-            property.set(From.VIEW, ":|")
-        then : 'The "onSet" actions are NOT triggered, because the `.set(From.VIEW, T)` method performs an "act on your view model"!'
-            showListener == [":("]
-        and : 'The view model actions are triggered.'
-            modelListener == [":|"]
-    }
-
-    def 'A property constructed using the "of" factory method, does not allow null items.'()
-    {
-        reportInfo """
-            The "of" factory method is used to create a property that does not allow null items.
+            The `of(..)` factory method is used to create a property that does not allow null items.
             If you try to set an item to null, the property will throw an exception.
         """
         given : 'A property constructed using the "of" factory method.'
@@ -370,10 +236,10 @@ class Properties_Spec extends Specification
 
     }
 
-    def 'A property can be converted to an Optional.'()
+    def 'A property can be converted to an `Optional`.'()
     {
         reportInfo """
-            A property can be converted to an Optional using the "toOptional()" method.
+            A property can be converted to an `Optional` using the `toOptional()` method.
             This is useful when you want to use the Optional API to query the state of the property.
         """
         given : 'A property with a non-null item.'

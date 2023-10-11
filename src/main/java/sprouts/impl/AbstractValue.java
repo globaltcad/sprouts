@@ -23,12 +23,11 @@ abstract class AbstractValue<T> implements Val<T>
     protected T _value;
 
 
-
     protected AbstractValue(
         Class<T> type,
-        String id,
-        boolean allowsNull,
-        T iniValue
+        String   id,
+        boolean  allowsNull,
+        T        iniValue // may be null
     ) {
         Objects.requireNonNull(id);
         Objects.requireNonNull(type);
@@ -95,7 +94,7 @@ abstract class AbstractValue<T> implements Val<T>
         if ( type.equals("Object") ) type = "?";
         if ( type.equals("String") && this.isPresent() ) value = "\"" + value + "\"";
         if (_nullable) type = type + "?";
-        String name = ( this instanceof  AbstractVariable ? "Var" : "Val" );
+        String name = "Var";
         String content = ( id.equals("?") ? value : id + "=" + value );
         return name + "<" + type + ">" + "[" + content + "]";
     }

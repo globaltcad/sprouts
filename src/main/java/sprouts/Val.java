@@ -16,10 +16,12 @@ import java.util.regex.Pattern;
  * 	so that it can be notified and updated when the item changes.
  * 	The API of this is very similar to the {@link Optional} API in the
  * 	sense that it is a wrapper around a single item, which may also be missing (null).
- * 	Use the {@link #onChange(Channel, Action)} method and pass {@link From#VIEW_MODEL}
- * 	to register callbacks which
- * 	will be called when the {@link #fire(Channel)} method is called or the item is
- * 	changed (typically by the {@link Var#set(Object)} method).
+ * 	Use the {@link #onChange(Channel, Action)} method to register an {@link Action} callback
+ * 	for a particular {@link Channel} constant
+ * 	(like for example {@link From#VIEW_MODEL} or {@link From#VIEW}) which
+ * 	will be invoked when the {@link #fire(Channel)} method or the {@link Var#set(Channel, Object)}
+ * 	method is called using the same {@link Channel}.
+ * 	Note that {@link Var#set(Object)} method defaults to the {@link From#VIEW_MODEL} channel.
  * 	<p>
  * 	<b>Please take a look at the <a href="https://globaltcad.github.io/sprouts/">living sprouts documentation</a>
  * 	where you can browse a large collection of examples demonstrating how to use the API of this class.</b>

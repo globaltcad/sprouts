@@ -19,5 +19,5 @@ public enum From implements Channel
     /**
      *  This channel is used to identify changes which are caused by any source.
      */
-    ANY
+    ALL
 }

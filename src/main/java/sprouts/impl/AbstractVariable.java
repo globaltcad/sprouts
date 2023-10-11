@@ -60,21 +60,26 @@ public class AbstractVariable<T> extends AbstractValue<T> implements Var<T>
 		Objects.requireNonNull(channel);
 		Objects.requireNonNull(action);
 		_actions.computeIfAbsent(channel, k->new ArrayList<>()).add(action);
-		if ( channel != From.ANY )
-			_actions.computeIfAbsent(From.ANY, k->new ArrayList<>()).add(action);
 		return this;
 	}
 
 	/** {@inheritDoc} */
 	@Override public Var<T> fire( Channel channel ) {
-		_triggerActions( _actions.computeIfAbsent(channel, k->new ArrayList<>()) );
+		if ( channel == From.ALL)
+			for ( Channel key : _actions.keySet() )
+				_triggerActions( _actions.computeIfAbsent(key, k->new ArrayList<>()) );
+		else {
+			_triggerActions( _actions.computeIfAbsent(channel, k->new ArrayList<>()) );
+			_triggerActions( _actions.computeIfAbsent(From.ALL, k->new ArrayList<>()) );
+		}
+
 		_viewers.forEach( v -> v.accept(_value) );
 		return this;
 	}
 
 	/** {@inheritDoc} */
 	@Override
-	public Var<T> set( Channel channel, T newItem) {
+	public Var<T> set( Channel channel, T newItem ) {
 		Objects.requireNonNull(channel);
 		if ( _isImmutable )
 			throw new UnsupportedOperationException("This variable is immutable!");

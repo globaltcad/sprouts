@@ -31,7 +31,7 @@
 
         {"kind":"and","text":"They also have the correct type.","code":["vars.type() == String","vals.type() == String"]},
 
-        {"kind":"and","text":"The \"Vals\" class has no methods for mutation, it is read only (basically a tuple).","code":["Vals.metaClass.getMethods().findAll{ it.name == \"set\" }.size() == 0","Vals.metaClass.getMethods().findAll{ it.name == \"add\" }.size() == 0","Vals.metaClass.getMethods().findAll{ it.name == \"remove\" }.size() == 0"]},
+        {"kind":"and","text":"The `Vals` class has no methods for mutation, it is read only (basically a tuple).","code":["Vals.metaClass.getMethods().findAll{ it.name == \"set\" }.size() == 0","Vals.metaClass.getMethods().findAll{ it.name == \"add\" }.size() == 0","Vals.metaClass.getMethods().findAll{ it.name == \"remove\" }.size() == 0"]},
 
         {"kind":"and","text":"Both property lists are not empty","code":["!vars.isEmpty() && vars.isNotEmpty()","!vals.isEmpty() && vals.isNotEmpty()"]},
 
