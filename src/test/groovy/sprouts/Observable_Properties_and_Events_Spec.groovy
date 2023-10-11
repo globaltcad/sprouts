@@ -34,7 +34,7 @@ class Observable_Properties_and_Events_Spec extends Specification
         """
         given : 'We create a simple String property.'
             var property = Var.of("Hello")
-        and : 'We also view the property as a noticeable.'
+        and : 'We also view the property as an observable.'
             Observable observable = property
         and : 'Finally we make sure that we can track changes to the property.'
             var observer = Mock(Observer)
@@ -64,7 +64,7 @@ class Observable_Properties_and_Events_Spec extends Specification
         """
         given : 'We create a simple String property.'
             var property = Var.of("Hello")
-        and : 'We also view the property as a noticeable.'
+        and : 'We also view the property as an observable.'
             Observable observable = property
         and : 'Finally we make sure that we can track changes to the property.'
             var observables = Mock(Observer)
@@ -103,7 +103,7 @@ class Observable_Properties_and_Events_Spec extends Specification
         """
         given : 'We create a simple String property.'
             var property = Var.of("Hello")
-        and : 'We also view the property as a noticeable.'
+        and : 'We also view the property as an observable.'
             Observable observable = property
         and : 'Finally we make sure that we can track changes to the property.'
             var observer = Mock(Observer)
@@ -125,7 +125,7 @@ class Observable_Properties_and_Events_Spec extends Specification
         """
         given : 'We create a simple String property list.'
             var list = Vars.of("Hello", "World")
-        and : 'We also view the list as a noticeable.'
+        and : 'We also view the list as an observable.'
             Observable observable = list
         and : 'Finally we make sure that we can track changes to the list.'
             var observer = Mock(Observer)

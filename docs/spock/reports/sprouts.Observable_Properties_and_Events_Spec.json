@@ -23,7 +23,7 @@
       "blocks":[
         {"kind":"given","text":"We create a simple String property.","code":["var property = Var.of(\"Hello\")"]},
 
-        {"kind":"and","text":"We also view the property as a noticeable.","code":["Observable observable = property"]},
+        {"kind":"and","text":"We also view the property as an observable.","code":["Observable observable = property"]},
 
         {"kind":"and","text":"Finally we make sure that we can track changes to the property.","code":["var observer = Mock(Observer)","observable.subscribe(observer)"]},
 
@@ -50,7 +50,7 @@
       "blocks":[
         {"kind":"given","text":"We create a simple String property.","code":["var property = Var.of(\"Hello\")"]},
 
-        {"kind":"and","text":"We also view the property as a noticeable.","code":["Observable observable = property"]},
+        {"kind":"and","text":"We also view the property as an observable.","code":["Observable observable = property"]},
 
         {"kind":"and","text":"Finally we make sure that we can track changes to the property.","code":["var observables = Mock(Observer)","observable.subscribe(observables)"]},
 
@@ -77,7 +77,7 @@
       "blocks":[
         {"kind":"given","text":"We create a simple String property.","code":["var property = Var.of(\"Hello\")"]},
 
-        {"kind":"and","text":"We also view the property as a noticeable.","code":["Observable observable = property"]},
+        {"kind":"and","text":"We also view the property as an observable.","code":["Observable observable = property"]},
 
         {"kind":"and","text":"Finally we make sure that we can track changes to the property.","code":["var observer = Mock(Observer)","observable.subscribe(observer)"]},
 
@@ -98,7 +98,7 @@
       "blocks":[
         {"kind":"given","text":"We create a simple String property list.","code":["var list = Vars.of(\"Hello\", \"World\")"]},
 
-        {"kind":"and","text":"We also view the list as a noticeable.","code":["Observable observable = list"]},
+        {"kind":"and","text":"We also view the list as an observable.","code":["Observable observable = list"]},
 
         {"kind":"and","text":"Finally we make sure that we can track changes to the list.","code":["var observer = Mock(Observer)","observable.subscribe(observer)"]},
 
