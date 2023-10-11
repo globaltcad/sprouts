@@ -71,7 +71,7 @@ class Observable_Properties_and_Events_Spec extends Specification
             observable.subscribe(observables)
 
         when : 'We change the property.'
-            property.fire(From.VIEW_MODEL)
+            property.fireChange(From.VIEW_MODEL)
 
         then : 'The listener is notified.'
             1 * observables.invoke()
@@ -80,7 +80,7 @@ class Observable_Properties_and_Events_Spec extends Specification
             observable.unsubscribe(observables)
 
         and : '...and change the property again.'
-            property.fire(From.VIEW_MODEL)
+            property.fireChange(From.VIEW_MODEL)
 
         then : 'The listener is not notified.'
             0 * observables.invoke()

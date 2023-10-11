@@ -19,7 +19,7 @@ import java.util.regex.Pattern;
  * 	Use the {@link #onChange(Channel, Action)} method to register an {@link Action} callback
  * 	for a particular {@link Channel} constant
  * 	(like for example {@link From#VIEW_MODEL} or {@link From#VIEW}) which
- * 	will be invoked when the {@link #fire(Channel)} method or the {@link Var#set(Channel, Object)}
+ * 	will be invoked when the {@link #fireChange(Channel)} method or the {@link Var#set(Channel, Object)}
  * 	method is called using the same {@link Channel}.
  * 	Note that {@link Var#set(Object)} method defaults to the {@link From#VIEW_MODEL} channel.
  * 	<p>
@@ -505,9 +505,9 @@ public interface Val<T> extends Observable
 	/**
 	 *  Use this to register an observer lambda for a particular {@link Channel},
 	 *  which will be called whenever the item
-	 *  wrapped by this {@link Val} changes through the {@link Var#set(Channel, T)} method.
+	 *  wrapped by this {@link Val} changes through the {@code Var::set(Channel, T)} method.
 	 *  The lambda will receive the current item of this property.
-	 *  The default channel is {@link From#VIEW_MODEL}, so if you use the {@link Var#set(T)} method
+	 *  The default channel is {@link From#VIEW_MODEL}, so if you use the {@code Var::set(T)} method
 	 *  then the observer lambdas registered through this method will be called.
 	 *
 	 * @param channel The channel from which the item is set.
@@ -524,9 +524,10 @@ public interface Val<T> extends Observable
 	 *  So it is supposed to be used by the view to update the UI components.
 	 *  This is in essence how binding works in Swing-Tree.
 	 *
+	 * @param channel The channel from which the item is set.
 	 * @return The {@link Val} instance itself.
 	 */
-	Val<T> fire( Channel channel );
+	Val<T> fireChange( Channel channel );
 
 	/**
 	 *  A property will only allow null items if it was constructed with a "ofNullable(..)" factory method.

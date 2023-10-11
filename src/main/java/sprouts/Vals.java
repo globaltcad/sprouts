@@ -196,7 +196,7 @@ public interface Vals<T> extends Iterable<T>, Observable
     }
 
     /**
-     *  Similar to {@link Var#onSet(Action)} but for a list of properties.
+     *  Similar to {@link Var#onChange(Channel, Action)} but for a list of properties.
      *
      * @param action The action to perform when the list of properties is shown (which is called when its state changes).
      * @return This list of properties.
@@ -204,7 +204,7 @@ public interface Vals<T> extends Iterable<T>, Observable
     Vals<T> onChange( Action<ValsDelegate<T>> action );
 
     /**
-     *  Similar to {@link Var#fireSet()} but for a list of properties.
+     *  Similar to {@link Var#fireChange(Channel)} but for a list of properties.
      * @return This list of properties to allow chaining.
      */
     Vals<T> fireChange();

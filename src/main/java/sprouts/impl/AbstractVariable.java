@@ -64,7 +64,7 @@ public class AbstractVariable<T> extends AbstractValue<T> implements Var<T>
 	}
 
 	/** {@inheritDoc} */
-	@Override public Var<T> fire( Channel channel ) {
+	@Override public Var<T> fireChange( Channel channel ) {
 		if ( channel == From.ALL)
 			for ( Channel key : _actions.keySet() )
 				_triggerActions( _actions.computeIfAbsent(key, k->new ArrayList<>()) );
@@ -84,7 +84,7 @@ public class AbstractVariable<T> extends AbstractValue<T> implements Var<T>
 		if ( _isImmutable )
 			throw new UnsupportedOperationException("This variable is immutable!");
 		if ( _setInternal(newItem) )
-			this.fire(channel);
+			this.fireChange(channel);
 		return this;
 	}
 

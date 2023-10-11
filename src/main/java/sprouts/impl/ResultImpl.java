@@ -86,7 +86,7 @@ public class ResultImpl<V> implements Result<V>
 	}
 
 	@Override
-	public Val<V> fire(Channel channel) {
+	public Val<V> fireChange( Channel channel ) {
 		/* A Result is immutable, so this method is not supported */
 		return this;
 	}

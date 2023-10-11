@@ -31,7 +31,7 @@
 
         {"kind":"then","text":"The side effect is executed.","code":["list == [\"Tofu\"]"]},
 
-        {"kind":"when","text":"We trigger the side effect manually.","code":["mutable.fire(From.VIEW_MODEL)"]},
+        {"kind":"when","text":"We trigger the side effect manually.","code":["mutable.fireChange(From.VIEW_MODEL)"]},
 
         {"kind":"then","text":"The side effect is executed again.","code":["list.size() == 2","list[0] == \"Tofu\"","list[1] == \"Tofu\""]}
       ],

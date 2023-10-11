@@ -60,7 +60,7 @@ abstract class AbstractValue&lt;T&gt; implements Val&lt;T&gt;
 <span class="fc" id="L60">    public final T orElseNull() { return _value; }</span>
 
     /** {@inheritDoc} */
-    @Override public Val&lt;T&gt; fire(Channel channel) {
+    @Override public Val&lt;T&gt; fireChange( Channel channel ) {
 <span class="nc" id="L64">        _triggerActions( _actions.computeIfAbsent(channel, k-&gt;new ArrayList&lt;&gt;()) );</span>
 <span class="nc" id="L65">        return this;</span>
     }

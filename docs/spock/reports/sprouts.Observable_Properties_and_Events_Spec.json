@@ -54,13 +54,13 @@
 
         {"kind":"and","text":"Finally we make sure that we can track changes to the property.","code":["var observables = Mock(Observer)","observable.subscribe(observables)"]},
 
-        {"kind":"when","text":"We change the property.","code":["property.fire(From.VIEW_MODEL)"]},
+        {"kind":"when","text":"We change the property.","code":["property.fireChange(From.VIEW_MODEL)"]},
 
         {"kind":"then","text":"The listener is notified.","code":["1 * observables.invoke()"]},
 
         {"kind":"when","text":"We unsubscribe the mocked listener from the property...","code":["observable.unsubscribe(observables)"]},
 
-        {"kind":"and","text":"...and change the property again.","code":["property.fire(From.VIEW_MODEL)"]},
+        {"kind":"and","text":"...and change the property again.","code":["property.fireChange(From.VIEW_MODEL)"]},
 
         {"kind":"then","text":"The listener is not notified.","code":["0 * observables.invoke()"]}
       ],

@@ -60,7 +60,7 @@ abstract class AbstractValue<T> implements Val<T>
     public final T orElseNull() { return _value; }
 
     /** {@inheritDoc} */
-    @Override public Val<T> fire(Channel channel) {
+    @Override public Val<T> fireChange( Channel channel ) {
         _triggerActions( _actions.computeIfAbsent(channel, k->new ArrayList<>()) );
         return this;
     }

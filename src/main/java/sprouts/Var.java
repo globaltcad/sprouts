@@ -12,7 +12,7 @@ import java.util.function.Function;
  * 	Use the {@link #onChange(Channel, Action)} method to register an {@link Action} callback
  * 	for a particular {@link Channel} constant
  * 	(like for example {@link From#VIEW_MODEL} or {@link From#VIEW}) which
- * 	will be invoked when the {@link #fire(Channel)} method or the {@link Var#set(Channel, Object)}
+ * 	will be invoked when the {@link #fireChange(Channel)} method or the {@link Var#set(Channel, Object)}
  * 	method is called using the same {@link Channel}.
  * 	Note that {@link Var#set(Object)} method defaults to the {@link From#VIEW_MODEL} channel,
  * 	which is intended to be used for state changes as part of your core business logic.
