@@ -1,12 +1,15 @@
 package sprouts;
 
 /**
- *  Implementations of this are conceptually similar to
- *  listeners, observers or any kind of event handler
- *  usually triggered by UI components
+ *  A functional interface for observing state changes
+ *  and performing some action in response.
+ *  The action is being informed of the change through
+ *  a delegate object denoted by the type parameter {@code D}.
+ *  <p>
+ *  Implementations of this are usually triggered by UI components
  *  or properties to cause some sort of binding effect.
  *
- * @param <D> The type of the delegate that will be passed to this event handler.
+     * @param <D> The type of the delegate that will be passed to this event handler.
  */
 @FunctionalInterface
 public interface Action<D>
@@ -19,7 +22,7 @@ public interface Action<D>
     void accept( D delegate );
 
     /**
-     * @return True if this action is no longer needed and should be removed.
+     * @return True if this action is no longer needed and can be removed.
      */
     default boolean canBeRemoved() { return false; }
 }

@@ -2,23 +2,31 @@
 
 /**
  *  An implementation of the {@link Channel} marker interface
- *  which is used to identify the source of a change in a property.
+ *  which is used to identify the source of a change in a {@link Var} or {@link Val} property.
+ * 	&lt;p&gt;
+ * 	This is typically used by the {@link Var#onChange(Channel, Action)} method to register an {@link Action} callback
+ * 	for a particular {@link Channel} constant (like for example {@link From#VIEW_MODEL} or {@link From#VIEW}) which
+ * 	will then be invoked when the {@link Var#fire(Channel)} method or the {@link Var#set(Channel, Object)}
+ * 	method is called using the same {@link Channel} as previously used to register the callback.
+ * 	&lt;p&gt;
+ * 	Note that the {@link Var#set(Object)} method defaults to using the {@link From#VIEW_MODEL} channel,
+ * 	which is intended to be used for state changes as part of your core business logic, in your view model.
  */
-<span class="fc" id="L7">public enum From implements Channel</span>
+<span class="fc" id="L15">public enum From implements Channel</span>
 {
     /**
      *  This channel is used to identify changes which are caused by the user
      *  through the view layer.
      */
-<span class="fc" id="L13">    VIEW,</span>
+<span class="fc" id="L21">    VIEW,</span>
     /**
      *  This channel is used to identify changes which are caused by the view model
      *  through the view model layer.
      */
-<span class="fc" id="L18">    VIEW_MODEL,</span>
+<span class="fc" id="L26">    VIEW_MODEL,</span>
     /**
      *  This channel is used to identify changes which are caused by any source.
      */
-<span class="fc" id="L22">    ALL</span>
+<span class="fc" id="L30">    ALL</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

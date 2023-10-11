@@ -8,9 +8,9 @@ import java.util.function.Function;
 
 public class ResultImpl<V> implements Result<V>
 {
-	private final String _id;
-	private final Class<V> _type;
-	private final V _value;
+	private final String        _id;
+	private final Class<V>      _type;
+	private final V             _value;
 	private final List<Problem> _problems;
 
 
@@ -106,5 +106,36 @@ public class ResultImpl<V> implements Result<V>
 		Objects.requireNonNull(observer);
 		/* A Result is immutable, so this method is not supported */
 		return this;
+	}
+
+	@Override
+	public String toString() {
+        String value = this.mapTo(String.class, Object::toString).orElse("null");
+        String id = this.id() == null ? "?" : this.id();
+        if ( id.equals(NO_ID) ) id = "?";
+        String type = ( type() == null ? "?" : type().getSimpleName() );
+        if ( type.equals("Object") ) type = "?";
+        if ( type.equals("String") && this.isPresent() ) value = "\"" + value + "\"";
+        String content = ( id.equals("?") ? value : id + "=" + value );
+        return "Result<" + type + ">" + "[" + content + "]";
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(_id, _type, _value, _problems);
+	}
+
+	@Override
+	public boolean equals( Object obj ) {
+		if ( obj == null ) return false;
+		if ( obj == this ) return true;
+		if ( obj instanceof Result ) {
+			Result<?> other = (Result<?>) obj;
+			if ( !Objects.equals(other.id(), _id)             ) return false;
+			if ( !Objects.equals(other.type(), _type)         ) return false;
+			if ( !Objects.equals(other.problems(), _problems) ) return false;
+			return Val.equals( other.orElseThrow(), _value ); // Arrays are compared with Arrays.equals
+		}
+		return false;
 	}
 }
