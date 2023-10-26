@@ -101,16 +101,16 @@ public class AbstractVariables<T> implements Vars<T>
     @SafeVarargs
     protected AbstractVariables( boolean isImmutable, Class<T> type, boolean allowsNull, Var<T>... vals ) {
         _isImmutable = isImmutable;
-        _type = type;
-        _allowsNull = allowsNull;
+        _type        = type;
+        _allowsNull  = allowsNull;
         _variables.addAll(Arrays.asList(vals));
         _checkNullSafety();
     }
 
     protected AbstractVariables( boolean isImmutable, Class<T> type, boolean allowsNull, List<Var<T>> vals ) {
         _isImmutable = isImmutable;
-        _type = type;
-        _allowsNull = allowsNull;
+        _type        = type;
+        _allowsNull  = allowsNull;
         _variables.addAll(vals);
         _checkNullSafety();
     }
@@ -368,20 +368,14 @@ public class AbstractVariables<T> implements Vars<T>
     private void _triggerAction(
             Change type, int index, Var<T> newVal, Var<T> oldVal
     ) {
-        List<Action<ValsDelegate<T>>> removableActions = new ArrayList<>();
         ValsDelegate<T> listChangeDelegate = _createDelegate(index, type, newVal, oldVal);
 
         for ( Action<ValsDelegate<T>> action : _viewActions )
             try {
-                if ( action.canBeRemoved() )
-                    removableActions.add(action);
-                else
-                    action.accept(listChangeDelegate);
+                action.accept(listChangeDelegate);
             } catch ( Exception e ) {
                 e.printStackTrace();
             }
-
-        _viewActions.removeAll(removableActions);
     }
 
     /** {@inheritDoc} */
@@ -441,15 +435,17 @@ public class AbstractVariables<T> implements Vars<T>
     }
 
     @Override
-    public Observable unsubscribe( Observer observer ) {
-        for ( Action<?> a : _viewActions )
+    public Observable unsubscribe( Subscriber subscriber ) {
+        for ( Action<?> a : new ArrayList<>(_viewActions) )
             if ( a instanceof SproutChangeListener ) {
                 SproutChangeListener<?> pcl = (SproutChangeListener<?>) a;
-                if ( pcl.listener() == observer) {
+                if ( Objects.equals(pcl.listener(), subscriber) ) {
                     _viewActions.remove(a);
                     return this;
                 }
             }
+            else if ( Objects.equals(a, subscriber) )
+                _viewActions.remove(a);
 
         return this;
     }

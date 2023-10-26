@@ -12,7 +12,7 @@ package sprouts;
      * @param <D> The type of the delegate that will be passed to this event handler.
  */
 @FunctionalInterface
-public interface Action<D>
+public interface Action<D> extends Subscriber
 {
     /**
      *  Executes the action.
@@ -22,7 +22,18 @@ public interface Action<D>
     void accept( D delegate );
 
     /**
-     * @return True if this action is no longer needed and can be removed.
+     *  Returns a new {@link Action} that will execute this action
+     *  and then the given action.
+     *
+     * @param other The other action to execute after this one.
+     * @return A new {@link Action} that will execute this action
+     *  and then the given action.
      */
-    default boolean canBeRemoved() { return false; }
+    default Action<D> andThen( Action<D> other ) {
+        return delegate -> {
+            this.accept(delegate);
+            other.accept(delegate);
+        };
+    }
+
 }

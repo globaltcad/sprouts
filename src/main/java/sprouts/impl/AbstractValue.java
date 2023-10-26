@@ -68,18 +68,13 @@ abstract class AbstractValue<T> implements Val<T>
     protected void _triggerActions(
         List<Action<Val<T>>> actions
     ) {
-        List<Action<Val<T>>> removableActions = new ArrayList<>();
         Val<T> clone = Val.ofNullable(this); // We clone this property to avoid concurrent modification
         for ( Action<Val<T>> action : new ArrayList<>(actions) ) // We copy the list to avoid concurrent modification
             try {
-                if ( action.canBeRemoved() )
-                    removableActions.add(action);
-                else
-                    action.accept(clone);
+                action.accept(clone);
             } catch ( Exception e ) {
                 e.printStackTrace();
             }
-        actions.removeAll(removableActions);
     }
 
     /** {@inheritDoc} */

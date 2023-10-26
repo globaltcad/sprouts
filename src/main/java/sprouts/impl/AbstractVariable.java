@@ -124,16 +124,17 @@ public class AbstractVariable<T> extends AbstractValue<T> implements Var<T>
 	}
 
 	@Override
-	public Observable unsubscribe( Observer observer ) {
+	public Observable unsubscribe( Subscriber subscriber ) {
 		for ( List<Action<Val<T>>> actions : _actions.values() )
-			for ( Action<?> a : actions )
+			for ( Action<?> a : new ArrayList<>(actions) )
 				if ( a instanceof SproutChangeListener ) {
 					SproutChangeListener<?> pcl = (SproutChangeListener<?>) a;
-					if ( pcl.listener() == observer) {
+					if ( pcl.listener() == subscriber) {
 						actions.remove(a);
-						return this;
 					}
 				}
+		        else if ( Objects.equals(a, subscriber) )
+				    actions.remove(a);
 
 		return this;
 	}

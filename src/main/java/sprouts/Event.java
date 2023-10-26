@@ -58,8 +58,9 @@ public interface Event extends Observable
                 return this;
             }
             @Override
-            public Observable unsubscribe( Observer observer) {
-                observers.remove(observer);
+            public Observable unsubscribe( Subscriber subscriber) {
+                if ( subscriber instanceof Observer )
+                    observers.remove( (Observer) subscriber );
                 return this;
             }
             @Override public void unsubscribeAll() { observers.clear(); }
@@ -85,8 +86,9 @@ public interface Event extends Observable
                 return this;
             }
             @Override
-            public Observable unsubscribe(Observer observer) {
-                observers.remove(observer);
+            public Observable unsubscribe( Subscriber subscriber ) {
+                if ( subscriber instanceof Observer )
+                    observers.remove( (Observer) subscriber );
                 return this;
             }
             @Override public void unsubscribeAll() { observers.clear(); }

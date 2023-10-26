@@ -7,7 +7,8 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
- *  A list of mutable properties that can be observed for changes.
+ *  A list of mutable properties that can be observed for changes by
+ *  {@link Subscriber} types (see {@link Observer} and {@link sprouts.Action}).
  *  Contrary to the supertype {@link Vals}, this interface provides methods for mutating the list.
  *  Use the {@link #onChange(Action)} method to register change listeners to the list. <br>
  *  Use {@link #subscribe(Observer)} if you want to be notified of changes to the list

@@ -20,14 +20,16 @@ public interface Observable
      * @param observer The listener to subscribe.
      * @return this {@link Observable} for chaining.
      */
-    Observable subscribe(Observer observer);
+    Observable subscribe( Observer observer );
 
     /**
-     * Unsubscribes the given listener from this {@link Observable}
+     * Unsubscribes the given {@link Subscriber} from this {@link Observable}
      * so that it will no longer be notified when something happens.
+     * A {@link Subscriber} may be either an {@link Observer} or an {@link Action}
+     * depending on the context.
      *
      * @param observer the listener to unsubscribe.
      * @return This {@link Observable}, to allow for chaining.
      */
-    Observable unsubscribe(Observer observer);
+    Observable unsubscribe( Subscriber observer );
 }

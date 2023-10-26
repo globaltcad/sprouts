@@ -10,7 +10,7 @@ final class SproutChangeListener<D> implements Action<D>
     private final Observer _observer;
 
 
-    SproutChangeListener( Observer observer) {
+    SproutChangeListener( Observer observer ) {
         _observer = Objects.requireNonNull(observer);
     }
 
