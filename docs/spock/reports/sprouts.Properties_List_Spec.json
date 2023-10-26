@@ -227,7 +227,7 @@
     },
   
     {
-      "id":"The display action of a property or list of properties will not be called if they report \"canBeRemoved()\"",
+      "id":"The display action of a property or list of properties will not be afterit was removed",
       "result":"PASS",
       "duration":"?",
       "iterations":{
@@ -238,11 +238,19 @@
 
         {"kind":"and","text":"A list where we are going to record changes.","code":["var changes = []"]},
 
-        {"kind":"and","text":"Now we register a \"show\" listeners on both objects.","code":["prop.onChange(From.VIEW_MODEL, new Action<Integer>() {","    @Override","    void accept(Integer delegate) {","        changes << \"Something happened to the property.\"","    }","    @Override boolean canBeRemoved() { return true }","})","list.onChange(new Action<ValsDelegate<Integer>>() {","    @Override","    void accept(ValsDelegate<Integer> delegate) {","        changes << \"Something happened to the list.\"","    }","    @Override boolean canBeRemoved() { return true }","})"]},
+        {"kind":"and","text":"","code":["Action<Val<Integer>> action1 = it -> { changes << \"Something happened to the property.\" }","Action<Val<Integer>> action2 = it -> { changes << \"Something happened to the list.\" }"]},
+
+        {"kind":"and","text":"Now we register change listeners on both objects.","code":["prop.onChange(From.VIEW_MODEL, action1)","list.onChange(action2)"]},
 
         {"kind":"when","text":"We modify the properties in various ways...","code":["prop.set(42)","list.add(1)","list.removeAt(1)","list.setAt(0, 2)","list.addAt(1, 3)","list.remove(3)"]},
 
-        {"kind":"then","text":"The \"show\" listener has been called zero times.","code":["changes.size() == 0"]}
+        {"kind":"then","text":"The listeners will have been called 6 times.","code":["changes.size() == 6"]},
+
+        {"kind":"when","text":"We remove the property and list.","code":["prop.unsubscribe(action1)","list.unsubscribe(action2)"]},
+
+        {"kind":"and","text":"We do some more unique modifications...","code":["prop.set(73)","list.add(4)","list.removeAt(1)","list.setAt(0, 3)","list.addAt(1, 4)","list.remove(4)"]},
+
+        {"kind":"then","text":"No additional changes have been recorded.","code":["changes.size() == 6"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -259,19 +267,19 @@
 
         {"kind":"and","text":"A list where we are going to record changes.","code":["var changes = []"]},
 
-        {"kind":"and","text":"Now we register a \"show\" listener on the \"Vars\" class.","code":["vars.onChange{ changes << it.changeType() }"]},
+        {"kind":"and","text":"Now we register a change action listener on the `Vars` class.","code":["vars.onChange{ changes << it.changeType() }"]},
 
         {"kind":"when","text":"We modify the property in various ways...","code":["vars.addAt(1, 1)","vars.setAt(0, 2)","vars.removeAt(1)","vars.add(3)"]},
 
-        {"kind":"then","text":"The \"show\" listener has been called four times.","code":["changes.size() == 4"]},
+        {"kind":"then","text":"The change listener has been called four times.","code":["changes.size() == 4"]},
 
-        {"kind":"and","text":"The \"show\" listener has been called with the correct indices.","code":["changes == [Change.ADD, Change.SET, Change.REMOVE, Change.ADD]"]}
+        {"kind":"and","text":"The change listener has been called with the correct indices.","code":["changes == [Change.ADD, Change.SET, Change.REMOVE, Change.ADD]"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
   
     {
-      "id":"Lists of properties can be sorted based on their natural order through the \"sort\" method.",
+      "id":"Lists of properties can be sorted based on their natural order through the `sort` method.",
       "result":"PASS",
       "duration":"?",
       "iterations":{
@@ -288,7 +296,7 @@
     },
   
     {
-      "id":"Lists of properties can be sorted using a custom comparator through the \"sort\" method.",
+      "id":"Lists of properties can be sorted using a custom comparator through the `sort` method.",
       "result":"PASS",
       "duration":"?",
       "iterations":{
@@ -335,11 +343,11 @@
       "tags":{},"see":[],"extraInfo":[]
       },
       "blocks":[
-        {"kind":"given","text":"A \"List\" of properties.","code":["var list = [Var.of(42), Var.of(73)]"]},
+        {"kind":"given","text":"A `List` of properties.","code":["var list = [Var.of(42), Var.of(73)]"]},
 
-        {"kind":"when","text":"We create a \"Vars\" list from the \"List\".","code":["var vars = Vars.of(Integer, list)"]},
+        {"kind":"when","text":"We create a `Vars` list from the `List`.","code":["var vars = Vars.of(Integer, list)"]},
 
-        {"kind":"then","text":"The \"Vars\" list has the same properties.","code":["vars.at(0).get() == 42","vars.at(1).get() == 73"]}
+        {"kind":"then","text":"The `Vars` list has the same properties.","code":["vars.at(0).get() == 42","vars.at(1).get() == 73"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -385,7 +393,7 @@
       "result":"PASS",
       "duration":"?",
       "iterations":{
-      "tags":{},"see":[],"extraInfo":["\n            The \"makeDistinct\" method makes sure that there are only unique values in the Vals list.\n            It does this by removing all duplicates from the list.\n            This is especially useful when you use the properties to model \n            combo box or radio button selections.\n            This modification will be reported to all \"show\" listeners,\n            which are usually used to update the UI.\n        "]
+      "tags":{},"see":[],"extraInfo":["\n            The `makeDistinct` method makes sure that there are only unique values in the Vals list.\n            It does this by removing all duplicates from the list.\n            This is especially useful when you use the properties to model \n            combo box or radio button selections.\n            This modification will be reported to all \"show\" listeners,\n            which are usually used to update the UI.\n        "]
       },
       "blocks":[
         {"kind":"given","text":"A \"Vars\" class with 4 properties that have unique ids.","code":["var vars = Vars.of(","                                    Var.of(3.1415f),","                                    Var.of(2.7182f),","                                    Var.of(3.1415f),","                                    Var.of(1.6180f)","                                )"]},

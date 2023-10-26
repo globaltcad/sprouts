@@ -101,16 +101,16 @@ public class AbstractVariables&lt;T&gt; implements Vars&lt;T&gt;
     @SafeVarargs
 <span class="fc" id="L102">    protected AbstractVariables( boolean isImmutable, Class&lt;T&gt; type, boolean allowsNull, Var&lt;T&gt;... vals ) {</span>
 <span class="fc" id="L103">        _isImmutable = isImmutable;</span>
-<span class="fc" id="L104">        _type = type;</span>
-<span class="fc" id="L105">        _allowsNull = allowsNull;</span>
+<span class="fc" id="L104">        _type        = type;</span>
+<span class="fc" id="L105">        _allowsNull  = allowsNull;</span>
 <span class="fc" id="L106">        _variables.addAll(Arrays.asList(vals));</span>
 <span class="fc" id="L107">        _checkNullSafety();</span>
 <span class="fc" id="L108">    }</span>
 
 <span class="fc" id="L110">    protected AbstractVariables( boolean isImmutable, Class&lt;T&gt; type, boolean allowsNull, List&lt;Var&lt;T&gt;&gt; vals ) {</span>
 <span class="fc" id="L111">        _isImmutable = isImmutable;</span>
-<span class="fc" id="L112">        _type = type;</span>
-<span class="fc" id="L113">        _allowsNull = allowsNull;</span>
+<span class="fc" id="L112">        _type        = type;</span>
+<span class="fc" id="L113">        _allowsNull  = allowsNull;</span>
 <span class="fc" id="L114">        _variables.addAll(vals);</span>
 <span class="fc" id="L115">        _checkNullSafety();</span>
 <span class="fc" id="L116">    }</span>
@@ -368,90 +368,86 @@ public class AbstractVariables&lt;T&gt; implements Vars&lt;T&gt;
     private void _triggerAction(
             Change type, int index, Var&lt;T&gt; newVal, Var&lt;T&gt; oldVal
     ) {
-<span class="fc" id="L371">        List&lt;Action&lt;ValsDelegate&lt;T&gt;&gt;&gt; removableActions = new ArrayList&lt;&gt;();</span>
-<span class="fc" id="L372">        ValsDelegate&lt;T&gt; listChangeDelegate = _createDelegate(index, type, newVal, oldVal);</span>
+<span class="fc" id="L371">        ValsDelegate&lt;T&gt; listChangeDelegate = _createDelegate(index, type, newVal, oldVal);</span>
 
-<span class="fc bfc" id="L374" title="All 2 branches covered.">        for ( Action&lt;ValsDelegate&lt;T&gt;&gt; action : _viewActions )</span>
+<span class="fc bfc" id="L373" title="All 2 branches covered.">        for ( Action&lt;ValsDelegate&lt;T&gt;&gt; action : _viewActions )</span>
             try {
-<span class="fc bfc" id="L376" title="All 2 branches covered.">                if ( action.canBeRemoved() )</span>
-<span class="fc" id="L377">                    removableActions.add(action);</span>
-                else
-<span class="fc" id="L379">                    action.accept(listChangeDelegate);</span>
-<span class="nc" id="L380">            } catch ( Exception e ) {</span>
-<span class="nc" id="L381">                e.printStackTrace();</span>
-<span class="fc" id="L382">            }</span>
-
-<span class="fc" id="L384">        _viewActions.removeAll(removableActions);</span>
-<span class="fc" id="L385">    }</span>
+<span class="fc" id="L375">                action.accept(listChangeDelegate);</span>
+<span class="nc" id="L376">            } catch ( Exception e ) {</span>
+<span class="nc" id="L377">                e.printStackTrace();</span>
+<span class="fc" id="L378">            }</span>
+<span class="fc" id="L379">    }</span>
 
     /** {@inheritDoc} */
     @Override
     public java.util.Iterator&lt;T&gt; iterator() {
-<span class="fc" id="L390">        return new java.util.Iterator&lt;T&gt;() {</span>
-<span class="fc" id="L391">            private int index = 0;</span>
-<span class="fc bfc" id="L392" title="All 2 branches covered.">            @Override public boolean hasNext() { return index &lt; size(); }</span>
-<span class="fc" id="L393">            @Override public T next() { return at(index++).orElseNull(); }</span>
+<span class="fc" id="L384">        return new java.util.Iterator&lt;T&gt;() {</span>
+<span class="fc" id="L385">            private int index = 0;</span>
+<span class="fc bfc" id="L386" title="All 2 branches covered.">            @Override public boolean hasNext() { return index &lt; size(); }</span>
+<span class="fc" id="L387">            @Override public T next() { return at(index++).orElseNull(); }</span>
         };
     }
 
     /** {@inheritDoc} */
     @Override
     public final String toString() {
-<span class="fc" id="L400">        String entries = _variables.stream()</span>
-<span class="pc bpc" id="L401" title="1 of 2 branches missed.">                                    .map( o -&gt; o.itemAsString() + ( o.hasID() ? &quot;(&quot; + o.id() + &quot;)&quot; : &quot;&quot; ) )</span>
-<span class="fc" id="L402">                                    .collect(Collectors.joining(&quot;, &quot;));</span>
+<span class="fc" id="L394">        String entries = _variables.stream()</span>
+<span class="pc bpc" id="L395" title="1 of 2 branches missed.">                                    .map( o -&gt; o.itemAsString() + ( o.hasID() ? &quot;(&quot; + o.id() + &quot;)&quot; : &quot;&quot; ) )</span>
+<span class="fc" id="L396">                                    .collect(Collectors.joining(&quot;, &quot;));</span>
 
-<span class="fc bfc" id="L404" title="All 2 branches covered.">        String prefix = _isImmutable ? &quot;Vals&quot; : &quot;Vars&quot;;</span>
+<span class="fc bfc" id="L398" title="All 2 branches covered.">        String prefix = _isImmutable ? &quot;Vals&quot; : &quot;Vars&quot;;</span>
 
-<span class="fc" id="L406">        return prefix + &quot;&lt;&quot; + _type.getSimpleName() + &quot;&gt;[&quot; + entries + &quot;]&quot;;</span>
+<span class="fc" id="L400">        return prefix + &quot;&lt;&quot; + _type.getSimpleName() + &quot;&gt;[&quot; + entries + &quot;]&quot;;</span>
     }
 
     /** {@inheritDoc} */
     @Override
     public final boolean equals( Object obj ) {
-<span class="pc bpc" id="L412" title="1 of 2 branches missed.">        if( obj == null ) return false;</span>
-<span class="pc bpc" id="L413" title="1 of 2 branches missed.">        if( obj == this ) return true;</span>
-<span class="pc bpc" id="L414" title="1 of 2 branches missed.">        if( obj instanceof Vals ) {</span>
+<span class="pc bpc" id="L406" title="1 of 2 branches missed.">        if( obj == null ) return false;</span>
+<span class="pc bpc" id="L407" title="1 of 2 branches missed.">        if( obj == this ) return true;</span>
+<span class="pc bpc" id="L408" title="1 of 2 branches missed.">        if( obj instanceof Vals ) {</span>
             @SuppressWarnings(&quot;unchecked&quot;)
-<span class="fc" id="L416">            Vals&lt;T&gt; other = (Vals&lt;T&gt;) obj;</span>
-<span class="pc bpc" id="L417" title="1 of 2 branches missed.">            if ( size() != other.size() ) return false;</span>
-<span class="fc bfc" id="L418" title="All 2 branches covered.">            for ( int i = 0; i &lt; size(); i++ )</span>
-<span class="pc bpc" id="L419" title="1 of 2 branches missed.">                if ( !this.at(i).equals(other.at(i)) ) return false;</span>
+<span class="fc" id="L410">            Vals&lt;T&gt; other = (Vals&lt;T&gt;) obj;</span>
+<span class="pc bpc" id="L411" title="1 of 2 branches missed.">            if ( size() != other.size() ) return false;</span>
+<span class="fc bfc" id="L412" title="All 2 branches covered.">            for ( int i = 0; i &lt; size(); i++ )</span>
+<span class="pc bpc" id="L413" title="1 of 2 branches missed.">                if ( !this.at(i).equals(other.at(i)) ) return false;</span>
 
-<span class="fc" id="L421">            return true;</span>
+<span class="fc" id="L415">            return true;</span>
         }
-<span class="nc" id="L423">        return false;</span>
+<span class="nc" id="L417">        return false;</span>
     }
 
     private void _checkNullSafety() {
-<span class="fc bfc" id="L427" title="All 2 branches covered.">        if ( !_allowsNull )</span>
-<span class="fc bfc" id="L428" title="All 2 branches covered.">            for ( Var&lt;T&gt; val : _variables )</span>
-<span class="fc" id="L429">                _checkNullSafetyOf(val);</span>
-<span class="fc" id="L430">    }</span>
+<span class="fc bfc" id="L421" title="All 2 branches covered.">        if ( !_allowsNull )</span>
+<span class="fc bfc" id="L422" title="All 2 branches covered.">            for ( Var&lt;T&gt; val : _variables )</span>
+<span class="fc" id="L423">                _checkNullSafetyOf(val);</span>
+<span class="fc" id="L424">    }</span>
 
     private void _checkNullSafetyOf( Val&lt;T&gt; value ) {
-<span class="fc" id="L433">        Objects.requireNonNull(value);</span>
-<span class="pc bpc" id="L434" title="2 of 4 branches missed.">        if ( !_allowsNull &amp;&amp; value.allowsNull() )</span>
-<span class="nc" id="L435">            throw new IllegalArgumentException(&quot;Null values are not allowed in this property list.&quot;);</span>
-<span class="fc" id="L436">    }</span>
+<span class="fc" id="L427">        Objects.requireNonNull(value);</span>
+<span class="pc bpc" id="L428" title="2 of 4 branches missed.">        if ( !_allowsNull &amp;&amp; value.allowsNull() )</span>
+<span class="nc" id="L429">            throw new IllegalArgumentException(&quot;Null values are not allowed in this property list.&quot;);</span>
+<span class="fc" id="L430">    }</span>
 
     @Override
     public Observable subscribe( Observer observer ) {
-<span class="fc" id="L440">        return this.onChange( new SproutChangeListener&lt;&gt;(observer) );</span>
+<span class="fc" id="L434">        return this.onChange( new SproutChangeListener&lt;&gt;(observer) );</span>
     }
 
     @Override
-    public Observable unsubscribe( Observer observer ) {
-<span class="pc bpc" id="L445" title="1 of 2 branches missed.">        for ( Action&lt;?&gt; a : _viewActions )</span>
-<span class="pc bpc" id="L446" title="1 of 2 branches missed.">            if ( a instanceof SproutChangeListener ) {</span>
-<span class="fc" id="L447">                SproutChangeListener&lt;?&gt; pcl = (SproutChangeListener&lt;?&gt;) a;</span>
-<span class="pc bpc" id="L448" title="1 of 2 branches missed.">                if ( pcl.listener() == observer) {</span>
-<span class="fc" id="L449">                    _viewActions.remove(a);</span>
-<span class="fc" id="L450">                    return this;</span>
+    public Observable unsubscribe( Subscriber subscriber ) {
+<span class="fc bfc" id="L439" title="All 2 branches covered.">        for ( Action&lt;?&gt; a : new ArrayList&lt;&gt;(_viewActions) )</span>
+<span class="fc bfc" id="L440" title="All 2 branches covered.">            if ( a instanceof SproutChangeListener ) {</span>
+<span class="fc" id="L441">                SproutChangeListener&lt;?&gt; pcl = (SproutChangeListener&lt;?&gt;) a;</span>
+<span class="pc bpc" id="L442" title="1 of 2 branches missed.">                if ( Objects.equals(pcl.listener(), subscriber) ) {</span>
+<span class="fc" id="L443">                    _viewActions.remove(a);</span>
+<span class="fc" id="L444">                    return this;</span>
                 }
-            }
+<span class="nc" id="L446">            }</span>
+<span class="pc bpc" id="L447" title="1 of 2 branches missed.">            else if ( Objects.equals(a, subscriber) )</span>
+<span class="fc" id="L448">                _viewActions.remove(a);</span>
 
-<span class="nc" id="L454">        return this;</span>
+<span class="fc" id="L450">        return this;</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

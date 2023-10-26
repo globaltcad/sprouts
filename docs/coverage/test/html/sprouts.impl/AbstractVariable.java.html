@@ -124,18 +124,19 @@ public class AbstractVariable&lt;T&gt; extends AbstractValue&lt;T&gt; implements
 	}
 
 	@Override
-	public Observable unsubscribe( Observer observer ) {
-<span class="pc bpc" id="L128" title="1 of 2 branches missed.">		for ( List&lt;Action&lt;Val&lt;T&gt;&gt;&gt; actions : _actions.values() )</span>
-<span class="pc bpc" id="L129" title="1 of 2 branches missed.">			for ( Action&lt;?&gt; a : actions )</span>
-<span class="pc bpc" id="L130" title="1 of 2 branches missed.">				if ( a instanceof SproutChangeListener ) {</span>
+	public Observable unsubscribe( Subscriber subscriber ) {
+<span class="fc bfc" id="L128" title="All 2 branches covered.">		for ( List&lt;Action&lt;Val&lt;T&gt;&gt;&gt; actions : _actions.values() )</span>
+<span class="fc bfc" id="L129" title="All 2 branches covered.">			for ( Action&lt;?&gt; a : new ArrayList&lt;&gt;(actions) )</span>
+<span class="fc bfc" id="L130" title="All 2 branches covered.">				if ( a instanceof SproutChangeListener ) {</span>
 <span class="fc" id="L131">					SproutChangeListener&lt;?&gt; pcl = (SproutChangeListener&lt;?&gt;) a;</span>
-<span class="pc bpc" id="L132" title="1 of 2 branches missed.">					if ( pcl.listener() == observer) {</span>
+<span class="pc bpc" id="L132" title="1 of 2 branches missed.">					if ( pcl.listener() == subscriber) {</span>
 <span class="fc" id="L133">						actions.remove(a);</span>
-<span class="fc" id="L134">						return this;</span>
 					}
-				}
+<span class="fc" id="L135">				}</span>
+<span class="pc bpc" id="L136" title="1 of 2 branches missed.">		        else if ( Objects.equals(a, subscriber) )</span>
+<span class="fc" id="L137">				    actions.remove(a);</span>
 
-<span class="nc" id="L138">		return this;</span>
+<span class="fc" id="L139">		return this;</span>
 	}
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

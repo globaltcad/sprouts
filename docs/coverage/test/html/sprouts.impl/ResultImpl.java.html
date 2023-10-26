@@ -102,8 +102,8 @@ public class ResultImpl&lt;V&gt; implements Result&lt;V&gt;
 	}
 
 	@Override
-	public Observable unsubscribe( Observer observer ) {
-<span class="nc" id="L106">		Objects.requireNonNull(observer);</span>
+	public Observable unsubscribe( Subscriber subscriber ) {
+<span class="nc" id="L106">		Objects.requireNonNull(subscriber);</span>
 		/* A Result is immutable, so this method is not supported */
 <span class="nc" id="L108">		return this;</span>
 	}

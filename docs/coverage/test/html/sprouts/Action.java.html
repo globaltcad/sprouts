@@ -12,7 +12,7 @@
      * @param &lt;D&gt; The type of the delegate that will be passed to this event handler.
  */
 @FunctionalInterface
-public interface Action&lt;D&gt;
+public interface Action&lt;D&gt; extends Subscriber
 {
     /**
      *  Executes the action.
@@ -22,8 +22,19 @@ public interface Action&lt;D&gt;
     void accept( D delegate );
 
     /**
-     * @return True if this action is no longer needed and can be removed.
+     *  Returns a new {@link Action} that will execute this action
+     *  and then the given action.
+     *
+     * @param other The other action to execute after this one.
+     * @return A new {@link Action} that will execute this action
+     *  and then the given action.
      */
-<span class="fc" id="L27">    default boolean canBeRemoved() { return false; }</span>
+    default Action&lt;D&gt; andThen( Action&lt;D&gt; other ) {
+<span class="nc" id="L33">        return delegate -&gt; {</span>
+<span class="nc" id="L34">            this.accept(delegate);</span>
+<span class="nc" id="L35">            other.accept(delegate);</span>
+<span class="nc" id="L36">        };</span>
+    }
+
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>
