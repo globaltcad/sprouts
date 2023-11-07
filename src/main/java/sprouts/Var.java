@@ -6,14 +6,18 @@ import java.util.Optional;
 import java.util.function.Function;
 
 /**
- * 	A mutable wrapper for an item which can be observed through {@link Channel}s,
- * 	usually by the frontend to then dynamically update itself for you.
+ * 	A mutable wrapper for an item which can be observed for changes
+ * 	using {@link Action}s registered through the {@link #onChange(Channel, Action)} method,
+ * 	where the {@link Channel} is used to distinguish between changes from
+ * 	different sources (usually application layers like the view model or the view).
  * 	<p>
- * 	Use the {@link #onChange(Channel, Action)} method to register an {@link Action} callback
- * 	for a particular {@link Channel} constant
- * 	(like for example {@link From#VIEW_MODEL} or {@link From#VIEW}) which
- * 	will be invoked when the {@link #fireChange(Channel)} method or the {@link Var#set(Channel, Object)}
- * 	method is called using the same {@link Channel}.
+ * 	The {@link Channel} constant passed to {@link #onChange(Channel, Action)} ensures that the
+ * 	corresponding {@link Action} callback is only invoked when the
+ * 	{@link #fireChange(Channel)} method or the {@link Var#set(Channel, Object)}
+ *  method is invoked with the same {@link Channel}.
+ *  Usually you will use the {@link From} constants to distinguish between
+ *  important application layers using the {@link From#VIEW_MODEL} or {@link From#VIEW} channels.
+ * <p>
  * 	Note that {@link Var#set(Object)} method defaults to the {@link From#VIEW_MODEL} channel,
  * 	which is intended to be used for state changes as part of your core business logic.
  *  <p>
@@ -29,11 +33,11 @@ import java.util.function.Function;
  * 	    // A username property with a validation action:
  * 		private final Var<String> username = Var.of("").onChange(From.VIEW v -> validateUser(v) );
  * 	}</pre>
- * 	And the following Swing-Tree example UI:
+ * 	And the following SwingTree example UI:
  * 	<pre>{@code
  * 	    UI.textField()
  * 	    .peek( tf -> vm.getUsername().onChange(From.VIEW_MODEL t -> tf.setText(t.get()) ) )
- * 	    .onKeyReleased( e -> vm.getUsername().act( ta.getText() ) );
+ * 	    .onKeyRelease( e -> vm.getUsername().act( ta.getText() ) );
  * 	}</pre>
  * 	Your view will automatically update the text field with the item of the property
  * 	and inside your view model you can also update the item of the property
@@ -42,6 +46,10 @@ import java.util.function.Function;
  * 	    // Initially empty username:
  * 		username.set( "" ) // triggers 'fire(From.VIEW_MODEL)'
  * 	}</pre>
+ * 	<p>
+ * 	If you no longer need to observe a property, you can use the {@link #unsubscribe(Subscriber)}
+ * 	method to remove all {@link Action}s (which are also {@link Subscriber}s) registered
+ * 	through {@link #onChange(Channel, Action)}.
  * 	<p>
  * 	<b>Please take a look at the <a href="https://globaltcad.github.io/sprouts/">living sprouts documentation</a>
  * 	where you can browse a large collection of examples demonstrating how to use the API of this class.</b>
