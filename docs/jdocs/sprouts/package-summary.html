@@ -147,8 +147,10 @@
 <tr class="rowColor">
 <td class="colFirst"><a href="../sprouts/Val.html" title="interface in sprouts">Val</a>&lt;T&gt;</td>
 <td class="colLast">
-<div class="block">A read only view on an item which can be observed by any kind of frontend
-        so that it can be notified and updated when the item it wraps changes.</div>
+<div class="block">A read only view on a wrapped item which can be observed for changes
+        using <a href="../sprouts/Action.html" title="interface in sprouts"><code>Action</code></a>s registered through the <a href="../sprouts/Val.html#onChange-sprouts.Channel-sprouts.Action-"><code>Val.onChange(Channel, Action)</code></a> method,
+        where the <a href="../sprouts/Channel.html" title="interface in sprouts"><code>Channel</code></a> is used to distinguish between changes from
+        different sources (usually application layers like the view model or the view).</div>
 </td>
 </tr>
 <tr class="altColor">
@@ -168,8 +170,10 @@
 <tr class="altColor">
 <td class="colFirst"><a href="../sprouts/Var.html" title="interface in sprouts">Var</a>&lt;T&gt;</td>
 <td class="colLast">
-<div class="block">A mutable wrapper for an item which can be observed through <a href="../sprouts/Channel.html" title="interface in sprouts"><code>Channel</code></a>s,
-        usually by the frontend to then dynamically update itself for you.</div>
+<div class="block">A mutable wrapper for an item which can be observed for changes
+        using <a href="../sprouts/Action.html" title="interface in sprouts"><code>Action</code></a>s registered through the <a href="../sprouts/Var.html#onChange-sprouts.Channel-sprouts.Action-"><code>Var.onChange(Channel, Action)</code></a> method,
+        where the <a href="../sprouts/Channel.html" title="interface in sprouts"><code>Channel</code></a> is used to distinguish between changes from
+        different sources (usually application layers like the view model or the view).</div>
 </td>
 </tr>
 <tr class="rowColor">

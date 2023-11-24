@@ -12,16 +12,22 @@ import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 /**
- * 	A read only view on an item which can be observed by any kind of frontend
- * 	so that it can be notified and updated when the item it wraps changes.
+ * 	A read only view on a wrapped item which can be observed for changes
+ * 	using {@link Action}s registered through the {@link #onChange(Channel, Action)} method,
+ * 	where the {@link Channel} is used to distinguish between changes from
+ * 	different sources (usually application layers like the view model or the view).
  * 	The API of this is very similar to the {@link Optional} API in the
- * 	sense that it is a wrapper around a single item, which may also be missing (null).
- * 	Use the {@link #onChange(Channel, Action)} method to register an {@link Action} callback
- * 	for a particular {@link Channel} constant
- * 	(like for example {@link From#VIEW_MODEL} or {@link From#VIEW}) which
- * 	will be invoked when the {@link #fireChange(Channel)} method or the {@link Var#set(Channel, Object)}
- * 	method is called using the same {@link Channel}.
+ * 	sense that it is a null safe wrapper around a single item, which may also be missing (null).
+ * 	<p>
+ * 	The {@link Channel} supplied to the {@link #onChange(Channel, Action)} method to register an {@link Action}
+ * 	callback is expected to be a simple constant, usually one of the {@link From} constants
+ * 	like for example {@link From#VIEW_MODEL} or {@link From#VIEW}.
+ * 	You may fire a change event for a particular channel using the {@link #fireChange(Channel)} method or
+ * 	in case the property is also a mutable {@link Var}, then through the {@link Var#set(Channel, Object)}.<br>
  * 	Note that {@link Var#set(Object)} method defaults to the {@link From#VIEW_MODEL} channel.
+ * 	<p>
+ * 	If you no longer need to observe changes on this property, then you can remove the registered {@link Action}
+ * 	callback using the {@link #unsubscribe(Subscriber)} method ({@link Action} implements {@link Subscriber}).
  * 	<p>
  * 	Note that the name of this class is short for "value". This name was deliberately chosen because
  * 	it is short, concise and yet clearly conveys the same meaning as other names used to model this
@@ -33,6 +39,7 @@ import java.util.regex.Pattern;
  * 	<b>Please take a look at the <a href="https://globaltcad.github.io/sprouts/">living sprouts documentation</a>
  * 	where you can browse a large collection of examples demonstrating how to use the API of this class.</b>
  *
+ * @see Var A mutable subclass of this class.
  * @param <T> The type of the item held by this {@link Val}.
  */
 public interface Val<T> extends Observable

@@ -113,14 +113,18 @@ var activeTableTab = "activeTableTab";
 <br>
 <pre>public interface <span class="typeNameLabel">Var&lt;T&gt;</span>
 extends <a href="../sprouts/Val.html" title="interface in sprouts">Val</a>&lt;T&gt;</pre>
-<div class="block">A mutable wrapper for an item which can be observed through <a href="../sprouts/Channel.html" title="interface in sprouts"><code>Channel</code></a>s,
-        usually by the frontend to then dynamically update itself for you.
+<div class="block">A mutable wrapper for an item which can be observed for changes
+        using <a href="../sprouts/Action.html" title="interface in sprouts"><code>Action</code></a>s registered through the <a href="../sprouts/Var.html#onChange-sprouts.Channel-sprouts.Action-"><code>onChange(Channel, Action)</code></a> method,
+        where the <a href="../sprouts/Channel.html" title="interface in sprouts"><code>Channel</code></a> is used to distinguish between changes from
+        different sources (usually application layers like the view model or the view).
         <p>
-        Use the <a href="../sprouts/Var.html#onChange-sprouts.Channel-sprouts.Action-"><code>onChange(Channel, Action)</code></a> method to register an <a href="../sprouts/Action.html" title="interface in sprouts"><code>Action</code></a> callback
-        for a particular <a href="../sprouts/Channel.html" title="interface in sprouts"><code>Channel</code></a> constant
-        (like for example <a href="../sprouts/From.html#VIEW_MODEL"><code>From.VIEW_MODEL</code></a> or <a href="../sprouts/From.html#VIEW"><code>From.VIEW</code></a>) which
-        will be invoked when the <a href="../sprouts/Val.html#fireChange-sprouts.Channel-"><code>Val.fireChange(Channel)</code></a> method or the <a href="../sprouts/Var.html#set-sprouts.Channel-T-"><code>set(Channel, Object)</code></a>
-        method is called using the same <a href="../sprouts/Channel.html" title="interface in sprouts"><code>Channel</code></a>.
+        The <a href="../sprouts/Channel.html" title="interface in sprouts"><code>Channel</code></a> constant passed to <a href="../sprouts/Var.html#onChange-sprouts.Channel-sprouts.Action-"><code>onChange(Channel, Action)</code></a> ensures that the
+        corresponding <a href="../sprouts/Action.html" title="interface in sprouts"><code>Action</code></a> callback is only invoked when the
+        <a href="../sprouts/Val.html#fireChange-sprouts.Channel-"><code>Val.fireChange(Channel)</code></a> method or the <a href="../sprouts/Var.html#set-sprouts.Channel-T-"><code>set(Channel, Object)</code></a>
+  method is invoked with the same <a href="../sprouts/Channel.html" title="interface in sprouts"><code>Channel</code></a>.
+  Usually you will use the <a href="../sprouts/From.html" title="enum in sprouts"><code>From</code></a> constants to distinguish between
+  important application layers using the <a href="../sprouts/From.html#VIEW_MODEL"><code>From.VIEW_MODEL</code></a> or <a href="../sprouts/From.html#VIEW"><code>From.VIEW</code></a> channels.
+ <p>
         Note that <a href="../sprouts/Var.html#set-T-"><code>set(Object)</code></a> method defaults to the <a href="../sprouts/From.html#VIEW_MODEL"><code>From.VIEW_MODEL</code></a> channel,
         which is intended to be used for state changes as part of your core business logic.
   <p>
@@ -136,11 +140,11 @@ extends <a href="../sprouts/Val.html" title="interface in sprouts">Val</a>&lt;T&
  	    // A username property with a validation action:
  		private final Var&lt;String&gt; username = Var.of("").onChange(From.VIEW v -&gt; validateUser(v) );
  	</code></pre>
-        And the following Swing-Tree example UI:
+        And the following SwingTree example UI:
         <pre><code>
  	    UI.textField()
  	    .peek( tf -&gt; vm.getUsername().onChange(From.VIEW_MODEL t -&gt; tf.setText(t.get()) ) )
- 	    .onKeyReleased( e -&gt; vm.getUsername().act( ta.getText() ) );
+ 	    .onKeyRelease( e -&gt; vm.getUsername().act( ta.getText() ) );
  	</code></pre>
         Your view will automatically update the text field with the item of the property
         and inside your view model you can also update the item of the property
@@ -149,6 +153,10 @@ extends <a href="../sprouts/Val.html" title="interface in sprouts">Val</a>&lt;T&
  	    // Initially empty username:
  		username.set( "" ) // triggers 'fire(From.VIEW_MODEL)'
  	</code></pre>
+        <p>
+        If you no longer need to observe a property, you can use the <a href="../sprouts/Observable.html#unsubscribe-sprouts.Subscriber-"><code>Observable.unsubscribe(Subscriber)</code></a>
+        method to remove all <a href="../sprouts/Action.html" title="interface in sprouts"><code>Action</code></a>s (which are also <a href="../sprouts/Subscriber.html" title="interface in sprouts"><code>Subscriber</code></a>s) registered
+        through <a href="../sprouts/Var.html#onChange-sprouts.Channel-sprouts.Action-"><code>onChange(Channel, Action)</code></a>.
         <p>
         Note that the name of this class is short for "variable". This name was deliberately chosen because
         it is short, concise and yet clearly conveys the same meaning as other names used to model this
