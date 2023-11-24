@@ -12,6 +12,10 @@ package sprouts;
 public interface ValsDelegate<T>
 {
     /**
+     *  The type of change that occurred in the property list.
+     *  This information can be used to perform different actions
+     *  that are specific to the type of change.
+     *
      *  @return The mutation type of the change which may be one of the following:
      *          <ul>
      *              <li>{@link Change#ADD}</li>

@@ -9,7 +9,7 @@ package sprouts;
  *  Implementations of this are usually triggered by UI components
  *  or properties to cause some sort of binding effect.
  *
-     * @param <D> The type of the delegate that will be passed to this event handler.
+ * @param <D> The type of the delegate that will be passed to this event handler.
  */
 @FunctionalInterface
 public interface Action<D> extends Subscriber

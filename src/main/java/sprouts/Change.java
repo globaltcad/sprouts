@@ -8,5 +8,37 @@ package sprouts;
  */
 public enum Change
 {
-    ADD, REMOVE, SET, CLEAR, SORT, DISTINCT, REVERT, NONE
+    /**
+     *  Indicates that a new value was added to the {@link Vars} instance.
+     */
+    ADD,
+    /**
+     *  Indicates that a value was removed from the {@link Vars} instance.
+     */
+    REMOVE,
+    /**
+     *  Indicates that a value was updated in the {@link Vars} instance.
+     */
+    SET,
+    /**
+     *  Indicates that the {@link Vars} instance was cleared.
+     */
+    CLEAR,
+    /**
+     *  Indicates that the elements in the {@link Vars} instance were sorted.
+     */
+    SORT,
+    /**
+     *  Indicates that the duplicates in the {@link Vars} instance were removed.
+     */
+    DISTINCT,
+    /**
+     *  Indicates tht the order of the elements in the {@link Vars} instance was reversed.
+     */
+    REVERT,
+    /**
+     *  Indicates that the {@link Vars} instance was not mutate
+     *  (But the change event was still triggered).
+     */
+    NONE
 }

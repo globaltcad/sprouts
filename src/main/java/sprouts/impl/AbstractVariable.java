@@ -9,7 +9,7 @@ import java.util.function.Consumer;
 
 /**
  * 	The base implementation for both {@link Var} and {@link Val} interfaces.
- * 	This also serves as a reference implementation for the concept of
+ * 	This also serves as a reference implementation for the concept of the
  *  {@link Var}/{@link Val} properties in general.
  * 
  * @param <T> The type of the value wrapped by a given property...
@@ -138,4 +138,10 @@ public class AbstractVariable<T> extends AbstractValue<T> implements Var<T>
 
 		return this;
 	}
+
+	@Override
+	protected String _stringTypeName() {
+		return _isImmutable ? super._stringTypeName() : "Var";
+	}
+
 }

@@ -12,6 +12,14 @@ import java.util.stream.StreamSupport;
 /**
  *  An immutable view of a list of immutably viewed properties that can be observed,
  *  iterated over, mapped, filtered, turned into a stream, and more.
+ * 	<p>
+ * 	Note that the name of this class is short for "values". This name was deliberately chosen because
+ * 	it is short, concise and yet clearly conveys the same meaning as other names used to model this
+ * 	kind of pattern, like "properties", "observable objects", "observable values", "observable properts", etc.
+ * 	<p>
+ * 	<b>Please take a look at the <a href="https://globaltcad.github.io/sprouts/">living sprouts documentation</a>
+ * 	where you can browse a large collection of examples demonstrating how to use the API of this class.</b>
+ *
  *
  * @param <T> The type of the properties.
  */

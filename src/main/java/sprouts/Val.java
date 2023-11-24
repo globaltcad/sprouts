@@ -13,7 +13,7 @@ import java.util.regex.Pattern;
 
 /**
  * 	A read only view on an item which can be observed by any kind of frontend
- * 	so that it can be notified and updated when the item changes.
+ * 	so that it can be notified and updated when the item it wraps changes.
  * 	The API of this is very similar to the {@link Optional} API in the
  * 	sense that it is a wrapper around a single item, which may also be missing (null).
  * 	Use the {@link #onChange(Channel, Action)} method to register an {@link Action} callback
@@ -22,6 +22,10 @@ import java.util.regex.Pattern;
  * 	will be invoked when the {@link #fireChange(Channel)} method or the {@link Var#set(Channel, Object)}
  * 	method is called using the same {@link Channel}.
  * 	Note that {@link Var#set(Object)} method defaults to the {@link From#VIEW_MODEL} channel.
+ * 	<p>
+ * 	Note that the name of this class is short for "value". This name was deliberately chosen because
+ * 	it is short, concise and yet clearly conveys the same meaning as other names used to model this
+ * 	kind of pattern, like "property", "observable object", "observable value", "observable property", etc.
  * 	<p>
  * 	<b>Please take a look at the <a href="https://globaltcad.github.io/sprouts/">living sprouts documentation</a>
  * 	where you can browse a large collection of examples demonstrating how to use the API of this class.</b>

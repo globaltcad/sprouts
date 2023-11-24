@@ -233,7 +233,19 @@ class Properties_Spec extends Specification
             v6.toString() == 'Var<String?>[null]'
             v7.toString() == 'Var<Long?>[maybe_long=5]'
             v8.toString() == 'Var<Integer?>[maybe_int=7]'
+    }
 
+    def 'Whether a property is a `Var` or `Val` can be seen in their String representaions.'()
+    {
+        reportInfo """
+            The string representation of a property will tell you whether it is a `Var` or `Val`.
+        """
+        given : 'Two properties, one mutable and one immutable.'
+            var v1 = Var.of("Apple")
+            var v2 = Val.of("Berry")
+        expect :
+            v1.toString() == 'Var<String>["Apple"]'
+            v2.toString() == 'Val<String>["Berry"]'
     }
 
     def 'A property can be converted to an `Optional`.'()
