@@ -89,31 +89,35 @@ abstract class AbstractValue&lt;T&gt; implements Val&lt;T&gt;
 <span class="pc bpc" id="L89" title="1 of 2 branches missed.">        if ( type.equals(&quot;Object&quot;) ) type = &quot;?&quot;;</span>
 <span class="fc bfc" id="L90" title="All 4 branches covered.">        if ( type.equals(&quot;String&quot;) &amp;&amp; this.isPresent() ) value = &quot;\&quot;&quot; + value + &quot;\&quot;&quot;;</span>
 <span class="fc bfc" id="L91" title="All 2 branches covered.">        if (_nullable) type = type + &quot;?&quot;;</span>
-<span class="fc" id="L92">        String name = &quot;Var&quot;;</span>
+<span class="fc" id="L92">        String name = _stringTypeName();</span>
 <span class="fc bfc" id="L93" title="All 2 branches covered.">        String content = ( id.equals(&quot;?&quot;) ? value : id + &quot;=&quot; + value );</span>
 <span class="fc" id="L94">        return name + &quot;&lt;&quot; + type + &quot;&gt;&quot; + &quot;[&quot; + content + &quot;]&quot;;</span>
     }
 
+    protected String _stringTypeName() {
+<span class="fc" id="L98">        return &quot;Val&quot;;</span>
+    }
+
     @Override
     public final boolean equals( Object obj ) {
-<span class="pc bpc" id="L99" title="1 of 2 branches missed.">        if ( obj == null ) return false;</span>
-<span class="pc bpc" id="L100" title="1 of 2 branches missed.">        if ( obj == this ) return true;</span>
-<span class="pc bpc" id="L101" title="1 of 2 branches missed.">        if ( obj instanceof Val ) {</span>
-<span class="fc" id="L102">            Val&lt;?&gt; other = (Val&lt;?&gt;) obj;</span>
-<span class="fc bfc" id="L103" title="All 2 branches covered.">            if ( other.type() != _type) return false;</span>
-<span class="pc bpc" id="L104" title="1 of 4 branches missed.">            if ( other.orElseNull() == null ) return _value == null;</span>
-<span class="fc" id="L105">            return Val.equals( other.orElseThrow(), _value); // Arrays are compared with Arrays.equals</span>
+<span class="pc bpc" id="L103" title="1 of 2 branches missed.">        if ( obj == null ) return false;</span>
+<span class="pc bpc" id="L104" title="1 of 2 branches missed.">        if ( obj == this ) return true;</span>
+<span class="pc bpc" id="L105" title="1 of 2 branches missed.">        if ( obj instanceof Val ) {</span>
+<span class="fc" id="L106">            Val&lt;?&gt; other = (Val&lt;?&gt;) obj;</span>
+<span class="fc bfc" id="L107" title="All 2 branches covered.">            if ( other.type() != _type) return false;</span>
+<span class="pc bpc" id="L108" title="1 of 4 branches missed.">            if ( other.orElseNull() == null ) return _value == null;</span>
+<span class="fc" id="L109">            return Val.equals( other.orElseThrow(), _value); // Arrays are compared with Arrays.equals</span>
         }
-<span class="nc" id="L107">        return false;</span>
+<span class="nc" id="L111">        return false;</span>
     }
 
     @Override
     public final int hashCode() {
-<span class="fc" id="L112">        int hash = 7;</span>
-<span class="fc bfc" id="L113" title="All 2 branches covered.">        hash = 31 * hash + ( _value == null ? 0 : Val.hashCode(_value) );</span>
-<span class="pc bpc" id="L114" title="1 of 2 branches missed.">        hash = 31 * hash + ( _type  == null ? 0 : _type.hashCode()     );</span>
-<span class="pc bpc" id="L115" title="1 of 2 branches missed.">        hash = 31 * hash + ( _id    == null ? 0 : _id.hashCode()       );</span>
-<span class="fc" id="L116">        return hash;</span>
+<span class="fc" id="L116">        int hash = 7;</span>
+<span class="fc bfc" id="L117" title="All 2 branches covered.">        hash = 31 * hash + ( _value == null ? 0 : Val.hashCode(_value) );</span>
+<span class="pc bpc" id="L118" title="1 of 2 branches missed.">        hash = 31 * hash + ( _type  == null ? 0 : _type.hashCode()     );</span>
+<span class="pc bpc" id="L119" title="1 of 2 branches missed.">        hash = 31 * hash + ( _id    == null ? 0 : _id.hashCode()       );</span>
+<span class="fc" id="L120">        return hash;</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>
