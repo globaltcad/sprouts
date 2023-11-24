@@ -46,6 +46,9 @@ import java.util.function.Function;
  * 	Note that the name of this class is short for "variable". This name was deliberately chosen because
  * 	it is short, concise and yet clearly conveys the same meaning as other names used to model this
  * 	kind of pattern, like "property", "observable object", "observable value", "observable property", etc.
+ *  Using the names {@link Var} and {@link Val} also allows for the distinction between
+ *  mutable and immutable properties without having to resort to prefixes like "mutable" or "immutable"
+ *  as part of a type that is supposed to be used everywhere in your code.
  * 	<p>
  * 	<b>Please take a look at the <a href="https://globaltcad.github.io/sprouts/">living sprouts documentation</a>
  * 	where you can browse a large collection of examples demonstrating how to use the API of this class.</b>

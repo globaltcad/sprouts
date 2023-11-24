@@ -15,6 +15,21 @@ import java.util.function.Consumer
     This is especially useful for testing your UIs logic (in a view model for example).
     This is the core motivation behind the creation of the Sprouts library.
     
+    In Sprouts, properties are represented by the `Var` and `Val` classes.
+    
+    You might be wondering, what is a `Var` or `Val` and what does 
+    it have to do with the common concept of a property?
+    
+    The answer is quite simply that the sprouts API uses the 
+    names `Var` and `Val` to refer to 2 common types of properties.
+    The name `Var` translates to "variable" and `Val` to "value"
+    which are also words that convey the meaning of a property
+    yet they allow us to distinguish between mutable and immutable properties
+    without having to resort to unnecessary prefixes like "mutable" or "immutable".
+    
+    So when the sprouts documentation refers to properties, it is
+    referring to the `Var` and `Val` classes.
+
     This specification introduces you to their API and shows you how to use them.
     
 ''')

@@ -26,6 +26,9 @@ import java.util.regex.Pattern;
  * 	Note that the name of this class is short for "value". This name was deliberately chosen because
  * 	it is short, concise and yet clearly conveys the same meaning as other names used to model this
  * 	kind of pattern, like "property", "observable object", "observable value", "observable property", etc.
+ *  Using {@link Var} and {@link Val} as names also allows for the distinction between
+ *  mutable and immutable properties without having to resort to prefixes like "mutable" or "immutable"
+ *  as part of types that are supposed to be used everywhere in your code.
  * 	<p>
  * 	<b>Please take a look at the <a href="https://globaltcad.github.io/sprouts/">living sprouts documentation</a>
  * 	where you can browse a large collection of examples demonstrating how to use the API of this class.</b>
@@ -347,7 +350,7 @@ public interface Val<T> extends Observable
 			try {
 				return mapper.apply(v);
 			} catch (Exception e) {
-				return Integer.MIN_VALUE;
+				return 0;
 			}
 		});
 	}
@@ -364,7 +367,7 @@ public interface Val<T> extends Observable
 			try {
 				return Integer.parseInt( v.toString() );
 			} catch ( NumberFormatException e ) {
-				return Integer.MIN_VALUE;
+				return 0;
 			}
 		});
 	}
