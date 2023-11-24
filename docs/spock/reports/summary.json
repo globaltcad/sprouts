@@ -1,14 +1,14 @@
 {
   "project": "Swing-Tree",
   "version": "0.2.0",
-  "created": "Thu Oct 26 12:31:18 CEST 2023",
+  "created": "Fri Nov 24 13:19:49 CET 2023",
   "statistics":{
     "runs":"13",
     "passed":"13",
     "failed":"0",
     "featureFailures":"0",
     "successRate":"1.0",
-    "duration":"368.0"
+    "duration":"346.0"
   },
   "specifications": [{
       "className":"sprouts.Event_Spec",
@@ -19,7 +19,7 @@
       "errors":"0",
       "skipped":"0" ,
       "successRate":"1.0",
-      "duration":"60",
+      "duration":"51",
       "executedFeatures":[{"id":"A listener can be unsubscribed from an Event.","extraInfo":[]},{"id":"The \"Event.of\" factory method is a shortcut for creating an event with an initial listener.","extraInfo":[]},{"id":"We can create an event using the \"Event.create\" factory method.","extraInfo":[]},{"id":"We can create an event using the \"Event.using\" factory method with a custom executor.","extraInfo":[]},{"id":"We can unsubscribe all Listeners from an Event!","extraInfo":[]}],
       "ignoredFeatures":[]
     },{
@@ -31,7 +31,7 @@
       "errors":"0",
       "skipped":"0" ,
       "successRate":"1.0",
-      "duration":"27",
+      "duration":"29",
       "executedFeatures":[{"id":"The register button does nothing if the inputs are not all valid.","extraInfo":[]},{"id":"The registration view model will display feedback about invalid inputs.","extraInfo":[]}],
       "ignoredFeatures":[]
     },{
@@ -55,7 +55,7 @@
       "errors":"0",
       "skipped":"0" ,
       "successRate":"1.0",
-      "duration":"16",
+      "duration":"13",
       "executedFeatures":[{"id":"A Problem can be created from an exception.","extraInfo":[]},{"id":"A Problem may have a reporter.","extraInfo":[]},{"id":"We can create a problem from a title.","extraInfo":[]}],
       "ignoredFeatures":[]
     },{
@@ -67,20 +67,20 @@
       "errors":"0",
       "skipped":"0" ,
       "successRate":"1.0",
-      "duration":"131",
+      "duration":"122",
       "executedFeatures":[{"id":"A list of properties can be turned into an immutable \"Vals\" list using the \"toVals\" method.","extraInfo":[]},{"id":"A list of properties can be turned into lists, sets or maps using various convenience methods.","extraInfo":[]},{"id":"Both the \"Vars\" and immutable \"Vals\" types can be used for functional programming.","extraInfo":[]},{"id":"Change listeners registered on a property list will be called when the list is sorted.","extraInfo":[]},{"id":"Checkout these cool one liners!","extraInfo":[]},{"id":"Items can be popped off a property list using a predicate.","extraInfo":[]},{"id":"Items can be removed from a property list using a predicate.","extraInfo":[]},{"id":"Just like a regular \"Var\" property you can register change listeners on \"Vars\".","extraInfo":[]},{"id":"Leading and trailing items can be popped off a property list.","extraInfo":[]},{"id":"Lists of properties can be sorted based on their natural order through the `sort` method.","extraInfo":[]},{"id":"Lists of properties can be sorted using a custom comparator through the `sort` method.","extraInfo":[]},{"id":"Map a \"Vals\" instance from one type of properties to another.","extraInfo":[]},{"id":"Map a \"Vars\" instance from one type of properties to another.","extraInfo":[]},{"id":"Multiple properties can be modelled through the \"Vars\" and \"Vals\" classes.","extraInfo":[]},{"id":"Properties can be popped off a property list using a predicate.","extraInfo":[]},{"id":"Properties can be removed from a property list using a predicate.","extraInfo":[]},{"id":"The \"Vals\" and \"Vars\" instances have descriptive String representations.","extraInfo":[]},{"id":"The \"Vars\" is a list of properties which can grow and shrink.","extraInfo":[]},{"id":"The \"makeDistinct\" method on a mutable list of properties modifies the list in-place.","extraInfo":[]},{"id":"The \"popAt\" method return the removed property.","extraInfo":[]},{"id":"The \"retainAll\" method does not trigger an \"onChange\" event if the list is not changed.","extraInfo":[]},{"id":"The display action of a property or list of properties will not be afterit was removed","extraInfo":[]},{"id":"The listeners registered in property lists will be informed what type of modification occurred.","extraInfo":[]},{"id":"The properties of one property list can be added to another property list.","extraInfo":[]},{"id":"Use \"anyEmpty\" to check if any of the properties are empty.","extraInfo":[]},{"id":"Use \"none\" to check if none of the properties match the given predicate.","extraInfo":[]},{"id":"Use \"removeOrThrow\" to to guarantee the removal of a property.","extraInfo":[]},{"id":"Using \"addAll\" to add multiple things to a property list will only trigger the change listeners once!","extraInfo":[]},{"id":"Various kinds of methods that mutate a property list will only trigger an \"onChange\" event once, even if multiple items are affected.","extraInfo":[]},{"id":"You can create a \"Vars\" list from a regular List of properties.","extraInfo":[]},{"id":"You can create the \"Vars\"/\"Vals\" property lists from property instances.","extraInfo":[]},{"id":"You can remove n leading or trailing entries from a property list.","extraInfo":[]}],
       "ignoredFeatures":[]
     },{
       "className":"sprouts.Properties_Spec",
       "title":"Properties",
-      "narrative":"Properties are a powerful tool to model the state \n    as well as business logic of your UI without actually depending on it.\n    This is especially useful for testing your UIs logic (in a view model for example).\n    This is the core motivation behind the creation of the Sprouts library.\n\n    This specification introduces you to their API and shows you how to use them.",
-      "featureCount":"14",
+      "narrative":"Properties are a powerful tool to model the state \n    as well as business logic of your UI without actually depending on it.\n    This is especially useful for testing your UIs logic (in a view model for example).\n    This is the core motivation behind the creation of the Sprouts library.\n\n    In Sprouts, properties are represented by the `Var` and `Val` classes.\n\n    You might be wondering, what is a `Var` or `Val` and what does \n    it have to do with the common concept of a property?\n\n    The answer is quite simply that the sprouts API uses the \n    names `Var` and `Val` to refer to 2 common types of properties.\n    The name `Var` translates to \"variable\" and `Val` to \"value\"\n    which are also words that convey the meaning of a property\n    yet they allow us to distinguish between mutable and immutable properties\n    without having to resort to unnecessary prefixes like \"mutable\" or \"immutable\".\n\n    So when the sprouts documentation refers to properties, it is\n    referring to the `Var` and `Val` classes.\n\n    This specification introduces you to their API and shows you how to use them.",
+      "featureCount":"15",
       "failures":"0",
       "errors":"0",
       "skipped":"0" ,
       "successRate":"1.0",
-      "duration":"24",
-      "executedFeatures":[{"id":"A property can be converted to an `Optional`.","extraInfo":[]},{"id":"A property constructed using the `of` factory method, does not allow null items.","extraInfo":[]},{"id":"Conveniently compare properties with another item using \"is\", \"isOneOf\" or \"isNot\"","extraInfo":[]},{"id":"Conveniently compare the item of a property with another item using \"is\", \"isOneOf\" or \"isNot\"","extraInfo":[]},{"id":"Properties are similar to the `Optional` class, you can map them and see if they are empty or not.","extraInfo":[]},{"id":"Properties are simple wrappers around a value","extraInfo":[]},{"id":"Properties not only have a value but also a type and id!","extraInfo":[]},{"id":"The \"ifPresent\" method allows us to see if a property has a value or not.","extraInfo":[]},{"id":"The `get()` method will throw an exception if there is no element present.","extraInfo":[]},{"id":"The equality and hash code of a property are based on its value, type and id!","extraInfo":[]},{"id":"The string representation of a property will give you all the information you need.","extraInfo":[]},{"id":"There are 2 types of properties, an immutable property, and its mutable sub-type.","extraInfo":[]},{"id":"There are various kinds of convenience methods for creating live view of properties.","extraInfo":[]},{"id":"Use the \"viewAs\" method to create a dynamically updated view of a property.","extraInfo":[]}],
+      "duration":"26",
+      "executedFeatures":[{"id":"A property can be converted to an `Optional`.","extraInfo":[]},{"id":"A property constructed using the `of` factory method, does not allow null items.","extraInfo":[]},{"id":"Conveniently compare properties with another item using \"is\", \"isOneOf\" or \"isNot\"","extraInfo":[]},{"id":"Conveniently compare the item of a property with another item using \"is\", \"isOneOf\" or \"isNot\"","extraInfo":[]},{"id":"Properties are similar to the `Optional` class, you can map them and see if they are empty or not.","extraInfo":[]},{"id":"Properties are simple wrappers around a value","extraInfo":[]},{"id":"Properties not only have a value but also a type and id!","extraInfo":[]},{"id":"The \"ifPresent\" method allows us to see if a property has a value or not.","extraInfo":[]},{"id":"The `get()` method will throw an exception if there is no element present.","extraInfo":[]},{"id":"The equality and hash code of a property are based on its value, type and id!","extraInfo":[]},{"id":"The string representation of a property will give you all the information you need.","extraInfo":[]},{"id":"There are 2 types of properties, an immutable property, and its mutable sub-type.","extraInfo":[]},{"id":"There are various kinds of convenience methods for creating live view of properties.","extraInfo":[]},{"id":"Use the \"viewAs\" method to create a dynamically updated view of a property.","extraInfo":[]},{"id":"Whether a property is a `Var` or `Val` can be seen in their String representaions.","extraInfo":[]}],
       "ignoredFeatures":[]
     },{
       "className":"sprouts.Property_Event_Delegates_Spec",
@@ -103,7 +103,7 @@
       "errors":"0",
       "skipped":"0" ,
       "successRate":"1.0",
-      "duration":"14",
+      "duration":"13",
       "executedFeatures":[{"id":"\"Vals\", a list of properties, is immutable.","extraInfo":[]},{"id":"A \"Val\" instance is immutable.","extraInfo":[]},{"id":"A \"Var\" may only wrap null if it is created as nullable.","extraInfo":[]},{"id":"A property can only wrap null if we specify a type class.","extraInfo":[]},{"id":"An empty property will throw an exception if you try to access its value.","extraInfo":[]},{"id":"The \"get\" method of a property throws an exception if the property is null.","extraInfo":[]},{"id":"The \"orElseNull\" method should be used instead of \"orElseThrow\" if you are fine with null items.","extraInfo":[]}],
       "ignoredFeatures":[]
     },{
@@ -115,7 +115,7 @@
       "errors":"0",
       "skipped":"0" ,
       "successRate":"1.0",
-      "duration":"20",
+      "duration":"16",
       "executedFeatures":[{"id":"A result can be created from multiple problems.","extraInfo":[]},{"id":"An empty `Result` can be mapped to any property type without an exception being thrown.","extraInfo":[]},{"id":"Create a Result from a list with some problems.","extraInfo":[]},{"id":"Just like a `Val` property, a Result has a type and id.","extraInfo":[]},{"id":"Results can be mapped to a property.","extraInfo":[]},{"id":"Results can be turned into an Optional.","extraInfo":[]},{"id":"We can create a result from any kind of value.","extraInfo":[]},{"id":"You can create a Result from a list.","extraInfo":[]}],
       "ignoredFeatures":[]
     },{
@@ -151,7 +151,7 @@
       "errors":"0",
       "skipped":"0" ,
       "successRate":"1.0",
-      "duration":"9",
+      "duration":"8",
       "executedFeatures":[{"id":"Changing the value of a property through the `.set(From.VIEW, T)` method will also affect its views","extraInfo":[]},{"id":"Properties can be bound by subscribing to them using the `onChange(..)` method.","extraInfo":[]},{"id":"Subscribing to the `From.ALL` channel will notify you of all changes.","extraInfo":[]},{"id":"The `withID(..)` method produces a new property with all bindings inherited.","extraInfo":[]},{"id":"Use `set(From.VIEW, T)` on our properties to change the property state from the frontend.","extraInfo":[]}],
       "ignoredFeatures":[]
     },{
@@ -163,7 +163,7 @@
       "errors":"0",
       "skipped":"0" ,
       "successRate":"1.0",
-      "duration":"18",
+      "duration":"19",
       "executedFeatures":[{"id":"Calling `fire(From.VIEW_MODEL)` method will also lead to `Observer` instances being notified.","extraInfo":[]},{"id":"Mutating a property using `set(From.VIEW,..)` will not trigger `onChange(From.VIEW_MODEL,..)` observer to be called.","extraInfo":[]},{"id":"Property list objects (`Vals` and `Vars`) can also be treated as `Observable`.","extraInfo":[]},{"id":"You can treat a property as an observable, and register `Observer` on it.","extraInfo":[]}],
       "ignoredFeatures":[]
     }

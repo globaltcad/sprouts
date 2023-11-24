@@ -1,10 +1,10 @@
 {
   "className":"sprouts.Properties_Spec",
   "title":"Properties",
-  "narrative":"Properties are a powerful tool to model the state \n    as well as business logic of your UI without actually depending on it.\n    This is especially useful for testing your UIs logic (in a view model for example).\n    This is the core motivation behind the creation of the Sprouts library.\n\n    This specification introduces you to their API and shows you how to use them.",
+  "narrative":"Properties are a powerful tool to model the state \n    as well as business logic of your UI without actually depending on it.\n    This is especially useful for testing your UIs logic (in a view model for example).\n    This is the core motivation behind the creation of the Sprouts library.\n\n    In Sprouts, properties are represented by the `Var` and `Val` classes.\n\n    You might be wondering, what is a `Var` or `Val` and what does \n    it have to do with the common concept of a property?\n\n    The answer is quite simply that the sprouts API uses the \n    names `Var` and `Val` to refer to 2 common types of properties.\n    The name `Var` translates to \"variable\" and `Val` to \"value\"\n    which are also words that convey the meaning of a property\n    yet they allow us to distinguish between mutable and immutable properties\n    without having to resort to unnecessary prefixes like \"mutable\" or \"immutable\".\n\n    So when the sprouts documentation refers to properties, it is\n    referring to the `Var` and `Val` classes.\n\n    This specification introduces you to their API and shows you how to use them.",
   "subjects":["sprouts.Val","sprouts.Var"],
   "statistics":{
-    "runs":"14",
+    "runs":"15",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -222,6 +222,21 @@
         {"kind":"expect","text":"","code":["v1.toString() == 'Var<String>[\"Apple\"]'","v2.toString() == 'Var<String>[fruit=\"Berry\"]'","v3.toString() == 'Var<Integer>[42]'","v4.toString() == 'Var<Integer>[number=42]'","v5.toString() == 'Var<Float>[ninety_nine=99.0]'"]},
 
         {"kind":"and","text":"Nullable properties have a \"?\" in the type:","code":["v6.toString() == 'Var<String?>[null]'","v7.toString() == 'Var<Long?>[maybe_long=5]'","v8.toString() == 'Var<Integer?>[maybe_int=7]'"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Whether a property is a `Var` or `Val` can be seen in their String representaions.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The string representation of a property will tell you whether it is a `Var` or `Val`.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two properties, one mutable and one immutable.","code":["var v1 = Var.of(\"Apple\")","var v2 = Val.of(\"Berry\")"]},
+
+        {"kind":"expect","text":"","code":["v1.toString() == 'Var<String>[\"Apple\"]'","v2.toString() == 'Val<String>[\"Berry\"]'"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
