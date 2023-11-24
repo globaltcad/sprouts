@@ -79,7 +79,6 @@ def deleteFilesIn(String path) {
 task cleanForDeployment(type: Delete) {
     delete "$rootDir/build"
     deleteFilesIn("$rootDir/docs/jdocs")
-    deleteFilesIn("$rootDir/docs/spock/reports" )
 }
 
 // 2:
