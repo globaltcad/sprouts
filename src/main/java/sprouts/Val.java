@@ -300,7 +300,14 @@ public interface Val<T> extends Observable
 	 * @return A property that is a live view of this property based on the provided mapping function.
 	 */
 	default Val<String> viewAsString( Function<T, String> mapper ) {
-		return viewAs( String.class, mapper );
+		return viewAs( String.class, v -> {
+			try {
+				String stringRef = mapper.apply(v);
+				return ( stringRef == null ? "" : stringRef );
+			} catch (Exception e) {
+				return "";
+			}
+		});
 	}
 
 	/**
@@ -309,7 +316,9 @@ public interface Val<T> extends Observable
 	 *
 	 * @return A String property that is a live view of this property.
 	 */
-	default Val<String> viewAsString() { return viewAsString( Objects::toString ); }
+	default Val<String> viewAsString() {
+		return viewAsString( v -> v == null ? "" : v.toString() );
+	}
 
 	/**
 	 * 	Use this to create a Double based live view of this property
@@ -321,7 +330,8 @@ public interface Val<T> extends Observable
 	default Val<Double> viewAsDouble( java.util.function.Function<T, Double> mapper ) {
 		return viewAs( Double.class, v -> {
 			try {
-				return mapper.apply(v);
+				Double numberRef = mapper.apply(v);
+				return ( numberRef == null ? 0.0 : numberRef );
 			} catch (Exception e) {
 				return Double.NaN;
 			}
@@ -338,7 +348,10 @@ public interface Val<T> extends Observable
 	default Val<Double> viewAsDouble() {
 		return viewAsDouble( v -> {
 			try {
-				return Double.parseDouble( v.toString() );
+				if ( v == null )
+					return 0.0;
+				else
+					return Double.parseDouble( v.toString() );
 			} catch ( NumberFormatException e ) {
 				return Double.NaN;
 			}
@@ -355,7 +368,8 @@ public interface Val<T> extends Observable
 	default Val<Integer> viewAsInt( java.util.function.Function<T, Integer> mapper ) {
 		return viewAs( Integer.class, v -> {
 			try {
-				return mapper.apply(v);
+				Integer numberRef = mapper.apply(v);
+				return ( numberRef == null ? 0 : numberRef );
 			} catch (Exception e) {
 				return 0;
 			}
@@ -372,7 +386,10 @@ public interface Val<T> extends Observable
 	default Val<Integer> viewAsInt() {
 		return viewAsInt( v -> {
 			try {
-				return Integer.parseInt( v.toString() );
+				if ( v == null )
+					return 0;
+				else
+					return Integer.parseInt( v.toString() );
 			} catch ( NumberFormatException e ) {
 				return 0;
 			}
