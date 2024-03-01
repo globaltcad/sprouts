@@ -344,4 +344,17 @@ class Properties_Spec extends Specification
             isOneOf2
     }
 
+    def 'Use `typeAsString()` to get the type of a property as a string.'()
+    {
+        reportInfo """
+            The `typeAsString()` method is used to get the type of a property as a string.
+            It simply takes the result of calling `type()` on the property and
+            calls `getName()` on it to get the type as a string.
+        """
+        given : 'A property with a non-null item.'
+            var property = Var.of("Hello World")
+        expect : 'The type of the property is returned as a string.'
+            property.typeAsString() == "java.lang.String"
+    }
+
 }
