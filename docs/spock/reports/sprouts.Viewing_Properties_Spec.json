@@ -1,0 +1,85 @@
+{
+  "className":"sprouts.Viewing_Properties_Spec",
+  "title":"Viewing Properties",
+  "narrative":"Both the read only `Val` and the mutable `Var` are observable properties.\n    As a consequence, they expose convenient methods to observe their changes\n    in the form of \"views\", which are themselves observable properties\n    that are a live view of the original property which gets updated\n    automatically when the original property changes.\n\n    This is especially useful when you want to observe a property\n    of one type as a property of another type, or when you want to\n    observe a property with some transformation applied to it.\n\n    This specification shows how to create views from both nullable and non-nullable properties,",
+  "subjects":["sprouts.Val","sprouts.Val"],
+  "statistics":{
+    "runs":"3",
+    "successRate":"100.0%",
+    "failures":"0",
+    "errors":"0",
+    "skipped":"0",
+    "duration":"?"
+  },
+  "headers":[],"tags":{},"see":[],
+  "features":[ 
+    {
+      "id":"A primitive or string type view will map nulls to the types null object.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A nullable property, which is a property that allows null values, can be viewed as a \n            property of a primitive type, in which case the null values will be mapped to\n            the \"null object\" of the given primitive type.\n\n            For example, the null object of an Integer is 0, and the null object of a Boolean is false.\n            The null object of a String is \"\" and so on...\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A nullable property...","code":["Var<File> file = Var.ofNull(File)"]},
+
+        {"kind":"and","text":"A couple of views...","code":["Val<Boolean> exists = file.viewAs(Boolean, f -> f.exists() )","Val<Integer> size = file.viewAsInt( f -> f.length() )","Val<String> name = file.viewAsString( f -> f.getName() )","Val<Long> lastModified = file.viewAs(Long, f -> f.lastModified() )","Val<Character> firstChar = file.viewAs(Character, f -> f.getName().charAt(0) )"]},
+
+        {"kind":"expect","text":"All views are non-nullable:","code":["!exists.allowsNull()","!size.allowsNull()","!name.allowsNull()","!lastModified.allowsNull()","!firstChar.allowsNull()"]},
+
+        {"kind":"and","text":"The views have the expected values.","code":["exists.get() == false","size.get() == 0","name.get() == \"\"","lastModified.get() == 0","firstChar.get() == '\\u0000'"]},
+
+        {"kind":"when","text":"We change the value of the property.","code":["file.set(new File(\"build.gradle\"))"]},
+
+        {"kind":"then","text":"The views are updated.","code":["exists.get() == true","size.get() == 0","name.get() == \"build.gradle\"","lastModified.get() > 0","firstChar.get() == 'b'"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Map null to custom values when viewing them as primitive types.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            When viewing a nullable property as a primitive type, you can map the null values to\n            custom values of the given type.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A nullable property...","code":["Var<Random> random = Var.ofNull(Random)"]},
+
+        {"kind":"and","text":"A couple of views...","code":["Val<Integer> randomInt = random.viewAsInt( r -> r == null ? 42 : r.nextInt() )","Val<Double> randomDouble = random.viewAsDouble( r -> r == null ? 3.14d : r.nextDouble() )","Val<Short> randomShort = random.viewAs(Short, r -> r == null ? (short)-1 : (short)r.nextInt() )","Val<String> randomString = random.viewAsString( r -> r == null ? \"?\" : r.getClass().getSimpleName() )"]},
+
+        {"kind":"expect","text":"All views are non-nullable:","code":["!randomInt.allowsNull()","!randomDouble.allowsNull()","!randomShort.allowsNull()","!randomString.allowsNull()"]},
+
+        {"kind":"and","text":"The views have the expected values.","code":["randomInt.get() == 42","randomDouble.get() == 3.14","randomShort.get() == -1","randomString.get() == \"?\""]},
+
+        {"kind":"when","text":"We change the value of the property.","code":["random.set(new Random(0))"]},
+
+        {"kind":"then","text":"The views are updated.","code":["randomInt.get() == -1557280266","randomDouble.get() == 0.3090505681997092","randomShort.get() == 9475","randomString.get() == \"Random\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use the \"view\" to create a view of a property of the same type.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The \"view\" method can be used to create a view of a property of the same type.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A property...","code":["Var<String> name = Var.of(\"John\")"]},
+
+        {"kind":"and","text":"A view of the property...","code":["Val<String> nameView = name.view( n -> n + \" Doe\" )"]},
+
+        {"kind":"expect","text":"The view has the expected value.","code":["nameView.get() == \"John Doe\""]},
+
+        {"kind":"when","text":"We change the value of the property.","code":["name.set(\"Jane\")"]},
+
+        {"kind":"then","text":"The view is updated.","code":["nameView.get() == \"Jane Doe\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    }
+  
+  ],
+  "generator":"https://github.com/renatoathaydes/spock-reports"
+}

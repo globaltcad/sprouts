@@ -111,11 +111,79 @@ public class AbstractVariable<T> extends AbstractValue<T> implements Var<T>
 
 	/** {@inheritDoc} */
 	@Override public final <U> Val<U> viewAs( Class<U> type, java.util.function.Function<T, U> mapper ) {
-		Var<U> var = mapTo(type, mapper);
-		// Now we register a live update listener to this property
-		this.onChange( DEFAULT_CHANNEL, v -> var.set( mapper.apply( v.orElseNull() ) ));
-		_viewers.add( v -> var.set(From.VIEW, mapper.apply( v ) ) );
+		boolean nullCanBeAvoided = _isPrimitiveRef(type) || type == String.class;
+		Var<U> var;
+		if ( nullCanBeAvoided )
+		{
+			var = Var.of(_mapOrGetNullObjectOf(type, this.orElseNull(), mapper));
+			// Now we register a live update listener to this property
+			this.onChange( DEFAULT_CHANNEL, v -> var.set( _mapOrGetNullObjectOf( type, v.orElseNull(), mapper ) ));
+			_viewers.add( v -> var.set(From.VIEW, _mapOrGetNullObjectOf(type, v, mapper)) );
+		}
+		else
+		{
+			if ( this.allowsNull() )
+				var = Var.ofNullable( type, mapper.apply( this.orElseNull() ) );
+			else
+				var = Var.of( mapper.apply( this.orElseNull() ) );
+			// Now we register a live update listener to this property
+			this.onChange( DEFAULT_CHANNEL, v -> var.set( mapper.apply( v.orElseNull() ) ));
+			_viewers.add( v -> var.set(From.VIEW, mapper.apply( v ) ) );
+		}
 		return var;
+	}
+
+	private boolean _isPrimitiveRef( Class<?> type ) {
+		if ( type.isPrimitive() )
+			return true;
+		else if (
+			type == Integer.class   ||
+			type == Long.class      ||
+			type == Double.class    ||
+			type == Float.class     ||
+			type == Short.class     ||
+			type == Byte.class      ||
+			type == Character.class ||
+			type == Boolean.class
+		)
+			return true;
+		else
+			return false;
+	}
+
+	private <T,N> N _mapOrGetNullObjectOf( Class<N> type, T in, java.util.function.Function<T, N> mapper ) {
+		boolean inIsNull = in == null;
+		N value;
+		try {
+			value = mapper.apply(in);
+		} catch ( Exception e ) {
+			if ( inIsNull )
+				value = null;
+			else
+				throw e;
+		}
+		if  ( value != null )
+			return value;
+		else if ( type == String.class )
+			return type.cast("");
+		else if ( type == Integer.class )
+			return type.cast(0);
+		else if ( type == Long.class )
+			return type.cast(0L);
+		else if ( type == Double.class )
+			return type.cast(0.0);
+		else if ( type == Float.class )
+			return type.cast(0.0f);
+		else if ( type == Short.class )
+			return type.cast((short)0);
+		else if ( type == Byte.class )
+			return type.cast((byte)0);
+		else if ( type == Character.class )
+			return type.cast((char)0);
+		else if ( type == Boolean.class )
+			return type.cast(false);
+		else
+			return null;
 	}
 
 	@Override
