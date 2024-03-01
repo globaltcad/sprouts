@@ -22,9 +22,9 @@ import java.util.function.Function;
  * 	which is intended to be used for state changes as part of your core business logic.
  *  <p>
  * 	So for example if you have a {@link Var} which represents the username
- * 	of a form, in your UI you can register a callback using {@link #onChange(Channel, Action)}
+ * 	of a form, then inside your UI you can register a callback using {@link #onChange(Channel, Action)}
  * 	using the channel {@link From#VIEW_MODEL} which
- * 	will update the UI accordingly when {@link #set(Object)} is called inside you view model.
+ * 	will update the UI accordingly when {@link #set(Object)} is called inside you view model. <br>
  * 	On the other hand, when the UI changes the property through the {@code #set(From.View, object)}
  * 	method, all {@link #onChange(Channel, Action)} with the channel {@link From#VIEW} listeners
  * 	will be notified. <br>
@@ -33,18 +33,19 @@ import java.util.function.Function;
  * 	    // A username property with a validation action:
  * 		private final Var<String> username = Var.of("").onChange(From.VIEW v -> validateUser(v) );
  * 	}</pre>
- * 	And the following SwingTree example UI:
+ * 	And the following <a href="https://github.com/globaltcad/swing-tree">SwingTree</a>
+ * 	example UI:
  * 	<pre>{@code
- * 	    UI.textField()
+ * 	    UI.textField("")
  * 	    .peek( tf -> vm.getUsername().onChange(From.VIEW_MODEL t -> tf.setText(t.get()) ) )
- * 	    .onKeyRelease( e -> vm.getUsername().act( ta.getText() ) );
+ * 	    .onKeyRelease( e -> vm.getUsername().set(From.VIEW, ta.getText() ) );
  * 	}</pre>
- * 	Your view will automatically update the text field with the item of the property
- * 	and inside your view model you can also update the item of the property
- * 	to be shown in the UI:
+ * 	Here your view will automatically update the item of the text property
+ * 	and inside your view model you can freely update the username property
+ * 	and it will automatically update the text field in the UI:
  * 	<pre>{@code
  * 	    // Initially empty username:
- * 		username.set( "" ) // triggers 'fire(From.VIEW_MODEL)'
+ * 		username.set( "" ) // triggers 'fireChange(From.VIEW_MODEL)'
  * 	}</pre>
  * 	<p>
  * 	If you no longer need to observe a property, you can use the {@link #unsubscribe(Subscriber)}
@@ -175,10 +176,24 @@ public interface Var<T> extends Val<T>
 	@Override Var<T> onChange( Channel channel, Action<Val<T>> action );
 
 	/**
-	 *  Essentially the same as {@link Optional#map(Function)}. but with a {@link Val} as return type.
+	 *  If the item is present, then this applies the provided mapping function to it,
+	 *  and return it wrapped in a new {@link Var} instance. <br>
+	 *  If the item is not present, then an empty {@link Var} instance is returned. <br>
+	 *  <p>
+	 *  But note that the resulting property does not constitute a live view of this property
+	 *  and will not be updated when this property changes. <br>
+	 *  It is functionally very similar to the {@link Optional#map(Function)} method. <br>
+	 *  <p>
+	 *  <b>
+	 *      If you want to map to a property which is an automatically updated live view of this property,
+	 *      then use the {@link #view(Function)} method instead.
+	 *  </b>
+	 *  This is essentially the same as {@link Optional#map(Function)} but based on {@link Var}
+	 *  as the wrapper instead of {@link Optional}.
 	 *
-	 * @param mapper the mapping function to apply to an item, if present
-	 * @return the result of applying an {@code Optional}-bearing mapping
+	 * @param mapper The mapping function to apply to an item, if present.
+	 * @return A new property either empty (containing null) or containing the result of applying
+	 * 			the mapping function to the item of this property.
 	 */
 	@Override default Var<T> map( java.util.function.Function<T, T> mapper ) {
 		if ( !isPresent() )
@@ -192,9 +207,23 @@ public interface Var<T> extends Val<T>
 	}
 
 	/**
+	 *  If the item is present, applies the provided mapping function to it,
+	 *  and returns it wrapped in a new {@link Var} instance. <br>
+	 *  If the item is not present, then an empty {@link Var} instance is returned. <br>
+	 *  <p>
+	 *  But note that the resulting property does not constitute a live view of this property
+	 *  and will not be updated when this property changes. <br>
+	 *  It is functionally very similar to the {@link Optional#map(Function)} method. <br>
+	 *  <p>
+	 *  <b>
+	 *      If you want to map to a property which is an automatically updated live view of this property,
+	 *      then use the {@link #viewAs(Class, Function)} method instead.
+	 *  </b>
+	 *
 	 * @param type The type of the item returned from the mapping function
 	 * @param mapper the mapping function to apply to an item, if present
-	 * @return the result of applying an {@code Optional}-bearing mapping
+	 * @return A new property either empty (containing null) or containing the result of applying
+	 * 			the mapping function to the item of this property.
 	 * @param <U> The type of the item returned from the mapping function
 	 */
 	@Override default <U> Var<U> mapTo( Class<U> type, java.util.function.Function<T, U> mapper ) {

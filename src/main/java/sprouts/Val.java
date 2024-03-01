@@ -257,17 +257,45 @@ public interface Val<T> extends Observable
 	}
 
 	/**
-	 *  Essentially the same as {@link Optional#map(Function)}. but with a {@link Val} as return type.
+	 *  If the item is present, applies the provided mapping function to it,
+	 *  and returns it wrapped in a new {@link Val} instance. <br>
+	 *  If the item is not present, then an empty {@link Val} instance is returned. <br>
+	 *  <p>
+	 *  But note that the resulting property does not constitute a live view of this property
+	 *  and will not be updated when this property changes. <br>
+	 *  It is functionally very similar to the {@link Optional#map(Function)} method. <br>
+	 *  <p>
+	 *  <b>
+	 *      If you want to map to a property which is an automatically updated live view of this property,
+	 *      then use the {@link #view(Function)} method instead.
+	 *  </b>
+	 *  This is essentially the same as {@link Optional#map(Function)} but based on {@link Val}
+	 *  as the wrapper instead of {@link Optional}.
 	 *
 	 * @param mapper the mapping function to apply to an item, if present
-	 * @return A property that is created from this property based on the provided mapping function.
+	 * @return A new property either empty (containing null) or containing the result of applying
+	 * 			the mapping function to the item of this property.
 	 */
 	Val<T> map( java.util.function.Function<T, T> mapper );
 
 	/**
+	 *  If the item is present, applies the provided mapping function to it,
+	 *  and returns it wrapped in a new {@link Val} instance. <br>
+	 *  If the item is not present, then an empty {@link Val} instance is returned. <br>
+	 *  <p>
+	 *  But note that the resulting property does not constitute a live view of this property
+	 *  and will not be updated when this property changes. <br>
+	 *  It is functionally very similar to the {@link Optional#map(Function)} method. <br>
+	 *  <p>
+	 *  <b>
+	 *      If you want to map to a property which is an automatically updated live view of this property,
+	 *      then use the {@link #viewAs(Class, Function)} method instead.
+	 *  </b>
+	 *
 	 * @param type The type of the item returned from the mapping function
 	 * @param mapper the mapping function to apply to an item, if present
-	 * @return A property that is created from this property based on the provided mapping function.
+	 * @return A new property either empty (containing null) or containing the result of applying
+	 * 			the mapping function to the item of this property.
 	 * @param <U> The type of the item returned from the mapping function
 	 */
 	<U> Val<U> mapTo( Class<U> type, java.util.function.Function<T, U> mapper );
@@ -327,7 +355,9 @@ public interface Val<T> extends Observable
 	 * @param mapper the mapping function to apply to an item, if present
 	 * @return A property that is a live view of this property based on the provided mapping function.
 	 */
-	default Val <T> view( java.util.function.Function<T, T> mapper ) { return viewAs( type(), mapper ); }
+	default Val <T> view( java.util.function.Function<T, T> mapper ) {
+		return viewAs( type(), mapper );
+	}
 
 	/**
 	 * 	Use this to create a {@link String} based live view of this property
@@ -435,10 +465,7 @@ public interface Val<T> extends Observable
 	default Val<Double> viewAsDouble() {
 		return viewAsDouble( v -> {
 			try {
-				if ( v == null )
-					return 0.0;
-				else
-					return Double.parseDouble( v.toString() );
+				return ( v == null ? 0.0 : Double.parseDouble( v.toString() ) );
 			} catch ( NumberFormatException e ) {
 				return Double.NaN;
 			}
@@ -496,10 +523,7 @@ public interface Val<T> extends Observable
 	default Val<Integer> viewAsInt() {
 		return viewAsInt( v -> {
 			try {
-				if ( v == null )
-					return 0;
-				else
-					return Integer.parseInt( v.toString() );
+				return ( v == null ? 0 : Integer.parseInt( v.toString() ) );
 			} catch ( NumberFormatException e ) {
 				return 0;
 			}
@@ -667,7 +691,7 @@ public interface Val<T> extends Observable
 	 *  Triggers all observer lambdas for the given {@link Channel}.
 	 *  Change listeners may be registered using the {@link #onChange(Channel, Action)} method.
 	 *  Note that when the {@code Var::set(T)} method is called
-	 *  then this will automatically translate to {@code fire(From.VIEW_MODEL)}.
+	 *  then this will automatically translate to {@code fireChange(From.VIEW_MODEL)}.
 	 *  So it is supposed to be used by the view to update the UI components.
 	 *  This is in essence how binding works in Swing-Tree.
 	 *
