@@ -694,4 +694,22 @@ class Properties_List_Spec extends Specification
             vars.none({ it.isNot(null) && it.get() == 2 })
     }
 
+    def 'The `indexOf` method returns the index of the first occurrence of the given property.'() {
+        given : 'A "Vars" instance having a few properties.'
+            var vars = Vars.of("a", "b", "c", "d", "e")
+        expect : 'The `indexOf` method returns the index of the first occurrence of the given property.'
+            vars.indexOf("c") == 2
+        when : 'We set one of the properties to null.'
+            vars.at(1).set("")
+        then : 'The `indexOf` method returns -1 if the property is not in the list.'
+            vars.indexOf("b") == -1
+            vars.indexOf("") == 1
+        when : 'We create a list of nullable properties and set one of the properties to null.'
+            vars = Vars.ofNullable(String, "a", "b", "c", "d", "e")
+            vars.at(1).set(null)
+        then : 'The `indexOf` method returns the index of the first occurrence of the given property.'
+            vars.indexOf("c") == 2
+            vars.indexOf(null) == 1
+    }
+
 }
