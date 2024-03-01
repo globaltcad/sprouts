@@ -20,7 +20,6 @@ import java.util.stream.StreamSupport;
  * 	<b>Please take a look at the <a href="https://globaltcad.github.io/sprouts/">living sprouts documentation</a>
  * 	where you can browse a large collection of examples demonstrating how to use the API of this class.</b>
  *
- *
  * @param <T> The type of the properties.
  */
 public interface Vals<T> extends Iterable<T>, Observable
@@ -180,13 +179,13 @@ public interface Vals<T> extends Iterable<T>, Observable
      * @param value The property to search for in this list.
      * @return The index of the given property in this list, or -1 if not found.
      */
-    default int indexOf( Val<T> value ) { return indexOf(value.get()); }
+    default int indexOf( Val<T> value ) { return indexOf(value.orElseNull()); }
 
     /**
      * @param value The value property to search for.
      * @return True if the given property is in this list.
      */
-    default boolean contains( Val<T> value ) { return contains(value.get()); }
+    default boolean contains( Val<T> value ) { return contains(value.orElseNull()); }
 
     /**
      *  Check for equality between this list of properties and another list of properties.

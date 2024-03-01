@@ -257,7 +257,7 @@ public class AbstractVariables<T> implements Vars<T>
             else
                 _variables.add(Var.of(val.get()));
         }
-        if ( vals.size() > 0 ) {
+        if ( vals.isNotEmpty() ) {
             if ( vals.size() > 1 )
                 _triggerAction( Change.ADD, -1, null, null );
             else
@@ -291,7 +291,7 @@ public class AbstractVariables<T> implements Vars<T>
     @Override
     public void sort( Comparator<T> comparator ) {
         if ( _isImmutable ) throw new UnsupportedOperationException("This is an immutable list.");
-        _variables.sort( ( a, b ) -> comparator.compare( a.get(), b.get() ) );
+        _variables.sort( ( a, b ) -> comparator.compare( a.orElseNull(), b.orElseNull() ) );
         _triggerAction( Change.SORT, -1, null, null );
     }
 
