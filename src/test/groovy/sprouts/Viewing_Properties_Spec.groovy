@@ -139,7 +139,7 @@ class Viewing_Properties_Spec extends Specification
         when : "We change the value of the property."
             date.set(new Date(0))
         then : "The view is updated to string representation of the date."
-            dateView.get() == "Thu Jan 01 01:00:00 CET 1970"
+            dateView.get() == String.valueOf(new Date(0))
     }
 
     def 'The `viewAsInt()` method can be used to create a null safe view of a property of any type as an int.'()
