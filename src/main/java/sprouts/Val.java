@@ -27,7 +27,7 @@ import java.util.regex.Pattern;
  * 	Note that {@link Var#set(Object)} method defaults to the {@link From#VIEW_MODEL} channel.
  * 	<p>
  * 	If you no longer need to observe changes on this property, then you can remove the registered {@link Action}
- * 	callback using the {@link #unsubscribe(Subscriber)} method ({@link Action} implements {@link Subscriber}).
+ * 	callback using the {@link #unsubscribe(Subscriber)} method ({@link Action} is also a {@link Subscriber}).
  * 	<p>
  * 	Note that the name of this class is short for "value". This name was deliberately chosen because
  * 	it is short, concise and yet clearly conveys the same meaning as other names used to model this
@@ -257,24 +257,73 @@ public interface Val<T> extends Observable
 	}
 
 	/**
-	 *  Essentially the same as {@link Optional#map(Function)}. but with a {@link Val} as return type.
+	 *  If the item is present, applies the provided mapping function to it,
+	 *  and returns it wrapped in a new {@link Val} instance. <br>
+	 *  If the item is not present, then an empty {@link Val} instance is returned. <br>
+	 *  <p>
+	 *  But note that the resulting property does not constitute a live view of this property
+	 *  and will not be updated when this property changes. <br>
+	 *  It is functionally very similar to the {@link Optional#map(Function)} method. <br>
+	 *  <p>
+	 *  <b>
+	 *      If you want to map to a property which is an automatically updated live view of this property,
+	 *      then use the {@link #view(Function)} method instead.
+	 *  </b>
+	 *  This is essentially the same as {@link Optional#map(Function)} but based on {@link Val}
+	 *  as the wrapper instead of {@link Optional}.
 	 *
 	 * @param mapper the mapping function to apply to an item, if present
-	 * @return A property that is created from this property based on the provided mapping function.
+	 * @return A new property either empty (containing null) or containing the result of applying
+	 * 			the mapping function to the item of this property.
 	 */
 	Val<T> map( java.util.function.Function<T, T> mapper );
 
 	/**
+	 *  If the item is present, applies the provided mapping function to it,
+	 *  and returns it wrapped in a new {@link Val} instance. <br>
+	 *  If the item is not present, then an empty {@link Val} instance is returned. <br>
+	 *  <p>
+	 *  But note that the resulting property does not constitute a live view of this property
+	 *  and will not be updated when this property changes. <br>
+	 *  It is functionally very similar to the {@link Optional#map(Function)} method. <br>
+	 *  <p>
+	 *  <b>
+	 *      If you want to map to a property which is an automatically updated live view of this property,
+	 *      then use the {@link #viewAs(Class, Function)} method instead.
+	 *  </b>
+	 *
 	 * @param type The type of the item returned from the mapping function
 	 * @param mapper the mapping function to apply to an item, if present
-	 * @return A property that is created from this property based on the provided mapping function.
+	 * @return A new property either empty (containing null) or containing the result of applying
+	 * 			the mapping function to the item of this property.
 	 * @param <U> The type of the item returned from the mapping function
 	 */
 	<U> Val<U> mapTo( Class<U> type, java.util.function.Function<T, U> mapper );
 
 	/**
 	 * 	Use this to create a live view of this property
-	 * 	through a new property based on the provided mapping function.
+	 * 	through a new property based on the provided mapping function. <br>
+	 * 	So whenever the item of this property changes, the item of the new property
+	 * 	will be updated based on the mapping function. <br>
+	 * 	<p>
+	 * 	Note that this method will try to map value based item types like
+	 * 	{@link String}, {@link Integer}, {@link Double}, etc.
+	 * 	to the default value of their respective primitive types,
+	 * 	if the provided mapping function returns a null reference.<br>
+	 * 	So for example, if this is a wrapper for a property of type {@link Integer},
+	 * 	and the mapping function returns a null reference, then the resulting view property
+	 * 	will always contain the value 0 and its {@link #allowsNull()} method will always return false.
+	 * 	<p>
+	 * 	The reason for this design decision is that a view of a property is intended to
+	 * 	be used as part of the UI of an application, where {@code null} may lead to exceptions
+	 * 	and ultimately confusing user experiences. <br>
+	 * 	<p>
+	 * 	Also note that a property view may only contain null if the property it is based on
+	 * 	was created with the "ofNullable(...)" factory method
+	 * 	(in which case its {@link #allowsNull()} method will return true).
+	 * 	Otherwise, it will throw an exception when trying to map a null reference.
+	 *
+	 *
 	 * @param type The type of the item returned from the mapping function
  	 * @param mapper the mapping function to apply to an item, if present
 	 * @return A property that is a live view of this property based on the provided mapping function.
@@ -284,19 +333,49 @@ public interface Val<T> extends Observable
 
 	/**
 	 * 	Use this to create a live view of this property
-	 * 	based on a mapping function.
-	 * 	Note that the mapping function is not allowed to return {@code null}.
-	 * 	Instead, use {@link #viewAs(Class, Function)}.
+	 * 	based on a mapping function which maps the item of this property to an item of the same type as this property.
+	 * 	So whenever the item of this property changes, the item of the new property
+	 * 	will be updated based on the mapping function.
+	 * 	If you want to create a live view of a different type, use the {@link #viewAs(Class, Function)}
+	 * 	method instead.
+	 * 	<p>
+	 * 	Note that this method will try to map value based item types like
+	 * 	{@link String}, {@link Integer}, {@link Double}, etc.
+	 * 	to the default value (or "null object") of their respective types,
+	 * 	if the provided mapping function returns a null reference.<br>
+	 * 	So if the type of this property is a {@link String}, and the mapping function returns a null reference,
+	 * 	then the resulting view property will always contain an empty string and
+	 * 	its {@link #allowsNull()} method will always return false.
+	 * 	<p>
+	 * 	Also note that a property view may only contain null if the property it is based on
+	 * 	was created with the "ofNullable(...)" factory method
+	 * 	(in which case its {@link #allowsNull()} method will return true).
+	 * 	Otherwise, it will throw an exception when trying to map a null reference.
 	 *
 	 * @param mapper the mapping function to apply to an item, if present
 	 * @return A property that is a live view of this property based on the provided mapping function.
 	 */
-	default Val <T> view( java.util.function.Function<T, T> mapper ) { return viewAs( type(), mapper ); }
+	default Val <T> view( java.util.function.Function<T, T> mapper ) {
+		return viewAs( type(), mapper );
+	}
 
 	/**
-	 * 	Use this to create a String based live view of this property
-	 * 	through a new property based on the provided mapping function.
-	 * @param mapper the mapping function to turn the item of this property to a String, if present
+	 * 	Use this to create a {@link String} based live view of this property
+	 * 	through a new property based on the provided mapping function
+	 * 	where the item of this property is mapped to a {@link String}.
+	 * 	This means that whenever the item of this property changes, the item of the new property
+	 * 	will also be updated based on the result of the mapping function.
+	 * 	<p>
+	 * 	<b>Note that {@code null} references inside the viewed property will always be mapped
+	 * 	to the "null object" of the {@link String} type, which is an empty string. <br>
+	 * 	This means that the resulting view can never contain null and its
+	 *  {@link #allowsNull()} method will always return false.</b>
+	 *  <p>
+	 *  The reason for this design decision is that a view of a property is intended to
+	 *  be used as part of the UI of an application, where {@code null} may lead to exceptions
+	 *  and ultimately a confusing or erroneous user experience. <br>
+	 *
+	 * @param mapper The mapping function to turn the item of this property to a String, if present
 	 * @return A property that is a live view of this property based on the provided mapping function.
 	 */
 	default Val<String> viewAsString( Function<T, String> mapper ) {
@@ -312,7 +391,21 @@ public interface Val<T> extends Observable
 
 	/**
 	 * 	Use this to create a String based live view of this property
-	 * 	through a new property based on the "toString" called on the item of this property.
+	 * 	through a new property based on the {@link Object#toString()} method
+	 * 	used as the mapping function.<br>
+	 * 	Whenever the item of this property changes, the item of the new property
+	 * 	will be recomputed by sending the item of this property to the {@link Object#toString()}
+	 * 	method and using the result as the new item of the view property.
+	 * 	<p>
+	 * 	<b>Note that {@code null} references inside the viewed property will always be mapped
+	 * 	to the "null object" of the {@link String} type, which is an empty string. <br>
+	 * 	This means that the resulting view can never contain null and its
+	 *  {@link #allowsNull()} method will always return false.</b>
+	 *  <p>
+	 *  The avoidance of null references in the view is a design decision
+	 *  based on the assumption that a view of a property is intended to
+	 *  be used as part of the UI of an application, where {@code null} may lead to exceptions
+	 *  and ultimately a confusing or error-prone user experience. <br>
 	 *
 	 * @return A String property that is a live view of this property.
 	 */
@@ -321,8 +414,23 @@ public interface Val<T> extends Observable
 	}
 
 	/**
-	 * 	Use this to create a Double based live view of this property
+	 * 	Use this to create a {@link Double} based live view of this property
 	 * 	through a new property based on the provided mapping function.
+	 * 	So whenever the item of this property changes, the item of the new property
+	 * 	will be recomputed based on the result of the mapping function.
+	 * 	<p>
+	 * 	<b>Note that {@code null} references inside the viewed property will always be mapped
+	 * 	to the "null object" of the {@link Double} type, which is {@code 0.0}. <br>
+	 * 	This means that the resulting view can never contain null and its
+	 * 	{@link #allowsNull()} method will always return false.</b>
+	 * 	<p>
+	 * 	Null is deliberately avoided in the view because the view of a property is intended to
+	 * 	be used as part of the UI of an application, where {@code null} may lead to exceptions
+	 * 	and ultimately a confusing or erroneous user experience. <br>
+	 * 	<p>
+	 * 	In case of an exception being thrown by the mapping function, the resulting view
+	 * 	will contain Double.NaN to indicate that the mapping function failed to map the item
+	 * 	of this property to a Double.
 	 *
 	 * @param mapper the mapping function to turn the item of this property to a Double, if present
 	 * @return A property that is a live view of this property based on the provided mapping function.
@@ -339,19 +447,25 @@ public interface Val<T> extends Observable
 	}
 
 	/**
-	 * 	Use this to create a Double based live view of this property
-	 * 	through a new property based on the "toString" and "parseDouble(String)" methods.
-	 * 	If the String cannot be parsed to a Double, the item of the property will be Double.NaN.
+	 * 	Use this to create a {@link Double} based live view of this property whose item
+	 * 	is dynamically computed based on the {@link Object#toString()} and {@link Double#parseDouble(String)} methods.
+	 * 	If the String cannot be parsed to a Double, the item of the property will be {@link Double#NaN}.
+	 * 	<p>
+	 * 	<b>Note that {@code null} references inside the viewed property will always be mapped
+	 * 	to the "null object" of the {@link Double} type, which is {@code 0.0}. <br>
+	 * 	This means that the resulting view can never contain null and its
+	 * 	{@link #allowsNull()} method will always return false.</b>
+	 * 	<p>
+	 * 	Null is deliberately avoided in the view because the view of a property is intended to
+	 * 	be used as part of the UI of an application, where {@code null} may lead to exceptions
+	 * 	and ultimately a confusing or erroneous user experience. <br>
 	 *
-	 * @return A Double property that is a live view of this property.
+	 * @return A {@link Double} property that is a live view of this property.
 	 */
 	default Val<Double> viewAsDouble() {
 		return viewAsDouble( v -> {
 			try {
-				if ( v == null )
-					return 0.0;
-				else
-					return Double.parseDouble( v.toString() );
+				return ( v == null ? 0.0 : Double.parseDouble( v.toString() ) );
 			} catch ( NumberFormatException e ) {
 				return Double.NaN;
 			}
@@ -361,6 +475,20 @@ public interface Val<T> extends Observable
 	/**
 	 * 	Use this to create an Integer based live view of this property
 	 * 	through a new property based on the provided mapping function.
+	 * 	So whenever the item of this property changes, the item of the new property
+	 * 	will be recomputed based on the result of the mapping function.
+	 * 	<p>
+	 * 	<b>Note that {@code null} references inside the viewed property will always be mapped
+	 * 	to the "null object" of the {@link Integer} type, which is {@code 0}. <br>
+	 * 	This means that the resulting view can never contain null and its
+	 * 	{@link #allowsNull()} method will always return false.</b>
+	 * 	<p>
+	 * 	Null is deliberately avoided in the view because a view of a property is intended to
+	 * 	be used as part of the UI of an application, where {@code null} may lead to exceptions
+	 * 	and ultimately a confusing or erroneous user experience. <br>
+	 * 	<p>
+	 * 	In case of an exception being thrown by the mapping function, the resulting view
+	 * 	will also contain {@code 0}.
 	 *
 	 * @param mapper the mapping function to turn the item of this property to a Integer, if present
 	 * @return A property that is a live view of this property based on the provided mapping function.
@@ -378,18 +506,24 @@ public interface Val<T> extends Observable
 
 	/**
 	 * 	Use this to create an Integer based live view of this property
-	 * 	through a new property based on the "toString" and "parseInt(String)" methods.
-	 * 	If the String cannot be parsed to an Integer, the item of the property will be Integer.MIN_VALUE.
+	 * 	through a new property based on the {@link Object#toString()} and {@link Integer#parseInt(String)} methods.
+	 * 	If the String cannot be parsed to an Integer, the item of the property will be {@code 0}.
+	 * 	<p>
+	 * 	<b>Note that {@code null} references inside the viewed property will always be mapped
+	 * 	to the "null object" of the {@link Integer} type, which is {@code 0}. <br>
+	 * 	This means that the resulting view can never contain null and its
+	 * 	{@link #allowsNull()} method will always return false.</b>
+	 * 	<p>
+	 * 	Null is deliberately avoided in the view because the view of a property is intended to
+	 * 	be used as part of the UI of an application, where {@code null} may lead to exceptions
+	 * 	and ultimately a confusing or erroneous user experience. <br>
 	 *
 	 * @return An Integer property that is a live view of this property.
 	 */
 	default Val<Integer> viewAsInt() {
 		return viewAsInt( v -> {
 			try {
-				if ( v == null )
-					return 0;
-				else
-					return Integer.parseInt( v.toString() );
+				return ( v == null ? 0 : Integer.parseInt( v.toString() ) );
 			} catch ( NumberFormatException e ) {
 				return 0;
 			}
@@ -399,7 +533,9 @@ public interface Val<T> extends Observable
 	/**
 	 *  This method simply returns a {@link String} representation of the wrapped item
 	 *  which would otherwise be accessed via the {@link #orElseThrow()} method.
-	 *  Calling it should not have any side effects.
+	 *  Calling it should not have any side effects. <br>
+	 *  The string conversion is based on the {@link String#valueOf(Object)} method,
+	 *  so if the item is null, the string "null" will be returned.
 	 *
 	 * @return The {@link String} representation of the item wrapped by an implementation of this interface.
 	 */
@@ -456,7 +592,7 @@ public interface Val<T> extends Observable
 	default boolean isNot( Val<T> other ) { return !this.is(other); }
 
 	/**
-	 *  This method check if at least one of the provided items is equal to
+	 *  This method checks if at least one of the provided items is equal to
 	 *  the item wrapped by this {@link Var} instance.
 	 *
 	 * @param first The first item of the same type as is wrapped by this.
@@ -464,6 +600,7 @@ public interface Val<T> extends Observable
 	 * @param otherValues The other items of the same type as is wrapped by this.
 	 * @return The truth value determining if the provided item is equal to the wrapped item.
 	 */
+	@SuppressWarnings("unchecked")
 	default boolean isOneOf( T first, T second, T... otherValues ) {
 		if ( this.is(first) ) return true;
 		if ( this.is(second) ) return true;
@@ -473,7 +610,7 @@ public interface Val<T> extends Observable
 	}
 
 	/**
-	 *  This method check if at least one of the items of the provided properties
+	 *  This checks if at least one of the items of the provided properties
 	 *  is equal to the item wrapped by this {@link Var} instance.
 	 *
 	 * @param first The first property of the same type as is wrapped by this.
@@ -481,6 +618,7 @@ public interface Val<T> extends Observable
 	 * @param otherValues The other properties of the same type as is wrapped by this.
 	 * @return The truth value determining if the item of the supplied property is equal to the wrapped item.
 	 */
+	@SuppressWarnings("unchecked")
 	default boolean isOneOf( Val<T> first, Val<T> second, Val<T>... otherValues ) {
 		if ( this.is(first) ) return true;
 		if ( this.is(second) ) return true;
@@ -490,8 +628,10 @@ public interface Val<T> extends Observable
 	}
 
 	/**
-	 *  This returns the name/id of the property which is useful for debugging as well as
-	 *  persisting their state by using them as keys for whatever storage data structure one chooses.
+	 *  Returns the name/id of the property which is useful for debugging as well as
+	 *  persisting their state by using them as keys for whatever storage data structure one chooses. <br>
+	 *  For example, when converting a property based model to a JSON object, the id of the properties
+	 *  can be used as keys in the JSON object.
 	 *
 	 * @return The id which is assigned to this property.
 	 */
@@ -551,7 +691,7 @@ public interface Val<T> extends Observable
 	 *  Triggers all observer lambdas for the given {@link Channel}.
 	 *  Change listeners may be registered using the {@link #onChange(Channel, Action)} method.
 	 *  Note that when the {@code Var::set(T)} method is called
-	 *  then this will automatically translate to {@code fire(From.VIEW_MODEL)}.
+	 *  then this will automatically translate to {@code fireChange(From.VIEW_MODEL)}.
 	 *  So it is supposed to be used by the view to update the UI components.
 	 *  This is in essence how binding works in Swing-Tree.
 	 *

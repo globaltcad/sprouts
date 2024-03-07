@@ -56,7 +56,7 @@ class Observable_Properties_and_Events_Spec extends Specification
             0 * observer.invoke()
     }
 
-    def 'Calling `fire(From.VIEW_MODEL)` method will also lead to `Observer` instances being notified.'()
+    def 'Calling `fireChange(From.VIEW_MODEL)` method will also lead to `Observer` instances being notified.'()
     {
         reportInfo """
             Using the `fireSet` you not only trigger the regular change listeners,

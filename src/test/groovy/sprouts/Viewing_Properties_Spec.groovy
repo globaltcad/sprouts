@@ -103,7 +103,8 @@ class Viewing_Properties_Spec extends Specification
     def 'Use the "view" to create a view of a property of the same type.'()
     {
         reportInfo """
-            The "view" method can be used to create a view of a property of the same type.
+            The "view" method can be used to create a view of a property of the same type,
+            but with some transformation applied to it.
         """
         given : 'A property...'
             Var<String> name = Var.of("John")
@@ -116,6 +117,90 @@ class Viewing_Properties_Spec extends Specification
             name.set("Jane")
         then : 'The view is updated.'
             nameView.get() == "Jane Doe"
+    }
+
+    def 'The `viewAsString()` method can be used to create a null safe view of a property of any type as a String.'()
+    {
+        reportInfo """
+            The `viewAsString()` method can be used to create a view of a property of any type as a String.
+            The null values are mapped to the empty string in order to make the view null safe, 
+            which is important inside of a GUI or when displaying the value in a user interface
+            where null pointer exceptions are not acceptable.
+        """
+        given : "A property based on... let's say a Date..."
+            Var<Date> date = Var.ofNull(Date)
+        and : "A view of the property as a String..."
+            Val<String> dateView = date.viewAsString()
+        expect : "The string based view is null safe:"
+            dateView.type() == String
+            dateView.get() == ""
+            !dateView.allowsNull()
+
+        when : "We change the value of the property."
+            date.set(new Date(0))
+        then : "The view is updated to string representation of the date."
+            dateView.get() == String.valueOf(new Date(0))
+    }
+
+    def 'The `viewAsInt()` method can be used to create a null safe view of a property of any type as an int.'()
+    {
+        reportInfo """
+            The `viewAsInt()` method can be used to create a view of a property of any type as an int.
+            The integer is computed by first converting the value to a string and then parsing the string to an int.
+            So it is important to make sure that the value can be converted to a string and that the 
+            string can be parsed to an int.
+            In this example, we use a `Short` property, which can easily be converted to a string and parsed to an int.
+            
+            The null values are mapped to 0 in order to make the view null safe, 
+            which is important inside of a GUI or when displaying the value in a user interface
+            where null pointer exceptions are not acceptable.
+        """
+        given : "A property based on... let's say a Short..."
+            Var<Short> num = Var.ofNull(Short)
+        and : "A view of the property as an int..."
+            Val<Integer> numView = num.viewAsInt()
+        expect : 'The source property is nullable...'
+            num.allowsNull()
+        and : "The (integer) view on the other hand is null safe."
+            numView.type() == Integer
+            numView.get() == 0
+            !numView.allowsNull()
+
+        when : "We change the value of the property."
+            num.set((short)42)
+        then : "The view is updated to the int representation of the short."
+            numView.get() == 42
+    }
+
+    def 'The `viewAsDouble()` method can be used to create a null safe view of a property of any type as a double.'()
+    {
+        reportInfo """
+            The `viewAsDouble()` method can be used to create a view of a property of any type as a double.
+            The double is computed by first converting the value to a string and then parsing the string to a double.
+            So it is important to make sure that the value can be converted to a string and that the 
+            string can be parsed to a double.
+            In this example, we use a `Float` property, which can easily be converted to a string and parsed to a double.
+            
+            The null values are mapped to 0.0 in order to make the view null safe, 
+            which is important inside of a GUI or when displaying the value in a user interface
+            where null pointer exceptions are not acceptable.
+        """
+        given : "A property based on... let's say a Float..."
+            Var<Float> num = Var.ofNull(Float)
+        and : "A view of the property as a double..."
+            Val<Double> numView = num.viewAsDouble()
+
+        expect : 'The source property is nullable...'
+            num.allowsNull()
+        and : "The (double) view on the other hand is null safe."
+            numView.type() == Double
+            numView.get() == 0.0
+            !numView.allowsNull()
+
+        when : "We change the value of the property."
+            num.set(3.14f)
+        then : "The view is updated to the double representation of the float."
+            numView.get() == 3.14
     }
 
 }

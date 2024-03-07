@@ -28,7 +28,7 @@ class Property_Binding_Spec extends Specification
         reportInfo"""
             A bound property inform a set observers
             when their state is changed through the `set(T)` method. 
-            However, it may also inform when `fire(From.VIEW_MODEL)` 
+            However, it may also inform when `fireChange(From.VIEW_MODEL)` 
             is called explicitly on a particular property.
             This *rebroadcasting* is often useful
             as it allows you to manually decide yourself when
