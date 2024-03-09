@@ -100,7 +100,7 @@ class Composite_Properties_Spec extends Specification
             bmi.get() == 0.0
     }
 
-    def 'A composite property view created using the `Val.ofNullable(..)` allows null items.'()
+    def 'A composite property view created using the `Val.ofNullable(..)` allows null.'()
     {
         reportInfo """
             A composite property view created using the `Val.ofNullable(..)` allows null items.
@@ -119,5 +119,47 @@ class Composite_Properties_Spec extends Specification
             noExceptionThrown()
         and : 'The view produces a null item.'
             fullAddress.orElseNull() == null
+    }
+
+    def 'Some non-nullable composite properties created using the `Val.of(..)` method cannot deal with null.'()
+    {
+        reportInfo """
+            Some non-nullable composite properties created using the `Lal.of(..)` method cannot deal with potential
+            null items produced by the combiner function, due to the type of the view
+            not having a default value (which is the case for primitive types or strings).
+        """
+        given : 'We are using `Date` based properties.'
+            Var<Date> date1 = Var.ofNullable(Date.class, new Date())
+            Var<Date> date2 = Var.ofNullable(Date.class, new Date())
+        and : 'A view of the 2 properties that represents the earliest date, or null if any of the dates is null.'
+            Val<Date> earliestDate = Val.of(date1, date2, (d1, d2) -> (d1==null||d2==null) ? null : d1.before(d2) ? d1 : d2)
+        expect : 'The view tells us that it does not allow null items.'
+            !earliestDate.allowsNull()
+        and : 'It contains an initial value.'
+            earliestDate.get() != null
+        when : 'We set the first date to null.'
+            date1.set(null)
+        then : """
+            You might expect the view to either produce a null item, or to throw an exception.
+            But, you have to remember that a view tries to be resilient to exceptions, which 
+            includes null-pointer exceptions. 
+            
+            So what this means in practice is that in this case, the view will
+            log a warning and keep the last value it had.
+        """
+            noExceptionThrown()
+        and : 'The view still contains the initial value.'
+            earliestDate.get() != null
+
+        when : """
+            We take a look at a more unfortunate scenario where at least one of the dates is null initially,
+            then this whole situation is not going to work out without an exception being thrown
+            at you.
+        """
+            date1 = Var.ofNull(Date)
+            date2 = Var.of(new Date())
+            earliestDate = Val.of(date1, date2, (d1, d2) -> (d1==null) ? null : d1.before(d2) ? d1 : d2)
+        then : 'An exception is thrown.'
+            thrown(NullPointerException)
     }
 }
