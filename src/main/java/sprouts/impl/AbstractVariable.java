@@ -5,7 +5,9 @@ import sprouts.Observer;
 import sprouts.*;
 
 import java.util.*;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * 	The base implementation for both {@link Var} and {@link Val} interfaces.
@@ -28,6 +30,67 @@ public class AbstractVariable<T> extends AbstractValue<T> implements Var<T>
 		Objects.requireNonNull(iniValue);
 		return new AbstractVariable<T>( immutable, (Class<T>) iniValue.getClass(), iniValue, NO_ID, Collections.emptyMap(), false );
 	}
+
+	public static <T> Var<T> of( Val<T> first, Val<T> second, BiFunction<T, T, T> combiner ) {
+		return of( false, first, second, combiner );
+	}
+
+	public static <T> Var<T> ofNullable( Val<T> first, Val<T> second, BiFunction<T, T, T> combiner ) {
+		return of( true, first, second, combiner );
+	}
+
+	private static <T> Var<T> of( boolean allowNull, Val<T> first, Val<T> second, BiFunction<T, T, T> combiner ) {
+		String id = "";
+		if ( !first.id().isEmpty() && !second.id().isEmpty() )
+			id = first.id() + "_and_" + second.id();
+		else if ( !first.id().isEmpty() )
+			id = first.id();
+		else if ( !second.id().isEmpty() )
+			id = second.id();
+
+		BiFunction<Val<T>, Val<T>, T> fullCombiner = (p1, p2) -> {
+			T newItem = null;
+			try {
+				newItem = combiner.apply(p1.orElseNull(), p2.orElseNull());
+			} catch ( Exception e ) {
+				if ( !allowNull ) {
+					newItem = _itemNullObjectOrNullOf(p1.type(), newItem);
+				}
+				if ( newItem == null )
+					throw new NullPointerException(
+							"Failed to initialize this non-nullable property with the initial value " +
+									"due to the result of the combiner function not yielding a non-null value!"
+					);
+				e.printStackTrace();
+			}
+
+			if ( !allowNull && newItem == null ) {
+				newItem = _itemNullObjectOrNullOf(first.type(), newItem);
+				if ( newItem == null )
+					throw new NullPointerException("The result of the combiner function is null, but the property does not allow null values!");
+			}
+			return newItem;
+		};
+
+		T initial = fullCombiner.apply(first, second);
+
+		Var<T> result;
+		if ( allowNull )
+			result = AbstractVariable.ofNullable( false, first.type(), initial ).withId(id);
+		else
+			result = AbstractVariable.of( false, first.type(), initial ).withId(id);
+
+		first.onChange(From.ALL, v -> {
+			T newItem = fullCombiner.apply(v, second);
+			result.set(From.ALL, newItem);
+		});
+		second.onChange(From.ALL, v -> {
+			T newItem = fullCombiner.apply(first, v);
+			result.set(From.ALL, newItem);
+		});
+		return result;
+	}
+
 
 	private final boolean _isImmutable;
 	private final List<Consumer<T>> _viewers = new ArrayList<>(0);
@@ -162,6 +225,10 @@ public class AbstractVariable<T> extends AbstractValue<T> implements Var<T>
 			else
 				throw e;
 		}
+		return _itemNullObjectOrNullOf(type, value);
+	}
+
+	private static <T> T _itemNullObjectOrNullOf(Class<T> type, T value ) {
 		if  ( value != null )
 			return value;
 		else if ( type == String.class )

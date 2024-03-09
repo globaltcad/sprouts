@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -116,6 +117,24 @@ public interface Val<T> extends Observable
 	static <T> Val<T> ofNullable( Val<T> toBeCopied ) {
 		Objects.requireNonNull(toBeCopied);
 		return Val.ofNullable( toBeCopied.type(), toBeCopied.orElseNull() ).withId( toBeCopied.id() );
+	}
+
+	static <T> Val<T> of( Val<T> first, Val<T> second, BiFunction<T, T, T> combiner ) {
+		Objects.requireNonNull(first);
+		Objects.requireNonNull(second);
+		Objects.requireNonNull(combiner);
+		if ( first.type() != second.type() )
+			throw new IllegalArgumentException("The types of the two properties are not compatible!");
+		return AbstractVariable.of( first, second, combiner );
+	}
+
+	static <T> Val<T> ofNullable( Val<T> first, Val<T> second, BiFunction<T, T, T> combiner ) {
+		Objects.requireNonNull(first);
+		Objects.requireNonNull(second);
+		Objects.requireNonNull(combiner);
+		if ( first.type() != second.type() )
+			throw new IllegalArgumentException("The types of the two properties are not compatible!");
+		return AbstractVariable.ofNullable( first, second, combiner );
 	}
 
 	/**
