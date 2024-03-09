@@ -144,6 +144,7 @@ public interface Val<T> extends Observable
 	 * @param <T> The type of the items held by the properties.
 	 * @throws NullPointerException If the combiner function returns a null reference
 	 *                              <b>when it is first called</b>.
+	 * @throws IllegalArgumentException If the types of the two properties are not compatible.
 	 */
 	static <T> Val<T> of( Val<T> first, Val<T> second, BiFunction<T, T, T> combiner ) {
 		Objects.requireNonNull(first);
@@ -175,6 +176,7 @@ public interface Val<T> extends Observable
 	 * @param <T> The type of the items held by the properties.
 	 * @throws NullPointerException If the combiner function returns a null reference
 	 *                              <b>when it is first called</b>.
+	 * @throws IllegalArgumentException If the types of the two properties are not compatible.
 	 */
 	static <T> Val<T> ofNullable( Val<T> first, Val<T> second, BiFunction<T, T, T> combiner ) {
 		Objects.requireNonNull(first);
