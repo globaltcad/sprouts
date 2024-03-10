@@ -273,6 +273,32 @@ public interface Val<T> extends Observable
 	default boolean isEmpty() { return !isPresent(); }
 
 	/**
+	 * @return A live view of the presence of an item in this property in the form
+	 *         of a {@link Boolean} property.
+	 *         So whenever the {@link #isPresent()} flag of this property changes,
+	 *         the item of the returned property will be updated to reflect the change.
+	 */
+	default Val<Boolean> viewIsPresent() {
+		if ( !this.allowsNull() )
+			return Val.of( true );
+		else
+			return viewAs(Boolean.class, Objects::nonNull);
+	}
+
+	/**
+	 * @return A live view of the absence of an item in this property in the form
+	 *         of a {@link Boolean} property.
+	 *         So whenever the {@link #isEmpty()} flag of this property changes,
+	 *         the item of the returned property will be updated to reflect the change.
+	 */
+	default Val<Boolean> viewIsEmpty() {
+		if ( !this.allowsNull() )
+			return Val.of( false );
+		else
+			return viewAs(Boolean.class, Objects::isNull);
+	}
+
+	/**
 	 * If an item is present, performs the given action with the item,
 	 * otherwise does nothing.
 	 *

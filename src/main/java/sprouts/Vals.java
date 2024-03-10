@@ -123,10 +123,20 @@ public interface Vals<T> extends Iterable<T>, Observable
     Class<T> type();
 
     /**
-     *  The number of properties in the list.
-     * @return The number of properties in the list.
+     * @return The number of properties in the list, which may never be negative.
      */
     int size();
+
+    /**
+     * @return A live view of the number of properties in the list.
+     *        The integer item of the returned property will be updated
+     *        whenever the size of the list of properties changes.
+     */
+    default Val<Integer> viewSize() {
+        Var<Integer> size = Var.of(size());
+        onChange( v -> size.set(v.vals().size()) );
+        return size;
+    }
 
     /**
      *  The property at the given index.
@@ -257,7 +267,8 @@ public interface Vals<T> extends Iterable<T>, Observable
     default Set<T> toSet() { return Collections.unmodifiableSet(stream().collect(Collectors.toSet())); }
 
     /**
-     * @return An immutable map where the keys are the ids of the properties in this list, and the values are the items of the properties.
+     * @return An immutable map where the keys are the ids of the properties in this list,
+     *         and the values are the items of the properties.
      */
     default Map<String,T> toMap() {
         Map<String,T> map = new HashMap<>();
@@ -269,7 +280,8 @@ public interface Vals<T> extends Iterable<T>, Observable
     }
 
     /**
-     * @return An immutable map where the keys are the ids of the properties in this list, and the values are the properties themselves.
+     * @return An immutable map where the keys are the ids of the properties in this list,
+     *         and the values are the properties themselves.
      */
     default Map<String,Val<T>> toValMap() {
         Map<String,Val<T>> map = new HashMap<>();
