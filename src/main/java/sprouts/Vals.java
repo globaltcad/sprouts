@@ -123,10 +123,44 @@ public interface Vals<T> extends Iterable<T>, Observable
     Class<T> type();
 
     /**
-     *  The number of properties in the list.
-     * @return The number of properties in the list.
+     * @return The number of properties in the list, which may never be negative.
      */
     int size();
+
+    /**
+     * @return A live view of the number of properties in the list.
+     *        The integer item of the returned property will be updated
+     *        whenever the size of the list of properties changes.
+     */
+    default Val<Integer> viewSize() {
+        Var<Integer> size = Var.of(size());
+        onChange( v -> size.set(v.vals().size()) );
+        return size;
+    }
+
+    /**
+     * @return A live view of the {@link #isEmpty()} flag,
+     *         meaning that whenever the list of properties becomes empty or not empty,
+     *         the boolean item of the returned property will be updated
+     *         accordingly.
+     */
+    default Val<Boolean> viewIsEmpty() {
+        Var<Boolean> empty = Var.of(isEmpty());
+        onChange( v -> empty.set(v.vals().isEmpty()) );
+        return empty;
+    }
+
+    /**
+     * @return A live view of the {@link #isNotEmpty()} flag,
+     *         meaning that whenever the list of properties becomes empty or not empty,
+     *         the boolean item of the returned property will be updated
+     *         accordingly.
+     */
+    default Val<Boolean> viewIsNotEmpty() {
+        Var<Boolean> notEmpty = Var.of(isNotEmpty());
+        onChange( v -> notEmpty.set(v.vals().isNotEmpty()) );
+        return notEmpty;
+    }
 
     /**
      *  The property at the given index.
@@ -257,7 +291,8 @@ public interface Vals<T> extends Iterable<T>, Observable
     default Set<T> toSet() { return Collections.unmodifiableSet(stream().collect(Collectors.toSet())); }
 
     /**
-     * @return An immutable map where the keys are the ids of the properties in this list, and the values are the items of the properties.
+     * @return An immutable map where the keys are the ids of the properties in this list,
+     *         and the values are the items of the properties.
      */
     default Map<String,T> toMap() {
         Map<String,T> map = new HashMap<>();
@@ -269,7 +304,8 @@ public interface Vals<T> extends Iterable<T>, Observable
     }
 
     /**
-     * @return An immutable map where the keys are the ids of the properties in this list, and the values are the properties themselves.
+     * @return An immutable map where the keys are the ids of the properties in this list,
+     *         and the values are the properties themselves.
      */
     default Map<String,Val<T>> toValMap() {
         Map<String,Val<T>> map = new HashMap<>();
