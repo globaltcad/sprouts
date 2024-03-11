@@ -39,7 +39,7 @@ class Common_Property_Views extends Specification
         """
         given : 'A nullable property which is not empty.'
             Var<String> name = Var.ofNullable(String, "John")
-        and : 'A view on "emptiness" of the property.'
+        and : 'A view of the "emptiness" of the property.'
             Val<Boolean> isEmpty = name.viewIsEmpty()
         expect : 'The view is false initially.'
             !isEmpty.get()
@@ -59,19 +59,19 @@ class Common_Property_Views extends Specification
         """
         given : 'A non-nullable property.'
             Var<String> name = Var.of(String, "John")
-        and : 'A view on "emptiness" of the property.'
+        and : 'A view of thr `isEmpty()` flag of the property.'
             Val<Boolean> isEmpty = name.viewIsEmpty()
-        expect : 'The view is false.'
+        expect : 'Initially, the view is false.'
             !isEmpty.get()
 
         when : 'We change the value of the property to an empty string.'
             name.set("")
-        then : 'The view is still false.'
+        then : 'The view is still false, because the property does not contain null!'
             !isEmpty.get()
 
-        when : 'We try to sneak in a null value.'
+        when : 'We try to sneak in a null value to make it empty...'
             name.set(null)
-        then : 'The property fights back by throwing an exception.'
+        then : 'Boom! The property fights back by throwing an exception.'
             thrown(NullPointerException)
     }
 
@@ -88,13 +88,13 @@ class Common_Property_Views extends Specification
         """
         given : 'A nullable property which is not empty.'
             Var<Integer> age = Var.ofNullable(Integer, 25)
-        and : 'A view on "presence" of the property.'
+        and : 'A view of the "presence" of the item of the age property.'
             Val<Boolean> isPresent = age.viewIsPresent()
-        expect : 'The view is true initially.'
+        expect : 'The view is true initially, because 25 is not null.'
             isPresent.get()
-        when : 'We change the value of the property to null.'
+        when : 'We change the value of the property to null, to make it empty.'
             age.set(null)
-        then : 'The view becomes false.'
+        then : 'The view becomes false, because now the property has null as its item.'
             !isPresent.get()
     }
 
@@ -108,12 +108,12 @@ class Common_Property_Views extends Specification
         """
         given : 'A non-nullable property.'
             Var<Integer> age = Var.of(Integer, 25)
-        and : 'A view on "presence" of the property.'
+        and : 'A view of the `isPresent()` flag of the property.'
             Val<Boolean> isPresent = age.viewIsPresent()
-        expect : 'The view is true.'
+        expect : 'The view is true initially, because 25 is not null.'
             isPresent.get()
 
-        when : 'We change the value of the property to null.'
+        when : 'We try to change the value of the property to null.'
             age.set(null)
         then : 'The property fights back by throwing an exception.'
             thrown(NullPointerException)
@@ -146,5 +146,53 @@ class Common_Property_Views extends Specification
             words.removeAt(0)
         then : 'The view becomes 4 again.'
             size.get() == 4
+    }
+
+    def 'We can "view the emptiness" of a property list.'()
+    {
+        reportInfo """
+            The method `viewIsEmpty()` on a property list
+            will return a property that is true when the list is empty,
+            and false otherwise.
+
+            Whenever the boolean returned by `isEmpty()` changes,
+            the value of the view will change too.
+
+            So this is effectively a live view on the `isEmpty()` method of the property list.
+        """
+        given : 'A list of 2 words say ing "cute cat" in japanese.'
+            Vars<String> words = Vars.of("かわいい","猫")
+        and : 'A view on the emptiness of the property list.'
+            Val<Boolean> isEmpty = words.viewIsEmpty()
+        expect : 'The view is false initially.'
+            !isEmpty.get()
+        when : 'We remove all the words from the property list.'
+            words.clear()
+        then : 'The view becomes true.'
+            isEmpty.get()
+    }
+
+    def 'We can "view the presence of items" of a property list.'()
+    {
+        reportInfo """
+            The method `viewIsNotEmpty()` on a property list
+            will return a property that is true when the list is not empty,
+            and false otherwise.
+
+            Whenever the boolean returned by `isNotEmpty()` changes,
+            the value of the view will change too.
+
+            So this is effectively a live view on the `isNotEmpty()` method of the property list.
+        """
+        given : 'An empty list of words.'
+            Vars<String> words = Vars.of(String)
+        and : 'A view on the presence of the items in the property list.'
+            Val<Boolean> isNotEmpty = words.viewIsNotEmpty()
+        expect : 'The view is false initially.'
+            !isNotEmpty.get()
+        when : 'We add the japanese word for "cute" to the property list.'
+            words.add("かわいい")
+        then : 'The view becomes true.'
+            isNotEmpty.get()
     }
 }
