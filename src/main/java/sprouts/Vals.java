@@ -139,6 +139,18 @@ public interface Vals<T> extends Iterable<T>, Observable
     }
 
     /**
+     * @return A live view of the {@link #isEmpty()} flag,
+     *         meaning that whenever the list of properties becomes empty or not empty,
+     *         the boolean item of the returned property will be updated
+     *         accordingly.
+     */
+    default Val<Boolean> viewIsEmpty() {
+        Var<Boolean> empty = Var.of(isEmpty());
+        onChange( v -> empty.set(v.vals().isEmpty()) );
+        return empty;
+    }
+
+    /**
      *  The property at the given index.
      * @param index The index of the property.
      * @return The property at the given index.
