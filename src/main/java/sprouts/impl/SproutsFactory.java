@@ -5,6 +5,11 @@ import sprouts.Var;
 
 import java.util.function.BiFunction;
 
+/**
+ *  Creates instances of the various property types in the Sprouts library.
+ *  This interface allows you to plug in your own implementations of the Sprouts properties
+ *  through the {@link Sprouts#setFactory(SproutsFactory)} method.
+ */
 public interface SproutsFactory 
 {
 	<T> Val<T> valOfNullable( Class<T> type, T item );
