@@ -1,10 +1,9 @@
 package sprouts.impl;
 
-import sprouts.Val;
-import sprouts.Vals;
-import sprouts.Var;
-import sprouts.Vars;
+import sprouts.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.BiFunction;
 
@@ -26,7 +25,52 @@ public final class Sprouts implements SproutsFactory
     private Sprouts() {}
 
 
-    @Override public <T> Val<T> valOfNullable( Class<T> type, T item ) {
+    @Override
+    public Event event() {
+
+        return new Event() {
+            private final List<Observer> observers = new ArrayList<>();
+
+            @Override public void fire() { observers.forEach( Observer::invoke); }
+            @Override
+            public Event subscribe( Observer observer) {
+                observers.add(observer);
+                return this;
+            }
+            @Override
+            public Observable unsubscribe( Subscriber subscriber) {
+                if ( subscriber instanceof Observer )
+                    observers.remove( (Observer) subscriber );
+                return this;
+            }
+            @Override public void unsubscribeAll() { observers.clear(); }
+        };
+    }
+
+    @Override
+    public Event eventOf( Event.Executor executor ) {
+
+        return new Event() {
+            private final List<Observer> observers = new ArrayList<>();
+
+            @Override
+            public void fire() { executor.execute( () -> observers.forEach( Observer::invoke) ); }
+            @Override
+            public Event subscribe(Observer observer) {
+                observers.add(observer);
+                return this;
+            }
+            @Override
+            public Observable unsubscribe( Subscriber subscriber ) {
+                if ( subscriber instanceof Observer )
+                    observers.remove( (Observer) subscriber );
+                return this;
+            }
+            @Override public void unsubscribeAll() { observers.clear(); }
+        };
+    }
+
+    @Override public <T> Val<T> valOfNullable(Class<T> type, T item ) {
         return AbstractVariable.ofNullable( true, type, item );
     }
 

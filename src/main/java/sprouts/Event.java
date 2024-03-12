@@ -1,5 +1,7 @@
 package sprouts;
 
+import sprouts.impl.Sprouts;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ForkJoinPool;
@@ -48,23 +50,7 @@ public interface Event extends Observable
      * @return A new {@link Event}.
      */
     static Event create() {
-        return new Event() {
-            private final List<Observer> observers = new ArrayList<>();
-
-            @Override public void fire() { observers.forEach( Observer::invoke); }
-            @Override
-            public Event subscribe( Observer observer) {
-                observers.add(observer);
-                return this;
-            }
-            @Override
-            public Observable unsubscribe( Subscriber subscriber) {
-                if ( subscriber instanceof Observer )
-                    observers.remove( (Observer) subscriber );
-                return this;
-            }
-            @Override public void unsubscribeAll() { observers.clear(); }
-        };
+        return Sprouts.factory().event();
     }
 
     /**
@@ -75,24 +61,7 @@ public interface Event extends Observable
      * @return A new {@link Event}.
      */
     static Event using( Executor executor ) {
-        return new Event() {
-            private final List<Observer> observers = new ArrayList<>();
-
-            @Override
-            public void fire() { executor.execute( () -> observers.forEach( Observer::invoke) ); }
-            @Override
-            public Event subscribe(Observer observer) {
-                observers.add(observer);
-                return this;
-            }
-            @Override
-            public Observable unsubscribe( Subscriber subscriber ) {
-                if ( subscriber instanceof Observer )
-                    observers.remove( (Observer) subscriber );
-                return this;
-            }
-            @Override public void unsubscribeAll() { observers.clear(); }
-        };
+        return Sprouts.factory().eventOf( executor );
     }
 
 

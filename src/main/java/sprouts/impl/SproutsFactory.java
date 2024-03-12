@@ -1,9 +1,6 @@
 package sprouts.impl;
 
-import sprouts.Val;
-import sprouts.Vals;
-import sprouts.Var;
-import sprouts.Vars;
+import sprouts.*;
 
 import java.util.function.BiFunction;
 
@@ -12,8 +9,12 @@ import java.util.function.BiFunction;
  *  This interface allows you to plug in your own implementations of the Sprouts properties
  *  through the {@link Sprouts#setFactory(SproutsFactory)} method.
  */
-public interface SproutsFactory 
+public interface SproutsFactory
 {
+	Event event();
+
+	Event eventOf( Event.Executor executor );
+
 	<T> Val<T> valOfNullable( Class<T> type, T item );
 
 	<T> Val<T> valOfNull( Class<T> type );
