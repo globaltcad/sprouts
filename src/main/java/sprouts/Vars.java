@@ -1,6 +1,6 @@
 package sprouts;
 
-import sprouts.impl.AbstractVariables;
+import sprouts.impl.Sprouts;
 
 import java.util.*;
 import java.util.function.Function;
@@ -35,7 +35,10 @@ public interface Vars<T> extends Vals<T>
      *  @return A new Vars instance.
      */
     @SuppressWarnings("unchecked")
-    static <T> Vars<T> of( Class<T> type, Var<T>... vars ) { return AbstractVariables.of( false, type, vars ); }
+    static <T> Vars<T> of( Class<T> type, Var<T>... vars ) {
+        Objects.requireNonNull(type);
+        return Sprouts.factory().varsOf( type, vars );
+    }
 
     /**
      *  Creates an empty list of non-nullable properties from the supplied type.
@@ -46,7 +49,10 @@ public interface Vars<T> extends Vals<T>
      *  @param <T> The type of the properties.
      *  @return A new Vars instance.
      */
-    static <T> Vars<T> of( Class<T> type ) { return AbstractVariables.of( false, type ); }
+    static <T> Vars<T> of( Class<T> type ) {
+        Objects.requireNonNull(type);
+        return Sprouts.factory().varsOf( type );
+    }
 
     /**
      *  Creates a list of non-nullable properties from one or more non-nullable properties.
@@ -56,7 +62,10 @@ public interface Vars<T> extends Vals<T>
      *  @return A new Vars instance.
      */
     @SuppressWarnings("unchecked")
-    static <T> Vars<T> of( Var<T> first, Var<T>... rest ) { return AbstractVariables.of( false, first, rest ); }
+    static <T> Vars<T> of( Var<T> first, Var<T>... rest ) {
+        Objects.requireNonNull(first);
+        return Sprouts.factory().varsOf( first, rest );
+    }
 
     /**
      *  Creates a list of non-nullable properties from one or more non-null values.
@@ -66,7 +75,10 @@ public interface Vars<T> extends Vals<T>
      *  @return A new Vars instance.
      */
     @SuppressWarnings("unchecked")
-    static <T> Vars<T> of( T first, T... rest ) { return AbstractVariables.of( false, first, rest ); }
+    static <T> Vars<T> of( T first, T... rest ) {
+        Objects.requireNonNull(first);
+        return Sprouts.factory().varsOf( first, rest );
+    }
 
     /**
      *  Creates a list of non-nullable properties from the supplied type and iterable of values.
@@ -77,7 +89,10 @@ public interface Vars<T> extends Vals<T>
      *  @param <T> The type of the properties.
      *  @return A new Vars instance.
      */
-    static <T> Vars<T> of( Class<T> type, Iterable<Var<T>> vars ) { return AbstractVariables.of( false, type, vars ); }
+    static <T> Vars<T> of( Class<T> type, Iterable<Var<T>> vars ) {
+        Objects.requireNonNull(type);
+        return Sprouts.factory().varsOf( type, vars );
+    }
 
     /**
      *  Creates a list of nullable properties from the supplied type and varargs properties.
@@ -91,7 +106,8 @@ public interface Vars<T> extends Vals<T>
      */
     @SuppressWarnings("unchecked")
     static <T> Vars<T> ofNullable( Class<T> type, Var<T>... vars ) {
-        return AbstractVariables.ofNullable( false, type, vars );
+        Objects.requireNonNull(type);
+        return Sprouts.factory().varsOfNullable( type, vars );
     }
 
     /**
@@ -103,7 +119,10 @@ public interface Vars<T> extends Vals<T>
      *  @param <T> The type of the properties.
      *  @return A new Vars instance.
      */
-    static <T> Vars<T> ofNullable( Class<T> type ) { return AbstractVariables.ofNullable( false, type ); }
+    static <T> Vars<T> ofNullable( Class<T> type ) {
+        Objects.requireNonNull(type);
+        return Sprouts.factory().varsOfNullable( type );
+    }
 
     /**
      *  Creates a list of nullable properties from the supplied type and values.
@@ -117,7 +136,8 @@ public interface Vars<T> extends Vals<T>
      */
     @SuppressWarnings("unchecked")
     static <T> Vars<T> ofNullable( Class<T> type, T... values ) {
-        return AbstractVariables.ofNullable( false, type, values );
+        Objects.requireNonNull(type);
+        return Sprouts.factory().varsOfNullable( type, values );
     }
 
     /**
@@ -129,7 +149,8 @@ public interface Vars<T> extends Vals<T>
      */
     @SuppressWarnings("unchecked")
     static <T> Vars<T> ofNullable( Var<T> first, Var<T>... rest ) {
-        return AbstractVariables.ofNullable( false, first, rest );
+        Objects.requireNonNull(first);
+        return Sprouts.factory().varsOfNullable( first, rest );
     }
 
     /** {@inheritDoc} */

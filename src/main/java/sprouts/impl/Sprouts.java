@@ -3,6 +3,7 @@ package sprouts.impl;
 import sprouts.Val;
 import sprouts.Vals;
 import sprouts.Var;
+import sprouts.Vars;
 
 import java.util.Objects;
 import java.util.function.BiFunction;
@@ -125,5 +126,36 @@ public final class Sprouts implements SproutsFactory
         return AbstractVariables.ofNullable( true, (Var<T>) first, vars );
     }
 
+
+
+	@SuppressWarnings("unchecked")
+	@Override public <T> Vars<T> varsOf(Class<T> type, Var<T>... vars ) { return AbstractVariables.of( false, type, vars ); }
+
+	@Override public <T> Vars<T> varsOf(Class<T> type ) { return AbstractVariables.of( false, type ); }
+
+	@SuppressWarnings("unchecked")
+	@Override public <T> Vars<T> varsOf(Var<T> first, Var<T>... rest ) { return AbstractVariables.of( false, first, rest ); }
+
+	@SuppressWarnings("unchecked")
+	@Override public <T> Vars<T> varsOf(T first, T... rest ) { return AbstractVariables.of( false, first, rest ); }
+
+	@Override public <T> Vars<T> varsOf(Class<T> type, Iterable<Var<T>> vars ) { return AbstractVariables.of( false, type, vars ); }
+
+	@SuppressWarnings("unchecked")
+	@Override public <T> Vars<T> varsOfNullable(Class<T> type, Var<T>... vars ) {
+		return AbstractVariables.ofNullable( false, type, vars );
+	}
+
+	@Override public <T> Vars<T> varsOfNullable(Class<T> type ) { return AbstractVariables.ofNullable( false, type ); }
+
+	@SuppressWarnings("unchecked")
+	@Override public <T> Vars<T> varsOfNullable(Class<T> type, T... values ) {
+		return AbstractVariables.ofNullable( false, type, values );
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override public <T> Vars<T> varsOfNullable(Var<T> first, Var<T>... rest ) {
+		return AbstractVariables.ofNullable( false, first, rest );
+	}
 
 }

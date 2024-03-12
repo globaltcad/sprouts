@@ -3,6 +3,7 @@ package sprouts.impl;
 import sprouts.Val;
 import sprouts.Vals;
 import sprouts.Var;
+import sprouts.Vars;
 
 import java.util.function.BiFunction;
 
@@ -59,5 +60,29 @@ public interface SproutsFactory
 	@SuppressWarnings("unchecked")
 	<T> Vals<T> valsOfNullable( Val<T> first, Val<T>... rest );
 
+
+	@SuppressWarnings("unchecked")
+	<T> Vars<T> varsOf( Class<T> type, Var<T>... vars );
+
+	<T> Vars<T> varsOf( Class<T> type );
+
+	@SuppressWarnings("unchecked")
+	<T> Vars<T> varsOf( Var<T> first, Var<T>... rest );
+
+	@SuppressWarnings("unchecked")
+	<T> Vars<T> varsOf( T first, T... rest );
+
+	<T> Vars<T> varsOf( Class<T> type, Iterable<Var<T>> vars );
+
+	@SuppressWarnings("unchecked")
+	<T> Vars<T> varsOfNullable( Class<T> type, Var<T>... vars );
+
+	<T> Vars<T> varsOfNullable( Class<T> type );
+
+	@SuppressWarnings("unchecked")
+	<T> Vars<T> varsOfNullable( Class<T> type, T... values );
+
+	@SuppressWarnings("unchecked")
+	<T> Vars<T> varsOfNullable( Var<T> first, Var<T>... rest );
 
 }
