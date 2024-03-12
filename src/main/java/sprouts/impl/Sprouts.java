@@ -1,6 +1,7 @@
 package sprouts.impl;
 
 import sprouts.Val;
+import sprouts.Vals;
 import sprouts.Var;
 
 import java.util.Objects;
@@ -80,5 +81,49 @@ public final class Sprouts implements SproutsFactory
     @Override public <T, V extends T> Var<T> varOf(Class<T> type, V item ) {
         return AbstractVariable.of( false, type, item );
     }
+
+
+    @SuppressWarnings("unchecked")
+    @Override public <T> Vals<T> valsOf(Class<T> type, Val<T>... vars ) {
+        return AbstractVariables.of( true, type, (Var<T>[]) vars );
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override public <T> Vals<T> valsOf(Val<T> first, Val<T>... rest ) {
+        Var<T>[] vars = new Var[rest.length];
+        System.arraycopy(rest, 0, vars, 0, rest.length);
+        return AbstractVariables.of( true, (Var<T>) first, vars );
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override public <T> Vals<T> valsOf(T first, T... rest ) { return AbstractVariables.of( true, first, rest); }
+
+    @Override public <T> Vals<T> valsOf(Class<T> type, Iterable<Val<T>> properties ) {
+        return AbstractVariables.of( true, type, (Iterable) properties );
+    }
+
+    @Override public <T> Vals<T> valsOf(Class<T> type, Vals<T> vals ) {
+        return AbstractVariables.of( true, type, vals );
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override public <T> Vals<T> valsOfNullable(Class<T> type, Val<T>... vals ) {
+        Var<T>[] vars = new Var[vals.length];
+        System.arraycopy(vals, 0, vars, 0, vals.length);
+        return AbstractVariables.ofNullable( true, type, vars );
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override public <T> Vals<T> valsOfNullable(Class<T> type, T... items ) {
+        return AbstractVariables.ofNullable( true, type, items );
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override public <T> Vals<T> valsOfNullable(Val<T> first, Val<T>... rest ) {
+        Var<T>[] vars = new Var[rest.length];
+        System.arraycopy(rest, 0, vars, 0, rest.length);
+        return AbstractVariables.ofNullable( true, (Var<T>) first, vars );
+    }
+
 
 }
