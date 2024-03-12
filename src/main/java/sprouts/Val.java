@@ -1,6 +1,6 @@
 package sprouts;
 
-import sprouts.impl.AbstractVariable;
+import sprouts.impl.Sprouts;
 
 import java.util.Arrays;
 import java.util.NoSuchElementException;
@@ -66,7 +66,9 @@ public interface Val<T> extends Observable
 	 * @param <T> The type of the wrapped item.
 	 * @return A new {@link Val} instance.
 	 */
-	static <T> Val<T> ofNullable( Class<T> type, T item ) { return AbstractVariable.ofNullable( true, type, item ); }
+	static <T> Val<T> ofNullable( Class<T> type, T item ) {
+		return Sprouts.factory().valOfNullable( type, item );
+	}
 
 	/**
 	 *  A more concise version of {@link #ofNullable(Class, Object)}
@@ -78,7 +80,9 @@ public interface Val<T> extends Observable
 	 * @return A new {@link Val} instance.
 	 * @param <T> The type of the wrapped item.
 	 */
-	static <T> Var<T> ofNull( Class<T> type ) { return AbstractVariable.ofNullable( true, type, null ); }
+	static <T> Val<T> ofNull( Class<T> type ) {
+		return Sprouts.factory().valOfNull( type );
+	}
 
 	/**
 	 * 	This factory method returns a {@code Val} describing the given non-{@code null}
@@ -89,7 +93,9 @@ public interface Val<T> extends Observable
 	 * @param <T> The type of the item held by the {@link Val}!
 	 * @return A new {@link Val} instance wrapping the given item.
 	 */
-	static <T> Val<T> of( T item ) { return AbstractVariable.of( true, item ); }
+	static <T> Val<T> of( T item ) {
+		return Sprouts.factory().valOf( item );
+	}
 
 	/**
 	 *  A factory method for creating a new {@link Val} instance
@@ -102,7 +108,7 @@ public interface Val<T> extends Observable
 	 */
 	static <T> Val<T> of( Val<T> toBeCopied ) {
 		Objects.requireNonNull(toBeCopied);
-		return Val.of( toBeCopied.get() ).withId( toBeCopied.id() );
+		return Sprouts.factory().valOf( toBeCopied );
 	}
 
 	/**
@@ -116,7 +122,7 @@ public interface Val<T> extends Observable
 	 */
 	static <T> Val<T> ofNullable( Val<T> toBeCopied ) {
 		Objects.requireNonNull(toBeCopied);
-		return Val.ofNullable( toBeCopied.type(), toBeCopied.orElseNull() ).withId( toBeCopied.id() );
+		return Sprouts.factory().valOfNullable( toBeCopied );
 	}
 
 	/**
@@ -152,7 +158,7 @@ public interface Val<T> extends Observable
 		Objects.requireNonNull(combiner);
 		if ( first.type() != second.type() )
 			throw new IllegalArgumentException("The types of the two properties are not compatible!");
-		return AbstractVariable.of( first, second, combiner );
+		return Sprouts.factory().valOf( first, second, combiner );
 	}
 
 	/**
@@ -184,7 +190,7 @@ public interface Val<T> extends Observable
 		Objects.requireNonNull(combiner);
 		if ( first.type() != second.type() )
 			throw new IllegalArgumentException("The types of the two properties are not compatible!");
-		return AbstractVariable.ofNullable( first, second, combiner );
+		return Sprouts.factory().valOfNullable( first, second, combiner );
 	}
 
 	/**
