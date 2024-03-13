@@ -30,22 +30,28 @@ public interface ValsDelegate<T>
     Change changeType();
 
     /**
+     *  Exposes the index at which the {@link Change} on the property list took place.<br>
+     *  Note that in case of the type of mutation be non-specific to a particular index,
+     *  like a list clear or a list sort, this method will return -1.
      *  @return The index at which a list mutation took place or -1
      *          if the change does not involve a particular index, like a list clear or a list sort.
      */
     int index();
 
     /**
+     *  Exposes the previous value of the property before the change took place.
      * @return The previous value of the property or an empty property if the change does not involve a previous value.
      */
     Val<T> oldValue();
 
     /**
+     *  Exposes the current value of the property after the change took place.
      * @return The current value of the property or an empty property if the change does not involve a current value.
      */
     Val<T> newValue();
 
     /**
+     *  Exposes a read only property list after the change has been applied.
      * @return An immutable copy of the property list after the change has been applied.
      */
     Vals<T> vals();

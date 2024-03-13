@@ -1,5 +1,6 @@
 package sprouts.impl;
 
+import org.jspecify.annotations.Nullable;
 import sprouts.*;
 
 import java.util.List;
@@ -10,11 +11,11 @@ public class ResultImpl<V> implements Result<V>
 {
 	private final String        _id;
 	private final Class<V>      _type;
-	private final V             _value;
 	private final List<Problem> _problems;
+	@Nullable private final V   _value;
 
 
-	public ResultImpl( String id, Class<V> type, List<Problem> problems, V value ) {
+	public ResultImpl( String id, Class<V> type, List<Problem> problems, @Nullable V value ) {
 		Objects.requireNonNull(type);
 		Objects.requireNonNull(id);
 		Objects.requireNonNull(problems);
@@ -39,10 +40,10 @@ public class ResultImpl<V> implements Result<V>
 
 	/** {@inheritDoc} */
 	@Override
-	public V orElseNullable( V other ) { return _value == null ? other : _value; }
+	public @Nullable V orElseNullable( @Nullable V other ) { return _value == null ? other : _value; }
 
 	/** {@inheritDoc} */
-	@Override public V orElseNull() { return _value; }
+	@Override public @Nullable V orElseNull() { return _value; }
 
 	/** {@inheritDoc} */
 	@Override

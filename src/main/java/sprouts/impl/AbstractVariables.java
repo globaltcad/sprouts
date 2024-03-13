@@ -1,5 +1,7 @@
 package sprouts.impl;
 
+import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
 import sprouts.*;
 import sprouts.Observable;
 import sprouts.Observer;
@@ -12,6 +14,8 @@ import java.util.stream.Collectors;
  */
 public class AbstractVariables<T> implements Vars<T>
 {
+    private static final Logger log = org.slf4j.LoggerFactory.getLogger(AbstractVariables.class);
+
     @SafeVarargs
     public static <T> Vars<T> of( boolean immutable, Class<T> type, Var<T>... vars ) {
         Objects.requireNonNull(type);
@@ -261,7 +265,7 @@ public class AbstractVariables<T> implements Vars<T>
             if ( vals.size() > 1 )
                 _triggerAction( Change.ADD, -1, null, null );
             else
-                _triggerAction( Change.ADD, _variables.size() - 1, Var.of(vals.at(0).orElseNull()), null );
+                _triggerAction( Change.ADD, _variables.size() - 1, Var.ofNullable(vals.type(),vals.at(0).orElseNull()), null );
         }
         return this;
     }
@@ -336,7 +340,7 @@ public class AbstractVariables<T> implements Vars<T>
     }
 
     private ValsDelegate<T> _createDelegate(
-            int index, Change type, Var<T> newVal, Var<T> oldVal
+            int index, Change type, @Nullable Var<T> newVal, @Nullable Var<T> oldVal
     ) {
         Var[] cloned = _variables.stream().map(Val::ofNullable).toArray(Var[]::new);
         Vals<T> clone = Vals.ofNullable(_type, cloned);
@@ -366,7 +370,7 @@ public class AbstractVariables<T> implements Vars<T>
     }
 
     private void _triggerAction(
-            Change type, int index, Var<T> newVal, Var<T> oldVal
+            Change type, int index, @Nullable Var<T> newVal, @Nullable Var<T> oldVal
     ) {
         ValsDelegate<T> listChangeDelegate = _createDelegate(index, type, newVal, oldVal);
 
@@ -374,7 +378,7 @@ public class AbstractVariables<T> implements Vars<T>
             try {
                 action.accept(listChangeDelegate);
             } catch ( Exception e ) {
-                e.printStackTrace();
+                log.error("Error in change action '" + action +"'.", e);
             }
     }
 
@@ -384,7 +388,7 @@ public class AbstractVariables<T> implements Vars<T>
         return new java.util.Iterator<T>() {
             private int index = 0;
             @Override public boolean hasNext() { return index < size(); }
-            @Override public T next() { return at(index++).orElseNull(); }
+            @Override public @Nullable T next() { return at(index++).orElseNull(); }
         };
     }
 
@@ -415,6 +419,13 @@ public class AbstractVariables<T> implements Vars<T>
             return true;
         }
         return false;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public final int hashCode() {
+        int hash = _variables.stream().mapToInt(Objects::hashCode).sum();
+        return 31 * hash + _type.hashCode();
     }
 
     private void _checkNullSafety() {

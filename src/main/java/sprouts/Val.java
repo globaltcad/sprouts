@@ -1,5 +1,6 @@
 package sprouts;
 
+import org.jspecify.annotations.Nullable;
 import sprouts.impl.Sprouts;
 
 import java.util.Arrays;
@@ -66,7 +67,7 @@ public interface Val<T> extends Observable
 	 * @param <T> The type of the wrapped item.
 	 * @return A new {@link Val} instance.
 	 */
-	static <T> Val<T> ofNullable( Class<T> type, T item ) {
+	static <T> Val<T> ofNullable( Class<T> type, @Nullable T item ) {
 		return Sprouts.factory().valOfNullable( type, item );
 	}
 
@@ -216,7 +217,9 @@ public interface Val<T> extends Observable
 	 *        May be {@code null}.
 	 * @return the item, if present, otherwise {@code other}
 	 */
-	default T orElseNullable( T other ) { return orElseNull() != null ? orElseNull() : other; }
+	default @Nullable T orElseNullable( @Nullable T other ) {
+		return orElseNull() != null ? Objects.requireNonNull(orElseNull()) : other;
+	}
 
 	/**
 	 * If an item is present, returns the item, otherwise returns
@@ -226,7 +229,10 @@ public interface Val<T> extends Observable
 	 *        May not be {@code null}.
 	 * @return the item, if present, otherwise {@code other}
 	 */
-	default T orElse( T other ) { return orElseNullable( Objects.requireNonNull(other) ); }
+	default T orElse( T other ) {
+		@Nullable T result = orElseNullable( Objects.requireNonNull(other) );
+		return Objects.requireNonNull(result);
+	}
 
 	/**
 	 * If an item is present, returns the item, otherwise returns the result
@@ -246,7 +252,7 @@ public interface Val<T> extends Observable
 	 *
 	 * @return the item, if present, otherwise {@code null}
 	 */
-	T orElseNull();
+	@Nullable T orElseNull();
 
 	/**
 	 * If an item is present, returns the item, otherwise throws
@@ -276,9 +282,14 @@ public interface Val<T> extends Observable
 	 *
 	 * @return  {@code true} if an item is not present, otherwise {@code false}
 	 */
-	default boolean isEmpty() { return !isPresent(); }
+	default boolean isEmpty() {
+		return !isPresent();
+	}
 
 	/**
+	 *  Creates and returns a boolean property which is a live view of the {@link #isPresent()}
+	 *  flag of this property.
+	 *
 	 * @return A live view of the presence of an item in this property in the form
 	 *         of a {@link Boolean} property.
 	 *         So whenever the {@link #isPresent()} flag of this property changes,
@@ -292,6 +303,9 @@ public interface Val<T> extends Observable
 	}
 
 	/**
+	 *  Creates and returns a boolean property which is a live view of the {@link #isEmpty()}
+	 *  flag of this property.
+	 *
 	 * @return A live view of the absence of an item in this property in the form
 	 *         of a {@link Boolean} property.
 	 *         So whenever the {@link #isEmpty()} flag of this property changes,
@@ -640,7 +654,9 @@ public interface Val<T> extends Observable
 	 *
 	 * @return The {@link String} representation of the item wrapped by an implementation of this interface.
 	 */
-	default String itemAsString() { return this.mapTo(String.class, String::valueOf).orElseNullable(EMPTY); }
+	default String itemAsString() {
+		return this.mapTo(String.class, String::valueOf).orElse(EMPTY);
+	}
 
 	/**
 	 *  This method returns a {@link String} representation of the type of the wrapped item.
@@ -656,9 +672,8 @@ public interface Val<T> extends Observable
 	 * @param otherItem The other item of the same type as is wrapped by this.
 	 * @return The truth value determining if the provided item is equal to the wrapped item.
 	 */
-	default boolean is( T otherItem ) {
-		T current = this.orElseNullable(null);
-		return equals(current, otherItem);
+	default boolean is( @Nullable T otherItem ) {
+		return equals(otherItem, this.orElseNullable(null));
 	}
 
 	/**
@@ -743,19 +758,33 @@ public interface Val<T> extends Observable
 	 *  This id is used to identify the property in the UI
 	 *  or as a key in a map, which is useful when converting your
 	 *  view model to a JSON object, or similar formats.
+	 *  <p>
+	 *  You can retrieve the id of a property by calling the {@link #id()} method.<br>
+	 *  An id may <b>not be null</b>, please use the {@link #NO_ID} constant
+	 *  or an empty string to indicate that a property has no id.
 	 *
-	 * @param id The id of the property.
+	 * @param id The id of the property, which is used to identify it.
+	 *           It may <b>not be null</b>, please use the {@link #NO_ID} constant
 	 * @return A new {@link Val} instance with the given id.
 	 */
 	Val<T> withId( String id );
 
 	/**
-	 * @return True when this property has not been assigned an id.
+	 *  A convenient method to check if this property has not been assigned an id. <br>
+	 *  This is the same as calling {@code !hasID()} or {@code id().equals(NO_ID)}.
+	 * @return True when this property has not been assigned an id or
+	 * 				the id is equal to the {@link #NO_ID} constant.
 	 */
-	default boolean hasNoID() { return !hasID(); }
+	default boolean hasNoID() {
+		return !hasID();
+	}
 
 	/**
-	 * @return The truth value determining if this property has been assigned an id.
+	 *  A convenient method to check if this property has been assigned an id. <br>
+	 *  This is the same as calling {@code !id().equals(NO_ID)}.
+	 *
+	 * @return The truth value determining if this property has been assigned an id,
+	 *  	 		or if <b>id is not equal to the {@link #NO_ID} constant</b>.
 	 */
 	default boolean hasID() { return !NO_ID.equals(id()); }
 
@@ -830,7 +859,7 @@ public interface Val<T> extends Observable
 	 * @param o2 The second object which ought to be compared to the first one.
 	 * @return The truth value determining if the objects are equal in terms of their state!
 	 */
-	static boolean equals( Object o1, Object o2 ) {
+	static boolean equals( @Nullable Object o1, @Nullable Object o2 ) {
 		if ( o1 instanceof float[]   ) return Arrays.equals( (float[] )  o1, (float[] )  o2 );
 		if ( o1 instanceof int[]     ) return Arrays.equals( (int[]   )  o1, (int[]   )  o2 );
 		if ( o1 instanceof char[]    ) return Arrays.equals( (char[]  )  o1, (char[]  )  o2 );

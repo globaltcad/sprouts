@@ -1,5 +1,6 @@
 package sprouts.impl;
 
+import org.jspecify.annotations.Nullable;
 import sprouts.Observable;
 import sprouts.Observer;
 import sprouts.*;
@@ -18,7 +19,7 @@ import java.util.function.Function;
  */
 public class AbstractVariable<T> extends AbstractValue<T> implements Var<T>
 {
-	public static <T> Var<T> ofNullable( boolean immutable, Class<T> type, T value ) {
+	public static <T> Var<T> ofNullable( boolean immutable, Class<T> type, @Nullable T value ) {
 		return new AbstractVariable<T>( immutable, type, value, NO_ID, Collections.emptyMap(), true );
 	}
 
@@ -49,7 +50,7 @@ public class AbstractVariable<T> extends AbstractValue<T> implements Var<T>
 			id = second.id();
 
 		BiFunction<Val<T>, Val<T>, T> fullCombiner = (p1, p2) -> {
-			T newItem = null;
+			@Nullable T newItem = null;
 			try {
 				newItem = combiner.apply(p1.orElseNull(), p2.orElseNull());
 			} catch ( Exception e ) {
@@ -99,7 +100,7 @@ public class AbstractVariable<T> extends AbstractValue<T> implements Var<T>
 	protected AbstractVariable(
 		boolean immutable,
 		Class<T> type,
-		T iniValue,
+		@Nullable T iniValue,
 		String id,
 		Map<Channel, List<Action<Val<T>>>> actions,
 		boolean allowsNull
@@ -142,7 +143,7 @@ public class AbstractVariable<T> extends AbstractValue<T> implements Var<T>
 
 	/** {@inheritDoc} */
 	@Override
-	public Var<T> set( Channel channel, T newItem ) {
+	public Var<T> set( Channel channel, @Nullable T newItem ) {
 		Objects.requireNonNull(channel);
 		if ( _isImmutable )
 			throw new UnsupportedOperationException("This variable is immutable!");
@@ -151,7 +152,7 @@ public class AbstractVariable<T> extends AbstractValue<T> implements Var<T>
 		return this;
 	}
 
-	private boolean _setInternal( T newValue ) {
+	private boolean _setInternal( @Nullable T newValue ) {
 		if ( !_nullable && newValue == null )
 			throw new NullPointerException(
 					"This property is configured to not allow null values! " +
@@ -178,7 +179,11 @@ public class AbstractVariable<T> extends AbstractValue<T> implements Var<T>
 		Var<U> var;
 		if ( nullCanBeAvoided )
 		{
-			var = Var.of(_mapOrGetNullObjectOf(type, this.orElseNull(), mapper));
+			@Nullable U result = _mapOrGetNullObjectOf(type, this.orElseNull(), mapper);
+			if ( result == null )
+				var = Var.ofNull( type );
+			else
+				var = Var.of(result);
 			// Now we register a live update listener to this property
 			this.onChange( DEFAULT_CHANNEL, v -> var.set( _mapOrGetNullObjectOf( type, v.orElseNull(), mapper ) ));
 			_viewers.add( v -> var.set(From.VIEW, _mapOrGetNullObjectOf(type, v, mapper)) );
@@ -214,9 +219,9 @@ public class AbstractVariable<T> extends AbstractValue<T> implements Var<T>
 			return false;
 	}
 
-	private <T,N> N _mapOrGetNullObjectOf( Class<N> type, T in, java.util.function.Function<T, N> mapper ) {
+	private <T,N> @Nullable N _mapOrGetNullObjectOf( Class<N> type, @Nullable T in, java.util.function.Function<T, N> mapper ) {
 		boolean inIsNull = in == null;
-		N value;
+		@Nullable N value;
 		try {
 			value = mapper.apply(in);
 		} catch ( Exception e ) {
@@ -228,7 +233,7 @@ public class AbstractVariable<T> extends AbstractValue<T> implements Var<T>
 		return _itemNullObjectOrNullOf(type, value);
 	}
 
-	private static <T> T _itemNullObjectOrNullOf(Class<T> type, T value ) {
+	private static <T> @Nullable T _itemNullObjectOrNullOf(Class<T> type, @Nullable T value ) {
 		if  ( value != null )
 			return value;
 		else if ( type == String.class )

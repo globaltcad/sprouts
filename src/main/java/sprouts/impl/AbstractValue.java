@@ -1,5 +1,7 @@
 package sprouts.impl;
 
+import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
 import sprouts.Action;
 import sprouts.Channel;
 import sprouts.Val;
@@ -14,20 +16,22 @@ import java.util.*;
  */
 abstract class AbstractValue<T> implements Val<T>
 {
+    private static final Logger log = org.slf4j.LoggerFactory.getLogger(AbstractValue.class);
+
     protected final Map<Channel, List<Action<Val<T>>>> _actions = new LinkedHashMap<>();
 
     protected final String _id;
     protected final boolean _nullable;
     protected final Class<T> _type;
 
-    protected T _value;
+    protected @Nullable T _value;
 
 
     protected AbstractValue(
-        Class<T> type,
-        String   id,
-        boolean  allowsNull,
-        T        iniValue // may be null
+            Class<T>    type,
+            String      id,
+            boolean     allowsNull,
+            @Nullable T iniValue // may be null
     ) {
         Objects.requireNonNull(id);
         Objects.requireNonNull(type);
@@ -57,7 +61,7 @@ abstract class AbstractValue<T> implements Val<T>
 
     /** {@inheritDoc} */
     @Override
-    public final T orElseNull() { return _value; }
+    public final @Nullable T orElseNull() { return _value; }
 
     /** {@inheritDoc} */
     @Override public Val<T> fireChange( Channel channel ) {
@@ -73,7 +77,7 @@ abstract class AbstractValue<T> implements Val<T>
             try {
                 action.accept(clone);
             } catch ( Exception e ) {
-                e.printStackTrace();
+                log.error("An error occurred while executing action '"+action+"' for property '"+this+"'", e);
             }
     }
 

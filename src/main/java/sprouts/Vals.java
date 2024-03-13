@@ -1,5 +1,6 @@
 package sprouts;
 
+import org.jspecify.annotations.Nullable;
 import sprouts.impl.Sprouts;
 
 import java.util.*;
@@ -125,16 +126,24 @@ public interface Vals<T> extends Iterable<T>, Observable
 
 
     /**
+     *  Exposes the common type of the properties in this list.<br>
+     *  The type of the properties in this list is retrieved from the first property in the list.
+     *  See {@link Val#type()} for more information.<br>
      * @return The type of the properties.
      */
     Class<T> type();
 
     /**
+     *  Exposes the size of the list of properties, which is the number of properties in the list.
+     *  This number may never be negative.
      * @return The number of properties in the list, which may never be negative.
      */
     int size();
 
     /**
+     *  Exposes an integer based property that is a live view on the {@link #size()} of the list of properties.
+     *  This means that whenever the size of the list of properties changes, the integer item of the returned property
+     *  will be updated accordingly.
      * @return A live view of the number of properties in the list.
      *        The integer item of the returned property will be updated
      *        whenever the size of the list of properties changes.
@@ -146,6 +155,9 @@ public interface Vals<T> extends Iterable<T>, Observable
     }
 
     /**
+     *  Exposes a boolean based property that is a live view on the {@link #isEmpty()} flag of the list of properties.
+     *  This means that whenever the list of properties becomes empty or not empty, the boolean item of the returned property
+     *  will be updated accordingly.
      * @return A live view of the {@link #isEmpty()} flag,
      *         meaning that whenever the list of properties becomes empty or not empty,
      *         the boolean item of the returned property will be updated
@@ -158,6 +170,9 @@ public interface Vals<T> extends Iterable<T>, Observable
     }
 
     /**
+     *  Exposes a boolean based property that is a live view on the {@link #isNotEmpty()} flag of the list of properties.
+     *  This means that whenever the list of properties becomes empty or not empty, the boolean item of the returned property
+     *  will be updated accordingly.
      * @return A live view of the {@link #isNotEmpty()} flag,
      *         meaning that whenever the list of properties becomes empty or not empty,
      *         the boolean item of the returned property will be updated
@@ -200,13 +215,13 @@ public interface Vals<T> extends Iterable<T>, Observable
      * @param value The value to search for.
      * @return True if any of the properties of this list wraps the given value.
      */
-    default boolean contains( T value ) { return indexOf(value) != -1; }
+    default boolean contains( @Nullable T value ) { return indexOf(value) != -1; }
 
     /**
      * @param value The value to search for.
      * @return The index of the property that wraps the given value, or -1 if not found.
      */
-    default int indexOf( T value )
+    default int indexOf( @Nullable T value )
     {
         int index = 0;
         for ( T v : this ) {
@@ -279,11 +294,19 @@ public interface Vals<T> extends Iterable<T>, Observable
     default Stream<T> stream() { return StreamSupport.stream(spliterator(), false); }
 
     /**
+     *  Converts this list of properties to a JDK {@link List} of items
+     *  and then returns the resulting list.
+     *  Note that the returned list is immutable.
+     *
      * @return An immutable list of the items in this list of properties.
      */
     default List<T> toList() { return Collections.unmodifiableList(stream().collect(Collectors.toList())); }
 
     /**
+     *  Converts this list of properties to a JDK {@link List} of properties
+     *  and then returns the resulting list.
+     *  Note that the returned list is immutable.
+     *
      * @return An immutable {@link List} of properties in this {@link Vals} instance.
      */
     default List<Val<T>> toValList() {
@@ -298,6 +321,12 @@ public interface Vals<T> extends Iterable<T>, Observable
     default Set<T> toSet() { return Collections.unmodifiableSet(stream().collect(Collectors.toSet())); }
 
     /**
+     *  A list of properties may be turned into a map of items where the keys are the ids of the properties
+     *  and the values are the items of the properties.<br>
+     *  This method performs this conversion and then returns the resulting map.
+     *  In case of duplicate ids, the item of the last property with the duplicate id will be
+     *  the one that remains in the map.<br>
+     *  Note that the returned map is immutable.
      * @return An immutable map where the keys are the ids of the properties in this list,
      *         and the values are the items of the properties.
      */
@@ -311,6 +340,12 @@ public interface Vals<T> extends Iterable<T>, Observable
     }
 
     /**
+     *  A list of properties may be turned into a map of properties where the keys are the ids of the properties
+     *  and the values are the properties themselves.<br>
+     *  This method performs this conversion and then returns the resulting map.
+     *  In case of duplicate ids, the last property with the duplicate id will be the one that remains in the map.<br>
+     *  Note that the returned map is immutable.
+     *
      * @return An immutable map where the keys are the ids of the properties in this list,
      *         and the values are the properties themselves.
      */

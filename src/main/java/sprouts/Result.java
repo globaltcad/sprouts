@@ -1,6 +1,7 @@
 package sprouts;
 
 
+import org.jspecify.annotations.Nullable;
 import sprouts.impl.Sprouts;
 
 import java.util.*;
@@ -53,7 +54,7 @@ public interface Result<V> extends Val<V>
 	 * @param <V> The type of the value.
 	 * @throws NullPointerException if the type is null.
 	 */
-	static <V> Result<V> of( Class<V> type, V value ) {
+	static <V> Result<V> of( Class<V> type, @Nullable V value ) {
 		Objects.requireNonNull(type);
 		return Sprouts.factory().resultOf(type, value);
 	}
@@ -93,7 +94,7 @@ public interface Result<V> extends Val<V>
 	 * @param <V> The type of the value.
 	 * @throws NullPointerException if the type or problems are null.
 	 */
-	static <V> Result<V> of( Class<V> type, V value, List<Problem> problems ) {
+	static <V> Result<V> of( Class<V> type, @Nullable V value, List<Problem> problems ) {
 		Objects.requireNonNull(type);
 		return Sprouts.factory().resultOf(type, value, problems);
 	}
@@ -183,11 +184,25 @@ public interface Result<V> extends Val<V>
 	}
 
 	/**
+	 *  Exposes a list of {@link Problem}s associated with this result item.
+	 *  A problem is a description of what went wrong in the process of obtaining
+	 *  the value wrapped by this result.
+	 *  <p>
+	 *  Note that a result may be present but still have problems,
+	 *  in which case the problems list is not empty.
+	 *
 	 * 	@return The list of {@link Problem}s associated with this result item.
 	 */
 	List<Problem> problems();
 
 	/**
+	 * 	Checks if this result has {@link Problem}s associated with it.
+	 * 	A problem is a description of what went wrong in the process of obtaining
+	 * 	the value wrapped by this result.
+	 * 	<p>
+	 * 	Note that a result may be present but still have problems,
+	 * 	in which case the problems list is not empty.
+	 *
 	 * 	@return {@code true} if this result is present, {@code false} otherwise.
 	 */
 	default boolean hasProblems() { return !problems().isEmpty(); }

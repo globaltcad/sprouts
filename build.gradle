@@ -9,13 +9,19 @@ plugins {
     id 'java-library'
     id 'maven-publish'
     id 'signing'
-    id('io.github.gradle-nexus.publish-plugin') version '1.1.0'
+    id 'io.github.gradle-nexus.publish-plugin' version '1.1.0'
+    // For static null checking:
+    id "net.ltgt.errorprone" version "3.1.0"
 }
 
+// If current version >= 11 we can do static analysis:
+boolean WE_CAN_DO_STATIC_ANALYSIS = JavaVersion.current().isJava11Compatible()
+println "Static analysis enabled: $WE_CAN_DO_STATIC_ANALYSIS"
 
 String GROUP_ID = "io.github.globaltcad"
 String PROJECT  = "sprouts"
 String VERSION  = "1.0.0"
+
 
 group GROUP_ID
 version VERSION
@@ -29,6 +35,20 @@ repositories {
 }
 
 dependencies {
+
+    if ( WE_CAN_DO_STATIC_ANALYSIS ) {
+        errorprone "com.uber.nullaway:nullaway:0.10.22"
+        compileOnly "com.google.code.findbugs:jsr305:3.0.2"
+        errorprone "com.google.errorprone:error_prone_core:2.24.1"
+    }
+    else
+        errorprone "com.google.errorprone:error_prone_core:2.9.+"
+
+    implementation group: 'org.jspecify', name: 'jspecify', version: '0.3.0'
+
+    // Logging :
+    implementation group: 'org.slf4j', name: 'slf4j-api', version: '[1+, )'
+    // Note that we are lenient with the version of slf4j, as we do not want to force a specific version on the user.
 
     // Testing :
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
@@ -48,6 +68,22 @@ dependencies {
 
 }
 
+if ( WE_CAN_DO_STATIC_ANALYSIS ) {
+    tasks.withType(JavaCompile) {
+        // remove the if condition if you want to run NullAway on test code
+        if (!name.toLowerCase().contains("test")) {
+            options.errorprone {
+                check("NullAway", net.ltgt.gradle.errorprone.CheckSeverity.ERROR)
+                option("NullAway:AnnotatedPackages", "")
+            }
+        } else {
+            options.errorprone {
+                check("NullAway", net.ltgt.gradle.errorprone.CheckSeverity.WARN)
+                option("NullAway:AnnotatedPackages", "")
+            }
+        }
+    }
+}
 test {
     useJUnitPlatform()
 }
