@@ -1,6 +1,7 @@
 package sprouts.impl;
 
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
 import sprouts.*;
 import sprouts.Observable;
 import sprouts.Observer;
@@ -13,6 +14,8 @@ import java.util.stream.Collectors;
  */
 public class AbstractVariables<T> implements Vars<T>
 {
+    private static final Logger log = org.slf4j.LoggerFactory.getLogger(AbstractVariables.class);
+
     @SafeVarargs
     public static <T> Vars<T> of( boolean immutable, Class<T> type, Var<T>... vars ) {
         Objects.requireNonNull(type);
@@ -375,7 +378,7 @@ public class AbstractVariables<T> implements Vars<T>
             try {
                 action.accept(listChangeDelegate);
             } catch ( Exception e ) {
-                e.printStackTrace();
+                log.error("Error in change action '" + action +"'.", e);
             }
     }
 

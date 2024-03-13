@@ -1,6 +1,7 @@
 package sprouts.impl;
 
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
 import sprouts.Action;
 import sprouts.Channel;
 import sprouts.Val;
@@ -15,6 +16,8 @@ import java.util.*;
  */
 abstract class AbstractValue<T> implements Val<T>
 {
+    private static final Logger log = org.slf4j.LoggerFactory.getLogger(AbstractValue.class);
+
     protected final Map<Channel, List<Action<Val<T>>>> _actions = new LinkedHashMap<>();
 
     protected final String _id;
@@ -74,7 +77,7 @@ abstract class AbstractValue<T> implements Val<T>
             try {
                 action.accept(clone);
             } catch ( Exception e ) {
-                e.printStackTrace();
+                log.error("An error occurred while executing action '"+action+"' for property '"+this+"'", e);
             }
     }
 

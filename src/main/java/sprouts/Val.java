@@ -282,9 +282,14 @@ public interface Val<T> extends Observable
 	 *
 	 * @return  {@code true} if an item is not present, otherwise {@code false}
 	 */
-	default boolean isEmpty() { return !isPresent(); }
+	default boolean isEmpty() {
+		return !isPresent();
+	}
 
 	/**
+	 *  Creates and returns a boolean property which is a live view of the {@link #isPresent()}
+	 *  flag of this property.
+	 *
 	 * @return A live view of the presence of an item in this property in the form
 	 *         of a {@link Boolean} property.
 	 *         So whenever the {@link #isPresent()} flag of this property changes,
@@ -298,6 +303,9 @@ public interface Val<T> extends Observable
 	}
 
 	/**
+	 *  Creates and returns a boolean property which is a live view of the {@link #isEmpty()}
+	 *  flag of this property.
+	 *
 	 * @return A live view of the absence of an item in this property in the form
 	 *         of a {@link Boolean} property.
 	 *         So whenever the {@link #isEmpty()} flag of this property changes,
@@ -750,19 +758,33 @@ public interface Val<T> extends Observable
 	 *  This id is used to identify the property in the UI
 	 *  or as a key in a map, which is useful when converting your
 	 *  view model to a JSON object, or similar formats.
+	 *  <p>
+	 *  You can retrieve the id of a property by calling the {@link #id()} method.<br>
+	 *  An id may <b>not be null</b>, please use the {@link #NO_ID} constant
+	 *  or an empty string to indicate that a property has no id.
 	 *
-	 * @param id The id of the property.
+	 * @param id The id of the property, which is used to identify it.
+	 *           It may <b>not be null</b>, please use the {@link #NO_ID} constant
 	 * @return A new {@link Val} instance with the given id.
 	 */
 	Val<T> withId( String id );
 
 	/**
-	 * @return True when this property has not been assigned an id.
+	 *  A convenient method to check if this property has not been assigned an id. <br>
+	 *  This is the same as calling {@code !hasID()} or {@code id().equals(NO_ID)}.
+	 * @return True when this property has not been assigned an id or
+	 * 				the id is equal to the {@link #NO_ID} constant.
 	 */
-	default boolean hasNoID() { return !hasID(); }
+	default boolean hasNoID() {
+		return !hasID();
+	}
 
 	/**
-	 * @return The truth value determining if this property has been assigned an id.
+	 *  A convenient method to check if this property has been assigned an id. <br>
+	 *  This is the same as calling {@code !id().equals(NO_ID)}.
+	 *
+	 * @return The truth value determining if this property has been assigned an id,
+	 *  	 		or if <b>id is not equal to the {@link #NO_ID} constant</b>.
 	 */
 	default boolean hasID() { return !NO_ID.equals(id()); }
 
