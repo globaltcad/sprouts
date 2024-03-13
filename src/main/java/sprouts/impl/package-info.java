@@ -3,4 +3,6 @@
  * Everything in this package should be considered library-private.
  * Public API code inside the package or any sub-packages might change between minor versions...
  */
-package sprouts.impl;
+@NullMarked package sprouts.impl;
+
+import org.jspecify.annotations.NullMarked;

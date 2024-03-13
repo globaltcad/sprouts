@@ -1,5 +1,6 @@
 package sprouts.impl;
 
+import org.jspecify.annotations.Nullable;
 import sprouts.*;
 import sprouts.Observable;
 import sprouts.Observer;
@@ -261,7 +262,7 @@ public class AbstractVariables<T> implements Vars<T>
             if ( vals.size() > 1 )
                 _triggerAction( Change.ADD, -1, null, null );
             else
-                _triggerAction( Change.ADD, _variables.size() - 1, Var.of(vals.at(0).orElseNull()), null );
+                _triggerAction( Change.ADD, _variables.size() - 1, Var.ofNullable(vals.type(),vals.at(0).orElseNull()), null );
         }
         return this;
     }
@@ -336,7 +337,7 @@ public class AbstractVariables<T> implements Vars<T>
     }
 
     private ValsDelegate<T> _createDelegate(
-            int index, Change type, Var<T> newVal, Var<T> oldVal
+            int index, Change type, @Nullable Var<T> newVal, @Nullable Var<T> oldVal
     ) {
         Var[] cloned = _variables.stream().map(Val::ofNullable).toArray(Var[]::new);
         Vals<T> clone = Vals.ofNullable(_type, cloned);
@@ -366,7 +367,7 @@ public class AbstractVariables<T> implements Vars<T>
     }
 
     private void _triggerAction(
-            Change type, int index, Var<T> newVal, Var<T> oldVal
+            Change type, int index, @Nullable Var<T> newVal, @Nullable Var<T> oldVal
     ) {
         ValsDelegate<T> listChangeDelegate = _createDelegate(index, type, newVal, oldVal);
 
@@ -384,7 +385,7 @@ public class AbstractVariables<T> implements Vars<T>
         return new java.util.Iterator<T>() {
             private int index = 0;
             @Override public boolean hasNext() { return index < size(); }
-            @Override public T next() { return at(index++).orElseNull(); }
+            @Override public @Nullable T next() { return at(index++).orElseNull(); }
         };
     }
 

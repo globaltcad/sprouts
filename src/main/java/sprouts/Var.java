@@ -148,7 +148,7 @@ public interface Var<T> extends Val<T>
 	 * @param newItem The new item which ought to replace the old one.
 	 * @return This very wrapper instance, in order to enable method chaining.
 	 */
-	default Var<T> set( T newItem ) {
+	default Var<T> set( @Nullable T newItem ) {
 		return this.set(DEFAULT_CHANNEL, newItem);
 	}
 

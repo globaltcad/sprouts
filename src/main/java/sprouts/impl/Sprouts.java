@@ -1,5 +1,6 @@
 package sprouts.impl;
 
+import org.jspecify.annotations.Nullable;
 import sprouts.*;
 
 import java.util.ArrayList;
@@ -93,7 +94,7 @@ public final class Sprouts implements SproutsFactory
         };
     }
 
-    @Override public <T> Val<T> valOfNullable(Class<T> type, T item ) {
+    @Override public <T> Val<T> valOfNullable( Class<T> type, @Nullable T item ) {
         return AbstractVariable.ofNullable( true, type, item );
     }
 
@@ -134,7 +135,7 @@ public final class Sprouts implements SproutsFactory
     }
 
 
-    @Override public <T> Var<T> varOfNullable(Class<T> type, T item ) {
+    @Override public <T> Var<T> varOfNullable(Class<T> type, @Nullable T item ) {
         return AbstractVariable.ofNullable( false, type, item );
     }
 
@@ -235,7 +236,7 @@ public final class Sprouts implements SproutsFactory
 		return resultOf(value, Collections.emptyList());
 	}
 
-	@Override public <V> Result<V> resultOf( Class<V> type, V value ) {
+	@Override public <V> Result<V> resultOf( Class<V> type, @Nullable V value ) {
 		Objects.requireNonNull(type);
 		return resultOf(type, value, Collections.emptyList());
 	}
@@ -252,13 +253,13 @@ public final class Sprouts implements SproutsFactory
 		return new ResultImpl<>(Result.ID, type, problems, null);
 	}
 
-	@Override public <V> Result<V> resultOf( Class<V> type, V value, List<Problem> problems ) {
+	@Override public <V> Result<V> resultOf( Class<V> type, @Nullable V value, List<Problem> problems ) {
 		Objects.requireNonNull(type);
 		problems = Collections.unmodifiableList(new ArrayList<>(Objects.requireNonNull(problems)));
 		return new ResultImpl<>(Result.ID, type, problems, value);
 	}
 
-	@Override public <V> Result<V> resultOf( Class<V> type, V value, Problem problem ) {
+	@Override public <V> Result<V> resultOf( Class<V> type, @Nullable V value, Problem problem ) {
 		Objects.requireNonNull(type);
 		Objects.requireNonNull(problem);
 		return new ResultImpl<>(Result.ID, type, Collections.singletonList(problem), value);
