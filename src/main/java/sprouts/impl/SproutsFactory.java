@@ -2,6 +2,7 @@ package sprouts.impl;
 
 import sprouts.*;
 
+import java.util.List;
 import java.util.function.BiFunction;
 
 /**
@@ -85,5 +86,28 @@ public interface SproutsFactory
 
 	@SuppressWarnings("unchecked")
 	<T> Vars<T> varsOfNullable( Var<T> first, Var<T>... rest );
+
+
+	<V> Result<V> resultOf( Class<V> type );
+
+	<V> Result<V> resultOf( V value );
+
+	<V> Result<V> resultOf( Class<V> type, V value );
+
+	<V> Result<V> resultOf( V value, List<Problem> problems );
+
+	<V> Result<V> resultOf( Class<V> type, List<Problem> problems );
+
+	<V> Result<V> resultOf( Class<V> type, V value, List<Problem> problems );
+
+	<V> Result<V> resultOf( Class<V> type, V value, Problem problem );
+
+	<V> Result<V> resultOf( Class<V> type, Problem problem );
+
+	<V> Result<List<V>> resultOfList( Class<V> type, Problem problem );
+
+	<V> Result<List<V>> resultOfList( Class<V> type, List<V> list );
+
+	<V> Result<List<V>> resultOfList( Class<V> type, List<V> list, List<Problem> problems );
 
 }

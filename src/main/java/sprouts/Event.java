@@ -2,8 +2,7 @@ package sprouts;
 
 import sprouts.impl.Sprouts;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ForkJoinPool;
 import java.util.function.Consumer;
 
@@ -61,6 +60,7 @@ public interface Event extends Observable
      * @return A new {@link Event}.
      */
     static Event using( Executor executor ) {
+        Objects.requireNonNull(executor);
         return Sprouts.factory().eventOf( executor );
     }
 

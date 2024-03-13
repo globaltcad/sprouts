@@ -3,6 +3,7 @@ package sprouts.impl;
 import sprouts.*;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.BiFunction;
@@ -147,24 +148,24 @@ public final class Sprouts implements SproutsFactory
         return AbstractVariables.of( true, type, (Iterable) properties );
     }
 
-    @Override public <T> Vals<T> valsOf(Class<T> type, Vals<T> vals ) {
+    @Override public <T> Vals<T> valsOf( Class<T> type, Vals<T> vals ) {
         return AbstractVariables.of( true, type, vals );
     }
 
     @SuppressWarnings("unchecked")
-    @Override public <T> Vals<T> valsOfNullable(Class<T> type, Val<T>... vals ) {
+    @Override public <T> Vals<T> valsOfNullable( Class<T> type, Val<T>... vals ) {
         Var<T>[] vars = new Var[vals.length];
         System.arraycopy(vals, 0, vars, 0, vals.length);
         return AbstractVariables.ofNullable( true, type, vars );
     }
 
     @SuppressWarnings("unchecked")
-    @Override public <T> Vals<T> valsOfNullable(Class<T> type, T... items ) {
+    @Override public <T> Vals<T> valsOfNullable( Class<T> type, T... items ) {
         return AbstractVariables.ofNullable( true, type, items );
     }
 
     @SuppressWarnings("unchecked")
-    @Override public <T> Vals<T> valsOfNullable(Val<T> first, Val<T>... rest ) {
+    @Override public <T> Vals<T> valsOfNullable( Val<T> first, Val<T>... rest ) {
         Var<T>[] vars = new Var[rest.length];
         System.arraycopy(rest, 0, vars, 0, rest.length);
         return AbstractVariables.ofNullable( true, (Var<T>) first, vars );
@@ -173,33 +174,104 @@ public final class Sprouts implements SproutsFactory
 
 
 	@SuppressWarnings("unchecked")
-	@Override public <T> Vars<T> varsOf(Class<T> type, Var<T>... vars ) { return AbstractVariables.of( false, type, vars ); }
+	@Override public <T> Vars<T> varsOf( Class<T> type, Var<T>... vars ) { return AbstractVariables.of( false, type, vars ); }
 
-	@Override public <T> Vars<T> varsOf(Class<T> type ) { return AbstractVariables.of( false, type ); }
-
-	@SuppressWarnings("unchecked")
-	@Override public <T> Vars<T> varsOf(Var<T> first, Var<T>... rest ) { return AbstractVariables.of( false, first, rest ); }
+	@Override public <T> Vars<T> varsOf( Class<T> type ) { return AbstractVariables.of( false, type ); }
 
 	@SuppressWarnings("unchecked")
-	@Override public <T> Vars<T> varsOf(T first, T... rest ) { return AbstractVariables.of( false, first, rest ); }
-
-	@Override public <T> Vars<T> varsOf(Class<T> type, Iterable<Var<T>> vars ) { return AbstractVariables.of( false, type, vars ); }
+	@Override public <T> Vars<T> varsOf( Var<T> first, Var<T>... rest ) { return AbstractVariables.of( false, first, rest ); }
 
 	@SuppressWarnings("unchecked")
-	@Override public <T> Vars<T> varsOfNullable(Class<T> type, Var<T>... vars ) {
+	@Override public <T> Vars<T> varsOf( T first, T... rest ) { return AbstractVariables.of( false, first, rest ); }
+
+	@Override public <T> Vars<T> varsOf( Class<T> type, Iterable<Var<T>> vars ) { return AbstractVariables.of( false, type, vars ); }
+
+	@SuppressWarnings("unchecked")
+	@Override public <T> Vars<T> varsOfNullable( Class<T> type, Var<T>... vars ) {
 		return AbstractVariables.ofNullable( false, type, vars );
 	}
 
-	@Override public <T> Vars<T> varsOfNullable(Class<T> type ) { return AbstractVariables.ofNullable( false, type ); }
+	@Override public <T> Vars<T> varsOfNullable( Class<T> type ) { return AbstractVariables.ofNullable( false, type ); }
 
 	@SuppressWarnings("unchecked")
-	@Override public <T> Vars<T> varsOfNullable(Class<T> type, T... values ) {
+	@Override public <T> Vars<T> varsOfNullable( Class<T> type, T... values ) {
 		return AbstractVariables.ofNullable( false, type, values );
 	}
 
 	@SuppressWarnings("unchecked")
-	@Override public <T> Vars<T> varsOfNullable(Var<T> first, Var<T>... rest ) {
+	@Override public <T> Vars<T> varsOfNullable( Var<T> first, Var<T>... rest ) {
 		return AbstractVariables.ofNullable( false, first, rest );
+	}
+
+	@Override public <V> Result<V> resultOf( Class<V> type ) {
+		Objects.requireNonNull(type);
+		return new ResultImpl<>(Result.ID, type, Collections.emptyList(), null);
+	}
+
+	@Override public <V> Result<V> resultOf( V value ) {
+		Objects.requireNonNull(value);
+		return resultOf(value, Collections.emptyList());
+	}
+
+	@Override public <V> Result<V> resultOf( Class<V> type, V value ) {
+		Objects.requireNonNull(type);
+		return resultOf(type, value, Collections.emptyList());
+	}
+
+	@Override public <V> Result<V> resultOf( V value, List<Problem> problems ) {
+		Objects.requireNonNull(value);
+		problems = Collections.unmodifiableList(new ArrayList<>(Objects.requireNonNull(problems)));
+		return new ResultImpl<>(Result.ID, (Class<V>) value.getClass(), problems, value);
+	}
+
+	@Override public <V> Result<V> resultOf( Class<V> type, List<Problem> problems ) {
+		Objects.requireNonNull(type);
+		problems = Collections.unmodifiableList(new ArrayList<>(Objects.requireNonNull(problems)));
+		return new ResultImpl<>(Result.ID, type, problems, null);
+	}
+
+	@Override public <V> Result<V> resultOf( Class<V> type, V value, List<Problem> problems ) {
+		Objects.requireNonNull(type);
+		problems = Collections.unmodifiableList(new ArrayList<>(Objects.requireNonNull(problems)));
+		return new ResultImpl<>(Result.ID, type, problems, value);
+	}
+
+	@Override public <V> Result<V> resultOf( Class<V> type, V value, Problem problem ) {
+		Objects.requireNonNull(type);
+		Objects.requireNonNull(problem);
+		return new ResultImpl<>(Result.ID, type, Collections.singletonList(problem), value);
+	}
+
+	@Override public <V> Result<V> resultOf( Class<V> type, Problem problem ) {
+		Objects.requireNonNull(type);
+		Objects.requireNonNull(problem);
+		return new ResultImpl<>(Result.ID, type, Collections.singletonList(problem), null);
+	}
+
+	@Override public <V> Result<List<V>> resultOfList( Class<V> type, Problem problem ) {
+		Objects.requireNonNull(type);
+		Objects.requireNonNull(problem);
+		return (Result<List<V>>) (Result) new ResultImpl<>(Result.ID, List.class, Collections.singletonList(problem), null);
+	}
+
+	@Override public <V> Result<List<V>> resultOfList( Class<V> type, List<V> list ) {
+		Objects.requireNonNull(type);
+		Objects.requireNonNull(list);
+		// We check the types of the list elements are of the correct type.
+		boolean matches = list.stream().filter(Objects::nonNull).allMatch(e -> type.isAssignableFrom(e.getClass()));
+		if ( !matches )
+			throw new IllegalArgumentException("List elements must be of type " + type.getName());
+		return (Result<List<V>>) (Result) new ResultImpl<>(Result.ID, List.class, Collections.emptyList(), list);
+	}
+
+	@Override public <V> Result<List<V>> resultOfList( Class<V> type, List<V> list, List<Problem> problems ) {
+		Objects.requireNonNull(type);
+		Objects.requireNonNull(list);
+		boolean matches = list.stream().filter(Objects::nonNull).allMatch(e -> type.isAssignableFrom(e.getClass()));
+		if ( !matches )
+			throw new IllegalArgumentException("List elements must be of type " + type.getName());
+		problems = Collections.unmodifiableList(new ArrayList<>(Objects.requireNonNull(problems)));
+		return (Result<List<V>>) (Result) new ResultImpl<>(Result.ID, List.class, problems, list);
 	}
 
 }
