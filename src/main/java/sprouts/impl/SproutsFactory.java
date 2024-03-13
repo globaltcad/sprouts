@@ -93,15 +93,15 @@ public interface SproutsFactory
 
 	<V> Result<V> resultOf( V value );
 
-	<V> Result<V> resultOf( Class<V> type, V value );
+	<V> Result<V> resultOf( Class<V> type, @Nullable V value );
 
 	<V> Result<V> resultOf( V value, List<Problem> problems );
 
 	<V> Result<V> resultOf( Class<V> type, List<Problem> problems );
 
-	<V> Result<V> resultOf( Class<V> type, V value, List<Problem> problems );
+	<V> Result<V> resultOf( Class<V> type, @Nullable V value, List<Problem> problems );
 
-	<V> Result<V> resultOf( Class<V> type, V value, Problem problem );
+	<V> Result<V> resultOf( Class<V> type, @Nullable V value, Problem problem );
 
 	<V> Result<V> resultOf( Class<V> type, Problem problem );
 

@@ -1,6 +1,7 @@
 package sprouts;
 
 
+import org.jspecify.annotations.Nullable;
 import sprouts.impl.Sprouts;
 
 import java.util.*;
@@ -53,7 +54,7 @@ public interface Result<V> extends Val<V>
 	 * @param <V> The type of the value.
 	 * @throws NullPointerException if the type is null.
 	 */
-	static <V> Result<V> of( Class<V> type, V value ) {
+	static <V> Result<V> of( Class<V> type, @Nullable V value ) {
 		Objects.requireNonNull(type);
 		return Sprouts.factory().resultOf(type, value);
 	}
@@ -93,7 +94,7 @@ public interface Result<V> extends Val<V>
 	 * @param <V> The type of the value.
 	 * @throws NullPointerException if the type or problems are null.
 	 */
-	static <V> Result<V> of( Class<V> type, V value, List<Problem> problems ) {
+	static <V> Result<V> of( Class<V> type, @Nullable V value, List<Problem> problems ) {
 		Objects.requireNonNull(type);
 		return Sprouts.factory().resultOf(type, value, problems);
 	}
