@@ -1,5 +1,6 @@
 package sprouts;
 
+import org.jspecify.annotations.Nullable;
 import sprouts.impl.Sprouts;
 
 import java.util.Arrays;
@@ -66,7 +67,7 @@ public interface Val<T> extends Observable
 	 * @param <T> The type of the wrapped item.
 	 * @return A new {@link Val} instance.
 	 */
-	static <T> Val<T> ofNullable( Class<T> type, T item ) {
+	static <T> Val<T> ofNullable( Class<T> type, @Nullable T item ) {
 		return Sprouts.factory().valOfNullable( type, item );
 	}
 
@@ -216,7 +217,9 @@ public interface Val<T> extends Observable
 	 *        May be {@code null}.
 	 * @return the item, if present, otherwise {@code other}
 	 */
-	default T orElseNullable( T other ) { return orElseNull() != null ? orElseNull() : other; }
+	default @Nullable T orElseNullable( @Nullable T other ) {
+		return orElseNull() != null ? Objects.requireNonNull(orElseNull()) : other;
+	}
 
 	/**
 	 * If an item is present, returns the item, otherwise returns
@@ -226,7 +229,10 @@ public interface Val<T> extends Observable
 	 *        May not be {@code null}.
 	 * @return the item, if present, otherwise {@code other}
 	 */
-	default T orElse( T other ) { return orElseNullable( Objects.requireNonNull(other) ); }
+	default T orElse( T other ) {
+		@Nullable T result = orElseNullable( Objects.requireNonNull(other) );
+		return Objects.requireNonNull(result);
+	}
 
 	/**
 	 * If an item is present, returns the item, otherwise returns the result
@@ -246,7 +252,7 @@ public interface Val<T> extends Observable
 	 *
 	 * @return the item, if present, otherwise {@code null}
 	 */
-	T orElseNull();
+	@Nullable T orElseNull();
 
 	/**
 	 * If an item is present, returns the item, otherwise throws
@@ -640,7 +646,9 @@ public interface Val<T> extends Observable
 	 *
 	 * @return The {@link String} representation of the item wrapped by an implementation of this interface.
 	 */
-	default String itemAsString() { return this.mapTo(String.class, String::valueOf).orElseNullable(EMPTY); }
+	default String itemAsString() {
+		return this.mapTo(String.class, String::valueOf).orElse(EMPTY);
+	}
 
 	/**
 	 *  This method returns a {@link String} representation of the type of the wrapped item.
@@ -656,9 +664,8 @@ public interface Val<T> extends Observable
 	 * @param otherItem The other item of the same type as is wrapped by this.
 	 * @return The truth value determining if the provided item is equal to the wrapped item.
 	 */
-	default boolean is( T otherItem ) {
-		T current = this.orElseNullable(null);
-		return equals(current, otherItem);
+	default boolean is( @Nullable T otherItem ) {
+		return equals(otherItem, this.orElseNullable(null));
 	}
 
 	/**
@@ -830,7 +837,7 @@ public interface Val<T> extends Observable
 	 * @param o2 The second object which ought to be compared to the first one.
 	 * @return The truth value determining if the objects are equal in terms of their state!
 	 */
-	static boolean equals( Object o1, Object o2 ) {
+	static boolean equals( @Nullable Object o1, @Nullable Object o2 ) {
 		if ( o1 instanceof float[]   ) return Arrays.equals( (float[] )  o1, (float[] )  o2 );
 		if ( o1 instanceof int[]     ) return Arrays.equals( (int[]   )  o1, (int[]   )  o2 );
 		if ( o1 instanceof char[]    ) return Arrays.equals( (char[]  )  o1, (char[]  )  o2 );

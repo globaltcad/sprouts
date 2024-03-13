@@ -1,5 +1,6 @@
 package sprouts.impl;
 
+import org.jspecify.annotations.Nullable;
 import sprouts.*;
 
 import java.util.List;
@@ -16,7 +17,7 @@ public interface SproutsFactory
 
 	Event eventOf( Event.Executor executor );
 
-	<T> Val<T> valOfNullable( Class<T> type, T item );
+	<T> Val<T> valOfNullable( Class<T> type, @Nullable T item );
 
 	<T> Val<T> valOfNull( Class<T> type );
 
@@ -31,7 +32,7 @@ public interface SproutsFactory
 	<T> Val<T> valOfNullable( Val<T> first, Val<T> second, BiFunction<T, T, T> combiner );
 
 
-	<T> Var<T> varOfNullable( Class<T> type, T item );
+	<T> Var<T> varOfNullable( Class<T> type, @Nullable T item );
 
 	<T> Var<T> varOfNull( Class<T> type );
 

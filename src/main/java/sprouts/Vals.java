@@ -1,5 +1,6 @@
 package sprouts;
 
+import org.jspecify.annotations.Nullable;
 import sprouts.impl.Sprouts;
 
 import java.util.*;
@@ -200,13 +201,13 @@ public interface Vals<T> extends Iterable<T>, Observable
      * @param value The value to search for.
      * @return True if any of the properties of this list wraps the given value.
      */
-    default boolean contains( T value ) { return indexOf(value) != -1; }
+    default boolean contains( @Nullable T value ) { return indexOf(value) != -1; }
 
     /**
      * @param value The value to search for.
      * @return The index of the property that wraps the given value, or -1 if not found.
      */
-    default int indexOf( T value )
+    default int indexOf( @Nullable T value )
     {
         int index = 0;
         for ( T v : this ) {

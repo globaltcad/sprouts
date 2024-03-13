@@ -1,5 +1,6 @@
 package sprouts.impl;
 
+import org.jspecify.annotations.Nullable;
 import sprouts.Observable;
 import sprouts.Observer;
 import sprouts.*;
@@ -142,7 +143,7 @@ public class AbstractVariable<T> extends AbstractValue<T> implements Var<T>
 
 	/** {@inheritDoc} */
 	@Override
-	public Var<T> set( Channel channel, T newItem ) {
+	public Var<T> set( Channel channel, @Nullable T newItem ) {
 		Objects.requireNonNull(channel);
 		if ( _isImmutable )
 			throw new UnsupportedOperationException("This variable is immutable!");
