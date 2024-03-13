@@ -10,12 +10,34 @@ import java.util.function.BiFunction;
 
 /**
  *  Exposes an API for configuring the {@link SproutsFactory},
- *  which serves implementations of the various property types in the Sprouts library.
+ *  which serves implementations of the various property types in the Sprouts library,
+ *  like {@link Event}, {@link Val}, {@link Var}, {@link Vals} and {@link Vars}.
+ *  The methods implemented here are used by the various factory methods of the sprouts API like
+ *  {@link Var#of(Object)}, {@link Vals#of(Object, Object[])}, {@link Result#of(Object)}...
  */
 public final class Sprouts implements SproutsFactory
 {
+    /**
+     *  A {@link SproutsFactory} is used by the various factory methods of this API like
+     *  {@link Var#of(Object)}, {@link Vals#of(Object, Object[])}, {@link Result#of(Object)}...
+     *  to create instances of these properties. <br>
+     *  You can plug in your own factory implementation through the {@link #setFactory(SproutsFactory)} method,
+     *  where you can then serve your own implementations of the various property types in the Sprouts library.
+     *
+     *  @return The default factory for creating instances of the various property types in the Sprouts library.
+     */
     public static SproutsFactory factory() { return FACTORY; }
 
+    /**
+     *  Sets the factory to be used by the various factory methods of this API like
+     *  {@link Var#of(Object)}, {@link Vals#of(Object, Object[])}, {@link Result#of(Object)}...
+     *  to create instances of these properties. <br>
+     *  You can use a custom {@link SproutsFactory} to instantiate and serve your own
+     *  implementations of the various property types in the Sprouts library. <br>
+     *
+     *  @param factory The factory to be used by the various factory methods of this API.
+     *  @throws NullPointerException if the factory is null.
+     */
     public static void setFactory( SproutsFactory factory ) {
         Objects.requireNonNull(factory);
         FACTORY = factory;
