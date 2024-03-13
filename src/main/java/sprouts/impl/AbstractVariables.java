@@ -417,6 +417,13 @@ public class AbstractVariables<T> implements Vars<T>
         return false;
     }
 
+    /** {@inheritDoc} */
+    @Override
+    public final int hashCode() {
+        int hash = _variables.stream().mapToInt(Objects::hashCode).sum();
+        return 31 * hash + _type.hashCode();
+    }
+
     private void _checkNullSafety() {
         if ( !_allowsNull )
             for ( Var<T> val : _variables )
