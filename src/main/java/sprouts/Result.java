@@ -1,7 +1,7 @@
 package sprouts;
 
 
-import sprouts.impl.ResultImpl;
+import sprouts.impl.Sprouts;
 
 import java.util.*;
 
@@ -27,7 +27,7 @@ public interface Result<V> extends Val<V>
 	 */
 	static <V> Result<V> of( Class<V> type ) {
 		Objects.requireNonNull(type);
-		return new ResultImpl<>(ID, type, Collections.emptyList(), null);
+		return Sprouts.factory().resultOf(type);
 	}
 
 	/**
@@ -39,7 +39,7 @@ public interface Result<V> extends Val<V>
 	 */
 	static <V> Result<V> of( V value ) {
 		Objects.requireNonNull(value);
-		return of(value, Collections.emptyList());
+		return Sprouts.factory().resultOf(value);
 	}
 
 	/**
@@ -55,7 +55,7 @@ public interface Result<V> extends Val<V>
 	 */
 	static <V> Result<V> of( Class<V> type, V value ) {
 		Objects.requireNonNull(type);
-		return of(type, value, Collections.emptyList());
+		return Sprouts.factory().resultOf(type, value);
 	}
 
 	/**
@@ -68,8 +68,7 @@ public interface Result<V> extends Val<V>
 	 */
 	static <V> Result<V> of( V value, List<Problem> problems ) {
 		Objects.requireNonNull(value);
-		problems = Collections.unmodifiableList(new ArrayList<>(Objects.requireNonNull(problems)));
-		return new ResultImpl<>(ID, (Class<V>) value.getClass(), problems, value);
+		return Sprouts.factory().resultOf(value, problems);
 	}
 
 	/**
@@ -82,8 +81,7 @@ public interface Result<V> extends Val<V>
 	 */
 	static <V> Result<V> of( Class<V> type, List<Problem> problems ) {
 		Objects.requireNonNull(type);
-		problems = Collections.unmodifiableList(new ArrayList<>(Objects.requireNonNull(problems)));
-		return new ResultImpl<>(ID, type, problems, null);
+		return Sprouts.factory().resultOf(type, problems);
 	}
 
 	/**
@@ -97,8 +95,7 @@ public interface Result<V> extends Val<V>
 	 */
 	static <V> Result<V> of( Class<V> type, V value, List<Problem> problems ) {
 		Objects.requireNonNull(type);
-		problems = Collections.unmodifiableList(new ArrayList<>(Objects.requireNonNull(problems)));
-		return new ResultImpl<>(ID, type, problems, value);
+		return Sprouts.factory().resultOf(type, value, problems);
 	}
 
 	/**
@@ -113,7 +110,7 @@ public interface Result<V> extends Val<V>
 	static <V> Result<V> of( Class<V> type, V value, Problem problem ) {
 		Objects.requireNonNull(type);
 		Objects.requireNonNull(problem);
-		return new ResultImpl<>(ID, type, Collections.singletonList(problem), value);
+		return Sprouts.factory().resultOf(type, value, problem);
 	}
 
 	/**
@@ -127,7 +124,7 @@ public interface Result<V> extends Val<V>
 	static <V> Result<V> of( Class<V> type, Problem problem ) {
 		Objects.requireNonNull(type);
 		Objects.requireNonNull(problem);
-		return new ResultImpl<>(ID, type, Collections.singletonList(problem), null);
+		return Sprouts.factory().resultOf(type, problem);
 	}
 
 	/**
@@ -141,7 +138,7 @@ public interface Result<V> extends Val<V>
 	static <V> Result<List<V>> ofList( Class<V> type, Problem problem ) {
 		Objects.requireNonNull(type);
 		Objects.requireNonNull(problem);
-		return (Result<List<V>>) (Result) new ResultImpl<>(ID, List.class, Collections.singletonList(problem), null);
+		return Sprouts.factory().resultOfList(type, problem);
 	}
 
 	/**
@@ -161,7 +158,7 @@ public interface Result<V> extends Val<V>
 		boolean matches = list.stream().filter(Objects::nonNull).allMatch(e -> type.isAssignableFrom(e.getClass()));
 		if ( !matches )
 			throw new IllegalArgumentException("List elements must be of type " + type.getName());
-		return (Result<List<V>>) (Result) new ResultImpl<>(ID, List.class, Collections.emptyList(), list);
+		return Sprouts.factory().resultOfList(type, list);
 	}
 
 	/**
@@ -181,8 +178,8 @@ public interface Result<V> extends Val<V>
 		boolean matches = list.stream().filter(Objects::nonNull).allMatch(e -> type.isAssignableFrom(e.getClass()));
 		if ( !matches )
 			throw new IllegalArgumentException("List elements must be of type " + type.getName());
-		problems = Collections.unmodifiableList(new ArrayList<>(Objects.requireNonNull(problems)));
-		return (Result<List<V>>) (Result) new ResultImpl<>(ID, List.class, problems, list);
+
+		return Sprouts.factory().resultOfList(type, list, problems);
 	}
 
 	/**

@@ -1,6 +1,6 @@
 package sprouts;
 
-import sprouts.impl.AbstractVariable;
+import sprouts.impl.Sprouts;
 
 import java.util.Optional;
 import java.util.function.Function;
@@ -86,7 +86,7 @@ public interface Var<T> extends Val<T>
 	 * @return A new {@link Var} instance.
 	 */
 	static <T> Var<T> ofNullable( Class<T> type, T item ) {
-		return AbstractVariable.ofNullable( false, type, item );
+		return Sprouts.factory().varOfNullable( type, item );
 	}
 
 	/**
@@ -102,7 +102,7 @@ public interface Var<T> extends Val<T>
 	 * @param <T> The type of the wrapped item.
 	 */
 	static <T> Var<T> ofNull( Class<T> type ) {
-		return AbstractVariable.ofNullable( false, type, null );
+		return Sprouts.factory().varOfNull( type );
 	}
 
 	/**
@@ -117,7 +117,9 @@ public interface Var<T> extends Val<T>
 	 * @return A new {@link Var} instance wrapping the given item.
 	 * @throws IllegalArgumentException If the given item is null.
 	 */
-	static <T> Var<T> of( T item ) { return AbstractVariable.of( false, item ); }
+	static <T> Var<T> of( T item ) {
+		return Sprouts.factory().varOf( item );
+	}
 
 	/**
 	 * 	This factory method returns a {@code Var} describing the given non-{@code null}
@@ -133,7 +135,9 @@ public interface Var<T> extends Val<T>
 	 * @return A new {@link Var} instance wrapping the given item.
 	 * @throws IllegalArgumentException If the given item is null.
 	 */
-	static <T, V extends T> Var<T> of( Class<T> type, V item ) { return AbstractVariable.of( false, type, item ); }
+	static <T, V extends T> Var<T> of( Class<T> type, V item ) {
+		return Sprouts.factory().varOf( type, item );
+	}
 
 	/**
 	 *  This method provides the ability to modify the state of the wrapper
