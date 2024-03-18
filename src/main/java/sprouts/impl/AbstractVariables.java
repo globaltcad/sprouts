@@ -351,19 +351,21 @@ public class AbstractVariables<T> implements Vars<T>
         */
         Val<T> clonedNewValue = ( newVal != null ? Val.ofNullable(newVal) : Val.ofNullable(_type, null) );
         Val<T> clonedOldValue = ( oldVal != null ? Val.ofNullable(oldVal) : Val.ofNullable(_type, null) );
+        Vals<T> newValues = Vals.ofNullable(_type, clonedNewValue);
+        Vals<T> oldValues = Vals.ofNullable(_type, clonedOldValue);
         return new ValsDelegate<T>() {
             @Override public int index() { return index; }
             @Override public Change changeType() { return type; }
-            @Override public Val<T> newValue() { return clonedNewValue; }
-            @Override public Val<T> oldValue() { return clonedOldValue; }
+            @Override public Vals<T> newValues() { return newValues; }
+            @Override public Vals<T> oldValues() { return oldValues; }
             @Override public Vals<T> vals() { return clone; }
             @Override public String toString() {
                 return "ValsDelegate[" +
-                            "index="      + index  + ", " +
-                            "changeType=" + type   + ", " +
-                            "newValue="   + newVal + ", " +
-                            "oldValue="   + oldVal + ", " +
-                            "vals="       + clone  +
+                            "index="      + index()      + ", " +
+                            "changeType=" + changeType() + ", " +
+                            "newValues="  + newValues()  + ", " +
+                            "oldValues="  + oldValues()  + ", " +
+                            "vals="       + vals()       +
                         ']';
             }
         };
