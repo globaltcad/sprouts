@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Val.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sprouts</a> &gt; <a href="index.source.html" class="el_package">sprouts</a> &gt; <span class="el_source">Val.java</span></div><h1>Val.java</h1><pre class="source lang-java linenums">package sprouts;
 
-import sprouts.impl.AbstractVariable;
+import org.jspecify.annotations.Nullable;
+import sprouts.impl.Sprouts;
 
 import java.util.Arrays;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -27,7 +29,7 @@ import java.util.regex.Pattern;
  * 	Note that {@link Var#set(Object)} method defaults to the {@link From#VIEW_MODEL} channel.
  * 	&lt;p&gt;
  * 	If you no longer need to observe changes on this property, then you can remove the registered {@link Action}
- * 	callback using the {@link #unsubscribe(Subscriber)} method ({@link Action} implements {@link Subscriber}).
+ * 	callback using the {@link #unsubscribe(Subscriber)} method ({@link Action} is also a {@link Subscriber}).
  * 	&lt;p&gt;
  * 	Note that the name of this class is short for &quot;value&quot;. This name was deliberately chosen because
  * 	it is short, concise and yet clearly conveys the same meaning as other names used to model this
@@ -46,8 +48,8 @@ public interface Val&lt;T&gt; extends Observable
 {
 	String NO_ID = &quot;&quot;; // This is the default id for properties
 	String EMPTY = &quot;EMPTY&quot;; // This is the default string for empty properties
-<span class="fc" id="L49">	Pattern ID_PATTERN = Pattern.compile(&quot;[a-zA-Z0-9_]*&quot;);</span>
-<span class="fc" id="L50">	From DEFAULT_CHANNEL = From.VIEW_MODEL;</span>
+<span class="fc" id="L51">	Pattern ID_PATTERN = Pattern.compile(&quot;[a-zA-Z0-9_]*&quot;);</span>
+<span class="fc" id="L52">	From DEFAULT_CHANNEL = From.VIEW_MODEL;</span>
 
 	/**
 	 *  Use this factory method to create a new {@link Val} instance
@@ -65,7 +67,9 @@ public interface Val&lt;T&gt; extends Observable
 	 * @param &lt;T&gt; The type of the wrapped item.
 	 * @return A new {@link Val} instance.
 	 */
-<span class="fc" id="L68">	static &lt;T&gt; Val&lt;T&gt; ofNullable( Class&lt;T&gt; type, T item ) { return AbstractVariable.ofNullable( true, type, item ); }</span>
+	static &lt;T&gt; Val&lt;T&gt; ofNullable( Class&lt;T&gt; type, @Nullable T item ) {
+<span class="fc" id="L71">		return Sprouts.factory().valOfNullable( type, item );</span>
+	}
 
 	/**
 	 *  A more concise version of {@link #ofNullable(Class, Object)}
@@ -77,7 +81,9 @@ public interface Val&lt;T&gt; extends Observable
 	 * @return A new {@link Val} instance.
 	 * @param &lt;T&gt; The type of the wrapped item.
 	 */
-<span class="nc" id="L80">	static &lt;T&gt; Var&lt;T&gt; ofNull( Class&lt;T&gt; type ) { return AbstractVariable.ofNullable( true, type, null ); }</span>
+	static &lt;T&gt; Val&lt;T&gt; ofNull( Class&lt;T&gt; type ) {
+<span class="nc" id="L85">		return Sprouts.factory().valOfNull( type );</span>
+	}
 
 	/**
 	 * 	This factory method returns a {@code Val} describing the given non-{@code null}
@@ -88,7 +94,9 @@ public interface Val&lt;T&gt; extends Observable
 	 * @param &lt;T&gt; The type of the item held by the {@link Val}!
 	 * @return A new {@link Val} instance wrapping the given item.
 	 */
-<span class="fc" id="L91">	static &lt;T&gt; Val&lt;T&gt; of( T item ) { return AbstractVariable.of( true, item ); }</span>
+	static &lt;T&gt; Val&lt;T&gt; of( T item ) {
+<span class="fc" id="L98">		return Sprouts.factory().valOf( item );</span>
+	}
 
 	/**
 	 *  A factory method for creating a new {@link Val} instance
@@ -100,8 +108,8 @@ public interface Val&lt;T&gt; extends Observable
 	 * @param &lt;T&gt; The type of the item held by the {@link Val}!
 	 */
 	static &lt;T&gt; Val&lt;T&gt; of( Val&lt;T&gt; toBeCopied ) {
-<span class="nc" id="L103">		Objects.requireNonNull(toBeCopied);</span>
-<span class="nc" id="L104">		return Val.of( toBeCopied.get() ).withId( toBeCopied.id() );</span>
+<span class="nc" id="L111">		Objects.requireNonNull(toBeCopied);</span>
+<span class="nc" id="L112">		return Sprouts.factory().valOf( toBeCopied );</span>
 	}
 
 	/**
@@ -114,8 +122,76 @@ public interface Val&lt;T&gt; extends Observable
 	 * @param &lt;T&gt; The type of the item held by the {@link Val}!
 	 */
 	static &lt;T&gt; Val&lt;T&gt; ofNullable( Val&lt;T&gt; toBeCopied ) {
-<span class="fc" id="L117">		Objects.requireNonNull(toBeCopied);</span>
-<span class="fc" id="L118">		return Val.ofNullable( toBeCopied.type(), toBeCopied.orElseNull() ).withId( toBeCopied.id() );</span>
+<span class="fc" id="L125">		Objects.requireNonNull(toBeCopied);</span>
+<span class="fc" id="L126">		return Sprouts.factory().valOfNullable( toBeCopied );</span>
+	}
+
+	/**
+	 *  Creates a read only {@link Val} property that constitutes a live view of
+	 *  the two given properties using a combiner function, which takes in the
+	 *  items of the two properties and returns an updated item based on them. &lt;br&gt;
+	 *  The combiner function is invoked to compute a new item for the view property whenever
+	 *  at least one of the items in the two properties changes, or
+	 *  whenever a manual change event is fired (see {@link Var#fireChange(Channel)}) on
+	 *  either one... &lt;br&gt;&lt;br&gt;
+	 *  &lt;p&gt;
+	 *  &lt;b&gt;Note the property view does not permit storing null references!
+	 *  So if the combiner function returns a null reference on the first call,
+	 *  a {@link NullPointerException} will be thrown.
+	 *  If a null reference is returned on subsequent calls, the view will
+	 *  log a warning and simply retain the last non-null value!&lt;/b&gt;&lt;br&gt;
+	 *  If you need a composite view which allows null, use the {@link #ofNullable(Val, Val, BiFunction)} method instead.
+	 *
+	 * @param first The first property to be combined with the second property.
+	 * @param second The second property to be combined with the first property.
+	 * @param combiner The function used to combine the items of the two properties,
+	 *                 where the first argument is the item of the first property and
+	 *                 the second argument is the item of the second property.
+	 * @return A new {@link Val} instance which is a live view of the two given properties.
+	 * @param &lt;T&gt; The type of the items held by the properties.
+	 * @throws NullPointerException If the combiner function returns a null reference
+	 *                              &lt;b&gt;when it is first called&lt;/b&gt;.
+	 * @throws IllegalArgumentException If the types of the two properties are not compatible.
+	 */
+	static &lt;T&gt; Val&lt;T&gt; of( Val&lt;T&gt; first, Val&lt;T&gt; second, BiFunction&lt;T, T, T&gt; combiner ) {
+<span class="fc" id="L157">		Objects.requireNonNull(first);</span>
+<span class="fc" id="L158">		Objects.requireNonNull(second);</span>
+<span class="fc" id="L159">		Objects.requireNonNull(combiner);</span>
+<span class="pc bpc" id="L160" title="1 of 2 branches missed.">		if ( first.type() != second.type() )</span>
+<span class="nc" id="L161">			throw new IllegalArgumentException(&quot;The types of the two properties are not compatible!&quot;);</span>
+<span class="fc" id="L162">		return Sprouts.factory().valOf( first, second, combiner );</span>
+	}
+
+	/**
+	 *  Creates a read only {@link Val} property that constitutes a live view of
+	 *  the two given properties using a combiner function, which takes in the
+	 *  items of the two properties and returns an updated item based on them. &lt;br&gt;
+	 *  The combiner function is invoked to compute a new item for the view property whenever
+	 *  at least one of the items of the two properties change, or
+	 *  whenever a manual change event is fired (see {@link Var#fireChange(Channel)}). &lt;br&gt;&lt;br&gt;
+	 *  &lt;p&gt;
+	 *  Note that this property does permit storing null references.&lt;/b&gt;&lt;br&gt;
+	 *  If you need a composite view which does not permit null,
+	 *  use the {@link #of(Val, Val, BiFunction)} method instead.
+	 *
+	 * @param first The first property to be combined with the second property.
+	 * @param second The second property to be combined with the first property.
+	 * @param combiner The function used to combine the items of the two properties,
+	 *                 where the first argument is the item of the first property and
+	 *                 the second argument is the item of the second property.
+	 * @return A new {@link Val} instance which is a live view of the two given properties.
+	 * @param &lt;T&gt; The type of the items held by the properties.
+	 * @throws NullPointerException If the combiner function returns a null reference
+	 *                              &lt;b&gt;when it is first called&lt;/b&gt;.
+	 * @throws IllegalArgumentException If the types of the two properties are not compatible.
+	 */
+	static &lt;T&gt; Val&lt;T&gt; ofNullable( Val&lt;T&gt; first, Val&lt;T&gt; second, BiFunction&lt;T, T, T&gt; combiner ) {
+<span class="fc" id="L189">		Objects.requireNonNull(first);</span>
+<span class="fc" id="L190">		Objects.requireNonNull(second);</span>
+<span class="fc" id="L191">		Objects.requireNonNull(combiner);</span>
+<span class="pc bpc" id="L192" title="1 of 2 branches missed.">		if ( first.type() != second.type() )</span>
+<span class="nc" id="L193">			throw new IllegalArgumentException(&quot;The types of the two properties are not compatible!&quot;);</span>
+<span class="fc" id="L194">		return Sprouts.factory().valOfNullable( first, second, combiner );</span>
 	}
 
 	/**
@@ -131,7 +207,7 @@ public interface Val&lt;T&gt; extends Observable
 	 * @return the non-{@code null} item described by this {@code Val}
 	 * @throws NoSuchElementException if no item is present
 	 */
-<span class="fc" id="L134">	default T get() { return orElseThrow(); }</span>
+<span class="fc" id="L210">	default T get() { return orElseThrow(); }</span>
 
 	/**
 	 * If an item is present, returns the item, otherwise returns
@@ -141,7 +217,9 @@ public interface Val&lt;T&gt; extends Observable
 	 *        May be {@code null}.
 	 * @return the item, if present, otherwise {@code other}
 	 */
-<span class="fc bfc" id="L144" title="All 2 branches covered.">	default T orElseNullable( T other ) { return orElseNull() != null ? orElseNull() : other; }</span>
+	default @Nullable T orElseNullable( @Nullable T other ) {
+<span class="fc bfc" id="L221" title="All 2 branches covered.">		return orElseNull() != null ? Objects.requireNonNull(orElseNull()) : other;</span>
+	}
 
 	/**
 	 * If an item is present, returns the item, otherwise returns
@@ -151,7 +229,10 @@ public interface Val&lt;T&gt; extends Observable
 	 *        May not be {@code null}.
 	 * @return the item, if present, otherwise {@code other}
 	 */
-<span class="fc" id="L154">	default T orElse( T other ) { return orElseNullable( Objects.requireNonNull(other) ); }</span>
+	default T orElse( T other ) {
+<span class="fc" id="L233">		@Nullable T result = orElseNullable( Objects.requireNonNull(other) );</span>
+<span class="fc" id="L234">		return Objects.requireNonNull(result);</span>
+	}
 
 	/**
 	 * If an item is present, returns the item, otherwise returns the result
@@ -163,7 +244,7 @@ public interface Val&lt;T&gt; extends Observable
 	 * @throws NullPointerException if no item is present and the supplying
 	 *         function is {@code null}
 	 */
-<span class="nc bnc" id="L166" title="All 2 branches missed.">	default T orElseGet( Supplier&lt;? extends T&gt; supplier ) { return this.isPresent() ? orElseThrow() : supplier.get(); }</span>
+<span class="nc bnc" id="L247" title="All 2 branches missed.">	default T orElseGet( Supplier&lt;? extends T&gt; supplier ) { return this.isPresent() ? orElseThrow() : supplier.get(); }</span>
 
 	/**
 	 * If an item is present, returns the item, otherwise returns
@@ -171,7 +252,7 @@ public interface Val&lt;T&gt; extends Observable
 	 *
 	 * @return the item, if present, otherwise {@code null}
 	 */
-	T orElseNull();
+	@Nullable T orElseNull();
 
 	/**
 	 * If an item is present, returns the item, otherwise throws
@@ -182,10 +263,10 @@ public interface Val&lt;T&gt; extends Observable
 	 */
 	default T orElseThrow() {
 		// This class is similar to optional, so if the value is null, we throw an exception!
-<span class="fc bfc" id="L185" title="All 2 branches covered.">		if ( orElseNull() == null )</span>
-<span class="fc" id="L186">			throw new NoSuchElementException(&quot;No value present&quot;);</span>
+<span class="fc bfc" id="L266" title="All 2 branches covered.">		if ( orElseNull() == null )</span>
+<span class="fc" id="L267">			throw new NoSuchElementException(&quot;No value present&quot;);</span>
 
-<span class="fc" id="L188">		return orElseNull();</span>
+<span class="fc" id="L269">		return orElseNull();</span>
 	}
 
 	/**
@@ -193,7 +274,7 @@ public interface Val&lt;T&gt; extends Observable
 	 *
 	 * @return {@code true} if an item is present, otherwise {@code false}
 	 */
-<span class="fc bfc" id="L196" title="All 2 branches covered.">	default boolean isPresent() { return orElseNull() != null; }</span>
+<span class="fc bfc" id="L277" title="All 2 branches covered.">	default boolean isPresent() { return orElseNull() != null; }</span>
 
 	/**
 	 * If an item is  not present, returns {@code true}, otherwise
@@ -201,7 +282,41 @@ public interface Val&lt;T&gt; extends Observable
 	 *
 	 * @return  {@code true} if an item is not present, otherwise {@code false}
 	 */
-<span class="fc bfc" id="L204" title="All 2 branches covered.">	default boolean isEmpty() { return !isPresent(); }</span>
+	default boolean isEmpty() {
+<span class="fc bfc" id="L286" title="All 2 branches covered.">		return !isPresent();</span>
+	}
+
+	/**
+	 *  Creates and returns a boolean property which is a live view of the {@link #isPresent()}
+	 *  flag of this property.
+	 *
+	 * @return A live view of the presence of an item in this property in the form
+	 *         of a {@link Boolean} property.
+	 *         So whenever the {@link #isPresent()} flag of this property changes,
+	 *         the item of the returned property will be updated to reflect the change.
+	 */
+	default Val&lt;Boolean&gt; viewIsPresent() {
+<span class="fc bfc" id="L299" title="All 2 branches covered.">		if ( !this.allowsNull() )</span>
+<span class="fc" id="L300">			return Val.of( true );</span>
+		else
+<span class="fc" id="L302">			return viewAs(Boolean.class, Objects::nonNull);</span>
+	}
+
+	/**
+	 *  Creates and returns a boolean property which is a live view of the {@link #isEmpty()}
+	 *  flag of this property.
+	 *
+	 * @return A live view of the absence of an item in this property in the form
+	 *         of a {@link Boolean} property.
+	 *         So whenever the {@link #isEmpty()} flag of this property changes,
+	 *         the item of the returned property will be updated to reflect the change.
+	 */
+	default Val&lt;Boolean&gt; viewIsEmpty() {
+<span class="fc bfc" id="L315" title="All 2 branches covered.">		if ( !this.allowsNull() )</span>
+<span class="fc" id="L316">			return Val.of( false );</span>
+		else
+<span class="fc" id="L318">			return viewAs(Boolean.class, Objects::isNull);</span>
+	}
 
 	/**
 	 * If an item is present, performs the given action with the item,
@@ -212,9 +327,9 @@ public interface Val&lt;T&gt; extends Observable
 	 *         {@code null}
 	 */
 	default void ifPresent( Consumer&lt;T&gt; action ) {
-<span class="pc bpc" id="L215" title="1 of 2 branches missed.">		if ( this.isPresent() )</span>
-<span class="fc" id="L216">			action.accept( orElseThrow() );</span>
-<span class="fc" id="L217">	}</span>
+<span class="pc bpc" id="L330" title="1 of 2 branches missed.">		if ( this.isPresent() )</span>
+<span class="fc" id="L331">			action.accept( orElseThrow() );</span>
+<span class="fc" id="L332">	}</span>
 
 	/**
 	 * If an item is present, performs the given action with the item,
@@ -228,11 +343,11 @@ public interface Val&lt;T&gt; extends Observable
 	 *         action is {@code null}.
 	 */
 	default void ifPresentOrElse( Consumer&lt;? super T&gt; action, Runnable emptyAction ) {
-<span class="nc bnc" id="L231" title="All 2 branches missed.">		if ( isPresent() )</span>
-<span class="nc" id="L232">			action.accept(orElseThrow());</span>
+<span class="nc bnc" id="L346" title="All 2 branches missed.">		if ( isPresent() )</span>
+<span class="nc" id="L347">			action.accept(orElseThrow());</span>
 		else
-<span class="nc" id="L234">			emptyAction.run();</span>
-<span class="nc" id="L235">	}</span>
+<span class="nc" id="L349">			emptyAction.run();</span>
+<span class="nc" id="L350">	}</span>
 
 	/**
 	 * If an item is present, returns a {@code Val} describing the item,
@@ -247,34 +362,83 @@ public interface Val&lt;T&gt; extends Observable
 	 *         produces a {@code null} result
 	 */
 	default Val&lt;T&gt; or( Supplier&lt;? extends Val&lt;? extends T&gt;&gt; supplier ) {
-<span class="nc" id="L250">		Objects.requireNonNull(supplier);</span>
-<span class="nc bnc" id="L251" title="All 2 branches missed.">		if ( isPresent() ) return this;</span>
+<span class="nc" id="L365">		Objects.requireNonNull(supplier);</span>
+<span class="nc bnc" id="L366" title="All 2 branches missed.">		if ( isPresent() ) return this;</span>
 		else {
 			@SuppressWarnings(&quot;unchecked&quot;)
-<span class="nc" id="L254">			Val&lt;T&gt; r = (Val&lt;T&gt;) supplier.get();</span>
-<span class="nc" id="L255">			return Objects.requireNonNull(r);</span>
+<span class="nc" id="L369">			Val&lt;T&gt; r = (Val&lt;T&gt;) supplier.get();</span>
+<span class="nc" id="L370">			return Objects.requireNonNull(r);</span>
 		}
 	}
 
 	/**
-	 *  Essentially the same as {@link Optional#map(Function)}. but with a {@link Val} as return type.
+	 *  If the item is present, applies the provided mapping function to it,
+	 *  and returns it wrapped in a new {@link Val} instance. &lt;br&gt;
+	 *  If the item is not present, then an empty {@link Val} instance is returned. &lt;br&gt;
+	 *  &lt;p&gt;
+	 *  But note that the resulting property does not constitute a live view of this property
+	 *  and will not be updated when this property changes. &lt;br&gt;
+	 *  It is functionally very similar to the {@link Optional#map(Function)} method. &lt;br&gt;
+	 *  &lt;p&gt;
+	 *  &lt;b&gt;
+	 *      If you want to map to a property which is an automatically updated live view of this property,
+	 *      then use the {@link #view(Function)} method instead.
+	 *  &lt;/b&gt;
+	 *  This is essentially the same as {@link Optional#map(Function)} but based on {@link Val}
+	 *  as the wrapper instead of {@link Optional}.
 	 *
 	 * @param mapper the mapping function to apply to an item, if present
-	 * @return A property that is created from this property based on the provided mapping function.
+	 * @return A new property either empty (containing null) or containing the result of applying
+	 * 			the mapping function to the item of this property.
 	 */
 	Val&lt;T&gt; map( java.util.function.Function&lt;T, T&gt; mapper );
 
 	/**
+	 *  If the item is present, applies the provided mapping function to it,
+	 *  and returns it wrapped in a new {@link Val} instance. &lt;br&gt;
+	 *  If the item is not present, then an empty {@link Val} instance is returned. &lt;br&gt;
+	 *  &lt;p&gt;
+	 *  But note that the resulting property does not constitute a live view of this property
+	 *  and will not be updated when this property changes. &lt;br&gt;
+	 *  It is functionally very similar to the {@link Optional#map(Function)} method. &lt;br&gt;
+	 *  &lt;p&gt;
+	 *  &lt;b&gt;
+	 *      If you want to map to a property which is an automatically updated live view of this property,
+	 *      then use the {@link #viewAs(Class, Function)} method instead.
+	 *  &lt;/b&gt;
+	 *
 	 * @param type The type of the item returned from the mapping function
 	 * @param mapper the mapping function to apply to an item, if present
-	 * @return A property that is created from this property based on the provided mapping function.
+	 * @return A new property either empty (containing null) or containing the result of applying
+	 * 			the mapping function to the item of this property.
 	 * @param &lt;U&gt; The type of the item returned from the mapping function
 	 */
 	&lt;U&gt; Val&lt;U&gt; mapTo( Class&lt;U&gt; type, java.util.function.Function&lt;T, U&gt; mapper );
 
 	/**
 	 * 	Use this to create a live view of this property
-	 * 	through a new property based on the provided mapping function.
+	 * 	through a new property based on the provided mapping function. &lt;br&gt;
+	 * 	So whenever the item of this property changes, the item of the new property
+	 * 	will be updated based on the mapping function. &lt;br&gt;
+	 * 	&lt;p&gt;
+	 * 	Note that this method will try to map value based item types like
+	 * 	{@link String}, {@link Integer}, {@link Double}, etc.
+	 * 	to the default value of their respective primitive types,
+	 * 	if the provided mapping function returns a null reference.&lt;br&gt;
+	 * 	So for example, if this is a wrapper for a property of type {@link Integer},
+	 * 	and the mapping function returns a null reference, then the resulting view property
+	 * 	will always contain the value 0 and its {@link #allowsNull()} method will always return false.
+	 * 	&lt;p&gt;
+	 * 	The reason for this design decision is that a view of a property is intended to
+	 * 	be used as part of the UI of an application, where {@code null} may lead to exceptions
+	 * 	and ultimately confusing user experiences. &lt;br&gt;
+	 * 	&lt;p&gt;
+	 * 	Also note that a property view may only contain null if the property it is based on
+	 * 	was created with the &quot;ofNullable(...)&quot; factory method
+	 * 	(in which case its {@link #allowsNull()} method will return true).
+	 * 	Otherwise, it will throw an exception when trying to map a null reference.
+	 *
+	 *
 	 * @param type The type of the item returned from the mapping function
  	 * @param mapper the mapping function to apply to an item, if present
 	 * @return A property that is a live view of this property based on the provided mapping function.
@@ -284,63 +448,141 @@ public interface Val&lt;T&gt; extends Observable
 
 	/**
 	 * 	Use this to create a live view of this property
-	 * 	based on a mapping function.
-	 * 	Note that the mapping function is not allowed to return {@code null}.
-	 * 	Instead, use {@link #viewAs(Class, Function)}.
+	 * 	based on a mapping function which maps the item of this property to an item of the same type as this property.
+	 * 	So whenever the item of this property changes, the item of the new property
+	 * 	will be updated based on the mapping function.
+	 * 	If you want to create a live view of a different type, use the {@link #viewAs(Class, Function)}
+	 * 	method instead.
+	 * 	&lt;p&gt;
+	 * 	Note that this method will try to map value based item types like
+	 * 	{@link String}, {@link Integer}, {@link Double}, etc.
+	 * 	to the default value (or &quot;null object&quot;) of their respective types,
+	 * 	if the provided mapping function returns a null reference.&lt;br&gt;
+	 * 	So if the type of this property is a {@link String}, and the mapping function returns a null reference,
+	 * 	then the resulting view property will always contain an empty string and
+	 * 	its {@link #allowsNull()} method will always return false.
+	 * 	&lt;p&gt;
+	 * 	Also note that a property view may only contain null if the property it is based on
+	 * 	was created with the &quot;ofNullable(...)&quot; factory method
+	 * 	(in which case its {@link #allowsNull()} method will return true).
+	 * 	Otherwise, it will throw an exception when trying to map a null reference.
 	 *
 	 * @param mapper the mapping function to apply to an item, if present
 	 * @return A property that is a live view of this property based on the provided mapping function.
 	 */
-<span class="fc" id="L294">	default Val &lt;T&gt; view( java.util.function.Function&lt;T, T&gt; mapper ) { return viewAs( type(), mapper ); }</span>
+	default Val &lt;T&gt; view( java.util.function.Function&lt;T, T&gt; mapper ) {
+<span class="fc" id="L474">		return viewAs( type(), mapper );</span>
+	}
 
 	/**
-	 * 	Use this to create a String based live view of this property
-	 * 	through a new property based on the provided mapping function.
-	 * @param mapper the mapping function to turn the item of this property to a String, if present
+	 * 	Use this to create a {@link String} based live view of this property
+	 * 	through a new property based on the provided mapping function
+	 * 	where the item of this property is mapped to a {@link String}.
+	 * 	This means that whenever the item of this property changes, the item of the new property
+	 * 	will also be updated based on the result of the mapping function.
+	 * 	&lt;p&gt;
+	 * 	&lt;b&gt;Note that {@code null} references inside the viewed property will always be mapped
+	 * 	to the &quot;null object&quot; of the {@link String} type, which is an empty string. &lt;br&gt;
+	 * 	This means that the resulting view can never contain null and its
+	 *  {@link #allowsNull()} method will always return false.&lt;/b&gt;
+	 *  &lt;p&gt;
+	 *  The reason for this design decision is that a view of a property is intended to
+	 *  be used as part of the UI of an application, where {@code null} may lead to exceptions
+	 *  and ultimately a confusing or erroneous user experience. &lt;br&gt;
+	 *
+	 * @param mapper The mapping function to turn the item of this property to a String, if present
 	 * @return A property that is a live view of this property based on the provided mapping function.
 	 */
 	default Val&lt;String&gt; viewAsString( Function&lt;T, String&gt; mapper ) {
-<span class="nc" id="L303">		return viewAs( String.class, mapper );</span>
+<span class="fc" id="L497">		return viewAs( String.class, v -&gt; {</span>
+			try {
+<span class="fc" id="L499">				String stringRef = mapper.apply(v);</span>
+<span class="pc bpc" id="L500" title="1 of 2 branches missed.">				return ( stringRef == null ? &quot;&quot; : stringRef );</span>
+<span class="fc" id="L501">			} catch (Exception e) {</span>
+<span class="fc" id="L502">				return &quot;&quot;;</span>
+			}
+		});
 	}
 
 	/**
 	 * 	Use this to create a String based live view of this property
-	 * 	through a new property based on the &quot;toString&quot; called on the item of this property.
+	 * 	through a new property based on the {@link Object#toString()} method
+	 * 	used as the mapping function.&lt;br&gt;
+	 * 	Whenever the item of this property changes, the item of the new property
+	 * 	will be recomputed by sending the item of this property to the {@link Object#toString()}
+	 * 	method and using the result as the new item of the view property.
+	 * 	&lt;p&gt;
+	 * 	&lt;b&gt;Note that {@code null} references inside the viewed property will always be mapped
+	 * 	to the &quot;null object&quot; of the {@link String} type, which is an empty string. &lt;br&gt;
+	 * 	This means that the resulting view can never contain null and its
+	 *  {@link #allowsNull()} method will always return false.&lt;/b&gt;
+	 *  &lt;p&gt;
+	 *  The avoidance of null references in the view is a design decision
+	 *  based on the assumption that a view of a property is intended to
+	 *  be used as part of the UI of an application, where {@code null} may lead to exceptions
+	 *  and ultimately a confusing or error-prone user experience. &lt;br&gt;
 	 *
 	 * @return A String property that is a live view of this property.
 	 */
-<span class="nc" id="L312">	default Val&lt;String&gt; viewAsString() { return viewAsString( Objects::toString ); }</span>
+	default Val&lt;String&gt; viewAsString() {
+<span class="fc bfc" id="L528" title="All 2 branches covered.">		return viewAsString( v -&gt; v == null ? &quot;&quot; : v.toString() );</span>
+	}
 
 	/**
-	 * 	Use this to create a Double based live view of this property
+	 * 	Use this to create a {@link Double} based live view of this property
 	 * 	through a new property based on the provided mapping function.
+	 * 	So whenever the item of this property changes, the item of the new property
+	 * 	will be recomputed based on the result of the mapping function.
+	 * 	&lt;p&gt;
+	 * 	&lt;b&gt;Note that {@code null} references inside the viewed property will always be mapped
+	 * 	to the &quot;null object&quot; of the {@link Double} type, which is {@code 0.0}. &lt;br&gt;
+	 * 	This means that the resulting view can never contain null and its
+	 * 	{@link #allowsNull()} method will always return false.&lt;/b&gt;
+	 * 	&lt;p&gt;
+	 * 	Null is deliberately avoided in the view because the view of a property is intended to
+	 * 	be used as part of the UI of an application, where {@code null} may lead to exceptions
+	 * 	and ultimately a confusing or erroneous user experience. &lt;br&gt;
+	 * 	&lt;p&gt;
+	 * 	In case of an exception being thrown by the mapping function, the resulting view
+	 * 	will contain Double.NaN to indicate that the mapping function failed to map the item
+	 * 	of this property to a Double.
 	 *
 	 * @param mapper the mapping function to turn the item of this property to a Double, if present
 	 * @return A property that is a live view of this property based on the provided mapping function.
 	 */
 	default Val&lt;Double&gt; viewAsDouble( java.util.function.Function&lt;T, Double&gt; mapper ) {
-<span class="fc" id="L322">		return viewAs( Double.class, v -&gt; {</span>
+<span class="fc" id="L554">		return viewAs( Double.class, v -&gt; {</span>
 			try {
-<span class="fc" id="L324">				return mapper.apply(v);</span>
-<span class="nc" id="L325">			} catch (Exception e) {</span>
-<span class="nc" id="L326">				return Double.NaN;</span>
+<span class="fc" id="L556">				Double numberRef = mapper.apply(v);</span>
+<span class="pc bpc" id="L557" title="1 of 2 branches missed.">				return ( numberRef == null ? 0.0 : numberRef );</span>
+<span class="nc" id="L558">			} catch (Exception e) {</span>
+<span class="nc" id="L559">				return Double.NaN;</span>
 			}
 		});
 	}
 
 	/**
-	 * 	Use this to create a Double based live view of this property
-	 * 	through a new property based on the &quot;toString&quot; and &quot;parseDouble(String)&quot; methods.
-	 * 	If the String cannot be parsed to a Double, the item of the property will be Double.NaN.
+	 * 	Use this to create a {@link Double} based live view of this property whose item
+	 * 	is dynamically computed based on the {@link Object#toString()} and {@link Double#parseDouble(String)} methods.
+	 * 	If the String cannot be parsed to a Double, the item of the property will be {@link Double#NaN}.
+	 * 	&lt;p&gt;
+	 * 	&lt;b&gt;Note that {@code null} references inside the viewed property will always be mapped
+	 * 	to the &quot;null object&quot; of the {@link Double} type, which is {@code 0.0}. &lt;br&gt;
+	 * 	This means that the resulting view can never contain null and its
+	 * 	{@link #allowsNull()} method will always return false.&lt;/b&gt;
+	 * 	&lt;p&gt;
+	 * 	Null is deliberately avoided in the view because the view of a property is intended to
+	 * 	be used as part of the UI of an application, where {@code null} may lead to exceptions
+	 * 	and ultimately a confusing or erroneous user experience. &lt;br&gt;
 	 *
-	 * @return A Double property that is a live view of this property.
+	 * @return A {@link Double} property that is a live view of this property.
 	 */
 	default Val&lt;Double&gt; viewAsDouble() {
-<span class="nc" id="L339">		return viewAsDouble( v -&gt; {</span>
+<span class="fc" id="L581">		return viewAsDouble( v -&gt; {</span>
 			try {
-<span class="nc" id="L341">				return Double.parseDouble( v.toString() );</span>
-<span class="nc" id="L342">			} catch ( NumberFormatException e ) {</span>
-<span class="nc" id="L343">				return Double.NaN;</span>
+<span class="fc bfc" id="L583" title="All 2 branches covered.">				return ( v == null ? 0.0 : Double.parseDouble( v.toString() ) );</span>
+<span class="nc" id="L584">			} catch ( NumberFormatException e ) {</span>
+<span class="nc" id="L585">				return Double.NaN;</span>
 			}
 		});
 	}
@@ -348,33 +590,57 @@ public interface Val&lt;T&gt; extends Observable
 	/**
 	 * 	Use this to create an Integer based live view of this property
 	 * 	through a new property based on the provided mapping function.
+	 * 	So whenever the item of this property changes, the item of the new property
+	 * 	will be recomputed based on the result of the mapping function.
+	 * 	&lt;p&gt;
+	 * 	&lt;b&gt;Note that {@code null} references inside the viewed property will always be mapped
+	 * 	to the &quot;null object&quot; of the {@link Integer} type, which is {@code 0}. &lt;br&gt;
+	 * 	This means that the resulting view can never contain null and its
+	 * 	{@link #allowsNull()} method will always return false.&lt;/b&gt;
+	 * 	&lt;p&gt;
+	 * 	Null is deliberately avoided in the view because a view of a property is intended to
+	 * 	be used as part of the UI of an application, where {@code null} may lead to exceptions
+	 * 	and ultimately a confusing or erroneous user experience. &lt;br&gt;
+	 * 	&lt;p&gt;
+	 * 	In case of an exception being thrown by the mapping function, the resulting view
+	 * 	will also contain {@code 0}.
 	 *
 	 * @param mapper the mapping function to turn the item of this property to a Integer, if present
 	 * @return A property that is a live view of this property based on the provided mapping function.
 	 */
 	default Val&lt;Integer&gt; viewAsInt( java.util.function.Function&lt;T, Integer&gt; mapper ) {
-<span class="fc" id="L356">		return viewAs( Integer.class, v -&gt; {</span>
+<span class="fc" id="L612">		return viewAs( Integer.class, v -&gt; {</span>
 			try {
-<span class="fc" id="L358">				return mapper.apply(v);</span>
-<span class="nc" id="L359">			} catch (Exception e) {</span>
-<span class="nc" id="L360">				return 0;</span>
+<span class="fc" id="L614">				Integer numberRef = mapper.apply(v);</span>
+<span class="pc bpc" id="L615" title="1 of 2 branches missed.">				return ( numberRef == null ? 0 : numberRef );</span>
+<span class="fc" id="L616">			} catch (Exception e) {</span>
+<span class="fc" id="L617">				return 0;</span>
 			}
 		});
 	}
 
 	/**
 	 * 	Use this to create an Integer based live view of this property
-	 * 	through a new property based on the &quot;toString&quot; and &quot;parseInt(String)&quot; methods.
-	 * 	If the String cannot be parsed to an Integer, the item of the property will be Integer.MIN_VALUE.
+	 * 	through a new property based on the {@link Object#toString()} and {@link Integer#parseInt(String)} methods.
+	 * 	If the String cannot be parsed to an Integer, the item of the property will be {@code 0}.
+	 * 	&lt;p&gt;
+	 * 	&lt;b&gt;Note that {@code null} references inside the viewed property will always be mapped
+	 * 	to the &quot;null object&quot; of the {@link Integer} type, which is {@code 0}. &lt;br&gt;
+	 * 	This means that the resulting view can never contain null and its
+	 * 	{@link #allowsNull()} method will always return false.&lt;/b&gt;
+	 * 	&lt;p&gt;
+	 * 	Null is deliberately avoided in the view because the view of a property is intended to
+	 * 	be used as part of the UI of an application, where {@code null} may lead to exceptions
+	 * 	and ultimately a confusing or erroneous user experience. &lt;br&gt;
 	 *
 	 * @return An Integer property that is a live view of this property.
 	 */
 	default Val&lt;Integer&gt; viewAsInt() {
-<span class="nc" id="L373">		return viewAsInt( v -&gt; {</span>
+<span class="fc" id="L639">		return viewAsInt( v -&gt; {</span>
 			try {
-<span class="nc" id="L375">				return Integer.parseInt( v.toString() );</span>
-<span class="nc" id="L376">			} catch ( NumberFormatException e ) {</span>
-<span class="nc" id="L377">				return 0;</span>
+<span class="fc bfc" id="L641" title="All 2 branches covered.">				return ( v == null ? 0 : Integer.parseInt( v.toString() ) );</span>
+<span class="nc" id="L642">			} catch ( NumberFormatException e ) {</span>
+<span class="nc" id="L643">				return 0;</span>
 			}
 		});
 	}
@@ -382,11 +648,15 @@ public interface Val&lt;T&gt; extends Observable
 	/**
 	 *  This method simply returns a {@link String} representation of the wrapped item
 	 *  which would otherwise be accessed via the {@link #orElseThrow()} method.
-	 *  Calling it should not have any side effects.
+	 *  Calling it should not have any side effects. &lt;br&gt;
+	 *  The string conversion is based on the {@link String#valueOf(Object)} method,
+	 *  so if the item is null, the string &quot;null&quot; will be returned.
 	 *
 	 * @return The {@link String} representation of the item wrapped by an implementation of this interface.
 	 */
-<span class="fc" id="L389">	default String itemAsString() { return this.mapTo(String.class, String::valueOf).orElseNullable(EMPTY); }</span>
+	default String itemAsString() {
+<span class="fc" id="L658">		return this.mapTo(String.class, String::valueOf).orElse(EMPTY);</span>
+	}
 
 	/**
 	 *  This method returns a {@link String} representation of the type of the wrapped item.
@@ -394,7 +664,7 @@ public interface Val&lt;T&gt; extends Observable
 	 *
 	 * @return A simple {@link String} representation of the type of the item wrapped by an implementation of this interface.
 	 */
-<span class="nc" id="L397">	default String typeAsString() { return this.type().getName(); }</span>
+<span class="fc" id="L667">	default String typeAsString() { return this.type().getName(); }</span>
 
 	/**
 	 *  This method check if the provided item is equal to the item wrapped by this {@link Var} instance.
@@ -402,9 +672,8 @@ public interface Val&lt;T&gt; extends Observable
 	 * @param otherItem The other item of the same type as is wrapped by this.
 	 * @return The truth value determining if the provided item is equal to the wrapped item.
 	 */
-	default boolean is( T otherItem ) {
-<span class="fc" id="L406">		T current = this.orElseNullable(null);</span>
-<span class="fc" id="L407">		return equals(current, otherItem);</span>
+	default boolean is( @Nullable T otherItem ) {
+<span class="fc" id="L676">		return equals(otherItem, this.orElseNullable(null));</span>
 	}
 
 	/**
@@ -415,8 +684,8 @@ public interface Val&lt;T&gt; extends Observable
 	 * @return The truth value determining if the item of the supplied property is equal to the wrapped item.
 	 */
 	default boolean is( Val&lt;T&gt; other ) {
-<span class="fc" id="L418">		Objects.requireNonNull(other);</span>
-<span class="fc" id="L419">		return this.is( other.orElseNullable(null) );</span>
+<span class="fc" id="L687">		Objects.requireNonNull(other);</span>
+<span class="fc" id="L688">		return this.is( other.orElseNullable(null) );</span>
 	}
 
 	/**
@@ -426,7 +695,7 @@ public interface Val&lt;T&gt; extends Observable
 	 * @param otherItem The other item of the same type as is wrapped by this.
 	 * @return The truth value determining if the provided item is not equal to the wrapped item.
 	 */
-<span class="fc bfc" id="L429" title="All 2 branches covered.">	default boolean isNot( T otherItem ) { return !this.is(otherItem); }</span>
+<span class="fc bfc" id="L698" title="All 2 branches covered.">	default boolean isNot( T otherItem ) { return !this.is(otherItem); }</span>
 
 	/**
 	 *  This method check if the item of the provided property
@@ -436,10 +705,10 @@ public interface Val&lt;T&gt; extends Observable
 	 * @param other The other property of the same type as is wrapped by this.
 	 * @return The truth value determining if the item of the supplied property is not equal to the wrapped item.
 	 */
-<span class="fc bfc" id="L439" title="All 2 branches covered.">	default boolean isNot( Val&lt;T&gt; other ) { return !this.is(other); }</span>
+<span class="fc bfc" id="L708" title="All 2 branches covered.">	default boolean isNot( Val&lt;T&gt; other ) { return !this.is(other); }</span>
 
 	/**
-	 *  This method check if at least one of the provided items is equal to
+	 *  This method checks if at least one of the provided items is equal to
 	 *  the item wrapped by this {@link Var} instance.
 	 *
 	 * @param first The first item of the same type as is wrapped by this.
@@ -447,16 +716,17 @@ public interface Val&lt;T&gt; extends Observable
 	 * @param otherValues The other items of the same type as is wrapped by this.
 	 * @return The truth value determining if the provided item is equal to the wrapped item.
 	 */
+	@SuppressWarnings(&quot;unchecked&quot;)
 	default boolean isOneOf( T first, T second, T... otherValues ) {
-<span class="fc bfc" id="L451" title="All 2 branches covered.">		if ( this.is(first) ) return true;</span>
-<span class="pc bpc" id="L452" title="1 of 2 branches missed.">		if ( this.is(second) ) return true;</span>
-<span class="pc bpc" id="L453" title="1 of 2 branches missed.">		for ( T otherValue : otherValues )</span>
-<span class="nc bnc" id="L454" title="All 2 branches missed.">			if ( this.is(otherValue) ) return true;</span>
-<span class="fc" id="L455">		return false;</span>
+<span class="fc bfc" id="L721" title="All 2 branches covered.">		if ( this.is(first) ) return true;</span>
+<span class="pc bpc" id="L722" title="1 of 2 branches missed.">		if ( this.is(second) ) return true;</span>
+<span class="pc bpc" id="L723" title="1 of 2 branches missed.">		for ( T otherValue : otherValues )</span>
+<span class="nc bnc" id="L724" title="All 2 branches missed.">			if ( this.is(otherValue) ) return true;</span>
+<span class="fc" id="L725">		return false;</span>
 	}
 
 	/**
-	 *  This method check if at least one of the items of the provided properties
+	 *  This checks if at least one of the items of the provided properties
 	 *  is equal to the item wrapped by this {@link Var} instance.
 	 *
 	 * @param first The first property of the same type as is wrapped by this.
@@ -464,17 +734,20 @@ public interface Val&lt;T&gt; extends Observable
 	 * @param otherValues The other properties of the same type as is wrapped by this.
 	 * @return The truth value determining if the item of the supplied property is equal to the wrapped item.
 	 */
+	@SuppressWarnings(&quot;unchecked&quot;)
 	default boolean isOneOf( Val&lt;T&gt; first, Val&lt;T&gt; second, Val&lt;T&gt;... otherValues ) {
-<span class="pc bpc" id="L468" title="1 of 2 branches missed.">		if ( this.is(first) ) return true;</span>
-<span class="fc bfc" id="L469" title="All 2 branches covered.">		if ( this.is(second) ) return true;</span>
-<span class="pc bpc" id="L470" title="1 of 2 branches missed.">		for ( Val&lt;T&gt; otherValue : otherValues )</span>
-<span class="nc bnc" id="L471" title="All 2 branches missed.">			if ( this.is(otherValue) ) return true;</span>
-<span class="fc" id="L472">		return false;</span>
+<span class="pc bpc" id="L739" title="1 of 2 branches missed.">		if ( this.is(first) ) return true;</span>
+<span class="fc bfc" id="L740" title="All 2 branches covered.">		if ( this.is(second) ) return true;</span>
+<span class="pc bpc" id="L741" title="1 of 2 branches missed.">		for ( Val&lt;T&gt; otherValue : otherValues )</span>
+<span class="nc bnc" id="L742" title="All 2 branches missed.">			if ( this.is(otherValue) ) return true;</span>
+<span class="fc" id="L743">		return false;</span>
 	}
 
 	/**
-	 *  This returns the name/id of the property which is useful for debugging as well as
-	 *  persisting their state by using them as keys for whatever storage data structure one chooses.
+	 *  Returns the name/id of the property which is useful for debugging as well as
+	 *  persisting their state by using them as keys for whatever storage data structure one chooses. &lt;br&gt;
+	 *  For example, when converting a property based model to a JSON object, the id of the properties
+	 *  can be used as keys in the JSON object.
 	 *
 	 * @return The id which is assigned to this property.
 	 */
@@ -485,21 +758,35 @@ public interface Val&lt;T&gt; extends Observable
 	 *  This id is used to identify the property in the UI
 	 *  or as a key in a map, which is useful when converting your
 	 *  view model to a JSON object, or similar formats.
+	 *  &lt;p&gt;
+	 *  You can retrieve the id of a property by calling the {@link #id()} method.&lt;br&gt;
+	 *  An id may &lt;b&gt;not be null&lt;/b&gt;, please use the {@link #NO_ID} constant
+	 *  or an empty string to indicate that a property has no id.
 	 *
-	 * @param id The id of the property.
+	 * @param id The id of the property, which is used to identify it.
+	 *           It may &lt;b&gt;not be null&lt;/b&gt;, please use the {@link #NO_ID} constant
 	 * @return A new {@link Val} instance with the given id.
 	 */
 	Val&lt;T&gt; withId( String id );
 
 	/**
-	 * @return True when this property has not been assigned an id.
+	 *  A convenient method to check if this property has not been assigned an id. &lt;br&gt;
+	 *  This is the same as calling {@code !hasID()} or {@code id().equals(NO_ID)}.
+	 * @return True when this property has not been assigned an id or
+	 * 				the id is equal to the {@link #NO_ID} constant.
 	 */
-<span class="nc bnc" id="L497" title="All 2 branches missed.">	default boolean hasNoID() { return !hasID(); }</span>
+	default boolean hasNoID() {
+<span class="nc bnc" id="L779" title="All 2 branches missed.">		return !hasID();</span>
+	}
 
 	/**
-	 * @return The truth value determining if this property has been assigned an id.
+	 *  A convenient method to check if this property has been assigned an id. &lt;br&gt;
+	 *  This is the same as calling {@code !id().equals(NO_ID)}.
+	 *
+	 * @return The truth value determining if this property has been assigned an id,
+	 *  	 		or if &lt;b&gt;id is not equal to the {@link #NO_ID} constant&lt;/b&gt;.
 	 */
-<span class="pc bpc" id="L502" title="1 of 2 branches missed.">	default boolean hasID() { return !NO_ID.equals(id()); }</span>
+<span class="pc bpc" id="L789" title="1 of 2 branches missed.">	default boolean hasID() { return !NO_ID.equals(id()); }</span>
 
 	/**
 	 *  This returns the type of the item wrapped by this {@link Var}
@@ -514,7 +801,7 @@ public interface Val&lt;T&gt; extends Observable
 	 *  interact with the item wrapped by this {@link Val} in a more functional way.
 	 * @return An {@link Optional} wrapping the item wrapped by this {@link Val}.
 	 */
-<span class="fc" id="L517">	default Optional&lt;T&gt; toOptional() { return Optional.ofNullable(this.orElseNull()); }</span>
+<span class="fc" id="L804">	default Optional&lt;T&gt; toOptional() { return Optional.ofNullable(this.orElseNull()); }</span>
 
 	/**
 	 *  Use this to register an observer lambda for a particular {@link Channel},
@@ -534,7 +821,7 @@ public interface Val&lt;T&gt; extends Observable
 	 *  Triggers all observer lambdas for the given {@link Channel}.
 	 *  Change listeners may be registered using the {@link #onChange(Channel, Action)} method.
 	 *  Note that when the {@code Var::set(T)} method is called
-	 *  then this will automatically translate to {@code fire(From.VIEW_MODEL)}.
+	 *  then this will automatically translate to {@code fireChange(From.VIEW_MODEL)}.
 	 *  So it is supposed to be used by the view to update the UI components.
 	 *  This is in essence how binding works in Swing-Tree.
 	 *
@@ -572,17 +859,17 @@ public interface Val&lt;T&gt; extends Observable
 	 * @param o2 The second object which ought to be compared to the first one.
 	 * @return The truth value determining if the objects are equal in terms of their state!
 	 */
-	static boolean equals( Object o1, Object o2 ) {
-<span class="pc bpc" id="L576" title="1 of 2 branches missed.">		if ( o1 instanceof float[]   ) return Arrays.equals( (float[] )  o1, (float[] )  o2 );</span>
-<span class="fc bfc" id="L577" title="All 2 branches covered.">		if ( o1 instanceof int[]     ) return Arrays.equals( (int[]   )  o1, (int[]   )  o2 );</span>
-<span class="pc bpc" id="L578" title="1 of 2 branches missed.">		if ( o1 instanceof char[]    ) return Arrays.equals( (char[]  )  o1, (char[]  )  o2 );</span>
-<span class="pc bpc" id="L579" title="1 of 2 branches missed.">		if ( o1 instanceof double[]  ) return Arrays.equals( (double[])  o1, (double[])  o2 );</span>
-<span class="pc bpc" id="L580" title="1 of 2 branches missed.">		if ( o1 instanceof long[]    ) return Arrays.equals( (long[]  )  o1, (long[]  )  o2 );</span>
-<span class="pc bpc" id="L581" title="1 of 2 branches missed.">		if ( o1 instanceof byte[]    ) return Arrays.equals( (byte[]  )  o1, (byte[]  )  o2 );</span>
-<span class="pc bpc" id="L582" title="1 of 2 branches missed.">		if ( o1 instanceof short[]   ) return Arrays.equals( (short[] )  o1, (short[] )  o2 );</span>
-<span class="pc bpc" id="L583" title="1 of 2 branches missed.">		if ( o1 instanceof boolean[] ) return Arrays.equals( (boolean[]) o1, (boolean[]) o2 );</span>
-<span class="pc bpc" id="L584" title="1 of 2 branches missed.">		if ( o1 instanceof Object[]  ) return Arrays.equals( (Object[])  o1, (Object[])  o2 );</span>
-<span class="fc" id="L585">		return Objects.equals( o1, o2 );</span>
+	static boolean equals( @Nullable Object o1, @Nullable Object o2 ) {
+<span class="pc bpc" id="L863" title="1 of 2 branches missed.">		if ( o1 instanceof float[]   ) return Arrays.equals( (float[] )  o1, (float[] )  o2 );</span>
+<span class="fc bfc" id="L864" title="All 2 branches covered.">		if ( o1 instanceof int[]     ) return Arrays.equals( (int[]   )  o1, (int[]   )  o2 );</span>
+<span class="pc bpc" id="L865" title="1 of 2 branches missed.">		if ( o1 instanceof char[]    ) return Arrays.equals( (char[]  )  o1, (char[]  )  o2 );</span>
+<span class="pc bpc" id="L866" title="1 of 2 branches missed.">		if ( o1 instanceof double[]  ) return Arrays.equals( (double[])  o1, (double[])  o2 );</span>
+<span class="pc bpc" id="L867" title="1 of 2 branches missed.">		if ( o1 instanceof long[]    ) return Arrays.equals( (long[]  )  o1, (long[]  )  o2 );</span>
+<span class="pc bpc" id="L868" title="1 of 2 branches missed.">		if ( o1 instanceof byte[]    ) return Arrays.equals( (byte[]  )  o1, (byte[]  )  o2 );</span>
+<span class="pc bpc" id="L869" title="1 of 2 branches missed.">		if ( o1 instanceof short[]   ) return Arrays.equals( (short[] )  o1, (short[] )  o2 );</span>
+<span class="pc bpc" id="L870" title="1 of 2 branches missed.">		if ( o1 instanceof boolean[] ) return Arrays.equals( (boolean[]) o1, (boolean[]) o2 );</span>
+<span class="pc bpc" id="L871" title="1 of 2 branches missed.">		if ( o1 instanceof Object[]  ) return Arrays.equals( (Object[])  o1, (Object[])  o2 );</span>
+<span class="fc" id="L872">		return Objects.equals( o1, o2 );</span>
 	}
 
 	/**
@@ -596,16 +883,16 @@ public interface Val&lt;T&gt; extends Observable
 	 * @return The hash code of the object.
 	 */
 	static int hashCode( Object o ) {
-<span class="pc bpc" id="L599" title="1 of 2 branches missed.">		if ( o instanceof float[]   ) return Arrays.hashCode( (float[] )  o );</span>
-<span class="fc bfc" id="L600" title="All 2 branches covered.">		if ( o instanceof int[]     ) return Arrays.hashCode( (int[]   )  o );</span>
-<span class="pc bpc" id="L601" title="1 of 2 branches missed.">		if ( o instanceof char[]    ) return Arrays.hashCode( (char[]  )  o );</span>
-<span class="pc bpc" id="L602" title="1 of 2 branches missed.">		if ( o instanceof double[]  ) return Arrays.hashCode( (double[])  o );</span>
-<span class="pc bpc" id="L603" title="1 of 2 branches missed.">		if ( o instanceof long[]    ) return Arrays.hashCode( (long[]  )  o );</span>
-<span class="pc bpc" id="L604" title="1 of 2 branches missed.">		if ( o instanceof byte[]    ) return Arrays.hashCode( (byte[]  )  o );</span>
-<span class="pc bpc" id="L605" title="1 of 2 branches missed.">		if ( o instanceof short[]   ) return Arrays.hashCode( (short[] )  o );</span>
-<span class="pc bpc" id="L606" title="1 of 2 branches missed.">		if ( o instanceof boolean[] ) return Arrays.hashCode( (boolean[]) o );</span>
-<span class="pc bpc" id="L607" title="1 of 2 branches missed.">		if ( o instanceof Object[]  ) return Arrays.hashCode( (Object[])  o );</span>
-<span class="fc" id="L608">		return Objects.hashCode( o );</span>
+<span class="pc bpc" id="L886" title="1 of 2 branches missed.">		if ( o instanceof float[]   ) return Arrays.hashCode( (float[] )  o );</span>
+<span class="fc bfc" id="L887" title="All 2 branches covered.">		if ( o instanceof int[]     ) return Arrays.hashCode( (int[]   )  o );</span>
+<span class="pc bpc" id="L888" title="1 of 2 branches missed.">		if ( o instanceof char[]    ) return Arrays.hashCode( (char[]  )  o );</span>
+<span class="pc bpc" id="L889" title="1 of 2 branches missed.">		if ( o instanceof double[]  ) return Arrays.hashCode( (double[])  o );</span>
+<span class="pc bpc" id="L890" title="1 of 2 branches missed.">		if ( o instanceof long[]    ) return Arrays.hashCode( (long[]  )  o );</span>
+<span class="pc bpc" id="L891" title="1 of 2 branches missed.">		if ( o instanceof byte[]    ) return Arrays.hashCode( (byte[]  )  o );</span>
+<span class="pc bpc" id="L892" title="1 of 2 branches missed.">		if ( o instanceof short[]   ) return Arrays.hashCode( (short[] )  o );</span>
+<span class="pc bpc" id="L893" title="1 of 2 branches missed.">		if ( o instanceof boolean[] ) return Arrays.hashCode( (boolean[]) o );</span>
+<span class="pc bpc" id="L894" title="1 of 2 branches missed.">		if ( o instanceof Object[]  ) return Arrays.hashCode( (Object[])  o );</span>
+<span class="fc" id="L895">		return Objects.hashCode( o );</span>
 	}
 
 }

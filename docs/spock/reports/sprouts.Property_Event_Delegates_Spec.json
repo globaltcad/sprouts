@@ -141,7 +141,7 @@
 
         {"kind":"when","text":"We add an element to the property list.","code":["propertyList.add(42)"]},
 
-        {"kind":"then","text":"The delegate has a descriptive string representation.","code":["delegate.toString() == 'ValsDelegate[index=3, changeType=ADD, newValue=Var<Integer>[42], oldValue=null, vals=Vals<Integer>[1, 2, 3, 42]]'"]}
+        {"kind":"then","text":"The delegate has a descriptive string representation.","code":["delegate.toString() == 'ValsDelegate[index=3, changeType=ADD, newValues=Vals<Integer>[42], oldValues=Vals<Integer>[EMPTY], vals=Vals<Integer>[1, 2, 3, 42]]'"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }
