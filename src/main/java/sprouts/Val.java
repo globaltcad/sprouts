@@ -170,7 +170,7 @@ public interface Val<T> extends Observable
 	 *  at least one of the items of the two properties change, or
 	 *  whenever a manual change event is fired (see {@link Var#fireChange(Channel)}). <br><br>
 	 *  <p>
-	 *  Note that this property does permit storing null references.</b><br>
+	 *  <b>Note that this property does permit storing null references.</b><br>
 	 *  If you need a composite view which does not permit null,
 	 *  use the {@link #of(Val, Val, BiFunction)} method instead.
 	 *
