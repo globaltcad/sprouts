@@ -1,10 +1,10 @@
 {
   "className":"sprouts.Properties_List_Spec",
   "title":"Lists of Properties",
-  "narrative":"Just like properties you can create lists of properties\n    and then bind them to UI components.\n    They are a powerful tool to model the state \n    as well as business logic of your UI without actually depending on it.\n    This is especially useful for testing your UIs logic.\n    This specification shows how to use the various\n    methods exposed by the property lists classes, \n    namely \"Vals\" (immutable) and \"Vars\" (mutable).",
+  "narrative":"Just like properties you can create lists of properties\n    and then bind them to UI components.\n    They are a powerful tool to model the state\n    as well as business logic of your UI without actually depending on it.\n    This is especially useful for testing your UIs logic.\n    This specification shows how to use the various\n    methods exposed by the property lists classes,\n    namely \"Vals\" (immutable) and \"Vars\" (mutable).",
   "subjects":["sprouts.Vals","sprouts.Vars"],
   "statistics":{
-    "runs":"32",
+    "runs":"33",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -671,6 +671,29 @@
         {"kind":"when","text":"We set one of the properties to null.","code":["vars.at(1).set(null)"]},
 
         {"kind":"then","text":"The \"none\" method returns true if none of the properties match the given predicate.","code":["vars.none({ it.isNot(null) && it.get() == 2 })"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `indexOf` method returns the index of the first occurrence of the given property.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"A \"Vars\" instance having a few properties.","code":["var vars = Vars.of(\"a\", \"b\", \"c\", \"d\", \"e\")"]},
+
+        {"kind":"expect","text":"The `indexOf` method returns the index of the first occurrence of the given property.","code":["vars.indexOf(\"c\") == 2"]},
+
+        {"kind":"when","text":"We set one of the properties to null.","code":["vars.at(1).set(\"\")"]},
+
+        {"kind":"then","text":"The `indexOf` method returns -1 if the property is not in the list.","code":["vars.indexOf(\"b\") == -1","vars.indexOf(\"\") == 1"]},
+
+        {"kind":"when","text":"We create a list of nullable properties and set one of the properties to null.","code":["vars = Vars.ofNullable(String, \"a\", \"b\", \"c\", \"d\", \"e\")","vars.at(1).set(null)"]},
+
+        {"kind":"then","text":"The `indexOf` method returns the index of the first occurrence of the given property.","code":["vars.indexOf(\"c\") == 2","vars.indexOf(null) == 1"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }

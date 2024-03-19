@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ValsDelegate.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sprouts</a> &gt; <a href="index.source.html" class="el_package">sprouts</a> &gt; <span class="el_source">ValsDelegate.java</span></div><h1>ValsDelegate.java</h1><pre class="source lang-java linenums">package sprouts;
+
+/**
+ *  A context object passed to the various types of change listeners registered
+ *  in property lists such as {@link Vals} and {@link Vars}.
+ *  It provides helpful context information about the change, such as the
+ *  previous and current value of the property, the index of the property
+ *  in the list, and type of change.
+ *
+ * @param &lt;T&gt; The type of the value wrapped by the delegated property...
+ */
+public interface ValsDelegate&lt;T&gt;
+{
+    /**
+     *  The type of change that occurred in the property list.
+     *  This information can be used to perform different actions
+     *  that are specific to the type of change.
+     *
+     *  @return The mutation type of the change which may be one of the following:
+     *          &lt;ul&gt;
+     *              &lt;li&gt;{@link Change#ADD}&lt;/li&gt;
+     *              &lt;li&gt;{@link Change#REMOVE}&lt;/li&gt;
+     *              &lt;li&gt;{@link Change#SET}&lt;/li&gt;
+     *              &lt;li&gt;{@link Change#SORT}&lt;/li&gt;
+     *              &lt;li&gt;{@link Change#CLEAR}&lt;/li&gt;
+     *              &lt;li&gt;{@link Change#DISTINCT}&lt;/li&gt;
+     *              &lt;li&gt;{@link Change#NONE}&lt;/li&gt;
+     *          &lt;/ul&gt;
+     */
+    Change changeType();
+
+    /**
+     *  Exposes the index at which the {@link Change} on the property list took place.&lt;br&gt;
+     *  Note that in case of the type of mutation be non-specific to a particular index,
+     *  like a list clear or a list sort, this method will return -1.
+     *  @return The index at which a list mutation took place or -1
+     *          if the change does not involve a particular index, like a list clear or a list sort.
+     */
+    int index();
+
+    /**
+     *  Exposes a read only property list of old values which were removed from the property list.
+     * @return An immutable copy of removed properties in the property list before the change has been applied.
+     */
+    Vals&lt;T&gt; oldValues();
+
+    /**
+     *  Exposes the first previous value of the property before the change took place.
+     *  This is equivalent to calling {@code oldValues().first()}.
+     * @deprecated Use {@link #oldValues()} instead! (After a change event, more than one item can be removed or changed)
+     * @return The previous value of the property or an empty property if the change does not involve a previous value.
+     */
+    @Deprecated
+    default Val&lt;T&gt; oldValue() {
+<span class="nc" id="L55">        return oldValues().first();</span>
+    }
+
+    /**
+     *  Exposes a read only property list after the change has been applied,
+     *  which contains the new values in the property list.
+     * @return An immutable copy of new properties in the property list after the change has been applied.
+     */
+    Vals&lt;T&gt; newValues();
+
+    /**
+     *  Exposes the first new value of the property after the change took place.
+     *  This is equivalent to calling {@code newValues().first()}.
+     *  @deprecated Use {@link #newValues()} instead! (After a change event, more than one item can be added or changed)
+     * @return The current value of the property or an empty property if the change does not involve a current value.
+     */
+    @Deprecated
+    default Val&lt;T&gt; newValue() {
+<span class="nc" id="L73">        return newValues().first();</span>
+    }
+
+    /**
+     *  Exposes a read only property list after the change has been applied.
+     * @return An immutable copy of the property list after the change has been applied.
+     */
+    Vals&lt;T&gt; vals();
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Var.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sprouts</a> &gt; <a href="index.source.html" class="el_package">sprouts</a> &gt; <span class="el_source">Var.java</span></div><h1>Var.java</h1><pre class="source lang-java linenums">package sprouts;
 
-import sprouts.impl.AbstractVariable;
+import org.jspecify.annotations.Nullable;
+import sprouts.impl.Sprouts;
 
 import java.util.Optional;
 import java.util.function.Function;
@@ -22,9 +23,9 @@ import java.util.function.Function;
  * 	which is intended to be used for state changes as part of your core business logic.
  *  &lt;p&gt;
  * 	So for example if you have a {@link Var} which represents the username
- * 	of a form, in your UI you can register a callback using {@link #onChange(Channel, Action)}
+ * 	of a form, then inside your UI you can register a callback using {@link #onChange(Channel, Action)}
  * 	using the channel {@link From#VIEW_MODEL} which
- * 	will update the UI accordingly when {@link #set(Object)} is called inside you view model.
+ * 	will update the UI accordingly when {@link #set(Object)} is called inside you view model. &lt;br&gt;
  * 	On the other hand, when the UI changes the property through the {@code #set(From.View, object)}
  * 	method, all {@link #onChange(Channel, Action)} with the channel {@link From#VIEW} listeners
  * 	will be notified. &lt;br&gt;
@@ -33,18 +34,19 @@ import java.util.function.Function;
  * 	    // A username property with a validation action:
  * 		private final Var&lt;String&gt; username = Var.of(&quot;&quot;).onChange(From.VIEW v -&gt; validateUser(v) );
  * 	}&lt;/pre&gt;
- * 	And the following SwingTree example UI:
+ * 	And the following &lt;a href=&quot;https://github.com/globaltcad/swing-tree&quot;&gt;SwingTree&lt;/a&gt;
+ * 	example UI:
  * 	&lt;pre&gt;{@code
- * 	    UI.textField()
+ * 	    UI.textField(&quot;&quot;)
  * 	    .peek( tf -&gt; vm.getUsername().onChange(From.VIEW_MODEL t -&gt; tf.setText(t.get()) ) )
- * 	    .onKeyRelease( e -&gt; vm.getUsername().act( ta.getText() ) );
+ * 	    .onKeyRelease( e -&gt; vm.getUsername().set(From.VIEW, ta.getText() ) );
  * 	}&lt;/pre&gt;
- * 	Your view will automatically update the text field with the item of the property
- * 	and inside your view model you can also update the item of the property
- * 	to be shown in the UI:
+ * 	Here your view will automatically update the item of the text property
+ * 	and inside your view model you can freely update the username property
+ * 	and it will automatically update the text field in the UI:
  * 	&lt;pre&gt;{@code
  * 	    // Initially empty username:
- * 		username.set( &quot;&quot; ) // triggers 'fire(From.VIEW_MODEL)'
+ * 		username.set( &quot;&quot; ) // triggers 'fireChange(From.VIEW_MODEL)'
  * 	}&lt;/pre&gt;
  * 	&lt;p&gt;
  * 	If you no longer need to observe a property, you can use the {@link #unsubscribe(Subscriber)}
@@ -84,8 +86,8 @@ public interface Var&lt;T&gt; extends Val&lt;T&gt;
 	 * @param &lt;T&gt; The type of the wrapped item.
 	 * @return A new {@link Var} instance.
 	 */
-	static &lt;T&gt; Var&lt;T&gt; ofNullable( Class&lt;T&gt; type, T item ) {
-<span class="fc" id="L88">		return AbstractVariable.ofNullable( false, type, item );</span>
+	static &lt;T&gt; Var&lt;T&gt; ofNullable( Class&lt;T&gt; type, @Nullable T item ) {
+<span class="fc" id="L90">		return Sprouts.factory().varOfNullable( type, item );</span>
 	}
 
 	/**
@@ -101,7 +103,7 @@ public interface Var&lt;T&gt; extends Val&lt;T&gt;
 	 * @param &lt;T&gt; The type of the wrapped item.
 	 */
 	static &lt;T&gt; Var&lt;T&gt; ofNull( Class&lt;T&gt; type ) {
-<span class="nc" id="L104">		return AbstractVariable.ofNullable( false, type, null );</span>
+<span class="fc" id="L106">		return Sprouts.factory().varOfNull( type );</span>
 	}
 
 	/**
@@ -116,7 +118,9 @@ public interface Var&lt;T&gt; extends Val&lt;T&gt;
 	 * @return A new {@link Var} instance wrapping the given item.
 	 * @throws IllegalArgumentException If the given item is null.
 	 */
-<span class="fc" id="L119">	static &lt;T&gt; Var&lt;T&gt; of( T item ) { return AbstractVariable.of( false, item ); }</span>
+	static &lt;T&gt; Var&lt;T&gt; of( T item ) {
+<span class="fc" id="L122">		return Sprouts.factory().varOf( item );</span>
+	}
 
 	/**
 	 * 	This factory method returns a {@code Var} describing the given non-{@code null}
@@ -132,7 +136,9 @@ public interface Var&lt;T&gt; extends Val&lt;T&gt;
 	 * @return A new {@link Var} instance wrapping the given item.
 	 * @throws IllegalArgumentException If the given item is null.
 	 */
-<span class="nc" id="L135">	static &lt;T, V extends T&gt; Var&lt;T&gt; of( Class&lt;T&gt; type, V item ) { return AbstractVariable.of( false, type, item ); }</span>
+	static &lt;T, V extends T&gt; Var&lt;T&gt; of( Class&lt;T&gt; type, V item ) {
+<span class="fc" id="L140">		return Sprouts.factory().varOf( type, item );</span>
+	}
 
 	/**
 	 *  This method provides the ability to modify the state of the wrapper
@@ -142,8 +148,8 @@ public interface Var&lt;T&gt; extends Val&lt;T&gt;
 	 * @param newItem The new item which ought to replace the old one.
 	 * @return This very wrapper instance, in order to enable method chaining.
 	 */
-	default Var&lt;T&gt; set( T newItem ) {
-<span class="fc" id="L146">		return this.set(DEFAULT_CHANNEL, newItem);</span>
+	default Var&lt;T&gt; set( @Nullable T newItem ) {
+<span class="fc" id="L152">		return this.set(DEFAULT_CHANNEL, newItem);</span>
 	}
 
 	/**
@@ -156,7 +162,7 @@ public interface Var&lt;T&gt; extends Val&lt;T&gt;
 	 * @param newItem The new item which ought to replace the old one.
 	 * @return This very wrapper instance, in order to enable method chaining.
 	 */
-	Var&lt;T&gt; set( Channel channel, T newItem );
+	Var&lt;T&gt; set( Channel channel, @Nullable T newItem );
 
 	/**
 	 *  Use this method to create a new property with an id.
@@ -175,36 +181,64 @@ public interface Var&lt;T&gt; extends Val&lt;T&gt;
 	@Override Var&lt;T&gt; onChange( Channel channel, Action&lt;Val&lt;T&gt;&gt; action );
 
 	/**
-	 *  Essentially the same as {@link Optional#map(Function)}. but with a {@link Val} as return type.
+	 *  If the item is present, then this applies the provided mapping function to it,
+	 *  and return it wrapped in a new {@link Var} instance. &lt;br&gt;
+	 *  If the item is not present, then an empty {@link Var} instance is returned. &lt;br&gt;
+	 *  &lt;p&gt;
+	 *  But note that the resulting property does not constitute a live view of this property
+	 *  and will not be updated when this property changes. &lt;br&gt;
+	 *  It is functionally very similar to the {@link Optional#map(Function)} method. &lt;br&gt;
+	 *  &lt;p&gt;
+	 *  &lt;b&gt;
+	 *      If you want to map to a property which is an automatically updated live view of this property,
+	 *      then use the {@link #view(Function)} method instead.
+	 *  &lt;/b&gt;
+	 *  This is essentially the same as {@link Optional#map(Function)} but based on {@link Var}
+	 *  as the wrapper instead of {@link Optional}.
 	 *
-	 * @param mapper the mapping function to apply to an item, if present
-	 * @return the result of applying an {@code Optional}-bearing mapping
+	 * @param mapper The mapping function to apply to an item, if present.
+	 * @return A new property either empty (containing null) or containing the result of applying
+	 * 			the mapping function to the item of this property.
 	 */
 	@Override default Var&lt;T&gt; map( java.util.function.Function&lt;T, T&gt; mapper ) {
-<span class="nc bnc" id="L184" title="All 2 branches missed.">		if ( !isPresent() )</span>
-<span class="nc" id="L185">			return Var.ofNullable( type(), null );</span>
+<span class="nc bnc" id="L204" title="All 2 branches missed.">		if ( !isPresent() )</span>
+<span class="nc" id="L205">			return Var.ofNullable( type(), null );</span>
 
-<span class="nc" id="L187">		T newValue = mapper.apply( orElseNull() );</span>
-<span class="nc bnc" id="L188" title="All 2 branches missed.">		if ( newValue == null )</span>
-<span class="nc" id="L189">			return Var.ofNullable( type(), null );</span>
+<span class="nc" id="L207">		T newValue = mapper.apply( orElseNull() );</span>
+<span class="nc bnc" id="L208" title="All 2 branches missed.">		if ( newValue == null )</span>
+<span class="nc" id="L209">			return Var.ofNullable( type(), null );</span>
 
-<span class="nc" id="L191">		return Var.of( newValue );</span>
+<span class="nc" id="L211">		return Var.of( newValue );</span>
 	}
 
 	/**
+	 *  If the item is present, applies the provided mapping function to it,
+	 *  and returns it wrapped in a new {@link Var} instance. &lt;br&gt;
+	 *  If the item is not present, then an empty {@link Var} instance is returned. &lt;br&gt;
+	 *  &lt;p&gt;
+	 *  But note that the resulting property does not constitute a live view of this property
+	 *  and will not be updated when this property changes. &lt;br&gt;
+	 *  It is functionally very similar to the {@link Optional#map(Function)} method. &lt;br&gt;
+	 *  &lt;p&gt;
+	 *  &lt;b&gt;
+	 *      If you want to map to a property which is an automatically updated live view of this property,
+	 *      then use the {@link #viewAs(Class, Function)} method instead.
+	 *  &lt;/b&gt;
+	 *
 	 * @param type The type of the item returned from the mapping function
 	 * @param mapper the mapping function to apply to an item, if present
-	 * @return the result of applying an {@code Optional}-bearing mapping
+	 * @return A new property either empty (containing null) or containing the result of applying
+	 * 			the mapping function to the item of this property.
 	 * @param &lt;U&gt; The type of the item returned from the mapping function
 	 */
 	@Override default &lt;U&gt; Var&lt;U&gt; mapTo( Class&lt;U&gt; type, java.util.function.Function&lt;T, U&gt; mapper ) {
-<span class="fc bfc" id="L201" title="All 2 branches covered.">		if ( !isPresent() )</span>
-<span class="fc" id="L202">			return Var.ofNullable( type, null );</span>
+<span class="fc bfc" id="L235" title="All 2 branches covered.">		if ( !isPresent() )</span>
+<span class="fc" id="L236">			return Var.ofNullable( type, null );</span>
 
-<span class="fc" id="L204">		U newValue = mapper.apply( orElseNull() );</span>
-<span class="pc bpc" id="L205" title="1 of 2 branches missed.">		if ( newValue == null )</span>
-<span class="nc" id="L206">			return Var.ofNullable( type, null );</span>
-<span class="fc" id="L207">		return Var.of( newValue );</span>
+<span class="fc" id="L238">		U newValue = mapper.apply( orElseNull() );</span>
+<span class="pc bpc" id="L239" title="1 of 2 branches missed.">		if ( newValue == null )</span>
+<span class="nc" id="L240">			return Var.ofNullable( type, null );</span>
+<span class="fc" id="L241">		return Var.of( newValue );</span>
 	}
 
 }

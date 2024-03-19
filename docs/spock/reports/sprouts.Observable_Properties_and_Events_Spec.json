@@ -1,7 +1,7 @@
 {
   "className":"sprouts.Observable_Properties_and_Events_Spec",
   "title":"Observable Events and Properties",
-  "narrative":"The `sprouts.Observable` interface defines something that may be observed\n    through the registration of `Observer` implementations \n    which will be invoked by the `Observable` in case specific situations.\n\n    It is the super type of various sprout types, like for example the generic `Event`,\n    defining something that can be triggered so that the `Observer`s may be informed,\n    or the `Val` and `Var` properties, as well as the `Vals` and `Vars`\n    property list types, which also allow for the observation of state changes.\n\n    You can listen to all of these types\n    through the common `Observable` interface, hiding the implementation details\n    of what the exact source of the change was.",
+  "narrative":"The `sprouts.Observable` interface defines something that may be observed\n    through the registration of `Observer` implementations\n    which will be invoked by the `Observable` in case specific situations.\n\n    It is the super type of various sprout types, like for example the generic `Event`,\n    defining something that can be triggered so that the `Observer`s may be informed,\n    or the `Val` and `Var` properties, as well as the `Vals` and `Vars`\n    property list types, which also allow for the observation of state changes.\n\n    You can listen to all of these types\n    through the common `Observable` interface, hiding the implementation details\n    of what the exact source of the change was.",
   "subjects":["sprouts.Val","sprouts.Var","sprouts.Vals","sprouts.Vars","sprouts.Observer","sprouts.Observable"],
   "statistics":{
     "runs":"4",
@@ -41,7 +41,7 @@
     },
   
     {
-      "id":"Calling `fire(From.VIEW_MODEL)` method will also lead to `Observer` instances being notified.",
+      "id":"Calling `fireChange(From.VIEW_MODEL)` method will also lead to `Observer` instances being notified.",
       "result":"PASS",
       "duration":"?",
       "iterations":{

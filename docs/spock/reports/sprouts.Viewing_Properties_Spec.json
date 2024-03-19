@@ -4,7 +4,7 @@
   "narrative":"Both the read only `Val` and the mutable `Var` are observable properties.\n    As a consequence, they expose convenient methods to observe their changes\n    in the form of \"views\", which are themselves observable properties\n    that are a live view of the original property which gets updated\n    automatically when the original property changes.\n\n    This is especially useful when you want to observe a property\n    of one type as a property of another type, or when you want to\n    observe a property with some transformation applied to it.\n\n    This specification shows how to create views from both nullable and non-nullable properties,",
   "subjects":["sprouts.Val","sprouts.Val"],
   "statistics":{
-    "runs":"3",
+    "runs":"6",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -64,7 +64,7 @@
       "result":"PASS",
       "duration":"?",
       "iterations":{
-      "tags":{},"see":[],"extraInfo":["\n            The \"view\" method can be used to create a view of a property of the same type.\n        "]
+      "tags":{},"see":[],"extraInfo":["\n            The \"view\" method can be used to create a view of a property of the same type,\n            but with some transformation applied to it.\n        "]
       },
       "blocks":[
         {"kind":"given","text":"A property...","code":["Var<String> name = Var.of(\"John\")"]},
@@ -76,6 +76,73 @@
         {"kind":"when","text":"We change the value of the property.","code":["name.set(\"Jane\")"]},
 
         {"kind":"then","text":"The view is updated.","code":["nameView.get() == \"Jane Doe\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `viewAsString()` method can be used to create a null safe view of a property of any type as a String.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `viewAsString()` method can be used to create a view of a property of any type as a String.\n            The null values are mapped to the empty string in order to make the view null safe, \n            which is important inside of a GUI or when displaying the value in a user interface\n            where null pointer exceptions are not acceptable.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A property based on... let's say a Date...","code":["Var<Date> date = Var.ofNull(Date)"]},
+
+        {"kind":"and","text":"A view of the property as a String...","code":["Val<String> dateView = date.viewAsString()"]},
+
+        {"kind":"expect","text":"The string based view is null safe:","code":["dateView.type() == String","dateView.get() == \"\"","!dateView.allowsNull()"]},
+
+        {"kind":"when","text":"We change the value of the property.","code":["date.set(new Date(0))"]},
+
+        {"kind":"then","text":"The view is updated to string representation of the date.","code":["dateView.get() == String.valueOf(new Date(0))"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `viewAsInt()` method can be used to create a null safe view of a property of any type as an int.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `viewAsInt()` method can be used to create a view of a property of any type as an int.\n            The integer is computed by first converting the value to a string and then parsing the string to an int.\n            So it is important to make sure that the value can be converted to a string and that the \n            string can be parsed to an int.\n            In this example, we use a `Short` property, which can easily be converted to a string and parsed to an int.\n\n            The null values are mapped to 0 in order to make the view null safe, \n            which is important inside of a GUI or when displaying the value in a user interface\n            where null pointer exceptions are not acceptable.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A property based on... let's say a Short...","code":["Var<Short> num = Var.ofNull(Short)"]},
+
+        {"kind":"and","text":"A view of the property as an int...","code":["Val<Integer> numView = num.viewAsInt()"]},
+
+        {"kind":"expect","text":"The source property is nullable...","code":["num.allowsNull()"]},
+
+        {"kind":"and","text":"The (integer) view on the other hand is null safe.","code":["numView.type() == Integer","numView.get() == 0","!numView.allowsNull()"]},
+
+        {"kind":"when","text":"We change the value of the property.","code":["num.set((short)42)"]},
+
+        {"kind":"then","text":"The view is updated to the int representation of the short.","code":["numView.get() == 42"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `viewAsDouble()` method can be used to create a null safe view of a property of any type as a double.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `viewAsDouble()` method can be used to create a view of a property of any type as a double.\n            The double is computed by first converting the value to a string and then parsing the string to a double.\n            So it is important to make sure that the value can be converted to a string and that the \n            string can be parsed to a double.\n            In this example, we use a `Float` property, which can easily be converted to a string and parsed to a double.\n\n            The null values are mapped to 0.0 in order to make the view null safe, \n            which is important inside of a GUI or when displaying the value in a user interface\n            where null pointer exceptions are not acceptable.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A property based on... let's say a Float...","code":["Var<Float> num = Var.ofNull(Float)"]},
+
+        {"kind":"and","text":"A view of the property as a double...","code":["Val<Double> numView = num.viewAsDouble()"]},
+
+        {"kind":"expect","text":"The source property is nullable...","code":["num.allowsNull()"]},
+
+        {"kind":"and","text":"The (double) view on the other hand is null safe.","code":["numView.type() == Double","numView.get() == 0.0","!numView.allowsNull()"]},
+
+        {"kind":"when","text":"We change the value of the property.","code":["num.set(3.14f)"]},
+
+        {"kind":"then","text":"The view is updated to the double representation of the float.","code":["numView.get() == 3.14"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }
