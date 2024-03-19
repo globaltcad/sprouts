@@ -192,32 +192,53 @@ public interface Vals<T> extends Iterable<T>, Observable
     Val<T> at( int index );
 
     /**
+     *  Exposes the first property in the list of properties.
+     *  If there is no first property, an exception will be thrown.
+     *
      * @return The first property in the list of properties.
      */
     Val<T> first();
 
     /**
+     *  Exposes the last property in the list of properties.
+     *  If there is no last property, an exception will be thrown.
+     *
      * @return The last property in the list of properties.
      */
     Val<T> last();
 
     /**
+     *  The boolean flag that indicates if the list of properties is empty,
+     *  which means that it has no properties.
+     *
      * @return True if the list of properties is empty.
      */
     default boolean isEmpty() { return size() == 0; }
 
     /**
+     *  The boolean flag that indicates if the list of properties is not empty,
+     *  which means that it has at least one property.
+     *  This is the opposite of {@link #isEmpty()}
+     *  and it may also be expressed as <code>!isEmpty()</code>.
+     *
      * @return True if the list of properties is not empty.
      */
     default boolean isNotEmpty() { return !isEmpty(); }
 
     /**
+     *  Checks weather the supplied item is in this list of properties.
+     *  This is functionally equivalent to {@code indexOf(value) != -1}.
+     *
      * @param value The value to search for.
      * @return True if any of the properties of this list wraps the given value.
      */
     default boolean contains( @Nullable T value ) { return indexOf(value) != -1; }
 
     /**
+     *  Use this to find the index of an item.
+     *  If the item is not found, -1 will be returned and in case
+     *  of the item having multiple occurrences, the index of the first occurrence will be returned.
+     *
      * @param value The value to search for.
      * @return The index of the property that wraps the given value, or -1 if not found.
      */

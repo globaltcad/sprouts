@@ -100,21 +100,34 @@ public interface Problem
 	}
 
 	/**
+	 *  Every problem has a title, which serves as a short, descriptive identifier.
+	 *  If a problem object is created from an exception, the title will be the name of the exception class.
+	 *
 	 * @return The title of the problem, which may not be null (but may be empty).
 	 */
 	String title();
 
 	/**
+	 *  A problem may have a description, which provides more detailed information about what went wrong.
+	 *  If a problem object is created from an exception, the description will be the message
+	 *  of the exception (or cause if there is no message).
+	 *
 	 * @return The description of the problem, which may not be null (but may be empty).
 	 */
 	String description();
 
 	/**
+	 *  A problem object may or may not have an exception attached to it.
+	 *  It is assumed that this exception is the cause of the problem.
+	 *
 	 * @return The exception that was thrown while obtaining the value, if any.
 	 */
 	default Optional<Exception> exception() { return Optional.empty(); }
 
 	/**
+	 *  A problem object may or may not have a reporter attached to it.
+	 *  It is expected to be the object where the problem originated from.
+	 *
 	 * @return The object that reported the problem, if any.
 	 */
 	default Optional<Object> reporter() { return Optional.empty(); }
