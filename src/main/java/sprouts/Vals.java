@@ -253,12 +253,22 @@ public interface Vals<T> extends Iterable<T>, Observable
     }
 
     /**
+     *  Uses the item of the supplied property to find the index of
+     *  the item in this list of properties.
+     *  So if any of the properties in this list wraps the same item as the given property,
+     *  the index of that property will be returned.
+     *  Note that if there are multiple occurrences of the same item in this list,
+     *  the index of the first occurrence will be returned.
+     *
      * @param value The property to search for in this list.
      * @return The index of the given property in this list, or -1 if not found.
      */
     default int indexOf( Val<T> value ) { return indexOf(value.orElseNull()); }
 
     /**
+     *  Check if the value of the supplied property is wrapped by any of the properties in this list.
+     *  This is functionally equivalent to {@code indexOf(property) != -1}.
+     *
      * @param value The value property to search for.
      * @return True if the given property is in this list.
      */
@@ -310,6 +320,10 @@ public interface Vals<T> extends Iterable<T>, Observable
     <U> Vals<U> mapTo( Class<U> type, Function<T,U> mapper );
 
     /**
+     *  Turns this list of properties into a stream of items
+     *  which can be used for further functional processing.
+     *  Note that the returned stream is not parallel.
+     *
      * @return A stream of the items in this list of properties.
      */
     default Stream<T> stream() { return StreamSupport.stream(spliterator(), false); }
@@ -337,6 +351,9 @@ public interface Vals<T> extends Iterable<T>, Observable
     }
 
     /**
+     *  Takes all the items in this list of properties and turns
+     *  them into an immutable JDK {@link Set} of items.
+     *
      * @return An immutable set of the items in this list of properties.
      */
     default Set<T> toSet() { return Collections.unmodifiableSet(stream().collect(Collectors.toSet())); }

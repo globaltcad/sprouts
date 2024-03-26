@@ -695,7 +695,7 @@ public interface Val<T> extends Observable
 	 * @param otherItem The other item of the same type as is wrapped by this.
 	 * @return The truth value determining if the provided item is not equal to the wrapped item.
 	 */
-	default boolean isNot( T otherItem ) { return !this.is(otherItem); }
+	default boolean isNot( @Nullable T otherItem ) { return !this.is(otherItem); }
 
 	/**
 	 *  This method check if the item of the provided property
@@ -717,7 +717,7 @@ public interface Val<T> extends Observable
 	 * @return The truth value determining if the provided item is equal to the wrapped item.
 	 */
 	@SuppressWarnings("unchecked")
-	default boolean isOneOf( T first, T second, T... otherValues ) {
+	default boolean isOneOf( @Nullable T first, @Nullable T second, T... otherValues ) {
 		if ( this.is(first) ) return true;
 		if ( this.is(second) ) return true;
 		for ( T otherValue : otherValues )

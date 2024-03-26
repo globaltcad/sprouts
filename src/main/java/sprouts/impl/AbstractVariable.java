@@ -8,7 +8,6 @@ import sprouts.*;
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * 	The base implementation for both {@link Var} and {@link Val} interfaces.
@@ -219,7 +218,7 @@ public class AbstractVariable<T> extends AbstractValue<T> implements Var<T>
 			return false;
 	}
 
-	private <T,N> @Nullable N _mapOrGetNullObjectOf( Class<N> type, @Nullable T in, java.util.function.Function<T, N> mapper ) {
+	private <I,N> @Nullable N _mapOrGetNullObjectOf(Class<N> type, @Nullable I in, java.util.function.Function<I, N> mapper ) {
 		boolean inIsNull = in == null;
 		@Nullable N value;
 		try {
