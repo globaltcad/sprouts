@@ -38,7 +38,7 @@ public interface Event extends Observable
      * @param observer The first listener to subscribe to the new {@link Event}.
      * @return A new {@link Event}.
      */
-    static Event of( Observer observer) {
+    static Event of( Observer observer ) {
         Event event = create();
         event.subscribe(observer);
         return event;

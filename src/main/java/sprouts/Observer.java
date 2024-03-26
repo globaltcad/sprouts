@@ -1,5 +1,7 @@
 package sprouts;
 
+import java.util.Objects;
+
 /**
  *  An observer is a callback that is executed when a
  *  sprouts {@link Observable} is triggered, usually in the
@@ -30,6 +32,7 @@ public interface Observer extends Subscriber
 	 *  and then the given callback.
 	 */
 	default Observer andThen( Observer other ) {
+		Objects.requireNonNull(other);
 		return () -> {
 			this.invoke();
 			other.invoke();
