@@ -3,6 +3,7 @@ package sprouts.impl;
 import org.jspecify.annotations.Nullable;
 import sprouts.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
@@ -47,28 +48,43 @@ public class ResultImpl<V> implements Result<V>
 
 	/** {@inheritDoc} */
 	@Override
-	public Val<V> map( Function<V, V> mapper ) {
+	public Result<V> map( Function<V, V> mapper ) {
 		Objects.requireNonNull(mapper);
 		if ( !isPresent() )
-			return Var.ofNullable( type(), null );
+			return Result.of( type() );
 
-		V newValue = mapper.apply( orElseNull() );
-
-		if ( newValue == null )
-			return Var.ofNullable( type(), null );
-		else
-			return Val.of( newValue );
+		try {
+			V newValue = mapper.apply(Objects.requireNonNull(_value));
+			if (newValue == null)
+				return Result.of(type(), problems());
+			else
+				return Result.of(newValue, problems());
+		} catch ( Exception e ) {
+			List<Problem> newProblems = new ArrayList<>(problems());
+			newProblems.add( Problem.of(e) );
+			return Result.of( type(), newProblems );
+		}
 	}
 
 	/** {@inheritDoc} */
 	@Override
-	public <U> Val<U> mapTo( Class<U> type, Function<V, U> mapper ) {
+	public <U> Result<U> mapTo( Class<U> type, Function<V, U> mapper ) {
 		Objects.requireNonNull(type);
 		Objects.requireNonNull(mapper);
 		if ( !isPresent() )
-			return Var.ofNullable( type, null );
-		else
-			return Val.ofNullable(type, mapper.apply(_value));
+			return Result.of( type, problems() );
+
+		try {
+			U newValue = mapper.apply( Objects.requireNonNull(_value) );
+			if (newValue == null)
+				return Result.of( type );
+			else
+				return Result.of( newValue, problems() );
+		} catch ( Exception e ) {
+			List<Problem> newProblems = new ArrayList<>(problems());
+			newProblems.add( Problem.of(e) );
+			return Result.of( type, newProblems );
+		}
 	}
 
 	/** {@inheritDoc} */
@@ -88,6 +104,7 @@ public class ResultImpl<V> implements Result<V>
 
 	@Override
 	public Val<V> fireChange( Channel channel ) {
+		Objects.requireNonNull(channel);
 		/* A Result is immutable, so this method is not supported */
 		return this;
 	}

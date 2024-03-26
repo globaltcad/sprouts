@@ -5,6 +5,7 @@ import org.jspecify.annotations.Nullable;
 import sprouts.impl.Sprouts;
 
 import java.util.*;
+import java.util.function.Function;
 
 /**
  * 	A result is very similar to an {@link Optional} in that it can either contain a value or not,
@@ -206,4 +207,30 @@ public interface Result<V> extends Val<V>
 	 * 	@return {@code true} if this result is present, {@code false} otherwise.
 	 */
 	default boolean hasProblems() { return !problems().isEmpty(); }
+
+	/**
+	 *  Safely maps the value of this result to a new value of a different type
+	 *  even if an exception is thrown during the mapping process,
+	 *  in which case the exception is caught and a new result is returned
+	 *  with the exception as a problem.
+	 *
+	 * @param type The type of the item returned from the mapping function.
+	 * @param mapper The mapping function to apply to an item, if present.
+	 * @return A new result with the mapped value and a list of problems describing related issues.
+	 * @param <U> The type of the item returned from the mapping function.
+	 */
+	@Override
+	<U> Result<U> mapTo( Class<U> type, Function<V, U> mapper );
+
+	/**
+	 *  Safely maps the value of this result to a new value of the same type
+	 *  even if an exception is thrown during the mapping process,
+	 *  in which case the exception is caught and a new result is returned
+	 *  with the exception as a problem.
+	 *
+	 * @param mapper The mapping function to apply to an item, if present.
+	 * @return A new result with the mapped value and a list of problems describing related issues.
+	 */
+	@Override
+	Result<V> map( Function<V, V> mapper );
 }
