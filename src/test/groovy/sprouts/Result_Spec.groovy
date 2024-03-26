@@ -48,13 +48,13 @@ class Result_Spec extends Specification
             thrown(UnsupportedOperationException)
     }
 
-    def 'Results can be mapped to a property.'()
+    def 'The items of a `Result` can be mapped using mapping functions.'()
     {
         given : 'A result.'
             def result = Result.of(42)
-        when : 'We map the result to a property.'
+        when : 'We map the result to another result with the value plus one.'
             def mapped = result.map { it + 1 }
-        then : 'The mapped property has the value of the result plus one.'
+        then : 'The mapped result has the value of the result plus one.'
             mapped.get() == 43
     }
 
@@ -68,7 +68,7 @@ class Result_Spec extends Specification
             optional.get() == 42
     }
 
-    def 'Just like a `Val` property, a Result has a type and id.'()
+    def 'Just like a `Val` property, a `Result` has a type and id.'()
     {
         given : 'A result.'
             def result = Result.of(42)
@@ -78,7 +78,7 @@ class Result_Spec extends Specification
             result.id() == "Result"
     }
 
-    def 'You can create a Result from a list.'()
+    def 'You can create a `Result` from a list.'()
     {
         reportInfo """
             A result can be created from a list of values which
@@ -131,6 +131,56 @@ class Result_Spec extends Specification
             def mapped = result.mapTo(String, it -> "foo $it" )
         then : 'The resulting property is also empty.'
             mapped.isEmpty()
+    }
+
+    def 'Exceptions inside of a mapping function are caught and turned into problems.'()
+    {
+        reportInfo """
+            Mapping `Result` objects is based on a mapping function
+            which has the responsibility of mapping the item of the result
+            to another item.
+            
+            However, sometimes the mapping function might throw an exception
+            in which case the exception is caught and turned into a problem and
+            the resulting property will be an empty result with the problem.
+            
+            The reason for this is because the inherent purpose of a `Result` is to
+            protect against exceptions crippling the application control flow
+            while also preserving a record of what went wrong.
+        """
+        given : 'A result.'
+            def result = Result.of(42)
+        when : 'We map the result unsuccessfully by throwing an exception:'
+            def mapped = result.map { throw new IllegalArgumentException("foo") }
+        then : 'The resulting property has a problem.'
+            mapped.problems().size() == 1
+        and : 'The problem is an exception problem.'
+            mapped.problems().first().exception().get().message == "foo"
+    }
+
+    def 'If mapping to another type goes wrong, the exception is caught and turned into a problem.'()
+    {
+        reportInfo """
+            Mapping `Result` objects is based on a mapping function
+            which has the responsibility of mapping the item of the result
+            to another item.
+            
+            However, sometimes the mapping function might throw an exception
+            in which case the exception is caught and turned into a problem and
+            the resulting property will be an empty result with the problem.
+            
+            The reason for this is because the inherent purpose of a `Result` is to
+            protect against exceptions crippling the application control flow
+            while also preserving a record of what went wrong.
+        """
+        given : 'A simple result with a simple item.'
+            def result = Result.of(42)
+        when : 'We map the result to another type with an exception.'
+            def mapped = result.mapTo(String, { throw new IllegalArgumentException("foo") })
+        then : 'The resulting property has a problem.'
+            mapped.problems().size() == 1
+        and : 'The problem is an exception problem.'
+            mapped.problems().first().exception().get().message == "foo"
     }
 
 }
