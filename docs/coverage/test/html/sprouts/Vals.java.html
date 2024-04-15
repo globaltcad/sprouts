@@ -228,7 +228,7 @@ public interface Vals&lt;T&gt; extends Iterable&lt;T&gt;, Observable
     /**
      *  Checks weather the supplied item is in this list of properties.
      *  This is functionally equivalent to {@code indexOf(value) != -1}.
-     *  
+     *
      * @param value The value to search for.
      * @return True if any of the properties of this list wraps the given value.
      */
@@ -253,16 +253,26 @@ public interface Vals&lt;T&gt; extends Iterable&lt;T&gt;, Observable
     }
 
     /**
+     *  Uses the item of the supplied property to find the index of
+     *  the item in this list of properties.
+     *  So if any of the properties in this list wraps the same item as the given property,
+     *  the index of that property will be returned.
+     *  Note that if there are multiple occurrences of the same item in this list,
+     *  the index of the first occurrence will be returned.
+     *
      * @param value The property to search for in this list.
      * @return The index of the given property in this list, or -1 if not found.
      */
-<span class="fc" id="L259">    default int indexOf( Val&lt;T&gt; value ) { return indexOf(value.orElseNull()); }</span>
+<span class="fc" id="L266">    default int indexOf( Val&lt;T&gt; value ) { return indexOf(value.orElseNull()); }</span>
 
     /**
+     *  Check if the value of the supplied property is wrapped by any of the properties in this list.
+     *  This is functionally equivalent to {@code indexOf(property) != -1}.
+     *
      * @param value The value property to search for.
      * @return True if the given property is in this list.
      */
-<span class="fc" id="L265">    default boolean contains( Val&lt;T&gt; value ) { return contains(value.orElseNull()); }</span>
+<span class="fc" id="L275">    default boolean contains( Val&lt;T&gt; value ) { return contains(value.orElseNull()); }</span>
 
     /**
      *  Check for equality between this list of properties and another list of properties.
@@ -272,11 +282,11 @@ public interface Vals&lt;T&gt; extends Iterable&lt;T&gt;, Observable
      */
     default boolean is( Vals&lt;T&gt; other )
     {
-<span class="nc bnc" id="L275" title="All 2 branches missed.">        if ( size() != other.size() ) return false;</span>
-<span class="nc bnc" id="L276" title="All 2 branches missed.">        for ( int i = 0; i &lt; size(); i++ )</span>
-<span class="nc bnc" id="L277" title="All 2 branches missed.">            if ( !this.at(i).is(other.at(i)) ) return false;</span>
+<span class="nc bnc" id="L285" title="All 2 branches missed.">        if ( size() != other.size() ) return false;</span>
+<span class="nc bnc" id="L286" title="All 2 branches missed.">        for ( int i = 0; i &lt; size(); i++ )</span>
+<span class="nc bnc" id="L287" title="All 2 branches missed.">            if ( !this.at(i).is(other.at(i)) ) return false;</span>
 
-<span class="nc" id="L279">        return true;</span>
+<span class="nc" id="L289">        return true;</span>
     }
 
     /**
@@ -310,9 +320,13 @@ public interface Vals&lt;T&gt; extends Iterable&lt;T&gt;, Observable
     &lt;U&gt; Vals&lt;U&gt; mapTo( Class&lt;U&gt; type, Function&lt;T,U&gt; mapper );
 
     /**
+     *  Turns this list of properties into a stream of items
+     *  which can be used for further functional processing.
+     *  Note that the returned stream is not parallel.
+     *
      * @return A stream of the items in this list of properties.
      */
-<span class="fc" id="L315">    default Stream&lt;T&gt; stream() { return StreamSupport.stream(spliterator(), false); }</span>
+<span class="fc" id="L329">    default Stream&lt;T&gt; stream() { return StreamSupport.stream(spliterator(), false); }</span>
 
     /**
      *  Converts this list of properties to a JDK {@link List} of items
@@ -321,7 +335,7 @@ public interface Vals&lt;T&gt; extends Iterable&lt;T&gt;, Observable
      *
      * @return An immutable list of the items in this list of properties.
      */
-<span class="fc" id="L324">    default List&lt;T&gt; toList() { return Collections.unmodifiableList(stream().collect(Collectors.toList())); }</span>
+<span class="fc" id="L338">    default List&lt;T&gt; toList() { return Collections.unmodifiableList(stream().collect(Collectors.toList())); }</span>
 
     /**
      *  Converts this list of properties to a JDK {@link List} of properties
@@ -331,15 +345,18 @@ public interface Vals&lt;T&gt; extends Iterable&lt;T&gt;, Observable
      * @return An immutable {@link List} of properties in this {@link Vals} instance.
      */
     default List&lt;Val&lt;T&gt;&gt; toValList() {
-<span class="fc" id="L334">        return Collections.unmodifiableList(</span>
-<span class="fc bfc" id="L335" title="All 2 branches covered.">                stream().map( v -&gt; v == null ? Val.ofNullable(type(), null) : Val.of(v) ).collect(Collectors.toList())</span>
+<span class="fc" id="L348">        return Collections.unmodifiableList(</span>
+<span class="fc bfc" id="L349" title="All 2 branches covered.">                stream().map( v -&gt; v == null ? Val.ofNullable(type(), null) : Val.of(v) ).collect(Collectors.toList())</span>
             );
     }
 
     /**
+     *  Takes all the items in this list of properties and turns
+     *  them into an immutable JDK {@link Set} of items.
+     *
      * @return An immutable set of the items in this list of properties.
      */
-<span class="fc" id="L342">    default Set&lt;T&gt; toSet() { return Collections.unmodifiableSet(stream().collect(Collectors.toSet())); }</span>
+<span class="fc" id="L359">    default Set&lt;T&gt; toSet() { return Collections.unmodifiableSet(stream().collect(Collectors.toSet())); }</span>
 
     /**
      *  A list of properties may be turned into a map of items where the keys are the ids of the properties
@@ -352,12 +369,12 @@ public interface Vals&lt;T&gt; extends Iterable&lt;T&gt;, Observable
      *         and the values are the items of the properties.
      */
     default Map&lt;String,T&gt; toMap() {
-<span class="fc" id="L355">        Map&lt;String,T&gt; map = new HashMap&lt;&gt;();</span>
-<span class="fc bfc" id="L356" title="All 2 branches covered.">        for ( int i = 0; i &lt; size(); i++ ) {</span>
-<span class="fc" id="L357">            Val&lt;T&gt; val = at(i);</span>
-<span class="fc" id="L358">            map.put( val.id(), val.orElseNull() );</span>
+<span class="fc" id="L372">        Map&lt;String,T&gt; map = new HashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L373" title="All 2 branches covered.">        for ( int i = 0; i &lt; size(); i++ ) {</span>
+<span class="fc" id="L374">            Val&lt;T&gt; val = at(i);</span>
+<span class="fc" id="L375">            map.put( val.id(), val.orElseNull() );</span>
         }
-<span class="fc" id="L360">        return Collections.unmodifiableMap(map);</span>
+<span class="fc" id="L377">        return Collections.unmodifiableMap(map);</span>
     }
 
     /**
@@ -371,12 +388,12 @@ public interface Vals&lt;T&gt; extends Iterable&lt;T&gt;, Observable
      *         and the values are the properties themselves.
      */
     default Map&lt;String,Val&lt;T&gt;&gt; toValMap() {
-<span class="fc" id="L374">        Map&lt;String,Val&lt;T&gt;&gt; map = new HashMap&lt;&gt;();</span>
-<span class="fc bfc" id="L375" title="All 2 branches covered.">        for ( int i = 0; i &lt; size(); i++ ) {</span>
-<span class="fc" id="L376">            Val&lt;T&gt; val = at(i);</span>
-<span class="fc" id="L377">            map.put( val.id(), val );</span>
+<span class="fc" id="L391">        Map&lt;String,Val&lt;T&gt;&gt; map = new HashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L392" title="All 2 branches covered.">        for ( int i = 0; i &lt; size(); i++ ) {</span>
+<span class="fc" id="L393">            Val&lt;T&gt; val = at(i);</span>
+<span class="fc" id="L394">            map.put( val.id(), val );</span>
         }
-<span class="fc" id="L379">        return Collections.unmodifiableMap(map);</span>
+<span class="fc" id="L396">        return Collections.unmodifiableMap(map);</span>
     }
 
     /**
@@ -384,26 +401,26 @@ public interface Vals&lt;T&gt; extends Iterable&lt;T&gt;, Observable
      *  @param predicate The predicate to check.
      *  @return True if any of the properties in this list of properties match the given predicate.
      */
-<span class="fc" id="L387">    default boolean any( Predicate&lt;Val&lt;T&gt;&gt; predicate ) { return toValList().stream().anyMatch( predicate ); }</span>
+<span class="fc" id="L404">    default boolean any( Predicate&lt;Val&lt;T&gt;&gt; predicate ) { return toValList().stream().anyMatch( predicate ); }</span>
 
     /**
      *  Check if all the properties in this list match the given predicate.
      *  @param predicate The predicate to check.
      *  @return True if all the properties in this list of properties match the given predicate.
      */
-<span class="nc" id="L394">    default boolean all( Predicate&lt;Val&lt;T&gt;&gt; predicate ) { return toValList().stream().allMatch( predicate ); }</span>
+<span class="nc" id="L411">    default boolean all( Predicate&lt;Val&lt;T&gt;&gt; predicate ) { return toValList().stream().allMatch( predicate ); }</span>
 
     /**
      *  Check if none of the properties in this list match the given predicate.
      *  @param predicate The predicate to check.
      *  @return True if none of the properties in this list of properties match the given predicate.
      */
-<span class="fc" id="L401">    default boolean none( Predicate&lt;Val&lt;T&gt;&gt; predicate ) { return toValList().stream().noneMatch( predicate ); }</span>
+<span class="fc" id="L418">    default boolean none( Predicate&lt;Val&lt;T&gt;&gt; predicate ) { return toValList().stream().noneMatch( predicate ); }</span>
 
     /**
      *  Check if any of the properties in this list is empty.
      *  @return True if any of the properties in this list of properties is empty.
      */
-<span class="fc" id="L407">    default boolean anyEmpty() { return any( Val::isEmpty ); }</span>
+<span class="fc" id="L424">    default boolean anyEmpty() { return any( Val::isEmpty ); }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>
