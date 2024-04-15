@@ -192,7 +192,7 @@ public class AbstractVariable<T> extends AbstractValue<T> implements Var<T>
 			if ( this.allowsNull() )
 				var = Var.ofNullable( type, mapper.apply( this.orElseNull() ) );
 			else
-				var = Var.of( mapper.apply( this.get() ) );
+				var = Var.of( type, mapper.apply( this.get() ) );
 			// Now we register a live update listener to this property
 			this.onChange( DEFAULT_CHANNEL, v -> var.set( mapper.apply( v.orElseNull() ) ));
 			_viewers.add( v -> var.set(From.VIEW, mapper.apply( v ) ) );

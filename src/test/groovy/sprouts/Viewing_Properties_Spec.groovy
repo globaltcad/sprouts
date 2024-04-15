@@ -203,4 +203,29 @@ class Viewing_Properties_Spec extends Specification
             numView.get() == 3.14
     }
 
+    def 'A view can handle viewing different sub-types of the given source type.'()
+    {
+        reportInfo """
+            The `viewAs(Class,..)` method takes 2 arguments: the type we want to view 
+            through the view property, and a function that transforms the value of the source property.
+            If the viewed type is a more general type than the source type, the view will be able to handle
+            viewing different sub-types of the given source type depending on the transformation function.
+        """
+        given : 'A property based on the generic type `Integer`...'
+            Var<Integer> num = Var.of(42 as int)
+        and : 'A view of the property as a generic `Number`...'
+            Val<Number> numView = num.viewAs(Number, n -> n < 0 ? n.floatValue() : n.doubleValue() )
+        expect : 'The view is of the given type and has the expected value.'
+            numView.type() == Number
+            numView.get() == 42.0
+            numView.get() instanceof Double
+
+        when : 'We change the value of the property so that the view holds a float.'
+            num.set(-3)
+        then : 'The view is updated to the float representation of the integer.'
+            numView.type() == Number
+            numView.get() == -3.0
+            numView.get() instanceof Float
+    }
+
 }
