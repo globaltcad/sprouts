@@ -3,6 +3,7 @@
 import org.jspecify.annotations.Nullable;
 import sprouts.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
@@ -15,129 +16,145 @@ public class ResultImpl&lt;V&gt; implements Result&lt;V&gt;
 	@Nullable private final V   _value;
 
 
-<span class="fc" id="L18">	public ResultImpl( String id, Class&lt;V&gt; type, List&lt;Problem&gt; problems, @Nullable V value ) {</span>
-<span class="fc" id="L19">		Objects.requireNonNull(type);</span>
-<span class="fc" id="L20">		Objects.requireNonNull(id);</span>
-<span class="fc" id="L21">		Objects.requireNonNull(problems);</span>
-<span class="fc" id="L22">		_id       = id;</span>
-<span class="fc" id="L23">		_type     = type;</span>
-<span class="fc" id="L24">		_problems = problems;</span>
-<span class="fc" id="L25">		_value    = value;</span>
-<span class="fc" id="L26">	}</span>
+<span class="fc" id="L19">	public ResultImpl( String id, Class&lt;V&gt; type, List&lt;Problem&gt; problems, @Nullable V value ) {</span>
+<span class="fc" id="L20">		Objects.requireNonNull(type);</span>
+<span class="fc" id="L21">		Objects.requireNonNull(id);</span>
+<span class="fc" id="L22">		Objects.requireNonNull(problems);</span>
+<span class="fc" id="L23">		_id       = id;</span>
+<span class="fc" id="L24">		_type     = type;</span>
+<span class="fc" id="L25">		_problems = problems;</span>
+<span class="fc" id="L26">		_value    = value;</span>
+<span class="fc" id="L27">	}</span>
 
 	/** {@inheritDoc} */
-<span class="fc" id="L29">	@Override public Class&lt;V&gt; type() { return _type; }</span>
+<span class="fc" id="L30">	@Override public Class&lt;V&gt; type() { return _type; }</span>
 
 	/** {@inheritDoc} */
-<span class="fc" id="L32">	@Override public String id() { return _id; }</span>
-
-	/** {@inheritDoc} */
-	@Override
-<span class="nc" id="L36">	public Val&lt;V&gt; withId( String id ) { return new ResultImpl&lt;&gt;(id, _type, _problems, _value); }</span>
-
-	/** {@inheritDoc} */
-<span class="fc" id="L39">	@Override public List&lt;Problem&gt; problems() { return _problems; }</span>
+<span class="fc" id="L33">	@Override public String id() { return _id; }</span>
 
 	/** {@inheritDoc} */
 	@Override
-<span class="nc bnc" id="L43" title="All 2 branches missed.">	public @Nullable V orElseNullable( @Nullable V other ) { return _value == null ? other : _value; }</span>
+<span class="nc" id="L37">	public Val&lt;V&gt; withId( String id ) { return new ResultImpl&lt;&gt;(id, _type, _problems, _value); }</span>
 
 	/** {@inheritDoc} */
-<span class="fc" id="L46">	@Override public @Nullable V orElseNull() { return _value; }</span>
+<span class="fc" id="L40">	@Override public List&lt;Problem&gt; problems() { return _problems; }</span>
 
 	/** {@inheritDoc} */
 	@Override
-	public Val&lt;V&gt; map( Function&lt;V, V&gt; mapper ) {
-<span class="fc" id="L51">		Objects.requireNonNull(mapper);</span>
-<span class="pc bpc" id="L52" title="1 of 2 branches missed.">		if ( !isPresent() )</span>
-<span class="nc" id="L53">			return Var.ofNullable( type(), null );</span>
+<span class="nc bnc" id="L44" title="All 2 branches missed.">	public @Nullable V orElseNullable( @Nullable V other ) { return _value == null ? other : _value; }</span>
 
-<span class="fc" id="L55">		V newValue = mapper.apply( orElseNull() );</span>
+	/** {@inheritDoc} */
+<span class="fc" id="L47">	@Override public @Nullable V orElseNull() { return _value; }</span>
 
-<span class="pc bpc" id="L57" title="1 of 2 branches missed.">		if ( newValue == null )</span>
-<span class="nc" id="L58">			return Var.ofNullable( type(), null );</span>
-		else
-<span class="fc" id="L60">			return Val.of( newValue );</span>
+	/** {@inheritDoc} */
+	@Override
+	public Result&lt;V&gt; map( Function&lt;V, V&gt; mapper ) {
+<span class="fc" id="L52">		Objects.requireNonNull(mapper);</span>
+<span class="pc bpc" id="L53" title="1 of 2 branches missed.">		if ( !isPresent() )</span>
+<span class="nc" id="L54">			return Result.of( type() );</span>
+
+		try {
+<span class="fc" id="L57">			V newValue = mapper.apply(Objects.requireNonNull(_value));</span>
+<span class="pc bpc" id="L58" title="1 of 2 branches missed.">			if (newValue == null)</span>
+<span class="nc" id="L59">				return Result.of(type(), problems());</span>
+			else
+<span class="fc" id="L61">				return Result.of(newValue, problems());</span>
+<span class="fc" id="L62">		} catch ( Exception e ) {</span>
+<span class="fc" id="L63">			List&lt;Problem&gt; newProblems = new ArrayList&lt;&gt;(problems());</span>
+<span class="fc" id="L64">			newProblems.add( Problem.of(e) );</span>
+<span class="fc" id="L65">			return Result.of( type(), newProblems );</span>
+		}
 	}
 
 	/** {@inheritDoc} */
 	@Override
-	public &lt;U&gt; Val&lt;U&gt; mapTo( Class&lt;U&gt; type, Function&lt;V, U&gt; mapper ) {
-<span class="fc" id="L66">		Objects.requireNonNull(type);</span>
-<span class="fc" id="L67">		Objects.requireNonNull(mapper);</span>
-<span class="pc bpc" id="L68" title="1 of 2 branches missed.">		if ( !isPresent() )</span>
-<span class="fc" id="L69">			return Var.ofNullable( type, null );</span>
-		else
-<span class="nc" id="L71">			return Val.ofNullable(type, mapper.apply(_value));</span>
+	public &lt;U&gt; Result&lt;U&gt; mapTo( Class&lt;U&gt; type, Function&lt;V, U&gt; mapper ) {
+<span class="fc" id="L72">		Objects.requireNonNull(type);</span>
+<span class="fc" id="L73">		Objects.requireNonNull(mapper);</span>
+<span class="fc bfc" id="L74" title="All 2 branches covered.">		if ( !isPresent() )</span>
+<span class="fc" id="L75">			return Result.of( type, problems() );</span>
+
+		try {
+<span class="nc" id="L78">			U newValue = mapper.apply( Objects.requireNonNull(_value) );</span>
+<span class="nc bnc" id="L79" title="All 2 branches missed.">			if (newValue == null)</span>
+<span class="nc" id="L80">				return Result.of( type );</span>
+			else
+<span class="nc" id="L82">				return Result.of( newValue, problems() );</span>
+<span class="fc" id="L83">		} catch ( Exception e ) {</span>
+<span class="fc" id="L84">			List&lt;Problem&gt; newProblems = new ArrayList&lt;&gt;(problems());</span>
+<span class="fc" id="L85">			newProblems.add( Problem.of(e) );</span>
+<span class="fc" id="L86">			return Result.of( type, newProblems );</span>
+		}
 	}
 
 	/** {@inheritDoc} */
 	@Override
 	public &lt;U&gt; Val&lt;U&gt; viewAs(Class&lt;U&gt; type, Function&lt;V, U&gt; mapper) {
-<span class="nc" id="L77">		Objects.requireNonNull(type);</span>
-<span class="nc" id="L78">		Objects.requireNonNull(mapper);</span>
-<span class="nc" id="L79">		return Val.ofNullable(this._type, this._value).viewAs(type, mapper);</span>
+<span class="nc" id="L93">		Objects.requireNonNull(type);</span>
+<span class="nc" id="L94">		Objects.requireNonNull(mapper);</span>
+<span class="nc" id="L95">		return Val.ofNullable(this._type, this._value).viewAs(type, mapper);</span>
 	}
 
 	@Override
 	public Val&lt;V&gt; onChange( Channel channel, Action&lt;Val&lt;V&gt;&gt; displayAction ) {
-<span class="nc" id="L84">		Objects.requireNonNull(displayAction);</span>
-		/* A Result is immutable, so this method is not supported */
-<span class="nc" id="L86">		return this;</span>
-	}
-
-	@Override
-	public Val&lt;V&gt; fireChange( Channel channel ) {
-		/* A Result is immutable, so this method is not supported */
-<span class="nc" id="L92">		return this;</span>
-	}
-
-	/** {@inheritDoc} */
-<span class="nc" id="L96">	@Override public boolean allowsNull() { return true; }</span>
-
-	@Override
-	public Observable subscribe( Observer observer ) {
-<span class="nc" id="L100">		Objects.requireNonNull(observer);</span>
+<span class="nc" id="L100">		Objects.requireNonNull(displayAction);</span>
 		/* A Result is immutable, so this method is not supported */
 <span class="nc" id="L102">		return this;</span>
 	}
 
 	@Override
-	public Observable unsubscribe( Subscriber subscriber ) {
-<span class="nc" id="L107">		Objects.requireNonNull(subscriber);</span>
+	public Val&lt;V&gt; fireChange( Channel channel ) {
+<span class="nc" id="L107">		Objects.requireNonNull(channel);</span>
 		/* A Result is immutable, so this method is not supported */
 <span class="nc" id="L109">		return this;</span>
 	}
 
+	/** {@inheritDoc} */
+<span class="nc" id="L113">	@Override public boolean allowsNull() { return true; }</span>
+
+	@Override
+	public Observable subscribe( Observer observer ) {
+<span class="nc" id="L117">		Objects.requireNonNull(observer);</span>
+		/* A Result is immutable, so this method is not supported */
+<span class="nc" id="L119">		return this;</span>
+	}
+
+	@Override
+	public Observable unsubscribe( Subscriber subscriber ) {
+<span class="nc" id="L124">		Objects.requireNonNull(subscriber);</span>
+		/* A Result is immutable, so this method is not supported */
+<span class="nc" id="L126">		return this;</span>
+	}
+
 	@Override
 	public String toString() {
-<span class="nc" id="L114">        String value = this.mapTo(String.class, Object::toString).orElse(&quot;null&quot;);</span>
-<span class="nc bnc" id="L115" title="All 2 branches missed.">        String id = this.id() == null ? &quot;?&quot; : this.id();</span>
-<span class="nc bnc" id="L116" title="All 2 branches missed.">        if ( id.equals(NO_ID) ) id = &quot;?&quot;;</span>
-<span class="nc bnc" id="L117" title="All 2 branches missed.">        String type = ( type() == null ? &quot;?&quot; : type().getSimpleName() );</span>
-<span class="nc bnc" id="L118" title="All 2 branches missed.">        if ( type.equals(&quot;Object&quot;) ) type = &quot;?&quot;;</span>
-<span class="nc bnc" id="L119" title="All 4 branches missed.">        if ( type.equals(&quot;String&quot;) &amp;&amp; this.isPresent() ) value = &quot;\&quot;&quot; + value + &quot;\&quot;&quot;;</span>
-<span class="nc bnc" id="L120" title="All 2 branches missed.">        String content = ( id.equals(&quot;?&quot;) ? value : id + &quot;=&quot; + value );</span>
-<span class="nc" id="L121">        return &quot;Result&lt;&quot; + type + &quot;&gt;&quot; + &quot;[&quot; + content + &quot;]&quot;;</span>
+<span class="nc" id="L131">        String value = this.mapTo(String.class, Object::toString).orElse(&quot;null&quot;);</span>
+<span class="nc bnc" id="L132" title="All 2 branches missed.">        String id = this.id() == null ? &quot;?&quot; : this.id();</span>
+<span class="nc bnc" id="L133" title="All 2 branches missed.">        if ( id.equals(NO_ID) ) id = &quot;?&quot;;</span>
+<span class="nc bnc" id="L134" title="All 2 branches missed.">        String type = ( type() == null ? &quot;?&quot; : type().getSimpleName() );</span>
+<span class="nc bnc" id="L135" title="All 2 branches missed.">        if ( type.equals(&quot;Object&quot;) ) type = &quot;?&quot;;</span>
+<span class="nc bnc" id="L136" title="All 4 branches missed.">        if ( type.equals(&quot;String&quot;) &amp;&amp; this.isPresent() ) value = &quot;\&quot;&quot; + value + &quot;\&quot;&quot;;</span>
+<span class="nc bnc" id="L137" title="All 2 branches missed.">        String content = ( id.equals(&quot;?&quot;) ? value : id + &quot;=&quot; + value );</span>
+<span class="nc" id="L138">        return &quot;Result&lt;&quot; + type + &quot;&gt;&quot; + &quot;[&quot; + content + &quot;]&quot;;</span>
 	}
 
 	@Override
 	public int hashCode() {
-<span class="nc" id="L126">		return Objects.hash(_id, _type, _value, _problems);</span>
+<span class="nc" id="L143">		return Objects.hash(_id, _type, _value, _problems);</span>
 	}
 
 	@Override
 	public boolean equals( Object obj ) {
-<span class="nc bnc" id="L131" title="All 2 branches missed.">		if ( obj == null ) return false;</span>
-<span class="nc bnc" id="L132" title="All 2 branches missed.">		if ( obj == this ) return true;</span>
-<span class="nc bnc" id="L133" title="All 2 branches missed.">		if ( obj instanceof Result ) {</span>
-<span class="nc" id="L134">			Result&lt;?&gt; other = (Result&lt;?&gt;) obj;</span>
-<span class="nc bnc" id="L135" title="All 2 branches missed.">			if ( !Objects.equals(other.id(), _id)             ) return false;</span>
-<span class="nc bnc" id="L136" title="All 2 branches missed.">			if ( !Objects.equals(other.type(), _type)         ) return false;</span>
-<span class="nc bnc" id="L137" title="All 2 branches missed.">			if ( !Objects.equals(other.problems(), _problems) ) return false;</span>
-<span class="nc" id="L138">			return Val.equals( other.orElseThrow(), _value ); // Arrays are compared with Arrays.equals</span>
+<span class="nc bnc" id="L148" title="All 2 branches missed.">		if ( obj == null ) return false;</span>
+<span class="nc bnc" id="L149" title="All 2 branches missed.">		if ( obj == this ) return true;</span>
+<span class="nc bnc" id="L150" title="All 2 branches missed.">		if ( obj instanceof Result ) {</span>
+<span class="nc" id="L151">			Result&lt;?&gt; other = (Result&lt;?&gt;) obj;</span>
+<span class="nc bnc" id="L152" title="All 2 branches missed.">			if ( !Objects.equals(other.id(), _id)             ) return false;</span>
+<span class="nc bnc" id="L153" title="All 2 branches missed.">			if ( !Objects.equals(other.type(), _type)         ) return false;</span>
+<span class="nc bnc" id="L154" title="All 2 branches missed.">			if ( !Objects.equals(other.problems(), _problems) ) return false;</span>
+<span class="nc" id="L155">			return Val.equals( other.orElseThrow(), _value ); // Arrays are compared with Arrays.equals</span>
 		}
-<span class="nc" id="L140">		return false;</span>
+<span class="nc" id="L157">		return false;</span>
 	}
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

@@ -1,43 +1,43 @@
 {
   "project": "Swing-Tree",
   "version": "0.2.0",
-  "created": "Tue Mar 19 09:58:59 CET 2024",
+  "created": "Mon Apr 15 12:22:59 CEST 2024",
   "statistics":{
     "runs":"16",
     "passed":"16",
     "failed":"0",
     "featureFailures":"0",
     "successRate":"1.0",
-    "duration":"482.0"
+    "duration":"444.0"
   },
   "specifications": [{
       "className":"sprouts.Event_Spec",
       "title":"Events",
-      "narrative":"Sprouts models events using 2 simple interfaces,\n    the `sprouts.Observable` interface\n    and the trigger-able `Event` interface where `Event` is a sub type of `Observable`.\n    The `Event` interface is used to fire events, and because it extends the `Observable` interface\n    it allows you to listen to an event through the registration of `Observer` instances.\n\n    `Event`s can be created using various factory methods (like for example `Event.create()`),\n    one of which even allows the specification of a custom `Event.Executor`\n    which can be used to control on which thread(s) the event is fired.",
+      "narrative":"Sprouts models events using 2 simple interfaces, \n    the `sprouts.Observable` interface\n    and the trigger-able `Event` interface where `Event` is a sub type of `Observable`.\n    The `Event` interface is used to fire events, and because it extends the `Observable` interface\n    it allows you to listen to an event through the registration of `Observer` instances.\n\n    `Event`s can be created using various factory methods (like for example `Event.create()`),\n    one of which even allows the specification of a custom `Event.Executor`\n    which can be used to control on which thread(s) the event is fired.",
       "featureCount":"5",
       "failures":"0",
       "errors":"0",
       "skipped":"0" ,
       "successRate":"1.0",
-      "duration":"32",
+      "duration":"30",
       "executedFeatures":[{"id":"A listener can be unsubscribed from an Event.","extraInfo":[]},{"id":"The \"Event.of\" factory method is a shortcut for creating an event with an initial listener.","extraInfo":[]},{"id":"We can create an event using the \"Event.create\" factory method.","extraInfo":[]},{"id":"We can create an event using the \"Event.using\" factory method with a custom executor.","extraInfo":[]},{"id":"We can unsubscribe all Listeners from an Event!","extraInfo":[]}],
       "ignoredFeatures":[]
     },{
       "className":"sprouts.MVVM_Unit_Test_Spec",
       "title":"Writing Unit Tests for View Models",
-      "narrative":"Not only is Sprouts a framework for building UIs, it is also a framework for\n    building view models based on its built in property types.\n    This specification demonstrates how to write unit tests\n    for the example view models in the test suite.",
+      "narrative":"Not only is Sprouts a framework for building UIs, it is also a framework for\n    building view models based on its built in property types. \n    This specification demonstrates how to write unit tests\n    for the example view models in the test suite.",
       "featureCount":"2",
       "failures":"0",
       "errors":"0",
       "skipped":"0" ,
       "successRate":"1.0",
-      "duration":"20",
+      "duration":"14",
       "executedFeatures":[{"id":"The register button does nothing if the inputs are not all valid.","extraInfo":[]},{"id":"The registration view model will display feedback about invalid inputs.","extraInfo":[]}],
       "ignoredFeatures":[]
     },{
       "className":"sprouts.Noticeable_Spec",
       "title":"Events",
-      "narrative":"The `Noticeable` interface is a thing that can be listened to\n    Not only is it the super type of `Event`, it is also the super type of\n    sprouts `Val` and `Var` property wrappers as well as the `Vals` and `Vars`\n    property list types.\n\n    This means that you can listen to all of these types for changes\n    through the `Noticeable` interface, hiding the implementation details\n    of what the exact source of the change was.",
+      "narrative":"The `Noticeable` interface is a thing that can be listened to\n    Not only is it the super type of `Event`, it is also the super type of \n    sprouts `Val` and `Var` property wrappers as well as the `Vals` and `Vars`\n    property list types.\n\n    This means that you can listen to all of these types for changes\n    through the `Noticeable` interface, hiding the implementation details\n    of what the exact source of the change was.",
       "featureCount":"4",
       "failures":"0",
       "errors":"0",
@@ -49,37 +49,37 @@
     },{
       "className":"sprouts.Problem_Spec",
       "title":"Nothing but Problems",
-      "narrative":"`Problem` instances are part of `Result` instances\n    which are used to represent the optional result of an operation\n    as well as a list of problems that occurred during the operation.\n\n    `Problem` instances tell us what went wrong and why\n    in various situations where we need to know.\n    They are immutable and thread safe and\n    are intended to be used in functional designs.\n\n    You might wonder, \"Why are exceptions not enough?\".\n    Exceptions are great for us developers, because they halt\n    the current execution and give us a stack trace we can debug,\n    but they do not always fail as gracefully as a user might expect.\n    In a complex system where lots of things can go wrong\n    you want to catch your exceptions and then collect\n    them in a list of problems like so:\n\n    `thingsThatWentWrong.add(Problem.of(myException));`\n\n    This way you can continue to execute your program\n    and collect all the problems that occurred so that\n    they can either be logged or presented to the user.",
+      "narrative":"`Problem` instances are part of `Result` instances \n    which are used to represent the optional result of an operation\n    as well as a list of problems that occurred during the operation.\n\n    `Problem` instances tell us what went wrong and why\n    in various situations where we need to know.\n    They are immutable and thread safe and\n    are intended to be used in functional designs.\n\n    You might wonder, \"Why are exceptions not enough?\".\n    Exceptions are great for us developers, because they halt\n    the current execution and give us a stack trace we can debug,\n    but they do not always fail as gracefully as a user might expect.\n    In a complex system where lots of things can go wrong\n    you want to catch your exceptions and then collect \n    them in a list of problems like so: \n\n    `thingsThatWentWrong.add(Problem.of(myException));`\n\n    This way you can continue to execute your program\n    and collect all the problems that occurred so that\n    they can either be logged or presented to the user.",
       "featureCount":"3",
       "failures":"0",
       "errors":"0",
       "skipped":"0" ,
       "successRate":"1.0",
-      "duration":"12",
+      "duration":"10",
       "executedFeatures":[{"id":"A Problem can be created from an exception.","extraInfo":[]},{"id":"A Problem may have a reporter.","extraInfo":[]},{"id":"We can create a problem from a title.","extraInfo":[]}],
       "ignoredFeatures":[]
     },{
       "className":"sprouts.Properties_List_Spec",
       "title":"Lists of Properties",
-      "narrative":"Just like properties you can create lists of properties\n    and then bind them to UI components.\n    They are a powerful tool to model the state\n    as well as business logic of your UI without actually depending on it.\n    This is especially useful for testing your UIs logic.\n    This specification shows how to use the various\n    methods exposed by the property lists classes,\n    namely \"Vals\" (immutable) and \"Vars\" (mutable).",
+      "narrative":"Just like properties you can create lists of properties\n    and then bind them to UI components.\n    They are a powerful tool to model the state \n    as well as business logic of your UI without actually depending on it.\n    This is especially useful for testing your UIs logic.\n    This specification shows how to use the various\n    methods exposed by the property lists classes, \n    namely \"Vals\" (immutable) and \"Vars\" (mutable).",
       "featureCount":"33",
       "failures":"0",
       "errors":"0",
       "skipped":"0" ,
       "successRate":"1.0",
-      "duration":"137",
+      "duration":"116",
       "executedFeatures":[{"id":"A list of properties can be turned into an immutable \"Vals\" list using the \"toVals\" method.","extraInfo":[]},{"id":"A list of properties can be turned into lists, sets or maps using various convenience methods.","extraInfo":[]},{"id":"Both the \"Vars\" and immutable \"Vals\" types can be used for functional programming.","extraInfo":[]},{"id":"Change listeners registered on a property list will be called when the list is sorted.","extraInfo":[]},{"id":"Checkout these cool one liners!","extraInfo":[]},{"id":"Items can be popped off a property list using a predicate.","extraInfo":[]},{"id":"Items can be removed from a property list using a predicate.","extraInfo":[]},{"id":"Just like a regular \"Var\" property you can register change listeners on \"Vars\".","extraInfo":[]},{"id":"Leading and trailing items can be popped off a property list.","extraInfo":[]},{"id":"Lists of properties can be sorted based on their natural order through the `sort` method.","extraInfo":[]},{"id":"Lists of properties can be sorted using a custom comparator through the `sort` method.","extraInfo":[]},{"id":"Map a \"Vals\" instance from one type of properties to another.","extraInfo":[]},{"id":"Map a \"Vars\" instance from one type of properties to another.","extraInfo":[]},{"id":"Multiple properties can be modelled through the \"Vars\" and \"Vals\" classes.","extraInfo":[]},{"id":"Properties can be popped off a property list using a predicate.","extraInfo":[]},{"id":"Properties can be removed from a property list using a predicate.","extraInfo":[]},{"id":"The \"Vals\" and \"Vars\" instances have descriptive String representations.","extraInfo":[]},{"id":"The \"Vars\" is a list of properties which can grow and shrink.","extraInfo":[]},{"id":"The \"makeDistinct\" method on a mutable list of properties modifies the list in-place.","extraInfo":[]},{"id":"The \"popAt\" method return the removed property.","extraInfo":[]},{"id":"The \"retainAll\" method does not trigger an \"onChange\" event if the list is not changed.","extraInfo":[]},{"id":"The `indexOf` method returns the index of the first occurrence of the given property.","extraInfo":[]},{"id":"The display action of a property or list of properties will not be afterit was removed","extraInfo":[]},{"id":"The listeners registered in property lists will be informed what type of modification occurred.","extraInfo":[]},{"id":"The properties of one property list can be added to another property list.","extraInfo":[]},{"id":"Use \"anyEmpty\" to check if any of the properties are empty.","extraInfo":[]},{"id":"Use \"none\" to check if none of the properties match the given predicate.","extraInfo":[]},{"id":"Use \"removeOrThrow\" to to guarantee the removal of a property.","extraInfo":[]},{"id":"Using \"addAll\" to add multiple things to a property list will only trigger the change listeners once!","extraInfo":[]},{"id":"Various kinds of methods that mutate a property list will only trigger an \"onChange\" event once, even if multiple items are affected.","extraInfo":[]},{"id":"You can create a \"Vars\" list from a regular List of properties.","extraInfo":[]},{"id":"You can create the \"Vars\"/\"Vals\" property lists from property instances.","extraInfo":[]},{"id":"You can remove n leading or trailing entries from a property list.","extraInfo":[]}],
       "ignoredFeatures":[]
     },{
       "className":"sprouts.Properties_Spec",
       "title":"Properties",
-      "narrative":"Properties are a powerful tool to model the state\n    as well as business logic of your UI without actually depending on it.\n    This is especially useful for testing your UIs logic (in a view model for example).\n    This is the core motivation behind the creation of the Sprouts library.\n\n    In Sprouts, properties are represented by the `Var` and `Val` classes.\n\n    You might be wondering, what is a `Var` or `Val` and what does\n    it have to do with the common concept of a property?\n\n    The answer is quite simply that the sprouts API uses the\n    names `Var` and `Val` to refer to 2 common types of properties.\n    The name `Var` translates to \"variable\" and `Val` to \"value\"\n    which are also words that convey the meaning of a property\n    yet they allow us to distinguish between mutable and immutable properties\n    without having to resort to unnecessary prefixes like \"mutable\" or \"immutable\".\n\n    So when the sprouts documentation refers to properties, it is\n    referring to the `Var` and `Val` classes.\n\n    This specification introduces you to their API and shows you how to use them.",
+      "narrative":"Properties are a powerful tool to model the state \n    as well as business logic of your UI without actually depending on it.\n    This is especially useful for testing your UIs logic (in a view model for example).\n    This is the core motivation behind the creation of the Sprouts library.\n\n    In Sprouts, properties are represented by the `Var` and `Val` classes.\n\n    You might be wondering, what is a `Var` or `Val` and what does \n    it have to do with the common concept of a property?\n\n    The answer is quite simply that the sprouts API uses the \n    names `Var` and `Val` to refer to 2 common types of properties.\n    The name `Var` translates to \"variable\" and `Val` to \"value\"\n    which are also words that convey the meaning of a property\n    yet they allow us to distinguish between mutable and immutable properties\n    without having to resort to unnecessary prefixes like \"mutable\" or \"immutable\".\n\n    So when the sprouts documentation refers to properties, it is\n    referring to the `Var` and `Val` classes.\n\n    This specification introduces you to their API and shows you how to use them.",
       "featureCount":"16",
       "failures":"0",
       "errors":"0",
       "skipped":"0" ,
       "successRate":"1.0",
-      "duration":"29",
+      "duration":"27",
       "executedFeatures":[{"id":"A property can be converted to an `Optional`.","extraInfo":[]},{"id":"A property constructed using the `of` factory method, does not allow null items.","extraInfo":[]},{"id":"Conveniently compare properties with another item using \"is\", \"isOneOf\" or \"isNot\"","extraInfo":[]},{"id":"Conveniently compare the item of a property with another item using \"is\", \"isOneOf\" or \"isNot\"","extraInfo":[]},{"id":"Properties are similar to the `Optional` class, you can map them and see if they are empty or not.","extraInfo":[]},{"id":"Properties are simple wrappers around a value","extraInfo":[]},{"id":"Properties not only have a value but also a type and id!","extraInfo":[]},{"id":"The \"ifPresent\" method allows us to see if a property has a value or not.","extraInfo":[]},{"id":"The `get()` method will throw an exception if there is no element present.","extraInfo":[]},{"id":"The equality and hash code of a property are based on its value, type and id!","extraInfo":[]},{"id":"The string representation of a property will give you all the information you need.","extraInfo":[]},{"id":"There are 2 types of properties, an immutable property, and its mutable sub-type.","extraInfo":[]},{"id":"There are various kinds of convenience methods for creating live view of properties.","extraInfo":[]},{"id":"Use `typeAsString()` to get the type of a property as a string.","extraInfo":[]},{"id":"Use the \"viewAs\" method to create a dynamically updated view of a property.","extraInfo":[]},{"id":"Whether a property is a `Var` or `Val` can be seen in their String representaions.","extraInfo":[]}],
       "ignoredFeatures":[]
     },{
@@ -91,7 +91,7 @@
       "errors":"0",
       "skipped":"0" ,
       "successRate":"1.0",
-      "duration":"10",
+      "duration":"9",
       "executedFeatures":[{"id":"The delegate of a property change action exposes a property that is an immutable clone.","extraInfo":[]},{"id":"The delegate of a property list change action exposes a list that is an immutable clone.","extraInfo":[]},{"id":"The delegate of a property list change action exposes a list that is an immutable clone.","extraInfo":[]},{"id":"The delegate of a property list change action has a descriptive string representation.","extraInfo":[]},{"id":"The delegate of a property user action exposes a property that is an immutable clone.","extraInfo":[]}],
       "ignoredFeatures":[]
     },{
@@ -103,25 +103,25 @@
       "errors":"0",
       "skipped":"0" ,
       "successRate":"1.0",
-      "duration":"16",
+      "duration":"19",
       "executedFeatures":[{"id":"\"Vals\", a list of properties, is immutable.","extraInfo":[]},{"id":"A \"Val\" instance is immutable.","extraInfo":[]},{"id":"A \"Var\" may only wrap null if it is created as nullable.","extraInfo":[]},{"id":"A property can only wrap null if we specify a type class.","extraInfo":[]},{"id":"An empty property will throw an exception if you try to access its value.","extraInfo":[]},{"id":"The \"get\" method of a property throws an exception if the property is null.","extraInfo":[]},{"id":"The \"orElseNull\" method should be used instead of \"orElseThrow\" if you are fine with null items.","extraInfo":[]}],
       "ignoredFeatures":[]
     },{
       "className":"sprouts.Result_Spec",
       "title":"Results",
       "narrative":"The `Result` interface is used to represent the optional result of an operation\n    as well as a list of problems that occurred during the operation.\n\n    It is a sub type of the `Val` property and as such can be used to represent a value\n    that is immutable and can be observed for changes.\n\n    The default result implementation indirectly exposed by its factory methods\n    is immutable and thread safe, effectively making it a monadic value\n    similar to the `Optional` type in Java 8.",
-      "featureCount":"8",
+      "featureCount":"10",
       "failures":"0",
       "errors":"0",
       "skipped":"0" ,
       "successRate":"1.0",
-      "duration":"23",
-      "executedFeatures":[{"id":"A result can be created from multiple problems.","extraInfo":[]},{"id":"An empty `Result` can be mapped to any property type without an exception being thrown.","extraInfo":[]},{"id":"Create a Result from a list with some problems.","extraInfo":[]},{"id":"Just like a `Val` property, a Result has a type and id.","extraInfo":[]},{"id":"Results can be mapped to a property.","extraInfo":[]},{"id":"Results can be turned into an Optional.","extraInfo":[]},{"id":"We can create a result from any kind of value.","extraInfo":[]},{"id":"You can create a Result from a list.","extraInfo":[]}],
+      "duration":"20",
+      "executedFeatures":[{"id":"A result can be created from multiple problems.","extraInfo":[]},{"id":"An empty `Result` can be mapped to any property type without an exception being thrown.","extraInfo":[]},{"id":"Create a Result from a list with some problems.","extraInfo":[]},{"id":"Exceptions inside of a mapping function are caught and turned into problems.","extraInfo":[]},{"id":"If mapping to another type goes wrong, the exception is caught and turned into a problem.","extraInfo":[]},{"id":"Just like a `Val` property, a `Result` has a type and id.","extraInfo":[]},{"id":"Results can be turned into an Optional.","extraInfo":[]},{"id":"The items of a `Result` can be mapped using mapping functions.","extraInfo":[]},{"id":"We can create a result from any kind of value.","extraInfo":[]},{"id":"You can create a `Result` from a list.","extraInfo":[]}],
       "ignoredFeatures":[]
     },{
       "className":"sprouts.Observable_Spec",
       "title":"Observable Events",
-      "narrative":"The `sprouts.Observable` interface defines something that may be observed\n    through the registration of `Observer` implementations\n    which will be invoked by the `Observable` in case specific situations.\n\n    It is the super type of various sprout types, like for example the generic `Event`,\n    defining something that can be triggered so that the `Observer`s may be informed,\n    or the `Val` and `Var` properties, as well as the `Vals` and `Vars`\n    property list types, which allow for the observation of state changes.\n\n    You can listen to all of these types\n    through the common `Observable` interface, hiding the implementation details\n    of what the exact source of the change was.",
+      "narrative":"The `sprouts.Observable` interface defines something that may be observed\n    through the registration of `Observer` implementations \n    which will be invoked by the `Observable` in case specific situations.\n\n    It is the super type of various sprout types, like for example the generic `Event`,\n    defining something that can be triggered so that the `Observer`s may be informed,\n    or the `Val` and `Var` properties, as well as the `Vals` and `Vars`\n    property list types, which allow for the observation of state changes.\n\n    You can listen to all of these types\n    through the common `Observable` interface, hiding the implementation details\n    of what the exact source of the change was.",
       "featureCount":"4",
       "failures":"0",
       "errors":"0",
@@ -133,7 +133,7 @@
     },{
       "className":"sprouts.Occurrence_Spec",
       "title":"Events",
-      "narrative":"Sprouts models events using 2 simple interfaces,\n    the `sprouts.Observable` interface\n    and the trigger-able `Occurrence` interface where `Occurrence` is a sub type of `Observable`.\n    The `Occurrence` interface is used to fire events, and because it extends the `Observable` interface\n    it allows you to listen to an event through the registration of `Observer` instances.\n\n    `Occurrence`s can be created using various factory methods (like for example `Occurrence.create()`),\n    one of which even allows the specification of a custom `Occurrence.Executor`\n    which can be used to control on which thread(s) the event is fired.",
+      "narrative":"Sprouts models events using 2 simple interfaces, \n    the `sprouts.Observable` interface\n    and the trigger-able `Occurrence` interface where `Occurrence` is a sub type of `Observable`.\n    The `Occurrence` interface is used to fire events, and because it extends the `Observable` interface\n    it allows you to listen to an event through the registration of `Observer` instances.\n\n    `Occurrence`s can be created using various factory methods (like for example `Occurrence.create()`),\n    one of which even allows the specification of a custom `Occurrence.Executor`\n    which can be used to control on which thread(s) the event is fired.",
       "featureCount":"5",
       "failures":"0",
       "errors":"0",
@@ -145,19 +145,19 @@
     },{
       "className":"sprouts.Property_Binding_Spec",
       "title":"Property Binding",
-      "narrative":"The core motivation behind the creation of the Sprouts library\n    is to provide a simple and powerful way to model the state\n    as well as business logic of your UI without actually depending on it.\n\n    To make the decoupling between your UI and the UIs state and logic\n    possible you need to bind Sprouts properties to UI components.\n    This is done through the use of change listeners and event listeners\n    and so called `Channel`s, which are used to distinguish between\n    different types of events.",
+      "narrative":"The core motivation behind the creation of the Sprouts library\n    is to provide a simple and powerful way to model the state \n    as well as business logic of your UI without actually depending on it.\n\n    To make the decoupling between your UI and the UIs state and logic \n    possible you need to bind Sprouts properties to UI components.\n    This is done through the use of change listeners and event listeners\n    and so called `Channel`s, which are used to distinguish between\n    different types of events.",
       "featureCount":"5",
       "failures":"0",
       "errors":"0",
       "skipped":"0" ,
       "successRate":"1.0",
-      "duration":"9",
+      "duration":"8",
       "executedFeatures":[{"id":"Changing the value of a property through the `.set(From.VIEW, T)` method will also affect its views","extraInfo":[]},{"id":"Properties can be bound by subscribing to them using the `onChange(..)` method.","extraInfo":[]},{"id":"Subscribing to the `From.ALL` channel will notify you of all changes.","extraInfo":[]},{"id":"The `withID(..)` method produces a new property with all bindings inherited.","extraInfo":[]},{"id":"Use `set(From.VIEW, T)` on our properties to change the property state from the frontend.","extraInfo":[]}],
       "ignoredFeatures":[]
     },{
       "className":"sprouts.Observable_Properties_and_Events_Spec",
       "title":"Observable Events and Properties",
-      "narrative":"The `sprouts.Observable` interface defines something that may be observed\n    through the registration of `Observer` implementations\n    which will be invoked by the `Observable` in case specific situations.\n\n    It is the super type of various sprout types, like for example the generic `Event`,\n    defining something that can be triggered so that the `Observer`s may be informed,\n    or the `Val` and `Var` properties, as well as the `Vals` and `Vars`\n    property list types, which also allow for the observation of state changes.\n\n    You can listen to all of these types\n    through the common `Observable` interface, hiding the implementation details\n    of what the exact source of the change was.",
+      "narrative":"The `sprouts.Observable` interface defines something that may be observed\n    through the registration of `Observer` implementations \n    which will be invoked by the `Observable` in case specific situations.\n\n    It is the super type of various sprout types, like for example the generic `Event`,\n    defining something that can be triggered so that the `Observer`s may be informed,\n    or the `Val` and `Var` properties, as well as the `Vals` and `Vars`\n    property list types, which also allow for the observation of state changes.\n\n    You can listen to all of these types\n    through the common `Observable` interface, hiding the implementation details\n    of what the exact source of the change was.",
       "featureCount":"4",
       "failures":"0",
       "errors":"0",
@@ -175,7 +175,7 @@
       "errors":"0",
       "skipped":"0" ,
       "successRate":"1.0",
-      "duration":"82",
+      "duration":"80",
       "executedFeatures":[{"id":"A `viewIsEmpty()` property from a non nullable property is always false.","extraInfo":[]},{"id":"A `viewIsPresent()` property from a non nullable property is always true.","extraInfo":[]},{"id":"The `viewIsEmpty()` method returns a property that is true when the original property is empty, and false otherwise.","extraInfo":[]},{"id":"The `viewIsPresent()` method returns a property that is true when the original property is not empty, and false otherwise.","extraInfo":[]},{"id":"The `viewSize()` method returns a property that is equal to the size of the original property.","extraInfo":[]},{"id":"We can \"view the emptiness\" of a property list.","extraInfo":[]},{"id":"We can \"view the presence of items\" of a property list.","extraInfo":[]}],
       "ignoredFeatures":[]
     },{
@@ -187,20 +187,20 @@
       "errors":"0",
       "skipped":"0" ,
       "successRate":"1.0",
-      "duration":"38",
+      "duration":"43",
       "executedFeatures":[{"id":"A composite property view created using the `Val.of(..)` does not update when receiving null items","extraInfo":[]},{"id":"A composite property view created using the `Val.ofNullable(..)` allows null.","extraInfo":[]},{"id":"A composite property view is a live view of 2 other properties.","extraInfo":[]},{"id":"A non nullable composite property view may be created from two nullable properties.","extraInfo":[]},{"id":"Some non-nullable composite properties created using the `Val.of(..)` method cannot deal with null.","extraInfo":[]}],
       "ignoredFeatures":[]
     },{
       "className":"sprouts.Viewing_Properties_Spec",
       "title":"Viewing Properties",
       "narrative":"Both the read only `Val` and the mutable `Var` are observable properties.\n    As a consequence, they expose convenient methods to observe their changes\n    in the form of \"views\", which are themselves observable properties\n    that are a live view of the original property which gets updated\n    automatically when the original property changes.\n\n    This is especially useful when you want to observe a property\n    of one type as a property of another type, or when you want to\n    observe a property with some transformation applied to it.\n\n    This specification shows how to create views from both nullable and non-nullable properties,",
-      "featureCount":"6",
+      "featureCount":"7",
       "failures":"0",
       "errors":"0",
       "skipped":"0" ,
       "successRate":"1.0",
-      "duration":"25",
-      "executedFeatures":[{"id":"A primitive or string type view will map nulls to the types null object.","extraInfo":[]},{"id":"Map null to custom values when viewing them as primitive types.","extraInfo":[]},{"id":"The `viewAsDouble()` method can be used to create a null safe view of a property of any type as a double.","extraInfo":[]},{"id":"The `viewAsInt()` method can be used to create a null safe view of a property of any type as an int.","extraInfo":[]},{"id":"The `viewAsString()` method can be used to create a null safe view of a property of any type as a String.","extraInfo":[]},{"id":"Use the \"view\" to create a view of a property of the same type.","extraInfo":[]}],
+      "duration":"19",
+      "executedFeatures":[{"id":"A primitive or string type view will map nulls to the types null object.","extraInfo":[]},{"id":"A view can handle viewing different sub-types of the given source type.","extraInfo":[]},{"id":"Map null to custom values when viewing them as primitive types.","extraInfo":[]},{"id":"The `viewAsDouble()` method can be used to create a null safe view of a property of any type as a double.","extraInfo":[]},{"id":"The `viewAsInt()` method can be used to create a null safe view of a property of any type as an int.","extraInfo":[]},{"id":"The `viewAsString()` method can be used to create a null safe view of a property of any type as a String.","extraInfo":[]},{"id":"Use the \"view\" to create a view of a property of the same type.","extraInfo":[]}],
       "ignoredFeatures":[]
     }
   ],

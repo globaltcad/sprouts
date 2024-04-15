@@ -4,7 +4,7 @@
   "narrative":"The `Result` interface is used to represent the optional result of an operation\n    as well as a list of problems that occurred during the operation.\n\n    It is a sub type of the `Val` property and as such can be used to represent a value\n    that is immutable and can be observed for changes.\n\n    The default result implementation indirectly exposed by its factory methods\n    is immutable and thread safe, effectively making it a monadic value\n    similar to the `Optional` type in Java 8.",
   "subjects":["sprouts.Result","sprouts.Val","sprouts.Problem"],
   "statistics":{
-    "runs":"8",
+    "runs":"10",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -50,7 +50,7 @@
     },
   
     {
-      "id":"Results can be mapped to a property.",
+      "id":"The items of a `Result` can be mapped using mapping functions.",
       "result":"PASS",
       "duration":"?",
       "iterations":{
@@ -59,9 +59,9 @@
       "blocks":[
         {"kind":"given","text":"A result.","code":["def result = Result.of(42)"]},
 
-        {"kind":"when","text":"We map the result to a property.","code":["def mapped = result.map { it + 1 }"]},
+        {"kind":"when","text":"We map the result to another result with the value plus one.","code":["def mapped = result.map { it + 1 }"]},
 
-        {"kind":"then","text":"The mapped property has the value of the result plus one.","code":["mapped.get() == 43"]}
+        {"kind":"then","text":"The mapped result has the value of the result plus one.","code":["mapped.get() == 43"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -84,7 +84,7 @@
     },
   
     {
-      "id":"Just like a `Val` property, a Result has a type and id.",
+      "id":"Just like a `Val` property, a `Result` has a type and id.",
       "result":"PASS",
       "duration":"?",
       "iterations":{
@@ -101,7 +101,7 @@
     },
   
     {
-      "id":"You can create a Result from a list.",
+      "id":"You can create a `Result` from a list.",
       "result":"PASS",
       "duration":"?",
       "iterations":{
@@ -153,6 +153,44 @@
         {"kind":"when","text":"We map the result to a property.","code":["def mapped = result.mapTo(String, it -> \"foo $it\" )"]},
 
         {"kind":"then","text":"The resulting property is also empty.","code":["mapped.isEmpty()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Exceptions inside of a mapping function are caught and turned into problems.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Mapping `Result` objects is based on a mapping function\n            which has the responsibility of mapping the item of the result\n            to another item.\n\n            However, sometimes the mapping function might throw an exception\n            in which case the exception is caught and turned into a problem and\n            the resulting property will be an empty result with the problem.\n\n            The reason for this is because the inherent purpose of a `Result` is to\n            protect against exceptions crippling the application control flow\n            while also preserving a record of what went wrong.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A result.","code":["def result = Result.of(42)"]},
+
+        {"kind":"when","text":"We map the result unsuccessfully by throwing an exception:","code":["def mapped = result.map { throw new IllegalArgumentException(\"foo\") }"]},
+
+        {"kind":"then","text":"The resulting property has a problem.","code":["mapped.problems().size() == 1"]},
+
+        {"kind":"and","text":"The problem is an exception problem.","code":["mapped.problems().first().exception().get().message == \"foo\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"If mapping to another type goes wrong, the exception is caught and turned into a problem.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Mapping `Result` objects is based on a mapping function\n            which has the responsibility of mapping the item of the result\n            to another item.\n\n            However, sometimes the mapping function might throw an exception\n            in which case the exception is caught and turned into a problem and\n            the resulting property will be an empty result with the problem.\n\n            The reason for this is because the inherent purpose of a `Result` is to\n            protect against exceptions crippling the application control flow\n            while also preserving a record of what went wrong.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A simple result with a simple item.","code":["def result = Result.of(42)"]},
+
+        {"kind":"when","text":"We map the result to another type with an exception.","code":["def mapped = result.mapTo(String, { throw new IllegalArgumentException(\"foo\") })"]},
+
+        {"kind":"then","text":"The resulting property has a problem.","code":["mapped.problems().size() == 1"]},
+
+        {"kind":"and","text":"The problem is an exception problem.","code":["mapped.problems().first().exception().get().message == \"foo\""]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }

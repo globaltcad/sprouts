@@ -170,7 +170,7 @@ public interface Val&lt;T&gt; extends Observable
 	 *  at least one of the items of the two properties change, or
 	 *  whenever a manual change event is fired (see {@link Var#fireChange(Channel)}). &lt;br&gt;&lt;br&gt;
 	 *  &lt;p&gt;
-	 *  Note that this property does permit storing null references.&lt;/b&gt;&lt;br&gt;
+	 *  &lt;b&gt;Note that this property does permit storing null references.&lt;/b&gt;&lt;br&gt;
 	 *  If you need a composite view which does not permit null,
 	 *  use the {@link #of(Val, Val, BiFunction)} method instead.
 	 *
@@ -695,7 +695,7 @@ public interface Val&lt;T&gt; extends Observable
 	 * @param otherItem The other item of the same type as is wrapped by this.
 	 * @return The truth value determining if the provided item is not equal to the wrapped item.
 	 */
-<span class="fc bfc" id="L698" title="All 2 branches covered.">	default boolean isNot( T otherItem ) { return !this.is(otherItem); }</span>
+<span class="fc bfc" id="L698" title="All 2 branches covered.">	default boolean isNot( @Nullable T otherItem ) { return !this.is(otherItem); }</span>
 
 	/**
 	 *  This method check if the item of the provided property
@@ -717,7 +717,7 @@ public interface Val&lt;T&gt; extends Observable
 	 * @return The truth value determining if the provided item is equal to the wrapped item.
 	 */
 	@SuppressWarnings(&quot;unchecked&quot;)
-	default boolean isOneOf( T first, T second, T... otherValues ) {
+	default boolean isOneOf( @Nullable T first, @Nullable T second, T... otherValues ) {
 <span class="fc bfc" id="L721" title="All 2 branches covered.">		if ( this.is(first) ) return true;</span>
 <span class="pc bpc" id="L722" title="1 of 2 branches missed.">		if ( this.is(second) ) return true;</span>
 <span class="pc bpc" id="L723" title="1 of 2 branches missed.">		for ( T otherValue : otherValues )</span>
