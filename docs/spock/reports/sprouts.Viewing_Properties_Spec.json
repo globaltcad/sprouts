@@ -4,7 +4,7 @@
   "narrative":"Both the read only `Val` and the mutable `Var` are observable properties.\n    As a consequence, they expose convenient methods to observe their changes\n    in the form of \"views\", which are themselves observable properties\n    that are a live view of the original property which gets updated\n    automatically when the original property changes.\n\n    This is especially useful when you want to observe a property\n    of one type as a property of another type, or when you want to\n    observe a property with some transformation applied to it.\n\n    This specification shows how to create views from both nullable and non-nullable properties,",
   "subjects":["sprouts.Val","sprouts.Val"],
   "statistics":{
-    "runs":"6",
+    "runs":"7",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -143,6 +143,27 @@
         {"kind":"when","text":"We change the value of the property.","code":["num.set(3.14f)"]},
 
         {"kind":"then","text":"The view is updated to the double representation of the float.","code":["numView.get() == 3.14"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A view can handle viewing different sub-types of the given source type.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `viewAs(Class,..)` method takes 2 arguments: the type we want to view \n            through the view property, and a function that transforms the value of the source property.\n            If the viewed type is a more general type than the source type, the view will be able to handle\n            viewing different sub-types of the given source type depending on the transformation function.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A property based on the generic type `Integer`...","code":["Var<Integer> num = Var.of(42 as int)"]},
+
+        {"kind":"and","text":"A view of the property as a generic `Number`...","code":["Val<Number> numView = num.viewAs(Number, n -> n < 0 ? n.floatValue() : n.doubleValue() )"]},
+
+        {"kind":"expect","text":"The view is of the given type and has the expected value.","code":["numView.type() == Number","numView.get() == 42.0","numView.get() instanceof Double"]},
+
+        {"kind":"when","text":"We change the value of the property so that the view holds a float.","code":["num.set(-3)"]},
+
+        {"kind":"then","text":"The view is updated to the float representation of the integer.","code":["numView.type() == Number","numView.get() == -3.0","numView.get() instanceof Float"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }
