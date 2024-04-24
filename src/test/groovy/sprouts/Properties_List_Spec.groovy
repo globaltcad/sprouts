@@ -796,6 +796,8 @@ class Properties_List_Spec extends Specification
         and : 'The `oldValues` of the change delegate should be a property list with the removed property.'
             change.oldValues().size() == 1
             change.oldValues().at(0).get() == "h"
+        and : 'The `index` of the change points to the position of the removed property.'
+            change.index() == 7
         when : 'We remove the second property of the list with the `removeAt` method.'
             vars.removeAt(1)
         then : 'The `newValues` should be an empty property list.'
@@ -803,6 +805,8 @@ class Properties_List_Spec extends Specification
         and : 'The `oldValues` should contain the removed property.'
             change.oldValues().size() == 1
             change.oldValues().at(0).get() == "b"
+        and : 'The `index` of the change points to the position of the removed property.'
+            change.index() == 1
         when : 'We remove the first property with the `removeFirst` method.'
             vars.removeFirst()
         then : 'The `newValues` should be an empty property list.'
@@ -810,6 +814,8 @@ class Properties_List_Spec extends Specification
         and : 'The `oldValues` should contain the removed property.'
             change.oldValues().size() == 1
             change.oldValues().at(0).get() == "a"
+        and : 'The `index` of the change points to the position of the removed property.'
+            change.index() == 0
         when : 'We remove a property with the `remove` method.'
             vars.remove("d")
         then : 'The `newValues` should be an empty property list.'
@@ -817,6 +823,8 @@ class Properties_List_Spec extends Specification
         and : 'The `oldValues` should contain the removed property.'
             change.oldValues().size() == 1
             change.oldValues().at(0).get() == "d"
+        and : 'The `index` of the change points to the position of the removed property.'
+            change.index() == 1
         when : 'We remove a property with the `remove` method.'
             vars.remove(Var.of("f"))
         then : 'The `newValues` should be an empty property list.'
@@ -824,6 +832,8 @@ class Properties_List_Spec extends Specification
         and : 'The `oldValues` should contain the removed property.'
             change.oldValues().size() == 1
             change.oldValues().at(0).get() == "f"
+        and : 'The `index` of the change points to the position of the removed property.'
+            change.index() == 2
     }
 
 }
