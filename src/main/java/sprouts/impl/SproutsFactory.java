@@ -40,6 +40,7 @@ public interface SproutsFactory
 
 	<T, V extends T> Var<T> varOf( Class<T> type, V item );
 
+	<T> Vals<T> valsOf( Class<T> type );
 
 	@SuppressWarnings("unchecked")
 	<T> Vals<T> valsOf( Class<T> type, Val<T>... vars );
@@ -53,6 +54,8 @@ public interface SproutsFactory
 	<T> Vals<T> valsOf( Class<T> type, Iterable<Val<T>> properties );
 
 	<T> Vals<T> valsOf( Class<T> type, Vals<T> vals );
+
+	<T> Vals<T> valsOfNullable( Class<T> type );
 
 	@SuppressWarnings("unchecked")
 	<T> Vals<T> valsOfNullable( Class<T> type, Val<T>... vals );
