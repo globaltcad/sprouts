@@ -25,6 +25,18 @@ import java.util.stream.StreamSupport;
  */
 public interface Vals<T> extends Iterable<T>, Observable
 {
+
+    /**
+     *  Create a new empty {@link Vals} instance.
+     * @param type The type of the items.
+     * @param <T> The type of the items.
+     * @return A new empty {@link Vals} instance.
+     */
+    static <T> Vals<T> of( Class<T> type ) {
+        Objects.requireNonNull(type);
+        return Sprouts.factory().valsOf( type );
+    }
+
     /**
      *  Create a new {@link Vals} instance from the given varargs of properties.
      * @param type The type of the items.
@@ -83,6 +95,17 @@ public interface Vals<T> extends Iterable<T>, Observable
         Objects.requireNonNull(type);
         Objects.requireNonNull(vals);
         return Sprouts.factory().valsOf( type, vals );
+    }
+
+    /**
+     *  Create a new empty nullable {@link Vals} instance.
+     * @param type The type of the items.
+     * @param <T> The type of the items.
+     * @return A new {@link Vals} instance.
+     */
+    static <T> Vals<T> ofNullable( Class<T> type ) {
+        Objects.requireNonNull(type);
+        return Sprouts.factory().valsOfNullable( type );
     }
 
     /**

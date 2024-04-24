@@ -349,26 +349,9 @@ public class AbstractVariables<T> implements Vars<T>
             pass the clone to the delegate. This is important because the delegate
             is passed to the action which might be executed on a different thread.
         */
-        Val<T> clonedNewValue = ( newVal != null ? Val.ofNullable(newVal) : Val.ofNullable(_type, null) );
-        Val<T> clonedOldValue = ( oldVal != null ? Val.ofNullable(oldVal) : Val.ofNullable(_type, null) );
-        Vals<T> newValues = Vals.ofNullable(_type, clonedNewValue);
-        Vals<T> oldValues = Vals.ofNullable(_type, clonedOldValue);
-        return new ValsDelegate<T>() {
-            @Override public int index() { return index; }
-            @Override public Change changeType() { return type; }
-            @Override public Vals<T> newValues() { return newValues; }
-            @Override public Vals<T> oldValues() { return oldValues; }
-            @Override public Vals<T> vals() { return clone; }
-            @Override public String toString() {
-                return "ValsDelegate[" +
-                            "index="      + index()      + ", " +
-                            "changeType=" + changeType() + ", " +
-                            "newValues="  + newValues()  + ", " +
-                            "oldValues="  + oldValues()  + ", " +
-                            "vals="       + vals()       +
-                        ']';
-            }
-        };
+        Vals<T> newValues = newVal == null ? Vals.ofNullable(_type) : Vals.ofNullable(_type, Val.ofNullable(newVal));
+        Vals<T> oldValues = oldVal == null ? Vals.ofNullable(_type) : Vals.ofNullable(_type, Val.ofNullable(oldVal));
+        return new ValsDelegateImpl<>(type, index, newValues, oldValues, clone);
     }
 
     private void _triggerAction(

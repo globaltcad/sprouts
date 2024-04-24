@@ -45,14 +45,14 @@ public interface ValsDelegate<T>
     Vals<T> oldValues();
 
     /**
-     *  Exposes the first previous value of the property before the change took place.
-     *  This is equivalent to calling {@code oldValues().first()}.
+     *  Exposes the first previous value of the property before the change took place, or an empty value if there are
+     *  no such values.
      * @deprecated Use {@link #oldValues()} instead! (After a change event, more than one item can be removed or changed)
      * @return The previous value of the property or an empty property if the change does not involve a previous value.
      */
     @Deprecated
     default Val<T> oldValue() {
-        return oldValues().first();
+        return oldValues().isEmpty() ? Val.ofNull(vals().type()) : oldValues().first();
     }
 
     /**
@@ -63,14 +63,14 @@ public interface ValsDelegate<T>
     Vals<T> newValues();
 
     /**
-     *  Exposes the first new value of the property after the change took place.
-     *  This is equivalent to calling {@code newValues().first()}.
+     *  Exposes the first new value of the property after the change took place, or an empty value if there are no such
+     *  values.
      *  @deprecated Use {@link #newValues()} instead! (After a change event, more than one item can be added or changed)
      * @return The current value of the property or an empty property if the change does not involve a current value.
      */
     @Deprecated
     default Val<T> newValue() {
-        return newValues().first();
+        return newValues().isEmpty() ? Val.ofNull(vals().type()) : newValues().first();
     }
 
     /**

@@ -712,4 +712,107 @@ class Properties_List_Spec extends Specification
             vars.indexOf(null) == 1
     }
 
+    def 'You can easily create an empty "Vals" list.'() {
+        reportInfo """
+            A common use case for empty lists and nullable empty lists is inside the change delegate.
+            A delegate holds information about the change, such as the `newValues` and `oldValues`.
+            These can also be empty. For example, when a property is removed from the list, the newVals list is empty. 
+        """
+        given : 'A "Vals" and a nullable "Vals" instance with no properties.'
+            var vals = Vals.of(String.class)
+            var valsNullable = Vals.ofNullable(String.class)
+        expect : 'The `size` method returns 0 and the `isEmpty` method returns true.'
+            vals.size() == 0
+            valsNullable.size() == 0
+            vals.isEmpty()
+            valsNullable.isEmpty()
+    }
+
+    def 'The change delegate contains information about changes made to a "Vars" list by adding properties.'() {
+        reportInfo """
+            When you add a property to a "Vars" list, the change delegate contains information about the change.
+            The `newValues` of the delegate contains the added property, and the `oldValues` is always an empty list.
+        """
+        given : 'A "Vars" instance having a few properties.'
+            var vars = Vars.of("a", "d", "e")
+        and : 'We register a listener that will record the last change for us.'
+            var change = null
+            vars.onChange({ change = it })
+        when : 'We add a property to the list with the `add` method.'
+            vars.add("f")
+        then : 'The `newValues` of the change delegate should be a property list with the added property.'
+            change.newValues().size() == 1
+            change.newValues().at(0).get() == "f"
+        and : 'The `oldValues` of the change should be an empty property list.'
+            change.oldValues().isEmpty()
+        when : 'We add a property to the list using the `add` method.'
+            vars.add(Var.of("g"))
+        then : 'The `newValues` should contain the added property.'
+            change.newValues().size() == 1
+            change.newValues().at(0).get() == "g"
+        and : 'The `oldValues` method should be an empty list.'
+            change.oldValues().isEmpty()
+        when : 'We add a property to the list using the `addAt` method.'
+            vars.addAt(1, "b")
+        then : 'The `newValues` should contain the added property.'
+            change.newValues().size() == 1
+            change.newValues().at(0).get() == "b"
+        and : 'The `oldValues` method should be an empty list.'
+            change.oldValues().isEmpty()
+        when : 'We add a property to the list using the `add` method.'
+            vars.addAt(2, Var.of("c"))
+        then : 'The `newValues` should contain the added property.'
+            change.newValues().size() == 1
+            change.newValues().at(0).get() == "c"
+        and : 'The `oldValues` method should be an empty list.'
+            change.oldValues().isEmpty()
+    }
+
+    def 'The change delegate contains information about changes made to a "Vars" list by removing properties.'() {
+        reportInfo """
+            When you remove a property from a "Vars" list, the change delegate contains information about the change.
+            The `newValues` of the delegate is always an empty list, and the `oldValues` contains the removed property.
+        """
+        given : 'A "Vars" instance having a few properties.'
+            var vars = Vars.of("a", "b", "c", "d", "e", "f", "g", "h")
+        and : 'We register a listener that will record the last change for us.'
+            var change = null
+            vars.onChange({ change = it })
+        when : 'We remove the last property of the list with the `removeLast` method.'
+            vars.removeLast()
+        then : 'The `newValues` of the change delegate should be an empty property list.'
+            change.newValues().isEmpty()
+        and : 'The `oldValues` of the change delegate should be a property list with the removed property.'
+            change.oldValues().size() == 1
+            change.oldValues().at(0).get() == "h"
+        when : 'We remove the second property of the list with the `removeAt` method.'
+            vars.removeAt(1)
+        then : 'The `newValues` should be an empty property list.'
+            change.newValues().isEmpty()
+        and : 'The `oldValues` should contain the removed property.'
+            change.oldValues().size() == 1
+            change.oldValues().at(0).get() == "b"
+        when : 'We remove the first property with the `removeFirst` method.'
+            vars.removeFirst()
+        then : 'The `newValues` should be an empty property list.'
+            change.newValues().isEmpty()
+        and : 'The `oldValues` should contain the removed property.'
+            change.oldValues().size() == 1
+            change.oldValues().at(0).get() == "a"
+        when : 'We remove a property with the `remove` method.'
+            vars.remove("d")
+        then : 'The `newValues` should be an empty property list.'
+            change.newValues().isEmpty()
+        and : 'The `oldValues` should contain the removed property.'
+            change.oldValues().size() == 1
+            change.oldValues().at(0).get() == "d"
+        when : 'We remove a property with the `remove` method.'
+            vars.remove(Var.of("f"))
+        then : 'The `newValues` should be an empty property list.'
+            change.newValues().isEmpty()
+        and : 'The `oldValues` should contain the removed property.'
+            change.oldValues().size() == 1
+            change.oldValues().at(0).get() == "f"
+    }
+
 }
