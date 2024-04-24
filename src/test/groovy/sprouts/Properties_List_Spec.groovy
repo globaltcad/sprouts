@@ -726,6 +726,9 @@ class Properties_List_Spec extends Specification
             valsNullable.size() == 0
             vals.isEmpty()
             valsNullable.isEmpty()
+        and : 'The `type` methods of the empty lists still return the correct type, even though they are empty.'
+            vals.type() == String.class
+            valsNullable.type() == String.class
     }
 
     def 'The change delegate contains information about changes made to a "Vars" list by adding properties.'() {
