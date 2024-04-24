@@ -748,6 +748,8 @@ class Properties_List_Spec extends Specification
             change.newValues().at(0).get() == "f"
         and : 'The `oldValues` of the change should be an empty property list.'
             change.oldValues().isEmpty()
+        and : 'The `index` of the change points to the added property.'
+            change.index() == 3
         when : 'We add a property to the list using the `add` method.'
             vars.add(Var.of("g"))
         then : 'The `newValues` should contain the added property.'
@@ -755,6 +757,8 @@ class Properties_List_Spec extends Specification
             change.newValues().at(0).get() == "g"
         and : 'The `oldValues` method should be an empty list.'
             change.oldValues().isEmpty()
+        and : 'The `index` of the change points to the added property.'
+            change.index() == 4
         when : 'We add a property to the list using the `addAt` method.'
             vars.addAt(1, "b")
         then : 'The `newValues` should contain the added property.'
@@ -762,6 +766,8 @@ class Properties_List_Spec extends Specification
             change.newValues().at(0).get() == "b"
         and : 'The `oldValues` method should be an empty list.'
             change.oldValues().isEmpty()
+        and : 'The `index` of the change points to the added property.'
+            change.index() == 1
         when : 'We add a property to the list using the `add` method.'
             vars.addAt(2, Var.of("c"))
         then : 'The `newValues` should contain the added property.'
@@ -769,6 +775,8 @@ class Properties_List_Spec extends Specification
             change.newValues().at(0).get() == "c"
         and : 'The `oldValues` method should be an empty list.'
             change.oldValues().isEmpty()
+        and : 'The `index` of the change points to the added property.'
+            change.index() == 2
     }
 
     def 'The change delegate contains information about changes made to a "Vars" list by removing properties.'() {
