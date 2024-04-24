@@ -139,7 +139,7 @@ class Property_Event_Delegates_Spec extends Specification
         when : 'We add an element to the property list.'
             propertyList.add(42)
         then : 'The delegate has a descriptive string representation.'
-            delegate.toString() == 'ValsDelegate[index=3, changeType=ADD, newValues=Vals<Integer>[42], oldValues=Vals<Integer>[EMPTY], vals=Vals<Integer>[1, 2, 3, 42]]'
+            delegate.toString() == 'ValsDelegate[index=3, changeType=ADD, newValues=Vals<Integer>[42], oldValues=Vals<Integer>[], vals=Vals<Integer>[1, 2, 3, 42]]'
     }
 
 }
