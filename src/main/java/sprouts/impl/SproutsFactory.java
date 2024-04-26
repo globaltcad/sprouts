@@ -114,4 +114,5 @@ public interface SproutsFactory
 
 	<V> Result<List<V>> resultOfList( Class<V> type, List<V> list, List<Problem> problems );
 
+	<T> Vals<T> valsOfNullable(Class<T> type, Vals<@Nullable T> vals);
 }
