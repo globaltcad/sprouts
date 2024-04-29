@@ -111,7 +111,7 @@ public final class Sprouts implements SproutsFactory
         return Val.of( toBeCopied.get() ).withId( toBeCopied.id() );
     }
 
-    @Override public <T> Val<T> valOfNullable(Val<T> toBeCopied ) {
+    @Override public <T> Val<@Nullable T> valOfNullable(Val<@Nullable T> toBeCopied ) {
         Objects.requireNonNull(toBeCopied);
         return Val.ofNullable( toBeCopied.type(), toBeCopied.orElseNull() ).withId( toBeCopied.id() );
     }
@@ -125,7 +125,7 @@ public final class Sprouts implements SproutsFactory
         return AbstractVariable.of( first, second, combiner );
     }
 
-    @Override public <T> Val<T> valOfNullable(Val<T> first, Val<T> second, BiFunction<T, T, T> combiner ) {
+    @Override public <T> Val<@Nullable T> valOfNullable(Val<@Nullable T> first, Val<@Nullable T> second, BiFunction<@Nullable T, @Nullable T, @Nullable T> combiner ) {
         Objects.requireNonNull(first);
         Objects.requireNonNull(second);
         Objects.requireNonNull(combiner);
@@ -179,28 +179,32 @@ public final class Sprouts implements SproutsFactory
     }
 
     @SuppressWarnings("unchecked")
-    @Override public <T> Vals<T> valsOfNullable( Class<T> type, Val<T>... vals ) {
+    @Override public <T> Vals<@Nullable T> valsOfNullable( Class<T> type, Val<@Nullable T>... vals ) {
         Var<T>[] vars = new Var[vals.length];
         System.arraycopy(vals, 0, vars, 0, vals.length);
         return AbstractVariables.ofNullable( true, type, vars );
     }
 
-    @Override public <T> Vals<T> valsOfNullable( Class<T> type ) {
+    @Override public <T> Vals<@Nullable T> valsOfNullable( Class<T> type ) {
         return AbstractVariables.ofNullable( true, type );
     }
 
     @SuppressWarnings("unchecked")
-    @Override public <T> Vals<T> valsOfNullable( Class<T> type, T... items ) {
+    @Override public <T> Vals<@Nullable T> valsOfNullable( Class<T> type, @Nullable T... items ) {
         return AbstractVariables.ofNullable( true, type, items );
     }
 
     @SuppressWarnings("unchecked")
-    @Override public <T> Vals<T> valsOfNullable( Val<T> first, Val<T>... rest ) {
+    @Override public <T> Vals<@Nullable T> valsOfNullable( Val<@Nullable T> first, Val<@Nullable T>... rest ) {
         Var<T>[] vars = new Var[rest.length];
         System.arraycopy(rest, 0, vars, 0, rest.length);
         return AbstractVariables.ofNullable( true, (Var<T>) first, vars );
     }
 
+    @Override
+    public <T> Vals<@Nullable T> valsOfNullable(Class<T> type, Vals<@Nullable T> vals) {
+        return AbstractVariables.ofNullable( true, type, vals );
+    }
 
 
 	@SuppressWarnings("unchecked")
@@ -217,19 +221,19 @@ public final class Sprouts implements SproutsFactory
 	@Override public <T> Vars<T> varsOf( Class<T> type, Iterable<Var<T>> vars ) { return AbstractVariables.of( false, type, vars ); }
 
 	@SuppressWarnings("unchecked")
-	@Override public <T> Vars<T> varsOfNullable( Class<T> type, Var<T>... vars ) {
+	@Override public <T> Vars<@Nullable T> varsOfNullable( Class<T> type, Var<@Nullable T>... vars ) {
 		return AbstractVariables.ofNullable( false, type, vars );
 	}
 
-	@Override public <T> Vars<T> varsOfNullable( Class<T> type ) { return AbstractVariables.ofNullable( false, type ); }
+	@Override public <T> Vars<@Nullable T> varsOfNullable( Class<T> type ) { return AbstractVariables.ofNullable( false, type ); }
 
 	@SuppressWarnings("unchecked")
-	@Override public <T> Vars<T> varsOfNullable( Class<T> type, T... values ) {
+	@Override public <T> Vars<@Nullable T> varsOfNullable( Class<T> type, @Nullable T... values ) {
 		return AbstractVariables.ofNullable( false, type, values );
 	}
 
 	@SuppressWarnings("unchecked")
-	@Override public <T> Vars<T> varsOfNullable( Var<T> first, Var<T>... rest ) {
+	@Override public <T> Vars<@Nullable T> varsOfNullable( Var<@Nullable T> first, Var<@Nullable T>... rest ) {
 		return AbstractVariables.ofNullable( false, first, rest );
 	}
 

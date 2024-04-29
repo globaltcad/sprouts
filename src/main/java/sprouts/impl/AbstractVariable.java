@@ -35,11 +35,11 @@ public class AbstractVariable<T> extends AbstractValue<T> implements Var<T>
 		return of( false, first, second, combiner );
 	}
 
-	public static <T> Var<T> ofNullable( Val<T> first, Val<T> second, BiFunction<T, T, T> combiner ) {
+	public static <T> Var<@Nullable T> ofNullable( Val<@Nullable T> first, Val<@Nullable T> second, BiFunction<@Nullable T, @Nullable T, @Nullable T> combiner ) {
 		return of( true, first, second, combiner );
 	}
 
-	private static <T> Var<T> of( boolean allowNull, Val<T> first, Val<T> second, BiFunction<T, T, T> combiner ) {
+	private static <T> Var<@Nullable T> of( boolean allowNull, Val<@Nullable T> first, Val<@Nullable T> second, BiFunction<@Nullable T, @Nullable T, @Nullable T> combiner ) {
 		String id = "";
 		if ( !first.id().isEmpty() && !second.id().isEmpty() )
 			id = first.id() + "_and_" + second.id();
