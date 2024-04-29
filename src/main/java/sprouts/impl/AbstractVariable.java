@@ -35,7 +35,7 @@ public class AbstractVariable<T> extends AbstractValue<T> implements Var<T>
 		return of( false, first, second, combiner );
 	}
 
-	public static <T> Var<T> ofNullable( Val<T> first, Val<T> second, BiFunction<T, T, T> combiner ) {
+	public static <T> Var<@Nullable T> ofNullable( Val<@Nullable T> first, Val<@Nullable T> second, BiFunction<@Nullable T, @Nullable T, @Nullable T> combiner ) {
 		return of( true, first, second, combiner );
 	}
 

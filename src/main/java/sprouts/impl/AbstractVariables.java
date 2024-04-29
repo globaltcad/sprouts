@@ -65,29 +65,29 @@ public class AbstractVariables<T> implements Vars<T>
         return AbstractVariables.of( immutable, type, (Iterable) list );
     }
 
-    public static <T> Vars<T> ofNullable( boolean immutable, Class<T> type ){
+    public static <T> Vars<@Nullable T> ofNullable( boolean immutable, Class<T> type ){
         Objects.requireNonNull(type);
-        return new AbstractVariables<T>( immutable, type, true, new Var[0] ){};
+        return new AbstractVariables<@Nullable T>( immutable, type, true, new Var[0] ){};
     }
 
     @SafeVarargs
-    public static <T> Vars<T> ofNullable( boolean immutable, Class<T> type, Var<T>... vars ) {
+    public static <T> Vars<@Nullable T> ofNullable( boolean immutable, Class<T> type, Var<@Nullable T>... vars ) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(vars);
-        return new AbstractVariables<T>( immutable, type, true, vars ){};
+        return new AbstractVariables<@Nullable T>( immutable, type, true, vars ){};
     }
 
     @SafeVarargs
-    public static <T> Vars<T> ofNullable( boolean immutable, Class<T> type, T... vars ) {
+    public static <T> Vars<@Nullable T> ofNullable( boolean immutable, Class<T> type, @Nullable T... vars ) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(vars);
         Var<T>[] array = new Var[vars.length];
         for ( int i = 0; i < vars.length; i++ ) array[i] = Var.ofNullable(type, vars[i]);
-        return new AbstractVariables<T>( immutable, type, true, array ){};
+        return new AbstractVariables<@Nullable T>( immutable, type, true, array ){};
     }
 
     @SafeVarargs
-    public static <T> Vars<T> ofNullable( boolean immutable, Var<T> first, Var<T>... vars ) {
+    public static <T> Vars<@Nullable T> ofNullable( boolean immutable, Var<@Nullable T> first, Var<@Nullable T>... vars ) {
         Objects.requireNonNull(first);
         Objects.requireNonNull(vars);
         Var<T>[] array = new Var[vars.length+1];
@@ -96,7 +96,7 @@ public class AbstractVariables<T> implements Vars<T>
         return ofNullable(immutable, first.type(), array);
     }
 
-    public static <T> Vars<T> ofNullable( boolean immutable, Class<T> type, Iterable<Var<T>> vars ) {
+    public static <T> Vars<@Nullable T> ofNullable( boolean immutable, Class<T> type, Iterable<Var<@Nullable T>> vars ) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(vars);
         List<Var<T>> list = new ArrayList<>();
@@ -105,7 +105,7 @@ public class AbstractVariables<T> implements Vars<T>
         return new AbstractVariables<T>( immutable, type, true, list.toArray(array) ){};
     }
 
-    public static <T> Vals<T> ofNullable( boolean immutable, Class<T> type, Vals<T> vals ) {
+    public static <T> Vals<@Nullable T> ofNullable( boolean immutable, Class<T> type, Vals<@Nullable T> vals ) {
         if ( vals instanceof AbstractVariables )
             return new AbstractVariables<>( immutable, type, true, ((AbstractVariables<T>) vals)._variables );
 

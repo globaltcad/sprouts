@@ -25,11 +25,11 @@ public interface SproutsFactory
 
 	<T> Val<T> valOf( Val<T> toBeCopied );
 
-	<T> Val<T> valOfNullable( Val<T> toBeCopied );
+	<T> Val<@Nullable T> valOfNullable( Val<@Nullable T> toBeCopied );
 
 	<T> Val<T> valOf( Val<T> first, Val<T> second, BiFunction<T, T, T> combiner );
 
-	<T> Val<T> valOfNullable( Val<T> first, Val<T> second, BiFunction<T, T, T> combiner );
+	<T> Val<@Nullable T> valOfNullable( Val<@Nullable T> first, Val<@Nullable T> second, BiFunction<@Nullable T, @Nullable T, @Nullable T> combiner );
 
 
 	<T> Var<T> varOfNullable( Class<T> type, @Nullable T item );
@@ -55,16 +55,16 @@ public interface SproutsFactory
 
 	<T> Vals<T> valsOf( Class<T> type, Vals<T> vals );
 
-	<T> Vals<T> valsOfNullable( Class<T> type );
+	<T> Vals<@Nullable T> valsOfNullable( Class<T> type );
 
 	@SuppressWarnings("unchecked")
-	<T> Vals<T> valsOfNullable( Class<T> type, Val<T>... vals );
+	<T> Vals<@Nullable T> valsOfNullable( Class<T> type, Val<@Nullable T>... vals );
 
 	@SuppressWarnings("unchecked")
-	<T> Vals<T> valsOfNullable( Class<T> type, T... items );
+	<T> Vals<@Nullable T> valsOfNullable( Class<T> type, @Nullable T... items );
 
 	@SuppressWarnings("unchecked")
-	<T> Vals<T> valsOfNullable( Val<T> first, Val<T>... rest );
+	<T> Vals<@Nullable T> valsOfNullable( Val<@Nullable T> first, Val<@Nullable T>... rest );
 
 
 	@SuppressWarnings("unchecked")
@@ -81,16 +81,17 @@ public interface SproutsFactory
 	<T> Vars<T> varsOf( Class<T> type, Iterable<Var<T>> vars );
 
 	@SuppressWarnings("unchecked")
-	<T> Vars<T> varsOfNullable( Class<T> type, Var<T>... vars );
+	<T> Vars<@Nullable T> varsOfNullable( Class<T> type, Var<@Nullable T>... vars );
 
-	<T> Vars<T> varsOfNullable( Class<T> type );
-
-	@SuppressWarnings("unchecked")
-	<T> Vars<T> varsOfNullable( Class<T> type, T... values );
+	<T> Vars<@Nullable T> varsOfNullable( Class<T> type );
 
 	@SuppressWarnings("unchecked")
-	<T> Vars<T> varsOfNullable( Var<T> first, Var<T>... rest );
+	<T> Vars<@Nullable T> varsOfNullable( Class<T> type, @Nullable T... values );
 
+	@SuppressWarnings("unchecked")
+	<T> Vars<@Nullable T> varsOfNullable( Var<@Nullable T> first, Var<@Nullable T>... rest );
+
+	<T> Vals<@Nullable T> valsOfNullable(Class<T> type, Vals<@Nullable T> vals);
 
 	<V> Result<V> resultOf( Class<V> type );
 
@@ -114,5 +115,4 @@ public interface SproutsFactory
 
 	<V> Result<List<V>> resultOfList( Class<V> type, List<V> list, List<Problem> problems );
 
-	<T> Vals<T> valsOfNullable(Class<T> type, Vals<@Nullable T> vals);
 }
