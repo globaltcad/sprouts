@@ -841,11 +841,11 @@ class Properties_List_Spec extends Specification
         given : 'A nullable "Vars" instance having a few properties.'
             var vars = Vars.ofNullable(String.class, "a", null, "c")
         expect : 'All properties in the property list are nullable.'
-            vars.at(0).allowsNull();
-            vars.at(1).allowsNull();
-            vars.at(2).allowsNull();
+            vars.at(0).allowsNull()
+            vars.at(1).allowsNull()
+            vars.at(2).allowsNull()
         when : 'We add a empty property.'
-            vars.add("x");
+            vars.add("x")
         then : 'The property list should contain the added property.'
             vars == Vars.ofNullable(String.class, "a", null, "c", "x")
         and : 'The added property should also be nullable.'
@@ -862,12 +862,12 @@ class Properties_List_Spec extends Specification
         given : 'A "Vars" instance having a few properties.'
             var vars = Vars.of("a", "b", "x", "d")
         expect : 'All properties in the property list are not nullable.'
-            !vars.at(0).allowsNull();
-            !vars.at(1).allowsNull();
-            !vars.at(2).allowsNull();
-            !vars.at(3).allowsNull();
+            !vars.at(0).allowsNull()
+            !vars.at(1).allowsNull()
+            !vars.at(2).allowsNull()
+            !vars.at(3).allowsNull()
         when : 'We add a property.'
-            vars.add("y");
+            vars.add("y")
         then : 'The property list should contain the added property.'
             vars == Vars.of("a", "b", "x", "d", "y")
         and : 'The added property should also be not nullable.'
