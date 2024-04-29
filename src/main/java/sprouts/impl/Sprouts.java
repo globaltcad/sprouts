@@ -201,10 +201,6 @@ public final class Sprouts implements SproutsFactory
         return AbstractVariables.ofNullable( true, (Var<T>) first, vars );
     }
 
-    @Override
-    public <T> Vals<T> valsOfNullable(Class<T> type, Vals<T> vals) {
-        return AbstractVariables.ofNullable( true, type, vals );
-    }
 
 
 	@SuppressWarnings("unchecked")

@@ -1,8 +1,6 @@
 package sprouts;
 
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
-import sprouts.impl.AbstractVariables;
 import sprouts.impl.Sprouts;
 
 import java.util.*;
@@ -25,7 +23,8 @@ import java.util.stream.StreamSupport;
  *
  * @param <T> The type of the properties.
  */
-public interface Vals<T> extends Iterable<T>, Observable {
+public interface Vals<T> extends Iterable<T>, Observable
+{
 
     /**
      *  Create a new empty {@link Vals} instance.
@@ -34,6 +33,7 @@ public interface Vals<T> extends Iterable<T>, Observable {
      * @return A new empty {@link Vals} instance.
      */
     static <T> Vals<T> of( Class<T> type ) {
+        Objects.requireNonNull(type);
         return Sprouts.factory().valsOf( type );
     }
 
@@ -45,7 +45,9 @@ public interface Vals<T> extends Iterable<T>, Observable {
      * @return A new {@link Vals} instance.
      */
     @SuppressWarnings("unchecked")
-    static <T> Vals<T> of( Class<T> type, Val<T> @NonNull... vars ) {
+    static <T> Vals<T> of( Class<T> type, Val<T>... vars ) {
+        Objects.requireNonNull(type);
+        Objects.requireNonNull(vars);
         return Sprouts.factory().valsOf( type, vars );
     }
 
@@ -57,7 +59,9 @@ public interface Vals<T> extends Iterable<T>, Observable {
      * @return A new {@link Vals} instance.
      */
     @SuppressWarnings("unchecked")
-    static <T> Vals<T> of( Val<T> first, Val<T> @NonNull... rest ) {
+    static <T> Vals<T> of( Val<T> first, Val<T>... rest ) {
+        Objects.requireNonNull(first);
+        Objects.requireNonNull(rest);
         return Sprouts.factory().valsOf( first, rest );
     }
 
@@ -69,7 +73,7 @@ public interface Vals<T> extends Iterable<T>, Observable {
      * @return A new {@link Vals} instance.
      */
     @SuppressWarnings("unchecked")
-    static <T> Vals<T> of( T first, T @NonNull... rest ) {
+    static <T> Vals<T> of( T first, T... rest ) {
         return Sprouts.factory().valsOf( first, rest );
     }
 
@@ -82,10 +86,14 @@ public interface Vals<T> extends Iterable<T>, Observable {
      *  @return A new {@link Vals} instance.
      */
     static <T> Vals<T> of( Class<T> type, Iterable<Val<T>> properties ) {
+        Objects.requireNonNull(type);
+        Objects.requireNonNull(properties);
         return Sprouts.factory().valsOf( type, properties );
     }
 
     static <T> Vals<T> of( Class<T> type, Vals<T> vals ) {
+        Objects.requireNonNull(type);
+        Objects.requireNonNull(vals);
         return Sprouts.factory().valsOf( type, vals );
     }
 
@@ -95,7 +103,8 @@ public interface Vals<T> extends Iterable<T>, Observable {
      * @param <T> The type of the items.
      * @return A new {@link Vals} instance.
      */
-    static <T> Vals<@Nullable T> ofNullable( Class<T> type ) {
+    static <T> Vals<T> ofNullable( Class<T> type ) {
+        Objects.requireNonNull(type);
         return Sprouts.factory().valsOfNullable( type );
     }
 
@@ -107,7 +116,8 @@ public interface Vals<T> extends Iterable<T>, Observable {
      * @return A new {@link Vals} instance.
      */
     @SuppressWarnings("unchecked")
-    static <T> Vals<@Nullable T> ofNullable( Class<T> type, Val<@Nullable T> @NonNull... vals ) {
+    static <T> Vals<T> ofNullable( Class<T> type, Val<T>... vals ) {
+        Objects.requireNonNull(type);
         return Sprouts.factory().valsOfNullable( type, vals );
     }
 
@@ -119,8 +129,8 @@ public interface Vals<T> extends Iterable<T>, Observable {
      * @return A new {@link Vals} instance.
      */
     @SuppressWarnings("unchecked")
-    static <T> Vals<@Nullable T> ofNullable( Class<T> type, @Nullable T @NonNull... items ) {
-        Objects.requireNonNull(items);
+    static <T> Vals<T> ofNullable( Class<T> type, T... items ) {
+        Objects.requireNonNull(type);
         return Sprouts.factory().valsOfNullable( type, items );
     }
 
@@ -132,12 +142,9 @@ public interface Vals<T> extends Iterable<T>, Observable {
      * @return A new {@link Vals} instance.
      */
     @SuppressWarnings("unchecked")
-    static <T> Vals<@Nullable T> ofNullable( Val<T> first, Val<@Nullable T> @NonNull... rest ) {
+    static <T> Vals<T> ofNullable( Val<T> first, Val<T>... rest ) {
+        Objects.requireNonNull(first);
         return Sprouts.factory().valsOfNullable( first, rest );
-    }
-
-    static <T> Vals<@Nullable T> ofNullable(Class<T> type, Vals<@Nullable T> vals) {
-        return Sprouts.factory().valsOfNullable( type, vals );
     }
 
 
@@ -204,27 +211,24 @@ public interface Vals<T> extends Iterable<T>, Observable {
      *  The property at the given index.
      * @param index The index of the property.
      * @return The property at the given index.
-     * @throws IndexOutOfBoundsException If the given index is out of bounds.
      */
-    Val<@Nullable T> at( int index );
+    Val<T> at( int index );
 
     /**
-     * Exposes the first property in the list of properties.
-     * If there is no first property, an exception will be thrown.
+     *  Exposes the first property in the list of properties.
+     *  If there is no first property, an exception will be thrown.
      *
      * @return The first property in the list of properties.
-     * @throws NoSuchElementException If the list is empty.
      */
-    Val<@Nullable T> first();
+    Val<T> first();
 
     /**
-     * Exposes the last property in the list of properties.
-     * If there is no last property, an exception will be thrown.
+     *  Exposes the last property in the list of properties.
+     *  If there is no last property, an exception will be thrown.
      *
      * @return The last property in the list of properties.
-     * @throws NoSuchElementException If the list is empty.
      */
-    Val<@Nullable T> last();
+    Val<T> last();
 
     /**
      *  The boolean flag that indicates if the list of properties is empty,
@@ -261,9 +265,10 @@ public interface Vals<T> extends Iterable<T>, Observable {
      * @param value The value to search for.
      * @return The index of the property that wraps the given value, or -1 if not found.
      */
-    default int indexOf( @Nullable T value ) {
+    default int indexOf( @Nullable T value )
+    {
         int index = 0;
-        for ( @Nullable T v : this ) {
+        for ( T v : this ) {
             if ( Val.equals(v,value) ) return index;
             index++;
         }
@@ -281,7 +286,7 @@ public interface Vals<T> extends Iterable<T>, Observable {
      * @param value The property to search for in this list.
      * @return The index of the given property in this list, or -1 if not found.
      */
-    default int indexOf( Val<@Nullable T> value ) { return indexOf(value.orElseNull()); }
+    default int indexOf( Val<T> value ) { return indexOf(value.orElseNull()); }
 
     /**
      *  Check if the value of the supplied property is wrapped by any of the properties in this list.
@@ -290,7 +295,7 @@ public interface Vals<T> extends Iterable<T>, Observable {
      * @param value The value property to search for.
      * @return True if the given property is in this list.
      */
-    default boolean contains( Val<@Nullable T> value ) { return contains(value.orElseNull()); }
+    default boolean contains( Val<T> value ) { return contains(value.orElseNull()); }
 
     /**
      *  Check for equality between this list of properties and another list of properties.
@@ -298,7 +303,7 @@ public interface Vals<T> extends Iterable<T>, Observable {
      * @param other The other list of properties.
      * @return True if the two lists of properties are equal.
      */
-    default boolean is( Vals<@Nullable T> other )
+    default boolean is( Vals<T> other )
     {
         if ( size() != other.size() ) return false;
         for ( int i = 0; i < size(); i++ )
@@ -313,20 +318,20 @@ public interface Vals<T> extends Iterable<T>, Observable {
      * @param action The action to perform when the list of properties is shown (which is called when its state changes).
      * @return This list of properties.
      */
-    Vals<@Nullable T> onChange( Action<ValsDelegate<@Nullable T>> action );
+    Vals<T> onChange( Action<ValsDelegate<T>> action );
 
     /**
      *  Similar to {@link Var#fireChange(Channel)} but for a list of properties.
      * @return This list of properties to allow chaining.
      */
-    Vals<@Nullable T> fireChange();
+    Vals<T> fireChange();
 
     /**
      *  Use this for mapping a list of properties to another list of properties.
      * @param mapper The mapper function.
      * @return A new list of properties.
      */
-    Vals<@Nullable T> map( Function<@Nullable T, @Nullable T> mapper );
+    Vals<T> map( Function<T,T> mapper );
 
     /**
      *  Use this for mapping a list of properties to another list of properties.
@@ -335,7 +340,7 @@ public interface Vals<T> extends Iterable<T>, Observable {
      * @param <U> The type of the items in the new list of properties.
      * @return A new list of properties.
      */
-    <U> Vals<@Nullable U> mapTo( Class<U> type, Function< @Nullable T, @Nullable U> mapper );
+    <U> Vals<U> mapTo( Class<U> type, Function<T,U> mapper );
 
     /**
      *  Turns this list of properties into a stream of items
@@ -344,7 +349,7 @@ public interface Vals<T> extends Iterable<T>, Observable {
      *
      * @return A stream of the items in this list of properties.
      */
-    default Stream<@Nullable T> stream() { return StreamSupport.stream(spliterator(), false); }
+    default Stream<T> stream() { return StreamSupport.stream(spliterator(), false); }
 
     /**
      *  Converts this list of properties to a JDK {@link List} of items
@@ -353,7 +358,7 @@ public interface Vals<T> extends Iterable<T>, Observable {
      *
      * @return An immutable list of the items in this list of properties.
      */
-    default List<@Nullable T> toList() { return Collections.unmodifiableList(stream().collect(Collectors.toList())); }
+    default List<T> toList() { return Collections.unmodifiableList(stream().collect(Collectors.toList())); }
 
     /**
      *  Converts this list of properties to a JDK {@link List} of properties
@@ -362,7 +367,11 @@ public interface Vals<T> extends Iterable<T>, Observable {
      *
      * @return An immutable {@link List} of properties in this {@link Vals} instance.
      */
-    List<Val<@Nullable T>> toValList();
+    default List<Val<T>> toValList() {
+        return Collections.unmodifiableList(
+                stream().map( v -> v == null ? Val.ofNullable(type(), null) : Val.of(v) ).collect(Collectors.toList())
+            );
+    }
 
     /**
      *  Takes all the items in this list of properties and turns
@@ -370,7 +379,7 @@ public interface Vals<T> extends Iterable<T>, Observable {
      *
      * @return An immutable set of the items in this list of properties.
      */
-    default Set<@Nullable T> toSet() { return Collections.unmodifiableSet(stream().collect(Collectors.toSet())); }
+    default Set<T> toSet() { return Collections.unmodifiableSet(stream().collect(Collectors.toSet())); }
 
     /**
      *  A list of properties may be turned into a map of items where the keys are the ids of the properties
@@ -382,10 +391,10 @@ public interface Vals<T> extends Iterable<T>, Observable {
      * @return An immutable map where the keys are the ids of the properties in this list,
      *         and the values are the items of the properties.
      */
-    default Map<String, @Nullable T> toMap() {
-        Map<String, @Nullable T> map = new HashMap<>();
+    default Map<String,T> toMap() {
+        Map<String,T> map = new HashMap<>();
         for ( int i = 0; i < size(); i++ ) {
-            Val<@Nullable T> val = at(i);
+            Val<T> val = at(i);
             map.put( val.id(), val.orElseNull() );
         }
         return Collections.unmodifiableMap(map);
@@ -401,10 +410,10 @@ public interface Vals<T> extends Iterable<T>, Observable {
      * @return An immutable map where the keys are the ids of the properties in this list,
      *         and the values are the properties themselves.
      */
-    default Map<String, Val<@Nullable T>> toValMap() {
-        Map<String, Val<@Nullable T>> map = new HashMap<>();
+    default Map<String,Val<T>> toValMap() {
+        Map<String,Val<T>> map = new HashMap<>();
         for ( int i = 0; i < size(); i++ ) {
-            Val<@Nullable T> val = at(i);
+            Val<T> val = at(i);
             map.put( val.id(), val );
         }
         return Collections.unmodifiableMap(map);
@@ -415,21 +424,21 @@ public interface Vals<T> extends Iterable<T>, Observable {
      *  @param predicate The predicate to check.
      *  @return True if any of the properties in this list of properties match the given predicate.
      */
-    default boolean any( Predicate<Val<@Nullable T>> predicate ) { return toValList().stream().anyMatch( predicate ); }
+    default boolean any( Predicate<Val<T>> predicate ) { return toValList().stream().anyMatch( predicate ); }
 
     /**
      *  Check if all the properties in this list match the given predicate.
      *  @param predicate The predicate to check.
      *  @return True if all the properties in this list of properties match the given predicate.
      */
-    default boolean all( Predicate<Val<@Nullable T>> predicate ) { return toValList().stream().allMatch( predicate ); }
+    default boolean all( Predicate<Val<T>> predicate ) { return toValList().stream().allMatch( predicate ); }
 
     /**
      *  Check if none of the properties in this list match the given predicate.
      *  @param predicate The predicate to check.
      *  @return True if none of the properties in this list of properties match the given predicate.
      */
-    default boolean none( Predicate<Val<@Nullable T>> predicate ) { return toValList().stream().noneMatch( predicate ); }
+    default boolean none( Predicate<Val<T>> predicate ) { return toValList().stream().noneMatch( predicate ); }
 
     /**
      *  Check if any of the properties in this list is empty.
