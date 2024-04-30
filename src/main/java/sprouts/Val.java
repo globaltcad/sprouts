@@ -1,5 +1,6 @@
 package sprouts;
 
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import sprouts.impl.Sprouts;
 
@@ -44,8 +45,7 @@ import java.util.regex.Pattern;
  * @see Var A mutable subclass of this class.
  * @param <T> The type of the item held by this {@link Val}.
  */
-public interface Val<T> extends Observable
-{
+public interface Val<T extends @Nullable Object> extends Observable {
 	String NO_ID = ""; // This is the default id for properties
 	String EMPTY = "EMPTY"; // This is the default string for empty properties
 	Pattern ID_PATTERN = Pattern.compile("[a-zA-Z0-9_]*");
@@ -67,7 +67,7 @@ public interface Val<T> extends Observable
 	 * @param <T> The type of the wrapped item.
 	 * @return A new {@link Val} instance.
 	 */
-	static <T> Val<T> ofNullable( Class<T> type, @Nullable T item ) {
+	static <T> Val<@Nullable T> ofNullable( Class<T> type, @Nullable T item ) {
 		return Sprouts.factory().valOfNullable( type, item );
 	}
 
@@ -81,7 +81,7 @@ public interface Val<T> extends Observable
 	 * @return A new {@link Val} instance.
 	 * @param <T> The type of the wrapped item.
 	 */
-	static <T> Val<T> ofNull( Class<T> type ) {
+	static <T> Val<@Nullable T> ofNull( Class<T> type ) {
 		return Sprouts.factory().valOfNull( type );
 	}
 
@@ -121,7 +121,7 @@ public interface Val<T> extends Observable
 	 * @return A new {@link Val} instance.
 	 * @param <T> The type of the item held by the {@link Val}!
 	 */
-	static <T> Val<T> ofNullable( Val<T> toBeCopied ) {
+	static <T> Val<@Nullable T> ofNullable( Val<T> toBeCopied ) {
 		Objects.requireNonNull(toBeCopied);
 		return Sprouts.factory().valOfNullable( toBeCopied );
 	}
@@ -185,7 +185,7 @@ public interface Val<T> extends Observable
 	 *                              <b>when it is first called</b>.
 	 * @throws IllegalArgumentException If the types of the two properties are not compatible.
 	 */
-	static <T> Val<T> ofNullable( Val<T> first, Val<T> second, BiFunction<T, T, T> combiner ) {
+	static <T extends @Nullable Object> Val<T> ofNullable( Val<T> first, Val<T> second, BiFunction<T, T, T> combiner ) {
 		Objects.requireNonNull(first);
 		Objects.requireNonNull(second);
 		Objects.requireNonNull(combiner);
@@ -207,7 +207,7 @@ public interface Val<T> extends Observable
 	 * @return the non-{@code null} item described by this {@code Val}
 	 * @throws NoSuchElementException if no item is present
 	 */
-	default T get() { return orElseThrow(); }
+	default @NonNull T get() { return orElseThrow(); }
 
 	/**
 	 * If an item is present, returns the item, otherwise returns
@@ -230,8 +230,8 @@ public interface Val<T> extends Observable
 	 * @return the item, if present, otherwise {@code other}
 	 */
 	default T orElse( T other ) {
-		@Nullable T result = orElseNullable( Objects.requireNonNull(other) );
-		return Objects.requireNonNull(result);
+		Objects.requireNonNull(other);
+		return isPresent() ? get() : other;
 	}
 
 	/**
@@ -244,7 +244,9 @@ public interface Val<T> extends Observable
 	 * @throws NullPointerException if no item is present and the supplying
 	 *         function is {@code null}
 	 */
-	default T orElseGet( Supplier<? extends T> supplier ) { return this.isPresent() ? orElseThrow() : supplier.get(); }
+	default T orElseGet( Supplier<? extends T> supplier ) {
+		return this.isPresent() ? orElseThrow() : supplier.get();
+	}
 
 	/**
 	 * If an item is present, returns the item, otherwise returns
@@ -261,12 +263,12 @@ public interface Val<T> extends Observable
 	 * @return the non-{@code null} item described by this {@code Val}
 	 * @throws NoSuchElementException if no item is present
 	 */
-	default T orElseThrow() {
+	default @NonNull T orElseThrow() {
 		// This class is similar to optional, so if the value is null, we throw an exception!
-		if ( orElseNull() == null )
+		T value = orElseNull();
+		if ( Objects.isNull(value) )
 			throw new NoSuchElementException("No value present");
-
-		return orElseNull();
+		return value;
 	}
 
 	/**
@@ -298,8 +300,7 @@ public interface Val<T> extends Observable
 	default Val<Boolean> viewIsPresent() {
 		if ( !this.allowsNull() )
 			return Val.of( true );
-		else
-			return viewAs(Boolean.class, Objects::nonNull);
+		return viewAs(Boolean.class, Objects::nonNull);
 	}
 
 	/**
@@ -328,7 +329,7 @@ public interface Val<T> extends Observable
 	 */
 	default void ifPresent( Consumer<T> action ) {
 		if ( this.isPresent() )
-			action.accept( orElseThrow() );
+			action.accept( get() );
 	}
 
 	/**
@@ -344,9 +345,8 @@ public interface Val<T> extends Observable
 	 */
 	default void ifPresentOrElse( Consumer<? super T> action, Runnable emptyAction ) {
 		if ( isPresent() )
-			action.accept(orElseThrow());
-		else
-			emptyAction.run();
+			action.accept(get());
+		emptyAction.run();
 	}
 
 	/**
@@ -363,12 +363,13 @@ public interface Val<T> extends Observable
 	 */
 	default Val<T> or( Supplier<? extends Val<? extends T>> supplier ) {
 		Objects.requireNonNull(supplier);
-		if ( isPresent() ) return this;
-		else {
-			@SuppressWarnings("unchecked")
-			Val<T> r = (Val<T>) supplier.get();
-			return Objects.requireNonNull(r);
-		}
+		if ( isPresent() )
+			return this;
+
+		@SuppressWarnings("unchecked")
+		Val<T> r = (Val<T>) supplier.get();
+		Objects.requireNonNull(r);
+		return r;
 	}
 
 	/**
@@ -444,7 +445,7 @@ public interface Val<T> extends Observable
 	 * @return A property that is a live view of this property based on the provided mapping function.
 	 * @param <U> The type of the item returned from the mapping function
 	 */
-	<U> Val<U> viewAs( Class<U> type, java.util.function.Function<T, U> mapper );
+	<U extends @Nullable Object> Val<U> viewAs( Class<@NonNull U> type, Function<T, @Nullable U> mapper );
 
 	/**
 	 * 	Use this to create a live view of this property
@@ -470,7 +471,7 @@ public interface Val<T> extends Observable
 	 * @param mapper the mapping function to apply to an item, if present
 	 * @return A property that is a live view of this property based on the provided mapping function.
 	 */
-	default Val <T> view( java.util.function.Function<T, T> mapper ) {
+	default Val<T> view( Function<T, T> mapper ) {
 		return viewAs( type(), mapper );
 	}
 
@@ -493,7 +494,7 @@ public interface Val<T> extends Observable
 	 * @param mapper The mapping function to turn the item of this property to a String, if present
 	 * @return A property that is a live view of this property based on the provided mapping function.
 	 */
-	default Val<String> viewAsString( Function<T, String> mapper ) {
+	default Val<String> viewAsString( Function<T, @Nullable String> mapper ) {
 		return viewAs( String.class, v -> {
 			try {
 				String stringRef = mapper.apply(v);
@@ -550,7 +551,7 @@ public interface Val<T> extends Observable
 	 * @param mapper the mapping function to turn the item of this property to a Double, if present
 	 * @return A property that is a live view of this property based on the provided mapping function.
 	 */
-	default Val<Double> viewAsDouble( java.util.function.Function<T, Double> mapper ) {
+	default Val<Double> viewAsDouble( java.util.function.Function<T, @Nullable Double> mapper ) {
 		return viewAs( Double.class, v -> {
 			try {
 				Double numberRef = mapper.apply(v);
@@ -608,7 +609,7 @@ public interface Val<T> extends Observable
 	 * @param mapper the mapping function to turn the item of this property to a Integer, if present
 	 * @return A property that is a live view of this property based on the provided mapping function.
 	 */
-	default Val<Integer> viewAsInt( java.util.function.Function<T, Integer> mapper ) {
+	default Val<Integer> viewAsInt( java.util.function.Function<T, @Nullable Integer> mapper ) {
 		return viewAs( Integer.class, v -> {
 			try {
 				Integer numberRef = mapper.apply(v);
@@ -650,7 +651,7 @@ public interface Val<T> extends Observable
 	 *  which would otherwise be accessed via the {@link #orElseThrow()} method.
 	 *  Calling it should not have any side effects. <br>
 	 *  The string conversion is based on the {@link String#valueOf(Object)} method,
-	 *  so if the item is null, the string "null" will be returned.
+	 *  and if the item is null, the string "EMPTY" will be returned.
 	 *
 	 * @return The {@link String} representation of the item wrapped by an implementation of this interface.
 	 */
@@ -673,7 +674,7 @@ public interface Val<T> extends Observable
 	 * @return The truth value determining if the provided item is equal to the wrapped item.
 	 */
 	default boolean is( @Nullable T otherItem ) {
-		return equals(otherItem, this.orElseNullable(null));
+		return equals(otherItem, orElseNull());
 	}
 
 	/**
@@ -683,9 +684,9 @@ public interface Val<T> extends Observable
 	 * @param other The other property of the same type as is wrapped by this.
 	 * @return The truth value determining if the item of the supplied property is equal to the wrapped item.
 	 */
-	default boolean is( Val<T> other ) {
+	default boolean is( Val<@Nullable T> other ) {
 		Objects.requireNonNull(other);
-		return this.is( other.orElseNullable(null) );
+		return is( other.orElseNull() );
 	}
 
 	/**
@@ -695,7 +696,7 @@ public interface Val<T> extends Observable
 	 * @param otherItem The other item of the same type as is wrapped by this.
 	 * @return The truth value determining if the provided item is not equal to the wrapped item.
 	 */
-	default boolean isNot( @Nullable T otherItem ) { return !this.is(otherItem); }
+	default boolean isNot( @Nullable T otherItem ) { return !is(otherItem); }
 
 	/**
 	 *  This method check if the item of the provided property
@@ -705,7 +706,7 @@ public interface Val<T> extends Observable
 	 * @param other The other property of the same type as is wrapped by this.
 	 * @return The truth value determining if the item of the supplied property is not equal to the wrapped item.
 	 */
-	default boolean isNot( Val<T> other ) { return !this.is(other); }
+	default boolean isNot( Val<@Nullable T> other ) { return !is(other); }
 
 	/**
 	 *  This method checks if at least one of the provided items is equal to
@@ -717,11 +718,12 @@ public interface Val<T> extends Observable
 	 * @return The truth value determining if the provided item is equal to the wrapped item.
 	 */
 	@SuppressWarnings("unchecked")
-	default boolean isOneOf( @Nullable T first, @Nullable T second, T... otherValues ) {
+	default boolean isOneOf( @Nullable T first, @Nullable T second, @Nullable T... otherValues ) {
 		if ( this.is(first) ) return true;
 		if ( this.is(second) ) return true;
+		Objects.requireNonNull(otherValues);
 		for ( T otherValue : otherValues )
-			if ( this.is(otherValue) ) return true;
+			if ( is(otherValue) ) return true;
 		return false;
 	}
 
@@ -735,11 +737,12 @@ public interface Val<T> extends Observable
 	 * @return The truth value determining if the item of the supplied property is equal to the wrapped item.
 	 */
 	@SuppressWarnings("unchecked")
-	default boolean isOneOf( Val<T> first, Val<T> second, Val<T>... otherValues ) {
+	default boolean isOneOf( Val<@Nullable T> first, Val<@Nullable T> second, Val<@Nullable T>... otherValues ) {
 		if ( this.is(first) ) return true;
 		if ( this.is(second) ) return true;
+		Objects.requireNonNull(otherValues);
 		for ( Val<T> otherValue : otherValues )
-			if ( this.is(otherValue) ) return true;
+			if ( is(otherValue) ) return true;
 		return false;
 	}
 
