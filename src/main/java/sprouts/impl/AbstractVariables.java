@@ -75,7 +75,7 @@ public class AbstractVariables<T> implements Vars<T>
     }
 
     @SafeVarargs
-    public static <T> Vars<T> ofNullable( boolean immutable, Class<T> type, T... vars ) {
+    public static <T> Vars<@Nullable T> ofNullable( boolean immutable, Class<T> type, @Nullable T... vars ) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(vars);
         Var<T>[] array = new Var[vars.length];

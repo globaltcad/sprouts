@@ -179,23 +179,23 @@ public final class Sprouts implements SproutsFactory
     }
 
     @SuppressWarnings("unchecked")
-    @Override public <T> Vals<T> valsOfNullable( Class<T> type, Val<T>... vals ) {
+    @Override public <T> Vals<@Nullable T> valsOfNullable( Class<T> type, Val<@Nullable T>... vals ) {
         Var<T>[] vars = new Var[vals.length];
         System.arraycopy(vals, 0, vars, 0, vals.length);
         return AbstractVariables.ofNullable( true, type, vars );
     }
 
-    @Override public <T> Vals<T> valsOfNullable( Class<T> type ) {
+    @Override public <T> Vals<@Nullable T> valsOfNullable( Class<T> type ) {
         return AbstractVariables.ofNullable( true, type );
     }
 
     @SuppressWarnings("unchecked")
-    @Override public <T> Vals<T> valsOfNullable( Class<T> type, T... items ) {
+    @Override public <T> Vals<@Nullable T> valsOfNullable( Class<T> type, @Nullable T... items ) {
         return AbstractVariables.ofNullable( true, type, items );
     }
 
     @SuppressWarnings("unchecked")
-    @Override public <T> Vals<T> valsOfNullable( Val<T> first, Val<T>... rest ) {
+    @Override public <T> Vals<@Nullable T> valsOfNullable( Val<@Nullable T> first, Val<@Nullable T>... rest ) {
         Var<T>[] vars = new Var[rest.length];
         System.arraycopy(rest, 0, vars, 0, rest.length);
         return AbstractVariables.ofNullable( true, (Var<T>) first, vars );
