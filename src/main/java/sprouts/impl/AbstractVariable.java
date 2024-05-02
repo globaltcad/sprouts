@@ -16,9 +16,8 @@ import java.util.function.Consumer;
  * 
  * @param <T> The type of the value wrapped by a given property...
  */
-public class AbstractVariable<T> extends AbstractValue<T> implements Var<T>
-{
-	public static <T> Var<T> ofNullable( boolean immutable, Class<T> type, @Nullable T value ) {
+public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<T> implements Var<T> {
+	public static <T> Var<@Nullable T> ofNullable( boolean immutable, Class<T> type, @Nullable T value ) {
 		return new AbstractVariable<T>( immutable, type, value, NO_ID, Collections.emptyMap(), true );
 	}
 
@@ -35,11 +34,11 @@ public class AbstractVariable<T> extends AbstractValue<T> implements Var<T>
 		return of( false, first, second, combiner );
 	}
 
-	public static <T> Var<T> ofNullable( Val<T> first, Val<T> second, BiFunction<T, T, T> combiner ) {
+	public static <T extends @Nullable Object> Var<@Nullable T> ofNullable( Val<T> first, Val<T> second, BiFunction<T, T, T> combiner ) {
 		return of( true, first, second, combiner );
 	}
 
-	private static <T> Var<T> of( boolean allowNull, Val<T> first, Val<T> second, BiFunction<T, T, T> combiner ) {
+	private static <T extends @Nullable Object> Var<T> of( boolean allowNull, Val<T> first, Val<T> second, BiFunction<T, T, T> combiner ) {
 		String id = "";
 		if ( !first.id().isEmpty() && !second.id().isEmpty() )
 			id = first.id() + "_and_" + second.id();
