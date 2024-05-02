@@ -32,9 +32,9 @@ public interface SproutsFactory
 	<T extends @Nullable Object> Val<@Nullable T> valOfNullable( Val<T> first, Val<T> second, BiFunction<T, T, T> combiner );
 
 
-	<T> Var<T> varOfNullable( Class<T> type, @Nullable T item );
+	<T> Var<@Nullable T> varOfNullable( Class<T> type, @Nullable T item );
 
-	<T> Var<T> varOfNull( Class<T> type );
+	<T> Var<@Nullable T> varOfNull( Class<T> type );
 
 	<T> Var<T> varOf( T item );
 
