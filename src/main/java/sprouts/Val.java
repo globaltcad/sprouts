@@ -229,7 +229,7 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	 *        May not be {@code null}.
 	 * @return the item, if present, otherwise {@code other}
 	 */
-	default T orElse( T other ) {
+	default @NonNull T orElse( @NonNull T other ) {
 		Objects.requireNonNull(other);
 		return isPresent() ? get() : other;
 	}
@@ -361,7 +361,7 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	 * @throws NullPointerException if the supplying function is {@code null} or
 	 *         produces a {@code null} result
 	 */
-	default Val<T> or( Supplier<? extends Val<? extends T>> supplier ) {
+	default Val<@NonNull T> or( Supplier<? extends Val<? extends @NonNull T>> supplier ) {
 		Objects.requireNonNull(supplier);
 		if ( isPresent() )
 			return this;
