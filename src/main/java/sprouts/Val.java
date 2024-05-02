@@ -121,7 +121,7 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	 * @return A new {@link Val} instance.
 	 * @param <T> The type of the item held by the {@link Val}!
 	 */
-	static <T> Val<@Nullable T> ofNullable( Val<T> toBeCopied ) {
+	static <T extends @Nullable Object> Val<@Nullable T> ofNullable( Val<T> toBeCopied ) {
 		Objects.requireNonNull(toBeCopied);
 		return Sprouts.factory().valOfNullable( toBeCopied );
 	}
