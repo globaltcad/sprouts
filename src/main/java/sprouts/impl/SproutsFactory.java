@@ -17,19 +17,19 @@ public interface SproutsFactory
 
 	Event eventOf( Event.Executor executor );
 
-	<T> Val<T> valOfNullable( Class<T> type, @Nullable T item );
+	<T> Val<@Nullable T> valOfNullable( Class<T> type, @Nullable T item );
 
-	<T> Val<T> valOfNull( Class<T> type );
+	<T> Val<@Nullable T> valOfNull( Class<T> type );
 
 	<T> Val<T> valOf( T item );
 
 	<T> Val<T> valOf( Val<T> toBeCopied );
 
-	<T> Val<T> valOfNullable( Val<T> toBeCopied );
+	<T extends @Nullable Object> Val<@Nullable T> valOfNullable( Val<T> toBeCopied );
 
 	<T> Val<T> valOf( Val<T> first, Val<T> second, BiFunction<T, T, T> combiner );
 
-	<T> Val<T> valOfNullable( Val<T> first, Val<T> second, BiFunction<T, T, T> combiner );
+	<T extends @Nullable Object> Val<@Nullable T> valOfNullable( Val<T> first, Val<T> second, BiFunction<T, T, T> combiner );
 
 
 	<T> Var<T> varOfNullable( Class<T> type, @Nullable T item );
