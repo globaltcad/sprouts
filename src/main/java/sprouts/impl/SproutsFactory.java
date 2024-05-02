@@ -55,16 +55,16 @@ public interface SproutsFactory
 
 	<T> Vals<T> valsOf( Class<T> type, Vals<T> vals );
 
-	<T> Vals<T> valsOfNullable( Class<T> type );
+	<T> Vals<@Nullable T> valsOfNullable( Class<T> type );
 
 	@SuppressWarnings("unchecked")
-	<T> Vals<T> valsOfNullable( Class<T> type, Val<T>... vals );
+	<T> Vals<@Nullable T> valsOfNullable( Class<T> type, Val<@Nullable T>... vals );
 
 	@SuppressWarnings("unchecked")
-	<T> Vals<T> valsOfNullable( Class<T> type, T... items );
+	<T> Vals<@Nullable T> valsOfNullable( Class<T> type, @Nullable T... items );
 
 	@SuppressWarnings("unchecked")
-	<T> Vals<T> valsOfNullable( Val<T> first, Val<T>... rest );
+	<T> Vals<@Nullable T> valsOfNullable( Val<@Nullable T> first, Val<@Nullable T>... rest );
 
 
 	@SuppressWarnings("unchecked")
