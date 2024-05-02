@@ -185,7 +185,7 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	 *                              <b>when it is first called</b>.
 	 * @throws IllegalArgumentException If the types of the two properties are not compatible.
 	 */
-	static <T extends @Nullable Object> Val<T> ofNullable( Val<T> first, Val<T> second, BiFunction<T, T, T> combiner ) {
+	static <T extends @Nullable Object> Val<@Nullable T> ofNullable( Val<T> first, Val<T> second, BiFunction<T, T, T> combiner ) {
 		Objects.requireNonNull(first);
 		Objects.requireNonNull(second);
 		Objects.requireNonNull(combiner);
