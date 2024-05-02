@@ -94,11 +94,11 @@ public final class Sprouts implements SproutsFactory
         };
     }
 
-    @Override public <T> Val<T> valOfNullable( Class<T> type, @Nullable T item ) {
+    @Override public <T> Val<@Nullable T> valOfNullable( Class<T> type, @Nullable T item ) {
         return AbstractVariable.ofNullable( true, type, item );
     }
 
-    @Override public <T> Val<T> valOfNull( Class<T> type ) {
+    @Override public <T> Val<@Nullable T> valOfNull( Class<T> type ) {
         return AbstractVariable.ofNullable( true, type, null );
     }
 
@@ -111,7 +111,7 @@ public final class Sprouts implements SproutsFactory
         return Val.of( toBeCopied.get() ).withId( toBeCopied.id() );
     }
 
-    @Override public <T> Val<T> valOfNullable(Val<T> toBeCopied ) {
+    @Override public <T> Val<@Nullable T> valOfNullable(Val<@Nullable T> toBeCopied ) {
         Objects.requireNonNull(toBeCopied);
         return Val.ofNullable( toBeCopied.type(), toBeCopied.orElseNull() ).withId( toBeCopied.id() );
     }
@@ -125,7 +125,7 @@ public final class Sprouts implements SproutsFactory
         return AbstractVariable.of( first, second, combiner );
     }
 
-    @Override public <T> Val<T> valOfNullable(Val<T> first, Val<T> second, BiFunction<T, T, T> combiner ) {
+    @Override public <T extends @Nullable Object> Val<@Nullable T> valOfNullable(Val<T> first, Val<T> second, BiFunction<T, T, T> combiner ) {
         Objects.requireNonNull(first);
         Objects.requireNonNull(second);
         Objects.requireNonNull(combiner);
