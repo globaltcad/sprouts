@@ -17,24 +17,24 @@ public interface SproutsFactory
 
 	Event eventOf( Event.Executor executor );
 
-	<T> Val<T> valOfNullable( Class<T> type, @Nullable T item );
+	<T> Val<@Nullable T> valOfNullable( Class<T> type, @Nullable T item );
 
-	<T> Val<T> valOfNull( Class<T> type );
+	<T> Val<@Nullable T> valOfNull( Class<T> type );
 
 	<T> Val<T> valOf( T item );
 
 	<T> Val<T> valOf( Val<T> toBeCopied );
 
-	<T> Val<T> valOfNullable( Val<T> toBeCopied );
+	<T extends @Nullable Object> Val<@Nullable T> valOfNullable( Val<T> toBeCopied );
 
 	<T> Val<T> valOf( Val<T> first, Val<T> second, BiFunction<T, T, T> combiner );
 
-	<T> Val<T> valOfNullable( Val<T> first, Val<T> second, BiFunction<T, T, T> combiner );
+	<T extends @Nullable Object> Val<@Nullable T> valOfNullable( Val<T> first, Val<T> second, BiFunction<T, T, T> combiner );
 
 
-	<T> Var<T> varOfNullable( Class<T> type, @Nullable T item );
+	<T> Var<@Nullable T> varOfNullable( Class<T> type, @Nullable T item );
 
-	<T> Var<T> varOfNull( Class<T> type );
+	<T> Var<@Nullable T> varOfNull( Class<T> type );
 
 	<T> Var<T> varOf( T item );
 
@@ -55,16 +55,16 @@ public interface SproutsFactory
 
 	<T> Vals<T> valsOf( Class<T> type, Vals<T> vals );
 
-	<T> Vals<T> valsOfNullable( Class<T> type );
+	<T> Vals<@Nullable T> valsOfNullable( Class<T> type );
 
 	@SuppressWarnings("unchecked")
-	<T> Vals<T> valsOfNullable( Class<T> type, Val<T>... vals );
+	<T> Vals<@Nullable T> valsOfNullable( Class<T> type, Val<@Nullable T>... vals );
 
 	@SuppressWarnings("unchecked")
-	<T> Vals<T> valsOfNullable( Class<T> type, T... items );
+	<T> Vals<@Nullable T> valsOfNullable( Class<T> type, @Nullable T... items );
 
 	@SuppressWarnings("unchecked")
-	<T> Vals<T> valsOfNullable( Val<T> first, Val<T>... rest );
+	<T> Vals<@Nullable T> valsOfNullable( Val<@Nullable T> first, Val<@Nullable T>... rest );
 
 
 	@SuppressWarnings("unchecked")
@@ -81,15 +81,15 @@ public interface SproutsFactory
 	<T> Vars<T> varsOf( Class<T> type, Iterable<Var<T>> vars );
 
 	@SuppressWarnings("unchecked")
-	<T> Vars<T> varsOfNullable( Class<T> type, Var<T>... vars );
+	<T> Vars<@Nullable T> varsOfNullable( Class<T> type, Var<@Nullable T>... vars );
 
-	<T> Vars<T> varsOfNullable( Class<T> type );
-
-	@SuppressWarnings("unchecked")
-	<T> Vars<T> varsOfNullable( Class<T> type, T... values );
+	<T> Vars<@Nullable T> varsOfNullable( Class<T> type );
 
 	@SuppressWarnings("unchecked")
-	<T> Vars<T> varsOfNullable( Var<T> first, Var<T>... rest );
+	<T> Vars<@Nullable T> varsOfNullable( Class<T> type, @Nullable T... values );
+
+	@SuppressWarnings("unchecked")
+	<T> Vars<@Nullable T> varsOfNullable( Var<@Nullable T> first, Var<@Nullable T>... rest );
 
 
 	<V> Result<V> resultOf( Class<V> type );

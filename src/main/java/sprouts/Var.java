@@ -65,7 +65,7 @@ import java.util.function.Function;
  *
  * @param <T> The type of the wrapped item.
  */
-public interface Var<T> extends Val<T>
+public interface Var<T extends @Nullable Object> extends Val<T>
 {
 	/**
 	 *  Use this factory method to create a new {@link Var} instance
@@ -86,7 +86,7 @@ public interface Var<T> extends Val<T>
 	 * @param <T> The type of the wrapped item.
 	 * @return A new {@link Var} instance.
 	 */
-	static <T> Var<T> ofNullable( Class<T> type, @Nullable T item ) {
+	static <T> Var<@Nullable T> ofNullable( Class<T> type, @Nullable T item ) {
 		return Sprouts.factory().varOfNullable( type, item );
 	}
 
@@ -102,7 +102,7 @@ public interface Var<T> extends Val<T>
 	 * @return A new {@link Var} instance.
 	 * @param <T> The type of the wrapped item.
 	 */
-	static <T> Var<T> ofNull( Class<T> type ) {
+	static <T> Var<@Nullable T> ofNull( Class<T> type ) {
 		return Sprouts.factory().varOfNull( type );
 	}
 
@@ -148,7 +148,7 @@ public interface Var<T> extends Val<T>
 	 * @param newItem The new item which ought to replace the old one.
 	 * @return This very wrapper instance, in order to enable method chaining.
 	 */
-	default Var<T> set( @Nullable T newItem ) {
+	default Var<T> set( T newItem ) {
 		return this.set(DEFAULT_CHANNEL, newItem);
 	}
 
@@ -162,7 +162,7 @@ public interface Var<T> extends Val<T>
 	 * @param newItem The new item which ought to replace the old one.
 	 * @return This very wrapper instance, in order to enable method chaining.
 	 */
-	Var<T> set( Channel channel, @Nullable T newItem );
+	Var<T> set( Channel channel, T newItem );
 
 	/**
 	 *  Use this method to create a new property with an id.
@@ -200,15 +200,12 @@ public interface Var<T> extends Val<T>
 	 * @return A new property either empty (containing null) or containing the result of applying
 	 * 			the mapping function to the item of this property.
 	 */
-	@Override default Var<T> map( java.util.function.Function<T, T> mapper ) {
+	@Override default Var<T> map( Function<T, T> mapper ) {
 		if ( !isPresent() )
-			return Var.ofNullable( type(), null );
+			return Var.ofNull( type() );
 
-		T newValue = mapper.apply( orElseNull() );
-		if ( newValue == null )
-			return Var.ofNullable( type(), null );
-
-		return Var.of( newValue );
+		T newValue = mapper.apply( get() );
+		return allowsNull() ? Var.ofNullable( type(), newValue ) : Var.of( newValue );
 	}
 
 	/**
@@ -231,14 +228,15 @@ public interface Var<T> extends Val<T>
 	 * 			the mapping function to the item of this property.
 	 * @param <U> The type of the item returned from the mapping function
 	 */
-	@Override default <U> Var<U> mapTo( Class<U> type, java.util.function.Function<T, U> mapper ) {
+	@Override default <U extends @Nullable Object> Var<@Nullable U> mapTo( Class<U> type, java.util.function.Function<T, U> mapper ) {
 		if ( !isPresent() )
-			return Var.ofNullable( type, null );
+			return Var.ofNull( type );
 
-		U newValue = mapper.apply( orElseNull() );
+		U newValue = mapper.apply( get() );
 		if ( newValue == null )
 			return Var.ofNullable( type, null );
-		return Var.of( newValue );
+
+		return allowsNull() ? Var.ofNullable( type, newValue ) : Var.of( newValue );
 	}
 
 }

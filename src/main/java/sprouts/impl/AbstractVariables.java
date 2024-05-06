@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 /**
  *  A base class for {@link Vars} implementations.
  */
-public class AbstractVariables<T> implements Vars<T>
+public class AbstractVariables<T extends @Nullable Object> implements Vars<T>
 {
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(AbstractVariables.class);
 
@@ -75,7 +75,7 @@ public class AbstractVariables<T> implements Vars<T>
     }
 
     @SafeVarargs
-    public static <T> Vars<T> ofNullable( boolean immutable, Class<T> type, T... vars ) {
+    public static <T> Vars<@Nullable T> ofNullable( boolean immutable, Class<T> type, @Nullable T... vars ) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(vars);
         Var<T>[] array = new Var[vars.length];
@@ -337,6 +337,11 @@ public class AbstractVariables<T> implements Vars<T>
     public Vals<T> fireChange() {
         _triggerAction( Change.NONE, -1, null, null );
         return this;
+    }
+
+    @Override
+    public boolean allowsNull() {
+        return _allowsNull;
     }
 
     private ValsDelegate<T> _createDelegate(

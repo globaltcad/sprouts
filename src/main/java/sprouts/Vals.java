@@ -23,8 +23,7 @@ import java.util.stream.StreamSupport;
  *
  * @param <T> The type of the properties.
  */
-public interface Vals<T> extends Iterable<T>, Observable
-{
+public interface Vals<T extends @Nullable Object> extends Iterable<T>, Observable {
 
     /**
      *  Create a new empty {@link Vals} instance.
@@ -103,7 +102,7 @@ public interface Vals<T> extends Iterable<T>, Observable
      * @param <T> The type of the items.
      * @return A new {@link Vals} instance.
      */
-    static <T> Vals<T> ofNullable( Class<T> type ) {
+    static <T> Vals<@Nullable T> ofNullable( Class<T> type ) {
         Objects.requireNonNull(type);
         return Sprouts.factory().valsOfNullable( type );
     }
@@ -116,7 +115,7 @@ public interface Vals<T> extends Iterable<T>, Observable
      * @return A new {@link Vals} instance.
      */
     @SuppressWarnings("unchecked")
-    static <T> Vals<T> ofNullable( Class<T> type, Val<T>... vals ) {
+    static <T> Vals<@Nullable T> ofNullable( Class<T> type, Val<@Nullable T>... vals ) {
         Objects.requireNonNull(type);
         return Sprouts.factory().valsOfNullable( type, vals );
     }
@@ -129,7 +128,7 @@ public interface Vals<T> extends Iterable<T>, Observable
      * @return A new {@link Vals} instance.
      */
     @SuppressWarnings("unchecked")
-    static <T> Vals<T> ofNullable( Class<T> type, T... items ) {
+    static <T> Vals<@Nullable T> ofNullable( Class<T> type, @Nullable T... items ) {
         Objects.requireNonNull(type);
         return Sprouts.factory().valsOfNullable( type, items );
     }
@@ -142,7 +141,7 @@ public interface Vals<T> extends Iterable<T>, Observable
      * @return A new {@link Vals} instance.
      */
     @SuppressWarnings("unchecked")
-    static <T> Vals<T> ofNullable( Val<T> first, Val<T>... rest ) {
+    static <T extends @Nullable Object> Vals<@Nullable T> ofNullable( Val<T> first, Val<T>... rest ) {
         Objects.requireNonNull(first);
         return Sprouts.factory().valsOfNullable( first, rest );
     }
@@ -299,12 +298,14 @@ public interface Vals<T> extends Iterable<T>, Observable
 
     /**
      *  Check for equality between this list of properties and another list of properties.
+     * <p>
+     *  Note: We compare the <strong>values</strong> of the lists, not the nullability or mutability.
+     *  So if the values of the lists are equal, we consider the lists to be equal.
      *
      * @param other The other list of properties.
      * @return True if the two lists of properties are equal.
      */
-    default boolean is( Vals<T> other )
-    {
+    default boolean is( Vals<@Nullable T> other ) {
         if ( size() != other.size() ) return false;
         for ( int i = 0; i < size(); i++ )
             if ( !this.at(i).is(other.at(i)) ) return false;
@@ -340,7 +341,7 @@ public interface Vals<T> extends Iterable<T>, Observable
      * @param <U> The type of the items in the new list of properties.
      * @return A new list of properties.
      */
-    <U> Vals<U> mapTo( Class<U> type, Function<T,U> mapper );
+    <U extends @Nullable Object> Vals<U> mapTo( Class<U> type, Function<T,U> mapper );
 
     /**
      *  Turns this list of properties into a stream of items
@@ -445,4 +446,14 @@ public interface Vals<T> extends Iterable<T>, Observable
      *  @return True if any of the properties in this list of properties is empty.
      */
     default boolean anyEmpty() { return any( Val::isEmpty ); }
+
+    /**
+     * A property list will only allow nullable properties if it was constructed with a "ofNullable(..)" factory method.
+     * Otherwise, it will throw an {@link IllegalArgumentException} when trying to set a {@code null} reference.
+     * This flag cannot be changed after the property list has been constructed!
+     *
+     * @return {@code true}, if this property list can contain null, {@code false} otherwise.
+     */
+    boolean allowsNull();
+
 }
