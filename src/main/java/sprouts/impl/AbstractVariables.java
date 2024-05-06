@@ -12,8 +12,7 @@ import java.util.stream.Collectors;
 /**
  *  A base class for {@link Vars} implementations.
  */
-public class AbstractVariables<T extends @Nullable Object> implements Vars<T>
-{
+public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(AbstractVariables.class);
 
     @SafeVarargs
@@ -136,7 +135,7 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T>
         if ( count == 0 ) return this;
         if ( count == 1 ) return removeLast();
         for ( int i = 0; i < count; i++ ) _variables.remove( size() - 1 );
-        _triggerAction( Change.REMOVE, -1, null, null );
+        _triggerAction( Change.REMOVE );
         return this;
     }
 
@@ -156,7 +155,7 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T>
         List<Var<T>> subList = _variables.subList( size() - count, size() );
         for ( Var<T> var : subList ) vars.add(var);
         subList.clear();
-        _triggerAction( Change.REMOVE, -1, null, null );
+        _triggerAction( Change.REMOVE );
         return vars;
     }
 
@@ -172,7 +171,7 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T>
         if ( count == 0 ) return this;
         if ( count == 1 ) return removeFirst();
         if ( count > 0 ) _variables.subList(0, count).clear();
-        _triggerAction( Change.REMOVE, -1, null, null );
+        _triggerAction( Change.REMOVE );
         return this;
     }
 
@@ -192,7 +191,7 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T>
         List<Var<T>> subList = _variables.subList( 0, count );
         for ( Var<T> var : subList ) vars.add(var);
         subList.clear();
-        _triggerAction( Change.REMOVE, -1, null, null );
+        _triggerAction( Change.REMOVE );
         return vars;
     }
 
@@ -204,7 +203,7 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T>
             if ( vars.contains(at(i)) )
                 _variables.remove(i);
 
-        _triggerAction( Change.REMOVE, -1, null, null );
+        _triggerAction( Change.REMOVE );
         return this;
     }
 
@@ -277,7 +276,7 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T>
 
         boolean changed = _variables.retainAll(vars.toValList());
         if ( changed )
-            _triggerAction( Change.REMOVE, -1, null, null );
+            _triggerAction( Change.REMOVE );
 
         return this;
     }
@@ -287,7 +286,7 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T>
     public Vars<T> clear() {
         if ( _isImmutable ) throw new UnsupportedOperationException("This is an immutable list.");
         _variables.clear();
-        _triggerAction( Change.CLEAR, -1, null, null );
+        _triggerAction( Change.CLEAR );
         return this;
     }
 
@@ -296,7 +295,7 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T>
     public void sort( Comparator<T> comparator ) {
         if ( _isImmutable ) throw new UnsupportedOperationException("This is an immutable list.");
         _variables.sort( ( a, b ) -> comparator.compare( a.orElseNull(), b.orElseNull() ) );
-        _triggerAction( Change.SORT, -1, null, null );
+        _triggerAction( Change.SORT );
     }
 
     /** {@inheritDoc} */
@@ -310,7 +309,7 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T>
 
         _variables.clear();
         _variables.addAll(list);
-        _triggerAction( Change.DISTINCT, -1, null, null );
+        _triggerAction( Change.DISTINCT );
     }
 
     @Override
@@ -321,7 +320,7 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T>
             _variables.set( i, at(size - i - 1) );
             _variables.set( size - i - 1, tmp );
         }
-        _triggerAction( Change.REVERT, -1, null, null );
+        _triggerAction( Change.REVERT );
         return this;
     }
 
@@ -335,7 +334,7 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T>
     /** {@inheritDoc} */
     @Override
     public Vals<T> fireChange() {
-        _triggerAction( Change.NONE, -1, null, null );
+        _triggerAction( Change.NONE );
         return this;
     }
 
@@ -359,6 +358,26 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T>
         return new ValsDelegateImpl<>(type, index, newValues, oldValues, clone);
     }
 
+    private ValsDelegate<T> _createDelegate(
+            int index, Change type, @Nullable Vals<T> newVals, @Nullable Vals<T> oldVals
+    ) {
+        @SuppressWarnings("unchecked")
+        Val<T>[] cloned = _variables.stream().map(var -> _allowsNull ? Val.ofNullable(var) : Val.of(var)).toArray(Val[]::new);
+        @SuppressWarnings("unchecked")
+        Val<T>[] newCloned = newVals == null ? new Val[0] : newVals.stream().map(v -> _allowsNull ? Val.ofNullable(_type, v) : Val.of(v)).toArray(Val[]::new);
+        @SuppressWarnings("unchecked")
+        Val<T>[] oldCloned = oldVals == null ? new Val[0] : oldVals.stream().map(v -> _allowsNull ? Val.ofNullable(_type, v) : Val.of(v)).toArray(Val[]::new);
+        Vals<T> clone = (Vals<T>) (_allowsNull ? Vals.ofNullable(_type, cloned) : Vals.of(_type, Arrays.asList(cloned)));
+        Vals<T> newClone = (Vals<T>) (_allowsNull ? Vals.ofNullable(_type, newCloned) : Vals.of(_type, Arrays.asList(newCloned)));
+        Vals<T> oldClone = (Vals<T>) (_allowsNull ? Vals.ofNullable(_type, oldCloned) : Vals.of(_type, Arrays.asList(oldCloned)));
+        /*
+            Note that we just created a deep copy of the property list, so we can safely
+            pass the clone to the delegate. This is important because the delegate
+            is passed to the action which might be executed on a different thread.
+        */
+        return new ValsDelegateImpl<>(type, index, newClone, oldClone, clone);
+    }
+
     private void _triggerAction(
             Change type, int index, @Nullable Var<T> newVal, @Nullable Var<T> oldVal
     ) {
@@ -368,7 +387,24 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T>
             try {
                 action.accept(listChangeDelegate);
             } catch ( Exception e ) {
-                log.error("Error in change action '" + action +"'.", e);
+                log.error("Error in change action '{}'.", action, e);
+            }
+    }
+
+    private void _triggerAction(Change type) {
+        _triggerAction(type, -1, (Vals<T>) null, null);
+    }
+
+    private void _triggerAction(
+            Change type, int index, @Nullable Vals<T> newVals, @Nullable Vals<T> oldVals
+    ) {
+        ValsDelegate<T> listChangeDelegate = _createDelegate(index, type, newVals, oldVals);
+
+        for (Action<ValsDelegate<T>> action : _viewActions)
+            try {
+                action.accept(listChangeDelegate);
+            } catch (Exception e) {
+                log.error("Error in change action '{}'.", action, e);
             }
     }
 
