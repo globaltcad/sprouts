@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 /**
  *  A base class for {@link Vars} implementations.
  */
-public class AbstractVariables<T> implements Vars<T>
+public class AbstractVariables<T extends @Nullable Object> implements Vars<T>
 {
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(AbstractVariables.class);
 

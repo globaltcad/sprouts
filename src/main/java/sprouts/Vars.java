@@ -1,5 +1,6 @@
 package sprouts;
 
+import org.jspecify.annotations.Nullable;
 import sprouts.impl.Sprouts;
 
 import java.util.*;
@@ -23,7 +24,7 @@ import java.util.function.Predicate;
  *
  * @param <T> The type of the properties.
  */
-public interface Vars<T> extends Vals<T>
+public interface Vars<T extends @Nullable Object> extends Vals<T>
 {
     /**
      *  Creates a list of non-nullable properties from the supplied type and vararg values.
@@ -105,7 +106,7 @@ public interface Vars<T> extends Vals<T>
      *  @return A new Vars instance.
      */
     @SuppressWarnings("unchecked")
-    static <T> Vars<T> ofNullable( Class<T> type, Var<T>... vars ) {
+    static <T> Vars<@Nullable T> ofNullable( Class<T> type, Var<@Nullable T>... vars ) {
         Objects.requireNonNull(type);
         return Sprouts.factory().varsOfNullable( type, vars );
     }
@@ -119,7 +120,7 @@ public interface Vars<T> extends Vals<T>
      *  @param <T> The type of the properties.
      *  @return A new Vars instance.
      */
-    static <T> Vars<T> ofNullable( Class<T> type ) {
+    static <T> Vars<@Nullable T> ofNullable( Class<T> type ) {
         Objects.requireNonNull(type);
         return Sprouts.factory().varsOfNullable( type );
     }
@@ -135,7 +136,7 @@ public interface Vars<T> extends Vals<T>
      *  @return A new Vars instance.
      */
     @SuppressWarnings("unchecked")
-    static <T> Vars<T> ofNullable( Class<T> type, T... values ) {
+    static <T> Vars<@Nullable T> ofNullable( Class<T> type, @Nullable T... values ) {
         Objects.requireNonNull(type);
         return Sprouts.factory().varsOfNullable( type, values );
     }
@@ -148,7 +149,7 @@ public interface Vars<T> extends Vals<T>
      * @return A new Vars instance.
      */
     @SuppressWarnings("unchecked")
-    static <T> Vars<T> ofNullable( Var<T> first, Var<T>... rest ) {
+    static <T> Vars<@Nullable T> ofNullable( Var<@Nullable T> first, Var<@Nullable T>... rest ) {
         Objects.requireNonNull(first);
         return Sprouts.factory().varsOfNullable( first, rest );
     }
@@ -163,12 +164,17 @@ public interface Vars<T> extends Vals<T>
     @Override default Var<T> last() { return at(size() - 1); }
 
     /**
-     *  Wraps the provided value in a {@link Var} property and adds it to the list.
+     * Wraps the provided value in a {@link Var} property and adds it to the list.
      *
      * @param value The value to add.
      * @return This list of properties.
      */
-    default Vars<T> add( T value ) { return add( Var.of(value) ); }
+    default Vars<T> add( T value ) {
+        if (allowsNull())
+            return add(Var.ofNullable(type(), value));
+        Objects.requireNonNull(value);
+        return add(Var.of(value));
+    }
 
     /**
      *  Adds the provided property to the list.
@@ -205,7 +211,7 @@ public interface Vars<T> extends Vals<T>
      *  @return This list of properties.
      */
     default Vars<T> remove( T value ) {
-        int index = indexOf(Var.of(value));
+        int index = indexOf(value);
         return index < 0 ? this : removeAt( index );
     }
 
@@ -217,7 +223,7 @@ public interface Vars<T> extends Vals<T>
      * @throws NoSuchElementException if the value is not found.
      */
     default Vars<T> removeOrThrow( T value ) {
-        int index = indexOf(Var.of(value));
+        int index = indexOf(value);
         if ( index < 0 )
             throw new NoSuchElementException("No such element: " + value);
         return removeAt( index );
@@ -322,11 +328,10 @@ public interface Vars<T> extends Vals<T>
      * @param predicate The predicate to test each property.
      * @return This list of properties.
      */
-    default Vars<T> removeIf( Predicate<Var<T>> predicate )
-    {
-        Vars<T> vars = Vars.of(type());
+    default Vars<T> removeIf( Predicate<Var<T>> predicate ) {
+        Vars<T> vars = (Vars<T>) (allowsNull() ? Vars.ofNullable(type()) : Vars.of(type()));
         for ( int i = size() - 1; i >= 0; i-- )
-            if ( predicate.test(this.at(i)) ) vars.add(this.at(i));
+            if ( predicate.test(at(i)) ) vars.add(at(i));
 
         this.removeAll(vars); // remove from this list at once and trigger events only once!
         return this;
@@ -339,11 +344,10 @@ public interface Vars<T> extends Vals<T>
      * @param predicate The predicate to test each property.
      * @return A new list of properties.
      */
-    default Vars<T> popIf( Predicate<Var<T>> predicate )
-    {
-        Vars<T> vars = Vars.of(type());
+    default Vars<T> popIf( Predicate<Var<T>> predicate ) {
+        Vars<T> vars = (Vars<T>) (allowsNull() ? Vars.ofNullable(type()) : Vars.of(type()));
         for ( int i = size() - 1; i >= 0; i-- )
-            if ( predicate.test(this.at(i)) ) vars.add(this.at(i));
+            if ( predicate.test(at(i)) ) vars.add(at(i) );
 
         this.removeAll(vars); // remove from this list at once and trigger events only once!
         return vars.revert();
@@ -356,9 +360,8 @@ public interface Vars<T> extends Vals<T>
      *  @param predicate The predicate to test each property item.
      *  @return This list of properties.
      */
-    default Vars<T> removeIfItem( Predicate<T> predicate )
-    {
-        Vars<T> vars = Vars.of(type());
+    default Vars<T> removeIfItem( Predicate<T> predicate ) {
+        Vars<T> vars = (Vars<T>) (allowsNull() ? Vars.ofNullable(type()) : Vars.of(type()));
         for ( int i = size() - 1; i >= 0; i-- )
             if ( predicate.test(this.at(i).get()) ) vars.add(this.at(i));
 
@@ -373,9 +376,8 @@ public interface Vars<T> extends Vals<T>
      *  @param predicate The predicate to test each property item.
      *  @return A new list of properties.
      */
-    default Vars<T> popIfItem( Predicate<T> predicate )
-    {
-        Vars<T> vars = Vars.of(type());
+    default Vars<T> popIfItem( Predicate<T> predicate ) {
+        Vars<T> vars = (Vars<T>) (allowsNull() ? Vars.ofNullable(type()) : Vars.of(type()));
         for ( int i = size() - 1; i >= 0; i-- )
             if ( predicate.test(at(i).get()) ) vars.add(at(i));
 
@@ -397,10 +399,9 @@ public interface Vars<T> extends Vals<T>
      *  @param items The list of properties to remove.
      *  @return This list of properties.
      */
-    default Vars<T> removeAll( T... items )
-    {
-        Vars<T> vars = Vars.of(type());
-        for ( T item : items ) vars.add(Var.of(item));
+    default Vars<T> removeAll( T... items ) {
+        Vars<T> vars = (Vars<T>) (allowsNull() ? Vars.ofNullable(type()) : Vars.of(type()));
+        for ( T item : items ) vars.add(item);
         return removeAll(vars);
     }
 
@@ -411,7 +412,12 @@ public interface Vars<T> extends Vals<T>
      *  @param item The value to add as a property item.
      *  @return This list of properties.
      */
-    default Vars<T> addAt( int index, T item ) { return addAt(index, Var.of(item)); }
+    default Vars<T> addAt( int index, T item ) {
+        if (allowsNull())
+            return addAt(index, Var.ofNullable(type(), item));
+        Objects.requireNonNull(item);
+        return addAt(index, Var.of(item));
+    }
 
     /**
      *  Adds the provided property to the list at the specified index.
@@ -428,7 +434,12 @@ public interface Vars<T> extends Vals<T>
      *  @param item The value to set.
      *  @return This list of properties.
      */
-    default Vars<T> setAt( int index, T item ) { return setAt(index, Var.of(item)); }
+    default Vars<T> setAt( int index, T item ) {
+        if (allowsNull())
+            return setAt(index, Var.ofNullable(type(), item));
+        Objects.requireNonNull(item);
+        return setAt(index, Var.of(item));
+    }
 
     /**
      *  Places the provided property at the specified index, effectively replacing the property
@@ -446,9 +457,8 @@ public interface Vars<T> extends Vals<T>
      *  @return This list of properties.
      */
     @SuppressWarnings("unchecked")
-    default Vars<T> addAll( T... items )
-    {
-        Vars<T> vars = Vars.of(this.type());
+    default Vars<T> addAll( T... items ) {
+        Vars<T> vars = (Vars<T>) (allowsNull() ? Vars.ofNullable(type()) : Vars.of(type()));
         for ( T v : items ) vars.add(v);
         return this.addAll(vars);
     }
@@ -459,9 +469,8 @@ public interface Vars<T> extends Vals<T>
      *  @param items The values to add as property items.
      *  @return This list of properties.
      */
-    default Vars<T> addAll( Iterable<T> items )
-    {
-        Vars<T> vars = Vars.of(this.type());
+    default Vars<T> addAll( Iterable<T> items ) {
+        Vars<T> vars = (Vars<T>) (allowsNull() ? Vars.ofNullable(type()) : Vars.of(type()));
         for ( T v : items ) vars.add(v);
         return this.addAll(vars);
     }
@@ -472,8 +481,7 @@ public interface Vars<T> extends Vals<T>
      *  @param vals The properties to add.
      *  @return This list of properties.
      */
-    default Vars<T> addAll( Vals<T> vals )
-    {
+    default Vars<T> addAll( Vals<T> vals ) {
         for ( T v : vals ) add(v);
         return this;
     }
@@ -494,10 +502,9 @@ public interface Vars<T> extends Vals<T>
      *               All other properties will be removed.
      *  @return This list of properties.
      */
-    default Vars<T> retainAll( T... items )
-    {
-        Vars<T> vars = Vars.of(type());
-        for ( T item : items ) vars.add(Var.of(item));
+    default Vars<T> retainAll( T... items ) {
+        Vars<T> vars = (Vars<T>) (allowsNull() ? Vars.ofNullable(type()) : Vars.of(type()));
+        for ( T item : items ) vars.add(item);
         return retainAll(vars);
     }
 
@@ -518,7 +525,10 @@ public interface Vars<T> extends Vals<T>
         @SuppressWarnings("unchecked")
         Var<T>[] vars = new Var[size()];
         int i = 0;
-        for ( T v : this ) vars[i++] = Var.of( mapper.apply(v) );
+        for ( T v : this ) {
+            T m = mapper.apply( v );
+            vars[i++] = allowsNull() ? Var.ofNullable( type(), m ) : Var.of( m );
+        }
         return Vars.of( type(), vars );
     }
 
