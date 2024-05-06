@@ -1,5 +1,6 @@
 package sprouts.impl;
 
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import sprouts.Observable;
 import sprouts.Observer;
@@ -8,6 +9,7 @@ import sprouts.*;
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * 	The base implementation for both {@link Var} and {@link Val} interfaces.
@@ -172,28 +174,20 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 	}
 
 	/** {@inheritDoc} */
-	@Override public final <U> Val<U> viewAs( Class<U> type, java.util.function.Function<T, U> mapper ) {
+	@Override public final <U extends @Nullable Object> Val<@Nullable U> viewAs(Class<@NonNull U> type, Function<T, @Nullable U> mapper ) {
 		boolean nullCanBeAvoided = _isPrimitiveRef(type) || type == String.class;
-		Var<U> var;
-		if ( nullCanBeAvoided )
-		{
-			@Nullable U result = _mapOrGetNullObjectOf(type, this.orElseNull(), mapper);
-			if ( result == null )
-				var = Var.ofNull( type );
-			else
-				var = Var.of(result);
+		final Var<@Nullable U> var;
+		if ( nullCanBeAvoided ) {
+			U result = _mapOrGetNullObjectOf(type, orElseNull(), mapper);
+			var = Var.of(result);
 			// Now we register a live update listener to this property
-			this.onChange( DEFAULT_CHANNEL, v -> var.set( _mapOrGetNullObjectOf( type, v.orElseNull(), mapper ) ));
+			onChange( DEFAULT_CHANNEL, v -> var.set( _mapOrGetNullObjectOf( type, v.orElseNull(), mapper ) ));
 			_viewers.add( v -> var.set(From.VIEW, _mapOrGetNullObjectOf(type, v, mapper)) );
-		}
-		else
-		{
-			if ( this.allowsNull() )
-				var = Var.ofNullable( type, mapper.apply( this.orElseNull() ) );
-			else
-				var = Var.of( type, mapper.apply( this.get() ) );
+		} else {
+			// If we allow U to be nullable, we must return a nullable Val; we can't check it at runtime
+			var = Var.ofNullable(type, mapper.apply(orElseNull()));
 			// Now we register a live update listener to this property
-			this.onChange( DEFAULT_CHANNEL, v -> var.set( mapper.apply( v.orElseNull() ) ));
+			onChange( DEFAULT_CHANNEL, v -> var.set( mapper.apply( v.orElseNull() ) ));
 			_viewers.add( v -> var.set(From.VIEW, mapper.apply( v ) ) );
 		}
 		return var;
@@ -217,9 +211,9 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 			return false;
 	}
 
-	private <I,N> @Nullable N _mapOrGetNullObjectOf(Class<N> type, @Nullable I in, java.util.function.Function<I, N> mapper ) {
+	private <I,N> N _mapOrGetNullObjectOf(Class<N> type, @Nullable I in, Function<I, @Nullable N> mapper ) {
 		boolean inIsNull = in == null;
-		@Nullable N value;
+		N value;
 		try {
 			value = mapper.apply(in);
 		} catch ( Exception e ) {
@@ -228,7 +222,32 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 			else
 				throw e;
 		}
-		return _itemNullObjectOrNullOf(type, value);
+		return _itemNullObjectOrThrowOf(type, value);
+	}
+
+	private static <T> T _itemNullObjectOrThrowOf(Class<T> type, @Nullable T value ) {
+		if  ( value != null )
+			return value;
+		else if ( type == String.class )
+			return type.cast("");
+		else if ( type == Integer.class )
+			return type.cast(0);
+		else if ( type == Long.class )
+			return type.cast(0L);
+		else if ( type == Double.class )
+			return type.cast(0.0);
+		else if ( type == Float.class )
+			return type.cast(0.0f);
+		else if ( type == Short.class )
+			return type.cast((short)0);
+		else if ( type == Byte.class )
+			return type.cast((byte)0);
+		else if ( type == Character.class )
+			return type.cast((char)0);
+		else if ( type == Boolean.class )
+			return type.cast(false);
+		else
+			throw new IllegalArgumentException(String.format("The given item of type '%s' cannot be mapped to a null object.", type.getSimpleName()));
 	}
 
 	private static <T> @Nullable T _itemNullObjectOrNullOf(Class<T> type, @Nullable T value ) {
