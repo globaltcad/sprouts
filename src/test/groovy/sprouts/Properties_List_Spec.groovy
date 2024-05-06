@@ -1019,4 +1019,38 @@ class Properties_List_Spec extends Specification
             change.vals() == Vals.of("a", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n")
     }
 
+    def 'The change delegate contains information about changes made to a "Vars" list by removing a list of properties.'() {
+        reportInfo """    
+            When you remove a list of properties to a "Vars" list, the change delegate contains information about the  
+            change. The `oldValues` of the delegate contains the removed properties, and the `newValues` is always an
+            empty list.
+        """
+        given : 'A "Vars" instance having a few properties.'
+            var vars = Vars.of("a", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "f", "h", "l")
+        and : 'We register a listener that will record the last change for us.'
+            var change = null
+            vars.onChange({ change = it })
+        when : 'We remove a list of values from the list with the `removeAll` method.'
+            vars.removeAll("f", "g")
+        then : 'The `oldValues` of the change delegate should be a property list with the added property.'
+            change.oldValues().size() == 3
+            change.oldValues() == Vals.of("f", "g", "f")
+        and : 'The `newValues` of the change should be an empty property list.'
+            change.newValues().isEmpty()
+        and : 'The `index` of the change is `-1`.'
+            change.index() == -1
+        and : 'The `vals` should not contain the removed properties'
+            change.vals() == Vals.of("a", "d", "e", "h", "i", "j", "k", "l", "m", "n", "o", "p", "h", "l")
+        when : 'We remove a property list from the list with the `removeAll` method.'
+            vars.removeAll(Vars.of("h", "i", "j"))
+        then : 'The `oldValues` of the change delegate should be a property list with the added property.'
+            change.oldValues().size() == 4
+            change.oldValues() == Vals.of("h", "i", "j", "h")
+        and : 'The `newValues` of the change should be an empty property list.'
+            change.newValues().isEmpty()
+        and : 'The `index` of the change is `-1`.'
+            change.index() == -1
+        and : 'The `vals` should not contain the removed properties'
+            change.vals() == Vals.of("a", "d", "e", "k", "l", "m", "n", "o", "p", "l")
+    }
 }
