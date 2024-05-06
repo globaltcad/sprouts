@@ -217,19 +217,19 @@ public final class Sprouts implements SproutsFactory
 	@Override public <T> Vars<T> varsOf( Class<T> type, Iterable<Var<T>> vars ) { return AbstractVariables.of( false, type, vars ); }
 
 	@SuppressWarnings("unchecked")
-	@Override public <T> Vars<T> varsOfNullable( Class<T> type, Var<T>... vars ) {
+	@Override public <T> Vars<@Nullable T> varsOfNullable( Class<T> type, Var<@Nullable T>... vars ) {
 		return AbstractVariables.ofNullable( false, type, vars );
 	}
 
-	@Override public <T> Vars<T> varsOfNullable( Class<T> type ) { return AbstractVariables.ofNullable( false, type ); }
+	@Override public <T> Vars<@Nullable T> varsOfNullable( Class<T> type ) { return AbstractVariables.ofNullable( false, type ); }
 
 	@SuppressWarnings("unchecked")
-	@Override public <T> Vars<T> varsOfNullable( Class<T> type, T... values ) {
+	@Override public <T> Vars<@Nullable T> varsOfNullable( Class<T> type, @Nullable T... values ) {
 		return AbstractVariables.ofNullable( false, type, values );
 	}
 
 	@SuppressWarnings("unchecked")
-	@Override public <T> Vars<T> varsOfNullable( Var<T> first, Var<T>... rest ) {
+	@Override public <T> Vars<@Nullable T> varsOfNullable( Var<@Nullable T> first, Var<@Nullable T>... rest ) {
 		return AbstractVariables.ofNullable( false, first, rest );
 	}
 

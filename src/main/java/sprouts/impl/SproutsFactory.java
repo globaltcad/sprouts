@@ -81,15 +81,15 @@ public interface SproutsFactory
 	<T> Vars<T> varsOf( Class<T> type, Iterable<Var<T>> vars );
 
 	@SuppressWarnings("unchecked")
-	<T> Vars<T> varsOfNullable( Class<T> type, Var<T>... vars );
+	<T> Vars<@Nullable T> varsOfNullable( Class<T> type, Var<@Nullable T>... vars );
 
-	<T> Vars<T> varsOfNullable( Class<T> type );
-
-	@SuppressWarnings("unchecked")
-	<T> Vars<T> varsOfNullable( Class<T> type, T... values );
+	<T> Vars<@Nullable T> varsOfNullable( Class<T> type );
 
 	@SuppressWarnings("unchecked")
-	<T> Vars<T> varsOfNullable( Var<T> first, Var<T>... rest );
+	<T> Vars<@Nullable T> varsOfNullable( Class<T> type, @Nullable T... values );
+
+	@SuppressWarnings("unchecked")
+	<T> Vars<@Nullable T> varsOfNullable( Var<@Nullable T> first, Var<@Nullable T>... rest );
 
 
 	<V> Result<V> resultOf( Class<V> type );
