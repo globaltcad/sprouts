@@ -158,10 +158,20 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
     @Override Var<T> at( int index );
 
     /** {@inheritDoc} */
-    @Override default Var<T> first() { return at(0); }
+    @Override
+    default Var<T> first() {
+        if (isEmpty())
+            throw new NoSuchElementException("There is no such property in the list. The list is empty.");
+        return at(0);
+    }
 
     /** {@inheritDoc} */
-    @Override default Var<T> last() { return at(size() - 1); }
+    @Override
+    default Var<T> last() {
+        if (isEmpty())
+            throw new NoSuchElementException("There is no such property in the list. The list is empty.");
+        return at(size() - 1);
+    }
 
     /**
      * Wraps the provided value in a {@link Var} property and adds it to the list.
@@ -460,7 +470,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
     default Vars<T> addAll( T... items ) {
         Vars<T> vars = (Vars<T>) (allowsNull() ? Vars.ofNullable(type()) : Vars.of(type()));
         for ( T v : items ) vars.add(v);
-        return this.addAll(vars);
+        return addAll(vars);
     }
 
     /**
@@ -472,7 +482,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
     default Vars<T> addAll( Iterable<T> items ) {
         Vars<T> vars = (Vars<T>) (allowsNull() ? Vars.ofNullable(type()) : Vars.of(type()));
         for ( T v : items ) vars.add(v);
-        return this.addAll(vars);
+        return addAll(vars);
     }
 
     /**
