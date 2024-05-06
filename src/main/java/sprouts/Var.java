@@ -148,7 +148,7 @@ public interface Var<T extends @Nullable Object> extends Val<T>
 	 * @param newItem The new item which ought to replace the old one.
 	 * @return This very wrapper instance, in order to enable method chaining.
 	 */
-	default Var<T> set( @Nullable T newItem ) {
+	default Var<T> set( T newItem ) {
 		return this.set(DEFAULT_CHANNEL, newItem);
 	}
 
@@ -162,7 +162,7 @@ public interface Var<T extends @Nullable Object> extends Val<T>
 	 * @param newItem The new item which ought to replace the old one.
 	 * @return This very wrapper instance, in order to enable method chaining.
 	 */
-	Var<T> set( Channel channel, @Nullable T newItem );
+	Var<T> set( Channel channel, T newItem );
 
 	/**
 	 *  Use this method to create a new property with an id.
