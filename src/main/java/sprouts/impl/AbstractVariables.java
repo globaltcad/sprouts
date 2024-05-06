@@ -248,9 +248,13 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
     }
 
     /** {@inheritDoc} */
-    @Override public Vars<T> addAll( Vals<T> vals )
-    {
+    @Override
+    public Vars<T> addAll( Vals<T> vals ) {
         if ( _isImmutable ) throw new UnsupportedOperationException("This is an immutable list.");
+
+        if (vals.isEmpty())
+            return this;
+
         for ( int i = 0; i < vals.size(); i++ ) {
             Val<T> val = vals.at(i);
             _checkNullSafetyOf(val);
@@ -260,12 +264,8 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
             else
                 _variables.add(Var.of(val.get()));
         }
-        if ( vals.isNotEmpty() ) {
-            if ( vals.size() > 1 )
-                _triggerAction( Change.ADD, -1, null, null );
-            else
-                _triggerAction( Change.ADD, _variables.size() - 1, Var.ofNullable(vals.type(),vals.at(0).orElseNull()), null );
-        }
+
+        _triggerAction( Change.ADD, size() - vals.size(), vals, null);
         return this;
     }
 
