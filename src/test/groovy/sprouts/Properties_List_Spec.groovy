@@ -973,4 +973,50 @@ class Properties_List_Spec extends Specification
             vars == Vars.ofNullable(String.class, "a", null, "c", "d", null, "f", null, "h1", "h2", null, null, "i1", "i2")
     }
 
+    def 'The change delegate contains information about changes made to a "Vars" list by adding a list of properties.'() {
+        reportInfo """    
+            When you add a list of properties to a "Vars" list, the change delegate contains information about the  
+            change. The `newValues` of the delegate contains the added properties, and the `oldValues` is always an
+            empty list.
+        """
+        given : 'A "Vars" instance having a few properties.'
+            var vars = Vars.of("a", "d", "e")
+        and : 'We register a listener that will record the last change for us.'
+            var change = null
+            vars.onChange({ change = it })
+        when : 'We add a list of values to the list with the `addAll` method.'
+            vars.addAll("f", "g")
+        then : 'The `newValues` of the change delegate should be a property list with the added property.'
+            change.newValues().size() == 2
+            change.newValues() == Vals.of("f", "g")
+        and : 'The `oldValues` of the change should be an empty property list.'
+            change.oldValues().isEmpty()
+        and : 'The `index` of the change points to the added properties.'
+            change.index() == 3
+        and : 'The `vals` should contain the added properties'
+            change.vals() == Vals.of("a", "d", "e", "f", "g")
+        when : 'We add properties list to the list using the `addAll` method.'
+            vars.addAll(Vars.of("h", "i", "j"))
+        then : 'The `newValues` should contain the added property.'
+            change.newValues().size() == 3
+            change.newValues() == Vals.of("h", "i", "j")
+        and : 'The `oldValues` method should be an empty list.'
+            change.oldValues().isEmpty()
+        and : 'The `index` of the change points to the added properties.'
+            change.index() == 5
+        and : 'The `vals` should contain the added properties'
+            change.vals() == Vals.of("a", "d", "e", "f", "g", "h", "i", "j")
+        when : 'We add list of properties to the list using the `addAll` method.'
+            vars.addAll(Arrays.asList("k", "l", "m", "n"))
+        then : 'The `newValues` should contain the added property.'
+            change.newValues().size() == 4
+            change.newValues() == Vals.of("k", "l", "m", "n")
+        and : 'The `oldValues` method should be an empty list.'
+            change.oldValues().isEmpty()
+        and : 'The `index` of the change points to the added properties.'
+            change.index() == 8
+        and : 'The `vals` should contain the added properties'
+            change.vals() == Vals.of("a", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n")
+    }
+
 }
