@@ -339,6 +339,11 @@ public class AbstractVariables<T> implements Vars<T>
         return this;
     }
 
+    @Override
+    public boolean allowsNull() {
+        return _allowsNull;
+    }
+
     private ValsDelegate<T> _createDelegate(
             int index, Change type, @Nullable Var<T> newVal, @Nullable Var<T> oldVal
     ) {

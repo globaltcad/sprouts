@@ -446,4 +446,14 @@ public interface Vals<T extends @Nullable Object> extends Iterable<T>, Observabl
      *  @return True if any of the properties in this list of properties is empty.
      */
     default boolean anyEmpty() { return any( Val::isEmpty ); }
+
+    /**
+     * A property list will only allow nullable properties if it was constructed with a "ofNullable(..)" factory method.
+     * Otherwise, it will throw an {@link IllegalArgumentException} when trying to set a {@code null} reference.
+     * This flag cannot be changed after the property list has been constructed!
+     *
+     * @return {@code true}, if this property list can contain null, {@code false} otherwise.
+     */
+    boolean allowsNull();
+
 }
