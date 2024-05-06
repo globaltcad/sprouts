@@ -836,4 +836,141 @@ class Properties_List_Spec extends Specification
             change.index() == 2
     }
 
+    def 'Properties created by adding values to a property list can be set to `null` if the list allows null properties.'()
+    {
+        given : 'A nullable "Vars" instance having a few properties.'
+            var vars = Vars.ofNullable(String.class, "a", null, "c")
+        expect : 'All properties in the property list are nullable.'
+            vars.at(0).allowsNull()
+            vars.at(1).allowsNull()
+            vars.at(2).allowsNull()
+        when : 'We add a empty property.'
+            vars.add("x")
+        then : 'The property list should contain the added property.'
+            vars == Vars.ofNullable(String.class, "a", null, "c", "x")
+        and : 'The added property should also be nullable.'
+            vars.at(3).allowsNull()
+        when : 'We can set the new added property to `null`.'
+            vars.at(3).set(null)
+        then : 'The added property should now be empty'
+            vars.at(3).isEmpty()
+            vars == Vars.ofNullable(String.class, "a", null, "c", null)
+    }
+
+    def 'Properties created by adding values to a property list cannot be set to `null` if the list does not allow null properties.'()
+    {
+        given : 'A "Vars" instance having a few properties.'
+            var vars = Vars.of("a", "b", "x", "d")
+        expect : 'All properties in the property list are not nullable.'
+            !vars.at(0).allowsNull()
+            !vars.at(1).allowsNull()
+            !vars.at(2).allowsNull()
+            !vars.at(3).allowsNull()
+        when : 'We add a property.'
+            vars.add("y")
+        then : 'The property list should contain the added property.'
+            vars == Vars.of("a", "b", "x", "d", "y")
+        and : 'The added property should also be not nullable.'
+            !vars.at(4).allowsNull()
+    }
+
+    def 'You can easily remove properties from a nullable "Vars" list that contains null properties.'() {
+        reportInfo """  
+            A nullable "Vars" list is able to handle null values. So you can remove properties for such a nullable
+            property list.
+        """
+        given: 'A nullable "Vals" instance with a few properties, including null properties.'
+            var vars = Vars.ofNullable(String.class, "a", "b", "c", "d", null, "f", "g", "h", null, "j", "k", "l", "m", "n", "o")
+        when: 'We remove a property with the `remove` method.'
+            vars.remove("d")
+        then: 'The property is removed from the property list.'
+            vars == Vars.ofNullable(String.class, "a", "b", "c", null, "f", "g", "h", null, "j", "k", "l", "m", "n", "o")
+        when: 'We remove a property with the `remove` method.'
+            vars.remove(Var.of("m"))
+        then: 'The property is removed from the property list.'
+            vars == Vars.ofNullable(String.class, "a", "b", "c", null, "f", "g", "h", null, "j", "k", "l", "n", "o")
+        when: 'We remove a property with the `removeAt` method.'
+            vars.removeAt(1)
+        then: 'The property is removed from the property list.'
+            vars == Vars.ofNullable(String.class, "a", "c", null, "f", "g", "h", null, "j", "k", "l", "n", "o")
+        when: 'We remove a property with the `removeFirst` method.'
+            vars.removeFirst()
+        then: 'The property is removed from the property list.'
+            vars == Vars.ofNullable(String.class, "c", null, "f", "g", "h", null, "j", "k", "l", "n", "o")
+        when: 'We remove a property with the `removeLast` method.'
+            vars.removeLast()
+        then: 'The property is removed from the property list.'
+            vars == Vars.ofNullable(String.class, "c", null, "f", "g", "h", null, "j", "k", "l", "n")
+        when: 'We remove multiple properties with the `removeAll` method.'
+            vars.removeAll("d", "c", "f")
+        then: 'The properties are removed from the property list.'
+            vars == Vars.ofNullable(String.class, null, "g", "h", null, "j", "k", "l", "n")
+        when: 'We remove multiple properties with the `removeFirst` method.'
+            vars.removeFirst(2)
+        then: 'The properties are removed from the property list.'
+            vars == Vars.ofNullable(String.class, "h", null, "j", "k", "l", "n")
+        when: 'We remove multiple properties with the `removeLast` method.'
+            vars.removeLast(2)
+        then: 'The properties are removed from the property list.'
+            vars == Vars.ofNullable(String.class, "h", null, "j", "k")
+    }
+
+    def 'You can easily remove `null` properties from a nullable "Vars" list.'() {
+        reportInfo """  
+            A nullable "Vars" list is able to handle `null` values. So you can remove `null` properties for such a
+            nullable property list.
+        """
+        given: 'A nullable "Vals" instance with a few properties, including `null` properties.'
+            var vars = Vars.ofNullable(String.class, "a", "b", "c", "d", null, null, "g", "h", null, "j", "k", null, "m", null, "o")
+        when: 'We remove an empty (`null`) property with the `remove` method.'
+            vars.remove((String) null)
+        then: 'The `null` property is removed from the property list.'
+            vars == Vars.ofNullable(String.class, "a", "b", "c", "d", null, "g", "h", null, "j", "k", null, "m", null, "o")
+        when: 'We remove an empty (`null`) property with the `remove` method.'
+            vars.remove(Var.ofNullable(String.class, null))
+        then: 'The `null` property is removed from the property list.'
+            vars == Vars.ofNullable(String.class, "a", "b", "c", "d", "g", "h", null, "j", "k", null, "m", null, "o")
+        when: 'We remove an empty (`null`) property with the `removeAt` method.'
+            vars.removeAt(9)
+        then: 'The `null` property is removed from the property list.'
+            vars == Vars.ofNullable(String.class, "a", "b", "c", "d", "g", "h", null, "j", "k", "m", null, "o")
+        when: 'We remove a list of properties including a `null` property with the `removeAll` method.'
+            vars.removeAll(null, "c", "d", "j")
+        then: 'The `null` property is removed from the property list.'
+            vars == Vars.ofNullable(String.class, "a", "b", "g", "h", "k", "m", "o")
+    }
+
+    def 'You can easily add properties to a nullable "Vars" list that contains null properties.'() {
+        reportInfo """  
+            A nullable "Vars" list is able to handle null values. So you can add nullable properties or values to such a
+            nullable property list.
+        """
+        given: 'A nullable "Vals" instance with a few properties, including null properties.'
+            var vars = Vars.ofNullable(String.class, "a", null, "c")
+        when: 'We add a value with the `add` method.'
+            vars.add("d")
+        then: 'The property is added to the property list.'
+            vars == Vars.ofNullable(String.class, "a", null, "c", "d")
+        when: 'We add a `null` value with the `add` method.'
+            vars.add(null)
+        then: 'The property is added to the property list.'
+            vars == Vars.ofNullable(String.class, "a", null, "c", "d", null)
+        when: 'We add a nullable property with the `add` method.'
+            vars.add(Var.ofNullable(String.class, "f"))
+        then: 'The property is added to the property list.'
+            vars == Vars.ofNullable(String.class, "a", null, "c", "d", null, "f")
+        when: 'We add a null property with the `add` method.'
+            vars.add(Var.ofNull(String.class))
+        then: 'The property is added to the property list.'
+            vars == Vars.ofNullable(String.class, "a", null, "c", "d", null, "f", null)
+        when: 'We add multiple values with the `addAll` method.'
+            vars.addAll("h1", "h2", null)
+        then: 'The properties are added to the property list.'
+            vars == Vars.ofNullable(String.class, "a", null, "c", "d", null, "f", null, "h1", "h2", null)
+        when: 'We add a "Vars" list with the `addAll` method.'
+            vars.addAll(Vars.ofNullable(String.class, null, "i1", "i2"))
+        then: 'The properties are added to the property list.'
+            vars == Vars.ofNullable(String.class, "a", null, "c", "d", null, "f", null, "h1", "h2", null, null, "i1", "i2")
+    }
+
 }
