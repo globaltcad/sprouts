@@ -392,7 +392,7 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	 * @return A new property either empty (containing null) or containing the result of applying
 	 * 			the mapping function to the item of this property.
 	 */
-	Val<T> map( java.util.function.Function<T, T> mapper );
+	Val<T> map( Function<T, T> mapper );
 
 	/**
 	 *  If the item is present, applies the provided mapping function to it,

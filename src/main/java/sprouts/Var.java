@@ -200,14 +200,11 @@ public interface Var<T extends @Nullable Object> extends Val<T>
 	 * @return A new property either empty (containing null) or containing the result of applying
 	 * 			the mapping function to the item of this property.
 	 */
-	@Override default Var<@Nullable T> map( Function<T, @Nullable T> mapper ) {
+	@Override default Var<T> map( Function<T, T> mapper ) {
 		if ( !isPresent() )
 			return Var.ofNull( type() );
 
 		T newValue = mapper.apply( get() );
-		if ( newValue == null )
-			return Var.ofNullable( type(), null );
-
 		return allowsNull() ? Var.ofNullable( type(), newValue ) : Var.of( newValue );
 	}
 
