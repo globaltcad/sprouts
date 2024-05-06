@@ -196,14 +196,16 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
     }
 
     /** {@inheritDoc} */
-    @Override public Vars<T> removeAll( Vars<T> vars )
-    {
+    @Override public Vars<T> removeAll( Vars<T> vars ) {
         if ( _isImmutable ) throw new UnsupportedOperationException("This is an immutable list.");
+
+        Vars<T> removal = (Vars<T>) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));
+
         for ( int i = size() - 1; i >= 0; i-- )
             if ( vars.contains(at(i)) )
-                _variables.remove(i);
+                removal.add( _variables.remove(i) );
 
-        _triggerAction( Change.REMOVE );
+        _triggerAction( Change.REMOVE, -1, null, removal.revert() );
         return this;
     }
 
