@@ -164,14 +164,25 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
      *  @param count The number of properties to remove.
      *  @return This list of properties.
      */
-    @Override public Vars<T> removeFirst( int count )
-    {
+    @Override public Vars<T> removeFirst( int count ) {
         if ( _isImmutable ) throw new UnsupportedOperationException( "This list is immutable." );
+
         count = Math.min( count, size() );
-        if ( count == 0 ) return this;
-        if ( count == 1 ) return removeFirst();
-        if ( count > 0 ) _variables.subList(0, count).clear();
-        _triggerAction( Change.REMOVE );
+
+        if ( count < 0)
+            throw new IllegalArgumentException("Invalid count! Count must be non-negative.");
+        if ( count == 0 )
+            return this;
+        if ( count == 1 )
+            return removeFirst();
+
+        Vars<T> vars = (Vars<T>) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));
+
+        List<Var<T>> subList = _variables.subList( 0, count );
+        for ( Var<T> var : subList ) vars.add(var);
+        subList.clear();
+
+        _triggerAction( Change.REMOVE, 0, null, vars );
         return this;
     }
 
