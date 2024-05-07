@@ -128,14 +128,25 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
     @Override public final int size() { return _variables.size(); }
 
     /** {@inheritDoc} */
-    @Override public Vars<T> removeLast( int count )
-    {
+    @Override public Vars<T> removeLast( int count ) {
         if ( _isImmutable ) throw new UnsupportedOperationException( "This list is immutable." );
+
         count = Math.min( count, size() );
-        if ( count == 0 ) return this;
-        if ( count == 1 ) return removeLast();
-        for ( int i = 0; i < count; i++ ) _variables.remove( size() - 1 );
-        _triggerAction( Change.REMOVE );
+
+        if ( count < 0)
+            throw new IllegalArgumentException("Invalid count! Count must be non-negative.");
+        if ( count == 0 )
+            return this;
+        if ( count == 1 )
+            return removeLast();
+
+        Vars<T> vars = (Vars<T>) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));
+
+        List<Var<T>> subList = _variables.subList( size() - count, size() );
+        for ( Var<T> var : subList ) vars.add(var);
+        subList.clear();
+
+        _triggerAction( Change.REMOVE, size(), null, vars );
         return this;
     }
 
