@@ -302,9 +302,18 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
     public Vars<T> retainAll( Vars<T> vars ) {
         if ( _isImmutable ) throw new UnsupportedOperationException("This is an immutable list.");
 
-        boolean changed = _variables.retainAll(vars.toValList());
-        if ( changed )
-            _triggerAction( Change.REMOVE );
+        Vars<T> old = (Vars<T>) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));
+
+        for (Iterator<Var<T>> it = _variables.iterator(); it.hasNext();) {
+            Var<T> var = it.next();
+            if (!vars.contains(var)) {
+                old.add(var);
+                it.remove();
+            }
+        }
+
+        if ( !old.isEmpty() )
+            _triggerAction( Change.REMOVE, -1, null, old );
 
         return this;
     }
