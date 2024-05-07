@@ -301,13 +301,12 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
     }
 
     /**
-     * Removes {@code count} number of properties from the end
-     * of the list.
+     * Removes {@code count} number of properties from the end of the list.
      * If {@code count} is greater than the size of the list, only all available properties will be removed.
      *
      * @param count The number of properties to remove.
      * @return This list of properties.
-     * @throws IllegalArgumentException If count is negative.
+     * @throws IllegalArgumentException If {@code count} is negative.
      */
     Vars<T> removeLast( int count );
 
@@ -327,18 +326,17 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
      *
      * @param count The number of properties to remove.
      * @return This list of properties.
-     * @throws IllegalArgumentException If count is negative.
+     * @throws IllegalArgumentException If {@code count} is negative.
      */
     Vars<T> removeFirst( int count );
 
     /**
-     * Removes the first {@code count} number of properties from the list
+     * Removes the first {@code count} number of properties from the list and returns them in a new list.
      * If {@code count} is greater than the size of the list, only all available properties will be popped.
-     * and returns them in a new list.
      *
      * @param count The number of properties to remove.
      * @return A new list of properties.
-     * @throws IllegalArgumentException If count is negative.
+     * @throws IllegalArgumentException If {@code count} is negative.
      */
     Vars<T> popFirst( int count );
 

@@ -128,13 +128,15 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
     @Override public final int size() { return _variables.size(); }
 
     /** {@inheritDoc} */
-    @Override public Vars<T> removeLast( int count ) {
-        if ( _isImmutable ) throw new UnsupportedOperationException( "This list is immutable." );
+    @Override
+    public Vars<T> removeLast( int count ) {
+        if ( _isImmutable )
+            throw new UnsupportedOperationException( "This list is immutable." );
+        if ( count < 0)
+            throw new IllegalArgumentException("Invalid count! Count must be non-negative.");
 
         count = Math.min( count, size() );
 
-        if ( count < 0)
-            throw new IllegalArgumentException("Invalid count! Count must be non-negative.");
         if ( count == 0 )
             return this;
         if ( count == 1 )
@@ -172,18 +174,16 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
         return vars;
     }
 
-    /**
-     *  Removes the first {@code count} number of properties from the list.
-     *  @param count The number of properties to remove.
-     *  @return This list of properties.
-     */
-    @Override public Vars<T> removeFirst( int count ) {
-        if ( _isImmutable ) throw new UnsupportedOperationException( "This list is immutable." );
+    /** {@inheritDoc} */
+    @Override
+    public Vars<T> removeFirst( int count ) {
+        if ( _isImmutable )
+            throw new UnsupportedOperationException( "This list is immutable." );
+        if ( count < 0)
+            throw new IllegalArgumentException("Invalid count! Count must be non-negative.");
 
         count = Math.min( count, size() );
 
-        if ( count < 0)
-            throw new IllegalArgumentException("Invalid count! Count must be non-negative.");
         if ( count == 0 )
             return this;
         if ( count == 1 )
@@ -199,19 +199,15 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
         return this;
     }
 
-    /**
-     *  Removes the first {@code count} number of properties from the list
-     *  and returns them in a new list.
-     *  @param count The number of properties to remove.
-     *  @return A new list of properties.
-     */
-    @Override public Vars<T> popFirst( int count ) {
-        if ( _isImmutable ) throw new UnsupportedOperationException( "This list is immutable." );
-
-        count = Math.min( count, size() );
-
+    /** {@inheritDoc} */
+    @Override
+    public Vars<T> popFirst( int count ) {
+        if ( _isImmutable )
+            throw new UnsupportedOperationException( "This list is immutable." );
         if ( count < 0)
             throw new IllegalArgumentException("Invalid count! Count must be non-negative.");
+
+        count = Math.min( count, size() );
 
         Vars<T> vars = (Vars<T>) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));
 
