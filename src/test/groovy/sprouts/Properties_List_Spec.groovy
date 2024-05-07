@@ -1131,5 +1131,16 @@ class Properties_List_Spec extends Specification
             change.index() == 17
         and : 'The `vals` should not contain the removed properties'
             change.vals() == Vars.of("e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u")
+        when : 'We remove a sequence of values from the list with the `popFirst` method.'
+            vars.popFirst(6)
+        then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
+            change.oldValues().size() == 6
+            change.oldValues() == Vals.of("e", "f", "g", "h", "i", "j")
+        and : 'The `newValues` of the change should be an empty property list.'
+            change.newValues().isEmpty()
+        and : 'The `index` of the change is the index of the first property removed.'
+            change.index() == 0
+        and : 'The `vals` should not contain the removed properties'
+            change.vals() == Vars.of("k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u")
     }
 }
