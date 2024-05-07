@@ -1116,9 +1116,20 @@ class Properties_List_Spec extends Specification
             change.oldValues() == Vals.of("a", "b", "c", "d")
         and : 'The `newValues` of the change should be an empty property list.'
             change.newValues().isEmpty()
-        and : 'The `index` of the change is `0`.'
+        and : 'The `index` of the change is the index of the first property removed.'
             change.index() == 0
         and : 'The `vals` should not contain the removed properties'
             change.vals() == Vars.of("e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z")
+        when : 'We remove a sequence of values from the list with the `removeLast` method.'
+            vars.removeLast(5)
+        then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
+            change.oldValues().size() == 5
+            change.oldValues() == Vals.of("v", "w", "x", "y", "z")
+        and : 'The `newValues` of the change should be an empty property list.'
+            change.newValues().isEmpty()
+        and : 'The `index` of the change is the index of the first property removed.'
+            change.index() == 17
+        and : 'The `vals` should not contain the removed properties'
+            change.vals() == Vars.of("e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u")
     }
 }
