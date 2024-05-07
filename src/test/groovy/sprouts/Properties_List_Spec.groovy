@@ -1097,4 +1097,28 @@ class Properties_List_Spec extends Specification
         and : 'The `vals` should not contain the removed properties'
             change.vals() == Vals.of("o")
     }
+
+    def 'The change delegate contains information about changes made to a "Vars" list by removing a sequence of properties.'() {
+        reportInfo """    
+            When you remove a sequence of properties from a "Vars" list, the change delegate contains information about
+            the change. The `oldValues` of the delegate contains the removed properties, and the `newValues` is always
+            an empty list.
+        """
+        given : 'A "Vars" instance having a few properties.'
+            var vars = Vars.of("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z")
+        and : 'We register a listener that will record the last change for us.'
+            var change = null
+            vars.onChange({ change = it })
+        when : 'We remove a sequence of values from the list with the `removeFirst` method.'
+            vars.removeFirst(4)
+        then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
+            change.oldValues().size() == 4
+            change.oldValues() == Vals.of("a", "b", "c", "d")
+        and : 'The `newValues` of the change should be an empty property list.'
+            change.newValues().isEmpty()
+        and : 'The `index` of the change is `0`.'
+            change.index() == 0
+        and : 'The `vals` should not contain the removed properties'
+            change.vals() == Vars.of("e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z")
+    }
 }
