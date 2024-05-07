@@ -1192,4 +1192,92 @@ class Properties_List_Spec extends Specification
             changeNullable.vals().isEmpty()
     }
 
+    def 'The change delegate contains information about changes made to a "Vars" list by removing a set of properties.'() {
+        reportInfo """    
+            When you remove a set of properties from a "Vars" list, the change delegate contains information about the
+            change. The `oldValues` of the delegate contains the removed properties, and the `newValues` is always an
+            empty list.
+        """
+        given : 'A "Vars" instance with some properties.'
+            var vars = Vars.of("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "a", "b", "c", "d")
+        and : 'We register a listener that will record the last change for us.'
+            var change = null
+            vars.onChange({ change = it })
+        when : 'We use the `retainAll` method to remove all properties from the list that are not contained in a given list of properties.'
+            vars.retainAll(Vars.of("d", "c", "f", "g", "h", "i", "j", "x"))
+        then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
+            change.oldValues().size() == 5
+            change.oldValues() == Vals.of("a", "b", "e", "a", "b")
+        and : 'The `newValues` of the change should be an empty property list.'
+            change.newValues().isEmpty()
+        and : 'The `index` of the change is `-1`.'
+            change.index() == -1
+        and : 'The `vals` should only contained the retained properties.'
+            change.vals() == Vars.of("c", "d", "f", "g", "h", "i", "j", "c", "d")
+        when : 'We use the `retainAll` method to remove all properties from the list that are not contained in a given list of values.'
+            vars.retainAll("a", "g", "h", "i", "j")
+        then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
+            change.oldValues().size() == 5
+            change.oldValues() == Vals.of("c", "d", "f", "c", "d")
+        and : 'The `newValues` of the change should be an empty property list.'
+            change.newValues().isEmpty()
+        and : 'The `index` of the change is `-1`.'
+            change.index() == -1
+        and : 'The `vals` should only contained the retained properties.'
+            change.vals() == Vars.of("g", "h", "i", "j")
+        when : 'When the `retainAll` method is used and no property is removed.'
+            change = null;
+            vars.retainAll("a", "g", "h", "i", "j")
+        then : 'No change event is triggered.'
+            change == null
+        when : 'When the `retainAll` method is used without matching properties.'
+            vars.retainAll("x", "y", "z")
+        then : 'The `oldValues` of the change delegate should be a property list with all removed properties.'
+            change.oldValues().size() == 4
+            change.oldValues() == Vals.of("g", "h", "i", "j")
+        and : 'The `newValues` of the change should be an empty property list.'
+            change.newValues().isEmpty()
+        and : 'The `index` of the change is `-1`.'
+            change.index() == -1
+        and : 'The `vals` should be an empty property list'
+            change.vals().isEmpty()
+    }
+
+    def 'The change delegate contains information about changes made to a nullable "Vars" list by removing a set of properties.'() {
+        reportInfo """    
+            When you remove a set of properties from a nullable "Vars" list, the change delegate contains information
+            about the change. The `oldValues` of the delegate contains the removed properties, and the `newValues` is
+            always an empty list.
+        """
+        given : 'A nullable "Vars" instance with some properties.'
+            var vars1 = Vars.ofNullable(String.class, "a", "b", null, "d", null, null, "g", "h", "i", "j", "a", "b", "c", "d")
+            var vars2 = Vars.ofNullable(String.class, "a", "b", null, "d", null, null, "g", "h", "i", "j", "a", "b", "c", "d")
+        and : 'We register a listener that will record the last change for us.'
+            var change = null
+            vars1.onChange({ change = it })
+            vars2.onChange({ change = it })
+        when : 'We use the `retainAll` method to remove all properties from the list that are not contained in a given list of properties.'
+            vars1.retainAll(Vars.ofNullable(String.class, "b", "d", "g", "h", "i", "j"))
+        then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
+            change.oldValues().size() == 6
+            change.oldValues() == Vals.ofNullable(String.class, "a", null, null, null, "a", "c")
+        and : 'The `newValues` of the change should be an empty property list.'
+            change.newValues().isEmpty()
+        and : 'The `index` of the change is `-1`.'
+            change.index() == -1
+        and : 'The `vals` should only contained the retained properties.'
+            change.vals() == Vars.ofNullable(String.class, "b", "d", "g", "h", "i", "j", "b", "d")
+        when : 'We use the `retainAll` method to remove all properties from the list that are not contained in a given list of properties.'
+            vars2.retainAll(Vars.ofNullable(String.class, null, "a", "b", "d"))
+        then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
+            change.oldValues().size() == 5
+            change.oldValues() == Vals.ofNullable(String.class, "g", "h", "i", "j", "c")
+        and : 'The `newValues` of the change should be an empty property list.'
+            change.newValues().isEmpty()
+        and : 'The `index` of the change is `-1`.'
+            change.index() == -1
+        and : 'The `vals` should only contained the retained properties.'
+            change.vals() == Vars.ofNullable(String.class, "a", "b", null, "d", null, null, "a", "b", "d")
+    }
+
 }
