@@ -1154,4 +1154,42 @@ class Properties_List_Spec extends Specification
         and : 'The `vals` should not contain the removed properties'
             change.vals() == Vars.of("k", "l", "m", "n")
     }
+
+    def 'The change delegate contains information about changes made to a "Vars" list by clearing the list.'() {
+        reportInfo """    
+            When you clear a "Vars" list, the change delegate contains information about the change. The `oldValues` of
+            the delegate contains the removed properties, and the `newValues` is always an empty list.
+        """
+        given : 'A nullable and a non-nullable "Vars" instance with some properties.'
+            var vars = Vars.of("a", "b", "c", "d")
+            var varsNullable = Vars.ofNullable(String.class, "a", "b", null, "d")
+        and : 'We register a listener that will record the last change for us.'
+            var change = null
+            vars.onChange({ change = it })
+            var changeNullable = null
+            varsNullable.onChange({ changeNullable = it })
+        when : 'We remove all properties from the list with the `clear` method.'
+            vars.clear()
+        then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
+            change.oldValues().size() == 4
+            change.oldValues() == Vals.of("a", "b", "c", "d")
+        and : 'The `newValues` of the change should be an empty property list.'
+            change.newValues().isEmpty()
+        and : 'The `index` of the change is the index of the first property removed.'
+            change.index() == 0
+        and : 'The `vals` should be an empty property list'
+            change.vals().isEmpty()
+        when : 'We remove all properties from the nullable list with the `clear` method.'
+            varsNullable.clear()
+        then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
+            changeNullable.oldValues().size() == 4
+            changeNullable.oldValues() == Vals.ofNullable(String.class, "a", "b", null, "d")
+        and : 'The `newValues` of the change should be an empty property list.'
+            changeNullable.newValues().isEmpty()
+        and : 'The `index` of the change is the index of the first property removed.'
+            changeNullable.index() == 0
+        and : 'The `vals` should be an empty property list'
+            changeNullable.vals().isEmpty()
+    }
+
 }
