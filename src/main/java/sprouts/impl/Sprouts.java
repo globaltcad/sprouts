@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.BiFunction;
+import java.util.stream.StreamSupport;
 
 /**
  *  Exposes an API for configuring the {@link SproutsFactory},
@@ -201,6 +202,11 @@ public final class Sprouts implements SproutsFactory
         return AbstractVariables.ofNullable( true, (Var<T>) first, vars );
     }
 
+    @Override
+    public <T> Vars<T> varsOfNullable(Class<T> type, Iterable<Var<T>> vars) {
+        Var<@Nullable T>[] varsArray = (Var<@Nullable T>[]) StreamSupport.stream(vars.spliterator(), false).toArray(Var[]::new);
+        return varsOfNullable(type,  varsArray);
+    }
 
 
 	@SuppressWarnings("unchecked")

@@ -154,6 +154,21 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
         return Sprouts.factory().varsOfNullable( first, rest );
     }
 
+    /**
+     * Creates a list of nullable properties from the supplied type and iterable of values.
+     * This factory method requires that the type be specified because the
+     * compiler cannot infer the type from a potentially empty iterable.
+     *
+     * @param type The type of the properties.
+     * @param vars The iterable of values.
+     * @param <T>  The type of the properties.
+     * @return A new Vars instance.
+     */
+    static <T> Vars<@Nullable T> ofNullable( Class<T> type, Iterable<Var<@Nullable T>> vars ) {
+        Objects.requireNonNull(type);
+        return Sprouts.factory().varsOfNullable( type, vars );
+    }
+
     /** {@inheritDoc} */
     @Override Var<T> at( int index );
 
