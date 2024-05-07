@@ -330,10 +330,13 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
     Vars<T> removeFirst( int count );
 
     /**
-     *  Removes the first {@code count} number of properties from the list
-     *  and returns them in a new list.
-     *  @param count The number of properties to remove.
-     *  @return A new list of properties.
+     * Removes the first {@code count} number of properties from the list
+     * If {@code count} is greater than the size of the list, only all available properties will be popped.
+     * and returns them in a new list.
+     *
+     * @param count The number of properties to remove.
+     * @return A new list of properties.
+     * @throws IllegalArgumentException If count is negative.
      */
     Vars<T> popFirst( int count );
 
