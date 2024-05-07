@@ -313,8 +313,11 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
     @Override
     public Vars<T> clear() {
         if ( _isImmutable ) throw new UnsupportedOperationException("This is an immutable list.");
+
+        Vars<T> vars = (Vars<T>) (_allowsNull ? Vars.ofNullable(_type, _variables) : Vars.of(_type, _variables));
+
         _variables.clear();
-        _triggerAction( Change.CLEAR );
+        _triggerAction( Change.CLEAR, 0, null, vars);
         return this;
     }
 
