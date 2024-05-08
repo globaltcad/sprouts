@@ -1,5 +1,6 @@
 package sprouts;
 
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import sprouts.impl.Sprouts;
 
@@ -337,13 +338,16 @@ public interface Vals<T extends @Nullable Object> extends Iterable<T>, Observabl
     Vals<T> map( Function<T,T> mapper );
 
     /**
-     *  Use this for mapping a list of properties to another list of properties.
-     * @param type The type of the items in the new list of properties.
+     * Use this for mapping a list of properties to another list of properties.
+     * Note: The mapping function is applied to all non-empty properties.
+     * Empty properties are not mapped and remain empty properties.
+     *
+     * @param type   The type of the items in the new list of properties.
      * @param mapper The mapper function.
-     * @param <U> The type of the items in the new list of properties.
+     * @param <U>    The type of the items in the new list of properties.
      * @return A new list of properties.
      */
-    <U extends @Nullable Object> Vals<U> mapTo( Class<U> type, Function<T,U> mapper );
+    <U extends @Nullable Object> Vals<@Nullable U> mapTo( Class<U> type, Function<@NonNull T,U> mapper );
 
     /**
      *  Turns this list of properties into a stream of items

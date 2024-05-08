@@ -1,5 +1,6 @@
 package sprouts;
 
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import sprouts.impl.Sprouts;
 
@@ -228,15 +229,12 @@ public interface Var<T extends @Nullable Object> extends Val<T>
 	 * 			the mapping function to the item of this property.
 	 * @param <U> The type of the item returned from the mapping function
 	 */
-	@Override default <U extends @Nullable Object> Var<@Nullable U> mapTo( Class<U> type, java.util.function.Function<T, U> mapper ) {
+	@Override default <U extends @Nullable Object> Var<@Nullable U> mapTo( Class<U> type, Function<@NonNull T, U> mapper ) {
 		if ( !isPresent() )
 			return Var.ofNull( type );
 
 		U newValue = mapper.apply( get() );
-		if ( newValue == null )
-			return Var.ofNullable( type, null );
-
-		return allowsNull() ? Var.ofNullable( type, newValue ) : Var.of( newValue );
+		return Var.ofNullable( type, newValue );
 	}
 
 }

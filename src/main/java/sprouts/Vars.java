@@ -1,5 +1,6 @@
 package sprouts;
 
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import sprouts.impl.Sprouts;
 
@@ -569,14 +570,14 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
     /**
      *  Use this for mapping a list of properties to another list of properties.
      */
-    @Override default <U> Vars<U> mapTo( Class<U> type, Function<T,U> mapper ) {
+    @Override
+    default <U extends @Nullable Object> Vars<@Nullable U> mapTo( Class<@NonNull U> type, Function<@NonNull T,U> mapper ) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(mapper);
-        @SuppressWarnings("unchecked")
-        Var<U>[] vars = new Var[size()];
+        Vars<@Nullable U> vars = Vars.ofNullable(type);
         for ( int i = 0; i < size(); i++ )
-            vars[i] = this.at( i ).mapTo( type, mapper );
-        return Vars.of( type, vars );
+            vars.add( at( i ).mapTo( type, mapper ) );
+        return vars;
     }
 
     default Vals<T> toVals() { return Vals.of( type(), this ); }
