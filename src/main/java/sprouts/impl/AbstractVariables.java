@@ -1,6 +1,5 @@
 package sprouts.impl;
 
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import sprouts.*;
@@ -8,15 +7,12 @@ import sprouts.Observable;
 import sprouts.Observer;
 
 import java.util.*;
-import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
  *  A base class for {@link Vars} implementations.
  */
-public class AbstractVariables<T> implements Vars<T>
-{
+public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(AbstractVariables.class);
 
     @SafeVarargs
@@ -65,16 +61,16 @@ public class AbstractVariables<T> implements Vars<T>
         return AbstractVariables.of( immutable, type, (Iterable) list );
     }
 
-    public static <T> Vars<@Nullable T> ofNullable( boolean immutable, Class<T> type ){
+    public static <T> Vars<T> ofNullable( boolean immutable, Class<T> type ){
         Objects.requireNonNull(type);
-        return new AbstractVariables<@Nullable T>( immutable, type, true, new Var[0] ){};
+        return new AbstractVariables<T>( immutable, type, true, new Var[0] ){};
     }
 
     @SafeVarargs
-    public static <T> Vars<@Nullable T> ofNullable( boolean immutable, Class<T> type, Var<@Nullable T>... vars ) {
+    public static <T> Vars<T> ofNullable( boolean immutable, Class<T> type, Var<T>... vars ) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(vars);
-        return new AbstractVariables<@Nullable T>( immutable, type, true, vars ){};
+        return new AbstractVariables<T>( immutable, type, true, vars ){};
     }
 
     @SafeVarargs
@@ -83,11 +79,11 @@ public class AbstractVariables<T> implements Vars<T>
         Objects.requireNonNull(vars);
         Var<T>[] array = new Var[vars.length];
         for ( int i = 0; i < vars.length; i++ ) array[i] = Var.ofNullable(type, vars[i]);
-        return new AbstractVariables<@Nullable T>( immutable, type, true, array ){};
+        return new AbstractVariables<T>( immutable, type, true, array ){};
     }
 
     @SafeVarargs
-    public static <T> Vars<@Nullable T> ofNullable( boolean immutable, Var<@Nullable T> first, Var<@Nullable T>... vars ) {
+    public static <T> Vars<T> ofNullable( boolean immutable, Var<T> first, Var<T>... vars ) {
         Objects.requireNonNull(first);
         Objects.requireNonNull(vars);
         Var<T>[] array = new Var[vars.length+1];
@@ -96,25 +92,8 @@ public class AbstractVariables<T> implements Vars<T>
         return ofNullable(immutable, first.type(), array);
     }
 
-    public static <T> Vars<@Nullable T> ofNullable( boolean immutable, Class<T> type, Iterable<Var<@Nullable T>> vars ) {
-        Objects.requireNonNull(type);
-        Objects.requireNonNull(vars);
-        List<Var<T>> list = new ArrayList<>();
-        vars.forEach( list::add );
-        Var<T>[] array = new Var[list.size()];
-        return new AbstractVariables<T>( immutable, type, true, list.toArray(array) ){};
-    }
 
-    public static <T> Vals<@Nullable T> ofNullable( boolean immutable, Class<T> type, Vals<@Nullable T> vals ) {
-        if ( vals instanceof AbstractVariables )
-            return new AbstractVariables<>( immutable, type, true, ((AbstractVariables<T>) vals)._variables );
-
-        List<Val<T>> list = new ArrayList<>();
-        for ( int i = 0; i < vals.size(); i++ ) list.add( vals.at(i) );
-        return AbstractVariables.ofNullable( immutable, type, (Iterable) list );
-    }
-
-    private final List<Var<@Nullable T>> _variables = new ArrayList<>();
+    private final List<Var<T>> _variables = new ArrayList<>();
     private final boolean _isImmutable;
     private final boolean _allowsNull;
     private final Class<T> _type;
@@ -142,12 +121,6 @@ public class AbstractVariables<T> implements Vars<T>
     /** {@inheritDoc} */
     @Override public final Var<T> at( int index ) { return _variables.get(index); }
 
-    @Override
-    public Vars<@Nullable T> add(@Nullable T value) {
-        Var<@Nullable T> var = _allowsNull ? Var.ofNullable(type(), value) : Var.ofOrThrow(value);
-        return add(var);
-    }
-
     /** {@inheritDoc} */
     @Override public final Class<T> type() { return _type; }
 
@@ -155,135 +128,111 @@ public class AbstractVariables<T> implements Vars<T>
     @Override public final int size() { return _variables.size(); }
 
     /** {@inheritDoc} */
-    @Override public Vars<T> removeLast( int count )
-    {
-        if ( _isImmutable ) throw new UnsupportedOperationException( "This list is immutable." );
+    @Override
+    public Vars<T> removeLast( int count ) {
+        if ( _isImmutable )
+            throw new UnsupportedOperationException( "This list is immutable." );
+        if ( count < 0)
+            throw new IllegalArgumentException("Invalid count! Count must be non-negative.");
+
         count = Math.min( count, size() );
-        if ( count == 0 ) return this;
-        if ( count == 1 ) return removeLast();
-        for ( int i = 0; i < count; i++ ) _variables.remove( size() - 1 );
-        _triggerAction( Change.REMOVE, -1, null, null );
+
+        if ( count == 0 )
+            return this;
+        if ( count == 1 )
+            return removeLast();
+
+        Vars<T> vars = (Vars<T>) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));
+
+        List<Var<T>> subList = _variables.subList( size() - count, size() );
+        for ( Var<T> var : subList ) vars.add(var);
+        subList.clear();
+
+        _triggerAction( Change.REMOVE, size(), null, vars );
         return this;
     }
 
-    /**
-     *  Removes {@code count} number of properties from the end
-     *  of the list and returns them in a new list.
-     *  @param count The number of properties to remove.
-     *  @return A new list of properties.
-     */
-    @Override public Vars<@Nullable T> popLast( int count )
-    {
-        if ( _isImmutable ) throw new UnsupportedOperationException( "This list is immutable." );
+    /** {@inheritDoc} */
+    @Override
+    public Vars<T> popLast( int count ) {
+        if ( _isImmutable )
+            throw new UnsupportedOperationException( "This list is immutable." );
+        if ( count < 0)
+            throw new IllegalArgumentException("Invalid count! Count must be non-negative.");
+
         count = Math.min( count, size() );
-        if ( count == 0 ) return _allowsNull ? Vars.ofNullable(type()) : Vars.of(type());
-        if ( count == 1 ) return _allowsNull ? Vars.ofNullable(type(), popLast()) : Vars.of(popLast());
-        Vars<@Nullable T> vars = _allowsNull ? Vars.ofNullable(type()) : Vars.of(type());
-        List<Var<@Nullable T>> subList = _variables.subList( size() - count, size() );
-        for ( Var<@Nullable T> var : subList ) vars.add(var);
+
+        Vars<T> vars = (Vars<T>) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));
+
+        if ( count == 0 )
+            return vars;
+
+        List<Var<T>> subList = _variables.subList( size() - count, size() );
+        for ( Var<T> var : subList ) vars.add(var);
         subList.clear();
-        _triggerAction( Change.REMOVE, -1, null, null );
+        _triggerAction( Change.REMOVE, size(), null, vars );
         return vars;
     }
 
-    /**
-     *  Removes the first {@code count} number of properties from the list.
-     *  @param count The number of properties to remove.
-     *  @return This list of properties.
-     */
-    @Override public Vars<@Nullable T> removeFirst( int count )
-    {
-        if ( _isImmutable ) throw new UnsupportedOperationException( "This list is immutable." );
-        count = Math.min( count, size() );
-        if ( count == 0 ) return this;
-        if ( count == 1 ) return removeFirst();
-        if ( count > 0 ) _variables.subList(0, count).clear();
-        _triggerAction( Change.REMOVE, -1, null, null );
-        return this;
-    }
+    /** {@inheritDoc} */
+    @Override
+    public Vars<T> removeFirst( int count ) {
+        if ( _isImmutable )
+            throw new UnsupportedOperationException( "This list is immutable." );
+        if ( count < 0)
+            throw new IllegalArgumentException("Invalid count! Count must be non-negative.");
 
-    /**
-     *  Removes the first {@code count} number of properties from the list
-     *  and returns them in a new list.
-     *  @param count The number of properties to remove.
-     *  @return A new list of properties.
-     */
-    @Override public Vars<@Nullable T> popFirst( int count )
-    {
-        if ( _isImmutable ) throw new UnsupportedOperationException( "This list is immutable." );
         count = Math.min( count, size() );
-        if ( count == 0 ) return Vars.of(type());
-        if ( count == 1 ) return Vars.of(popFirst());
-        Vars<T> vars = Vars.of(type());
+
+        if ( count == 0 )
+            return this;
+        if ( count == 1 )
+            return removeFirst();
+
+        Vars<T> vars = (Vars<T>) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));
+
         List<Var<T>> subList = _variables.subList( 0, count );
         for ( Var<T> var : subList ) vars.add(var);
         subList.clear();
-        _triggerAction( Change.REMOVE, -1, null, null );
+
+        _triggerAction( Change.REMOVE, 0, null, vars );
+        return this;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Vars<T> popFirst( int count ) {
+        if ( _isImmutable )
+            throw new UnsupportedOperationException( "This list is immutable." );
+        if ( count < 0)
+            throw new IllegalArgumentException("Invalid count! Count must be non-negative.");
+
+        count = Math.min( count, size() );
+
+        Vars<T> vars = (Vars<T>) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));
+
+        if ( count == 0 )
+            return vars;
+
+        List<Var<T>> subList = _variables.subList( 0, count );
+        for ( Var<T> var : subList ) vars.add(var);
+        subList.clear();
+        _triggerAction( Change.REMOVE, 0, null, vars );
         return vars;
     }
 
-    @Override
-    public Vars<@Nullable T> removeIf(Predicate<Var<@Nullable T>> predicate) {
-        Vars<@Nullable T> vars = _allowsNull ? Vars.ofNullable(type()) : Vars.of(type());
-        for (int i = size() - 1; i >= 0; i--)
-            if (predicate.test(this.at(i))) vars.add(this.at(i));
-
-        this.removeAll(vars); // remove from this list at once and trigger events only once!
-        return this;
-    }
-
-    @Override
-    public Vars<@Nullable T> popIf(Predicate<Var<@Nullable T>> predicate) {
-        Vars<@Nullable T> vars = _allowsNull ? Vars.ofNullable(type()) : Vars.of(type());
-        for ( int i = size() - 1; i >= 0; i-- )
-            if ( predicate.test(this.at(i)) ) vars.add(this.at(i));
-
-        this.removeAll(vars); // remove from this list at once and trigger events only once!
-        return vars.revert();
-    }
-
-    @Override
-    public Vars<@Nullable T> removeIfItem(Predicate<@Nullable T> predicate) {
-        Vars<@Nullable T> vars = _allowsNull ? Vars.ofNullable(type()) : Vars.of(type());
-        for ( int i = size() - 1; i >= 0; i-- )
-            if ( predicate.test(this.at(i).get()) ) vars.add(this.at(i));
-
-        this.removeAll(vars); // remove from this list at once and trigger events only once!
-        return this;
-    }
-
-    @Override
-    public Vars<@Nullable T> popIfItem(Predicate<@Nullable T> predicate) {
-        Vars<@Nullable T> vars = _allowsNull ? Vars.ofNullable(type()) : Vars.of(type());
-        for (int i = size() - 1; i >= 0; i--)
-            if (predicate.test(at(i).get())) vars.add(at(i));
-
-        this.removeAll(vars); // remove from this list at once and trigger events only once!
-        return vars.revert();
-    }
-
     /** {@inheritDoc} */
-    @Override public Vars<T> removeAll( Vars<@Nullable T> vars )
-    {
+    @Override public Vars<T> removeAll( Vars<T> vars ) {
         if ( _isImmutable ) throw new UnsupportedOperationException("This is an immutable list.");
+
+        Vars<T> removal = (Vars<T>) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));
+
         for ( int i = size() - 1; i >= 0; i-- )
             if ( vars.contains(at(i)) )
-                _variables.remove(i);
+                removal.add( _variables.remove(i) );
 
-        _triggerAction( Change.REMOVE, -1, null, null );
+        _triggerAction( Change.REMOVE, -1, null, removal.revert() );
         return this;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public Vars<@Nullable T> addAt(int index, @Nullable T item) {
-        if (_allowsNull)
-            return addAt(index, Var.ofNullable(type(), item));
-
-        if (item == null)
-            throw new IllegalArgumentException("Null values are not allowed in this property list.");
-
-        return addAt(index, Var.of(item));
     }
 
     /** {@inheritDoc} */
@@ -296,20 +245,9 @@ public class AbstractVariables<T> implements Vars<T>
         return this;
     }
 
-    @Override
-    public Vars<@Nullable T> setAt(int index, @Nullable T item) {
-        if (_allowsNull)
-            return setAt(index, Var.ofNullable(type(), item));
-
-        if (item == null)
-            throw new IllegalArgumentException("Null values are not allowed in this property list.");
-
-        return setAt(index, Var.of(item));
-    }
-
     /** {@inheritDoc} */
     @Override
-    public Vars<@Nullable T> removeAt( int index ) {
+    public Vars<T> removeAt( int index ) {
         if ( _isImmutable ) throw new UnsupportedOperationException("This is an immutable list.");
         if ( index < 0 || index >= _variables.size() )
             throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + _variables.size());
@@ -337,33 +275,14 @@ public class AbstractVariables<T> implements Vars<T>
         return this;
     }
 
-    @Override
-    public Vars<@Nullable T> addAll( @Nullable T @NonNull ... items ) {
-        Objects.requireNonNull(items);
-        Vars<@Nullable T> vars = _allowsNull ? Vars.ofNullable(type()) : Vars.of(type());
-
-        for (@Nullable T v : items) {
-            vars.add(v);
-        }
-
-        return this.addAll(vars);
-    }
-
     /** {@inheritDoc} */
     @Override
-    public Vars<@Nullable T> addAll( Iterable<@Nullable T> items ) {
-        Vars<@Nullable T> vars = _allowsNull ? Vars.ofNullable(type()) : Vars.of(type());
-
-        for (@Nullable T v : items) {
-            vars.add(v);
-        }
-
-        return this.addAll(vars);
-    }
-
-    /** {@inheritDoc} */
-    @Override public Vars<T> addAll( Vals<@Nullable T> vals ) {
+    public Vars<T> addAll( Vals<T> vals ) {
         if ( _isImmutable ) throw new UnsupportedOperationException("This is an immutable list.");
+
+        if (vals.isEmpty())
+            return this;
+
         for ( int i = 0; i < vals.size(); i++ ) {
             Val<T> val = vals.at(i);
             _checkNullSafetyOf(val);
@@ -371,49 +290,44 @@ public class AbstractVariables<T> implements Vars<T>
             if ( val instanceof Var )
                 _variables.add((Var<T>) val);
             else
-                _variables.add(_allowsNull ? Var.ofNullable(type(), val.orElseNull()) : Var.of(val.get()));
+                _variables.add(Var.of(val.get()));
         }
-        if ( vals.isNotEmpty() ) {
-            if ( vals.size() > 1 )
-                _triggerAction( Change.ADD, -1, null, null );
-            else
-                _triggerAction( Change.ADD, _variables.size() - 1, Var.ofNullable(vals.type(),vals.at(0).orElseNull()), null );
-        }
+
+        _triggerAction( Change.ADD, size() - vals.size(), vals, null);
         return this;
     }
 
     /** {@inheritDoc} */
     @Override
-    public Vars<@Nullable T> retainAll( Vars<@Nullable T> vars ) {
+    public Vars<T> retainAll( Vars<T> vars ) {
         if ( _isImmutable ) throw new UnsupportedOperationException("This is an immutable list.");
 
-        boolean changed = _variables.removeIf(v -> !vars.contains(v));
-        if ( changed )
-            _triggerAction( Change.REMOVE, -1, null, null );
+        Vars<T> old = (Vars<T>) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));
+
+        for (Iterator<Var<T>> it = _variables.iterator(); it.hasNext();) {
+            Var<T> var = it.next();
+            if (!vars.contains(var)) {
+                old.add(var);
+                it.remove();
+            }
+        }
+
+        if ( !old.isEmpty() )
+            _triggerAction( Change.REMOVE, -1, null, old );
 
         return this;
-    }
-
-    @Override
-    public Vars<@Nullable T> retainAll(@Nullable T @NonNull ... items) {
-        Objects.requireNonNull(items);
-        Vars<@Nullable T> vars = _allowsNull ? Vars.ofNullable(type()) : Vars.of(type());
-        for (@Nullable T item : items) vars.add(_allowsNull ? Var.ofNullable(type(), item) : Var.ofOrThrow(item));
-        return retainAll(vars);
     }
 
     /** {@inheritDoc} */
     @Override
     public Vars<T> clear() {
         if ( _isImmutable ) throw new UnsupportedOperationException("This is an immutable list.");
-        _variables.clear();
-        _triggerAction( Change.CLEAR, -1, null, null );
-        return this;
-    }
 
-    @Override
-    public Vals<@Nullable T> toVals() {
-        return _allowsNull ? Vals.ofNullable(type(), this) : Vals.of(type(), this);
+        Vars<T> vars = (Vars<T>) (_allowsNull ? Vars.ofNullable(_type, _variables) : Vars.of(_type, _variables));
+
+        _variables.clear();
+        _triggerAction( Change.CLEAR, 0, null, vars);
+        return this;
     }
 
     /** {@inheritDoc} */
@@ -421,7 +335,7 @@ public class AbstractVariables<T> implements Vars<T>
     public void sort( Comparator<T> comparator ) {
         if ( _isImmutable ) throw new UnsupportedOperationException("This is an immutable list.");
         _variables.sort( ( a, b ) -> comparator.compare( a.orElseNull(), b.orElseNull() ) );
-        _triggerAction( Change.SORT, -1, null, null );
+        _triggerAction( Change.SORT );
     }
 
     /** {@inheritDoc} */
@@ -435,7 +349,7 @@ public class AbstractVariables<T> implements Vars<T>
 
         _variables.clear();
         _variables.addAll(list);
-        _triggerAction( Change.DISTINCT, -1, null, null );
+        _triggerAction( Change.DISTINCT );
     }
 
     @Override
@@ -446,7 +360,7 @@ public class AbstractVariables<T> implements Vars<T>
             _variables.set( i, at(size - i - 1) );
             _variables.set( size - i - 1, tmp );
         }
-        _triggerAction( Change.REVERT, -1, null, null );
+        _triggerAction( Change.REVERT );
         return this;
     }
 
@@ -460,36 +374,13 @@ public class AbstractVariables<T> implements Vars<T>
     /** {@inheritDoc} */
     @Override
     public Vals<T> fireChange() {
-        _triggerAction( Change.NONE, -1, null, null );
+        _triggerAction( Change.NONE );
         return this;
     }
 
     @Override
-    public Vals<@Nullable T> map(Function<@Nullable T, @Nullable T> mapper) {
-        Objects.requireNonNull(mapper);
-        @SuppressWarnings("unchecked")
-        Var<T>[] vars = new Var[size()];
-        int i = 0;
-        for ( T v : this ) vars[i++] = _allowsNull ? Var.ofNullable(type(), mapper.apply(v) ) : Var.ofOrThrow(mapper.apply(v));
-        return Vals.of( type(), vars );
-    }
-
-    @Override
-    public <U> Vals<@Nullable U> mapTo(Class<U> type, Function<@Nullable T, @Nullable U> mapper) {
-        Objects.requireNonNull(type);
-        Objects.requireNonNull(mapper);
-        @SuppressWarnings("unchecked")
-        Var<U>[] vars = new Var[size()];
-        for ( int i = 0; i < size(); i++ )
-            vars[i] = this.at( i ).mapTo( type, mapper );
-        return Vars.of( type, vars );
-    }
-
-    @Override
-    public List<Val<@Nullable T>> toValList() {
-        return Collections.unmodifiableList(
-                stream().map(v -> _allowsNull ? Val.ofNullable(type(), v) : Val.of(Objects.requireNonNull(v)) ).collect(Collectors.toList())
-        );
+    public boolean allowsNull() {
+        return _allowsNull;
     }
 
     private ValsDelegate<T> _createDelegate(
@@ -507,6 +398,26 @@ public class AbstractVariables<T> implements Vars<T>
         return new ValsDelegateImpl<>(type, index, newValues, oldValues, clone);
     }
 
+    private ValsDelegate<T> _createDelegate(
+            int index, Change type, @Nullable Vals<T> newVals, @Nullable Vals<T> oldVals
+    ) {
+        @SuppressWarnings("unchecked")
+        Val<T>[] cloned = _variables.stream().map(var -> _allowsNull ? Val.ofNullable(var) : Val.of(var)).toArray(Val[]::new);
+        @SuppressWarnings("unchecked")
+        Val<T>[] newCloned = newVals == null ? new Val[0] : newVals.stream().map(v -> _allowsNull ? Val.ofNullable(_type, v) : Val.of(v)).toArray(Val[]::new);
+        @SuppressWarnings("unchecked")
+        Val<T>[] oldCloned = oldVals == null ? new Val[0] : oldVals.stream().map(v -> _allowsNull ? Val.ofNullable(_type, v) : Val.of(v)).toArray(Val[]::new);
+        Vals<T> clone = (Vals<T>) (_allowsNull ? Vals.ofNullable(_type, cloned) : Vals.of(_type, Arrays.asList(cloned)));
+        Vals<T> newClone = (Vals<T>) (_allowsNull ? Vals.ofNullable(_type, newCloned) : Vals.of(_type, Arrays.asList(newCloned)));
+        Vals<T> oldClone = (Vals<T>) (_allowsNull ? Vals.ofNullable(_type, oldCloned) : Vals.of(_type, Arrays.asList(oldCloned)));
+        /*
+            Note that we just created a deep copy of the property list, so we can safely
+            pass the clone to the delegate. This is important because the delegate
+            is passed to the action which might be executed on a different thread.
+        */
+        return new ValsDelegateImpl<>(type, index, newClone, oldClone, clone);
+    }
+
     private void _triggerAction(
             Change type, int index, @Nullable Var<T> newVal, @Nullable Var<T> oldVal
     ) {
@@ -516,13 +427,30 @@ public class AbstractVariables<T> implements Vars<T>
             try {
                 action.accept(listChangeDelegate);
             } catch ( Exception e ) {
-                log.error("Error in change action '" + action +"'.", e);
+                log.error("Error in change action '{}'.", action, e);
+            }
+    }
+
+    private void _triggerAction(Change type) {
+        _triggerAction(type, -1, (Vals<T>) null, null);
+    }
+
+    private void _triggerAction(
+            Change type, int index, @Nullable Vals<T> newVals, @Nullable Vals<T> oldVals
+    ) {
+        ValsDelegate<T> listChangeDelegate = _createDelegate(index, type, newVals, oldVals);
+
+        for (Action<ValsDelegate<T>> action : _viewActions)
+            try {
+                action.accept(listChangeDelegate);
+            } catch (Exception e) {
+                log.error("Error in change action '{}'.", action, e);
             }
     }
 
     /** {@inheritDoc} */
     @Override
-    public java.util.Iterator<@Nullable T> iterator() {
+    public java.util.Iterator<T> iterator() {
         return new java.util.Iterator<T>() {
             private int index = 0;
             @Override public boolean hasNext() { return index < size(); }
@@ -576,8 +504,6 @@ public class AbstractVariables<T> implements Vars<T>
         Objects.requireNonNull(value);
         if ( !_allowsNull && value.allowsNull() )
             throw new IllegalArgumentException("Null values are not allowed in this property list.");
-        if ( _allowsNull && !value.allowsNull() )
-            throw new IllegalArgumentException("Null values are allowed in this property list.");
     }
 
     @Override

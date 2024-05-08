@@ -14,7 +14,7 @@ import java.util.*;
  *
  *  @param <T> The type of the value.
  */
-abstract class AbstractValue<T> implements Val<T>
+abstract class AbstractValue<T extends @Nullable Object> implements Val<T>
 {
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(AbstractValue.class);
 

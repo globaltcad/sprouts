@@ -17,24 +17,24 @@ public interface SproutsFactory
 
 	Event eventOf( Event.Executor executor );
 
-	<T> Val<T> valOfNullable( Class<T> type, @Nullable T item );
+	<T> Val<@Nullable T> valOfNullable( Class<T> type, @Nullable T item );
 
-	<T> Val<T> valOfNull( Class<T> type );
+	<T> Val<@Nullable T> valOfNull( Class<T> type );
 
 	<T> Val<T> valOf( T item );
 
 	<T> Val<T> valOf( Val<T> toBeCopied );
 
-	<T> Val<@Nullable T> valOfNullable( Val<@Nullable T> toBeCopied );
+	<T extends @Nullable Object> Val<@Nullable T> valOfNullable( Val<T> toBeCopied );
 
 	<T> Val<T> valOf( Val<T> first, Val<T> second, BiFunction<T, T, T> combiner );
 
-	<T> Val<@Nullable T> valOfNullable( Val<@Nullable T> first, Val<@Nullable T> second, BiFunction<@Nullable T, @Nullable T, @Nullable T> combiner );
+	<T extends @Nullable Object> Val<@Nullable T> valOfNullable( Val<T> first, Val<T> second, BiFunction<T, T, T> combiner );
 
 
-	<T> Var<T> varOfNullable( Class<T> type, @Nullable T item );
+	<T> Var<@Nullable T> varOfNullable( Class<T> type, @Nullable T item );
 
-	<T> Var<T> varOfNull( Class<T> type );
+	<T> Var<@Nullable T> varOfNull( Class<T> type );
 
 	<T> Var<T> varOf( T item );
 
@@ -91,7 +91,8 @@ public interface SproutsFactory
 	@SuppressWarnings("unchecked")
 	<T> Vars<@Nullable T> varsOfNullable( Var<@Nullable T> first, Var<@Nullable T>... rest );
 
-	<T> Vals<@Nullable T> valsOfNullable(Class<T> type, Vals<@Nullable T> vals);
+	<T> Vars<@Nullable T> varsOfNullable(Class<T> type, Iterable<Var<@Nullable T>> vars);
+
 
 	<V> Result<V> resultOf( Class<V> type );
 

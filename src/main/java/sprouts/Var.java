@@ -65,7 +65,7 @@ import java.util.function.Function;
  *
  * @param <T> The type of the wrapped item.
  */
-public interface Var<T> extends Val<T>
+public interface Var<T extends @Nullable Object> extends Val<T>
 {
 	/**
 	 *  Use this factory method to create a new {@link Var} instance
@@ -124,24 +124,6 @@ public interface Var<T> extends Val<T>
 
 	/**
 	 * 	This factory method returns a {@code Var} describing the given non-{@code null}
-	 * 	item similar to {@link Optional#of(Object)}, but specifically
-	 * 	designed to be used for MVVM. <br>
-	 * 	{@link Var} instances returned by this method will report {@code false}
-	 * 	for {@link #allowsNull()}, because <b>the item is guaranteed to be non-null</b>.
-	 *
-	 * @param item The initial item of the property which must not be null.
-	 * @param <T> The type of the item held by the {@link Var}!
-	 * @return A new {@link Var} instance wrapping the given item.
-	 * @throws IllegalArgumentException If the given item is null.
-	 */
-	static <T> Var<T> ofOrThrow( @Nullable T item ) {
-		if (item == null)
-			throw new IllegalArgumentException();
-		return Sprouts.factory().varOf( item );
-	}
-
-	/**
-	 * 	This factory method returns a {@code Var} describing the given non-{@code null}
 	 * 	item similar to {@link Optional#of(Object)} and its type which
 	 * 	may also be a super type of the supplied item. <br>
 	 * 	{@link Var} instances returned by this method will report {@code false}
@@ -165,9 +147,8 @@ public interface Var<T> extends Val<T>
 	 *
 	 * @param newItem The new item which ought to replace the old one.
 	 * @return This very wrapper instance, in order to enable method chaining.
-	 * @throws NullPointerException If the given {@code newItem} is {@code null} and this {@code  Var} is not nullable.
 	 */
-	default Var<@Nullable T> set( @Nullable T newItem ) {
+	default Var<T> set( T newItem ) {
 		return this.set(DEFAULT_CHANNEL, newItem);
 	}
 
@@ -180,9 +161,8 @@ public interface Var<T> extends Val<T>
 	 * @param channel The channel from which the item is set.
 	 * @param newItem The new item which ought to replace the old one.
 	 * @return This very wrapper instance, in order to enable method chaining.
-	 * @throws NullPointerException If the given {@code newItem} is {@code null} and this {@code  Var} is not nullable.
 	 */
-	Var<@Nullable T> set( Channel channel, @Nullable T newItem );
+	Var<T> set( Channel channel, T newItem );
 
 	/**
 	 *  Use this method to create a new property with an id.
@@ -198,7 +178,7 @@ public interface Var<T> extends Val<T>
 	/**
 	 * {@inheritDoc}
 	 */
-	@Override Var<@Nullable T> onChange( Channel channel, Action<Val<@Nullable T>> action );
+	@Override Var<T> onChange( Channel channel, Action<Val<T>> action );
 
 	/**
 	 *  If the item is present, then this applies the provided mapping function to it,
@@ -220,12 +200,12 @@ public interface Var<T> extends Val<T>
 	 * @return A new property either empty (containing null) or containing the result of applying
 	 * 			the mapping function to the item of this property.
 	 */
-	@Override default Var<@Nullable T> map( java.util.function.Function<T, T> mapper ) {
+	@Override default Var<T> map( Function<T, T> mapper ) {
 		if ( !isPresent() )
 			return Var.ofNull( type() );
 
 		T newValue = mapper.apply( get() );
-		return Var.of( newValue );
+		return allowsNull() ? Var.ofNullable( type(), newValue ) : Var.of( newValue );
 	}
 
 	/**
@@ -248,12 +228,15 @@ public interface Var<T> extends Val<T>
 	 * 			the mapping function to the item of this property.
 	 * @param <U> The type of the item returned from the mapping function
 	 */
-	@Override default <U> Var<U> mapTo( Class<U> type, java.util.function.Function<T, U> mapper ) {
+	@Override default <U extends @Nullable Object> Var<@Nullable U> mapTo( Class<U> type, java.util.function.Function<T, U> mapper ) {
 		if ( !isPresent() )
 			return Var.ofNull( type );
 
 		U newValue = mapper.apply( get() );
-		return Var.of( newValue );
+		if ( newValue == null )
+			return Var.ofNullable( type, null );
+
+		return allowsNull() ? Var.ofNullable( type, newValue ) : Var.of( newValue );
 	}
 
 }

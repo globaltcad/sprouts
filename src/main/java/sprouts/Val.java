@@ -45,8 +45,7 @@ import java.util.regex.Pattern;
  * @see Var A mutable subclass of this class.
  * @param <T> The type of the item held by this {@link Val}.
  */
-public interface Val<T> extends Observable
-{
+public interface Val<T extends @Nullable Object> extends Observable {
 	String NO_ID = ""; // This is the default id for properties
 	String EMPTY = "EMPTY"; // This is the default string for empty properties
 	Pattern ID_PATTERN = Pattern.compile("[a-zA-Z0-9_]*");
@@ -122,7 +121,7 @@ public interface Val<T> extends Observable
 	 * @return A new {@link Val} instance.
 	 * @param <T> The type of the item held by the {@link Val}!
 	 */
-	static <T> Val<@Nullable T> ofNullable( Val<@Nullable T> toBeCopied ) {
+	static <T extends @Nullable Object> Val<@Nullable T> ofNullable( Val<T> toBeCopied ) {
 		Objects.requireNonNull(toBeCopied);
 		return Sprouts.factory().valOfNullable( toBeCopied );
 	}
@@ -150,11 +149,16 @@ public interface Val<T> extends Observable
 	 *                 the second argument is the item of the second property.
 	 * @return A new {@link Val} instance which is a live view of the two given properties.
 	 * @param <T> The type of the items held by the properties.
+	 * @throws NullPointerException If the combiner function returns a null reference
+	 *                              <b>when it is first called</b>.
+	 * @throws IllegalArgumentException If the types of the two properties are not compatible.
 	 */
 	static <T> Val<T> of( Val<T> first, Val<T> second, BiFunction<T, T, T> combiner ) {
 		Objects.requireNonNull(first);
 		Objects.requireNonNull(second);
 		Objects.requireNonNull(combiner);
+		if ( first.type() != second.type() )
+			throw new IllegalArgumentException("The types of the two properties are not compatible!");
 		return Sprouts.factory().valOf( first, second, combiner );
 	}
 
@@ -177,11 +181,16 @@ public interface Val<T> extends Observable
 	 *                 the second argument is the item of the second property.
 	 * @return A new {@link Val} instance which is a live view of the two given properties.
 	 * @param <T> The type of the items held by the properties.
+	 * @throws NullPointerException If the combiner function returns a null reference
+	 *                              <b>when it is first called</b>.
+	 * @throws IllegalArgumentException If the types of the two properties are not compatible.
 	 */
-	static <T> Val<@Nullable T> ofNullable( Val<@Nullable T> first, Val<@Nullable T> second, BiFunction<@Nullable T, @Nullable T, @Nullable T> combiner ) {
+	static <T extends @Nullable Object> Val<@Nullable T> ofNullable( Val<T> first, Val<T> second, BiFunction<T, T, T> combiner ) {
 		Objects.requireNonNull(first);
 		Objects.requireNonNull(second);
 		Objects.requireNonNull(combiner);
+		if ( first.type() != second.type() )
+			throw new IllegalArgumentException("The types of the two properties are not compatible!");
 		return Sprouts.factory().valOfNullable( first, second, combiner );
 	}
 
@@ -198,7 +207,7 @@ public interface Val<T> extends Observable
 	 * @return the non-{@code null} item described by this {@code Val}
 	 * @throws NoSuchElementException if no item is present
 	 */
-	default T get() { return orElseThrow(); }
+	default @NonNull T get() { return orElseThrow(); }
 
 	/**
 	 * If an item is present, returns the item, otherwise returns
@@ -209,7 +218,7 @@ public interface Val<T> extends Observable
 	 * @return the item, if present, otherwise {@code other}
 	 */
 	default @Nullable T orElseNullable( @Nullable T other ) {
-		return isPresent() ? get() : other;
+		return orElseNull() != null ? Objects.requireNonNull(orElseNull()) : other;
 	}
 
 	/**
@@ -220,7 +229,7 @@ public interface Val<T> extends Observable
 	 *        May not be {@code null}.
 	 * @return the item, if present, otherwise {@code other}
 	 */
-	default T orElse( T other ) {
+	default @NonNull T orElse( @NonNull T other ) {
 		Objects.requireNonNull(other);
 		return isPresent() ? get() : other;
 	}
@@ -231,17 +240,12 @@ public interface Val<T> extends Observable
 	 *
 	 * @param supplier the supplying function that produces an item to be returned
 	 * @return the item, if present, otherwise the result produced by the
-	 * supplying function
-	 * @throws NullPointerException if the supplying function is {@code null} or
-	 *                              produces a {@code null} result
+	 *         supplying function
+	 * @throws NullPointerException if no item is present and the supplying
+	 *         function is {@code null}
 	 */
-	default T orElseGet(Supplier<? extends T> supplier) {
-		if (isPresent())
-			return get();
-
-		T value = supplier.get();
-		Objects.requireNonNull(value);
-		return value;
+	default T orElseGet( Supplier<? extends T> supplier ) {
+		return this.isPresent() ? orElseThrow() : supplier.get();
 	}
 
 	/**
@@ -259,9 +263,9 @@ public interface Val<T> extends Observable
 	 * @return the non-{@code null} item described by this {@code Val}
 	 * @throws NoSuchElementException if no item is present
 	 */
-	default T orElseThrow() {
+	default @NonNull T orElseThrow() {
 		// This class is similar to optional, so if the value is null, we throw an exception!
-		@Nullable T value = orElseNull();
+		T value = orElseNull();
 		if ( Objects.isNull(value) )
 			throw new NoSuchElementException("No value present");
 		return value;
@@ -296,8 +300,7 @@ public interface Val<T> extends Observable
 	default Val<Boolean> viewIsPresent() {
 		if ( !this.allowsNull() )
 			return Val.of( true );
-		else
-			return viewAs(Boolean.class, Objects::nonNull);
+		return viewAs(Boolean.class, Objects::nonNull);
 	}
 
 	/**
@@ -321,10 +324,10 @@ public interface Val<T> extends Observable
 	 * otherwise does nothing.
 	 *
 	 * @param action the action to be performed, if an item is present
-	 * @throws NullPointerException The given action is {@code null}
+	 * @throws NullPointerException if item is present and the given action is
+	 *         {@code null}
 	 */
 	default void ifPresent( Consumer<T> action ) {
-		Objects.requireNonNull(action);
 		if ( this.isPresent() )
 			action.accept( get() );
 	}
@@ -343,7 +346,6 @@ public interface Val<T> extends Observable
 	default void ifPresentOrElse( Consumer<? super T> action, Runnable emptyAction ) {
 		if ( isPresent() )
 			action.accept(get());
-
 		emptyAction.run();
 	}
 
@@ -390,7 +392,7 @@ public interface Val<T> extends Observable
 	 * @return A new property either empty (containing null) or containing the result of applying
 	 * 			the mapping function to the item of this property.
 	 */
-	Val<@Nullable T> map( java.util.function.Function<T, T> mapper );
+	Val<T> map( Function<T, T> mapper );
 
 	/**
 	 *  If the item is present, applies the provided mapping function to it,
@@ -412,7 +414,7 @@ public interface Val<T> extends Observable
 	 * 			the mapping function to the item of this property.
 	 * @param <U> The type of the item returned from the mapping function
 	 */
-	<U> Val<@Nullable U> mapTo( Class<U> type, java.util.function.Function<T, U> mapper );
+	<U> Val<U> mapTo( Class<U> type, java.util.function.Function<T, U> mapper );
 
 	/**
 	 * 	Use this to create a live view of this property
@@ -443,7 +445,7 @@ public interface Val<T> extends Observable
 	 * @return A property that is a live view of this property based on the provided mapping function.
 	 * @param <U> The type of the item returned from the mapping function
 	 */
-	<U> Val<@Nullable U> viewAs( Class<U> type, java.util.function.Function<@Nullable T, @Nullable U> mapper );
+	<U extends @Nullable Object> Val<U> viewAs( Class<@NonNull U> type, Function<T, @Nullable U> mapper );
 
 	/**
 	 * 	Use this to create a live view of this property
@@ -469,7 +471,7 @@ public interface Val<T> extends Observable
 	 * @param mapper the mapping function to apply to an item, if present
 	 * @return A property that is a live view of this property based on the provided mapping function.
 	 */
-	default Val <@Nullable T> view( java.util.function.Function<@Nullable T, @Nullable T> mapper ) {
+	default Val<T> view( Function<T, T> mapper ) {
 		return viewAs( type(), mapper );
 	}
 
@@ -492,7 +494,7 @@ public interface Val<T> extends Observable
 	 * @param mapper The mapping function to turn the item of this property to a String, if present
 	 * @return A property that is a live view of this property based on the provided mapping function.
 	 */
-	default Val<String> viewAsString( Function<@Nullable T, @Nullable String> mapper ) {
+	default Val<String> viewAsString( Function<T, @Nullable String> mapper ) {
 		return viewAs( String.class, v -> {
 			try {
 				String stringRef = mapper.apply(v);
@@ -549,7 +551,7 @@ public interface Val<T> extends Observable
 	 * @param mapper the mapping function to turn the item of this property to a Double, if present
 	 * @return A property that is a live view of this property based on the provided mapping function.
 	 */
-	default Val<Double> viewAsDouble( java.util.function.Function<@Nullable T, @Nullable Double> mapper ) {
+	default Val<Double> viewAsDouble( java.util.function.Function<T, @Nullable Double> mapper ) {
 		return viewAs( Double.class, v -> {
 			try {
 				Double numberRef = mapper.apply(v);
@@ -607,7 +609,7 @@ public interface Val<T> extends Observable
 	 * @param mapper the mapping function to turn the item of this property to a Integer, if present
 	 * @return A property that is a live view of this property based on the provided mapping function.
 	 */
-	default Val<Integer> viewAsInt( java.util.function.Function<@Nullable T, @Nullable Integer> mapper ) {
+	default Val<Integer> viewAsInt( java.util.function.Function<T, @Nullable Integer> mapper ) {
 		return viewAs( Integer.class, v -> {
 			try {
 				Integer numberRef = mapper.apply(v);
@@ -649,7 +651,7 @@ public interface Val<T> extends Observable
 	 *  which would otherwise be accessed via the {@link #orElseThrow()} method.
 	 *  Calling it should not have any side effects. <br>
 	 *  The string conversion is based on the {@link String#valueOf(Object)} method,
-	 *  so if the item is null, the string "EMPTY" will be returned.
+	 *  and if the item is null, the string "EMPTY" will be returned.
 	 *
 	 * @return The {@link String} representation of the item wrapped by an implementation of this interface.
 	 */
@@ -684,7 +686,7 @@ public interface Val<T> extends Observable
 	 */
 	default boolean is( Val<@Nullable T> other ) {
 		Objects.requireNonNull(other);
-		return this.is( other.orElseNull() );
+		return is( other.orElseNull() );
 	}
 
 	/**
@@ -716,11 +718,11 @@ public interface Val<T> extends Observable
 	 * @return The truth value determining if the provided item is equal to the wrapped item.
 	 */
 	@SuppressWarnings("unchecked")
-	default boolean isOneOf( @Nullable T first, @Nullable T second, @Nullable T @NonNull... otherValues ) {
-		if ( is(first) ) return true;
-		if ( is(second) ) return true;
-		if ( otherValues == null) return false;
-        for ( T otherValue : otherValues )
+	default boolean isOneOf( @Nullable T first, @Nullable T second, @Nullable T... otherValues ) {
+		if ( this.is(first) ) return true;
+		if ( this.is(second) ) return true;
+		Objects.requireNonNull(otherValues);
+		for ( T otherValue : otherValues )
 			if ( is(otherValue) ) return true;
 		return false;
 	}
@@ -735,10 +737,10 @@ public interface Val<T> extends Observable
 	 * @return The truth value determining if the item of the supplied property is equal to the wrapped item.
 	 */
 	@SuppressWarnings("unchecked")
-	default boolean isOneOf( Val<@Nullable T> first, Val<@Nullable T> second, Val<@Nullable T> @NonNull... otherValues ) {
-		if ( is(first) ) return true;
-		if ( is(second) ) return true;
-		if ( otherValues == null) return false;
+	default boolean isOneOf( Val<@Nullable T> first, Val<@Nullable T> second, Val<@Nullable T>... otherValues ) {
+		if ( this.is(first) ) return true;
+		if ( this.is(second) ) return true;
+		Objects.requireNonNull(otherValues);
 		for ( Val<T> otherValue : otherValues )
 			if ( is(otherValue) ) return true;
 		return false;
@@ -816,7 +818,7 @@ public interface Val<T> extends Observable
 	 * @param action The lambda which will be called whenever the item wrapped by this {@link Var} changes.
 	 * @return The {@link Val} instance itself.
 	 */
-	Val<@Nullable T> onChange( Channel channel, Action<Val<@Nullable T>> action );
+	Val<T> onChange( Channel channel, Action<Val<T>> action );
 
 	/**
 	 *  Triggers all observer lambdas for the given {@link Channel}.
@@ -829,7 +831,7 @@ public interface Val<T> extends Observable
 	 * @param channel The channel from which the item is set.
 	 * @return The {@link Val} instance itself.
 	 */
-	Val<@Nullable T> fireChange( Channel channel );
+	Val<T> fireChange( Channel channel );
 
 	/**
 	 *  A property will only allow null items if it was constructed with a "ofNullable(..)" factory method.
