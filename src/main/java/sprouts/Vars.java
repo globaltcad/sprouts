@@ -154,14 +154,39 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
         return Sprouts.factory().varsOfNullable( first, rest );
     }
 
+    /**
+     * Creates a list of nullable properties from the supplied type and iterable of values.
+     * This factory method requires that the type be specified because the
+     * compiler cannot infer the type from a potentially empty iterable.
+     *
+     * @param type The type of the properties.
+     * @param vars The iterable of values.
+     * @param <T>  The type of the properties.
+     * @return A new Vars instance.
+     */
+    static <T> Vars<@Nullable T> ofNullable( Class<T> type, Iterable<Var<@Nullable T>> vars ) {
+        Objects.requireNonNull(type);
+        return Sprouts.factory().varsOfNullable( type, vars );
+    }
+
     /** {@inheritDoc} */
     @Override Var<T> at( int index );
 
     /** {@inheritDoc} */
-    @Override default Var<T> first() { return at(0); }
+    @Override
+    default Var<T> first() {
+        if (isEmpty())
+            throw new NoSuchElementException("There is no such property in the list. The list is empty.");
+        return at(0);
+    }
 
     /** {@inheritDoc} */
-    @Override default Var<T> last() { return at(size() - 1); }
+    @Override
+    default Var<T> last() {
+        if (isEmpty())
+            throw new NoSuchElementException("There is no such property in the list. The list is empty.");
+        return at(size() - 1);
+    }
 
     /**
      * Wraps the provided value in a {@link Var} property and adds it to the list.
@@ -291,33 +316,42 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
     }
 
     /**
-     *  Removes {@code count} number of properties from the end
-     *  of the list.
-     *  @param count The number of properties to remove.
-     *  @return This list of properties.
+     * Removes {@code count} number of properties from the end of the list.
+     * If {@code count} is greater than the size of the list, only all available properties will be removed.
+     *
+     * @param count The number of properties to remove.
+     * @return This list of properties.
+     * @throws IllegalArgumentException If {@code count} is negative.
      */
     Vars<T> removeLast( int count );
 
     /**
-     *  Removes {@code count} number of properties from the end
-     *  of the list and returns them in a new list.
-     *  @param count The number of properties to remove.
-     *  @return A new list of properties.
+     * Removes {@code count} number of properties from the end of the list and returns them in a new list.
+     * If {@code count} is greater than the size of the list, only all available properties will be popped.
+     *
+     * @param count The number of properties to remove.
+     * @return A new list of properties.
+     * @throws IllegalArgumentException If {@code count} is negative.
      */
     Vars<T> popLast( int count );
 
     /**
-     *  Removes the first {@code count} number of properties from the list.
-     *  @param count The number of properties to remove.
-     *  @return This list of properties.
+     * Removes the first {@code count} number of properties from the list.
+     * If {@code count} is greater than the size of the list, only all available properties will be removed.
+     *
+     * @param count The number of properties to remove.
+     * @return This list of properties.
+     * @throws IllegalArgumentException If {@code count} is negative.
      */
     Vars<T> removeFirst( int count );
 
     /**
-     *  Removes the first {@code count} number of properties from the list
-     *  and returns them in a new list.
-     *  @param count The number of properties to remove.
-     *  @return A new list of properties.
+     * Removes the first {@code count} number of properties from the list and returns them in a new list.
+     * If {@code count} is greater than the size of the list, only all available properties will be popped.
+     *
+     * @param count The number of properties to remove.
+     * @return A new list of properties.
+     * @throws IllegalArgumentException If {@code count} is negative.
      */
     Vars<T> popFirst( int count );
 
@@ -460,7 +494,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
     default Vars<T> addAll( T... items ) {
         Vars<T> vars = (Vars<T>) (allowsNull() ? Vars.ofNullable(type()) : Vars.of(type()));
         for ( T v : items ) vars.add(v);
-        return this.addAll(vars);
+        return addAll(vars);
     }
 
     /**
@@ -472,7 +506,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
     default Vars<T> addAll( Iterable<T> items ) {
         Vars<T> vars = (Vars<T>) (allowsNull() ? Vars.ofNullable(type()) : Vars.of(type()));
         for ( T v : items ) vars.add(v);
-        return this.addAll(vars);
+        return addAll(vars);
     }
 
     /**

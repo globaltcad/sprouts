@@ -91,6 +91,8 @@ public interface SproutsFactory
 	@SuppressWarnings("unchecked")
 	<T> Vars<@Nullable T> varsOfNullable( Var<@Nullable T> first, Var<@Nullable T>... rest );
 
+	<T> Vars<@Nullable T> varsOfNullable(Class<T> type, Iterable<Var<@Nullable T>> vars);
+
 
 	<V> Result<V> resultOf( Class<V> type );
 

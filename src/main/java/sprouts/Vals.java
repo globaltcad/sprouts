@@ -218,6 +218,7 @@ public interface Vals<T extends @Nullable Object> extends Iterable<T>, Observabl
      *  If there is no first property, an exception will be thrown.
      *
      * @return The first property in the list of properties.
+     * @throws NoSuchElementException If the list is empty.
      */
     Val<T> first();
 
@@ -226,6 +227,7 @@ public interface Vals<T extends @Nullable Object> extends Iterable<T>, Observabl
      *  If there is no last property, an exception will be thrown.
      *
      * @return The last property in the list of properties.
+     * @throws NoSuchElementException If the list is empty.
      */
     Val<T> last();
 

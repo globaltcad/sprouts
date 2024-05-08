@@ -973,4 +973,311 @@ class Properties_List_Spec extends Specification
             vars == Vars.ofNullable(String.class, "a", null, "c", "d", null, "f", null, "h1", "h2", null, null, "i1", "i2")
     }
 
+    def 'The change delegate contains information about changes made to a "Vars" list by adding a list of properties.'() {
+        reportInfo """    
+            When you add a list of properties to a "Vars" list, the change delegate contains information about the  
+            change. The `newValues` of the delegate contains the added properties, and the `oldValues` is always an
+            empty list.
+        """
+        given : 'A "Vars" instance having a few properties.'
+            var vars = Vars.of("a", "d", "e")
+        and : 'We register a listener that will record the last change for us.'
+            var change = null
+            vars.onChange({ change = it })
+        when : 'We add a list of values to the list with the `addAll` method.'
+            vars.addAll("f", "g")
+        then : 'The `newValues` of the change delegate should be a property list with the added property.'
+            change.newValues().size() == 2
+            change.newValues() == Vals.of("f", "g")
+        and : 'The `oldValues` of the change should be an empty property list.'
+            change.oldValues().isEmpty()
+        and : 'The `index` of the change points to the added properties.'
+            change.index() == 3
+        and : 'The `vals` should contain the added properties'
+            change.vals() == Vals.of("a", "d", "e", "f", "g")
+        when : 'We add properties list to the list using the `addAll` method.'
+            vars.addAll(Vars.of("h", "i", "j"))
+        then : 'The `newValues` should contain the added property.'
+            change.newValues().size() == 3
+            change.newValues() == Vals.of("h", "i", "j")
+        and : 'The `oldValues` method should be an empty list.'
+            change.oldValues().isEmpty()
+        and : 'The `index` of the change points to the added properties.'
+            change.index() == 5
+        and : 'The `vals` should contain the added properties'
+            change.vals() == Vals.of("a", "d", "e", "f", "g", "h", "i", "j")
+        when : 'We add list of properties to the list using the `addAll` method.'
+            vars.addAll(Arrays.asList("k", "l", "m", "n"))
+        then : 'The `newValues` should contain the added property.'
+            change.newValues().size() == 4
+            change.newValues() == Vals.of("k", "l", "m", "n")
+        and : 'The `oldValues` method should be an empty list.'
+            change.oldValues().isEmpty()
+        and : 'The `index` of the change points to the added properties.'
+            change.index() == 8
+        and : 'The `vals` should contain the added properties'
+            change.vals() == Vals.of("a", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n")
+    }
+
+    def 'The change delegate contains information about changes made to a "Vars" list by removing a list of properties.'() {
+        reportInfo """    
+            When you remove multiple properties from a "Vars" list, the change delegate contains information about the  
+            change. The `oldValues` of the delegate contains the removed properties, and the `newValues` is always an
+            empty list.
+        """
+        given : 'A "Vars" instance having a few properties.'
+            var vars = Vars.of("a", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "k", "p", "f", "h", "l", "m", "n", "p")
+        and : 'We register a listener that will record the last change for us.'
+            var change = null
+            vars.onChange({ change = it })
+        when : 'We remove a list of values from the list with the `removeAll` method.'
+            vars.removeAll("f", "g")
+        then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
+            change.oldValues().size() == 3
+            change.oldValues() == Vals.of("f", "g", "f")
+        and : 'The `newValues` of the change should be an empty property list.'
+            change.newValues().isEmpty()
+        and : 'The `index` of the change is `-1`.'
+            change.index() == -1
+        and : 'The `vals` should not contain the removed properties'
+            change.vals() == Vals.of("a", "d", "e", "h", "i", "j", "k", "l", "m", "n", "o", "k", "p", "h", "l", "m", "n", "p")
+        when : 'We remove a property list from the list with the `removeAll` method.'
+            vars.removeAll(Vars.of("h", "i", "j"))
+        then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
+            change.oldValues().size() == 4
+            change.oldValues() == Vals.of("h", "i", "j", "h")
+        and : 'The `newValues` of the change should be an empty property list.'
+            change.newValues().isEmpty()
+        and : 'The `index` of the change is `-1`.'
+            change.index() == -1
+        and : 'The `vals` should not contain the removed properties'
+            change.vals() == Vals.of("a", "d", "e", "k", "l", "m", "n", "o", "k", "p", "l", "m", "n", "p")
+        when : 'Now we remove properties from the list based on a predicate with the `removeIf` method.'
+            vars.removeIf(var -> "l" == var.orElseNull() || "m" == var.orElseNull())
+        then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
+            change.oldValues().size() == 4
+            change.oldValues() == Vals.of("l", "m", "l", "m")
+        and : 'The `newValues` of the change should be an empty property list.'
+            change.newValues().isEmpty()
+        and : 'The `index` of the change is `-1`.'
+            change.index() == -1
+        and : 'The `vals` should not contain the removed properties'
+            change.vals() == Vals.of("a", "d", "e", "k", "n", "o", "k", "p", "n", "p")
+        when : 'We can also remove properties from the list based on a predicate with the `popIf` method.'
+            vars.popIf(var -> "e" == var.orElseNull() || "p" == var.orElseNull())
+        then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
+            change.oldValues().size() == 3
+            change.oldValues() == Vals.of("e", "p", "p")
+        and : 'The `newValues` of the change should be an empty property list.'
+            change.newValues().isEmpty()
+        and : 'The `index` of the change is `-1`.'
+            change.index() == -1
+        and : 'The `vals` should not contain the removed properties'
+            change.vals() == Vals.of("a", "d", "k", "n", "o", "k", "n")
+        when : 'We remove values from the list based on a predicate using the `removeIfItem` method.'
+            vars.removeIfItem(v -> "a" == v || "n" == v)
+        then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
+            change.oldValues().size() == 3
+            change.oldValues() == Vals.of("a", "n", "n")
+        and : 'The `newValues` of the change should be an empty property list.'
+            change.newValues().isEmpty()
+        and : 'The `index` of the change is `-1`.'
+            change.index() == -1
+        and : 'The `vals` should not contain the removed properties'
+            change.vals() == Vals.of("d", "k", "o", "k")
+        when : 'We remove values from the list based on a predicate using the `popIfItem` method.'
+            vars.popIfItem(v -> "d" == v || "k" == v)
+        then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
+            change.oldValues().size() == 3
+            change.oldValues() == Vals.of("d", "k", "k")
+        and : 'The `newValues` of the change should be an empty property list.'
+            change.newValues().isEmpty()
+        and : 'The `index` of the change is `-1`.'
+            change.index() == -1
+        and : 'The `vals` should not contain the removed properties'
+            change.vals() == Vals.of("o")
+    }
+
+    def 'The change delegate contains information about changes made to a "Vars" list by removing a sequence of properties.'() {
+        reportInfo """    
+            When you remove a sequence of properties from a "Vars" list, the change delegate contains information about
+            the change. The `oldValues` of the delegate contains the removed properties, and the `newValues` is always
+            an empty list.
+        """
+        given : 'A "Vars" instance having a few properties.'
+            var vars = Vars.of("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z")
+        and : 'We register a listener that will record the last change for us.'
+            var change = null
+            vars.onChange({ change = it })
+        when : 'We remove a sequence of values from the list with the `removeFirst` method.'
+            vars.removeFirst(4)
+        then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
+            change.oldValues().size() == 4
+            change.oldValues() == Vals.of("a", "b", "c", "d")
+        and : 'The `newValues` of the change should be an empty property list.'
+            change.newValues().isEmpty()
+        and : 'The `index` of the change is the index of the first property removed.'
+            change.index() == 0
+        and : 'The `vals` should not contain the removed properties'
+            change.vals() == Vars.of("e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z")
+        when : 'We remove a sequence of values from the list with the `removeLast` method.'
+            vars.removeLast(5)
+        then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
+            change.oldValues().size() == 5
+            change.oldValues() == Vals.of("v", "w", "x", "y", "z")
+        and : 'The `newValues` of the change should be an empty property list.'
+            change.newValues().isEmpty()
+        and : 'The `index` of the change is the index of the first property removed.'
+            change.index() == 17
+        and : 'The `vals` should not contain the removed properties'
+            change.vals() == Vars.of("e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u")
+        when : 'We remove a sequence of values from the list with the `popFirst` method.'
+            vars.popFirst(6)
+        then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
+            change.oldValues().size() == 6
+            change.oldValues() == Vals.of("e", "f", "g", "h", "i", "j")
+        and : 'The `newValues` of the change should be an empty property list.'
+            change.newValues().isEmpty()
+        and : 'The `index` of the change is the index of the first property removed.'
+            change.index() == 0
+        and : 'The `vals` should not contain the removed properties'
+            change.vals() == Vars.of("k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u")
+        when : 'We remove a sequence of values from the list with the `popLast` method.'
+            vars.popLast(7)
+        then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
+            change.oldValues().size() == 7
+            change.oldValues() == Vals.of("o", "p", "q", "r", "s", "t", "u")
+        and : 'The `newValues` of the change should be an empty property list.'
+            change.newValues().isEmpty()
+        and : 'The `index` of the change is the index of the first property removed.'
+            change.index() == 4
+        and : 'The `vals` should not contain the removed properties'
+            change.vals() == Vars.of("k", "l", "m", "n")
+    }
+
+    def 'The change delegate contains information about changes made to a "Vars" list by clearing the list.'() {
+        reportInfo """    
+            When you clear a "Vars" list, the change delegate contains information about the change. The `oldValues` of
+            the delegate contains the removed properties, and the `newValues` is always an empty list.
+        """
+        given : 'A nullable and a non-nullable "Vars" instance with some properties.'
+            var vars = Vars.of("a", "b", "c", "d")
+            var varsNullable = Vars.ofNullable(String.class, "a", "b", null, "d")
+        and : 'We register a listener that will record the last change for us.'
+            var change = null
+            vars.onChange({ change = it })
+            var changeNullable = null
+            varsNullable.onChange({ changeNullable = it })
+        when : 'We remove all properties from the list with the `clear` method.'
+            vars.clear()
+        then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
+            change.oldValues().size() == 4
+            change.oldValues() == Vals.of("a", "b", "c", "d")
+        and : 'The `newValues` of the change should be an empty property list.'
+            change.newValues().isEmpty()
+        and : 'The `index` of the change is the index of the first property removed.'
+            change.index() == 0
+        and : 'The `vals` should be an empty property list'
+            change.vals().isEmpty()
+        when : 'We remove all properties from the nullable list with the `clear` method.'
+            varsNullable.clear()
+        then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
+            changeNullable.oldValues().size() == 4
+            changeNullable.oldValues() == Vals.ofNullable(String.class, "a", "b", null, "d")
+        and : 'The `newValues` of the change should be an empty property list.'
+            changeNullable.newValues().isEmpty()
+        and : 'The `index` of the change is the index of the first property removed.'
+            changeNullable.index() == 0
+        and : 'The `vals` should be an empty property list'
+            changeNullable.vals().isEmpty()
+    }
+
+    def 'The change delegate contains information about changes made to a "Vars" list by removing a set of properties.'() {
+        reportInfo """    
+            When you remove a set of properties from a "Vars" list, the change delegate contains information about the
+            change. The `oldValues` of the delegate contains the removed properties, and the `newValues` is always an
+            empty list.
+        """
+        given : 'A "Vars" instance with some properties.'
+            var vars = Vars.of("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "a", "b", "c", "d")
+        and : 'We register a listener that will record the last change for us.'
+            var change = null
+            vars.onChange({ change = it })
+        when : 'We use the `retainAll` method to remove all properties from the list that are not contained in a given list of properties.'
+            vars.retainAll(Vars.of("d", "c", "f", "g", "h", "i", "j", "x"))
+        then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
+            change.oldValues().size() == 5
+            change.oldValues() == Vals.of("a", "b", "e", "a", "b")
+        and : 'The `newValues` of the change should be an empty property list.'
+            change.newValues().isEmpty()
+        and : 'The `index` of the change is `-1`.'
+            change.index() == -1
+        and : 'The `vals` should only contained the retained properties.'
+            change.vals() == Vars.of("c", "d", "f", "g", "h", "i", "j", "c", "d")
+        when : 'We use the `retainAll` method to remove all properties from the list that are not contained in a given list of values.'
+            vars.retainAll("a", "g", "h", "i", "j")
+        then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
+            change.oldValues().size() == 5
+            change.oldValues() == Vals.of("c", "d", "f", "c", "d")
+        and : 'The `newValues` of the change should be an empty property list.'
+            change.newValues().isEmpty()
+        and : 'The `index` of the change is `-1`.'
+            change.index() == -1
+        and : 'The `vals` should only contained the retained properties.'
+            change.vals() == Vars.of("g", "h", "i", "j")
+        when : 'When the `retainAll` method is used and no property is removed.'
+            change = null;
+            vars.retainAll("a", "g", "h", "i", "j")
+        then : 'No change event is triggered.'
+            change == null
+        when : 'When the `retainAll` method is used without matching properties.'
+            vars.retainAll("x", "y", "z")
+        then : 'The `oldValues` of the change delegate should be a property list with all removed properties.'
+            change.oldValues().size() == 4
+            change.oldValues() == Vals.of("g", "h", "i", "j")
+        and : 'The `newValues` of the change should be an empty property list.'
+            change.newValues().isEmpty()
+        and : 'The `index` of the change is `-1`.'
+            change.index() == -1
+        and : 'The `vals` should be an empty property list'
+            change.vals().isEmpty()
+    }
+
+    def 'The change delegate contains information about changes made to a nullable "Vars" list by removing a set of properties.'() {
+        reportInfo """    
+            When you remove a set of properties from a nullable "Vars" list, the change delegate contains information
+            about the change. The `oldValues` of the delegate contains the removed properties, and the `newValues` is
+            always an empty list.
+        """
+        given : 'A nullable "Vars" instance with some properties.'
+            var vars1 = Vars.ofNullable(String.class, "a", "b", null, "d", null, null, "g", "h", "i", "j", "a", "b", "c", "d")
+            var vars2 = Vars.ofNullable(String.class, "a", "b", null, "d", null, null, "g", "h", "i", "j", "a", "b", "c", "d")
+        and : 'We register a listener that will record the last change for us.'
+            var change = null
+            vars1.onChange({ change = it })
+            vars2.onChange({ change = it })
+        when : 'We use the `retainAll` method to remove all properties from the list that are not contained in a given list of properties.'
+            vars1.retainAll(Vars.ofNullable(String.class, "b", "d", "g", "h", "i", "j"))
+        then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
+            change.oldValues().size() == 6
+            change.oldValues() == Vals.ofNullable(String.class, "a", null, null, null, "a", "c")
+        and : 'The `newValues` of the change should be an empty property list.'
+            change.newValues().isEmpty()
+        and : 'The `index` of the change is `-1`.'
+            change.index() == -1
+        and : 'The `vals` should only contained the retained properties.'
+            change.vals() == Vars.ofNullable(String.class, "b", "d", "g", "h", "i", "j", "b", "d")
+        when : 'We use the `retainAll` method to remove all properties from the list that are not contained in a given list of properties.'
+            vars2.retainAll(Vars.ofNullable(String.class, null, "a", "b", "d"))
+        then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
+            change.oldValues().size() == 5
+            change.oldValues() == Vals.ofNullable(String.class, "g", "h", "i", "j", "c")
+        and : 'The `newValues` of the change should be an empty property list.'
+            change.newValues().isEmpty()
+        and : 'The `index` of the change is `-1`.'
+            change.index() == -1
+        and : 'The `vals` should only contained the retained properties.'
+            change.vals() == Vars.ofNullable(String.class, "a", "b", null, "d", null, null, "a", "b", "d")
+    }
+
 }
