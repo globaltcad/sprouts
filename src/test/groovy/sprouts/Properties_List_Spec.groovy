@@ -1280,4 +1280,20 @@ class Properties_List_Spec extends Specification
             change.vals() == Vars.ofNullable(String.class, "a", "b", null, "d", null, null, "a", "b", "d")
     }
 
+    def 'You can create a mapped version of a property list.'() {
+        reportInfo """    
+            The `mapTo` method allows you to create a mapped list where all non-empty properties are mapped using a
+            given mapping function. Empty properties are not mapped and will be reflected as empty properties in the
+            resulting list, regardless of the mapping function.
+            Note: The resulting property list is not a live view of the property list and will not update if the
+            original list or its properties change.
+        """
+        given : 'A nullable "Vars" instance with some properties.'
+            var vars = Vars.ofNullable(Integer.class, 0, 1, 2, 3, null, 5)
+        when : 'Map all non-nullable properties using a mapper function.'
+            var vars2 = vars.mapTo(String.class, i -> "n:" + i)
+        then : 'The resulting list contains the mapped properties.'
+            vars2 == Vars.ofNullable(String.class, "n:0", "n:1", "n:2", "n:3", null, "n:5")
+    }
+
 }
