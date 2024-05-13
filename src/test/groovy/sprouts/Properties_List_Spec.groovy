@@ -1296,4 +1296,35 @@ class Properties_List_Spec extends Specification
             vars2 == Vars.ofNullable(String.class, "n:0", "n:1", "n:2", "n:3", null, "n:5")
     }
 
+    def 'Create a copy of the current state of the "Vars" list.'() {
+        reportInfo """    
+            A copy of the current state of a "Vars" list can be easily made using the `toVals' method.
+            The copy captures the current state, and later changes to the underlying list will not be reflected in the copy.
+        """
+        given : 'A nullable and a non-nullable "Vars" instance with some properties.'
+            var vars = Vars.of( 0, 1, 2, 3, 4, 5)
+            var varsNullable = Vars.ofNullable(Integer.class, 0, 1, 2, 3, null, 5)
+        when : 'Create copies of the current "Vars" instances using the `toVars` method.'
+            var copy = vars.toVals()
+            var copyNullable = varsNullable.toVals()
+        then : 'The resulting lists should be equal to the original lists.'
+            copy == vars
+            copy == Vars.of( 0, 1, 2, 3, 4, 5)
+            copyNullable == varsNullable
+            copyNullable == Vars.ofNullable(Integer.class, 0, 1, 2, 3, null, 5)
+        and : 'Also the nullability of the copied lists is equal to the original lists.'
+            copy.allowsNull() == vars.allowsNull()
+            copyNullable.allowsNull() == varsNullable.allowsNull()
+        when : 'We can modify the underlying list.'
+            vars.at(1).set(6)
+            vars.add(42)
+            varsNullable.at(1).set(null)
+            varsNullable.add(42)
+        then : 'Changes are not applied to copied lists, and the lists remain unchanged.'
+            copy == Vars.of(0, 1, 2, 3, 4, 5)
+            copy != vars
+            copyNullable == Vars.ofNullable(Integer.class, 0, 1, 2, 3, null, 5)
+            copyNullable != varsNullable
+    }
+
 }
