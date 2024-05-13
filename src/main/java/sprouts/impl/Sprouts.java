@@ -176,7 +176,8 @@ public final class Sprouts implements SproutsFactory
     }
 
     @Override public <T> Vals<T> valsOf( Class<T> type, Vals<T> vals ) {
-        return AbstractVariables.of( true, type, vals );
+        T[] values = (T[]) vals.stream().toArray(Object[]::new);
+        return AbstractVariables.of(true, type, values);
     }
 
     @SuppressWarnings("unchecked")
@@ -200,6 +201,12 @@ public final class Sprouts implements SproutsFactory
         Var<T>[] vars = new Var[rest.length];
         System.arraycopy(rest, 0, vars, 0, rest.length);
         return AbstractVariables.ofNullable( true, (Var<T>) first, vars );
+    }
+
+    @Override
+    public <T> Vals<@Nullable T> valsOfNullable(Class<T> type, Vals<@Nullable T> vals) {
+        T[] values = (T[]) vals.stream().toArray(Object[]::new);
+        return valsOfNullable(type, values);
     }
 
     @Override

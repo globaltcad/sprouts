@@ -1,5 +1,6 @@
 package sprouts;
 
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import sprouts.impl.Sprouts;
 
@@ -90,6 +91,16 @@ public interface Vals<T extends @Nullable Object> extends Iterable<T>, Observabl
         return Sprouts.factory().valsOf( type, properties );
     }
 
+    /**
+     * Create a new unconnected {@link Vals} instance from the given property list.
+     * The references held by the list properties are copied, not the properties themselves.
+     * Thus, if the properties within the given list change, the changes are not reflected.
+     *
+     * @param type The type of the items.
+     * @param vals The property list to initialize the {@link Vals} instance.
+     * @param <T>  The type of the items.
+     * @return A new {@link Vals} instance.
+     */
     static <T> Vals<T> of( Class<T> type, Vals<T> vals ) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(vals);
@@ -146,6 +157,21 @@ public interface Vals<T extends @Nullable Object> extends Iterable<T>, Observabl
         return Sprouts.factory().valsOfNullable( first, rest );
     }
 
+    /**
+     * Create a new unconnected {@link Vals} instance from the given property list.
+     * The references held by the list properties are copied, not the properties themselves.
+     * Thus, if the properties within the given list change, the changes are not reflected.
+     *
+     * @param type The type of the items.
+     * @param vals The property list to initialize the {@link Vals} instance.
+     * @param <T>  The type of the items.
+     * @return A new {@link Vals} instance.
+     */
+    static <T> Vals<@Nullable T> ofNullable(Class<T> type, Vals<@Nullable T> vals) {
+        Objects.requireNonNull(type);
+        Objects.requireNonNull(vals);
+        return Sprouts.factory().valsOfNullable( type, vals );
+    }
 
     /**
      *  Exposes the common type of the properties in this list.<br>
@@ -337,13 +363,16 @@ public interface Vals<T extends @Nullable Object> extends Iterable<T>, Observabl
     Vals<T> map( Function<T,T> mapper );
 
     /**
-     *  Use this for mapping a list of properties to another list of properties.
-     * @param type The type of the items in the new list of properties.
+     * Use this for mapping a list of properties to another list of properties.
+     * Note: The mapping function is applied to all non-empty properties.
+     * Empty properties are not mapped and remain empty properties.
+     *
+     * @param type   The type of the items in the new list of properties.
      * @param mapper The mapper function.
-     * @param <U> The type of the items in the new list of properties.
+     * @param <U>    The type of the items in the new list of properties.
      * @return A new list of properties.
      */
-    <U extends @Nullable Object> Vals<U> mapTo( Class<U> type, Function<T,U> mapper );
+    <U extends @Nullable Object> Vals<@Nullable U> mapTo( Class<U> type, Function<@NonNull T,U> mapper );
 
     /**
      *  Turns this list of properties into a stream of items

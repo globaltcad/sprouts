@@ -15,11 +15,25 @@ import java.util.stream.Collectors;
 public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(AbstractVariables.class);
 
+    public static <T> Vars<T> of( boolean immutable, Class<T> type ) {
+        Objects.requireNonNull(type);
+        return new AbstractVariables<T>( immutable, type, false ){};
+    }
+
     @SafeVarargs
     public static <T> Vars<T> of( boolean immutable, Class<T> type, Var<T>... vars ) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(vars);
         return new AbstractVariables<T>( immutable, type, false, vars ){};
+    }
+
+    @SafeVarargs
+    public static <T> Vars<T> of( boolean immutable, Class<T> type, T... vars ) {
+        Objects.requireNonNull(type);
+        Objects.requireNonNull(vars);
+        Var<T>[] array = new Var[vars.length];
+        for ( int i = 0; i < vars.length; i++ ) array[i] = Var.of(type, vars[i]);
+        return new AbstractVariables<T>( immutable, type, false, array ){};
     }
 
     @SafeVarargs

@@ -1280,4 +1280,51 @@ class Properties_List_Spec extends Specification
             change.vals() == Vars.ofNullable(String.class, "a", "b", null, "d", null, null, "a", "b", "d")
     }
 
+    def 'You can create a mapped version of a property list.'() {
+        reportInfo """    
+            The `mapTo` method allows you to create a mapped list where all non-empty properties are mapped using a
+            given mapping function. Empty properties are not mapped and will be reflected as empty properties in the
+            resulting list, regardless of the mapping function.
+            Note: The resulting property list is not a live view of the property list and will not update if the
+            original list or its properties change.
+        """
+        given : 'A nullable "Vars" instance with some properties.'
+            var vars = Vars.ofNullable(Integer.class, 0, 1, 2, 3, null, 5)
+        when : 'Map all non-nullable properties using a mapper function.'
+            var vars2 = vars.mapTo(String.class, i -> "n:" + i)
+        then : 'The resulting list contains the mapped properties.'
+            vars2 == Vars.ofNullable(String.class, "n:0", "n:1", "n:2", "n:3", null, "n:5")
+    }
+
+    def 'Create a copy of the current state of the "Vars" list.'() {
+        reportInfo """    
+            A copy of the current state of a "Vars" list can be easily made using the `toVals' method.
+            The copy captures the current state, and later changes to the underlying list will not be reflected in the copy.
+        """
+        given : 'A nullable and a non-nullable "Vars" instance with some properties.'
+            var vars = Vars.of( 0, 1, 2, 3, 4, 5)
+            var varsNullable = Vars.ofNullable(Integer.class, 0, 1, 2, 3, null, 5)
+        when : 'Create copies of the current "Vars" instances using the `toVars` method.'
+            var copy = vars.toVals()
+            var copyNullable = varsNullable.toVals()
+        then : 'The resulting lists should be equal to the original lists.'
+            copy == vars
+            copy == Vars.of( 0, 1, 2, 3, 4, 5)
+            copyNullable == varsNullable
+            copyNullable == Vars.ofNullable(Integer.class, 0, 1, 2, 3, null, 5)
+        and : 'Also the nullability of the copied lists is equal to the original lists.'
+            copy.allowsNull() == vars.allowsNull()
+            copyNullable.allowsNull() == varsNullable.allowsNull()
+        when : 'We can modify the underlying list.'
+            vars.at(1).set(6)
+            vars.add(42)
+            varsNullable.at(1).set(null)
+            varsNullable.add(42)
+        then : 'Changes are not applied to copied lists, and the lists remain unchanged.'
+            copy == Vars.of(0, 1, 2, 3, 4, 5)
+            copy != vars
+            copyNullable == Vars.ofNullable(Integer.class, 0, 1, 2, 3, null, 5)
+            copyNullable != varsNullable
+    }
+
 }
