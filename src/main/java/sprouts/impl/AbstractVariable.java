@@ -174,80 +174,21 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 	}
 
 	/** {@inheritDoc} */
-	@Override public final <U extends @Nullable Object> Val<@Nullable U> viewAs(Class<@NonNull U> type, Function<T, @Nullable U> mapper ) {
-		boolean nullCanBeAvoided = _isPrimitiveRef(type) || type == String.class;
-		final Var<@Nullable U> var;
-		if ( nullCanBeAvoided ) {
-			U result = _mapOrGetNullObjectOf(type, orElseNull(), mapper);
-			var = Var.of(result);
-			// Now we register a live update listener to this property
-			onChange( DEFAULT_CHANNEL, v -> var.set( _mapOrGetNullObjectOf( type, v.orElseNull(), mapper ) ));
-			_viewers.add( v -> var.set(From.VIEW, _mapOrGetNullObjectOf(type, v, mapper)) );
-		} else {
-			// If we allow U to be nullable, we must return a nullable Val; we can't check it at runtime
-			var = Var.ofNullable(type, mapper.apply(orElseNull()));
-			// Now we register a live update listener to this property
-			onChange( DEFAULT_CHANNEL, v -> var.set( mapper.apply( v.orElseNull() ) ));
-			_viewers.add( v -> var.set(From.VIEW, mapper.apply( v ) ) );
-		}
+	@Override
+	public final <U> Val<U> viewAs(Class<U> type, Function<T, U> mapper) {
+		final Var<U> var = Var.of(type, mapper.apply(orElseNull()));
+		onChange(DEFAULT_CHANNEL, v -> var.set(mapper.apply(v.orElseNull())));
+		_viewers.add(v -> var.set(From.VIEW, mapper.apply(v)));
 		return var;
 	}
 
-	private boolean _isPrimitiveRef( Class<?> type ) {
-		if ( type.isPrimitive() )
-			return true;
-		else if (
-			type == Integer.class   ||
-			type == Long.class      ||
-			type == Double.class    ||
-			type == Float.class     ||
-			type == Short.class     ||
-			type == Byte.class      ||
-			type == Character.class ||
-			type == Boolean.class
-		)
-			return true;
-		else
-			return false;
-	}
-
-	private <I,N> N _mapOrGetNullObjectOf(Class<N> type, @Nullable I in, Function<I, @Nullable N> mapper ) {
-		boolean inIsNull = in == null;
-		N value;
-		try {
-			value = mapper.apply(in);
-		} catch ( Exception e ) {
-			if ( inIsNull )
-				value = null;
-			else
-				throw e;
-		}
-		return _itemNullObjectOrThrowOf(type, value);
-	}
-
-	private static <T> T _itemNullObjectOrThrowOf(Class<T> type, @Nullable T value ) {
-		if  ( value != null )
-			return value;
-		else if ( type == String.class )
-			return type.cast("");
-		else if ( type == Integer.class )
-			return type.cast(0);
-		else if ( type == Long.class )
-			return type.cast(0L);
-		else if ( type == Double.class )
-			return type.cast(0.0);
-		else if ( type == Float.class )
-			return type.cast(0.0f);
-		else if ( type == Short.class )
-			return type.cast((short)0);
-		else if ( type == Byte.class )
-			return type.cast((byte)0);
-		else if ( type == Character.class )
-			return type.cast((char)0);
-		else if ( type == Boolean.class )
-			return type.cast(false);
-		else
-			throw new IllegalArgumentException(String.format("The given item of type '%s' cannot be mapped to a null object.", type.getSimpleName()));
+	/** {@inheritDoc} */
+	@Override
+	public <U> Val<@Nullable U> viewAsNullable(Class<U> type, Function<T, @Nullable U> mapper) {
+		final Var<@Nullable U> var = Var.ofNullable(type, mapper.apply(orElseNull()));
+		onChange(DEFAULT_CHANNEL, v -> var.set(mapper.apply(v.orElseNull())));
+		_viewers.add(v -> var.set(From.VIEW, mapper.apply(v)));
+		return var;
 	}
 
 	private static <T> @Nullable T _itemNullObjectOrNullOf(Class<T> type, @Nullable T value ) {

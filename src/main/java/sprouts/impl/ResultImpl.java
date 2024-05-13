@@ -96,6 +96,13 @@ public class ResultImpl<V> implements Result<V>
 	}
 
 	@Override
+	public <U> Val<@Nullable U> viewAsNullable(Class<U> type, Function<V, @Nullable U> mapper) {
+		Objects.requireNonNull(type);
+		Objects.requireNonNull(mapper);
+		return Val.ofNullable(this._type, this._value).viewAs(type, mapper);
+	}
+
+	@Override
 	public Val<V> onChange( Channel channel, Action<Val<V>> displayAction ) {
 		Objects.requireNonNull(displayAction);
 		/* A Result is immutable, so this method is not supported */
