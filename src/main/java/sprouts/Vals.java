@@ -91,6 +91,16 @@ public interface Vals<T extends @Nullable Object> extends Iterable<T>, Observabl
         return Sprouts.factory().valsOf( type, properties );
     }
 
+    /**
+     * Create a new unconnected {@link Vals} instance from the given property list.
+     * The references held by the list properties are copied, not the properties themselves.
+     * Thus, if the properties within the given list change, the changes are not reflected.
+     *
+     * @param type The type of the items.
+     * @param vals The property list to initialize the {@link Vals} instance.
+     * @param <T>  The type of the items.
+     * @return A new {@link Vals} instance.
+     */
     static <T> Vals<T> of( Class<T> type, Vals<T> vals ) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(vals);
@@ -147,6 +157,21 @@ public interface Vals<T extends @Nullable Object> extends Iterable<T>, Observabl
         return Sprouts.factory().valsOfNullable( first, rest );
     }
 
+    /**
+     * Create a new unconnected {@link Vals} instance from the given property list.
+     * The references held by the list properties are copied, not the properties themselves.
+     * Thus, if the properties within the given list change, the changes are not reflected.
+     *
+     * @param type The type of the items.
+     * @param vals The property list to initialize the {@link Vals} instance.
+     * @param <T>  The type of the items.
+     * @return A new {@link Vals} instance.
+     */
+    static <T> Vals<@Nullable T> ofNullable(Class<T> type, Vals<@Nullable T> vals) {
+        Objects.requireNonNull(type);
+        Objects.requireNonNull(vals);
+        return Sprouts.factory().valsOfNullable( type, vals );
+    }
 
     /**
      *  Exposes the common type of the properties in this list.<br>

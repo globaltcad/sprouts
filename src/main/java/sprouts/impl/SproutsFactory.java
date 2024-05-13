@@ -66,6 +66,8 @@ public interface SproutsFactory
 	@SuppressWarnings("unchecked")
 	<T> Vals<@Nullable T> valsOfNullable( Val<@Nullable T> first, Val<@Nullable T>... rest );
 
+	<T> Vals<@Nullable T> valsOfNullable(Class<T> type, Vals<@Nullable T> vals);
+
 
 	@SuppressWarnings("unchecked")
 	<T> Vars<T> varsOf( Class<T> type, Var<T>... vars );

@@ -580,7 +580,15 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
         return vars;
     }
 
-    default Vals<T> toVals() { return Vals.of( type(), this ); }
+    /**
+     * Create a copy of the current state of the list.
+     * Note: The created {@code Vals} instance will not reflect changes made to the underlying list.
+     *
+     * @return An immutable copy of the current list.
+     */
+    default Vals<T> toVals() {
+        return (Vals<T>) (allowsNull() ? Vals.ofNullable(type(), this) : Vals.of(type(), (Vals<T>) this));
+    }
 
     /**
      *  Use this for sorting the list of properties.
