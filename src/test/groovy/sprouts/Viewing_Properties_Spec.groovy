@@ -37,11 +37,11 @@ class Viewing_Properties_Spec extends Specification
         given : 'A nullable property...'
             Var<File> file = Var.ofNull(File)
         and : 'A couple of views...'
-            Val<Boolean> exists = file.viewAs( Boolean.class, false, f -> f.exists() )
+            Val<Boolean> exists = file.view( false, f -> f.exists() )
             Val<Integer> size = file.viewAsInt( f -> f.length() )
             Val<String> name = file.viewAsString( f -> f.getName() )
-            Val<Long> lastModified = file.viewAs( Long.class , 0L, f -> f.lastModified() )
-            Val<Character> firstChar = file.viewAs( Character.class, '\u0000' as char, f -> f.getName().charAt(0) )
+            Val<Long> lastModified = file.view( 0L, f -> f.lastModified() )
+            Val<Character> firstChar = file.view( '\u0000' as char, f -> f.getName().charAt(0) )
         expect : 'All views are non-nullable:'
             !exists.allowsNull()
             !size.allowsNull()

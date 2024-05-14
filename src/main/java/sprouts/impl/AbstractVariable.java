@@ -183,10 +183,10 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 	}
 
 	@Override
-	public <U> Val<U> viewAs( Class<U> type, U nullValue, Function<T, U> mapper) {
-		final Var<U> var = Var.of(isPresent() ? mapper.apply(get()) : nullValue);
-		onChange(DEFAULT_CHANNEL, v -> var.set(v.isPresent() ? mapper.apply(v.get()) : nullValue));
-		_viewers.add(v -> var.set(From.VIEW, v != null ? mapper.apply(v) : nullValue));
+	public <U> Val<U> view(U nullObject, Function<T, U> mapper) {
+		final Var<U> var = Var.of(isPresent() ? mapper.apply(get()) : nullObject);
+		onChange(DEFAULT_CHANNEL, v -> var.set(v.isPresent() ? mapper.apply(v.get()) : nullObject));
+		_viewers.add(v -> var.set(From.VIEW, v != null ? mapper.apply(v) : nullObject));
 		return var;
 	}
 
