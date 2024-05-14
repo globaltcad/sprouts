@@ -497,6 +497,36 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	}
 
 	/**
+	 * Use this to create a {@link String} based live view of this property through a new property based on the
+	 * provided mapping function and null object.
+	 * This means that whenever the item of this property changes, the item of the new property
+	 * will also be updated based on the result of the mapping function.
+	 * <p>
+	 * Note: The mapping function can map to {@code null} and may need to handle {@code null}.
+	 * If the mapping function returns {@code null} or throws an exception, the view will contain the proved
+	 * null object.
+	 * <p>
+	 * The result is a non-nullable {@link String} view of the property.
+	 * The reason for this design decision is that a view of a property is intended to be used as part of an
+	 * application, where {@code null} can lead to exceptions and ultimately a confusing user experience.
+	 *
+	 * @param nullObject The null object to use if the mapping function returns {@code null}.
+	 * @param mapper The mapping function to map the item of this property to a {@link String}.
+	 * @return A property that is a live view of this property based on the provided mapping function.
+	 */
+	default Val<String> viewAsString( String nullObject, Function<T, @Nullable String> mapper ) {
+		Objects.requireNonNull(nullObject);
+		return viewAs( String.class, v -> {
+			try {
+				String stringRef = mapper.apply(v);
+				return ( stringRef == null ? nullObject : stringRef );
+			} catch (Exception e) {
+				return nullObject;
+			}
+		});
+	}
+
+	/**
 	 * 	Use this to create a {@link String} based live view of this property
 	 * 	through a new property based on the provided mapping function
 	 * 	where the item of this property is mapped to a {@link String}.
@@ -516,14 +546,7 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	 * @return A property that is a live view of this property based on the provided mapping function.
 	 */
 	default Val<String> viewAsString( Function<T, @Nullable String> mapper ) {
-		return viewAs( String.class, v -> {
-			try {
-				String stringRef = mapper.apply(v);
-				return ( stringRef == null ? "" : stringRef );
-			} catch (Exception e) {
-				return "";
-			}
-		});
+		return viewAsString("", mapper);
 	}
 
 	/**
@@ -547,7 +570,36 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	 * @return A String property that is a live view of this property.
 	 */
 	default Val<String> viewAsString() {
-		return viewAsString( v -> v == null ? "" : v.toString() );
+		return viewAsString( "", v -> v == null ? null : v.toString() );
+	}
+
+	/**
+	 * Use this to create a {@link Double} based live view of this property through a new property based on the
+	 * provided mapping function and null object.
+	 * This means that whenever the item of this property changes, the item of the new property
+	 * will also be updated based on the result of the mapping function.
+	 * <p>
+	 * Note: The mapping function can map to {@code null} and may need to handle {@code null}.
+	 * If the mapping function returns {@code null}, the view will contain the provided null object.
+	 * If the mapping function throws an exception, the view will contain {@code Double.NaN}.
+	 * <p>
+	 * The result is a non-nullable {@link Double} view of the property.
+	 * The reason for this design decision is that a view of a property is intended to be used as part of an
+	 * application, where {@code null} can lead to exceptions and ultimately a confusing user experience.
+	 *
+	 * @param nullObject The null object to use if the mapping function returns {@code null}.
+	 * @param mapper The mapping function to map the item of this property to a {@link Double}.
+	 * @return A property that is a live view of this property based on the provided mapping function.
+	 */
+	default Val<Double> viewAsDouble( double nullObject, Function<T, @Nullable Double> mapper ) {
+		return viewAs( Double.class, v -> {
+			try {
+				Double numberRef = mapper.apply(v);
+				return ( numberRef == null ? nullObject : numberRef );
+			} catch (Exception e) {
+				return Double.NaN;
+			}
+		});
 	}
 
 	/**
@@ -573,14 +625,7 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	 * @return A property that is a live view of this property based on the provided mapping function.
 	 */
 	default Val<Double> viewAsDouble( java.util.function.Function<T, @Nullable Double> mapper ) {
-		return viewAs( Double.class, v -> {
-			try {
-				Double numberRef = mapper.apply(v);
-				return ( numberRef == null ? 0.0 : numberRef );
-			} catch (Exception e) {
-				return Double.NaN;
-			}
-		});
+		return viewAsDouble(0.0, mapper);
 	}
 
 	/**
@@ -600,11 +645,34 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	 * @return A {@link Double} property that is a live view of this property.
 	 */
 	default Val<Double> viewAsDouble() {
-		return viewAsDouble( v -> {
+		return viewAsDouble( 0.0, v -> v == null ? null : Double.parseDouble( v.toString() ));
+	}
+
+	/**
+	 * Use this to create a {@link Integer} based live view of this property through a new property based on the
+	 * provided mapping function and null object.
+	 * This means that whenever the item of this property changes, the item of the new property
+	 * will also be updated based on the result of the mapping function.
+	 * <p>
+	 * Note: The mapping function can map to {@code null} and may need to handle {@code null}.
+	 * If the mapping function returns {@code null} or throws an exception, the view will contain the provided
+	 * null object.
+	 * <p>
+	 * The result is a non-nullable {@link Integer} view of the property.
+	 * The reason for this design decision is that a view of a property is intended to be used as part of an
+	 * application, where {@code null} can lead to exceptions and ultimately a confusing user experience.
+	 *
+	 * @param nullObject The null object to use if the mapping function returns {@code null}.
+	 * @param mapper The mapping function to map the item of this property to a {@link Integer}.
+	 * @return A property that is a live view of this property based on the provided mapping function.
+	 */
+	default Val<Integer> viewAsInt( int nullObject, Function<T, @Nullable Integer> mapper ) {
+		return viewAs( Integer.class, v -> {
 			try {
-				return ( v == null ? 0.0 : Double.parseDouble( v.toString() ) );
-			} catch ( NumberFormatException e ) {
-				return Double.NaN;
+				Integer numberRef = mapper.apply(v);
+				return ( numberRef == null ? nullObject : numberRef );
+			} catch (Exception e) {
+				return nullObject;
 			}
 		});
 	}
@@ -631,14 +699,7 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	 * @return A property that is a live view of this property based on the provided mapping function.
 	 */
 	default Val<Integer> viewAsInt( Function<T, @Nullable Integer> mapper ) {
-		return viewAs( Integer.class, v -> {
-			try {
-				Integer numberRef = mapper.apply(v);
-				return ( numberRef == null ? 0 : numberRef );
-			} catch (Exception e) {
-				return 0;
-			}
-		});
+		return viewAsInt(0, mapper);
 	}
 
 	/**
@@ -658,13 +719,7 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	 * @return An Integer property that is a live view of this property.
 	 */
 	default Val<Integer> viewAsInt() {
-		return viewAsInt( v -> {
-			try {
-				return ( v == null ? 0 : Integer.parseInt( v.toString() ) );
-			} catch ( NumberFormatException e ) {
-				return 0;
-			}
-		});
+		return viewAsInt( 0, v -> v == null ? null : Integer.parseInt( v.toString() ) );
 	}
 
 	/**
