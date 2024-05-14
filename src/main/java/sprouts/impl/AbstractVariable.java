@@ -143,7 +143,7 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 
 	/** {@inheritDoc} */
 	@Override
-	public Var<T> set( Channel channel, @Nullable T newItem ) {
+	public Var<T> set( Channel channel, T newItem ) {
 		Objects.requireNonNull(channel);
 		if ( _isImmutable )
 			throw new UnsupportedOperationException("This variable is immutable!");
@@ -152,7 +152,7 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 		return this;
 	}
 
-	private boolean _setInternal( @Nullable T newValue ) {
+	private boolean _setInternal( T newValue ) {
 		if ( !_nullable && newValue == null )
 			throw new NullPointerException(
 					"This property is configured to not allow null values! " +
