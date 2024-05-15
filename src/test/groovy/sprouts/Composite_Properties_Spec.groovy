@@ -155,4 +155,103 @@ class Composite_Properties_Spec extends Specification
         then : 'An exception is thrown.'
             thrown(NullPointerException)
     }
+
+    def 'The second property of a composite view created using the `Val.viewOf(..)` and `Val.viewOfNullable(..)` methods can be of any type.'()
+    {
+        reportInfo """
+            The type of the returned property view is determined by the first property, the second property can be
+            of any type.
+        """
+        given : 'We create a property of type `String` and another property of type `Integer`.'
+            Var<String> stringVar = Var.ofNull(String.class)
+            Var<Integer> integerVar = Var.ofNull(Integer.class)
+        and : 'A nullable and a non-nullable composite view of the two properties.'
+            Val<String> view = Val.viewOf(stringVar, integerVar, (s, i) -> s + ":" + i)
+            Val<String> nullableView = Val.viewOfNullable(stringVar, integerVar, (s, i) -> s == null || i == null ? null : s + ":" + i)
+        expect : 'The views hold the expected value.'
+            view.get() == "null:null"
+            nullableView.isEmpty()
+        and : 'The views have the correct nullability.'
+            !view.allowsNull()
+            nullableView.allowsNull()
+        when : 'We update the first property.'
+            stringVar.set("string")
+        then : 'The views hold the expected value.'
+            view.get() == "string:null"
+            nullableView.isEmpty()
+        when : 'We update the second property.'
+            integerVar.set(42)
+        then : 'The views hold the expected value.'
+            view.get() == "string:42"
+            nullableView.get() == "string:42"
+        when : 'We update the first property.'
+            stringVar.set(null)
+        then : 'The views hold the expected value.'
+            view.get() == "null:42"
+            nullableView.isEmpty()
+    }
+
+    def 'You can combine different types into a composite property view.'()
+    {
+        reportInfo """
+            You can combine properties of different types into a live view. The view itself can also be of any type.
+        """
+        given : 'We create a property of type `Integer` and another property of type `Double`.'
+            Var<Integer> integerVar = Var.ofNullable(Integer.class, 4)
+            Var<Double> doubleVar = Var.ofNullable(Double.class, 0.5d)
+        and : 'A composite view of the two properties.'
+            Val<String> view = Val.viewOf(String.class, integerVar, doubleVar, (i, d) -> i == null ? null : String.format("%d * %.1f = %.1f", i, d, i * d))
+        expect : 'The view holds the expected value.'
+            view.get() == "4 * 0.5 = 2.0"
+        when : 'We update the first property.'
+            integerVar.set(9)
+        then : 'The view holds the expected value.'
+            view.get() == "9 * 0.5 = 4.5"
+        when : 'We update the second property.'
+            doubleVar.set(1d/3d)
+        then : 'The view holds the expected value.'
+            view.get() == "9 * 0.3 = 3.0"
+        when : 'We set a value so that the combiner returns `null`.'
+            integerVar.set(null)
+        then : 'The view is not updated and still retains the old value.'
+            view.get() == "9 * 0.3 = 3.0"
+        when : 'We set a value so that the combiner returns throws an exception'
+            integerVar.set(9)
+            doubleVar.set(null)
+        then : 'The view is not updated and still retains the old value.'
+            view.get() == "9 * 0.3 = 3.0"
+    }
+
+    def 'You can combine different types into a nullable composite property view.'()
+    {
+        reportInfo """
+            You can combine properties of different types into a nullable live view. The view itself can also be of any
+            type.
+        """
+        given : 'We create a property of type `Integer` and another property of type `Double`.'
+            Var<Integer> integerVar = Var.ofNullable(Integer.class, 4)
+            Var<Double> doubleVar = Var.ofNullable(Double.class, 0.5d)
+        and : 'A composite view of the two properties.'
+            Val<String> view = Val.viewOfNullable(String.class, integerVar, doubleVar, (i, d) -> i == null ? null : String.format("%d * %.1f = %.1f", i, d, i * d))
+        expect : 'The view holds the expected value.'
+            view.get() == "4 * 0.5 = 2.0"
+        when : 'We update the first property.'
+            integerVar.set(9)
+        then : 'The view holds the expected value.'
+            view.get() == "9 * 0.5 = 4.5"
+        when : 'We update the second property.'
+            doubleVar.set(1d/3d)
+        then : 'The view holds the expected value.'
+            view.get() == "9 * 0.3 = 3.0"
+        when : 'We set a value so that the combiner returns `null`.'
+            integerVar.set(null)
+        then : 'The view should be empty.'
+            view.isEmpty()
+        when : 'We set a value so that the combiner returns throws an exception'
+            integerVar.set(9)
+            doubleVar.set(null)
+            then : 'The view should be empty.'
+        view.isEmpty()
+    }
+
 }
