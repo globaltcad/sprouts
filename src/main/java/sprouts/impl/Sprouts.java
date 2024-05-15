@@ -117,22 +117,23 @@ public final class Sprouts implements SproutsFactory
         return Val.ofNullable( toBeCopied.type(), toBeCopied.orElseNull() ).withId( toBeCopied.id() );
     }
 
-    @Override public <T> Val<T> valOf( Val<T> first, Val<T> second, BiFunction<T, T, T> combiner ) {
+    @Override public <T> Val<T> viewOf( Val<T> first, Val<T> second, BiFunction<T, T, T> combiner ) {
         Objects.requireNonNull(first);
         Objects.requireNonNull(second);
         Objects.requireNonNull(combiner);
         if ( first.type() != second.type() )
             throw new IllegalArgumentException("The types of the two properties are not compatible!");
-        return AbstractVariable.of( first, second, combiner );
+        return AbstractVariable.viewOf( first, second, combiner );
     }
 
-    @Override public <T extends @Nullable Object> Val<@Nullable T> valOfNullable(Val<T> first, Val<T> second, BiFunction<T, T, T> combiner ) {
+    @Override public <T extends @Nullable Object> Val<@Nullable T> viewOfNullable(Val<T> first, Val<T> second, BiFunction<T, T, T> combiner ) {
         Objects.requireNonNull(first);
         Objects.requireNonNull(second);
         Objects.requireNonNull(combiner);
         if ( first.type() != second.type() )
             throw new IllegalArgumentException("The types of the two properties are not compatible!");
         return AbstractVariable.ofNullable( first, second, combiner );
+        return AbstractVariable.viewOfNullable( first, second, combiner );
     }
 
 

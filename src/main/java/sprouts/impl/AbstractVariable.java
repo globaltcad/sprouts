@@ -32,11 +32,11 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 		return new AbstractVariable<T>( immutable, (Class<T>) iniValue.getClass(), iniValue, NO_ID, Collections.emptyMap(), false );
 	}
 
-	public static <T> Var<T> of( Val<T> first, Val<T> second, BiFunction<T, T, T> combiner ) {
+	public static <T> Var<T> viewOf( Val<T> first, Val<T> second, BiFunction<T, T, T> combiner ) {
 		return of( false, first, second, combiner );
 	}
 
-	public static <T extends @Nullable Object> Var<@Nullable T> ofNullable( Val<T> first, Val<T> second, BiFunction<T, T, T> combiner ) {
+	public static <T extends @Nullable Object> Var<@Nullable T> viewOfNullable( Val<T> first, Val<T> second, BiFunction<T, T, T> combiner ) {
 		return of( true, first, second, combiner );
 	}
 

@@ -127,71 +127,73 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	}
 
 	/**
-	 *  Creates a read only {@link Val} property that constitutes a live view of
-	 *  the two given properties using a combiner function, which takes in the
-	 *  items of the two properties and returns an updated item based on them. <br>
-	 *  The combiner function is invoked to compute a new item for the view property whenever
-	 *  at least one of the items in the two properties changes, or
-	 *  whenever a manual change event is fired (see {@link Var#fireChange(Channel)}) on
-	 *  either one... <br><br>
-	 *  <p>
-	 *  <b>Note the property view does not permit storing null references!
-	 *  So if the combiner function returns a null reference on the first call,
-	 *  a {@link NullPointerException} will be thrown.
-	 *  If a null reference is returned on subsequent calls, the view will
-	 *  log a warning and simply retain the last non-null value!</b><br>
-	 *  If you need a composite view which allows null, use the {@link #ofNullable(Val, Val, BiFunction)} method instead.
+	 * Creates a read-only {@link Val} property that represents a live view of the two given properties using a
+	 * combiner function.
+	 * <p>
+	 * The combiner function takes the items of the two properties and returns an updated item based on them.
+	 * The combiner is called to compute a new item for the view property whenever at least one of the items
+	 * in the two properties changes, or whenever a manual change event is fired (see {@link Var#fireChange(Channel)})
+	 * on either of the two properties.
+	 * <p>
+	 * Note: The property view does <b>not</b> allow storing {@code null} references!
+	 * So if the combiner function returns a {@code null} reference on the first call, a {@link NullPointerException}
+	 * will be thrown.
+	 * If a {@code null} reference is returned on subsequent calls, the view will log a warning and simply retain the
+	 * last non-null value!
+	 * <p>
+	 * If you need a composite view that allows {@code null}, use the {@link #viewOfNullable(Val, Val, BiFunction)}
+	 * method instead.
 	 *
-	 * @param first The first property to be combined with the second property.
-	 * @param second The second property to be combined with the first property.
+	 * @param first    The first property to be combined.
+	 * @param second   The second property to be combined.
 	 * @param combiner The function used to combine the items of the two properties,
 	 *                 where the first argument is the item of the first property and
 	 *                 the second argument is the item of the second property.
+	 * @param <T>      The type of the items held by the properties.
 	 * @return A new {@link Val} instance which is a live view of the two given properties.
-	 * @param <T> The type of the items held by the properties.
-	 * @throws NullPointerException If the combiner function returns a null reference
-	 *                              <b>when it is first called</b>.
+	 * @throws NullPointerException     If the combiner function returns a {@code null} reference
+	 *                                  <b>when it is first called</b>.
 	 * @throws IllegalArgumentException If the types of the two properties are not compatible.
 	 */
-	static <T> Val<T> of( Val<T> first, Val<T> second, BiFunction<T, T, T> combiner ) {
+	static <T> Val<T> viewOf(Val<T> first, Val<T> second, BiFunction<T, T, T> combiner ) {
 		Objects.requireNonNull(first);
 		Objects.requireNonNull(second);
 		Objects.requireNonNull(combiner);
 		if ( first.type() != second.type() )
 			throw new IllegalArgumentException("The types of the two properties are not compatible!");
-		return Sprouts.factory().valOf( first, second, combiner );
+		return Sprouts.factory().viewOf( first, second, combiner );
 	}
 
 	/**
-	 *  Creates a read only {@link Val} property that constitutes a live view of
-	 *  the two given properties using a combiner function, which takes in the
-	 *  items of the two properties and returns an updated item based on them. <br>
-	 *  The combiner function is invoked to compute a new item for the view property whenever
-	 *  at least one of the items of the two properties change, or
-	 *  whenever a manual change event is fired (see {@link Var#fireChange(Channel)}). <br><br>
-	 *  <p>
-	 *  <b>Note that this property does permit storing null references.</b><br>
-	 *  If you need a composite view which does not permit null,
-	 *  use the {@link #of(Val, Val, BiFunction)} method instead.
+	 * Creates a read-only nullable {@link Val} property that represents a live view of the two given properties using a
+	 * combiner function.
+	 * <p>
+	 * The combiner function takes the items of the two properties and returns an updated item based on them.
+	 * The combiner is called to compute a new item for the view property whenever at least one of the items
+	 * in the two properties changes, or whenever a manual change event is fired (see {@link Var#fireChange(Channel)})
+	 * on either of the two properties.
+	 * <p>
+	 * Note: The property view does <b>allow</b> storing {@code null} references!
+	 * If you need a composite view that not allows {@code null}, use the {@link #viewOf(Val, Val, BiFunction)}
+	 * method instead.
 	 *
-	 * @param first The first property to be combined with the second property.
-	 * @param second The second property to be combined with the first property.
+	 * @param first    The first property to be combined.
+	 * @param second   The second property to be combined.
 	 * @param combiner The function used to combine the items of the two properties,
 	 *                 where the first argument is the item of the first property and
 	 *                 the second argument is the item of the second property.
-	 * @return A new {@link Val} instance which is a live view of the two given properties.
-	 * @param <T> The type of the items held by the properties.
-	 * @throws NullPointerException If the combiner function returns a null reference
-	 *                              <b>when it is first called</b>.
+	 * @param <T>      The type of the items held by the properties.
+	 * @return A new nullable {@link Val} instance which is a live view of the two given properties.
 	 * @throws IllegalArgumentException If the types of the two properties are not compatible.
 	 */
-	static <T extends @Nullable Object> Val<@Nullable T> ofNullable( Val<T> first, Val<T> second, BiFunction<T, T, T> combiner ) {
+	static <T extends @Nullable Object> Val<@Nullable T> viewOfNullable(Val<T> first, Val<T> second, BiFunction<T, T, T> combiner ) {
 		Objects.requireNonNull(first);
 		Objects.requireNonNull(second);
 		Objects.requireNonNull(combiner);
 		if ( first.type() != second.type() )
 			throw new IllegalArgumentException("The types of the two properties are not compatible!");
 		return Sprouts.factory().valOfNullable( first, second, combiner );
+		return Sprouts.factory().viewOfNullable( first, second, combiner );
 	}
 
 	/**

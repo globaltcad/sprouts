@@ -31,7 +31,7 @@ class Composite_Properties_Spec extends Specification
             Var<String> forename = Var.of("John")
             Var<String> surname = Var.of("Doe")
         and : 'Now we create a view of the 2 properties that represents the full name.'
-            Val<String> fullName = Val.of(forename, surname, (f, s) -> f + " " + s)
+            Val<String> fullName = Val.viewOf(forename, surname, (f, s) -> f + " " + s)
         expect : 'Initially, the view has the expected value.'
             fullName.get() == "John Doe"
         when : 'We change the value of the properties.'
@@ -52,7 +52,7 @@ class Composite_Properties_Spec extends Specification
             Var<String> street = Var.of("Kingsway")
             Var<Integer> number = Var.of(123)
         and : 'Now we create a view of the 2 properties that represents the full address.'
-            Val<String> fullAddress = Val.of(street, number.viewAsString(), (s, n) -> s.isEmpty() ? null : s + " " + n)
+            Val<String> fullAddress = Val.viewOf(street, number.viewAsString(), (s, n) -> s.isEmpty() ? null : s + " " + n)
         expect : 'The view does not allow null items.'
             !fullAddress.allowsNull()
         when : 'We turn the street into an empty string to cause the view to produce a null item.'
@@ -75,7 +75,7 @@ class Composite_Properties_Spec extends Specification
             Var<Double> weight = Var.ofNull(Double)
             Var<Double> height = Var.ofNull(Double)
         and : 'A view of the 2 properties that represents the BMI.'
-            Val<Double> bmi = Val.of(weight, height, (w, h) -> w / (h * h))
+            Val<Double> bmi = Val.viewOf(weight, height, (w, h) -> w / (h * h))
         expect : 'The view does not allow null items.'
             !bmi.allowsNull()
         and : """
@@ -110,7 +110,7 @@ class Composite_Properties_Spec extends Specification
             Var<String> street = Var.of("Kingsway")
             Var<Integer> number = Var.of(123)
         and : 'Now we create a view of the 2 properties that represents the full address.'
-            Val<String> fullAddress = Val.ofNullable(street, number.viewAsString(), (s, n) -> s.isEmpty() ? null : s + " " + n)
+            Val<String> fullAddress = Val.viewOfNullable(street, number.viewAsString(), (s, n) -> s.isEmpty() ? null : s + " " + n)
         expect : 'The view allows null items.'
             fullAddress.allowsNull()
         when : 'We turn the street into an empty string to cause the view to produce a null item.'
@@ -132,7 +132,7 @@ class Composite_Properties_Spec extends Specification
             Var<Date> date1 = Var.ofNullable(Date.class, new Date())
             Var<Date> date2 = Var.ofNullable(Date.class, new Date())
         and : 'A view of the 2 properties that represents the earliest date, or null if any of the dates is null.'
-            Val<Date> earliestDate = Val.of(date1, date2, (d1, d2) -> (d1==null||d2==null) ? null : d1.before(d2) ? d1 : d2)
+            Val<Date> earliestDate = Val.viewOf(date1, date2, (d1, d2) -> (d1==null||d2==null) ? null : d1.before(d2) ? d1 : d2)
         expect : 'The view tells us that it does not allow null items.'
             !earliestDate.allowsNull()
         and : 'It contains an initial value.'
@@ -158,7 +158,7 @@ class Composite_Properties_Spec extends Specification
         """
             date1 = Var.ofNull(Date)
             date2 = Var.of(new Date())
-            earliestDate = Val.of(date1, date2, (d1, d2) -> (d1==null) ? null : d1.before(d2) ? d1 : d2)
+            earliestDate = Val.viewOf(date1, date2, (d1, d2) -> (d1==null) ? null : d1.before(d2) ? d1 : d2)
         then : 'An exception is thrown.'
             thrown(NullPointerException)
     }

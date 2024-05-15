@@ -28,6 +28,9 @@ public interface SproutsFactory
 	<T extends @Nullable Object> Val<@Nullable T> valOfNullable( Val<T> toBeCopied );
 
 	<T> Val<T> valOf( Val<T> first, Val<T> second, BiFunction<T, T, T> combiner );
+	<T> Val<T> viewOf( Val<T> first, Val<T> second, BiFunction<T, T, T> combiner );
+
+	<T extends @Nullable Object> Val<@Nullable T> viewOfNullable( Val<T> first, Val<T> second, BiFunction<T, T, T> combiner );
 
 	<T extends @Nullable Object> Val<@Nullable T> valOfNullable( Val<T> first, Val<T> second, BiFunction<T, T, T> combiner );
 
