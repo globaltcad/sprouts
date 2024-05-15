@@ -132,8 +132,25 @@ public final class Sprouts implements SproutsFactory
         Objects.requireNonNull(combiner);
         if ( first.type() != second.type() )
             throw new IllegalArgumentException("The types of the two properties are not compatible!");
-        return AbstractVariable.ofNullable( first, second, combiner );
         return AbstractVariable.viewOfNullable( first, second, combiner );
+    }
+
+    @Override
+    public <T extends @Nullable Object, U extends @Nullable Object, R> Val<R> viewOf(Class<R> type, Val<T> first, Val<U> second, BiFunction<T, U, R> combiner) {
+        Objects.requireNonNull(type);
+        Objects.requireNonNull(first);
+        Objects.requireNonNull(second);
+        Objects.requireNonNull(combiner);
+        return AbstractVariable.viewOf( type, first, second, combiner );
+    }
+
+    @Override
+    public <T extends @Nullable Object, U extends @Nullable Object, R> Val<@Nullable R> viewOfNullable(Class<R> type, Val<T> first, Val<U> second, BiFunction<T, U, @Nullable R> combiner) {
+        Objects.requireNonNull(type);
+        Objects.requireNonNull(first);
+        Objects.requireNonNull(second);
+        Objects.requireNonNull(combiner);
+        return AbstractVariable.viewOfNullable( type, first, second, combiner );
     }
 
 
