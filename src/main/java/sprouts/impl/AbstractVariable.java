@@ -36,11 +36,11 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 	}
 
 	public static <T extends @Nullable Object, U extends @Nullable Object> Var<@NonNull T> viewOf( Val<T> first, Val<U> second, BiFunction<T, U, @NonNull T> combiner ) {
-		return of( false, first, second, combiner );
+		return of( first, second, combiner );
 	}
 
 	public static <T extends @Nullable Object, U extends @Nullable Object> Var<@Nullable T> viewOfNullable( Val<T> first, Val<U> second, BiFunction<T, U, @Nullable T> combiner ) {
-		return of( true, first, second, combiner );
+		return ofNullable( first, second, combiner );
 	}
 
 	public static <T extends @Nullable Object, U extends @Nullable Object, R> Val<R> viewOf(Class<R> type, Val<T> first, Val<U> second, BiFunction<T, U, R> combiner) {
@@ -51,7 +51,7 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 		return ofNullable( type, first, second, combiner );
 	}
 
-	private static <T extends @Nullable Object, U extends @Nullable Object> Var<T> of( boolean allowNull, Val<T> first, Val<U> second, BiFunction<T, U, T> combiner ) {
+	private static <T extends @Nullable Object, U extends @Nullable Object> Var<@NonNull T> of( Val<T> first, Val<U> second, BiFunction<T, U, @NonNull T> combiner ) {
 		String id = "";
 		if ( !first.id().isEmpty() && !second.id().isEmpty() )
 			id = first.id() + "_and_" + second.id();
@@ -60,46 +60,59 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 		else if ( !second.id().isEmpty() )
 			id = second.id();
 
-		BiFunction<Val<T>, Val<U>, T> fullCombiner = (p1, p2) -> {
-			@Nullable T newItem = null;
+		BiFunction<Val<T>, Val<U>, @Nullable T> fullCombiner = (p1, p2) -> {
 			try {
-				newItem = combiner.apply(p1.orElseNull(), p2.orElseNull());
+				return combiner.apply(p1.orElseNull(), p2.orElseNull());
 			} catch ( Exception e ) {
-				if ( !allowNull ) {
-					newItem = _itemNullObjectOrNullOf(p1.type(), newItem);
-				}
-				if ( newItem == null )
-					throw new NullPointerException(
-							"Failed to initialize this non-nullable property with the initial value " +
-									"due to the result of the combiner function not yielding a non-null value!"
-					);
-				e.printStackTrace();
+				return null;
 			}
+		};
 
-			if ( !allowNull && newItem == null ) {
-				newItem = _itemNullObjectOrNullOf(first.type(), newItem);
-				if ( newItem == null )
-					throw new NullPointerException("The result of the combiner function is null, but the property does not allow null values!");
+		T initial = fullCombiner.apply(first, second);
+		Objects.requireNonNull(initial,"The result of the combiner function is null, but the property does not allow null values!");
+
+		Var<T> result = AbstractVariable.of( false, first.type(), initial ).withId(id);
+
+		first.onChange(From.ALL, v -> {
+			T newItem = fullCombiner.apply(v, second);
+			if (newItem == null)
+				log.error("Invalid combiner result! The combination of the first value '{}' (changed) and the second value '{}' was null and null is not allowed! The old value '{}' is retained!", first.orElseNull(), second.orElseNull(), result.orElseNull());
+			else
+				result.set(From.ALL, newItem);
+		});
+		second.onChange(From.ALL, v -> {
+			T newItem = fullCombiner.apply(first, v);
+			if (newItem == null)
+				log.error("Invalid combiner result! The combination of the first value '{}' and the second value '{}' (changed) was null and null is not allowed! The old value '{}' is retained!", first.orElseNull(), second.orElseNull(), result.orElseNull());
+			else
+				result.set(From.ALL, newItem);
+		});
+		return result;
+	}
+
+	private static <T extends @Nullable Object, U extends @Nullable Object> Var<T> ofNullable( Val<T> first, Val<U> second, BiFunction<T, U, T> combiner ) {
+		String id = "";
+		if ( !first.id().isEmpty() && !second.id().isEmpty() )
+			id = first.id() + "_and_" + second.id();
+		else if ( !first.id().isEmpty() )
+			id = first.id();
+		else if ( !second.id().isEmpty() )
+			id = second.id();
+
+		BiFunction<Val<T>, Val<U>, @Nullable T> fullCombiner = (p1, p2) -> {
+			try {
+				return combiner.apply(p1.orElseNull(), p2.orElseNull());
+			} catch ( Exception e ) {
+				return null;
 			}
-			return newItem;
 		};
 
 		T initial = fullCombiner.apply(first, second);
 
-		Var<T> result;
-		if ( allowNull )
-			result = AbstractVariable.ofNullable( false, first.type(), initial ).withId(id);
-		else
-			result = AbstractVariable.of( false, first.type(), initial ).withId(id);
+		Var<@Nullable T> result = AbstractVariable.ofNullable( false, first.type(), initial ).withId(id);
 
-		first.onChange(From.ALL, v -> {
-			T newItem = fullCombiner.apply(v, second);
-			result.set(From.ALL, newItem);
-		});
-		second.onChange(From.ALL, v -> {
-			T newItem = fullCombiner.apply(first, v);
-			result.set(From.ALL, newItem);
-		});
+		first.onChange(From.ALL, v -> result.set(From.ALL, fullCombiner.apply(v, second)));
+		second.onChange(From.ALL, v -> result.set(From.ALL, fullCombiner.apply(first, v)));
 		return result;
 	}
 
@@ -161,14 +174,10 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 			}
 		};
 
-		Var<R> result =  AbstractVariable.ofNullable( false, type, fullCombiner.apply(first, second) ).withId(id);
+		Var<@Nullable R> result =  AbstractVariable.ofNullable( false, type, fullCombiner.apply(first, second) ).withId(id);
 
-		first.onChange(From.ALL, v -> {
-				result.set(From.ALL, fullCombiner.apply(v, second));
-		});
-		second.onChange(From.ALL, v -> {
-				result.set(From.ALL, fullCombiner.apply(first, v));
-		});
+		first.onChange(From.ALL, v -> result.set(From.ALL, fullCombiner.apply(v, second)));
+		second.onChange(From.ALL, v -> result.set(From.ALL, fullCombiner.apply(first, v)));
 		return result;
 	}
 

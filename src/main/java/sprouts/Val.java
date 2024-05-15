@@ -136,8 +136,8 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	 * on either of the two properties.
 	 * <p>
 	 * Note: The property view does <b>not</b> allow storing {@code null} references!
-	 * So if the combiner function returns a {@code null} reference on the first call, a {@link NullPointerException}
-	 * will be thrown.
+	 * So if the combiner function returns a {@code null} reference or throws an exception on the first call,
+	 * a {@link NullPointerException} will be thrown.
 	 * If a {@code null} reference is returned on subsequent calls, the view will log a warning and simply retain the
 	 * last non-null value!
 	 * <p>
@@ -172,6 +172,8 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	 * on either of the two properties.
 	 * <p>
 	 * Note: The property view does <b>allow</b> storing {@code null} references!
+	 * If the combiner function throws an exception, the view will be set to {@code null}.
+	 * <p>
 	 * If you need a composite view that not allows {@code null}, use the {@link #viewOf(Val, Val, BiFunction)}
 	 * method instead.
 	 *
@@ -188,8 +190,6 @@ public interface Val<T extends @Nullable Object> extends Observable {
 		Objects.requireNonNull(first);
 		Objects.requireNonNull(second);
 		Objects.requireNonNull(combiner);
-		if ( first.type() != second.type() )
-			throw new IllegalArgumentException("The types of the two properties are not compatible!");
 		return Sprouts.factory().viewOfNullable( first, second, combiner );
 	}
 

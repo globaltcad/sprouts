@@ -41,106 +41,100 @@ class Composite_Properties_Spec extends Specification
             fullName.get() == "Jane Smith"
     }
 
-    def 'A composite property view created using the `Val.of(..)` does not update when receiving null items'()
+    def 'A composite property view created using the `Val.viewOf(..)` does not update when receiving `null` items'()
     {
         reportInfo """
-            A composite property view created using the `Val.of(..)` does not allow null items.
+            A composite property view created using the `Val.viewOf(..)` does not allow `null` items.
             This does not mean that the properties it is composed of cannot be nullable, it just means
-            that the items produced by the combiner function cannot be null.
+            that the items produced by the combiner function cannot be `null`.
         """
         given : 'We have 2 properties modelling the address of a person.'
             Var<String> street = Var.of("Kingsway")
             Var<Integer> number = Var.of(123)
         and : 'Now we create a view of the 2 properties that represents the full address.'
-            Val<String> fullAddress = Val.viewOf(street, number.viewAsString(), (s, n) -> s.isEmpty() ? null : s + " " + n)
+            Val<String> fullAddress = Val.viewOf(street, number, (s, n) -> s.isEmpty() ? null : s + " " + n)
         expect : 'The view does not allow null items.'
             !fullAddress.allowsNull()
-        when : 'We turn the street into an empty string to cause the view to produce a null item.'
+        when : 'We turn the street into an empty string to cause the view to produce a `null` item.'
             street.set("")
-        then : 'The view will interpret the null item as the null object of the type of the view.'
-            fullAddress.get() == ""
+        then: 'The view will retain the old value.'
+            fullAddress.get() == "Kingsway 123"
     }
 
     def 'A non nullable composite property view may be created from two nullable properties.'()
     {
         reportInfo """
-            Although a composite property view created using the `Val.of(..)` does permit null items
+            Although a composite property view created using the `Val.viewOf(..)` does permit `null` items
             itself, it may be created from two nullable properties, as long as the combiner function
-            does not produce null items.
+            does not produce `null` items.
         """
         given : """
             We have 2 properties modelling the weight and height of a person.
             These properties are nullable for this example.
         """
-            Var<Double> weight = Var.ofNull(Double)
-            Var<Double> height = Var.ofNull(Double)
+            Var<Double> weight = Var.ofNullable(Double, 80d)
+            Var<Double> height = Var.ofNullable(Double, 1.8d)
         and : 'A view of the 2 properties that represents the BMI.'
             Val<Double> bmi = Val.viewOf(weight, height, (w, h) -> w / (h * h))
-        expect : 'The view does not allow null items.'
+        expect : 'The view does not allow `null` items.'
             !bmi.allowsNull()
-        and : """
-            Note that both of these properties are empty initially, which
-            means that the combiner function will throw an exception when
-            invoked with their items.
-            
-            Views however, try to be resilient to null-pointer exceptions,
-            and due to the fact that we are using the `Double` type here,
-            the view can resort to a default value: 0.0
-        """
-            bmi.get() == 0
-        when : 'We set the weight to 80 and the height to 1.8.'
-            weight.set(80d)
-            height.set(1.8d)
-        then : 'The view has the expected value.'
+        and : 'The view has the expected value.'
             bmi.get() == 24.691358024691358d
-
-        when : 'We set the weight to null.'
+        when : 'We set the weight to `null`.'
             weight.set(null)
-        then : 'The view resorts back to the default value 0.0!'
-            bmi.get() == 0.0
+        then: 'The view will retain the old value.'
+            bmi.get() == 24.691358024691358d
+        when : 'We create a new view with the 2 properties and the same combiner.'
+            Val.viewOf(weight, height, (w, h) -> w / (h * h))
+        then : """
+            Note that one of these properties is empty, which means that the combiner function will throw an exception
+            when invoked with their items.
+            An exception in the combiner function on the first call will throw a `NullPointerException`.
+        """
+            thrown(NullPointerException)
     }
 
-    def 'A composite property view created using the `Val.ofNullable(..)` allows null.'()
+    def 'A composite property view created using the `Val.viewOfNullable(..)` allows `null`.'()
     {
         reportInfo """
-            A composite property view created using the `Val.ofNullable(..)` allows null items.
-            This means that the items produced by the combiner function can be null.
+            A composite property view created using the `Val.viewOfNullable(..)` allows `null` items.
+            This means that the items produced by the combiner function can be `null`.
         """
         given : 'We have 2 properties modelling the address of a person.'
             Var<String> street = Var.of("Kingsway")
             Var<Integer> number = Var.of(123)
         and : 'Now we create a view of the 2 properties that represents the full address.'
             Val<String> fullAddress = Val.viewOfNullable(street, number.viewAsString(), (s, n) -> s.isEmpty() ? null : s + " " + n)
-        expect : 'The view allows null items.'
+        expect : 'The view allows `null` items.'
             fullAddress.allowsNull()
-        when : 'We turn the street into an empty string to cause the view to produce a null item.'
+        when : 'We turn the street into an empty string to cause the view to produce a `null` item.'
             street.set("")
         then : 'No exception is thrown.'
             noExceptionThrown()
-        and : 'The view produces a null item.'
+        and : 'The view produces a `null` item.'
             fullAddress.orElseNull() == null
     }
 
-    def 'Some non-nullable composite properties created using the `Val.of(..)` method cannot deal with null.'()
+    def 'Some non-nullable composite properties created using the `Val.viewOf(..)` method cannot deal with `null`.'()
     {
         reportInfo """
-            Some non-nullable composite properties created using the `Lal.of(..)` method cannot deal with potential
-            null items produced by the combiner function, due to the type of the view
+            Some non-nullable composite properties created using the `Lal.viewOf(..)` method cannot deal with potential
+            `null` items produced by the combiner function, due to the type of the view
             not having a default value (which is the case for primitive types or strings).
         """
         given : 'We are using `Date` based properties.'
             Var<Date> date1 = Var.ofNullable(Date.class, new Date())
             Var<Date> date2 = Var.ofNullable(Date.class, new Date())
-        and : 'A view of the 2 properties that represents the earliest date, or null if any of the dates is null.'
+        and : 'A view of the 2 properties that represents the earliest date, or `null` if any of the dates is `null`.'
             Val<Date> earliestDate = Val.viewOf(date1, date2, (d1, d2) -> (d1==null||d2==null) ? null : d1.before(d2) ? d1 : d2)
-        expect : 'The view tells us that it does not allow null items.'
+        expect : 'The view tells us that it does not allow `null` items.'
             !earliestDate.allowsNull()
         and : 'It contains an initial value.'
             earliestDate.get() != null
-        when : 'We set the first date to null.'
+        when : 'We set the first date to `null`.'
             date1.set(null)
         then : """
-            You might expect the view to either produce a null item, or to throw an exception.
+            You might expect the view to either produce a `null` item, or to throw an exception.
             But, you have to remember that a view tries to be resilient to exceptions, which 
             includes null-pointer exceptions. 
             
@@ -150,9 +144,8 @@ class Composite_Properties_Spec extends Specification
             noExceptionThrown()
         and : 'The view still contains the initial value.'
             earliestDate.get() != null
-
         when : """
-            We take a look at a more unfortunate scenario where at least one of the dates is null initially,
+            We take a look at a more unfortunate scenario where at least one of the dates is `null` initially,
             then this whole situation is not going to work out without an exception being thrown
             at you.
         """
