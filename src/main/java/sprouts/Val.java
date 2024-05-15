@@ -219,10 +219,12 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	 * @param combiner The function used to combine the items of the two properties,
 	 *                 where the first argument is the item of the first property and
 	 *                 the second argument is the item of the second property.
-	 * @param <T>      The type of the items held by the properties.
+	 * @param <T>      The type of the first property.
+	 * @param <U>      The type of the second property.
+	 * @param <R>      The type of the returned property.
 	 * @return A new {@link Val} instance which is a live view of the two given properties.
-	 * @throws NullPointerException     If the combiner function returns a {@code null} reference
-	 *                                  <b>when it is first called</b>.
+	 * @throws NullPointerException If the combiner function returns a {@code null} reference
+	 *                              <b>when it is first called</b>.
 	 */
 	static <T extends @Nullable Object, U extends @Nullable Object, R> Val<R> viewOf(Class<R> type, Val<T> first, Val<U> second, BiFunction<T, U, R> combiner ) {
 		Objects.requireNonNull(type);
@@ -252,7 +254,9 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	 * @param combiner The function used to combine the items of the two properties,
 	 *                 where the first argument is the item of the first property and
 	 *                 the second argument is the item of the second property.
-	 * @param <T>      The type of the items held by the properties.
+	 * @param <T>      The type of the first property.
+	 * @param <U>      The type of the second property.
+	 * @param <R>      The type of the returned property.
 	 * @return A new {@link Val} instance which is a live view of the two given properties.
 	 */
 	static <T extends @Nullable Object, U extends @Nullable Object, R> Val<@Nullable R> viewOfNullable(Class<R> type, Val<T> first, Val<U> second, BiFunction<T, U, @Nullable R> combiner ) {
