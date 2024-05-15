@@ -1,5 +1,6 @@
 package sprouts.impl;
 
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import sprouts.*;
 
@@ -117,21 +118,19 @@ public final class Sprouts implements SproutsFactory
         return Val.ofNullable( toBeCopied.type(), toBeCopied.orElseNull() ).withId( toBeCopied.id() );
     }
 
-    @Override public <T> Val<T> viewOf( Val<T> first, Val<T> second, BiFunction<T, T, T> combiner ) {
+    @Override
+    public <T extends @Nullable Object, U extends @Nullable Object> Val<@NonNull T> viewOf(Val<T> first, Val<U> second, BiFunction<T, U, @NonNull T> combiner ) {
         Objects.requireNonNull(first);
         Objects.requireNonNull(second);
         Objects.requireNonNull(combiner);
-        if ( first.type() != second.type() )
-            throw new IllegalArgumentException("The types of the two properties are not compatible!");
         return AbstractVariable.viewOf( first, second, combiner );
     }
 
-    @Override public <T extends @Nullable Object> Val<@Nullable T> viewOfNullable(Val<T> first, Val<T> second, BiFunction<T, T, T> combiner ) {
+    @Override
+    public <T extends @Nullable Object, U extends @Nullable Object> Val<@Nullable T> viewOfNullable(Val<T> first, Val<U> second, BiFunction<T, U, @Nullable T> combiner ) {
         Objects.requireNonNull(first);
         Objects.requireNonNull(second);
         Objects.requireNonNull(combiner);
-        if ( first.type() != second.type() )
-            throw new IllegalArgumentException("The types of the two properties are not compatible!");
         return AbstractVariable.viewOfNullable( first, second, combiner );
     }
 

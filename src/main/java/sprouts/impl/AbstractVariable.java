@@ -35,11 +35,11 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 		return new AbstractVariable<T>( immutable, (Class<T>) iniValue.getClass(), iniValue, NO_ID, Collections.emptyMap(), false );
 	}
 
-	public static <T> Var<T> viewOf( Val<T> first, Val<T> second, BiFunction<T, T, T> combiner ) {
+	public static <T extends @Nullable Object, U extends @Nullable Object> Var<@NonNull T> viewOf( Val<T> first, Val<U> second, BiFunction<T, U, @NonNull T> combiner ) {
 		return of( false, first, second, combiner );
 	}
 
-	public static <T extends @Nullable Object> Var<@Nullable T> viewOfNullable( Val<T> first, Val<T> second, BiFunction<T, T, T> combiner ) {
+	public static <T extends @Nullable Object, U extends @Nullable Object> Var<@Nullable T> viewOfNullable( Val<T> first, Val<U> second, BiFunction<T, U, @Nullable T> combiner ) {
 		return of( true, first, second, combiner );
 	}
 
@@ -51,7 +51,7 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 		return ofNullable( type, first, second, combiner );
 	}
 
-	private static <T extends @Nullable Object> Var<T> of( boolean allowNull, Val<T> first, Val<T> second, BiFunction<T, T, T> combiner ) {
+	private static <T extends @Nullable Object, U extends @Nullable Object> Var<T> of( boolean allowNull, Val<T> first, Val<U> second, BiFunction<T, U, T> combiner ) {
 		String id = "";
 		if ( !first.id().isEmpty() && !second.id().isEmpty() )
 			id = first.id() + "_and_" + second.id();
@@ -60,7 +60,7 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 		else if ( !second.id().isEmpty() )
 			id = second.id();
 
-		BiFunction<Val<T>, Val<T>, T> fullCombiner = (p1, p2) -> {
+		BiFunction<Val<T>, Val<U>, T> fullCombiner = (p1, p2) -> {
 			@Nullable T newItem = null;
 			try {
 				newItem = combiner.apply(p1.orElseNull(), p2.orElseNull());

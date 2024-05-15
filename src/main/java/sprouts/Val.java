@@ -149,18 +149,16 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	 * @param combiner The function used to combine the items of the two properties,
 	 *                 where the first argument is the item of the first property and
 	 *                 the second argument is the item of the second property.
-	 * @param <T>      The type of the items held by the properties.
+	 * @param <T>      The type of the item of the first property and the returned property.
+	 * @param <U>      The type of the second property.
 	 * @return A new {@link Val} instance which is a live view of the two given properties.
-	 * @throws NullPointerException     If the combiner function returns a {@code null} reference
-	 *                                  <b>when it is first called</b>.
-	 * @throws IllegalArgumentException If the types of the two properties are not compatible.
+	 * @throws NullPointerException If the combiner function returns a {@code null} reference
+	 *                              <b>when it is first called</b>.
 	 */
-	static <T> Val<T> viewOf(Val<T> first, Val<T> second, BiFunction<T, T, T> combiner ) {
+	static <T extends @Nullable Object, U extends @Nullable Object> Val<@NonNull T> viewOf(Val<T> first, Val<U> second, BiFunction<T, U, @NonNull T> combiner ) {
 		Objects.requireNonNull(first);
 		Objects.requireNonNull(second);
 		Objects.requireNonNull(combiner);
-		if ( first.type() != second.type() )
-			throw new IllegalArgumentException("The types of the two properties are not compatible!");
 		return Sprouts.factory().viewOf( first, second, combiner );
 	}
 
@@ -182,11 +180,11 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	 * @param combiner The function used to combine the items of the two properties,
 	 *                 where the first argument is the item of the first property and
 	 *                 the second argument is the item of the second property.
-	 * @param <T>      The type of the items held by the properties.
+	 * @param <T>      The type of the item of the first property and the returned property.
+	 * @param <U>      The type of the second property.
 	 * @return A new nullable {@link Val} instance which is a live view of the two given properties.
-	 * @throws IllegalArgumentException If the types of the two properties are not compatible.
 	 */
-	static <T extends @Nullable Object> Val<@Nullable T> viewOfNullable(Val<T> first, Val<T> second, BiFunction<T, T, T> combiner ) {
+	static <T extends @Nullable Object, U extends @Nullable Object> Val<@Nullable T> viewOfNullable(Val<T> first, Val<U> second, BiFunction<T, U, @Nullable T> combiner ) {
 		Objects.requireNonNull(first);
 		Objects.requireNonNull(second);
 		Objects.requireNonNull(combiner);
