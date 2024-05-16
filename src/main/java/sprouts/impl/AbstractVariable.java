@@ -184,8 +184,11 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 
 	/** {@inheritDoc} */
 	@Override
-	public <U> Val<U> view(U nullObject, Function<T, @Nullable U> mapper) {
-		Function<T, U> nonNullMapper = nonNullMapper(nullObject, nullObject, mapper);
+	public <U> Val<U> view(U nullObject, U errorObject, Function<T, @Nullable U> mapper) {
+		Objects.requireNonNull(nullObject);
+		Objects.requireNonNull(errorObject);
+
+		Function<T, U> nonNullMapper = nonNullMapper(nullObject, errorObject, mapper);
 
 		final U initial = nonNullMapper.apply(orElseNull());
 		final Var<U> var = Var.of( initial );

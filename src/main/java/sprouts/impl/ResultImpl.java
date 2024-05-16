@@ -96,10 +96,11 @@ public class ResultImpl<V> implements Result<V>
 	}
 
 	@Override
-	public <U> Val<U> view( U nullObject, Function<V, U> mapper) {
+	public <U> Val<U> view( U nullObject, U errorObject, Function<V, U> mapper) {
 		Objects.requireNonNull(nullObject);
+		Objects.requireNonNull(errorObject);
 		Objects.requireNonNull(mapper);
-		return Val.ofNullable(this._type, this._value).view( nullObject, mapper);
+		return Val.ofNullable(this._type, this._value).view( nullObject, errorObject, mapper);
 	}
 
 	@Override
