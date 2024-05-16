@@ -247,7 +247,7 @@ class Composite_Properties_Spec extends Specification
             integerVar.set(null)
         then : 'The view should be empty.'
             view.isEmpty()
-        when : 'We set a value so that the combiner returns throws an exception'
+        when : 'We set a value so that the combiner throws an exception'
             integerVar.set(9)
             doubleVar.set(null)
             then : 'The view should be empty.'

@@ -174,7 +174,7 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	 * Note: The property view does <b>allow</b> storing {@code null} references!
 	 * If the combiner function throws an exception, the view will be set to {@code null}.
 	 * <p>
-	 * If you need a composite view that not allows {@code null}, use the {@link #viewOf(Val, Val, BiFunction)}
+	 * If you need a composite view that does not allow {@code null}, use the {@link #viewOf(Val, Val, BiFunction)}
 	 * method instead.
 	 *
 	 * @param first    The first property to be combined.
