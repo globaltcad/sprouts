@@ -300,7 +300,7 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	default Val<Boolean> viewIsPresent() {
 		if ( !this.allowsNull() )
 			return Val.of( true );
-		return view(false, obj -> true);
+		return viewAs(Boolean.class, Objects::nonNull);
 	}
 
 	/**
@@ -316,7 +316,7 @@ public interface Val<T extends @Nullable Object> extends Observable {
 		if ( !this.allowsNull() )
 			return Val.of( false );
 		else
-			return view(true, obj -> false);
+			return viewAs(Boolean.class, Objects::isNull);
 	}
 
 	/**
@@ -437,23 +437,23 @@ public interface Val<T extends @Nullable Object> extends Observable {
 
 	/**
 	 * Use this to create a live view of this property through a new property based on the provided mapping function.
-	 * So whenever the value of this property changes, the value of the new property will be updated based on the
+	 * So whenever the item of this property changes, the item of the new property will be updated based on the
 	 * mapping function and null object.
 	 * <p>
-	 * Note: The mapping function is not allowed to map to {@code null}.
-	 * Null object are mapped to the provided {@code nullValue} without using the mapping function.
-	 * Thus, the mapping function does not have to deal with {@code null}.
+	 * Note: The mapping function can map to {@code null} and may need to handle {@code null}.
+	 * If the mapping function returns {@code null} or throws an exception, the view will contain the proved
+	 * null object.
 	 * <p>
 	 * The result is a non-nullable view of the property.
 	 * The reason for this design decision is that a view of a property is intended to be used as part of an
 	 * application, where {@code null} can lead to exceptions and ultimately a confusing user experience.
 	 *
 	 * @param nullObject The null object to use if no item is present.
-	 * @param mapper    The mapping function to apply to a value, if present.
+	 * @param mapper    The mapping function to apply to an item.
 	 * @param <U>       The type of the resulting property.
 	 * @return A property that is a live view of this property based on the provided mapping function and null object.
 	 */
-	<U> Val<U> view( U nullObject, Function<T, U> mapper );
+	<U> Val<U> view( U nullObject, Function<T, @Nullable U> mapper );
 
 	/**
 	 * Use this to create a nullable live view of this property through a new property based on the provided mapping

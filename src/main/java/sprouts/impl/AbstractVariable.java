@@ -182,11 +182,22 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 		return var;
 	}
 
+	/** {@inheritDoc} */
 	@Override
-	public <U> Val<U> view(U nullObject, Function<T, U> mapper) {
-		final Var<U> var = Var.of(isPresent() ? mapper.apply(get()) : nullObject);
-		onChange(DEFAULT_CHANNEL, v -> var.set(v.isPresent() ? mapper.apply(v.get()) : nullObject));
-		_viewers.add(v -> var.set(From.VIEW, v != null ? mapper.apply(v) : nullObject));
+	public <U> Val<U> view(U nullObject, Function<T, @Nullable U> mapper) {
+		Function<T, U> nonNullMapper = nonNullMapper(nullObject, nullObject, mapper);
+
+		final U initial = nonNullMapper.apply(orElseNull());
+		final Var<U> var = Var.of( initial );
+
+		onChange(DEFAULT_CHANNEL, v -> {
+			final U value = nonNullMapper.apply(orElseNull());
+			var.set( value );
+		});
+		_viewers.add(v -> {
+			final U value = nonNullMapper.apply(orElseNull());
+			var.set( value );
+		});
 		return var;
 	}
 
@@ -248,6 +259,17 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 	@Override
 	protected String _stringTypeName() {
 		return _isImmutable ? super._stringTypeName() : "Var";
+	}
+
+	private static <T extends @Nullable Object, R> Function<T, R> nonNullMapper(R nullObject, R errorObject, Function<T, @Nullable R> mapper) {
+		return t -> {
+			try {
+				@Nullable R r = mapper.apply(t);
+				return r == null ? nullObject : r;
+			} catch (Exception e) {
+				return errorObject;
+			}
+		};
 	}
 
 }
