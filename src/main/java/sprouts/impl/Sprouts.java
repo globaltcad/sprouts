@@ -1,5 +1,6 @@
 package sprouts.impl;
 
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import sprouts.*;
 
@@ -117,22 +118,38 @@ public final class Sprouts implements SproutsFactory
         return Val.ofNullable( toBeCopied.type(), toBeCopied.orElseNull() ).withId( toBeCopied.id() );
     }
 
-    @Override public <T> Val<T> valOf( Val<T> first, Val<T> second, BiFunction<T, T, T> combiner ) {
+    @Override
+    public <T extends @Nullable Object, U extends @Nullable Object> Val<@NonNull T> viewOf(Val<T> first, Val<U> second, BiFunction<T, U, @NonNull T> combiner ) {
         Objects.requireNonNull(first);
         Objects.requireNonNull(second);
         Objects.requireNonNull(combiner);
-        if ( first.type() != second.type() )
-            throw new IllegalArgumentException("The types of the two properties are not compatible!");
-        return AbstractVariable.of( first, second, combiner );
+        return AbstractVariable.viewOf( first, second, combiner );
     }
 
-    @Override public <T extends @Nullable Object> Val<@Nullable T> valOfNullable(Val<T> first, Val<T> second, BiFunction<T, T, T> combiner ) {
+    @Override
+    public <T extends @Nullable Object, U extends @Nullable Object> Val<@Nullable T> viewOfNullable(Val<T> first, Val<U> second, BiFunction<T, U, @Nullable T> combiner ) {
         Objects.requireNonNull(first);
         Objects.requireNonNull(second);
         Objects.requireNonNull(combiner);
-        if ( first.type() != second.type() )
-            throw new IllegalArgumentException("The types of the two properties are not compatible!");
-        return AbstractVariable.ofNullable( first, second, combiner );
+        return AbstractVariable.viewOfNullable( first, second, combiner );
+    }
+
+    @Override
+    public <T extends @Nullable Object, U extends @Nullable Object, R> Val<R> viewOf(Class<R> type, Val<T> first, Val<U> second, BiFunction<T, U, R> combiner) {
+        Objects.requireNonNull(type);
+        Objects.requireNonNull(first);
+        Objects.requireNonNull(second);
+        Objects.requireNonNull(combiner);
+        return AbstractVariable.viewOf( type, first, second, combiner );
+    }
+
+    @Override
+    public <T extends @Nullable Object, U extends @Nullable Object, R> Val<@Nullable R> viewOfNullable(Class<R> type, Val<T> first, Val<U> second, BiFunction<T, U, @Nullable R> combiner) {
+        Objects.requireNonNull(type);
+        Objects.requireNonNull(first);
+        Objects.requireNonNull(second);
+        Objects.requireNonNull(combiner);
+        return AbstractVariable.viewOfNullable( type, first, second, combiner );
     }
 
 
