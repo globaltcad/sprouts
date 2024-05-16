@@ -38,7 +38,7 @@ class Viewing_Properties_Spec extends Specification
             Var<File> file = Var.ofNull(File)
         and : 'A couple of views...'
             Val<Boolean> exists = file.view( false, f -> f.exists() )
-            Val<Integer> size = file.viewAsInt( f -> f.length() )
+            Val<Integer> size = file.viewAsInt( f -> (int) f.length() )
             Val<String> name = file.viewAsString( f -> f.getName() )
             Val<Long> lastModified = file.view( 0L, f -> f.lastModified() )
             Val<Character> firstChar = file.view( '\u0000' as char, f -> f.getName().charAt(0) )
@@ -60,7 +60,7 @@ class Viewing_Properties_Spec extends Specification
             file.set(new File("build.gradle"))
         then : 'The views are updated.'
             exists.get() == true
-            size.get() == 0
+            size.get() != 0
             name.get() == "build.gradle"
             lastModified.get() > 0
             firstChar.get() == 'b'
