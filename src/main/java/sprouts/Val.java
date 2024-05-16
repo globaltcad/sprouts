@@ -516,14 +516,7 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	 */
 	default Val<String> viewAsString( String nullObject, Function<T, @Nullable String> mapper ) {
 		Objects.requireNonNull(nullObject);
-		return viewAs( String.class, v -> {
-			try {
-				String stringRef = mapper.apply(v);
-				return ( stringRef == null ? nullObject : stringRef );
-			} catch (Exception e) {
-				return nullObject;
-			}
-		});
+		return view(nullObject, mapper);
 	}
 
 	/**
@@ -546,7 +539,7 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	 * @return A property that is a live view of this property based on the provided mapping function.
 	 */
 	default Val<String> viewAsString( Function<T, @Nullable String> mapper ) {
-		return viewAsString("", mapper);
+		return view("", mapper);
 	}
 
 	/**
@@ -570,7 +563,7 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	 * @return A String property that is a live view of this property.
 	 */
 	default Val<String> viewAsString() {
-		return viewAsString( "", v -> v == null ? null : v.toString() );
+		return view("", v -> v == null ? null : v.toString());
 	}
 
 	/**
@@ -667,14 +660,7 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	 * @return A property that is a live view of this property based on the provided mapping function.
 	 */
 	default Val<Integer> viewAsInt( int nullObject, Function<T, @Nullable Integer> mapper ) {
-		return viewAs( Integer.class, v -> {
-			try {
-				Integer numberRef = mapper.apply(v);
-				return ( numberRef == null ? nullObject : numberRef );
-			} catch (Exception e) {
-				return nullObject;
-			}
-		});
+		return view(nullObject, mapper);
 	}
 
 	/**
@@ -699,7 +685,7 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	 * @return A property that is a live view of this property based on the provided mapping function.
 	 */
 	default Val<Integer> viewAsInt( Function<T, @Nullable Integer> mapper ) {
-		return viewAsInt(0, mapper);
+		return view(0, mapper);
 	}
 
 	/**
@@ -719,7 +705,7 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	 * @return An Integer property that is a live view of this property.
 	 */
 	default Val<Integer> viewAsInt() {
-		return viewAsInt( 0, v -> v == null ? null : Integer.parseInt( v.toString() ) );
+		return view(0, v -> v == null ? null : Integer.parseInt(v.toString()));
 	}
 
 	/**
