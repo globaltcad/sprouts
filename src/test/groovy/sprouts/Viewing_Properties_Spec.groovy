@@ -250,4 +250,44 @@ class Viewing_Properties_Spec extends Specification
             view.get() == "error"
     }
 
+    def 'A view is updated only once for every change, or not updated at all if no change occurred.'()
+    {
+        reportInfo """
+            The state of a view is only updated when the source property changes.
+            And this is done only a single time for every change.
+            However, if a change event is triggered manually, the view is also updated
+            even if the value of the source property has not changed.
+        """
+        given : 'A simple source property...'
+            Var<String> source = Var.of("Hello")
+            var changes = 0
+        and : 'A view of the source property as a byte representation of the length of the string.'
+            Val<Byte> view = source.viewAs(Byte, s -> {
+                changes++
+                return (byte) s.length()
+            })
+        expect : 'The view has the expected value.'
+            view.get() == 5
+            changes == 1
+
+        when : 'We change the value of the source property to the same value.'
+            source.set("Hello")
+        then : 'The view is not updated.'
+            view.get() == 5
+            changes == 1
+
+        when : 'We change the value of the source property to a different value.'
+            source.set("World")
+        then : 'The view is updated.'
+            view.get() == 5
+            changes == 2
+
+        when : 'We try to trigger a view update through a manual change event.'
+            source.fireChange(From.VIEW_MODEL)
+        then : 'The view is updated despite the value of the source property not changing.'
+            view.get() == 5
+            changes == 3
+
+    }
+
 }
