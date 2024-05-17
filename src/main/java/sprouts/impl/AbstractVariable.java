@@ -20,7 +20,9 @@ import java.util.function.Function;
  * @param <T> The type of the value wrapped by a given property...
  */
 public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<T> implements Var<T> {
+
 	private static final Logger log = org.slf4j.LoggerFactory.getLogger(AbstractVariable.class);
+	private static From VIEW_CHANNEL = From.ALL;
 
 	public static <T> Var<@Nullable T> ofNullable( boolean immutable, Class<T> type, @Nullable T value ) {
 		return new AbstractVariable<T>( immutable, type, value, NO_ID, Collections.emptyMap(), true );
@@ -183,7 +185,6 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 
 
 	private final boolean _isImmutable;
-	private final List<Consumer<T>> _viewers = new ArrayList<>(0);
 
 
 	protected AbstractVariable(
@@ -225,8 +226,6 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 			_triggerActions( _actions.computeIfAbsent(channel, k->new ArrayList<>()) );
 			_triggerActions( _actions.computeIfAbsent(From.ALL, k->new ArrayList<>()) );
 		}
-
-		_viewers.forEach( v -> v.accept(_value) );
 		return this;
 	}
 
@@ -266,8 +265,7 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 	@Override
 	public final <U> Val<U> viewAs(Class<U> type, Function<T, U> mapper) {
 		final Var<U> var = Var.of(type, mapper.apply(orElseNull()));
-		onChange(DEFAULT_CHANNEL, v -> var.set(mapper.apply(v.orElseNull())));
-		_viewers.add(v -> var.set(From.VIEW, mapper.apply(v)));
+		onChange(VIEW_CHANNEL, v -> var.set(mapper.apply(v.orElseNull())));
 		return var;
 	}
 
@@ -282,11 +280,7 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 		final U initial = nonNullMapper.apply(orElseNull());
 		final Var<U> var = Var.of( initial );
 
-		onChange(DEFAULT_CHANNEL, v -> {
-			final U value = nonNullMapper.apply(orElseNull());
-			var.set( value );
-		});
-		_viewers.add(v -> {
+		onChange(VIEW_CHANNEL, v -> {
 			final U value = nonNullMapper.apply(orElseNull());
 			var.set( value );
 		});
@@ -297,8 +291,7 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 	@Override
 	public <U> Val<@Nullable U> viewAsNullable(Class<U> type, Function<T, @Nullable U> mapper) {
 		final Var<@Nullable U> var = Var.ofNullable(type, mapper.apply(orElseNull()));
-		onChange(DEFAULT_CHANNEL, v -> var.set(mapper.apply(v.orElseNull())));
-		_viewers.add(v -> var.set(From.VIEW, mapper.apply(v)));
+		onChange(VIEW_CHANNEL, v -> var.set(mapper.apply(v.orElseNull())));
 		return var;
 	}
 
