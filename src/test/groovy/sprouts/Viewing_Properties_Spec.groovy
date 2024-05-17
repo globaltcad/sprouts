@@ -94,9 +94,9 @@ class Viewing_Properties_Spec extends Specification
         when : 'We change the value of the property.'
             random.set(new Random(0))
         then : 'The views are updated.'
-            randomInt.get() == -1557280266
-            randomDouble.get() == 0.3090505681997092
-            randomShort.get() == 9475
+            randomInt.get() == -1155484576
+            randomDouble.get() == 0.8314409887870612
+            randomShort.get() == 28862
             randomString.get() == "Random"
     }
 
