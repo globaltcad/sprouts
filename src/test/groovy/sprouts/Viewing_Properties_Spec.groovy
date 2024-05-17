@@ -37,11 +37,11 @@ class Viewing_Properties_Spec extends Specification
         given : 'A nullable property...'
             Var<File> file = Var.ofNull(File)
         and : 'A couple of views...'
-            Val<Boolean> exists = file.viewAs(Boolean, f -> f.exists() )
-            Val<Integer> size = file.viewAsInt( f -> f.length() )
+            Val<Boolean> exists = file.view( false, f -> f.exists() )
+            Val<Integer> size = file.viewAsInt( f -> (int) f.length() )
             Val<String> name = file.viewAsString( f -> f.getName() )
-            Val<Long> lastModified = file.viewAs(Long, f -> f.lastModified() )
-            Val<Character> firstChar = file.viewAs(Character, f -> f.getName().charAt(0) )
+            Val<Long> lastModified = file.view( 0L, f -> f.lastModified() )
+            Val<Character> firstChar = file.view( '\u0000' as char, f -> f.getName().charAt(0) )
         expect : 'All views are non-nullable:'
             !exists.allowsNull()
             !size.allowsNull()
@@ -60,7 +60,7 @@ class Viewing_Properties_Spec extends Specification
             file.set(new File("build.gradle"))
         then : 'The views are updated.'
             exists.get() == true
-            size.get() == 0
+            size.get() != 0
             name.get() == "build.gradle"
             lastModified.get() > 0
             firstChar.get() == 'b'
@@ -226,6 +226,28 @@ class Viewing_Properties_Spec extends Specification
             numView.type() == Number
             numView.get() == -3.0
             numView.get() instanceof Float
+    }
+
+    def 'A view can use specific items to indicate mapping to `null` or exceptions during mapping.'()
+    {
+        reportInfo """
+            The `view` method allows to provide a specific `nullObject` to be used when the mapping function returns
+            `null` and an `errorObject` to be used when an error occurs.
+        """
+        given : 'A property of type integer.'
+            var integerVar = Var.ofNullable(Integer.class, 6);
+        and : 'A string view based on the property.'
+            var view = integerVar.view("negative", "error", i -> i < 0 ? null : String.format("3 / %d = %.1f", i, 3 / i))
+        expect : 'The view has the expected value.'
+            view.get() == "3 / 6 = 0.5"
+        when : 'We update the property so that the mapping function returns `null`.'
+            integerVar.set(-1)
+        then : 'The view has the expected `nullValue`.'
+            view.get() == "negative"
+        when : 'We update the property so that the mapping function throws an exception.'
+            integerVar.set(0)
+        then : 'The view has the expected `errorValue`.'
+            view.get() == "error"
     }
 
 }
