@@ -5,6 +5,8 @@ import spock.lang.Specification
 import spock.lang.Subject
 import spock.lang.Title
 
+import java.util.function.Supplier
+
 @Title("Results")
 @Narrative('''
     The `Result` interface is used to represent the optional result of an operation
@@ -183,4 +185,41 @@ class Result_Spec extends Specification
             mapped.problems().first().exception().get().message == "foo"
     }
 
+    def 'Create a result from a supplier which may or may not throw an exception using the `ofTry` method.'()
+    {
+        reportInfo """
+            The core purpose of a `Result` is to resolve a value 
+            while being protected against exceptions
+            that might occur during the execution of an operation
+            that produces the value.
+            
+            The `ofTry` method is used to create a `Result` from a value supplier.
+            The supplier may or may not throw an exception.
+            If it does, the exception is caught and turned into a problem.
+        """
+        given : 'A flag that determines if an exception should be thrown.'
+            def doFail = false
+        and : 'A supplier that may or may not throw an exception.'
+            Supplier<String> supplier = ()->{
+                if ( doFail )
+                    throw new IllegalArgumentException("foo")
+                else
+                    return "bar"
+            }
+
+        when : 'We create a result from the supplier with the `doFail` flag set to false.'
+            def result = Result.ofTry(String.class, supplier)
+        then : 'No exception is thrown, which means the result has the value.'
+            result.get() == "bar"
+        and : 'The result has no problems.'
+            result.problems().isEmpty()
+
+        when : 'We create a result from the supplier with the `doFail` flag set to true.'
+            doFail = true
+            def result2 = Result.ofTry(String.class, supplier)
+        then : 'An exception is thrown, which means the result has a problem.'
+            result2.problems().size() == 1
+        and : 'The problem is an exception problem.'
+            result2.problems().first().exception().get().message == "foo"
+    }
 }
