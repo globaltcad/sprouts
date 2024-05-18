@@ -6,6 +6,7 @@ import sprouts.impl.Sprouts;
 
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * 	A result is very similar to an {@link Optional} in that it can either contain a value or not,
@@ -182,6 +183,23 @@ public interface Result<V> extends Val<V>
 			throw new IllegalArgumentException("List elements must be of type " + type.getName());
 
 		return Sprouts.factory().resultOfList(type, list, problems);
+	}
+
+	/**
+	 *  A factory method for creating a result from a {@link Supplier} which may throw an exception.
+	 *  If the supplier throws an exception, the exception is caught and a new result is returned
+	 *  with the exception as a problem.
+	 *
+	 * @param type The type of the value returned from the supplier.
+	 * @param supplier The supplier to obtain the value from.
+	 * @return A new result with the value obtained from the supplier and a list of problems describing related issues.
+	 * @param <V> The type of the value returned from the supplier.
+	 * @throws NullPointerException if the type or supplier is null.
+	 */
+	static <V> Result<V> ofTry( Class<V> type, Supplier<V> supplier ) {
+		Objects.requireNonNull(type);
+		Objects.requireNonNull(supplier);
+		return Sprouts.factory().resultOfTry(type, supplier);
 	}
 
 	/**

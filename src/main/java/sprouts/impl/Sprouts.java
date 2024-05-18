@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.BiFunction;
+import java.util.function.Supplier;
 import java.util.stream.StreamSupport;
 
 /**
@@ -333,5 +334,16 @@ public final class Sprouts implements SproutsFactory
 		problems = Collections.unmodifiableList(new ArrayList<>(Objects.requireNonNull(problems)));
 		return (Result<List<V>>) (Result) new ResultImpl<>(Result.ID, List.class, problems, list);
 	}
+
+    @Override
+    public <V> Result<V> resultOfTry( Class<V> type, Supplier<V> supplier ) {
+        Objects.requireNonNull(type);
+        Objects.requireNonNull(supplier);
+        try {
+            return resultOf(type, supplier.get());
+        } catch (Exception e) {
+            return resultOf(type, Problem.of(e));
+        }
+    }
 
 }

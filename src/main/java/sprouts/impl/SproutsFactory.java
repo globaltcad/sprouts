@@ -6,6 +6,7 @@ import sprouts.*;
 
 import java.util.List;
 import java.util.function.BiFunction;
+import java.util.function.Supplier;
 
 /**
  *  Creates instances of the various property types in the Sprouts library.
@@ -123,4 +124,5 @@ public interface SproutsFactory
 
 	<V> Result<List<V>> resultOfList( Class<V> type, List<V> list, List<Problem> problems );
 
+	<V> Result<V> resultOfTry( Class<V> type, Supplier<V> supplier );
 }
