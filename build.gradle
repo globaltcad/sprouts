@@ -20,7 +20,7 @@ println "Static analysis enabled: $WE_CAN_DO_STATIC_ANALYSIS"
 
 String GROUP_ID = "io.github.globaltcad"
 String PROJECT  = "sprouts"
-String VERSION  = "1.1.1"
+String VERSION  = "2.0.0-M1"
 
 
 group GROUP_ID
@@ -54,10 +54,10 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.2'    // mandatory dependencies for using Spock
 
-    testImplementation 'org.codehaus.groovy:groovy:3.0.12'
-    testImplementation platform('org.spockframework:spock-bom:2.1-groovy-3.0')
-    testImplementation 'org.spockframework:spock-core:2.1-groovy-3.0'
-    testImplementation 'com.athaydes:spock-reports:2.3.2-groovy-3.0'
+    implementation group: 'org.apache.groovy', name: 'groovy', version: '4.0.21'
+    testImplementation group: 'com.athaydes', name: 'spock-reports', version: '2.5.1-groovy-4.0'
+    testImplementation group: 'org.spockframework', name: 'spock-core', version: '2.3-groovy-4.0'
+
 
     // if you don't already have slf4j-api and an implementation of it in the classpath, add this! (needed for reports)
     testImplementation 'org.slf4j:slf4j-api:1.7.30'
