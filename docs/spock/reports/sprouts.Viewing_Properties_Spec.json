@@ -4,7 +4,7 @@
   "narrative":"Both the read only `Val` and the mutable `Var` are observable properties.\n    As a consequence, they expose convenient methods to observe their changes\n    in the form of \"views\", which are themselves observable properties\n    that are a live view of the original property which gets updated\n    automatically when the original property changes.\n\n    This is especially useful when you want to observe a property\n    of one type as a property of another type, or when you want to\n    observe a property with some transformation applied to it.\n\n    This specification shows how to create views from both nullable and non-nullable properties,",
   "subjects":["sprouts.Val","sprouts.Val"],
   "statistics":{
-    "runs":"7",
+    "runs":"9",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -23,7 +23,7 @@
       "blocks":[
         {"kind":"given","text":"A nullable property...","code":["Var<File> file = Var.ofNull(File)"]},
 
-        {"kind":"and","text":"A couple of views...","code":["Val<Boolean> exists = file.viewAs(Boolean, f -> f.exists() )","Val<Integer> size = file.viewAsInt( f -> f.length() )","Val<String> name = file.viewAsString( f -> f.getName() )","Val<Long> lastModified = file.viewAs(Long, f -> f.lastModified() )","Val<Character> firstChar = file.viewAs(Character, f -> f.getName().charAt(0) )"]},
+        {"kind":"and","text":"A couple of views...","code":["Val<Boolean> exists = file.view( false, f -> f.exists() )","Val<Integer> size = file.viewAsInt( f -> (int) f.length() )","Val<String> name = file.viewAsString( f -> f.getName() )","Val<Long> lastModified = file.view( 0L, f -> f.lastModified() )","Val<Character> firstChar = file.view( '\\u0000' as char, f -> f.getName().charAt(0) )"]},
 
         {"kind":"expect","text":"All views are non-nullable:","code":["!exists.allowsNull()","!size.allowsNull()","!name.allowsNull()","!lastModified.allowsNull()","!firstChar.allowsNull()"]},
 
@@ -31,7 +31,7 @@
 
         {"kind":"when","text":"We change the value of the property.","code":["file.set(new File(\"build.gradle\"))"]},
 
-        {"kind":"then","text":"The views are updated.","code":["exists.get() == true","size.get() == 0","name.get() == \"build.gradle\"","lastModified.get() > 0","firstChar.get() == 'b'"]}
+        {"kind":"then","text":"The views are updated.","code":["exists.get() == true","size.get() != 0","name.get() == \"build.gradle\"","lastModified.get() > 0","firstChar.get() == 'b'"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -54,7 +54,7 @@
 
         {"kind":"when","text":"We change the value of the property.","code":["random.set(new Random(0))"]},
 
-        {"kind":"then","text":"The views are updated.","code":["randomInt.get() == -1557280266","randomDouble.get() == 0.3090505681997092","randomShort.get() == 9475","randomString.get() == \"Random\""]}
+        {"kind":"then","text":"The views are updated.","code":["randomInt.get() == -1155484576","randomDouble.get() == 0.8314409887870612","randomShort.get() == 28862","randomString.get() == \"Random\""]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -164,6 +164,60 @@
         {"kind":"when","text":"We change the value of the property so that the view holds a float.","code":["num.set(-3)"]},
 
         {"kind":"then","text":"The view is updated to the float representation of the integer.","code":["numView.type() == Number","numView.get() == -3.0","numView.get() instanceof Float"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A view can use specific items to indicate mapping to `null` or exceptions during mapping.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `view` method allows to provide a specific `nullObject` to be used when the mapping function returns\n            `null` and an `errorObject` to be used when an error occurs.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A property of type integer.","code":["var integerVar = Var.ofNullable(Integer.class, 6);"]},
+
+        {"kind":"and","text":"A string view based on the property.","code":["var view = integerVar.view(\"negative\", \"error\", i -> i < 0 ? null : String.format(\"3 / %d = %.1f\", i, 3 / i))"]},
+
+        {"kind":"expect","text":"The view has the expected value.","code":["view.get() == \"3 / 6 = 0.5\""]},
+
+        {"kind":"when","text":"We update the property so that the mapping function returns `null`.","code":["integerVar.set(-1)"]},
+
+        {"kind":"then","text":"The view has the expected `nullValue`.","code":["view.get() == \"negative\""]},
+
+        {"kind":"when","text":"We update the property so that the mapping function throws an exception.","code":["integerVar.set(0)"]},
+
+        {"kind":"then","text":"The view has the expected `errorValue`.","code":["view.get() == \"error\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A view is updated only once for every change, or not updated at all if no change occurred.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The state of a view is only updated when the source property changes.\n            And this is done only a single time for every change.\n            However, if a change event is triggered manually, the view is also updated\n            even if the value of the source property has not changed.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A simple source property...","code":["Var<String> source = Var.of(\"Hello\")","var changes = 0"]},
+
+        {"kind":"and","text":"A view of the source property as a byte representation of the length of the string.","code":["Val<Byte> view = source.viewAs(Byte, s -> {","    changes++","    return (byte) s.length()","})"]},
+
+        {"kind":"expect","text":"The view has the expected value.","code":["view.get() == 5","changes == 1"]},
+
+        {"kind":"when","text":"We change the value of the source property to the same value.","code":["source.set(\"Hello\")"]},
+
+        {"kind":"then","text":"The view is not updated.","code":["view.get() == 5","changes == 1"]},
+
+        {"kind":"when","text":"We change the value of the source property to a different value.","code":["source.set(\"World\")"]},
+
+        {"kind":"then","text":"The view is updated.","code":["view.get() == 5","changes == 2"]},
+
+        {"kind":"when","text":"We try to trigger a view update through a manual change event.","code":["source.fireChange(From.VIEW_MODEL)"]},
+
+        {"kind":"then","text":"The view is updated despite the value of the source property not changing.","code":["view.get() == 5","changes == 3"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }
