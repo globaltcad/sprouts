@@ -45,14 +45,14 @@ public interface ValsDelegate&lt;T&gt;
     Vals&lt;T&gt; oldValues();
 
     /**
-     *  Exposes the first previous value of the property before the change took place.
-     *  This is equivalent to calling {@code oldValues().first()}.
+     *  Exposes the first previous value of the property before the change took place, or an empty value if there are
+     *  no such values.
      * @deprecated Use {@link #oldValues()} instead! (After a change event, more than one item can be removed or changed)
      * @return The previous value of the property or an empty property if the change does not involve a previous value.
      */
     @Deprecated
     default Val&lt;T&gt; oldValue() {
-<span class="nc" id="L55">        return oldValues().first();</span>
+<span class="nc bnc" id="L55" title="All 2 branches missed.">        return oldValues().isEmpty() ? Val.ofNull(vals().type()) : oldValues().first();</span>
     }
 
     /**
@@ -63,14 +63,14 @@ public interface ValsDelegate&lt;T&gt;
     Vals&lt;T&gt; newValues();
 
     /**
-     *  Exposes the first new value of the property after the change took place.
-     *  This is equivalent to calling {@code newValues().first()}.
+     *  Exposes the first new value of the property after the change took place, or an empty value if there are no such
+     *  values.
      *  @deprecated Use {@link #newValues()} instead! (After a change event, more than one item can be added or changed)
      * @return The current value of the property or an empty property if the change does not involve a current value.
      */
     @Deprecated
     default Val&lt;T&gt; newValue() {
-<span class="nc" id="L73">        return newValues().first();</span>
+<span class="nc bnc" id="L73" title="All 2 branches missed.">        return newValues().isEmpty() ? Val.ofNull(vals().type()) : newValues().first();</span>
     }
 
     /**

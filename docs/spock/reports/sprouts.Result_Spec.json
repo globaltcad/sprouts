@@ -4,7 +4,7 @@
   "narrative":"The `Result` interface is used to represent the optional result of an operation\n    as well as a list of problems that occurred during the operation.\n\n    It is a sub type of the `Val` property and as such can be used to represent a value\n    that is immutable and can be observed for changes.\n\n    The default result implementation indirectly exposed by its factory methods\n    is immutable and thread safe, effectively making it a monadic value\n    similar to the `Optional` type in Java 8.",
   "subjects":["sprouts.Result","sprouts.Val","sprouts.Problem"],
   "statistics":{
-    "runs":"10",
+    "runs":"11",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -191,6 +191,33 @@
         {"kind":"then","text":"The resulting property has a problem.","code":["mapped.problems().size() == 1"]},
 
         {"kind":"and","text":"The problem is an exception problem.","code":["mapped.problems().first().exception().get().message == \"foo\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Create a result from a supplier which may or may not throw an exception using the `ofTry` method.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The core purpose of a `Result` is to resolve a value \n            while being protected against exceptions\n            that might occur during the execution of an operation\n            that produces the value.\n\n            The `ofTry` method is used to create a `Result` from a value supplier.\n            The supplier may or may not throw an exception.\n            If it does, the exception is caught and turned into a problem.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A flag that determines if an exception should be thrown.","code":["def doFail = false"]},
+
+        {"kind":"and","text":"A supplier that may or may not throw an exception.","code":["Supplier<String> supplier = ()->{","    if ( doFail )","        throw new IllegalArgumentException(\"foo\")","    else","        return \"bar\"","}"]},
+
+        {"kind":"when","text":"We create a result from the supplier with the `doFail` flag set to false.","code":["def result = Result.ofTry(String.class, supplier)"]},
+
+        {"kind":"then","text":"No exception is thrown, which means the result has the value.","code":["result.get() == \"bar\""]},
+
+        {"kind":"and","text":"The result has no problems.","code":["result.problems().isEmpty()"]},
+
+        {"kind":"when","text":"We create a result from the supplier with the `doFail` flag set to true.","code":["doFail = true","def result2 = Result.ofTry(String.class, supplier)"]},
+
+        {"kind":"then","text":"An exception is thrown, which means the result has a problem.","code":["result2.problems().size() == 1"]},
+
+        {"kind":"and","text":"The problem is an exception problem.","code":["result2.problems().first().exception().get().message == \"foo\""]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }

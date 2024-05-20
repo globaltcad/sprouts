@@ -14,7 +14,7 @@ import java.util.*;
  *
  *  @param &lt;T&gt; The type of the value.
  */
-abstract class AbstractValue&lt;T&gt; implements Val&lt;T&gt;
+abstract class AbstractValue&lt;T extends @Nullable Object&gt; implements Val&lt;T&gt;
 {
 <span class="fc" id="L19">    private static final Logger log = org.slf4j.LoggerFactory.getLogger(AbstractValue.class);</span>
 
@@ -76,8 +76,8 @@ abstract class AbstractValue&lt;T&gt; implements Val&lt;T&gt;
 <span class="fc bfc" id="L76" title="All 2 branches covered.">        for ( Action&lt;Val&lt;T&gt;&gt; action : new ArrayList&lt;&gt;(actions) ) // We copy the list to avoid concurrent modification</span>
             try {
 <span class="fc" id="L78">                action.accept(clone);</span>
-<span class="fc" id="L79">            } catch ( Exception e ) {</span>
-<span class="fc" id="L80">                log.error(&quot;An error occurred while executing action '&quot;+action+&quot;' for property '&quot;+this+&quot;'&quot;, e);</span>
+<span class="nc" id="L79">            } catch ( Exception e ) {</span>
+<span class="nc" id="L80">                log.error(&quot;An error occurred while executing action '&quot;+action+&quot;' for property '&quot;+this+&quot;'&quot;, e);</span>
 <span class="fc" id="L81">            }</span>
 <span class="fc" id="L82">    }</span>
 
