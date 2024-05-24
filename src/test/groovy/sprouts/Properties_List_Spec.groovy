@@ -109,6 +109,26 @@ class Properties_List_Spec extends Specification
             vars.size() == 0
     }
 
+
+    def 'You can remove a sequence `n` entries from a property list.'() {
+        reportInfo """
+            A common use case is to remove a sequence of entries from a list.
+            You can remove not only the first or the last `n` entries with the `removeFirst(int)` and `removeLast(int)`
+            methods.
+            You can also remove `n` entries between any two indices with the `removeBetween(int, int)` method.
+        """
+        given : 'A `Vars` instance with six properties.'
+            var vars = Vars.of("Racoon", "Squirrel", "Turtle", "Piglet", "Rooster", "Rabbit")
+        expect : 'The `Vars` instance has six properties.'
+            vars.size() == 6
+        when : 'We remove the two entries between index `1` and index `3` from the list.'
+            vars.removeBetween(1, 3)
+        then : 'The `Vars` instance has four properties.'
+            vars.size() == 4
+        and : 'The two entries have been removed.'
+            vars == Vars.of("Racoon", "Piglet", "Rooster", "Rabbit")
+    }
+
     def 'The properties of one property list can be added to another property list.'()
     {
         reportInfo """
@@ -913,6 +933,10 @@ class Properties_List_Spec extends Specification
             vars.removeLast(2)
         then: 'The properties are removed from the property list.'
             vars == Vars.ofNullable(String.class, "h", null, "j", "k")
+        when: 'We remove multiple properties with the `removeBetween` method.'
+            vars.removeBetween(1, 3)
+        then: 'The properties are removed from the property list.'
+            vars == Vars.ofNullable(String.class, "h", "k")
     }
 
     def 'You can easily remove `null` properties from a nullable "Vars" list.'() {
@@ -1121,38 +1145,49 @@ class Properties_List_Spec extends Specification
         and : 'The `vals` should not contain the removed properties'
             change.vals() == Vars.of("e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z")
         when : 'We remove a sequence of values from the list with the `removeLast` method.'
-            vars.removeLast(5)
+            vars.removeLast(4)
         then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
-            change.oldValues().size() == 5
-            change.oldValues() == Vals.of("v", "w", "x", "y", "z")
+            change.oldValues().size() == 4
+            change.oldValues() == Vals.of("w", "x", "y", "z")
         and : 'The `newValues` of the change should be an empty property list.'
             change.newValues().isEmpty()
         and : 'The `index` of the change is the index of the first property removed.'
-            change.index() == 17
+            change.index() == 18
         and : 'The `vals` should not contain the removed properties'
-            change.vals() == Vars.of("e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u")
-        when : 'We remove a sequence of values from the list with the `popFirst` method.'
-            vars.popFirst(6)
+            change.vals() == Vars.of("e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v")
+        when : 'We remove a sequence of values from the list with the `removeBetween` method.'
+            vars.removeBetween(1, 4)
         then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
-            change.oldValues().size() == 6
-            change.oldValues() == Vals.of("e", "f", "g", "h", "i", "j")
+            change.oldValues().size() == 3
+            change.oldValues() == Vals.of("f", "g", "h")
+        and : 'The `newValues` of the change should be an empty property list.'
+            change.newValues().isEmpty()
+        and : 'The `index` of the change is the index of the first property removed.'
+            change.index() == 1
+        and : 'The `vals` should not contain the removed properties'
+            change.vals() == Vars.of("e", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v")
+        when : 'We remove a sequence of values from the list with the `popFirst` method.'
+            vars.popFirst(4)
+        then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
+            change.oldValues().size() == 4
+            change.oldValues() == Vals.of("e", "i", "j", "k")
         and : 'The `newValues` of the change should be an empty property list.'
             change.newValues().isEmpty()
         and : 'The `index` of the change is the index of the first property removed.'
             change.index() == 0
         and : 'The `vals` should not contain the removed properties'
-            change.vals() == Vars.of("k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u")
+            change.vals() == Vars.of("l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v")
         when : 'We remove a sequence of values from the list with the `popLast` method.'
-            vars.popLast(7)
+            vars.popLast(4)
         then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
-            change.oldValues().size() == 7
-            change.oldValues() == Vals.of("o", "p", "q", "r", "s", "t", "u")
+            change.oldValues().size() == 4
+            change.oldValues() == Vals.of("s", "t", "u", "v")
         and : 'The `newValues` of the change should be an empty property list.'
             change.newValues().isEmpty()
         and : 'The `index` of the change is the index of the first property removed.'
-            change.index() == 4
+            change.index() == 7
         and : 'The `vals` should not contain the removed properties'
-            change.vals() == Vars.of("k", "l", "m", "n")
+            change.vals() == Vars.of("l", "m", "n", "o", "p", "q", "r")
     }
 
     def 'The change delegate contains information about changes made to a "Vars" list by clearing the list.'() {
