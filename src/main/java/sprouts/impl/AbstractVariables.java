@@ -277,6 +277,11 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
         if ( from < 0 || to >= _variables.size() || from > to )
             throw new IndexOutOfBoundsException("From: " + from + ", To: " + to + ", Size: " + _variables.size());
 
+        if (from == to)
+            return this;
+        if (from + 1 == to)
+            return removeAt(from);
+
         Vars<T> removal = (Vars<T>) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));
 
         List<Var<T>> subList = _variables.subList( from, to );
