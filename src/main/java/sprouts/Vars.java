@@ -358,7 +358,9 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
      * @return A new list of properties.
      * @throws IllegalArgumentException If {@code count} is negative.
      */
-    Vars<T> popLast( int count );
+    default Vars<T> popLast( int count ) {
+        return popBetween(size() - count, size());
+    }
 
     /**
      * Removes the first {@code count} number of properties from the list.
@@ -380,7 +382,9 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
      * @return A new list of properties.
      * @throws IllegalArgumentException If {@code count} is negative.
      */
-    Vars<T> popFirst( int count );
+    default Vars<T> popFirst( int count ) {
+        return popBetween(0, count);
+    }
 
     /**
      *  Removes all properties from the list for which the provided predicate

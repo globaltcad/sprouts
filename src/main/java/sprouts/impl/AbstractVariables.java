@@ -142,50 +142,6 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
     @Override public final int size() { return _variables.size(); }
 
     /** {@inheritDoc} */
-    @Override
-    public Vars<T> popLast( int count ) {
-        if ( _isImmutable )
-            throw new UnsupportedOperationException( "This list is immutable." );
-        if ( count < 0)
-            throw new IllegalArgumentException("Invalid count! Count must be non-negative.");
-
-        count = Math.min( count, size() );
-
-        Vars<T> vars = (Vars<T>) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));
-
-        if ( count == 0 )
-            return vars;
-
-        List<Var<T>> subList = _variables.subList( size() - count, size() );
-        for ( Var<T> var : subList ) vars.add(var);
-        subList.clear();
-        _triggerAction( Change.REMOVE, size(), null, vars );
-        return vars;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public Vars<T> popFirst( int count ) {
-        if ( _isImmutable )
-            throw new UnsupportedOperationException( "This list is immutable." );
-        if ( count < 0)
-            throw new IllegalArgumentException("Invalid count! Count must be non-negative.");
-
-        count = Math.min( count, size() );
-
-        Vars<T> vars = (Vars<T>) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));
-
-        if ( count == 0 )
-            return vars;
-
-        List<Var<T>> subList = _variables.subList( 0, count );
-        for ( Var<T> var : subList ) vars.add(var);
-        subList.clear();
-        _triggerAction( Change.REMOVE, 0, null, vars );
-        return vars;
-    }
-
-    /** {@inheritDoc} */
     @Override public Vars<T> removeAll( Vars<T> vars ) {
         if ( _isImmutable ) throw new UnsupportedOperationException("This is an immutable list.");
 
