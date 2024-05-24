@@ -1319,7 +1319,7 @@ class Properties_List_Spec extends Specification
         and : 'The `vals` should only contained the retained properties.'
             change.vals() == Vars.of("g", "h", "i", "j")
         when : 'When the `retainAll` method is used and no property is removed.'
-            change = null;
+            change = null
             vars.retainAll("a", "g", "h", "i", "j")
         then : 'No change event is triggered.'
             change == null
