@@ -241,6 +241,60 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
 
     /** {@inheritDoc} */
     @Override
+    public Vars<T> setBetween(int from, int to, T value) {
+        if (_isImmutable) throw new UnsupportedOperationException("This is an immutable list.");
+        if (from < 0 || to > _variables.size() || from > to)
+            throw new IndexOutOfBoundsException("From: " + from + ", To: " + to + ", Size: " + _variables.size());
+
+        if (!_allowsNull)
+            Objects.requireNonNull(value);
+
+        if (from == to)
+            return this;
+
+        Vars<T> oldVars = (Vars<T>) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));
+        Vars<T> newVars = (Vars<T>) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));
+
+        for (int i = from; i < to; i++) {
+            Var<T> n = _allowsNull ? Var.ofNullable(_type, value) : Var.of(value);
+            Var<T> o = _variables.set(i, n);
+            newVars.add(n);
+            oldVars.add(o);
+        }
+
+        _triggerAction(Change.SET, from, newVars, oldVars);
+
+        return this;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Vars<T> setBetween(int from, int to, Var<T> value) {
+        if (_isImmutable) throw new UnsupportedOperationException("This is an immutable list.");
+        if (from < 0 || to > _variables.size() || from > to)
+            throw new IndexOutOfBoundsException("From: " + from + ", To: " + to + ", Size: " + _variables.size());
+
+        _checkNullSafetyOf(value);
+
+        if (from == to)
+            return (Vars<T>) this;
+
+        Vars<T> oldVars = (Vars<T>) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));
+        Vars<T> newVars = (Vars<T>) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));
+
+        for (int i = from; i < to; i++) {
+            Var<T> o = _variables.set(i, value);
+            newVars.add(value);
+            oldVars.add(o);
+        }
+
+        _triggerAction(Change.SET, from, newVars, oldVars);
+
+        return (Vars<T>) this;
+    }
+
+    /** {@inheritDoc} */
+    @Override
     public Vars<T> addAll( Vals<T> vals ) {
         if ( _isImmutable ) throw new UnsupportedOperationException("This is an immutable list.");
 

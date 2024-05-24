@@ -321,7 +321,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
      *
      * @param from the start index, inclusive.
      * @param to   the end index, exclusive.
-     * @return this list of properties.
+     * @return {@code this} list of properties.
      * @throws IndexOutOfBoundsException if {@code from} is negative, or {@code to} is greater than the size of this
      *                                   {@code Vars} object, or {@code from} is greater than {@code to}.
      */
@@ -514,6 +514,35 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
      *  @return This list of properties.
      */
     Vars<T> setAt( int index, Var<T> var );
+
+    /**
+     * Wraps the specified value in distinct properties and sets them in the specified range, effectively replacing the
+     * properties in the specified range.
+     *
+     * @param from  the start index, inclusive.
+     * @param to    the end index, exclusive.
+     * @param value the value to set.
+     * @return {@code this} list of properties.
+     * @throws IndexOutOfBoundsException if {@code from} is negative, or {@code to} is greater than the size of this
+     *                                   {@code Vars} object, or {@code from} is greater than {@code to}.
+     */
+    Vars<T> setBetween(int from, int to, T value);
+
+    /**
+     * Places the provided property in the specified range, effectively replacing the properties in the specified range
+     * with the given property.
+     * <p>
+     * Note: The provided property will be placed in the provided range.
+     * This will cause the same property to be placed multiple times in the list.
+     *
+     * @param from  the start index, inclusive.
+     * @param to    the end index, exclusive.
+     * @param value the value to set.
+     * @return {@code this} list of properties.
+     * @throws IndexOutOfBoundsException if {@code from} is negative, or {@code to} is greater than the size of this
+     *                                   {@code Vars} object, or {@code from} is greater than {@code to}.
+     */
+    Vars<T> setBetween(int from, int to, Var<T> value);
 
     /**
      *  Wraps each provided item in a property and appends it to this
