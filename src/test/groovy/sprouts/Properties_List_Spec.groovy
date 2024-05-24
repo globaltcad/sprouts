@@ -109,8 +109,7 @@ class Properties_List_Spec extends Specification
             vars.size() == 0
     }
 
-
-    def 'You can remove a sequence `n` entries from a property list.'() {
+    def 'You can remove a sequence of `n` entries from a property list.'() {
         reportInfo """
             A common use case is to remove a sequence of entries from a list.
             You can remove not only the first or the last `n` entries with the `removeFirst(int)` and `removeLast(int)`
@@ -473,6 +472,23 @@ class Properties_List_Spec extends Specification
         and : 'We removed properties have the correct values.'
             first2 == Vars.of(666, 1)
             last2 == Vars.of(1, 2)
+    }
+
+    def 'You can pop a sequence of `n` entries from a property list.'() {
+        reportInfo """
+            To remove a sequence of properties and get the removed properties you can use the `popBetween` method.
+            This can be seen as a generalization of the `popFirst` and `popLast` methods.
+        """
+        given : 'A `Vars` instance with six properties.'
+            var vars = Vars.of("Racoon", "Squirrel", "Turtle", "Piglet", "Rooster", "Rabbit")
+            expect : 'The `Vars` instance has six properties.'
+            vars.size() == 6
+        when : 'We pop the two entries between index `1` and index `3` from the list.'
+            var vars2 = vars.popBetween(1, 3)
+        then : 'The popped `Vars` instance has two properties.'
+            vars2.size() == 2
+            and : 'The popped `Vars` instance contains the expected values.'
+            vars2 == Vars.of("Squirrel", "Turtle")
     }
 
     def 'The "popAt" method return the removed property.'()
@@ -1188,6 +1204,17 @@ class Properties_List_Spec extends Specification
             change.index() == 7
         and : 'The `vals` should not contain the removed properties'
             change.vals() == Vars.of("l", "m", "n", "o", "p", "q", "r")
+        when : 'We remove a sequence of values from the list with the `popBetween` method.'
+            vars.popBetween(2, 5)
+        then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
+            change.oldValues().size() == 3
+            change.oldValues() == Vals.of("n", "o", "p")
+        and : 'The `newValues` of the change should be an empty property list.'
+            change.newValues().isEmpty()
+        and : 'The `index` of the change is the index of the first property removed.'
+            change.index() == 2
+        and : 'The `vals` should not contain the removed properties'
+            change.vals() == Vars.of("l", "m", "q", "r")
     }
 
     def 'The change delegate contains information about changes made to a "Vars" list by clearing the list.'() {
