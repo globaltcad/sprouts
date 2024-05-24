@@ -64,12 +64,43 @@ class Properties_List_Spec extends Specification
             vars.at(0).get() == "Apricot"
             vars.at(1).get() == "Blueberry"
 
-        when : 'We use the "aetAt" method to change the state of the "Vars" properties.'
+        when : 'We use the "setAt" method to change the state of the "Vars" properties.'
+        reportInfo """
+            Note: The `setAt` method replaces the properties at the given index with a new property.
+            This is different to the `vars.at(index).set(value)` which updated the property itself.            
+        """
             vars.setAt(0, "Tim")
             vars.setAt(1, "Tom")
         then : 'The "Vars" properties have changed.'
             vars.at(0).get() == "Tim"
             vars.at(1).get() == "Tom"
+    }
+
+    def 'You can set a range of properties to a given value or property with the `setBetween` method.'() {
+        given : 'A `Vars` instance with 12 properties.'
+            var vars = Vars.of("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l")
+        expect : 'The `Vars` instance has 12 properties.'
+            vars.size() == 12
+        when: 'We set the properties between index `3` and `7` to the value `x`.'
+            vars.setBetween(3, 7, 'x')
+        then: 'The `Vars` instance contains the expected properties.'
+            vars == Vars.of("a", "b", "c", "x", "x", "x", "x", "h", "i", "j", "k", "l")
+        when: 'We update the value of one of the new properties.'
+            vars.at(4).set("y")
+        then: 'The updated property has the expected value.'
+            vars.at(4).get() == "y"
+        and: 'The other properties remain unchanged.'
+            vars == Vars.of("a", "b", "c", "x", "y", "x", "x", "h", "i", "j", "k", "l")
+        when: 'We set the properties between index `6` and `10` to the property with the value `z`.'
+            vars.setBetween(6, 10, Var.of("z"))
+        then: 'The `Vars` instance contains the expected properties.'
+            vars == Vars.of("a", "b", "c", "x", "y", "x", "z", "z", "z", "z", "k", "l")
+        when: 'We update the value of one of the new properties.'
+            vars.at(7).set("o")
+        then: 'The updated property has the expected value.'
+            vars.at(7).get() == "o"
+        and: 'The other properties have changed as well.'
+            vars == Vars.of("a", "b", "c", "x", "y", "x", "o", "o", "o", "o", "k", "l")
     }
 
     def 'You can remove n leading or trailing entries from a property list.'()
@@ -1340,6 +1371,81 @@ class Properties_List_Spec extends Specification
             change.index() == -1
         and : 'The `vals` should only contained the retained properties.'
             change.vals() == Vars.ofNullable(String.class, "a", "b", null, "d", null, null, "a", "b", "d")
+    }
+
+    def 'The change delegate contains information about changes made to a `Vars` list by setting a sequence properties.'() {
+        reportInfo """    
+            When you set a value or property to a sequence of properties, the change delegate contains information
+            about the change. The `oldValues' of the delegate contain the properties that were removed, and the
+            `newValues' contain the properties that were added.
+        """
+        given : 'A `Vars` instance with some properties.'
+            var vars = Vars.of("a", "b", "c", "d", "e", "f", "g", "h", "i", "j")
+        and : 'We register a listener that will record the last change for us.'
+            var change = null
+            vars.onChange({ change = it })
+        when : 'We use the `setBetween` method to set all properties within the given range to new properties containing the given value.'
+            vars.setBetween(2, 5, "x")
+        then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
+            change.oldValues().size() == 3
+            change.oldValues() == Vals.of("c", "d", "e")
+        and : 'The `newValues` of the change should be a property list with the added properties.'
+            change.newValues().size() == 3
+            change.newValues() == Vals.of("x", "x", "x")
+        and : 'The `index` of the change is `2`.'
+            change.index() == 2
+        and : 'The `vals` should contain the expected properties.'
+            change.vals() == Vars.of("a", "b", "x", "x", "x", "f", "g", "h", "i", "j")
+        when : 'We use the `setBetween` method to set all properties within the given range to the given property.'
+            vars.setBetween(4, 8, Var.of("z"))
+        then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
+            change.oldValues().size() == 4
+            change.oldValues() == Vals.of("x", "f", "g", "h")
+        and : 'The `newValues` of the change should be a property list with the added properties.'
+            change.newValues().size() == 4
+            change.newValues() == Vals.of("z", "z", "z", "z")
+        and : 'The `index` of the change is `4`.'
+            change.index() == 4
+        and : 'The `vals` should contain the expected properties.'
+            change.vals() == Vars.of("a", "b", "x", "x", "z", "z", "z", "z", "i", "j")
+    }
+
+    def 'The change delegate contains information about changes made to a nullable `Vars` list by setting a sequence properties.'() {
+        reportInfo """    
+            When you set a value or property to a sequence of nullable properties, the change delegate contains information
+            about the change. The `oldValues' of the delegate contain the properties that were removed, and the
+            `newValues' contain the properties that were added.
+        """
+        given : 'A nullable `Vars` instance with some properties.'
+        var vars = Vars.ofNullable(String.class, "a", "b", null, "d", null, null, "g", "h", "i", "j")
+        and : 'We register a listener that will record the last change for us.'
+            var change = null
+            vars.onChange({ change = it })
+        when : 'We use the `setBetween` method to set all properties within the given range to new properties containing the given value.'
+            vars.setBetween(2, 5, (String) null)
+        then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
+            change.oldValues().size() == 3
+            change.oldValues() == Vals.ofNullable(String.class, null, "d", null)
+        and : 'The `newValues` of the change should be a property list with the added properties.'
+            change.newValues().size() == 3
+            change.newValues() == Vals.ofNullable(String.class, (String) null, (String) null, (String) null)
+        and : 'The `index` of the change is `2`.'
+            change.index() == 2
+        and : 'The `vals` should contain the expected properties.'
+
+            change.vals() == Vars.ofNullable(String.class, "a", "b", null, null, null, null, "g", "h", "i", "j")
+        when : 'We use the `setBetween` method to set all properties within the given range to the given property.'
+            vars.setBetween(5, 9, Var.ofNull(String.class))
+        then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
+            change.oldValues().size() == 4
+            change.oldValues() == Vals.ofNullable(String.class, null, "g", "h", "i")
+        and : 'The `newValues` of the change should be a property list with the added properties.'
+            change.newValues().size() == 4
+            change.newValues() == Vals.ofNullable(String.class, (String) null, (String) null, (String) null, (String) null)
+        and : 'The `index` of the change is `4`.'
+            change.index() == 5
+        and : 'The `vals` should contain the expected properties.'
+            change.vals() == Vars.ofNullable(String.class, "a", "b", null, null, null, null, null, null, null, "j")
     }
 
     def 'You can create a mapped version of a property list.'() {
