@@ -335,7 +335,9 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
      * @return This list of properties.
      * @throws IllegalArgumentException If {@code count} is negative.
      */
-    Vars<T> removeLast( int count );
+    default Vars<T> removeLast( int count ) {
+        return removeBetween(size() - count, size());
+    }
 
     /**
      * Removes {@code count} number of properties from the end of the list and returns them in a new list.
@@ -355,7 +357,9 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
      * @return This list of properties.
      * @throws IllegalArgumentException If {@code count} is negative.
      */
-    Vars<T> removeFirst( int count );
+    default Vars<T> removeFirst( int count ) {
+        return removeBetween(0, count);
+    }
 
     /**
      * Removes the first {@code count} number of properties from the list and returns them in a new list.

@@ -143,31 +143,6 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
 
     /** {@inheritDoc} */
     @Override
-    public Vars<T> removeLast( int count ) {
-        if ( _isImmutable )
-            throw new UnsupportedOperationException( "This list is immutable." );
-        if ( count < 0)
-            throw new IllegalArgumentException("Invalid count! Count must be non-negative.");
-
-        count = Math.min( count, size() );
-
-        if ( count == 0 )
-            return this;
-        if ( count == 1 )
-            return removeLast();
-
-        Vars<T> vars = (Vars<T>) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));
-
-        List<Var<T>> subList = _variables.subList( size() - count, size() );
-        for ( Var<T> var : subList ) vars.add(var);
-        subList.clear();
-
-        _triggerAction( Change.REMOVE, size(), null, vars );
-        return this;
-    }
-
-    /** {@inheritDoc} */
-    @Override
     public Vars<T> popLast( int count ) {
         if ( _isImmutable )
             throw new UnsupportedOperationException( "This list is immutable." );
@@ -186,31 +161,6 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
         subList.clear();
         _triggerAction( Change.REMOVE, size(), null, vars );
         return vars;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public Vars<T> removeFirst( int count ) {
-        if ( _isImmutable )
-            throw new UnsupportedOperationException( "This list is immutable." );
-        if ( count < 0)
-            throw new IllegalArgumentException("Invalid count! Count must be non-negative.");
-
-        count = Math.min( count, size() );
-
-        if ( count == 0 )
-            return this;
-        if ( count == 1 )
-            return removeFirst();
-
-        Vars<T> vars = (Vars<T>) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));
-
-        List<Var<T>> subList = _variables.subList( 0, count );
-        for ( Var<T> var : subList ) vars.add(var);
-        subList.clear();
-
-        _triggerAction( Change.REMOVE, 0, null, vars );
-        return this;
     }
 
     /** {@inheritDoc} */
