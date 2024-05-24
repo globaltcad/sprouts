@@ -221,6 +221,28 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
         return this;
     }
 
+    /** {@inheritDoc} */
+    @Override
+    public Vars<T> popBetween(int from, int to) {
+        if ( _isImmutable ) throw new UnsupportedOperationException("This is an immutable list.");
+        if ( from < 0 || to > _variables.size() || from > to )
+            throw new IndexOutOfBoundsException("From: " + from + ", To: " + to + ", Size: " + _variables.size());
+
+        Vars<T> vars = (Vars<T>) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));
+
+        if (from == to)
+            return vars;
+
+        List<Var<T>> subList = _variables.subList( from, to );
+        for ( Var<T> var : subList ) vars.add(var);
+        subList.clear();
+
+        _triggerAction( Change.REMOVE, from, null, vars );
+
+        return vars;
+    }
+
+    /** {@inheritDoc} */
     @Override
     public Vars<T> removeBetween(int from, int to) {
         if ( _isImmutable ) throw new UnsupportedOperationException("This is an immutable list.");

@@ -231,6 +231,17 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
     }
 
     /**
+     * Remove and return all elements between {@code from} inclusive and {@code to} exclusive.
+     *
+     * @param from the start index, inclusive.
+     * @param to   the end index, exclusive.
+     * @return The removed list of properties.
+     * @throws IndexOutOfBoundsException if {@code from} is negative, or {@code to} is greater than the size of this
+     *                                   {@code Vars} object, or {@code from} is greater than {@code to}.
+     */
+    Vars<T> popBetween(int from, int to);
+
+    /**
      *  Removes the property containing the provided value from the list.
      *  If the value is not found, the list is unchanged.
      *  @param value The value to remove.
@@ -306,7 +317,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
     default Vars<T> removeLast() { return size() > 0 ? removeAt(size() - 1) : this; }
 
     /**
-     * Remove all elements between {@code  from} inclusive and {@code to} exclusive.
+     * Remove all elements between {@code from} inclusive and {@code to} exclusive.
      *
      * @param from the start index, inclusive.
      * @param to   the end index, exclusive.
