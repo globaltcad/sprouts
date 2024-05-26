@@ -179,7 +179,7 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
 
     /** {@inheritDoc} */
     @Override
-    public Vars<T> popBetween(int from, int to) {
+    public Vars<T> popRange(int from, int to) {
         if ( _isImmutable ) throw new UnsupportedOperationException("This is an immutable list.");
         if ( from < 0 || to > _variables.size() || from > to )
             throw new IndexOutOfBoundsException("From: " + from + ", To: " + to + ", Size: " + _variables.size());
@@ -200,7 +200,7 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
 
     /** {@inheritDoc} */
     @Override
-    public Vars<T> removeBetween(int from, int to) {
+    public Vars<T> removeRange(int from, int to) {
         if ( _isImmutable ) throw new UnsupportedOperationException("This is an immutable list.");
         if ( from < 0 || to > _variables.size() || from > to )
             throw new IndexOutOfBoundsException("From: " + from + ", To: " + to + ", Size: " + _variables.size());
@@ -241,7 +241,7 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
 
     /** {@inheritDoc} */
     @Override
-    public Vars<T> setBetween(int from, int to, T value) {
+    public Vars<T> setRange(int from, int to, T value) {
         if (_isImmutable) throw new UnsupportedOperationException("This is an immutable list.");
         if (from < 0 || to > _variables.size() || from > to)
             throw new IndexOutOfBoundsException("From: " + from + ", To: " + to + ", Size: " + _variables.size());
@@ -269,7 +269,7 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
 
     /** {@inheritDoc} */
     @Override
-    public Vars<T> setBetween(int from, int to, Var<T> value) {
+    public Vars<T> setRange(int from, int to, Var<T> value) {
         if (_isImmutable) throw new UnsupportedOperationException("This is an immutable list.");
         if (from < 0 || to > _variables.size() || from > to)
             throw new IndexOutOfBoundsException("From: " + from + ", To: " + to + ", Size: " + _variables.size());

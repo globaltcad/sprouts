@@ -76,13 +76,13 @@ class Properties_List_Spec extends Specification
             vars.at(1).get() == "Tom"
     }
 
-    def 'You can set a range of properties to a given value or property with the `setBetween` method.'() {
+    def 'You can set a range of properties to a given value or property with the `setRange` method.'() {
         given : 'A `Vars` instance with 12 properties.'
             var vars = Vars.of("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l")
         expect : 'The `Vars` instance has 12 properties.'
             vars.size() == 12
         when: 'We set the properties between index `3` and `7` to the value `x`.'
-            vars.setBetween(3, 7, 'x')
+            vars.setRange(3, 7, 'x')
         then: 'The `Vars` instance contains the expected properties.'
             vars == Vars.of("a", "b", "c", "x", "x", "x", "x", "h", "i", "j", "k", "l")
         when: 'We update the value of one of the new properties.'
@@ -92,7 +92,7 @@ class Properties_List_Spec extends Specification
         and: 'The other properties remain unchanged.'
             vars == Vars.of("a", "b", "c", "x", "y", "x", "x", "h", "i", "j", "k", "l")
         when: 'We set the properties between index `6` and `10` to the property with the value `z`.'
-            vars.setBetween(6, 10, Var.of("z"))
+            vars.setRange(6, 10, Var.of("z"))
         then: 'The `Vars` instance contains the expected properties.'
             vars == Vars.of("a", "b", "c", "x", "y", "x", "z", "z", "z", "z", "k", "l")
         when: 'We update the value of one of the new properties.'
@@ -144,15 +144,15 @@ class Properties_List_Spec extends Specification
         reportInfo """
             A common use case is to remove a sequence of entries from a list.
             You can remove not only the first or the last `n` entries with the `removeFirst(int)` and `removeLast(int)`
-            methods.
-            You can also remove `n` entries between any two indices with the `removeBetween(int, int)` method.
+            methods. You can also remove `n` entries within the range of any two indices with the
+            `removeRange(int, int)` method.
         """
         given : 'A `Vars` instance with six properties.'
             var vars = Vars.of("Racoon", "Squirrel", "Turtle", "Piglet", "Rooster", "Rabbit")
         expect : 'The `Vars` instance has six properties.'
             vars.size() == 6
         when : 'We remove the two entries between index `1` and index `3` from the list.'
-            vars.removeBetween(1, 3)
+            vars.removeRange(1, 3)
         then : 'The `Vars` instance has four properties.'
             vars.size() == 4
         and : 'The two entries have been removed.'
@@ -507,7 +507,7 @@ class Properties_List_Spec extends Specification
 
     def 'You can pop a sequence of `n` entries from a property list.'() {
         reportInfo """
-            To remove a sequence of properties and get the removed properties you can use the `popBetween` method.
+            To remove a sequence of properties and get the removed properties you can use the `popRange` method.
             This can be seen as a generalization of the `popFirst` and `popLast` methods.
         """
         given : 'A `Vars` instance with six properties.'
@@ -515,7 +515,7 @@ class Properties_List_Spec extends Specification
             expect : 'The `Vars` instance has six properties.'
             vars.size() == 6
         when : 'We pop the two entries between index `1` and index `3` from the list.'
-            var vars2 = vars.popBetween(1, 3)
+            var vars2 = vars.popRange(1, 3)
         then : 'The popped `Vars` instance has two properties.'
             vars2.size() == 2
             and : 'The popped `Vars` instance contains the expected values.'
@@ -980,8 +980,8 @@ class Properties_List_Spec extends Specification
             vars.removeLast(2)
         then: 'The properties are removed from the property list.'
             vars == Vars.ofNullable(String.class, "h", null, "j", "k")
-        when: 'We remove multiple properties with the `removeBetween` method.'
-            vars.removeBetween(1, 3)
+        when: 'We remove multiple properties with the `removeRange` method.'
+            vars.removeRange(1, 3)
         then: 'The properties are removed from the property list.'
             vars == Vars.ofNullable(String.class, "h", "k")
     }
@@ -1202,8 +1202,8 @@ class Properties_List_Spec extends Specification
             change.index() == 18
         and : 'The `vals` should not contain the removed properties'
             change.vals() == Vars.of("e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v")
-        when : 'We remove a sequence of values from the list with the `removeBetween` method.'
-            vars.removeBetween(1, 4)
+        when : 'We remove a sequence of values from the list with the `removeRange` method.'
+            vars.removeRange(1, 4)
         then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
             change.oldValues().size() == 3
             change.oldValues() == Vals.of("f", "g", "h")
@@ -1235,8 +1235,8 @@ class Properties_List_Spec extends Specification
             change.index() == 7
         and : 'The `vals` should not contain the removed properties'
             change.vals() == Vars.of("l", "m", "n", "o", "p", "q", "r")
-        when : 'We remove a sequence of values from the list with the `popBetween` method.'
-            vars.popBetween(2, 5)
+        when : 'We remove a sequence of values from the list with the `popRange` method.'
+            vars.popRange(2, 5)
         then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
             change.oldValues().size() == 3
             change.oldValues() == Vals.of("n", "o", "p")
@@ -1384,8 +1384,8 @@ class Properties_List_Spec extends Specification
         and : 'We register a listener that will record the last change for us.'
             var change = null
             vars.onChange({ change = it })
-        when : 'We use the `setBetween` method to set all properties within the given range to new properties containing the given value.'
-            vars.setBetween(2, 5, "x")
+        when : 'We use the `setRange` method to set all properties within the given range to new properties containing the given value.'
+            vars.setRange(2, 5, "x")
         then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
             change.oldValues().size() == 3
             change.oldValues() == Vals.of("c", "d", "e")
@@ -1396,8 +1396,8 @@ class Properties_List_Spec extends Specification
             change.index() == 2
         and : 'The `vals` should contain the expected properties.'
             change.vals() == Vars.of("a", "b", "x", "x", "x", "f", "g", "h", "i", "j")
-        when : 'We use the `setBetween` method to set all properties within the given range to the given property.'
-            vars.setBetween(4, 8, Var.of("z"))
+        when : 'We use the `setRange` method to set all properties within the given range to the given property.'
+            vars.setRange(4, 8, Var.of("z"))
         then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
             change.oldValues().size() == 4
             change.oldValues() == Vals.of("x", "f", "g", "h")
@@ -1421,8 +1421,8 @@ class Properties_List_Spec extends Specification
         and : 'We register a listener that will record the last change for us.'
             var change = null
             vars.onChange({ change = it })
-        when : 'We use the `setBetween` method to set all properties within the given range to new properties containing the given value.'
-            vars.setBetween(2, 5, (String) null)
+        when : 'We use the `setRange` method to set all properties within the given range to new properties containing the given value.'
+            vars.setRange(2, 5, (String) null)
         then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
             change.oldValues().size() == 3
             change.oldValues() == Vals.ofNullable(String.class, null, "d", null)
@@ -1434,8 +1434,8 @@ class Properties_List_Spec extends Specification
         and : 'The `vals` should contain the expected properties.'
 
             change.vals() == Vars.ofNullable(String.class, "a", "b", null, null, null, null, "g", "h", "i", "j")
-        when : 'We use the `setBetween` method to set all properties within the given range to the given property.'
-            vars.setBetween(5, 9, Var.ofNull(String.class))
+        when : 'We use the `setRange` method to set all properties within the given range to the given property.'
+            vars.setRange(5, 9, Var.ofNull(String.class))
         then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
             change.oldValues().size() == 4
             change.oldValues() == Vals.ofNullable(String.class, null, "g", "h", "i")

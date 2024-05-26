@@ -231,7 +231,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
     }
 
     /**
-     * Remove and return all elements between {@code from} inclusive and {@code to} exclusive.
+     * Remove and return all elements within the range {@code from} inclusive and {@code to} exclusive.
      *
      * @param from the start index, inclusive.
      * @param to   the end index, exclusive.
@@ -239,7 +239,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
      * @throws IndexOutOfBoundsException if {@code from} is negative, or {@code to} is greater than the size of this
      *                                   {@code Vars} object, or {@code from} is greater than {@code to}.
      */
-    Vars<T> popBetween(int from, int to);
+    Vars<T> popRange(int from, int to);
 
     /**
      *  Removes the property containing the provided value from the list.
@@ -317,7 +317,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
     default Vars<T> removeLast() { return size() > 0 ? removeAt(size() - 1) : this; }
 
     /**
-     * Remove all elements between {@code from} inclusive and {@code to} exclusive.
+     * Remove all elements withn the range {@code from} inclusive and {@code to} exclusive.
      *
      * @param from the start index, inclusive.
      * @param to   the end index, exclusive.
@@ -325,7 +325,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
      * @throws IndexOutOfBoundsException if {@code from} is negative, or {@code to} is greater than the size of this
      *                                   {@code Vars} object, or {@code from} is greater than {@code to}.
      */
-    Vars<T> removeBetween(int from, int to);
+    Vars<T> removeRange(int from, int to);
 
     /**
      *  Removes the last property from the list and returns it.
@@ -347,7 +347,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
      * @throws IllegalArgumentException If {@code count} is negative.
      */
     default Vars<T> removeLast( int count ) {
-        return removeBetween(size() - count, size());
+        return removeRange(size() - count, size());
     }
 
     /**
@@ -359,7 +359,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
      * @throws IllegalArgumentException If {@code count} is negative.
      */
     default Vars<T> popLast( int count ) {
-        return popBetween(size() - count, size());
+        return popRange(size() - count, size());
     }
 
     /**
@@ -371,7 +371,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
      * @throws IllegalArgumentException If {@code count} is negative.
      */
     default Vars<T> removeFirst( int count ) {
-        return removeBetween(0, count);
+        return removeRange(0, count);
     }
 
     /**
@@ -383,7 +383,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
      * @throws IllegalArgumentException If {@code count} is negative.
      */
     default Vars<T> popFirst( int count ) {
-        return popBetween(0, count);
+        return popRange(0, count);
     }
 
     /**
@@ -526,7 +526,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
      * @throws IndexOutOfBoundsException if {@code from} is negative, or {@code to} is greater than the size of this
      *                                   {@code Vars} object, or {@code from} is greater than {@code to}.
      */
-    Vars<T> setBetween(int from, int to, T value);
+    Vars<T> setRange(int from, int to, T value);
 
     /**
      * Places the provided property in the specified range, effectively replacing the properties in the specified range
@@ -542,7 +542,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
      * @throws IndexOutOfBoundsException if {@code from} is negative, or {@code to} is greater than the size of this
      *                                   {@code Vars} object, or {@code from} is greater than {@code to}.
      */
-    Vars<T> setBetween(int from, int to, Var<T> value);
+    Vars<T> setRange(int from, int to, Var<T> value);
 
     /**
      *  Wraps each provided item in a property and appends it to this
