@@ -221,6 +221,19 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
     }
 
     /**
+     * Removes the sequence of properties at the specified index.
+     *
+     * @param index the index of the sequence to remove.
+     * @param size  the size of the sequence to remove.
+     * @return this list of properties.
+     * @throws IndexOutOfBoundsException if {@code from} is negative, or {@code to} is greater than the size of this
+     *                                   {@code Vars} object, or {@code from} is greater than {@code to}.
+     */
+    default Vars<T> removeAt( int index, int size ) {
+        return removeRange(index, index + size);
+    }
+
+    /**
      *  Removes and returns the property at the specified index.
      *
      * @param index The index of the property to remove.
@@ -230,6 +243,19 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
         Var<T> var = at(index);
         removeRange(index, index + 1);
         return var;
+    }
+
+    /**
+     * Removes and returns the sequence of properties at the specified index.
+     *
+     * @param index the index of the sequence to pop.
+     * @param size  the size of the sequence to pop.
+     * @return The removed list of properties.
+     * @throws IndexOutOfBoundsException if {@code from} is negative, or {@code to} is greater than the size of this
+     *                                   {@code Vars} object, or {@code from} is greater than {@code to}.
+     */
+    default Vars<T> popAt( int index, int size ) {
+        return popRange(index, index + size);
     }
 
     /**
@@ -511,13 +537,46 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
     }
 
     /**
+     * Wraps the specified value in distinct properties and sets them in the specified sequence, effectively replacing
+     * the property at that sequence.
+     *
+     * @param index the index of the sequence to set the properties.
+     * @param size  the size of the sequence to set the properties.
+     * @param item  the value to set.
+     * @return This list of properties.
+     * @throws IndexOutOfBoundsException if {@code from} is negative, or {@code to} is greater than the size of this
+     *                                   {@code Vars} object, or {@code from} is greater than {@code to}.
+     */
+    default Vars<T> setAt( int index, int size, T item ) {
+        return setRange(index, index + size, item);
+    }
+
+    /**
      *  Places the provided property at the specified index, effectively replacing the property
      *  at that index.
      *  @param index The index at which to set the property.
      *  @param var The property to set.
-     *  @return This list of properties.
+     *  @return {@code this} list of properties.
      */
     Vars<T> setAt( int index, Var<T> var );
+
+    /**
+     * Places the provided property in the specified sequence, effectively replacing the properties at the specified
+     * sequence with the given property.
+     * <p>
+     * Note: The provided property will be placed in the provided sequence.
+     * This will cause the same property to be placed multiple times in the list.
+     *
+     * @param index the index of the sequence to set the property.
+     * @param size  the size of the sequence to set the property.
+     * @param value the property to set.
+     * @return {@code this} list of properties.
+     * @throws IndexOutOfBoundsException if {@code from} is negative, or {@code to} is greater than the size of this
+     *                                   {@code Vars} object, or {@code from} is greater than {@code to}.
+     */
+    default Vars<T> setAt( int index, int size, Var<T> value ) {
+        return setRange(index, index + size, value);
+    }
 
     /**
      * Wraps the specified value in distinct properties and sets them in the specified range, effectively replacing the
