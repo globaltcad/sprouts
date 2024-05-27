@@ -216,7 +216,22 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
      * @param index The index of the property to remove.
      * @return This list of properties.
      */
-    Vars<T> removeAt( int index );
+    default Vars<T> removeAt( int index ) {
+        return removeRange(index, index + 1);
+    }
+
+    /**
+     * Removes the sequence of properties at the specified index.
+     *
+     * @param index the index of the sequence to remove.
+     * @param size  the size of the sequence to remove.
+     * @return this list of properties.
+     * @throws IndexOutOfBoundsException if {@code from} is negative, or {@code to} is greater than the size of this
+     *                                   {@code Vars} object, or {@code from} is greater than {@code to}.
+     */
+    default Vars<T> removeAt( int index, int size ) {
+        return removeRange(index, index + size);
+    }
 
     /**
      *  Removes and returns the property at the specified index.
@@ -226,9 +241,33 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
      */
     default Var<T> popAt( int index ) {
         Var<T> var = at(index);
-        removeAt(index);
+        removeRange(index, index + 1);
         return var;
     }
+
+    /**
+     * Removes and returns the sequence of properties at the specified index.
+     *
+     * @param index the index of the sequence to pop.
+     * @param size  the size of the sequence to pop.
+     * @return The removed list of properties.
+     * @throws IndexOutOfBoundsException if {@code from} is negative, or {@code to} is greater than the size of this
+     *                                   {@code Vars} object, or {@code from} is greater than {@code to}.
+     */
+    default Vars<T> popAt( int index, int size ) {
+        return popRange(index, index + size);
+    }
+
+    /**
+     * Remove and return all elements within the range {@code from} inclusive and {@code to} exclusive.
+     *
+     * @param from the start index, inclusive.
+     * @param to   the end index, exclusive.
+     * @return The removed list of properties.
+     * @throws IndexOutOfBoundsException if {@code from} is negative, or {@code to} is greater than the size of this
+     *                                   {@code Vars} object, or {@code from} is greater than {@code to}.
+     */
+    Vars<T> popRange(int from, int to);
 
     /**
      *  Removes the property containing the provided value from the list.
@@ -238,7 +277,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
      */
     default Vars<T> remove( T value ) {
         int index = indexOf(value);
-        return index < 0 ? this : removeAt( index );
+        return index < 0 ? this : removeRange( index, index + 1 );
     }
 
     /**
@@ -252,7 +291,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
         int index = indexOf(value);
         if ( index < 0 )
             throw new NoSuchElementException("No such element: " + value);
-        return removeAt( index );
+        return removeRange( index, index + 1 );
     }
 
     /**
@@ -263,7 +302,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
      */
     default Vars<T> remove( Var<T> var ) {
         int index = indexOf(var);
-        return index < 0 ? this : removeAt( index );
+        return index < 0 ? this : removeRange( index, index + 1 );
     }
 
     /**
@@ -277,7 +316,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
         int index = indexOf(var);
         if ( index < 0 )
             throw new NoSuchElementException("No such element: " + var);
-        return removeAt( index );
+        return removeRange( index, index + 1 );
     }
 
     /**
@@ -285,7 +324,9 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
      *
      * @return This list of properties.
      */
-    default Vars<T> removeFirst() { return size() > 0 ? removeAt(0) : this; }
+    default Vars<T> removeFirst() {
+        return size() > 0 ? removeRange(0, 1) : this;
+    }
 
     /**
      *  Removes the first property from the list and returns it.
@@ -294,7 +335,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
      */
     default Var<T> popFirst() {
         Var<T> var = first();
-        removeFirst();
+        removeRange(0, 1);
         return var;
     }
 
@@ -303,7 +344,20 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
      *
      * @return This list of properties.
      */
-    default Vars<T> removeLast() { return size() > 0 ? removeAt(size() - 1) : this; }
+    default Vars<T> removeLast() {
+        return size() > 0 ? removeRange(size() - 1, size()) : this;
+    }
+
+    /**
+     * Remove all elements withn the range {@code from} inclusive and {@code to} exclusive.
+     *
+     * @param from the start index, inclusive.
+     * @param to   the end index, exclusive.
+     * @return {@code this} list of properties.
+     * @throws IndexOutOfBoundsException if {@code from} is negative, or {@code to} is greater than the size of this
+     *                                   {@code Vars} object, or {@code from} is greater than {@code to}.
+     */
+    Vars<T> removeRange(int from, int to);
 
     /**
      *  Removes the last property from the list and returns it.
@@ -311,9 +365,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
      * @return The removed property.
      */
     default Var<T> popLast() {
-        Var<T> var = last();
-        removeLast();
-        return var;
+        return popRange(size() - 1, size()).at(0);
     }
 
     /**
@@ -324,7 +376,9 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
      * @return This list of properties.
      * @throws IllegalArgumentException If {@code count} is negative.
      */
-    Vars<T> removeLast( int count );
+    default Vars<T> removeLast( int count ) {
+        return removeRange(size() - count, size());
+    }
 
     /**
      * Removes {@code count} number of properties from the end of the list and returns them in a new list.
@@ -334,7 +388,9 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
      * @return A new list of properties.
      * @throws IllegalArgumentException If {@code count} is negative.
      */
-    Vars<T> popLast( int count );
+    default Vars<T> popLast( int count ) {
+        return popRange(size() - count, size());
+    }
 
     /**
      * Removes the first {@code count} number of properties from the list.
@@ -344,7 +400,9 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
      * @return This list of properties.
      * @throws IllegalArgumentException If {@code count} is negative.
      */
-    Vars<T> removeFirst( int count );
+    default Vars<T> removeFirst( int count ) {
+        return removeRange(0, count);
+    }
 
     /**
      * Removes the first {@code count} number of properties from the list and returns them in a new list.
@@ -354,7 +412,9 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
      * @return A new list of properties.
      * @throws IllegalArgumentException If {@code count} is negative.
      */
-    Vars<T> popFirst( int count );
+    default Vars<T> popFirst( int count ) {
+        return popRange(0, count);
+    }
 
     /**
      *  Removes all properties from the list for which the provided predicate
@@ -477,13 +537,75 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
     }
 
     /**
+     * Wraps the specified value in distinct properties and sets them in the specified sequence, effectively replacing
+     * the property at that sequence.
+     *
+     * @param index the index of the sequence to set the properties.
+     * @param size  the size of the sequence to set the properties.
+     * @param item  the value to set.
+     * @return This list of properties.
+     * @throws IndexOutOfBoundsException if {@code from} is negative, or {@code to} is greater than the size of this
+     *                                   {@code Vars} object, or {@code from} is greater than {@code to}.
+     */
+    default Vars<T> setAt( int index, int size, T item ) {
+        return setRange(index, index + size, item);
+    }
+
+    /**
      *  Places the provided property at the specified index, effectively replacing the property
      *  at that index.
      *  @param index The index at which to set the property.
      *  @param var The property to set.
-     *  @return This list of properties.
+     *  @return {@code this} list of properties.
      */
     Vars<T> setAt( int index, Var<T> var );
+
+    /**
+     * Places the provided property in the specified sequence, effectively replacing the properties at the specified
+     * sequence with the given property.
+     * <p>
+     * Note: The provided property will be placed in the provided sequence.
+     * This will cause the same property to be placed multiple times in the list.
+     *
+     * @param index the index of the sequence to set the property.
+     * @param size  the size of the sequence to set the property.
+     * @param value the property to set.
+     * @return {@code this} list of properties.
+     * @throws IndexOutOfBoundsException if {@code from} is negative, or {@code to} is greater than the size of this
+     *                                   {@code Vars} object, or {@code from} is greater than {@code to}.
+     */
+    default Vars<T> setAt( int index, int size, Var<T> value ) {
+        return setRange(index, index + size, value);
+    }
+
+    /**
+     * Wraps the specified value in distinct properties and sets them in the specified range, effectively replacing the
+     * properties in the specified range.
+     *
+     * @param from  the start index, inclusive.
+     * @param to    the end index, exclusive.
+     * @param value the value to set.
+     * @return {@code this} list of properties.
+     * @throws IndexOutOfBoundsException if {@code from} is negative, or {@code to} is greater than the size of this
+     *                                   {@code Vars} object, or {@code from} is greater than {@code to}.
+     */
+    Vars<T> setRange(int from, int to, T value);
+
+    /**
+     * Places the provided property in the specified range, effectively replacing the properties in the specified range
+     * with the given property.
+     * <p>
+     * Note: The provided property will be placed in the provided range.
+     * This will cause the same property to be placed multiple times in the list.
+     *
+     * @param from  the start index, inclusive.
+     * @param to    the end index, exclusive.
+     * @param value the value to set.
+     * @return {@code this} list of properties.
+     * @throws IndexOutOfBoundsException if {@code from} is negative, or {@code to} is greater than the size of this
+     *                                   {@code Vars} object, or {@code from} is greater than {@code to}.
+     */
+    Vars<T> setRange(int from, int to, Var<T> value);
 
     /**
      *  Wraps each provided item in a property and appends it to this

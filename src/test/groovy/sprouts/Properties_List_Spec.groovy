@@ -64,12 +64,70 @@ class Properties_List_Spec extends Specification
             vars.at(0).get() == "Apricot"
             vars.at(1).get() == "Blueberry"
 
-        when : 'We use the "aetAt" method to change the state of the "Vars" properties.'
+        when : 'We use the "setAt" method to change the state of the "Vars" properties.'
+        reportInfo """
+            Note: The `setAt` method replaces the properties at the given index with a new property.
+            This is different to the `vars.at(index).set(value)` which updated the property itself.            
+        """
             vars.setAt(0, "Tim")
             vars.setAt(1, "Tom")
         then : 'The "Vars" properties have changed.'
             vars.at(0).get() == "Tim"
             vars.at(1).get() == "Tom"
+    }
+
+    def 'You can set a range of properties to a given value or property with the `setRange` method.'() {
+        given : 'A `Vars` instance with 12 properties.'
+            var vars = Vars.of("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l")
+        expect : 'The `Vars` instance has 12 properties.'
+            vars.size() == 12
+        when: 'We set the properties between index `3` and `7` to the value `x`.'
+            vars.setRange(3, 7, 'x')
+        then: 'The `Vars` instance contains the expected properties.'
+            vars == Vars.of("a", "b", "c", "x", "x", "x", "x", "h", "i", "j", "k", "l")
+        when: 'We update the value of one of the new properties.'
+            vars.at(4).set("y")
+        then: 'The updated property has the expected value.'
+            vars.at(4).get() == "y"
+        and: 'The other properties remain unchanged.'
+            vars == Vars.of("a", "b", "c", "x", "y", "x", "x", "h", "i", "j", "k", "l")
+        when: 'We set the properties between index `6` and `10` to a property with the value `z`.'
+            vars.setRange(6, 10, Var.of("z"))
+        then: 'The `Vars` instance contains the expected properties.'
+            vars == Vars.of("a", "b", "c", "x", "y", "x", "z", "z", "z", "z", "k", "l")
+        when: 'We update the value of one of the new properties.'
+            vars.at(7).set("o")
+        then: 'The updated property has the expected value.'
+            vars.at(7).get() == "o"
+        and: 'The other properties have changed as well.'
+            vars == Vars.of("a", "b", "c", "x", "y", "x", "o", "o", "o", "o", "k", "l")
+    }
+
+    def 'You can set a sequence of properties to a given value or property with the `setAt` method.'() {
+        given : 'A `Vars` instance with 12 properties.'
+            var vars = Vars.of("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l")
+        expect : 'The `Vars` instance has 12 properties.'
+            vars.size() == 12
+        when: 'We set `4` properties from index `3` to value `x`.'
+            vars.setAt(3, 4, 'x')
+        then: 'The `Vars` instance contains the expected properties.'
+            vars == Vars.of("a", "b", "c", "x", "x", "x", "x", "h", "i", "j", "k", "l")
+        when: 'We update the value of one of the new properties.'
+            vars.at(4).set("y")
+        then: 'The updated property has the expected value.'
+            vars.at(4).get() == "y"
+        and: 'The other properties remain unchanged.'
+            vars == Vars.of("a", "b", "c", "x", "y", "x", "x", "h", "i", "j", "k", "l")
+        when: 'We set `4` properties from index `6` to a property with the value `z`.'
+            vars.setAt(6, 4, Var.of("z"))
+        then: 'The `Vars` instance contains the expected properties.'
+            vars == Vars.of("a", "b", "c", "x", "y", "x", "z", "z", "z", "z", "k", "l")
+        when: 'We update the value of one of the new properties.'
+            vars.at(7).set("o")
+        then: 'The updated property has the expected value.'
+            vars.at(7).get() == "o"
+        and: 'The other properties have changed as well.'
+            vars == Vars.of("a", "b", "c", "x", "y", "x", "o", "o", "o", "o", "k", "l")
     }
 
     def 'You can remove n leading or trailing entries from a property list.'()
@@ -107,6 +165,43 @@ class Properties_List_Spec extends Specification
             vars.removeLast(2)
         then : 'The "Vars" class has no properties.'
             vars.size() == 0
+    }
+
+    def 'You can remove a range of entries from a property list.'() {
+        reportInfo """
+            A common use case is to remove a range of entries from a list.
+            You can remove not only the first or the last `n` entries with the `removeFirst(int)` and `removeLast(int)`
+            methods. You can also remove entries within the range of any two indices with the
+            `removeRange(int, int)` method.
+        """
+        given : 'A `Vars` instance with six properties.'
+            var vars = Vars.of("Racoon", "Squirrel", "Turtle", "Piglet", "Rooster", "Rabbit")
+        expect : 'The `Vars` instance has six properties.'
+            vars.size() == 6
+        when : 'We remove the two entries between index `1` and index `3` from the list.'
+            vars.removeRange(1, 3)
+        then : 'The `Vars` instance has four properties.'
+            vars.size() == 4
+        and : 'The two entries have been removed.'
+            vars == Vars.of("Racoon", "Piglet", "Rooster", "Rabbit")
+    }
+
+    def 'You can remove a sequence of `n` entries from a property list.'() {
+        reportInfo """
+            A common use case is to remove a sequence of entries from a list.
+            You can remove not only the first or the last `n` entries with the `removeFirst(int)` and `removeLast(int)`
+            methods. You can also remove `n` entries starting at any index with the `removeAt(int, int)` method.
+        """
+        given : 'A `Vars` instance with six properties.'
+            var vars = Vars.of("Racoon", "Squirrel", "Turtle", "Piglet", "Rooster", "Rabbit")
+        expect : 'The `Vars` instance has six properties.'
+            vars.size() == 6
+        when : 'We remove the two entries starting at index `1` from the list.'
+            vars.removeAt(1, 2)
+        then : 'The `Vars` instance has four properties.'
+            vars.size() == 4
+        and : 'The two entries have been removed.'
+            vars == Vars.of("Racoon", "Piglet", "Rooster", "Rabbit")
     }
 
     def 'The properties of one property list can be added to another property list.'()
@@ -453,6 +548,40 @@ class Properties_List_Spec extends Specification
         and : 'We removed properties have the correct values.'
             first2 == Vars.of(666, 1)
             last2 == Vars.of(1, 2)
+    }
+
+    def 'You can pop a range of entries from a property list.'() {
+        reportInfo """
+            To remove a range of properties and get the removed properties you can use the `popRange` method.
+            This can be seen as a generalization of the `popFirst` and `popLast` methods.
+        """
+        given : 'A `Vars` instance with six properties.'
+            var vars = Vars.of("Racoon", "Squirrel", "Turtle", "Piglet", "Rooster", "Rabbit")
+            expect : 'The `Vars` instance has six properties.'
+            vars.size() == 6
+        when : 'We pop the two entries between index `1` and index `3` from the list.'
+            var vars2 = vars.popRange(1, 3)
+        then : 'The popped `Vars` instance has two properties.'
+            vars2.size() == 2
+            and : 'The popped `Vars` instance contains the expected values.'
+            vars2 == Vars.of("Squirrel", "Turtle")
+    }
+
+    def 'You can pop a sequence of `n` entries from a property list.'() {
+        reportInfo """
+            To remove a sequence of properties and get the removed properties you can use the `popAt` method.
+            This can be seen as a generalization of the `popFirst` and `popLast` methods.
+        """
+        given : 'A `Vars` instance with six properties.'
+            var vars = Vars.of("Racoon", "Squirrel", "Turtle", "Piglet", "Rooster", "Rabbit")
+        expect : 'The `Vars` instance has six properties.'
+            vars.size() == 6
+        when : 'We pop the two entries starting at index `1` from the list.'
+            var vars2 = vars.popAt(1, 2)
+        then : 'The popped `Vars` instance has two properties.'
+            vars2.size() == 2
+        and : 'The popped `Vars` instance contains the expected values.'
+            vars2 == Vars.of("Squirrel", "Turtle")
     }
 
     def 'The "popAt" method return the removed property.'()
@@ -880,39 +1009,47 @@ class Properties_List_Spec extends Specification
             property list.
         """
         given: 'A nullable "Vals" instance with a few properties, including null properties.'
-            var vars = Vars.ofNullable(String.class, "a", "b", "c", "d", null, "f", "g", "h", null, "j", "k", "l", "m", "n", "o")
+            var vars = Vars.ofNullable(String.class, "a", "b", "c", "d", null, "f", "g", "h", null, "j", "k", "l", "m", "n", "o", "p", "q")
         when: 'We remove a property with the `remove` method.'
             vars.remove("d")
         then: 'The property is removed from the property list.'
-            vars == Vars.ofNullable(String.class, "a", "b", "c", null, "f", "g", "h", null, "j", "k", "l", "m", "n", "o")
+            vars == Vars.ofNullable(String.class, "a", "b", "c", null, "f", "g", "h", null, "j", "k", "l", "m", "n", "o", "p", "q")
         when: 'We remove a property with the `remove` method.'
             vars.remove(Var.of("m"))
         then: 'The property is removed from the property list.'
-            vars == Vars.ofNullable(String.class, "a", "b", "c", null, "f", "g", "h", null, "j", "k", "l", "n", "o")
+            vars == Vars.ofNullable(String.class, "a", "b", "c", null, "f", "g", "h", null, "j", "k", "l", "n", "o", "p", "q")
         when: 'We remove a property with the `removeAt` method.'
             vars.removeAt(1)
         then: 'The property is removed from the property list.'
-            vars == Vars.ofNullable(String.class, "a", "c", null, "f", "g", "h", null, "j", "k", "l", "n", "o")
+            vars == Vars.ofNullable(String.class, "a", "c", null, "f", "g", "h", null, "j", "k", "l", "n", "o", "p", "q")
         when: 'We remove a property with the `removeFirst` method.'
             vars.removeFirst()
         then: 'The property is removed from the property list.'
-            vars == Vars.ofNullable(String.class, "c", null, "f", "g", "h", null, "j", "k", "l", "n", "o")
+            vars == Vars.ofNullable(String.class, "c", null, "f", "g", "h", null, "j", "k", "l", "n", "o", "p", "q")
         when: 'We remove a property with the `removeLast` method.'
             vars.removeLast()
         then: 'The property is removed from the property list.'
-            vars == Vars.ofNullable(String.class, "c", null, "f", "g", "h", null, "j", "k", "l", "n")
+            vars == Vars.ofNullable(String.class, "c", null, "f", "g", "h", null, "j", "k", "l", "n", "o", "p")
         when: 'We remove multiple properties with the `removeAll` method.'
             vars.removeAll("d", "c", "f")
         then: 'The properties are removed from the property list.'
-            vars == Vars.ofNullable(String.class, null, "g", "h", null, "j", "k", "l", "n")
+            vars == Vars.ofNullable(String.class, null, "g", "h", null, "j", "k", "l", "n", "o", "p")
         when: 'We remove multiple properties with the `removeFirst` method.'
             vars.removeFirst(2)
         then: 'The properties are removed from the property list.'
-            vars == Vars.ofNullable(String.class, "h", null, "j", "k", "l", "n")
+            vars == Vars.ofNullable(String.class, "h", null, "j", "k", "l", "n", "o", "p")
         when: 'We remove multiple properties with the `removeLast` method.'
             vars.removeLast(2)
         then: 'The properties are removed from the property list.'
-            vars == Vars.ofNullable(String.class, "h", null, "j", "k")
+            vars == Vars.ofNullable(String.class, "h", null, "j", "k", "l", "n")
+        when: 'We remove multiple properties with the `removeRange` method.'
+            vars.removeRange(1, 3)
+        then: 'The properties are removed from the property list.'
+            vars == Vars.ofNullable(String.class, "h", "k", "l", "n")
+        when: 'We remove multiple properties with the `removeAt` method.'
+            vars.removeAt(1, 2)
+        then: 'The properties are removed from the property list.'
+            vars == Vars.ofNullable(String.class, "h", "n")
     }
 
     def 'You can easily remove `null` properties from a nullable "Vars" list.'() {
@@ -1121,38 +1258,71 @@ class Properties_List_Spec extends Specification
         and : 'The `vals` should not contain the removed properties'
             change.vals() == Vars.of("e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z")
         when : 'We remove a sequence of values from the list with the `removeLast` method.'
-            vars.removeLast(5)
+            vars.removeLast(4)
         then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
-            change.oldValues().size() == 5
-            change.oldValues() == Vals.of("v", "w", "x", "y", "z")
+            change.oldValues().size() == 4
+            change.oldValues() == Vals.of("w", "x", "y", "z")
         and : 'The `newValues` of the change should be an empty property list.'
             change.newValues().isEmpty()
         and : 'The `index` of the change is the index of the first property removed.'
-            change.index() == 17
+            change.index() == 18
         and : 'The `vals` should not contain the removed properties'
-            change.vals() == Vars.of("e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u")
-        when : 'We remove a sequence of values from the list with the `popFirst` method.'
-            vars.popFirst(6)
+            change.vals() == Vars.of("e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v")
+        when : 'We remove a range of values from the list with the `removeRange` method.'
+            vars.removeRange(1, 3)
         then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
-            change.oldValues().size() == 6
-            change.oldValues() == Vals.of("e", "f", "g", "h", "i", "j")
+            change.oldValues().size() == 2
+            change.oldValues() == Vals.of("f", "g")
+        and : 'The `newValues` of the change should be an empty property list.'
+            change.newValues().isEmpty()
+        and : 'The `index` of the change is the index of the first property removed.'
+            change.index() == 1
+        and : 'The `vals` should not contain the removed properties'
+            change.vals() == Vars.of("e", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v")
+        when : 'We remove a sequence of values from the list with the `removeAt` method.'
+            vars.removeAt(2, 2)
+        then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
+            change.oldValues().size() == 2
+            change.oldValues() == Vals.of("i", "j")
+        and : 'The `newValues` of the change should be an empty property list.'
+            change.newValues().isEmpty()
+        and : 'The `index` of the change is the index of the first property removed.'
+            change.index() == 2
+        and : 'The `vals` should not contain the removed properties'
+            change.vals() == Vars.of("e", "h", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v")
+        when : 'We remove a sequence of values from the list with the `popFirst` method.'
+            vars.popFirst(3)
+        then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
+            change.oldValues().size() == 3
+            change.oldValues() == Vals.of("e", "h", "k")
         and : 'The `newValues` of the change should be an empty property list.'
             change.newValues().isEmpty()
         and : 'The `index` of the change is the index of the first property removed.'
             change.index() == 0
         and : 'The `vals` should not contain the removed properties'
-            change.vals() == Vars.of("k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u")
+            change.vals() == Vars.of("l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v")
         when : 'We remove a sequence of values from the list with the `popLast` method.'
-            vars.popLast(7)
+            vars.popLast(4)
         then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
-            change.oldValues().size() == 7
-            change.oldValues() == Vals.of("o", "p", "q", "r", "s", "t", "u")
+            change.oldValues().size() == 4
+            change.oldValues() == Vals.of("s", "t", "u", "v")
         and : 'The `newValues` of the change should be an empty property list.'
             change.newValues().isEmpty()
         and : 'The `index` of the change is the index of the first property removed.'
-            change.index() == 4
+            change.index() == 7
         and : 'The `vals` should not contain the removed properties'
-            change.vals() == Vars.of("k", "l", "m", "n")
+            change.vals() == Vars.of("l", "m", "n", "o", "p", "q", "r")
+        when : 'We remove a sequence of values from the list with the `popRange` method.'
+            vars.popRange(2, 5)
+        then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
+            change.oldValues().size() == 3
+            change.oldValues() == Vals.of("n", "o", "p")
+        and : 'The `newValues` of the change should be an empty property list.'
+            change.newValues().isEmpty()
+        and : 'The `index` of the change is the index of the first property removed.'
+            change.index() == 2
+        and : 'The `vals` should not contain the removed properties'
+            change.vals() == Vars.of("l", "m", "q", "r")
     }
 
     def 'The change delegate contains information about changes made to a "Vars" list by clearing the list.'() {
@@ -1226,7 +1396,7 @@ class Properties_List_Spec extends Specification
         and : 'The `vals` should only contained the retained properties.'
             change.vals() == Vars.of("g", "h", "i", "j")
         when : 'When the `retainAll` method is used and no property is removed.'
-            change = null;
+            change = null
             vars.retainAll("a", "g", "h", "i", "j")
         then : 'No change event is triggered.'
             change == null
@@ -1278,6 +1448,155 @@ class Properties_List_Spec extends Specification
             change.index() == -1
         and : 'The `vals` should only contained the retained properties.'
             change.vals() == Vars.ofNullable(String.class, "a", "b", null, "d", null, null, "a", "b", "d")
+    }
+
+    def 'The change delegate contains information about changes made to a `Vars` list by setting a range properties.'() {
+        reportInfo """    
+            When you set a value or property to a range of properties, the change delegate contains information
+            about the change. The `oldValues' of the delegate contain the properties that were removed, and the
+            `newValues' contain the properties that were added.
+        """
+        given : 'A `Vars` instance with some properties.'
+            var vars = Vars.of("a", "b", "c", "d", "e", "f", "g", "h", "i", "j")
+        and : 'We register a listener that will record the last change for us.'
+            var change = null
+            vars.onChange({ change = it })
+        when : 'We use the `setRange` method to set all properties within the given range to new properties containing the given value.'
+            vars.setRange(2, 5, "x")
+        then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
+            change.oldValues().size() == 3
+            change.oldValues() == Vals.of("c", "d", "e")
+        and : 'The `newValues` of the change should be a property list with the added properties.'
+            change.newValues().size() == 3
+            change.newValues() == Vals.of("x", "x", "x")
+        and : 'The `index` of the change is `2`.'
+            change.index() == 2
+        and : 'The `vals` should contain the expected properties.'
+            change.vals() == Vars.of("a", "b", "x", "x", "x", "f", "g", "h", "i", "j")
+        when : 'We use the `setRange` method to set all properties within the given range to the given property.'
+            vars.setRange(4, 8, Var.of("z"))
+        then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
+            change.oldValues().size() == 4
+            change.oldValues() == Vals.of("x", "f", "g", "h")
+        and : 'The `newValues` of the change should be a property list with the added properties.'
+            change.newValues().size() == 4
+            change.newValues() == Vals.of("z", "z", "z", "z")
+        and : 'The `index` of the change is `4`.'
+            change.index() == 4
+        and : 'The `vals` should contain the expected properties.'
+            change.vals() == Vars.of("a", "b", "x", "x", "z", "z", "z", "z", "i", "j")
+    }
+
+    def 'The change delegate contains information about changes made to a `Vars` list by setting a sequence properties.'() {
+        reportInfo """    
+            When you set a value or property to a sequence of properties, the change delegate contains information
+            about the change. The `oldValues' of the delegate contain the properties that were removed, and the
+            `newValues' contain the properties that were added.
+        """
+        given : 'A `Vars` instance with some properties.'
+            var vars = Vars.of("a", "b", "c", "d", "e", "f", "g", "h", "i", "j")
+        and : 'We register a listener that will record the last change for us.'
+            var change = null
+            vars.onChange({ change = it })
+        when : 'We use the `setAt` method to set all properties starting at the given index to new properties containing the given value.'
+            vars.setAt(2, 3, "x")
+        then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
+            change.oldValues().size() == 3
+            change.oldValues() == Vals.of("c", "d", "e")
+        and : 'The `newValues` of the change should be a property list with the added properties.'
+            change.newValues().size() == 3
+            change.newValues() == Vals.of("x", "x", "x")
+        and : 'The `index` of the change is `2`.'
+            change.index() == 2
+        and : 'The `vals` should contain the expected properties.'
+            change.vals() == Vars.of("a", "b", "x", "x", "x", "f", "g", "h", "i", "j")
+        when : 'We use the `setAt` method to set all properties within the given sequence to the given property.'
+            vars.setAt(4, 4, Var.of("z"))
+        then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
+            change.oldValues().size() == 4
+            change.oldValues() == Vals.of("x", "f", "g", "h")
+        and : 'The `newValues` of the change should be a property list with the added properties.'
+            change.newValues().size() == 4
+            change.newValues() == Vals.of("z", "z", "z", "z")
+        and : 'The `index` of the change is `4`.'
+            change.index() == 4
+        and : 'The `vals` should contain the expected properties.'
+            change.vals() == Vars.of("a", "b", "x", "x", "z", "z", "z", "z", "i", "j")
+    }
+
+    def 'The change delegate contains information about changes made to a nullable `Vars` list by setting a range properties.'() {
+        reportInfo """    
+            When you set a value or property to a range of nullable properties, the change delegate contains information
+            about the change. The `oldValues' of the delegate contain the properties that were removed, and the
+            `newValues' contain the properties that were added.
+        """
+        given : 'A nullable `Vars` instance with some properties.'
+        var vars = Vars.ofNullable(String.class, "a", "b", null, "d", null, null, "g", "h", "i", "j")
+        and : 'We register a listener that will record the last change for us.'
+            var change = null
+            vars.onChange({ change = it })
+        when : 'We use the `setRange` method to set all properties within the given range to new properties containing the given value.'
+            vars.setRange(2, 5, (String) null)
+        then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
+            change.oldValues().size() == 3
+            change.oldValues() == Vals.ofNullable(String.class, null, "d", null)
+        and : 'The `newValues` of the change should be a property list with the added properties.'
+            change.newValues().size() == 3
+            change.newValues() == Vals.ofNullable(String.class, (String) null, (String) null, (String) null)
+        and : 'The `index` of the change is `2`.'
+            change.index() == 2
+        and : 'The `vals` should contain the expected properties.'
+            change.vals() == Vars.ofNullable(String.class, "a", "b", null, null, null, null, "g", "h", "i", "j")
+        when : 'We use the `setRange` method to set all properties within the given range to the given property.'
+            vars.setRange(5, 9, Var.ofNull(String.class))
+        then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
+            change.oldValues().size() == 4
+            change.oldValues() == Vals.ofNullable(String.class, null, "g", "h", "i")
+        and : 'The `newValues` of the change should be a property list with the added properties.'
+            change.newValues().size() == 4
+            change.newValues() == Vals.ofNullable(String.class, (String) null, (String) null, (String) null, (String) null)
+        and : 'The `index` of the change is `4`.'
+            change.index() == 5
+        and : 'The `vals` should contain the expected properties.'
+            change.vals() == Vars.ofNullable(String.class, "a", "b", null, null, null, null, null, null, null, "j")
+    }
+
+    def 'The change delegate contains information about changes made to a nullable `Vars` list by setting a sequence properties.'() {
+        reportInfo """    
+            When you set a value or property to a sequence of nullable properties, the change delegate contains information
+            about the change. The `oldValues' of the delegate contain the properties that were removed, and the
+            `newValues' contain the properties that were added.
+        """
+        given : 'A nullable `Vars` instance with some properties.'
+            var vars = Vars.ofNullable(String.class, "a", "b", null, "d", null, null, "g", "h", "i", "j")
+        and : 'We register a listener that will record the last change for us.'
+            var change = null
+            vars.onChange({ change = it })
+        when : 'We use the `setAt` method to set all properties within the given sequence to new properties containing the given value.'
+            vars.setAt(2, 3, (String) null)
+        then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
+            change.oldValues().size() == 3
+            change.oldValues() == Vals.ofNullable(String.class, null, "d", null)
+        and : 'The `newValues` of the change should be a property list with the added properties.'
+            change.newValues().size() == 3
+            change.newValues() == Vals.ofNullable(String.class, (String) null, (String) null, (String) null)
+        and : 'The `index` of the change is `2`.'
+            change.index() == 2
+        and : 'The `vals` should contain the expected properties.'
+
+        change.vals() == Vars.ofNullable(String.class, "a", "b", null, null, null, null, "g", "h", "i", "j")
+        when : 'We use the `setAt` method to set all properties within the given sequence to the given property.'
+            vars.setAt(5, 4, Var.ofNull(String.class))
+        then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
+            change.oldValues().size() == 4
+            change.oldValues() == Vals.ofNullable(String.class, null, "g", "h", "i")
+        and : 'The `newValues` of the change should be a property list with the added properties.'
+            change.newValues().size() == 4
+            change.newValues() == Vals.ofNullable(String.class, (String) null, (String) null, (String) null, (String) null)
+        and : 'The `index` of the change is `4`.'
+            change.index() == 5
+        and : 'The `vals` should contain the expected properties.'
+            change.vals() == Vars.ofNullable(String.class, "a", "b", null, null, null, null, null, null, null, "j")
     }
 
     def 'You can create a mapped version of a property list.'() {
