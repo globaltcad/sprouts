@@ -167,18 +167,6 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
 
     /** {@inheritDoc} */
     @Override
-    public Vars<T> removeAt( int index ) {
-        if ( _isImmutable ) throw new UnsupportedOperationException("This is an immutable list.");
-        if ( index < 0 || index >= _variables.size() )
-            throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + _variables.size());
-        Var<T> old = _variables.get(index);
-        _variables.remove(index);
-        _triggerAction( Change.REMOVE, index, null, old );
-        return this;
-    }
-
-    /** {@inheritDoc} */
-    @Override
     public Vars<T> popRange(int from, int to) {
         if ( _isImmutable ) throw new UnsupportedOperationException("This is an immutable list.");
         if ( from < 0 || to > _variables.size() || from > to )
@@ -207,8 +195,6 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
 
         if (from == to)
             return this;
-        if (from + 1 == to)
-            return removeAt(from);
 
         Vars<T> removal = (Vars<T>) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));
 

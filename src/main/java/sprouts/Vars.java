@@ -216,7 +216,9 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
      * @param index The index of the property to remove.
      * @return This list of properties.
      */
-    Vars<T> removeAt( int index );
+    default Vars<T> removeAt( int index ) {
+        return removeRange(index, index + 1);
+    }
 
     /**
      *  Removes and returns the property at the specified index.
@@ -226,7 +228,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
      */
     default Var<T> popAt( int index ) {
         Var<T> var = at(index);
-        removeAt(index);
+        removeRange(index, index + 1);
         return var;
     }
 
@@ -249,7 +251,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
      */
     default Vars<T> remove( T value ) {
         int index = indexOf(value);
-        return index < 0 ? this : removeAt( index );
+        return index < 0 ? this : removeRange( index, index + 1 );
     }
 
     /**
@@ -263,7 +265,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
         int index = indexOf(value);
         if ( index < 0 )
             throw new NoSuchElementException("No such element: " + value);
-        return removeAt( index );
+        return removeRange( index, index + 1 );
     }
 
     /**
@@ -274,7 +276,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
      */
     default Vars<T> remove( Var<T> var ) {
         int index = indexOf(var);
-        return index < 0 ? this : removeAt( index );
+        return index < 0 ? this : removeRange( index, index + 1 );
     }
 
     /**
@@ -288,7 +290,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
         int index = indexOf(var);
         if ( index < 0 )
             throw new NoSuchElementException("No such element: " + var);
-        return removeAt( index );
+        return removeRange( index, index + 1 );
     }
 
     /**
@@ -296,7 +298,9 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
      *
      * @return This list of properties.
      */
-    default Vars<T> removeFirst() { return size() > 0 ? removeAt(0) : this; }
+    default Vars<T> removeFirst() {
+        return size() > 0 ? removeRange(0, 1) : this;
+    }
 
     /**
      *  Removes the first property from the list and returns it.
@@ -305,7 +309,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
      */
     default Var<T> popFirst() {
         Var<T> var = first();
-        removeFirst();
+        removeRange(0, 1);
         return var;
     }
 
@@ -314,7 +318,9 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
      *
      * @return This list of properties.
      */
-    default Vars<T> removeLast() { return size() > 0 ? removeAt(size() - 1) : this; }
+    default Vars<T> removeLast() {
+        return size() > 0 ? removeRange(size() - 1, size()) : this;
+    }
 
     /**
      * Remove all elements withn the range {@code from} inclusive and {@code to} exclusive.
@@ -333,9 +339,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
      * @return The removed property.
      */
     default Var<T> popLast() {
-        Var<T> var = last();
-        removeLast();
-        return var;
+        return popRange(size() - 1, size()).at(0);
     }
 
     /**
