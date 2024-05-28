@@ -239,10 +239,12 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
     default Vars<T> add( Var<T> var ) { return addAt( size(), var ); }
 
     /**
-     *  Removes the property at the specified index.
+     * Removes the property at the specified index.
      *
      * @param index The index of the property to remove.
-     * @return This list of properties.
+     * @return {@code this} list of properties.
+     * @throws IndexOutOfBoundsException if {@code index} is negative, or {@code index} is greater than or equal to the
+     *                                   size of this {@code Vars} object.
      */
     default Vars<T> removeAt( int index ) {
         return removeRange(index, index + 1);
@@ -253,9 +255,10 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
      *
      * @param index the index of the sequence to remove.
      * @param size  the size of the sequence to remove.
-     * @return this list of properties.
-     * @throws IndexOutOfBoundsException if {@code from} is negative, or {@code to} is greater than the size of this
-     *                                   {@code Vars} object, or {@code from} is greater than {@code to}.
+     * @return {@code this} list of properties.
+     * @throws IndexOutOfBoundsException if {@code index} is negative, or {@code size} is negative,
+     *                                   or {@code index} + {@code size} is greater than the size of this {@code Vars}
+     *                                   object.
      */
     default Vars<T> removeAt( int index, int size ) {
         return removeRange(index, index + size);
@@ -298,10 +301,11 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
     Vars<T> popRange(int from, int to);
 
     /**
-     *  Removes the property containing the provided value from the list.
-     *  If the value is not found, the list is unchanged.
-     *  @param value The value to remove.
-     *  @return This list of properties.
+     * Removes the property containing the provided value from the list.
+     * If the value is not found, the list is unchanged.
+     *
+     * @param value the value to remove.
+     * @return {@code this} list of properties.
      */
     default Vars<T> remove( T value ) {
         int index = indexOf(value);
@@ -309,10 +313,11 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
     }
 
     /**
-     *  Removes the property containing the provided value from the list.
-     *  If the value is not found, a {@link NoSuchElementException} is thrown.
-     *  @param value The value to remove.
-     *  @return This list of properties.
+     * Removes the property containing the provided value from the list.
+     * If the value is not found, a {@link NoSuchElementException} is thrown.
+     *
+     * @param value the value to remove.
+     * @return {@code this} list of properties.
      * @throws NoSuchElementException if the value is not found.
      */
     default Vars<T> removeOrThrow( T value ) {
@@ -323,10 +328,11 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
     }
 
     /**
-     *  Removes the provided property from the list.
-     *  If the property is not found, the list is unchanged.
-     *  @param var The property to remove.
-     *  @return This list of properties.
+     * Removes the provided property from the list.
+     * If the property is not found, the list is unchanged.
+     *
+     * @param var the property to remove.
+     * @return {@code this} list of properties.
      */
     default Vars<T> remove( Var<T> var ) {
         int index = indexOf(var);
@@ -334,10 +340,11 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
     }
 
     /**
-     *  Removes the provided property from the list.
-     *  If the property is not found, a {@link NoSuchElementException} is thrown.
-     *  @param var The property to remove.
-     *  @return This list of properties.
+     * Removes the provided property from the list.
+     * If the property is not found, a {@link NoSuchElementException} is thrown.
+     *
+     * @param var the property to remove.
+     * @return {@code this} list of properties.
      * @throws NoSuchElementException if the property is not found.
      */
     default Vars<T> removeOrThrow( Var<T> var ) {
@@ -348,9 +355,9 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
     }
 
     /**
-     *  Removes the first property from the list.
+     * Removes the first property from the list, or does nothing if the list is empty.
      *
-     * @return This list of properties.
+     * @return {@code this} list of properties.
      */
     default Vars<T> removeFirst() {
         return size() > 0 ? removeRange(0, 1) : this;
@@ -368,16 +375,16 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
     }
 
     /**
-     *  Removes the last property from the list.
+     * Removes the last property from the list, or does nothing if the list is empty.
      *
-     * @return This list of properties.
+     * @return {@code this} list of properties.
      */
     default Vars<T> removeLast() {
         return size() > 0 ? removeRange(size() - 1, size()) : this;
     }
 
     /**
-     * Remove all elements withn the range {@code from} inclusive and {@code to} exclusive.
+     * Remove all elements within the range {@code from} inclusive and {@code to} exclusive.
      *
      * @param from the start index, inclusive.
      * @param to   the end index, exclusive.
@@ -400,9 +407,10 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
      * Removes {@code count} number of properties from the end of the list.
      * If {@code count} is greater than the size of the list, only all available properties will be removed.
      *
-     * @param count The number of properties to remove.
-     * @return This list of properties.
-     * @throws IllegalArgumentException If {@code count} is negative.
+     * @param count the number of properties to remove.
+     * @return {@code this} list of properties.
+     * @throws IndexOutOfBoundsException if {@code count} is negative, or {@code count} is greater than the size of
+     *                                   this {@code Vars} object.
      */
     default Vars<T> removeLast( int count ) {
         return removeRange(size() - count, size());
@@ -424,9 +432,10 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
      * Removes the first {@code count} number of properties from the list.
      * If {@code count} is greater than the size of the list, only all available properties will be removed.
      *
-     * @param count The number of properties to remove.
-     * @return This list of properties.
-     * @throws IllegalArgumentException If {@code count} is negative.
+     * @param count the number of properties to remove.
+     * @return {@code this} list of properties.
+     * @throws IndexOutOfBoundsException if {@code count} is negative, or {@code count} is greater than the size of
+     *                                   this {@code Vars} object.
      */
     default Vars<T> removeFirst( int count ) {
         return removeRange(0, count);
@@ -445,11 +454,11 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
     }
 
     /**
-     *  Removes all properties from the list for which the provided predicate
-     *  returns true.
+     * Removes all properties from the list for which the provided predicate
+     * returns true.
      *
-     * @param predicate The predicate to test each property.
-     * @return This list of properties.
+     * @param predicate the predicate to test each property.
+     * @return {@code this} list of properties.
      */
     default Vars<T> removeIf( Predicate<Var<T>> predicate ) {
         Vars<T> vars = (Vars<T>) (allowsNull() ? Vars.ofNullable(type()) : Vars.of(type()));
@@ -477,11 +486,11 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
     }
 
     /**
-     *  Removes all properties from the list for whose items the provided predicate
-     *  returns true.
+     * Removes all properties from the list for whose items the provided predicate
+     * returns true.
      *
-     *  @param predicate The predicate to test each property item.
-     *  @return This list of properties.
+     * @param predicate the predicate to test each property item.
+     * @return {@code this} list of properties.
      */
     default Vars<T> removeIfItem( Predicate<T> predicate ) {
         Vars<T> vars = (Vars<T>) (allowsNull() ? Vars.ofNullable(type()) : Vars.of(type()));
@@ -509,18 +518,20 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
     }
 
     /**
-     *  Removes all properties from the list that are contained in the provided
-     *  list of properties.
-     *  @param vars The list of properties to remove.
-     *  @return This list of properties.
+     * Removes all properties from the list that are contained in the provided
+     * list of properties.
+     *
+     * @param vars the list of properties to remove.
+     * @return {@code this} list of properties.
      */
     Vars<T> removeAll( Vars<T> vars );
 
     /**
-     *  Removes all properties from the list whose items are contained in the provided
-     *  array of properties and returns them in a new list.
-     *  @param items The list of properties to remove.
-     *  @return This list of properties.
+     * Removes all properties from the list whose items are contained in the provided
+     * array of properties and returns them in a new list.
+     *
+     * @param items the list of properties to remove.
+     * @return {@code this} list of properties.
      */
     default Vars<T> removeAll( T... items ) {
         Vars<T> vars = (Vars<T>) (allowsNull() ? Vars.ofNullable(type()) : Vars.of(type()));
