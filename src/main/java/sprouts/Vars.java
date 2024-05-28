@@ -265,10 +265,12 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
     }
 
     /**
-     *  Removes and returns the property at the specified index.
+     * Removes and returns the property at the specified index.
      *
-     * @param index The index of the property to remove.
-     * @return The removed property.
+     * @param index the index of the property to remove.
+     * @return the removed property.
+     * @throws IndexOutOfBoundsException if {@code index} is negative, or {@code index} is greater than or equal to the
+     *                                   size of this {@code Vars} object.
      */
     default Var<T> popAt( int index ) {
         Var<T> var = at(index);
@@ -282,8 +284,9 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
      * @param index the index of the sequence to pop.
      * @param size  the size of the sequence to pop.
      * @return The removed list of properties.
-     * @throws IndexOutOfBoundsException if {@code from} is negative, or {@code to} is greater than the size of this
-     *                                   {@code Vars} object, or {@code from} is greater than {@code to}.
+     * @throws IndexOutOfBoundsException if {@code index} is negative, or {@code size} is negative,
+     *                                   or {@code index} + {@code size} is greater than the size of this {@code Vars}
+     *                                   object.
      */
     default Vars<T> popAt( int index, int size ) {
         return popRange(index, index + size);
@@ -364,9 +367,10 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
     }
 
     /**
-     *  Removes the first property from the list and returns it.
+     * Removes the first property from the list and returns it.
      *
-     * @return The removed property.
+     * @return the removed property.
+     * @throws NoSuchElementException if the list is empty.
      */
     default Var<T> popFirst() {
         Var<T> var = first();
@@ -395,11 +399,14 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
     Vars<T> removeRange(int from, int to);
 
     /**
-     *  Removes the last property from the list and returns it.
+     * Removes the last property from the list and returns it.
      *
-     * @return The removed property.
+     * @return the removed property.
+     * @throws NoSuchElementException if the list is empty.
      */
     default Var<T> popLast() {
+        if (isEmpty())
+            throw new NoSuchElementException("There is no such property in the list. The list is empty.");
         return popRange(size() - 1, size()).at(0);
     }
 
@@ -420,9 +427,10 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
      * Removes {@code count} number of properties from the end of the list and returns them in a new list.
      * If {@code count} is greater than the size of the list, only all available properties will be popped.
      *
-     * @param count The number of properties to remove.
-     * @return A new list of properties.
-     * @throws IllegalArgumentException If {@code count} is negative.
+     * @param count the number of properties to remove.
+     * @return a new list of properties.
+     * @throws IndexOutOfBoundsException if {@code count} is negative, or {@code count} is greater than the size of
+     *                                   this {@code Vars} object.
      */
     default Vars<T> popLast( int count ) {
         return popRange(size() - count, size());
@@ -445,9 +453,10 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
      * Removes the first {@code count} number of properties from the list and returns them in a new list.
      * If {@code count} is greater than the size of the list, only all available properties will be popped.
      *
-     * @param count The number of properties to remove.
-     * @return A new list of properties.
-     * @throws IllegalArgumentException If {@code count} is negative.
+     * @param count the number of properties to remove.
+     * @return a new list of properties.
+     * @throws IndexOutOfBoundsException if {@code count} is negative, or {@code count} is greater than the size of
+     *                                   this {@code Vars} object.
      */
     default Vars<T> popFirst( int count ) {
         return popRange(0, count);
@@ -470,11 +479,11 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
     }
 
     /**
-     *  Removes all properties from the list for which the provided predicate
-     *  returns true and returns them in a new list.
+     * Removes all properties from the list for which the provided predicate
+     * returns true and returns them in a new list.
      *
-     * @param predicate The predicate to test each property.
-     * @return A new list of properties.
+     * @param predicate the predicate to test each property.
+     * @return a new list of properties.
      */
     default Vars<T> popIf( Predicate<Var<T>> predicate ) {
         Vars<T> vars = (Vars<T>) (allowsNull() ? Vars.ofNullable(type()) : Vars.of(type()));
@@ -502,11 +511,11 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
     }
 
     /**
-     *  Removes all properties from the list for whose items the provided predicate
-     *  returns true and returns them in a new list.
+     * Removes all properties from the list for whose items the provided predicate
+     * returns true and returns them in a new list.
      *
-     *  @param predicate The predicate to test each property item.
-     *  @return A new list of properties.
+     * @param predicate the predicate to test each property item.
+     * @return a new list of properties.
      */
     default Vars<T> popIfItem( Predicate<T> predicate ) {
         Vars<T> vars = (Vars<T>) (allowsNull() ? Vars.ofNullable(type()) : Vars.of(type()));
