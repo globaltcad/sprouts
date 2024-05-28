@@ -9,19 +9,19 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
- *  A list of mutable properties that can be observed for changes by
- *  {@link Subscriber} types (see {@link Observer} and {@link sprouts.Action}).
- *  Contrary to the supertype {@link Vals}, this interface provides methods for mutating the list.
- *  Use the {@link #onChange(Action)} method to register change listeners to the list. <br>
- *  Use {@link #subscribe(Observer)} if you want to be notified of changes to the list
- *  without any further information about the change.
- * 	<p>
- * 	Note that the name of this class is short for "variables". This name was deliberately chosen because
- * 	it is short, concise and yet clearly conveys the same meaning as other names used to model this
- * 	kind of pattern, like "properties", "observable objects", "observable values", "observable properties", etc.
- * 	<p>
- * 	<b>Please take a look at the <a href="https://globaltcad.github.io/sprouts/">living sprouts documentation</a>
- * 	where you can browse a large collection of examples demonstrating how to use the API of this class.</b>
+ * A list of mutable properties that can be observed for changes by
+ * {@link Subscriber} types (see {@link Observer} and {@link sprouts.Action}).
+ * Contrary to the supertype {@link Vals}, this interface provides methods for mutating the list.
+ * Use the {@link #onChange(Action)} method to register change listeners to the list. <br>
+ * Use {@link #subscribe(Observer)} if you want to be notified of changes to the list
+ * without any further information about the change.
+ * <p>
+ * Note that the name of this class is short for "variables". This name was deliberately chosen because
+ * it is short, concise and yet clearly conveys the same meaning as other names used to model this
+ * kind of pattern, like "properties", "observable objects", "observable values", "observable properties", etc.
+ * <p>
+ * <b>Please take a look at the <a href="https://globaltcad.github.io/sprouts/">living sprouts documentation</a>
+ * where you can browse a large collection of examples demonstrating how to use the API of this class.</b>
  *
  * @param <T> The type of the properties.
  */
@@ -716,20 +716,18 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
     }
 
     /**
-     *  The {@link #retainAll(Vars)} method removes all properties from this list
-     *  that are not contained in the provided list of properties.
-     *  @param vars The list of properties to retain.
-     *              All other properties will be removed.
-     *  @return This list of properties.
+     * Removes all properties from {@code this} list that are not contained in the provided list of properties.
+     *
+     * @param vars The list of properties to retain. All other properties will be removed.
+     * @return {@code this} list of properties.
      */
     Vars<T> retainAll( Vars<T> vars );
 
     /**
-     *  This method removes all properties from this list
-     *  whose items are not contained in the provided array of items.
-     *  @param items The array of items, whose properties to retain.
-     *               All other properties will be removed.
-     *  @return This list of properties.
+     * Removes all properties from {@code this} list whose items are not contained in the provided array of items.
+     *
+     * @param items The array of items, whose properties to retain. All other properties will be removed.
+     * @return {@code this} list of properties.
      */
     default Vars<T> retainAll( T... items ) {
         Vars<T> vars = (Vars<T>) (allowsNull() ? Vars.ofNullable(type()) : Vars.of(type()));
@@ -738,16 +736,17 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
     }
 
     /**
-     *  Removes all properties from this list.
-     *  This is conceptually equivalent to calling {@link List#clear()}
-     *  on a regular list.
+     * Removes all properties from {@code this} list.
+     * This is conceptually equivalent to calling {@link List#clear()} on a regular list.
      *
-     * @return This list.
+     * @return {@code this} list.
      */
     Vars<T> clear();
 
     /**
-     *  Use this for mapping a list of properties to another list of properties.
+     * Use this for mapping a list of properties to another list of properties.
+     *
+     * @return the new list.
      */
     @Override default Vars<T> map( Function<T,T> mapper ) {
         Objects.requireNonNull(mapper);
@@ -762,7 +761,9 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
     }
 
     /**
-     *  Use this for mapping a list of properties to another list of properties.
+     * Use this for mapping a list of properties to another list of properties.
+     *
+     * @return the new list.
      */
     @Override
     default <U extends @Nullable Object> Vars<@Nullable U> mapTo( Class<@NonNull U> type, Function<@NonNull T,U> mapper ) {
@@ -778,45 +779,45 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
      * Create a copy of the current state of the list.
      * Note: The created {@code Vals} instance will not reflect changes made to the underlying list.
      *
-     * @return An immutable copy of the current list.
+     * @return an immutable copy of the current list.
      */
     default Vals<T> toVals() {
         return (Vals<T>) (allowsNull() ? Vals.ofNullable(type(), this) : Vals.of(type(), (Vals<T>) this));
     }
 
     /**
-     *  Use this for sorting the list of properties.
+     * Use this for sorting the list of properties.
      *
      * @param comparator The comparator to use for sorting.
      */
     void sort( Comparator<T> comparator );
 
     /**
-     * Sorts the list of properties using the natural ordering of the
-     * properties.
-     * Note that this method expected the wrapped values to be
-     * {@link Comparable}.
+     * Sorts the list of properties using the natural ordering of the properties.
+     * Note that this method expected the wrapped values to be {@link Comparable}.
+     *
+     * @throws UnsupportedOperationException if the values are not {@link Comparable}.
      */
     default void sort() {
         // First we have to check if the type is comparable:
-        if ( Comparable.class.isAssignableFrom(type()) ) {
+        if (Comparable.class.isAssignableFrom(type())) {
             @SuppressWarnings("unchecked")
             Comparator<T> comparator = (Comparator<T>) Comparator.naturalOrder();
-            sort( comparator );
-        }
-        else
+            sort(comparator);
+        } else {
             throw new UnsupportedOperationException("Cannot sort a list of non-comparable types.");
+        }
     }
 
     /**
-     *  Removes all duplicate properties from this list of properties.
+     * Removes all duplicate properties from {@code this} list of properties.
      */
     void makeDistinct();
 
     /**
-     *  Reverse the order of the properties in this list.
+     * Reverse the order of the properties in {@code this} list.
      *
-     * @return This list.
+     * @return {@code this} list.
      */
     Vars<T> revert();
 }
