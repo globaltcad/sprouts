@@ -42,6 +42,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
     @SuppressWarnings("unchecked")
     static <T> Vars<T> of( Class<T> type, Var<T>... vars ) {
         Objects.requireNonNull(type);
+        Objects.requireNonNull(vars);
         return Sprouts.factory().varsOf( type, vars );
     }
 
@@ -74,6 +75,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
     @SuppressWarnings("unchecked")
     static <T> Vars<T> of( Var<T> first, Var<T>... rest ) {
         Objects.requireNonNull(first);
+        Objects.requireNonNull(rest);
         return Sprouts.factory().varsOf( first, rest );
     }
 
@@ -90,6 +92,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
     @SuppressWarnings("unchecked")
     static <T> Vars<T> of( T first, T... rest ) {
         Objects.requireNonNull(first);
+        Objects.requireNonNull(rest);
         return Sprouts.factory().varsOf( first, rest );
     }
 
@@ -107,6 +110,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
      */
     static <T> Vars<T> of( Class<T> type, Iterable<Var<T>> vars ) {
         Objects.requireNonNull(type);
+        Objects.requireNonNull(vars);
         return Sprouts.factory().varsOf( type, vars );
     }
 
@@ -125,6 +129,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
     @SuppressWarnings("unchecked")
     static <T> Vars<@Nullable T> ofNullable( Class<T> type, Var<@Nullable T>... vars ) {
         Objects.requireNonNull(type);
+        Objects.requireNonNull(vars);
         return Sprouts.factory().varsOfNullable( type, vars );
     }
 
@@ -172,6 +177,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
     @SuppressWarnings("unchecked")
     static <T> Vars<@Nullable T> ofNullable( Var<@Nullable T> first, Var<@Nullable T>... rest ) {
         Objects.requireNonNull(first);
+        Objects.requireNonNull(rest);
         return Sprouts.factory().varsOfNullable( first, rest );
     }
 
