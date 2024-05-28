@@ -219,7 +219,8 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
      * Wraps the provided value in a {@link Var} property and adds it to the list.
      *
      * @param value The value to add.
-     * @return This list of properties.
+     * @return {@code this} list of properties.
+     * @throws NullPointerException if {@code null} is not allowed and the {@code value} is {@code null}.
      */
     default Vars<T> add( T value ) {
         if (allowsNull())
@@ -229,10 +230,11 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
     }
 
     /**
-     *  Adds the provided property to the list.
+     * Adds the provided property to the list.
      *
-     * @param var The property to add.
-     * @return This list of properties.
+     * @param var the property to add.
+     * @return {@code this} list of properties.
+     * @throws IllegalArgumentException if the list allows {@code null} and the property does not allow {@code null}.
      */
     default Vars<T> add( Var<T> var ) { return addAt( size(), var ); }
 
@@ -527,11 +529,13 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
     }
 
     /**
-     *  Wraps the provided value in a {@link Var} property and adds it to the list
-     *  at the specified index.
-     *  @param index The index at which to add the property.
-     *  @param item The value to add as a property item.
-     *  @return This list of properties.
+     * Wraps the provided value in a {@link Var} property and adds it to the list
+     * at the specified index.
+     *
+     * @param index the index at which to add the property.
+     * @param item  the value to add as a property item.
+     * @return {@code this} list of properties.
+     * @throws NullPointerException if {@code null} is not allowed and the {@code item} is {@code null}.
      */
     default Vars<T> addAt( int index, T item ) {
         if (allowsNull())
@@ -541,12 +545,14 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
     }
 
     /**
-     *  Adds the provided property to the list at the specified index.
-     *  @param index The index at which to add the property.
-     *  @param var The property to add.
-     *  @return This list of properties.
+     * Adds the provided property to the list at the specified index.
+     *
+     * @param index The index at which to add the property.
+     * @param var   The property to add.
+     * @return {@code this} list of properties.
+     * @throws IllegalArgumentException if the list allows {@code null} and the property does not allow {@code null}.
      */
-    Vars<T> addAt( int index, Var<T> var );
+    Vars<T> addAt(int index, Var<T> var);
 
     /**
      *  Wraps the provided value in a property and sets it at the specified index
@@ -634,10 +640,12 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
     Vars<T> setRange(int from, int to, Var<T> value);
 
     /**
-     *  Wraps each provided item in a property and appends it to this
-     *  list of properties.
-     *  @param items The array of values to add as property items.
-     *  @return This list of properties.
+     * Wraps each provided item in a property and appends it to this
+     * list of properties.
+     *
+     * @param items The array of values to add as property items.
+     * @return {@code this} list of properties.
+     * @throws NullPointerException if {@code null} is not allowed and one of the {@code items} is {@code null}.
      */
     @SuppressWarnings("unchecked")
     default Vars<T> addAll( T... items ) {
@@ -647,10 +655,12 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
     }
 
     /**
-     *  Iterates over the supplied values, and appends
-     *  them to this list as properties.
-     *  @param items The values to add as property items.
-     *  @return This list of properties.
+     * Iterates over the supplied values, and appends
+     * them to {@code this} list as properties.
+     *
+     * @param items The values to add as property items.
+     * @return {@code this} list of properties.
+     * @throws NullPointerException if {@code null} is not allowed and one of the {@code items} is {@code null}.
      */
     default Vars<T> addAll( Iterable<T> items ) {
         Vars<T> vars = (Vars<T>) (allowsNull() ? Vars.ofNullable(type()) : Vars.of(type()));
@@ -659,10 +669,12 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
     }
 
     /**
-     *  Iterates over the supplied property list, and appends
-     *  them to this list.
-     *  @param vals The properties to add.
-     *  @return This list of properties.
+     * Iterates over the supplied property list, and appends
+     * the values of the list to {@code this} list.
+     *
+     * @param vals The properties to add.
+     * @return {@code this} list of properties.
+     * @throws NullPointerException if {@code null} is not allowed and one of the {@code vals} is empty.
      */
     default Vars<T> addAll( Vals<T> vals ) {
         for ( T v : vals ) add(v);
