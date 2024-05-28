@@ -25,16 +25,19 @@ import java.util.function.Predicate;
  *
  * @param <T> The type of the properties.
  */
-public interface Vars<T extends @Nullable Object> extends Vals<T>
-{
+public interface Vars<T extends @Nullable Object> extends Vals<T> {
+
     /**
-     *  Creates a list of non-nullable properties from the supplied type and vararg values.
-     *  This factory method requires that the type be specified because the
-     *  compiler cannot infer the type from a potentially empty vararg array.
-     *  @param type The type of the properties.
-     *  @param vars The properties to add to the new Vars instance.
-     *  @param <T> The type of the properties.
-     *  @return A new Vars instance.
+     * Creates a list of non-nullable properties from the supplied type and vararg values.
+     * This factory method requires that the type be specified because the
+     * compiler cannot infer the type from a potentially empty vararg array.
+     *
+     * @param type the type of the properties.
+     * @param vars the properties to add to the new Vars instance.
+     * @param <T>  the type of the properties.
+     * @return a new {@code Vars} instance.
+     * @throws NullPointerException     if {@code type} is {@code null}, or {@code vars} is {@code null}.
+     * @throws IllegalArgumentException if any property allows {@code null}.
      */
     @SuppressWarnings("unchecked")
     static <T> Vars<T> of( Class<T> type, Var<T>... vars ) {
@@ -43,13 +46,15 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
     }
 
     /**
-     *  Creates an empty list of non-nullable properties from the supplied type.
-     *  This factory method requires that the type be specified because the
-     *  compiler cannot infer the type from a potentially empty vararg array.
-     *  @param type The type of the properties.
-     *              This is used to check if the item is of the correct type.
-     *  @param <T> The type of the properties.
-     *  @return A new Vars instance.
+     * Creates an empty list of non-nullable properties from the supplied type.
+     * This factory method requires that the type be specified because the
+     * compiler cannot infer the type from a potentially empty vararg array.
+     *
+     * @param type the type of the properties.
+     *             This is used to check if the item is of the correct type.
+     * @param <T>  the type of the properties.
+     * @return a new {@code Vars} instance.
+     * @throws NullPointerException if {@code type} is {@code null}.
      */
     static <T> Vars<T> of( Class<T> type ) {
         Objects.requireNonNull(type);
@@ -57,11 +62,14 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
     }
 
     /**
-     *  Creates a list of non-nullable properties from one or more non-nullable properties.
-     *  @param first The first property to add to the new Vars instance.
-     *  @param rest The remaining properties to add to the new Vars instance.
-     *  @param <T> The type of the properties.
-     *  @return A new Vars instance.
+     * Creates a list of non-nullable properties from one or more non-nullable properties.
+     *
+     * @param first the first property to add to the new Vars instance.
+     * @param rest  the remaining properties to add to the new Vars instance.
+     * @param <T>   the type of the properties.
+     * @return a new {@code Vars} instance.
+     * @throws NullPointerException     if {@code first} is {@code null}, or {@code rest} is {@code null}.
+     * @throws IllegalArgumentException if any property allows {@code null}.
      */
     @SuppressWarnings("unchecked")
     static <T> Vars<T> of( Var<T> first, Var<T>... rest ) {
@@ -70,11 +78,14 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
     }
 
     /**
-     *  Creates a list of non-nullable properties from one or more non-null values.
-     *  @param first The first value to add to the new Vars instance.
-     *  @param rest The remaining values to add to the new Vars instance.
-     *  @param <T> The type of the values.
-     *  @return A new Vars instance.
+     * Creates a list of non-nullable properties from one or more non-null values.
+     *
+     * @param first the first value to add to the new Vars instance.
+     * @param rest  the remaining values to add to the new Vars instance.
+     * @param <T>   the type of the values.
+     * @return a new {@code Vars} instance.
+     * @throws NullPointerException     if {@code first} is {@code null}, or {@code rest} is {@code null}.
+     * @throws IllegalArgumentException if any value in {@code rest} is {@code null}.
      */
     @SuppressWarnings("unchecked")
     static <T> Vars<T> of( T first, T... rest ) {
@@ -83,13 +94,16 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
     }
 
     /**
-     *  Creates a list of non-nullable properties from the supplied type and iterable of values.
-     *  This factory method requires that the type be specified because the
-     *  compiler cannot infer the type from a potentially empty iterable.
-     *  @param type The type of the properties.
-     *  @param vars The iterable of values.
-     *  @param <T> The type of the properties.
-     *  @return A new Vars instance.
+     * Creates a list of non-nullable properties from the supplied type and iterable of values.
+     * This factory method requires that the type be specified because the
+     * compiler cannot infer the type from a potentially empty iterable.
+     *
+     * @param type the type of the properties.
+     * @param vars the iterable of values.
+     * @param <T>  the type of the properties.
+     * @return a new {@code Vars} instance.
+     * @throws NullPointerException     if {@code type} is {@code null}, or {@code vars} is {@code null}.
+     * @throws IllegalArgumentException if any property in {@code vars} allows {@code null}.
      */
     static <T> Vars<T> of( Class<T> type, Iterable<Var<T>> vars ) {
         Objects.requireNonNull(type);
@@ -97,14 +111,16 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
     }
 
     /**
-     *  Creates a list of nullable properties from the supplied type and varargs properties.
-     *  This factory method requires that the type be specified because the
-     *  compiler cannot infer the type from the null values.
-     *  @param type The type of the properties.
-     *  @param vars The properties to add to the new Vars instance.
-     *              The properties may be nullable properties, but they may not be null themselves.
-     *  @param <T> The type of the properties.
-     *  @return A new Vars instance.
+     * Creates a list of nullable properties from the supplied type and varargs properties.
+     * This factory method requires that the type be specified because the
+     * compiler cannot infer the type from the null values.
+     *
+     * @param type the type of the properties.
+     * @param vars the properties to add to the new Vars instance.
+     *             The properties may be nullable properties, but they may not be null themselves.
+     * @param <T>  the type of the properties.
+     * @return a new {@code Vars} instance.
+     * @throws NullPointerException if {@code type} is {@code null}, or {@code vars} is {@code null}.
      */
     @SuppressWarnings("unchecked")
     static <T> Vars<@Nullable T> ofNullable( Class<T> type, Var<@Nullable T>... vars ) {
@@ -113,13 +129,15 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
     }
 
     /**
-     *  Creates an empty list of nullable properties from the supplied type.
-     *  This factory method requires that the type be specified because the
-     *  compiler cannot infer the type from a potentially empty vararg array.
-     *  @param type The type of the properties.
-     *              This is used to check if the item is of the correct type.
-     *  @param <T> The type of the properties.
-     *  @return A new Vars instance.
+     * Creates an empty list of nullable properties from the supplied type.
+     * This factory method requires that the type be specified because the
+     * compiler cannot infer the type from a potentially empty vararg array.
+     *
+     * @param type the type of the properties.
+     *             This is used to check if the item is of the correct type.
+     * @param <T>  the type of the properties.
+     * @return a new {@code Vars} instance.
+     * @throws NullPointerException if {@code type} is {@code null}.
      */
     static <T> Vars<@Nullable T> ofNullable( Class<T> type ) {
         Objects.requireNonNull(type);
@@ -127,14 +145,15 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
     }
 
     /**
-     *  Creates a list of nullable properties from the supplied type and values.
-     *  This factory method requires that the type be specified because the
-     *  compiler cannot infer the type from the null values.
-     *  @param type The type of the properties.
-     *  @param values The values to be wrapped by properties and then added to the new Vars instance.
-     *                The values may be null.
-     *  @param <T> The type of the values.
-     *  @return A new Vars instance.
+     * Creates a list of nullable properties from the supplied type and values.
+     * This factory method requires that the type be specified because the
+     * compiler cannot infer the type from the null values.
+     *
+     * @param type   the type of the properties.
+     * @param values the values to be wrapped by properties and then added to the new Vars instance.
+     *               The values may be null.
+     * @param <T>    the type of the values.
+     * @return a new {@code Vars} instance.
      */
     @SuppressWarnings("unchecked")
     static <T> Vars<@Nullable T> ofNullable( Class<T> type, @Nullable T... values ) {
@@ -143,11 +162,12 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
     }
 
     /**
-     *  Creates a list of nullable properties from the supplied properties.
-     * @param first The first property to add to the new Vars instance.
-     * @param rest The remaining properties to add to the new Vars instance.
-     * @param <T> The type of the properties.
-     * @return A new Vars instance.
+     * Creates a list of nullable properties from the supplied properties.
+     *
+     * @param first the first property to add to the new Vars instance.
+     * @param rest  the remaining properties to add to the new Vars instance.
+     * @param <T>   the type of the properties.
+     * @return a new {@code Vars} instance.
      */
     @SuppressWarnings("unchecked")
     static <T> Vars<@Nullable T> ofNullable( Var<@Nullable T> first, Var<@Nullable T>... rest ) {
@@ -160,10 +180,10 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
      * This factory method requires that the type be specified because the
      * compiler cannot infer the type from a potentially empty iterable.
      *
-     * @param type The type of the properties.
-     * @param vars The iterable of values.
-     * @param <T>  The type of the properties.
-     * @return A new Vars instance.
+     * @param type the type of the properties.
+     * @param vars the iterable of values.
+     * @param <T>  the type of the properties.
+     * @return a new {@code Vars} instance.
      */
     static <T> Vars<@Nullable T> ofNullable( Class<T> type, Iterable<Var<@Nullable T>> vars ) {
         Objects.requireNonNull(type);
