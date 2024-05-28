@@ -575,11 +575,15 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
     Vars<T> addAt(int index, Var<T> var);
 
     /**
-     *  Wraps the provided value in a property and sets it at the specified index
-     *  effectively replacing the property at that index.
-     *  @param index The index at which to set the property.
-     *  @param item The value to set.
-     *  @return This list of properties.
+     * Wraps the provided value in a property and sets it at the specified index
+     * effectively replacing the property at that index.
+     *
+     * @param index the index at which to set the property.
+     * @param item  the value to set.
+     * @return {@code this} list of properties.
+     * @throws NullPointerException      if {@code null} is not allowed and the {@code item} is {@code null}.
+     * @throws IndexOutOfBoundsException if {@code index} is negative, or {@code index} is greater than or equal to the
+     *                                   size of this {@code Vars} object.
      */
     default Vars<T> setAt( int index, T item ) {
         if (allowsNull())
@@ -595,20 +599,26 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
      * @param index the index of the sequence to set the properties.
      * @param size  the size of the sequence to set the properties.
      * @param item  the value to set.
-     * @return This list of properties.
-     * @throws IndexOutOfBoundsException if {@code from} is negative, or {@code to} is greater than the size of this
-     *                                   {@code Vars} object, or {@code from} is greater than {@code to}.
+     * @return {@code this} list of properties.
+     * @throws IndexOutOfBoundsException if {@code index} is negative, or {@code size} is negative,
+     *                                   or {@code index} + {@code size} is greater than the size of
+     *                                   this {@code Vars} object.
+     * @throws NullPointerException      if {@code null} is not allowed and the {@code item} is {@code null}.
      */
     default Vars<T> setAt( int index, int size, T item ) {
         return setRange(index, index + size, item);
     }
 
     /**
-     *  Places the provided property at the specified index, effectively replacing the property
-     *  at that index.
-     *  @param index The index at which to set the property.
-     *  @param var The property to set.
-     *  @return {@code this} list of properties.
+     * Places the provided property at the specified index, effectively replacing the property
+     * at that index.
+     *
+     * @param index The index at which to set the property.
+     * @param var   The property to set.
+     * @return {@code this} list of properties.
+     * @throws IndexOutOfBoundsException if {@code index} is negative, or {@code index} is greater than or equal to the
+     *                                   size of this {@code Vars} object.
+     * @throws IllegalArgumentException  if the list allows {@code null} and the property does not allow {@code null}.
      */
     Vars<T> setAt( int index, Var<T> var );
 
@@ -623,8 +633,10 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
      * @param size  the size of the sequence to set the property.
      * @param value the property to set.
      * @return {@code this} list of properties.
-     * @throws IndexOutOfBoundsException if {@code from} is negative, or {@code to} is greater than the size of this
-     *                                   {@code Vars} object, or {@code from} is greater than {@code to}.
+     * @throws IndexOutOfBoundsException if {@code index} is negative, or {@code size} is negative,
+     *                                   or {@code index} + {@code size} is greater than the size of
+     *                                   this {@code Vars} object.
+     * @throws IllegalArgumentException  if the list allows {@code null} and the property does not allow {@code null}.
      */
     default Vars<T> setAt( int index, int size, Var<T> value ) {
         return setRange(index, index + size, value);
@@ -640,6 +652,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
      * @return {@code this} list of properties.
      * @throws IndexOutOfBoundsException if {@code from} is negative, or {@code to} is greater than the size of this
      *                                   {@code Vars} object, or {@code from} is greater than {@code to}.
+     * @throws NullPointerException      if {@code null} is not allowed and the {@code item} is {@code null}.
      */
     Vars<T> setRange(int from, int to, T value);
 
@@ -656,6 +669,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
      * @return {@code this} list of properties.
      * @throws IndexOutOfBoundsException if {@code from} is negative, or {@code to} is greater than the size of this
      *                                   {@code Vars} object, or {@code from} is greater than {@code to}.
+     * @throws IllegalArgumentException  if the list allows {@code null} and the property does not allow {@code null}.
      */
     Vars<T> setRange(int from, int to, Var<T> value);
 
