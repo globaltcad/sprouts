@@ -505,7 +505,11 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	 * @param <U>    The type of the item returned from the mapping function
 	 * @return A property that is a live view of this property based on the provided mapping function.
 	 */
-	<U> Val<U> viewAs( Class<U> type, Function<T, U> mapper );
+	default <U> Val<U> viewAs( Class<U> type, Function<T, U> mapper ) {
+		final Var<U> var = Var.of(type, mapper.apply(orElseNull()));
+		onChange(Util.VIEW_CHANNEL, v -> var.set(mapper.apply(v.orElseNull())));
+		return var;
+	}
 
 	/**
 	 * Use this to create a live view of this property through a new property based on the provided mapping function.
@@ -548,7 +552,22 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	 * @param <U>         The type of the resulting property.
 	 * @return A property that is a live view of this property based on the provided mapping function and null object.
 	 */
-	<U> Val<U> view( U nullObject, U errorObject, Function<T, @Nullable U> mapper );
+	default <U> Val<U> view( U nullObject, U errorObject, Function<T, @Nullable U> mapper ) {
+		Objects.requireNonNull(nullObject);
+		Objects.requireNonNull(errorObject);
+
+		Function<T, U> nonNullMapper = Util.nonNullMapper(nullObject, errorObject, mapper);
+
+		final U initial = nonNullMapper.apply(orElseNull());
+		final Var<U> var = Var.of( initial );
+
+		onChange(Util.VIEW_CHANNEL, v -> {
+			final U value = nonNullMapper.apply(orElseNull());
+			var.set( value );
+		});
+		return var;
+	}
+
 
 	/**
 	 * Use this to create a nullable live view of this property through a new property based on the provided mapping
@@ -561,7 +580,11 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	 * @param <U>    The type of the resulting property.
 	 * @return A nullable property that is a live view of this property based on the provided mapping function.
 	 */
-	<U> Val<@Nullable U> viewAsNullable( Class<U> type, Function<T, @Nullable U> mapper );
+	default <U> Val<@Nullable U> viewAsNullable( Class<U> type, Function<T, @Nullable U> mapper ) {
+		final Var<@Nullable U> var = Var.ofNullable(type, mapper.apply(orElseNull()));
+		onChange(Util.VIEW_CHANNEL, v -> var.set(mapper.apply(v.orElseNull())));
+		return var;
+	}
 
 	/**
 	 * 	Use this to create a live view of this property

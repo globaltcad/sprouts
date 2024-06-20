@@ -9,8 +9,6 @@ import sprouts.*;
 
 import java.util.*;
 import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * 	The base implementation for both {@link Var} and {@link Val} interfaces.
@@ -22,7 +20,6 @@ import java.util.function.Function;
 public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<T> implements Var<T> {
 
 	private static final Logger log = org.slf4j.LoggerFactory.getLogger(AbstractVariable.class);
-	private static From VIEW_CHANNEL = From.ALL;
 
 	public static <T> Var<@Nullable T> ofNullable( boolean immutable, Class<T> type, @Nullable T value ) {
 		return new AbstractVariable<T>( immutable, type, value, NO_ID, Collections.emptyMap(), true );
@@ -261,65 +258,6 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 		return false;
 	}
 
-	/** {@inheritDoc} */
-	@Override
-	public final <U> Val<U> viewAs(Class<U> type, Function<T, U> mapper) {
-		final Var<U> var = Var.of(type, mapper.apply(orElseNull()));
-		onChange(VIEW_CHANNEL, v -> var.set(mapper.apply(v.orElseNull())));
-		return var;
-	}
-
-	/** {@inheritDoc} */
-	@Override
-	public <U> Val<U> view(U nullObject, U errorObject, Function<T, @Nullable U> mapper) {
-		Objects.requireNonNull(nullObject);
-		Objects.requireNonNull(errorObject);
-
-		Function<T, U> nonNullMapper = nonNullMapper(nullObject, errorObject, mapper);
-
-		final U initial = nonNullMapper.apply(orElseNull());
-		final Var<U> var = Var.of( initial );
-
-		onChange(VIEW_CHANNEL, v -> {
-			final U value = nonNullMapper.apply(orElseNull());
-			var.set( value );
-		});
-		return var;
-	}
-
-	/** {@inheritDoc} */
-	@Override
-	public <U> Val<@Nullable U> viewAsNullable(Class<U> type, Function<T, @Nullable U> mapper) {
-		final Var<@Nullable U> var = Var.ofNullable(type, mapper.apply(orElseNull()));
-		onChange(VIEW_CHANNEL, v -> var.set(mapper.apply(v.orElseNull())));
-		return var;
-	}
-
-	private static <T> @Nullable T _itemNullObjectOrNullOf(Class<T> type, @Nullable T value ) {
-		if  ( value != null )
-			return value;
-		else if ( type == String.class )
-			return type.cast("");
-		else if ( type == Integer.class )
-			return type.cast(0);
-		else if ( type == Long.class )
-			return type.cast(0L);
-		else if ( type == Double.class )
-			return type.cast(0.0);
-		else if ( type == Float.class )
-			return type.cast(0.0f);
-		else if ( type == Short.class )
-			return type.cast((short)0);
-		else if ( type == Byte.class )
-			return type.cast((byte)0);
-		else if ( type == Character.class )
-			return type.cast((char)0);
-		else if ( type == Boolean.class )
-			return type.cast(false);
-		else
-			return null;
-	}
-
 	@Override
 	public Observable subscribe( Observer observer ) {
 		return onChange(DEFAULT_CHANNEL, new SproutChangeListener<>(observer) );
@@ -344,17 +282,6 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 	@Override
 	protected String _stringTypeName() {
 		return _isImmutable ? super._stringTypeName() : "Var";
-	}
-
-	private static <T extends @Nullable Object, R> Function<T, R> nonNullMapper(R nullObject, R errorObject, Function<T, @Nullable R> mapper) {
-		return t -> {
-			try {
-				@Nullable R r = mapper.apply(t);
-				return r == null ? nullObject : r;
-			} catch (Exception e) {
-				return errorObject;
-			}
-		};
 	}
 
 }
