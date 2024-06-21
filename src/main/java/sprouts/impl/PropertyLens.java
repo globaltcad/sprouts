@@ -20,40 +20,41 @@ public final class PropertyLens<A extends @Nullable Object, T extends @Nullable 
 {
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(PropertyLens.class);
 
-    private final Map<Channel, List<Action<Val<T>>>> _actions = new LinkedHashMap<>();
-    private final String        _id;
-    private final boolean       _nullable;
-    private final Class<T>      _type;
-    private final Var<A>        _parent;
-    Function<A,@Nullable T>     _getter;
-    BiFunction<A,@Nullable T,A> _setter;
-    private final boolean       _isImmutable;
+
+    private final ChangeListeners<T>   _changeListeners;
+    private final String               _id;
+    private final boolean              _nullable;
+    private final Class<T>             _type;
+    private final Var<A>               _parent;
+    Function<A,@Nullable T>            _getter;
+    BiFunction<A,@Nullable T,A>        _setter;
+    private final boolean              _isImmutable;
 
     private @Nullable T _lastValue;
 
+
     public PropertyLens(
-            boolean                            immutable,
-            Class<T>                           type,
-            String                             id,
-            boolean                            allowsNull,
-            @Nullable T                        iniValue, // may be null
-            Var<A>                             parent,
-            Function<A,@Nullable T>            getter,
-            BiFunction<A,@Nullable T,A>        wither,
-            Map<Channel, List<Action<Val<T>>>> actions
+            boolean                         immutable,
+            Class<T>                        type,
+            String                          id,
+            boolean                         allowsNull,
+            @Nullable T                     iniValue, // may be null
+            Var<A>                          parent,
+            Function<A,@Nullable T>         getter,
+            BiFunction<A,@Nullable T,A>     wither,
+            @Nullable ChangeListeners<T>    changeListeners
     ) {
         Objects.requireNonNull(id);
         Objects.requireNonNull(type);
-        Objects.requireNonNull(actions);
         Objects.requireNonNull(parent);
-        _type        = type;
-        _id          = id;
-        _nullable    = allowsNull;
-        _parent      = parent;
-        _getter      = getter;
-        _setter      = wither;
-        _isImmutable = immutable;
-        actions.forEach( (k,v) -> _actions.put(k, new ArrayList<>(v)) );
+        _type            = type;
+        _id              = id;
+        _nullable        = allowsNull;
+        _parent          = parent;
+        _getter          = getter;
+        _setter          = wither;
+        _isImmutable     = immutable;
+        _changeListeners = changeListeners == null ? new ChangeListeners<>() : new ChangeListeners<>(changeListeners);
 
         _lastValue = iniValue;
         parent.onChange(From.ALL, p -> {
@@ -100,18 +101,6 @@ public final class PropertyLens<A extends @Nullable Object, T extends @Nullable 
     @Override
     public final @Nullable T orElseNull() { return _value(); }
 
-    private void _triggerActions(
-        List<Action<Val<T>>> actions
-    ) {
-        Val<T> clone = Val.ofNullable(this); // We clone this property to avoid concurrent modification
-        for ( Action<Val<T>> action : new ArrayList<>(actions) ) // We copy the list to avoid concurrent modification
-            try {
-                action.accept(clone);
-            } catch ( Exception e ) {
-                log.error("An error occurred while executing action '"+action+"' for property '"+this+"'", e);
-            }
-    }
-
     /** {@inheritDoc} */
     @Override public final boolean allowsNull() { return _nullable; }
 
@@ -134,31 +123,23 @@ public final class PropertyLens<A extends @Nullable Object, T extends @Nullable 
     }
 
     /** {@inheritDoc} */
-    @Override public Var<T> withId( String id ) {
-        return new PropertyLens<>(_isImmutable, _type, id, _nullable, _value(), _parent, _getter, _setter, _actions);
+    @Override public final Var<T> withId( String id ) {
+        return new PropertyLens<>(_isImmutable, _type, id, _nullable, _value(), _parent, _getter, _setter, _changeListeners);
     }
     public Var<T> onChange( Channel channel, Action<Val<T>> action ) {
-        Objects.requireNonNull(channel);
-        Objects.requireNonNull(action);
-        _actions.computeIfAbsent(channel, k->new ArrayList<>()).add(action);
+        _changeListeners.onChange(channel, action);
         return this;
     }
 
     /** {@inheritDoc} */
-    @Override public Var<T> fireChange( Channel channel ) {
-        if ( channel == From.ALL)
-            for ( Channel key : _actions.keySet() )
-                _triggerActions( _actions.computeIfAbsent(key, k->new ArrayList<>()) );
-        else {
-            _triggerActions( _actions.computeIfAbsent(channel, k->new ArrayList<>()) );
-            _triggerActions( _actions.computeIfAbsent(From.ALL, k->new ArrayList<>()) );
-        }
+    @Override public final Var<T> fireChange( Channel channel ) {
+        _changeListeners.fireChange(this, channel);
         return this;
     }
 
     /** {@inheritDoc} */
     @Override
-    public Var<T> set( Channel channel, T newItem ) {
+    public final Var<T> set( Channel channel, T newItem ) {
         Objects.requireNonNull(channel);
         if ( _isImmutable )
             throw new UnsupportedOperationException("This variable is immutable!");
@@ -192,23 +173,13 @@ public final class PropertyLens<A extends @Nullable Object, T extends @Nullable 
     }
 
     @Override
-    public sprouts.Observable subscribe(Observer observer ) {
+    public final sprouts.Observable subscribe(Observer observer ) {
         return onChange(DEFAULT_CHANNEL, new SproutChangeListener<>(observer) );
     }
 
     @Override
-    public Observable unsubscribe(Subscriber subscriber ) {
-        for ( List<Action<Val<T>>> actions : _actions.values() )
-            for ( Action<?> a : new ArrayList<>(actions) )
-                if ( a instanceof SproutChangeListener ) {
-                    SproutChangeListener<?> pcl = (SproutChangeListener<?>) a;
-                    if ( pcl.listener() == subscriber) {
-                        actions.remove(a);
-                    }
-                }
-                else if ( Objects.equals(a, subscriber) )
-                    actions.remove(a);
-
+    public final Observable unsubscribe(Subscriber subscriber ) {
+        _changeListeners.unsubscribe(subscriber);
         return this;
     }
 

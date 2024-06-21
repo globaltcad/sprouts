@@ -5,7 +5,6 @@ import org.jspecify.annotations.Nullable;
 import sprouts.impl.PropertyLens;
 import sprouts.impl.Sprouts;
 
-import java.util.HashMap;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -281,7 +280,7 @@ public interface Var<T extends @Nullable Object> extends Val<T>
 					this,
 					getter,
 					wither,
-					new HashMap<>()
+					null
 				);
 	}
 	/**
@@ -321,7 +320,7 @@ public interface Var<T extends @Nullable Object> extends Val<T>
 					this,
 					getter,
 					wither,
-					new HashMap<>()
+					null
 				);
 	}
 

@@ -22,16 +22,16 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 	private static final Logger log = org.slf4j.LoggerFactory.getLogger(AbstractVariable.class);
 
 	public static <T> Var<@Nullable T> ofNullable( boolean immutable, Class<T> type, @Nullable T value ) {
-		return new AbstractVariable<T>( immutable, type, value, NO_ID, Collections.emptyMap(), true );
+		return new AbstractVariable<T>( immutable, type, value, NO_ID, new ChangeListeners<>(), true );
 	}
 
 	public static <T> Var<T> of( boolean immutable, Class<T> type, T value ) {
-		return new AbstractVariable<T>( immutable, type, value, NO_ID, Collections.emptyMap(), false );
+		return new AbstractVariable<T>( immutable, type, value, NO_ID, new ChangeListeners<>(), false );
 	}
 
 	public static <T> Var<T> of( boolean immutable, T iniValue ) {
 		Objects.requireNonNull(iniValue);
-		return new AbstractVariable<T>( immutable, (Class<T>) iniValue.getClass(), iniValue, NO_ID, Collections.emptyMap(), false );
+		return new AbstractVariable<T>( immutable, (Class<T>) iniValue.getClass(), iniValue, NO_ID, new ChangeListeners<>(), false );
 	}
 
 	public static <T extends @Nullable Object, U extends @Nullable Object> Var<@NonNull T> viewOf( Val<T> first, Val<U> second, BiFunction<T, U, @NonNull T> combiner ) {
@@ -181,6 +181,7 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 	}
 
 
+	private final ChangeListeners<T> _changeListeners;
 	private final boolean _isImmutable;
 
 
@@ -189,40 +190,32 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 		Class<T> type,
 		@Nullable T iniValue,
 		String id,
-		Map<Channel, List<Action<Val<T>>>> actions,
+		ChangeListeners<T> changeListeners,
 		boolean allowsNull
 	) {
 		super( type, id, allowsNull, iniValue );
 		Objects.requireNonNull(id);
 		Objects.requireNonNull(type);
-		Objects.requireNonNull(actions);
+		Objects.requireNonNull(changeListeners);
 		_isImmutable = immutable;
-		actions.forEach( (k,v) -> _actions.put(k, new ArrayList<>(v)) );
+		_changeListeners = new ChangeListeners<>(changeListeners);
 	}
 
 	/** {@inheritDoc} */
 	@Override public Var<T> withId( String id ) {
-        return new AbstractVariable<T>( _isImmutable, _type, _value, id, _actions, _nullable);
+        return new AbstractVariable<T>( _isImmutable, _type, _value, id, _changeListeners, _nullable);
 	}
 
 	/** {@inheritDoc} */
 	@Override
 	public Var<T> onChange( Channel channel, Action<Val<T>> action ) {
-		Objects.requireNonNull(channel);
-		Objects.requireNonNull(action);
-		_actions.computeIfAbsent(channel, k->new ArrayList<>()).add(action);
+		_changeListeners.onChange(channel, action);
 		return this;
 	}
 
 	/** {@inheritDoc} */
 	@Override public Var<T> fireChange( Channel channel ) {
-		if ( channel == From.ALL)
-			for ( Channel key : _actions.keySet() )
-				_triggerActions( _actions.computeIfAbsent(key, k->new ArrayList<>()) );
-		else {
-			_triggerActions( _actions.computeIfAbsent(channel, k->new ArrayList<>()) );
-			_triggerActions( _actions.computeIfAbsent(From.ALL, k->new ArrayList<>()) );
-		}
+		_changeListeners.fireChange(this, channel);
 		return this;
 	}
 
@@ -265,17 +258,7 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 
 	@Override
 	public Observable unsubscribe( Subscriber subscriber ) {
-		for ( List<Action<Val<T>>> actions : _actions.values() )
-			for ( Action<?> a : new ArrayList<>(actions) )
-				if ( a instanceof SproutChangeListener ) {
-					SproutChangeListener<?> pcl = (SproutChangeListener<?>) a;
-					if ( pcl.listener() == subscriber) {
-						actions.remove(a);
-					}
-				}
-		        else if ( Objects.equals(a, subscriber) )
-				    actions.remove(a);
-
+		_changeListeners.unsubscribe(subscriber);
 		return this;
 	}
 

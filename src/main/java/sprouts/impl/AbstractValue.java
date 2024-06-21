@@ -18,8 +18,6 @@ abstract class AbstractValue<T extends @Nullable Object> implements Val<T>
 {
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(AbstractValue.class);
 
-    protected final Map<Channel, List<Action<Val<T>>>> _actions = new LinkedHashMap<>();
-
     protected final String _id;
     protected final boolean _nullable;
     protected final Class<T> _type;
@@ -62,24 +60,6 @@ abstract class AbstractValue<T extends @Nullable Object> implements Val<T>
     /** {@inheritDoc} */
     @Override
     public final @Nullable T orElseNull() { return _value; }
-
-    /** {@inheritDoc} */
-    @Override public Val<T> fireChange( Channel channel ) {
-        _triggerActions( _actions.computeIfAbsent(channel, k->new ArrayList<>()) );
-        return this;
-    }
-
-    protected void _triggerActions(
-        List<Action<Val<T>>> actions
-    ) {
-        Val<T> clone = Val.ofNullable(this); // We clone this property to avoid concurrent modification
-        for ( Action<Val<T>> action : new ArrayList<>(actions) ) // We copy the list to avoid concurrent modification
-            try {
-                action.accept(clone);
-            } catch ( Exception e ) {
-                log.error("An error occurred while executing action '"+action+"' for property '"+this+"'", e);
-            }
-    }
 
     /** {@inheritDoc} */
     @Override public final boolean allowsNull() { return _nullable; }
