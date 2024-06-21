@@ -2,9 +2,12 @@ package sprouts;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import sprouts.impl.PropertyLens;
 import sprouts.impl.Sprouts;
 
+import java.util.HashMap;
 import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
@@ -235,6 +238,91 @@ public interface Var<T extends @Nullable Object> extends Val<T>
 
 		U newValue = mapper.apply( get() );
 		return Var.ofNullable( type, newValue );
+	}
+
+	/**
+	 * Creates a lens property (Var) that focuses on a specific field of the current data structure.
+	 * This method is used to zoom into an immutable nested data structure, allowing read and write
+	 * operations on a specific field via getter and wither functions.
+	 *
+	 * <p>For example, consider a record {@code Author} with fields {@code firstName}, {@code lastName},
+	 * {@code birthDate}, and {@code books}. Using {@code zoomTo}, you can create lenses for each field
+	 * to access and update them individually.
+	 *
+	 * <pre>{@code
+	 * var author = new Author("John", "Doe", LocalDate.of(1829, 8, 12), List.of("Book1", "Book2"));
+	 * var authorProperty = Var.of(author);
+	 *
+	 * // Creating lenses for Author fields
+	 * var firstNameLens = authorProperty.zoomTo(Author::getFirstName, Author::withFirstName);
+	 * var lastNameLens = authorProperty.zoomTo(Author::getLastName, Author::withLastName);
+	 * var birthDateLens = authorProperty.zoomTo(Author::getBirthDate, Author::withBirthDate);
+	 * var booksLens = authorProperty.zoomTo(Author::getBooks, Author::withBooks);
+	 *
+	 * // Usage example: Update the first name via the lens
+	 * firstNameLens.set("Jane");
+	 * }</pre>
+	 *
+	 * @param <B>     The type of the field that the lens will focus on.
+	 * @param getter  Function to get the current value of the focused field from the parent object.
+	 * @param wither  BiFunction to set or update the value of the focused field and return a new instance
+	 *                of the parent object with the updated field.
+	 * @return A new Var that acts as a lens focusing on the specified field of the parent object.
+	 */
+	default <B> Var<B> zoomTo( Function<T,B> getter, BiFunction<T,B,T> wither ) {
+		B initialValue = getter.apply(this.orElseNull());
+		Class<B> type = (Class<B>) initialValue.getClass();
+		return new PropertyLens<>(
+					false,
+					type,
+					Val.NO_ID,
+					false,//does not allow null
+					initialValue, //may NOT be null
+					this,
+					getter,
+					wither,
+					new HashMap<>()
+				);
+	}
+	/**
+	 * Creates a nullable lens property (Var) that focuses on a specific nullable field of the current data structure.
+	 * This method is used to zoom into an immutable nested data structure, allowing read and write operations on
+	 * a specific nullable field via getter and wither functions.
+	 *
+	 * <p>For example, consider a record {@code User} with an optional email field. Using {@code zoomToNullable},
+	 * you can create a lens specifically for the email field, which is optional and can be null.
+	 *
+	 * <pre>{@code
+	 * var user = new User("sam42", MembershipLevel.GOLD, LocalDate.of(2020, 1, 1), "sam.sus@example.com");
+	 * var userProperty = Var.of(user);
+	 *
+	 * // Creating a lens for the nullable email field
+	 * var emailLens = userProperty.zoomToNullable(String.class, User::email, User::withEmail);
+	 *
+	 * // Usage example: Update the email via the lens
+	 * emailLens.set(null);
+	 * }</pre>
+	 *
+	 * @param <B>     The type of the nullable field that the lens will focus on.
+	 * @param type    The class type of the nullable field.
+	 * @param getter  Function to get the current value of the focused nullable field from the parent object.
+	 * @param wither  BiFunction to set or update the value of the focused nullable field and return a new instance
+	 *                of the parent object with the updated field.
+	 * @return A new Var that acts as a lens focusing on the specified nullable field of the parent object.
+	 */
+	default <B extends @Nullable Object> Var<B> zoomToNullable( Class<B> type, Function<T,B> getter, BiFunction<T,B,T> wither ) {
+		B initialValue = getter.apply(this.orElseNull());
+		return new PropertyLens<>(
+					false,
+					type,
+					Val.NO_ID,
+					true,//allows null
+					initialValue, //may be null
+					this,
+					getter,
+					wither,
+					new HashMap<>()
+				);
 	}
 
 }
