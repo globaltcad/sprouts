@@ -9,47 +9,53 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
- *  A list of mutable properties that can be observed for changes by
- *  {@link Subscriber} types (see {@link Observer} and {@link sprouts.Action}).
- *  Contrary to the supertype {@link Vals}, this interface provides methods for mutating the list.
- *  Use the {@link #onChange(Action)} method to register change listeners to the list. <br>
- *  Use {@link #subscribe(Observer)} if you want to be notified of changes to the list
- *  without any further information about the change.
- * 	<p>
- * 	Note that the name of this class is short for "variables". This name was deliberately chosen because
- * 	it is short, concise and yet clearly conveys the same meaning as other names used to model this
- * 	kind of pattern, like "properties", "observable objects", "observable values", "observable properties", etc.
- * 	<p>
- * 	<b>Please take a look at the <a href="https://globaltcad.github.io/sprouts/">living sprouts documentation</a>
- * 	where you can browse a large collection of examples demonstrating how to use the API of this class.</b>
+ * A list of mutable properties that can be observed for changes by
+ * {@link Subscriber} types (see {@link Observer} and {@link sprouts.Action}).
+ * Contrary to the supertype {@link Vals}, this interface provides methods for mutating the list.
+ * Use the {@link #onChange(Action)} method to register change listeners to the list. <br>
+ * Use {@link #subscribe(Observer)} if you want to be notified of changes to the list
+ * without any further information about the change.
+ * <p>
+ * Note that the name of this class is short for "variables". This name was deliberately chosen because
+ * it is short, concise and yet clearly conveys the same meaning as other names used to model this
+ * kind of pattern, like "properties", "observable objects", "observable values", "observable properties", etc.
+ * <p>
+ * <b>Please take a look at the <a href="https://globaltcad.github.io/sprouts/">living sprouts documentation</a>
+ * where you can browse a large collection of examples demonstrating how to use the API of this class.</b>
  *
  * @param <T> The type of the properties.
  */
-public interface Vars<T extends @Nullable Object> extends Vals<T>
-{
+public interface Vars<T extends @Nullable Object> extends Vals<T> {
+
     /**
-     *  Creates a list of non-nullable properties from the supplied type and vararg values.
-     *  This factory method requires that the type be specified because the
-     *  compiler cannot infer the type from a potentially empty vararg array.
-     *  @param type The type of the properties.
-     *  @param vars The properties to add to the new Vars instance.
-     *  @param <T> The type of the properties.
-     *  @return A new Vars instance.
+     * Creates a list of non-nullable properties from the supplied type and vararg values.
+     * This factory method requires that the type be specified because the
+     * compiler cannot infer the type from a potentially empty vararg array.
+     *
+     * @param type the type of the properties.
+     * @param vars the properties to add to the new Vars instance.
+     * @param <T>  the type of the properties.
+     * @return a new {@code Vars} instance.
+     * @throws NullPointerException     if {@code type} is {@code null}, or {@code vars} is {@code null}.
+     * @throws IllegalArgumentException if any property allows {@code null}.
      */
     @SuppressWarnings("unchecked")
     static <T> Vars<T> of( Class<T> type, Var<T>... vars ) {
         Objects.requireNonNull(type);
+        Objects.requireNonNull(vars);
         return Sprouts.factory().varsOf( type, vars );
     }
 
     /**
-     *  Creates an empty list of non-nullable properties from the supplied type.
-     *  This factory method requires that the type be specified because the
-     *  compiler cannot infer the type from a potentially empty vararg array.
-     *  @param type The type of the properties.
-     *              This is used to check if the item is of the correct type.
-     *  @param <T> The type of the properties.
-     *  @return A new Vars instance.
+     * Creates an empty list of non-nullable properties from the supplied type.
+     * This factory method requires that the type be specified because the
+     * compiler cannot infer the type from a potentially empty vararg array.
+     *
+     * @param type the type of the properties.
+     *             This is used to check if the item is of the correct type.
+     * @param <T>  the type of the properties.
+     * @return a new {@code Vars} instance.
+     * @throws NullPointerException if {@code type} is {@code null}.
      */
     static <T> Vars<T> of( Class<T> type ) {
         Objects.requireNonNull(type);
@@ -57,69 +63,86 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
     }
 
     /**
-     *  Creates a list of non-nullable properties from one or more non-nullable properties.
-     *  @param first The first property to add to the new Vars instance.
-     *  @param rest The remaining properties to add to the new Vars instance.
-     *  @param <T> The type of the properties.
-     *  @return A new Vars instance.
+     * Creates a list of non-nullable properties from one or more non-nullable properties.
+     *
+     * @param first the first property to add to the new Vars instance.
+     * @param rest  the remaining properties to add to the new Vars instance.
+     * @param <T>   the type of the properties.
+     * @return a new {@code Vars} instance.
+     * @throws NullPointerException     if {@code first} is {@code null}, or {@code rest} is {@code null}.
+     * @throws IllegalArgumentException if any property allows {@code null}.
      */
     @SuppressWarnings("unchecked")
     static <T> Vars<T> of( Var<T> first, Var<T>... rest ) {
         Objects.requireNonNull(first);
+        Objects.requireNonNull(rest);
         return Sprouts.factory().varsOf( first, rest );
     }
 
     /**
-     *  Creates a list of non-nullable properties from one or more non-null values.
-     *  @param first The first value to add to the new Vars instance.
-     *  @param rest The remaining values to add to the new Vars instance.
-     *  @param <T> The type of the values.
-     *  @return A new Vars instance.
+     * Creates a list of non-nullable properties from one or more non-null values.
+     *
+     * @param first the first value to add to the new Vars instance.
+     * @param rest  the remaining values to add to the new Vars instance.
+     * @param <T>   the type of the values.
+     * @return a new {@code Vars} instance.
+     * @throws NullPointerException     if {@code first} is {@code null}, or {@code rest} is {@code null}.
+     * @throws IllegalArgumentException if any value in {@code rest} is {@code null}.
      */
     @SuppressWarnings("unchecked")
     static <T> Vars<T> of( T first, T... rest ) {
         Objects.requireNonNull(first);
+        Objects.requireNonNull(rest);
         return Sprouts.factory().varsOf( first, rest );
     }
 
     /**
-     *  Creates a list of non-nullable properties from the supplied type and iterable of values.
-     *  This factory method requires that the type be specified because the
-     *  compiler cannot infer the type from a potentially empty iterable.
-     *  @param type The type of the properties.
-     *  @param vars The iterable of values.
-     *  @param <T> The type of the properties.
-     *  @return A new Vars instance.
+     * Creates a list of non-nullable properties from the supplied type and iterable of values.
+     * This factory method requires that the type be specified because the
+     * compiler cannot infer the type from a potentially empty iterable.
+     *
+     * @param type the type of the properties.
+     * @param vars the iterable of values.
+     * @param <T>  the type of the properties.
+     * @return a new {@code Vars} instance.
+     * @throws NullPointerException     if {@code type} is {@code null}, or {@code vars} is {@code null}.
+     * @throws IllegalArgumentException if any property in {@code vars} allows {@code null}.
      */
     static <T> Vars<T> of( Class<T> type, Iterable<Var<T>> vars ) {
         Objects.requireNonNull(type);
+        Objects.requireNonNull(vars);
         return Sprouts.factory().varsOf( type, vars );
     }
 
     /**
-     *  Creates a list of nullable properties from the supplied type and varargs properties.
-     *  This factory method requires that the type be specified because the
-     *  compiler cannot infer the type from the null values.
-     *  @param type The type of the properties.
-     *  @param vars The properties to add to the new Vars instance.
-     *              The properties may be nullable properties, but they may not be null themselves.
-     *  @param <T> The type of the properties.
-     *  @return A new Vars instance.
+     * Creates a list of nullable properties from the supplied type and varargs properties.
+     * This factory method requires that the type be specified because the
+     * compiler cannot infer the type from the null values.
+     *
+     * @param type the type of the properties.
+     * @param vars the properties to add to the new Vars instance.
+     *             The properties may be nullable properties, but they may not be null themselves.
+     * @param <T>  the type of the properties.
+     * @return a new {@code Vars} instance.
+     * @throws NullPointerException if {@code type} is {@code null}, or {@code vars} is {@code null}.
      */
     @SuppressWarnings("unchecked")
     static <T> Vars<@Nullable T> ofNullable( Class<T> type, Var<@Nullable T>... vars ) {
         Objects.requireNonNull(type);
+        Objects.requireNonNull(vars);
         return Sprouts.factory().varsOfNullable( type, vars );
     }
 
     /**
-     *  Creates an empty list of nullable properties from the supplied type.
-     *  This factory method requires that the type be specified because the
-     *  compiler cannot infer the type from a potentially empty vararg array.
-     *  @param type The type of the properties.
-     *              This is used to check if the item is of the correct type.
-     *  @param <T> The type of the properties.
-     *  @return A new Vars instance.
+     * Creates an empty list of nullable properties from the supplied type.
+     * This factory method requires that the type be specified because the
+     * compiler cannot infer the type from a potentially empty vararg array.
+     *
+     * @param type the type of the properties.
+     *             This is used to check if the item is of the correct type.
+     * @param <T>  the type of the properties.
+     * @return a new {@code Vars} instance.
+     * @throws NullPointerException if {@code type} is {@code null}.
      */
     static <T> Vars<@Nullable T> ofNullable( Class<T> type ) {
         Objects.requireNonNull(type);
@@ -127,14 +150,15 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
     }
 
     /**
-     *  Creates a list of nullable properties from the supplied type and values.
-     *  This factory method requires that the type be specified because the
-     *  compiler cannot infer the type from the null values.
-     *  @param type The type of the properties.
-     *  @param values The values to be wrapped by properties and then added to the new Vars instance.
-     *                The values may be null.
-     *  @param <T> The type of the values.
-     *  @return A new Vars instance.
+     * Creates a list of nullable properties from the supplied type and values.
+     * This factory method requires that the type be specified because the
+     * compiler cannot infer the type from the null values.
+     *
+     * @param type   the type of the properties.
+     * @param values the values to be wrapped by properties and then added to the new Vars instance.
+     *               The values may be null.
+     * @param <T>    the type of the values.
+     * @return a new {@code Vars} instance.
      */
     @SuppressWarnings("unchecked")
     static <T> Vars<@Nullable T> ofNullable( Class<T> type, @Nullable T... values ) {
@@ -143,15 +167,17 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
     }
 
     /**
-     *  Creates a list of nullable properties from the supplied properties.
-     * @param first The first property to add to the new Vars instance.
-     * @param rest The remaining properties to add to the new Vars instance.
-     * @param <T> The type of the properties.
-     * @return A new Vars instance.
+     * Creates a list of nullable properties from the supplied properties.
+     *
+     * @param first the first property to add to the new Vars instance.
+     * @param rest  the remaining properties to add to the new Vars instance.
+     * @param <T>   the type of the properties.
+     * @return a new {@code Vars} instance.
      */
     @SuppressWarnings("unchecked")
     static <T> Vars<@Nullable T> ofNullable( Var<@Nullable T> first, Var<@Nullable T>... rest ) {
         Objects.requireNonNull(first);
+        Objects.requireNonNull(rest);
         return Sprouts.factory().varsOfNullable( first, rest );
     }
 
@@ -160,10 +186,10 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
      * This factory method requires that the type be specified because the
      * compiler cannot infer the type from a potentially empty iterable.
      *
-     * @param type The type of the properties.
-     * @param vars The iterable of values.
-     * @param <T>  The type of the properties.
-     * @return A new Vars instance.
+     * @param type the type of the properties.
+     * @param vars the iterable of values.
+     * @param <T>  the type of the properties.
+     * @return a new {@code Vars} instance.
      */
     static <T> Vars<@Nullable T> ofNullable( Class<T> type, Iterable<Var<@Nullable T>> vars ) {
         Objects.requireNonNull(type);
@@ -193,7 +219,8 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
      * Wraps the provided value in a {@link Var} property and adds it to the list.
      *
      * @param value The value to add.
-     * @return This list of properties.
+     * @return {@code this} list of properties.
+     * @throws NullPointerException if {@code null} is not allowed and the {@code value} is {@code null}.
      */
     default Vars<T> add( T value ) {
         if (allowsNull())
@@ -203,18 +230,21 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
     }
 
     /**
-     *  Adds the provided property to the list.
+     * Adds the provided property to the list.
      *
-     * @param var The property to add.
-     * @return This list of properties.
+     * @param var the property to add.
+     * @return {@code this} list of properties.
+     * @throws IllegalArgumentException if the list allows {@code null} and the property does not allow {@code null}.
      */
     default Vars<T> add( Var<T> var ) { return addAt( size(), var ); }
 
     /**
-     *  Removes the property at the specified index.
+     * Removes the property at the specified index.
      *
      * @param index The index of the property to remove.
-     * @return This list of properties.
+     * @return {@code this} list of properties.
+     * @throws IndexOutOfBoundsException if {@code index} is negative, or {@code index} is greater than or equal to the
+     *                                   size of this {@code Vars} object.
      */
     default Vars<T> removeAt( int index ) {
         return removeRange(index, index + 1);
@@ -225,19 +255,22 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
      *
      * @param index the index of the sequence to remove.
      * @param size  the size of the sequence to remove.
-     * @return this list of properties.
-     * @throws IndexOutOfBoundsException if {@code from} is negative, or {@code to} is greater than the size of this
-     *                                   {@code Vars} object, or {@code from} is greater than {@code to}.
+     * @return {@code this} list of properties.
+     * @throws IndexOutOfBoundsException if {@code index} is negative, or {@code size} is negative,
+     *                                   or {@code index} + {@code size} is greater than the size of this {@code Vars}
+     *                                   object.
      */
     default Vars<T> removeAt( int index, int size ) {
         return removeRange(index, index + size);
     }
 
     /**
-     *  Removes and returns the property at the specified index.
+     * Removes and returns the property at the specified index.
      *
-     * @param index The index of the property to remove.
-     * @return The removed property.
+     * @param index the index of the property to remove.
+     * @return the removed property.
+     * @throws IndexOutOfBoundsException if {@code index} is negative, or {@code index} is greater than or equal to the
+     *                                   size of this {@code Vars} object.
      */
     default Var<T> popAt( int index ) {
         Var<T> var = at(index);
@@ -251,8 +284,9 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
      * @param index the index of the sequence to pop.
      * @param size  the size of the sequence to pop.
      * @return The removed list of properties.
-     * @throws IndexOutOfBoundsException if {@code from} is negative, or {@code to} is greater than the size of this
-     *                                   {@code Vars} object, or {@code from} is greater than {@code to}.
+     * @throws IndexOutOfBoundsException if {@code index} is negative, or {@code size} is negative,
+     *                                   or {@code index} + {@code size} is greater than the size of this {@code Vars}
+     *                                   object.
      */
     default Vars<T> popAt( int index, int size ) {
         return popRange(index, index + size);
@@ -270,10 +304,11 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
     Vars<T> popRange(int from, int to);
 
     /**
-     *  Removes the property containing the provided value from the list.
-     *  If the value is not found, the list is unchanged.
-     *  @param value The value to remove.
-     *  @return This list of properties.
+     * Removes the property containing the provided value from the list.
+     * If the value is not found, the list is unchanged.
+     *
+     * @param value the value to remove.
+     * @return {@code this} list of properties.
      */
     default Vars<T> remove( T value ) {
         int index = indexOf(value);
@@ -281,10 +316,11 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
     }
 
     /**
-     *  Removes the property containing the provided value from the list.
-     *  If the value is not found, a {@link NoSuchElementException} is thrown.
-     *  @param value The value to remove.
-     *  @return This list of properties.
+     * Removes the property containing the provided value from the list.
+     * If the value is not found, a {@link NoSuchElementException} is thrown.
+     *
+     * @param value the value to remove.
+     * @return {@code this} list of properties.
      * @throws NoSuchElementException if the value is not found.
      */
     default Vars<T> removeOrThrow( T value ) {
@@ -295,10 +331,11 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
     }
 
     /**
-     *  Removes the provided property from the list.
-     *  If the property is not found, the list is unchanged.
-     *  @param var The property to remove.
-     *  @return This list of properties.
+     * Removes the provided property from the list.
+     * If the property is not found, the list is unchanged.
+     *
+     * @param var the property to remove.
+     * @return {@code this} list of properties.
      */
     default Vars<T> remove( Var<T> var ) {
         int index = indexOf(var);
@@ -306,10 +343,11 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
     }
 
     /**
-     *  Removes the provided property from the list.
-     *  If the property is not found, a {@link NoSuchElementException} is thrown.
-     *  @param var The property to remove.
-     *  @return This list of properties.
+     * Removes the provided property from the list.
+     * If the property is not found, a {@link NoSuchElementException} is thrown.
+     *
+     * @param var the property to remove.
+     * @return {@code this} list of properties.
      * @throws NoSuchElementException if the property is not found.
      */
     default Vars<T> removeOrThrow( Var<T> var ) {
@@ -320,18 +358,19 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
     }
 
     /**
-     *  Removes the first property from the list.
+     * Removes the first property from the list, or does nothing if the list is empty.
      *
-     * @return This list of properties.
+     * @return {@code this} list of properties.
      */
     default Vars<T> removeFirst() {
         return size() > 0 ? removeRange(0, 1) : this;
     }
 
     /**
-     *  Removes the first property from the list and returns it.
+     * Removes the first property from the list and returns it.
      *
-     * @return The removed property.
+     * @return the removed property.
+     * @throws NoSuchElementException if the list is empty.
      */
     default Var<T> popFirst() {
         Var<T> var = first();
@@ -340,16 +379,16 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
     }
 
     /**
-     *  Removes the last property from the list.
+     * Removes the last property from the list, or does nothing if the list is empty.
      *
-     * @return This list of properties.
+     * @return {@code this} list of properties.
      */
     default Vars<T> removeLast() {
         return size() > 0 ? removeRange(size() - 1, size()) : this;
     }
 
     /**
-     * Remove all elements withn the range {@code from} inclusive and {@code to} exclusive.
+     * Remove all elements within the range {@code from} inclusive and {@code to} exclusive.
      *
      * @param from the start index, inclusive.
      * @param to   the end index, exclusive.
@@ -360,11 +399,14 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
     Vars<T> removeRange(int from, int to);
 
     /**
-     *  Removes the last property from the list and returns it.
+     * Removes the last property from the list and returns it.
      *
-     * @return The removed property.
+     * @return the removed property.
+     * @throws NoSuchElementException if the list is empty.
      */
     default Var<T> popLast() {
+        if (isEmpty())
+            throw new NoSuchElementException("There is no such property in the list. The list is empty.");
         return popRange(size() - 1, size()).at(0);
     }
 
@@ -372,9 +414,10 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
      * Removes {@code count} number of properties from the end of the list.
      * If {@code count} is greater than the size of the list, only all available properties will be removed.
      *
-     * @param count The number of properties to remove.
-     * @return This list of properties.
-     * @throws IllegalArgumentException If {@code count} is negative.
+     * @param count the number of properties to remove.
+     * @return {@code this} list of properties.
+     * @throws IndexOutOfBoundsException if {@code count} is negative, or {@code count} is greater than the size of
+     *                                   this {@code Vars} object.
      */
     default Vars<T> removeLast( int count ) {
         return removeRange(size() - count, size());
@@ -384,9 +427,10 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
      * Removes {@code count} number of properties from the end of the list and returns them in a new list.
      * If {@code count} is greater than the size of the list, only all available properties will be popped.
      *
-     * @param count The number of properties to remove.
-     * @return A new list of properties.
-     * @throws IllegalArgumentException If {@code count} is negative.
+     * @param count the number of properties to remove.
+     * @return a new list of properties.
+     * @throws IndexOutOfBoundsException if {@code count} is negative, or {@code count} is greater than the size of
+     *                                   this {@code Vars} object.
      */
     default Vars<T> popLast( int count ) {
         return popRange(size() - count, size());
@@ -396,9 +440,10 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
      * Removes the first {@code count} number of properties from the list.
      * If {@code count} is greater than the size of the list, only all available properties will be removed.
      *
-     * @param count The number of properties to remove.
-     * @return This list of properties.
-     * @throws IllegalArgumentException If {@code count} is negative.
+     * @param count the number of properties to remove.
+     * @return {@code this} list of properties.
+     * @throws IndexOutOfBoundsException if {@code count} is negative, or {@code count} is greater than the size of
+     *                                   this {@code Vars} object.
      */
     default Vars<T> removeFirst( int count ) {
         return removeRange(0, count);
@@ -408,20 +453,21 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
      * Removes the first {@code count} number of properties from the list and returns them in a new list.
      * If {@code count} is greater than the size of the list, only all available properties will be popped.
      *
-     * @param count The number of properties to remove.
-     * @return A new list of properties.
-     * @throws IllegalArgumentException If {@code count} is negative.
+     * @param count the number of properties to remove.
+     * @return a new list of properties.
+     * @throws IndexOutOfBoundsException if {@code count} is negative, or {@code count} is greater than the size of
+     *                                   this {@code Vars} object.
      */
     default Vars<T> popFirst( int count ) {
         return popRange(0, count);
     }
 
     /**
-     *  Removes all properties from the list for which the provided predicate
-     *  returns true.
+     * Removes all properties from the list for which the provided predicate
+     * returns true.
      *
-     * @param predicate The predicate to test each property.
-     * @return This list of properties.
+     * @param predicate the predicate to test each property.
+     * @return {@code this} list of properties.
      */
     default Vars<T> removeIf( Predicate<Var<T>> predicate ) {
         Vars<T> vars = (Vars<T>) (allowsNull() ? Vars.ofNullable(type()) : Vars.of(type()));
@@ -433,11 +479,11 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
     }
 
     /**
-     *  Removes all properties from the list for which the provided predicate
-     *  returns true and returns them in a new list.
+     * Removes all properties from the list for which the provided predicate
+     * returns true and returns them in a new list.
      *
-     * @param predicate The predicate to test each property.
-     * @return A new list of properties.
+     * @param predicate the predicate to test each property.
+     * @return a new list of properties.
      */
     default Vars<T> popIf( Predicate<Var<T>> predicate ) {
         Vars<T> vars = (Vars<T>) (allowsNull() ? Vars.ofNullable(type()) : Vars.of(type()));
@@ -449,11 +495,11 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
     }
 
     /**
-     *  Removes all properties from the list for whose items the provided predicate
-     *  returns true.
+     * Removes all properties from the list for whose items the provided predicate
+     * returns true.
      *
-     *  @param predicate The predicate to test each property item.
-     *  @return This list of properties.
+     * @param predicate the predicate to test each property item.
+     * @return {@code this} list of properties.
      */
     default Vars<T> removeIfItem( Predicate<T> predicate ) {
         Vars<T> vars = (Vars<T>) (allowsNull() ? Vars.ofNullable(type()) : Vars.of(type()));
@@ -465,11 +511,11 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
     }
 
     /**
-     *  Removes all properties from the list for whose items the provided predicate
-     *  returns true and returns them in a new list.
+     * Removes all properties from the list for whose items the provided predicate
+     * returns true and returns them in a new list.
      *
-     *  @param predicate The predicate to test each property item.
-     *  @return A new list of properties.
+     * @param predicate the predicate to test each property item.
+     * @return a new list of properties.
      */
     default Vars<T> popIfItem( Predicate<T> predicate ) {
         Vars<T> vars = (Vars<T>) (allowsNull() ? Vars.ofNullable(type()) : Vars.of(type()));
@@ -481,18 +527,20 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
     }
 
     /**
-     *  Removes all properties from the list that are contained in the provided
-     *  list of properties.
-     *  @param vars The list of properties to remove.
-     *  @return This list of properties.
+     * Removes all properties from the list that are contained in the provided
+     * list of properties.
+     *
+     * @param vars the list of properties to remove.
+     * @return {@code this} list of properties.
      */
     Vars<T> removeAll( Vars<T> vars );
 
     /**
-     *  Removes all properties from the list whose items are contained in the provided
-     *  array of properties and returns them in a new list.
-     *  @param items The list of properties to remove.
-     *  @return This list of properties.
+     * Removes all properties from the list whose items are contained in the provided
+     * array of properties and returns them in a new list.
+     *
+     * @param items the list of properties to remove.
+     * @return {@code this} list of properties.
      */
     default Vars<T> removeAll( T... items ) {
         Vars<T> vars = (Vars<T>) (allowsNull() ? Vars.ofNullable(type()) : Vars.of(type()));
@@ -501,11 +549,13 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
     }
 
     /**
-     *  Wraps the provided value in a {@link Var} property and adds it to the list
-     *  at the specified index.
-     *  @param index The index at which to add the property.
-     *  @param item The value to add as a property item.
-     *  @return This list of properties.
+     * Wraps the provided value in a {@link Var} property and adds it to the list
+     * at the specified index.
+     *
+     * @param index the index at which to add the property.
+     * @param item  the value to add as a property item.
+     * @return {@code this} list of properties.
+     * @throws NullPointerException if {@code null} is not allowed and the {@code item} is {@code null}.
      */
     default Vars<T> addAt( int index, T item ) {
         if (allowsNull())
@@ -515,19 +565,25 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
     }
 
     /**
-     *  Adds the provided property to the list at the specified index.
-     *  @param index The index at which to add the property.
-     *  @param var The property to add.
-     *  @return This list of properties.
+     * Adds the provided property to the list at the specified index.
+     *
+     * @param index The index at which to add the property.
+     * @param var   The property to add.
+     * @return {@code this} list of properties.
+     * @throws IllegalArgumentException if the list allows {@code null} and the property does not allow {@code null}.
      */
-    Vars<T> addAt( int index, Var<T> var );
+    Vars<T> addAt(int index, Var<T> var);
 
     /**
-     *  Wraps the provided value in a property and sets it at the specified index
-     *  effectively replacing the property at that index.
-     *  @param index The index at which to set the property.
-     *  @param item The value to set.
-     *  @return This list of properties.
+     * Wraps the provided value in a property and sets it at the specified index
+     * effectively replacing the property at that index.
+     *
+     * @param index the index at which to set the property.
+     * @param item  the value to set.
+     * @return {@code this} list of properties.
+     * @throws NullPointerException      if {@code null} is not allowed and the {@code item} is {@code null}.
+     * @throws IndexOutOfBoundsException if {@code index} is negative, or {@code index} is greater than or equal to the
+     *                                   size of this {@code Vars} object.
      */
     default Vars<T> setAt( int index, T item ) {
         if (allowsNull())
@@ -543,20 +599,26 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
      * @param index the index of the sequence to set the properties.
      * @param size  the size of the sequence to set the properties.
      * @param item  the value to set.
-     * @return This list of properties.
-     * @throws IndexOutOfBoundsException if {@code from} is negative, or {@code to} is greater than the size of this
-     *                                   {@code Vars} object, or {@code from} is greater than {@code to}.
+     * @return {@code this} list of properties.
+     * @throws IndexOutOfBoundsException if {@code index} is negative, or {@code size} is negative,
+     *                                   or {@code index} + {@code size} is greater than the size of
+     *                                   this {@code Vars} object.
+     * @throws NullPointerException      if {@code null} is not allowed and the {@code item} is {@code null}.
      */
     default Vars<T> setAt( int index, int size, T item ) {
         return setRange(index, index + size, item);
     }
 
     /**
-     *  Places the provided property at the specified index, effectively replacing the property
-     *  at that index.
-     *  @param index The index at which to set the property.
-     *  @param var The property to set.
-     *  @return {@code this} list of properties.
+     * Places the provided property at the specified index, effectively replacing the property
+     * at that index.
+     *
+     * @param index The index at which to set the property.
+     * @param var   The property to set.
+     * @return {@code this} list of properties.
+     * @throws IndexOutOfBoundsException if {@code index} is negative, or {@code index} is greater than or equal to the
+     *                                   size of this {@code Vars} object.
+     * @throws IllegalArgumentException  if the list allows {@code null} and the property does not allow {@code null}.
      */
     Vars<T> setAt( int index, Var<T> var );
 
@@ -571,8 +633,10 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
      * @param size  the size of the sequence to set the property.
      * @param value the property to set.
      * @return {@code this} list of properties.
-     * @throws IndexOutOfBoundsException if {@code from} is negative, or {@code to} is greater than the size of this
-     *                                   {@code Vars} object, or {@code from} is greater than {@code to}.
+     * @throws IndexOutOfBoundsException if {@code index} is negative, or {@code size} is negative,
+     *                                   or {@code index} + {@code size} is greater than the size of
+     *                                   this {@code Vars} object.
+     * @throws IllegalArgumentException  if the list allows {@code null} and the property does not allow {@code null}.
      */
     default Vars<T> setAt( int index, int size, Var<T> value ) {
         return setRange(index, index + size, value);
@@ -588,6 +652,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
      * @return {@code this} list of properties.
      * @throws IndexOutOfBoundsException if {@code from} is negative, or {@code to} is greater than the size of this
      *                                   {@code Vars} object, or {@code from} is greater than {@code to}.
+     * @throws NullPointerException      if {@code null} is not allowed and the {@code item} is {@code null}.
      */
     Vars<T> setRange(int from, int to, T value);
 
@@ -604,14 +669,17 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
      * @return {@code this} list of properties.
      * @throws IndexOutOfBoundsException if {@code from} is negative, or {@code to} is greater than the size of this
      *                                   {@code Vars} object, or {@code from} is greater than {@code to}.
+     * @throws IllegalArgumentException  if the list allows {@code null} and the property does not allow {@code null}.
      */
     Vars<T> setRange(int from, int to, Var<T> value);
 
     /**
-     *  Wraps each provided item in a property and appends it to this
-     *  list of properties.
-     *  @param items The array of values to add as property items.
-     *  @return This list of properties.
+     * Wraps each provided item in a property and appends it to this
+     * list of properties.
+     *
+     * @param items The array of values to add as property items.
+     * @return {@code this} list of properties.
+     * @throws NullPointerException if {@code null} is not allowed and one of the {@code items} is {@code null}.
      */
     @SuppressWarnings("unchecked")
     default Vars<T> addAll( T... items ) {
@@ -621,10 +689,12 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
     }
 
     /**
-     *  Iterates over the supplied values, and appends
-     *  them to this list as properties.
-     *  @param items The values to add as property items.
-     *  @return This list of properties.
+     * Iterates over the supplied values, and appends
+     * them to {@code this} list as properties.
+     *
+     * @param items The values to add as property items.
+     * @return {@code this} list of properties.
+     * @throws NullPointerException if {@code null} is not allowed and one of the {@code items} is {@code null}.
      */
     default Vars<T> addAll( Iterable<T> items ) {
         Vars<T> vars = (Vars<T>) (allowsNull() ? Vars.ofNullable(type()) : Vars.of(type()));
@@ -633,10 +703,12 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
     }
 
     /**
-     *  Iterates over the supplied property list, and appends
-     *  them to this list.
-     *  @param vals The properties to add.
-     *  @return This list of properties.
+     * Iterates over the supplied property list, and appends
+     * the values of the list to {@code this} list.
+     *
+     * @param vals The properties to add.
+     * @return {@code this} list of properties.
+     * @throws NullPointerException if {@code null} is not allowed and one of the {@code vals} is empty.
      */
     default Vars<T> addAll( Vals<T> vals ) {
         for ( T v : vals ) add(v);
@@ -644,20 +716,18 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
     }
 
     /**
-     *  The {@link #retainAll(Vars)} method removes all properties from this list
-     *  that are not contained in the provided list of properties.
-     *  @param vars The list of properties to retain.
-     *              All other properties will be removed.
-     *  @return This list of properties.
+     * Removes all properties from {@code this} list that are not contained in the provided list of properties.
+     *
+     * @param vars The list of properties to retain. All other properties will be removed.
+     * @return {@code this} list of properties.
      */
     Vars<T> retainAll( Vars<T> vars );
 
     /**
-     *  This method removes all properties from this list
-     *  whose items are not contained in the provided array of items.
-     *  @param items The array of items, whose properties to retain.
-     *               All other properties will be removed.
-     *  @return This list of properties.
+     * Removes all properties from {@code this} list whose items are not contained in the provided array of items.
+     *
+     * @param items The array of items, whose properties to retain. All other properties will be removed.
+     * @return {@code this} list of properties.
      */
     default Vars<T> retainAll( T... items ) {
         Vars<T> vars = (Vars<T>) (allowsNull() ? Vars.ofNullable(type()) : Vars.of(type()));
@@ -666,16 +736,17 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
     }
 
     /**
-     *  Removes all properties from this list.
-     *  This is conceptually equivalent to calling {@link List#clear()}
-     *  on a regular list.
+     * Removes all properties from {@code this} list.
+     * This is conceptually equivalent to calling {@link List#clear()} on a regular list.
      *
-     * @return This list.
+     * @return {@code this} list.
      */
     Vars<T> clear();
 
     /**
-     *  Use this for mapping a list of properties to another list of properties.
+     * Use this for mapping a list of properties to another list of properties.
+     *
+     * @return the new list.
      */
     @Override default Vars<T> map( Function<T,T> mapper ) {
         Objects.requireNonNull(mapper);
@@ -690,7 +761,9 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
     }
 
     /**
-     *  Use this for mapping a list of properties to another list of properties.
+     * Use this for mapping a list of properties to another list of properties.
+     *
+     * @return the new list.
      */
     @Override
     default <U extends @Nullable Object> Vars<@Nullable U> mapTo( Class<@NonNull U> type, Function<@NonNull T,U> mapper ) {
@@ -706,45 +779,45 @@ public interface Vars<T extends @Nullable Object> extends Vals<T>
      * Create a copy of the current state of the list.
      * Note: The created {@code Vals} instance will not reflect changes made to the underlying list.
      *
-     * @return An immutable copy of the current list.
+     * @return an immutable copy of the current list.
      */
     default Vals<T> toVals() {
         return (Vals<T>) (allowsNull() ? Vals.ofNullable(type(), this) : Vals.of(type(), (Vals<T>) this));
     }
 
     /**
-     *  Use this for sorting the list of properties.
+     * Use this for sorting the list of properties.
      *
      * @param comparator The comparator to use for sorting.
      */
     void sort( Comparator<T> comparator );
 
     /**
-     * Sorts the list of properties using the natural ordering of the
-     * properties.
-     * Note that this method expected the wrapped values to be
-     * {@link Comparable}.
+     * Sorts the list of properties using the natural ordering of the properties.
+     * Note that this method expected the wrapped values to be {@link Comparable}.
+     *
+     * @throws UnsupportedOperationException if the values are not {@link Comparable}.
      */
     default void sort() {
         // First we have to check if the type is comparable:
-        if ( Comparable.class.isAssignableFrom(type()) ) {
+        if (Comparable.class.isAssignableFrom(type())) {
             @SuppressWarnings("unchecked")
             Comparator<T> comparator = (Comparator<T>) Comparator.naturalOrder();
-            sort( comparator );
-        }
-        else
+            sort(comparator);
+        } else {
             throw new UnsupportedOperationException("Cannot sort a list of non-comparable types.");
+        }
     }
 
     /**
-     *  Removes all duplicate properties from this list of properties.
+     * Removes all duplicate properties from {@code this} list of properties.
      */
     void makeDistinct();
 
     /**
-     *  Reverse the order of the properties in this list.
+     * Reverse the order of the properties in {@code this} list.
      *
-     * @return This list.
+     * @return {@code this} list.
      */
     Vars<T> revert();
 }
