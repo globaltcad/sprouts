@@ -45,33 +45,11 @@ public interface ValsDelegate<T>
     Vals<T> oldValues();
 
     /**
-     *  Exposes the first previous value of the property before the change took place, or an empty value if there are
-     *  no such values.
-     * @deprecated Use {@link #oldValues()} instead! (After a change event, more than one item can be removed or changed)
-     * @return The previous value of the property or an empty property if the change does not involve a previous value.
-     */
-    @Deprecated
-    default Val<T> oldValue() {
-        return oldValues().isEmpty() ? Val.ofNull(vals().type()) : oldValues().first();
-    }
-
-    /**
      *  Exposes a read only property list after the change has been applied,
      *  which contains the new values in the property list.
      * @return An immutable copy of new properties in the property list after the change has been applied.
      */
     Vals<T> newValues();
-
-    /**
-     *  Exposes the first new value of the property after the change took place, or an empty value if there are no such
-     *  values.
-     *  @deprecated Use {@link #newValues()} instead! (After a change event, more than one item can be added or changed)
-     * @return The current value of the property or an empty property if the change does not involve a current value.
-     */
-    @Deprecated
-    default Val<T> newValue() {
-        return newValues().isEmpty() ? Val.ofNull(vals().type()) : newValues().first();
-    }
 
     /**
      *  Exposes a read only property list after the change has been applied.
