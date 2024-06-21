@@ -142,403 +142,393 @@ public class AbstractVariables&lt;T extends @Nullable Object&gt; implements Vars
 <span class="fc" id="L142">    @Override public final int size() { return _variables.size(); }</span>
 
     /** {@inheritDoc} */
-    @Override
-    public Vars&lt;T&gt; removeLast( int count ) {
-<span class="pc bpc" id="L147" title="1 of 2 branches missed.">        if ( _isImmutable )</span>
-<span class="nc" id="L148">            throw new UnsupportedOperationException( &quot;This list is immutable.&quot; );</span>
-<span class="pc bpc" id="L149" title="1 of 2 branches missed.">        if ( count &lt; 0)</span>
-<span class="nc" id="L150">            throw new IllegalArgumentException(&quot;Invalid count! Count must be non-negative.&quot;);</span>
-
-<span class="fc" id="L152">        count = Math.min( count, size() );</span>
-
-<span class="pc bpc" id="L154" title="1 of 2 branches missed.">        if ( count == 0 )</span>
-<span class="nc" id="L155">            return this;</span>
-<span class="pc bpc" id="L156" title="1 of 2 branches missed.">        if ( count == 1 )</span>
-<span class="nc" id="L157">            return removeLast();</span>
-
-<span class="fc bfc" id="L159" title="All 2 branches covered.">        Vars&lt;T&gt; vars = (Vars&lt;T&gt;) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));</span>
-
-<span class="fc" id="L161">        List&lt;Var&lt;T&gt;&gt; subList = _variables.subList( size() - count, size() );</span>
-<span class="fc bfc" id="L162" title="All 2 branches covered.">        for ( Var&lt;T&gt; var : subList ) vars.add(var);</span>
-<span class="fc" id="L163">        subList.clear();</span>
-
-<span class="fc" id="L165">        _triggerAction( Change.REMOVE, size(), null, vars );</span>
-<span class="fc" id="L166">        return this;</span>
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public Vars&lt;T&gt; popLast( int count ) {
-<span class="pc bpc" id="L172" title="1 of 2 branches missed.">        if ( _isImmutable )</span>
-<span class="nc" id="L173">            throw new UnsupportedOperationException( &quot;This list is immutable.&quot; );</span>
-<span class="pc bpc" id="L174" title="1 of 2 branches missed.">        if ( count &lt; 0)</span>
-<span class="nc" id="L175">            throw new IllegalArgumentException(&quot;Invalid count! Count must be non-negative.&quot;);</span>
-
-<span class="fc" id="L177">        count = Math.min( count, size() );</span>
-
-<span class="pc bpc" id="L179" title="1 of 2 branches missed.">        Vars&lt;T&gt; vars = (Vars&lt;T&gt;) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));</span>
-
-<span class="pc bpc" id="L181" title="1 of 2 branches missed.">        if ( count == 0 )</span>
-<span class="nc" id="L182">            return vars;</span>
-
-<span class="fc" id="L184">        List&lt;Var&lt;T&gt;&gt; subList = _variables.subList( size() - count, size() );</span>
-<span class="fc bfc" id="L185" title="All 2 branches covered.">        for ( Var&lt;T&gt; var : subList ) vars.add(var);</span>
-<span class="fc" id="L186">        subList.clear();</span>
-<span class="fc" id="L187">        _triggerAction( Change.REMOVE, size(), null, vars );</span>
-<span class="fc" id="L188">        return vars;</span>
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public Vars&lt;T&gt; removeFirst( int count ) {
-<span class="pc bpc" id="L194" title="1 of 2 branches missed.">        if ( _isImmutable )</span>
-<span class="nc" id="L195">            throw new UnsupportedOperationException( &quot;This list is immutable.&quot; );</span>
-<span class="pc bpc" id="L196" title="1 of 2 branches missed.">        if ( count &lt; 0)</span>
-<span class="nc" id="L197">            throw new IllegalArgumentException(&quot;Invalid count! Count must be non-negative.&quot;);</span>
-
-<span class="fc" id="L199">        count = Math.min( count, size() );</span>
-
-<span class="pc bpc" id="L201" title="1 of 2 branches missed.">        if ( count == 0 )</span>
-<span class="nc" id="L202">            return this;</span>
-<span class="pc bpc" id="L203" title="1 of 2 branches missed.">        if ( count == 1 )</span>
-<span class="nc" id="L204">            return removeFirst();</span>
-
-<span class="fc bfc" id="L206" title="All 2 branches covered.">        Vars&lt;T&gt; vars = (Vars&lt;T&gt;) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));</span>
-
-<span class="fc" id="L208">        List&lt;Var&lt;T&gt;&gt; subList = _variables.subList( 0, count );</span>
-<span class="fc bfc" id="L209" title="All 2 branches covered.">        for ( Var&lt;T&gt; var : subList ) vars.add(var);</span>
-<span class="fc" id="L210">        subList.clear();</span>
-
-<span class="fc" id="L212">        _triggerAction( Change.REMOVE, 0, null, vars );</span>
-<span class="fc" id="L213">        return this;</span>
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public Vars&lt;T&gt; popFirst( int count ) {
-<span class="pc bpc" id="L219" title="1 of 2 branches missed.">        if ( _isImmutable )</span>
-<span class="nc" id="L220">            throw new UnsupportedOperationException( &quot;This list is immutable.&quot; );</span>
-<span class="pc bpc" id="L221" title="1 of 2 branches missed.">        if ( count &lt; 0)</span>
-<span class="nc" id="L222">            throw new IllegalArgumentException(&quot;Invalid count! Count must be non-negative.&quot;);</span>
-
-<span class="fc" id="L224">        count = Math.min( count, size() );</span>
-
-<span class="pc bpc" id="L226" title="1 of 2 branches missed.">        Vars&lt;T&gt; vars = (Vars&lt;T&gt;) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));</span>
-
-<span class="pc bpc" id="L228" title="1 of 2 branches missed.">        if ( count == 0 )</span>
-<span class="nc" id="L229">            return vars;</span>
-
-<span class="fc" id="L231">        List&lt;Var&lt;T&gt;&gt; subList = _variables.subList( 0, count );</span>
-<span class="fc bfc" id="L232" title="All 2 branches covered.">        for ( Var&lt;T&gt; var : subList ) vars.add(var);</span>
-<span class="fc" id="L233">        subList.clear();</span>
-<span class="fc" id="L234">        _triggerAction( Change.REMOVE, 0, null, vars );</span>
-<span class="fc" id="L235">        return vars;</span>
-    }
-
-    /** {@inheritDoc} */
     @Override public Vars&lt;T&gt; removeAll( Vars&lt;T&gt; vars ) {
-<span class="pc bpc" id="L240" title="1 of 2 branches missed.">        if ( _isImmutable ) throw new UnsupportedOperationException(&quot;This is an immutable list.&quot;);</span>
+<span class="pc bpc" id="L146" title="1 of 2 branches missed.">        if ( _isImmutable ) throw new UnsupportedOperationException(&quot;This is an immutable list.&quot;);</span>
 
-<span class="fc bfc" id="L242" title="All 2 branches covered.">        Vars&lt;T&gt; removal = (Vars&lt;T&gt;) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));</span>
+<span class="fc bfc" id="L148" title="All 2 branches covered.">        Vars&lt;T&gt; removal = (Vars&lt;T&gt;) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));</span>
 
-<span class="fc bfc" id="L244" title="All 2 branches covered.">        for ( int i = size() - 1; i &gt;= 0; i-- )</span>
-<span class="fc bfc" id="L245" title="All 2 branches covered.">            if ( vars.contains(at(i)) )</span>
-<span class="fc" id="L246">                removal.add( _variables.remove(i) );</span>
+<span class="fc bfc" id="L150" title="All 2 branches covered.">        for ( int i = size() - 1; i &gt;= 0; i-- )</span>
+<span class="fc bfc" id="L151" title="All 2 branches covered.">            if ( vars.contains(at(i)) )</span>
+<span class="fc" id="L152">                removal.add( _variables.remove(i) );</span>
 
-<span class="fc" id="L248">        _triggerAction( Change.REMOVE, -1, null, removal.revert() );</span>
-<span class="fc" id="L249">        return this;</span>
+<span class="fc" id="L154">        _triggerAction( Change.REMOVE, -1, null, removal.revert() );</span>
+<span class="fc" id="L155">        return this;</span>
     }
 
     /** {@inheritDoc} */
     @Override
     public Vars&lt;T&gt; addAt( int index, Var&lt;T&gt; value ) {
-<span class="fc bfc" id="L255" title="All 2 branches covered.">        if ( _isImmutable ) throw new UnsupportedOperationException(&quot;This is an immutable list.&quot;);</span>
-<span class="fc" id="L256">        _checkNullSafetyOf(value);</span>
-<span class="fc" id="L257">        _variables.add(index, value);</span>
-<span class="fc" id="L258">        _triggerAction( Change.ADD, index, value, null );</span>
-<span class="fc" id="L259">        return this;</span>
+<span class="fc bfc" id="L161" title="All 2 branches covered.">        if ( _isImmutable ) throw new UnsupportedOperationException(&quot;This is an immutable list.&quot;);</span>
+<span class="fc" id="L162">        _checkNullSafetyOf(value);</span>
+<span class="fc" id="L163">        _variables.add(index, value);</span>
+<span class="fc" id="L164">        _triggerAction( Change.ADD, index, value, null );</span>
+<span class="fc" id="L165">        return this;</span>
     }
 
     /** {@inheritDoc} */
     @Override
-    public Vars&lt;T&gt; removeAt( int index ) {
-<span class="fc bfc" id="L265" title="All 2 branches covered.">        if ( _isImmutable ) throw new UnsupportedOperationException(&quot;This is an immutable list.&quot;);</span>
-<span class="pc bpc" id="L266" title="2 of 4 branches missed.">        if ( index &lt; 0 || index &gt;= _variables.size() )</span>
-<span class="nc" id="L267">            throw new IndexOutOfBoundsException(&quot;Index: &quot; + index + &quot;, Size: &quot; + _variables.size());</span>
-<span class="fc" id="L268">        Var&lt;T&gt; old = _variables.get(index);</span>
-<span class="fc" id="L269">        _variables.remove(index);</span>
-<span class="fc" id="L270">        _triggerAction( Change.REMOVE, index, null, old );</span>
-<span class="fc" id="L271">        return this;</span>
+    public Vars&lt;T&gt; popRange(int from, int to) {
+<span class="pc bpc" id="L171" title="1 of 2 branches missed.">        if ( _isImmutable ) throw new UnsupportedOperationException(&quot;This is an immutable list.&quot;);</span>
+<span class="pc bpc" id="L172" title="3 of 6 branches missed.">        if ( from &lt; 0 || to &gt; _variables.size() || from &gt; to )</span>
+<span class="nc" id="L173">            throw new IndexOutOfBoundsException(&quot;From: &quot; + from + &quot;, To: &quot; + to + &quot;, Size: &quot; + _variables.size());</span>
+
+<span class="pc bpc" id="L175" title="1 of 2 branches missed.">        Vars&lt;T&gt; vars = (Vars&lt;T&gt;) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));</span>
+
+<span class="pc bpc" id="L177" title="1 of 2 branches missed.">        if (from == to)</span>
+<span class="nc" id="L178">            return vars;</span>
+
+<span class="fc" id="L180">        List&lt;Var&lt;T&gt;&gt; subList = _variables.subList( from, to );</span>
+<span class="fc bfc" id="L181" title="All 2 branches covered.">        for ( Var&lt;T&gt; var : subList ) vars.add(var);</span>
+<span class="fc" id="L182">        subList.clear();</span>
+
+<span class="fc" id="L184">        _triggerAction( Change.REMOVE, from, null, vars );</span>
+
+<span class="fc" id="L186">        return vars;</span>
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Vars&lt;T&gt; removeRange(int from, int to) {
+<span class="fc bfc" id="L192" title="All 2 branches covered.">        if ( _isImmutable ) throw new UnsupportedOperationException(&quot;This is an immutable list.&quot;);</span>
+<span class="pc bpc" id="L193" title="3 of 6 branches missed.">        if ( from &lt; 0 || to &gt; _variables.size() || from &gt; to )</span>
+<span class="nc" id="L194">            throw new IndexOutOfBoundsException(&quot;From: &quot; + from + &quot;, To: &quot; + to + &quot;, Size: &quot; + _variables.size());</span>
+
+<span class="pc bpc" id="L196" title="1 of 2 branches missed.">        if (from == to)</span>
+<span class="nc" id="L197">            return this;</span>
+
+<span class="fc bfc" id="L199" title="All 2 branches covered.">        Vars&lt;T&gt; removal = (Vars&lt;T&gt;) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));</span>
+
+<span class="fc" id="L201">        List&lt;Var&lt;T&gt;&gt; subList = _variables.subList( from, to );</span>
+<span class="fc bfc" id="L202" title="All 2 branches covered.">        for ( Var&lt;T&gt; var : subList ) removal.add(var);</span>
+<span class="fc" id="L203">        subList.clear();</span>
+
+<span class="fc" id="L205">        _triggerAction( Change.REMOVE, from, null, removal );</span>
+
+<span class="fc" id="L207">        return this;</span>
     }
 
     /** {@inheritDoc} */
     @Override
     public Vars&lt;T&gt; setAt( int index, Var&lt;T&gt; value ) {
-<span class="pc bpc" id="L277" title="1 of 2 branches missed.">        if ( _isImmutable ) throw new UnsupportedOperationException(&quot;This is an immutable list.&quot;);</span>
-<span class="pc bpc" id="L278" title="2 of 4 branches missed.">        if ( index &lt; 0 || index &gt;= _variables.size() )</span>
-<span class="nc" id="L279">            throw new IndexOutOfBoundsException(&quot;Index: &quot; + index + &quot;, Size: &quot; + _variables.size());</span>
+<span class="pc bpc" id="L213" title="1 of 2 branches missed.">        if ( _isImmutable ) throw new UnsupportedOperationException(&quot;This is an immutable list.&quot;);</span>
+<span class="pc bpc" id="L214" title="2 of 4 branches missed.">        if ( index &lt; 0 || index &gt;= _variables.size() )</span>
+<span class="nc" id="L215">            throw new IndexOutOfBoundsException(&quot;Index: &quot; + index + &quot;, Size: &quot; + _variables.size());</span>
 
-<span class="fc" id="L281">        _checkNullSafetyOf(value);</span>
+<span class="fc" id="L217">        _checkNullSafetyOf(value);</span>
 
-<span class="fc" id="L283">        Var&lt;T&gt; old = _variables.get(index);</span>
+<span class="fc" id="L219">        Var&lt;T&gt; old = _variables.get(index);</span>
 
-<span class="pc bpc" id="L285" title="1 of 2 branches missed.">        if ( !old.equals(value) ) {</span>
-<span class="fc" id="L286">            _variables.set(index, value);</span>
-<span class="fc" id="L287">            _triggerAction(Change.SET, index, value, old);</span>
+<span class="pc bpc" id="L221" title="1 of 2 branches missed.">        if ( !old.equals(value) ) {</span>
+<span class="fc" id="L222">            _variables.set(index, value);</span>
+<span class="fc" id="L223">            _triggerAction(Change.SET, index, value, old);</span>
         }
-<span class="fc" id="L289">        return this;</span>
+<span class="fc" id="L225">        return this;</span>
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Vars&lt;T&gt; setRange(int from, int to, T value) {
+<span class="pc bpc" id="L231" title="1 of 2 branches missed.">        if (_isImmutable) throw new UnsupportedOperationException(&quot;This is an immutable list.&quot;);</span>
+<span class="pc bpc" id="L232" title="3 of 6 branches missed.">        if (from &lt; 0 || to &gt; _variables.size() || from &gt; to)</span>
+<span class="nc" id="L233">            throw new IndexOutOfBoundsException(&quot;From: &quot; + from + &quot;, To: &quot; + to + &quot;, Size: &quot; + _variables.size());</span>
+
+<span class="fc bfc" id="L235" title="All 2 branches covered.">        if (!_allowsNull)</span>
+<span class="fc" id="L236">            Objects.requireNonNull(value);</span>
+
+<span class="pc bpc" id="L238" title="1 of 2 branches missed.">        if (from == to)</span>
+<span class="nc" id="L239">            return this;</span>
+
+<span class="fc bfc" id="L241" title="All 2 branches covered.">        Vars&lt;T&gt; oldVars = (Vars&lt;T&gt;) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));</span>
+<span class="fc bfc" id="L242" title="All 2 branches covered.">        Vars&lt;T&gt; newVars = (Vars&lt;T&gt;) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));</span>
+
+<span class="fc bfc" id="L244" title="All 2 branches covered.">        for (int i = from; i &lt; to; i++) {</span>
+<span class="fc bfc" id="L245" title="All 2 branches covered.">            Var&lt;T&gt; n = _allowsNull ? Var.ofNullable(_type, value) : Var.of(value);</span>
+<span class="fc" id="L246">            Var&lt;T&gt; o = _variables.set(i, n);</span>
+<span class="fc" id="L247">            newVars.add(n);</span>
+<span class="fc" id="L248">            oldVars.add(o);</span>
+        }
+
+<span class="fc" id="L251">        _triggerAction(Change.SET, from, newVars, oldVars);</span>
+
+<span class="fc" id="L253">        return this;</span>
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Vars&lt;T&gt; setRange(int from, int to, Var&lt;T&gt; value) {
+<span class="pc bpc" id="L259" title="1 of 2 branches missed.">        if (_isImmutable) throw new UnsupportedOperationException(&quot;This is an immutable list.&quot;);</span>
+<span class="pc bpc" id="L260" title="3 of 6 branches missed.">        if (from &lt; 0 || to &gt; _variables.size() || from &gt; to)</span>
+<span class="nc" id="L261">            throw new IndexOutOfBoundsException(&quot;From: &quot; + from + &quot;, To: &quot; + to + &quot;, Size: &quot; + _variables.size());</span>
+
+<span class="fc" id="L263">        _checkNullSafetyOf(value);</span>
+
+<span class="pc bpc" id="L265" title="1 of 2 branches missed.">        if (from == to)</span>
+<span class="nc" id="L266">            return (Vars&lt;T&gt;) this;</span>
+
+<span class="fc bfc" id="L268" title="All 2 branches covered.">        Vars&lt;T&gt; oldVars = (Vars&lt;T&gt;) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));</span>
+<span class="fc bfc" id="L269" title="All 2 branches covered.">        Vars&lt;T&gt; newVars = (Vars&lt;T&gt;) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));</span>
+
+<span class="fc bfc" id="L271" title="All 2 branches covered.">        for (int i = from; i &lt; to; i++) {</span>
+<span class="fc" id="L272">            Var&lt;T&gt; o = _variables.set(i, value);</span>
+<span class="fc" id="L273">            newVars.add(value);</span>
+<span class="fc" id="L274">            oldVars.add(o);</span>
+        }
+
+<span class="fc" id="L277">        _triggerAction(Change.SET, from, newVars, oldVars);</span>
+
+<span class="fc" id="L279">        return (Vars&lt;T&gt;) this;</span>
     }
 
     /** {@inheritDoc} */
     @Override
     public Vars&lt;T&gt; addAll( Vals&lt;T&gt; vals ) {
-<span class="pc bpc" id="L295" title="1 of 2 branches missed.">        if ( _isImmutable ) throw new UnsupportedOperationException(&quot;This is an immutable list.&quot;);</span>
+<span class="pc bpc" id="L285" title="1 of 2 branches missed.">        if ( _isImmutable ) throw new UnsupportedOperationException(&quot;This is an immutable list.&quot;);</span>
 
-<span class="pc bpc" id="L297" title="1 of 2 branches missed.">        if (vals.isEmpty())</span>
-<span class="nc" id="L298">            return this;</span>
+<span class="pc bpc" id="L287" title="1 of 2 branches missed.">        if (vals.isEmpty())</span>
+<span class="nc" id="L288">            return this;</span>
 
-<span class="fc bfc" id="L300" title="All 2 branches covered.">        for ( int i = 0; i &lt; vals.size(); i++ ) {</span>
-<span class="fc" id="L301">            Val&lt;T&gt; val = vals.at(i);</span>
-<span class="fc" id="L302">            _checkNullSafetyOf(val);</span>
+<span class="fc bfc" id="L290" title="All 2 branches covered.">        for ( int i = 0; i &lt; vals.size(); i++ ) {</span>
+<span class="fc" id="L291">            Val&lt;T&gt; val = vals.at(i);</span>
+<span class="fc" id="L292">            _checkNullSafetyOf(val);</span>
 
-<span class="pc bpc" id="L304" title="1 of 2 branches missed.">            if ( val instanceof Var )</span>
-<span class="fc" id="L305">                _variables.add((Var&lt;T&gt;) val);</span>
+<span class="pc bpc" id="L294" title="1 of 2 branches missed.">            if ( val instanceof Var )</span>
+<span class="fc" id="L295">                _variables.add((Var&lt;T&gt;) val);</span>
             else
-<span class="nc" id="L307">                _variables.add(Var.of(val.get()));</span>
+<span class="nc" id="L297">                _variables.add(Var.of(val.get()));</span>
         }
 
-<span class="fc" id="L310">        _triggerAction( Change.ADD, size() - vals.size(), vals, null);</span>
-<span class="fc" id="L311">        return this;</span>
+<span class="fc" id="L300">        _triggerAction( Change.ADD, size() - vals.size(), vals, null);</span>
+<span class="fc" id="L301">        return this;</span>
     }
 
     /** {@inheritDoc} */
     @Override
     public Vars&lt;T&gt; retainAll( Vars&lt;T&gt; vars ) {
-<span class="pc bpc" id="L317" title="1 of 2 branches missed.">        if ( _isImmutable ) throw new UnsupportedOperationException(&quot;This is an immutable list.&quot;);</span>
+<span class="pc bpc" id="L307" title="1 of 2 branches missed.">        if ( _isImmutable ) throw new UnsupportedOperationException(&quot;This is an immutable list.&quot;);</span>
 
-<span class="fc bfc" id="L319" title="All 2 branches covered.">        Vars&lt;T&gt; old = (Vars&lt;T&gt;) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));</span>
+<span class="fc bfc" id="L309" title="All 2 branches covered.">        Vars&lt;T&gt; old = (Vars&lt;T&gt;) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));</span>
 
-<span class="fc bfc" id="L321" title="All 2 branches covered.">        for (Iterator&lt;Var&lt;T&gt;&gt; it = _variables.iterator(); it.hasNext();) {</span>
-<span class="fc" id="L322">            Var&lt;T&gt; var = it.next();</span>
-<span class="fc bfc" id="L323" title="All 2 branches covered.">            if (!vars.contains(var)) {</span>
-<span class="fc" id="L324">                old.add(var);</span>
-<span class="fc" id="L325">                it.remove();</span>
+<span class="fc bfc" id="L311" title="All 2 branches covered.">        for (Iterator&lt;Var&lt;T&gt;&gt; it = _variables.iterator(); it.hasNext();) {</span>
+<span class="fc" id="L312">            Var&lt;T&gt; var = it.next();</span>
+<span class="fc bfc" id="L313" title="All 2 branches covered.">            if (!vars.contains(var)) {</span>
+<span class="fc" id="L314">                old.add(var);</span>
+<span class="fc" id="L315">                it.remove();</span>
             }
-<span class="fc" id="L327">        }</span>
+<span class="fc" id="L317">        }</span>
 
-<span class="fc bfc" id="L329" title="All 2 branches covered.">        if ( !old.isEmpty() )</span>
-<span class="fc" id="L330">            _triggerAction( Change.REMOVE, -1, null, old );</span>
+<span class="fc bfc" id="L319" title="All 2 branches covered.">        if ( !old.isEmpty() )</span>
+<span class="fc" id="L320">            _triggerAction( Change.REMOVE, -1, null, old );</span>
 
-<span class="fc" id="L332">        return this;</span>
+<span class="fc" id="L322">        return this;</span>
     }
 
     /** {@inheritDoc} */
     @Override
     public Vars&lt;T&gt; clear() {
-<span class="fc bfc" id="L338" title="All 2 branches covered.">        if ( _isImmutable ) throw new UnsupportedOperationException(&quot;This is an immutable list.&quot;);</span>
+<span class="fc bfc" id="L328" title="All 2 branches covered.">        if ( _isImmutable ) throw new UnsupportedOperationException(&quot;This is an immutable list.&quot;);</span>
 
-<span class="fc bfc" id="L340" title="All 2 branches covered.">        Vars&lt;T&gt; vars = (Vars&lt;T&gt;) (_allowsNull ? Vars.ofNullable(_type, _variables) : Vars.of(_type, _variables));</span>
+<span class="fc bfc" id="L330" title="All 2 branches covered.">        Vars&lt;T&gt; vars = (Vars&lt;T&gt;) (_allowsNull ? Vars.ofNullable(_type, _variables) : Vars.of(_type, _variables));</span>
 
-<span class="fc" id="L342">        _variables.clear();</span>
-<span class="fc" id="L343">        _triggerAction( Change.CLEAR, 0, null, vars);</span>
-<span class="fc" id="L344">        return this;</span>
+<span class="fc" id="L332">        _variables.clear();</span>
+<span class="fc" id="L333">        _triggerAction( Change.CLEAR, 0, null, vars);</span>
+<span class="fc" id="L334">        return this;</span>
     }
 
     /** {@inheritDoc} */
     @Override
     public void sort( Comparator&lt;T&gt; comparator ) {
-<span class="fc bfc" id="L350" title="All 2 branches covered.">        if ( _isImmutable ) throw new UnsupportedOperationException(&quot;This is an immutable list.&quot;);</span>
-<span class="fc" id="L351">        _variables.sort( ( a, b ) -&gt; comparator.compare( a.orElseNull(), b.orElseNull() ) );</span>
-<span class="fc" id="L352">        _triggerAction( Change.SORT );</span>
-<span class="fc" id="L353">    }</span>
+<span class="fc bfc" id="L340" title="All 2 branches covered.">        if ( _isImmutable ) throw new UnsupportedOperationException(&quot;This is an immutable list.&quot;);</span>
+<span class="fc" id="L341">        _variables.sort( ( a, b ) -&gt; comparator.compare( a.orElseNull(), b.orElseNull() ) );</span>
+<span class="fc" id="L342">        _triggerAction( Change.SORT );</span>
+<span class="fc" id="L343">    }</span>
 
     /** {@inheritDoc} */
     @Override
     public final void makeDistinct() {
-<span class="pc bpc" id="L358" title="1 of 2 branches missed.">        if ( _isImmutable ) throw new UnsupportedOperationException(&quot;This is an immutable list.&quot;);</span>
-<span class="fc" id="L359">        List&lt;Var&lt;T&gt;&gt; list = new ArrayList&lt;&gt;();</span>
-<span class="fc bfc" id="L360" title="All 2 branches covered.">        for ( Var&lt;T&gt; v : _variables )</span>
-<span class="fc bfc" id="L361" title="All 2 branches covered.">            if ( !list.contains(v) )</span>
-<span class="fc" id="L362">                list.add(v);</span>
+<span class="pc bpc" id="L348" title="1 of 2 branches missed.">        if ( _isImmutable ) throw new UnsupportedOperationException(&quot;This is an immutable list.&quot;);</span>
+<span class="fc" id="L349">        List&lt;Var&lt;T&gt;&gt; list = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L350" title="All 2 branches covered.">        for ( Var&lt;T&gt; v : _variables )</span>
+<span class="fc bfc" id="L351" title="All 2 branches covered.">            if ( !list.contains(v) )</span>
+<span class="fc" id="L352">                list.add(v);</span>
 
-<span class="fc" id="L364">        _variables.clear();</span>
-<span class="fc" id="L365">        _variables.addAll(list);</span>
-<span class="fc" id="L366">        _triggerAction( Change.DISTINCT );</span>
-<span class="fc" id="L367">    }</span>
+<span class="fc" id="L354">        _variables.clear();</span>
+<span class="fc" id="L355">        _variables.addAll(list);</span>
+<span class="fc" id="L356">        _triggerAction( Change.DISTINCT );</span>
+<span class="fc" id="L357">    }</span>
 
     @Override
     public Vars&lt;T&gt; revert() {
-<span class="fc" id="L371">        int size = size();</span>
-<span class="fc bfc" id="L372" title="All 2 branches covered.">        for ( int i = 0; i &lt; size / 2; i++ ) {</span>
-<span class="fc" id="L373">            Var&lt;T&gt; tmp = at(i);</span>
-<span class="fc" id="L374">            _variables.set( i, at(size - i - 1) );</span>
-<span class="fc" id="L375">            _variables.set( size - i - 1, tmp );</span>
+<span class="fc" id="L361">        int size = size();</span>
+<span class="fc bfc" id="L362" title="All 2 branches covered.">        for ( int i = 0; i &lt; size / 2; i++ ) {</span>
+<span class="fc" id="L363">            Var&lt;T&gt; tmp = at(i);</span>
+<span class="fc" id="L364">            _variables.set( i, at(size - i - 1) );</span>
+<span class="fc" id="L365">            _variables.set( size - i - 1, tmp );</span>
         }
-<span class="fc" id="L377">        _triggerAction( Change.REVERT );</span>
-<span class="fc" id="L378">        return this;</span>
+<span class="fc" id="L367">        _triggerAction( Change.REVERT );</span>
+<span class="fc" id="L368">        return this;</span>
     }
 
     /** {@inheritDoc} */
     @Override
     public Vals&lt;T&gt; onChange( Action&lt;ValsDelegate&lt;T&gt;&gt; action ) {
-<span class="fc" id="L384">        _viewActions.add(action);</span>
-<span class="fc" id="L385">        return this;</span>
+<span class="fc" id="L374">        _viewActions.add(action);</span>
+<span class="fc" id="L375">        return this;</span>
     }
 
     /** {@inheritDoc} */
     @Override
     public Vals&lt;T&gt; fireChange() {
-<span class="nc" id="L391">        _triggerAction( Change.NONE );</span>
-<span class="nc" id="L392">        return this;</span>
+<span class="nc" id="L381">        _triggerAction( Change.NONE );</span>
+<span class="nc" id="L382">        return this;</span>
     }
 
     @Override
     public boolean allowsNull() {
-<span class="fc" id="L397">        return _allowsNull;</span>
+<span class="fc" id="L387">        return _allowsNull;</span>
     }
 
     private ValsDelegate&lt;T&gt; _createDelegate(
             int index, Change type, @Nullable Var&lt;T&gt; newVal, @Nullable Var&lt;T&gt; oldVal
     ) {
-<span class="fc" id="L403">        Var[] cloned = _variables.stream().map(Val::ofNullable).toArray(Var[]::new);</span>
-<span class="fc" id="L404">        Vals&lt;T&gt; clone = Vals.ofNullable(_type, cloned);</span>
+<span class="fc" id="L393">        Var[] cloned = _variables.stream().map(Val::ofNullable).toArray(Var[]::new);</span>
+<span class="fc" id="L394">        Vals&lt;T&gt; clone = Vals.ofNullable(_type, cloned);</span>
         /*
             Note that we just created a deep copy of the property list, so we can safely
             pass the clone to the delegate. This is important because the delegate
             is passed to the action which might be executed on a different thread.
         */
-<span class="fc bfc" id="L410" title="All 2 branches covered.">        Vals&lt;T&gt; newValues = newVal == null ? Vals.ofNullable(_type) : Vals.ofNullable(_type, Val.ofNullable(newVal));</span>
-<span class="fc bfc" id="L411" title="All 2 branches covered.">        Vals&lt;T&gt; oldValues = oldVal == null ? Vals.ofNullable(_type) : Vals.ofNullable(_type, Val.ofNullable(oldVal));</span>
-<span class="fc" id="L412">        return new ValsDelegateImpl&lt;&gt;(type, index, newValues, oldValues, clone);</span>
+<span class="pc bpc" id="L400" title="1 of 2 branches missed.">        Vals&lt;T&gt; newValues = newVal == null ? Vals.ofNullable(_type) : Vals.ofNullable(_type, Val.ofNullable(newVal));</span>
+<span class="fc bfc" id="L401" title="All 2 branches covered.">        Vals&lt;T&gt; oldValues = oldVal == null ? Vals.ofNullable(_type) : Vals.ofNullable(_type, Val.ofNullable(oldVal));</span>
+<span class="fc" id="L402">        return new ValsDelegateImpl&lt;&gt;(type, index, newValues, oldValues, clone);</span>
     }
 
     private ValsDelegate&lt;T&gt; _createDelegate(
             int index, Change type, @Nullable Vals&lt;T&gt; newVals, @Nullable Vals&lt;T&gt; oldVals
     ) {
         @SuppressWarnings(&quot;unchecked&quot;)
-<span class="fc bfc" id="L419" title="All 2 branches covered.">        Val&lt;T&gt;[] cloned = _variables.stream().map(var -&gt; _allowsNull ? Val.ofNullable(var) : Val.of(var)).toArray(Val[]::new);</span>
+<span class="fc bfc" id="L409" title="All 2 branches covered.">        Val&lt;T&gt;[] cloned = _variables.stream().map(var -&gt; _allowsNull ? Val.ofNullable(var) : Val.of(var)).toArray(Val[]::new);</span>
         @SuppressWarnings(&quot;unchecked&quot;)
-<span class="fc bfc" id="L421" title="All 4 branches covered.">        Val&lt;T&gt;[] newCloned = newVals == null ? new Val[0] : newVals.stream().map(v -&gt; _allowsNull ? Val.ofNullable(_type, v) : Val.of(v)).toArray(Val[]::new);</span>
+<span class="fc bfc" id="L411" title="All 4 branches covered.">        Val&lt;T&gt;[] newCloned = newVals == null ? new Val[0] : newVals.stream().map(v -&gt; _allowsNull ? Val.ofNullable(_type, v) : Val.of(v)).toArray(Val[]::new);</span>
         @SuppressWarnings(&quot;unchecked&quot;)
-<span class="fc bfc" id="L423" title="All 4 branches covered.">        Val&lt;T&gt;[] oldCloned = oldVals == null ? new Val[0] : oldVals.stream().map(v -&gt; _allowsNull ? Val.ofNullable(_type, v) : Val.of(v)).toArray(Val[]::new);</span>
-<span class="fc bfc" id="L424" title="All 2 branches covered.">        Vals&lt;T&gt; clone = (Vals&lt;T&gt;) (_allowsNull ? Vals.ofNullable(_type, cloned) : Vals.of(_type, Arrays.asList(cloned)));</span>
-<span class="fc bfc" id="L425" title="All 2 branches covered.">        Vals&lt;T&gt; newClone = (Vals&lt;T&gt;) (_allowsNull ? Vals.ofNullable(_type, newCloned) : Vals.of(_type, Arrays.asList(newCloned)));</span>
-<span class="fc bfc" id="L426" title="All 2 branches covered.">        Vals&lt;T&gt; oldClone = (Vals&lt;T&gt;) (_allowsNull ? Vals.ofNullable(_type, oldCloned) : Vals.of(_type, Arrays.asList(oldCloned)));</span>
+<span class="fc bfc" id="L413" title="All 4 branches covered.">        Val&lt;T&gt;[] oldCloned = oldVals == null ? new Val[0] : oldVals.stream().map(v -&gt; _allowsNull ? Val.ofNullable(_type, v) : Val.of(v)).toArray(Val[]::new);</span>
+<span class="fc bfc" id="L414" title="All 2 branches covered.">        Vals&lt;T&gt; clone = (Vals&lt;T&gt;) (_allowsNull ? Vals.ofNullable(_type, cloned) : Vals.of(_type, Arrays.asList(cloned)));</span>
+<span class="fc bfc" id="L415" title="All 2 branches covered.">        Vals&lt;T&gt; newClone = (Vals&lt;T&gt;) (_allowsNull ? Vals.ofNullable(_type, newCloned) : Vals.of(_type, Arrays.asList(newCloned)));</span>
+<span class="fc bfc" id="L416" title="All 2 branches covered.">        Vals&lt;T&gt; oldClone = (Vals&lt;T&gt;) (_allowsNull ? Vals.ofNullable(_type, oldCloned) : Vals.of(_type, Arrays.asList(oldCloned)));</span>
         /*
             Note that we just created a deep copy of the property list, so we can safely
             pass the clone to the delegate. This is important because the delegate
             is passed to the action which might be executed on a different thread.
         */
-<span class="fc" id="L432">        return new ValsDelegateImpl&lt;&gt;(type, index, newClone, oldClone, clone);</span>
+<span class="fc" id="L422">        return new ValsDelegateImpl&lt;&gt;(type, index, newClone, oldClone, clone);</span>
     }
 
     private void _triggerAction(
             Change type, int index, @Nullable Var&lt;T&gt; newVal, @Nullable Var&lt;T&gt; oldVal
     ) {
-<span class="fc" id="L438">        ValsDelegate&lt;T&gt; listChangeDelegate = _createDelegate(index, type, newVal, oldVal);</span>
+<span class="fc" id="L428">        ValsDelegate&lt;T&gt; listChangeDelegate = _createDelegate(index, type, newVal, oldVal);</span>
 
-<span class="fc bfc" id="L440" title="All 2 branches covered.">        for ( Action&lt;ValsDelegate&lt;T&gt;&gt; action : _viewActions )</span>
+<span class="fc bfc" id="L430" title="All 2 branches covered.">        for ( Action&lt;ValsDelegate&lt;T&gt;&gt; action : _viewActions )</span>
             try {
-<span class="fc" id="L442">                action.accept(listChangeDelegate);</span>
-<span class="nc" id="L443">            } catch ( Exception e ) {</span>
-<span class="nc" id="L444">                log.error(&quot;Error in change action '{}'.&quot;, action, e);</span>
-<span class="fc" id="L445">            }</span>
-<span class="fc" id="L446">    }</span>
+<span class="fc" id="L432">                action.accept(listChangeDelegate);</span>
+<span class="nc" id="L433">            } catch ( Exception e ) {</span>
+<span class="nc" id="L434">                log.error(&quot;Error in change action '{}'.&quot;, action, e);</span>
+<span class="fc" id="L435">            }</span>
+<span class="fc" id="L436">    }</span>
 
     private void _triggerAction(Change type) {
-<span class="fc" id="L449">        _triggerAction(type, -1, (Vals&lt;T&gt;) null, null);</span>
-<span class="fc" id="L450">    }</span>
+<span class="fc" id="L439">        _triggerAction(type, -1, (Vals&lt;T&gt;) null, null);</span>
+<span class="fc" id="L440">    }</span>
 
     private void _triggerAction(
             Change type, int index, @Nullable Vals&lt;T&gt; newVals, @Nullable Vals&lt;T&gt; oldVals
     ) {
-<span class="fc" id="L455">        ValsDelegate&lt;T&gt; listChangeDelegate = _createDelegate(index, type, newVals, oldVals);</span>
+<span class="fc" id="L445">        ValsDelegate&lt;T&gt; listChangeDelegate = _createDelegate(index, type, newVals, oldVals);</span>
 
-<span class="fc bfc" id="L457" title="All 2 branches covered.">        for (Action&lt;ValsDelegate&lt;T&gt;&gt; action : _viewActions)</span>
+<span class="fc bfc" id="L447" title="All 2 branches covered.">        for (Action&lt;ValsDelegate&lt;T&gt;&gt; action : _viewActions)</span>
             try {
-<span class="fc" id="L459">                action.accept(listChangeDelegate);</span>
-<span class="nc" id="L460">            } catch (Exception e) {</span>
-<span class="nc" id="L461">                log.error(&quot;Error in change action '{}'.&quot;, action, e);</span>
-<span class="fc" id="L462">            }</span>
-<span class="fc" id="L463">    }</span>
+<span class="fc" id="L449">                action.accept(listChangeDelegate);</span>
+<span class="nc" id="L450">            } catch (Exception e) {</span>
+<span class="nc" id="L451">                log.error(&quot;Error in change action '{}'.&quot;, action, e);</span>
+<span class="fc" id="L452">            }</span>
+<span class="fc" id="L453">    }</span>
 
     /** {@inheritDoc} */
     @Override
     public java.util.Iterator&lt;T&gt; iterator() {
-<span class="fc" id="L468">        return new java.util.Iterator&lt;T&gt;() {</span>
-<span class="fc" id="L469">            private int index = 0;</span>
-<span class="fc bfc" id="L470" title="All 2 branches covered.">            @Override public boolean hasNext() { return index &lt; size(); }</span>
-<span class="fc" id="L471">            @Override public @Nullable T next() { return at(index++).orElseNull(); }</span>
+<span class="fc" id="L458">        return new java.util.Iterator&lt;T&gt;() {</span>
+<span class="fc" id="L459">            private int index = 0;</span>
+<span class="fc bfc" id="L460" title="All 2 branches covered.">            @Override public boolean hasNext() { return index &lt; size(); }</span>
+<span class="fc" id="L461">            @Override public @Nullable T next() { return at(index++).orElseNull(); }</span>
         };
     }
 
     /** {@inheritDoc} */
     @Override
     public final String toString() {
-<span class="fc" id="L478">        String entries = _variables.stream()</span>
-<span class="pc bpc" id="L479" title="1 of 2 branches missed.">                                    .map( o -&gt; o.itemAsString() + ( o.hasID() ? &quot;(&quot; + o.id() + &quot;)&quot; : &quot;&quot; ) )</span>
-<span class="fc" id="L480">                                    .collect(Collectors.joining(&quot;, &quot;));</span>
+<span class="fc" id="L468">        String entries = _variables.stream()</span>
+<span class="pc bpc" id="L469" title="1 of 2 branches missed.">                                    .map( o -&gt; o.itemAsString() + ( o.hasID() ? &quot;(&quot; + o.id() + &quot;)&quot; : &quot;&quot; ) )</span>
+<span class="fc" id="L470">                                    .collect(Collectors.joining(&quot;, &quot;));</span>
 
-<span class="fc bfc" id="L482" title="All 2 branches covered.">        String prefix = _isImmutable ? &quot;Vals&quot; : &quot;Vars&quot;;</span>
+<span class="fc bfc" id="L472" title="All 2 branches covered.">        String prefix = _isImmutable ? &quot;Vals&quot; : &quot;Vars&quot;;</span>
 
-<span class="fc" id="L484">        return prefix + &quot;&lt;&quot; + _type.getSimpleName() + &quot;&gt;[&quot; + entries + &quot;]&quot;;</span>
+<span class="fc" id="L474">        return prefix + &quot;&lt;&quot; + _type.getSimpleName() + &quot;&gt;[&quot; + entries + &quot;]&quot;;</span>
     }
 
     /** {@inheritDoc} */
     @Override
     public final boolean equals( Object obj ) {
-<span class="pc bpc" id="L490" title="1 of 2 branches missed.">        if( obj == null ) return false;</span>
-<span class="pc bpc" id="L491" title="1 of 2 branches missed.">        if( obj == this ) return true;</span>
-<span class="pc bpc" id="L492" title="1 of 2 branches missed.">        if( obj instanceof Vals ) {</span>
+<span class="pc bpc" id="L480" title="1 of 2 branches missed.">        if( obj == null ) return false;</span>
+<span class="pc bpc" id="L481" title="1 of 2 branches missed.">        if( obj == this ) return true;</span>
+<span class="pc bpc" id="L482" title="1 of 2 branches missed.">        if( obj instanceof Vals ) {</span>
             @SuppressWarnings(&quot;unchecked&quot;)
-<span class="fc" id="L494">            Vals&lt;T&gt; other = (Vals&lt;T&gt;) obj;</span>
-<span class="fc bfc" id="L495" title="All 2 branches covered.">            if ( size() != other.size() ) return false;</span>
-<span class="fc bfc" id="L496" title="All 2 branches covered.">            for ( int i = 0; i &lt; size(); i++ )</span>
-<span class="pc bpc" id="L497" title="1 of 2 branches missed.">                if ( !this.at(i).equals(other.at(i)) ) return false;</span>
+<span class="fc" id="L484">            Vals&lt;T&gt; other = (Vals&lt;T&gt;) obj;</span>
+<span class="fc bfc" id="L485" title="All 2 branches covered.">            if ( size() != other.size() ) return false;</span>
+<span class="fc bfc" id="L486" title="All 2 branches covered.">            for ( int i = 0; i &lt; size(); i++ )</span>
+<span class="pc bpc" id="L487" title="1 of 2 branches missed.">                if ( !this.at(i).equals(other.at(i)) ) return false;</span>
 
-<span class="fc" id="L499">            return true;</span>
+<span class="fc" id="L489">            return true;</span>
         }
-<span class="nc" id="L501">        return false;</span>
+<span class="nc" id="L491">        return false;</span>
     }
 
     /** {@inheritDoc} */
     @Override
     public final int hashCode() {
-<span class="nc" id="L507">        int hash = _variables.stream().mapToInt(Objects::hashCode).sum();</span>
-<span class="nc" id="L508">        return 31 * hash + _type.hashCode();</span>
+<span class="nc" id="L497">        int hash = _variables.stream().mapToInt(Objects::hashCode).sum();</span>
+<span class="nc" id="L498">        return 31 * hash + _type.hashCode();</span>
     }
 
     private void _checkNullSafety() {
-<span class="fc bfc" id="L512" title="All 2 branches covered.">        if ( !_allowsNull )</span>
-<span class="fc bfc" id="L513" title="All 2 branches covered.">            for ( Var&lt;T&gt; val : _variables )</span>
-<span class="fc" id="L514">                _checkNullSafetyOf(val);</span>
-<span class="fc" id="L515">    }</span>
+<span class="fc bfc" id="L502" title="All 2 branches covered.">        if ( !_allowsNull )</span>
+<span class="fc bfc" id="L503" title="All 2 branches covered.">            for ( Var&lt;T&gt; val : _variables )</span>
+<span class="fc" id="L504">                _checkNullSafetyOf(val);</span>
+<span class="fc" id="L505">    }</span>
 
     private void _checkNullSafetyOf( Val&lt;T&gt; value ) {
-<span class="fc" id="L518">        Objects.requireNonNull(value);</span>
-<span class="pc bpc" id="L519" title="1 of 4 branches missed.">        if ( !_allowsNull &amp;&amp; value.allowsNull() )</span>
-<span class="nc" id="L520">            throw new IllegalArgumentException(&quot;Null values are not allowed in this property list.&quot;);</span>
-<span class="fc" id="L521">    }</span>
+<span class="fc" id="L508">        Objects.requireNonNull(value);</span>
+<span class="pc bpc" id="L509" title="1 of 4 branches missed.">        if ( !_allowsNull &amp;&amp; value.allowsNull() )</span>
+<span class="nc" id="L510">            throw new IllegalArgumentException(&quot;Null values are not allowed in this property list.&quot;);</span>
+<span class="fc" id="L511">    }</span>
 
     @Override
     public Observable subscribe( Observer observer ) {
-<span class="fc" id="L525">        return this.onChange( new SproutChangeListener&lt;&gt;(observer) );</span>
+<span class="fc" id="L515">        return this.onChange( new SproutChangeListener&lt;&gt;(observer) );</span>
     }
 
     @Override
     public Observable unsubscribe( Subscriber subscriber ) {
-<span class="fc bfc" id="L530" title="All 2 branches covered.">        for ( Action&lt;?&gt; a : new ArrayList&lt;&gt;(_viewActions) )</span>
-<span class="fc bfc" id="L531" title="All 2 branches covered.">            if ( a instanceof SproutChangeListener ) {</span>
-<span class="fc" id="L532">                SproutChangeListener&lt;?&gt; pcl = (SproutChangeListener&lt;?&gt;) a;</span>
-<span class="pc bpc" id="L533" title="1 of 2 branches missed.">                if ( Objects.equals(pcl.listener(), subscriber) ) {</span>
-<span class="fc" id="L534">                    _viewActions.remove(a);</span>
-<span class="fc" id="L535">                    return this;</span>
+<span class="fc bfc" id="L520" title="All 2 branches covered.">        for ( Action&lt;?&gt; a : new ArrayList&lt;&gt;(_viewActions) )</span>
+<span class="fc bfc" id="L521" title="All 2 branches covered.">            if ( a instanceof SproutChangeListener ) {</span>
+<span class="fc" id="L522">                SproutChangeListener&lt;?&gt; pcl = (SproutChangeListener&lt;?&gt;) a;</span>
+<span class="pc bpc" id="L523" title="1 of 2 branches missed.">                if ( Objects.equals(pcl.listener(), subscriber) ) {</span>
+<span class="fc" id="L524">                    _viewActions.remove(a);</span>
+<span class="fc" id="L525">                    return this;</span>
                 }
-<span class="nc" id="L537">            }</span>
-<span class="pc bpc" id="L538" title="1 of 2 branches missed.">            else if ( Objects.equals(a, subscriber) )</span>
-<span class="fc" id="L539">                _viewActions.remove(a);</span>
+<span class="nc" id="L527">            }</span>
+<span class="pc bpc" id="L528" title="1 of 2 branches missed.">            else if ( Objects.equals(a, subscriber) )</span>
+<span class="fc" id="L529">                _viewActions.remove(a);</span>
 
-<span class="fc" id="L541">        return this;</span>
+<span class="fc" id="L531">        return this;</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>
