@@ -83,13 +83,13 @@ public final class PropertyLens<A extends @Nullable Object, T extends @Nullable 
         _changeListeners = changeListeners == null ? new ChangeListeners<>() : new ChangeListeners<>(changeListeners);
 
         _lastValue = iniValue;
-        parent.onChange(From.ALL, p -> {
-            T newValue = _getFromParent();
+        parent.onChange(From.ALL, new WeakAction<>(this, (thisLens,v) -> {
+            T newValue = thisLens._getFromParent();
             if ( !Objects.equals(_lastValue, newValue) ) {
                 _lastValue = newValue;
-                fireChange(From.ALL);
+                thisLens.fireChange(From.ALL);
             }
-        });
+        }));
 
         if ( !ID_PATTERN.matcher(_id).matches() )
             throw new IllegalArgumentException("The provided id '"+_id+"' is not valid!");
