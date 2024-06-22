@@ -139,8 +139,8 @@ task deploy() {
             signing.password=<my-key-password>
             signing.secretKeyRingFile=<my/path/to/my/.gnupg-keyring/secring.gpg>
 
-            sonatypeUsername=<my-username>
-            sonatypePassword=<my-password>
+            sonatypeUsername=<my-token-name>
+            sonatypePassword=<my-publish-token>
 
             ossrhUsername=<my-username>
             ossrhPassword=<my-password>
