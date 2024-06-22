@@ -54,10 +54,8 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.2'    // mandatory dependencies for using Spock
 
-    implementation group: 'org.apache.groovy', name: 'groovy', version: '4.0.21'
     testImplementation group: 'com.athaydes', name: 'spock-reports', version: '2.5.1-groovy-4.0'
     testImplementation group: 'org.spockframework', name: 'spock-core', version: '2.3-groovy-4.0'
-
 
     // if you don't already have slf4j-api and an implementation of it in the classpath, add this! (needed for reports)
     testImplementation 'org.slf4j:slf4j-api:1.7.30'
