@@ -5,6 +5,7 @@ import sprouts.*;
 import sprouts.Observer;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 import static sprouts.Val.DEFAULT_CHANNEL;
 
@@ -14,20 +15,34 @@ final class ChangeListeners<T>
 
     private final Map<Channel, List<Action<Val<T>>>> _actions = new LinkedHashMap<>();
 
-    public ChangeListeners(Map<Channel, List<Action<Val<T>>> > actions) {
-        actions.forEach( (k,v) -> _actions.put(k, new ArrayList<>(v)) );
-    }
-
-    public ChangeListeners(ChangeListeners<T> other) {
-        this(other._actions);
-    }
 
     public ChangeListeners() {}
+
+    public ChangeListeners(ChangeListeners<T> other) {
+        _copyFrom(other);
+    }
+
+    private void _copyFrom(ChangeListeners<T> other) {
+        other._actions.forEach( (k, v) -> _actions.put(k, new ArrayList<>(v)) );
+    }
+
+    private List<Action<Val<T>>> _getActionsFor( Channel channel ) {
+        return _actions.computeIfAbsent(channel, k->new ArrayList<>());
+    }
+
+    private void _addActionTo( Channel channel, Action<Val<T>> action ) {
+        _getActionsFor(channel).add(action);
+    }
+
+    private void _removeActionIf( Predicate<Action<Val<T>>> predicate ) {
+        for ( List<Action<Val<T>>> actions : _actions.values() )
+            actions.removeIf(predicate);
+    }
 
     public void onChange( Channel channel, Action<Val<T>> action ) {
         Objects.requireNonNull(channel);
         Objects.requireNonNull(action);
-        _actions.computeIfAbsent(channel, k->new ArrayList<>()).add(action);
+        _addActionTo(channel, action);
     }
 
     public final void onChange( Observer observer ) {
@@ -37,10 +52,10 @@ final class ChangeListeners<T>
 	public void fireChange( Val<T> owner, Channel channel ) {
 		if ( channel == From.ALL)
 			for ( Channel key : _actions.keySet() )
-				_triggerActions( owner, _actions.computeIfAbsent(key, k->new ArrayList<>()) );
+				_triggerActions( owner, _getActionsFor(key) );
 		else {
-			_triggerActions( owner, _actions.computeIfAbsent(channel, k->new ArrayList<>()) );
-			_triggerActions( owner, _actions.computeIfAbsent(From.ALL, k->new ArrayList<>()) );
+			_triggerActions( owner, _getActionsFor(channel) );
+			_triggerActions( owner, _getActionsFor(From.ALL) );
 		}
 	}
 
@@ -56,17 +71,15 @@ final class ChangeListeners<T>
             }
     }
 
-    public void unsubscribe(Subscriber subscriber ) {
-        for ( List<Action<Val<T>>> actions : _actions.values() )
-            for ( Action<?> a : new ArrayList<>(actions) )
+    public void unsubscribe( Subscriber subscriber ) {
+        _removeActionIf( a -> {
                 if ( a instanceof SproutChangeListener ) {
                     SproutChangeListener<?> pcl = (SproutChangeListener<?>) a;
-                    if ( pcl.listener() == subscriber) {
-                        actions.remove(a);
-                    }
+                    return pcl.listener() == subscriber;
                 }
-                else if ( Objects.equals(a, subscriber) )
-                    actions.remove(a);
+                else
+                    return Objects.equals(a, subscriber);
+            });
     }
 
 }
