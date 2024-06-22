@@ -11,18 +11,24 @@ import java.util.function.BiConsumer;
 final class WeakAction<@Nullable O, D> implements Action<D>
 {
     private final WeakReference<O> _owner;
-    private final BiConsumer<O, D> _action;
+    private @Nullable BiConsumer<O, D> _action;
 
-    WeakAction( @NonNull O owner, BiConsumer<O, D> action ) {
+    WeakAction( @NonNull O owner, @NonNull BiConsumer<O, D> action ) {
         _owner = new WeakReference<>(owner);
         _action = action;
     }
 
     @Override
     public void accept( D delegate ) {
+        if ( _action == null )
+            return;
+
         O owner = _owner.get();
+
         if ( owner != null )
             _action.accept(owner, delegate);
+        else
+            _action = null;
     }
 
     public @Nullable O owner() {
