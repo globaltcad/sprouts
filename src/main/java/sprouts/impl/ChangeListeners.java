@@ -70,13 +70,13 @@ final class ChangeListeners<T>
 
     private static final class ChannelListeners<T> {
 
-        private final Map<Object,Action<Val<T>>> _actions = new WeakHashMap<>();
+        private final WeakHashMap<Object,Action<Val<T>>> _weaklyOwned = new WeakHashMap<>();
         private final List<WeakReference<Action<Val<T>>>> _inOrder = new ArrayList<>();
 
         public ChannelListeners() {}
 
         public ChannelListeners(ChannelListeners<T> other ) {
-            _actions.putAll(other._actions);
+            _weaklyOwned.putAll(other._weaklyOwned);
             _inOrder.addAll(other._inOrder);
         }
 
@@ -85,16 +85,16 @@ final class ChangeListeners<T>
                 WeakAction<?,?> wa = (WeakAction<?,?>) action;
                 Object owner = wa.owner();
                 if ( owner != null )
-                    _actions.put(owner,action);
+                    _weaklyOwned.put(owner,action);
             }
             else
-                _actions.put(action,action);
+                _weaklyOwned.put(action,action); // Effectively a strong reference
 
             _inOrder.add(new WeakReference<>(action));
         }
 
         public void removeIf( Predicate<Action<Val<T>>> predicate ) {
-            _actions.entrySet().removeIf( e -> predicate.test(e.getValue()) );
+            _weaklyOwned.entrySet().removeIf(e -> predicate.test(e.getValue()) );
             _inOrder.removeIf( a -> {
                 Action<Val<T>> action = a.get();
                 return action == null || predicate.test(action);
