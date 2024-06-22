@@ -573,5 +573,129 @@ class Property_Lenses extends Specification
             emailLens.orElseNull() == null
     }
 
+    def 'We can create nullable lenses from nullable property even if there is no initial value.'()
+    {
+        reportInfo """
+            It should be possible to create a nullable lens from a nullable property
+            even if the initial value of the first lens is null.
+            In that case the second lens should also have a null value.
+        """
+        given: """
+            We create a nullable `Book` based property which is 
+            initially set to null.
+            And then we create a nullable lens for the `Author` record
+            of the `Book` record.
+        """
+            var bookProperty = Var.ofNull(Book.class)
+            var authorLens = bookProperty.zoomToNullable(Author.class, Book::author, Book::withAuthor)
+        expect : """
+            Both the lens and the original property should have a null value.
+        """
+            authorLens.orElseNull() == null
+            bookProperty.orElseNull() == null
+
+        when : 'We set a new Book instance without an author.'
+            var book = new Book("The Book", null, Genre.HISTORY, LocalDate.of(2019, 5, 12), 304)
+            bookProperty.set(book)
+        then : 'The book property has the new value and the lens has a null value.'
+            bookProperty.get() == book
+            authorLens.orElseNull() == null
+
+        when : 'We set a new Book instance with an author.'
+            var author = new Author("John", "Doe", LocalDate.of(1980, 2, 15), ["New Book"])
+            var newBook = book.withAuthor(author)
+            bookProperty.set(newBook)
+        then : 'The book property has the new value and the lens has the author value.'
+            bookProperty.get() == newBook
+            authorLens.get() == author
+    }
+
+    def 'A property lens with a default value focuses on specific field with a non-null parent value.'() {
+        given: "An Author record and its property"
+            var author = new Author("John", "Doe", LocalDate.of(1829, 8, 12), ["Book1", "Book2"])
+            var authorProperty = Var.of(author)
+        and: "A lens focusing on the first name of the Author with a default value"
+            var defaultFirstName = "Unknown"
+            var firstNameLens = authorProperty.zoomTo(defaultFirstName, Author::firstName, Author::withFirstName)
+
+        expect: "The lens retrieves the correct initial value"
+            firstNameLens.get() == author.firstName()
+
+        when: "The first name is updated through the lens"
+            firstNameLens.set("Jane")
+
+        then: "The original property is updated correctly"
+            authorProperty.get().firstName() == "Jane"
+            firstNameLens.get() == "Jane"
+    }
+
+    def 'A property lens with a default value uses its default value when the parent property value is null initially.'() {
+        given: "A nullable Author property initialized to null"
+            var authorProperty = Var.ofNull(Author.class)
+        and: "A lens focusing on the first name of the Author with a default value"
+            var defaultFirstName = "Unknown"
+            var firstNameLens = authorProperty.zoomTo(defaultFirstName, Author::firstName, Author::withFirstName)
+
+        expect: "The lens retrieves the default value when the parent is null"
+            firstNameLens.get() == defaultFirstName
+
+        when: "A new Author record is set with a specific first name"
+            var newAuthor = new Author("Jane", "Smith", LocalDate.of(1997, 9, 3), ["Book3", "Book4"])
+            authorProperty.set(newAuthor)
+
+        then: "The lens retrieves the new value from the parent"
+            firstNameLens.get() == newAuthor.firstName()
+    }
+
+    def 'A property lens with a default value updates the parent value correctly when setting it through the lens.'() {
+        given: "An Author record and its property"
+            var author = new Author("John", "Doe", LocalDate.of(1829, 8, 12), ["Book1", "Book2"])
+            var authorProperty = Var.of(author)
+        and: "A lens focusing on the first name of the Author with a default value"
+            var defaultFirstName = "Unknown"
+            var firstNameLens = authorProperty.zoomTo(defaultFirstName, Author::firstName, Author::withFirstName)
+
+        when: "The first name is updated through the lens"
+            firstNameLens.set("Jane")
+
+        then: "The original property is updated correctly"
+            authorProperty.get().firstName() == "Jane"
+    }
+
+    def 'A lens with a default value throws an exception when the null object is null.'() {
+        given: "An Author record and its property"
+            var author = new Author("John", "Doe", LocalDate.of(1829, 8, 12), ["Book1", "Book2"])
+            var authorProperty = Var.of(author)
+
+        when: "Creating a lens with a null default value"
+            authorProperty.zoomTo(null, Author::firstName, Author::withFirstName)
+
+        then: "An exception is thrown"
+            thrown(NullPointerException)
+    }
+
+    def 'A lens with a default value handles updates gracefully when switching from null parent to non-null parent.'() {
+        given: "A nullable Author property initialized to null"
+            var authorProperty = Var.ofNull(Author.class)
+        and: "A lens focusing on the first name of the Author with a default value"
+            var defaultFirstName = "Unknown"
+            var firstNameLens = authorProperty.zoomTo(defaultFirstName, Author::firstName, Author::withFirstName)
+
+        expect: "The lens retrieves the default value when the parent is null"
+            firstNameLens.get() == defaultFirstName
+
+        when: "A new Author record is set with a specific first name"
+            var newAuthor = new Author("Jane", "Smith", LocalDate.of(1997, 9, 3), ["Book3", "Book4"])
+            authorProperty.set(newAuthor)
+
+        then: "The lens retrieves the new value from the parent"
+            firstNameLens.get() == newAuthor.firstName()
+
+        when: "The parent is set back to null"
+            authorProperty.set(null)
+
+        then: "The lens retrieves the default value again"
+            firstNameLens.get() == defaultFirstName
+    }
 
 }

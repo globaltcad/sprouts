@@ -5,6 +5,7 @@ import org.jspecify.annotations.Nullable;
 import sprouts.impl.PropertyLens;
 import sprouts.impl.Sprouts;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -283,6 +284,72 @@ public interface Var<T extends @Nullable Object> extends Val<T>
 					null
 				);
 	}
+
+	/**
+	 * Creates a lens property (Var) that focuses on a specific field of the current data structure,
+	 * allowing a default value for when the current value is null.
+	 * This method is useful when dealing with potentially null parent property values,
+	 * providing a null object to handle such cases gracefully.
+	 *
+	 * <p>For example, consider a record {@code Book} with a nullable field {@code publisher}.
+	 * Using {@code zoomTo} with a null object, you can create a lens for the {@code publisher} field
+	 * even when the parent object is null.
+	 * <b>So when accessing the value of the lens, you well never have to
+	 * worry about a {@code NullPointerException}.</b>
+	 *
+	 * <pre>{@code
+	 * var bookProperty = Var.ofNull(Book.class);
+	 * Publisher nullPublisher = new Publisher("Unknown");
+	 *
+	 * // Creating a lens for the Publisher field with a null object
+	 * var publisherLens = bookProperty.zoomTo(nullPublisher, Book::getPublisher, Book::withPublisher);
+	 * assert publisherLens.get() == nullPublisher;
+	 *
+	 * // Updating the book property with a new publisher
+	 * var book = new Book("Some Title", new Publisher("Publisher1"));
+	 * bookProperty.set(book);
+	 * assert publisherLens.get() == book.getPublisher();
+	 * }</pre>
+	 *
+	 * @param <B>        The type of the field that the lens will focus on.
+	 * @param nullObject The object to use when the parent object is null.
+	 * @param getter     Function to get the current value of the focused field from the parent object.
+	 * @param wither     BiFunction to set or update the value of the focused field and return a new instance
+	 *                   of the parent object with the updated field.
+	 * @return A new Var that acts as a lens focusing on the specified field of the parent object, using
+	 *         the null object when the parent object is null.
+	 */
+	default <B> Var<B> zoomTo( B nullObject, Function<T,B> getter, BiFunction<T,B,T> wither ) {
+		Objects.requireNonNull(nullObject, "Null object must not be null");
+		Objects.requireNonNull(getter, "Getter must not be null");
+		Objects.requireNonNull(wither, "Wither must not be null");
+		Class<B> type = (Class<B>) nullObject.getClass();
+		Function<T,B> nullSafeGetter = newParentValue -> {
+			if ( newParentValue == null )
+				return nullObject;
+
+			return getter.apply(newParentValue);
+		};
+		BiFunction<T,B,T> nullSafeWither = (parentValue, newValue) -> {
+			if ( parentValue == null )
+				return null;
+
+			return wither.apply(parentValue, newValue);
+		};
+		B initialValue = nullSafeGetter.apply(this.orElseNull());
+		return new PropertyLens<>(
+					false,
+					type,
+					Val.NO_ID,
+					false,//does not allow null
+					initialValue, //may NOT be null
+					this,
+					nullSafeGetter,
+					nullSafeWither,
+					null
+				);
+	}
+
 	/**
 	 * Creates a nullable lens property (Var) that focuses on a specific nullable field of the current data structure.
 	 * This method is used to zoom into an immutable nested data structure, allowing read and write operations on
@@ -310,7 +377,22 @@ public interface Var<T extends @Nullable Object> extends Val<T>
 	 * @return A new Var that acts as a lens focusing on the specified nullable field of the parent object.
 	 */
 	default <B extends @Nullable Object> Var<B> zoomToNullable( Class<B> type, Function<T,B> getter, BiFunction<T,B,T> wither ) {
-		B initialValue = getter.apply(this.orElseNull());
+		Objects.requireNonNull(type, "Type must not be null");
+		Objects.requireNonNull(getter, "Getter must not be null");
+		Objects.requireNonNull(wither, "Wither must not be null");
+		Function<T,B> nullSafeGetter = newParentValue -> {
+			if ( newParentValue == null )
+				return null;
+
+			return getter.apply(newParentValue);
+		};
+		BiFunction<T,B,T> nullSafeWither = (parentValue, newValue) -> {
+			if ( parentValue == null )
+				return null;
+
+			return wither.apply(parentValue, newValue);
+		};
+		B initialValue = nullSafeGetter.apply(this.orElseNull());
 		return new PropertyLens<>(
 					false,
 					type,
@@ -318,8 +400,8 @@ public interface Var<T extends @Nullable Object> extends Val<T>
 					true,//allows null
 					initialValue, //may be null
 					this,
-					getter,
-					wither,
+					nullSafeGetter,
+					nullSafeWither,
 					null
 				);
 	}
