@@ -11,10 +11,36 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
- *  This is the base class for all {@link Val} implementations.
- *  It provides the basic functionality and state, like the id, the type, the value, etc.
+ * The Sprouts Property Lens is based on the Lens design pattern, which is a functional programming
+ * technique used to simplify the process of accessing and updating parts of
+ * a nested (immutable) data structures into a new instance of the data structure.
+ * It is essentially a pair of functions, one to get a value from a specific
+ * part of a data structure (like a record),
+ * and another to set or update that value while producing a new
+ * instance of the data structure. This pattern is particularly useful with Java records,
+ * which are immutable by design, as it allows for clean and concise manipulation
+ * of deeply nested fields without breaking immutability.
+ * <p>
+ * Now what does this have to do with Sprouts properties?
+ * After all, the MVVM properties of this library are mutable
+ * wrapper types with regular getter and setter methods.
+ * Although properties are mutable, their items are expected to
+ * be immutable data carriers, such as ints, doubles, strings or records.
+ * In case of records (or other custom value oriented data types),
+ * there is really no limit to how deeply nested the data structure can be.
+ * You may even want to model your entire application state as a single record
+ * composed of other records, lists, maps and primitives.
+ * <p>
+ * <b>This is where the Property Lens comes in:</b><br>
+ * You can create a lens property from any regular property
+ * holding an immutable data structure, and then use the lens property
+ * like a regular property. <br>
+ * Under the hood the lens property will use the lens pattern to access
+ * and update the nested data structure of the original property.
  *
- *  @param <T> The type of the value.
+ *  @param <T> The type of the value, which is expected to be an immutable data carrier,
+ *             such as a record, value object, or a primitive.
+ *
  */
 public final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object> implements Var<T>
 {
