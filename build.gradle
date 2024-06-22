@@ -248,6 +248,11 @@ publishing {
                         email = "d.nepp@globaltcad.com"
                     }
                     developer {
+                        id = "mschwengerer"
+                        name = "Mathias Schwengerer"
+                        email = "m.schwengerer@globaltcad.com"
+                    }
+                    developer {
                         id = "hdemel"
                         name = "Harald Demel"
                         email = "h.demel@globaltcad.com"
