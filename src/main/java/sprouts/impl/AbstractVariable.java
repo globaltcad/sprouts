@@ -72,14 +72,14 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 
 		Var<T> result = AbstractVariable.of( false, first.type(), initial ).withId(id);
 
-		first.onChange(From.ALL, new WeakAction<>( result, (r,v) -> {
+		first.onChange(From.ALL, Action.ofWeak( result, (r,v) -> {
 			T newItem = fullCombiner.apply(v, second);
 			if (newItem == null)
 				log.error("Invalid combiner result! The combination of the first value '{}' (changed) and the second value '{}' was null and null is not allowed! The old value '{}' is retained!", first.orElseNull(), second.orElseNull(), result.orElseNull());
 			else
 				r.set(From.ALL, newItem);
 		}));
-		second.onChange(From.ALL, new WeakAction<>( result, (r,v) -> {
+		second.onChange(From.ALL, Action.ofWeak( result, (r,v) -> {
 			T newItem = fullCombiner.apply(first, v);
 			if (newItem == null)
 				log.error("Invalid combiner result! The combination of the first value '{}' and the second value '{}' (changed) was null and null is not allowed! The old value '{}' is retained!", first.orElseNull(), second.orElseNull(), result.orElseNull());
@@ -110,8 +110,8 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 
 		Var<@Nullable T> result = AbstractVariable.ofNullable( false, first.type(), initial ).withId(id);
 
-		first.onChange(From.ALL, new WeakAction<>(result, (r,v) -> r.set(From.ALL, fullCombiner.apply(v, second) )));
-		second.onChange(From.ALL, new WeakAction<>(result, (r,v) -> r.set(From.ALL, fullCombiner.apply(first, v) )));
+		first.onChange(From.ALL, Action.ofWeak(result, (r,v) -> r.set(From.ALL, fullCombiner.apply(v, second) )));
+		second.onChange(From.ALL, Action.ofWeak(result, (r,v) -> r.set(From.ALL, fullCombiner.apply(first, v) )));
 		return result;
 	}
 
@@ -139,14 +139,14 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 
 		Var<R> result = AbstractVariable.of( false, type, initial ).withId(id);
 
-		first.onChange(From.ALL, new WeakAction<>(result, (r,v) -> {
+		first.onChange(From.ALL, Action.ofWeak(result, (r,v) -> {
 			@Nullable R newItem = fullCombiner.apply(v, second);
 			if (newItem == null)
 				log.error("Invalid combiner result! The combination of the first value '{}' (changed) and the second value '{}' was null and null is not allowed! The old value '{}' is retained!", first.orElseNull(), second.orElseNull(), result.orElseNull());
 			else
 				r.set(From.ALL, newItem);
 		}));
-		second.onChange(From.ALL, new WeakAction<>(result, (r,v) -> {
+		second.onChange(From.ALL, Action.ofWeak(result, (r,v) -> {
 			@Nullable R newItem = fullCombiner.apply(first, v);
 			if (newItem == null)
 				log.error("Invalid combiner result! The combination of the first value '{}' and the second value '{}' (changed) was null and null is not allowed! The old value '{}' is retained!", first.orElseNull(), second.orElseNull(), result.orElseNull());
@@ -180,8 +180,8 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 
 		Var<@Nullable R> result =  AbstractVariable.ofNullable( false, type, fullCombiner.apply(first, second) ).withId(id);
 
-		first.onChange(From.ALL, new WeakAction<>(result, (r,v) -> r.set(From.ALL, fullCombiner.apply(v, second))));
-		second.onChange(From.ALL, new WeakAction<>(result, (r,v) ->r.set(From.ALL, fullCombiner.apply(first, v))));
+		first.onChange(From.ALL, Action.ofWeak(result, (r,v) -> r.set(From.ALL, fullCombiner.apply(v, second))));
+		second.onChange(From.ALL, Action.ofWeak(result, (r,v) ->r.set(From.ALL, fullCombiner.apply(first, v))));
 		return result;
 	}
 

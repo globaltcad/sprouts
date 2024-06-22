@@ -83,7 +83,7 @@ public final class PropertyLens<A extends @Nullable Object, T extends @Nullable 
         _changeListeners = changeListeners == null ? new ChangeListeners<>() : new ChangeListeners<>(changeListeners);
 
         _lastValue = iniValue;
-        parent.onChange(From.ALL, new WeakAction<>(this, (thisLens,v) -> {
+        parent.onChange(From.ALL, Action.ofWeak(this, (thisLens,v) -> {
             T newValue = thisLens._getFromParent();
             if ( !Objects.equals(_lastValue, newValue) ) {
                 _lastValue = newValue;
