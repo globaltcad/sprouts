@@ -8,18 +8,18 @@ import sprouts.Val;
 import java.lang.ref.WeakReference;
 import java.util.function.BiConsumer;
 
-final class WeakAction<@Nullable O, T> implements Action<Val<T>>
+final class WeakAction<@Nullable O, D> implements Action<D>
 {
     private final WeakReference<O> _owner;
-    private final BiConsumer<O, Val<T>> _action;
+    private final BiConsumer<O, D> _action;
 
-    WeakAction( @NonNull O owner, BiConsumer<O, Val<T>> action ) {
+    WeakAction( @NonNull O owner, BiConsumer<O, D> action ) {
         _owner = new WeakReference<>(owner);
         _action = action;
     }
 
     @Override
-    public void accept( Val<T> delegate ) {
+    public void accept( D delegate ) {
         O owner = _owner.get();
         if ( owner != null )
             _action.accept(owner, delegate);
@@ -27,9 +27,5 @@ final class WeakAction<@Nullable O, T> implements Action<Val<T>>
 
     public @Nullable O owner() {
         return _owner.get();
-    }
-
-    public boolean isAlive() {
-        return _owner.get() != null;
     }
 }

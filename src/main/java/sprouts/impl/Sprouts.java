@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 import java.util.stream.StreamSupport;
@@ -344,6 +345,11 @@ public final class Sprouts implements SproutsFactory
         } catch (Exception e) {
             return resultOf(type, Problem.of(e));
         }
+    }
+
+    @Override
+    public <O, D> Action<D> weakPropertyActionOf(O owner, BiConsumer<O, D> action) {
+        return new WeakAction<>(owner, action);
     }
 
 }
