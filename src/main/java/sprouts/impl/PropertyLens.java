@@ -200,7 +200,8 @@ public final class PropertyLens<A extends @Nullable Object, T extends @Nullable 
 
     @Override
     public final sprouts.Observable subscribe(Observer observer ) {
-        return onChange(DEFAULT_CHANNEL, new SproutChangeListener<>(observer) );
+        _changeListeners.onChange( observer );
+        return this;
     }
 
     @Override

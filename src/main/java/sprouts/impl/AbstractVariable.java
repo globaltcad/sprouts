@@ -253,7 +253,8 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 
 	@Override
 	public Observable subscribe( Observer observer ) {
-		return onChange(DEFAULT_CHANNEL, new SproutChangeListener<>(observer) );
+		_changeListeners.onChange( observer );
+		return this;
 	}
 
 	@Override

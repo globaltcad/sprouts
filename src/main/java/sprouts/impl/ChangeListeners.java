@@ -2,8 +2,11 @@ package sprouts.impl;
 
 import org.slf4j.Logger;
 import sprouts.*;
+import sprouts.Observer;
 
 import java.util.*;
+
+import static sprouts.Val.DEFAULT_CHANNEL;
 
 final class ChangeListeners<T>
 {
@@ -25,6 +28,10 @@ final class ChangeListeners<T>
         Objects.requireNonNull(channel);
         Objects.requireNonNull(action);
         _actions.computeIfAbsent(channel, k->new ArrayList<>()).add(action);
+    }
+
+    public final void onChange( Observer observer ) {
+        onChange(DEFAULT_CHANNEL, new SproutChangeListener<>(observer) );
     }
 
 	public void fireChange( Val<T> owner, Channel channel ) {
