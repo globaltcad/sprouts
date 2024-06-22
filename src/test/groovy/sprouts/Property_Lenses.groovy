@@ -573,5 +573,41 @@ class Property_Lenses extends Specification
             emailLens.orElseNull() == null
     }
 
+    def 'We can create nullable lenses from nullable property even if there is no initial value.'()
+    {
+        reportInfo """
+            It should be possible to create a nullable lens from a nullable property
+            even if the initial value of the first lens is null.
+            In that case the second lens should also have a null value.
+        """
+        given: """
+            We create a nullable `Book` based property which is 
+            initially set to null.
+            And then we create a nullable lens for the `Author` record
+            of the `Book` record.
+        """
+            var bookProperty = Var.ofNull(Book.class)
+            var authorLens = bookProperty.zoomToNullable(Author.class, Book::author, Book::withAuthor)
+        expect : """
+            Both the lens and the original property should have a null value.
+        """
+            authorLens.orElseNull() == null
+            bookProperty.orElseNull() == null
+
+        when : 'We set a new Book instance without an author.'
+            var book = new Book("The Book", null, Genre.HISTORY, LocalDate.of(2019, 5, 12), 304)
+            bookProperty.set(book)
+        then : 'The book property has the new value and the lens has a null value.'
+            bookProperty.get() == book
+            authorLens.orElseNull() == null
+
+        when : 'We set a new Book instance with an author.'
+            var author = new Author("John", "Doe", LocalDate.of(1980, 2, 15), ["New Book"])
+            var newBook = book.withAuthor(author)
+            bookProperty.set(newBook)
+        then : 'The book property has the new value and the lens has the author value.'
+            bookProperty.get() == newBook
+            authorLens.get() == author
+    }
 
 }
