@@ -26,7 +26,7 @@ public interface Action<D> extends Subscriber
      *  <b>
      *      Keep in mind that the owner and action may only
      *      be garbage collected if there are no other strong references to them.
-     *      This includes the action itself, which may be referenced by other actions.
+     *      This includes the action itself, which may not hold a strong reference to the owner!
      *      In order to allow you to access the owner of the action,
      *      it is passed as a parameter to the supplied {@link BiConsumer}
      *      as the first argument.
