@@ -127,5 +127,5 @@ public interface SproutsFactory
 
 	<V> Result<V> resultOfTry( Class<V> type, Supplier<V> supplier );
 
-	<O,D> Action<D> weakPropertyActionOf( O owner, BiConsumer<O, D> action );
+	<O,D> Action<D> actionOfWeak( O owner, BiConsumer<O, D> action );
 }

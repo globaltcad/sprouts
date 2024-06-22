@@ -348,7 +348,7 @@ public final class Sprouts implements SproutsFactory
     }
 
     @Override
-    public <O, D> Action<D> weakPropertyActionOf(O owner, BiConsumer<O, D> action) {
+    public <O, D> Action<D> actionOfWeak(O owner, BiConsumer<O, D> action) {
         return new WeakAction<>(owner, action);
     }
 
