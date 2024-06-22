@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PropertyCallbacks.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sprouts</a> &gt; <a href="index.source.html" class="el_package">sprouts.impl</a> &gt; <span class="el_source">PropertyCallbacks.java</span></div><h1>PropertyCallbacks.java</h1><pre class="source lang-java linenums">package sprouts.impl;
+
+import org.slf4j.Logger;
+import sprouts.*;
+
+import java.util.*;
+
+final class PropertyCallbacks&lt;T&gt;
+{
+<span class="fc" id="L10">    private static final Logger log = org.slf4j.LoggerFactory.getLogger(PropertyCallbacks.class);</span>
+
+<span class="fc" id="L12">    private final Map&lt;Channel, List&lt;Action&lt;Val&lt;T&gt;&gt;&gt;&gt; _actions = new LinkedHashMap&lt;&gt;();</span>
+
+<span class="fc" id="L14">    public PropertyCallbacks(Map&lt;Channel, List&lt;Action&lt;Val&lt;T&gt;&gt;&gt; &gt; actions) {</span>
+<span class="fc" id="L15">        actions.forEach( (k,v) -&gt; _actions.put(k, new ArrayList&lt;&gt;(v)) );</span>
+<span class="fc" id="L16">    }</span>
+
+    public PropertyCallbacks(PropertyCallbacks&lt;T&gt; other) {
+<span class="fc" id="L19">        this(other._actions);</span>
+<span class="fc" id="L20">    }</span>
+
+<span class="fc" id="L22">    public PropertyCallbacks() {}</span>
+
+    public void onChange( Channel channel, Action&lt;Val&lt;T&gt;&gt; action ) {
+<span class="fc" id="L25">        Objects.requireNonNull(channel);</span>
+<span class="fc" id="L26">        Objects.requireNonNull(action);</span>
+<span class="fc" id="L27">        _actions.computeIfAbsent(channel, k-&gt;new ArrayList&lt;&gt;()).add(action);</span>
+<span class="fc" id="L28">    }</span>
+
+    public void fireSingleChange( Val&lt;T&gt; owner, Channel channel ) {
+<span class="nc" id="L31">        _triggerActions( owner, _actions.computeIfAbsent(channel, k-&gt;new ArrayList&lt;&gt;()) );</span>
+<span class="nc" id="L32">    }</span>
+
+	public void fireChange( Val&lt;T&gt; owner, Channel channel ) {
+<span class="fc bfc" id="L35" title="All 2 branches covered.">		if ( channel == From.ALL)</span>
+<span class="fc bfc" id="L36" title="All 2 branches covered.">			for ( Channel key : _actions.keySet() )</span>
+<span class="pc" id="L37">				_triggerActions( owner, _actions.computeIfAbsent(key, k-&gt;new ArrayList&lt;&gt;()) );</span>
+		else {
+<span class="fc" id="L39">			_triggerActions( owner, _actions.computeIfAbsent(channel, k-&gt;new ArrayList&lt;&gt;()) );</span>
+<span class="fc" id="L40">			_triggerActions( owner, _actions.computeIfAbsent(From.ALL, k-&gt;new ArrayList&lt;&gt;()) );</span>
+		}
+<span class="fc" id="L42">	}</span>
+
+    private void _triggerActions(
+        Val&lt;T&gt; owner, List&lt;Action&lt;Val&lt;T&gt;&gt;&gt; actions
+    ) {
+<span class="fc" id="L47">        Val&lt;T&gt; clone = Val.ofNullable(owner); // We clone this property to avoid concurrent modification</span>
+<span class="fc bfc" id="L48" title="All 2 branches covered.">        for ( Action&lt;Val&lt;T&gt;&gt; action : new ArrayList&lt;&gt;(actions) ) // We copy the list to avoid concurrent modification</span>
+            try {
+<span class="fc" id="L50">                action.accept(clone);</span>
+<span class="fc" id="L51">            } catch ( Exception e ) {</span>
+<span class="fc" id="L52">                log.error(&quot;An error occurred while executing action '&quot;+action+&quot;' for property '&quot;+this+&quot;'&quot;, e);</span>
+<span class="fc" id="L53">            }</span>
+<span class="fc" id="L54">    }</span>
+
+    public void unsubscribe(Subscriber subscriber ) {
+<span class="fc bfc" id="L57" title="All 2 branches covered.">        for ( List&lt;Action&lt;Val&lt;T&gt;&gt;&gt; actions : _actions.values() )</span>
+<span class="fc bfc" id="L58" title="All 2 branches covered.">            for ( Action&lt;?&gt; a : new ArrayList&lt;&gt;(actions) )</span>
+<span class="fc bfc" id="L59" title="All 2 branches covered.">                if ( a instanceof SproutChangeListener ) {</span>
+<span class="fc" id="L60">                    SproutChangeListener&lt;?&gt; pcl = (SproutChangeListener&lt;?&gt;) a;</span>
+<span class="pc bpc" id="L61" title="1 of 2 branches missed.">                    if ( pcl.listener() == subscriber) {</span>
+<span class="fc" id="L62">                        actions.remove(a);</span>
+                    }
+<span class="fc" id="L64">                }</span>
+<span class="pc bpc" id="L65" title="1 of 2 branches missed.">                else if ( Objects.equals(a, subscriber) )</span>
+<span class="fc" id="L66">                    actions.remove(a);</span>
+<span class="fc" id="L67">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>
