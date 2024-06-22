@@ -127,10 +127,31 @@ task deploy() {
     dependsOn 'check'
 
 }
-// 3:
-//     execute publishToSonatype
-//     go to https://s01.oss.sonatype.org/#stagingRepositories
-//     close and release the repository
+/*
+  3:
+     execute publishToSonatype
+     go to https://s01.oss.sonatype.org/#stagingRepositories
+     close and release the repository
+
+      Note that you need the correct gradle.properties file in
+      your home directory (~/.gradle/gradle.properties)
+      It should look something like this:
+      ```
+            signing.keyId=<my-key-id>
+            signing.password=<my-key-password>
+            signing.secretKeyRingFile=<my/path/to/my/.gnupg-keyring/secring.gpg>
+
+            sonatypeUsername=<my-username>
+            sonatypePassword=<my-password>
+
+            ossrhUsername=<my-username>
+            ossrhPassword=<my-password>
+
+            # https://s01.oss.sonatype.org
+            ossrhToken=<my-token-name>
+            ossrhTokenPassword=<my-publish-token>
+      ```
+*/
 
 // Depends on javadocs Task
 task releaseJDocs(type: Copy) {
@@ -212,11 +233,11 @@ nexusPublishing {
 publishing {
     repositories {
         maven {
-            name = "GitHubPackages"
-            url = "https://maven.pkg.github.com/globaltcad/" + PROJECT
+            name = "nexus"
+            url = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
             credentials {
-                username = System.getenv("GITHUB_ACTOR")
-                password = System.getenv("GITHUB_TOKEN")
+                username = findProperty("ossrhToken") as String
+                password = findProperty("ossrhTokenPassword") as String
             }
         }
     }
