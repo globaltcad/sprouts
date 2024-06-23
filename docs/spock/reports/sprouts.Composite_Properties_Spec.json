@@ -4,7 +4,7 @@
   "narrative":"A composite property view is an immutable property that is a live view of two other properties.\n    It is especially useful when you want to observe 2 properties merged into one maybe with some\n    sort of transformation applied to them.",
   "subjects":[],
   "statistics":{
-    "runs":"8",
+    "runs":"9",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -227,6 +227,31 @@
         {"kind":"when","text":"We set a value so that the combiner throws an exception","code":["integerVar.set(9)","doubleVar.set(null)"]},
 
         {"kind":"then","text":"The view should be empty.","code":["view.isEmpty()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The change listeners of the parents of composite properties are garbage collected when the composite is no longer referenced strongly.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A composite property registers weak action listeners on its parent parent properties\n            it is actively viewing.\n            These weak listeners are automatically removed when the composite is garbage collected.\n            So when the property composite is no longer referenced strongly, it should be\n            garbage collected and the weak listeners should be removed\n            from the original properties as well.\n\n            We can verify this by checking the reported number of change listeners.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We have two parent properties, a long based property nad an enum property based on the `TimeUnit` enum.","code":["var longProperty = Var.of(0L)","var unitProperty = Var.of(TimeUnit.SECONDS)"]},
+
+        {"kind":"expect","text":"Initially there are no change listeners registered on the properties.","code":["unitProperty.numberOfChangeListeners() == 0","longProperty.numberOfChangeListeners() == 0"]},
+
+        {"kind":"when","text":"We create four (nullable and not-nullable) composite properties that are referenced strongly.","code":["var composite1 = Val.viewOfNullable(longProperty, unitProperty, (l, u) -> l + u.toMillis(1))","var composite2 = Val.viewOf(longProperty, unitProperty, (l, u) -> l + u.toMillis(1))","var composite3 = Val.viewOfNullable(String.class, longProperty, unitProperty, (l, u) -> l + \" \" + u)","var composite4 = Val.viewOf(String.class, longProperty, unitProperty, (l, u) -> l + \" \" + u)"]},
+
+        {"kind":"then","text":"The two parent properties have 4 change listeners registered.","code":["longProperty.numberOfChangeListeners() == 4","unitProperty.numberOfChangeListeners() == 4"]},
+
+        {"kind":"when","text":"We create four more views which we do not reference strongly.","code":["Val.viewOfNullable(longProperty, unitProperty, (l, u) -> l + u.toMillis(1))","Val.viewOf(longProperty, unitProperty, (l, u) -> l + u.toMillis(1))","Val.viewOfNullable(String.class, longProperty, unitProperty, (l, u) -> l + \" \" + u)","Val.viewOf(String.class, longProperty, unitProperty, (l, u) -> l + \" \" + u)"]},
+
+        {"kind":"and","text":"We wait for the garbage collector to run.","code":["waitForGarbageCollection()","Thread.sleep(500)"]},
+
+        {"kind":"then","text":"The two parent properties still have 4 change listeners registered.","code":["longProperty.numberOfChangeListeners() == 4","unitProperty.numberOfChangeListeners() == 4"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }

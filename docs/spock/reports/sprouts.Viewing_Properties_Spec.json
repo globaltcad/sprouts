@@ -4,7 +4,7 @@
   "narrative":"Both the read only `Val` and the mutable `Var` are observable properties.\n    As a consequence, they expose convenient methods to observe their changes\n    in the form of \"views\", which are themselves observable properties\n    that are a live view of the original property which gets updated\n    automatically when the original property changes.\n\n    This is especially useful when you want to observe a property\n    of one type as a property of another type, or when you want to\n    observe a property with some transformation applied to it.\n\n    This specification shows how to create views from both nullable and non-nullable properties,",
   "subjects":["sprouts.Val","sprouts.Val"],
   "statistics":{
-    "runs":"9",
+    "runs":"10",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -218,6 +218,31 @@
         {"kind":"when","text":"We try to trigger a view update through a manual change event.","code":["source.fireChange(From.VIEW_MODEL)"]},
 
         {"kind":"then","text":"The view is updated despite the value of the source property not changing.","code":["view.get() == 5","changes == 3"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The change listener of property view parents are garbage collected when the view is no longer referenced strongly.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A property view registers a weak action listener on the original parent property\n            it is actively viewing.\n            These weak listeners are automatically removed when the view is garbage collected.\n            So when the property view is no longer referenced strongly, it should be\n            garbage collected and the weak listener should be removed\n            from the original property.\n\n            We can verify this by checking the reported number of change listeners.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We have an enum property based on the `TimeUnit` enum.","code":["var timeUnitProperty = Var.of(TimeUnit.SECONDS)"]},
+
+        {"kind":"expect","text":"Initially there are no change listeners registered:","code":["timeUnitProperty.numberOfChangeListeners() == 0"]},
+
+        {"kind":"when","text":"We create four unique views which we reference strongly.","code":["var ordinalView = timeUnitProperty.viewAsInt(TimeUnit::ordinal)","var nameView = timeUnitProperty.viewAsString(TimeUnit::name)","var nullableView = timeUnitProperty.viewAsNullable(Long, u -> u.ordinal() == 0 ? null : u.toMillis(1))","var nonNullView = timeUnitProperty.viewAs(Long, u -> u.toMillis(1))"]},
+
+        {"kind":"then","text":"The enum property has 4 change listeners registered.","code":["timeUnitProperty.numberOfChangeListeners() == 4"]},
+
+        {"kind":"when","text":"We create four more views which we do not reference strongly.","code":["timeUnitProperty.viewAsInt(TimeUnit::ordinal)","timeUnitProperty.viewAsString(TimeUnit::name)","timeUnitProperty.viewAsNullable(Long, u -> u.ordinal() == 0 ? null : u.toMillis(1))","timeUnitProperty.viewAs(Long, u -> u.toMillis(1))"]},
+
+        {"kind":"and","text":"We wait for the garbage collector to run.","code":["waitForGarbageCollection()","Thread.sleep(500)"]},
+
+        {"kind":"then","text":"The enum property still has 2 change listeners registered.","code":["timeUnitProperty.numberOfChangeListeners() == 4"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }
