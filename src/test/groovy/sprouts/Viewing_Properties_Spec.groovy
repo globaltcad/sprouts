@@ -5,6 +5,9 @@ import spock.lang.Specification
 import spock.lang.Subject
 import spock.lang.Title
 
+import java.lang.ref.WeakReference
+import java.util.concurrent.TimeUnit
+
 @Title('Viewing Properties')
 @Narrative('''
 
@@ -288,6 +291,58 @@ class Viewing_Properties_Spec extends Specification
             view.get() == 5
             changes == 3
 
+    }
+
+    def 'The change listener of property view parents are garbage collected when the view is no longer referenced strongly.'()
+    {
+        reportInfo """
+            A property view registers a weak action listener on the original parent property
+            it is actively viewing.
+            These weak listeners are automatically removed when the view is garbage collected.
+            So when the property view is no longer referenced strongly, it should be
+            garbage collected and the weak listener should be removed
+            from the original property.
+            
+            We can verify this by checking the reported number of change listeners.
+        """
+        given : 'We have an enum property based on the `TimeUnit` enum.'
+            var timeUnitProperty = Var.of(TimeUnit.SECONDS)
+        expect : 'Initially there are no change listeners registered:'
+            timeUnitProperty.numberOfChangeListeners() == 0
+
+        when : 'We create four unique views which we reference strongly.'
+            var ordinalView = timeUnitProperty.viewAsInt(TimeUnit::ordinal)
+            var nameView = timeUnitProperty.viewAsString(TimeUnit::name)
+            var nullableView = timeUnitProperty.viewAsNullable(Long, u -> u.ordinal() == 0 ? null : u.toMillis(1))
+            var nonNullView = timeUnitProperty.viewAs(Long, u -> u.toMillis(1))
+
+        then : 'The enum property has 4 change listeners registered.'
+            timeUnitProperty.numberOfChangeListeners() == 4
+
+        when : 'We create four more views which we do not reference strongly.'
+            timeUnitProperty.viewAsInt(TimeUnit::ordinal)
+            timeUnitProperty.viewAsString(TimeUnit::name)
+            timeUnitProperty.viewAsNullable(Long, u -> u.ordinal() == 0 ? null : u.toMillis(1))
+            timeUnitProperty.viewAs(Long, u -> u.toMillis(1))
+        and : 'We wait for the garbage collector to run.'
+            waitForGarbageCollection()
+            Thread.sleep(500)
+
+        then : 'The enum property still has 2 change listeners registered.'
+            timeUnitProperty.numberOfChangeListeners() == 4
+    }
+
+    /**
+     * This method guarantees that garbage collection is
+     * done unlike <code>{@link System#gc()}</code>
+     */
+    static void waitForGarbageCollection() {
+        Object obj = new Object();
+        WeakReference ref = new WeakReference<>(obj);
+        obj = null;
+        while(ref.get() != null) {
+            System.gc();
+        }
     }
 
 }

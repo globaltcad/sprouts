@@ -8,6 +8,7 @@ import sprouts.Observer;
 import sprouts.*;
 
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 
 /**
@@ -69,23 +70,32 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 
 		T initial = fullCombiner.apply(first, second);
 		Objects.requireNonNull(initial,"The result of the combiner function is null, but the property does not allow null values!");
-
-		Var<T> result = AbstractVariable.of( false, first.type(), initial ).withId(id);
-
-		first.onChange(From.ALL, v -> {
+		BiConsumer<Var<T>,Val<T>> firstListener = (innerResult,v) -> {
 			T newItem = fullCombiner.apply(v, second);
 			if (newItem == null)
-				log.error("Invalid combiner result! The combination of the first value '{}' (changed) and the second value '{}' was null and null is not allowed! The old value '{}' is retained!", first.orElseNull(), second.orElseNull(), result.orElseNull());
+				log.error(
+					"Invalid combiner result! The combination of the first value '{}' (changed) and the second " +
+					"value '{}' was null and null is not allowed! The old value '{}' is retained!",
+					first.orElseNull(), second.orElseNull(), innerResult.orElseNull()
+				);
 			else
-				result.set(From.ALL, newItem);
-		});
-		second.onChange(From.ALL, v -> {
+				innerResult.set(From.ALL, newItem);
+		};
+		BiConsumer<Var<T>,Val<U>> secondListener = (innerResult,v) -> {
 			T newItem = fullCombiner.apply(first, v);
 			if (newItem == null)
-				log.error("Invalid combiner result! The combination of the first value '{}' and the second value '{}' (changed) was null and null is not allowed! The old value '{}' is retained!", first.orElseNull(), second.orElseNull(), result.orElseNull());
+				log.error(
+					"Invalid combiner result! The combination of the first value '{}' and the second " +
+					"value '{}' (changed) was null and null is not allowed! The old value '{}' is retained!",
+					first.orElseNull(), second.orElseNull(), innerResult.orElseNull()
+				);
 			else
-				result.set(From.ALL, newItem);
-		});
+				innerResult.set(From.ALL, newItem);
+		};
+
+		Var<T> result = AbstractVariable.of( false, first.type(), initial ).withId(id);
+		first.onChange(From.ALL, Action.ofWeak( result, firstListener));
+		second.onChange(From.ALL, Action.ofWeak( result, secondListener));
 		return result;
 	}
 
@@ -110,8 +120,12 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 
 		Var<@Nullable T> result = AbstractVariable.ofNullable( false, first.type(), initial ).withId(id);
 
-		first.onChange(From.ALL, v -> result.set(From.ALL, fullCombiner.apply(v, second)));
-		second.onChange(From.ALL, v -> result.set(From.ALL, fullCombiner.apply(first, v)));
+		first.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
+			innerResult.set(From.ALL, fullCombiner.apply(v, second) );
+		}));
+		second.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
+			innerResult.set(From.ALL, fullCombiner.apply(first, v) );
+		}));
 		return result;
 	}
 
@@ -139,24 +153,39 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 
 		Var<R> result = AbstractVariable.of( false, type, initial ).withId(id);
 
-		first.onChange(From.ALL, v -> {
+		first.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
 			@Nullable R newItem = fullCombiner.apply(v, second);
 			if (newItem == null)
-				log.error("Invalid combiner result! The combination of the first value '{}' (changed) and the second value '{}' was null and null is not allowed! The old value '{}' is retained!", first.orElseNull(), second.orElseNull(), result.orElseNull());
+				log.error(
+					"Invalid combiner result! The combination of the first value '{}' (changed) " +
+					"and the second value '{}' was null and null is not allowed! " +
+					"The old value '{}' is retained!",
+					first.orElseNull(), second.orElseNull(), innerResult.orElseNull()
+				);
 			else
-				result.set(From.ALL, newItem);
-		});
-		second.onChange(From.ALL, v -> {
+				innerResult.set(From.ALL, newItem);
+		}));
+		second.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
 			@Nullable R newItem = fullCombiner.apply(first, v);
 			if (newItem == null)
-				log.error("Invalid combiner result! The combination of the first value '{}' and the second value '{}' (changed) was null and null is not allowed! The old value '{}' is retained!", first.orElseNull(), second.orElseNull(), result.orElseNull());
+				log.error(
+					"Invalid combiner result! The combination of the first value '{}' and the second " +
+					"value '{}' (changed) was null and null is not allowed! " +
+					"The old value '{}' is retained!",
+					first.orElseNull(), second.orElseNull(), innerResult.orElseNull()
+				);
 			else
-				result.set(From.ALL, newItem);
-		});
+				innerResult.set(From.ALL, newItem);
+		}));
 		return result;
 	}
 
-	private static <T extends @Nullable Object, U extends @Nullable Object, R> Val<@Nullable R> ofNullable(Class<R> type, Val<T> first, Val<U> second, BiFunction<T, U, @Nullable R> combiner) {
+	private static <T extends @Nullable Object, U extends @Nullable Object, R> Val<@Nullable R> ofNullable(
+	    Class<R>                      type,
+	    Val<T>                        first,
+	    Val<U>                        second,
+	    BiFunction<T, U, @Nullable R> combiner
+	) {
 		String id = "";
 		if ( !first.id().isEmpty() && !second.id().isEmpty() )
 			id = first.id() + "_and_" + second.id();
@@ -175,8 +204,12 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 
 		Var<@Nullable R> result =  AbstractVariable.ofNullable( false, type, fullCombiner.apply(first, second) ).withId(id);
 
-		first.onChange(From.ALL, v -> result.set(From.ALL, fullCombiner.apply(v, second)));
-		second.onChange(From.ALL, v -> result.set(From.ALL, fullCombiner.apply(first, v)));
+		first.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
+			innerResult.set(From.ALL, fullCombiner.apply(v, second));
+		}));
+		second.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
+			innerResult.set(From.ALL, fullCombiner.apply(first, v));
+		}));
 		return result;
 	}
 
@@ -253,7 +286,8 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 
 	@Override
 	public Observable subscribe( Observer observer ) {
-		return onChange(DEFAULT_CHANNEL, new SproutChangeListener<>(observer) );
+		_changeListeners.onChange( observer );
+		return this;
 	}
 
 	@Override
@@ -265,6 +299,10 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 	@Override
 	protected String _stringTypeName() {
 		return _isImmutable ? super._stringTypeName() : "Var";
+	}
+
+	public final long numberOfChangeListeners() {
+		return _changeListeners.numberOfChangeListeners();
 	}
 
 }

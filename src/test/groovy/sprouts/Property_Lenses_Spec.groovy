@@ -7,6 +7,7 @@ import spock.lang.Subject
 import spock.lang.Title
 import sprouts.impl.PropertyLens
 
+import java.lang.ref.WeakReference
 import java.time.LocalDate
 
 @Title("Property Lenses")
@@ -156,7 +157,7 @@ import java.time.LocalDate
 ''')
 @Subject([PropertyLens, Var])
 @CompileDynamic
-class Property_Lenses extends Specification
+class Property_Lenses_Spec extends Specification
 {
     enum Genre { FICTION, NON_FICTION, SCIENCE, FANTASY, BIOGRAPHY, HISTORY }
 
@@ -696,6 +697,55 @@ class Property_Lenses extends Specification
 
         then: "The lens retrieves the default value again"
             firstNameLens.get() == defaultFirstName
+    }
+
+    def 'The lenses of a property are garbage collected when no longer referenced strongly.'()
+    {
+        reportInfo """
+            A property lens registers a weak action listener on the original property.
+            These weak listeners are stored in a weak hash map where the property lens
+            itself is the weakly referenced key.
+            So when the property lens is no longer referenced strongly, it should be
+            garbage collected and the weak listener should be removed
+            from the original property.
+            
+            We can verify this by checking the reported number of change listeners.
+        """
+        given : 'We have an `Author` record and a property holding it.'
+            var author = new Author("John", "Doe", LocalDate.of(1829, 8, 12), ["Book1", "Book2"])
+            var authorProperty = Var.of(author)
+        expect : 'Initially there are no change listeners registered:'
+            authorProperty.numberOfChangeListeners() == 0
+
+        when : 'We create two lenses which we reference strongly.'
+            var firstName = authorProperty.zoomTo(Author::firstName, Author::withFirstName)
+            var lastName = authorProperty.zoomTo(Author::lastName,  Author::withLastName)
+
+        then : 'The author property has 2 change listeners registered.'
+            authorProperty.numberOfChangeListeners() == 2
+
+        when : 'We create two lenses which we do not reference strongly.'
+            authorProperty.zoomTo(Author::birthDate, Author::withBirthDate)
+            authorProperty.zoomTo(Author::books,     Author::withBooks)
+        and : 'We wait for the garbage collector to run.'
+            waitForGarbageCollection()
+            Thread.sleep(500)
+
+        then : 'The author property should still have 2 change listeners registered.'
+            authorProperty.numberOfChangeListeners() == 2
+    }
+
+    /**
+     * This method guarantees that garbage collection is
+     * done unlike <code>{@link System#gc()}</code>
+     */
+    static void waitForGarbageCollection() {
+        Object obj = new Object();
+        WeakReference ref = new WeakReference<Object>(obj);
+        obj = null;
+        while(ref.get() != null) {
+            System.gc();
+        }
     }
 
 }

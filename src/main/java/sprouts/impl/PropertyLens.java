@@ -83,13 +83,13 @@ public final class PropertyLens<A extends @Nullable Object, T extends @Nullable 
         _changeListeners = changeListeners == null ? new ChangeListeners<>() : new ChangeListeners<>(changeListeners);
 
         _lastValue = iniValue;
-        parent.onChange(From.ALL, p -> {
-            T newValue = _getFromParent();
-            if ( !Objects.equals(_lastValue, newValue) ) {
-                _lastValue = newValue;
-                fireChange(From.ALL);
+        parent.onChange(From.ALL, Action.ofWeak(this, (thisLens,v) -> {
+            T newValue = thisLens._getFromParent();
+            if ( !Objects.equals(thisLens._lastValue, newValue) ) {
+                thisLens._lastValue = newValue;
+                thisLens.fireChange(From.ALL);
             }
-        });
+        }));
 
         if ( !ID_PATTERN.matcher(_id).matches() )
             throw new IllegalArgumentException("The provided id '"+_id+"' is not valid!");
@@ -200,13 +200,18 @@ public final class PropertyLens<A extends @Nullable Object, T extends @Nullable 
 
     @Override
     public final sprouts.Observable subscribe(Observer observer ) {
-        return onChange(DEFAULT_CHANNEL, new SproutChangeListener<>(observer) );
+        _changeListeners.onChange( observer );
+        return this;
     }
 
     @Override
     public final Observable unsubscribe(Subscriber subscriber ) {
         _changeListeners.unsubscribe(subscriber);
         return this;
+    }
+
+    public final long numberOfChangeListeners() {
+        return _changeListeners.numberOfChangeListeners();
     }
 
     @Override
@@ -232,4 +237,5 @@ public final class PropertyLens<A extends @Nullable Object, T extends @Nullable 
         hash = 31 * hash + ( _id    == null ? 0 : _id.hashCode()     );
         return hash;
     }
+
 }
