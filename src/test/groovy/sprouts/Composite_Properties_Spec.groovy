@@ -4,6 +4,9 @@ import spock.lang.Narrative
 import spock.lang.Specification
 import spock.lang.Title
 
+import java.lang.ref.WeakReference
+import java.util.concurrent.TimeUnit
+
 @Title('Composite Property Views')
 @Narrative('''
 
@@ -254,4 +257,56 @@ class Composite_Properties_Spec extends Specification
         view.isEmpty()
     }
 
+
+    def 'The change listeners of the parents of composite properties are garbage collected when the composite is no longer referenced strongly.'()
+    {
+        reportInfo """
+            A composite property registers weak action listeners on its parent parent properties
+            it is actively viewing.
+            These weak listeners are automatically removed when the composite is garbage collected.
+            So when the property composite is no longer referenced strongly, it should be
+            garbage collected and the weak listeners should be removed
+            from the original properties as well.
+            
+            We can verify this by checking the reported number of change listeners.
+        """
+        given : 'We have two parent properties, a long based property nad an enum property based on the `TimeUnit` enum.'
+            var longProperty = Var.of(0L)
+            var unitProperty = Var.of(TimeUnit.SECONDS)
+        expect : 'Initially there are no change listeners registered on the properties.'
+            unitProperty.numberOfChangeListeners() == 0
+            longProperty.numberOfChangeListeners() == 0
+
+        when : 'We create two (nullable and not-nullable) composite properties that are referenced strongly.'
+            var composite1 = Val.viewOfNullable(longProperty, unitProperty, (l, u) -> l + u.toMillis(1))
+            var composite2 = Val.viewOf(longProperty, unitProperty, (l, u) -> l + u.toMillis(1))
+        then : 'The two parent properties have 2 change listeners registered.'
+            longProperty.numberOfChangeListeners() == 2
+            unitProperty.numberOfChangeListeners() == 2
+
+        when : 'We create two more views which we do not reference strongly.'
+            //Val.viewOfNullable(longProperty, unitProperty, (l, u) -> l + u.toMillis(1))
+            Val.viewOf(longProperty, unitProperty, (l, u) -> l + u.toMillis(1))
+        and : 'We wait for the garbage collector to run.'
+            waitForGarbageCollection()
+            Thread.sleep(500)
+
+        then : 'The two parent properties still have 2 change listeners registered.'
+            longProperty.numberOfChangeListeners() == 2
+            unitProperty.numberOfChangeListeners() == 2
+    }
+
+    /**
+     * This method guarantees that garbage collection is
+     * done unlike <code>{@link System#gc()}</code>
+     */
+    static void waitForGarbageCollection() {
+        Object obj = new Object();
+        WeakReference ref = new WeakReference<>(obj);
+        obj = null;
+        while(ref.get() != null) {
+            System.gc();
+        }
+    }
 }
+
