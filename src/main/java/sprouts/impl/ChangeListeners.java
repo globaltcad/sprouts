@@ -1,13 +1,12 @@
 package sprouts.impl;
 
 import org.slf4j.Logger;
-import sprouts.*;
 import sprouts.Observer;
+import sprouts.*;
 
-import java.lang.ref.WeakReference;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import static sprouts.Val.DEFAULT_CHANNEL;
 
@@ -71,60 +70,65 @@ final class ChangeListeners<T>
     public long numberOfChangeListeners() {
         return _actions.values()
                             .stream()
-                            .map(ChannelListeners:: _getActions)
-                            .mapToLong(List::size)
+                            .mapToLong(ChannelListeners::numberOfChangeListeners)
                             .sum();
     }
 
     private static final class ChannelListeners<T> {
 
-        private final WeakHashMap<Object,Action<Val<T>>> _weaklyOwned = new WeakHashMap<>();
-        private final List<WeakReference<Action<Val<T>>>> _inOrder = new ArrayList<>();
+        private final List<Action<Val<T>>> _channelActions = new ArrayList<>();
+
 
         public ChannelListeners() {}
 
         public ChannelListeners(ChannelListeners<T> other ) {
-            _weaklyOwned.putAll(other._weaklyOwned);
-            _inOrder.addAll(other._inOrder);
+            _channelActions.addAll(other._channelActions);
         }
 
         public void add( Action<Val<T>> action ) {
-            if ( action instanceof WeakAction ) {
-                WeakAction<?,?> wa = (WeakAction<?,?>) action;
-                Object owner = wa.owner();
-                if ( owner != null )
-                    _weaklyOwned.put(owner,action);
-            }
-            else
-                _weaklyOwned.put(action,action); // Effectively a strong reference
-
-            _inOrder.add(new WeakReference<>(action));
-        }
-
-        public void removeIf( Predicate<Action<Val<T>>> predicate ) {
-            _weaklyOwned.entrySet().removeIf(e -> predicate.test(e.getValue()) );
-            _inOrder.removeIf( a -> {
-                Action<Val<T>> action = a.get();
-                return action == null || predicate.test(action);
+            _getActions( actions -> {
+                if ( action instanceof WeakAction ) {
+                    WeakAction<?,?> wa = (WeakAction<?,?>) action;
+                    Object owner = wa.owner();
+                    if ( owner != null ) {
+                        actions.add(action);
+                        ChangeListenerCleaner.getInstance()
+                                .register(owner, () -> {
+                                    _getActions( innerActions -> {
+                                        innerActions.remove(wa);
+                                        wa.clear();
+                                    });
+                                });
+                    }
+                }
+                else
+                    actions.add(action);
             });
         }
 
-        private List<Action<Val<T>>> _getActions() {
-            _inOrder.removeIf( a -> a.get() == null );
-            return _inOrder.stream()
-                            .map( WeakReference::get )
-                            .filter( Objects::nonNull )
-                            .collect(Collectors.toList());
+        public void removeIf( Predicate<Action<Val<T>>> predicate ) {
+            _getActions( actions -> actions.removeIf(predicate) );
+        }
+
+        private synchronized long _getActions(Consumer<List<Action<Val<T>>>> receiver) {
+            receiver.accept(_channelActions);
+            return _channelActions.size();
+        }
+
+        private long numberOfChangeListeners() {
+            return _getActions( actions -> {} );
         }
 
         public void trigger( Val<T> owner ) {
             Val<T> clone = Val.ofNullable(owner); // We clone this property to avoid concurrent modification
-            for ( Action<Val<T>> action : _getActions() ) // We copy the list to avoid concurrent modification
-                try {
-                    action.accept(clone);
-                } catch ( Exception e ) {
-                    log.error("An error occurred while executing action '"+action+"' for property '"+this+"'", e);
-                }
+            _getActions( actions -> {
+                for ( Action<Val<T>> action : actions ) // We copy the list to avoid concurrent modification
+                    try {
+                        action.accept(clone);
+                    } catch ( Exception e ) {
+                        log.error("An error occurred while executing action '"+action+"' for property '"+this+"'", e);
+                    }
+            });
         }
 
     }

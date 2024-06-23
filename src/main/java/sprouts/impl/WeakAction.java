@@ -34,4 +34,8 @@ final class WeakAction<@Nullable O, D> implements Action<D>
     public @Nullable O owner() {
         return _owner.get();
     }
+
+    public void clear() {
+        _action = null;
+    }
 }
