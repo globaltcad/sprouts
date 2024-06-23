@@ -156,7 +156,7 @@ import java.time.LocalDate
 ''')
 @Subject([PropertyLens, Var])
 @CompileDynamic
-class Property_Lenses extends Specification
+class Property_Lenses_Spec extends Specification
 {
     enum Genre { FICTION, NON_FICTION, SCIENCE, FANTASY, BIOGRAPHY, HISTORY }
 
