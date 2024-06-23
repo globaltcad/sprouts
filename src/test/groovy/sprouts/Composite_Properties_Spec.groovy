@@ -277,23 +277,27 @@ class Composite_Properties_Spec extends Specification
             unitProperty.numberOfChangeListeners() == 0
             longProperty.numberOfChangeListeners() == 0
 
-        when : 'We create two (nullable and not-nullable) composite properties that are referenced strongly.'
+        when : 'We create four (nullable and not-nullable) composite properties that are referenced strongly.'
             var composite1 = Val.viewOfNullable(longProperty, unitProperty, (l, u) -> l + u.toMillis(1))
             var composite2 = Val.viewOf(longProperty, unitProperty, (l, u) -> l + u.toMillis(1))
-        then : 'The two parent properties have 2 change listeners registered.'
-            longProperty.numberOfChangeListeners() == 2
-            unitProperty.numberOfChangeListeners() == 2
+            var composite3 = Val.viewOfNullable(String.class, longProperty, unitProperty, (l, u) -> l + " " + u)
+            var composite4 = Val.viewOf(String.class, longProperty, unitProperty, (l, u) -> l + " " + u)
+        then : 'The two parent properties have 4 change listeners registered.'
+            longProperty.numberOfChangeListeners() == 4
+            unitProperty.numberOfChangeListeners() == 4
 
-        when : 'We create two more views which we do not reference strongly.'
-            //Val.viewOfNullable(longProperty, unitProperty, (l, u) -> l + u.toMillis(1))
+        when : 'We create four more views which we do not reference strongly.'
+            Val.viewOfNullable(longProperty, unitProperty, (l, u) -> l + u.toMillis(1))
             Val.viewOf(longProperty, unitProperty, (l, u) -> l + u.toMillis(1))
+            Val.viewOfNullable(String.class, longProperty, unitProperty, (l, u) -> l + " " + u)
+            Val.viewOf(String.class, longProperty, unitProperty, (l, u) -> l + " " + u)
         and : 'We wait for the garbage collector to run.'
             waitForGarbageCollection()
             Thread.sleep(500)
 
-        then : 'The two parent properties still have 2 change listeners registered.'
-            longProperty.numberOfChangeListeners() == 2
-            unitProperty.numberOfChangeListeners() == 2
+        then : 'The two parent properties still have 4 change listeners registered.'
+            longProperty.numberOfChangeListeners() == 4
+            unitProperty.numberOfChangeListeners() == 4
     }
 
     /**

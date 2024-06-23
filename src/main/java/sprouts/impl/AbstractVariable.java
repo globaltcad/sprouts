@@ -70,19 +70,27 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 
 		T initial = fullCombiner.apply(first, second);
 		Objects.requireNonNull(initial,"The result of the combiner function is null, but the property does not allow null values!");
-		BiConsumer<Var<T>,Val<T>> firstListener = (r,v) -> {
+		BiConsumer<Var<T>,Val<T>> firstListener = (innerResult,v) -> {
 			T newItem = fullCombiner.apply(v, second);
 			if (newItem == null)
-				log.error("Invalid combiner result! The combination of the first value '{}' (changed) and the second value '{}' was null and null is not allowed! The old value '{}' is retained!", first.orElseNull(), second.orElseNull(), r.orElseNull());
+				log.error(
+					"Invalid combiner result! The combination of the first value '{}' (changed) and the second " +
+					"value '{}' was null and null is not allowed! The old value '{}' is retained!",
+					first.orElseNull(), second.orElseNull(), innerResult.orElseNull()
+				);
 			else
-				r.set(From.ALL, newItem);
+				innerResult.set(From.ALL, newItem);
 		};
-		BiConsumer<Var<T>,Val<U>> secondListener = (r,v) -> {
+		BiConsumer<Var<T>,Val<U>> secondListener = (innerResult,v) -> {
 			T newItem = fullCombiner.apply(first, v);
 			if (newItem == null)
-				log.error("Invalid combiner result! The combination of the first value '{}' and the second value '{}' (changed) was null and null is not allowed! The old value '{}' is retained!", first.orElseNull(), second.orElseNull(), r.orElseNull());
+				log.error(
+					"Invalid combiner result! The combination of the first value '{}' and the second " +
+					"value '{}' (changed) was null and null is not allowed! The old value '{}' is retained!",
+					first.orElseNull(), second.orElseNull(), innerResult.orElseNull()
+				);
 			else
-				r.set(From.ALL, newItem);
+				innerResult.set(From.ALL, newItem);
 		};
 
 		Var<T> result = AbstractVariable.of( false, first.type(), initial ).withId(id);
@@ -112,8 +120,12 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 
 		Var<@Nullable T> result = AbstractVariable.ofNullable( false, first.type(), initial ).withId(id);
 
-		first.onChange(From.ALL, Action.ofWeak(result, (r,v) -> r.set(From.ALL, fullCombiner.apply(v, second) )));
-		second.onChange(From.ALL, Action.ofWeak(result, (r,v) -> r.set(From.ALL, fullCombiner.apply(first, v) )));
+		first.onChange(From.ALL, Action.ofWeak(result, (r,v) -> {
+			r.set(From.ALL, fullCombiner.apply(v, second) );
+		}));
+		second.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
+			innerResult.set(From.ALL, fullCombiner.apply(first, v) );
+		}));
 		return result;
 	}
 
@@ -141,19 +153,29 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 
 		Var<R> result = AbstractVariable.of( false, type, initial ).withId(id);
 
-		first.onChange(From.ALL, Action.ofWeak(result, (r,v) -> {
+		first.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
 			@Nullable R newItem = fullCombiner.apply(v, second);
 			if (newItem == null)
-				log.error("Invalid combiner result! The combination of the first value '{}' (changed) and the second value '{}' was null and null is not allowed! The old value '{}' is retained!", first.orElseNull(), second.orElseNull(), result.orElseNull());
+				log.error(
+					"Invalid combiner result! The combination of the first value '{}' (changed) " +
+					"and the second value '{}' was null and null is not allowed! " +
+					"The old value '{}' is retained!",
+					first.orElseNull(), second.orElseNull(), innerResult.orElseNull()
+				);
 			else
-				r.set(From.ALL, newItem);
+				innerResult.set(From.ALL, newItem);
 		}));
-		second.onChange(From.ALL, Action.ofWeak(result, (r,v) -> {
+		second.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
 			@Nullable R newItem = fullCombiner.apply(first, v);
 			if (newItem == null)
-				log.error("Invalid combiner result! The combination of the first value '{}' and the second value '{}' (changed) was null and null is not allowed! The old value '{}' is retained!", first.orElseNull(), second.orElseNull(), result.orElseNull());
+				log.error(
+					"Invalid combiner result! The combination of the first value '{}' and the second " +
+					"value '{}' (changed) was null and null is not allowed! " +
+					"The old value '{}' is retained!",
+					first.orElseNull(), second.orElseNull(), innerResult.orElseNull()
+				);
 			else
-				r.set(From.ALL, newItem);
+				innerResult.set(From.ALL, newItem);
 		}));
 		return result;
 	}
