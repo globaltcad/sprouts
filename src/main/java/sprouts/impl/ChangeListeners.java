@@ -68,6 +68,14 @@ final class ChangeListeners<T>
             });
     }
 
+    public long numberOfChangeListeners() {
+        return _actions.values()
+                            .stream()
+                            .map(ChannelListeners:: _getActions)
+                            .mapToLong(List::size)
+                            .sum();
+    }
+
     private static final class ChannelListeners<T> {
 
         private final WeakHashMap<Object,Action<Val<T>>> _weaklyOwned = new WeakHashMap<>();

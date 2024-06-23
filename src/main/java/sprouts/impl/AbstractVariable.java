@@ -273,4 +273,8 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 		return _isImmutable ? super._stringTypeName() : "Var";
 	}
 
+	public final long numberOfChangeListeners() {
+		return _changeListeners.numberOfChangeListeners();
+	}
+
 }

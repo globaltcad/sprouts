@@ -85,8 +85,8 @@ public final class PropertyLens<A extends @Nullable Object, T extends @Nullable 
         _lastValue = iniValue;
         parent.onChange(From.ALL, Action.ofWeak(this, (thisLens,v) -> {
             T newValue = thisLens._getFromParent();
-            if ( !Objects.equals(_lastValue, newValue) ) {
-                _lastValue = newValue;
+            if ( !Objects.equals(thisLens._lastValue, newValue) ) {
+                thisLens._lastValue = newValue;
                 thisLens.fireChange(From.ALL);
             }
         }));
@@ -210,6 +210,10 @@ public final class PropertyLens<A extends @Nullable Object, T extends @Nullable 
         return this;
     }
 
+    public final long numberOfChangeListeners() {
+        return _changeListeners.numberOfChangeListeners();
+    }
+
     @Override
     public final boolean equals( Object obj ) {
         if ( obj == null ) return false;
@@ -233,4 +237,5 @@ public final class PropertyLens<A extends @Nullable Object, T extends @Nullable 
         hash = 31 * hash + ( _id    == null ? 0 : _id.hashCode()     );
         return hash;
     }
+
 }
