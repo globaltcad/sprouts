@@ -120,8 +120,8 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 
 		Var<@Nullable T> result = AbstractVariable.ofNullable( false, first.type(), initial ).withId(id);
 
-		first.onChange(From.ALL, Action.ofWeak(result, (r,v) -> {
-			r.set(From.ALL, fullCombiner.apply(v, second) );
+		first.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
+			innerResult.set(From.ALL, fullCombiner.apply(v, second) );
 		}));
 		second.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
 			innerResult.set(From.ALL, fullCombiner.apply(first, v) );
@@ -204,8 +204,12 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 
 		Var<@Nullable R> result =  AbstractVariable.ofNullable( false, type, fullCombiner.apply(first, second) ).withId(id);
 
-		first.onChange(From.ALL, Action.ofWeak(result, (r,v) -> r.set(From.ALL, fullCombiner.apply(v, second))));
-		second.onChange(From.ALL, Action.ofWeak(result, (r,v) ->r.set(From.ALL, fullCombiner.apply(first, v))));
+		first.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
+			innerResult.set(From.ALL, fullCombiner.apply(v, second));
+		}));
+		second.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
+			innerResult.set(From.ALL, fullCombiner.apply(first, v));
+		}));
 		return result;
 	}
 
