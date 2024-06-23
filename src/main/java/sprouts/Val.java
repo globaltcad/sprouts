@@ -506,9 +506,11 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	 * @return A property that is a live view of this property based on the provided mapping function.
 	 */
 	default <U> Val<U> viewAs( Class<U> type, Function<T, U> mapper ) {
-		final Var<U> var = Var.of(type, mapper.apply(orElseNull()));
-		onChange(Util.VIEW_CHANNEL, v -> var.set(mapper.apply(v.orElseNull())));
-		return var;
+		final Var<U> viewProperty = Var.of(type, mapper.apply(orElseNull()));
+		onChange(Util.VIEW_CHANNEL, Action.ofWeak(viewProperty, (innerViewProperty, v) -> {
+			innerViewProperty.set(mapper.apply(v.orElseNull()));
+		}));
+		return viewProperty;
 	}
 
 	/**
@@ -559,13 +561,13 @@ public interface Val<T extends @Nullable Object> extends Observable {
 		Function<T, U> nonNullMapper = Util.nonNullMapper(nullObject, errorObject, mapper);
 
 		final U initial = nonNullMapper.apply(orElseNull());
-		final Var<U> var = Var.of( initial );
+		final Var<U> viewProperty = Var.of( initial );
 
-		onChange(Util.VIEW_CHANNEL, v -> {
+		onChange(Util.VIEW_CHANNEL, Action.ofWeak( viewProperty, (innerViewProperty, v) -> {
 			final U value = nonNullMapper.apply(orElseNull());
-			var.set( value );
-		});
-		return var;
+			innerViewProperty.set( value );
+		}));
+		return viewProperty;
 	}
 
 
@@ -581,9 +583,11 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	 * @return A nullable property that is a live view of this property based on the provided mapping function.
 	 */
 	default <U> Val<@Nullable U> viewAsNullable( Class<U> type, Function<T, @Nullable U> mapper ) {
-		final Var<@Nullable U> var = Var.ofNullable(type, mapper.apply(orElseNull()));
-		onChange(Util.VIEW_CHANNEL, v -> var.set(mapper.apply(v.orElseNull())));
-		return var;
+		final Var<@Nullable U> viewProperty = Var.ofNullable(type, mapper.apply(orElseNull()));
+		onChange(Util.VIEW_CHANNEL, Action.ofWeak( viewProperty, (innerViewProperty, v) -> {
+			innerViewProperty.set(mapper.apply(v.orElseNull()));
+		}));
+		return viewProperty;
 	}
 
 	/**
