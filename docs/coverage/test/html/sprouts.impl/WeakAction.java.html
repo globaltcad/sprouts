@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>WeakAction.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sprouts</a> &gt; <a href="index.source.html" class="el_package">sprouts.impl</a> &gt; <span class="el_source">WeakAction.java</span></div><h1>WeakAction.java</h1><pre class="source lang-java linenums">package sprouts.impl;
+
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+import sprouts.Action;
+import sprouts.Val;
+
+import java.lang.ref.WeakReference;
+import java.util.function.BiConsumer;
+
+final class WeakAction&lt;@Nullable O, D&gt; implements Action&lt;D&gt;
+{
+    private final WeakReference&lt;O&gt; _owner;
+    private @Nullable BiConsumer&lt;O, D&gt; _action;
+
+<span class="fc" id="L16">    WeakAction( @NonNull O owner, @NonNull BiConsumer&lt;O, D&gt; action ) {</span>
+<span class="fc" id="L17">        _owner = new WeakReference&lt;&gt;(owner);</span>
+<span class="fc" id="L18">        _action = action;</span>
+<span class="fc" id="L19">    }</span>
+
+    @Override
+    public void accept( D delegate ) {
+<span class="pc bpc" id="L23" title="1 of 2 branches missed.">        if ( _action == null )</span>
+<span class="nc" id="L24">            return;</span>
+
+<span class="fc" id="L26">        O owner = _owner.get();</span>
+
+<span class="pc bpc" id="L28" title="1 of 2 branches missed.">        if ( owner != null )</span>
+<span class="fc" id="L29">            _action.accept(owner, delegate);</span>
+        else
+<span class="nc" id="L31">            _action = null;</span>
+<span class="fc" id="L32">    }</span>
+
+    public @Nullable O owner() {
+<span class="fc" id="L35">        return _owner.get();</span>
+    }
+
+    public void clear() {
+<span class="fc" id="L39">        _action = null;</span>
+<span class="fc" id="L40">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

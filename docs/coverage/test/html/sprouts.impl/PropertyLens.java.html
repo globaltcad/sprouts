@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PropertyLens.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sprouts</a> &gt; <a href="index.source.html" class="el_package">sprouts.impl</a> &gt; <span class="el_source">PropertyLens.java</span></div><h1>PropertyLens.java</h1><pre class="source lang-java linenums">package sprouts.impl;
+
+import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import sprouts.Observable;
+import sprouts.Observer;
+import sprouts.*;
+
+import java.util.*;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+
+/**
+ * The Sprouts Property Lens is based on the Lens design pattern, which is a functional programming
+ * technique used to simplify the process of accessing and updating parts of
+ * a nested (immutable) data structures into a new instance of the data structure.
+ * It is essentially a pair of functions, one to get a value from a specific
+ * part of a data structure (like a record),
+ * and another to set or update that value while producing a new
+ * instance of the data structure. This pattern is particularly useful with Java records,
+ * which are immutable by design, as it allows for clean and concise manipulation
+ * of deeply nested fields without breaking immutability.
+ * &lt;p&gt;
+ * Now what does this have to do with Sprouts properties?
+ * After all, the MVVM properties of this library are mutable
+ * wrapper types with regular getter and setter methods.
+ * Although properties are mutable, their items are expected to
+ * be immutable data carriers, such as ints, doubles, strings or records.
+ * In case of records (or other custom value oriented data types),
+ * there is really no limit to how deeply nested the data structure can be.
+ * You may even want to model your entire application state as a single record
+ * composed of other records, lists, maps and primitives.
+ * &lt;p&gt;
+ * &lt;b&gt;This is where the Property Lens comes in:&lt;/b&gt;&lt;br&gt;
+ * You can create a lens property from any regular property
+ * holding an immutable data structure, and then use the lens property
+ * like a regular property. &lt;br&gt;
+ * Under the hood the lens property will use the lens pattern to access
+ * and update the nested data structure of the original property.
+ *
+ *  @param &lt;T&gt; The type of the value, which is expected to be an immutable data carrier,
+ *             such as a record, value object, or a primitive.
+ *
+ */
+public final class PropertyLens&lt;A extends @Nullable Object, T extends @Nullable Object&gt; implements Var&lt;T&gt;
+{
+<span class="fc" id="L47">    private static final Logger log = org.slf4j.LoggerFactory.getLogger(PropertyLens.class);</span>
+
+
+    private final ChangeListeners&lt;T&gt;   _changeListeners;
+    private final String               _id;
+    private final boolean              _nullable;
+    private final Class&lt;T&gt;             _type;
+    private final Var&lt;A&gt;               _parent;
+    Function&lt;A,@Nullable T&gt;            _getter;
+    BiFunction&lt;A,@Nullable T,A&gt;        _setter;
+    private final boolean              _isImmutable;
+
+    private @Nullable T _lastValue;
+
+
+    public PropertyLens(
+            boolean                         immutable,
+            Class&lt;T&gt;                        type,
+            String                          id,
+            boolean                         allowsNull,
+            @Nullable T                     iniValue, // may be null
+            Var&lt;A&gt;                          parent,
+            Function&lt;A,@Nullable T&gt;         getter,
+            BiFunction&lt;A,@Nullable T,A&gt;     wither,
+            @Nullable ChangeListeners&lt;T&gt;    changeListeners
+<span class="fc" id="L72">    ) {</span>
+<span class="fc" id="L73">        Objects.requireNonNull(id);</span>
+<span class="fc" id="L74">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L75">        Objects.requireNonNull(parent);</span>
+<span class="fc" id="L76">        _type            = type;</span>
+<span class="fc" id="L77">        _id              = id;</span>
+<span class="fc" id="L78">        _nullable        = allowsNull;</span>
+<span class="fc" id="L79">        _parent          = parent;</span>
+<span class="fc" id="L80">        _getter          = getter;</span>
+<span class="fc" id="L81">        _setter          = wither;</span>
+<span class="fc" id="L82">        _isImmutable     = immutable;</span>
+<span class="pc bpc" id="L83" title="1 of 2 branches missed.">        _changeListeners = changeListeners == null ? new ChangeListeners&lt;&gt;() : new ChangeListeners&lt;&gt;(changeListeners);</span>
+
+<span class="fc" id="L85">        _lastValue = iniValue;</span>
+<span class="fc" id="L86">        parent.onChange(From.ALL, Action.ofWeak(this, (thisLens,v) -&gt; {</span>
+<span class="fc" id="L87">            T newValue = thisLens._getFromParent();</span>
+<span class="fc bfc" id="L88" title="All 2 branches covered.">            if ( !Objects.equals(thisLens._lastValue, newValue) ) {</span>
+<span class="fc" id="L89">                thisLens._lastValue = newValue;</span>
+<span class="fc" id="L90">                thisLens.fireChange(From.ALL);</span>
+            }
+<span class="fc" id="L92">        }));</span>
+
+<span class="pc bpc" id="L94" title="1 of 2 branches missed.">        if ( !ID_PATTERN.matcher(_id).matches() )</span>
+<span class="nc" id="L95">            throw new IllegalArgumentException(&quot;The provided id '&quot;+_id+&quot;' is not valid!&quot;);</span>
+<span class="pc bpc" id="L96" title="1 of 4 branches missed.">        if ( !allowsNull &amp;&amp; iniValue == null )</span>
+<span class="nc" id="L97">            throw new IllegalArgumentException(&quot;The provided initial value is null, but the property does not allow null values!&quot;);</span>
+<span class="fc" id="L98">    }</span>
+
+    private @Nullable T _getFromParent() {
+<span class="fc" id="L101">        return _getter.apply(_parent.orElseNull());</span>
+    }
+
+    private void _setInParent(@Nullable T value) {
+<span class="fc" id="L105">        _parent.set(_setter.apply(_parent.orElseNull(), value));</span>
+<span class="fc" id="L106">    }</span>
+
+    private @Nullable T _value() {
+<span class="fc" id="L109">        @Nullable T value = _getFromParent();</span>
+<span class="fc bfc" id="L110" title="All 2 branches covered.">        if ( value != null ) {</span>
+            // We check if the type is correct
+<span class="pc bpc" id="L112" title="1 of 2 branches missed.">            if ( !_type.isAssignableFrom(value.getClass()) )</span>
+<span class="nc" id="L113">                throw new IllegalArgumentException(</span>
+                        &quot;The provided type of the initial value is not compatible with the actual type of the variable&quot;
+                );
+        }
+<span class="fc" id="L117">        return value;</span>
+    }
+
+    /** {@inheritDoc} */
+<span class="fc" id="L121">    @Override public final Class&lt;T&gt; type() { return _type; }</span>
+
+    /** {@inheritDoc} */
+<span class="fc" id="L124">    @Override public final String id() { return _id; }</span>
+
+    /** {@inheritDoc} */
+    @Override
+<span class="fc" id="L128">    public final @Nullable T orElseNull() { return _value(); }</span>
+
+    /** {@inheritDoc} */
+<span class="nc" id="L131">    @Override public final boolean allowsNull() { return _nullable; }</span>
+
+    @Override
+    public final String toString() {
+<span class="nc" id="L135">        String value = this.mapTo(String.class, Object::toString).orElse(&quot;null&quot;);</span>
+<span class="nc bnc" id="L136" title="All 2 branches missed.">        String id = this.id() == null ? &quot;?&quot; : this.id();</span>
+<span class="nc bnc" id="L137" title="All 2 branches missed.">        if ( id.equals(NO_ID) ) id = &quot;?&quot;;</span>
+<span class="nc bnc" id="L138" title="All 2 branches missed.">        String type = ( type() == null ? &quot;?&quot; : type().getSimpleName() );</span>
+<span class="nc bnc" id="L139" title="All 2 branches missed.">        if ( type.equals(&quot;Object&quot;) ) type = &quot;?&quot;;</span>
+<span class="nc bnc" id="L140" title="All 4 branches missed.">        if ( type.equals(&quot;String&quot;) &amp;&amp; this.isPresent() ) value = &quot;\&quot;&quot; + value + &quot;\&quot;&quot;;</span>
+<span class="nc bnc" id="L141" title="All 2 branches missed.">        if (_nullable) type = type + &quot;?&quot;;</span>
+<span class="nc" id="L142">        String name = _stringTypeName();</span>
+<span class="nc bnc" id="L143" title="All 2 branches missed.">        String content = ( id.equals(&quot;?&quot;) ? value : id + &quot;=&quot; + value );</span>
+<span class="nc" id="L144">        return name + &quot;&lt;&quot; + type + &quot;&gt;&quot; + &quot;[&quot; + content + &quot;]&quot;;</span>
+    }
+
+    protected String _stringTypeName() {
+<span class="nc" id="L148">        return &quot;Val&quot;;</span>
+    }
+
+    /** {@inheritDoc} */
+    @Override public final Var&lt;T&gt; withId( String id ) {
+<span class="nc" id="L153">        return new PropertyLens&lt;&gt;(_isImmutable, _type, id, _nullable, _value(), _parent, _getter, _setter, _changeListeners);</span>
+    }
+    public Var&lt;T&gt; onChange( Channel channel, Action&lt;Val&lt;T&gt;&gt; action ) {
+<span class="fc" id="L156">        _changeListeners.onChange(channel, action);</span>
+<span class="fc" id="L157">        return this;</span>
+    }
+
+    /** {@inheritDoc} */
+    @Override public final Var&lt;T&gt; fireChange( Channel channel ) {
+<span class="fc" id="L162">        _changeListeners.fireChange(this, channel);</span>
+<span class="fc" id="L163">        return this;</span>
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public final Var&lt;T&gt; set( Channel channel, T newItem ) {
+<span class="fc" id="L169">        Objects.requireNonNull(channel);</span>
+<span class="pc bpc" id="L170" title="1 of 2 branches missed.">        if ( _isImmutable )</span>
+<span class="nc" id="L171">            throw new UnsupportedOperationException(&quot;This variable is immutable!&quot;);</span>
+<span class="fc bfc" id="L172" title="All 2 branches covered.">        if ( _setInternal(newItem) )</span>
+<span class="fc" id="L173">            this.fireChange(channel);</span>
+<span class="fc" id="L174">        return this;</span>
+    }
+
+    private boolean _setInternal( T newValue ) {
+<span class="fc bfc" id="L178" title="All 4 branches covered.">        if ( !_nullable &amp;&amp; newValue == null )</span>
+<span class="fc" id="L179">            throw new NullPointerException(</span>
+                    &quot;This property is configured to not allow null values! &quot; +
+                            &quot;If you want your property to allow null values, use the 'ofNullable(Class, T)' factory method.&quot;
+            );
+
+<span class="fc" id="L184">        T oldValue = _value();</span>
+
+<span class="fc bfc" id="L186" title="All 2 branches covered.">        if ( !Objects.equals( oldValue, newValue ) ) {</span>
+            // First we check if the value is compatible with the type
+<span class="pc bpc" id="L188" title="1 of 4 branches missed.">            if ( newValue != null &amp;&amp; !_type.isAssignableFrom(newValue.getClass()) )</span>
+<span class="nc" id="L189">                throw new IllegalArgumentException(</span>
+<span class="nc" id="L190">                        &quot;The provided type '&quot;+newValue.getClass()+&quot;' of the new value is not compatible &quot; +</span>
+                                &quot;with the type '&quot;+_type+&quot;' of this property&quot;
+                );
+
+<span class="fc" id="L194">            _lastValue = newValue;</span>
+<span class="fc" id="L195">            _setInParent(newValue);</span>
+<span class="fc" id="L196">            return true;</span>
+        }
+<span class="fc" id="L198">        return false;</span>
+    }
+
+    @Override
+    public final sprouts.Observable subscribe(Observer observer ) {
+<span class="nc" id="L203">        _changeListeners.onChange( observer );</span>
+<span class="nc" id="L204">        return this;</span>
+    }
+
+    @Override
+    public final Observable unsubscribe(Subscriber subscriber ) {
+<span class="nc" id="L209">        _changeListeners.unsubscribe(subscriber);</span>
+<span class="nc" id="L210">        return this;</span>
+    }
+
+    public final long numberOfChangeListeners() {
+<span class="nc" id="L214">        return _changeListeners.numberOfChangeListeners();</span>
+    }
+
+    @Override
+    public final boolean equals( Object obj ) {
+<span class="nc bnc" id="L219" title="All 2 branches missed.">        if ( obj == null ) return false;</span>
+<span class="nc bnc" id="L220" title="All 2 branches missed.">        if ( obj == this ) return true;</span>
+<span class="nc bnc" id="L221" title="All 2 branches missed.">        if ( obj instanceof Val ) {</span>
+<span class="nc" id="L222">            Val&lt;?&gt; other = (Val&lt;?&gt;) obj;</span>
+<span class="nc bnc" id="L223" title="All 2 branches missed.">            if ( other.type() != _type) return false;</span>
+<span class="nc" id="L224">            T value = _value();</span>
+<span class="nc bnc" id="L225" title="All 4 branches missed.">            if ( other.orElseNull() == null ) return value == null;</span>
+<span class="nc" id="L226">            return Val.equals( other.orElseThrow(), value); // Arrays are compared with Arrays.equals</span>
+        }
+<span class="nc" id="L228">        return false;</span>
+    }
+
+    @Override
+    public final int hashCode() {
+<span class="nc" id="L233">        T value = _value();</span>
+<span class="nc" id="L234">        int hash = 7;</span>
+<span class="nc bnc" id="L235" title="All 2 branches missed.">        hash = 31 * hash + ( value == null ? 0 : Val.hashCode(value) );</span>
+<span class="nc bnc" id="L236" title="All 2 branches missed.">        hash = 31 * hash + ( _type  == null ? 0 : _type.hashCode()   );</span>
+<span class="nc bnc" id="L237" title="All 2 branches missed.">        hash = 31 * hash + ( _id    == null ? 0 : _id.hashCode()     );</span>
+<span class="nc" id="L238">        return hash;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>
