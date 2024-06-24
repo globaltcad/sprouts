@@ -84,23 +84,23 @@ class Properties_List_Spec extends Specification
         when: 'We set the properties between index `3` and `7` to the value `x`.'
             vars.setRange(3, 7, 'x')
         then: 'The `Vars` instance contains the expected properties.'
-            vars.toList() == List.of("a", "b", "c", "x", "x", "x", "x", "h", "i", "j", "k", "l")
+            vars.toList() == ["a", "b", "c", "x", "x", "x", "x", "h", "i", "j", "k", "l"]
         when: 'We update the value of one of the new properties.'
             vars.at(4).set("y")
         then: 'The updated property has the expected value.'
             vars.at(4).get() == "y"
         and: 'The other properties remain unchanged.'
-            vars.toList() == List.of("a", "b", "c", "x", "y", "x", "x", "h", "i", "j", "k", "l")
+            vars.toList() == ["a", "b", "c", "x", "y", "x", "x", "h", "i", "j", "k", "l"]
         when: 'We set the properties between index `6` and `10` to a property with the value `z`.'
             vars.setRange(6, 10, Var.of("z"))
         then: 'The `Vars` instance contains the expected properties.'
-            vars.toList() == List.of("a", "b", "c", "x", "y", "x", "z", "z", "z", "z", "k", "l")
+            vars.toList() == ["a", "b", "c", "x", "y", "x", "z", "z", "z", "z", "k", "l"]
         when: 'We update the value of one of the new properties.'
             vars.at(7).set("o")
         then: 'The updated property has the expected value.'
             vars.at(7).get() == "o"
         and: 'The other properties have changed as well.'
-            vars.toList() == List.of("a", "b", "c", "x", "y", "x", "o", "o", "o", "o", "k", "l")
+            vars.toList() == ["a", "b", "c", "x", "y", "x", "o", "o", "o", "o", "k", "l"]
     }
 
     def 'You can set a sequence of properties to a given value or property with the `setAt` method.'() {
@@ -111,23 +111,23 @@ class Properties_List_Spec extends Specification
         when: 'We set `4` properties from index `3` to value `x`.'
             vars.setAt(3, 4, 'x')
         then: 'The `Vars` instance contains the expected properties.'
-            vars.toList() == List.of("a", "b", "c", "x", "x", "x", "x", "h", "i", "j", "k", "l")
+            vars.toList() == ["a", "b", "c", "x", "x", "x", "x", "h", "i", "j", "k", "l"]
         when: 'We update the value of one of the new properties.'
             vars.at(4).set("y")
         then: 'The updated property has the expected value.'
             vars.at(4).get() == "y"
         and: 'The other properties remain unchanged.'
-            vars.toList() == List.of("a", "b", "c", "x", "y", "x", "x", "h", "i", "j", "k", "l")
+            vars.toList() == ["a", "b", "c", "x", "y", "x", "x", "h", "i", "j", "k", "l"]
         when: 'We set `4` properties from index `6` to a property with the value `z`.'
             vars.setAt(6, 4, Var.of("z"))
         then: 'The `Vars` instance contains the expected properties.'
-            vars.toList() == List.of("a", "b", "c", "x", "y", "x", "z", "z", "z", "z", "k", "l")
+            vars.toList() == ["a", "b", "c", "x", "y", "x", "z", "z", "z", "z", "k", "l"]
         when: 'We update the value of one of the new properties.'
             vars.at(7).set("o")
         then: 'The updated property has the expected value.'
             vars.at(7).get() == "o"
         and: 'The other properties have changed as well.'
-            vars.toList() == List.of("a", "b", "c", "x", "y", "x", "o", "o", "o", "o", "k", "l")
+            vars.toList() == ["a", "b", "c", "x", "y", "x", "o", "o", "o", "o", "k", "l"]
     }
 
     def 'You can remove n leading or trailing entries from a property list.'()
@@ -183,7 +183,7 @@ class Properties_List_Spec extends Specification
         then : 'The `Vars` instance has four properties.'
             vars.size() == 4
         and : 'The two entries have been removed.'
-            vars.toList() == List.of("Racoon", "Piglet", "Rooster", "Rabbit")
+            vars.toList() == ["Racoon", "Piglet", "Rooster", "Rabbit"]
     }
 
     def 'You can remove a sequence of `n` entries from a property list.'() {
@@ -201,7 +201,7 @@ class Properties_List_Spec extends Specification
         then : 'The `Vars` instance has four properties.'
             vars.size() == 4
         and : 'The two entries have been removed.'
-            vars.toList() == List.of("Racoon", "Piglet", "Rooster", "Rabbit")
+            vars.toList() == ["Racoon", "Piglet", "Rooster", "Rabbit"]
     }
 
     def 'The properties of one property list can be added to another property list.'()
@@ -490,7 +490,7 @@ class Properties_List_Spec extends Specification
             var vals = vars.toVals()
         then : 'The "Vals" list has the correct size and values.'
             vals.size() == 3
-            vals.toList() == List.of("ukraine", "belgium", "france")
+            vals.toList() == ["ukraine", "belgium", "france"]
     }
 
     def 'The "makeDistinct" method on a mutable list of properties modifies the list in-place.'()
@@ -518,7 +518,7 @@ class Properties_List_Spec extends Specification
             vars.makeDistinct()
         then : 'The list has been modified in-place.'
             vars.size() == 3
-            vars.toList() == List.of(3.1415f, 2.7182f, 1.6180f)
+            vars.toList() == [3.1415f, 2.7182f, 1.6180f]
         and : 'The "show" listeners have been called.'
             changes == [Change.DISTINCT]
     }
@@ -536,7 +536,7 @@ class Properties_List_Spec extends Specification
             var first = vars.popFirst()
             var last = vars.popLast()
         then : 'The first and last properties have been removed from the list.'
-            vars.toList() == List.of(666, 1, -16, 8, 73, -9, 0, 42, 1, 2)
+            vars.toList() == [666, 1, -16, 8, 73, -9, 0, 42, 1, 2]
         and : 'We removed properties have the correct values.'
             first.get() == -42
             last.get() == 8
@@ -545,10 +545,10 @@ class Properties_List_Spec extends Specification
             var first2 = vars.popFirst(2)
             var last2 = vars.popLast(2)
         then : 'The first and last 2 properties have been removed from the list.'
-            vars.toList() == List.of(-16, 8, 73, -9, 0, 42)
+            vars.toList() == [-16, 8, 73, -9, 0, 42]
         and : 'We removed properties have the correct values.'
-            first2.toList() == List.of(666, 1)
-            last2.toList() == List.of(1, 2)
+            first2.toList() == [666, 1]
+            last2.toList() == [1, 2]
     }
 
     def 'You can pop a range of entries from a property list.'() {
@@ -565,7 +565,7 @@ class Properties_List_Spec extends Specification
         then : 'The popped `Vars` instance has two properties.'
             vars2.size() == 2
             and : 'The popped `Vars` instance contains the expected values.'
-            vars2.toList() == List.of("Squirrel", "Turtle")
+            vars2.toList() == ["Squirrel", "Turtle"]
     }
 
     def 'You can pop a sequence of `n` entries from a property list.'() {
@@ -582,7 +582,7 @@ class Properties_List_Spec extends Specification
         then : 'The popped `Vars` instance has two properties.'
             vars2.size() == 2
         and : 'The popped `Vars` instance contains the expected values.'
-            vars2.toList() == List.of("Squirrel", "Turtle")
+            vars2.toList() == ["Squirrel", "Turtle"]
     }
 
     def 'The "popAt" method return the removed property.'()
@@ -596,7 +596,7 @@ class Properties_List_Spec extends Specification
         when : 'We pop the property at index 2.'
             var popped = vars.popAt(2)
         then : 'The property at index 2 has been removed from the list.'
-            vars.toList() == List.of("seitan", "tofu", "mock duck")
+            vars.toList() == ["seitan", "tofu", "mock duck"]
         and : 'The removed property has the correct value.'
             popped.get() == "tempeh"
     }
@@ -614,7 +614,7 @@ class Properties_List_Spec extends Specification
         then : 'No exception is thrown.'
             noExceptionThrown()
         and : 'The property at index 2 has been removed from the list.'
-            vars.toList() == List.of("poha", "idli", "upma")
+            vars.toList() == ["poha", "idli", "upma"]
 
         when : 'We try to remove a property that is not in the list.'
             vars.removeOrThrow("dosa")
@@ -633,7 +633,7 @@ class Properties_List_Spec extends Specification
         when : 'We remove all properties that start with "p".'
             vars.removeIf({ it.get().startsWith("p") })
         then : 'The properties that start with "p" have been removed from the list.'
-            vars.toList() == List.of("idli", "dosa", "upma")
+            vars.toList() == ["idli", "dosa", "upma"]
     }
 
     def 'Properties can be popped off a property list using a predicate.'()
@@ -647,9 +647,9 @@ class Properties_List_Spec extends Specification
         when : 'We remove all properties that start with "p".'
             var popped = vars.popIf({ it.get().startsWith("p") })
         then : 'The properties that start with "p" have been removed from the list.'
-            vars.toList() == List.of("idli", "dosa", "upma")
+            vars.toList() == ["idli", "dosa", "upma"]
         and : 'The removed properties have the correct values.'
-            popped.toList() == List.of("poha", "poori")
+            popped.toList() == ["poha", "poori"]
     }
 
     def 'Items can be popped off a property list using a predicate.'()
@@ -663,9 +663,9 @@ class Properties_List_Spec extends Specification
         when : 'We remove all properties that start with "p".'
             var popped = vars.popIfItem({ it.startsWith("p") })
         then : 'The properties that start with "p" have been removed from the list.'
-            vars.toList() == List.of("idli", "dosa", "upma")
+            vars.toList() == ["idli", "dosa", "upma"]
         and : 'The removed properties have the correct values.'
-            popped.toList() == List.of("poha", "poori")
+            popped.toList() == ["poha", "poori"]
     }
 
     def 'Items can be removed from a property list using a predicate.'()
@@ -679,7 +679,7 @@ class Properties_List_Spec extends Specification
         when : 'We remove all properties that start with "p".'
             vars.removeIfItem({ it.startsWith("p") })
         then : 'The properties that start with "p" have been removed from the list.'
-            vars.toList() == List.of("idli", "dosa", "upma")
+            vars.toList() == ["idli", "dosa", "upma"]
     }
 
     def 'Using "addAll" to add multiple things to a property list will only trigger the change listeners once!'()
@@ -698,7 +698,7 @@ class Properties_List_Spec extends Specification
         when : 'We add multiple properties to the list.'
             vars.addAll("vada", "samosa", "pakora")
         then : 'The properties have been added to the list.'
-            vars.toList() == List.of("poha", "idli", "dosa", "upma", "poori", "vada", "samosa", "pakora")
+            vars.toList() == ["poha", "idli", "dosa", "upma", "poori", "vada", "samosa", "pakora"]
         and : 'The change listener has only been triggered once.'
             changeCount == 1
     }
@@ -711,26 +711,26 @@ class Properties_List_Spec extends Specification
              Let's have a look at some of them.
         """
         expect :
-            Vars.of(0.1f, 0.2f, 0.3f).removeAll(0.1f, 0.3f).toList() == List.of(0.2f)
-            Vars.of(3, 4, 5).removeFirst().toList() == List.of(4, 5)
-            Vars.of(3, 4, 5).removeLast().toList() == List.of(3, 4)
+            Vars.of(0.1f, 0.2f, 0.3f).removeAll(0.1f, 0.3f).toList() == [0.2f]
+            Vars.of(3, 4, 5).removeFirst().toList() == [4, 5]
+            Vars.of(3, 4, 5).removeLast().toList() == [3, 4]
             Vars.of(3, 4, 5).popFirst().get() == 3
             Vars.of(3, 4, 5).popLast().get() == 5
-            Vars.of(1, 2, 3, 4, 5, 6, 7).removeLast(4).toList() == List.of(1, 2, 3)
-            Vars.of(1, 2, 3, 4, 5, 6, 7).removeFirst(4).toList() == List.of(5, 6, 7)
-            Vars.of(1, 2, 3, 4, 5, 6, 7).popLast(4).toList() == List.of(4, 5, 6, 7)
-            Vars.of(1, 2, 3, 4, 5, 6, 7).popFirst(4).toList() == List.of(1, 2, 3, 4)
-            Vars.of(1, 2, 3, 4, 5, 6, 7).removeAt(2).toList() == List.of(1, 2, 4, 5, 6, 7)
+            Vars.of(1, 2, 3, 4, 5, 6, 7).removeLast(4).toList() == [1, 2, 3]
+            Vars.of(1, 2, 3, 4, 5, 6, 7).removeFirst(4).toList() == [5, 6, 7]
+            Vars.of(1, 2, 3, 4, 5, 6, 7).popLast(4).toList() == [4, 5, 6, 7]
+            Vars.of(1, 2, 3, 4, 5, 6, 7).popFirst(4).toList() == [1, 2, 3, 4]
+            Vars.of(1, 2, 3, 4, 5, 6, 7).removeAt(2).toList() == [1, 2, 4, 5, 6, 7]
             Vars.of(1, 2, 3, 4, 5, 6, 7).popAt(2).get() == 3
-            Vars.of(1, 2, 3, 4, 5).removeIf({ it.get() % 2 == 0 }).toList() == List.of(1, 3, 5)
-            Vars.of(1, 2, 3, 4, 5).popIf({ it.get() % 2 == 0 }).toList() == List.of(2, 4)
-            Vars.of(1, 2, 3, 4, 5).removeIfItem({ it % 2 == 0 }).toList() == List.of(1, 3, 5)
-            Vars.of(1, 2, 3, 4, 5).popIfItem({ it % 2 == 0 }).toList() == List.of(2, 4)
-            Vars.of("a", "b", "c").addAll("d", "e", "f").toList() == List.of("a", "b", "c", "d", "e", "f")
-            Vars.of("x", "y").addAll(Vars.of("z")).toList() == List.of("x", "y", "z")
-            Vars.of("x", "y").addAll(Vars.of("z", "a", "b")).toList() == List.of("x", "y", "z", "a", "b")
-            Vars.of(1, 2, 3, 4, 5).retainAll(1, 0, 3, 5, 42).toList() == List.of(1, 3, 5)
-            Vars.of(1, 2, 3, 4, 5).retainAll(Vars.of(1, 0, 3, 5, 42)).toList() == List.of(1, 3, 5)
+            Vars.of(1, 2, 3, 4, 5).removeIf({ it.get() % 2 == 0 }).toList() == [1, 3, 5]
+            Vars.of(1, 2, 3, 4, 5).popIf({ it.get() % 2 == 0 }).toList() == [2, 4]
+            Vars.of(1, 2, 3, 4, 5).removeIfItem({ it % 2 == 0 }).toList() == [1, 3, 5]
+            Vars.of(1, 2, 3, 4, 5).popIfItem({ it % 2 == 0 }).toList() == [2, 4]
+            Vars.of("a", "b", "c").addAll("d", "e", "f").toList() == ["a", "b", "c", "d", "e", "f"]
+            Vars.of("x", "y").addAll(Vars.of("z")).toList() == ["x", "y", "z"]
+            Vars.of("x", "y").addAll(Vars.of("z", "a", "b")).toList() == ["x", "y", "z", "a", "b"]
+            Vars.of(1, 2, 3, 4, 5).retainAll(1, 0, 3, 5, 42).toList() == [1, 3, 5]
+            Vars.of(1, 2, 3, 4, 5).retainAll(Vars.of(1, 0, 3, 5, 42)).toList() == [1, 3, 5]
     }
 
     def 'Various kinds of methods that mutate a property list will only trigger an "onChange" event once, even if multiple items are affected.'(
@@ -998,7 +998,7 @@ class Properties_List_Spec extends Specification
         when : 'We add a property.'
             vars.add("y")
         then : 'The property list should contain the added property.'
-            vars.toList() == List.of("a", "b", "x", "d", "y")
+            vars.toList() == ["a", "b", "x", "d", "y"]
         and : 'The added property should also be not nullable.'
             !vars.at(4).allowsNull()
     }
@@ -1628,7 +1628,7 @@ class Properties_List_Spec extends Specification
             var copyNullable = varsNullable.toVals()
         then : 'The resulting lists should be equal to the original lists.'
             copy.toList() == vars.toList()
-            copy.toList() == List.of( 0, 1, 2, 3, 4, 5)
+            copy.toList() == [ 0, 1, 2, 3, 4, 5]
             copyNullable.toList() == varsNullable.toList()
             copyNullable.toList() == [0, 1, 2, 3, null, 5]
         and : 'Also the nullability of the copied lists is equal to the original lists.'
@@ -1640,7 +1640,7 @@ class Properties_List_Spec extends Specification
             varsNullable.at(1).set(null)
             varsNullable.add(42)
         then : 'Changes are not applied to copied lists, and the lists remain unchanged.'
-            copy.toList() == List.of(0, 1, 2, 3, 4, 5)
+            copy.toList() == [0, 1, 2, 3, 4, 5]
             copy != vars
             copyNullable.toList() == [0, 1, 2, 3, null, 5]
             copyNullable.toList() != varsNullable.toList()
