@@ -8,7 +8,7 @@ import java.lang.ref.WeakReference;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 
-final class WeakActionImpl<@Nullable O, D> implements WeakAction<O, D>
+final class WeakActionImpl<O extends @Nullable Object, D> implements WeakAction<O, D>
 {
     private @Nullable BiConsumer<O, D> _action;
     private final WeakReference<O> _owner;
