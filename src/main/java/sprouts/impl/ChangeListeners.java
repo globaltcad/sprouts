@@ -89,8 +89,7 @@ final class ChangeListeners<T>
             _getActions( actions -> {
                 if ( action instanceof WeakAction ) {
                     WeakAction<?,?> wa = (WeakAction<?,?>) action;
-                    Object owner = wa.owner();
-                    if ( owner != null ) {
+                    wa.owner().ifPresent( owner -> {
                         actions.add(action);
                         ChangeListenerCleaner.getInstance()
                                 .register(owner, () -> {
@@ -99,7 +98,7 @@ final class ChangeListeners<T>
                                         wa.clear();
                                     });
                                 });
-                    }
+                    });
                 }
                 else
                     actions.add(action);

@@ -1,6 +1,5 @@
 package sprouts
 
-import example.LoginViewModel
 import example.UserRegistrationViewModel
 import spock.lang.Narrative
 import spock.lang.Specification
@@ -16,7 +15,7 @@ import spock.lang.Title
     for the example view models in the test suite.
 
 ''')
-@Subject([UserRegistrationViewModel, LoginViewModel])
+@Subject([UserRegistrationViewModel])
 class MVVM_Unit_Test_Spec extends Specification
 {
 

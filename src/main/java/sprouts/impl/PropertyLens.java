@@ -2,12 +2,9 @@ package sprouts.impl;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
-import org.slf4j.Logger;
-import sprouts.Observable;
-import sprouts.Observer;
 import sprouts.*;
 
-import java.util.*;
+import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -45,9 +42,6 @@ import java.util.function.Function;
  */
 public final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object> implements Var<T>
 {
-    private static final Logger log = org.slf4j.LoggerFactory.getLogger(PropertyLens.class);
-
-
     private final ChangeListeners<T>   _changeListeners;
     private final String               _id;
     private final boolean              _nullable;
@@ -145,7 +139,7 @@ public final class PropertyLens<A extends @Nullable Object, T extends @Nullable 
         return name + "<" + type + ">" + "[" + content + "]";
     }
 
-    protected String _stringTypeName() {
+    private String _stringTypeName() {
         return "Val";
     }
 
@@ -153,6 +147,8 @@ public final class PropertyLens<A extends @Nullable Object, T extends @Nullable 
     @Override public final Var<T> withId( String id ) {
         return new PropertyLens<>(_isImmutable, _type, id, _nullable, _value(), _parent, _getter, _setter, _changeListeners);
     }
+
+    @Override
     public Var<T> onChange( Channel channel, Action<Val<T>> action ) {
         _changeListeners.onChange(channel, action);
         return this;
@@ -232,7 +228,7 @@ public final class PropertyLens<A extends @Nullable Object, T extends @Nullable 
         if ( obj == null ) return false;
         if ( obj == this ) return true;
         if ( !_isImmutable ) {
-            return super.equals(obj);
+            return false;
         }
         if ( obj instanceof Val ) {
             Val<?> other = (Val<?>) obj;
@@ -247,7 +243,7 @@ public final class PropertyLens<A extends @Nullable Object, T extends @Nullable 
     @Override
     public final int hashCode() {
         if ( !_isImmutable ) {
-            return super.hashCode();
+            return System.identityHashCode(this);
         }
         T value = _value();
         int hash = 7;

@@ -2,19 +2,19 @@ package sprouts.impl;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
-import sprouts.Action;
-import sprouts.Val;
+import sprouts.WeakAction;
 
 import java.lang.ref.WeakReference;
+import java.util.Optional;
 import java.util.function.BiConsumer;
 
-final class WeakAction<@Nullable O, D> implements Action<D>
+final class WeakActionImpl<O extends @Nullable Object, D> implements WeakAction<O, D>
 {
-    private final WeakReference<O> _owner;
     private @Nullable BiConsumer<O, D> _action;
+    private final WeakReference<O> _owner;
 
-    WeakAction( @NonNull O owner, @NonNull BiConsumer<O, D> action ) {
-        _owner = new WeakReference<>(owner);
+    WeakActionImpl( @NonNull O owner, @NonNull BiConsumer<O, D> action ) {
+        _owner  = new WeakReference<>(owner);
         _action = action;
     }
 
@@ -31,10 +31,12 @@ final class WeakAction<@Nullable O, D> implements Action<D>
             _action = null;
     }
 
-    public @Nullable O owner() {
-        return _owner.get();
+    @Override
+    public Optional<O> owner() {
+        return Optional.ofNullable(_owner.get());
     }
 
+    @Override
     public void clear() {
         _action = null;
     }
