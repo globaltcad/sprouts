@@ -1,5 +1,6 @@
 package sprouts.impl;
 
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import sprouts.Observable;
@@ -157,6 +158,18 @@ public final class PropertyLens<A extends @Nullable Object, T extends @Nullable 
         return this;
     }
 
+    @Override
+    public <U> Var<@Nullable U> mapTo(Class<U> type, Function<@NonNull T, U> mapper) {
+        if ( !isPresent() )
+            return _isImmutable ? AbstractVariable.ofNullable( true, type, null ) : Var.ofNull( type );
+
+        U newValue = mapper.apply( get() );
+        if ( _isImmutable )
+            return AbstractVariable.ofNullable( true, type, null );
+        else
+            return Var.ofNullable( type, newValue );
+    }
+
     /** {@inheritDoc} */
     @Override public final Var<T> fireChange( Channel channel ) {
         _changeListeners.fireChange(this, channel);
@@ -218,6 +231,9 @@ public final class PropertyLens<A extends @Nullable Object, T extends @Nullable 
     public final boolean equals( Object obj ) {
         if ( obj == null ) return false;
         if ( obj == this ) return true;
+        if ( !_isImmutable ) {
+            return super.equals(obj);
+        }
         if ( obj instanceof Val ) {
             Val<?> other = (Val<?>) obj;
             if ( other.type() != _type) return false;
@@ -230,6 +246,9 @@ public final class PropertyLens<A extends @Nullable Object, T extends @Nullable 
 
     @Override
     public final int hashCode() {
+        if ( !_isImmutable ) {
+            return super.hashCode();
+        }
         T value = _value();
         int hash = 7;
         hash = 31 * hash + ( value == null ? 0 : Val.hashCode(value) );

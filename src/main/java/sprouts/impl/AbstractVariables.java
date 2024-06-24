@@ -346,13 +346,17 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
     @Override
     public final void makeDistinct() {
         if ( _isImmutable ) throw new UnsupportedOperationException("This is an immutable list.");
-        List<Var<T>> list = new ArrayList<>();
-        for ( Var<T> v : _variables )
-            if ( !list.contains(v) )
-                list.add(v);
-
+        Set<T> checked = new HashSet<>();
+        List<Var<T>> retained = new ArrayList<>();
+        for ( Var<T> property : _variables ) {
+            T item = property.orElseNull();
+            if ( !checked.contains(item) ) {
+                checked.add(item);
+                retained.add(property);
+            }
+        }
         _variables.clear();
-        _variables.addAll(list);
+        _variables.addAll(retained);
         _triggerAction( Change.DISTINCT );
     }
 

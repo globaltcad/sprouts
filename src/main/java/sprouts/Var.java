@@ -232,13 +232,7 @@ public interface Var<T extends @Nullable Object> extends Val<T>
 	 * 			the mapping function to the item of this property.
 	 * @param <U> The type of the item returned from the mapping function
 	 */
-	@Override default <U extends @Nullable Object> Var<@Nullable U> mapTo( Class<U> type, Function<@NonNull T, U> mapper ) {
-		if ( !isPresent() )
-			return Var.ofNull( type );
-
-		U newValue = mapper.apply( get() );
-		return Var.ofNullable( type, newValue );
-	}
+	@Override <U extends @Nullable Object> Var<@Nullable U> mapTo( Class<U> type, Function<@NonNull T, U> mapper );
 
 	/**
 	 * Creates a lens property (Var) that focuses on a specific field of the current data structure.
