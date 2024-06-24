@@ -17,14 +17,14 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
 
     public static <T> Vars<T> of( boolean immutable, Class<T> type ) {
         Objects.requireNonNull(type);
-        return new AbstractVariables<T>( immutable, type, false ){};
+        return new AbstractVariables<T>( immutable, type, false );
     }
 
     @SafeVarargs
     public static <T> Vars<T> of( boolean immutable, Class<T> type, Var<T>... vars ) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(vars);
-        return new AbstractVariables<T>( immutable, type, false, vars ){};
+        return new AbstractVariables<T>( immutable, type, false, vars );
     }
 
     @SafeVarargs
@@ -32,8 +32,9 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
         Objects.requireNonNull(type);
         Objects.requireNonNull(vars);
         Var<T>[] array = new Var[vars.length];
-        for ( int i = 0; i < vars.length; i++ ) array[i] = Var.of(type, vars[i]);
-        return new AbstractVariables<T>( immutable, type, false, array ){};
+        for ( int i = 0; i < vars.length; i++ )
+            array[i] = AbstractVariable.of( immutable, vars[i] );
+        return new AbstractVariables<T>( immutable, type, false, array );
     }
 
     @SafeVarargs
@@ -51,9 +52,9 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
         Objects.requireNonNull(first);
         Objects.requireNonNull(rest);
         Var<T>[] vars = new Var[rest.length+1];
-        vars[0] = Var.of(first);
+        vars[0] = AbstractVariable.of( immutable, first );
         for ( int i = 0; i < rest.length; i++ )
-            vars[ i + 1 ] = Var.of( rest[ i ] );
+            vars[ i + 1 ] = AbstractVariable.of( immutable, rest[ i ] );
         return of(immutable, vars[0].type(), vars);
     }
 
@@ -63,7 +64,7 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
         List<Var<T>> list = new ArrayList<>();
         vars.forEach( list::add );
         Var<T>[] array = new Var[list.size()];
-        return new AbstractVariables<T>( immutable, type, false, list.toArray(array) ){};
+        return new AbstractVariables<T>( immutable, type, false, list.toArray(array) );
     }
 
     public static <T> Vals<T> of( boolean immutable, Class<T> type, Vals<T> vals ) {
@@ -71,13 +72,14 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
             return new AbstractVariables<>( immutable, type, false, ((AbstractVariables<T>) vals)._variables );
 
         List<Val<T>> list = new ArrayList<>();
-        for ( int i = 0; i < vals.size(); i++ ) list.add( vals.at(i) );
+        for ( int i = 0; i < vals.size(); i++ )
+            list.add( vals.at(i) );
         return AbstractVariables.of( immutable, type, (Iterable) list );
     }
 
     public static <T> Vars<T> ofNullable( boolean immutable, Class<T> type ){
         Objects.requireNonNull(type);
-        return new AbstractVariables<T>( immutable, type, true, new Var[0] ){};
+        return new AbstractVariables<T>( immutable, type, true, new Var[0] );
     }
 
     @SafeVarargs
@@ -92,8 +94,9 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
         Objects.requireNonNull(type);
         Objects.requireNonNull(vars);
         Var<T>[] array = new Var[vars.length];
-        for ( int i = 0; i < vars.length; i++ ) array[i] = Var.ofNullable(type, vars[i]);
-        return new AbstractVariables<T>( immutable, type, true, array ){};
+        for ( int i = 0; i < vars.length; i++ )
+            array[i] = AbstractVariable.ofNullable( immutable, type, vars[i]);
+        return new AbstractVariables<T>( immutable, type, true, array );
     }
 
     @SafeVarargs
@@ -483,7 +486,15 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
     public final boolean equals( Object obj ) {
         if( obj == null ) return false;
         if( obj == this ) return true;
+        if ( !_isImmutable ) {
+            return super.equals(obj);
+        }
         if( obj instanceof Vals ) {
+            if ( obj instanceof AbstractVariables ) {
+                AbstractVariables<?> other = (AbstractVariables<?>) obj;
+                if ( !other._isImmutable )
+                    return false;
+            }
             @SuppressWarnings("unchecked")
             Vals<T> other = (Vals<T>) obj;
             if ( size() != other.size() ) return false;
@@ -498,6 +509,9 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
     /** {@inheritDoc} */
     @Override
     public final int hashCode() {
+        if ( !_isImmutable ) {
+            return super.hashCode();
+        }
         int hash = _variables.stream().mapToInt(Objects::hashCode).sum();
         return 31 * hash + _type.hashCode();
     }
