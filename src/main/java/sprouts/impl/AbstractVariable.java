@@ -10,6 +10,7 @@ import sprouts.*;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 
 /**
  * 	The base implementation for both {@link Var} and {@link Val} interfaces.
@@ -246,6 +247,20 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 		return this;
 	}
 
+	@Override
+	public <U extends @Nullable Object> Var<@Nullable U> mapTo( Class<U> type, Function<@NonNull T, U> mapper ) {
+		if ( !isPresent() )
+			return _isImmutable ? AbstractVariable.ofNullable( true, type, null ) : Var.ofNull( type );
+
+		U newValue = mapper.apply( get() );
+
+		if ( _isImmutable )
+			return AbstractVariable.ofNullable( true, type, newValue );
+		else
+			return Var.ofNullable( type, newValue );
+	}
+
+
 	/** {@inheritDoc} */
 	@Override public Var<T> fireChange( Channel channel ) {
 		_changeListeners.fireChange(this, channel);
@@ -299,6 +314,11 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 	@Override
 	protected String _stringTypeName() {
 		return _isImmutable ? super._stringTypeName() : "Var";
+	}
+
+	@Override
+	protected boolean _isImmutable() {
+		return _isImmutable;
 	}
 
 	public final long numberOfChangeListeners() {

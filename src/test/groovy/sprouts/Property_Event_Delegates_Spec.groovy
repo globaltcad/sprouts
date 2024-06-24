@@ -92,7 +92,7 @@ class Property_Event_Delegates_Spec extends Specification
         when : 'We add an element to the property list.'
             propertyList.add(42)
         then : 'The exposed delegate is equal to the property list.'
-            delegate.vals() == propertyList
+            delegate.vals().toList() == propertyList.toList()
         and : 'The delegate is however not identical to the property list.'
             delegate.vals() !== propertyList
         when : 'We try to mutate the delegate...'
@@ -121,7 +121,7 @@ class Property_Event_Delegates_Spec extends Specification
         when : 'We add an element to the property list.'
             propertyList.add(42)
         then : 'The exposed delegate is equal to the property list.'
-            delegate.vals() == propertyList
+            delegate.vals().toList() == propertyList.toList()
         and : 'The delegate is however not identical to the property list.'
             delegate.vals() !== propertyList
         when : 'We try to mutate the delegate...'
