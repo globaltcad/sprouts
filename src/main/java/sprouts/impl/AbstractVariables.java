@@ -145,14 +145,21 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
     @Override public final int size() { return _variables.size(); }
 
     /** {@inheritDoc} */
-    @Override public Vars<T> removeAll( Vars<T> vars ) {
-        if ( _isImmutable ) throw new UnsupportedOperationException("This is an immutable list.");
+    @Override public Vars<T> removeAll( Vals<T> properties ) {
+        if ( _isImmutable )
+            throw new UnsupportedOperationException("This is an immutable list.");
 
-        Vars<T> removal = (Vars<T>) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));
+        Vars<T> removal = _allowsNull ? Vars.ofNullable(_type) : Vars.of(_type);
 
-        for ( int i = size() - 1; i >= 0; i-- )
-            if ( vars.contains(at(i)) )
-                removal.add( _variables.remove(i) );
+        if ( properties.isMutable() ) {
+            for ( int i = size() - 1; i >= 0; i-- )
+                if ( properties.contains(this.at(i)) )
+                    removal.add( _variables.remove(i) );
+        } else {
+            for ( int i = size() - 1; i >= 0; i-- )
+                if ( properties.contains(this.at(i).orElseNull()) )
+                    removal.add( _variables.remove(i) );
+        }
 
         _triggerAction( Change.REMOVE, -1, null, removal.revert() );
         return this;
@@ -279,13 +286,17 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
 
         _triggerAction(Change.SET, from, newVars, oldVars);
 
-        return (Vars<T>) this;
+        return this;
     }
 
     /** {@inheritDoc} */
     @Override
     public Vars<T> addAll( Vals<T> vals ) {
-        if ( _isImmutable ) throw new UnsupportedOperationException("This is an immutable list.");
+        if ( _isImmutable )
+            throw new UnsupportedOperationException("This is an immutable list.");
+
+        if ( vals.allowsNull() != this.allowsNull() )
+            throw new IllegalArgumentException("The null safety of the given list does not match this list.");
 
         if (vals.isEmpty())
             return this;
@@ -294,8 +305,18 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
             Val<T> val = vals.at(i);
             _checkNullSafetyOf(val);
 
-            if ( val instanceof Var )
-                _variables.add((Var<T>) val);
+            if ( val instanceof Var ) {
+                if ( val instanceof AbstractVariable ) {
+                    AbstractVariable<T> var = (AbstractVariable<T>) val;
+                    if ( var._isImmutable() ) {
+                        _variables.add(Var.of(val.get()));
+                    } else {
+                        _variables.add((Var<T>) val);
+                    }
+                }
+                else
+                    _variables.add((Var<T>) val);
+            }
             else
                 _variables.add(Var.of(val.get()));
         }
@@ -306,16 +327,27 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
 
     /** {@inheritDoc} */
     @Override
-    public Vars<T> retainAll( Vars<T> vars ) {
-        if ( _isImmutable ) throw new UnsupportedOperationException("This is an immutable list.");
+    public Vars<T> retainAll( Vals<T> vars ) {
+        if ( _isImmutable )
+            throw new UnsupportedOperationException("This is an immutable list.");
 
-        Vars<T> old = (Vars<T>) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));
+        Vars<T> old = _allowsNull ? Vars.ofNullable(_type) : Vars.of(_type);
 
-        for (Iterator<Var<T>> it = _variables.iterator(); it.hasNext();) {
-            Var<T> var = it.next();
-            if (!vars.contains(var)) {
-                old.add(var);
-                it.remove();
+        if ( vars.isMutable() ) {
+            for (Iterator<Var<T>> it = _variables.iterator(); it.hasNext();) {
+                Var<T> var = it.next();
+                if (!vars.contains(var)) {
+                    old.add(var);
+                    it.remove();
+                }
+            }
+        } else {
+            for (Iterator<Var<T>> it = _variables.iterator(); it.hasNext();) {
+                Var<T> var = it.next();
+                if (!vars.contains(var.orElseNull())) {
+                    old.add(var);
+                    it.remove();
+                }
             }
         }
 
@@ -392,6 +424,11 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
     @Override
     public boolean allowsNull() {
         return _allowsNull;
+    }
+
+    @Override
+    public boolean isMutable() {
+        return !_isImmutable;
     }
 
     private ValsDelegate<T> _createDelegate(

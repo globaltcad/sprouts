@@ -188,9 +188,12 @@ public final class Sprouts implements SproutsFactory
     }
 
     @SuppressWarnings("unchecked")
-    @Override public <T> Vals<T> valsOf(T first, T... rest ) { return AbstractVariables.of( true, first, rest); }
+    @Override public <T> Vals<T> valsOf( T first, T... rest ) { return AbstractVariables.of( true, first, rest); }
 
-    @Override public <T> Vals<T> valsOf(Class<T> type, Iterable<Val<T>> properties ) {
+    @SuppressWarnings("unchecked")
+    @Override public <T> Vals<T> valsOf( Class<T> type, T... items ) { return AbstractVariables.of( true, type, items ); }
+
+    @Override public <T> Vals<T> valsOf( Class<T> type, Iterable<Val<T>> properties ) {
         return AbstractVariables.of( true, type, (Iterable) properties );
     }
 
@@ -245,6 +248,9 @@ public final class Sprouts implements SproutsFactory
 
 	@SuppressWarnings("unchecked")
 	@Override public <T> Vars<T> varsOf( T first, T... rest ) { return AbstractVariables.of( false, first, rest ); }
+
+    @SuppressWarnings("unchecked")
+    @Override public <T> Vars<T> varsOf( Class<T> type, T... items ) { return AbstractVariables.of( false, type, items ); }
 
 	@Override public <T> Vars<T> varsOf( Class<T> type, Iterable<Var<T>> vars ) { return AbstractVariables.of( false, type, vars ); }
 

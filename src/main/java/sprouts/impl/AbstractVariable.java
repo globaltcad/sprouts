@@ -267,6 +267,11 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 		return this;
 	}
 
+	@Override
+	public final boolean isMutable() {
+		return !_isImmutable;
+	}
+
 	/** {@inheritDoc} */
 	@Override
 	public Var<T> set( Channel channel, T newItem ) {

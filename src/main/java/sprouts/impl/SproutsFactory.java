@@ -58,6 +58,9 @@ public interface SproutsFactory
 	@SuppressWarnings("unchecked")
 	<T> Vals<T> valsOf( T first, T... rest );
 
+	@SuppressWarnings("unchecked")
+	<T> Vals<T> valsOf( Class<T> type, T... items );
+
 	<T> Vals<T> valsOf( Class<T> type, Iterable<Val<T>> properties );
 
 	<T> Vals<T> valsOf( Class<T> type, Vals<T> vals );
@@ -86,6 +89,9 @@ public interface SproutsFactory
 
 	@SuppressWarnings("unchecked")
 	<T> Vars<T> varsOf( T first, T... rest );
+
+	@SuppressWarnings("unchecked")
+	<T> Vars<T> varsOf( Class<T> type, T... items );
 
 	<T> Vars<T> varsOf( Class<T> type, Iterable<Var<T>> vars );
 

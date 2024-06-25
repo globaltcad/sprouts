@@ -730,7 +730,25 @@ class Properties_List_Spec extends Specification
             Vars.of("x", "y").addAll(Vars.of("z")).toList() == ["x", "y", "z"]
             Vars.of("x", "y").addAll(Vars.of("z", "a", "b")).toList() == ["x", "y", "z", "a", "b"]
             Vars.of(1, 2, 3, 4, 5).retainAll(1, 0, 3, 5, 42).toList() == [1, 3, 5]
-            Vars.of(1, 2, 3, 4, 5).retainAll(Vars.of(1, 0, 3, 5, 42)).toList() == [1, 3, 5]
+            Vars.of(1, 2, 3, 4, 5).retainAll(Vals.of(1, 0, 3, 5, 42)).toList() == [1, 3, 5]
+            Vars.of(1, 2, 3, 4, 5).retainAll(Vars.of(1, 0, 3, 5, 42)).toList() == []
+            Vars.of(1, 2, 3, 4, 5).removeAll(1, 0, 3, 5, 42).toList() == [2, 4]
+            Vars.of(1, 2, 3, 4, 5).removeAll(Vals.of(1, 0, 3, 5, 42)).toList() == [2, 4]
+        and : """   
+            Because `Var` and `Vars` are mutable, their equality is modelled in
+            terms of their identity, not their value. Whereas `Val` and `Vals`
+            are immutable, so their equality is modelled in terms of their value.
+        """
+            Vars.of(1, 2, 3, 4, 5).removeAll(Vars.of(1, 0, 3, 5, 42)).toList() == [1, 2, 3, 4, 5]
+            Vars.of("a", "b", "c").remove(Var.of("a")).toList() == ["a", "b", "c"]
+            Vars.of("a", "b", "c").remove("a").toList() == ["b", "c"]
+            Vars.of("a", "b", "c").add(Var.of("d")).toList() == ["a", "b", "c", "d"]
+            Vars.of("a", "b", "c").add("d").toList() == ["a", "b", "c", "d"]
+            Vars.of(1, 2, 3).indexOf(2) == 1
+            Vars.of(1, 2, 3).indexOf(Var.of(2)) == -1
+            Vars.of(1, 2, 3).indexOf(Val.of(2)) == 1
+            Vars.of(1, 2, 3).indexOf(Val.of(2).get()) == 1
+            Vars.of(1, 2, 3).indexOf(Var.of(2).get()) == 1
     }
 
     def 'Various kinds of methods that mutate a property list will only trigger an "onChange" event once, even if multiple items are affected.'(
@@ -955,7 +973,7 @@ class Properties_List_Spec extends Specification
         and : 'The `index` of the change points to the position of the removed property.'
             change.index() == 1
         when : 'We remove a property with the `remove` method.'
-            vars.remove(Var.of("f"))
+            vars.remove(Val.of("f"))
         then : 'The `newValues` should be an empty property list.'
             change.newValues().isEmpty()
         and : 'The `oldValues` should contain the removed property.'
@@ -963,6 +981,16 @@ class Properties_List_Spec extends Specification
             change.oldValues().at(0).get() == "f"
         and : 'The `index` of the change points to the position of the removed property.'
             change.index() == 2
+
+        when : 'We reset the change and then try to remove a new mutable property.'
+            change = null
+            vars.remove(Var.of("g"))
+        then : """
+            Nothing happens because the property is a mutable identity sensitive property.
+            Whereas a `Val` is a value sensitive property.
+        """
+            change == null
+            vars.toList() == ["c", "e", "g"]
     }
 
     def 'Properties created by adding values to a property list can be set to `null` if the list allows null properties.'()
@@ -1015,7 +1043,7 @@ class Properties_List_Spec extends Specification
         then: 'The property is removed from the property list.'
             vars.toList() == ["a", "b", "c", null, "f", "g", "h", null, "j", "k", "l", "m", "n", "o", "p", "q"]
         when: 'We remove a property with the `remove` method.'
-            vars.remove(Var.of("m"))
+            vars.remove(Val.of("m"))
         then: 'The property is removed from the property list.'
             vars.toList() == ["a", "b", "c", null, "f", "g", "h", null, "j", "k", "l", "n", "o", "p", "q"]
         when: 'We remove a property with the `removeAt` method.'
@@ -1064,7 +1092,7 @@ class Properties_List_Spec extends Specification
         then: 'The `null` property is removed from the property list.'
             vars.toList() == ["a", "b", "c", "d", null, "g", "h", null, "j", "k", null, "m", null, "o"]
         when: 'We remove an empty (`null`) property with the `remove` method.'
-            vars.remove(Var.ofNullable(String.class, null))
+            vars.remove(Val.ofNullable(String.class, null))
         then: 'The `null` property is removed from the property list.'
             vars.toList() == ["a", "b", "c", "d", "g", "h", null, "j", "k", null, "m", null, "o"]
         when: 'We remove an empty (`null`) property with the `removeAt` method.'
@@ -1179,7 +1207,7 @@ class Properties_List_Spec extends Specification
         and : 'The `vals` should not contain the removed properties'
             change.vals() == Vals.of("a", "d", "e", "h", "i", "j", "k", "l", "m", "n", "o", "k", "p", "h", "l", "m", "n", "p")
         when : 'We remove a property list from the list with the `removeAll` method.'
-            vars.removeAll(Vars.of("h", "i", "j"))
+            vars.removeAll(Vals.of("h", "i", "j"))
         then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
             change.oldValues().size() == 4
             change.oldValues() == Vals.of("h", "i", "j", "h")
@@ -1374,7 +1402,7 @@ class Properties_List_Spec extends Specification
             var change = null
             vars.onChange({ change = it })
         when : 'We use the `retainAll` method to remove all properties from the list that are not contained in a given list of properties.'
-            vars.retainAll(Vars.of("d", "c", "f", "g", "h", "i", "j", "x"))
+            vars.retainAll(Vals.of("d", "c", "f", "g", "h", "i", "j", "x"))
         then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
             change.oldValues().size() == 5
             change.oldValues() == Vals.of("a", "b", "e", "a", "b")
@@ -1427,7 +1455,7 @@ class Properties_List_Spec extends Specification
             vars1.onChange({ change = it })
             vars2.onChange({ change = it })
         when : 'We use the `retainAll` method to remove all properties from the list that are not contained in a given list of properties.'
-            vars1.retainAll(Vars.ofNullable(String.class, "b", "d", "g", "h", "i", "j"))
+            vars1.retainAll(Vals.ofNullable(String.class, "b", "d", "g", "h", "i", "j"))
         then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
             change.oldValues().size() == 6
             change.oldValues() == Vals.ofNullable(String.class, "a", null, null, null, "a", "c")
@@ -1438,7 +1466,7 @@ class Properties_List_Spec extends Specification
         and : 'The `vals` should only contained the retained properties.'
             change.vals() == Vals.ofNullable(String.class, "b", "d", "g", "h", "i", "j", "b", "d")
         when : 'We use the `retainAll` method to remove all properties from the list that are not contained in a given list of properties.'
-            vars2.retainAll(Vars.ofNullable(String.class, null, "a", "b", "d"))
+            vars2.retainAll(Vals.ofNullable(String.class, null, "a", "b", "d"))
         then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
             change.oldValues().size() == 5
             change.oldValues() == Vals.ofNullable(String.class, "g", "h", "i", "j", "c")
