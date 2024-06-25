@@ -2,6 +2,7 @@ package sprouts.impl;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
 import sprouts.*;
 
 import java.util.Objects;
@@ -42,6 +43,8 @@ import java.util.function.Function;
  */
 public final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object> implements Var<T>
 {
+    private static final Logger log = org.slf4j.LoggerFactory.getLogger(PropertyLens.class);
+
     private final ChangeListeners<T>   _changeListeners;
     private final String               _id;
     private final boolean              _nullable;
@@ -51,7 +54,7 @@ public final class PropertyLens<A extends @Nullable Object, T extends @Nullable 
     BiFunction<A,@Nullable T,A>        _setter;
     private final boolean              _isImmutable;
 
-    private @Nullable T _lastValue;
+    private @Nullable T _lastItem;
 
 
     public PropertyLens(
@@ -59,7 +62,7 @@ public final class PropertyLens<A extends @Nullable Object, T extends @Nullable 
             Class<T>                        type,
             String                          id,
             boolean                         allowsNull,
-            @Nullable T                     iniValue, // may be null
+            @Nullable T                     initialItem, // may be null
             Var<A>                          parent,
             Function<A,@Nullable T>         getter,
             BiFunction<A,@Nullable T,A>     wither,
@@ -77,39 +80,65 @@ public final class PropertyLens<A extends @Nullable Object, T extends @Nullable 
         _isImmutable     = immutable;
         _changeListeners = changeListeners == null ? new ChangeListeners<>() : new ChangeListeners<>(changeListeners);
 
-        _lastValue = iniValue;
+        _lastItem = initialItem;
         parent.onChange(From.ALL, Action.ofWeak(this, (thisLens,v) -> {
-            T newValue = thisLens._getFromParent();
-            if ( !Objects.equals(thisLens._lastValue, newValue) ) {
-                thisLens._lastValue = newValue;
+            T newValue = thisLens._fetchItemFromParent();
+            if ( !Objects.equals(thisLens._lastItem, newValue) ) {
+                thisLens._lastItem = newValue;
                 thisLens.fireChange(From.ALL);
             }
         }));
 
         if ( !ID_PATTERN.matcher(_id).matches() )
-            throw new IllegalArgumentException("The provided id '"+_id+"' is not valid!");
-        if ( !allowsNull && iniValue == null )
+            throw new IllegalArgumentException("The provided id '"+_id+"' is not valid! It must match the pattern '"+ID_PATTERN.pattern()+"'");
+        if ( !allowsNull && initialItem == null )
             throw new IllegalArgumentException("The provided initial value is null, but the property does not allow null values!");
     }
 
-    private @Nullable T _getFromParent() {
-        return _getter.apply(_parent.orElseNull());
+    private String _idForError(String id) {
+        return id.isEmpty() ? "" : "'"+id+"' ";
     }
 
-    private void _setInParent(@Nullable T value) {
-        _parent.set(_setter.apply(_parent.orElseNull(), value));
+    private @Nullable T _fetchItemFromParent() {
+        T fetchedValue = _lastItem;
+        try {
+            fetchedValue = _getter.apply(_parent.orElseNull());
+        } catch ( Exception e ) {
+            log.error(
+                    "Failed to fetch item of type '"+_type+"' for property lens "+ _idForError(_id) +
+                    "from parent property "+ _idForError(_parent.id())+"(with item type '"+_parent.type()+"') " +
+                    "using the current getter lambda.",
+                    e
+            );
+        }
+        return fetchedValue;
     }
 
-    private @Nullable T _value() {
-        @Nullable T value = _getFromParent();
-        if ( value != null ) {
+    private void _setInParentAndInternally(@Nullable T newItem) {
+        try {
+            A newParentItem = _setter.apply(_parent.orElseNull(), newItem);
+            _lastItem = newItem;
+            _parent.set(newParentItem);
+        } catch ( Exception e ) {
+            log.error(
+                    "Property lens "+_idForError(_id)+"(for item type '"+_type+"') failed to update its " +
+                    "parent property '"+_idForError(_parent.id())+"' (with item type '"+_parent.type()+"') " +
+                    "using the current setter lambda!",
+                    e
+            );
+        }
+    }
+
+    private @Nullable T _item() {
+        @Nullable T currentItem = _fetchItemFromParent();
+        if ( currentItem != null ) {
             // We check if the type is correct
-            if ( !_type.isAssignableFrom(value.getClass()) )
+            if ( !_type.isAssignableFrom(currentItem.getClass()) )
                 throw new IllegalArgumentException(
                         "The provided type of the initial value is not compatible with the actual type of the variable"
                 );
         }
-        return value;
+        return currentItem;
     }
 
     /** {@inheritDoc} */
@@ -120,7 +149,7 @@ public final class PropertyLens<A extends @Nullable Object, T extends @Nullable 
 
     /** {@inheritDoc} */
     @Override
-    public final @Nullable T orElseNull() { return _value(); }
+    public final @Nullable T orElseNull() { return _item(); }
 
     /** {@inheritDoc} */
     @Override public final boolean allowsNull() { return _nullable; }
@@ -139,18 +168,14 @@ public final class PropertyLens<A extends @Nullable Object, T extends @Nullable 
         if ( type.equals("Object") ) type = "?";
         if ( type.equals("String") && this.isPresent() ) value = "\"" + value + "\"";
         if (_nullable) type = type + "?";
-        String name = _stringTypeName();
+        String name = "Lens";
         String content = ( id.equals("?") ? value : id + "=" + value );
         return name + "<" + type + ">" + "[" + content + "]";
     }
 
-    private String _stringTypeName() {
-        return "Val";
-    }
-
     /** {@inheritDoc} */
     @Override public final Var<T> withId( String id ) {
-        return new PropertyLens<>(_isImmutable, _type, id, _nullable, _value(), _parent, _getter, _setter, _changeListeners);
+        return new PropertyLens<>(_isImmutable, _type, id, _nullable, _item(), _parent, _getter, _setter, _changeListeners);
     }
 
     @Override
@@ -182,7 +207,7 @@ public final class PropertyLens<A extends @Nullable Object, T extends @Nullable 
     public final Var<T> set( Channel channel, T newItem ) {
         Objects.requireNonNull(channel);
         if ( _isImmutable )
-            throw new UnsupportedOperationException("This variable is immutable!");
+            throw new UnsupportedOperationException("This property is immutable!");
         if ( _setInternal(newItem) )
             this.fireChange(channel);
         return this;
@@ -195,18 +220,17 @@ public final class PropertyLens<A extends @Nullable Object, T extends @Nullable 
                             "If you want your property to allow null values, use the 'ofNullable(Class, T)' factory method."
             );
 
-        T oldValue = _value();
+        T oldValue = _item();
 
         if ( !Objects.equals( oldValue, newValue ) ) {
             // First we check if the value is compatible with the type
             if ( newValue != null && !_type.isAssignableFrom(newValue.getClass()) )
                 throw new IllegalArgumentException(
                         "The provided type '"+newValue.getClass()+"' of the new value is not compatible " +
-                                "with the type '"+_type+"' of this property"
+                                "with the expected item type '"+_type+"' of this property lens."
                 );
 
-            _lastValue = newValue;
-            _setInParent(newValue);
+            _setInParentAndInternally(newValue);
             return true;
         }
         return false;
@@ -238,7 +262,7 @@ public final class PropertyLens<A extends @Nullable Object, T extends @Nullable 
         if ( obj instanceof Val ) {
             Val<?> other = (Val<?>) obj;
             if ( other.type() != _type) return false;
-            T value = _value();
+            T value = _item();
             if ( other.orElseNull() == null ) return value == null;
             return Val.equals( other.orElseThrow(), value); // Arrays are compared with Arrays.equals
         }
@@ -250,7 +274,7 @@ public final class PropertyLens<A extends @Nullable Object, T extends @Nullable 
         if ( !_isImmutable ) {
             return System.identityHashCode(this);
         }
-        T value = _value();
+        T value = _item();
         int hash = 7;
         hash = 31 * hash + ( value == null ? 0 : Val.hashCode(value) );
         hash = 31 * hash + ( _type  == null ? 0 : _type.hashCode()   );

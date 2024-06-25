@@ -735,6 +735,98 @@ class Property_Lenses_Spec extends Specification
             authorProperty.numberOfChangeListeners() == 2
     }
 
+    def 'You can access the item of a lens, even if an exception occurs in its getter.'()
+    {
+        reportInfo """
+            The item of a property lens is always retrieved from a getter function.
+            If an exception occurs in the getter function, then the lens will
+            return the last known item.
+        """
+        given : 'We create an `Author` and store it in a regular property.'
+            var author = new Author("Joe", "Average", LocalDate.of(1990, 1, 1), [])
+            var authorProperty = Var.of(author)
+        and : 'We create a lens for the last name of the author with a faulty getter function.'
+            var getterFails = false
+            var lastName = authorProperty.zoomTo(
+                                                {
+                                                    if (getterFails) throw new RuntimeException()
+                                                    else return it.lastName()
+                                                },
+                                                Author::withLastName
+                                            )
+        expect : 'The lens should have the correct initial value.'
+            lastName.get() == "Average"
+        when : 'We set the getter to fail and then try to access the item of the lens.'
+            getterFails = true
+        then : 'No exception is thrown...'
+            noExceptionThrown()
+        and : '...and the lens returns the last known item.'
+            lastName.get() == "Average"
+
+        when : 'We completely change the original property.'
+            authorProperty.set(new Author("Jane", "Doe", LocalDate.of(1995, 5, 5), ["Book1", "Book2"]))
+        then : """
+            The lens should still return the last known item due to the exception
+            preventing the lens from updating its item correctly
+            through the getter function.
+        """
+            lastName.get() == "Average"
+
+        when : 'We set the getter to work again and then try to access the item of the lens.'
+            getterFails = false
+        then : 'The lens should return the correct item.'
+            lastName.get() == "Doe"
+    }
+
+
+    def 'You can try to change the item of a lens, even if an exception occurs in its wither.'()
+    {
+        reportInfo """
+            When modifying the item of a lens, a wither function is used.
+            This wither function takes the item of the parent property
+            and the new item of the lens as arguments and then returns
+            an updated item for the parent property.
+            
+            If an exception occurs in this wither function, then the lens
+            will fail to update the parent property.
+        """
+        given : 'We create an `Author` and store it in a regular property.'
+            var author = new Author("Filia", "Fischer", LocalDate.of(2010, 3, 6), [])
+            var authorProperty = Var.of(author)
+        and : 'We create a lens for the last name of the author with a faulty wither function.'
+            var witherFails = false
+            var lastName = authorProperty.zoomTo(
+                                            Author::lastName,
+                                            (oldAuthor, newName)->{
+                                                if (witherFails) throw new RuntimeException()
+                                                else return oldAuthor.withLastName(newName)
+                                            }
+                                        )
+        expect : 'The lens should have the correct initial value.'
+            lastName.get() == "Fischer"
+        when : 'We modify the property lens to "Mayer"...'
+            lastName.set("Mayer")
+        then : 'The parent property is updated correctly.'
+            authorProperty.get().lastName() == "Mayer"
+
+        when : """
+            We set the wither to fail and then try to modify the item of the lens again.
+            Let's say we want to set the last name to "Smith".
+        """
+            witherFails = true
+            lastName.set("Smith")
+        then : 'No exception is thrown...'
+            noExceptionThrown()
+        and : """
+            Due to the exception in the wither function, the parent property
+            is not updated correctly.
+            And because the lens represents the last known item of the parent property,
+            it still returns the last name "Mayer", the name "Smith" is never applied.
+        """
+            authorProperty.get().lastName() == "Mayer"
+            lastName.get() == "Mayer"
+    }
+
     /**
      * This method guarantees that garbage collection is
      * done unlike <code>{@link System#gc()}</code>
