@@ -128,6 +128,11 @@ public class ResultImpl<V> implements Result<V>
 	@Override public boolean allowsNull() { return true; }
 
 	@Override
+	public boolean isMutable() {
+		return false;
+	}
+
+	@Override
 	public Observable subscribe( Observer observer ) {
 		Objects.requireNonNull(observer);
 		/* A Result is immutable, so this method is not supported */

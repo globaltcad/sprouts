@@ -97,6 +97,25 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
     }
 
     /**
+     * Creates a list of non-nullable properties from the supplied type and values.
+     * This factory method requires that the type be specified because the
+     * compiler cannot infer the type from the values.
+     *
+     * @param type  the type of the properties.
+     * @param items the values to be wrapped by properties and then added to the new Vars instance.
+     *              The values may not be null.
+     * @param <T>   the type of the values.
+     * @return a new {@code Vars} instance.
+     * @throws NullPointerException if {@code type} is {@code null}, or {@code items} is {@code null}.
+     */
+    @SuppressWarnings("unchecked")
+    static <T> Vars<T> of( Class<T> type, T... items ) {
+        Objects.requireNonNull(type);
+        Objects.requireNonNull(items);
+        return Sprouts.factory().varsOf( type, items );
+    }
+
+    /**
      * Creates a list of non-nullable properties from the supplied type and iterable of values.
      * This factory method requires that the type be specified because the
      * compiler cannot infer the type from a potentially empty iterable.
@@ -530,10 +549,10 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
      * Removes all properties from the list that are contained in the provided
      * list of properties.
      *
-     * @param vars the list of properties to remove.
+     * @param properties the list of properties to remove.
      * @return {@code this} list of properties.
      */
-    Vars<T> removeAll( Vars<T> vars );
+    Vars<T> removeAll( Vals<T> properties );
 
     /**
      * Removes all properties from the list whose items are contained in the provided
@@ -543,9 +562,13 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
      * @return {@code this} list of properties.
      */
     default Vars<T> removeAll( T... items ) {
-        Vars<T> vars = (Vars<T>) (allowsNull() ? Vars.ofNullable(type()) : Vars.of(type()));
-        for ( T item : items ) vars.add(item);
-        return removeAll(vars);
+        T @Nullable[] arrayOfThis = (T[]) new Object[size()];
+        for ( int i = 0; i < size(); i++ ) {
+            arrayOfThis[i] = at(i).orElseNull();
+        }
+        Vals<T> toBeRemoved = allowsNull() ? Vals.ofNullable(type(), items) : Vals.of(type(), items);
+
+        return removeAll(toBeRemoved);
     }
 
     /**
@@ -683,7 +706,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
      */
     @SuppressWarnings("unchecked")
     default Vars<T> addAll( T... items ) {
-        Vars<T> vars = (Vars<T>) (allowsNull() ? Vars.ofNullable(type()) : Vars.of(type()));
+        Vars<T> vars = allowsNull() ? Vars.ofNullable(type()) : Vars.of(type());
         for ( T v : items ) vars.add(v);
         return addAll(vars);
     }
@@ -710,10 +733,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
      * @return {@code this} list of properties.
      * @throws NullPointerException if {@code null} is not allowed and one of the {@code vals} is empty.
      */
-    default Vars<T> addAll( Vals<T> vals ) {
-        for ( T v : vals ) add(v);
-        return this;
-    }
+    Vars<T> addAll( Vals<T> vals );
 
     /**
      * Removes all properties from {@code this} list that are not contained in the provided list of properties.
@@ -721,7 +741,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
      * @param vars The list of properties to retain. All other properties will be removed.
      * @return {@code this} list of properties.
      */
-    Vars<T> retainAll( Vars<T> vars );
+    Vars<T> retainAll( Vals<T> vars );
 
     /**
      * Removes all properties from {@code this} list whose items are not contained in the provided array of items.
@@ -730,9 +750,8 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
      * @return {@code this} list of properties.
      */
     default Vars<T> retainAll( T... items ) {
-        Vars<T> vars = (Vars<T>) (allowsNull() ? Vars.ofNullable(type()) : Vars.of(type()));
-        for ( T item : items ) vars.add(item);
-        return retainAll(vars);
+        Vals<T> toBeRetained = allowsNull() ? Vals.ofNullable(type(), items) : Vals.of(type(), items);
+        return retainAll(toBeRetained);
     }
 
     /**

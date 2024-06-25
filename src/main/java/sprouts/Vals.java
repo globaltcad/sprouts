@@ -74,7 +74,24 @@ public interface Vals<T extends @Nullable Object> extends Iterable<T>, Observabl
      */
     @SuppressWarnings("unchecked")
     static <T> Vals<T> of( T first, T... rest ) {
+        Objects.requireNonNull(first);
+        Objects.requireNonNull(rest);
         return Sprouts.factory().valsOf( first, rest );
+    }
+
+    /**
+     *  Create a new {@link Vals} instance from the supplied type and items array.
+     *  The type must be provided to ensure type safety.
+     *  @param type The type of the items.
+     *  @param items The items to add to the new {@link Vals} instance.
+     *  @param <T> The type of the items.
+     *  @return A new {@link Vals} instance.
+     */
+    @SuppressWarnings("unchecked")
+    static <T> Vals<T> of( Class<T> type, T... items ) {
+        Objects.requireNonNull(type);
+        Objects.requireNonNull(items);
+        return Sprouts.factory().valsOf( type, items );
     }
 
     /**
@@ -313,7 +330,18 @@ public interface Vals<T extends @Nullable Object> extends Iterable<T>, Observabl
      * @param value The property to search for in this list.
      * @return The index of the given property in this list, or -1 if not found.
      */
-    default int indexOf( Val<T> value ) { return indexOf(value.orElseNull()); }
+    default int indexOf( Val<T> value ) {
+        if ( !value.isMutable() )
+            return indexOf(value.orElseNull());
+        else {
+            for ( int i = 0; i < size(); i++ ) {
+                Val<T> val = at(i);
+                if ( val.equals(value) )
+                    return i;
+            }
+            return -1;
+        }
+    }
 
     /**
      *  Check if the value of the supplied property is wrapped by any of the properties in this list.
@@ -322,7 +350,12 @@ public interface Vals<T extends @Nullable Object> extends Iterable<T>, Observabl
      * @param value The value property to search for.
      * @return True if the given property is in this list.
      */
-    default boolean contains( Val<T> value ) { return contains(value.orElseNull()); }
+    default boolean contains( Val<T> value ) {
+        if ( !value.isMutable() )
+            return contains(value.orElseNull());
+        else
+            return indexOf(value) != -1;
+    }
 
     /**
      *  Check for equality between this list of properties and another list of properties.
@@ -335,8 +368,26 @@ public interface Vals<T extends @Nullable Object> extends Iterable<T>, Observabl
      */
     default boolean is( Vals<@Nullable T> other ) {
         if ( size() != other.size() ) return false;
-        for ( int i = 0; i < size(); i++ )
-            if ( !this.at(i).is(other.at(i)) ) return false;
+        if ( this.isMutable() != other.isMutable() )
+            return false;
+
+        if ( this.isMutable() ) {
+            for ( int i = 0; i < size(); i++ ) {
+                Val<T> a = at(i);
+                Val<T> b = other.at(i);
+                if ( !a.is(b) )
+                    return false;
+            }
+        } else {
+
+        }
+        for ( int i = 0; i < size(); i++ ) {
+            Val<T> a = at(i);
+            Val<T> b = other.at(i);
+            if ( !a.is(b) )
+                return false;
+        }
+
 
         return true;
     }
@@ -487,4 +538,12 @@ public interface Vals<T extends @Nullable Object> extends Iterable<T>, Observabl
      */
     boolean allowsNull();
 
+    /**
+     *  Tells you whether this list of properties is mutable or not.
+     *  Immutable lists of properties are created with the "of(..)" factory methods
+     *  on the {@link Vals} interface, while mutable lists of properties are created
+     *  using the {@link Vars} interface factory methods.
+     * @return True if this list of properties is mutable, false if it is immutable.
+     */
+    boolean isMutable();
 }
