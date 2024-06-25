@@ -89,47 +89,46 @@ final class ChangeListeners&lt;T&gt;
 <span class="fc" id="L89">            _getActions( actions -&gt; {</span>
 <span class="fc bfc" id="L90" title="All 2 branches covered.">                if ( action instanceof WeakAction ) {</span>
 <span class="fc" id="L91">                    WeakAction&lt;?,?&gt; wa = (WeakAction&lt;?,?&gt;) action;</span>
-<span class="fc" id="L92">                    Object owner = wa.owner();</span>
-<span class="pc bpc" id="L93" title="1 of 2 branches missed.">                    if ( owner != null ) {</span>
-<span class="fc" id="L94">                        actions.add(action);</span>
-<span class="fc" id="L95">                        ChangeListenerCleaner.getInstance()</span>
-<span class="fc" id="L96">                                .register(owner, () -&gt; {</span>
-<span class="fc" id="L97">                                    _getActions( innerActions -&gt; {</span>
-<span class="fc" id="L98">                                        innerActions.remove(wa);</span>
-<span class="fc" id="L99">                                        wa.clear();</span>
-<span class="fc" id="L100">                                    });</span>
-<span class="fc" id="L101">                                });</span>
-                    }
-<span class="fc" id="L103">                }</span>
+<span class="fc" id="L92">                    wa.owner().ifPresent( owner -&gt; {</span>
+<span class="fc" id="L93">                        actions.add(action);</span>
+<span class="fc" id="L94">                        ChangeListenerCleaner.getInstance()</span>
+<span class="fc" id="L95">                                .register(owner, () -&gt; {</span>
+<span class="fc" id="L96">                                    _getActions( innerActions -&gt; {</span>
+<span class="fc" id="L97">                                        innerActions.remove(wa);</span>
+<span class="fc" id="L98">                                        wa.clear();</span>
+<span class="fc" id="L99">                                    });</span>
+<span class="fc" id="L100">                                });</span>
+<span class="fc" id="L101">                    });</span>
+<span class="fc" id="L102">                }</span>
                 else
-<span class="fc" id="L105">                    actions.add(action);</span>
-<span class="fc" id="L106">            });</span>
-<span class="fc" id="L107">        }</span>
+<span class="fc" id="L104">                    actions.add(action);</span>
+<span class="fc" id="L105">            });</span>
+<span class="fc" id="L106">        }</span>
 
         public void removeIf( Predicate&lt;Action&lt;Val&lt;T&gt;&gt;&gt; predicate ) {
-<span class="fc" id="L110">            _getActions( actions -&gt; actions.removeIf(predicate) );</span>
-<span class="fc" id="L111">        }</span>
+<span class="fc" id="L109">            _getActions( actions -&gt; actions.removeIf(predicate) );</span>
+<span class="fc" id="L110">        }</span>
 
         private synchronized long _getActions(Consumer&lt;List&lt;Action&lt;Val&lt;T&gt;&gt;&gt;&gt; receiver) {
-<span class="fc" id="L114">            receiver.accept(_channelActions);</span>
-<span class="fc" id="L115">            return _channelActions.size();</span>
+<span class="fc" id="L113">            receiver.accept(_channelActions);</span>
+<span class="fc" id="L114">            return _channelActions.size();</span>
         }
 
         private long numberOfChangeListeners() {
-<span class="fc" id="L119">            return _getActions( actions -&gt; {} );</span>
+<span class="fc" id="L118">            return _getActions( actions -&gt; {} );</span>
         }
 
         public void trigger( Val&lt;T&gt; owner ) {
-<span class="fc" id="L123">            Val&lt;T&gt; clone = Val.ofNullable(owner); // We clone this property to avoid concurrent modification</span>
-<span class="fc" id="L124">            _getActions( actions -&gt; {</span>
-<span class="fc bfc" id="L125" title="All 2 branches covered.">                for ( Action&lt;Val&lt;T&gt;&gt; action : actions ) // We copy the list to avoid concurrent modification</span>
+<span class="fc" id="L122">            Val&lt;T&gt; clone = Val.ofNullable(owner); // We clone this property to avoid concurrent modification</span>
+<span class="fc" id="L123">            _getActions( actions -&gt; {</span>
+<span class="fc bfc" id="L124" title="All 2 branches covered.">                for ( Action&lt;Val&lt;T&gt;&gt; action : actions ) // We copy the list to avoid concurrent modification</span>
                     try {
-<span class="fc" id="L127">                        action.accept(clone);</span>
-<span class="fc" id="L128">                    } catch ( Exception e ) {</span>
-<span class="fc" id="L129">                        log.error(&quot;An error occurred while executing action '&quot;+action+&quot;' for property '&quot;+this+&quot;'&quot;, e);</span>
-<span class="fc" id="L130">                    }</span>
-<span class="fc" id="L131">            });</span>
-<span class="fc" id="L132">        }</span>
+<span class="fc" id="L126">                        action.accept(clone);</span>
+<span class="fc" id="L127">                    } catch ( Exception e ) {</span>
+<span class="fc" id="L128">                        log.error(&quot;An error occurred while executing action '&quot;+action+&quot;' for property '&quot;+this+&quot;'&quot;, e);</span>
+<span class="fc" id="L129">                    }</span>
+<span class="fc" id="L130">            });</span>
+<span class="fc" id="L131">        }</span>
 
     }
 

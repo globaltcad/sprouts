@@ -1011,7 +1011,7 @@ public interface Val<T extends @Nullable Object> extends Observable {
 
 	/**
 	 *  This method is used to determine if the property is mutable or not.
-	 *  A mutable property can be changed by calling the {@link Var#set(T)} method.
+	 *  A mutable property can be changed by calling the {@code Var.set(T)} method.
 	 *  An immutable property cannot be changed and will throw an exception when trying to do so.
 	 *  <br>
 	 *  The purpose of this method is to warn the UI that this property can be changed,

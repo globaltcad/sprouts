@@ -71,7 +71,7 @@
 
         {"kind":"when","text":"We add an element to the property list.","code":["propertyList.add(42)"]},
 
-        {"kind":"then","text":"The exposed delegate is equal to the property list.","code":["delegate.vals() == propertyList"]},
+        {"kind":"then","text":"The exposed delegate is equal to the property list.","code":["delegate.vals().toList() == propertyList.toList()"]},
 
         {"kind":"and","text":"The delegate is however not identical to the property list.","code":["delegate.vals() !== propertyList"]},
 
@@ -83,7 +83,7 @@
 
         {"kind":"when","text":"We add an element to the property list.","code":["propertyList.add(42)"]},
 
-        {"kind":"then","text":"The exposed delegate is equal to the property list.","code":["delegate.vals() == propertyList"]},
+        {"kind":"then","text":"The exposed delegate is equal to the property list.","code":["delegate.vals().toList() == propertyList.toList()"]},
 
         {"kind":"and","text":"The delegate is however not identical to the property list.","code":["delegate.vals() !== propertyList"]},
 
@@ -106,7 +106,7 @@
 
         {"kind":"when","text":"We add an element to the property list.","code":["propertyList.add(42)"]},
 
-        {"kind":"then","text":"The exposed delegate is equal to the property list.","code":["delegate.vals() == propertyList"]},
+        {"kind":"then","text":"The exposed delegate is equal to the property list.","code":["delegate.vals().toList() == propertyList.toList()"]},
 
         {"kind":"and","text":"The delegate is however not identical to the property list.","code":["delegate.vals() !== propertyList"]},
 
@@ -118,7 +118,7 @@
 
         {"kind":"when","text":"We add an element to the property list.","code":["propertyList.add(42)"]},
 
-        {"kind":"then","text":"The exposed delegate is equal to the property list.","code":["delegate.vals() == propertyList"]},
+        {"kind":"then","text":"The exposed delegate is equal to the property list.","code":["delegate.vals().toList() == propertyList.toList()"]},
 
         {"kind":"and","text":"The delegate is however not identical to the property list.","code":["delegate.vals() !== propertyList"]},
 

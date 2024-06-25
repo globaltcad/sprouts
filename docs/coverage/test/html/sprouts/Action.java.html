@@ -37,10 +37,10 @@ public interface Action&lt;D&gt; extends Subscriber
      * @param action A {@link BiConsumer} that takes in the owner and the delegate
      *               and is executed when the action is triggered.
      * @return A new {@link Action} instance with a weakly referenced owner.
-     * @param &lt;O&gt; The type of the owner.
      * @param &lt;D&gt; The type of the delegate that will be passed to this event handler.
+     * @param &lt;O&gt; The type of the owner.
      */
-    static &lt;O, D&gt; Action&lt;D&gt; ofWeak( O owner, BiConsumer&lt;O, D&gt; action ) {
+    static &lt;O, D&gt; WeakAction&lt;O, D&gt; ofWeak( O owner, BiConsumer&lt;O, D&gt; action ) {
 <span class="fc" id="L44">        return Sprouts.factory().actionOfWeak(owner, action);</span>
     }
 

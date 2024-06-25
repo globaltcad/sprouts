@@ -4,7 +4,7 @@
   "narrative":"Just like properties you can create lists of properties\n    and then bind them to UI components.\n    They are a powerful tool to model the state \n    as well as business logic of your UI without actually depending on it.\n    This is especially useful for testing your UIs logic.\n    This specification shows how to use the various\n    methods exposed by the property lists classes, \n    namely \"Vals\" (immutable) and \"Vars\" (mutable).",
   "subjects":["sprouts.Vals","sprouts.Vars"],
   "statistics":{
-    "runs":"83",
+    "runs":"88",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -62,23 +62,23 @@
 
         {"kind":"when","text":"We set the properties between index `3` and `7` to the value `x`.","code":["vars.setRange(3, 7, 'x')"]},
 
-        {"kind":"then","text":"The `Vars` instance contains the expected properties.","code":["vars == Vars.of(\"a\", \"b\", \"c\", \"x\", \"x\", \"x\", \"x\", \"h\", \"i\", \"j\", \"k\", \"l\")"]},
+        {"kind":"then","text":"The `Vars` instance contains the expected properties.","code":["vars.toList() == [\"a\", \"b\", \"c\", \"x\", \"x\", \"x\", \"x\", \"h\", \"i\", \"j\", \"k\", \"l\"]"]},
 
         {"kind":"when","text":"We update the value of one of the new properties.","code":["vars.at(4).set(\"y\")"]},
 
         {"kind":"then","text":"The updated property has the expected value.","code":["vars.at(4).get() == \"y\""]},
 
-        {"kind":"and","text":"The other properties remain unchanged.","code":["vars == Vars.of(\"a\", \"b\", \"c\", \"x\", \"y\", \"x\", \"x\", \"h\", \"i\", \"j\", \"k\", \"l\")"]},
+        {"kind":"and","text":"The other properties remain unchanged.","code":["vars.toList() == [\"a\", \"b\", \"c\", \"x\", \"y\", \"x\", \"x\", \"h\", \"i\", \"j\", \"k\", \"l\"]"]},
 
         {"kind":"when","text":"We set the properties between index `6` and `10` to a property with the value `z`.","code":["vars.setRange(6, 10, Var.of(\"z\"))"]},
 
-        {"kind":"then","text":"The `Vars` instance contains the expected properties.","code":["vars == Vars.of(\"a\", \"b\", \"c\", \"x\", \"y\", \"x\", \"z\", \"z\", \"z\", \"z\", \"k\", \"l\")"]},
+        {"kind":"then","text":"The `Vars` instance contains the expected properties.","code":["vars.toList() == [\"a\", \"b\", \"c\", \"x\", \"y\", \"x\", \"z\", \"z\", \"z\", \"z\", \"k\", \"l\"]"]},
 
         {"kind":"when","text":"We update the value of one of the new properties.","code":["vars.at(7).set(\"o\")"]},
 
         {"kind":"then","text":"The updated property has the expected value.","code":["vars.at(7).get() == \"o\""]},
 
-        {"kind":"and","text":"The other properties have changed as well.","code":["vars == Vars.of(\"a\", \"b\", \"c\", \"x\", \"y\", \"x\", \"o\", \"o\", \"o\", \"o\", \"k\", \"l\")"]}
+        {"kind":"and","text":"The other properties have changed as well.","code":["vars.toList() == [\"a\", \"b\", \"c\", \"x\", \"y\", \"x\", \"o\", \"o\", \"o\", \"o\", \"k\", \"l\"]"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -97,23 +97,23 @@
 
         {"kind":"when","text":"We set `4` properties from index `3` to value `x`.","code":["vars.setAt(3, 4, 'x')"]},
 
-        {"kind":"then","text":"The `Vars` instance contains the expected properties.","code":["vars == Vars.of(\"a\", \"b\", \"c\", \"x\", \"x\", \"x\", \"x\", \"h\", \"i\", \"j\", \"k\", \"l\")"]},
+        {"kind":"then","text":"The `Vars` instance contains the expected properties.","code":["vars.toList() == [\"a\", \"b\", \"c\", \"x\", \"x\", \"x\", \"x\", \"h\", \"i\", \"j\", \"k\", \"l\"]"]},
 
         {"kind":"when","text":"We update the value of one of the new properties.","code":["vars.at(4).set(\"y\")"]},
 
         {"kind":"then","text":"The updated property has the expected value.","code":["vars.at(4).get() == \"y\""]},
 
-        {"kind":"and","text":"The other properties remain unchanged.","code":["vars == Vars.of(\"a\", \"b\", \"c\", \"x\", \"y\", \"x\", \"x\", \"h\", \"i\", \"j\", \"k\", \"l\")"]},
+        {"kind":"and","text":"The other properties remain unchanged.","code":["vars.toList() == [\"a\", \"b\", \"c\", \"x\", \"y\", \"x\", \"x\", \"h\", \"i\", \"j\", \"k\", \"l\"]"]},
 
         {"kind":"when","text":"We set `4` properties from index `6` to a property with the value `z`.","code":["vars.setAt(6, 4, Var.of(\"z\"))"]},
 
-        {"kind":"then","text":"The `Vars` instance contains the expected properties.","code":["vars == Vars.of(\"a\", \"b\", \"c\", \"x\", \"y\", \"x\", \"z\", \"z\", \"z\", \"z\", \"k\", \"l\")"]},
+        {"kind":"then","text":"The `Vars` instance contains the expected properties.","code":["vars.toList() == [\"a\", \"b\", \"c\", \"x\", \"y\", \"x\", \"z\", \"z\", \"z\", \"z\", \"k\", \"l\"]"]},
 
         {"kind":"when","text":"We update the value of one of the new properties.","code":["vars.at(7).set(\"o\")"]},
 
         {"kind":"then","text":"The updated property has the expected value.","code":["vars.at(7).get() == \"o\""]},
 
-        {"kind":"and","text":"The other properties have changed as well.","code":["vars == Vars.of(\"a\", \"b\", \"c\", \"x\", \"y\", \"x\", \"o\", \"o\", \"o\", \"o\", \"k\", \"l\")"]}
+        {"kind":"and","text":"The other properties have changed as well.","code":["vars.toList() == [\"a\", \"b\", \"c\", \"x\", \"y\", \"x\", \"o\", \"o\", \"o\", \"o\", \"k\", \"l\"]"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -171,7 +171,7 @@
 
         {"kind":"then","text":"The `Vars` instance has four properties.","code":["vars.size() == 4"]},
 
-        {"kind":"and","text":"The two entries have been removed.","code":["vars == Vars.of(\"Racoon\", \"Piglet\", \"Rooster\", \"Rabbit\")"]}
+        {"kind":"and","text":"The two entries have been removed.","code":["vars.toList() == [\"Racoon\", \"Piglet\", \"Rooster\", \"Rabbit\"]"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -192,7 +192,7 @@
 
         {"kind":"then","text":"The `Vars` instance has four properties.","code":["vars.size() == 4"]},
 
-        {"kind":"and","text":"The two entries have been removed.","code":["vars == Vars.of(\"Racoon\", \"Piglet\", \"Rooster\", \"Rabbit\")"]}
+        {"kind":"and","text":"The two entries have been removed.","code":["vars.toList() == [\"Racoon\", \"Piglet\", \"Rooster\", \"Rabbit\"]"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -476,7 +476,7 @@
 
         {"kind":"when","text":"We turn the list of properties into different collection types...","code":["var list = vars.toList()","var set = vars.toSet()","var map = vars.toMap()","var valMap = vars.toValMap()"]},
 
-        {"kind":"then","text":"The collections have the correct size and values.","code":["list.size() == 4","set.size() == 4","map.size() == 4","valMap.size() == 4","list == [42, 73, 1, 2]","set == [42, 73, 1, 2] as Set","map == [\"a\": 42, \"b\": 73, \"c\": 1, \"d\": 2]","valMap == [\"a\": Val.of(42), \"b\": Val.of(73), \"c\": Val.of(1), \"d\": Val.of(2)]"]},
+        {"kind":"then","text":"The collections have the correct size and values.","code":["list.size() == 4","set.size() == 4","map.size() == 4","valMap.size() == 4","list == [42, 73, 1, 2]","set == [42, 73, 1, 2] as Set","map == [\"a\": 42, \"b\": 73, \"c\": 1, \"d\": 2]","valMap != [\"a\": Val.of(42), \"b\": Val.of(73), \"c\": Val.of(1), \"d\": Val.of(2)]","valMap == [\"a\": vars.at(0), \"b\": vars.at(1), \"c\": vars.at(2), \"d\": vars.at(3)]"]},
 
         {"kind":"and","text":"All of these collections are of the correct type.","code":["list instanceof List","set instanceof Set","map instanceof Map","valMap instanceof Map"]}
       ],
@@ -495,7 +495,7 @@
 
         {"kind":"when","text":"We turn the list of properties into an immutable \"Vals\" list.","code":["var vals = vars.toVals()"]},
 
-        {"kind":"then","text":"The \"Vals\" list has the correct size and values.","code":["vals.size() == 3","vals == Vals.of(Val.of(\"ukraine\"), Val.of(\"belgium\"), Val.of(\"france\"))"]}
+        {"kind":"then","text":"The \"Vals\" list has the correct size and values.","code":["vals.size() == 3","vals.toList() == [\"ukraine\", \"belgium\", \"france\"]"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -514,7 +514,7 @@
 
         {"kind":"when","text":"We call the \"makeDistinct\" method.","code":["vars.makeDistinct()"]},
 
-        {"kind":"then","text":"The list has been modified in-place.","code":["vars.size() == 3","vars == Vars.of(Var.of(3.1415f), Var.of(2.7182f), Var.of(1.6180f))"]},
+        {"kind":"then","text":"The list has been modified in-place.","code":["vars.size() == 3","vars.toList() == [3.1415f, 2.7182f, 1.6180f]"]},
 
         {"kind":"and","text":"The \"show\" listeners have been called.","code":["changes == [Change.DISTINCT]"]}
       ],
@@ -533,15 +533,15 @@
 
         {"kind":"when","text":"We pop the first and last property from the list.","code":["var first = vars.popFirst()","var last = vars.popLast()"]},
 
-        {"kind":"then","text":"The first and last properties have been removed from the list.","code":["vars == Vars.of(666, 1, -16, 8, 73, -9, 0, 42, 1, 2)"]},
+        {"kind":"then","text":"The first and last properties have been removed from the list.","code":["vars.toList() == [666, 1, -16, 8, 73, -9, 0, 42, 1, 2]"]},
 
         {"kind":"and","text":"We removed properties have the correct values.","code":["first.get() == -42","last.get() == 8"]},
 
         {"kind":"when","text":"We pop the first and last 2 properties from the list.","code":["var first2 = vars.popFirst(2)","var last2 = vars.popLast(2)"]},
 
-        {"kind":"then","text":"The first and last 2 properties have been removed from the list.","code":["vars == Vars.of(-16, 8, 73, -9, 0, 42)"]},
+        {"kind":"then","text":"The first and last 2 properties have been removed from the list.","code":["vars.toList() == [-16, 8, 73, -9, 0, 42]"]},
 
-        {"kind":"and","text":"We removed properties have the correct values.","code":["first2 == Vars.of(666, 1)","last2 == Vars.of(1, 2)"]}
+        {"kind":"and","text":"We removed properties have the correct values.","code":["first2.toList() == [666, 1]","last2.toList() == [1, 2]"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -562,7 +562,7 @@
 
         {"kind":"then","text":"The popped `Vars` instance has two properties.","code":["vars2.size() == 2"]},
 
-        {"kind":"and","text":"The popped `Vars` instance contains the expected values.","code":["vars2 == Vars.of(\"Squirrel\", \"Turtle\")"]}
+        {"kind":"and","text":"The popped `Vars` instance contains the expected values.","code":["vars2.toList() == [\"Squirrel\", \"Turtle\"]"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -583,7 +583,7 @@
 
         {"kind":"then","text":"The popped `Vars` instance has two properties.","code":["vars2.size() == 2"]},
 
-        {"kind":"and","text":"The popped `Vars` instance contains the expected values.","code":["vars2 == Vars.of(\"Squirrel\", \"Turtle\")"]}
+        {"kind":"and","text":"The popped `Vars` instance contains the expected values.","code":["vars2.toList() == [\"Squirrel\", \"Turtle\"]"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -600,7 +600,7 @@
 
         {"kind":"when","text":"We pop the property at index 2.","code":["var popped = vars.popAt(2)"]},
 
-        {"kind":"then","text":"The property at index 2 has been removed from the list.","code":["vars == Vars.of(\"seitan\", \"tofu\", \"mock duck\")"]},
+        {"kind":"then","text":"The property at index 2 has been removed from the list.","code":["vars.toList() == [\"seitan\", \"tofu\", \"mock duck\"]"]},
 
         {"kind":"and","text":"The removed property has the correct value.","code":["popped.get() == \"tempeh\""]}
       ],
@@ -621,7 +621,7 @@
 
         {"kind":"then","text":"No exception is thrown.","code":["noExceptionThrown()"]},
 
-        {"kind":"and","text":"The property at index 2 has been removed from the list.","code":["vars == Vars.of(\"poha\", \"idli\", \"upma\")"]},
+        {"kind":"and","text":"The property at index 2 has been removed from the list.","code":["vars.toList() == [\"poha\", \"idli\", \"upma\"]"]},
 
         {"kind":"when","text":"We try to remove a property that is not in the list.","code":["vars.removeOrThrow(\"dosa\")"]},
 
@@ -642,7 +642,7 @@
 
         {"kind":"when","text":"We remove all properties that start with \"p\".","code":["vars.removeIf({ it.get().startsWith(\"p\") })"]},
 
-        {"kind":"then","text":"The properties that start with \"p\" have been removed from the list.","code":["vars == Vars.of(\"idli\", \"dosa\", \"upma\")"]}
+        {"kind":"then","text":"The properties that start with \"p\" have been removed from the list.","code":["vars.toList() == [\"idli\", \"dosa\", \"upma\"]"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -659,9 +659,9 @@
 
         {"kind":"when","text":"We remove all properties that start with \"p\".","code":["var popped = vars.popIf({ it.get().startsWith(\"p\") })"]},
 
-        {"kind":"then","text":"The properties that start with \"p\" have been removed from the list.","code":["vars == Vars.of(\"idli\", \"dosa\", \"upma\")"]},
+        {"kind":"then","text":"The properties that start with \"p\" have been removed from the list.","code":["vars.toList() == [\"idli\", \"dosa\", \"upma\"]"]},
 
-        {"kind":"and","text":"The removed properties have the correct values.","code":["popped == Vars.of(\"poha\", \"poori\")"]}
+        {"kind":"and","text":"The removed properties have the correct values.","code":["popped.toList() == [\"poha\", \"poori\"]"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -678,9 +678,9 @@
 
         {"kind":"when","text":"We remove all properties that start with \"p\".","code":["var popped = vars.popIfItem({ it.startsWith(\"p\") })"]},
 
-        {"kind":"then","text":"The properties that start with \"p\" have been removed from the list.","code":["vars == Vars.of(\"idli\", \"dosa\", \"upma\")"]},
+        {"kind":"then","text":"The properties that start with \"p\" have been removed from the list.","code":["vars.toList() == [\"idli\", \"dosa\", \"upma\"]"]},
 
-        {"kind":"and","text":"The removed properties have the correct values.","code":["popped == Vars.of(\"poha\", \"poori\")"]}
+        {"kind":"and","text":"The removed properties have the correct values.","code":["popped.toList() == [\"poha\", \"poori\"]"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -697,7 +697,7 @@
 
         {"kind":"when","text":"We remove all properties that start with \"p\".","code":["vars.removeIfItem({ it.startsWith(\"p\") })"]},
 
-        {"kind":"then","text":"The properties that start with \"p\" have been removed from the list.","code":["vars == Vars.of(\"idli\", \"dosa\", \"upma\")"]}
+        {"kind":"then","text":"The properties that start with \"p\" have been removed from the list.","code":["vars.toList() == [\"idli\", \"dosa\", \"upma\"]"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -716,7 +716,7 @@
 
         {"kind":"when","text":"We add multiple properties to the list.","code":["vars.addAll(\"vada\", \"samosa\", \"pakora\")"]},
 
-        {"kind":"then","text":"The properties have been added to the list.","code":["vars == Vars.of(\"poha\", \"idli\", \"dosa\", \"upma\", \"poori\", \"vada\", \"samosa\", \"pakora\")"]},
+        {"kind":"then","text":"The properties have been added to the list.","code":["vars.toList() == [\"poha\", \"idli\", \"dosa\", \"upma\", \"poori\", \"vada\", \"samosa\", \"pakora\"]"]},
 
         {"kind":"and","text":"The change listener has only been triggered once.","code":["changeCount == 1"]}
       ],
@@ -731,7 +731,9 @@
       "tags":{},"see":[],"extraInfo":["\n             The \"Vars\" class has a nice API with many useful methods whose\n             usage can be demonstrated in a single line of code.\n             Let's have a look at some of them.\n        "]
       },
       "blocks":[
-        {"kind":"expect","text":"","code":["Vars.of(0.1f, 0.2f, 0.3f).removeAll(0.1f, 0.3f) == Vars.of(0.2f)","Vars.of(3, 4, 5).removeFirst() == Vars.of(4, 5)","Vars.of(3, 4, 5).removeLast() == Vars.of(3, 4)","Vars.of(3, 4, 5).popFirst() == Var.of(3)","Vars.of(3, 4, 5).popLast() == Var.of(5)","Vars.of(1, 2, 3, 4, 5, 6, 7).removeLast(4) == Vars.of(1, 2, 3)","Vars.of(1, 2, 3, 4, 5, 6, 7).removeFirst(4) == Vars.of(5, 6, 7)","Vars.of(1, 2, 3, 4, 5, 6, 7).popLast(4) == Vars.of(4, 5, 6, 7)","Vars.of(1, 2, 3, 4, 5, 6, 7).popFirst(4) == Vars.of(1, 2, 3, 4)","Vars.of(1, 2, 3, 4, 5, 6, 7).removeAt(2) == Vars.of(1, 2, 4, 5, 6, 7)","Vars.of(1, 2, 3, 4, 5, 6, 7).popAt(2) == Var.of(3)","Vars.of(1, 2, 3, 4, 5).removeIf({ it.get() % 2 == 0 }) == Vars.of(1, 3, 5)","Vars.of(1, 2, 3, 4, 5).popIf({ it.get() % 2 == 0 }) == Vars.of(2, 4)","Vars.of(1, 2, 3, 4, 5).removeIfItem({ it % 2 == 0 }) == Vars.of(1, 3, 5)","Vars.of(1, 2, 3, 4, 5).popIfItem({ it % 2 == 0 }) == Vars.of(2, 4)","Vars.of(\"a\", \"b\", \"c\").addAll(\"d\", \"e\", \"f\") == Vars.of(\"a\", \"b\", \"c\", \"d\", \"e\", \"f\")","Vars.of(\"x\", \"y\").addAll(Vars.of(\"z\")) == Vars.of(\"x\", \"y\", \"z\")","Vars.of(\"x\", \"y\").addAll(Vars.of(\"z\", \"a\", \"b\")) == Vars.of(\"x\", \"y\", \"z\", \"a\", \"b\")","Vars.of(1, 2, 3, 4, 5).retainAll(1, 0, 3, 5, 42) == Vars.of(1, 3, 5)","Vars.of(1, 2, 3, 4, 5).retainAll(Vars.of(1, 0, 3, 5, 42)) == Vars.of(1, 3, 5)"]}
+        {"kind":"expect","text":"","code":["Vars.of(0.1f, 0.2f, 0.3f).removeAll(0.1f, 0.3f).toList() == [0.2f]","Vars.of(3, 4, 5).removeFirst().toList() == [4, 5]","Vars.of(3, 4, 5).removeLast().toList() == [3, 4]","Vars.of(3, 4, 5).popFirst().get() == 3","Vars.of(3, 4, 5).popLast().get() == 5","Vars.of(1, 2, 3, 4, 5, 6, 7).removeLast(4).toList() == [1, 2, 3]","Vars.of(1, 2, 3, 4, 5, 6, 7).removeFirst(4).toList() == [5, 6, 7]","Vars.of(1, 2, 3, 4, 5, 6, 7).popLast(4).toList() == [4, 5, 6, 7]","Vars.of(1, 2, 3, 4, 5, 6, 7).popFirst(4).toList() == [1, 2, 3, 4]","Vars.of(1, 2, 3, 4, 5, 6, 7).removeAt(2).toList() == [1, 2, 4, 5, 6, 7]","Vars.of(1, 2, 3, 4, 5, 6, 7).popAt(2).get() == 3","Vars.of(1, 2, 3, 4, 5).removeIf({ it.get() % 2 == 0 }).toList() == [1, 3, 5]","Vars.of(1, 2, 3, 4, 5).popIf({ it.get() % 2 == 0 }).toList() == [2, 4]","Vars.of(1, 2, 3, 4, 5).removeIfItem({ it % 2 == 0 }).toList() == [1, 3, 5]","Vars.of(1, 2, 3, 4, 5).popIfItem({ it % 2 == 0 }).toList() == [2, 4]","Vars.of(\"a\", \"b\", \"c\").addAll(\"d\", \"e\", \"f\").toList() == [\"a\", \"b\", \"c\", \"d\", \"e\", \"f\"]","Vars.of(\"x\", \"y\").addAll(Vars.of(\"z\")).toList() == [\"x\", \"y\", \"z\"]","Vars.of(\"x\", \"y\").addAll(Vars.of(\"z\", \"a\", \"b\")).toList() == [\"x\", \"y\", \"z\", \"a\", \"b\"]","Vars.of(1, 2, 3, 4, 5).retainAll(1, 0, 3, 5, 42).toList() == [1, 3, 5]","Vars.of(1, 2, 3, 4, 5).retainAll(Vals.of(1, 0, 3, 5, 42)).toList() == [1, 3, 5]","Vars.of(1, 2, 3, 4, 5).retainAll(Vars.of(1, 0, 3, 5, 42)).toList() == []","Vars.of(1, 2, 3, 4, 5).removeAll(1, 0, 3, 5, 42).toList() == [2, 4]","Vars.of(1, 2, 3, 4, 5).removeAll(Vals.of(1, 0, 3, 5, 42)).toList() == [2, 4]"]},
+
+        {"kind":"and","text":"   \n            Because `Var` and `Vars` are mutable, their equality is modelled in\n            terms of their identity, not their value. Whereas `Val` and `Vals`\n            are immutable, so their equality is modelled in terms of their value.\n        ","code":["Vars.of(1, 2, 3, 4, 5).removeAll(Vars.of(1, 0, 3, 5, 42)).toList() == [1, 2, 3, 4, 5]","Vars.of(\"a\", \"b\", \"c\").remove(Var.of(\"a\")).toList() == [\"a\", \"b\", \"c\"]","Vars.of(\"a\", \"b\", \"c\").remove(\"a\").toList() == [\"b\", \"c\"]","Vars.of(\"a\", \"b\", \"c\").add(Var.of(\"d\")).toList() == [\"a\", \"b\", \"c\", \"d\"]","Vars.of(\"a\", \"b\", \"c\").add(\"d\").toList() == [\"a\", \"b\", \"c\", \"d\"]","Vars.of(1, 2, 3).indexOf(2) == 1","Vars.of(1, 2, 3).indexOf(Var.of(2)) == -1","Vars.of(1, 2, 3).indexOf(Val.of(2)) == 1","Vars.of(1, 2, 3).indexOf(Val.of(2).get()) == 1","Vars.of(1, 2, 3).indexOf(Var.of(2).get()) == 1"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -1464,13 +1466,17 @@
 
         {"kind":"and","text":"The `index` of the change points to the position of the removed property.","code":["change.index() == 1"]},
 
-        {"kind":"when","text":"We remove a property with the `remove` method.","code":["vars.remove(Var.of(\"f\"))"]},
+        {"kind":"when","text":"We remove a property with the `remove` method.","code":["vars.remove(Val.of(\"f\"))"]},
 
         {"kind":"then","text":"The `newValues` should be an empty property list.","code":["change.newValues().isEmpty()"]},
 
         {"kind":"and","text":"The `oldValues` should contain the removed property.","code":["change.oldValues().size() == 1","change.oldValues().at(0).get() == \"f\""]},
 
-        {"kind":"and","text":"The `index` of the change points to the position of the removed property.","code":["change.index() == 2"]}
+        {"kind":"and","text":"The `index` of the change points to the position of the removed property.","code":["change.index() == 2"]},
+
+        {"kind":"when","text":"We reset the change and then try to remove a new mutable property.","code":["change = null","vars.remove(Var.of(\"g\"))"]},
+
+        {"kind":"then","text":"\n            Nothing happens because the property is a mutable identity sensitive property.\n            Whereas a `Val` is a value sensitive property.\n        ","code":["change == null","vars.toList() == [\"c\", \"e\", \"g\"]"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -1489,13 +1495,13 @@
 
         {"kind":"when","text":"We add a empty property.","code":["vars.add(\"x\")"]},
 
-        {"kind":"then","text":"The property list should contain the added property.","code":["vars == Vars.ofNullable(String.class, \"a\", null, \"c\", \"x\")"]},
+        {"kind":"then","text":"The property list should contain the added property.","code":["vars.toList() == [\"a\", null, \"c\", \"x\"]"]},
 
         {"kind":"and","text":"The added property should also be nullable.","code":["vars.at(3).allowsNull()"]},
 
         {"kind":"when","text":"We can set the new added property to `null`.","code":["vars.at(3).set(null)"]},
 
-        {"kind":"then","text":"The added property should now be empty","code":["vars.at(3).isEmpty()","vars == Vars.ofNullable(String.class, \"a\", null, \"c\", null)"]}
+        {"kind":"then","text":"The added property should now be empty","code":["vars.at(3).isEmpty()","vars.toList() == [\"a\", null, \"c\", null]"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -1514,7 +1520,7 @@
 
         {"kind":"when","text":"We add a property.","code":["vars.add(\"y\")"]},
 
-        {"kind":"then","text":"The property list should contain the added property.","code":["vars == Vars.of(\"a\", \"b\", \"x\", \"d\", \"y\")"]},
+        {"kind":"then","text":"The property list should contain the added property.","code":["vars.toList() == [\"a\", \"b\", \"x\", \"d\", \"y\"]"]},
 
         {"kind":"and","text":"The added property should also be not nullable.","code":["!vars.at(4).allowsNull()"]}
       ],
@@ -1533,43 +1539,43 @@
 
         {"kind":"when","text":"We remove a property with the `remove` method.","code":["vars.remove(\"d\")"]},
 
-        {"kind":"then","text":"The property is removed from the property list.","code":["vars == Vars.ofNullable(String.class, \"a\", \"b\", \"c\", null, \"f\", \"g\", \"h\", null, \"j\", \"k\", \"l\", \"m\", \"n\", \"o\", \"p\", \"q\")"]},
+        {"kind":"then","text":"The property is removed from the property list.","code":["vars.toList() == [\"a\", \"b\", \"c\", null, \"f\", \"g\", \"h\", null, \"j\", \"k\", \"l\", \"m\", \"n\", \"o\", \"p\", \"q\"]"]},
 
-        {"kind":"when","text":"We remove a property with the `remove` method.","code":["vars.remove(Var.of(\"m\"))"]},
+        {"kind":"when","text":"We remove a property with the `remove` method.","code":["vars.remove(Val.of(\"m\"))"]},
 
-        {"kind":"then","text":"The property is removed from the property list.","code":["vars == Vars.ofNullable(String.class, \"a\", \"b\", \"c\", null, \"f\", \"g\", \"h\", null, \"j\", \"k\", \"l\", \"n\", \"o\", \"p\", \"q\")"]},
+        {"kind":"then","text":"The property is removed from the property list.","code":["vars.toList() == [\"a\", \"b\", \"c\", null, \"f\", \"g\", \"h\", null, \"j\", \"k\", \"l\", \"n\", \"o\", \"p\", \"q\"]"]},
 
         {"kind":"when","text":"We remove a property with the `removeAt` method.","code":["vars.removeAt(1)"]},
 
-        {"kind":"then","text":"The property is removed from the property list.","code":["vars == Vars.ofNullable(String.class, \"a\", \"c\", null, \"f\", \"g\", \"h\", null, \"j\", \"k\", \"l\", \"n\", \"o\", \"p\", \"q\")"]},
+        {"kind":"then","text":"The property is removed from the property list.","code":["vars.toList() == [\"a\", \"c\", null, \"f\", \"g\", \"h\", null, \"j\", \"k\", \"l\", \"n\", \"o\", \"p\", \"q\"]"]},
 
         {"kind":"when","text":"We remove a property with the `removeFirst` method.","code":["vars.removeFirst()"]},
 
-        {"kind":"then","text":"The property is removed from the property list.","code":["vars == Vars.ofNullable(String.class, \"c\", null, \"f\", \"g\", \"h\", null, \"j\", \"k\", \"l\", \"n\", \"o\", \"p\", \"q\")"]},
+        {"kind":"then","text":"The property is removed from the property list.","code":["vars.toList() == [\"c\", null, \"f\", \"g\", \"h\", null, \"j\", \"k\", \"l\", \"n\", \"o\", \"p\", \"q\"]"]},
 
         {"kind":"when","text":"We remove a property with the `removeLast` method.","code":["vars.removeLast()"]},
 
-        {"kind":"then","text":"The property is removed from the property list.","code":["vars == Vars.ofNullable(String.class, \"c\", null, \"f\", \"g\", \"h\", null, \"j\", \"k\", \"l\", \"n\", \"o\", \"p\")"]},
+        {"kind":"then","text":"The property is removed from the property list.","code":["vars.toList() == [\"c\", null, \"f\", \"g\", \"h\", null, \"j\", \"k\", \"l\", \"n\", \"o\", \"p\"]"]},
 
         {"kind":"when","text":"We remove multiple properties with the `removeAll` method.","code":["vars.removeAll(\"d\", \"c\", \"f\")"]},
 
-        {"kind":"then","text":"The properties are removed from the property list.","code":["vars == Vars.ofNullable(String.class, null, \"g\", \"h\", null, \"j\", \"k\", \"l\", \"n\", \"o\", \"p\")"]},
+        {"kind":"then","text":"The properties are removed from the property list.","code":["vars.toList() == [null, \"g\", \"h\", null, \"j\", \"k\", \"l\", \"n\", \"o\", \"p\"]"]},
 
         {"kind":"when","text":"We remove multiple properties with the `removeFirst` method.","code":["vars.removeFirst(2)"]},
 
-        {"kind":"then","text":"The properties are removed from the property list.","code":["vars == Vars.ofNullable(String.class, \"h\", null, \"j\", \"k\", \"l\", \"n\", \"o\", \"p\")"]},
+        {"kind":"then","text":"The properties are removed from the property list.","code":["vars.toList() == [\"h\", null, \"j\", \"k\", \"l\", \"n\", \"o\", \"p\"]"]},
 
         {"kind":"when","text":"We remove multiple properties with the `removeLast` method.","code":["vars.removeLast(2)"]},
 
-        {"kind":"then","text":"The properties are removed from the property list.","code":["vars == Vars.ofNullable(String.class, \"h\", null, \"j\", \"k\", \"l\", \"n\")"]},
+        {"kind":"then","text":"The properties are removed from the property list.","code":["vars.toList() == [\"h\", null, \"j\", \"k\", \"l\", \"n\"]"]},
 
         {"kind":"when","text":"We remove multiple properties with the `removeRange` method.","code":["vars.removeRange(1, 3)"]},
 
-        {"kind":"then","text":"The properties are removed from the property list.","code":["vars == Vars.ofNullable(String.class, \"h\", \"k\", \"l\", \"n\")"]},
+        {"kind":"then","text":"The properties are removed from the property list.","code":["vars.toList() == [\"h\", \"k\", \"l\", \"n\"]"]},
 
         {"kind":"when","text":"We remove multiple properties with the `removeAt` method.","code":["vars.removeAt(1, 2)"]},
 
-        {"kind":"then","text":"The properties are removed from the property list.","code":["vars == Vars.ofNullable(String.class, \"h\", \"n\")"]}
+        {"kind":"then","text":"The properties are removed from the property list.","code":["vars.toList() == [\"h\", \"n\"]"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -1586,19 +1592,19 @@
 
         {"kind":"when","text":"We remove an empty (`null`) property with the `remove` method.","code":["vars.remove((String) null)"]},
 
-        {"kind":"then","text":"The `null` property is removed from the property list.","code":["vars == Vars.ofNullable(String.class, \"a\", \"b\", \"c\", \"d\", null, \"g\", \"h\", null, \"j\", \"k\", null, \"m\", null, \"o\")"]},
+        {"kind":"then","text":"The `null` property is removed from the property list.","code":["vars.toList() == [\"a\", \"b\", \"c\", \"d\", null, \"g\", \"h\", null, \"j\", \"k\", null, \"m\", null, \"o\"]"]},
 
-        {"kind":"when","text":"We remove an empty (`null`) property with the `remove` method.","code":["vars.remove(Var.ofNullable(String.class, null))"]},
+        {"kind":"when","text":"We remove an empty (`null`) property with the `remove` method.","code":["vars.remove(Val.ofNullable(String.class, null))"]},
 
-        {"kind":"then","text":"The `null` property is removed from the property list.","code":["vars == Vars.ofNullable(String.class, \"a\", \"b\", \"c\", \"d\", \"g\", \"h\", null, \"j\", \"k\", null, \"m\", null, \"o\")"]},
+        {"kind":"then","text":"The `null` property is removed from the property list.","code":["vars.toList() == [\"a\", \"b\", \"c\", \"d\", \"g\", \"h\", null, \"j\", \"k\", null, \"m\", null, \"o\"]"]},
 
         {"kind":"when","text":"We remove an empty (`null`) property with the `removeAt` method.","code":["vars.removeAt(9)"]},
 
-        {"kind":"then","text":"The `null` property is removed from the property list.","code":["vars == Vars.ofNullable(String.class, \"a\", \"b\", \"c\", \"d\", \"g\", \"h\", null, \"j\", \"k\", \"m\", null, \"o\")"]},
+        {"kind":"then","text":"The `null` property is removed from the property list.","code":["vars.toList() == [\"a\", \"b\", \"c\", \"d\", \"g\", \"h\", null, \"j\", \"k\", \"m\", null, \"o\"]"]},
 
         {"kind":"when","text":"We remove a list of properties including a `null` property with the `removeAll` method.","code":["vars.removeAll(null, \"c\", \"d\", \"j\")"]},
 
-        {"kind":"then","text":"The `null` property is removed from the property list.","code":["vars == Vars.ofNullable(String.class, \"a\", \"b\", \"g\", \"h\", \"k\", \"m\", \"o\")"]}
+        {"kind":"then","text":"The `null` property is removed from the property list.","code":["vars.toList() == [\"a\", \"b\", \"g\", \"h\", \"k\", \"m\", \"o\"]"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -1615,27 +1621,27 @@
 
         {"kind":"when","text":"We add a value with the `add` method.","code":["vars.add(\"d\")"]},
 
-        {"kind":"then","text":"The property is added to the property list.","code":["vars == Vars.ofNullable(String.class, \"a\", null, \"c\", \"d\")"]},
+        {"kind":"then","text":"The property is added to the property list.","code":["vars.toList() == [\"a\", null, \"c\", \"d\"]"]},
 
         {"kind":"when","text":"We add a `null` value with the `add` method.","code":["vars.add(null)"]},
 
-        {"kind":"then","text":"The property is added to the property list.","code":["vars == Vars.ofNullable(String.class, \"a\", null, \"c\", \"d\", null)"]},
+        {"kind":"then","text":"The property is added to the property list.","code":["vars.toList() == [\"a\", null, \"c\", \"d\", null]"]},
 
         {"kind":"when","text":"We add a nullable property with the `add` method.","code":["vars.add(Var.ofNullable(String.class, \"f\"))"]},
 
-        {"kind":"then","text":"The property is added to the property list.","code":["vars == Vars.ofNullable(String.class, \"a\", null, \"c\", \"d\", null, \"f\")"]},
+        {"kind":"then","text":"The property exists in the property list.","code":["vars.toList() == [\"a\", null, \"c\", \"d\", null, \"f\"]"]},
 
         {"kind":"when","text":"We add a null property with the `add` method.","code":["vars.add(Var.ofNull(String.class))"]},
 
-        {"kind":"then","text":"The property is added to the property list.","code":["vars == Vars.ofNullable(String.class, \"a\", null, \"c\", \"d\", null, \"f\", null)"]},
+        {"kind":"then","text":"The null property exists in the property list.","code":["vars.toList() == [\"a\", null, \"c\", \"d\", null, \"f\", null]"]},
 
         {"kind":"when","text":"We add multiple values with the `addAll` method.","code":["vars.addAll(\"h1\", \"h2\", null)"]},
 
-        {"kind":"then","text":"The properties are added to the property list.","code":["vars == Vars.ofNullable(String.class, \"a\", null, \"c\", \"d\", null, \"f\", null, \"h1\", \"h2\", null)"]},
+        {"kind":"then","text":"The properties are added to the property list.","code":["vars.toList() == [\"a\", null, \"c\", \"d\", null, \"f\", null, \"h1\", \"h2\", null]"]},
 
         {"kind":"when","text":"We add a \"Vars\" list with the `addAll` method.","code":["vars.addAll(Vars.ofNullable(String.class, null, \"i1\", \"i2\"))"]},
 
-        {"kind":"then","text":"The properties are added to the property list.","code":["vars == Vars.ofNullable(String.class, \"a\", null, \"c\", \"d\", null, \"f\", null, \"h1\", \"h2\", null, null, \"i1\", \"i2\")"]}
+        {"kind":"then","text":"The properties are added to the property list.","code":["vars.toList() == [\"a\", null, \"c\", \"d\", null, \"f\", null, \"h1\", \"h2\", null, null, \"i1\", \"i2\"]"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -1707,7 +1713,7 @@
 
         {"kind":"and","text":"The `vals` should not contain the removed properties","code":["change.vals() == Vals.of(\"a\", \"d\", \"e\", \"h\", \"i\", \"j\", \"k\", \"l\", \"m\", \"n\", \"o\", \"k\", \"p\", \"h\", \"l\", \"m\", \"n\", \"p\")"]},
 
-        {"kind":"when","text":"We remove a property list from the list with the `removeAll` method.","code":["vars.removeAll(Vars.of(\"h\", \"i\", \"j\"))"]},
+        {"kind":"when","text":"We remove a property list from the list with the `removeAll` method.","code":["vars.removeAll(Vals.of(\"h\", \"i\", \"j\"))"]},
 
         {"kind":"then","text":"The `oldValues` of the change delegate should be a property list with the removed properties.","code":["change.oldValues().size() == 4","change.oldValues() == Vals.of(\"h\", \"i\", \"j\", \"h\")"]},
 
@@ -1780,7 +1786,7 @@
 
         {"kind":"and","text":"The `index` of the change is the index of the first property removed.","code":["change.index() == 0"]},
 
-        {"kind":"and","text":"The `vals` should not contain the removed properties","code":["change.vals() == Vars.of(\"e\", \"f\", \"g\", \"h\", \"i\", \"j\", \"k\", \"l\", \"m\", \"n\", \"o\", \"p\", \"q\", \"r\", \"s\", \"t\", \"u\", \"v\", \"w\", \"x\", \"y\", \"z\")"]},
+        {"kind":"and","text":"The `vals` should not contain the removed properties","code":["change.vals() == Vals.of(\"e\", \"f\", \"g\", \"h\", \"i\", \"j\", \"k\", \"l\", \"m\", \"n\", \"o\", \"p\", \"q\", \"r\", \"s\", \"t\", \"u\", \"v\", \"w\", \"x\", \"y\", \"z\")"]},
 
         {"kind":"when","text":"We remove a sequence of values from the list with the `removeLast` method.","code":["vars.removeLast(4)"]},
 
@@ -1790,7 +1796,7 @@
 
         {"kind":"and","text":"The `index` of the change is the index of the first property removed.","code":["change.index() == 18"]},
 
-        {"kind":"and","text":"The `vals` should not contain the removed properties","code":["change.vals() == Vars.of(\"e\", \"f\", \"g\", \"h\", \"i\", \"j\", \"k\", \"l\", \"m\", \"n\", \"o\", \"p\", \"q\", \"r\", \"s\", \"t\", \"u\", \"v\")"]},
+        {"kind":"and","text":"The `vals` should not contain the removed properties","code":["change.vals() == Vals.of(\"e\", \"f\", \"g\", \"h\", \"i\", \"j\", \"k\", \"l\", \"m\", \"n\", \"o\", \"p\", \"q\", \"r\", \"s\", \"t\", \"u\", \"v\")"]},
 
         {"kind":"when","text":"We remove a range of values from the list with the `removeRange` method.","code":["vars.removeRange(1, 3)"]},
 
@@ -1800,7 +1806,7 @@
 
         {"kind":"and","text":"The `index` of the change is the index of the first property removed.","code":["change.index() == 1"]},
 
-        {"kind":"and","text":"The `vals` should not contain the removed properties","code":["change.vals() == Vars.of(\"e\", \"h\", \"i\", \"j\", \"k\", \"l\", \"m\", \"n\", \"o\", \"p\", \"q\", \"r\", \"s\", \"t\", \"u\", \"v\")"]},
+        {"kind":"and","text":"The `vals` should not contain the removed properties","code":["change.vals() == Vals.of(\"e\", \"h\", \"i\", \"j\", \"k\", \"l\", \"m\", \"n\", \"o\", \"p\", \"q\", \"r\", \"s\", \"t\", \"u\", \"v\")"]},
 
         {"kind":"when","text":"We remove a sequence of values from the list with the `removeAt` method.","code":["vars.removeAt(2, 2)"]},
 
@@ -1810,7 +1816,7 @@
 
         {"kind":"and","text":"The `index` of the change is the index of the first property removed.","code":["change.index() == 2"]},
 
-        {"kind":"and","text":"The `vals` should not contain the removed properties","code":["change.vals() == Vars.of(\"e\", \"h\", \"k\", \"l\", \"m\", \"n\", \"o\", \"p\", \"q\", \"r\", \"s\", \"t\", \"u\", \"v\")"]},
+        {"kind":"and","text":"The `vals` should not contain the removed properties","code":["change.vals() == Vals.of(\"e\", \"h\", \"k\", \"l\", \"m\", \"n\", \"o\", \"p\", \"q\", \"r\", \"s\", \"t\", \"u\", \"v\")"]},
 
         {"kind":"when","text":"We remove a sequence of values from the list with the `popFirst` method.","code":["vars.popFirst(3)"]},
 
@@ -1820,7 +1826,7 @@
 
         {"kind":"and","text":"The `index` of the change is the index of the first property removed.","code":["change.index() == 0"]},
 
-        {"kind":"and","text":"The `vals` should not contain the removed properties","code":["change.vals() == Vars.of(\"l\", \"m\", \"n\", \"o\", \"p\", \"q\", \"r\", \"s\", \"t\", \"u\", \"v\")"]},
+        {"kind":"and","text":"The `vals` should not contain the removed properties","code":["change.vals() == Vals.of(\"l\", \"m\", \"n\", \"o\", \"p\", \"q\", \"r\", \"s\", \"t\", \"u\", \"v\")"]},
 
         {"kind":"when","text":"We remove a sequence of values from the list with the `popLast` method.","code":["vars.popLast(4)"]},
 
@@ -1830,7 +1836,7 @@
 
         {"kind":"and","text":"The `index` of the change is the index of the first property removed.","code":["change.index() == 7"]},
 
-        {"kind":"and","text":"The `vals` should not contain the removed properties","code":["change.vals() == Vars.of(\"l\", \"m\", \"n\", \"o\", \"p\", \"q\", \"r\")"]},
+        {"kind":"and","text":"The `vals` should not contain the removed properties","code":["change.vals() == Vals.of(\"l\", \"m\", \"n\", \"o\", \"p\", \"q\", \"r\")"]},
 
         {"kind":"when","text":"We remove a sequence of values from the list with the `popRange` method.","code":["vars.popRange(2, 5)"]},
 
@@ -1840,7 +1846,7 @@
 
         {"kind":"and","text":"The `index` of the change is the index of the first property removed.","code":["change.index() == 2"]},
 
-        {"kind":"and","text":"The `vals` should not contain the removed properties","code":["change.vals() == Vars.of(\"l\", \"m\", \"q\", \"r\")"]}
+        {"kind":"and","text":"The `vals` should not contain the removed properties","code":["change.vals() == Vals.of(\"l\", \"m\", \"q\", \"r\")"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -1892,7 +1898,7 @@
 
         {"kind":"and","text":"We register a listener that will record the last change for us.","code":["var change = null","vars.onChange({ change = it })"]},
 
-        {"kind":"when","text":"We use the `retainAll` method to remove all properties from the list that are not contained in a given list of properties.","code":["vars.retainAll(Vars.of(\"d\", \"c\", \"f\", \"g\", \"h\", \"i\", \"j\", \"x\"))"]},
+        {"kind":"when","text":"We use the `retainAll` method to remove all properties from the list that are not contained in a given list of properties.","code":["vars.retainAll(Vals.of(\"d\", \"c\", \"f\", \"g\", \"h\", \"i\", \"j\", \"x\"))"]},
 
         {"kind":"then","text":"The `oldValues` of the change delegate should be a property list with the removed properties.","code":["change.oldValues().size() == 5","change.oldValues() == Vals.of(\"a\", \"b\", \"e\", \"a\", \"b\")"]},
 
@@ -1900,7 +1906,7 @@
 
         {"kind":"and","text":"The `index` of the change is `-1`.","code":["change.index() == -1"]},
 
-        {"kind":"and","text":"The `vals` should only contained the retained properties.","code":["change.vals() == Vars.of(\"c\", \"d\", \"f\", \"g\", \"h\", \"i\", \"j\", \"c\", \"d\")"]},
+        {"kind":"and","text":"The `vals` should only contained the retained properties.","code":["change.vals() == Vals.of(\"c\", \"d\", \"f\", \"g\", \"h\", \"i\", \"j\", \"c\", \"d\")"]},
 
         {"kind":"when","text":"We use the `retainAll` method to remove all properties from the list that are not contained in a given list of values.","code":["vars.retainAll(\"a\", \"g\", \"h\", \"i\", \"j\")"]},
 
@@ -1910,7 +1916,7 @@
 
         {"kind":"and","text":"The `index` of the change is `-1`.","code":["change.index() == -1"]},
 
-        {"kind":"and","text":"The `vals` should only contained the retained properties.","code":["change.vals() == Vars.of(\"g\", \"h\", \"i\", \"j\")"]},
+        {"kind":"and","text":"The `vals` should only contained the retained properties.","code":["change.vals() == Vals.of(\"g\", \"h\", \"i\", \"j\")"]},
 
         {"kind":"when","text":"When the `retainAll` method is used and no property is removed.","code":["change = null","vars.retainAll(\"a\", \"g\", \"h\", \"i\", \"j\")"]},
 
@@ -1941,7 +1947,7 @@
 
         {"kind":"and","text":"We register a listener that will record the last change for us.","code":["var change = null","vars1.onChange({ change = it })","vars2.onChange({ change = it })"]},
 
-        {"kind":"when","text":"We use the `retainAll` method to remove all properties from the list that are not contained in a given list of properties.","code":["vars1.retainAll(Vars.ofNullable(String.class, \"b\", \"d\", \"g\", \"h\", \"i\", \"j\"))"]},
+        {"kind":"when","text":"We use the `retainAll` method to remove all properties from the list that are not contained in a given list of properties.","code":["vars1.retainAll(Vals.ofNullable(String.class, \"b\", \"d\", \"g\", \"h\", \"i\", \"j\"))"]},
 
         {"kind":"then","text":"The `oldValues` of the change delegate should be a property list with the removed properties.","code":["change.oldValues().size() == 6","change.oldValues() == Vals.ofNullable(String.class, \"a\", null, null, null, \"a\", \"c\")"]},
 
@@ -1949,9 +1955,9 @@
 
         {"kind":"and","text":"The `index` of the change is `-1`.","code":["change.index() == -1"]},
 
-        {"kind":"and","text":"The `vals` should only contained the retained properties.","code":["change.vals() == Vars.ofNullable(String.class, \"b\", \"d\", \"g\", \"h\", \"i\", \"j\", \"b\", \"d\")"]},
+        {"kind":"and","text":"The `vals` should only contained the retained properties.","code":["change.vals() == Vals.ofNullable(String.class, \"b\", \"d\", \"g\", \"h\", \"i\", \"j\", \"b\", \"d\")"]},
 
-        {"kind":"when","text":"We use the `retainAll` method to remove all properties from the list that are not contained in a given list of properties.","code":["vars2.retainAll(Vars.ofNullable(String.class, null, \"a\", \"b\", \"d\"))"]},
+        {"kind":"when","text":"We use the `retainAll` method to remove all properties from the list that are not contained in a given list of properties.","code":["vars2.retainAll(Vals.ofNullable(String.class, null, \"a\", \"b\", \"d\"))"]},
 
         {"kind":"then","text":"The `oldValues` of the change delegate should be a property list with the removed properties.","code":["change.oldValues().size() == 5","change.oldValues() == Vals.ofNullable(String.class, \"g\", \"h\", \"i\", \"j\", \"c\")"]},
 
@@ -1959,7 +1965,7 @@
 
         {"kind":"and","text":"The `index` of the change is `-1`.","code":["change.index() == -1"]},
 
-        {"kind":"and","text":"The `vals` should only contained the retained properties.","code":["change.vals() == Vars.ofNullable(String.class, \"a\", \"b\", null, \"d\", null, null, \"a\", \"b\", \"d\")"]}
+        {"kind":"and","text":"The `vals` should only contained the retained properties.","code":["change.vals() == Vals.ofNullable(String.class, \"a\", \"b\", null, \"d\", null, null, \"a\", \"b\", \"d\")"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -1984,7 +1990,7 @@
 
         {"kind":"and","text":"The `index` of the change is `2`.","code":["change.index() == 2"]},
 
-        {"kind":"and","text":"The `vals` should contain the expected properties.","code":["change.vals() == Vars.of(\"a\", \"b\", \"x\", \"x\", \"x\", \"f\", \"g\", \"h\", \"i\", \"j\")"]},
+        {"kind":"and","text":"The `vals` should contain the expected properties.","code":["change.vals() == Vals.of(\"a\", \"b\", \"x\", \"x\", \"x\", \"f\", \"g\", \"h\", \"i\", \"j\")"]},
 
         {"kind":"when","text":"We use the `setRange` method to set all properties within the given range to the given property.","code":["vars.setRange(4, 8, Var.of(\"z\"))"]},
 
@@ -1994,7 +2000,7 @@
 
         {"kind":"and","text":"The `index` of the change is `4`.","code":["change.index() == 4"]},
 
-        {"kind":"and","text":"The `vals` should contain the expected properties.","code":["change.vals() == Vars.of(\"a\", \"b\", \"x\", \"x\", \"z\", \"z\", \"z\", \"z\", \"i\", \"j\")"]}
+        {"kind":"and","text":"The `vals` should contain the expected properties.","code":["change.vals() == Vals.of(\"a\", \"b\", \"x\", \"x\", \"z\", \"z\", \"z\", \"z\", \"i\", \"j\")"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -2019,7 +2025,7 @@
 
         {"kind":"and","text":"The `index` of the change is `2`.","code":["change.index() == 2"]},
 
-        {"kind":"and","text":"The `vals` should contain the expected properties.","code":["change.vals() == Vars.of(\"a\", \"b\", \"x\", \"x\", \"x\", \"f\", \"g\", \"h\", \"i\", \"j\")"]},
+        {"kind":"and","text":"The `vals` should contain the expected properties.","code":["change.vals() == Vals.of(\"a\", \"b\", \"x\", \"x\", \"x\", \"f\", \"g\", \"h\", \"i\", \"j\")"]},
 
         {"kind":"when","text":"We use the `setAt` method to set all properties within the given sequence to the given property.","code":["vars.setAt(4, 4, Var.of(\"z\"))"]},
 
@@ -2029,7 +2035,7 @@
 
         {"kind":"and","text":"The `index` of the change is `4`.","code":["change.index() == 4"]},
 
-        {"kind":"and","text":"The `vals` should contain the expected properties.","code":["change.vals() == Vars.of(\"a\", \"b\", \"x\", \"x\", \"z\", \"z\", \"z\", \"z\", \"i\", \"j\")"]}
+        {"kind":"and","text":"The `vals` should contain the expected properties.","code":["change.vals() == Vals.of(\"a\", \"b\", \"x\", \"x\", \"z\", \"z\", \"z\", \"z\", \"i\", \"j\")"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -2054,7 +2060,7 @@
 
         {"kind":"and","text":"The `index` of the change is `2`.","code":["change.index() == 2"]},
 
-        {"kind":"and","text":"The `vals` should contain the expected properties.","code":["change.vals() == Vars.ofNullable(String.class, \"a\", \"b\", null, null, null, null, \"g\", \"h\", \"i\", \"j\")"]},
+        {"kind":"and","text":"The `vals` should contain the expected properties.","code":["change.vals() == Vals.ofNullable(String.class, \"a\", \"b\", null, null, null, null, \"g\", \"h\", \"i\", \"j\")"]},
 
         {"kind":"when","text":"We use the `setRange` method to set all properties within the given range to the given property.","code":["vars.setRange(5, 9, Var.ofNull(String.class))"]},
 
@@ -2064,7 +2070,7 @@
 
         {"kind":"and","text":"The `index` of the change is `4`.","code":["change.index() == 5"]},
 
-        {"kind":"and","text":"The `vals` should contain the expected properties.","code":["change.vals() == Vars.ofNullable(String.class, \"a\", \"b\", null, null, null, null, null, null, null, \"j\")"]}
+        {"kind":"and","text":"The `vals` should contain the expected properties.","code":["change.vals() == Vals.ofNullable(String.class, \"a\", \"b\", null, null, null, null, null, null, null, \"j\")"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -2089,7 +2095,7 @@
 
         {"kind":"and","text":"The `index` of the change is `2`.","code":["change.index() == 2"]},
 
-        {"kind":"and","text":"The `vals` should contain the expected properties.","code":["change.vals() == Vars.ofNullable(String.class, \"a\", \"b\", null, null, null, null, \"g\", \"h\", \"i\", \"j\")"]},
+        {"kind":"and","text":"The `vals` should contain the expected properties.","code":["change.vals() == Vals.ofNullable(String.class, \"a\", \"b\", null, null, null, null, \"g\", \"h\", \"i\", \"j\")"]},
 
         {"kind":"when","text":"We use the `setAt` method to set all properties within the given sequence to the given property.","code":["vars.setAt(5, 4, Var.ofNull(String.class))"]},
 
@@ -2099,7 +2105,7 @@
 
         {"kind":"and","text":"The `index` of the change is `4`.","code":["change.index() == 5"]},
 
-        {"kind":"and","text":"The `vals` should contain the expected properties.","code":["change.vals() == Vars.ofNullable(String.class, \"a\", \"b\", null, null, null, null, null, null, null, \"j\")"]}
+        {"kind":"and","text":"The `vals` should contain the expected properties.","code":["change.vals() == Vals.ofNullable(String.class, \"a\", \"b\", null, null, null, null, null, null, null, \"j\")"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -2116,7 +2122,7 @@
 
         {"kind":"when","text":"Map all non-nullable properties using a mapper function.","code":["var vars2 = vars.mapTo(String.class, i -> \"n:\" + i)"]},
 
-        {"kind":"then","text":"The resulting list contains the mapped properties.","code":["vars2 == Vars.ofNullable(String.class, \"n:0\", \"n:1\", \"n:2\", \"n:3\", null, \"n:5\")"]}
+        {"kind":"then","text":"The resulting list contains the mapped properties.","code":["vars2.toList() == [\"n:0\", \"n:1\", \"n:2\", \"n:3\", null, \"n:5\"]"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -2133,13 +2139,120 @@
 
         {"kind":"when","text":"Create copies of the current \"Vars\" instances using the `toVars` method.","code":["var copy = vars.toVals()","var copyNullable = varsNullable.toVals()"]},
 
-        {"kind":"then","text":"The resulting lists should be equal to the original lists.","code":["copy == vars","copy == Vars.of( 0, 1, 2, 3, 4, 5)","copyNullable == varsNullable","copyNullable == Vars.ofNullable(Integer.class, 0, 1, 2, 3, null, 5)"]},
+        {"kind":"then","text":"The resulting lists should be equal to the original lists.","code":["copy.toList() == vars.toList()","copy.toList() == [ 0, 1, 2, 3, 4, 5]","copyNullable.toList() == varsNullable.toList()","copyNullable.toList() == [0, 1, 2, 3, null, 5]"]},
 
         {"kind":"and","text":"Also the nullability of the copied lists is equal to the original lists.","code":["copy.allowsNull() == vars.allowsNull()","copyNullable.allowsNull() == varsNullable.allowsNull()"]},
 
         {"kind":"when","text":"We can modify the underlying list.","code":["vars.at(1).set(6)","vars.add(42)","varsNullable.at(1).set(null)","varsNullable.add(42)"]},
 
-        {"kind":"then","text":"Changes are not applied to copied lists, and the lists remain unchanged.","code":["copy == Vars.of(0, 1, 2, 3, 4, 5)","copy != vars","copyNullable == Vars.ofNullable(Integer.class, 0, 1, 2, 3, null, 5)","copyNullable != varsNullable"]}
+        {"kind":"then","text":"Changes are not applied to copied lists, and the lists remain unchanged.","code":["copy.toList() == [0, 1, 2, 3, 4, 5]","copy != vars","copyNullable.toList() == [0, 1, 2, 3, null, 5]","copyNullable.toList() != varsNullable.toList()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Immutable property lists are considered equal if their values are equal.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The equality of two property lists is determined by the equality of their values,\n            if and only if the lists are immutable.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create a hand full of different types of property lists:","code":["var vals1 = Vals.of(1, 2, 3, 4, 5)","var vals2 = Vals.of(1, 2, 3, 4, 5)","var vars1 = Vars.of(1, 2, 3, 4, 5)","var vars2 = Vars.of(1, 2, 3, 4, 5)"]},
+
+        {"kind":"expect","text":"The immutable property lists are equal because their values are equal.","code":["vals1 == vals2","vals1.hashCode() == vals2.hashCode()"]},
+
+        {"kind":"and","text":"The mutable property lists on the other hand are not equal.","code":["vars1 != vars2","vars1.hashCode() != vars2.hashCode()"]},
+
+        {"kind":"and","text":"The mutable and immutable property lists are also never equal.","code":["vals1 != vars1","vals1.hashCode() != vars1.hashCode()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A nullable property list does not accept non-nullable properties.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A nullable (and mutable) property list does not accept non-nullable properties.\n            Which is to say that when you try to add a non-nullable property to a nullable property list,\n            then the property list will throw an exception.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A nullable and mutable property list.","code":["var properties = Vars.ofNullable(String.class)"]},
+
+        {"kind":"when","text":"We implicitly add a property through a simple item.","code":["properties.add(\"Should work!\")"]},
+
+        {"kind":"then","text":"No exception is thrown and the property is added.","code":["noExceptionThrown()","properties.toList() == [\"Should work!\"]"]},
+
+        {"kind":"when","text":"We explicitly add a nullable property through a simple item.","code":["properties.add(Var.ofNullable(String.class, \"Should also work!\"))"]},
+
+        {"kind":"then","text":"Again, no exception is thrown and the property is added.","code":["noExceptionThrown()"]},
+
+        {"kind":"and","text":"The property list has the expected values.","code":["properties.toList() == [\"Should work!\", \"Should also work!\"]"]},
+
+        {"kind":"when","text":"We now try to add a non-nullable property through a simple item.","code":["properties.add(Var.of(\"This will not work!\"))"]},
+
+        {"kind":"then","text":"An exception is thrown because the property list does not accept non-nullable properties.","code":["thrown(IllegalArgumentException)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A non-nullable property list does not accept nullable properties.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A non-nullable (and mutable) property list does not accept nullable properties.\n            Which is to say that when you try to add a nullable property to a non-nullable property list,\n            then the property list will throw an exception.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A non-nullable and mutable property list.","code":["var properties = Vars.of(String.class)"]},
+
+        {"kind":"when","text":"We implicitly add a property through a simple item.","code":["properties.add(\"Should work!\")"]},
+
+        {"kind":"then","text":"No exception is thrown and the property is added.","code":["noExceptionThrown()","properties.toList() == [\"Should work!\"]"]},
+
+        {"kind":"when","text":"We explicitly add a non-nullable property through a simple item.","code":["properties.add(Var.of(\"Should also work!\"))"]},
+
+        {"kind":"then","text":"Again, no exception is thrown and the property is added.","code":["noExceptionThrown()"]},
+
+        {"kind":"and","text":"The property list has the expected values.","code":["properties.toList() == [\"Should work!\", \"Should also work!\"]"]},
+
+        {"kind":"when","text":"We now try to add a nullable property through a simple item.","code":["properties.add(Var.ofNullable(String.class, \"This will not work!\"))"]},
+
+        {"kind":"then","text":"An exception is thrown because the property list does not accept nullable properties.","code":["thrown(IllegalArgumentException)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You cannot construct a non-nullable property list from nullable properties.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            You cannot construct a non-nullable property list from a nullable property list.\n            Which is to say that when you try to call the `of` method on the `Vars` class with \n            set of nullable properties, then the property list will throw an exception.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create a hand of properties, one of which is nullable.","code":["var property1 = Var.of(\"Never Null\")","var property2 = Var.ofNullable(String.class, \"Maybe Null\")"]},
+
+        {"kind":"when","text":"We try to construct a non-nullable property list from the properties.","code":["Vars.of(property1, property2)"]},
+
+        {"kind":"then","text":"An exception is thrown because the property list does not accept nullable properties.","code":["thrown(IllegalArgumentException)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You cannot construct a nullable property list from non-nullable properties.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            You cannot construct a nullable property list from a non-nullable property list.\n            Which is to say that when you try to call the `ofNullable` method on the `Vars` class with \n            set of non-nullable properties, then the property list will throw an exception.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create a hand of properties, all of which are non-nullable.","code":["var property1 = Var.ofNullable(String.class, \"Maybe Null\")","var property2 = Var.of(\"Always Not Null\")"]},
+
+        {"kind":"when","text":"We try to construct a nullable property list from the properties.","code":["Vars.ofNullable(String.class, property1, property2)"]},
+
+        {"kind":"then","text":"An exception is thrown because the property list does not accept non-nullable properties.","code":["thrown(IllegalArgumentException)"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }

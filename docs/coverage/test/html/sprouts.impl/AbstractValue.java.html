@@ -82,26 +82,34 @@ abstract class AbstractValue&lt;T extends @Nullable Object&gt; implements Val&lt
 <span class="fc" id="L82">        return &quot;Val&quot;;</span>
     }
 
+    protected abstract boolean _isImmutable();
+
     @Override
     public final boolean equals( Object obj ) {
-<span class="pc bpc" id="L87" title="1 of 2 branches missed.">        if ( obj == null ) return false;</span>
-<span class="pc bpc" id="L88" title="1 of 2 branches missed.">        if ( obj == this ) return true;</span>
-<span class="pc bpc" id="L89" title="1 of 2 branches missed.">        if ( obj instanceof Val ) {</span>
-<span class="fc" id="L90">            Val&lt;?&gt; other = (Val&lt;?&gt;) obj;</span>
-<span class="fc bfc" id="L91" title="All 2 branches covered.">            if ( other.type() != _type) return false;</span>
-<span class="pc bpc" id="L92" title="1 of 4 branches missed.">            if ( other.orElseNull() == null ) return _value == null;</span>
-<span class="fc" id="L93">            return Val.equals( other.orElseThrow(), _value); // Arrays are compared with Arrays.equals</span>
+<span class="pc bpc" id="L89" title="1 of 2 branches missed.">        if ( obj == null ) return false;</span>
+<span class="fc bfc" id="L90" title="All 2 branches covered.">        if ( obj == this ) return true;</span>
+<span class="fc bfc" id="L91" title="All 2 branches covered.">        if ( !_isImmutable() ) {</span>
+<span class="fc" id="L92">            return false;</span>
         }
-<span class="nc" id="L95">        return false;</span>
+<span class="pc bpc" id="L94" title="1 of 2 branches missed.">        if ( obj instanceof Val ) {</span>
+<span class="fc" id="L95">            Val&lt;?&gt; other = (Val&lt;?&gt;) obj;</span>
+<span class="fc bfc" id="L96" title="All 2 branches covered.">            if ( other.type() != _type) return false;</span>
+<span class="pc bpc" id="L97" title="1 of 4 branches missed.">            if ( other.orElseNull() == null ) return _value == null;</span>
+<span class="fc" id="L98">            return Val.equals( other.orElseThrow(), _value); // Arrays are compared with Arrays.equals</span>
+        }
+<span class="nc" id="L100">        return false;</span>
     }
 
     @Override
     public final int hashCode() {
-<span class="fc" id="L100">        int hash = 7;</span>
-<span class="fc bfc" id="L101" title="All 2 branches covered.">        hash = 31 * hash + ( _value == null ? 0 : Val.hashCode(_value) );</span>
-<span class="pc bpc" id="L102" title="1 of 2 branches missed.">        hash = 31 * hash + ( _type  == null ? 0 : _type.hashCode()     );</span>
-<span class="pc bpc" id="L103" title="1 of 2 branches missed.">        hash = 31 * hash + ( _id    == null ? 0 : _id.hashCode()       );</span>
-<span class="fc" id="L104">        return hash;</span>
+<span class="fc bfc" id="L105" title="All 2 branches covered.">        if ( !_isImmutable() ) {</span>
+<span class="fc" id="L106">            return System.identityHashCode(this);</span>
+        }
+<span class="fc" id="L108">        int hash = 7;</span>
+<span class="fc bfc" id="L109" title="All 2 branches covered.">        hash = 31 * hash + ( _value == null ? 0 : Val.hashCode(_value) );</span>
+<span class="pc bpc" id="L110" title="1 of 2 branches missed.">        hash = 31 * hash + ( _type  == null ? 0 : _type.hashCode()     );</span>
+<span class="pc bpc" id="L111" title="1 of 2 branches missed.">        hash = 31 * hash + ( _id    == null ? 0 : _id.hashCode()       );</span>
+<span class="fc" id="L112">        return hash;</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>
