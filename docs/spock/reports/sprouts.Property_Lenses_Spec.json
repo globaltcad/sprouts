@@ -1,0 +1,323 @@
+{
+  "className":"sprouts.Property_Lenses_Spec",
+  "title":"Property Lenses",
+  "narrative":"The Sprouts Property Lens is based on the Lens design pattern.\n    The Lens design pattern is a functional programming \n    technique used to simplify the process of accessing and updating parts of \n    a nested (immutable) data structures into a new instance of the data structure.\n\n    A Lens is essentially a pair of functions: \n    one to get a value from a specific part of a data structure (like a record), \n    and another to set or update that value while producing a new \n    instance of the data structure. This pattern is particularly useful with Java records, \n    which are immutable by design, as it allows for clean and concise manipulation \n    of deeply nested fields without breaking immutability.\n\n    Now what does this have to do with Sprouts properties?\n    After all, the MVVM properties of this library are mutable \n    wrapper types with regular getter and setter methods.\n    Although properties are mutable, their items are expected to\n    be immutable data carriers, such as ints, doubles, strings or records.\n    In case of records (or other custom value oriented data types),\n    there is really no limit to how deeply nested the data structure can be.\n    You may even want to model your entire application state as a single record\n    composed of other records, lists, maps and primitives.\n    This is where the Property Lens comes in:\n\n    You can create a lens property from any regular property\n    holding an immutable data structure, and then use the lens property\n    like a regular property.\n\n    Under the hood the lens property will use the lens pattern to access\n    and update the nested data structure of the original property.\n\n    In this specification we will demonstrate how to create and use\n    lens properties and also explore edge cases and limitations.\n\n    In this Specification we are using the following \n    data structure classes:\n    ````java\n        import java.time.LocalDate;\n        import java.util.List;\n\n        // Enums\n        enum Genre {\n            FICTION, NON_FICTION, SCIENCE, FANTASY, BIOGRAPHY, HISTORY\n        }\n\n        enum MembershipLevel {\n            BASIC, SILVER, GOLD, PLATINUM\n        }\n\n        // Records\n        public record Author(String firstName, String lastName, LocalDate birthDate, List<String> books) {\n            public Author withFirstName(String firstName) {\n                return new Author(firstName, this.lastName, this.birthDate, this.books);\n            }\n\n            public Author withLastName(String lastName) {\n                return new Author(this.firstName, lastName, this.birthDate, this.books);\n            }\n\n            public Author withBirthDate(LocalDate birthDate) {\n                return new Author(this.firstName, this.lastName, birthDate, this.books);\n            }\n\n            public Author withBooks(List<String> books) {\n                return new Author(this.firstName, this.lastName, this.birthDate, books);\n            }\n        }\n\n        public record Book(String title, Author author, Genre genre, LocalDate publicationDate, int pageCount) {\n            public Book withTitle(String title) {\n                return new Book(title, this.author, this.genre, this.publicationDate, this.pageCount);\n            }\n\n            public Book withAuthor(Author author) {\n                return new Book(this.title, author, this.genre, this.publicationDate, this.pageCount);\n            }\n\n            public Book withGenre(Genre genre) {\n                return new Book(this.title, this.author, genre, this.publicationDate, this.pageCount);\n            }\n\n            public Book withPublicationDate(LocalDate publicationDate) {\n                return new Book(this.title, this.author, this.genre, publicationDate, this.pageCount);\n            }\n\n            public Book withPageCount(int pageCount) {\n                return new Book(this.title, this.author, this.genre, this.publicationDate, pageCount);\n            }\n        }\n\n        public record Member(String memberId, String firstName, String lastName, MembershipLevel membershipLevel, LocalDate joinDate, String email) {\n            public Member withMemberId(String memberId) {\n                return new Member(memberId, this.firstName, this.lastName, this.membershipLevel, this.joinDate, this.email);\n            }\n\n            public Member withFirstName(String firstName) {\n                return new Member(this.memberId, firstName, this.lastName, this.membershipLevel, this.joinDate, this.email);\n            }\n\n            public Member withLastName(String lastName) {\n                return new Member(this.memberId, this.firstName, lastName, this.membershipLevel, this.joinDate, this.email);\n            }\n\n            public Member withMembershipLevel(MembershipLevel membershipLevel) {\n                return new Member(this.memberId, this.firstName, this.lastName, membershipLevel, this.joinDate, this.email);\n            }\n\n            public Member withJoinDate(LocalDate joinDate) {\n                return new Member(this.memberId, this.firstName, this.lastName, this.membershipLevel, joinDate, this.email);\n            }\n\n            public Member withEmail(String email) {\n                return new Member(this.memberId, this.firstName, this.lastName, this.membershipLevel, this.joinDate, email);\n            }\n        }\n\n        public record Loan(String loanId, Book book, Member member, LocalDate loanDate, LocalDate returnDate, boolean returned) {\n            public Loan withLoanId(String loanId) {\n                return new Loan(loanId, this.book, this.member, this.loanDate, this.returnDate, this.returned);\n            }\n\n            public Loan withBook(Book book) {\n                return new Loan(this.loanId, book, this.member, this.loanDate, this.returnDate, this.returned);\n            }\n\n            public Loan withMember(Member member) {\n                return new Loan(this.loanId, this.book, member, this.loanDate, this.returnDate, this.returned);\n            }\n\n            public Loan withLoanDate(LocalDate loanDate) {\n                return new Loan(this.loanId, this.book, this.member, loanDate, this.returnDate, this.returned);\n            }\n\n            public Loan withReturnDate(LocalDate returnDate) {\n                return new Loan(this.loanId, this.book, this.member, this.loanDate, returnDate, this.returned);\n            }\n\n            public Loan withReturned(boolean returned) {\n                return new Loan(this.loanId, this.book, this.member, this.loanDate, this.returnDate, returned);\n            }\n        }\n        ```",
+  "subjects":["sprouts.impl.PropertyLens","sprouts.Var"],
+  "statistics":{
+    "runs":"13",
+    "successRate":"100.0%",
+    "failures":"0",
+    "errors":"0",
+    "skipped":"0",
+    "duration":"?"
+  },
+  "headers":[],"tags":{},"see":[],
+  "features":[ 
+    {
+      "id":"Many lens properties can be created from a regular property.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Note that a lens only focuses on a single field of the targeted data structure.\n            So if the original property changes its state to a completely new instance of the data structure,\n            then the lens will only receive an update event if the focused field of the new instance is different\n            from the focused field of the old instance.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"\n            For this example we will merely use the Author record\n            to demonstrate how each property of the record can be\n            accessed and updated using a lens property.\n\n            We also assert that the lenses receive updates when the\n            the record property they focus on is updated.\n        ","code":["var author = new Author(\"John\", \"Doe\", LocalDate.of(1829, 8, 12), [\"Book1\", \"Book2\"])","var authorProperty = Var.of(author)"]},
+
+        {"kind":"and","text":"We create lenses for each property of the Author record:","code":["var firstNameLens    = authorProperty.zoomTo(Author::firstName, Author::withFirstName)","var lastNameLens     = authorProperty.zoomTo(Author::lastName,  Author::withLastName)","var birthDateLens = authorProperty.zoomTo(Author::birthDate, Author::withBirthDate)","var booksLens      = authorProperty.zoomTo(Author::books,     Author::withBooks)"]},
+
+        {"kind":"and","text":"We also create lists and listeners for recording all change events:","code":["var firstNameTrace = []","var lastNameTrace = []","var birthDateTrace = []","var booksTrace = []","var authorTrace = []","firstNameLens.onChange(From.ALL,it -> firstNameTrace << it.get() )","lastNameLens.onChange(From.ALL,it -> lastNameTrace << it.get() )","birthDateLens.onChange(From.ALL,it -> birthDateTrace << it.get() )","booksLens.onChange(From.ALL,it -> booksTrace << it.get() )","authorProperty.onChange(From.ALL,it -> authorTrace << it.get() )"]},
+
+        {"kind":"expect","text":"Initial values are correct:","code":["firstNameLens.get() == author.firstName()","lastNameLens.get() == author.lastName()","birthDateLens.get() == author.birthDate()","booksLens.get() == author.books()","authorProperty.get() == author"]},
+
+        {"kind":"when","text":"We create a completely new and completely different Author record:","code":["var newAuthor = new Author(\"Jane\", \"Smith\", LocalDate.of(1997, 9, 3), [\"Book3\", \"Book4\"])","authorProperty.set(newAuthor)"]},
+
+        {"kind":"then","text":"The lenses have updated values:","code":["firstNameLens.get() == newAuthor.firstName()","lastNameLens.get() == newAuthor.lastName()","birthDateLens.get() == newAuthor.birthDate()","booksLens.get() == newAuthor.books()","authorProperty.get() == newAuthor"]},
+
+        {"kind":"and","text":"All change events were recorded:","code":["firstNameTrace == [\"Jane\"]","lastNameTrace == [\"Smith\"]","birthDateTrace == [LocalDate.of(1997, 9, 3)]","booksTrace == [[\"Book3\", \"Book4\"]]","authorTrace == [newAuthor]"]},
+
+        {"kind":"when","text":"We update the Author in a way where effectively nothing changes:","code":["authorProperty.set(newAuthor)"]},
+
+        {"kind":"then","text":"The lenses have the same values as before:","code":["firstNameLens.get() == newAuthor.firstName()","lastNameLens.get() == newAuthor.lastName()","birthDateLens.get() == newAuthor.birthDate()","booksLens.get() == newAuthor.books()","authorProperty.get() == newAuthor"]},
+
+        {"kind":"and","text":"No additional change events were recorded:","code":["firstNameTrace == [\"Jane\"]","lastNameTrace == [\"Smith\"]","birthDateTrace == [LocalDate.of(1997, 9, 3)]","booksTrace == [[\"Book3\", \"Book4\"]]","authorTrace == [newAuthor]"]},
+
+        {"kind":"when","text":"We update the Author in a way where only 2 properties change:","code":["var newAuthor2 = newAuthor.withFirstName(\"Martha\").withBirthDate(LocalDate.of(2002, 5, 17))","authorProperty.set(newAuthor2)"]},
+
+        {"kind":"then","text":"The lenses have updated values:","code":["firstNameLens.get() == newAuthor2.firstName()","lastNameLens.get() == newAuthor2.lastName()","birthDateLens.get() == newAuthor2.birthDate()","booksLens.get() == newAuthor2.books()","authorProperty.get() == newAuthor2"]},
+
+        {"kind":"and","text":"Only the relevant change events were recorded:","code":["firstNameTrace == [\"Jane\", \"Martha\"]","lastNameTrace == [\"Smith\"]","birthDateTrace == [LocalDate.of(1997, 9, 3), LocalDate.of(2002, 5, 17)]","booksTrace == [[\"Book3\", \"Book4\"]]","authorTrace == [newAuthor, newAuthor2]"]},
+
+        {"kind":"when","text":"\n            We modify one of the lenses, then this will automatically\n            update the full value of the original property.\n            The other lenses on the other hand will not receive any updates\n            because the focused field of the original property have not changed:\n        ","code":["firstNameLens.set(\"Raffaela\")"]},
+
+        {"kind":"then","text":"The original property has updated values:","code":["authorProperty.get() == newAuthor2.withFirstName(\"Raffaela\")"]},
+
+        {"kind":"and","text":"Only the relevant change events were recorded:","code":["firstNameTrace == [\"Jane\", \"Martha\", \"Raffaela\"]","lastNameTrace == [\"Smith\"]","birthDateTrace == [LocalDate.of(1997, 9, 3), LocalDate.of(2002, 5, 17)]","booksTrace == [[\"Book3\", \"Book4\"]]","authorTrace == [newAuthor, newAuthor2, newAuthor2.withFirstName(\"Raffaela\")]"]},
+
+        {"kind":"when","text":"We pass a value to a lens which is equal to the current value of the lens:","code":["lastNameLens.set(\"Smith\")"]},
+
+        {"kind":"then","text":"No change events are recorded:","code":["firstNameTrace == [\"Jane\", \"Martha\", \"Raffaela\"]","lastNameTrace == [\"Smith\"]","birthDateTrace == [LocalDate.of(1997, 9, 3), LocalDate.of(2002, 5, 17)]","booksTrace == [[\"Book3\", \"Book4\"]]","authorTrace == [newAuthor, newAuthor2, newAuthor2.withFirstName(\"Raffaela\")]"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You can create lenses from other lenses to dive deeper into nested data structures.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            As previously mentioned, a property lens effectively behaves like a regular property,\n            which includes the ability to create yet another lens from an existing lens\n            for which the same rules apply.\n\n            This allows you to create a chain of lenses to access deeply nested fields\n            of a data structure.\n\n            In this example we will create a property for the `Loan` record\n            and then create lenses its nested `Book` and `Member` records\n            and then create lenses for the nested `Author` record of the `Book` record.\n            Changing the original property will trigger updates for all lenses in the chain.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"\n            We first create full data structure composed of many nested records.\n        ","code":["var author = new Author(\"Raffaela\", \"Raab\", LocalDate.of(1996, 3, 21), [\"Book1\", \"Book2\"])","var book   = new Book(\"The Book\", author, Genre.HISTORY, LocalDate.of(2019, 5, 12), 304)","var member = new Member(\"1234\", \"Marc\", \"Mayer\", MembershipLevel.GOLD, LocalDate.of(2015, 2, 3), null)","var loan   = new Loan(\"5678\", book, member, LocalDate.of(2021, 8, 12), LocalDate.of(2021, 9, 12), false)","var loanProperty = Var.of(loan)"]},
+
+        {"kind":"and","text":"\n            Create lenses for nested records and also trace lists for recording\n            state changes of the original property and all of its lenses.\n        ","code":["var bookLens = loanProperty.zoomTo(Loan::book, Loan::withBook)","var memberLens = loanProperty.zoomTo(Loan::member, Loan::withMember)","var authorLens = bookLens.zoomTo(Book::author, Book::withAuthor)","var loanTrace = []","var bookTrace = []","var memberTrace = []","var authorTrace = []","loanProperty.onChange(From.ALL, it -> loanTrace << it.get())","bookLens.onChange(From.ALL, it -> bookTrace << it.get())","memberLens.onChange(From.ALL, it -> memberTrace << it.get())","authorLens.onChange(From.ALL, it -> authorTrace << it.get())"]},
+
+        {"kind":"expect","text":"\n            The initial values are correct.\n            This is a bit of a sanity check to ensure that the lenses\n            are correctly set up and that they can access the nested records.\n        ","code":["loanProperty.get() == loan","bookLens.get() == loan.book()","memberLens.get() == loan.member()","authorLens.get() == loan.book().author()"]},
+
+        {"kind":"when","text":"\n            We update various levels of nested structures.\n        ","code":["var newAuthor = new Author(\"John\", \"Doe\", LocalDate.of(1980, 2, 15), [\"New Book\"])","var newBook = loan.book().withAuthor(newAuthor)","var newLoan = loan.withBook(newBook)","loanProperty.set(newLoan)"]},
+
+        {"kind":"then","text":"\n            Values are updated correctly and change events are recorded.\n            Note that the member lens trace is empty because the member record\n            was not updated from the original loan record.\n        ","code":["loanProperty.get() == newLoan","bookLens.get() == newLoan.book()","memberLens.get() == newLoan.member()","authorLens.get() == newLoan.book().author()","loanTrace == [newLoan]","bookTrace == [newLoan.book()]","memberTrace == []","authorTrace == [newLoan.book().author()]"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You can create nullable lens properties from a regular property.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            This test ensures that the `zoomToNullable` method works correctly\n            with a property that contains a nullable field.\n\n            We will use the Member record which has an optional email field\n            to demonstrate how the lens property behaves with nullable fields.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"\n            Initialize a Member record instance with an optional email field.\n        ","code":["var member = new Member(\"1234\", \"John\", \"Doe\", MembershipLevel.GOLD, LocalDate.of(2010, 1, 1), null)","var memberProperty = Var.of(member)"]},
+
+        {"kind":"and","text":"\n            Create a lens for the nullable email field of the Member record.\n            Also set up a trace list to record state changes of the lens and the original property.\n        ","code":["var emailLens = memberProperty.zoomToNullable(String.class, Member::email, Member::withEmail)","var memberTrace = []","var emailTrace = []","memberProperty.onChange(From.ALL, it -> memberTrace << it.get())","emailLens.onChange(From.ALL, it -> emailTrace << it.get())"]},
+
+        {"kind":"expect","text":"\n            Initial values are correct:\n            - The lens should correctly retrieve the initial nullable email field value.\n            - The original property should contain the initial Member record.\n        ","code":["emailLens.orElseNull() == null","memberProperty.get() == member"]},
+
+        {"kind":"when","text":"\n            Update the nullable email field using the lens.\n        ","code":["emailLens.set(\"john.doe@example.com\")"]},
+
+        {"kind":"then","text":"\n            The lens should update the nullable email field value.\n            Both the lens and the original property should reflect the changes.\n        ","code":["emailLens.get() == \"john.doe@example.com\"","memberProperty.get().email() == \"john.doe@example.com\""]},
+
+        {"kind":"and","text":"\n            Change the nullable email field back to null using the lens.\n        ","code":["emailLens.set(null)"]},
+
+        {"kind":"then","text":"\n            The lens should update the nullable email field value to null.\n            Both the lens and the original property should reflect the changes.\n        ","code":["emailLens.orElseNull() == null","memberProperty.get().email() == null"]},
+
+        {"kind":"when","text":"\n            Update the original property with a new Member instance where the email field is null.\n        ","code":["var newMember = member.withEmail(null)","memberProperty.set(newMember)"]},
+
+        {"kind":"then","text":"\n            The lens should correctly reflect the updated nullable email field value as null.\n            Both the lens and the original property should reflect the changes.\n        ","code":["emailLens.orElseNull() == null","memberProperty.get() == newMember"]},
+
+        {"kind":"and","text":"\n            Update the original property with a new Member instance where the email field is set.\n        ","code":["var updatedMember = member.withEmail(\"jane.doe@example.com\")","memberProperty.set(updatedMember)"]},
+
+        {"kind":"then","text":"\n            The lens should correctly reflect the updated nullable email field value.\n            Both the lens and the original property should reflect the changes.\n        ","code":["emailLens.get() == \"jane.doe@example.com\"","memberProperty.get() == updatedMember"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A lens created from the `zoomTo` method throws an exception when receiving null values.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"An Author record and its property","code":["var author = new Author(\"John\", \"Doe\", LocalDate.of(1829, 8, 12), [\"Book1\", \"Book2\"])","var authorProperty = Var.of(author)"]},
+
+        {"kind":"and","text":"A lens focusing on the first name of the Author","code":["var firstNameLens = authorProperty.zoomTo(Author::firstName, Author::withFirstName)"]},
+
+        {"kind":"when","text":"Setting a null value via the lens","code":["firstNameLens.set(null)"]},
+
+        {"kind":"then","text":"An exception is thrown","code":["thrown(NullPointerException)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You cannot create a lens from the `zoomTo` method if the target value is null.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"An Author record with a null first name and its property","code":["var author = new Author(null, \"Doe\", LocalDate.of(1829, 8, 12), [\"Book1\", \"Book2\"])","var authorProperty = Var.of(author)"]},
+
+        {"kind":"when","text":"Creating a lens focusing on the first name of the Author","code":["authorProperty.zoomTo(Author::firstName, Author::withFirstName)"]},
+
+        {"kind":"then","text":"An exception is thrown","code":["thrown(NullPointerException)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A lens on a nested null value models null without throwing an exception.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"A Member record with a null book","code":["var member = new Member(\"1234\", \"John\", \"Doe\", MembershipLevel.GOLD, LocalDate.of(2010, 1, 1), null)","var memberProperty = Var.of(member)"]},
+
+        {"kind":"when","text":"Creating a lens focusing on a nested nullable field","code":["var emailLens = memberProperty.zoomToNullable(String.class, Member::email, Member::withEmail)"]},
+
+        {"kind":"then","text":"The lens handles the null value correctly","code":["emailLens.orElseNull() == null"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"We can create nullable lenses from nullable property even if there is no initial value.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            It should be possible to create a nullable lens from a nullable property\n            even if the initial value of the first lens is null.\n            In that case the second lens should also have a null value.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"\n            We create a nullable `Book` based property which is \n            initially set to null.\n            And then we create a nullable lens for the `Author` record\n            of the `Book` record.\n        ","code":["var bookProperty = Var.ofNull(Book.class)","var authorLens = bookProperty.zoomToNullable(Author.class, Book::author, Book::withAuthor)"]},
+
+        {"kind":"expect","text":"\n            Both the lens and the original property should have a null value.\n        ","code":["authorLens.orElseNull() == null","bookProperty.orElseNull() == null"]},
+
+        {"kind":"when","text":"We set a new Book instance without an author.","code":["var book = new Book(\"The Book\", null, Genre.HISTORY, LocalDate.of(2019, 5, 12), 304)","bookProperty.set(book)"]},
+
+        {"kind":"then","text":"The book property has the new value and the lens has a null value.","code":["bookProperty.get() == book","authorLens.orElseNull() == null"]},
+
+        {"kind":"when","text":"We set a new Book instance with an author.","code":["var author = new Author(\"John\", \"Doe\", LocalDate.of(1980, 2, 15), [\"New Book\"])","var newBook = book.withAuthor(author)","bookProperty.set(newBook)"]},
+
+        {"kind":"then","text":"The book property has the new value and the lens has the author value.","code":["bookProperty.get() == newBook","authorLens.get() == author"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A property lens with a default value focuses on specific field with a non-null parent value.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"An Author record and its property","code":["var author = new Author(\"John\", \"Doe\", LocalDate.of(1829, 8, 12), [\"Book1\", \"Book2\"])","var authorProperty = Var.of(author)"]},
+
+        {"kind":"and","text":"A lens focusing on the first name of the Author with a default value","code":["var defaultFirstName = \"Unknown\"","var firstNameLens = authorProperty.zoomTo(defaultFirstName, Author::firstName, Author::withFirstName)"]},
+
+        {"kind":"expect","text":"The lens retrieves the correct initial value","code":["firstNameLens.get() == author.firstName()"]},
+
+        {"kind":"when","text":"The first name is updated through the lens","code":["firstNameLens.set(\"Jane\")"]},
+
+        {"kind":"then","text":"The original property is updated correctly","code":["authorProperty.get().firstName() == \"Jane\"","firstNameLens.get() == \"Jane\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A property lens with a default value uses its default value when the parent property value is null initially.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"A nullable Author property initialized to null","code":["var authorProperty = Var.ofNull(Author.class)"]},
+
+        {"kind":"and","text":"A lens focusing on the first name of the Author with a default value","code":["var defaultFirstName = \"Unknown\"","var firstNameLens = authorProperty.zoomTo(defaultFirstName, Author::firstName, Author::withFirstName)"]},
+
+        {"kind":"expect","text":"The lens retrieves the default value when the parent is null","code":["firstNameLens.get() == defaultFirstName"]},
+
+        {"kind":"when","text":"A new Author record is set with a specific first name","code":["var newAuthor = new Author(\"Jane\", \"Smith\", LocalDate.of(1997, 9, 3), [\"Book3\", \"Book4\"])","authorProperty.set(newAuthor)"]},
+
+        {"kind":"then","text":"The lens retrieves the new value from the parent","code":["firstNameLens.get() == newAuthor.firstName()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A property lens with a default value updates the parent value correctly when setting it through the lens.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"An Author record and its property","code":["var author = new Author(\"John\", \"Doe\", LocalDate.of(1829, 8, 12), [\"Book1\", \"Book2\"])","var authorProperty = Var.of(author)"]},
+
+        {"kind":"and","text":"A lens focusing on the first name of the Author with a default value","code":["var defaultFirstName = \"Unknown\"","var firstNameLens = authorProperty.zoomTo(defaultFirstName, Author::firstName, Author::withFirstName)"]},
+
+        {"kind":"when","text":"The first name is updated through the lens","code":["firstNameLens.set(\"Jane\")"]},
+
+        {"kind":"then","text":"The original property is updated correctly","code":["authorProperty.get().firstName() == \"Jane\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A lens with a default value throws an exception when the null object is null.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"An Author record and its property","code":["var author = new Author(\"John\", \"Doe\", LocalDate.of(1829, 8, 12), [\"Book1\", \"Book2\"])","var authorProperty = Var.of(author)"]},
+
+        {"kind":"when","text":"Creating a lens with a null default value","code":["authorProperty.zoomTo(null, Author::firstName, Author::withFirstName)"]},
+
+        {"kind":"then","text":"An exception is thrown","code":["thrown(NullPointerException)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A lens with a default value handles updates gracefully when switching from null parent to non-null parent.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"A nullable Author property initialized to null","code":["var authorProperty = Var.ofNull(Author.class)"]},
+
+        {"kind":"and","text":"A lens focusing on the first name of the Author with a default value","code":["var defaultFirstName = \"Unknown\"","var firstNameLens = authorProperty.zoomTo(defaultFirstName, Author::firstName, Author::withFirstName)"]},
+
+        {"kind":"expect","text":"The lens retrieves the default value when the parent is null","code":["firstNameLens.get() == defaultFirstName"]},
+
+        {"kind":"when","text":"A new Author record is set with a specific first name","code":["var newAuthor = new Author(\"Jane\", \"Smith\", LocalDate.of(1997, 9, 3), [\"Book3\", \"Book4\"])","authorProperty.set(newAuthor)"]},
+
+        {"kind":"then","text":"The lens retrieves the new value from the parent","code":["firstNameLens.get() == newAuthor.firstName()"]},
+
+        {"kind":"when","text":"The parent is set back to null","code":["authorProperty.set(null)"]},
+
+        {"kind":"then","text":"The lens retrieves the default value again","code":["firstNameLens.get() == defaultFirstName"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The lenses of a property are garbage collected when no longer referenced strongly.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A property lens registers a weak action listener on the original property.\n            These weak listeners are stored in a weak hash map where the property lens\n            itself is the weakly referenced key.\n            So when the property lens is no longer referenced strongly, it should be\n            garbage collected and the weak listener should be removed\n            from the original property.\n\n            We can verify this by checking the reported number of change listeners.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We have an `Author` record and a property holding it.","code":["var author = new Author(\"John\", \"Doe\", LocalDate.of(1829, 8, 12), [\"Book1\", \"Book2\"])","var authorProperty = Var.of(author)"]},
+
+        {"kind":"expect","text":"Initially there are no change listeners registered:","code":["authorProperty.numberOfChangeListeners() == 0"]},
+
+        {"kind":"when","text":"We create two lenses which we reference strongly.","code":["var firstName = authorProperty.zoomTo(Author::firstName, Author::withFirstName)","var lastName = authorProperty.zoomTo(Author::lastName,  Author::withLastName)"]},
+
+        {"kind":"then","text":"The author property has 2 change listeners registered.","code":["authorProperty.numberOfChangeListeners() == 2"]},
+
+        {"kind":"when","text":"We create two lenses which we do not reference strongly.","code":["authorProperty.zoomTo(Author::birthDate, Author::withBirthDate)","authorProperty.zoomTo(Author::books,     Author::withBooks)"]},
+
+        {"kind":"and","text":"We wait for the garbage collector to run.","code":["waitForGarbageCollection()","Thread.sleep(500)"]},
+
+        {"kind":"then","text":"The author property should still have 2 change listeners registered.","code":["authorProperty.numberOfChangeListeners() == 2"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    }
+  
+  ],
+  "generator":"https://github.com/renatoathaydes/spock-reports"
+}

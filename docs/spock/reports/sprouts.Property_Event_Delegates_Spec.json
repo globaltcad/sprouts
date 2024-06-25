@@ -1,0 +1,151 @@
+{
+  "className":"sprouts.Property_Event_Delegates_Spec",
+  "title":"Property Event Delegates",
+  "narrative":"The properties and property lists in Sprouts allow you to listen for changes\n    by registering action listener instances to the property or property list.\n    These listener types receive so called delegate instances which are used\n    to access the property or property list that was changed in the action\n    in an immutable way.",
+  "subjects":["sprouts.Var","sprouts.Vars","sprouts.Val","sprouts.Vals"],
+  "statistics":{
+    "runs":"5",
+    "successRate":"100.0%",
+    "failures":"0",
+    "errors":"0",
+    "skipped":"0",
+    "duration":"?"
+  },
+  "headers":[],"tags":{},"see":[],
+  "features":[ 
+    {
+      "id":"The delegate of a property change action exposes a property that is an immutable clone.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The delegate of the a property is basically an immutable clone of the property,\n            conceptually a snapshot of the property at the time of the change.\n            The reason for this is because the change action might be executed on a different thread\n            than the thread that changed the property.\n            This means that the property might have changed again before the change action is executed\n            causing the change action to receive a delegate that is not representative of true change\n            that occurred.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A property.","code":["var property = Var.of(1)","var delegate = null","property.onChange(From.VIEW_MODEL,  it -> delegate = it )"]},
+
+        {"kind":"when","text":"We change the property.","code":["property.set(42)"]},
+
+        {"kind":"then","text":"The exposed delegate is equal to the property.","code":["delegate == property"]},
+
+        {"kind":"and","text":"The delegate is however not identical to the property.","code":["delegate !== property"]},
+
+        {"kind":"when","text":"We try to mutate the delegate...","code":["delegate.set(0)"]},
+
+        {"kind":"then","text":"...we get an exception.","code":["thrown(UnsupportedOperationException)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The delegate of a property user action exposes a property that is an immutable clone.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The delegate of the a property is basically an immutable clone of the property,\n            conceptually a snapshot of the property at the time of the change.\n            The reason for this is because the change action might be executed on a different thread\n            than the thread that changed the property.\n            This means that the property might have changed again before the change action is executed\n            causing the change action to receive a delegate that is not representative of true change\n            that occurred.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A property.","code":["var property = Var.of(1)","var delegate = null","property.onChange(From.VIEW, it -> delegate = it )"]},
+
+        {"kind":"when","text":"We change the property.","code":["property.set(From.VIEW, 7)"]},
+
+        {"kind":"then","text":"The exposed delegate is equal to the property.","code":["delegate == property"]},
+
+        {"kind":"and","text":"The delegate is however not identical to the property.","code":["delegate !== property"]},
+
+        {"kind":"when","text":"We try to mutate the delegate...","code":["delegate.set(From.VIEW, 0)"]},
+
+        {"kind":"then","text":"...we get an exception.","code":["thrown(UnsupportedOperationException)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The delegate of a property list change action exposes a list that is an immutable clone.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The delegate of the a property list not only exposes various kinds of \n            information describing how the list changed, it also exposes \n            an immutable clone of the property list after the change.\n            This clone is conceptually a snapshot of the property list at the time of the change.\n            The reason for this is because the change action might be executed on a different thread\n            than the thread that changed the property list.\n            This means that the property list might have changed again before the change action is executed\n            causing the change action to receive a delegate that is not representative of true change\n            that occurred.\n        ","\n            The delegate of the a property list not only exposes various kinds of \n            information describing how the list changed, it also exposes \n            an immutable clone of the property list after the change.\n            This clone is conceptually a snapshot of the property list at the time of the change.\n            The reason for this is because the change action might be executed on a different thread\n            than the thread that changed the property list.\n            This means that the property list might have changed again before the change action is executed\n            causing the change action to receive a delegate that is not representative of true change\n            that occurred.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A property list.","code":["var propertyList = Vars.of(1, 2, 3)","var delegate = null","propertyList.onChange( it -> delegate = it )"]},
+
+        {"kind":"when","text":"We add an element to the property list.","code":["propertyList.add(42)"]},
+
+        {"kind":"then","text":"The exposed delegate is equal to the property list.","code":["delegate.vals().toList() == propertyList.toList()"]},
+
+        {"kind":"and","text":"The delegate is however not identical to the property list.","code":["delegate.vals() !== propertyList"]},
+
+        {"kind":"when","text":"We try to mutate the delegate...","code":["delegate.vals().add(0)"]},
+
+        {"kind":"then","text":"...we get an exception.","code":["thrown(UnsupportedOperationException)","reportInfo \"\"\"","    The delegate of the a property list not only exposes various kinds of","    information describing how the list changed, it also exposes","    an immutable clone of the property list after the change.","    This clone is conceptually a snapshot of the property list at the time of the change.","    The reason for this is because the change action might be executed on a different thread","    than the thread that changed the property list.","    This means that the property list might have changed again before the change action is executed","    causing the change action to receive a delegate that is not representative of true change","    that occurred.","\"\"\""]},
+
+        {"kind":"given","text":"A property list.","code":["var propertyList = Vars.of(1, 2, 3)","var delegate = null","propertyList.onChange( it -> delegate = it )"]},
+
+        {"kind":"when","text":"We add an element to the property list.","code":["propertyList.add(42)"]},
+
+        {"kind":"then","text":"The exposed delegate is equal to the property list.","code":["delegate.vals().toList() == propertyList.toList()"]},
+
+        {"kind":"and","text":"The delegate is however not identical to the property list.","code":["delegate.vals() !== propertyList"]},
+
+        {"kind":"when","text":"We try to mutate the delegate...","code":["delegate.vals().add(0)"]},
+
+        {"kind":"then","text":"...we get an exception.","code":["thrown(UnsupportedOperationException)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The delegate of a property list change action exposes a list that is an immutable clone.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"A property list.","code":["var propertyList = Vars.of(1, 2, 3)","var delegate = null","propertyList.onChange( it -> delegate = it )"]},
+
+        {"kind":"when","text":"We add an element to the property list.","code":["propertyList.add(42)"]},
+
+        {"kind":"then","text":"The exposed delegate is equal to the property list.","code":["delegate.vals().toList() == propertyList.toList()"]},
+
+        {"kind":"and","text":"The delegate is however not identical to the property list.","code":["delegate.vals() !== propertyList"]},
+
+        {"kind":"when","text":"We try to mutate the delegate...","code":["delegate.vals().add(0)"]},
+
+        {"kind":"then","text":"...we get an exception.","code":["thrown(UnsupportedOperationException)","reportInfo \"\"\"","    The delegate of the a property list not only exposes various kinds of","    information describing how the list changed, it also exposes","    an immutable clone of the property list after the change.","    This clone is conceptually a snapshot of the property list at the time of the change.","    The reason for this is because the change action might be executed on a different thread","    than the thread that changed the property list.","    This means that the property list might have changed again before the change action is executed","    causing the change action to receive a delegate that is not representative of true change","    that occurred.","\"\"\""]},
+
+        {"kind":"given","text":"A property list.","code":["var propertyList = Vars.of(1, 2, 3)","var delegate = null","propertyList.onChange( it -> delegate = it )"]},
+
+        {"kind":"when","text":"We add an element to the property list.","code":["propertyList.add(42)"]},
+
+        {"kind":"then","text":"The exposed delegate is equal to the property list.","code":["delegate.vals().toList() == propertyList.toList()"]},
+
+        {"kind":"and","text":"The delegate is however not identical to the property list.","code":["delegate.vals() !== propertyList"]},
+
+        {"kind":"when","text":"We try to mutate the delegate...","code":["delegate.vals().add(0)"]},
+
+        {"kind":"then","text":"...we get an exception.","code":["thrown(UnsupportedOperationException)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The delegate of a property list change action has a descriptive string representation.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"A property list.","code":["var propertyList = Vars.of(1, 2, 3)","var delegate = null","propertyList.onChange( it -> delegate = it )"]},
+
+        {"kind":"when","text":"We add an element to the property list.","code":["propertyList.add(42)"]},
+
+        {"kind":"then","text":"The delegate has a descriptive string representation.","code":["delegate.toString() == 'ValsDelegate[index=3, changeType=ADD, newValues=Vals<Integer>[42], oldValues=Vals<Integer>[], vals=Vals<Integer>[1, 2, 3, 42]]'"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    }
+  
+  ],
+  "generator":"https://github.com/renatoathaydes/spock-reports"
+}
