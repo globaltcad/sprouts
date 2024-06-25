@@ -168,7 +168,10 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
     /** {@inheritDoc} */
     @Override
     public Vars<T> addAt( int index, Var<T> value ) {
-        if ( _isImmutable ) throw new UnsupportedOperationException("This is an immutable list.");
+        if ( _isImmutable )
+            throw new UnsupportedOperationException("This is an immutable list.");
+        if ( this.allowsNull() != value.allowsNull() )
+            throw new IllegalArgumentException("The null safety of the given property does not match this list.");
         _checkNullSafetyOf(value);
         _variables.add(index, value);
         _triggerAction( Change.ADD, index, value, null );
@@ -557,6 +560,11 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
         if ( !_allowsNull )
             for ( Var<T> val : _variables )
                 _checkNullSafetyOf(val);
+        else {
+            for ( Var<T> val : _variables )
+                if ( !val.allowsNull() )
+                    throw new IllegalArgumentException("The null safety of the given property does not match this list.");
+        }
     }
 
     private void _checkNullSafetyOf( Val<T> value ) {
