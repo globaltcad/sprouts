@@ -4,7 +4,10 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import sprouts.impl.Sprouts;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -489,7 +492,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
      * @return {@code this} list of properties.
      */
     default Vars<T> removeIf( Predicate<Var<T>> predicate ) {
-        Vars<T> vars = (Vars<T>) (allowsNull() ? Vars.ofNullable(type()) : Vars.of(type()));
+        Vars<T> vars = allowsNull() ? Vars.ofNullable(type()) : Vars.of(type());
         for ( int i = size() - 1; i >= 0; i-- )
             if ( predicate.test(at(i)) ) vars.add(at(i));
 
@@ -505,7 +508,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
      * @return a new list of properties.
      */
     default Vars<T> popIf( Predicate<Var<T>> predicate ) {
-        Vars<T> vars = (Vars<T>) (allowsNull() ? Vars.ofNullable(type()) : Vars.of(type()));
+        Vars<T> vars = allowsNull() ? Vars.ofNullable(type()) : Vars.of(type());
         for ( int i = size() - 1; i >= 0; i-- )
             if ( predicate.test(at(i)) ) vars.add(at(i) );
 
