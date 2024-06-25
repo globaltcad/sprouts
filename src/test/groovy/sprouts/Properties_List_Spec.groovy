@@ -734,7 +734,21 @@ class Properties_List_Spec extends Specification
             Vars.of(1, 2, 3, 4, 5).retainAll(Vars.of(1, 0, 3, 5, 42)).toList() == []
             Vars.of(1, 2, 3, 4, 5).removeAll(1, 0, 3, 5, 42).toList() == [2, 4]
             Vars.of(1, 2, 3, 4, 5).removeAll(Vals.of(1, 0, 3, 5, 42)).toList() == [2, 4]
+        and : """   
+            Because `Var` and `Vars` are mutable, their equality is modelled in
+            terms of their identity, not their value. Whereas `Val` and `Vals`
+            are immutable, so their equality is modelled in terms of their value.
+        """
             Vars.of(1, 2, 3, 4, 5).removeAll(Vars.of(1, 0, 3, 5, 42)).toList() == [1, 2, 3, 4, 5]
+            Vars.of("a", "b", "c").remove(Var.of("a")).toList() == ["a", "b", "c"]
+            Vars.of("a", "b", "c").remove("a").toList() == ["b", "c"]
+            Vars.of("a", "b", "c").add(Var.of("d")).toList() == ["a", "b", "c", "d"]
+            Vars.of("a", "b", "c").add("d").toList() == ["a", "b", "c", "d"]
+            Vars.of(1, 2, 3).indexOf(2) == 1
+            Vars.of(1, 2, 3).indexOf(Var.of(2)) == -1
+            Vars.of(1, 2, 3).indexOf(Val.of(2)) == 1
+            Vars.of(1, 2, 3).indexOf(Val.of(2).get()) == 1
+            Vars.of(1, 2, 3).indexOf(Var.of(2).get()) == 1
     }
 
     def 'Various kinds of methods that mutate a property list will only trigger an "onChange" event once, even if multiple items are affected.'(
