@@ -1695,4 +1695,88 @@ class Properties_List_Spec extends Specification
             vals1.hashCode() != vars1.hashCode()
     }
 
+    def 'A nullable property list does not accept non-nullable properties.'()
+    {
+        reportInfo """
+            A nullable (and mutable) property list does not accept non-nullable properties.
+            Which is to say that when you try to add a non-nullable property to a nullable property list,
+            then the property list will throw an exception.
+        """
+        given : 'A nullable and mutable property list.'
+            var properties = Vars.ofNullable(String.class)
+        when : 'We implicitly add a property through a simple item.'
+            properties.add("Should work!")
+        then : 'No exception is thrown and the property is added.'
+            noExceptionThrown()
+            properties.toList() == ["Should work!"]
+        when : 'We explicitly add a nullable property through a simple item.'
+            properties.add(Var.ofNullable(String.class, "Should also work!"))
+        then : 'Again, no exception is thrown and the property is added.'
+            noExceptionThrown()
+        and : 'The property list has the expected values.'
+            properties.toList() == ["Should work!", "Should also work!"]
+
+        when : 'We now try to add a non-nullable property through a simple item.'
+            properties.add(Var.of("This will not work!"))
+        then : 'An exception is thrown because the property list does not accept non-nullable properties.'
+            thrown(IllegalArgumentException)
+    }
+
+    def 'A non-nullable property list does not accept nullable properties.'()
+    {
+        reportInfo """
+            A non-nullable (and mutable) property list does not accept nullable properties.
+            Which is to say that when you try to add a nullable property to a non-nullable property list,
+            then the property list will throw an exception.
+        """
+        given : 'A non-nullable and mutable property list.'
+            var properties = Vars.of(String.class)
+        when : 'We implicitly add a property through a simple item.'
+            properties.add("Should work!")
+        then : 'No exception is thrown and the property is added.'
+            noExceptionThrown()
+            properties.toList() == ["Should work!"]
+        when : 'We explicitly add a non-nullable property through a simple item.'
+            properties.add(Var.of("Should also work!"))
+        then : 'Again, no exception is thrown and the property is added.'
+            noExceptionThrown()
+        and : 'The property list has the expected values.'
+            properties.toList() == ["Should work!", "Should also work!"]
+
+        when : 'We now try to add a nullable property through a simple item.'
+            properties.add(Var.ofNullable(String.class, "This will not work!"))
+        then : 'An exception is thrown because the property list does not accept nullable properties.'
+            thrown(IllegalArgumentException)
+    }
+
+    def 'You cannot construct a non-nullable property list from nullable properties.'() {
+        reportInfo """
+            You cannot construct a non-nullable property list from a nullable property list.
+            Which is to say that when you try to call the `of` method on the `Vars` class with 
+            set of nullable properties, then the property list will throw an exception.
+        """
+        given : 'We create a hand of properties, one of which is nullable.'
+            var property1 = Var.of("Never Null")
+            var property2 = Var.ofNullable(String.class, "Maybe Null")
+        when : 'We try to construct a non-nullable property list from the properties.'
+            Vars.of(property1, property2)
+        then : 'An exception is thrown because the property list does not accept nullable properties.'
+            thrown(IllegalArgumentException)
+    }
+
+    def 'You cannot construct a nullable property list from non-nullable properties.'() {
+        reportInfo """
+            You cannot construct a nullable property list from a non-nullable property list.
+            Which is to say that when you try to call the `ofNullable` method on the `Vars` class with 
+            set of non-nullable properties, then the property list will throw an exception.
+        """
+        given : 'We create a hand of properties, all of which are non-nullable.'
+            var property1 = Var.ofNullable(String.class, "Maybe Null")
+            var property2 = Var.of("Always Not Null")
+        when : 'We try to construct a nullable property list from the properties.'
+            Vars.ofNullable(String.class, property1, property2)
+        then : 'An exception is thrown because the property list does not accept non-nullable properties.'
+            thrown(IllegalArgumentException)
+    }
+
 }
