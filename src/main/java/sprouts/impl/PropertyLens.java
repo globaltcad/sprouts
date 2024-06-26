@@ -1,10 +1,10 @@
 package sprouts.impl;
 
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import sprouts.*;
 
+import java.lang.ref.WeakReference;
 import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -45,14 +45,14 @@ public final class PropertyLens<A extends @Nullable Object, T extends @Nullable 
 {
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(PropertyLens.class);
 
-    private final ChangeListeners<T>   _changeListeners;
-    private final String               _id;
-    private final boolean              _nullable;
-    private final Class<T>             _type;
-    private final Var<A>               _parent;
-    Function<A,@Nullable T>            _getter;
-    BiFunction<A,@Nullable T,A>        _setter;
-    private final boolean              _isImmutable;
+    private final ChangeListeners<T>    _changeListeners;
+    private final String                _id;
+    private final boolean               _nullable;
+    private final Class<T>              _type;
+    private final WeakReference<Var<A>> _parent;
+    Function<A,@Nullable T>             _getter;
+    BiFunction<A,@Nullable T,A>         _setter;
+    private final boolean               _isImmutable;
 
     private @Nullable T _lastItem;
 
@@ -63,14 +63,13 @@ public final class PropertyLens<A extends @Nullable Object, T extends @Nullable 
             String                          id,
             boolean                         allowsNull,
             @Nullable T                     initialItem, // may be null
-            Var<A>                          parent,
+            WeakReference<Var<A>>           parent,
             Function<A,@Nullable T>         getter,
             BiFunction<A,@Nullable T,A>     wither,
             @Nullable ChangeListeners<T>    changeListeners
     ) {
         Objects.requireNonNull(id);
         Objects.requireNonNull(type);
-        Objects.requireNonNull(parent);
         _type            = type;
         _id              = id;
         _nullable        = allowsNull;
@@ -81,13 +80,16 @@ public final class PropertyLens<A extends @Nullable Object, T extends @Nullable 
         _changeListeners = changeListeners == null ? new ChangeListeners<>() : new ChangeListeners<>(changeListeners);
 
         _lastItem = initialItem;
-        parent.onChange(From.ALL, Action.ofWeak(this, (thisLens,v) -> {
-            T newValue = thisLens._fetchItemFromParent();
-            if ( !Objects.equals(thisLens._lastItem, newValue) ) {
-                thisLens._lastItem = newValue;
-                thisLens.fireChange(From.ALL);
-            }
-        }));
+        Var<A> foundParent = parent.get();
+        if ( foundParent != null ) {
+            foundParent.onChange(From.ALL, Action.ofWeak(this, (thisLens, v) -> {
+                T newValue = thisLens._fetchItemFromParent();
+                if (!Objects.equals(thisLens._lastItem, newValue)) {
+                    thisLens._lastItem = newValue;
+                    thisLens.fireChange(From.ALL);
+                }
+            }));
+        }
 
         if ( !ID_PATTERN.matcher(_id).matches() )
             throw new IllegalArgumentException("The provided id '"+_id+"' is not valid! It must match the pattern '"+ID_PATTERN.pattern()+"'");
@@ -101,12 +103,16 @@ public final class PropertyLens<A extends @Nullable Object, T extends @Nullable 
 
     private @Nullable T _fetchItemFromParent() {
         T fetchedValue = _lastItem;
+        @Nullable Var<A> parent = _parent.get();
+        if ( parent == null )
+            return fetchedValue;
+
         try {
-            fetchedValue = _getter.apply(_parent.orElseNull());
+            fetchedValue = _getter.apply(parent.orElseNull());
         } catch ( Exception e ) {
             log.error(
                     "Failed to fetch item of type '"+_type+"' for property lens "+ _idForError(_id) +
-                    "from parent property "+ _idForError(_parent.id())+"(with item type '"+_parent.type()+"') " +
+                    "from parent property "+ _idForError(parent.id())+"(with item type '"+parent.type()+"') " +
                     "using the current getter lambda.",
                     e
             );
@@ -115,14 +121,20 @@ public final class PropertyLens<A extends @Nullable Object, T extends @Nullable 
     }
 
     private void _setInParentAndInternally(@Nullable T newItem) {
-        try {
-            A newParentItem = _setter.apply(_parent.orElseNull(), newItem);
+        @Nullable Var<A> parent = _parent.get();
+        if ( parent == null ) {
             _lastItem = newItem;
-            _parent.set(newParentItem);
+            return;
+        }
+
+        try {
+            A newParentItem = _setter.apply(parent.orElseNull(), newItem);
+            _lastItem = newItem;
+            parent.set(newParentItem);
         } catch ( Exception e ) {
             log.error(
                     "Property lens "+_idForError(_id)+"(for item type '"+_type+"') failed to update its " +
-                    "parent property '"+_idForError(_parent.id())+"' (with item type '"+_parent.type()+"') " +
+                    "parent property '"+_idForError(parent.id())+"' (with item type '"+parent.type()+"') " +
                     "using the current setter lambda!",
                     e
             );

@@ -5,6 +5,7 @@ import org.jspecify.annotations.Nullable;
 import sprouts.impl.PropertyLens;
 import sprouts.impl.Sprouts;
 
+import java.lang.ref.WeakReference;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiFunction;
@@ -274,7 +275,7 @@ public interface Var<T extends @Nullable Object> extends Val<T>
 					Val.NO_ID,
 					false,//does not allow null
 					initialValue, //may NOT be null
-					this,
+					new WeakReference<>(this),
 					getter,
 					wither,
 					null
@@ -339,7 +340,7 @@ public interface Var<T extends @Nullable Object> extends Val<T>
 					Val.NO_ID,
 					false,//does not allow null
 					initialValue, //may NOT be null
-					this,
+				    new WeakReference<>(this),
 					nullSafeGetter,
 					nullSafeWither,
 					null
@@ -395,7 +396,7 @@ public interface Var<T extends @Nullable Object> extends Val<T>
 					Val.NO_ID,
 					true,//allows null
 					initialValue, //may be null
-					this,
+				    new WeakReference<>(this),
 					nullSafeGetter,
 					nullSafeWither,
 					null

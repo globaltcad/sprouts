@@ -2,11 +2,9 @@ package sprouts.impl;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
-import sprouts.Action;
-import sprouts.Channel;
 import sprouts.Val;
 
-import java.util.*;
+import java.util.Objects;
 
 /**
  *  This is the base class for all {@link Val} implementations.

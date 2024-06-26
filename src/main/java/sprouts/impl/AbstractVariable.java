@@ -1,16 +1,10 @@
 package sprouts.impl;
 
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
-import sprouts.Observable;
-import sprouts.Observer;
 import sprouts.*;
 
-import java.util.*;
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
-import java.util.function.Function;
+import java.util.Objects;
 
 /**
  * 	The base implementation for both {@link Var} and {@link Val} interfaces.
