@@ -11,10 +11,11 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
- * 	The base implementation for both {@link Var} and {@link Val} interfaces.
- * 	This also serves as a reference implementation for the concept of the
- *  {@link Var}/{@link Val} properties in general.
- * 
+ *  A property view is a property that is derived from one or more other properties.
+ *  It observes the changes of the source properties and updates its value accordingly.
+ *  The value of a property view is calculated by a combiner function or a simple
+ *  mapping function depending on the number of source properties.
+ *
  * @param <T> The type of the value wrapped by a given property...
  */
 public class PropertyView<T extends @Nullable Object> implements Var<T> {
@@ -292,6 +293,16 @@ public class PropertyView<T extends @Nullable Object> implements Var<T> {
 
 	@Override
 	public final boolean isMutable() {
+		return true;
+	}
+
+	@Override
+	public boolean isLens() {
+		return false;
+	}
+
+	@Override
+	public boolean isView() {
 		return true;
 	}
 

@@ -13,7 +13,7 @@ import java.util.Objects;
  * 
  * @param <T> The type of the value wrapped by a given property...
  */
-public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<T> implements Var<T> {
+final class AbstractVariable<T extends @Nullable Object> extends AbstractValue<T> implements Var<T> {
 
 	private static final Logger log = org.slf4j.LoggerFactory.getLogger(AbstractVariable.class);
 
@@ -72,6 +72,16 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 	@Override
 	public final boolean isMutable() {
 		return !_isImmutable;
+	}
+
+	@Override
+	public boolean isLens() {
+		return false;
+	}
+
+	@Override
+	public boolean isView() {
+		return false;
 	}
 
 	/** {@inheritDoc} */

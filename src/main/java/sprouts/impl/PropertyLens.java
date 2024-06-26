@@ -172,6 +172,16 @@ public final class PropertyLens<A extends @Nullable Object, T extends @Nullable 
     }
 
     @Override
+    public boolean isLens() {
+        return true;
+    }
+
+    @Override
+    public boolean isView() {
+        return false;
+    }
+
+    @Override
     public final String toString() {
         String value = this.mapTo(String.class, Object::toString).orElse("null");
         String id = this.id() == null ? "?" : this.id();

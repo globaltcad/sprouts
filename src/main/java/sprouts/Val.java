@@ -1030,6 +1030,30 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	boolean isMutable();
 
 	/**
+	 *  This method is used to determine if the property is a lens or not.
+	 *  A lens is a property which observes a specific part of the item
+	 *  of a parent property, and is used to create a view of that part,
+	 *  which may also be modified using the {@code Var.set(T)} method.<br>
+	 *  See {@link Var#zoomTo(Function, BiFunction)} and {@link Var#zoomTo(Object, Function, BiFunction)}
+	 *  for more information on how to create a lens.
+	 *
+	 * @return {@code true}, if this property is a lens, {@code false} otherwise.
+	 */
+	default boolean isLens() { return false; }
+
+	/**
+	 *  This method is used to determine if the property is a view or not.
+	 *  A view is a simple property which observes the item of another property,
+	 *  using a mapping function to create a new item based on the item of the parent property.
+	 *  This kind of property may only change its state when the parent property changes. <br>
+	 *  See {@link Var#viewAs(Class, Function)} and {@link Var#view(Object, Function)} for more information
+	 *  on how to create a view.
+	 *
+	 * @return {@code true}, if this property is a view, {@code false} otherwise.
+	 */
+	default boolean isView() { return false; }
+
+	/**
 	 *  {@link Val} and {@link Var} implementations are expected to represent
 	 *  simple wrappers for data centric quasi value types!
 	 *  So two primitive arrays of integers for example would not be recognized as
