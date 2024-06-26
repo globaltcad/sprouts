@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.StreamSupport;
 
@@ -125,7 +126,7 @@ public final class Sprouts implements SproutsFactory
         Objects.requireNonNull(first);
         Objects.requireNonNull(second);
         Objects.requireNonNull(combiner);
-        return AbstractVariable.viewOf( first, second, combiner );
+        return PropertyView.viewOf( first, second, combiner );
     }
 
     @Override
@@ -133,7 +134,7 @@ public final class Sprouts implements SproutsFactory
         Objects.requireNonNull(first);
         Objects.requireNonNull(second);
         Objects.requireNonNull(combiner);
-        return AbstractVariable.viewOfNullable( first, second, combiner );
+        return PropertyView.viewOfNullable( first, second, combiner );
     }
 
     @Override
@@ -142,7 +143,7 @@ public final class Sprouts implements SproutsFactory
         Objects.requireNonNull(first);
         Objects.requireNonNull(second);
         Objects.requireNonNull(combiner);
-        return AbstractVariable.viewOf( type, first, second, combiner );
+        return PropertyView.viewOf( type, first, second, combiner );
     }
 
     @Override
@@ -151,9 +152,13 @@ public final class Sprouts implements SproutsFactory
         Objects.requireNonNull(first);
         Objects.requireNonNull(second);
         Objects.requireNonNull(combiner);
-        return AbstractVariable.viewOfNullable( type, first, second, combiner );
+        return PropertyView.viewOfNullable( type, first, second, combiner );
     }
 
+    @Override
+    public <T, U> Val<T> viewOf(Class<T> type, Val<U> source, Function<U, T> mapper) {
+        return PropertyView.of(type, source, mapper);
+    }
 
     @Override public <T> Var<T> varOfNullable(Class<T> type, @Nullable T item ) {
         return AbstractVariable.ofNullable( false, type, item );

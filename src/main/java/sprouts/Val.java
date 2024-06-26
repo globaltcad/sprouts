@@ -2,6 +2,7 @@ package sprouts;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import sprouts.impl.PropertyView;
 import sprouts.impl.Sprouts;
 
 import java.util.Arrays;
@@ -486,7 +487,18 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	 * 			the mapping function to the item of this property.
 	 * @param <U> The type of the item returned from the mapping function
 	 */
-	<U> Val<U> mapTo( Class<U> type, java.util.function.Function<T, U> mapper );
+	default <U> Val<U> mapTo( Class<U> type, java.util.function.Function<T, U> mapper ) {
+		if ( !isPresent() )
+			return !isMutable() ? Val.ofNull( type ) : Var.ofNull( type );
+
+		U newValue = mapper.apply( get() );
+
+		if ( !isMutable() )
+			return Val.ofNullable( type, newValue );
+		else
+			return Var.ofNullable( type, newValue );
+	}
+
 
 	/**
 	 * Use this to create a live view of this property through a new property based on the provided mapping function.
@@ -506,11 +518,7 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	 * @return A property that is a live view of this property based on the provided mapping function.
 	 */
 	default <U> Val<U> viewAs( Class<U> type, Function<T, U> mapper ) {
-		final Var<U> viewProperty = Var.of(type, mapper.apply(orElseNull()));
-		onChange(Util.VIEW_CHANNEL, Action.ofWeak(viewProperty, (innerViewProperty, v) -> {
-			innerViewProperty.set(mapper.apply(v.orElseNull()));
-		}));
-		return viewProperty;
+		return Sprouts.factory().viewOf( type, this, mapper );
 	}
 
 	/**

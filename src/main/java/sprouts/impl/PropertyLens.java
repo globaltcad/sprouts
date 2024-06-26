@@ -184,18 +184,6 @@ public final class PropertyLens<A extends @Nullable Object, T extends @Nullable 
         return this;
     }
 
-    @Override
-    public <U> Var<@Nullable U> mapTo(Class<U> type, Function<@NonNull T, U> mapper) {
-        if ( !isPresent() )
-            return _isImmutable ? AbstractVariable.ofNullable( true, type, null ) : Var.ofNull( type );
-
-        U newValue = mapper.apply( get() );
-        if ( _isImmutable )
-            return AbstractVariable.ofNullable( true, type, null );
-        else
-            return Var.ofNullable( type, newValue );
-    }
-
     /** {@inheritDoc} */
     @Override public final Var<T> fireChange( Channel channel ) {
         _changeListeners.fireChange(this, channel);
