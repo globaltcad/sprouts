@@ -267,19 +267,7 @@ public interface Var<T extends @Nullable Object> extends Val<T>
 	 * @return A new Var that acts as a lens focusing on the specified field of the parent object.
 	 */
 	default <B> Var<B> zoomTo( Function<T,B> getter, BiFunction<T,B,T> wither ) {
-		B initialValue = getter.apply(this.orElseNull());
-		Class<B> type = (Class<B>) initialValue.getClass();
-		return new PropertyLens<>(
-					false,
-					type,
-					Val.NO_ID,
-					false,//does not allow null
-					initialValue, //may NOT be null
-					new WeakReference<>(this),
-					getter,
-					wither,
-					null
-				);
+		return Sprouts.factory().lensOf( this, getter, wither );
 	}
 
 	/**
@@ -317,34 +305,7 @@ public interface Var<T extends @Nullable Object> extends Val<T>
 	 *         the null object when the parent object is null.
 	 */
 	default <B> Var<B> zoomTo( B nullObject, Function<T,B> getter, BiFunction<T,B,T> wither ) {
-		Objects.requireNonNull(nullObject, "Null object must not be null");
-		Objects.requireNonNull(getter, "Getter must not be null");
-		Objects.requireNonNull(wither, "Wither must not be null");
-		Class<B> type = (Class<B>) nullObject.getClass();
-		Function<T,B> nullSafeGetter = newParentValue -> {
-			if ( newParentValue == null )
-				return nullObject;
-
-			return getter.apply(newParentValue);
-		};
-		BiFunction<T,B,T> nullSafeWither = (parentValue, newValue) -> {
-			if ( parentValue == null )
-				return null;
-
-			return wither.apply(parentValue, newValue);
-		};
-		B initialValue = nullSafeGetter.apply(this.orElseNull());
-		return new PropertyLens<>(
-					false,
-					type,
-					Val.NO_ID,
-					false,//does not allow null
-					initialValue, //may NOT be null
-				    new WeakReference<>(this),
-					nullSafeGetter,
-					nullSafeWither,
-					null
-				);
+		return Sprouts.factory().lensOf( this, nullObject, getter, wither );
 	}
 
 	/**

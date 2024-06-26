@@ -4,6 +4,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import sprouts.*;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -158,6 +159,55 @@ public final class Sprouts implements SproutsFactory
     @Override
     public <T, U> Val<T> viewOf(Class<T> type, Val<U> source, Function<U, T> mapper) {
         return PropertyView.of(type, source, mapper);
+    }
+
+    @Override
+    public <T, B> Var<B> lensOf(Var<T> source, Function<T, B> getter, BiFunction<T, B, T> wither) {
+        B initialValue = getter.apply(source.orElseNull());
+        Class<B> type = (Class<B>) initialValue.getClass();
+        return new PropertyLens<>(
+                false,
+                type,
+                Val.NO_ID,
+                false,//does not allow null
+                initialValue, //may NOT be null
+                new WeakReference<>(source),
+                getter,
+                wither,
+                null
+            );
+    }
+
+    @Override
+    public <T, B> Var<B> lensOf(Var<T> source, B nullObject, Function<T, B> getter, BiFunction<T, B, T> wither) {
+        Objects.requireNonNull(nullObject, "Null object must not be null");
+        Objects.requireNonNull(getter, "Getter must not be null");
+        Objects.requireNonNull(wither, "Wither must not be null");
+        Class<B> type = (Class<B>) nullObject.getClass();
+        Function<T,B> nullSafeGetter = newParentValue -> {
+            if ( newParentValue == null )
+                return nullObject;
+
+            return getter.apply(newParentValue);
+        };
+        BiFunction<T,B,T> nullSafeWither = (parentValue, newValue) -> {
+            if ( parentValue == null )
+                return null;
+
+            return wither.apply(parentValue, newValue);
+        };
+        B initialValue = nullSafeGetter.apply(source.orElseNull());
+        return new PropertyLens<>(
+                    false,
+                    type,
+                    Val.NO_ID,
+                    false,//does not allow null
+                    initialValue, //may NOT be null
+                    new WeakReference<>(source),
+                    nullSafeGetter,
+                    nullSafeWither,
+                    null
+                );
     }
 
     @Override public <T> Var<T> varOfNullable(Class<T> type, @Nullable T item ) {
