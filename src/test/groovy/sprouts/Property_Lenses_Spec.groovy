@@ -839,6 +839,28 @@ class Property_Lenses_Spec extends Specification
             !view.isLens() && view.isView()
     }
 
+    def 'A property knows if it is mutable or not or nullable or not.'()
+    {
+        given : 'We create a regular property, a property lens and a view of a property.'
+            var regularProperty = Var.of(new Author("Forename", "Surname", LocalDate.of(2008, 8, 12), []))
+            var lens = regularProperty.zoomTo(Author::birthDate, Author::withBirthDate)
+            var view = lens.viewAsString( date -> "Year: " + date.getDayOfYear() )
+            var regularNullProperty = Var.ofNullable(Author.class, new Author("Forename", "Surname", LocalDate.of(2008, 8, 12), []))
+            var nullLens = regularProperty.zoomToNullable(Author.class, Author::birthDate, Author::withBirthDate)
+            var nullView = lens.viewAsNullable(String.class, date -> "Year: " + date.getDayOfYear() )
+            var immutableProperty = Val.of("I never change!")
+            var immutableNullProperty = Val.ofNullable(String, "I also never change!")
+        expect :
+            regularProperty.isMutable() && !regularProperty.allowsNull()
+            lens.isMutable() && !lens.allowsNull()
+            view.isMutable() && !view.allowsNull()
+            regularNullProperty.isMutable() && regularNullProperty.allowsNull()
+            nullLens.isMutable() && nullLens.allowsNull()
+            nullView.isMutable() && nullView.allowsNull()
+            !immutableProperty.isMutable() && !immutableProperty.allowsNull()
+            !immutableNullProperty.isMutable() && immutableNullProperty.allowsNull()
+    }
+
     /**
      * This method guarantees that garbage collection is
      * done unlike <code>{@link System#gc()}</code>
