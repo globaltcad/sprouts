@@ -2,11 +2,8 @@ package sprouts;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
-import sprouts.impl.PropertyLens;
 import sprouts.impl.Sprouts;
 
-import java.lang.ref.WeakReference;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -335,33 +332,7 @@ public interface Var<T extends @Nullable Object> extends Val<T>
 	 * @return A new Var that acts as a lens focusing on the specified nullable field of the parent object.
 	 */
 	default <B extends @Nullable Object> Var<B> zoomToNullable( Class<B> type, Function<T,B> getter, BiFunction<T,B,T> wither ) {
-		Objects.requireNonNull(type, "Type must not be null");
-		Objects.requireNonNull(getter, "Getter must not be null");
-		Objects.requireNonNull(wither, "Wither must not be null");
-		Function<T,B> nullSafeGetter = newParentValue -> {
-			if ( newParentValue == null )
-				return null;
-
-			return getter.apply(newParentValue);
-		};
-		BiFunction<T,B,T> nullSafeWither = (parentValue, newValue) -> {
-			if ( parentValue == null )
-				return null;
-
-			return wither.apply(parentValue, newValue);
-		};
-		B initialValue = nullSafeGetter.apply(this.orElseNull());
-		return new PropertyLens<>(
-					false,
-					type,
-					Val.NO_ID,
-					true,//allows null
-					initialValue, //may be null
-				    new WeakReference<>(this),
-					nullSafeGetter,
-					nullSafeWither,
-					null
-				);
+		return Sprouts.factory().lensOfNullable(type, this, getter, wither);
 	}
 
 }

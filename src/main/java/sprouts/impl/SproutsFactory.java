@@ -45,6 +45,8 @@ public interface SproutsFactory
 
 	<T extends @Nullable Object, B extends @Nullable Object> Var<B> lensOf( Var<T> source, B nullObject, Function<T,B> getter, BiFunction<T,B,T> wither );
 
+	<T extends @Nullable Object, B extends @Nullable Object> Var<B> lensOfNullable( Class<B> type, Var<T> source, Function<T,B> getter, BiFunction<T,B,T> wither );
+
 	<T> Var<@Nullable T> varOfNullable( Class<T> type, @Nullable T item );
 
 	<T> Var<@Nullable T> varOfNull( Class<T> type );

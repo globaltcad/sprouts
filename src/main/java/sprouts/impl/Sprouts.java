@@ -210,6 +210,37 @@ public final class Sprouts implements SproutsFactory
                 );
     }
 
+    @Override
+    public <T, B> Var<B> lensOfNullable(Class<B> type, Var<T> source, Function<T, B> getter, BiFunction<T, B, T> wither) {
+        Objects.requireNonNull(type, "Type must not be null");
+		Objects.requireNonNull(getter, "Getter must not be null");
+		Objects.requireNonNull(wither, "Wither must not be null");
+		Function<T,B> nullSafeGetter = newParentValue -> {
+			if ( newParentValue == null )
+				return null;
+
+			return getter.apply(newParentValue);
+		};
+		BiFunction<T,B,T> nullSafeWither = (parentValue, newValue) -> {
+			if ( parentValue == null )
+				return null;
+
+			return wither.apply(parentValue, newValue);
+		};
+		B initialValue = nullSafeGetter.apply(source.orElseNull());
+		return new PropertyLens<>(
+					false,
+					type,
+					Val.NO_ID,
+					true,//allows null
+					initialValue, //may be null
+				    new WeakReference<>(source),
+					nullSafeGetter,
+					nullSafeWither,
+					null
+				);
+    }
+
     @Override public <T> Var<T> varOfNullable(Class<T> type, @Nullable T item ) {
         return Property.ofNullable( false, type, item );
     }
@@ -227,57 +258,57 @@ public final class Sprouts implements SproutsFactory
     }
 
     @Override public <T> Vals<T> valsOf(Class<T> type ) {
-        return AbstractVariables.of( true, type );
+        return PropertyList.of( true, type );
     }
 
     @SuppressWarnings("unchecked")
     @Override public <T> Vals<T> valsOf(Class<T> type, Val<T>... vars ) {
-        return AbstractVariables.of( true, type, (Var<T>[]) vars );
+        return PropertyList.of( true, type, (Var<T>[]) vars );
     }
 
     @SuppressWarnings("unchecked")
     @Override public <T> Vals<T> valsOf(Val<T> first, Val<T>... rest ) {
         Var<T>[] vars = new Var[rest.length];
         System.arraycopy(rest, 0, vars, 0, rest.length);
-        return AbstractVariables.of( true, (Var<T>) first, vars );
+        return PropertyList.of( true, (Var<T>) first, vars );
     }
 
     @SuppressWarnings("unchecked")
-    @Override public <T> Vals<T> valsOf( T first, T... rest ) { return AbstractVariables.of( true, first, rest); }
+    @Override public <T> Vals<T> valsOf( T first, T... rest ) { return PropertyList.of( true, first, rest); }
 
     @SuppressWarnings("unchecked")
-    @Override public <T> Vals<T> valsOf( Class<T> type, T... items ) { return AbstractVariables.of( true, type, items ); }
+    @Override public <T> Vals<T> valsOf( Class<T> type, T... items ) { return PropertyList.of( true, type, items ); }
 
     @Override public <T> Vals<T> valsOf( Class<T> type, Iterable<Val<T>> properties ) {
-        return AbstractVariables.of( true, type, (Iterable) properties );
+        return PropertyList.of( true, type, (Iterable) properties );
     }
 
     @Override public <T> Vals<T> valsOf( Class<T> type, Vals<T> vals ) {
         T[] values = (T[]) vals.stream().toArray(Object[]::new);
-        return AbstractVariables.of(true, type, values);
+        return PropertyList.of(true, type, values);
     }
 
     @SuppressWarnings("unchecked")
     @Override public <T> Vals<@Nullable T> valsOfNullable( Class<T> type, Val<@Nullable T>... vals ) {
         Var<T>[] vars = new Var[vals.length];
         System.arraycopy(vals, 0, vars, 0, vals.length);
-        return AbstractVariables.ofNullable( true, type, vars );
+        return PropertyList.ofNullable( true, type, vars );
     }
 
     @Override public <T> Vals<@Nullable T> valsOfNullable( Class<T> type ) {
-        return AbstractVariables.ofNullable( true, type );
+        return PropertyList.ofNullable( true, type );
     }
 
     @SuppressWarnings("unchecked")
     @Override public <T> Vals<@Nullable T> valsOfNullable( Class<T> type, @Nullable T... items ) {
-        return AbstractVariables.ofNullable( true, type, items );
+        return PropertyList.ofNullable( true, type, items );
     }
 
     @SuppressWarnings("unchecked")
     @Override public <T> Vals<@Nullable T> valsOfNullable( Val<@Nullable T> first, Val<@Nullable T>... rest ) {
         Var<T>[] vars = new Var[rest.length];
         System.arraycopy(rest, 0, vars, 0, rest.length);
-        return AbstractVariables.ofNullable( true, (Var<T>) first, vars );
+        return PropertyList.ofNullable( true, (Var<T>) first, vars );
     }
 
     @Override
@@ -294,36 +325,36 @@ public final class Sprouts implements SproutsFactory
 
 
 	@SuppressWarnings("unchecked")
-	@Override public <T> Vars<T> varsOf( Class<T> type, Var<T>... vars ) { return AbstractVariables.of( false, type, vars ); }
+	@Override public <T> Vars<T> varsOf( Class<T> type, Var<T>... vars ) { return PropertyList.of( false, type, vars ); }
 
-	@Override public <T> Vars<T> varsOf( Class<T> type ) { return AbstractVariables.of( false, type ); }
-
-	@SuppressWarnings("unchecked")
-	@Override public <T> Vars<T> varsOf( Var<T> first, Var<T>... rest ) { return AbstractVariables.of( false, first, rest ); }
+	@Override public <T> Vars<T> varsOf( Class<T> type ) { return PropertyList.of( false, type ); }
 
 	@SuppressWarnings("unchecked")
-	@Override public <T> Vars<T> varsOf( T first, T... rest ) { return AbstractVariables.of( false, first, rest ); }
+	@Override public <T> Vars<T> varsOf( Var<T> first, Var<T>... rest ) { return PropertyList.of( false, first, rest ); }
+
+	@SuppressWarnings("unchecked")
+	@Override public <T> Vars<T> varsOf( T first, T... rest ) { return PropertyList.of( false, first, rest ); }
 
     @SuppressWarnings("unchecked")
-    @Override public <T> Vars<T> varsOf( Class<T> type, T... items ) { return AbstractVariables.of( false, type, items ); }
+    @Override public <T> Vars<T> varsOf( Class<T> type, T... items ) { return PropertyList.of( false, type, items ); }
 
-	@Override public <T> Vars<T> varsOf( Class<T> type, Iterable<Var<T>> vars ) { return AbstractVariables.of( false, type, vars ); }
+	@Override public <T> Vars<T> varsOf( Class<T> type, Iterable<Var<T>> vars ) { return PropertyList.of( false, type, vars ); }
 
 	@SuppressWarnings("unchecked")
 	@Override public <T> Vars<@Nullable T> varsOfNullable( Class<T> type, Var<@Nullable T>... vars ) {
-		return AbstractVariables.ofNullable( false, type, vars );
+		return PropertyList.ofNullable( false, type, vars );
 	}
 
-	@Override public <T> Vars<@Nullable T> varsOfNullable( Class<T> type ) { return AbstractVariables.ofNullable( false, type ); }
+	@Override public <T> Vars<@Nullable T> varsOfNullable( Class<T> type ) { return PropertyList.ofNullable( false, type ); }
 
 	@SuppressWarnings("unchecked")
 	@Override public <T> Vars<@Nullable T> varsOfNullable( Class<T> type, @Nullable T... values ) {
-		return AbstractVariables.ofNullable( false, type, values );
+		return PropertyList.ofNullable( false, type, values );
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override public <T> Vars<@Nullable T> varsOfNullable( Var<@Nullable T> first, Var<@Nullable T>... rest ) {
-		return AbstractVariables.ofNullable( false, first, rest );
+		return PropertyList.ofNullable( false, first, rest );
 	}
 
 	@Override public <V> Result<V> resultOf( Class<V> type ) {

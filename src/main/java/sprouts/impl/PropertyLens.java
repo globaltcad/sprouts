@@ -41,7 +41,7 @@ import java.util.function.Function;
  *             such as a record, value object, or a primitive.
  *
  */
-public final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object> implements Var<T>
+final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object> implements Var<T>
 {
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(PropertyLens.class);
 

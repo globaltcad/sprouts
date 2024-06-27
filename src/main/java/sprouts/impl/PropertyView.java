@@ -18,7 +18,7 @@ import java.util.function.Function;
  *
  * @param <T> The type of the value wrapped by a given property...
  */
-public class PropertyView<T extends @Nullable Object> implements Var<T> {
+final class PropertyView<T extends @Nullable Object> implements Var<T> {
 
 	private static final Logger log = org.slf4j.LoggerFactory.getLogger(PropertyView.class);
 

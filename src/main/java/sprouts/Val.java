@@ -2,7 +2,6 @@ package sprouts;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
-import sprouts.impl.PropertyView;
 import sprouts.impl.Sprouts;
 
 import java.util.Arrays;

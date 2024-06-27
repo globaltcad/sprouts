@@ -12,19 +12,19 @@ import java.util.stream.Collectors;
 /**
  *  A base class for {@link Vars} implementations.
  */
-public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
-    private static final Logger log = org.slf4j.LoggerFactory.getLogger(AbstractVariables.class);
+final class PropertyList<T extends @Nullable Object> implements Vars<T> {
+    private static final Logger log = org.slf4j.LoggerFactory.getLogger(PropertyList.class);
 
     public static <T> Vars<T> of( boolean immutable, Class<T> type ) {
         Objects.requireNonNull(type);
-        return new AbstractVariables<T>( immutable, type, false );
+        return new PropertyList<T>( immutable, type, false );
     }
 
     @SafeVarargs
     public static <T> Vars<T> of( boolean immutable, Class<T> type, Var<T>... vars ) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(vars);
-        return new AbstractVariables<T>( immutable, type, false, vars );
+        return new PropertyList<T>( immutable, type, false, vars );
     }
 
     @SafeVarargs
@@ -34,7 +34,7 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
         Var<T>[] array = new Var[vars.length];
         for ( int i = 0; i < vars.length; i++ )
             array[i] = Property.of( immutable, vars[i] );
-        return new AbstractVariables<T>( immutable, type, false, array );
+        return new PropertyList<T>( immutable, type, false, array );
     }
 
     @SafeVarargs
@@ -64,29 +64,29 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
         List<Var<T>> list = new ArrayList<>();
         vars.forEach( list::add );
         Var<T>[] array = new Var[list.size()];
-        return new AbstractVariables<T>( immutable, type, false, list.toArray(array) );
+        return new PropertyList<T>( immutable, type, false, list.toArray(array) );
     }
 
     public static <T> Vals<T> of( boolean immutable, Class<T> type, Vals<T> vals ) {
-        if ( vals instanceof AbstractVariables )
-            return new AbstractVariables<>( immutable, type, false, ((AbstractVariables<T>) vals)._variables );
+        if ( vals instanceof PropertyList)
+            return new PropertyList<>( immutable, type, false, ((PropertyList<T>) vals)._variables );
 
         List<Val<T>> list = new ArrayList<>();
         for ( int i = 0; i < vals.size(); i++ )
             list.add( vals.at(i) );
-        return AbstractVariables.of( immutable, type, (Iterable) list );
+        return PropertyList.of( immutable, type, (Iterable) list );
     }
 
     public static <T> Vars<T> ofNullable( boolean immutable, Class<T> type ){
         Objects.requireNonNull(type);
-        return new AbstractVariables<T>( immutable, type, true, new Var[0] );
+        return new PropertyList<T>( immutable, type, true, new Var[0] );
     }
 
     @SafeVarargs
     public static <T> Vars<T> ofNullable( boolean immutable, Class<T> type, Var<T>... vars ) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(vars);
-        return new AbstractVariables<T>( immutable, type, true, vars ){};
+        return new PropertyList<T>( immutable, type, true, vars );
     }
 
     @SafeVarargs
@@ -96,7 +96,7 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
         Var<T>[] array = new Var[vars.length];
         for ( int i = 0; i < vars.length; i++ )
             array[i] = Property.ofNullable( immutable, type, vars[i]);
-        return new AbstractVariables<T>( immutable, type, true, array );
+        return new PropertyList<T>( immutable, type, true, array );
     }
 
     @SafeVarargs
@@ -119,7 +119,7 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
 
 
     @SafeVarargs
-    protected AbstractVariables( boolean isImmutable, Class<T> type, boolean allowsNull, Var<T>... vals ) {
+    protected PropertyList(boolean isImmutable, Class<T> type, boolean allowsNull, Var<T>... vals ) {
         _isImmutable = isImmutable;
         _type        = type;
         _allowsNull  = allowsNull;
@@ -127,7 +127,7 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
         _checkNullSafety();
     }
 
-    protected AbstractVariables( boolean isImmutable, Class<T> type, boolean allowsNull, List<Var<T>> vals ) {
+    protected PropertyList(boolean isImmutable, Class<T> type, boolean allowsNull, List<Var<T>> vals ) {
         _isImmutable = isImmutable;
         _type        = type;
         _allowsNull  = allowsNull;
@@ -441,7 +441,7 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
         */
         Vals<T> newValues = newVal == null ? Vals.ofNullable(_type) : Vals.ofNullable(_type, Val.ofNullable(newVal));
         Vals<T> oldValues = oldVal == null ? Vals.ofNullable(_type) : Vals.ofNullable(_type, Val.ofNullable(oldVal));
-        return new ValsDelegateImpl<>(type, index, newValues, oldValues, clone);
+        return new PropertyListDelegate<>(type, index, newValues, oldValues, clone);
     }
 
     private ValsDelegate<T> _createDelegate(
@@ -461,7 +461,7 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
             pass the clone to the delegate. This is important because the delegate
             is passed to the action which might be executed on a different thread.
         */
-        return new ValsDelegateImpl<>(type, index, newClone, oldClone, clone);
+        return new PropertyListDelegate<>(type, index, newClone, oldClone, clone);
     }
 
     private void _triggerAction(
@@ -525,8 +525,8 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
             return false;
         }
         if( obj instanceof Vals ) {
-            if ( obj instanceof AbstractVariables ) {
-                AbstractVariables<?> other = (AbstractVariables<?>) obj;
+            if ( obj instanceof PropertyList) {
+                PropertyList<?> other = (PropertyList<?>) obj;
                 if ( !other._isImmutable )
                     return false;
             }
