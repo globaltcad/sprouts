@@ -101,15 +101,15 @@ public final class Sprouts implements SproutsFactory
     }
 
     @Override public <T> Val<@Nullable T> valOfNullable( Class<T> type, @Nullable T item ) {
-        return AbstractVariable.ofNullable( true, type, item );
+        return Property.ofNullable( true, type, item );
     }
 
     @Override public <T> Val<@Nullable T> valOfNull( Class<T> type ) {
-        return AbstractVariable.ofNullable( true, type, null );
+        return Property.ofNullable( true, type, null );
     }
 
     @Override public <T> Val<T> valOf( T item ) {
-        return AbstractVariable.of( true, item );
+        return Property.of( true, item );
     }
 
     @Override public <T> Val<T> valOf( Val<T> toBeCopied ) {
@@ -211,19 +211,19 @@ public final class Sprouts implements SproutsFactory
     }
 
     @Override public <T> Var<T> varOfNullable(Class<T> type, @Nullable T item ) {
-        return AbstractVariable.ofNullable( false, type, item );
+        return Property.ofNullable( false, type, item );
     }
 
     @Override public <T> Var<T> varOfNull(Class<T> type ) {
-        return AbstractVariable.ofNullable( false, type, null );
+        return Property.ofNullable( false, type, null );
     }
 
     @Override public <T> Var<T> varOf(T item ) {
-        return AbstractVariable.of( false, item );
+        return Property.of( false, item );
     }
 
     @Override public <T, V extends T> Var<T> varOf(Class<T> type, V item ) {
-        return AbstractVariable.of( false, type, item );
+        return Property.of( false, type, item );
     }
 
     @Override public <T> Vals<T> valsOf(Class<T> type ) {

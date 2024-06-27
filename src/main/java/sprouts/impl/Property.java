@@ -13,21 +13,21 @@ import java.util.Objects;
  * 
  * @param <T> The type of the value wrapped by a given property...
  */
-final class AbstractVariable<T extends @Nullable Object> implements Var<T> {
+final class Property<T extends @Nullable Object> implements Var<T> {
 
-	private static final Logger log = org.slf4j.LoggerFactory.getLogger(AbstractVariable.class);
+	private static final Logger log = org.slf4j.LoggerFactory.getLogger(Property.class);
 
 	public static <T> Var<@Nullable T> ofNullable( boolean immutable, Class<T> type, @Nullable T value ) {
-		return new AbstractVariable<T>( immutable, type, value, NO_ID, new ChangeListeners<>(), true );
+		return new Property<T>( immutable, type, value, NO_ID, new ChangeListeners<>(), true );
 	}
 
 	public static <T> Var<T> of( boolean immutable, Class<T> type, T value ) {
-		return new AbstractVariable<T>( immutable, type, value, NO_ID, new ChangeListeners<>(), false );
+		return new Property<T>( immutable, type, value, NO_ID, new ChangeListeners<>(), false );
 	}
 
 	public static <T> Var<T> of( boolean immutable, T iniValue ) {
 		Objects.requireNonNull(iniValue);
-		return new AbstractVariable<T>( immutable, (Class<T>) iniValue.getClass(), iniValue, NO_ID, new ChangeListeners<>(), false );
+		return new Property<T>( immutable, (Class<T>) iniValue.getClass(), iniValue, NO_ID, new ChangeListeners<>(), false );
 	}
 
 
@@ -41,7 +41,7 @@ final class AbstractVariable<T extends @Nullable Object> implements Var<T> {
 	private @Nullable T _value;
 
 
-	AbstractVariable(
+	Property(
 		boolean            immutable,
 		Class<T>           type,
 		@Nullable T        iniValue,
@@ -75,7 +75,7 @@ final class AbstractVariable<T extends @Nullable Object> implements Var<T> {
 
 	/** {@inheritDoc} */
 	@Override public Var<T> withId( String id ) {
-        return new AbstractVariable<T>( _isImmutable, _type, _value, id, _changeListeners, _nullable);
+        return new Property<T>( _isImmutable, _type, _value, id, _changeListeners, _nullable);
 	}
 
 	/** {@inheritDoc} */

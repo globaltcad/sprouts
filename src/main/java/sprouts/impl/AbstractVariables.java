@@ -33,7 +33,7 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
         Objects.requireNonNull(vars);
         Var<T>[] array = new Var[vars.length];
         for ( int i = 0; i < vars.length; i++ )
-            array[i] = AbstractVariable.of( immutable, vars[i] );
+            array[i] = Property.of( immutable, vars[i] );
         return new AbstractVariables<T>( immutable, type, false, array );
     }
 
@@ -52,9 +52,9 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
         Objects.requireNonNull(first);
         Objects.requireNonNull(rest);
         Var<T>[] vars = new Var[rest.length+1];
-        vars[0] = AbstractVariable.of( immutable, first );
+        vars[0] = Property.of( immutable, first );
         for ( int i = 0; i < rest.length; i++ )
-            vars[ i + 1 ] = AbstractVariable.of( immutable, rest[ i ] );
+            vars[ i + 1 ] = Property.of( immutable, rest[ i ] );
         return of(immutable, vars[0].type(), vars);
     }
 
@@ -95,7 +95,7 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
         Objects.requireNonNull(vars);
         Var<T>[] array = new Var[vars.length];
         for ( int i = 0; i < vars.length; i++ )
-            array[i] = AbstractVariable.ofNullable( immutable, type, vars[i]);
+            array[i] = Property.ofNullable( immutable, type, vars[i]);
         return new AbstractVariables<T>( immutable, type, true, array );
     }
 
