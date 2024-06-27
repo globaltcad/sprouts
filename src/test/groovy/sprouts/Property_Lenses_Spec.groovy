@@ -827,6 +827,18 @@ class Property_Lenses_Spec extends Specification
             lastName.get() == "Mayer"
     }
 
+    def 'A property lens knows that it is a property lens.'()
+    {
+        given : 'We create a regular property, a property lens and a view of a property.'
+            var regularProperty = Var.of(new Author("Forename", "Surname", LocalDate.of(2008, 8, 12), []))
+            var lens = regularProperty.zoomTo(Author::birthDate, Author::withBirthDate)
+            var view = lens.viewAsString( date -> "Year: " + date.getDayOfYear() )
+        expect :
+            !regularProperty.isLens() && !regularProperty.isView()
+            lens.isLens() && !lens.isView()
+            !view.isLens() && view.isView()
+    }
+
     /**
      * This method guarantees that garbage collection is
      * done unlike <code>{@link System#gc()}</code>
