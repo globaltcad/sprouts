@@ -562,19 +562,7 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	 * @return A property that is a live view of this property based on the provided mapping function and null object.
 	 */
 	default <U> Val<U> view( U nullObject, U errorObject, Function<T, @Nullable U> mapper ) {
-		Objects.requireNonNull(nullObject);
-		Objects.requireNonNull(errorObject);
-
-		Function<T, U> nonNullMapper = Util.nonNullMapper(nullObject, errorObject, mapper);
-
-		final U initial = nonNullMapper.apply(orElseNull());
-		final Var<U> viewProperty = Var.of( initial );
-
-		onChange(Util.VIEW_CHANNEL, Action.ofWeak( viewProperty, (innerViewProperty, v) -> {
-			final U value = nonNullMapper.apply(orElseNull());
-			innerViewProperty.set( value );
-		}));
-		return viewProperty;
+		return Sprouts.factory().viewOf(nullObject, errorObject, this, mapper);
 	}
 
 
@@ -590,11 +578,7 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	 * @return A nullable property that is a live view of this property based on the provided mapping function.
 	 */
 	default <U> Val<@Nullable U> viewAsNullable( Class<U> type, Function<T, @Nullable U> mapper ) {
-		final Var<@Nullable U> viewProperty = Var.ofNullable(type, mapper.apply(orElseNull()));
-		onChange(Util.VIEW_CHANNEL, Action.ofWeak( viewProperty, (innerViewProperty, v) -> {
-			innerViewProperty.set(mapper.apply(v.orElseNull()));
-		}));
-		return viewProperty;
+		return Sprouts.factory().viewOfNullable( type, this, mapper );
 	}
 
 	/**

@@ -162,6 +162,33 @@ public final class Sprouts implements SproutsFactory
     }
 
     @Override
+    public <T, U> Val<U> viewOf(U nullObject, U errorObject, Val<T> source, Function<T, @Nullable U> mapper) {
+        Objects.requireNonNull(nullObject);
+		Objects.requireNonNull(errorObject);
+
+		Function<T, U> nonNullMapper = Util.nonNullMapper(nullObject, errorObject, mapper);
+
+		final U initial = nonNullMapper.apply(source.orElseNull());
+        final Class<U> targetType = (Class<U>) initial.getClass();
+		final Var<U> viewProperty = PropertyView.of( targetType, initial );
+
+        source.onChange(Util.VIEW_CHANNEL, Action.ofWeak( viewProperty, (innerViewProperty, v) -> {
+			final U value = nonNullMapper.apply(source.orElseNull());
+			innerViewProperty.set( value );
+		}));
+		return viewProperty;
+    }
+
+    @Override
+    public <T, U> Val<@Nullable U> viewOfNullable(Class<U> type, Val<T> source, Function<T, @Nullable U> mapper) {
+        final Var<@Nullable U> viewProperty = PropertyView.ofNullable(type, mapper.apply(source.orElseNull()));
+        source.onChange(Util.VIEW_CHANNEL, Action.ofWeak( viewProperty, (innerViewProperty, v) -> {
+            innerViewProperty.set(mapper.apply(v.orElseNull()));
+        }));
+        return viewProperty;
+    }
+
+    @Override
     public <T, B> Var<B> lensOf(Var<T> source, Function<T, B> getter, BiFunction<T, B, T> wither) {
         B initialValue = getter.apply(source.orElseNull());
         Class<B> type = (Class<B>) initialValue.getClass();
