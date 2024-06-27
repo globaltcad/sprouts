@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
-public class ResultImpl<V> implements Result<V>
+final class ResultImpl<V> implements Result<V>
 {
 	private final String        _id;
 	private final Class<V>      _type;

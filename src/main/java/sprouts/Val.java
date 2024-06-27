@@ -486,7 +486,18 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	 * 			the mapping function to the item of this property.
 	 * @param <U> The type of the item returned from the mapping function
 	 */
-	<U> Val<U> mapTo( Class<U> type, java.util.function.Function<T, U> mapper );
+	default <U> Val<U> mapTo( Class<U> type, java.util.function.Function<T, U> mapper ) {
+		if ( !isPresent() )
+			return !isMutable() ? Val.ofNull( type ) : Var.ofNull( type );
+
+		U newValue = mapper.apply( get() );
+
+		if ( !isMutable() )
+			return Val.ofNullable( type, newValue );
+		else
+			return Var.ofNullable( type, newValue );
+	}
+
 
 	/**
 	 * Use this to create a live view of this property through a new property based on the provided mapping function.
@@ -506,11 +517,7 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	 * @return A property that is a live view of this property based on the provided mapping function.
 	 */
 	default <U> Val<U> viewAs( Class<U> type, Function<T, U> mapper ) {
-		final Var<U> viewProperty = Var.of(type, mapper.apply(orElseNull()));
-		onChange(Util.VIEW_CHANNEL, Action.ofWeak(viewProperty, (innerViewProperty, v) -> {
-			innerViewProperty.set(mapper.apply(v.orElseNull()));
-		}));
-		return viewProperty;
+		return Sprouts.factory().viewOf( type, this, mapper );
 	}
 
 	/**
@@ -555,19 +562,7 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	 * @return A property that is a live view of this property based on the provided mapping function and null object.
 	 */
 	default <U> Val<U> view( U nullObject, U errorObject, Function<T, @Nullable U> mapper ) {
-		Objects.requireNonNull(nullObject);
-		Objects.requireNonNull(errorObject);
-
-		Function<T, U> nonNullMapper = Util.nonNullMapper(nullObject, errorObject, mapper);
-
-		final U initial = nonNullMapper.apply(orElseNull());
-		final Var<U> viewProperty = Var.of( initial );
-
-		onChange(Util.VIEW_CHANNEL, Action.ofWeak( viewProperty, (innerViewProperty, v) -> {
-			final U value = nonNullMapper.apply(orElseNull());
-			innerViewProperty.set( value );
-		}));
-		return viewProperty;
+		return Sprouts.factory().viewOf(nullObject, errorObject, this, mapper);
 	}
 
 
@@ -583,11 +578,7 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	 * @return A nullable property that is a live view of this property based on the provided mapping function.
 	 */
 	default <U> Val<@Nullable U> viewAsNullable( Class<U> type, Function<T, @Nullable U> mapper ) {
-		final Var<@Nullable U> viewProperty = Var.ofNullable(type, mapper.apply(orElseNull()));
-		onChange(Util.VIEW_CHANNEL, Action.ofWeak( viewProperty, (innerViewProperty, v) -> {
-			innerViewProperty.set(mapper.apply(v.orElseNull()));
-		}));
-		return viewProperty;
+		return Sprouts.factory().viewOfNullable( type, this, mapper );
 	}
 
 	/**
@@ -1020,6 +1011,30 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	 * @return {@code true}, if this property can be changed, {@code false} otherwise.
 	 */
 	boolean isMutable();
+
+	/**
+	 *  This method is used to determine if the property is a lens or not.
+	 *  A lens is a property which observes a specific part of the item
+	 *  of a parent property, and is used to create a view of that part,
+	 *  which may also be modified using the {@code Var.set(T)} method.<br>
+	 *  See {@link Var#zoomTo(Function, BiFunction)} and {@link Var#zoomTo(Object, Function, BiFunction)}
+	 *  for more information on how to create a lens.
+	 *
+	 * @return {@code true}, if this property is a lens, {@code false} otherwise.
+	 */
+	default boolean isLens() { return false; }
+
+	/**
+	 *  This method is used to determine if the property is a view or not.
+	 *  A view is a simple property which observes the item of another property,
+	 *  using a mapping function to create a new item based on the item of the parent property.
+	 *  This kind of property may only change its state when the parent property changes. <br>
+	 *  See {@link Var#viewAs(Class, Function)} and {@link Var#view(Object, Function)} for more information
+	 *  on how to create a view.
+	 *
+	 * @return {@code true}, if this property is a view, {@code false} otherwise.
+	 */
+	default boolean isView() { return false; }
 
 	/**
 	 *  {@link Val} and {@link Var} implementations are expected to represent

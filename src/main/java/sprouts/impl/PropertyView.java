@@ -3,37 +3,46 @@ package sprouts.impl;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
-import sprouts.Observable;
-import sprouts.Observer;
 import sprouts.*;
 
-import java.util.*;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
- * 	The base implementation for both {@link Var} and {@link Val} interfaces.
- * 	This also serves as a reference implementation for the concept of the
- *  {@link Var}/{@link Val} properties in general.
- * 
+ *  A property view is a property that is derived from one or more other properties.
+ *  It observes the changes of the source properties and updates its value accordingly.
+ *  The value of a property view is calculated by a combiner function or a simple
+ *  mapping function depending on the number of source properties.
+ *
  * @param <T> The type of the value wrapped by a given property...
  */
-public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<T> implements Var<T> {
+final class PropertyView<T extends @Nullable Object> implements Var<T> {
 
-	private static final Logger log = org.slf4j.LoggerFactory.getLogger(AbstractVariable.class);
+	private static final Logger log = org.slf4j.LoggerFactory.getLogger(PropertyView.class);
 
-	public static <T> Var<@Nullable T> ofNullable( boolean immutable, Class<T> type, @Nullable T value ) {
-		return new AbstractVariable<T>( immutable, type, value, NO_ID, new ChangeListeners<>(), true );
+
+	public static <T> Var<@Nullable T> ofNullable( Class<T> type, @Nullable T value ) {
+		return new PropertyView<T>(type, value, NO_ID, new ChangeListeners<>(), true );
 	}
 
-	public static <T> Var<T> of( boolean immutable, Class<T> type, T value ) {
-		return new AbstractVariable<T>( immutable, type, value, NO_ID, new ChangeListeners<>(), false );
+	public static <T> Var<T> of( Class<T> type, T value ) {
+		return new PropertyView<T>(type, value, NO_ID, new ChangeListeners<>(), false );
 	}
 
-	public static <T> Var<T> of( boolean immutable, T iniValue ) {
-		Objects.requireNonNull(iniValue);
-		return new AbstractVariable<T>( immutable, (Class<T>) iniValue.getClass(), iniValue, NO_ID, new ChangeListeners<>(), false );
+	public static <U, T> Val<T> of( Class<T> type, Val<U> parent, Function<U, T> mapper ) {
+		@Nullable T initialItem = mapper.apply(parent.orElseNull());
+		if ( parent.isMutable() && parent instanceof Var ) {
+			Var<U> source = (Var<U>) parent;
+			PropertyView<T> view = new PropertyView<T>(type, initialItem, NO_ID, new ChangeListeners<>(), false );
+			source.onChange(From.ALL, Action.ofWeak(view, (innerViewProperty, v) -> {
+				innerViewProperty.set(mapper.apply(v.orElseNull()));
+			}));
+			return view;
+		}
+		else
+			return ( initialItem == null ? Val.ofNull(type) : Val.of(initialItem) );
 	}
 
 	public static <T extends @Nullable Object, U extends @Nullable Object> Var<@NonNull T> viewOf( Val<T> first, Val<U> second, BiFunction<T, U, @NonNull T> combiner ) {
@@ -94,9 +103,9 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 				innerResult.set(From.ALL, newItem);
 		};
 
-		Var<T> result = AbstractVariable.of( false, first.type(), initial ).withId(id);
-		first.onChange(From.ALL, Action.ofWeak( result, firstListener));
-		second.onChange(From.ALL, Action.ofWeak( result, secondListener));
+		Var<T> result = PropertyView.of(first.type(), initial ).withId(id);
+		first.onChange(From.ALL, Action.ofWeak( result, firstListener ));
+		second.onChange(From.ALL, Action.ofWeak( result, secondListener ));
 		return result;
 	}
 
@@ -119,7 +128,7 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 
 		T initial = fullCombiner.apply(first, second);
 
-		Var<@Nullable T> result = AbstractVariable.ofNullable( false, first.type(), initial ).withId(id);
+		Var<@Nullable T> result = PropertyView.ofNullable(first.type(), initial ).withId(id);
 
 		first.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
 			innerResult.set(From.ALL, fullCombiner.apply(v, second) );
@@ -152,7 +161,7 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 		if (initial == null)
 			throw new NullPointerException("The result of the combiner function is null, but the property does not allow null values!");
 
-		Var<R> result = AbstractVariable.of( false, type, initial ).withId(id);
+		Var<R> result = PropertyView.of(type, initial ).withId(id);
 
 		first.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
 			@Nullable R newItem = fullCombiner.apply(v, second);
@@ -203,7 +212,7 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 			}
 		};
 
-		Var<@Nullable R> result =  AbstractVariable.ofNullable( false, type, fullCombiner.apply(first, second) ).withId(id);
+		Var<@Nullable R> result =  PropertyView.ofNullable(type, fullCombiner.apply(first, second) ).withId(id);
 
 		first.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
 			innerResult.set(From.ALL, fullCombiner.apply(v, second));
@@ -216,28 +225,57 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 
 
 	private final ChangeListeners<T> _changeListeners;
-	private final boolean _isImmutable;
+
+    protected final String _id;
+	protected final boolean _nullable;
+	protected final Class<T> _type;
+
+	protected @Nullable T _value;
 
 
-	protected AbstractVariable(
-		boolean immutable,
+	protected PropertyView(
+			Class<T>    type,
+			String      id,
+			boolean     allowsNull,
+			@Nullable T iniValue // may be null
+	) {
+		Objects.requireNonNull(id);
+		Objects.requireNonNull(type);
+		_type     = type;
+		_id       = id;
+		_nullable = allowsNull;
+		_value    = iniValue;
+		_changeListeners = new ChangeListeners<>();
+
+		if ( _value != null ) {
+			// We check if the type is correct
+			if ( !_type.isAssignableFrom(_value.getClass()) )
+				throw new IllegalArgumentException(
+						"The provided type of the initial value is not compatible with the actual type of the variable"
+				);
+		}
+		if ( !ID_PATTERN.matcher(_id).matches() )
+			throw new IllegalArgumentException("The provided id '"+_id+"' is not valid!");
+		if ( !allowsNull && iniValue == null )
+			throw new IllegalArgumentException("The provided initial value is null, but the property does not allow null values!");
+	}
+
+	protected PropertyView(
 		Class<T> type,
 		@Nullable T iniValue,
 		String id,
 		ChangeListeners<T> changeListeners,
 		boolean allowsNull
 	) {
-		super( type, id, allowsNull, iniValue );
+		this( type, id, allowsNull, iniValue );
 		Objects.requireNonNull(id);
 		Objects.requireNonNull(type);
 		Objects.requireNonNull(changeListeners);
-		_isImmutable = immutable;
-		_changeListeners = new ChangeListeners<>(changeListeners);
 	}
 
 	/** {@inheritDoc} */
 	@Override public Var<T> withId( String id ) {
-        return new AbstractVariable<T>( _isImmutable, _type, _value, id, _changeListeners, _nullable);
+        return new PropertyView<T>(_type, _value, id, _changeListeners, _nullable);
 	}
 
 	/** {@inheritDoc} */
@@ -247,20 +285,6 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 		return this;
 	}
 
-	@Override
-	public <U extends @Nullable Object> Var<@Nullable U> mapTo( Class<U> type, Function<@NonNull T, U> mapper ) {
-		if ( !isPresent() )
-			return _isImmutable ? AbstractVariable.ofNullable( true, type, null ) : Var.ofNull( type );
-
-		U newValue = mapper.apply( get() );
-
-		if ( _isImmutable )
-			return AbstractVariable.ofNullable( true, type, newValue );
-		else
-			return Var.ofNullable( type, newValue );
-	}
-
-
 	/** {@inheritDoc} */
 	@Override public Var<T> fireChange( Channel channel ) {
 		_changeListeners.fireChange(this, channel);
@@ -269,15 +293,23 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 
 	@Override
 	public final boolean isMutable() {
-		return !_isImmutable;
+		return true;
+	}
+
+	@Override
+	public boolean isLens() {
+		return false;
+	}
+
+	@Override
+	public boolean isView() {
+		return true;
 	}
 
 	/** {@inheritDoc} */
 	@Override
 	public Var<T> set( Channel channel, T newItem ) {
 		Objects.requireNonNull(channel);
-		if ( _isImmutable )
-			throw new UnsupportedOperationException("This variable is immutable!");
 		if ( _setInternal(newItem) )
 			this.fireChange(channel);
 		return this;
@@ -316,18 +348,39 @@ public class AbstractVariable<T extends @Nullable Object> extends AbstractValue<
 		return this;
 	}
 
-	@Override
-	protected String _stringTypeName() {
-		return _isImmutable ? super._stringTypeName() : "Var";
-	}
-
-	@Override
-	protected boolean _isImmutable() {
-		return _isImmutable;
-	}
-
 	public final long numberOfChangeListeners() {
 		return _changeListeners.numberOfChangeListeners();
+	}
+
+	/** {@inheritDoc} */
+	@Override public final Class<T> type() { return _type; }
+
+	/** {@inheritDoc} */
+	@Override public final String id() { return _id; }
+
+	/** {@inheritDoc} */
+	@Override
+	public final @Nullable T orElseNull() { return _value; }
+
+	/** {@inheritDoc} */
+	@Override public final boolean allowsNull() { return _nullable; }
+
+	@Override
+	public final String toString() {
+		String value = this.mapTo(String.class, Object::toString).orElse("null");
+		String id = this.id() == null ? "?" : this.id();
+		if ( id.equals(NO_ID) ) id = "?";
+		String type = ( type() == null ? "?" : type().getSimpleName() );
+		if ( type.equals("Object") ) type = "?";
+		if ( type.equals("String") && this.isPresent() ) value = "\"" + value + "\"";
+		if (_nullable) type = type + "?";
+		String name = _stringTypeName();
+		String content = ( id.equals("?") ? value : id + "=" + value );
+		return name + "<" + type + ">" + "[" + content + "]";
+	}
+
+	protected String _stringTypeName() {
+		return "View";
 	}
 
 }
