@@ -309,16 +309,11 @@ public class AbstractVariables<T extends @Nullable Object> implements Vars<T> {
             _checkNullSafetyOf(val);
 
             if ( val instanceof Var ) {
-                if ( val instanceof AbstractVariable ) {
-                    AbstractVariable<T> var = (AbstractVariable<T>) val;
-                    if ( var._isImmutable() ) {
-                        _variables.add(Var.of(val.get()));
-                    } else {
-                        _variables.add((Var<T>) val);
-                    }
-                }
-                else
+                if ( !val.isMutable() ) {
+                    _variables.add(Var.of(val.get()));
+                } else {
                     _variables.add((Var<T>) val);
+                }
             }
             else
                 _variables.add(Var.of(val.get()));

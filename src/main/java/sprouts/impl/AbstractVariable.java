@@ -13,7 +13,7 @@ import java.util.Objects;
  * 
  * @param <T> The type of the value wrapped by a given property...
  */
-final class AbstractVariable<T extends @Nullable Object> extends AbstractValue<T> implements Var<T> {
+final class AbstractVariable<T extends @Nullable Object> implements Var<T> {
 
 	private static final Logger log = org.slf4j.LoggerFactory.getLogger(AbstractVariable.class);
 
@@ -32,23 +32,45 @@ final class AbstractVariable<T extends @Nullable Object> extends AbstractValue<T
 
 
 	private final ChangeListeners<T> _changeListeners;
-	private final boolean _isImmutable;
+	private final String   _id;
+	private final Class<T> _type;
+
+	private final boolean  _nullable;
+	private final boolean  _isImmutable;
+
+	private @Nullable T _value;
 
 
-	protected AbstractVariable(
-		boolean immutable,
-		Class<T> type,
-		@Nullable T iniValue,
-		String id,
+	AbstractVariable(
+		boolean            immutable,
+		Class<T>           type,
+		@Nullable T        iniValue,
+		String             id,
 		ChangeListeners<T> changeListeners,
-		boolean allowsNull
+		boolean            allowsNull
 	) {
-		super( type, id, allowsNull, iniValue );
 		Objects.requireNonNull(id);
 		Objects.requireNonNull(type);
 		Objects.requireNonNull(changeListeners);
-		_isImmutable = immutable;
+		_type            = type;
+		_id              = id;
+		_nullable        = allowsNull;
+		_isImmutable     = immutable;
+		_value           = iniValue;
 		_changeListeners = new ChangeListeners<>(changeListeners);
+
+		if ( _value != null ) {
+			// We check if the type is correct
+			if ( !_type.isAssignableFrom(_value.getClass()) )
+				throw new IllegalArgumentException(
+						"The provided type of the initial value is not compatible with the actual type of the variable"
+				);
+		}
+		if ( !ID_PATTERN.matcher(_id).matches() )
+			throw new IllegalArgumentException("The provided id '"+_id+"' is not valid!");
+		if ( !allowsNull && iniValue == null )
+			throw new IllegalArgumentException("The provided initial value is null, but the property does not allow null values!");
+
 	}
 
 	/** {@inheritDoc} */
@@ -72,16 +94,6 @@ final class AbstractVariable<T extends @Nullable Object> extends AbstractValue<T
 	@Override
 	public final boolean isMutable() {
 		return !_isImmutable;
-	}
-
-	@Override
-	public boolean isLens() {
-		return false;
-	}
-
-	@Override
-	public boolean isView() {
-		return false;
 	}
 
 	/** {@inheritDoc} */
@@ -128,18 +140,62 @@ final class AbstractVariable<T extends @Nullable Object> extends AbstractValue<T
 		return this;
 	}
 
-	@Override
-	protected String _stringTypeName() {
-		return _isImmutable ? super._stringTypeName() : "Var";
-	}
-
-	@Override
-	protected boolean _isImmutable() {
-		return _isImmutable;
-	}
-
 	public final long numberOfChangeListeners() {
 		return _changeListeners.numberOfChangeListeners();
 	}
 
+	/** {@inheritDoc} */
+	@Override public final Class<T> type() { return _type; }
+
+	/** {@inheritDoc} */
+	@Override public final String id() { return _id; }
+
+	/** {@inheritDoc} */
+	@Override
+	public final @Nullable T orElseNull() { return _value; }
+
+	/** {@inheritDoc} */
+	@Override public final boolean allowsNull() { return _nullable; }
+
+	@Override
+	public final String toString() {
+		String value = this.mapTo(String.class, Object::toString).orElse("null");
+		String id = this.id() == null ? "?" : this.id();
+		if ( id.equals(NO_ID) ) id = "?";
+		String type = ( type() == null ? "?" : type().getSimpleName() );
+		if ( type.equals("Object") ) type = "?";
+		if ( type.equals("String") && this.isPresent() ) value = "\"" + value + "\"";
+		if (_nullable) type = type + "?";
+		String name = _isImmutable ? "Val" : "Var";
+		String content = ( id.equals("?") ? value : id + "=" + value );
+		return name + "<" + type + ">" + "[" + content + "]";
+	}
+
+	@Override
+	public final boolean equals( Object obj ) {
+		if ( obj == null ) return false;
+		if ( obj == this ) return true;
+		if ( !_isImmutable ) {
+			return false;
+		}
+		if ( obj instanceof Val ) {
+			Val<?> other = (Val<?>) obj;
+			if ( other.type() != _type) return false;
+			if ( other.orElseNull() == null ) return _value == null;
+			return Val.equals( other.orElseThrow(), _value); // Arrays are compared with Arrays.equals
+		}
+		return false;
+	}
+
+	@Override
+	public final int hashCode() {
+		if ( !_isImmutable ) {
+			return System.identityHashCode(this);
+		}
+		int hash = 7;
+		hash = 31 * hash + ( _value == null ? 0 : Val.hashCode(_value) );
+		hash = 31 * hash + ( _type  == null ? 0 : _type.hashCode()     );
+		hash = 31 * hash + ( _id    == null ? 0 : _id.hashCode()       );
+		return hash;
+	}
 }
