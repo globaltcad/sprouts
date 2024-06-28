@@ -1810,4 +1810,47 @@ class Properties_List_Spec extends Specification
             !Vars.of(1, 2, 3, 4, 5).all(i -> i.get() < 5)
     }
 
+
+    def 'The `removeOrThrow(Val)` method removes the given property from the list or throws an exception if the property is not in the list.'() {
+        reportInfo """
+            The `removeOrThrow(Val)` method ensures that the given property is removed from the list
+            only if the property is in the list. If the property is not in the list, an exception is thrown.
+        """
+        given : 'A property list with some properties.'
+            var properties = Vars.of(1, 2, 3, 4, 5)
+        when : 'We remove a property that is in the list.'
+            properties.removeOrThrow(Val.of(3))
+        then : 'The property is removed from the list.'
+            properties.toList() == [1, 2, 4, 5]
+        when : 'We try to remove a property that is not in the list.'
+            properties.removeOrThrow(Val.of(6))
+        then : 'An exception is thrown because the property is not in the list.'
+            thrown(NoSuchElementException)
+    }
+
+    def 'Calling `.removeOrThrow(Var.of(..))` will always throw an exception.'() {
+        reportInfo """
+            The difference between a `Val.of(..)` and a `Var.of(..)` is that the 
+            former is an immutable value based property and the latter is a mutable
+            reference based property. The `removeOrThrow` method will only remove
+            a property if the exact same property is in the list or 
+            an immutable value based property with the same value is in the list.
+        """
+        given : 'A property list with some properties.'
+            var properties = Vars.of(1, 2, 3, 4, 5)
+        when : 'We try to remove a property that is in the list.'
+            properties.removeOrThrow(Var.of(3))
+        then : 'An exception is thrown because the property is not in the list.'
+            thrown(NoSuchElementException)
+        when : 'We try to remove a property by value that is in the list.'
+            properties.removeOrThrow(Val.of(4))
+        then : 'The property is removed from the list.'
+            properties.toList() == [1, 2, 3, 5]
+
+        when : 'We remove a property that is actually in the list.'
+            properties.removeOrThrow(properties.at(2))
+        then : 'The property is removed from the list.'
+            properties.toList() == [1, 2, 5]
+    }
+
 }
