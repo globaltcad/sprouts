@@ -193,7 +193,6 @@ public final class Sprouts implements SproutsFactory
         B initialValue = getter.apply(source.orElseNull());
         Class<B> type = (Class<B>) initialValue.getClass();
         return new PropertyLens<>(
-                false,
                 type,
                 Val.NO_ID,
                 false,//does not allow null
@@ -225,7 +224,6 @@ public final class Sprouts implements SproutsFactory
         };
         B initialValue = nullSafeGetter.apply(source.orElseNull());
         return new PropertyLens<>(
-                    false,
                     type,
                     Val.NO_ID,
                     false,//does not allow null
@@ -256,8 +254,7 @@ public final class Sprouts implements SproutsFactory
 		};
 		B initialValue = nullSafeGetter.apply(source.orElseNull());
 		return new PropertyLens<>(
-					false,
-					type,
+                    type,
 					Val.NO_ID,
 					true,//allows null
 					initialValue, //may be null
