@@ -1779,4 +1779,20 @@ class Properties_List_Spec extends Specification
             thrown(IllegalArgumentException)
     }
 
+    def 'The `is(Vals)` method checks if the items of the current property list are equal to the other property list.'() {
+        reportInfo """
+            The `is(Vals)` method checks if the items of the current property list are equal to the other property list.
+            The method returns `true` if the items of the two property lists are equal, and `false` otherwise.
+        """
+        expect :
+            Vals.of(1, 2, 3, 4, 5).is(Vals.of(1, 2, 3, 4, 5))
+            !Vals.of(1, 2, 3, 4, 5).is(Vals.of(1, 2, 32, 4, 5))
+        and :
+            Vars.of(1, 2, 3, 4, 5).is(Vals.of(1, 2, 3, 4, 5))
+            !Vars.of(1, 2, 3, 4, 5).is(Vals.of(1, 27, 3, 4, 5))
+        and :
+            Vals.of(1, 2, 3, 4, 5).is(Vars.of(1, 2, 3, 4, 5))
+            !Vals.of(1, 2, 3, 4, 5).is(Vars.of(1, 2, 3, 42, 5))
+    }
+
 }
