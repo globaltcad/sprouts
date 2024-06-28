@@ -1795,4 +1795,19 @@ class Properties_List_Spec extends Specification
             !Vals.of(1, 2, 3, 4, 5).is(Vars.of(1, 2, 3, 42, 5))
     }
 
+    def 'Use `all(Predicate)` to check if all properties in the list satisfy a given predicate.'() {
+        reportInfo """
+            The `all(Predicate)` method uses the stream API to check if the
+            properties in the list satisfy a given predicate.
+            The method returns `true` if the predicate is satisfied by all properties, 
+            and `false` otherwise.
+        """
+        expect :
+            Vals.of(1, 2, 3, 4, 5).all(i -> i.get() < 6)
+            !Vals.of(1, 2, 3, 4, 5).all(i -> i.get() < 5)
+        and :
+            Vars.of(1, 2, 3, 4, 5).all(i -> i.get() < 6)
+            !Vars.of(1, 2, 3, 4, 5).all(i -> i.get() < 5)
+    }
+
 }
