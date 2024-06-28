@@ -5,6 +5,8 @@ import spock.lang.Specification
 import spock.lang.Subject
 import spock.lang.Title
 
+import java.util.concurrent.TimeUnit
+
 @Title("Common Property Views")
 @Narrative('''
 
@@ -194,5 +196,81 @@ class Common_Property_Views extends Specification
             words.add("かわいい")
         then : 'The view becomes true.'
             isNotEmpty.get()
+    }
+
+    def 'Use `viewAsInt(int,Function)` to view a nullable property as a non null integer.'() {
+        reportInfo """
+            The `viewAsInt(int,Function)` method creates and returns an integer based live property view
+            from a nullable property of any type that uses a default value to represent null and a function
+            to convert the non null value to an integer.
+            The view will be updated automatically
+            when the original property changes.
+        """
+        given : 'A String property holding a japanese sentence.'
+            Var<String> sentence = Var.ofNullable(String, "ブランコツリーはいいですね")
+        and : 'A view on the length of the sentence with a unique default value.'
+            Val<Integer> length = sentence.viewAsInt(42,String::length)
+        expect : 'The view is 13 initially and it confirms that it is indeed a view.'
+            length.get() == 13
+            length.isView()
+        when : 'We change the value of the property to null.'
+            sentence.set(null)
+        then : 'The view becomes 42.'
+            length.get() == 42
+        when : 'We change the value of the property to an empty string.'
+            sentence.set("")
+        then : 'The view becomes 0.'
+            length.get() == 0
+    }
+
+    def 'Use `viewAsDouble(double,Function)` to view a nullable property as a non null double.'() {
+        reportInfo """
+            The `viewAsDouble(double,Function)` method creates and returns a double based live property view
+            from a nullable property of any type that uses a default value to represent null and a function
+            to convert the non null value to a double.
+            The view will be updated automatically
+            when the original property changes.
+        """
+        given : 'A String property holding an english sentence.'
+            Var<String> sentence = Var.ofNullable(String, "SwingTree is nice, isn't it?")
+        and : 'A view on the average word length of the sentence with a unique default value.'
+            Val<Double> averageWordLength = sentence.viewAsDouble(-0.5, s -> {
+                                                if ( s == null )
+                                                    return null
+                                                var words = s.split(" ") as List<String>
+                                                return words.stream().mapToInt(String::length).average().orElse(-1)
+                                            })
+        expect : 'The view is 4.0 initially and it confirms that it is indeed a view.'
+            averageWordLength.get() == 4.8
+            averageWordLength.isView()
+        when : 'We change the value of the property to null.'
+            sentence.set(null)
+        then : 'The view becomes -0.5.'
+            averageWordLength.get() == -0.5
+        when : 'We change the value of the property to an empty string.'
+            sentence.set("")
+        then : 'The view contains 0.0 because the average of an empty list is 0.'
+            averageWordLength.get() == 0.0
+    }
+
+    def 'Use the `viewAsString(String,Function)` method to view a nullable property as a non null String.'() {
+        reportInfo """
+            The `viewAsString(String,Function)` method creates and returns a String based live property view
+            from a nullable property of any type that uses a default value to represent null and a function
+            to convert the non null value to a String.
+            The view will be updated automatically
+            when the original property changes.
+        """
+        given : 'A property holding nullable `TimeUnit` enum items.'
+            Var<TimeUnit> timeUnit = Var.ofNullable(TimeUnit, TimeUnit.SECONDS)
+        and : 'A view on the lowercase name of the time unit with a unique default value.'
+            Val<String> lowerCaseName = timeUnit.viewAsString("unknown", u -> u.name().toLowerCase())
+        expect : 'The view is "seconds" initially and it confirms that it is indeed a view.'
+            lowerCaseName.get() == "seconds"
+            lowerCaseName.isView()
+        when : 'We change the value of the property to null.'
+            timeUnit.set(null)
+        then : 'The view becomes "unknown" because the property is empty.'
+            lowerCaseName.get() == "unknown"
     }
 }

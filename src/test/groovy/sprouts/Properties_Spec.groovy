@@ -386,4 +386,27 @@ class Properties_Spec extends Specification
             property.typeAsString() == "java.lang.String"
     }
 
+    def 'Use the `withId(String id)` method to create a new property with a String based id.'()
+    {
+        reportInfo """
+            The `withId(String id)` method is used to create a new property with a String based id.
+            This is useful when you want to give a property a unique identifier.
+            It may serve as a key in a map or as a way to identify the property in a log message.
+            You may also want to use it when converting a set of properties to another
+            data format like JSON or XML.
+        """
+        given : 'A regular immutable property without an id.'
+            var property = Val.of("Hello World")
+        expect : 'The property has no id.'
+            property.id().isEmpty()
+            property.hasNoID()
+            !property.hasID()
+        when : 'We create a new property with an id.'
+            var propertyWithId = property.withId("XY")
+        then : 'The new property has the expected id.'
+            propertyWithId.id() == "XY"
+            propertyWithId.hasID()
+            !propertyWithId.hasNoID()
+    }
+
 }
