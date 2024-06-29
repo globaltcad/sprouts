@@ -6,6 +6,8 @@ import spock.lang.Subject
 import spock.lang.Title
 
 import java.lang.ref.WeakReference
+import java.time.DayOfWeek
+import java.time.Month
 import java.util.concurrent.TimeUnit
 
 @Title('Viewing Properties')
@@ -361,9 +363,9 @@ class Viewing_Properties_Spec extends Specification
             and is then unsubscribed, which should prevent further notifications.
         """
         given : 'A property based on an enum.'
-            var timeUnitProperty = Var.of(TimeUnit.DAYS)
+            var weekDay = Var.of(DayOfWeek.FRIDAY)
         and : 'A view of the property as a String.'
-            Val<String> view = timeUnitProperty.viewAsString(TimeUnit::name)
+            Val<String> view = weekDay.viewAsString(DayOfWeek::name)
         and : 'A trace list and a change listener that listens to changes on the view.'
             var trace = []
             Observer observer = { trace << view.get() }
@@ -376,17 +378,17 @@ class Viewing_Properties_Spec extends Specification
             trace.isEmpty()
 
         when : 'We change the value of the property 2 times.'
-            timeUnitProperty.set(TimeUnit.HOURS)
-            timeUnitProperty.set(TimeUnit.NANOSECONDS)
+            weekDay.set(DayOfWeek.SATURDAY)
+            weekDay.set(DayOfWeek.WEDNESDAY)
         then : 'The listener is notified of the new value of the view.'
-            trace == ["HOURS", "NANOSECONDS"]
+            trace == ["SATURDAY", "WEDNESDAY"]
 
         when : 'We unsubscribe the listener from the view.'
             view.unsubscribe(observer)
         and : 'We change the value of the property.'
-            timeUnitProperty.set(TimeUnit.MICROSECONDS)
+            weekDay.set(DayOfWeek.MONDAY)
         then : 'The listener is not notified of the new value of the view.'
-            trace == ["HOURS", "NANOSECONDS"]
+            trace == ["SATURDAY", "WEDNESDAY"]
     }
 
     def 'You can subscribe and unsubscribe action lambdas on property views.()'()
@@ -397,9 +399,9 @@ class Viewing_Properties_Spec extends Specification
             and is then unsubscribed, which should prevent further notifications.
         """
         given : 'A property based on an enum.'
-            var timeUnitProperty = Var.of(TimeUnit.DAYS)
+            var monthProperty = Var.of(Month.AUGUST)
         and : 'A view of the property as a String.'
-            Val<String> view = timeUnitProperty.viewAsString(TimeUnit::name)
+            Val<String> view = monthProperty.viewAsString(Month::name)
         and : 'A trace list and a change listener that listens to changes on the view.'
             var trace = []
             Action<Val<String>> action = { trace << it.get() }
@@ -414,17 +416,17 @@ class Viewing_Properties_Spec extends Specification
             view.numberOfChangeListeners() == 1
 
         when : 'We change the value of the property 2 times.'
-            timeUnitProperty.set(TimeUnit.HOURS)
-            timeUnitProperty.set(TimeUnit.NANOSECONDS)
+            monthProperty.set(Month.SEPTEMBER)
+            monthProperty.set(Month.NOVEMBER)
         then : 'The listener is notified of the new value of the view.'
-            trace == ["HOURS", "NANOSECONDS"]
+            trace == ["SEPTEMBER", "NOVEMBER"]
 
         when : 'We unsubscribe the listener from the view.'
             view.unsubscribe(action)
         and : 'We change the value of the property.'
-            timeUnitProperty.set(TimeUnit.MICROSECONDS)
+            monthProperty.set(Month.FEBRUARY)
         then : 'The listener is not notified of the new value of the view.'
-            trace == ["HOURS", "NANOSECONDS"]
+            trace == ["SEPTEMBER", "NOVEMBER"]
         and : 'There are no change listeners registered.'
             view.numberOfChangeListeners() == 0
     }

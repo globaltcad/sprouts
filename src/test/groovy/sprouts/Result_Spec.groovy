@@ -5,6 +5,8 @@ import spock.lang.Specification
 import spock.lang.Subject
 import spock.lang.Title
 
+import java.time.DayOfWeek
+import java.time.Month
 import java.util.concurrent.TimeUnit
 import java.util.function.Supplier
 
@@ -233,14 +235,14 @@ class Result_Spec extends Specification
             and the item of the result.
         """
         given : 'A result object holding a common enum value.'
-            def result = Result.of(TimeUnit.SECONDS)
+            def result = Result.of(DayOfWeek.MONDAY)
         expect : 'The string representation of the result.'
-            result.toString() == "Result<TimeUnit>[SECONDS]"
+            result.toString() == "Result<DayOfWeek>[MONDAY]"
 
         when : 'We update the result with a String id.'
             result = result.withId("foo")
         then : 'The string representation of the result reflects the id.'
-            result.toString() == "Result<TimeUnit>[foo=SECONDS]"
+            result.toString() == "Result<DayOfWeek>[foo=MONDAY]"
     }
 
     def 'The equality of two `Result` instances is based on the type and the item of the result.'()
