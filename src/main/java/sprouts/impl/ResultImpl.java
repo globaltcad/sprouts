@@ -176,7 +176,8 @@ final class ResultImpl<V> implements Result<V>
 			if ( !Objects.equals(other.id(), _id)             ) return false;
 			if ( !Objects.equals(other.type(), _type)         ) return false;
 			if ( !Objects.equals(other.problems(), _problems) ) return false;
-			return Val.equals( other.orElseThrow(), _value ); // Arrays are compared with Arrays.equals
+			return
+				Val.equals( other.orElseNull(), _value ); // Arrays are compared with Arrays.equals
 		}
 		return false;
 	}

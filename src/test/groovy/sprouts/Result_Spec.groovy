@@ -224,7 +224,6 @@ class Result_Spec extends Specification
             result2.problems().first().exception().get().message == "foo"
     }
 
-
     def 'You can recognize a `Result` by its String representation.'()
     {
         reportInfo """
@@ -242,6 +241,34 @@ class Result_Spec extends Specification
             result = result.withId("foo")
         then : 'The string representation of the result reflects the id.'
             result.toString() == "Result<TimeUnit>[foo=SECONDS]"
+    }
+
+    def 'The equality of two `Result` instances is based on the type and the item of the result.'()
+    {
+        reportInfo """
+            The `Result` type is a value centric type which means that
+            the equality of two `Result` instances is based on the item of the result
+            and its type.
+        """
+        expect : 'The following results are equal and they have the same hash code.'
+            Result.of(42) == Result.of(42)
+            Result.of(42).hashCode() == Result.of(42).hashCode()
+
+            Result.of(Integer) == Result.of(Integer)
+            Result.of(Integer).hashCode() == Result.of(Integer).hashCode()
+
+        and : 'The following results are not equal and they have different hash codes.'
+            Result.of(42) != Result.of(43).withId("foo")
+            Result.of(42).hashCode() != Result.of(43).withId("foo").hashCode()
+
+            Result.of(Integer) != Result.of(String)
+            Result.of(Integer).hashCode() != Result.of(String).hashCode()
+
+            Result.of(Integer) != Result.of(Integer).withId("foo")
+            Result.of(Integer).hashCode() != Result.of(Integer).withId("foo").hashCode()
+
+            Result.of(42) != Result.of(Integer)
+            Result.of(42).hashCode() != Result.of(Integer).hashCode()
     }
 
 }
