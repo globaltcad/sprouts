@@ -1853,4 +1853,27 @@ class Properties_List_Spec extends Specification
             properties.toList() == [1, 2, 5]
     }
 
+    def 'You can create a nullable immutable property list from nullable properties only.'() {
+        reportInfo """
+            You can create a nullable immutable property list from nullable properties only.
+            Which is to say that when you try to call the `of` method on the `Vals` class with 
+            set of nullable properties, then the property list will accept the properties.
+        """
+        given : 'We create a hand of properties, all of which are nullable.'
+            var property1 = Var.ofNullable(String.class, "Maybe Null")
+            var property2 = Var.ofNullable(String.class, "Maybe Also Null")
+            var property3 = Var.of("Never Null")
+        when : 'We try to construct a nullable property list from the first two properties.'
+            var list = Vals.ofNullable(property1, property2)
+        then : 'No exception is thrown because the property list accepts nullable properties.'
+            noExceptionThrown()
+        and : 'The property list has the expected values.'
+            list.toList() == ["Maybe Null", "Maybe Also Null"]
+            !list.isMutable()
+        when : 'We try to construct a nullable property list from all three properties.'
+            Vals.ofNullable(property1, property2, property3)
+        then : 'An exception is thrown because the property list does not accept non-nullable properties.'
+            thrown(IllegalArgumentException)
+    }
+
 }
