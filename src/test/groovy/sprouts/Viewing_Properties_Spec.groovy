@@ -353,6 +353,82 @@ class Viewing_Properties_Spec extends Specification
             view.toString() == "View<Byte>[patient_age=5]"
     }
 
+    def 'You can subscribe and unsubscribe observer lambdas on property views.()'()
+    {
+        reportInfo """
+            A property is like a publisher that can have multiple observers.
+            In this test we create a property view and a change observer that listens to changes on the view
+            and is then unsubscribed, which should prevent further notifications.
+        """
+        given : 'A property based on an enum.'
+            var timeUnitProperty = Var.of(TimeUnit.DAYS)
+        and : 'A view of the property as a String.'
+            Val<String> view = timeUnitProperty.viewAsString(TimeUnit::name)
+        and : 'A trace list and a change listener that listens to changes on the view.'
+            var trace = []
+            Observer observer = { trace << view.get() }
+        expect : 'The trace list is empty.'
+            trace.isEmpty()
+
+        when : 'We subscribe the listener to the view.'
+            view.subscribe(observer)
+        then : 'The listener is not immediately notified!'
+            trace.isEmpty()
+
+        when : 'We change the value of the property 2 times.'
+            timeUnitProperty.set(TimeUnit.HOURS)
+            timeUnitProperty.set(TimeUnit.NANOSECONDS)
+        then : 'The listener is notified of the new value of the view.'
+            trace == ["HOURS", "NANOSECONDS"]
+
+        when : 'We unsubscribe the listener from the view.'
+            view.unsubscribe(observer)
+        and : 'We change the value of the property.'
+            timeUnitProperty.set(TimeUnit.MICROSECONDS)
+        then : 'The listener is not notified of the new value of the view.'
+            trace == ["HOURS", "NANOSECONDS"]
+    }
+
+    def 'You can subscribe and unsubscribe action lambdas on property views.()'()
+    {
+        reportInfo """
+            A property is like a publisher that can have multiple action listeners.
+            In this test we create a property view and an action listener that listens to changes on the view
+            and is then unsubscribed, which should prevent further notifications.
+        """
+        given : 'A property based on an enum.'
+            var timeUnitProperty = Var.of(TimeUnit.DAYS)
+        and : 'A view of the property as a String.'
+            Val<String> view = timeUnitProperty.viewAsString(TimeUnit::name)
+        and : 'A trace list and a change listener that listens to changes on the view.'
+            var trace = []
+            Action<Val<String>> action = { trace << it.get() }
+        expect : 'The trace list is empty and there are no change listeners registered.'
+            trace.isEmpty()
+            view.numberOfChangeListeners() == 0
+
+        when : 'We subscribe the listener to the view.'
+            view.onChange(From.ALL, action)
+        then : 'The listener is not immediately notified, but there is one change listener registered.'
+            trace.isEmpty()
+            view.numberOfChangeListeners() == 1
+
+        when : 'We change the value of the property 2 times.'
+            timeUnitProperty.set(TimeUnit.HOURS)
+            timeUnitProperty.set(TimeUnit.NANOSECONDS)
+        then : 'The listener is notified of the new value of the view.'
+            trace == ["HOURS", "NANOSECONDS"]
+
+        when : 'We unsubscribe the listener from the view.'
+            view.unsubscribe(action)
+        and : 'We change the value of the property.'
+            timeUnitProperty.set(TimeUnit.MICROSECONDS)
+        then : 'The listener is not notified of the new value of the view.'
+            trace == ["HOURS", "NANOSECONDS"]
+        and : 'There are no change listeners registered.'
+            view.numberOfChangeListeners() == 0
+    }
+
     /**
      * This method guarantees that garbage collection is
      * done unlike <code>{@link System#gc()}</code>
