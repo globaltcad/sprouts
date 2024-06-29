@@ -383,7 +383,7 @@ public final class Sprouts implements SproutsFactory
 
 	@Override public <V> Result<V> resultOf( Class<V> type ) {
 		Objects.requireNonNull(type);
-		return new ResultImpl<>(Result.ID, type, Collections.emptyList(), null);
+		return new ResultImpl<>(ResultImpl.ID, type, Collections.emptyList(), null);
 	}
 
 	@Override public <V> Result<V> resultOf( V value ) {
@@ -399,37 +399,37 @@ public final class Sprouts implements SproutsFactory
 	@Override public <V> Result<V> resultOf( V value, List<Problem> problems ) {
 		Objects.requireNonNull(value);
 		problems = Collections.unmodifiableList(new ArrayList<>(Objects.requireNonNull(problems)));
-		return new ResultImpl<>(Result.ID, (Class<V>) value.getClass(), problems, value);
+		return new ResultImpl<>(ResultImpl.ID, (Class<V>) value.getClass(), problems, value);
 	}
 
 	@Override public <V> Result<V> resultOf( Class<V> type, List<Problem> problems ) {
 		Objects.requireNonNull(type);
 		problems = Collections.unmodifiableList(new ArrayList<>(Objects.requireNonNull(problems)));
-		return new ResultImpl<>(Result.ID, type, problems, null);
+		return new ResultImpl<>(ResultImpl.ID, type, problems, null);
 	}
 
 	@Override public <V> Result<V> resultOf( Class<V> type, @Nullable V value, List<Problem> problems ) {
 		Objects.requireNonNull(type);
 		problems = Collections.unmodifiableList(new ArrayList<>(Objects.requireNonNull(problems)));
-		return new ResultImpl<>(Result.ID, type, problems, value);
+		return new ResultImpl<>(ResultImpl.ID, type, problems, value);
 	}
 
 	@Override public <V> Result<V> resultOf( Class<V> type, @Nullable V value, Problem problem ) {
 		Objects.requireNonNull(type);
 		Objects.requireNonNull(problem);
-		return new ResultImpl<>(Result.ID, type, Collections.singletonList(problem), value);
+		return new ResultImpl<>(ResultImpl.ID, type, Collections.singletonList(problem), value);
 	}
 
 	@Override public <V> Result<V> resultOf( Class<V> type, Problem problem ) {
 		Objects.requireNonNull(type);
 		Objects.requireNonNull(problem);
-		return new ResultImpl<>(Result.ID, type, Collections.singletonList(problem), null);
+		return new ResultImpl<>(ResultImpl.ID, type, Collections.singletonList(problem), null);
 	}
 
 	@Override public <V> Result<List<V>> resultOfList( Class<V> type, Problem problem ) {
 		Objects.requireNonNull(type);
 		Objects.requireNonNull(problem);
-		return (Result<List<V>>) (Result) new ResultImpl<>(Result.ID, List.class, Collections.singletonList(problem), null);
+		return (Result<List<V>>) (Result) new ResultImpl<>(ResultImpl.ID, List.class, Collections.singletonList(problem), null);
 	}
 
 	@Override public <V> Result<List<V>> resultOfList( Class<V> type, List<V> list ) {
@@ -439,7 +439,7 @@ public final class Sprouts implements SproutsFactory
 		boolean matches = list.stream().filter(Objects::nonNull).allMatch(e -> type.isAssignableFrom(e.getClass()));
 		if ( !matches )
 			throw new IllegalArgumentException("List elements must be of type " + type.getName());
-		return (Result<List<V>>) (Result) new ResultImpl<>(Result.ID, List.class, Collections.emptyList(), list);
+		return (Result<List<V>>) (Result) new ResultImpl<>(ResultImpl.ID, List.class, Collections.emptyList(), list);
 	}
 
 	@Override public <V> Result<List<V>> resultOfList( Class<V> type, List<V> list, List<Problem> problems ) {
@@ -449,7 +449,7 @@ public final class Sprouts implements SproutsFactory
 		if ( !matches )
 			throw new IllegalArgumentException("List elements must be of type " + type.getName());
 		problems = Collections.unmodifiableList(new ArrayList<>(Objects.requireNonNull(problems)));
-		return (Result<List<V>>) (Result) new ResultImpl<>(Result.ID, List.class, problems, list);
+		return (Result<List<V>>) (Result) new ResultImpl<>(ResultImpl.ID, List.class, problems, list);
 	}
 
     @Override

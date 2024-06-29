@@ -5,6 +5,7 @@ import spock.lang.Specification
 import spock.lang.Subject
 import spock.lang.Title
 
+import java.util.concurrent.TimeUnit
 import java.util.function.Supplier
 
 @Title("Results")
@@ -76,8 +77,8 @@ class Result_Spec extends Specification
             def result = Result.of(42)
         expect : 'The result has a type.'
             result.type() == Integer
-        and : 'The result has an id.'
-            result.id() == "Result"
+        and : 'The result has an empty id.'
+            result.id().isEmpty()
     }
 
     def 'You can create a `Result` from a list.'()
@@ -222,4 +223,20 @@ class Result_Spec extends Specification
         and : 'The problem is an exception problem.'
             result2.problems().first().exception().get().message == "foo"
     }
+
+
+    def 'You can recognize a `Result` by its String representation.'()
+    {
+        reportInfo """
+            A `Result` instance has a specific string representation that 
+            tells you both the type of the result and the current item of the result.
+            The string representation of starts with "Result" followed by the type of the result
+            and the item of the result.
+        """
+        given : 'A result object holding a common enum value.'
+            def result = Result.of(TimeUnit.SECONDS)
+        expect : 'The string representation of the result.'
+            result.toString() == "Result<TimeUnit>[SECONDS]"
+    }
+
 }
