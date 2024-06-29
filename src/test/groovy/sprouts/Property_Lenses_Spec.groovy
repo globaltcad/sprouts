@@ -861,6 +861,21 @@ class Property_Lenses_Spec extends Specification
             !immutableNullProperty.isMutable() && immutableNullProperty.allowsNull()
     }
 
+    def 'You can recognize a property lens from its String representation.'()
+    {
+        reportInfo """
+            A property lens has a specific string representation that can be used to recognize it.
+            The string representation of a property lens starts with "Lens" followed by the item
+            type and square brackets containing the current item of the lens.
+        """
+        given : 'A source property and a lens focusing on a specific field.'
+            var author = new Author("Forename", "Surname", LocalDate.of(2008, 8, 12), [])
+            var authorProperty = Var.of(author)
+            var lens = authorProperty.zoomTo(Author::birthDate, Author::withBirthDate)
+        expect : 'The string representation of the lens should be recognizable.'
+            lens.toString() == "Lens<LocalDate>[2008-08-12]"
+    }
+
     /**
      * This method guarantees that garbage collection is
      * done unlike <code>{@link System#gc()}</code>

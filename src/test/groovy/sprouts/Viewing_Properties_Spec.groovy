@@ -332,6 +332,22 @@ class Viewing_Properties_Spec extends Specification
             timeUnitProperty.numberOfChangeListeners() == 4
     }
 
+    def 'You can recognize a property view from its String representation.'()
+    {
+        reportInfo """
+            A property view has a specific string representation that can be used to recognize it.
+            The string representation of a property view starts with "View" followed by the item
+            type and square brackets
+            containing the current item of the view.
+        """
+        given : 'A property based on a string.'
+            var stringProperty = Var.of("Hello")
+        and : 'A view of the property as a byte representation of the length of the string.'
+            Val<Byte> view = stringProperty.viewAs(Byte, s -> (byte) s.length())
+        expect : 'The string representation of the view is as expected.'
+            view.toString() == "View<Byte>[5]"
+    }
+
     /**
      * This method guarantees that garbage collection is
      * done unlike <code>{@link System#gc()}</code>
