@@ -262,13 +262,13 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 			throw new IllegalArgumentException("The provided initial value is null, but the property does not allow null values!");
 	}
 
-	protected PropertyView(
-		Class<T> type,
-		@Nullable T iniValue,
-		String id,
-		ChangeListeners<T> changeListeners,
-		boolean allowsNull
-	) {
+	private PropertyView(
+        Class<T> type,
+        @Nullable T iniValue,
+        String id,
+        ChangeListeners<T> changeListeners,
+        boolean allowsNull
+    ) {
 		this( type, id, allowsNull, iniValue );
 		Objects.requireNonNull(id);
 		Objects.requireNonNull(type);
@@ -376,13 +376,9 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 		if ( type.equals("Object") ) type = "?";
 		if ( type.equals("String") && this.isPresent() ) value = "\"" + value + "\"";
 		if (_nullable) type = type + "?";
-		String name = _stringTypeName();
+		String name = "View";
 		String content = ( id.equals("?") ? value : id + "=" + value );
 		return name + "<" + type + ">" + "[" + content + "]";
-	}
-
-	protected String _stringTypeName() {
-		return "View";
 	}
 
 }

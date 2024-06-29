@@ -125,7 +125,11 @@ final class ChangeListeners<T>
                     try {
                         action.accept(clone);
                     } catch ( Exception e ) {
-                        log.error("An error occurred while executing action '"+action+"' for property '"+this+"'", e);
+                        log.error(
+                            "An error occurred while executing " +
+                            "action '"+action+"' for property '"+owner+"'",
+                            e
+                        );
                     }
             });
         }

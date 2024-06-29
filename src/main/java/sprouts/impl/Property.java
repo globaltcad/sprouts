@@ -1,7 +1,6 @@
 package sprouts.impl;
 
 import org.jspecify.annotations.Nullable;
-import org.slf4j.Logger;
 import sprouts.*;
 
 import java.util.Objects;
@@ -14,8 +13,6 @@ import java.util.Objects;
  * @param <T> The type of the value wrapped by a given property...
  */
 final class Property<T extends @Nullable Object> implements Var<T> {
-
-	private static final Logger log = org.slf4j.LoggerFactory.getLogger(Property.class);
 
 	public static <T> Var<@Nullable T> ofNullable( boolean immutable, Class<T> type, @Nullable T value ) {
 		return new Property<T>( immutable, type, value, NO_ID, new ChangeListeners<>(), true );
@@ -64,7 +61,7 @@ final class Property<T extends @Nullable Object> implements Var<T> {
 			if ( !_type.isAssignableFrom(_value.getClass()) )
 				throw new IllegalArgumentException(
 						"The provided type of the initial value is not compatible with the actual type of the variable"
-				);
+					);
 		}
 		if ( !ID_PATTERN.matcher(_id).matches() )
 			throw new IllegalArgumentException("The provided id '"+_id+"' is not valid!");
