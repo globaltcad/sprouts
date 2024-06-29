@@ -271,4 +271,16 @@ class Result_Spec extends Specification
             Result.of(42).hashCode() != Result.of(Integer).hashCode()
     }
 
+    def 'A `Result` tells us that it is immutable.'()
+    {
+        reportInfo """
+            A `Result` is an immutable value type which means that
+            once created, it cannot be changed.
+        """
+        given : 'A result.'
+            def result = Result.of(42)
+        expect : 'The `isMutable()` method returns false.'
+            !result.isMutable()
+    }
+
 }
