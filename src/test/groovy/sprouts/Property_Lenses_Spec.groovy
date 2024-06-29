@@ -861,6 +861,69 @@ class Property_Lenses_Spec extends Specification
             !immutableNullProperty.isMutable() && immutableNullProperty.allowsNull()
     }
 
+    def 'You can recognize a property lens from its String representation.'()
+    {
+        reportInfo """
+            A property lens has a specific string representation that can be used to recognize it.
+            The string representation of a property lens starts with "Lens" followed by the item
+            type and square brackets containing the current item of the lens.
+        """
+        given : 'A source property and a lens focusing on a specific field.'
+            var author = new Author("Forename", "Surname", LocalDate.of(2008, 8, 12), [])
+            var authorProperty = Var.of(author)
+            var lens = authorProperty.zoomTo(Author::birthDate, Author::withBirthDate)
+        expect : 'The string representation of the lens should be recognizable.'
+            lens.toString() == "Lens<LocalDate>[2008-08-12]"
+        when : 'We update the lens to have a custom id String.'
+            lens = lens.withId("patient_birth")
+        then : 'The string representation of the view is as expected.'
+            lens.toString() == "Lens<LocalDate>[patient_birth=2008-08-12]"
+    }
+
+    def 'You can subscribe and unsubscribe observer lambdas on property lenses.()'()
+    {
+        reportInfo """
+            A property lens may act like a publisher that can have multiple observers.
+            In this test we create a property lens and a change observer that listens to changes to the lens
+            and is then unsubscribed, which should prevent further notifications.
+        """
+        given : 'A property based on the Author record.'
+            var author = new Author("John", "Doe", LocalDate.of(1829, 8, 12), ["Book1", "Book2"])
+            var authorProperty = Var.of(author)
+        and : 'A lens of the surname of the author.'
+            Val<String> lens = authorProperty.zoomTo(Author::lastName, Author::withLastName)
+        and : 'A trace list and a change listener that listens to changes on the lens.'
+            var trace = []
+            Observer observer = { trace << lens.get() }
+        expect : 'The trace list is empty and there are no change listeners.'
+            trace.isEmpty()
+            lens.numberOfChangeListeners() == 0
+
+        when : 'We subscribe the listener to the lens.'
+            lens.subscribe(observer)
+        then : 'The listener is not immediately notified, but the lens has one change listener.'
+            trace.isEmpty()
+            lens.numberOfChangeListeners() == 1
+
+        when : 'We change the value of the source property as well as the lens directly.'
+            authorProperty.set(author.withLastName("Smith"))
+            authorProperty.set(authorProperty.get().withFirstName("Jane"))
+            lens.set("Mayer")
+        then : 'The listener is notified of the new value of the lens.'
+            trace == ["Smith", "Mayer"]
+
+        when : 'We unsubscribe the listener from the lens.'
+            lens.unsubscribe(observer)
+        and : 'We change the value of the source property as well as the lens directly.'
+            authorProperty.set(author.withLastName("Johnson"))
+            authorProperty.set(authorProperty.get().withFirstName("Raffaela"))
+            lens.set("Brown")
+        then : 'The listener is not notified of the new value of the lens.'
+            trace == ["Smith", "Mayer"]
+        and : 'The lens has no change listeners.'
+            lens.numberOfChangeListeners() == 0
+    }
+
     /**
      * This method guarantees that garbage collection is
      * done unlike <code>{@link System#gc()}</code>

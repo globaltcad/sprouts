@@ -17,8 +17,6 @@ import java.util.function.Supplier;
  */
 public interface Result<V> extends Val<V>
 {
-	String ID = "Result";
-
 	/**
 	 *  A factory method for creating an empty result
 	 *  without a value and no problems.

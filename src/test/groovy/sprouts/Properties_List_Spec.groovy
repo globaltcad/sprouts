@@ -1779,4 +1779,101 @@ class Properties_List_Spec extends Specification
             thrown(IllegalArgumentException)
     }
 
+    def 'The `is(Vals)` method checks if the items of the current property list are equal to the other property list.'() {
+        reportInfo """
+            The `is(Vals)` method checks if the items of the current property list are equal to the other property list.
+            The method returns `true` if the items of the two property lists are equal, and `false` otherwise.
+        """
+        expect :
+            Vals.of(1, 2, 3, 4, 5).is(Vals.of(1, 2, 3, 4, 5))
+            !Vals.of(1, 2, 3, 4, 5).is(Vals.of(1, 2, 32, 4, 5))
+        and :
+            Vars.of(1, 2, 3, 4, 5).is(Vals.of(1, 2, 3, 4, 5))
+            !Vars.of(1, 2, 3, 4, 5).is(Vals.of(1, 27, 3, 4, 5))
+        and :
+            Vals.of(1, 2, 3, 4, 5).is(Vars.of(1, 2, 3, 4, 5))
+            !Vals.of(1, 2, 3, 4, 5).is(Vars.of(1, 2, 3, 42, 5))
+    }
+
+    def 'Use `all(Predicate)` to check if all properties in the list satisfy a given predicate.'() {
+        reportInfo """
+            The `all(Predicate)` method uses the stream API to check if the
+            properties in the list satisfy a given predicate.
+            The method returns `true` if the predicate is satisfied by all properties, 
+            and `false` otherwise.
+        """
+        expect :
+            Vals.of(1, 2, 3, 4, 5).all(i -> i.get() < 6)
+            !Vals.of(1, 2, 3, 4, 5).all(i -> i.get() < 5)
+        and :
+            Vars.of(1, 2, 3, 4, 5).all(i -> i.get() < 6)
+            !Vars.of(1, 2, 3, 4, 5).all(i -> i.get() < 5)
+    }
+
+
+    def 'The `removeOrThrow(Val)` method removes the given property from the list or throws an exception if the property is not in the list.'() {
+        reportInfo """
+            The `removeOrThrow(Val)` method ensures that the given property is removed from the list
+            only if the property is in the list. If the property is not in the list, an exception is thrown.
+        """
+        given : 'A property list with some properties.'
+            var properties = Vars.of(1, 2, 3, 4, 5)
+        when : 'We remove a property that is in the list.'
+            properties.removeOrThrow(Val.of(3))
+        then : 'The property is removed from the list.'
+            properties.toList() == [1, 2, 4, 5]
+        when : 'We try to remove a property that is not in the list.'
+            properties.removeOrThrow(Val.of(6))
+        then : 'An exception is thrown because the property is not in the list.'
+            thrown(NoSuchElementException)
+    }
+
+    def 'Calling `.removeOrThrow(Var.of(..))` will always throw an exception.'() {
+        reportInfo """
+            The difference between a `Val.of(..)` and a `Var.of(..)` is that the 
+            former is an immutable value based property and the latter is a mutable
+            reference based property. The `removeOrThrow` method will only remove
+            a property if the exact same property is in the list or 
+            an immutable value based property with the same value is in the list.
+        """
+        given : 'A property list with some properties.'
+            var properties = Vars.of(1, 2, 3, 4, 5)
+        when : 'We try to remove a property that is in the list.'
+            properties.removeOrThrow(Var.of(3))
+        then : 'An exception is thrown because the property is not in the list.'
+            thrown(NoSuchElementException)
+        when : 'We try to remove a property by value that is in the list.'
+            properties.removeOrThrow(Val.of(4))
+        then : 'The property is removed from the list.'
+            properties.toList() == [1, 2, 3, 5]
+
+        when : 'We remove a property that is actually in the list.'
+            properties.removeOrThrow(properties.at(2))
+        then : 'The property is removed from the list.'
+            properties.toList() == [1, 2, 5]
+    }
+
+    def 'You can create a nullable immutable property list from nullable properties only.'() {
+        reportInfo """
+            You can create a nullable immutable property list from nullable properties only.
+            Which is to say that when you try to call the `of` method on the `Vals` class with 
+            set of nullable properties, then the property list will accept the properties.
+        """
+        given : 'We create a hand of properties, all of which are nullable.'
+            var property1 = Var.ofNullable(String.class, "Maybe Null")
+            var property2 = Var.ofNullable(String.class, "Maybe Also Null")
+            var property3 = Var.of("Never Null")
+        when : 'We try to construct a nullable property list from the first two properties.'
+            var list = Vals.ofNullable(property1, property2)
+        then : 'No exception is thrown because the property list accepts nullable properties.'
+            noExceptionThrown()
+        and : 'The property list has the expected values.'
+            list.toList() == ["Maybe Null", "Maybe Also Null"]
+            !list.isMutable()
+        when : 'We try to construct a nullable property list from all three properties.'
+            Vals.ofNullable(property1, property2, property3)
+        then : 'An exception is thrown because the property list does not accept non-nullable properties.'
+            thrown(IllegalArgumentException)
+    }
+
 }

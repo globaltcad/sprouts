@@ -367,28 +367,14 @@ public interface Vals<T extends @Nullable Object> extends Iterable<T>, Observabl
      * @return True if the two lists of properties are equal.
      */
     default boolean is( Vals<@Nullable T> other ) {
-        if ( size() != other.size() ) return false;
-        if ( this.isMutable() != other.isMutable() )
+        if ( size() != other.size() )
             return false;
-
-        if ( this.isMutable() ) {
-            for ( int i = 0; i < size(); i++ ) {
-                Val<T> a = at(i);
-                Val<T> b = other.at(i);
-                if ( !a.is(b) )
-                    return false;
-            }
-        } else {
-
-        }
         for ( int i = 0; i < size(); i++ ) {
             Val<T> a = at(i);
             Val<T> b = other.at(i);
             if ( !a.is(b) )
                 return false;
         }
-
-
         return true;
     }
 

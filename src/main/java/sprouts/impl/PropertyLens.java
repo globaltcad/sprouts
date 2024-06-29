@@ -52,13 +52,11 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
     private final WeakReference<Var<A>> _parent;
     Function<A,@Nullable T>             _getter;
     BiFunction<A,@Nullable T,A>         _setter;
-    private final boolean               _isImmutable;
 
     private @Nullable T _lastItem;
 
 
     public PropertyLens(
-            boolean                         immutable,
             Class<T>                        type,
             String                          id,
             boolean                         allowsNull,
@@ -76,7 +74,6 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
         _parent          = parent;
         _getter          = getter;
         _setter          = wither;
-        _isImmutable     = immutable;
         _changeListeners = changeListeners == null ? new ChangeListeners<>() : new ChangeListeners<>(changeListeners);
 
         _lastItem = initialItem;
@@ -168,7 +165,7 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
 
     @Override
     public boolean isMutable() {
-        return !_isImmutable;
+        return true;
     }
 
     @Override
@@ -197,7 +194,7 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
 
     /** {@inheritDoc} */
     @Override public final Var<T> withId( String id ) {
-        return new PropertyLens<>(_isImmutable, _type, id, _nullable, _item(), _parent, _getter, _setter, _changeListeners);
+        return new PropertyLens<>(_type, id, _nullable, _item(), _parent, _getter, _setter, _changeListeners);
     }
 
     @Override
@@ -216,8 +213,6 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
     @Override
     public final Var<T> set( Channel channel, T newItem ) {
         Objects.requireNonNull(channel);
-        if ( _isImmutable )
-            throw new UnsupportedOperationException("This property is immutable!");
         if ( _setInternal(newItem) )
             this.fireChange(channel);
         return this;
@@ -261,35 +256,4 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
     public final long numberOfChangeListeners() {
         return _changeListeners.numberOfChangeListeners();
     }
-
-    @Override
-    public final boolean equals( Object obj ) {
-        if ( obj == null ) return false;
-        if ( obj == this ) return true;
-        if ( !_isImmutable ) {
-            return false;
-        }
-        if ( obj instanceof Val ) {
-            Val<?> other = (Val<?>) obj;
-            if ( other.type() != _type) return false;
-            T value = _item();
-            if ( other.orElseNull() == null ) return value == null;
-            return Val.equals( other.orElseThrow(), value); // Arrays are compared with Arrays.equals
-        }
-        return false;
-    }
-
-    @Override
-    public final int hashCode() {
-        if ( !_isImmutable ) {
-            return System.identityHashCode(this);
-        }
-        T value = _item();
-        int hash = 7;
-        hash = 31 * hash + ( value == null ? 0 : Val.hashCode(value) );
-        hash = 31 * hash + ( _type  == null ? 0 : _type.hashCode()   );
-        hash = 31 * hash + ( _id    == null ? 0 : _id.hashCode()     );
-        return hash;
-    }
-
 }

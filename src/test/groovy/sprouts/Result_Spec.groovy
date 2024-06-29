@@ -5,6 +5,9 @@ import spock.lang.Specification
 import spock.lang.Subject
 import spock.lang.Title
 
+import java.time.DayOfWeek
+import java.time.Month
+import java.util.concurrent.TimeUnit
 import java.util.function.Supplier
 
 @Title("Results")
@@ -76,8 +79,8 @@ class Result_Spec extends Specification
             def result = Result.of(42)
         expect : 'The result has a type.'
             result.type() == Integer
-        and : 'The result has an id.'
-            result.id() == "Result"
+        and : 'The result has an empty id.'
+            result.id().isEmpty()
     }
 
     def 'You can create a `Result` from a list.'()
@@ -222,4 +225,64 @@ class Result_Spec extends Specification
         and : 'The problem is an exception problem.'
             result2.problems().first().exception().get().message == "foo"
     }
+
+    def 'You can recognize a `Result` by its String representation.'()
+    {
+        reportInfo """
+            A `Result` instance has a specific string representation that 
+            tells you both the type of the result and the current item of the result.
+            The string representation of starts with "Result" followed by the type of the result
+            and the item of the result.
+        """
+        given : 'A result object holding a common enum value.'
+            def result = Result.of(DayOfWeek.MONDAY)
+        expect : 'The string representation of the result.'
+            result.toString() == "Result<DayOfWeek>[MONDAY]"
+
+        when : 'We update the result with a String id.'
+            result = result.withId("foo")
+        then : 'The string representation of the result reflects the id.'
+            result.toString() == "Result<DayOfWeek>[foo=MONDAY]"
+    }
+
+    def 'The equality of two `Result` instances is based on the type and the item of the result.'()
+    {
+        reportInfo """
+            The `Result` type is a value centric type which means that
+            the equality of two `Result` instances is based on the item of the result
+            and its type.
+        """
+        expect : 'The following results are equal and they have the same hash code.'
+            Result.of(42) == Result.of(42)
+            Result.of(42).hashCode() == Result.of(42).hashCode()
+
+            Result.of(Integer) == Result.of(Integer)
+            Result.of(Integer).hashCode() == Result.of(Integer).hashCode()
+
+        and : 'The following results are not equal and they have different hash codes.'
+            Result.of(42) != Result.of(43).withId("foo")
+            Result.of(42).hashCode() != Result.of(43).withId("foo").hashCode()
+
+            Result.of(Integer) != Result.of(String)
+            Result.of(Integer).hashCode() != Result.of(String).hashCode()
+
+            Result.of(Integer) != Result.of(Integer).withId("foo")
+            Result.of(Integer).hashCode() != Result.of(Integer).withId("foo").hashCode()
+
+            Result.of(42) != Result.of(Integer)
+            Result.of(42).hashCode() != Result.of(Integer).hashCode()
+    }
+
+    def 'A `Result` tells us that it is immutable.'()
+    {
+        reportInfo """
+            A `Result` is an immutable value type which means that
+            once created, it cannot be changed.
+        """
+        given : 'A result.'
+            def result = Result.of(42)
+        expect : 'The `isMutable()` method returns false.'
+            !result.isMutable()
+    }
+
 }

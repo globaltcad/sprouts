@@ -418,7 +418,8 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	default void ifPresentOrElse( Consumer<? super T> action, Runnable emptyAction ) {
 		if ( isPresent() )
 			action.accept(get());
-		emptyAction.run();
+		else
+			emptyAction.run();
 	}
 
 	/**

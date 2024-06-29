@@ -226,19 +226,19 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 
 	private final ChangeListeners<T> _changeListeners;
 
-    protected final String _id;
-	protected final boolean _nullable;
-	protected final Class<T> _type;
+    private final String _id;
+	private final boolean _nullable;
+	private final Class<T> _type;
 
-	protected @Nullable T _value;
+	@Nullable private T _value;
 
 
-	protected PropertyView(
-			Class<T>    type,
-			String      id,
-			boolean     allowsNull,
-			@Nullable T iniValue // may be null
-	) {
+	private PropertyView(
+        Class<T>    type,
+        String      id,
+        boolean     allowsNull,
+        @Nullable T iniValue // may be null
+    ) {
 		Objects.requireNonNull(id);
 		Objects.requireNonNull(type);
 		_type     = type;
@@ -255,18 +255,20 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 				);
 		}
 		if ( !ID_PATTERN.matcher(_id).matches() )
-			throw new IllegalArgumentException("The provided id '"+_id+"' is not valid!");
+			throw new IllegalArgumentException(
+				"The provided id '"+_id+"' is not valid! It must match the pattern '"+ID_PATTERN.pattern()+"'!"
+			);
 		if ( !allowsNull && iniValue == null )
 			throw new IllegalArgumentException("The provided initial value is null, but the property does not allow null values!");
 	}
 
-	protected PropertyView(
-		Class<T> type,
-		@Nullable T iniValue,
-		String id,
-		ChangeListeners<T> changeListeners,
-		boolean allowsNull
-	) {
+	private PropertyView(
+        Class<T> type,
+        @Nullable T iniValue,
+        String id,
+        ChangeListeners<T> changeListeners,
+        boolean allowsNull
+    ) {
 		this( type, id, allowsNull, iniValue );
 		Objects.requireNonNull(id);
 		Objects.requireNonNull(type);
@@ -374,13 +376,9 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 		if ( type.equals("Object") ) type = "?";
 		if ( type.equals("String") && this.isPresent() ) value = "\"" + value + "\"";
 		if (_nullable) type = type + "?";
-		String name = _stringTypeName();
+		String name = "View";
 		String content = ( id.equals("?") ? value : id + "=" + value );
 		return name + "<" + type + ">" + "[" + content + "]";
-	}
-
-	protected String _stringTypeName() {
-		return "View";
 	}
 
 }

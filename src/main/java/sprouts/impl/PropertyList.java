@@ -67,16 +67,6 @@ final class PropertyList<T extends @Nullable Object> implements Vars<T> {
         return new PropertyList<T>( immutable, type, false, list.toArray(array) );
     }
 
-    public static <T> Vals<T> of( boolean immutable, Class<T> type, Vals<T> vals ) {
-        if ( vals instanceof PropertyList)
-            return new PropertyList<>( immutable, type, false, ((PropertyList<T>) vals)._variables );
-
-        List<Val<T>> list = new ArrayList<>();
-        for ( int i = 0; i < vals.size(); i++ )
-            list.add( vals.at(i) );
-        return PropertyList.of( immutable, type, (Iterable) list );
-    }
-
     public static <T> Vars<T> ofNullable( boolean immutable, Class<T> type ){
         Objects.requireNonNull(type);
         return new PropertyList<T>( immutable, type, true, new Var[0] );
@@ -119,19 +109,11 @@ final class PropertyList<T extends @Nullable Object> implements Vars<T> {
 
 
     @SafeVarargs
-    protected PropertyList(boolean isImmutable, Class<T> type, boolean allowsNull, Var<T>... vals ) {
+    private PropertyList(boolean isImmutable, Class<T> type, boolean allowsNull, Var<T>... vals) {
         _isImmutable = isImmutable;
         _type        = type;
         _allowsNull  = allowsNull;
         _variables.addAll(Arrays.asList(vals));
-        _checkNullSafety();
-    }
-
-    protected PropertyList(boolean isImmutable, Class<T> type, boolean allowsNull, List<Var<T>> vals ) {
-        _isImmutable = isImmutable;
-        _type        = type;
-        _allowsNull  = allowsNull;
-        _variables.addAll(vals);
         _checkNullSafety();
     }
 

@@ -6,6 +6,8 @@ import spock.lang.Subject
 import spock.lang.Title
 
 import java.lang.ref.WeakReference
+import java.time.DayOfWeek
+import java.time.Month
 import java.util.concurrent.TimeUnit
 
 @Title('Viewing Properties')
@@ -330,6 +332,103 @@ class Viewing_Properties_Spec extends Specification
 
         then : 'The enum property still has 2 change listeners registered.'
             timeUnitProperty.numberOfChangeListeners() == 4
+    }
+
+    def 'You can recognize a property view from its String representation.'()
+    {
+        reportInfo """
+            A property view has a specific string representation that can be used to recognize it.
+            The string representation of a property view starts with "View" followed by the item
+            type and square brackets
+            containing the current item of the view.
+        """
+        given : 'A property based on a string.'
+            var stringProperty = Var.of("Hello")
+        and : 'A view of the property as a byte representation of the length of the string.'
+            Val<Byte> view = stringProperty.viewAs(Byte, s -> (byte) s.length())
+        expect : 'The string representation of the view is as expected.'
+            view.toString() == "View<Byte>[5]"
+
+        when : 'We update the view to have a custom id String.'
+            view = view.withId("patient_age")
+        then : 'The string representation of the view is as expected.'
+            view.toString() == "View<Byte>[patient_age=5]"
+    }
+
+    def 'You can subscribe and unsubscribe observer lambdas on property views.()'()
+    {
+        reportInfo """
+            A property is like a publisher that can have multiple observers.
+            In this test we create a property view and a change observer that listens to changes on the view
+            and is then unsubscribed, which should prevent further notifications.
+        """
+        given : 'A property based on an enum.'
+            var weekDay = Var.of(DayOfWeek.FRIDAY)
+        and : 'A view of the property as a String.'
+            Val<String> view = weekDay.viewAsString(DayOfWeek::name)
+        and : 'A trace list and a change listener that listens to changes on the view.'
+            var trace = []
+            Observer observer = { trace << view.get() }
+        expect : 'The trace list is empty.'
+            trace.isEmpty()
+
+        when : 'We subscribe the listener to the view.'
+            view.subscribe(observer)
+        then : 'The listener is not immediately notified!'
+            trace.isEmpty()
+
+        when : 'We change the value of the property 2 times.'
+            weekDay.set(DayOfWeek.SATURDAY)
+            weekDay.set(DayOfWeek.WEDNESDAY)
+        then : 'The listener is notified of the new value of the view.'
+            trace == ["SATURDAY", "WEDNESDAY"]
+
+        when : 'We unsubscribe the listener from the view.'
+            view.unsubscribe(observer)
+        and : 'We change the value of the property.'
+            weekDay.set(DayOfWeek.MONDAY)
+        then : 'The listener is not notified of the new value of the view.'
+            trace == ["SATURDAY", "WEDNESDAY"]
+    }
+
+    def 'You can subscribe and unsubscribe action lambdas on property views.()'()
+    {
+        reportInfo """
+            A property is like a publisher that can have multiple action listeners.
+            In this test we create a property view and an action listener that listens to changes on the view
+            and is then unsubscribed, which should prevent further notifications.
+        """
+        given : 'A property based on an enum.'
+            var monthProperty = Var.of(Month.AUGUST)
+        and : 'A view of the property as a String.'
+            Val<String> view = monthProperty.viewAsString(Month::name)
+        and : 'A trace list and a change listener that listens to changes on the view.'
+            var trace = []
+            Action<Val<String>> action = { trace << it.get() }
+        expect : 'The trace list is empty and there are no change listeners registered.'
+            trace.isEmpty()
+            view.numberOfChangeListeners() == 0
+
+        when : 'We subscribe the listener to the view.'
+            view.onChange(From.ALL, action)
+        then : 'The listener is not immediately notified, but there is one change listener registered.'
+            trace.isEmpty()
+            view.numberOfChangeListeners() == 1
+
+        when : 'We change the value of the property 2 times.'
+            monthProperty.set(Month.SEPTEMBER)
+            monthProperty.set(Month.NOVEMBER)
+        then : 'The listener is notified of the new value of the view.'
+            trace == ["SEPTEMBER", "NOVEMBER"]
+
+        when : 'We unsubscribe the listener from the view.'
+            view.unsubscribe(action)
+        and : 'We change the value of the property.'
+            monthProperty.set(Month.FEBRUARY)
+        then : 'The listener is not notified of the new value of the view.'
+            trace == ["SEPTEMBER", "NOVEMBER"]
+        and : 'There are no change listeners registered.'
+            view.numberOfChangeListeners() == 0
     }
 
     /**

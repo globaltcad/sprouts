@@ -10,7 +10,9 @@ import java.util.function.Function;
 
 final class ResultImpl<V> implements Result<V>
 {
-	private final String        _id;
+    public static final String ID = "";
+
+    private final String        _id;
 	private final Class<V>      _type;
 	private final List<Problem> _problems;
 	@Nullable private final V   _value;
@@ -152,8 +154,10 @@ final class ResultImpl<V> implements Result<V>
         String id = this.id() == null ? "?" : this.id();
         if ( id.equals(NO_ID) ) id = "?";
         String type = ( type() == null ? "?" : type().getSimpleName() );
-        if ( type.equals("Object") ) type = "?";
-        if ( type.equals("String") && this.isPresent() ) value = "\"" + value + "\"";
+        if ( type.equals("Object") )
+			type = "?";
+        if ( type.equals("String") && this.isPresent() )
+			value = "\"" + value + "\"";
         String content = ( id.equals("?") ? value : id + "=" + value );
         return "Result<" + type + ">" + "[" + content + "]";
 	}
@@ -172,7 +176,8 @@ final class ResultImpl<V> implements Result<V>
 			if ( !Objects.equals(other.id(), _id)             ) return false;
 			if ( !Objects.equals(other.type(), _type)         ) return false;
 			if ( !Objects.equals(other.problems(), _problems) ) return false;
-			return Val.equals( other.orElseThrow(), _value ); // Arrays are compared with Arrays.equals
+			return
+				Val.equals( other.orElseNull(), _value ); // Arrays are compared with Arrays.equals
 		}
 		return false;
 	}
