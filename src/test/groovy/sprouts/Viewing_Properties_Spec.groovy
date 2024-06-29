@@ -346,6 +346,11 @@ class Viewing_Properties_Spec extends Specification
             Val<Byte> view = stringProperty.viewAs(Byte, s -> (byte) s.length())
         expect : 'The string representation of the view is as expected.'
             view.toString() == "View<Byte>[5]"
+
+        when : 'We update the view to have a custom id String.'
+            view = view.withId("patient_age")
+        then : 'The string representation of the view is as expected.'
+            view.toString() == "View<Byte>[patient_age=5]"
     }
 
     /**

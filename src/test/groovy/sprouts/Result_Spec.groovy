@@ -237,6 +237,11 @@ class Result_Spec extends Specification
             def result = Result.of(TimeUnit.SECONDS)
         expect : 'The string representation of the result.'
             result.toString() == "Result<TimeUnit>[SECONDS]"
+
+        when : 'We update the result with a String id.'
+            result = result.withId("foo")
+        then : 'The string representation of the result reflects the id.'
+            result.toString() == "Result<TimeUnit>[foo=SECONDS]"
     }
 
 }

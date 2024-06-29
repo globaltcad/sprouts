@@ -874,6 +874,10 @@ class Property_Lenses_Spec extends Specification
             var lens = authorProperty.zoomTo(Author::birthDate, Author::withBirthDate)
         expect : 'The string representation of the lens should be recognizable.'
             lens.toString() == "Lens<LocalDate>[2008-08-12]"
+        when : 'We update the lens to have a custom id String.'
+            lens = lens.withId("patient_birth")
+        then : 'The string representation of the view is as expected.'
+            lens.toString() == "Lens<LocalDate>[patient_birth=2008-08-12]"
     }
 
     /**
