@@ -5,6 +5,9 @@ import spock.lang.Specification
 import spock.lang.Subject
 import spock.lang.Title
 
+import java.lang.ref.WeakReference
+import java.time.DayOfWeek
+import java.time.Month
 import java.util.concurrent.TimeUnit
 
 @Title("Common Property Views")
@@ -272,5 +275,77 @@ class Common_Property_Views extends Specification
             timeUnit.set(null)
         then : 'The view becomes "unknown" because the property is empty.'
             lowerCaseName.get() == "unknown"
+    }
+
+    def 'Properties can be garbage collected, even if they are observed by a composite view.'()
+    {
+        reportInfo """
+            If you create a composite property of two other properties,
+            then these two properties may be garbage collected if they are not used anymore
+            even if you still hold onto the composite property.
+        """
+        given : 'Two properties we will dereference later.'
+            Var<DayOfWeek> day = Var.of(DayOfWeek.MONDAY)
+            Var<String> name = Var.of("John")
+        and : 'A composite property that observes the two properties.'
+            Val<String> composite = Val.viewOf(name, day, (n,d) -> n + " " + d.name().toLowerCase())
+        expect : 'The composite property is "John monday" initially.'
+            composite.get() == "John monday"
+        when : 'We wrap the two properties in `WeakReference` objects.'
+            def dayRef = new WeakReference(day)
+            def nameRef = new WeakReference(name)
+        and : 'We dereference the strong references to the two properties.'
+            day = null
+            name = null
+        and : 'We wait for the garbage collector to do its job.'
+            waitForGarbageCollection()
+        then : 'The composite property is still "John monday".'
+            composite.get() == "John monday"
+        and : 'The two properties are gone.'
+            dayRef.get() == null
+            nameRef.get() == null
+    }
+
+    def 'Properties can be garbage collected, even if they are observed by a nullable composite view.'()
+    {
+        reportInfo """
+            If you create a nullable composite property of two other properties,
+            then these two properties may be garbage collected if they are not used anymore
+            even if you still hold onto the composite property.
+        """
+        given : 'Two properties we will dereference later.'
+            Var<Month> month = Var.of(Month.JANUARY)
+            Var<String> name = Var.of("Linda")
+        and : 'A nullable composite property that observes the two properties.'
+            Val<String> composite = Val.viewOfNullable(name, month, (n,m) -> n + " " + m.name().toLowerCase())
+        expect : 'The composite property is "Linda january" initially.'
+            composite.get() == "Linda january"
+        when : 'We wrap the two properties in `WeakReference` objects.'
+            def monthRef = new WeakReference(month)
+            def nameRef = new WeakReference(name)
+        and : 'We dereference the strong references to the two properties.'
+            month = null
+            name = null
+        and : 'We wait for the garbage collector to do its job.'
+            waitForGarbageCollection()
+        then : 'The composite property is still "Linda january".'
+            composite.get() == "Linda january"
+        and : 'The two properties are gone.'
+            monthRef.get() == null
+            nameRef.get() == null
+    }
+
+
+    /**
+     * This method guarantees that garbage collection is
+     * done unlike <code>{@link System#gc()}</code>
+     */
+    static void waitForGarbageCollection() {
+        Object obj = new Object();
+        WeakReference ref = new WeakReference<>(obj);
+        obj = null;
+        while(ref.get() != null) {
+            System.gc();
+        }
     }
 }

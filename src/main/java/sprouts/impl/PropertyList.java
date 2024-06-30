@@ -10,7 +10,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- *  A base class for {@link Vars} implementations.
+ *  A base class for {@link Vars} implementations, a property list
+ *  with support for registering change listeners.
  */
 final class PropertyList<T extends @Nullable Object> implements Vars<T> {
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(PropertyList.class);

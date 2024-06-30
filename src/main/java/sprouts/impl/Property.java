@@ -76,17 +76,17 @@ final class Property<T extends @Nullable Object> implements Var<T> {
 	}
 
 	/** {@inheritDoc} */
-	@Override
-	public Var<T> onChange( Channel channel, Action<Val<T>> action ) {
-		_changeListeners.onChange(channel, action);
-		return this;
-	}
+	@Override public final Class<T> type() { return _type; }
 
 	/** {@inheritDoc} */
-	@Override public Var<T> fireChange( Channel channel ) {
-		_changeListeners.fireChange(this, channel);
-		return this;
-	}
+	@Override public final String id() { return _id; }
+
+	/** {@inheritDoc} */
+	@Override
+	public final @Nullable T orElseNull() { return _value; }
+
+	/** {@inheritDoc} */
+	@Override public final boolean allowsNull() { return _nullable; }
 
 	@Override
 	public final boolean isMutable() {
@@ -125,6 +125,19 @@ final class Property<T extends @Nullable Object> implements Var<T> {
 		return false;
 	}
 
+	/** {@inheritDoc} */
+	@Override
+	public Var<T> onChange( Channel channel, Action<Val<T>> action ) {
+		_changeListeners.onChange(channel, action);
+		return this;
+	}
+
+	/** {@inheritDoc} */
+	@Override public Var<T> fireChange( Channel channel ) {
+		_changeListeners.fireChange(this, channel);
+		return this;
+	}
+
 	@Override
 	public Observable subscribe( Observer observer ) {
 		_changeListeners.onChange( observer );
@@ -140,19 +153,6 @@ final class Property<T extends @Nullable Object> implements Var<T> {
 	public final long numberOfChangeListeners() {
 		return _changeListeners.numberOfChangeListeners();
 	}
-
-	/** {@inheritDoc} */
-	@Override public final Class<T> type() { return _type; }
-
-	/** {@inheritDoc} */
-	@Override public final String id() { return _id; }
-
-	/** {@inheritDoc} */
-	@Override
-	public final @Nullable T orElseNull() { return _value; }
-
-	/** {@inheritDoc} */
-	@Override public final boolean allowsNull() { return _nullable; }
 
 	@Override
 	public final String toString() {
