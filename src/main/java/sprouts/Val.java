@@ -46,9 +46,18 @@ import java.util.regex.Pattern;
  * @param <T> The type of the item held by this {@link Val}.
  */
 public interface Val<T extends @Nullable Object> extends Observable {
-	String NO_ID = ""; // This is the default id for properties
-	String EMPTY = "EMPTY"; // This is the default string for empty properties
+	/**
+	 *  The default id for properties which do not have an id.
+	 */
+	String NO_ID = "";
+	/**
+	 *  The regex {@link Pattern} used to validate property ids.
+	 *  All ids must match this pattern.
+	 */
 	Pattern ID_PATTERN = Pattern.compile("[a-zA-Z0-9_]*");
+	/**
+	 *  The default channel used for change events.
+	 */
 	From DEFAULT_CHANNEL = From.VIEW_MODEL;
 
 	/**
@@ -810,7 +819,7 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	 * @return The {@link String} representation of the item wrapped by an implementation of this interface.
 	 */
 	default String itemAsString() {
-		return this.mapTo(String.class, String::valueOf).orElse(EMPTY);
+		return this.mapTo(String.class, String::valueOf).orElse("null");
 	}
 
 	/**

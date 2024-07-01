@@ -73,8 +73,18 @@ public interface Event extends Observable
      */
     interface Executor
     {
+        /**
+         *  A basic {@link Executor} that executes the given {@link Runnable} on the same thread.
+         */
         Executor SAME_THREAD = Runnable::run;
+        /**
+         *  A {@link Executor} that executes the given {@link Runnable} on a new thread.
+         */
         Executor NEW_THREAD = runnable -> new Thread( runnable ).start();
+        /**
+         *  A {@link Executor} that executes the given {@link Runnable} on the
+         *  {@link ForkJoinPool#commonPool()} (which is a shared, static pool).
+         */
         Executor FORK_JOIN_POOL = ForkJoinPool.commonPool()::execute;
 
         /**

@@ -14,6 +14,8 @@ import java.util.function.Supplier;
  * 	which describe what went wrong in the process of obtaining the value wrapped by the result.
  * 	So usually, if the result is not present, there will most likely be a list of {@link Problem}s
  * 	explaining why the value is not present and what went wrong.
+ *
+ * @param <V> The type of the item wrapped by this result.
  */
 public interface Result<V> extends Val<V>
 {
