@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Result.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sprouts</a> &gt; <a href="index.source.html" class="el_package">sprouts</a> &gt; <span class="el_source">Result.java</span></div><h1>Result.java</h1><pre class="source lang-java linenums">package sprouts;
+
+
+import org.jspecify.annotations.Nullable;
+import sprouts.impl.Sprouts;
+
+import java.util.*;
+import java.util.function.Function;
+import java.util.function.Supplier;
+
+/**
+ * 	A result is very similar to an {@link Optional} in that it can either contain a value or not,
+ * 	with the difference being that a result can also contain a list of {@link Problem}s
+ * 	which describe what went wrong in the process of obtaining the value wrapped by the result.
+ * 	So usually, if the result is not present, there will most likely be a list of {@link Problem}s
+ * 	explaining why the value is not present and what went wrong.
+ *
+ * @param &lt;V&gt; The type of the item wrapped by this result.
+ */
+public interface Result&lt;V&gt; extends Val&lt;V&gt;
+{
+	/**
+	 *  A factory method for creating an empty result
+	 *  without a value and no problems.
+	 *
+	 * @param type The type of the value, which may not be null.
+	 * @return An empty result.
+	 * @param &lt;V&gt; The type of the value.
+	 * @throws NullPointerException if the type is null.
+	 */
+	static &lt;V&gt; Result&lt;V&gt; of( Class&lt;V&gt; type ) {
+<span class="fc" id="L32">		Objects.requireNonNull(type);</span>
+<span class="fc" id="L33">		return Sprouts.factory().resultOf(type);</span>
+	}
+
+	/**
+	 *  A factory method for creating a result with a non-null value and no problems.
+	 * @param value The value to wrap in the result.
+	 * @return A result with the given value and no problems.
+	 * @param &lt;V&gt; The type of the value.
+	 * @throws NullPointerException if the value is null.
+	 */
+	static &lt;V&gt; Result&lt;V&gt; of( V value ) {
+<span class="fc" id="L44">		Objects.requireNonNull(value);</span>
+<span class="fc" id="L45">		return Sprouts.factory().resultOf(value);</span>
+	}
+
+	/**
+	 *  A factory method for creating a result with a potentially null value but no problems.
+	 *  Some results may be empty without that being a problem, so this method is useful for
+	 *  creating results that may be empty but are not necessarily problematic.
+	 *
+	 * @param type The type of the value, which may not be null.
+	 * @param value The value to wrap in the result or null to create an empty result.
+	 * @return A result with the given value and no problems.
+	 * @param &lt;V&gt; The type of the value.
+	 * @throws NullPointerException if the type is null.
+	 */
+	static &lt;V&gt; Result&lt;V&gt; of( Class&lt;V&gt; type, @Nullable V value ) {
+<span class="fc" id="L60">		Objects.requireNonNull(type);</span>
+<span class="fc" id="L61">		return Sprouts.factory().resultOf(type, value);</span>
+	}
+
+	/**
+	 *  A factory method for creating a result with a non-null value and a list of problems.
+	 * @param value The value to wrap in the result, which may not be null.
+	 * @param problems The list of problems associated with the result.
+	 * @return A result with the given value and problems.
+	 * @param &lt;V&gt; The type of the value.
+	 * @throws NullPointerException if the value or problems are null.
+	 */
+	static &lt;V&gt; Result&lt;V&gt; of( V value, List&lt;Problem&gt; problems ) {
+<span class="fc" id="L73">		Objects.requireNonNull(value);</span>
+<span class="fc" id="L74">		return Sprouts.factory().resultOf(value, problems);</span>
+	}
+
+	/**
+	 *  A factory method for creating an empty result and a list of problems.
+	 * @param type The type of the value, which may not be null.
+	 * @param problems The list of problems associated with the result.
+	 * @return An empty result with the given problems.
+	 * @param &lt;V&gt; The type of the value.
+	 * @throws NullPointerException if the type or problems are null.
+	 */
+	static &lt;V&gt; Result&lt;V&gt; of( Class&lt;V&gt; type, List&lt;Problem&gt; problems ) {
+<span class="fc" id="L86">		Objects.requireNonNull(type);</span>
+<span class="fc" id="L87">		return Sprouts.factory().resultOf(type, problems);</span>
+	}
+
+	/**
+	 *  A factory method for creating a result with a potentially null value and a list of problems.
+	 * @param type The type of the value, which may not be null.
+	 * @param value The value to wrap in the result or null.
+	 * @param problems The list of problems associated with the result.
+	 * @return A result with the given value and problems.
+	 * @param &lt;V&gt; The type of the value.
+	 * @throws NullPointerException if the type or problems are null.
+	 */
+	static &lt;V&gt; Result&lt;V&gt; of( Class&lt;V&gt; type, @Nullable V value, List&lt;Problem&gt; problems ) {
+<span class="nc" id="L100">		Objects.requireNonNull(type);</span>
+<span class="nc" id="L101">		return Sprouts.factory().resultOf(type, value, problems);</span>
+	}
+
+	/**
+	 *  A factory method for creating an optional result with a single problem.
+	 * @param type The type of the value, which may not be null.
+	 * @param value The value to wrap in the result, which may be null.
+	 * @param problem The problem associated with the result.
+	 * @return A result with the given problem.
+	 * @param &lt;V&gt; The type of the value.
+	 * @throws NullPointerException if any of the parameters are null.
+	 */
+	static &lt;V&gt; Result&lt;V&gt; of( Class&lt;V&gt; type, V value, Problem problem ) {
+<span class="nc" id="L114">		Objects.requireNonNull(type);</span>
+<span class="nc" id="L115">		Objects.requireNonNull(problem);</span>
+<span class="nc" id="L116">		return Sprouts.factory().resultOf(type, value, problem);</span>
+	}
+
+	/**
+	 *  A factory method for creating a result with a single problem.
+	 * @param type The type of the value, which may not be null.
+	 * @param problem The problem associated with the result.
+	 * @return A result with the given problem.
+	 * @param &lt;V&gt; The type of the value.
+	 * @throws NullPointerException if any of the parameters are null.
+	 */
+	static &lt;V&gt; Result&lt;V&gt; of( Class&lt;V&gt; type, Problem problem ) {
+<span class="nc" id="L128">		Objects.requireNonNull(type);</span>
+<span class="nc" id="L129">		Objects.requireNonNull(problem);</span>
+<span class="nc" id="L130">		return Sprouts.factory().resultOf(type, problem);</span>
+	}
+
+	/**
+	 *  A factory method for creating a list based result with a single problem.
+	 * @param type The type of the list value, which may not be null.
+	 * @param problem The problem associated with the result.
+	 * @return A result with the given problem.
+	 * @param &lt;V&gt; The type of the value.
+	 * @throws NullPointerException if any of the parameters are null.
+	 */
+	static &lt;V&gt; Result&lt;List&lt;V&gt;&gt; ofList( Class&lt;V&gt; type, Problem problem ) {
+<span class="nc" id="L142">		Objects.requireNonNull(type);</span>
+<span class="nc" id="L143">		Objects.requireNonNull(problem);</span>
+<span class="nc" id="L144">		return Sprouts.factory().resultOfList(type, problem);</span>
+	}
+
+	/**
+	 *  A factory method for creating a list based result from the given list.
+	 *  The list may be empty but not null.
+	 * @param type The type of the list value, which may not be null.
+	 *             This is the type of the list elements, not the type of the list itself.
+	 * @param list The list to wrap in the result.
+	 * @param &lt;V&gt; The type of the list elements.
+	 * @return A result with the given list.
+	 * @throws NullPointerException if any of the parameters are null.
+	 */
+	static &lt;V&gt; Result&lt;List&lt;V&gt;&gt; ofList( Class&lt;V&gt; type, List&lt;V&gt; list ) {
+<span class="fc" id="L158">		Objects.requireNonNull(type);</span>
+<span class="fc" id="L159">		Objects.requireNonNull(list);</span>
+		// We check the types of the list elements are of the correct type.
+<span class="fc" id="L161">		boolean matches = list.stream().filter(Objects::nonNull).allMatch(e -&gt; type.isAssignableFrom(e.getClass()));</span>
+<span class="pc bpc" id="L162" title="1 of 2 branches missed.">		if ( !matches )</span>
+<span class="nc" id="L163">			throw new IllegalArgumentException(&quot;List elements must be of type &quot; + type.getName());</span>
+<span class="fc" id="L164">		return Sprouts.factory().resultOfList(type, list);</span>
+	}
+
+	/**
+	 *  A factory method for creating a list based result from the given list and problems.
+	 *  The list may be empty but not null.
+	 * @param type The type of the list value, which may not be null.
+	 *             This is the type of the list elements, not the type of the list itself.
+	 * @param list The list to wrap in the result.
+	 * @param problems The list of problems associated with the result.
+	 * @param &lt;V&gt; The type of the list elements.
+	 * @return A result with the given list and problems.
+	 * @throws NullPointerException if any of the parameters are null.
+	 */
+	static &lt;V&gt; Result&lt;List&lt;V&gt;&gt; ofList( Class&lt;V&gt; type, List&lt;V&gt; list, List&lt;Problem&gt; problems ) {
+<span class="fc" id="L179">		Objects.requireNonNull(type);</span>
+<span class="fc" id="L180">		Objects.requireNonNull(list);</span>
+<span class="fc" id="L181">		boolean matches = list.stream().filter(Objects::nonNull).allMatch(e -&gt; type.isAssignableFrom(e.getClass()));</span>
+<span class="pc bpc" id="L182" title="1 of 2 branches missed.">		if ( !matches )</span>
+<span class="nc" id="L183">			throw new IllegalArgumentException(&quot;List elements must be of type &quot; + type.getName());</span>
+
+<span class="fc" id="L185">		return Sprouts.factory().resultOfList(type, list, problems);</span>
+	}
+
+	/**
+	 *  A factory method for creating a result from a {@link Supplier} which may throw an exception.
+	 *  If the supplier throws an exception, the exception is caught and a new result is returned
+	 *  with the exception as a problem.
+	 *
+	 * @param type The type of the value returned from the supplier.
+	 * @param supplier The supplier to obtain the value from.
+	 * @return A new result with the value obtained from the supplier and a list of problems describing related issues.
+	 * @param &lt;V&gt; The type of the value returned from the supplier.
+	 * @throws NullPointerException if the type or supplier is null.
+	 */
+	static &lt;V&gt; Result&lt;V&gt; ofTry( Class&lt;V&gt; type, Supplier&lt;V&gt; supplier ) {
+<span class="fc" id="L200">		Objects.requireNonNull(type);</span>
+<span class="fc" id="L201">		Objects.requireNonNull(supplier);</span>
+<span class="fc" id="L202">		return Sprouts.factory().resultOfTry(type, supplier);</span>
+	}
+
+	/**
+	 *  Exposes a list of {@link Problem}s associated with this result item.
+	 *  A problem is a description of what went wrong in the process of obtaining
+	 *  the value wrapped by this result.
+	 *  &lt;p&gt;
+	 *  Note that a result may be present but still have problems,
+	 *  in which case the problems list is not empty.
+	 *
+	 * 	@return The list of {@link Problem}s associated with this result item.
+	 */
+	List&lt;Problem&gt; problems();
+
+	/**
+	 * 	Checks if this result has {@link Problem}s associated with it.
+	 * 	A problem is a description of what went wrong in the process of obtaining
+	 * 	the value wrapped by this result.
+	 * 	&lt;p&gt;
+	 * 	Note that a result may be present but still have problems,
+	 * 	in which case the problems list is not empty.
+	 *
+	 * 	@return {@code true} if this result is present, {@code false} otherwise.
+	 */
+<span class="nc bnc" id="L227" title="All 2 branches missed.">	default boolean hasProblems() { return !problems().isEmpty(); }</span>
+
+	/**
+	 *  Safely maps the value of this result to a new value of a different type
+	 *  even if an exception is thrown during the mapping process,
+	 *  in which case the exception is caught and a new result is returned
+	 *  with the exception as a problem.
+	 *
+	 * @param type The type of the item returned from the mapping function.
+	 * @param mapper The mapping function to apply to an item, if present.
+	 * @return A new result with the mapped value and a list of problems describing related issues.
+	 * @param &lt;U&gt; The type of the item returned from the mapping function.
+	 */
+	@Override
+	&lt;U&gt; Result&lt;U&gt; mapTo( Class&lt;U&gt; type, Function&lt;V, U&gt; mapper );
+
+	/**
+	 *  Safely maps the value of this result to a new value of the same type
+	 *  even if an exception is thrown during the mapping process,
+	 *  in which case the exception is caught and a new result is returned
+	 *  with the exception as a problem.
+	 *
+	 * @param mapper The mapping function to apply to an item, if present.
+	 * @return A new result with the mapped value and a list of problems describing related issues.
+	 */
+	@Override
+	Result&lt;V&gt; map( Function&lt;V, V&gt; mapper );
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>
