@@ -1,10 +1,10 @@
 {
   "className":"sprouts.Properties_List_Spec",
   "title":"Lists of Properties",
-  "narrative":"Just like properties you can create lists of properties\n    and then bind them to UI components.\n    They are a powerful tool to model the state \n    as well as business logic of your UI without actually depending on it.\n    This is especially useful for testing your UIs logic.\n    This specification shows how to use the various\n    methods exposed by the property lists classes, \n    namely \"Vals\" (immutable) and \"Vars\" (mutable).",
+  "narrative":"Just like properties you can create lists of properties\n    and then bind them to UI components.\n    They are a powerful tool to model the state\n    as well as business logic of your UI without actually depending on it.\n    This is especially useful for testing your UIs logic.\n    This specification shows how to use the various\n    methods exposed by the property lists classes,\n    namely \"Vals\" (immutable) and \"Vars\" (mutable).",
   "subjects":["sprouts.Vals","sprouts.Vars"],
   "statistics":{
-    "runs":"88",
+    "runs":"93",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -2251,6 +2251,107 @@
         {"kind":"given","text":"We create a hand of properties, all of which are non-nullable.","code":["var property1 = Var.ofNullable(String.class, \"Maybe Null\")","var property2 = Var.of(\"Always Not Null\")"]},
 
         {"kind":"when","text":"We try to construct a nullable property list from the properties.","code":["Vars.ofNullable(String.class, property1, property2)"]},
+
+        {"kind":"then","text":"An exception is thrown because the property list does not accept non-nullable properties.","code":["thrown(IllegalArgumentException)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `is(Vals)` method checks if the items of the current property list are equal to the other property list.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `is(Vals)` method checks if the items of the current property list are equal to the other property list.\n            The method returns `true` if the items of the two property lists are equal, and `false` otherwise.\n        "]
+      },
+      "blocks":[
+        {"kind":"expect","text":"","code":["Vals.of(1, 2, 3, 4, 5).is(Vals.of(1, 2, 3, 4, 5))","!Vals.of(1, 2, 3, 4, 5).is(Vals.of(1, 2, 32, 4, 5))"]},
+
+        {"kind":"and","text":"","code":["Vars.of(1, 2, 3, 4, 5).is(Vals.of(1, 2, 3, 4, 5))","!Vars.of(1, 2, 3, 4, 5).is(Vals.of(1, 27, 3, 4, 5))"]},
+
+        {"kind":"and","text":"","code":["Vals.of(1, 2, 3, 4, 5).is(Vars.of(1, 2, 3, 4, 5))","!Vals.of(1, 2, 3, 4, 5).is(Vars.of(1, 2, 3, 42, 5))"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use `all(Predicate)` to check if all properties in the list satisfy a given predicate.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `all(Predicate)` method uses the stream API to check if the\n            properties in the list satisfy a given predicate.\n            The method returns `true` if the predicate is satisfied by all properties, \n            and `false` otherwise.\n        "]
+      },
+      "blocks":[
+        {"kind":"expect","text":"","code":["Vals.of(1, 2, 3, 4, 5).all(i -> i.get() < 6)","!Vals.of(1, 2, 3, 4, 5).all(i -> i.get() < 5)"]},
+
+        {"kind":"and","text":"","code":["Vars.of(1, 2, 3, 4, 5).all(i -> i.get() < 6)","!Vars.of(1, 2, 3, 4, 5).all(i -> i.get() < 5)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `removeOrThrow(Val)` method removes the given property from the list or throws an exception if the property is not in the list.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `removeOrThrow(Val)` method ensures that the given property is removed from the list\n            only if the property is in the list. If the property is not in the list, an exception is thrown.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A property list with some properties.","code":["var properties = Vars.of(1, 2, 3, 4, 5)"]},
+
+        {"kind":"when","text":"We remove a property that is in the list.","code":["properties.removeOrThrow(Val.of(3))"]},
+
+        {"kind":"then","text":"The property is removed from the list.","code":["properties.toList() == [1, 2, 4, 5]"]},
+
+        {"kind":"when","text":"We try to remove a property that is not in the list.","code":["properties.removeOrThrow(Val.of(6))"]},
+
+        {"kind":"then","text":"An exception is thrown because the property is not in the list.","code":["thrown(NoSuchElementException)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Calling `.removeOrThrow(Var.of(..))` will always throw an exception.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The difference between a `Val.of(..)` and a `Var.of(..)` is that the \n            former is an immutable value based property and the latter is a mutable\n            reference based property. The `removeOrThrow` method will only remove\n            a property if the exact same property is in the list or \n            an immutable value based property with the same value is in the list.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A property list with some properties.","code":["var properties = Vars.of(1, 2, 3, 4, 5)"]},
+
+        {"kind":"when","text":"We try to remove a property that is in the list.","code":["properties.removeOrThrow(Var.of(3))"]},
+
+        {"kind":"then","text":"An exception is thrown because the property is not in the list.","code":["thrown(NoSuchElementException)"]},
+
+        {"kind":"when","text":"We try to remove a property by value that is in the list.","code":["properties.removeOrThrow(Val.of(4))"]},
+
+        {"kind":"then","text":"The property is removed from the list.","code":["properties.toList() == [1, 2, 3, 5]"]},
+
+        {"kind":"when","text":"We remove a property that is actually in the list.","code":["properties.removeOrThrow(properties.at(2))"]},
+
+        {"kind":"then","text":"The property is removed from the list.","code":["properties.toList() == [1, 2, 5]"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You can create a nullable immutable property list from nullable properties only.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            You can create a nullable immutable property list from nullable properties only.\n            Which is to say that when you try to call the `of` method on the `Vals` class with \n            set of nullable properties, then the property list will accept the properties.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create a hand of properties, all of which are nullable.","code":["var property1 = Var.ofNullable(String.class, \"Maybe Null\")","var property2 = Var.ofNullable(String.class, \"Maybe Also Null\")","var property3 = Var.of(\"Never Null\")"]},
+
+        {"kind":"when","text":"We try to construct a nullable property list from the first two properties.","code":["var list = Vals.ofNullable(property1, property2)"]},
+
+        {"kind":"then","text":"No exception is thrown because the property list accepts nullable properties.","code":["noExceptionThrown()"]},
+
+        {"kind":"and","text":"The property list has the expected values.","code":["list.toList() == [\"Maybe Null\", \"Maybe Also Null\"]","!list.isMutable()"]},
+
+        {"kind":"when","text":"We try to construct a nullable property list from all three properties.","code":["Vals.ofNullable(property1, property2, property3)"]},
 
         {"kind":"then","text":"An exception is thrown because the property list does not accept non-nullable properties.","code":["thrown(IllegalArgumentException)"]}
       ],

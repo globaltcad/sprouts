@@ -125,10 +125,14 @@ final class ChangeListeners&lt;T&gt;
                     try {
 <span class="fc" id="L126">                        action.accept(clone);</span>
 <span class="fc" id="L127">                    } catch ( Exception e ) {</span>
-<span class="fc" id="L128">                        log.error(&quot;An error occurred while executing action '&quot;+action+&quot;' for property '&quot;+this+&quot;'&quot;, e);</span>
-<span class="fc" id="L129">                    }</span>
-<span class="fc" id="L130">            });</span>
-<span class="fc" id="L131">        }</span>
+<span class="fc" id="L128">                        log.error(</span>
+                            &quot;An error occurred while executing &quot; +
+                            &quot;action '&quot;+action+&quot;' for property '&quot;+owner+&quot;'&quot;,
+                            e
+                        );
+<span class="fc" id="L133">                    }</span>
+<span class="fc" id="L134">            });</span>
+<span class="fc" id="L135">        }</span>
 
     }
 

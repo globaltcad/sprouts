@@ -170,8 +170,8 @@ public interface Vals&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&gt
      */
     @SuppressWarnings(&quot;unchecked&quot;)
     static &lt;T extends @Nullable Object&gt; Vals&lt;@Nullable T&gt; ofNullable( Val&lt;T&gt; first, Val&lt;T&gt;... rest ) {
-<span class="nc" id="L173">        Objects.requireNonNull(first);</span>
-<span class="nc" id="L174">        return Sprouts.factory().valsOfNullable( first, rest );</span>
+<span class="fc" id="L173">        Objects.requireNonNull(first);</span>
+<span class="fc" id="L174">        return Sprouts.factory().valsOfNullable( first, rest );</span>
     }
 
     /**
@@ -367,29 +367,15 @@ public interface Vals&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&gt
      * @return True if the two lists of properties are equal.
      */
     default boolean is( Vals&lt;@Nullable T&gt; other ) {
-<span class="nc bnc" id="L370" title="All 2 branches missed.">        if ( size() != other.size() ) return false;</span>
-<span class="nc bnc" id="L371" title="All 2 branches missed.">        if ( this.isMutable() != other.isMutable() )</span>
-<span class="nc" id="L372">            return false;</span>
-
-<span class="nc bnc" id="L374" title="All 2 branches missed.">        if ( this.isMutable() ) {</span>
-<span class="nc bnc" id="L375" title="All 2 branches missed.">            for ( int i = 0; i &lt; size(); i++ ) {</span>
-<span class="nc" id="L376">                Val&lt;T&gt; a = at(i);</span>
-<span class="nc" id="L377">                Val&lt;T&gt; b = other.at(i);</span>
-<span class="nc bnc" id="L378" title="All 2 branches missed.">                if ( !a.is(b) )</span>
-<span class="nc" id="L379">                    return false;</span>
-            }
-        } else {
-
+<span class="pc bpc" id="L370" title="1 of 2 branches missed.">        if ( size() != other.size() )</span>
+<span class="nc" id="L371">            return false;</span>
+<span class="fc bfc" id="L372" title="All 2 branches covered.">        for ( int i = 0; i &lt; size(); i++ ) {</span>
+<span class="fc" id="L373">            Val&lt;T&gt; a = at(i);</span>
+<span class="fc" id="L374">            Val&lt;T&gt; b = other.at(i);</span>
+<span class="fc bfc" id="L375" title="All 2 branches covered.">            if ( !a.is(b) )</span>
+<span class="fc" id="L376">                return false;</span>
         }
-<span class="nc bnc" id="L384" title="All 2 branches missed.">        for ( int i = 0; i &lt; size(); i++ ) {</span>
-<span class="nc" id="L385">            Val&lt;T&gt; a = at(i);</span>
-<span class="nc" id="L386">            Val&lt;T&gt; b = other.at(i);</span>
-<span class="nc bnc" id="L387" title="All 2 branches missed.">            if ( !a.is(b) )</span>
-<span class="nc" id="L388">                return false;</span>
-        }
-
-
-<span class="nc" id="L392">        return true;</span>
+<span class="fc" id="L378">        return true;</span>
     }
 
     /**
@@ -432,7 +418,7 @@ public interface Vals&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&gt
      *
      * @return A stream of the items in this list of properties.
      */
-<span class="fc" id="L435">    default Stream&lt;T&gt; stream() { return StreamSupport.stream(spliterator(), false); }</span>
+<span class="fc" id="L421">    default Stream&lt;T&gt; stream() { return StreamSupport.stream(spliterator(), false); }</span>
 
     /**
      *  Converts this list of properties to a JDK {@link List} of items
@@ -441,7 +427,7 @@ public interface Vals&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&gt
      *
      * @return An immutable list of the items in this list of properties.
      */
-<span class="fc" id="L444">    default List&lt;T&gt; toList() { return Collections.unmodifiableList(stream().collect(Collectors.toList())); }</span>
+<span class="fc" id="L430">    default List&lt;T&gt; toList() { return Collections.unmodifiableList(stream().collect(Collectors.toList())); }</span>
 
     /**
      *  Converts this list of properties to a JDK {@link List} of properties
@@ -451,8 +437,8 @@ public interface Vals&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&gt
      * @return An immutable {@link List} of properties in this {@link Vals} instance.
      */
     default List&lt;Val&lt;T&gt;&gt; toValList() {
-<span class="fc" id="L454">        return Collections.unmodifiableList(</span>
-<span class="fc bfc" id="L455" title="All 2 branches covered.">                stream().map( v -&gt; v == null ? Val.ofNullable(type(), null) : Val.of(v) ).collect(Collectors.toList())</span>
+<span class="fc" id="L440">        return Collections.unmodifiableList(</span>
+<span class="fc bfc" id="L441" title="All 2 branches covered.">                stream().map( v -&gt; v == null ? Val.ofNullable(type(), null) : Val.of(v) ).collect(Collectors.toList())</span>
             );
     }
 
@@ -462,7 +448,7 @@ public interface Vals&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&gt
      *
      * @return An immutable set of the items in this list of properties.
      */
-<span class="fc" id="L465">    default Set&lt;T&gt; toSet() { return Collections.unmodifiableSet(stream().collect(Collectors.toSet())); }</span>
+<span class="fc" id="L451">    default Set&lt;T&gt; toSet() { return Collections.unmodifiableSet(stream().collect(Collectors.toSet())); }</span>
 
     /**
      *  A list of properties may be turned into a map of items where the keys are the ids of the properties
@@ -475,12 +461,12 @@ public interface Vals&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&gt
      *         and the values are the items of the properties.
      */
     default Map&lt;String,T&gt; toMap() {
-<span class="fc" id="L478">        Map&lt;String,T&gt; map = new HashMap&lt;&gt;();</span>
-<span class="fc bfc" id="L479" title="All 2 branches covered.">        for ( int i = 0; i &lt; size(); i++ ) {</span>
-<span class="fc" id="L480">            Val&lt;T&gt; val = at(i);</span>
-<span class="fc" id="L481">            map.put( val.id(), val.orElseNull() );</span>
+<span class="fc" id="L464">        Map&lt;String,T&gt; map = new HashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L465" title="All 2 branches covered.">        for ( int i = 0; i &lt; size(); i++ ) {</span>
+<span class="fc" id="L466">            Val&lt;T&gt; val = at(i);</span>
+<span class="fc" id="L467">            map.put( val.id(), val.orElseNull() );</span>
         }
-<span class="fc" id="L483">        return Collections.unmodifiableMap(map);</span>
+<span class="fc" id="L469">        return Collections.unmodifiableMap(map);</span>
     }
 
     /**
@@ -494,12 +480,12 @@ public interface Vals&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&gt
      *         and the values are the properties themselves.
      */
     default Map&lt;String,Val&lt;T&gt;&gt; toValMap() {
-<span class="fc" id="L497">        Map&lt;String,Val&lt;T&gt;&gt; map = new HashMap&lt;&gt;();</span>
-<span class="fc bfc" id="L498" title="All 2 branches covered.">        for ( int i = 0; i &lt; size(); i++ ) {</span>
-<span class="fc" id="L499">            Val&lt;T&gt; val = at(i);</span>
-<span class="fc" id="L500">            map.put( val.id(), val );</span>
+<span class="fc" id="L483">        Map&lt;String,Val&lt;T&gt;&gt; map = new HashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L484" title="All 2 branches covered.">        for ( int i = 0; i &lt; size(); i++ ) {</span>
+<span class="fc" id="L485">            Val&lt;T&gt; val = at(i);</span>
+<span class="fc" id="L486">            map.put( val.id(), val );</span>
         }
-<span class="fc" id="L502">        return Collections.unmodifiableMap(map);</span>
+<span class="fc" id="L488">        return Collections.unmodifiableMap(map);</span>
     }
 
     /**
@@ -507,27 +493,27 @@ public interface Vals&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&gt
      *  @param predicate The predicate to check.
      *  @return True if any of the properties in this list of properties match the given predicate.
      */
-<span class="fc" id="L510">    default boolean any( Predicate&lt;Val&lt;T&gt;&gt; predicate ) { return toValList().stream().anyMatch( predicate ); }</span>
+<span class="fc" id="L496">    default boolean any( Predicate&lt;Val&lt;T&gt;&gt; predicate ) { return toValList().stream().anyMatch( predicate ); }</span>
 
     /**
      *  Check if all the properties in this list match the given predicate.
      *  @param predicate The predicate to check.
      *  @return True if all the properties in this list of properties match the given predicate.
      */
-<span class="nc" id="L517">    default boolean all( Predicate&lt;Val&lt;T&gt;&gt; predicate ) { return toValList().stream().allMatch( predicate ); }</span>
+<span class="fc" id="L503">    default boolean all( Predicate&lt;Val&lt;T&gt;&gt; predicate ) { return toValList().stream().allMatch( predicate ); }</span>
 
     /**
      *  Check if none of the properties in this list match the given predicate.
      *  @param predicate The predicate to check.
      *  @return True if none of the properties in this list of properties match the given predicate.
      */
-<span class="fc" id="L524">    default boolean none( Predicate&lt;Val&lt;T&gt;&gt; predicate ) { return toValList().stream().noneMatch( predicate ); }</span>
+<span class="fc" id="L510">    default boolean none( Predicate&lt;Val&lt;T&gt;&gt; predicate ) { return toValList().stream().noneMatch( predicate ); }</span>
 
     /**
      *  Check if any of the properties in this list is empty.
      *  @return True if any of the properties in this list of properties is empty.
      */
-<span class="fc" id="L530">    default boolean anyEmpty() { return any( Val::isEmpty ); }</span>
+<span class="fc" id="L516">    default boolean anyEmpty() { return any( Val::isEmpty ); }</span>
 
     /**
      * A property list will only allow nullable properties if it was constructed with a &quot;ofNullable(..)&quot; factory method.

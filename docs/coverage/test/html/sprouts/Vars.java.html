@@ -373,10 +373,10 @@ public interface Vars&lt;T extends @Nullable Object&gt; extends Vals&lt;T&gt; {
      * @throws NoSuchElementException if the property is not found.
      */
     default Vars&lt;T&gt; removeOrThrow( Var&lt;T&gt; var ) {
-<span class="nc" id="L376">        int index = indexOf(var);</span>
-<span class="nc bnc" id="L377" title="All 2 branches missed.">        if ( index &lt; 0 )</span>
-<span class="nc" id="L378">            throw new NoSuchElementException(&quot;No such element: &quot; + var);</span>
-<span class="nc" id="L379">        return removeRange( index, index + 1 );</span>
+<span class="fc" id="L376">        int index = indexOf(var);</span>
+<span class="fc bfc" id="L377" title="All 2 branches covered.">        if ( index &lt; 0 )</span>
+<span class="fc" id="L378">            throw new NoSuchElementException(&quot;No such element: &quot; + var);</span>
+<span class="fc" id="L379">        return removeRange( index, index + 1 );</span>
     }
 
     /**

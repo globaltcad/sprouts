@@ -2,10 +2,8 @@
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
-import sprouts.impl.PropertyLens;
 import sprouts.impl.Sprouts;
 
-import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -91,7 +89,7 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
 	 * @return A new {@link Var} instance.
 	 */
 	static &lt;T&gt; Var&lt;@Nullable T&gt; ofNullable( Class&lt;T&gt; type, @Nullable T item ) {
-<span class="fc" id="L94">		return Sprouts.factory().varOfNullable( type, item );</span>
+<span class="fc" id="L92">		return Sprouts.factory().varOfNullable( type, item );</span>
 	}
 
 	/**
@@ -107,7 +105,7 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
 	 * @param &lt;T&gt; The type of the wrapped item.
 	 */
 	static &lt;T&gt; Var&lt;@Nullable T&gt; ofNull( Class&lt;T&gt; type ) {
-<span class="fc" id="L110">		return Sprouts.factory().varOfNull( type );</span>
+<span class="fc" id="L108">		return Sprouts.factory().varOfNull( type );</span>
 	}
 
 	/**
@@ -123,7 +121,7 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
 	 * @throws IllegalArgumentException If the given item is null.
 	 */
 	static &lt;T&gt; Var&lt;T&gt; of( T item ) {
-<span class="fc" id="L126">		return Sprouts.factory().varOf( item );</span>
+<span class="fc" id="L124">		return Sprouts.factory().varOf( item );</span>
 	}
 
 	/**
@@ -141,7 +139,7 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
 	 * @throws IllegalArgumentException If the given item is null.
 	 */
 	static &lt;T, V extends T&gt; Var&lt;T&gt; of( Class&lt;T&gt; type, V item ) {
-<span class="fc" id="L144">		return Sprouts.factory().varOf( type, item );</span>
+<span class="fc" id="L142">		return Sprouts.factory().varOf( type, item );</span>
 	}
 
 	/**
@@ -153,7 +151,7 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
 	 * @return This very wrapper instance, in order to enable method chaining.
 	 */
 	default Var&lt;T&gt; set( T newItem ) {
-<span class="fc" id="L156">		return this.set(DEFAULT_CHANNEL, newItem);</span>
+<span class="fc" id="L154">		return this.set(DEFAULT_CHANNEL, newItem);</span>
 	}
 
 	/**
@@ -205,11 +203,11 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
 	 * 			the mapping function to the item of this property.
 	 */
 	@Override default Var&lt;T&gt; map( Function&lt;T, T&gt; mapper ) {
-<span class="nc bnc" id="L208" title="All 2 branches missed.">		if ( !isPresent() )</span>
-<span class="nc" id="L209">			return Var.ofNull( type() );</span>
+<span class="nc bnc" id="L206" title="All 2 branches missed.">		if ( !isPresent() )</span>
+<span class="nc" id="L207">			return Var.ofNull( type() );</span>
 
-<span class="nc" id="L211">		T newValue = mapper.apply( get() );</span>
-<span class="nc bnc" id="L212" title="All 2 branches missed.">		return allowsNull() ? Var.ofNullable( type(), newValue ) : Var.of( newValue );</span>
+<span class="nc" id="L209">		T newValue = mapper.apply( get() );</span>
+<span class="nc bnc" id="L210" title="All 2 branches missed.">		return allowsNull() ? Var.ofNullable( type(), newValue ) : Var.of( newValue );</span>
 	}
 
 	/**
@@ -232,7 +230,9 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
 	 * 			the mapping function to the item of this property.
 	 * @param &lt;U&gt; The type of the item returned from the mapping function
 	 */
-	@Override &lt;U extends @Nullable Object&gt; Var&lt;@Nullable U&gt; mapTo( Class&lt;U&gt; type, Function&lt;@NonNull T, U&gt; mapper );
+	default @Override &lt;U extends @Nullable Object&gt; Var&lt;@Nullable U&gt; mapTo( Class&lt;U&gt; type, Function&lt;@NonNull T, U&gt; mapper ) {
+<span class="fc" id="L234">		return (Var&lt;U&gt;) Val.super.mapTo( type, mapper );</span>
+	}
 
 	/**
 	 * Creates a lens property (Var) that focuses on a specific field of the current data structure.
@@ -264,19 +264,7 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
 	 * @return A new Var that acts as a lens focusing on the specified field of the parent object.
 	 */
 	default &lt;B&gt; Var&lt;B&gt; zoomTo( Function&lt;T,B&gt; getter, BiFunction&lt;T,B,T&gt; wither ) {
-<span class="fc" id="L267">		B initialValue = getter.apply(this.orElseNull());</span>
-<span class="fc" id="L268">		Class&lt;B&gt; type = (Class&lt;B&gt;) initialValue.getClass();</span>
-<span class="fc" id="L269">		return new PropertyLens&lt;&gt;(</span>
-					false,
-					type,
-					Val.NO_ID,
-					false,//does not allow null
-					initialValue, //may NOT be null
-					this,
-					getter,
-					wither,
-					null
-				);
+<span class="fc" id="L267">		return Sprouts.factory().lensOf( this, getter, wither );</span>
 	}
 
 	/**
@@ -314,34 +302,7 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
 	 *         the null object when the parent object is null.
 	 */
 	default &lt;B&gt; Var&lt;B&gt; zoomTo( B nullObject, Function&lt;T,B&gt; getter, BiFunction&lt;T,B,T&gt; wither ) {
-<span class="fc" id="L317">		Objects.requireNonNull(nullObject, &quot;Null object must not be null&quot;);</span>
-<span class="fc" id="L318">		Objects.requireNonNull(getter, &quot;Getter must not be null&quot;);</span>
-<span class="fc" id="L319">		Objects.requireNonNull(wither, &quot;Wither must not be null&quot;);</span>
-<span class="fc" id="L320">		Class&lt;B&gt; type = (Class&lt;B&gt;) nullObject.getClass();</span>
-<span class="fc" id="L321">		Function&lt;T,B&gt; nullSafeGetter = newParentValue -&gt; {</span>
-<span class="fc bfc" id="L322" title="All 2 branches covered.">			if ( newParentValue == null )</span>
-<span class="fc" id="L323">				return nullObject;</span>
-
-<span class="fc" id="L325">			return getter.apply(newParentValue);</span>
-		};
-<span class="fc" id="L327">		BiFunction&lt;T,B,T&gt; nullSafeWither = (parentValue, newValue) -&gt; {</span>
-<span class="pc bpc" id="L328" title="1 of 2 branches missed.">			if ( parentValue == null )</span>
-<span class="nc" id="L329">				return null;</span>
-
-<span class="fc" id="L331">			return wither.apply(parentValue, newValue);</span>
-		};
-<span class="fc" id="L333">		B initialValue = nullSafeGetter.apply(this.orElseNull());</span>
-<span class="fc" id="L334">		return new PropertyLens&lt;&gt;(</span>
-					false,
-					type,
-					Val.NO_ID,
-					false,//does not allow null
-					initialValue, //may NOT be null
-					this,
-					nullSafeGetter,
-					nullSafeWither,
-					null
-				);
+<span class="fc" id="L305">		return Sprouts.factory().lensOf( this, nullObject, getter, wither );</span>
 	}
 
 	/**
@@ -371,33 +332,7 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
 	 * @return A new Var that acts as a lens focusing on the specified nullable field of the parent object.
 	 */
 	default &lt;B extends @Nullable Object&gt; Var&lt;B&gt; zoomToNullable( Class&lt;B&gt; type, Function&lt;T,B&gt; getter, BiFunction&lt;T,B,T&gt; wither ) {
-<span class="fc" id="L374">		Objects.requireNonNull(type, &quot;Type must not be null&quot;);</span>
-<span class="fc" id="L375">		Objects.requireNonNull(getter, &quot;Getter must not be null&quot;);</span>
-<span class="fc" id="L376">		Objects.requireNonNull(wither, &quot;Wither must not be null&quot;);</span>
-<span class="fc" id="L377">		Function&lt;T,B&gt; nullSafeGetter = newParentValue -&gt; {</span>
-<span class="fc bfc" id="L378" title="All 2 branches covered.">			if ( newParentValue == null )</span>
-<span class="fc" id="L379">				return null;</span>
-
-<span class="fc" id="L381">			return getter.apply(newParentValue);</span>
-		};
-<span class="fc" id="L383">		BiFunction&lt;T,B,T&gt; nullSafeWither = (parentValue, newValue) -&gt; {</span>
-<span class="pc bpc" id="L384" title="1 of 2 branches missed.">			if ( parentValue == null )</span>
-<span class="nc" id="L385">				return null;</span>
-
-<span class="fc" id="L387">			return wither.apply(parentValue, newValue);</span>
-		};
-<span class="fc" id="L389">		B initialValue = nullSafeGetter.apply(this.orElseNull());</span>
-<span class="fc" id="L390">		return new PropertyLens&lt;&gt;(</span>
-					false,
-					type,
-					Val.NO_ID,
-					true,//allows null
-					initialValue, //may be null
-					this,
-					nullSafeGetter,
-					nullSafeWither,
-					null
-				);
+<span class="fc" id="L335">		return Sprouts.factory().lensOfNullable(type, this, getter, wither);</span>
 	}
 
 }

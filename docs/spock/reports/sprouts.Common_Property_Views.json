@@ -4,7 +4,7 @@
   "narrative":"A property or property list is more than just a wrapper around values.\n    These interfaces have rich APIs that exposes a plethora of methods,\n    many of which are designed to inform you about\n    their contents without actually exposing them to you.\n\n    The relevant methods here are `Val::isEmpty`, `Val::isPresent` and `Vals::size`.\n    But these are not going to be conversed in this specification.\n    Instead we will focus on their \"views\", which can be created\n    through the `Val::viewIsEmpty`, `Val::viewIsPresent` and `Vals::viewSize` methods.\n\n    Each of these methods return a property which will always be \"up to date\"\n    with respect to the thing that is observed, and will be updated\n    automatically when the observed thing changes.",
   "subjects":["sprouts.Var","sprouts.Val","sprouts.Vars","sprouts.Vals"],
   "statistics":{
-    "runs":"7",
+    "runs":"12",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -166,6 +166,131 @@
         {"kind":"when","text":"We add the japanese word for \"cute\" to the property list.","code":["words.add(\"かわいい\")"]},
 
         {"kind":"then","text":"The view becomes true.","code":["isNotEmpty.get()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use `viewAsInt(int,Function)` to view a nullable property as a non null integer.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `viewAsInt(int,Function)` method creates and returns an integer based live property view\n            from a nullable property of any type that uses a default value to represent null and a function\n            to convert the non null value to an integer.\n            The view will be updated automatically\n            when the original property changes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A String property holding a japanese sentence.","code":["Var<String> sentence = Var.ofNullable(String, \"ブランコツリーはいいですね\")"]},
+
+        {"kind":"and","text":"A view on the length of the sentence with a unique default value.","code":["Val<Integer> length = sentence.viewAsInt(42,String::length)"]},
+
+        {"kind":"expect","text":"The view is 13 initially and it confirms that it is indeed a view.","code":["length.get() == 13","length.isView()"]},
+
+        {"kind":"when","text":"We change the value of the property to null.","code":["sentence.set(null)"]},
+
+        {"kind":"then","text":"The view becomes 42.","code":["length.get() == 42"]},
+
+        {"kind":"when","text":"We change the value of the property to an empty string.","code":["sentence.set(\"\")"]},
+
+        {"kind":"then","text":"The view becomes 0.","code":["length.get() == 0"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use `viewAsDouble(double,Function)` to view a nullable property as a non null double.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `viewAsDouble(double,Function)` method creates and returns a double based live property view\n            from a nullable property of any type that uses a default value to represent null and a function\n            to convert the non null value to a double.\n            The view will be updated automatically\n            when the original property changes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A String property holding an english sentence.","code":["Var<String> sentence = Var.ofNullable(String, \"SwingTree is nice, isn't it?\")"]},
+
+        {"kind":"and","text":"A view on the average word length of the sentence with a unique default value.","code":["Val<Double> averageWordLength = sentence.viewAsDouble(-0.5, s -> {","                                    if ( s == null )","                                        return null","                                    var words = s.split(\" \") as List<String>","                                    return words.stream().mapToInt(String::length).average().orElse(-1)","                                })"]},
+
+        {"kind":"expect","text":"The view is 4.0 initially and it confirms that it is indeed a view.","code":["averageWordLength.get() == 4.8","averageWordLength.isView()"]},
+
+        {"kind":"when","text":"We change the value of the property to null.","code":["sentence.set(null)"]},
+
+        {"kind":"then","text":"The view becomes -0.5.","code":["averageWordLength.get() == -0.5"]},
+
+        {"kind":"when","text":"We change the value of the property to an empty string.","code":["sentence.set(\"\")"]},
+
+        {"kind":"then","text":"The view contains 0.0 because the average of an empty list is 0.","code":["averageWordLength.get() == 0.0"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use the `viewAsString(String,Function)` method to view a nullable property as a non null String.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `viewAsString(String,Function)` method creates and returns a String based live property view\n            from a nullable property of any type that uses a default value to represent null and a function\n            to convert the non null value to a String.\n            The view will be updated automatically\n            when the original property changes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A property holding nullable `TimeUnit` enum items.","code":["Var<TimeUnit> timeUnit = Var.ofNullable(TimeUnit, TimeUnit.SECONDS)"]},
+
+        {"kind":"and","text":"A view on the lowercase name of the time unit with a unique default value.","code":["Val<String> lowerCaseName = timeUnit.viewAsString(\"unknown\", u -> u.name().toLowerCase())"]},
+
+        {"kind":"expect","text":"The view is \"seconds\" initially and it confirms that it is indeed a view.","code":["lowerCaseName.get() == \"seconds\"","lowerCaseName.isView()"]},
+
+        {"kind":"when","text":"We change the value of the property to null.","code":["timeUnit.set(null)"]},
+
+        {"kind":"then","text":"The view becomes \"unknown\" because the property is empty.","code":["lowerCaseName.get() == \"unknown\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Properties can be garbage collected, even if they are observed by a composite view.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            If you create a composite property of two other properties,\n            then these two properties may be garbage collected if they are not used anymore\n            even if you still hold onto the composite property.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two properties we will dereference later.","code":["Var<DayOfWeek> day = Var.of(DayOfWeek.MONDAY)","Var<String> name = Var.of(\"John\")"]},
+
+        {"kind":"and","text":"A composite property that observes the two properties.","code":["Val<String> composite = Val.viewOf(name, day, (n,d) -> n + \" \" + d.name().toLowerCase())"]},
+
+        {"kind":"expect","text":"The composite property is \"John monday\" initially.","code":["composite.get() == \"John monday\""]},
+
+        {"kind":"when","text":"We wrap the two properties in `WeakReference` objects.","code":["def dayRef = new WeakReference(day)","def nameRef = new WeakReference(name)"]},
+
+        {"kind":"and","text":"We dereference the strong references to the two properties.","code":["day = null","name = null"]},
+
+        {"kind":"and","text":"We wait for the garbage collector to do its job.","code":["waitForGarbageCollection()"]},
+
+        {"kind":"then","text":"The composite property is still \"John monday\".","code":["composite.get() == \"John monday\""]},
+
+        {"kind":"and","text":"The two properties are gone.","code":["dayRef.get() == null","nameRef.get() == null"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Properties can be garbage collected, even if they are observed by a nullable composite view.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            If you create a nullable composite property of two other properties,\n            then these two properties may be garbage collected if they are not used anymore\n            even if you still hold onto the composite property.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two properties we will dereference later.","code":["Var<Month> month = Var.of(Month.JANUARY)","Var<String> name = Var.of(\"Linda\")"]},
+
+        {"kind":"and","text":"A nullable composite property that observes the two properties.","code":["Val<String> composite = Val.viewOfNullable(name, month, (n,m) -> n + \" \" + m.name().toLowerCase())"]},
+
+        {"kind":"expect","text":"The composite property is \"Linda january\" initially.","code":["composite.get() == \"Linda january\""]},
+
+        {"kind":"when","text":"We wrap the two properties in `WeakReference` objects.","code":["def monthRef = new WeakReference(month)","def nameRef = new WeakReference(name)"]},
+
+        {"kind":"and","text":"We dereference the strong references to the two properties.","code":["month = null","name = null"]},
+
+        {"kind":"and","text":"We wait for the garbage collector to do its job.","code":["waitForGarbageCollection()"]},
+
+        {"kind":"then","text":"The composite property is still \"Linda january\".","code":["composite.get() == \"Linda january\""]},
+
+        {"kind":"and","text":"The two properties are gone.","code":["monthRef.get() == null","nameRef.get() == null"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }

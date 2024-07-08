@@ -4,7 +4,7 @@
   "narrative":"The `Result` interface is used to represent the optional result of an operation\n    as well as a list of problems that occurred during the operation.\n\n    It is a sub type of the `Val` property and as such can be used to represent a value\n    that is immutable and can be observed for changes.\n\n    The default result implementation indirectly exposed by its factory methods\n    is immutable and thread safe, effectively making it a monadic value\n    similar to the `Optional` type in Java 8.",
   "subjects":["sprouts.Result","sprouts.Val","sprouts.Problem"],
   "statistics":{
-    "runs":"11",
+    "runs":"14",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -95,7 +95,7 @@
 
         {"kind":"expect","text":"The result has a type.","code":["result.type() == Integer"]},
 
-        {"kind":"and","text":"The result has an id.","code":["result.id() == \"Result\""]}
+        {"kind":"and","text":"The result has an empty id.","code":["result.id().isEmpty()"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -218,6 +218,55 @@
         {"kind":"then","text":"An exception is thrown, which means the result has a problem.","code":["result2.problems().size() == 1"]},
 
         {"kind":"and","text":"The problem is an exception problem.","code":["result2.problems().first().exception().get().message == \"foo\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You can recognize a `Result` by its String representation.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A `Result` instance has a specific string representation that \n            tells you both the type of the result and the current item of the result.\n            The string representation of starts with \"Result\" followed by the type of the result\n            and the item of the result.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A result object holding a common enum value.","code":["def result = Result.of(DayOfWeek.MONDAY)"]},
+
+        {"kind":"expect","text":"The string representation of the result.","code":["result.toString() == \"Result<DayOfWeek>[MONDAY]\""]},
+
+        {"kind":"when","text":"We update the result with a String id.","code":["result = result.withId(\"foo\")"]},
+
+        {"kind":"then","text":"The string representation of the result reflects the id.","code":["result.toString() == \"Result<DayOfWeek>[foo=MONDAY]\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The equality of two `Result` instances is based on the type and the item of the result.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `Result` type is a value centric type which means that\n            the equality of two `Result` instances is based on the item of the result\n            and its type.\n        "]
+      },
+      "blocks":[
+        {"kind":"expect","text":"The following results are equal and they have the same hash code.","code":["Result.of(42) == Result.of(42)","Result.of(42).hashCode() == Result.of(42).hashCode()","Result.of(Integer) == Result.of(Integer)","Result.of(Integer).hashCode() == Result.of(Integer).hashCode()"]},
+
+        {"kind":"and","text":"The following results are not equal and they have different hash codes.","code":["Result.of(42) != Result.of(43).withId(\"foo\")","Result.of(42).hashCode() != Result.of(43).withId(\"foo\").hashCode()","Result.of(Integer) != Result.of(String)","Result.of(Integer).hashCode() != Result.of(String).hashCode()","Result.of(Integer) != Result.of(Integer).withId(\"foo\")","Result.of(Integer).hashCode() != Result.of(Integer).withId(\"foo\").hashCode()","Result.of(42) != Result.of(Integer)","Result.of(42).hashCode() != Result.of(Integer).hashCode()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A `Result` tells us that it is immutable.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A `Result` is an immutable value type which means that\n            once created, it cannot be changed.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A result.","code":["def result = Result.of(42)"]},
+
+        {"kind":"expect","text":"The `isMutable()` method returns false.","code":["!result.isMutable()"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }

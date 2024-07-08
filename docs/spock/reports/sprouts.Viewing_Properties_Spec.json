@@ -4,7 +4,7 @@
   "narrative":"Both the read only `Val` and the mutable `Var` are observable properties.\n    As a consequence, they expose convenient methods to observe their changes\n    in the form of \"views\", which are themselves observable properties\n    that are a live view of the original property which gets updated\n    automatically when the original property changes.\n\n    This is especially useful when you want to observe a property\n    of one type as a property of another type, or when you want to\n    observe a property with some transformation applied to it.\n\n    This specification shows how to create views from both nullable and non-nullable properties,",
   "subjects":["sprouts.Val","sprouts.Val"],
   "statistics":{
-    "runs":"10",
+    "runs":"13",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -243,6 +243,95 @@
         {"kind":"and","text":"We wait for the garbage collector to run.","code":["waitForGarbageCollection()","Thread.sleep(500)"]},
 
         {"kind":"then","text":"The enum property still has 2 change listeners registered.","code":["timeUnitProperty.numberOfChangeListeners() == 4"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You can recognize a property view from its String representation.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A property view has a specific string representation that can be used to recognize it.\n            The string representation of a property view starts with \"View\" followed by the item\n            type and square brackets\n            containing the current item of the view.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A property based on a string.","code":["var stringProperty = Var.of(\"Hello\")"]},
+
+        {"kind":"and","text":"A view of the property as a byte representation of the length of the string.","code":["Val<Byte> view = stringProperty.viewAs(Byte, s -> (byte) s.length())"]},
+
+        {"kind":"expect","text":"The string representation of the view is as expected.","code":["view.toString() == \"View<Byte>[5]\""]},
+
+        {"kind":"when","text":"We update the view to have a custom id String.","code":["view = view.withId(\"patient_age\")"]},
+
+        {"kind":"then","text":"The string representation of the view is as expected.","code":["view.toString() == \"View<Byte>[patient_age=5]\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You can subscribe and unsubscribe observer lambdas on property views.()",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A property is like a publisher that can have multiple observers.\n            In this test we create a property view and a change observer that listens to changes on the view\n            and is then unsubscribed, which should prevent further notifications.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A property based on an enum.","code":["var weekDay = Var.of(DayOfWeek.FRIDAY)"]},
+
+        {"kind":"and","text":"A view of the property as a String.","code":["Val<String> view = weekDay.viewAsString(DayOfWeek::name)"]},
+
+        {"kind":"and","text":"A trace list and a change listener that listens to changes on the view.","code":["var trace = []","Observer observer = { trace << view.get() }"]},
+
+        {"kind":"expect","text":"The trace list is empty.","code":["trace.isEmpty()"]},
+
+        {"kind":"when","text":"We subscribe the listener to the view.","code":["view.subscribe(observer)"]},
+
+        {"kind":"then","text":"The listener is not immediately notified!","code":["trace.isEmpty()"]},
+
+        {"kind":"when","text":"We change the value of the property 2 times.","code":["weekDay.set(DayOfWeek.SATURDAY)","weekDay.set(DayOfWeek.WEDNESDAY)"]},
+
+        {"kind":"then","text":"The listener is notified of the new value of the view.","code":["trace == [\"SATURDAY\", \"WEDNESDAY\"]"]},
+
+        {"kind":"when","text":"We unsubscribe the listener from the view.","code":["view.unsubscribe(observer)"]},
+
+        {"kind":"and","text":"We change the value of the property.","code":["weekDay.set(DayOfWeek.MONDAY)"]},
+
+        {"kind":"then","text":"The listener is not notified of the new value of the view.","code":["trace == [\"SATURDAY\", \"WEDNESDAY\"]"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You can subscribe and unsubscribe action lambdas on property views.()",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A property is like a publisher that can have multiple action listeners.\n            In this test we create a property view and an action listener that listens to changes on the view\n            and is then unsubscribed, which should prevent further notifications.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A property based on an enum.","code":["var monthProperty = Var.of(Month.AUGUST)"]},
+
+        {"kind":"and","text":"A view of the property as a String.","code":["Val<String> view = monthProperty.viewAsString(Month::name)"]},
+
+        {"kind":"and","text":"A trace list and a change listener that listens to changes on the view.","code":["var trace = []","Action<Val<String>> action = { trace << it.get() }"]},
+
+        {"kind":"expect","text":"The trace list is empty and there are no change listeners registered.","code":["trace.isEmpty()","view.numberOfChangeListeners() == 0"]},
+
+        {"kind":"when","text":"We subscribe the listener to the view.","code":["view.onChange(From.ALL, action)"]},
+
+        {"kind":"then","text":"The listener is not immediately notified, but there is one change listener registered.","code":["trace.isEmpty()","view.numberOfChangeListeners() == 1"]},
+
+        {"kind":"when","text":"We change the value of the property 2 times.","code":["monthProperty.set(Month.SEPTEMBER)","monthProperty.set(Month.NOVEMBER)"]},
+
+        {"kind":"then","text":"The listener is notified of the new value of the view.","code":["trace == [\"SEPTEMBER\", \"NOVEMBER\"]"]},
+
+        {"kind":"when","text":"We unsubscribe the listener from the view.","code":["view.unsubscribe(action)"]},
+
+        {"kind":"and","text":"We change the value of the property.","code":["monthProperty.set(Month.FEBRUARY)"]},
+
+        {"kind":"then","text":"The listener is not notified of the new value of the view.","code":["trace == [\"SEPTEMBER\", \"NOVEMBER\"]"]},
+
+        {"kind":"and","text":"There are no change listeners registered.","code":["view.numberOfChangeListeners() == 0"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }

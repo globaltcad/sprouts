@@ -1,0 +1,575 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PropertyList.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sprouts</a> &gt; <a href="index.source.html" class="el_package">sprouts.impl</a> &gt; <span class="el_source">PropertyList.java</span></div><h1>PropertyList.java</h1><pre class="source lang-java linenums">package sprouts.impl;
+
+import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import sprouts.*;
+import sprouts.Observable;
+import sprouts.Observer;
+
+import java.util.*;
+import java.util.stream.Collectors;
+
+/**
+ *  A base class for {@link Vars} implementations, a property list
+ *  with support for registering change listeners.
+ */
+final class PropertyList&lt;T extends @Nullable Object&gt; implements Vars&lt;T&gt; {
+<span class="fc" id="L17">    private static final Logger log = org.slf4j.LoggerFactory.getLogger(PropertyList.class);</span>
+
+    public static &lt;T&gt; Vars&lt;T&gt; of( boolean immutable, Class&lt;T&gt; type ) {
+<span class="fc" id="L20">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L21">        return new PropertyList&lt;T&gt;( immutable, type, false );</span>
+    }
+
+    @SafeVarargs
+    public static &lt;T&gt; Vars&lt;T&gt; of( boolean immutable, Class&lt;T&gt; type, Var&lt;T&gt;... vars ) {
+<span class="fc" id="L26">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L27">        Objects.requireNonNull(vars);</span>
+<span class="fc" id="L28">        return new PropertyList&lt;T&gt;( immutable, type, false, vars );</span>
+    }
+
+    @SafeVarargs
+    public static &lt;T&gt; Vars&lt;T&gt; of( boolean immutable, Class&lt;T&gt; type, T... vars ) {
+<span class="fc" id="L33">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L34">        Objects.requireNonNull(vars);</span>
+<span class="fc" id="L35">        Var&lt;T&gt;[] array = new Var[vars.length];</span>
+<span class="fc bfc" id="L36" title="All 2 branches covered.">        for ( int i = 0; i &lt; vars.length; i++ )</span>
+<span class="fc" id="L37">            array[i] = Property.of( immutable, vars[i] );</span>
+<span class="fc" id="L38">        return new PropertyList&lt;T&gt;( immutable, type, false, array );</span>
+    }
+
+    @SafeVarargs
+    public static &lt;T&gt; Vars&lt;T&gt; of( boolean immutable, Var&lt;T&gt; first, Var&lt;T&gt;... rest ) {
+<span class="fc" id="L43">        Objects.requireNonNull(first);</span>
+<span class="fc" id="L44">        Objects.requireNonNull(rest);</span>
+<span class="fc" id="L45">        Var&lt;T&gt;[] vars = new Var[rest.length+1];</span>
+<span class="fc" id="L46">        vars[0] = first;</span>
+<span class="fc" id="L47">        System.arraycopy(rest, 0, vars, 1, rest.length);</span>
+<span class="fc" id="L48">        return of(immutable, first.type(), vars);</span>
+    }
+
+    @SafeVarargs
+    public static &lt;T&gt; Vars&lt;T&gt; of( boolean immutable, T first, T... rest ) {
+<span class="fc" id="L53">        Objects.requireNonNull(first);</span>
+<span class="fc" id="L54">        Objects.requireNonNull(rest);</span>
+<span class="fc" id="L55">        Var&lt;T&gt;[] vars = new Var[rest.length+1];</span>
+<span class="fc" id="L56">        vars[0] = Property.of( immutable, first );</span>
+<span class="fc bfc" id="L57" title="All 2 branches covered.">        for ( int i = 0; i &lt; rest.length; i++ )</span>
+<span class="fc" id="L58">            vars[ i + 1 ] = Property.of( immutable, rest[ i ] );</span>
+<span class="fc" id="L59">        return of(immutable, vars[0].type(), vars);</span>
+    }
+
+    public static &lt;T&gt; Vars&lt;T&gt; of( boolean immutable, Class&lt;T&gt; type, Iterable&lt;Var&lt;T&gt;&gt; vars ) {
+<span class="fc" id="L63">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L64">        Objects.requireNonNull(vars);</span>
+<span class="fc" id="L65">        List&lt;Var&lt;T&gt;&gt; list = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L66">        vars.forEach( list::add );</span>
+<span class="fc" id="L67">        Var&lt;T&gt;[] array = new Var[list.size()];</span>
+<span class="fc" id="L68">        return new PropertyList&lt;T&gt;( immutable, type, false, list.toArray(array) );</span>
+    }
+
+    public static &lt;T&gt; Vars&lt;T&gt; ofNullable( boolean immutable, Class&lt;T&gt; type ){
+<span class="fc" id="L72">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L73">        return new PropertyList&lt;T&gt;( immutable, type, true, new Var[0] );</span>
+    }
+
+    @SafeVarargs
+    public static &lt;T&gt; Vars&lt;T&gt; ofNullable( boolean immutable, Class&lt;T&gt; type, Var&lt;T&gt;... vars ) {
+<span class="fc" id="L78">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L79">        Objects.requireNonNull(vars);</span>
+<span class="fc" id="L80">        return new PropertyList&lt;T&gt;( immutable, type, true, vars );</span>
+    }
+
+    @SafeVarargs
+    public static &lt;T&gt; Vars&lt;@Nullable T&gt; ofNullable( boolean immutable, Class&lt;T&gt; type, @Nullable T... vars ) {
+<span class="fc" id="L85">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L86">        Objects.requireNonNull(vars);</span>
+<span class="fc" id="L87">        Var&lt;T&gt;[] array = new Var[vars.length];</span>
+<span class="fc bfc" id="L88" title="All 2 branches covered.">        for ( int i = 0; i &lt; vars.length; i++ )</span>
+<span class="fc" id="L89">            array[i] = Property.ofNullable( immutable, type, vars[i]);</span>
+<span class="fc" id="L90">        return new PropertyList&lt;T&gt;( immutable, type, true, array );</span>
+    }
+
+    @SafeVarargs
+    public static &lt;T&gt; Vars&lt;T&gt; ofNullable( boolean immutable, Var&lt;T&gt; first, Var&lt;T&gt;... vars ) {
+<span class="fc" id="L95">        Objects.requireNonNull(first);</span>
+<span class="fc" id="L96">        Objects.requireNonNull(vars);</span>
+<span class="fc" id="L97">        Var&lt;T&gt;[] array = new Var[vars.length+1];</span>
+<span class="fc" id="L98">        array[0] = first;</span>
+<span class="fc" id="L99">        System.arraycopy(vars, 0, array, 1, vars.length);</span>
+<span class="fc" id="L100">        return ofNullable(immutable, first.type(), array);</span>
+    }
+
+
+<span class="fc" id="L104">    private final List&lt;Var&lt;T&gt;&gt; _variables = new ArrayList&lt;&gt;();</span>
+    private final boolean _isImmutable;
+    private final boolean _allowsNull;
+    private final Class&lt;T&gt; _type;
+
+<span class="fc" id="L109">    private final List&lt;Action&lt;ValsDelegate&lt;T&gt;&gt;&gt; _viewActions = new ArrayList&lt;&gt;();</span>
+
+
+    @SafeVarargs
+<span class="fc" id="L113">    private PropertyList(boolean isImmutable, Class&lt;T&gt; type, boolean allowsNull, Var&lt;T&gt;... vals) {</span>
+<span class="fc" id="L114">        _isImmutable = isImmutable;</span>
+<span class="fc" id="L115">        _type        = type;</span>
+<span class="fc" id="L116">        _allowsNull  = allowsNull;</span>
+<span class="fc" id="L117">        _variables.addAll(Arrays.asList(vals));</span>
+<span class="fc" id="L118">        _checkNullSafety();</span>
+<span class="fc" id="L119">    }</span>
+
+    /** {@inheritDoc} */
+<span class="fc" id="L122">    @Override public final Var&lt;T&gt; at( int index ) { return _variables.get(index); }</span>
+
+    /** {@inheritDoc} */
+<span class="fc" id="L125">    @Override public final Class&lt;T&gt; type() { return _type; }</span>
+
+    /** {@inheritDoc} */
+<span class="fc" id="L128">    @Override public final int size() { return _variables.size(); }</span>
+
+    /** {@inheritDoc} */
+    @Override public Vars&lt;T&gt; removeAll( Vals&lt;T&gt; properties ) {
+<span class="pc bpc" id="L132" title="1 of 2 branches missed.">        if ( _isImmutable )</span>
+<span class="nc" id="L133">            throw new UnsupportedOperationException(&quot;This is an immutable list.&quot;);</span>
+
+<span class="fc bfc" id="L135" title="All 2 branches covered.">        Vars&lt;T&gt; removal = _allowsNull ? Vars.ofNullable(_type) : Vars.of(_type);</span>
+
+<span class="fc bfc" id="L137" title="All 2 branches covered.">        if ( properties.isMutable() ) {</span>
+<span class="fc bfc" id="L138" title="All 2 branches covered.">            for ( int i = size() - 1; i &gt;= 0; i-- )</span>
+<span class="fc bfc" id="L139" title="All 2 branches covered.">                if ( properties.contains(this.at(i)) )</span>
+<span class="fc" id="L140">                    removal.add( _variables.remove(i) );</span>
+        } else {
+<span class="fc bfc" id="L142" title="All 2 branches covered.">            for ( int i = size() - 1; i &gt;= 0; i-- )</span>
+<span class="fc bfc" id="L143" title="All 2 branches covered.">                if ( properties.contains(this.at(i).orElseNull()) )</span>
+<span class="fc" id="L144">                    removal.add( _variables.remove(i) );</span>
+        }
+
+<span class="fc" id="L147">        _triggerAction( Change.REMOVE, -1, null, removal.revert() );</span>
+<span class="fc" id="L148">        return this;</span>
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Vars&lt;T&gt; addAt( int index, Var&lt;T&gt; value ) {
+<span class="fc bfc" id="L154" title="All 2 branches covered.">        if ( _isImmutable )</span>
+<span class="fc" id="L155">            throw new UnsupportedOperationException(&quot;This is an immutable list.&quot;);</span>
+<span class="fc bfc" id="L156" title="All 2 branches covered.">        if ( this.allowsNull() != value.allowsNull() )</span>
+<span class="fc" id="L157">            throw new IllegalArgumentException(&quot;The null safety of the given property does not match this list.&quot;);</span>
+<span class="fc" id="L158">        _checkNullSafetyOf(value);</span>
+<span class="fc" id="L159">        _variables.add(index, value);</span>
+<span class="fc" id="L160">        _triggerAction( Change.ADD, index, value, null );</span>
+<span class="fc" id="L161">        return this;</span>
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Vars&lt;T&gt; popRange(int from, int to) {
+<span class="pc bpc" id="L167" title="1 of 2 branches missed.">        if ( _isImmutable ) throw new UnsupportedOperationException(&quot;This is an immutable list.&quot;);</span>
+<span class="pc bpc" id="L168" title="3 of 6 branches missed.">        if ( from &lt; 0 || to &gt; _variables.size() || from &gt; to )</span>
+<span class="nc" id="L169">            throw new IndexOutOfBoundsException(&quot;From: &quot; + from + &quot;, To: &quot; + to + &quot;, Size: &quot; + _variables.size());</span>
+
+<span class="pc bpc" id="L171" title="1 of 2 branches missed.">        Vars&lt;T&gt; vars = (Vars&lt;T&gt;) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));</span>
+
+<span class="pc bpc" id="L173" title="1 of 2 branches missed.">        if (from == to)</span>
+<span class="nc" id="L174">            return vars;</span>
+
+<span class="fc" id="L176">        List&lt;Var&lt;T&gt;&gt; subList = _variables.subList( from, to );</span>
+<span class="fc bfc" id="L177" title="All 2 branches covered.">        for ( Var&lt;T&gt; var : subList ) vars.add(var);</span>
+<span class="fc" id="L178">        subList.clear();</span>
+
+<span class="fc" id="L180">        _triggerAction( Change.REMOVE, from, null, vars );</span>
+
+<span class="fc" id="L182">        return vars;</span>
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Vars&lt;T&gt; removeRange(int from, int to) {
+<span class="fc bfc" id="L188" title="All 2 branches covered.">        if ( _isImmutable ) throw new UnsupportedOperationException(&quot;This is an immutable list.&quot;);</span>
+<span class="pc bpc" id="L189" title="3 of 6 branches missed.">        if ( from &lt; 0 || to &gt; _variables.size() || from &gt; to )</span>
+<span class="nc" id="L190">            throw new IndexOutOfBoundsException(&quot;From: &quot; + from + &quot;, To: &quot; + to + &quot;, Size: &quot; + _variables.size());</span>
+
+<span class="pc bpc" id="L192" title="1 of 2 branches missed.">        if (from == to)</span>
+<span class="nc" id="L193">            return this;</span>
+
+<span class="fc bfc" id="L195" title="All 2 branches covered.">        Vars&lt;T&gt; removal = (Vars&lt;T&gt;) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));</span>
+
+<span class="fc" id="L197">        List&lt;Var&lt;T&gt;&gt; subList = _variables.subList( from, to );</span>
+<span class="fc bfc" id="L198" title="All 2 branches covered.">        for ( Var&lt;T&gt; var : subList ) removal.add(var);</span>
+<span class="fc" id="L199">        subList.clear();</span>
+
+<span class="fc" id="L201">        _triggerAction( Change.REMOVE, from, null, removal );</span>
+
+<span class="fc" id="L203">        return this;</span>
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Vars&lt;T&gt; setAt( int index, Var&lt;T&gt; value ) {
+<span class="pc bpc" id="L209" title="1 of 2 branches missed.">        if ( _isImmutable ) throw new UnsupportedOperationException(&quot;This is an immutable list.&quot;);</span>
+<span class="pc bpc" id="L210" title="2 of 4 branches missed.">        if ( index &lt; 0 || index &gt;= _variables.size() )</span>
+<span class="nc" id="L211">            throw new IndexOutOfBoundsException(&quot;Index: &quot; + index + &quot;, Size: &quot; + _variables.size());</span>
+
+<span class="fc" id="L213">        _checkNullSafetyOf(value);</span>
+
+<span class="fc" id="L215">        Var&lt;T&gt; old = _variables.get(index);</span>
+
+<span class="pc bpc" id="L217" title="1 of 2 branches missed.">        if ( !old.equals(value) ) {</span>
+<span class="fc" id="L218">            _variables.set(index, value);</span>
+<span class="fc" id="L219">            _triggerAction(Change.SET, index, value, old);</span>
+        }
+<span class="fc" id="L221">        return this;</span>
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Vars&lt;T&gt; setRange(int from, int to, T value) {
+<span class="pc bpc" id="L227" title="1 of 2 branches missed.">        if (_isImmutable) throw new UnsupportedOperationException(&quot;This is an immutable list.&quot;);</span>
+<span class="pc bpc" id="L228" title="3 of 6 branches missed.">        if (from &lt; 0 || to &gt; _variables.size() || from &gt; to)</span>
+<span class="nc" id="L229">            throw new IndexOutOfBoundsException(&quot;From: &quot; + from + &quot;, To: &quot; + to + &quot;, Size: &quot; + _variables.size());</span>
+
+<span class="fc bfc" id="L231" title="All 2 branches covered.">        if (!_allowsNull)</span>
+<span class="fc" id="L232">            Objects.requireNonNull(value);</span>
+
+<span class="pc bpc" id="L234" title="1 of 2 branches missed.">        if (from == to)</span>
+<span class="nc" id="L235">            return this;</span>
+
+<span class="fc bfc" id="L237" title="All 2 branches covered.">        Vars&lt;T&gt; oldVars = (Vars&lt;T&gt;) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));</span>
+<span class="fc bfc" id="L238" title="All 2 branches covered.">        Vars&lt;T&gt; newVars = (Vars&lt;T&gt;) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));</span>
+
+<span class="fc bfc" id="L240" title="All 2 branches covered.">        for (int i = from; i &lt; to; i++) {</span>
+<span class="fc bfc" id="L241" title="All 2 branches covered.">            Var&lt;T&gt; n = _allowsNull ? Var.ofNullable(_type, value) : Var.of(value);</span>
+<span class="fc" id="L242">            Var&lt;T&gt; o = _variables.set(i, n);</span>
+<span class="fc" id="L243">            newVars.add(n);</span>
+<span class="fc" id="L244">            oldVars.add(o);</span>
+        }
+
+<span class="fc" id="L247">        _triggerAction(Change.SET, from, newVars, oldVars);</span>
+
+<span class="fc" id="L249">        return this;</span>
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Vars&lt;T&gt; setRange(int from, int to, Var&lt;T&gt; value) {
+<span class="pc bpc" id="L255" title="1 of 2 branches missed.">        if (_isImmutable) throw new UnsupportedOperationException(&quot;This is an immutable list.&quot;);</span>
+<span class="pc bpc" id="L256" title="3 of 6 branches missed.">        if (from &lt; 0 || to &gt; _variables.size() || from &gt; to)</span>
+<span class="nc" id="L257">            throw new IndexOutOfBoundsException(&quot;From: &quot; + from + &quot;, To: &quot; + to + &quot;, Size: &quot; + _variables.size());</span>
+
+<span class="fc" id="L259">        _checkNullSafetyOf(value);</span>
+
+<span class="pc bpc" id="L261" title="1 of 2 branches missed.">        if (from == to)</span>
+<span class="nc" id="L262">            return (Vars&lt;T&gt;) this;</span>
+
+<span class="fc bfc" id="L264" title="All 2 branches covered.">        Vars&lt;T&gt; oldVars = (Vars&lt;T&gt;) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));</span>
+<span class="fc bfc" id="L265" title="All 2 branches covered.">        Vars&lt;T&gt; newVars = (Vars&lt;T&gt;) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));</span>
+
+<span class="fc bfc" id="L267" title="All 2 branches covered.">        for (int i = from; i &lt; to; i++) {</span>
+<span class="fc" id="L268">            Var&lt;T&gt; o = _variables.set(i, value);</span>
+<span class="fc" id="L269">            newVars.add(value);</span>
+<span class="fc" id="L270">            oldVars.add(o);</span>
+        }
+
+<span class="fc" id="L273">        _triggerAction(Change.SET, from, newVars, oldVars);</span>
+
+<span class="fc" id="L275">        return this;</span>
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Vars&lt;T&gt; addAll( Vals&lt;T&gt; vals ) {
+<span class="pc bpc" id="L281" title="1 of 2 branches missed.">        if ( _isImmutable )</span>
+<span class="nc" id="L282">            throw new UnsupportedOperationException(&quot;This is an immutable list.&quot;);</span>
+
+<span class="pc bpc" id="L284" title="1 of 2 branches missed.">        if ( vals.allowsNull() != this.allowsNull() )</span>
+<span class="nc" id="L285">            throw new IllegalArgumentException(&quot;The null safety of the given list does not match this list.&quot;);</span>
+
+<span class="pc bpc" id="L287" title="1 of 2 branches missed.">        if (vals.isEmpty())</span>
+<span class="nc" id="L288">            return this;</span>
+
+<span class="fc bfc" id="L290" title="All 2 branches covered.">        for ( int i = 0; i &lt; vals.size(); i++ ) {</span>
+<span class="fc" id="L291">            Val&lt;T&gt; val = vals.at(i);</span>
+<span class="fc" id="L292">            _checkNullSafetyOf(val);</span>
+
+<span class="pc bpc" id="L294" title="1 of 2 branches missed.">            if ( val instanceof Var ) {</span>
+<span class="pc bpc" id="L295" title="1 of 2 branches missed.">                if ( !val.isMutable() ) {</span>
+<span class="nc" id="L296">                    _variables.add(Var.of(val.get()));</span>
+                } else {
+<span class="fc" id="L298">                    _variables.add((Var&lt;T&gt;) val);</span>
+                }
+            }
+            else
+<span class="nc" id="L302">                _variables.add(Var.of(val.get()));</span>
+        }
+
+<span class="fc" id="L305">        _triggerAction( Change.ADD, size() - vals.size(), vals, null);</span>
+<span class="fc" id="L306">        return this;</span>
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Vars&lt;T&gt; retainAll( Vals&lt;T&gt; vars ) {
+<span class="pc bpc" id="L312" title="1 of 2 branches missed.">        if ( _isImmutable )</span>
+<span class="nc" id="L313">            throw new UnsupportedOperationException(&quot;This is an immutable list.&quot;);</span>
+
+<span class="fc bfc" id="L315" title="All 2 branches covered.">        Vars&lt;T&gt; old = _allowsNull ? Vars.ofNullable(_type) : Vars.of(_type);</span>
+
+<span class="fc bfc" id="L317" title="All 2 branches covered.">        if ( vars.isMutable() ) {</span>
+<span class="fc bfc" id="L318" title="All 2 branches covered.">            for (Iterator&lt;Var&lt;T&gt;&gt; it = _variables.iterator(); it.hasNext();) {</span>
+<span class="fc" id="L319">                Var&lt;T&gt; var = it.next();</span>
+<span class="pc bpc" id="L320" title="1 of 2 branches missed.">                if (!vars.contains(var)) {</span>
+<span class="fc" id="L321">                    old.add(var);</span>
+<span class="fc" id="L322">                    it.remove();</span>
+                }
+<span class="fc" id="L324">            }</span>
+        } else {
+<span class="fc bfc" id="L326" title="All 2 branches covered.">            for (Iterator&lt;Var&lt;T&gt;&gt; it = _variables.iterator(); it.hasNext();) {</span>
+<span class="fc" id="L327">                Var&lt;T&gt; var = it.next();</span>
+<span class="fc bfc" id="L328" title="All 2 branches covered.">                if (!vars.contains(var.orElseNull())) {</span>
+<span class="fc" id="L329">                    old.add(var);</span>
+<span class="fc" id="L330">                    it.remove();</span>
+                }
+<span class="fc" id="L332">            }</span>
+        }
+
+<span class="fc bfc" id="L335" title="All 2 branches covered.">        if ( !old.isEmpty() )</span>
+<span class="fc" id="L336">            _triggerAction( Change.REMOVE, -1, null, old );</span>
+
+<span class="fc" id="L338">        return this;</span>
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Vars&lt;T&gt; clear() {
+<span class="fc bfc" id="L344" title="All 2 branches covered.">        if ( _isImmutable ) throw new UnsupportedOperationException(&quot;This is an immutable list.&quot;);</span>
+
+<span class="fc bfc" id="L346" title="All 2 branches covered.">        Vars&lt;T&gt; vars = (Vars&lt;T&gt;) (_allowsNull ? Vars.ofNullable(_type, _variables) : Vars.of(_type, _variables));</span>
+
+<span class="fc" id="L348">        _variables.clear();</span>
+<span class="fc" id="L349">        _triggerAction( Change.CLEAR, 0, null, vars);</span>
+<span class="fc" id="L350">        return this;</span>
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public void sort( Comparator&lt;T&gt; comparator ) {
+<span class="fc bfc" id="L356" title="All 2 branches covered.">        if ( _isImmutable ) throw new UnsupportedOperationException(&quot;This is an immutable list.&quot;);</span>
+<span class="fc" id="L357">        _variables.sort( ( a, b ) -&gt; comparator.compare( a.orElseNull(), b.orElseNull() ) );</span>
+<span class="fc" id="L358">        _triggerAction( Change.SORT );</span>
+<span class="fc" id="L359">    }</span>
+
+    /** {@inheritDoc} */
+    @Override
+    public final void makeDistinct() {
+<span class="pc bpc" id="L364" title="1 of 2 branches missed.">        if ( _isImmutable ) throw new UnsupportedOperationException(&quot;This is an immutable list.&quot;);</span>
+<span class="fc" id="L365">        Set&lt;T&gt; checked = new HashSet&lt;&gt;();</span>
+<span class="fc" id="L366">        List&lt;Var&lt;T&gt;&gt; retained = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L367" title="All 2 branches covered.">        for ( Var&lt;T&gt; property : _variables ) {</span>
+<span class="fc" id="L368">            T item = property.orElseNull();</span>
+<span class="fc bfc" id="L369" title="All 2 branches covered.">            if ( !checked.contains(item) ) {</span>
+<span class="fc" id="L370">                checked.add(item);</span>
+<span class="fc" id="L371">                retained.add(property);</span>
+            }
+<span class="fc" id="L373">        }</span>
+<span class="fc" id="L374">        _variables.clear();</span>
+<span class="fc" id="L375">        _variables.addAll(retained);</span>
+<span class="fc" id="L376">        _triggerAction( Change.DISTINCT );</span>
+<span class="fc" id="L377">    }</span>
+
+    @Override
+    public Vars&lt;T&gt; revert() {
+<span class="fc" id="L381">        int size = size();</span>
+<span class="fc bfc" id="L382" title="All 2 branches covered.">        for ( int i = 0; i &lt; size / 2; i++ ) {</span>
+<span class="fc" id="L383">            Var&lt;T&gt; tmp = at(i);</span>
+<span class="fc" id="L384">            _variables.set( i, at(size - i - 1) );</span>
+<span class="fc" id="L385">            _variables.set( size - i - 1, tmp );</span>
+        }
+<span class="fc" id="L387">        _triggerAction( Change.REVERT );</span>
+<span class="fc" id="L388">        return this;</span>
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Vals&lt;T&gt; onChange( Action&lt;ValsDelegate&lt;T&gt;&gt; action ) {
+<span class="fc" id="L394">        _viewActions.add(action);</span>
+<span class="fc" id="L395">        return this;</span>
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Vals&lt;T&gt; fireChange() {
+<span class="nc" id="L401">        _triggerAction( Change.NONE );</span>
+<span class="nc" id="L402">        return this;</span>
+    }
+
+    @Override
+    public boolean allowsNull() {
+<span class="fc" id="L407">        return _allowsNull;</span>
+    }
+
+    @Override
+    public boolean isMutable() {
+<span class="fc bfc" id="L412" title="All 2 branches covered.">        return !_isImmutable;</span>
+    }
+
+    private ValsDelegate&lt;T&gt; _createDelegate(
+            int index, Change type, @Nullable Var&lt;T&gt; newVal, @Nullable Var&lt;T&gt; oldVal
+    ) {
+<span class="fc" id="L418">        Var[] cloned = _variables.stream().map(Val::ofNullable).toArray(Var[]::new);</span>
+<span class="fc" id="L419">        Vals&lt;T&gt; clone = Vals.ofNullable(_type, cloned);</span>
+        /*
+            Note that we just created a deep copy of the property list, so we can safely
+            pass the clone to the delegate. This is important because the delegate
+            is passed to the action which might be executed on a different thread.
+        */
+<span class="pc bpc" id="L425" title="1 of 2 branches missed.">        Vals&lt;T&gt; newValues = newVal == null ? Vals.ofNullable(_type) : Vals.ofNullable(_type, Val.ofNullable(newVal));</span>
+<span class="fc bfc" id="L426" title="All 2 branches covered.">        Vals&lt;T&gt; oldValues = oldVal == null ? Vals.ofNullable(_type) : Vals.ofNullable(_type, Val.ofNullable(oldVal));</span>
+<span class="fc" id="L427">        return new PropertyListDelegate&lt;&gt;(type, index, newValues, oldValues, clone);</span>
+    }
+
+    private ValsDelegate&lt;T&gt; _createDelegate(
+            int index, Change type, @Nullable Vals&lt;T&gt; newVals, @Nullable Vals&lt;T&gt; oldVals
+    ) {
+        @SuppressWarnings(&quot;unchecked&quot;)
+<span class="fc bfc" id="L434" title="All 2 branches covered.">        Val&lt;T&gt;[] cloned = _variables.stream().map(var -&gt; _allowsNull ? Val.ofNullable(var) : Val.of(var)).toArray(Val[]::new);</span>
+        @SuppressWarnings(&quot;unchecked&quot;)
+<span class="fc bfc" id="L436" title="All 4 branches covered.">        Val&lt;T&gt;[] newCloned = newVals == null ? new Val[0] : newVals.stream().map(v -&gt; _allowsNull ? Val.ofNullable(_type, v) : Val.of(v)).toArray(Val[]::new);</span>
+        @SuppressWarnings(&quot;unchecked&quot;)
+<span class="fc bfc" id="L438" title="All 4 branches covered.">        Val&lt;T&gt;[] oldCloned = oldVals == null ? new Val[0] : oldVals.stream().map(v -&gt; _allowsNull ? Val.ofNullable(_type, v) : Val.of(v)).toArray(Val[]::new);</span>
+<span class="fc bfc" id="L439" title="All 2 branches covered.">        Vals&lt;T&gt; clone = (Vals&lt;T&gt;) (_allowsNull ? Vals.ofNullable(_type, cloned) : Vals.of(_type, Arrays.asList(cloned)));</span>
+<span class="fc bfc" id="L440" title="All 2 branches covered.">        Vals&lt;T&gt; newClone = (Vals&lt;T&gt;) (_allowsNull ? Vals.ofNullable(_type, newCloned) : Vals.of(_type, Arrays.asList(newCloned)));</span>
+<span class="fc bfc" id="L441" title="All 2 branches covered.">        Vals&lt;T&gt; oldClone = (Vals&lt;T&gt;) (_allowsNull ? Vals.ofNullable(_type, oldCloned) : Vals.of(_type, Arrays.asList(oldCloned)));</span>
+        /*
+            Note that we just created a deep copy of the property list, so we can safely
+            pass the clone to the delegate. This is important because the delegate
+            is passed to the action which might be executed on a different thread.
+        */
+<span class="fc" id="L447">        return new PropertyListDelegate&lt;&gt;(type, index, newClone, oldClone, clone);</span>
+    }
+
+    private void _triggerAction(
+            Change type, int index, @Nullable Var&lt;T&gt; newVal, @Nullable Var&lt;T&gt; oldVal
+    ) {
+<span class="fc" id="L453">        ValsDelegate&lt;T&gt; listChangeDelegate = _createDelegate(index, type, newVal, oldVal);</span>
+
+<span class="fc bfc" id="L455" title="All 2 branches covered.">        for ( Action&lt;ValsDelegate&lt;T&gt;&gt; action : _viewActions )</span>
+            try {
+<span class="fc" id="L457">                action.accept(listChangeDelegate);</span>
+<span class="nc" id="L458">            } catch ( Exception e ) {</span>
+<span class="nc" id="L459">                log.error(&quot;Error in change action '{}'.&quot;, action, e);</span>
+<span class="fc" id="L460">            }</span>
+<span class="fc" id="L461">    }</span>
+
+    private void _triggerAction(Change type) {
+<span class="fc" id="L464">        _triggerAction(type, -1, (Vals&lt;T&gt;) null, null);</span>
+<span class="fc" id="L465">    }</span>
+
+    private void _triggerAction(
+            Change type, int index, @Nullable Vals&lt;T&gt; newVals, @Nullable Vals&lt;T&gt; oldVals
+    ) {
+<span class="fc" id="L470">        ValsDelegate&lt;T&gt; listChangeDelegate = _createDelegate(index, type, newVals, oldVals);</span>
+
+<span class="fc bfc" id="L472" title="All 2 branches covered.">        for (Action&lt;ValsDelegate&lt;T&gt;&gt; action : _viewActions)</span>
+            try {
+<span class="fc" id="L474">                action.accept(listChangeDelegate);</span>
+<span class="nc" id="L475">            } catch (Exception e) {</span>
+<span class="nc" id="L476">                log.error(&quot;Error in change action '{}'.&quot;, action, e);</span>
+<span class="fc" id="L477">            }</span>
+<span class="fc" id="L478">    }</span>
+
+    /** {@inheritDoc} */
+    @Override
+    public java.util.Iterator&lt;T&gt; iterator() {
+<span class="fc" id="L483">        return new java.util.Iterator&lt;T&gt;() {</span>
+<span class="fc" id="L484">            private int index = 0;</span>
+<span class="fc bfc" id="L485" title="All 2 branches covered.">            @Override public boolean hasNext() { return index &lt; size(); }</span>
+<span class="fc" id="L486">            @Override public @Nullable T next() { return at(index++).orElseNull(); }</span>
+        };
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public final String toString() {
+<span class="fc" id="L493">        String entries = _variables.stream()</span>
+<span class="pc bpc" id="L494" title="1 of 2 branches missed.">                                    .map( o -&gt; o.itemAsString() + ( o.hasID() ? &quot;(&quot; + o.id() + &quot;)&quot; : &quot;&quot; ) )</span>
+<span class="fc" id="L495">                                    .collect(Collectors.joining(&quot;, &quot;));</span>
+
+<span class="fc bfc" id="L497" title="All 2 branches covered.">        String prefix = _isImmutable ? &quot;Vals&quot; : &quot;Vars&quot;;</span>
+
+<span class="fc" id="L499">        return prefix + &quot;&lt;&quot; + _type.getSimpleName() + &quot;&gt;[&quot; + entries + &quot;]&quot;;</span>
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public final boolean equals( Object obj ) {
+<span class="pc bpc" id="L505" title="1 of 2 branches missed.">        if( obj == null ) return false;</span>
+<span class="pc bpc" id="L506" title="1 of 2 branches missed.">        if( obj == this ) return true;</span>
+<span class="fc bfc" id="L507" title="All 2 branches covered.">        if ( !_isImmutable ) {</span>
+<span class="fc" id="L508">            return false;</span>
+        }
+<span class="pc bpc" id="L510" title="1 of 2 branches missed.">        if( obj instanceof Vals ) {</span>
+<span class="pc bpc" id="L511" title="1 of 2 branches missed.">            if ( obj instanceof PropertyList) {</span>
+<span class="fc" id="L512">                PropertyList&lt;?&gt; other = (PropertyList&lt;?&gt;) obj;</span>
+<span class="fc bfc" id="L513" title="All 2 branches covered.">                if ( !other._isImmutable )</span>
+<span class="fc" id="L514">                    return false;</span>
+            }
+            @SuppressWarnings(&quot;unchecked&quot;)
+<span class="fc" id="L517">            Vals&lt;T&gt; other = (Vals&lt;T&gt;) obj;</span>
+<span class="pc bpc" id="L518" title="1 of 2 branches missed.">            if ( size() != other.size() ) return false;</span>
+<span class="fc bfc" id="L519" title="All 2 branches covered.">            for ( int i = 0; i &lt; size(); i++ )</span>
+<span class="pc bpc" id="L520" title="1 of 2 branches missed.">                if ( !this.at(i).equals(other.at(i)) ) return false;</span>
+
+<span class="fc" id="L522">            return true;</span>
+        }
+<span class="nc" id="L524">        return false;</span>
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public final int hashCode() {
+<span class="fc bfc" id="L530" title="All 2 branches covered.">        if ( !_isImmutable ) {</span>
+<span class="fc" id="L531">            return System.identityHashCode(this);</span>
+        }
+<span class="fc" id="L533">        int hash = _variables.stream().mapToInt(Objects::hashCode).sum();</span>
+<span class="fc" id="L534">        return 31 * hash + _type.hashCode();</span>
+    }
+
+    private void _checkNullSafety() {
+<span class="fc bfc" id="L538" title="All 2 branches covered.">        if ( !_allowsNull )</span>
+<span class="fc bfc" id="L539" title="All 2 branches covered.">            for ( Var&lt;T&gt; val : _variables )</span>
+<span class="fc" id="L540">                _checkNullSafetyOf(val);</span>
+        else {
+<span class="fc bfc" id="L542" title="All 2 branches covered.">            for ( Var&lt;T&gt; val : _variables )</span>
+<span class="fc bfc" id="L543" title="All 2 branches covered.">                if ( !val.allowsNull() )</span>
+<span class="fc" id="L544">                    throw new IllegalArgumentException(&quot;The null safety of the given property does not match this list.&quot;);</span>
+        }
+<span class="fc" id="L546">    }</span>
+
+    private void _checkNullSafetyOf( Val&lt;T&gt; value ) {
+<span class="fc" id="L549">        Objects.requireNonNull(value);</span>
+<span class="fc bfc" id="L550" title="All 4 branches covered.">        if ( !_allowsNull &amp;&amp; value.allowsNull() )</span>
+<span class="fc" id="L551">            throw new IllegalArgumentException(&quot;Null values are not allowed in this property list.&quot;);</span>
+<span class="fc" id="L552">    }</span>
+
+    @Override
+    public Observable subscribe( Observer observer ) {
+<span class="fc" id="L556">        return this.onChange( new SproutChangeListener&lt;&gt;(observer) );</span>
+    }
+
+    @Override
+    public Observable unsubscribe( Subscriber subscriber ) {
+<span class="fc bfc" id="L561" title="All 2 branches covered.">        for ( Action&lt;?&gt; a : new ArrayList&lt;&gt;(_viewActions) )</span>
+<span class="fc bfc" id="L562" title="All 2 branches covered.">            if ( a instanceof SproutChangeListener ) {</span>
+<span class="fc" id="L563">                SproutChangeListener&lt;?&gt; pcl = (SproutChangeListener&lt;?&gt;) a;</span>
+<span class="pc bpc" id="L564" title="1 of 2 branches missed.">                if ( Objects.equals(pcl.listener(), subscriber) ) {</span>
+<span class="fc" id="L565">                    _viewActions.remove(a);</span>
+<span class="fc" id="L566">                    return this;</span>
+                }
+<span class="nc" id="L568">            }</span>
+<span class="pc bpc" id="L569" title="1 of 2 branches missed.">            else if ( Objects.equals(a, subscriber) )</span>
+<span class="fc" id="L570">                _viewActions.remove(a);</span>
+
+<span class="fc" id="L572">        return this;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

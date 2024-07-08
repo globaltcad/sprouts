@@ -14,11 +14,11 @@ import java.util.function.Supplier;
  * 	which describe what went wrong in the process of obtaining the value wrapped by the result.
  * 	So usually, if the result is not present, there will most likely be a list of {@link Problem}s
  * 	explaining why the value is not present and what went wrong.
+ *
+ * @param &lt;V&gt; The type of the item wrapped by this result.
  */
 public interface Result&lt;V&gt; extends Val&lt;V&gt;
 {
-	String ID = &quot;Result&quot;;
-
 	/**
 	 *  A factory method for creating an empty result
 	 *  without a value and no problems.
@@ -29,8 +29,8 @@ public interface Result&lt;V&gt; extends Val&lt;V&gt;
 	 * @throws NullPointerException if the type is null.
 	 */
 	static &lt;V&gt; Result&lt;V&gt; of( Class&lt;V&gt; type ) {
-<span class="nc" id="L32">		Objects.requireNonNull(type);</span>
-<span class="nc" id="L33">		return Sprouts.factory().resultOf(type);</span>
+<span class="fc" id="L32">		Objects.requireNonNull(type);</span>
+<span class="fc" id="L33">		return Sprouts.factory().resultOf(type);</span>
 	}
 
 	/**
