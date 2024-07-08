@@ -28,8 +28,36 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 		return new PropertyView<>(type, item, NO_ID, new ChangeListeners<>(), true);
 	}
 
+	public static <T, U> Val<@Nullable U> ofNullable(Class<U> type, Val<T> source, Function<T, @Nullable U> mapper) {
+		final Var<@Nullable U> viewProperty = PropertyView.ofNullable(type, mapper.apply(source.orElseNull()));
+		source.onChange(Util.VIEW_CHANNEL, Action.ofWeak( viewProperty, (innerViewProperty, v) -> {
+			innerViewProperty.set(mapper.apply(v.orElseNull()));
+		}));
+		return viewProperty;
+	}
+
 	public static <T> Var<T> of( Class<T> type, T item ) {
 		return new PropertyView<>(type, item, NO_ID, new ChangeListeners<>(), false);
+	}
+
+	public static <T, U> Val<U> of(U nullObject, U errorObject, Val<T> source, Function<T, @Nullable U> mapper) {
+		Objects.requireNonNull(nullObject);
+		Objects.requireNonNull(errorObject);
+
+		Function<T, U> nonNullMapper = Util.nonNullMapper(nullObject, errorObject, mapper);
+
+		final U initial = nonNullMapper.apply(source.orElseNull());
+		final Class<U> targetType = (Class<U>) initial.getClass();
+		if ( source.isImmutable() ) {
+			return Val.of(initial); // A nice little optimization: a view of an immutable property is also immutable.
+		}
+
+		final Var<U> viewProperty = PropertyView.of( targetType, initial );
+		source.onChange(Util.VIEW_CHANNEL, Action.ofWeak( viewProperty, (innerViewProperty, v) -> {
+			final U value = nonNullMapper.apply(source.orElseNull());
+			innerViewProperty.set( value );
+		}));
+		return viewProperty;
 	}
 
 	public static <U, T> Val<T> of( Class<T> type, Val<U> parent, Function<U, T> mapper ) {
@@ -42,7 +70,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 			}));
 			return view;
 		}
-		else
+		else // A nice little optimization: a view of an immutable property is also immutable!
 			return ( initialItem == null ? Val.ofNull(type) : Val.of(initialItem) );
 	}
 

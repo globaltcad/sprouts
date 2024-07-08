@@ -158,6 +158,9 @@ public final class Sprouts implements SproutsFactory
 
     @Override
     public <T, U> Val<T> viewOf(Class<T> type, Val<U> source, Function<U, T> mapper) {
+        Objects.requireNonNull(type);
+        Objects.requireNonNull(source);
+        Objects.requireNonNull(mapper);
         return PropertyView.of(type, source, mapper);
     }
 
@@ -165,27 +168,17 @@ public final class Sprouts implements SproutsFactory
     public <T, U> Val<U> viewOf(U nullObject, U errorObject, Val<T> source, Function<T, @Nullable U> mapper) {
         Objects.requireNonNull(nullObject);
 		Objects.requireNonNull(errorObject);
-
-		Function<T, U> nonNullMapper = Util.nonNullMapper(nullObject, errorObject, mapper);
-
-		final U initial = nonNullMapper.apply(source.orElseNull());
-        final Class<U> targetType = (Class<U>) initial.getClass();
-		final Var<U> viewProperty = PropertyView.of( targetType, initial );
-
-        source.onChange(Util.VIEW_CHANNEL, Action.ofWeak( viewProperty, (innerViewProperty, v) -> {
-			final U value = nonNullMapper.apply(source.orElseNull());
-			innerViewProperty.set( value );
-		}));
-		return viewProperty;
+        Objects.requireNonNull(source);
+        Objects.requireNonNull(mapper);
+		return PropertyView.of(nullObject, errorObject, source, mapper);
     }
 
     @Override
     public <T, U> Val<@Nullable U> viewOfNullable(Class<U> type, Val<T> source, Function<T, @Nullable U> mapper) {
-        final Var<@Nullable U> viewProperty = PropertyView.ofNullable(type, mapper.apply(source.orElseNull()));
-        source.onChange(Util.VIEW_CHANNEL, Action.ofWeak( viewProperty, (innerViewProperty, v) -> {
-            innerViewProperty.set(mapper.apply(v.orElseNull()));
-        }));
-        return viewProperty;
+        Objects.requireNonNull(type);
+        Objects.requireNonNull(source);
+        Objects.requireNonNull(mapper);
+        return PropertyView.ofNullable(type, source, mapper);
     }
 
     @Override
