@@ -1017,10 +1017,28 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	 *  <br>
 	 *  The purpose of this method is to warn the UI that this property can be changed,
 	 *  so that it may throw an exception or do something else to handle this case.
+	 *  <br>
+	 *  Note that this is the inverse of {@link #isImmutable()}.
 	 *
 	 * @return {@code true}, if this property can be changed, {@code false} otherwise.
 	 */
 	boolean isMutable();
+
+	/**
+	 *  This method is used to determine if the property is immutable or not.
+	 *  An immutable property cannot be changed by calling the {@code Var.set(T)} method
+	 *  and will throw an exception when trying to do so.
+	 *  <br>
+	 *  The purpose of this method is to give the UI confidence in the fact that this property cannot be changed,
+	 *  so that it may make some assumptions based on that.
+	 *  <br>
+	 *  Note that this is the inverse of {@link #isMutable()}.
+	 *
+	 * @return {@code true}, if this property can not be changed, {@code false} otherwise.
+	 */
+	default boolean isImmutable() {
+		return !this.isMutable();
+	}
 
 	/**
 	 *  This method is used to determine if the property is a lens or not.
