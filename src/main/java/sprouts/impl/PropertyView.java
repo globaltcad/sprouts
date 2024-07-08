@@ -44,7 +44,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 		return new PropertyView<>(type, item, NO_ID, new ChangeListeners<>(), false);
 	}
 
-	public static <T, U> Val<U> of(U nullObject, U errorObject, Val<T> source, Function<T, @Nullable U> mapper) {
+	public static <T, U> Val<U> of( U nullObject, U errorObject, Val<T> source, Function<T, @Nullable U> mapper) {
 		Objects.requireNonNull(nullObject);
 		Objects.requireNonNull(errorObject);
 
@@ -99,13 +99,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 		Val<U> second,
 		BiFunction<T, U, @NonNull T> combiner
 	) {
-		String id = "";
-		if ( !first.id().isEmpty() && !second.id().isEmpty() )
-			id = first.id() + "_and_" + second.id();
-		else if ( !first.id().isEmpty() )
-			id = first.id();
-		else if ( !second.id().isEmpty() )
-			id = second.id();
+		String id = _compositeIdFrom(first, second);
 
 		BiFunction<Val<T>, Val<U>, @Nullable T> fullCombiner = (p1, p2) -> {
 			try {
@@ -163,13 +157,8 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 	}
 
 	private static <T extends @Nullable Object, U extends @Nullable Object> Val<T> ofNullable( Val<T> first, Val<U> second, BiFunction<T, U, T> combiner ) {
-		String id = "";
-		if ( !first.id().isEmpty() && !second.id().isEmpty() )
-			id = first.id() + "_and_" + second.id();
-		else if ( !first.id().isEmpty() )
-			id = first.id();
-		else if ( !second.id().isEmpty() )
-			id = second.id();
+
+		String id = _compositeIdFrom(first, second);
 
 		BiFunction<Val<T>, Val<U>, @Nullable T> fullCombiner = (p1, p2) -> {
 			try {
@@ -213,13 +202,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 		Val<U> second,
 		BiFunction<T,U,R> combiner
 	) {
-		String id = "";
-		if ( !first.id().isEmpty() && !second.id().isEmpty() )
-			id = first.id() + "_and_" + second.id();
-		else if ( !first.id().isEmpty() )
-			id = first.id();
-		else if ( !second.id().isEmpty() )
-			id = second.id();
+		String id = _compositeIdFrom(first, second);
 
 		BiFunction<Val<T>, Val<U>, @Nullable R> fullCombiner = (p1, p2) -> {
 			try {
@@ -277,13 +260,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 	    Val<U>                        second,
 	    BiFunction<T, U, @Nullable R> combiner
 	) {
-		String id = "";
-		if ( !first.id().isEmpty() && !second.id().isEmpty() )
-			id = first.id() + "_and_" + second.id();
-		else if ( !first.id().isEmpty() )
-			id = first.id();
-		else if ( !second.id().isEmpty() )
-			id = second.id();
+		String id = _compositeIdFrom(first, second);
 
 		BiFunction<Val<T>, Val<U>, @Nullable R> fullCombiner = (p1, p2) -> {
 			try {
@@ -311,6 +288,16 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 		return result;
 	}
 
+	private static String _compositeIdFrom(Val<?> first, Val<?> second) {
+		String id = "";
+		if ( !first.id().isEmpty() && !second.id().isEmpty() )
+			id = first.id() + "_and_" + second.id();
+		else if ( !first.id().isEmpty() )
+			id = first.id();
+		else if ( !second.id().isEmpty() )
+			id = second.id();
+		return id;
+	}
 
 	private final ChangeListeners<T> _changeListeners;
 
