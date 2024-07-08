@@ -158,6 +158,9 @@ public final class Sprouts implements SproutsFactory
 
     @Override
     public <T, U> Val<T> viewOf(Class<T> type, Val<U> source, Function<U, T> mapper) {
+        Objects.requireNonNull(type);
+        Objects.requireNonNull(source);
+        Objects.requireNonNull(mapper);
         return PropertyView.of(type, source, mapper);
     }
 
@@ -165,27 +168,17 @@ public final class Sprouts implements SproutsFactory
     public <T, U> Val<U> viewOf(U nullObject, U errorObject, Val<T> source, Function<T, @Nullable U> mapper) {
         Objects.requireNonNull(nullObject);
 		Objects.requireNonNull(errorObject);
-
-		Function<T, U> nonNullMapper = Util.nonNullMapper(nullObject, errorObject, mapper);
-
-		final U initial = nonNullMapper.apply(source.orElseNull());
-        final Class<U> targetType = (Class<U>) initial.getClass();
-		final Var<U> viewProperty = PropertyView.of( targetType, initial );
-
-        source.onChange(Util.VIEW_CHANNEL, Action.ofWeak( viewProperty, (innerViewProperty, v) -> {
-			final U value = nonNullMapper.apply(source.orElseNull());
-			innerViewProperty.set( value );
-		}));
-		return viewProperty;
+        Objects.requireNonNull(source);
+        Objects.requireNonNull(mapper);
+		return PropertyView.of(nullObject, errorObject, source, mapper);
     }
 
     @Override
     public <T, U> Val<@Nullable U> viewOfNullable(Class<U> type, Val<T> source, Function<T, @Nullable U> mapper) {
-        final Var<@Nullable U> viewProperty = PropertyView.ofNullable(type, mapper.apply(source.orElseNull()));
-        source.onChange(Util.VIEW_CHANNEL, Action.ofWeak( viewProperty, (innerViewProperty, v) -> {
-            innerViewProperty.set(mapper.apply(v.orElseNull()));
-        }));
-        return viewProperty;
+        Objects.requireNonNull(type);
+        Objects.requireNonNull(source);
+        Objects.requireNonNull(mapper);
+        return PropertyView.ofNullable(type, source, mapper);
     }
 
     @Override
@@ -209,30 +202,7 @@ public final class Sprouts implements SproutsFactory
         Objects.requireNonNull(nullObject, "Null object must not be null");
         Objects.requireNonNull(getter, "Getter must not be null");
         Objects.requireNonNull(wither, "Wither must not be null");
-        Class<B> type = (Class<B>) nullObject.getClass();
-        Function<T,B> nullSafeGetter = newParentValue -> {
-            if ( newParentValue == null )
-                return nullObject;
-
-            return getter.apply(newParentValue);
-        };
-        BiFunction<T,B,T> nullSafeWither = (parentValue, newValue) -> {
-            if ( parentValue == null )
-                return null;
-
-            return wither.apply(parentValue, newValue);
-        };
-        B initialValue = nullSafeGetter.apply(source.orElseNull());
-        return new PropertyLens<>(
-                    type,
-                    Val.NO_ID,
-                    false,//does not allow null
-                    initialValue, //may NOT be null
-                    new WeakReference<>(source),
-                    nullSafeGetter,
-                    nullSafeWither,
-                    null
-                );
+        return PropertyLens.of(source, nullObject, getter, wither);
     }
 
     @Override
@@ -240,29 +210,7 @@ public final class Sprouts implements SproutsFactory
         Objects.requireNonNull(type, "Type must not be null");
 		Objects.requireNonNull(getter, "Getter must not be null");
 		Objects.requireNonNull(wither, "Wither must not be null");
-		Function<T,B> nullSafeGetter = newParentValue -> {
-			if ( newParentValue == null )
-				return null;
-
-			return getter.apply(newParentValue);
-		};
-		BiFunction<T,B,T> nullSafeWither = (parentValue, newValue) -> {
-			if ( parentValue == null )
-				return null;
-
-			return wither.apply(parentValue, newValue);
-		};
-		B initialValue = nullSafeGetter.apply(source.orElseNull());
-		return new PropertyLens<>(
-                    type,
-					Val.NO_ID,
-					true,//allows null
-					initialValue, //may be null
-				    new WeakReference<>(source),
-					nullSafeGetter,
-					nullSafeWither,
-					null
-				);
+		return PropertyLens.ofNullable(type, source, getter, wither);
     }
 
     @Override public <T> Var<T> varOfNullable(Class<T> type, @Nullable T item ) {

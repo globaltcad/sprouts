@@ -28,8 +28,40 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 		return new PropertyView<>(type, item, NO_ID, new ChangeListeners<>(), true);
 	}
 
+	public static <T, U> Val<@Nullable U> ofNullable(Class<U> type, Val<T> source, Function<T, @Nullable U> mapper) {
+		final U initialItem = mapper.apply(source.orElseNull());
+		if ( source.isImmutable() ) {
+			return initialItem == null ? Val.ofNull(type) : Val.of(initialItem);
+		}
+		final Var<@Nullable U> viewProperty = PropertyView.ofNullable(type, initialItem);
+		source.onChange(Util.VIEW_CHANNEL, Action.ofWeak( viewProperty, (innerViewProperty, v) -> {
+			innerViewProperty.set(mapper.apply(v.orElseNull()));
+		}));
+		return viewProperty;
+	}
+
 	public static <T> Var<T> of( Class<T> type, T item ) {
 		return new PropertyView<>(type, item, NO_ID, new ChangeListeners<>(), false);
+	}
+
+	public static <T, U> Val<U> of( U nullObject, U errorObject, Val<T> source, Function<T, @Nullable U> mapper) {
+		Objects.requireNonNull(nullObject);
+		Objects.requireNonNull(errorObject);
+
+		Function<T, U> nonNullMapper = Util.nonNullMapper(nullObject, errorObject, mapper);
+
+		final U initial = nonNullMapper.apply(source.orElseNull());
+		final Class<U> targetType = (Class<U>) initial.getClass();
+		if ( source.isImmutable() ) {
+			return Val.of(initial); // A nice little optimization: a view of an immutable property is also immutable.
+		}
+
+		final Var<U> viewProperty = PropertyView.of( targetType, initial );
+		source.onChange(Util.VIEW_CHANNEL, Action.ofWeak( viewProperty, (innerViewProperty, v) -> {
+			final U value = nonNullMapper.apply(source.orElseNull());
+			innerViewProperty.set( value );
+		}));
+		return viewProperty;
 	}
 
 	public static <U, T> Val<T> of( Class<T> type, Val<U> parent, Function<U, T> mapper ) {
@@ -42,15 +74,15 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 			}));
 			return view;
 		}
-		else
+		else // A nice little optimization: a view of an immutable property is also immutable!
 			return ( initialItem == null ? Val.ofNull(type) : Val.of(initialItem) );
 	}
 
-	public static <T extends @Nullable Object, U extends @Nullable Object> Var<@NonNull T> viewOf( Val<T> first, Val<U> second, BiFunction<T, U, @NonNull T> combiner ) {
+	public static <T extends @Nullable Object, U extends @Nullable Object> Val<@NonNull T> viewOf( Val<T> first, Val<U> second, BiFunction<T, U, @NonNull T> combiner ) {
 		return of( first, second, combiner );
 	}
 
-	public static <T extends @Nullable Object, U extends @Nullable Object> Var<@Nullable T> viewOfNullable( Val<T> first, Val<U> second, BiFunction<T, U, @Nullable T> combiner ) {
+	public static <T extends @Nullable Object, U extends @Nullable Object> Val<@Nullable T> viewOfNullable( Val<T> first, Val<U> second, BiFunction<T, U, @Nullable T> combiner ) {
 		return ofNullable( first, second, combiner );
 	}
 
@@ -62,18 +94,12 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 		return ofNullable( type, first, second, combiner );
 	}
 
-	private static <T extends @Nullable Object, U extends @Nullable Object> Var<@NonNull T> of(
+	private static <T extends @Nullable Object, U extends @Nullable Object> Val<@NonNull T> of(
 		Val<T> first,
 		Val<U> second,
 		BiFunction<T, U, @NonNull T> combiner
 	) {
-		String id = "";
-		if ( !first.id().isEmpty() && !second.id().isEmpty() )
-			id = first.id() + "_and_" + second.id();
-		else if ( !first.id().isEmpty() )
-			id = first.id();
-		else if ( !second.id().isEmpty() )
-			id = second.id();
+		String id = _compositeIdFrom(first, second);
 
 		BiFunction<Val<T>, Val<U>, @Nullable T> fullCombiner = (p1, p2) -> {
 			try {
@@ -116,20 +142,23 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 				innerResult.set(From.ALL, newItem);
 		};
 
+		boolean firstIsImmutable = first.isImmutable();
+		boolean secondIsImmutable = second.isImmutable();
+		if ( firstIsImmutable && secondIsImmutable ) {
+			return initial == null ? Val.ofNull(first.type()) : Val.of(initial);
+		}
+
 		Var<T> result = PropertyView.of(first.type(), initial ).withId(id);
-		first.onChange(From.ALL, Action.ofWeak( result, firstListener ));
-		second.onChange(From.ALL, Action.ofWeak( result, secondListener ));
+		if ( !firstIsImmutable )
+			first.onChange(From.ALL, Action.ofWeak( result, firstListener ));
+		if ( !secondIsImmutable )
+			second.onChange(From.ALL, Action.ofWeak( result, secondListener ));
 		return result;
 	}
 
-	private static <T extends @Nullable Object, U extends @Nullable Object> Var<T> ofNullable( Val<T> first, Val<U> second, BiFunction<T, U, T> combiner ) {
-		String id = "";
-		if ( !first.id().isEmpty() && !second.id().isEmpty() )
-			id = first.id() + "_and_" + second.id();
-		else if ( !first.id().isEmpty() )
-			id = first.id();
-		else if ( !second.id().isEmpty() )
-			id = second.id();
+	private static <T extends @Nullable Object, U extends @Nullable Object> Val<T> ofNullable( Val<T> first, Val<U> second, BiFunction<T, U, T> combiner ) {
+
+		String id = _compositeIdFrom(first, second);
 
 		BiFunction<Val<T>, Val<U>, @Nullable T> fullCombiner = (p1, p2) -> {
 			try {
@@ -141,21 +170,29 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 
 		T initial = fullCombiner.apply(first, second);
 
+		boolean firstIsImmutable = first.isImmutable();
+		boolean secondIsImmutable = second.isImmutable();
+		if ( firstIsImmutable && secondIsImmutable ) {
+			return initial == null ? Val.ofNull(first.type()) : Val.of(initial);
+		}
+
 		Var<@Nullable T> result = PropertyView.ofNullable(first.type(), initial ).withId(id);
 		WeakReference<Val<T>> weakFirst = new WeakReference<>(first);
 		WeakReference<Val<U>> weakSecond = new WeakReference<>(second);
-		first.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
-			Val<U> innerSecond = weakSecond.get();
-			if ( innerSecond == null )
-				return;
-			innerResult.set(From.ALL, fullCombiner.apply(v, innerSecond) );
-		}));
-		second.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
-			Val<T> innerFirst = weakFirst.get();
-			if ( innerFirst == null )
-				return;
-			innerResult.set(From.ALL, fullCombiner.apply(innerFirst, v) );
-		}));
+		if ( !firstIsImmutable )
+			first.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
+				Val<U> innerSecond = weakSecond.get();
+				if ( innerSecond == null )
+					return;
+				innerResult.set(From.ALL, fullCombiner.apply(v, innerSecond) );
+			}));
+		if ( !secondIsImmutable )
+			second.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
+				Val<T> innerFirst = weakFirst.get();
+				if ( innerFirst == null )
+					return;
+				innerResult.set(From.ALL, fullCombiner.apply(innerFirst, v) );
+			}));
 		return result;
 	}
 
@@ -165,13 +202,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 		Val<U> second,
 		BiFunction<T,U,R> combiner
 	) {
-		String id = "";
-		if ( !first.id().isEmpty() && !second.id().isEmpty() )
-			id = first.id() + "_and_" + second.id();
-		else if ( !first.id().isEmpty() )
-			id = first.id();
-		else if ( !second.id().isEmpty() )
-			id = second.id();
+		String id = _compositeIdFrom(first, second);
 
 		BiFunction<Val<T>, Val<U>, @Nullable R> fullCombiner = (p1, p2) -> {
 			try {
@@ -229,13 +260,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 	    Val<U>                        second,
 	    BiFunction<T, U, @Nullable R> combiner
 	) {
-		String id = "";
-		if ( !first.id().isEmpty() && !second.id().isEmpty() )
-			id = first.id() + "_and_" + second.id();
-		else if ( !first.id().isEmpty() )
-			id = first.id();
-		else if ( !second.id().isEmpty() )
-			id = second.id();
+		String id = _compositeIdFrom(first, second);
 
 		BiFunction<Val<T>, Val<U>, @Nullable R> fullCombiner = (p1, p2) -> {
 			try {
@@ -263,6 +288,16 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 		return result;
 	}
 
+	private static String _compositeIdFrom(Val<?> first, Val<?> second) {
+		String id = "";
+		if ( !first.id().isEmpty() && !second.id().isEmpty() )
+			id = first.id() + "_and_" + second.id();
+		else if ( !first.id().isEmpty() )
+			id = first.id();
+		else if ( !second.id().isEmpty() )
+			id = second.id();
+		return id;
+	}
 
 	private final ChangeListeners<T> _changeListeners;
 
