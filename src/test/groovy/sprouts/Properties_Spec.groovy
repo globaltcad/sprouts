@@ -409,4 +409,128 @@ class Properties_Spec extends Specification
             !propertyWithId.hasNoID()
     }
 
+    def 'You can update a property item based on the current item through the `update(Function)` method.'()
+    {
+        reportInfo """
+            A common use-case is to update the item of a property
+            based on the current item. This is especially
+            useful when your property holds larger value oriented types
+            like records for which you want to update one of
+            its fields through a wither. 
+            
+            In this example however, we are going to use a groovy map
+            to demonstrate the concept.
+        """
+        given : 'A property with a map item.'
+            var property = Var.of([name: "Alice", age: 42])
+        when : 'We update the item of the property.'
+            property.update( it -> it + [age: it.age + 1] )
+        then : 'The item of the property is updated.'
+            property.get() == [name: "Alice", age: 43]
+    }
+
+    def 'You may not pass a null function to the `update(Function)` method.'()
+    {
+        given : 'A property with a non-null item.'
+            var property = Var.of("Hello World")
+        when : 'We try to update the item of the property with a null function.'
+            property.update(null)
+        then : 'An exception is thrown.'
+            thrown(NullPointerException)
+    }
+
+    def 'Exceptions inside the function of the `update(Function)` method reach the caller.'()
+    {
+        given : 'A property with a non-null item.'
+            var property = Var.of("How are you today?")
+        when : 'We try to update the item of the property with a function that throws an exception.'
+            property.update( it -> { throw new RuntimeException("Boom!") } )
+        then : 'The exception reaches us, the caller.'
+            thrown(RuntimeException)
+    }
+
+    def 'You cannot map null items of a property through the `update(Function)` method.'()
+    {
+        reportInfo """
+            The `update(Function)` method is used to update the item of a property.
+            If the item of the property is null, the function is not called.
+            This is useful when you want to update the item of a property
+            only if it is not null.
+        """
+        given : 'A property with a null item.'
+            var property = Var.ofNullable(String, null)
+        when : 'We try to update the item of the property.'
+            property.update( it -> it + "!" )
+        then : 'The item of the property is still null.'
+            property.orElseNull() == null
+    }
+
+    def 'You can update a nullable property item based on the current item through the `updateNullable(Function)` method.'()
+    {
+        reportInfo """
+            A common use-case is to update the item of a property
+            based on the current item. This is especially
+            useful when your property holds larger value oriented types
+            like records for which you want to update one of
+            its fields through a wither. 
+            
+            You may also want to update the item of a nullable property
+            and decide the new item based on the update function receiving
+            a null reference.
+            
+            In this example however, we are going to use a groovy map
+            to demonstrate the concept.
+        """
+        given : 'A null property with a map item.'
+            var property = Var.ofNullable(Map, [name: "Alice", age: 42])
+        when : 'We update the item of the property.'
+            property.updateNullable( it -> it + [age: it.age + 1] )
+        then : 'The item of the property is updated.'
+            property.get() == [name: "Alice", age: 43]
+    }
+
+    def 'You may not pass a null function to the `updateNullable(Function)` method.'()
+    {
+        given : 'A property with a non-null item.'
+            var property = Var.of("Hello World")
+        when : 'We try to update the item of the property with a null function.'
+            property.updateNullable(null)
+        then : 'An exception is thrown.'
+            thrown(NullPointerException)
+    }
+
+    def 'Exceptions inside the function of the `updateNullable(Function)` method reach the caller.'()
+    {
+        given : 'A property with a non-null item.'
+            var property = Var.of("How are you today?")
+        when : 'We try to update the item of the property with a function that throws an exception.'
+            property.updateNullable( it -> { throw new RuntimeException("Boom!") } )
+        then : 'The exception reaches us, the caller.'
+            thrown(RuntimeException)
+    }
+
+    def 'You can map null items of a property through the `updateNullable(Function)` method.'()
+    {
+        reportInfo """
+            The `updateNullable(Function)` method is used to update the item of a property.
+            If the item of the property is null, the function is called with a null reference.
+            This is useful when you want to update the item of a property even
+            if it is null. This is most likely the case when
+            you have a special meaning assigned to the null reference.
+            Keep in mind that the `update` method is the preferred way
+            of updating the item of a property, as it does not allow null items.
+        """
+        given : 'A property with a null item.'
+            var property = Var.ofNullable(String, null)
+        when : 'We try to update the item of the property.'
+            property.updateNullable( it -> it == null ? null : it + "!" )
+        then : 'The item of the property is still null.'
+            property.orElseNull() == null
+
+        when : 'We map the null reference to something else.'
+            property.updateNullable( it -> "Hello World" )
+        then : 'The item of the property is updated.'
+            property.orElseNull() == "Hello World"
+    }
+
 }
