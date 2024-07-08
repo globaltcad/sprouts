@@ -29,7 +29,11 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 	}
 
 	public static <T, U> Val<@Nullable U> ofNullable(Class<U> type, Val<T> source, Function<T, @Nullable U> mapper) {
-		final Var<@Nullable U> viewProperty = PropertyView.ofNullable(type, mapper.apply(source.orElseNull()));
+		final U initialItem = mapper.apply(source.orElseNull());
+		if ( source.isImmutable() ) {
+			return initialItem == null ? Val.ofNull(type) : Val.of(initialItem);
+		}
+		final Var<@Nullable U> viewProperty = PropertyView.ofNullable(type, initialItem);
 		source.onChange(Util.VIEW_CHANNEL, Action.ofWeak( viewProperty, (innerViewProperty, v) -> {
 			innerViewProperty.set(mapper.apply(v.orElseNull()));
 		}));
@@ -74,11 +78,11 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 			return ( initialItem == null ? Val.ofNull(type) : Val.of(initialItem) );
 	}
 
-	public static <T extends @Nullable Object, U extends @Nullable Object> Var<@NonNull T> viewOf( Val<T> first, Val<U> second, BiFunction<T, U, @NonNull T> combiner ) {
+	public static <T extends @Nullable Object, U extends @Nullable Object> Val<@NonNull T> viewOf( Val<T> first, Val<U> second, BiFunction<T, U, @NonNull T> combiner ) {
 		return of( first, second, combiner );
 	}
 
-	public static <T extends @Nullable Object, U extends @Nullable Object> Var<@Nullable T> viewOfNullable( Val<T> first, Val<U> second, BiFunction<T, U, @Nullable T> combiner ) {
+	public static <T extends @Nullable Object, U extends @Nullable Object> Val<@Nullable T> viewOfNullable( Val<T> first, Val<U> second, BiFunction<T, U, @Nullable T> combiner ) {
 		return ofNullable( first, second, combiner );
 	}
 
@@ -90,7 +94,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 		return ofNullable( type, first, second, combiner );
 	}
 
-	private static <T extends @Nullable Object, U extends @Nullable Object> Var<@NonNull T> of(
+	private static <T extends @Nullable Object, U extends @Nullable Object> Val<@NonNull T> of(
 		Val<T> first,
 		Val<U> second,
 		BiFunction<T, U, @NonNull T> combiner
@@ -144,13 +148,21 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 				innerResult.set(From.ALL, newItem);
 		};
 
+		boolean firstIsImmutable = first.isImmutable();
+		boolean secondIsImmutable = second.isImmutable();
+		if ( firstIsImmutable && secondIsImmutable ) {
+			return initial == null ? Val.ofNull(first.type()) : Val.of(initial);
+		}
+
 		Var<T> result = PropertyView.of(first.type(), initial ).withId(id);
-		first.onChange(From.ALL, Action.ofWeak( result, firstListener ));
-		second.onChange(From.ALL, Action.ofWeak( result, secondListener ));
+		if ( !firstIsImmutable )
+			first.onChange(From.ALL, Action.ofWeak( result, firstListener ));
+		if ( !secondIsImmutable )
+			second.onChange(From.ALL, Action.ofWeak( result, secondListener ));
 		return result;
 	}
 
-	private static <T extends @Nullable Object, U extends @Nullable Object> Var<T> ofNullable( Val<T> first, Val<U> second, BiFunction<T, U, T> combiner ) {
+	private static <T extends @Nullable Object, U extends @Nullable Object> Val<T> ofNullable( Val<T> first, Val<U> second, BiFunction<T, U, T> combiner ) {
 		String id = "";
 		if ( !first.id().isEmpty() && !second.id().isEmpty() )
 			id = first.id() + "_and_" + second.id();
@@ -169,21 +181,29 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 
 		T initial = fullCombiner.apply(first, second);
 
+		boolean firstIsImmutable = first.isImmutable();
+		boolean secondIsImmutable = second.isImmutable();
+		if ( firstIsImmutable && secondIsImmutable ) {
+			return initial == null ? Val.ofNull(first.type()) : Val.of(initial);
+		}
+
 		Var<@Nullable T> result = PropertyView.ofNullable(first.type(), initial ).withId(id);
 		WeakReference<Val<T>> weakFirst = new WeakReference<>(first);
 		WeakReference<Val<U>> weakSecond = new WeakReference<>(second);
-		first.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
-			Val<U> innerSecond = weakSecond.get();
-			if ( innerSecond == null )
-				return;
-			innerResult.set(From.ALL, fullCombiner.apply(v, innerSecond) );
-		}));
-		second.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
-			Val<T> innerFirst = weakFirst.get();
-			if ( innerFirst == null )
-				return;
-			innerResult.set(From.ALL, fullCombiner.apply(innerFirst, v) );
-		}));
+		if ( !firstIsImmutable )
+			first.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
+				Val<U> innerSecond = weakSecond.get();
+				if ( innerSecond == null )
+					return;
+				innerResult.set(From.ALL, fullCombiner.apply(v, innerSecond) );
+			}));
+		if ( !secondIsImmutable )
+			second.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
+				Val<T> innerFirst = weakFirst.get();
+				if ( innerFirst == null )
+					return;
+				innerResult.set(From.ALL, fullCombiner.apply(innerFirst, v) );
+			}));
 		return result;
 	}
 
