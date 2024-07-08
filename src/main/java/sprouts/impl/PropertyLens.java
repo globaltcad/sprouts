@@ -45,6 +45,65 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
 {
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(PropertyLens.class);
 
+    public static <T, B> Var<B> of(Var<T> source, B nullObject, Function<T, B> getter, BiFunction<T, B, T> wither) {
+        Objects.requireNonNull(nullObject, "Null object must not be null");
+        Objects.requireNonNull(getter, "Getter must not be null");
+        Objects.requireNonNull(wither, "Wither must not be null");
+        Class<B> type = (Class<B>) nullObject.getClass();
+        Function<T,B> nullSafeGetter = newParentValue -> {
+            if ( newParentValue == null )
+                return nullObject;
+
+            return getter.apply(newParentValue);
+        };
+        BiFunction<T,B,T> nullSafeWither = (parentValue, newValue) -> {
+            if ( parentValue == null )
+                return null;
+
+            return wither.apply(parentValue, newValue);
+        };
+        B initialValue = nullSafeGetter.apply(source.orElseNull());
+        return new PropertyLens<>(
+                type,
+                Val.NO_ID,
+                false,//does not allow null
+                initialValue, //may NOT be null
+                new WeakReference<>(source),
+                nullSafeGetter,
+                nullSafeWither,
+                null
+        );
+    }
+
+    public static <T, B> Var<B> ofNullable(Class<B> type, Var<T> source, Function<T, B> getter, BiFunction<T, B, T> wither) {
+        Objects.requireNonNull(type, "Type must not be null");
+        Objects.requireNonNull(getter, "Getter must not be null");
+        Objects.requireNonNull(wither, "Wither must not be null");
+        Function<T,B> nullSafeGetter = newParentValue -> {
+            if ( newParentValue == null )
+                return null;
+
+            return getter.apply(newParentValue);
+        };
+        BiFunction<T,B,T> nullSafeWither = (parentValue, newValue) -> {
+            if ( parentValue == null )
+                return null;
+
+            return wither.apply(parentValue, newValue);
+        };
+        B initialValue = nullSafeGetter.apply(source.orElseNull());
+        return new PropertyLens<>(
+                type,
+                Val.NO_ID,
+                true,//allows null
+                initialValue, //may be null
+                new WeakReference<>(source),
+                nullSafeGetter,
+                nullSafeWither,
+                null
+        );
+    }
+
     private final ChangeListeners<T>    _changeListeners;
     private final String                _id;
     private final boolean               _nullable;

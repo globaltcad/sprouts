@@ -202,30 +202,7 @@ public final class Sprouts implements SproutsFactory
         Objects.requireNonNull(nullObject, "Null object must not be null");
         Objects.requireNonNull(getter, "Getter must not be null");
         Objects.requireNonNull(wither, "Wither must not be null");
-        Class<B> type = (Class<B>) nullObject.getClass();
-        Function<T,B> nullSafeGetter = newParentValue -> {
-            if ( newParentValue == null )
-                return nullObject;
-
-            return getter.apply(newParentValue);
-        };
-        BiFunction<T,B,T> nullSafeWither = (parentValue, newValue) -> {
-            if ( parentValue == null )
-                return null;
-
-            return wither.apply(parentValue, newValue);
-        };
-        B initialValue = nullSafeGetter.apply(source.orElseNull());
-        return new PropertyLens<>(
-                    type,
-                    Val.NO_ID,
-                    false,//does not allow null
-                    initialValue, //may NOT be null
-                    new WeakReference<>(source),
-                    nullSafeGetter,
-                    nullSafeWither,
-                    null
-                );
+        return PropertyLens.of(source, nullObject, getter, wither);
     }
 
     @Override
@@ -233,29 +210,7 @@ public final class Sprouts implements SproutsFactory
         Objects.requireNonNull(type, "Type must not be null");
 		Objects.requireNonNull(getter, "Getter must not be null");
 		Objects.requireNonNull(wither, "Wither must not be null");
-		Function<T,B> nullSafeGetter = newParentValue -> {
-			if ( newParentValue == null )
-				return null;
-
-			return getter.apply(newParentValue);
-		};
-		BiFunction<T,B,T> nullSafeWither = (parentValue, newValue) -> {
-			if ( parentValue == null )
-				return null;
-
-			return wither.apply(parentValue, newValue);
-		};
-		B initialValue = nullSafeGetter.apply(source.orElseNull());
-		return new PropertyLens<>(
-                    type,
-					Val.NO_ID,
-					true,//allows null
-					initialValue, //may be null
-				    new WeakReference<>(source),
-					nullSafeGetter,
-					nullSafeWither,
-					null
-				);
+		return PropertyLens.ofNullable(type, source, getter, wither);
     }
 
     @Override public <T> Var<T> varOfNullable(Class<T> type, @Nullable T item ) {
