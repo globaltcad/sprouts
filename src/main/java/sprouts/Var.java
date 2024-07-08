@@ -4,6 +4,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import sprouts.impl.Sprouts;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -165,6 +166,76 @@ public interface Var<T extends @Nullable Object> extends Val<T>
 	 * @return This very wrapper instance, in order to enable method chaining.
 	 */
 	Var<T> set( Channel channel, T newItem );
+
+	/**
+	 *  A common use-case is to update the item of a property
+	 *  based on the current item. This is especially
+	 *  useful when your property holds larger value oriented types
+	 *  like records for which you want to update one of
+	 *  its fields through a wither. <br>
+	 *  This is possible through this method, and it may
+	 *  look something like this:
+	 *  <pre>{@code
+	 *      record Point(int x, int y){...}
+	 *      var myProperty = Var.of(new Point(1,2));
+	 *  	myProperty.update( it -> it.withY(42) );
+	 *  }</pre>
+	 *  This takes the current item, even if it is null, and applies the
+	 *  given mapper function to it, which will then be used to set the new item.
+	 *  So this is essentially just a convenience method which will
+	 *  call the {@link #set(Object)} for you, which means that
+	 *  the same change listeners will be triggered if the item changes.
+	 *  <p>
+	 *  <b>Note that this method will not be called when the item is null,
+	 *  use {@link #updateNullable(Function)} for that. <br>
+	 *  Also note that any exceptions thrown by the mapper will not be caught and
+	 *  will be propagated to the caller.</b>
+	 *
+	 * @param mapper A function which take the current item and returns
+	 *               an item which will be used to set the new item.
+	 * @return This property instance, to allow for fluent method chaining.
+	 * @throws NullPointerException If the given mapper is null.
+	 */
+	default Var<T> update( Function<T,@Nullable T> mapper ) {
+		Objects.requireNonNull(mapper);
+		if ( this.isEmpty() )
+			return this;
+		return this.set(mapper.apply(this.get()));
+	}
+
+	/**
+	 *  A common use-case is to update the item of a property
+	 *  based on the current item, but this time the item can be null.
+	 *  This is especially useful when your property holds larger value oriented types
+	 *  like records for which you want to update one of
+	 *  its fields through a wither. <br>
+	 *  This is possible using this method, and it may
+	 *  look something like this:
+	 *  <pre>{@code
+	 *      record Point(int x, int y){...}
+	 *      var myProperty = Var.ofNullable(Point.class, new Point(1,2));
+	 *  	myProperty.updateNullable( it -> it == null ? it : it.withY(42) );
+	 *  }</pre>
+	 *  This takes the current item, even if it is null, and applies the
+	 *  given mapper function to it, which will then be used to set the new item.
+	 *  Note that this is essentially just a convenience method which will
+	 *  call the {@link #set(Object)} for you, which means that
+	 *  the same change listeners will be triggered if the item changes.
+	 *  <p>
+	 *  <b>
+	 *      Note that any exceptions thrown by the mapper will not be caught and
+	 *      will be propagated to the caller.
+	 *  </b>
+	 *
+	 * @param mapper A function which take the current item or null and returns
+	 *               an item which will be used to set the new item.
+	 * @return This property instance, to allow for fluent method chaining.
+	 * @throws NullPointerException If the given mapper is null.
+	 */
+	default Var<T> updateNullable( Function<@Nullable T,@Nullable T> mapper ) {
+		Objects.requireNonNull(mapper);
+		return this.set(mapper.apply(this.orElseNull()));
+	}
 
 	/**
 	 *  Use this method to create a new property with an id.
