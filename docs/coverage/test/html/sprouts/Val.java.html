@@ -1017,10 +1017,28 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Observable {
 	 *  &lt;br&gt;
 	 *  The purpose of this method is to warn the UI that this property can be changed,
 	 *  so that it may throw an exception or do something else to handle this case.
+	 *  &lt;br&gt;
+	 *  Note that this is the inverse of {@link #isImmutable()}.
 	 *
 	 * @return {@code true}, if this property can be changed, {@code false} otherwise.
 	 */
 	boolean isMutable();
+
+	/**
+	 *  This method is used to determine if the property is immutable or not.
+	 *  An immutable property cannot be changed by calling the {@code Var.set(T)} method
+	 *  and will throw an exception when trying to do so.
+	 *  &lt;br&gt;
+	 *  The purpose of this method is to give the UI confidence in the fact that this property cannot be changed,
+	 *  so that it may make some assumptions based on that.
+	 *  &lt;br&gt;
+	 *  Note that this is the inverse of {@link #isMutable()}.
+	 *
+	 * @return {@code true}, if this property can not be changed, {@code false} otherwise.
+	 */
+	default boolean isImmutable() {
+<span class="pc bpc" id="L1040" title="1 of 2 branches missed.">		return !this.isMutable();</span>
+	}
 
 	/**
 	 *  This method is used to determine if the property is a lens or not.
@@ -1032,7 +1050,7 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Observable {
 	 *
 	 * @return {@code true}, if this property is a lens, {@code false} otherwise.
 	 */
-<span class="fc" id="L1035">	default boolean isLens() { return false; }</span>
+<span class="fc" id="L1053">	default boolean isLens() { return false; }</span>
 
 	/**
 	 *  This method is used to determine if the property is a view or not.
@@ -1044,7 +1062,7 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Observable {
 	 *
 	 * @return {@code true}, if this property is a view, {@code false} otherwise.
 	 */
-<span class="fc" id="L1047">	default boolean isView() { return false; }</span>
+<span class="fc" id="L1065">	default boolean isView() { return false; }</span>
 
 	/**
 	 *  {@link Val} and {@link Var} implementations are expected to represent
@@ -1062,16 +1080,16 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Observable {
 	 * @return The truth value determining if the objects are equal in terms of their state!
 	 */
 	static boolean equals( @Nullable Object o1, @Nullable Object o2 ) {
-<span class="fc bfc" id="L1065" title="All 2 branches covered.">		if ( o1 instanceof float[]   ) return Arrays.equals( (float[] )  o1, (float[] )  o2 );</span>
-<span class="fc bfc" id="L1066" title="All 2 branches covered.">		if ( o1 instanceof int[]     ) return Arrays.equals( (int[]   )  o1, (int[]   )  o2 );</span>
-<span class="fc bfc" id="L1067" title="All 2 branches covered.">		if ( o1 instanceof char[]    ) return Arrays.equals( (char[]  )  o1, (char[]  )  o2 );</span>
-<span class="fc bfc" id="L1068" title="All 2 branches covered.">		if ( o1 instanceof double[]  ) return Arrays.equals( (double[])  o1, (double[])  o2 );</span>
-<span class="fc bfc" id="L1069" title="All 2 branches covered.">		if ( o1 instanceof long[]    ) return Arrays.equals( (long[]  )  o1, (long[]  )  o2 );</span>
-<span class="pc bpc" id="L1070" title="1 of 2 branches missed.">		if ( o1 instanceof byte[]    ) return Arrays.equals( (byte[]  )  o1, (byte[]  )  o2 );</span>
-<span class="pc bpc" id="L1071" title="1 of 2 branches missed.">		if ( o1 instanceof short[]   ) return Arrays.equals( (short[] )  o1, (short[] )  o2 );</span>
-<span class="fc bfc" id="L1072" title="All 2 branches covered.">		if ( o1 instanceof boolean[] ) return Arrays.equals( (boolean[]) o1, (boolean[]) o2 );</span>
-<span class="fc bfc" id="L1073" title="All 2 branches covered.">		if ( o1 instanceof Object[]  ) return Arrays.equals( (Object[])  o1, (Object[])  o2 );</span>
-<span class="fc" id="L1074">		return Objects.equals( o1, o2 );</span>
+<span class="fc bfc" id="L1083" title="All 2 branches covered.">		if ( o1 instanceof float[]   ) return Arrays.equals( (float[] )  o1, (float[] )  o2 );</span>
+<span class="fc bfc" id="L1084" title="All 2 branches covered.">		if ( o1 instanceof int[]     ) return Arrays.equals( (int[]   )  o1, (int[]   )  o2 );</span>
+<span class="fc bfc" id="L1085" title="All 2 branches covered.">		if ( o1 instanceof char[]    ) return Arrays.equals( (char[]  )  o1, (char[]  )  o2 );</span>
+<span class="fc bfc" id="L1086" title="All 2 branches covered.">		if ( o1 instanceof double[]  ) return Arrays.equals( (double[])  o1, (double[])  o2 );</span>
+<span class="fc bfc" id="L1087" title="All 2 branches covered.">		if ( o1 instanceof long[]    ) return Arrays.equals( (long[]  )  o1, (long[]  )  o2 );</span>
+<span class="pc bpc" id="L1088" title="1 of 2 branches missed.">		if ( o1 instanceof byte[]    ) return Arrays.equals( (byte[]  )  o1, (byte[]  )  o2 );</span>
+<span class="pc bpc" id="L1089" title="1 of 2 branches missed.">		if ( o1 instanceof short[]   ) return Arrays.equals( (short[] )  o1, (short[] )  o2 );</span>
+<span class="fc bfc" id="L1090" title="All 2 branches covered.">		if ( o1 instanceof boolean[] ) return Arrays.equals( (boolean[]) o1, (boolean[]) o2 );</span>
+<span class="fc bfc" id="L1091" title="All 2 branches covered.">		if ( o1 instanceof Object[]  ) return Arrays.equals( (Object[])  o1, (Object[])  o2 );</span>
+<span class="fc" id="L1092">		return Objects.equals( o1, o2 );</span>
 	}
 
 	/**
@@ -1085,16 +1103,16 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Observable {
 	 * @return The hash code of the object.
 	 */
 	static int hashCode( Object o ) {
-<span class="fc bfc" id="L1088" title="All 2 branches covered.">		if ( o instanceof float[]   ) return Arrays.hashCode( (float[] )  o );</span>
-<span class="fc bfc" id="L1089" title="All 2 branches covered.">		if ( o instanceof int[]     ) return Arrays.hashCode( (int[]   )  o );</span>
-<span class="fc bfc" id="L1090" title="All 2 branches covered.">		if ( o instanceof char[]    ) return Arrays.hashCode( (char[]  )  o );</span>
-<span class="fc bfc" id="L1091" title="All 2 branches covered.">		if ( o instanceof double[]  ) return Arrays.hashCode( (double[])  o );</span>
-<span class="fc bfc" id="L1092" title="All 2 branches covered.">		if ( o instanceof long[]    ) return Arrays.hashCode( (long[]  )  o );</span>
-<span class="pc bpc" id="L1093" title="1 of 2 branches missed.">		if ( o instanceof byte[]    ) return Arrays.hashCode( (byte[]  )  o );</span>
-<span class="pc bpc" id="L1094" title="1 of 2 branches missed.">		if ( o instanceof short[]   ) return Arrays.hashCode( (short[] )  o );</span>
-<span class="fc bfc" id="L1095" title="All 2 branches covered.">		if ( o instanceof boolean[] ) return Arrays.hashCode( (boolean[]) o );</span>
-<span class="fc bfc" id="L1096" title="All 2 branches covered.">		if ( o instanceof Object[]  ) return Arrays.hashCode( (Object[])  o );</span>
-<span class="fc" id="L1097">		return Objects.hashCode( o );</span>
+<span class="fc bfc" id="L1106" title="All 2 branches covered.">		if ( o instanceof float[]   ) return Arrays.hashCode( (float[] )  o );</span>
+<span class="fc bfc" id="L1107" title="All 2 branches covered.">		if ( o instanceof int[]     ) return Arrays.hashCode( (int[]   )  o );</span>
+<span class="fc bfc" id="L1108" title="All 2 branches covered.">		if ( o instanceof char[]    ) return Arrays.hashCode( (char[]  )  o );</span>
+<span class="fc bfc" id="L1109" title="All 2 branches covered.">		if ( o instanceof double[]  ) return Arrays.hashCode( (double[])  o );</span>
+<span class="fc bfc" id="L1110" title="All 2 branches covered.">		if ( o instanceof long[]    ) return Arrays.hashCode( (long[]  )  o );</span>
+<span class="pc bpc" id="L1111" title="1 of 2 branches missed.">		if ( o instanceof byte[]    ) return Arrays.hashCode( (byte[]  )  o );</span>
+<span class="pc bpc" id="L1112" title="1 of 2 branches missed.">		if ( o instanceof short[]   ) return Arrays.hashCode( (short[] )  o );</span>
+<span class="fc bfc" id="L1113" title="All 2 branches covered.">		if ( o instanceof boolean[] ) return Arrays.hashCode( (boolean[]) o );</span>
+<span class="fc bfc" id="L1114" title="All 2 branches covered.">		if ( o instanceof Object[]  ) return Arrays.hashCode( (Object[])  o );</span>
+<span class="fc" id="L1115">		return Objects.hashCode( o );</span>
 	}
 
 }

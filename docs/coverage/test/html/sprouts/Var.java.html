@@ -4,6 +4,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import sprouts.impl.Sprouts;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -89,7 +90,7 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
 	 * @return A new {@link Var} instance.
 	 */
 	static &lt;T&gt; Var&lt;@Nullable T&gt; ofNullable( Class&lt;T&gt; type, @Nullable T item ) {
-<span class="fc" id="L92">		return Sprouts.factory().varOfNullable( type, item );</span>
+<span class="fc" id="L93">		return Sprouts.factory().varOfNullable( type, item );</span>
 	}
 
 	/**
@@ -105,7 +106,7 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
 	 * @param &lt;T&gt; The type of the wrapped item.
 	 */
 	static &lt;T&gt; Var&lt;@Nullable T&gt; ofNull( Class&lt;T&gt; type ) {
-<span class="fc" id="L108">		return Sprouts.factory().varOfNull( type );</span>
+<span class="fc" id="L109">		return Sprouts.factory().varOfNull( type );</span>
 	}
 
 	/**
@@ -121,7 +122,7 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
 	 * @throws IllegalArgumentException If the given item is null.
 	 */
 	static &lt;T&gt; Var&lt;T&gt; of( T item ) {
-<span class="fc" id="L124">		return Sprouts.factory().varOf( item );</span>
+<span class="fc" id="L125">		return Sprouts.factory().varOf( item );</span>
 	}
 
 	/**
@@ -139,7 +140,7 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
 	 * @throws IllegalArgumentException If the given item is null.
 	 */
 	static &lt;T, V extends T&gt; Var&lt;T&gt; of( Class&lt;T&gt; type, V item ) {
-<span class="fc" id="L142">		return Sprouts.factory().varOf( type, item );</span>
+<span class="fc" id="L143">		return Sprouts.factory().varOf( type, item );</span>
 	}
 
 	/**
@@ -151,7 +152,7 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
 	 * @return This very wrapper instance, in order to enable method chaining.
 	 */
 	default Var&lt;T&gt; set( T newItem ) {
-<span class="fc" id="L154">		return this.set(DEFAULT_CHANNEL, newItem);</span>
+<span class="fc" id="L155">		return this.set(DEFAULT_CHANNEL, newItem);</span>
 	}
 
 	/**
@@ -165,6 +166,149 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
 	 * @return This very wrapper instance, in order to enable method chaining.
 	 */
 	Var&lt;T&gt; set( Channel channel, T newItem );
+
+	/**
+	 *  A common use-case is to update the item of a property
+	 *  based on the current item. This is especially
+	 *  useful when your property holds larger value oriented types
+	 *  like records for which you want to update one of
+	 *  its fields through a wither. &lt;br&gt;
+	 *  This is possible through this method, and it may
+	 *  look something like this:
+	 *  &lt;pre&gt;{@code
+	 *      record Point(int x, int y){...}
+	 *      var myProperty = Var.of(new Point(1,2));
+	 *  	myProperty.update( it -&gt; it.withY(42) );
+	 *  }&lt;/pre&gt;
+	 *  This takes the current item (&lt;b&gt;if it is not null&lt;/b&gt;) and applies the
+	 *  provided mapper function to it. The result will then be used to set the new item.
+	 *  So this is essentially a convenience method for the {@link #set(Object)} method,
+	 *  which means that the same change listeners will be triggered when the item changes.
+	 *  &lt;p&gt;
+	 *  &lt;b&gt;Note that this method will not be called when the item is null,
+	 *  use {@link #updateNullable(Function)} for that. &lt;br&gt;
+	 *  Also note that any exceptions thrown by the mapper will not be caught and
+	 *  will be propagated to the caller.&lt;/b&gt;
+	 *
+	 * @param mapper A function which take the current item and returns
+	 *               an item which will be used to set the new item.
+	 *               It is ignored in case of the property item being null.
+	 * @return This property instance, to allow for fluent method chaining.
+	 * @throws NullPointerException If the given mapper is null.
+	 */
+	default Var&lt;T&gt; update( Function&lt;T,@Nullable T&gt; mapper ) {
+<span class="fc" id="L200">		return update(DEFAULT_CHANNEL, mapper);</span>
+	}
+
+	/**
+	 *  A common use-case is to update the item of a property
+	 *  based on the current item. This is especially
+	 *  useful when your property holds larger value oriented types
+	 *  like records for which you want to update one of
+	 *  its fields through a wither. &lt;br&gt;
+	 *  This is possible through this method, and it may
+	 *  look something like this:
+	 *  &lt;pre&gt;{@code
+	 *      record Point(int x, int y){...}
+	 *      var myProperty = Var.of(new Point(1,2));
+	 *  	myProperty.update(From.View, it -&gt; it.withY(42) );
+	 *  }&lt;/pre&gt;
+	 *  This takes the current item (&lt;b&gt;if it is not null&lt;/b&gt;) and applies the
+	 *  given mapper function to it, which will then be used to set the new item
+	 *  on the supplied {@link Channel}.
+	 *  So this is essentially just a convenience method which will
+	 *  call the {@link #set(Channel, Object)} for you, which means that
+	 *  the same change listeners will be triggered if the item changes.
+	 *  &lt;p&gt;
+	 *  &lt;b&gt;Note that this method will not be called when the item is null,
+	 *  use {@link #updateNullable(Function)} for that. &lt;br&gt;
+	 *  Also note that any exceptions thrown by the mapper will not be caught and
+	 *  will be propagated to the caller.&lt;/b&gt;
+	 *
+	 * @param channel The {@link Channel} for which the associated change listener should be invoked.
+	 * @param mapper A function which take the current item and returns
+	 *               an item which will be used to set the new item.
+	 *               It is ignored in case of the property item being null.
+	 * @return This property instance, to allow for fluent method chaining.
+	 * @throws NullPointerException If the given mapper is null.
+	 */
+	default Var&lt;T&gt; update( Channel channel, Function&lt;T,@Nullable T&gt; mapper ) {
+<span class="fc" id="L236">		Objects.requireNonNull(channel);</span>
+<span class="fc" id="L237">		Objects.requireNonNull(mapper);</span>
+<span class="fc bfc" id="L238" title="All 2 branches covered.">		if ( this.isEmpty() )</span>
+<span class="fc" id="L239">			return this;</span>
+<span class="fc" id="L240">		return this.set(channel, mapper.apply(this.get()));</span>
+	}
+
+	/**
+	 *  A common use-case is to update the item of a property
+	 *  based on the current item, but this time the item can be null.
+	 *  This is especially useful when your property holds larger value oriented types
+	 *  like records for which you want to update one of
+	 *  its fields through a wither. &lt;br&gt;
+	 *  This is possible using this method, and it may
+	 *  look something like this:
+	 *  &lt;pre&gt;{@code
+	 *      record Point(int x, int y){...}
+	 *      var myProperty = Var.ofNullable(Point.class, new Point(1,2));
+	 *  	myProperty.updateNullable( it -&gt; it == null ? it : it.withY(42) );
+	 *  }&lt;/pre&gt;
+	 *  This takes the current item, even if it is null, and applies the
+	 *  given mapper function to it, whose result will then be used to set the new item.
+	 *  Note that this is essentially just a convenience method which will
+	 *  call the {@link #set(Object)} for you, which means that
+	 *  the same change listeners will be triggered if the item changes.
+	 *  &lt;p&gt;
+	 *  &lt;b&gt;
+	 *      Note that any exceptions thrown by the mapper will not be caught and
+	 *      will be propagated to the caller.
+	 *  &lt;/b&gt;
+	 *
+	 * @param mapper A function which take the current item or null and returns
+	 *               an item which will be used to set the new item.
+	 * @return This property instance, to allow for fluent method chaining.
+	 * @throws NullPointerException If the given mapper is null.
+	 */
+	default Var&lt;T&gt; updateNullable( Function&lt;@Nullable T,@Nullable T&gt; mapper ) {
+<span class="fc" id="L273">		return this.updateNullable(DEFAULT_CHANNEL, mapper);</span>
+	}
+
+	/**
+	 *  A common use-case is to update the item of a property
+	 *  based on the current item, but this time the item can be null.
+	 *  This is especially useful when your property holds larger value oriented types
+	 *  like records for which you want to update one of
+	 *  its fields through a wither. &lt;br&gt;
+	 *  This is possible using this method, and it may
+	 *  look something like this:
+	 *  &lt;pre&gt;{@code
+	 *      record Point(int x, int y){...}
+	 *      var myProperty = Var.ofNullable(Point.class, new Point(1,2));
+	 *  	myProperty.updateNullable(From.View, it -&gt; it == null ? it : it.withY(42) );
+	 *  }&lt;/pre&gt;
+	 *  This takes the current item, even if it is null, and applies the
+	 *  given mapper function to it, which will then be used to set the new item
+	 *  on the supplied {@link Channel}.
+	 *  Note that this is essentially just a convenience method which will
+	 *  call the {@link #set(Channel, Object)} for you, which means that
+	 *  the same change listeners will be triggered if the item changes.
+	 *  &lt;p&gt;
+	 *  &lt;b&gt;
+	 *      Note that any exceptions thrown by the mapper will not be caught and
+	 *      will be propagated to the caller.
+	 *  &lt;/b&gt;
+	 *
+	 * @param channel The {@link Channel} for which the associated change listener should be invoked.
+	 * @param mapper A function which take the current item or null and returns
+	 *               an item which will be used to set the new item.
+	 * @return This property instance, to allow for fluent method chaining.
+	 * @throws NullPointerException If the given mapper is null.
+	 */
+	default Var&lt;T&gt; updateNullable( Channel channel, Function&lt;@Nullable T,@Nullable T&gt; mapper ) {
+<span class="fc" id="L308">		Objects.requireNonNull(channel);</span>
+<span class="fc" id="L309">		Objects.requireNonNull(mapper);</span>
+<span class="fc" id="L310">		return this.set(channel, mapper.apply(this.orElseNull()));</span>
+	}
 
 	/**
 	 *  Use this method to create a new property with an id.
@@ -203,11 +347,11 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
 	 * 			the mapping function to the item of this property.
 	 */
 	@Override default Var&lt;T&gt; map( Function&lt;T, T&gt; mapper ) {
-<span class="nc bnc" id="L206" title="All 2 branches missed.">		if ( !isPresent() )</span>
-<span class="nc" id="L207">			return Var.ofNull( type() );</span>
+<span class="nc bnc" id="L350" title="All 2 branches missed.">		if ( !isPresent() )</span>
+<span class="nc" id="L351">			return Var.ofNull( type() );</span>
 
-<span class="nc" id="L209">		T newValue = mapper.apply( get() );</span>
-<span class="nc bnc" id="L210" title="All 2 branches missed.">		return allowsNull() ? Var.ofNullable( type(), newValue ) : Var.of( newValue );</span>
+<span class="nc" id="L353">		T newValue = mapper.apply( get() );</span>
+<span class="nc bnc" id="L354" title="All 2 branches missed.">		return allowsNull() ? Var.ofNullable( type(), newValue ) : Var.of( newValue );</span>
 	}
 
 	/**
@@ -231,7 +375,7 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
 	 * @param &lt;U&gt; The type of the item returned from the mapping function
 	 */
 	default @Override &lt;U extends @Nullable Object&gt; Var&lt;@Nullable U&gt; mapTo( Class&lt;U&gt; type, Function&lt;@NonNull T, U&gt; mapper ) {
-<span class="fc" id="L234">		return (Var&lt;U&gt;) Val.super.mapTo( type, mapper );</span>
+<span class="fc" id="L378">		return (Var&lt;U&gt;) Val.super.mapTo( type, mapper );</span>
 	}
 
 	/**
@@ -264,7 +408,7 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
 	 * @return A new Var that acts as a lens focusing on the specified field of the parent object.
 	 */
 	default &lt;B&gt; Var&lt;B&gt; zoomTo( Function&lt;T,B&gt; getter, BiFunction&lt;T,B,T&gt; wither ) {
-<span class="fc" id="L267">		return Sprouts.factory().lensOf( this, getter, wither );</span>
+<span class="fc" id="L411">		return Sprouts.factory().lensOf( this, getter, wither );</span>
 	}
 
 	/**
@@ -302,7 +446,7 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
 	 *         the null object when the parent object is null.
 	 */
 	default &lt;B&gt; Var&lt;B&gt; zoomTo( B nullObject, Function&lt;T,B&gt; getter, BiFunction&lt;T,B,T&gt; wither ) {
-<span class="fc" id="L305">		return Sprouts.factory().lensOf( this, nullObject, getter, wither );</span>
+<span class="fc" id="L449">		return Sprouts.factory().lensOf( this, nullObject, getter, wither );</span>
 	}
 
 	/**
@@ -332,7 +476,7 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
 	 * @return A new Var that acts as a lens focusing on the specified nullable field of the parent object.
 	 */
 	default &lt;B extends @Nullable Object&gt; Var&lt;B&gt; zoomToNullable( Class&lt;B&gt; type, Function&lt;T,B&gt; getter, BiFunction&lt;T,B,T&gt; wither ) {
-<span class="fc" id="L335">		return Sprouts.factory().lensOfNullable(type, this, getter, wither);</span>
+<span class="fc" id="L479">		return Sprouts.factory().lensOfNullable(type, this, getter, wither);</span>
 	}
 
 }
