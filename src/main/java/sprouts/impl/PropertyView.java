@@ -5,7 +5,6 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import sprouts.*;
 
-import java.lang.ref.WeakReference;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -110,8 +109,8 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 		};
 
 		T initial = fullCombiner.apply(first, second);
-		WeakReference<Val<T>> weakFirst = new WeakReference<>(first);
-		WeakReference<Val<U>> weakSecond = new WeakReference<>(second);
+		ParentRef<Val<T>> weakFirst = ParentRef.of(first);
+		ParentRef<Val<U>> weakSecond = ParentRef.of(second);
 		Objects.requireNonNull(initial,"The result of the combiner function is null, but the property does not allow null items!");
 		BiConsumer<Var<T>,Val<T>> firstListener = (innerResult,v) -> {
 			Val<U> innerSecond = weakSecond.get();
@@ -177,8 +176,8 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 		}
 
 		Var<@Nullable T> result = PropertyView.ofNullable(first.type(), initial ).withId(id);
-		WeakReference<Val<T>> weakFirst = new WeakReference<>(first);
-		WeakReference<Val<U>> weakSecond = new WeakReference<>(second);
+		ParentRef<Val<T>> weakFirst = ParentRef.of(first);
+		ParentRef<Val<U>> weakSecond = ParentRef.of(second);
 		if ( !firstIsImmutable )
 			first.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
 				Val<U> innerSecond = weakSecond.get();
@@ -218,8 +217,8 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 			throw new NullPointerException("The result of the combiner function is null, but the property does not allow null items!");
 
 		Var<R> result = PropertyView.of(type, initial ).withId(id);
-		WeakReference<Val<T>> weakFirst = new WeakReference<>(first);
-		WeakReference<Val<U>> weakSecond = new WeakReference<>(second);
+		ParentRef<Val<T>> weakFirst = ParentRef.of(first);
+		ParentRef<Val<U>> weakSecond = ParentRef.of(second);
 
 		first.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
 			Val<U> innerSecond = weakSecond.get();
@@ -271,8 +270,8 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 		};
 
 		Var<@Nullable R> result =  PropertyView.ofNullable(type, fullCombiner.apply(first, second) ).withId(id);
-		WeakReference<Val<T>> weakFirst = new WeakReference<>(first);
-		WeakReference<Val<U>> weakSecond = new WeakReference<>(second);
+		ParentRef<Val<T>> weakFirst = ParentRef.of(first);
+		ParentRef<Val<U>> weakSecond = ParentRef.of(second);
 		first.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
 			Val<U> innerSecond = weakSecond.get();
 			if ( innerSecond == null )
