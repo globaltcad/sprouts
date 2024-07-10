@@ -308,17 +308,19 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 
 
 	private PropertyView(
-        Class<T>    type,
-        String      id,
-        boolean     allowsNull,
-        @Nullable T iniValue // may be null
+        Class<T> type,
+        @Nullable T iniValue,
+        String id,
+        ChangeListeners<T> changeListeners,
+        boolean allowsNull
     ) {
 		Objects.requireNonNull(id);
 		Objects.requireNonNull(type);
-		_type     = type;
-		_id       = id;
-		_nullable = allowsNull;
-		_currentItem = iniValue;
+		Objects.requireNonNull(changeListeners);
+		_type            = type;
+		_id              = id;
+		_nullable        = allowsNull;
+		_currentItem     = iniValue;
 		_changeListeners = new ChangeListeners<>();
 
 		if ( _currentItem != null ) {
@@ -326,32 +328,19 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 			if ( !_type.isAssignableFrom(_currentItem.getClass()) )
 				throw new IllegalArgumentException(
 						"The provided type of the initial item is not compatible " +
-						"with the actual type of the variable"
-					);
+								"with the actual type of the variable"
+				);
 		}
 		if ( !ID_PATTERN.matcher(_id).matches() )
 			throw new IllegalArgumentException(
-				"The provided id '"+_id+"' is not valid! It must match " +
-				"the pattern '"+ID_PATTERN.pattern()+"'."
+					"The provided id '"+_id+"' is not valid! It must match " +
+							"the pattern '"+ID_PATTERN.pattern()+"'."
 			);
 		if ( !allowsNull && iniValue == null )
 			throw new IllegalArgumentException(
-						"The provided initial item is null, " +
-						"but this property view does not allow null items!"
-					);
-	}
-
-	private PropertyView(
-        Class<T> type,
-        @Nullable T iniValue,
-        String id,
-        ChangeListeners<T> changeListeners,
-        boolean allowsNull
-    ) {
-		this( type, id, allowsNull, iniValue );
-		Objects.requireNonNull(id);
-		Objects.requireNonNull(type);
-		Objects.requireNonNull(changeListeners);
+					"The provided initial item is null, " +
+							"but this property view does not allow null items!"
+			);
 	}
 
 	/** {@inheritDoc} */
