@@ -5,7 +5,6 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import sprouts.*;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -23,14 +22,14 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 
 	private static final Logger log = org.slf4j.LoggerFactory.getLogger(PropertyView.class);
 
-	private static @Nullable Val<?>[] _filterStrongParentRefs( @Nullable Val<?>[] parentRefs ) {
+	private static @Nullable ParentRef<@Nullable Val<?>>[] _filterStrongParentRefs( @Nullable Val<?>[] parentRefs ) {
+		ParentRef<@Nullable Val<?>>[] strongParentRefs = new ParentRef[parentRefs.length];
 		for ( int i = 0; i < parentRefs.length; i++ ) {
 			Val<?> property = parentRefs[i];
 			Objects.requireNonNull(property);
-			if ( !property.isView() && !property.isLens() )
-				parentRefs[i] = null;
+			strongParentRefs[i] = ParentRef.of(property);
 		}
-		return parentRefs;
+		return strongParentRefs;
 	}
 
 	private static <T> PropertyView<@Nullable T> _ofNullable( Class<T> type, @Nullable T item, Val<?>... strongParentRefs ) {
@@ -119,11 +118,9 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 		};
 
 		T initial = fullCombiner.apply(first, second);
-		ParentRef<Val<T>> weakFirst = ParentRef.of(first);
-		ParentRef<Val<U>> weakSecond = ParentRef.of(second);
 		Objects.requireNonNull(initial,"The result of the combiner function is null, but the property does not allow null items!");
-		BiConsumer<Var<T>,Val<T>> firstListener = (innerResult,v) -> {
-			Val<U> innerSecond = weakSecond.get();
+		BiConsumer<PropertyView<T>,Val<T>> firstListener = (innerResult,v) -> {
+			Val<U> innerSecond = innerResult._getSource(1);
 			if (innerSecond == null)
 				return;
 			T newItem = fullCombiner.apply(v, innerSecond);
@@ -136,8 +133,8 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 			else
 				innerResult.set(From.ALL, newItem);
 		};
-		BiConsumer<Var<T>,Val<U>> secondListener = (innerResult,v) -> {
-			Val<T> innerFirst = weakFirst.get();
+		BiConsumer<PropertyView<T>,Val<U>> secondListener = (innerResult,v) -> {
+			Val<T> innerFirst = innerResult._getSource(0);
 			if (innerFirst == null)
 				return;
 			T newItem = fullCombiner.apply(innerFirst, v);
@@ -157,7 +154,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 			return initial == null ? Val.ofNull(first.type()) : Val.of(initial);
 		}
 
-		Var<T> result = PropertyView._of( first.type(), initial, first, second ).withId(id);
+		PropertyView<T> result = PropertyView._of( first.type(), initial, first, second ).withId(id);
 		if ( !firstIsImmutable )
 			first.onChange(From.ALL, Action.ofWeak( result, firstListener ));
 		if ( !secondIsImmutable )
@@ -186,18 +183,16 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 		}
 
 		PropertyView<@Nullable T> result = PropertyView._ofNullable( first.type(), initial, first, second ).withId(id);
-		ParentRef<Val<T>> weakFirst = ParentRef.of(first);
-		ParentRef<Val<U>> weakSecond = ParentRef.of(second);
 		if ( !firstIsImmutable )
 			first.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
-				Val<U> innerSecond = weakSecond.get();
+				Val<U> innerSecond = innerResult._getSource(1);
 				if ( innerSecond == null )
 					return;
 				innerResult.set(From.ALL, fullCombiner.apply(v, innerSecond) );
 			}));
 		if ( !secondIsImmutable )
 			second.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
-				Val<T> innerFirst = weakFirst.get();
+				Val<T> innerFirst = innerResult._getSource(0);
 				if ( innerFirst == null )
 					return;
 				innerResult.set(From.ALL, fullCombiner.apply(innerFirst, v) );
@@ -227,11 +222,9 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 			throw new NullPointerException("The result of the combiner function is null, but the property does not allow null items!");
 
 		PropertyView<R> result = PropertyView._of(type, initial, first, second ).withId(id);
-		ParentRef<Val<T>> weakFirst = ParentRef.of(first);
-		ParentRef<Val<U>> weakSecond = ParentRef.of(second);
 
 		first.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
-			Val<U> innerSecond = weakSecond.get();
+			Val<U> innerSecond = innerResult._getSource(1);
 			if ( innerSecond == null )
 				return;
 			@Nullable R newItem = fullCombiner.apply(v, innerSecond);
@@ -246,7 +239,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 				innerResult.set(From.ALL, newItem);
 		}));
 		second.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
-			Val<T> innerFirst = weakFirst.get();
+			Val<T> innerFirst = innerResult._getSource(0);
 			if ( innerFirst == null )
 				return;
 			@Nullable R newItem = fullCombiner.apply(innerFirst, v);
@@ -280,16 +273,14 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 		};
 
 		PropertyView<@Nullable R> result =  PropertyView._ofNullable( type, fullCombiner.apply(first, second), first, second ).withId(id);
-		ParentRef<Val<T>> weakFirst = ParentRef.of(first);
-		ParentRef<Val<U>> weakSecond = ParentRef.of(second);
 		first.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
-			Val<U> innerSecond = weakSecond.get();
+			Val<U> innerSecond = innerResult._getSource(1);
 			if ( innerSecond == null )
 				return;
 			innerResult.set(From.ALL, fullCombiner.apply(v, innerSecond));
 		}));
 		second.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
-			Val<T> innerFirst = weakFirst.get();
+			Val<T> innerFirst = innerResult._getSource(0);
 			if ( innerFirst == null )
 				return;
 			innerResult.set(From.ALL, fullCombiner.apply(innerFirst, v));
@@ -316,7 +307,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 
 	@Nullable private T _currentItem;
 
-	private final Val<?>[] _strongParentRefs;
+	private final ParentRef<Val<?>>[] _strongParentRefs;
 
 
 	private PropertyView(
@@ -325,7 +316,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
         String id,
         ChangeListeners<T> changeListeners,
         boolean allowsNull,
-		Val<?>[] strongParentRefs
+		ParentRef<Val<?>>[] strongParentRefs
     ) {
 		Objects.requireNonNull(id);
 		Objects.requireNonNull(type);
@@ -356,6 +347,12 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 					"The provided initial item is null, " +
 							"but this property view does not allow null items!"
 			);
+	}
+
+	private <T> Val<T> _getSource( int index ) {
+		if ( index < 0 || index >= _strongParentRefs.length )
+			throw new IndexOutOfBoundsException("The index "+index+" is out of bounds!");
+		return (Val) _strongParentRefs[index].get();
 	}
 
 	/** {@inheritDoc} */
