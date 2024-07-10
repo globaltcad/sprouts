@@ -22,9 +22,12 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 
 	private static final Logger log = org.slf4j.LoggerFactory.getLogger(PropertyView.class);
 
-
-	public static <T> Var<@Nullable T> ofNullable( Class<T> type, @Nullable T item ) {
+	private static <T> Var<@Nullable T> _ofNullable( Class<T> type, @Nullable T item ) {
 		return new PropertyView<>(type, item, NO_ID, new ChangeListeners<>(), true);
+	}
+
+	private static <T> PropertyView<T> _of( Class<T> type, T item ) {
+		return new PropertyView<>(type, item, NO_ID, new ChangeListeners<>(), false);
 	}
 
 	public static <T, U> Val<@Nullable U> ofNullable(Class<U> type, Val<T> source, Function<T, @Nullable U> mapper) {
@@ -32,15 +35,11 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 		if ( source.isImmutable() ) {
 			return initialItem == null ? Val.ofNull(type) : Val.of(initialItem);
 		}
-		final Var<@Nullable U> viewProperty = PropertyView.ofNullable(type, initialItem);
+		final Var<@Nullable U> viewProperty = PropertyView._ofNullable(type, initialItem);
 		source.onChange(Util.VIEW_CHANNEL, Action.ofWeak( viewProperty, (innerViewProperty, v) -> {
 			innerViewProperty.set(mapper.apply(v.orElseNull()));
 		}));
 		return viewProperty;
-	}
-
-	public static <T> Var<T> of( Class<T> type, T item ) {
-		return new PropertyView<>(type, item, NO_ID, new ChangeListeners<>(), false);
 	}
 
 	public static <T, U> Val<U> of( U nullObject, U errorObject, Val<T> source, Function<T, @Nullable U> mapper) {
@@ -55,7 +54,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 			return Val.of(initial); // A nice little optimization: a view of an immutable property is also immutable.
 		}
 
-		final Var<U> viewProperty = PropertyView.of( targetType, initial );
+		final Var<U> viewProperty = PropertyView._of( targetType, initial );
 		source.onChange(Util.VIEW_CHANNEL, Action.ofWeak( viewProperty, (innerViewProperty, v) -> {
 			final U value = nonNullMapper.apply(source.orElseNull());
 			innerViewProperty.set( value );
@@ -67,7 +66,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 		@Nullable T initialItem = mapper.apply(parent.orElseNull());
 		if ( parent.isMutable() && parent instanceof Var ) {
 			Var<U> source = (Var<U>) parent;
-			PropertyView<T> view = new PropertyView<T>(type, initialItem, NO_ID, new ChangeListeners<>(), false );
+			PropertyView<T> view = PropertyView._of( type, initialItem );
 			source.onChange(From.ALL, Action.ofWeak(view, (innerViewProperty, v) -> {
 				innerViewProperty.set(mapper.apply(v.orElseNull()));
 			}));
@@ -147,7 +146,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 			return initial == null ? Val.ofNull(first.type()) : Val.of(initial);
 		}
 
-		Var<T> result = PropertyView.of(first.type(), initial ).withId(id);
+		Var<T> result = PropertyView._of(first.type(), initial ).withId(id);
 		if ( !firstIsImmutable )
 			first.onChange(From.ALL, Action.ofWeak( result, firstListener ));
 		if ( !secondIsImmutable )
@@ -175,7 +174,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 			return initial == null ? Val.ofNull(first.type()) : Val.of(initial);
 		}
 
-		Var<@Nullable T> result = PropertyView.ofNullable(first.type(), initial ).withId(id);
+		Var<@Nullable T> result = PropertyView._ofNullable(first.type(), initial ).withId(id);
 		ParentRef<Val<T>> weakFirst = ParentRef.of(first);
 		ParentRef<Val<U>> weakSecond = ParentRef.of(second);
 		if ( !firstIsImmutable )
@@ -216,7 +215,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 		if (initial == null)
 			throw new NullPointerException("The result of the combiner function is null, but the property does not allow null items!");
 
-		Var<R> result = PropertyView.of(type, initial ).withId(id);
+		Var<R> result = PropertyView._of(type, initial ).withId(id);
 		ParentRef<Val<T>> weakFirst = ParentRef.of(first);
 		ParentRef<Val<U>> weakSecond = ParentRef.of(second);
 
@@ -269,7 +268,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 			}
 		};
 
-		Var<@Nullable R> result =  PropertyView.ofNullable(type, fullCombiner.apply(first, second) ).withId(id);
+		Var<@Nullable R> result =  PropertyView._ofNullable(type, fullCombiner.apply(first, second) ).withId(id);
 		ParentRef<Val<T>> weakFirst = ParentRef.of(first);
 		ParentRef<Val<U>> weakSecond = ParentRef.of(second);
 		first.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
