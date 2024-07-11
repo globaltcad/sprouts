@@ -20,7 +20,7 @@ println "Static analysis enabled: $WE_CAN_DO_STATIC_ANALYSIS"
 
 String GROUP_ID = "io.github.globaltcad"
 String PROJECT  = "sprouts"
-String VERSION  = "2.0.0-M6"
+String VERSION  = "2.0.0-M7"
 
 
 group GROUP_ID
