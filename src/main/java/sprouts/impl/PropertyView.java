@@ -352,7 +352,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 			);
 	}
 
-	private <T> @Nullable Val<T> _getSource( int index ) {
+	private <P> @Nullable Val<P> _getSource(int index ) {
 		if ( index < 0 || index >= _strongParentRefs.length )
 			throw new IndexOutOfBoundsException("The index "+index+" is out of bounds!");
 		return (Val) _strongParentRefs[index].get();
