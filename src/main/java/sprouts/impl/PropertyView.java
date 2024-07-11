@@ -22,7 +22,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 
 	private static final Logger log = org.slf4j.LoggerFactory.getLogger(PropertyView.class);
 
-	private static @Nullable ParentRef<@Nullable Val<?>>[] _filterStrongParentRefs( @Nullable Val<?>[] parentRefs ) {
+	private static ParentRef<@Nullable Val<?>>[] _filterStrongParentRefs( Val<?>[] parentRefs ) {
 		ParentRef<@Nullable Val<?>>[] strongParentRefs = new ParentRef[parentRefs.length];
 		for ( int i = 0; i < parentRefs.length; i++ ) {
 			Val<?> property = parentRefs[i];
@@ -66,7 +66,9 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 
 		final PropertyView<U> viewProperty = PropertyView._of( targetType, initial, source );
 		source.onChange(Util.VIEW_CHANNEL, Action.ofWeak( viewProperty, (innerViewProperty, v) -> {
-			Val<T> innerSource = innerViewProperty._getSource(0);
+			@Nullable Val<T> innerSource = innerViewProperty._getSource(0);
+			if ( innerSource == null )
+				return;
 			final U value = nonNullMapper.apply(innerSource.orElseNull());
 			innerViewProperty.set( value );
 		}));
@@ -308,7 +310,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 
 	@Nullable private T _currentItem;
 
-	private final ParentRef<Val<?>>[] _strongParentRefs;
+	private final ParentRef<@Nullable Val<?>>[] _strongParentRefs;
 
 
 	private PropertyView(
@@ -317,7 +319,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
         String id,
         ChangeListeners<T> changeListeners,
         boolean allowsNull,
-		ParentRef<Val<?>>[] strongParentRefs
+		ParentRef<@Nullable Val<?>>[] strongParentRefs
     ) {
 		Objects.requireNonNull(id);
 		Objects.requireNonNull(type);
@@ -350,7 +352,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 			);
 	}
 
-	private <T> Val<T> _getSource( int index ) {
+	private <T> @Nullable Val<T> _getSource( int index ) {
 		if ( index < 0 || index >= _strongParentRefs.length )
 			throw new IndexOutOfBoundsException("The index "+index+" is out of bounds!");
 		return (Val) _strongParentRefs[index].get();
