@@ -190,7 +190,7 @@ public final class Sprouts implements SproutsFactory
                 Val.NO_ID,
                 false,//does not allow null
                 initialValue, //may NOT be null
-                new WeakReference<>(source),
+                ParentRef.of(source),
                 getter,
                 wither,
                 null

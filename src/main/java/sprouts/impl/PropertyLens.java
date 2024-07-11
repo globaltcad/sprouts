@@ -4,7 +4,6 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import sprouts.*;
 
-import java.lang.ref.WeakReference;
 import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -68,7 +67,7 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
                 Val.NO_ID,
                 false,//does not allow null
                 initialValue, //may NOT be null
-                new WeakReference<>(source),
+                ParentRef.of(source),
                 nullSafeGetter,
                 nullSafeWither,
                 null
@@ -97,20 +96,20 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
                 Val.NO_ID,
                 true,//allows null
                 initialValue, //may be null
-                new WeakReference<>(source),
+                ParentRef.of(source),
                 nullSafeGetter,
                 nullSafeWither,
                 null
         );
     }
 
-    private final ChangeListeners<T>    _changeListeners;
-    private final String                _id;
-    private final boolean               _nullable;
-    private final Class<T>              _type;
-    private final WeakReference<Var<A>> _parent;
-    Function<A,@Nullable T>             _getter;
-    BiFunction<A,@Nullable T,A>         _setter;
+    private final ChangeListeners<T> _changeListeners;
+    private final String             _id;
+    private final boolean            _nullable;
+    private final Class<T>           _type;
+    private final ParentRef<Var<A>>  _parent;
+    Function<A,@Nullable T>          _getter;
+    BiFunction<A,@Nullable T,A>      _setter;
 
     private @Nullable T _lastItem;
 
@@ -120,7 +119,7 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
             String                          id,
             boolean                         allowsNull,
             @Nullable T                     initialItem, // may be null
-            WeakReference<Var<A>>           parent,
+            ParentRef<Var<A>>               parent,
             Function<A,@Nullable T>         getter,
             BiFunction<A,@Nullable T,A>     wither,
             @Nullable ChangeListeners<T>    changeListeners

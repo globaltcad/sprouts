@@ -431,6 +431,60 @@ class Viewing_Properties_Spec extends Specification
             view.numberOfChangeListeners() == 0
     }
 
+    def 'A chain of views may not be garbage collected.'()
+    {
+        reportInfo """
+            Every view holds a reference to the source property it is viewing.
+            So if a chain of views is created, the source property will be referenced by all views in the chain.
+            These references may be weak references if the parent property is not a view itself.
+            This is also true for lenses, which are also always strong references.
+            A plain property on the other hand is weakly referenced by the views.
+            So the chain of views may not be garbage collected if the source property is not garbage collected.
+        """
+        given : 'A property based on an enum.'
+            var dayOfWeekProp = Var.of(DayOfWeek.FRIDAY)
+        and : 'A chain of views.'
+            Val<String> view1 = dayOfWeekProp.viewAsString(DayOfWeek::name)
+            Val<String> view2 = view1.view(s -> s + " is a good day")
+            Val<String> view3 = view2.view(s -> s + " to have a party")
+        and : """
+            Now we store all of these references in a list of WeakReference objects.
+            This way we can check which of the references are still present
+            after awaiting garbage collection.
+        """
+            var refs = [
+                    new WeakReference(dayOfWeekProp), new WeakReference(view1),
+                    new WeakReference(view2), new WeakReference(view3)
+                ]
+        expect : 'All references are still present after awaiting garbage collection.'
+            refs.every( it -> it.get() != null )
+        and : 'Each property has the expected number of change listeners for their respective child.'
+            dayOfWeekProp.numberOfChangeListeners() == 1
+            view1.numberOfChangeListeners() == 1
+            view2.numberOfChangeListeners() == 1
+            view3.numberOfChangeListeners() == 0
+
+        when : 'We now remove the intermediate views from the chain.'
+            view1 = null
+            view2 = null
+        and : 'We await garbage collection.'
+            waitForGarbageCollection()
+            Thread.sleep(500)
+        then : 'Every reference is still present.'
+            refs.every( it -> it.get() != null )
+
+        when : 'We remove the last view from the chain.'
+            view3 = null
+        and : 'We await garbage collection.'
+            waitForGarbageCollection()
+            Thread.sleep(500)
+        then : 'All views were garbage collected, but the source is still there.'
+            refs[0].get() != null
+            refs[1].get() == null
+            refs[2].get() == null
+            refs[3].get() == null
+    }
+
     /**
      * This method guarantees that garbage collection is
      * done unlike <code>{@link System#gc()}</code>
