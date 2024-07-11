@@ -464,7 +464,6 @@ class Viewing_Properties_Spec extends Specification
             view2.numberOfChangeListeners() == 1
             view3.numberOfChangeListeners() == 0
 
-
         when : 'We now remove the intermediate views from the chain.'
             view1 = null
             view2 = null
@@ -472,13 +471,13 @@ class Viewing_Properties_Spec extends Specification
             waitForGarbageCollection()
             Thread.sleep(500)
         then : 'Every reference is still present.'
-            refs[0].get() != null
-            refs[1].get() != null
-            refs[2].get() != null
-            refs[3].get() != null
+            refs.every( it -> it.get() != null )
 
         when : 'We remove the last view from the chain.'
             view3 = null
+        and : 'We await garbage collection.'
+            waitForGarbageCollection()
+            Thread.sleep(500)
         then : 'All views were garbage collected, but the source is still there.'
             refs[0].get() != null
             refs[1].get() == null
