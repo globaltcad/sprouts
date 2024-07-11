@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ParentRef.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sprouts</a> &gt; <a href="index.source.html" class="el_package">sprouts.impl</a> &gt; <span class="el_source">ParentRef.java</span></div><h1>ParentRef.java</h1><pre class="source lang-java linenums">package sprouts.impl;
+
+import org.jspecify.annotations.Nullable;
+import sprouts.Val;
+
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
+
+/**
+ *  The {@link PropertyView} and {@link PropertyLens} classes have
+ *  references to parent properties. It may or may not make sense to
+ *  keep a strong reference to the parent property.&lt;br&gt;
+ *  A regular mutable property should not keep a strong reference
+ *  as it would prevent the parent property from being garbage collected.&lt;br&gt;
+ *  For views and lenses we expect a use-case where you may want to
+ *  build a chain of views/lenses on other views/lenses. In this case
+ *  it makes sense to keep a strong reference to the parent property
+ *  so that this chain of properties is not garbage collected.&lt;br&gt;
+ *
+ * @param &lt;V&gt; The type of the parent property.
+ */
+interface ParentRef&lt;V extends Val&lt;?&gt;&gt; {
+
+    static &lt;T extends Val&lt;?&gt;&gt; ParentRef&lt;T&gt; of( Reference&lt;T&gt; ref ) {
+<span class="fc" id="L25">        return ref::get;</span>
+    }
+
+    static &lt;T extends Val&lt;?&gt;&gt; ParentRef&lt;T&gt; of( T value ) {
+<span class="fc bfc" id="L29" title="All 4 branches covered.">        if ( value.isView() || value.isLens() )</span>
+<span class="fc" id="L30">            return ()-&gt;value;</span>
+        else
+<span class="fc" id="L32">            return of(new WeakReference&lt;&gt;(value));</span>
+    }
+
+    @Nullable
+    V get();
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

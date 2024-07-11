@@ -1,0 +1,261 @@
+{
+  "className":"sprouts.Composite_Properties_Spec",
+  "title":"Composite Property Views",
+  "narrative":"A composite property view is an immutable property that is a live view of two other properties.\n    It is especially useful when you want to observe 2 properties merged into one maybe with some\n    sort of transformation applied to them.",
+  "subjects":[],
+  "statistics":{
+    "runs":"9",
+    "successRate":"100.0%",
+    "failures":"0",
+    "errors":"0",
+    "skipped":"0",
+    "duration":"?"
+  },
+  "headers":[],"tags":{},"see":[],
+  "features":[ 
+    {
+      "id":"A composite property view is a live view of 2 other properties.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A composite property view is an immutable property that is a live view of 2 other properties.\n            whose items are merged into one using a simple lambda function that takes the 2 items as arguments\n            and returns the merged item. The function is called every time one of the 2 properties changes, \n            and the view is updated with the result of the function.\n\n            It is especially useful when you want to observe 2 properties merged into one maybe with some\n            sort of transformation applied to them.\n\n            A classic example is to merge a forename and a surname into a full name.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We have 2properties modelling a forename and a surname of a person.","code":["Var<String> forename = Var.of(\"John\")","Var<String> surname = Var.of(\"Doe\")"]},
+
+        {"kind":"and","text":"Now we create a view of the 2 properties that represents the full name.","code":["Val<String> fullName = Val.viewOf(forename, surname, (f, s) -> f + \" \" + s)"]},
+
+        {"kind":"expect","text":"Initially, the view has the expected value.","code":["fullName.get() == \"John Doe\""]},
+
+        {"kind":"when","text":"We change the value of the properties.","code":["forename.set(\"Jane\")","surname.set(\"Smith\")"]},
+
+        {"kind":"then","text":"The full name view has the new item which is the first name and the last name merged.","code":["fullName.get() == \"Jane Smith\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A composite property view created using the `Val.viewOf(..)` does not update when receiving `null` items",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A composite property view created using the `Val.viewOf(..)` does not allow `null` items.\n            This does not mean that the properties it is composed of cannot be nullable, it just means\n            that the items produced by the combiner function cannot be `null`.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We have 2 properties modelling the address of a person.","code":["Var<String> street = Var.of(\"Kingsway\")","Var<Integer> number = Var.of(123)"]},
+
+        {"kind":"and","text":"Now we create a view of the 2 properties that represents the full address.","code":["Val<String> fullAddress = Val.viewOf(street, number, (s, n) -> s.isEmpty() ? null : s + \" \" + n)"]},
+
+        {"kind":"expect","text":"The view does not allow null items.","code":["!fullAddress.allowsNull()"]},
+
+        {"kind":"when","text":"We turn the street into an empty string to cause the view to produce a `null` item.","code":["street.set(\"\")"]},
+
+        {"kind":"then","text":"The view will retain the old value.","code":["fullAddress.get() == \"Kingsway 123\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A non nullable composite property view may be created from two nullable properties.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Although a composite property view created using the `Val.viewOf(..)` does permit `null` items\n            itself, it may be created from two nullable properties, as long as the combiner function\n            does not produce `null` items.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"\n            We have 2 properties modelling the weight and height of a person.\n            These properties are nullable for this example.\n        ","code":["Var<Double> weight = Var.ofNullable(Double, 80d)","Var<Double> height = Var.ofNullable(Double, 1.8d)"]},
+
+        {"kind":"and","text":"A view of the 2 properties that represents the BMI.","code":["Val<Double> bmi = Val.viewOf(weight, height, (w, h) -> w / (h * h))"]},
+
+        {"kind":"expect","text":"The view does not allow `null` items.","code":["!bmi.allowsNull()"]},
+
+        {"kind":"and","text":"The view has the expected value.","code":["bmi.get() == 24.691358024691358d"]},
+
+        {"kind":"when","text":"We set the weight to `null`.","code":["weight.set(null)"]},
+
+        {"kind":"then","text":"The view will retain the old value.","code":["bmi.get() == 24.691358024691358d"]},
+
+        {"kind":"when","text":"We create a new view with the 2 properties and the same combiner.","code":["Val.viewOf(weight, height, (w, h) -> w / (h * h))"]},
+
+        {"kind":"then","text":"\n            Note that one of these properties is empty, which means that the combiner function will throw an exception\n            when invoked with their items.\n            An exception in the combiner function on the first call will throw a `NullPointerException`.\n        ","code":["thrown(NullPointerException)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A composite property view created using the `Val.viewOfNullable(..)` allows `null`.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A composite property view created using the `Val.viewOfNullable(..)` allows `null` items.\n            This means that the items produced by the combiner function can be `null`.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We have 2 properties modelling the address of a person.","code":["Var<String> street = Var.of(\"Kingsway\")","Var<Integer> number = Var.of(123)"]},
+
+        {"kind":"and","text":"Now we create a view of the 2 properties that represents the full address.","code":["Val<String> fullAddress = Val.viewOfNullable(street, number.viewAsString(), (s, n) -> s.isEmpty() ? null : s + \" \" + n)"]},
+
+        {"kind":"expect","text":"The view allows `null` items.","code":["fullAddress.allowsNull()"]},
+
+        {"kind":"when","text":"We turn the street into an empty string to cause the view to produce a `null` item.","code":["street.set(\"\")"]},
+
+        {"kind":"then","text":"No exception is thrown.","code":["noExceptionThrown()"]},
+
+        {"kind":"and","text":"The view produces a `null` item.","code":["fullAddress.orElseNull() == null"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Some non-nullable composite properties created using the `Val.viewOf(..)` method cannot deal with `null`.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Some non-nullable composite properties created using the `Lal.viewOf(..)` method cannot deal with potential\n            `null` items produced by the combiner function, due to the type of the view\n            not having a default value (which is the case for primitive types or strings).\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We are using `Date` based properties.","code":["Var<Date> date1 = Var.ofNullable(Date.class, new Date())","Var<Date> date2 = Var.ofNullable(Date.class, new Date())"]},
+
+        {"kind":"and","text":"A view of the 2 properties that represents the earliest date, or `null` if any of the dates is `null`.","code":["Val<Date> earliestDate = Val.viewOf(date1, date2, (d1, d2) -> (d1==null||d2==null) ? null : d1.before(d2) ? d1 : d2)"]},
+
+        {"kind":"expect","text":"The view tells us that it does not allow `null` items.","code":["!earliestDate.allowsNull()"]},
+
+        {"kind":"and","text":"It contains an initial value.","code":["earliestDate.get() != null"]},
+
+        {"kind":"when","text":"We set the first date to `null`.","code":["date1.set(null)"]},
+
+        {"kind":"then","text":"\n            You might expect the view to either produce a `null` item, or to throw an exception.\n            But, you have to remember that a view tries to be resilient to exceptions, which \n            includes null-pointer exceptions. \n\n            So what this means in practice is that in this case, the view will\n            log a warning and keep the last value it had.\n        ","code":["noExceptionThrown()"]},
+
+        {"kind":"and","text":"The view still contains the initial value.","code":["earliestDate.get() != null"]},
+
+        {"kind":"when","text":"\n            We take a look at a more unfortunate scenario where at least one of the dates is `null` initially,\n            then this whole situation is not going to work out without an exception being thrown\n            at you.\n        ","code":["date1 = Var.ofNull(Date)","date2 = Var.of(new Date())","earliestDate = Val.viewOf(date1, date2, (d1, d2) -> (d1==null) ? null : d1.before(d2) ? d1 : d2)"]},
+
+        {"kind":"then","text":"An exception is thrown.","code":["thrown(NullPointerException)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The second property of a composite view created using the `Val.viewOf(..)` and `Val.viewOfNullable(..)` methods can be of any type.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The type of the returned property view is determined by the first property, the second property can be\n            of any type.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create a property of type `String` and another property of type `Integer`.","code":["Var<String> stringVar = Var.ofNull(String.class)","Var<Integer> integerVar = Var.ofNull(Integer.class)"]},
+
+        {"kind":"and","text":"A nullable and a non-nullable composite view of the two properties.","code":["Val<String> view = Val.viewOf(stringVar, integerVar, (s, i) -> s + \":\" + i)","Val<String> nullableView = Val.viewOfNullable(stringVar, integerVar, (s, i) -> s == null || i == null ? null : s + \":\" + i)"]},
+
+        {"kind":"expect","text":"The views hold the expected value.","code":["view.get() == \"null:null\"","nullableView.isEmpty()"]},
+
+        {"kind":"and","text":"The views have the correct nullability.","code":["!view.allowsNull()","nullableView.allowsNull()"]},
+
+        {"kind":"when","text":"We update the first property.","code":["stringVar.set(\"string\")"]},
+
+        {"kind":"then","text":"The views hold the expected value.","code":["view.get() == \"string:null\"","nullableView.isEmpty()"]},
+
+        {"kind":"when","text":"We update the second property.","code":["integerVar.set(42)"]},
+
+        {"kind":"then","text":"The views hold the expected value.","code":["view.get() == \"string:42\"","nullableView.get() == \"string:42\""]},
+
+        {"kind":"when","text":"We update the first property.","code":["stringVar.set(null)"]},
+
+        {"kind":"then","text":"The views hold the expected value.","code":["view.get() == \"null:42\"","nullableView.isEmpty()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You can combine different types into a composite property view.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            You can combine properties of different types into a live view. The view itself can also be of any type.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create a property of type `Integer` and another property of type `Double`.","code":["Var<Integer> integerVar = Var.ofNullable(Integer.class, 4)","Var<Double> doubleVar = Var.ofNullable(Double.class, 0.5d)"]},
+
+        {"kind":"and","text":"A composite view of the two properties.","code":["Val<String> view = Val.viewOf(String.class, integerVar, doubleVar, (i, d) -> i == null ? null : String.format(\"%d * %.1f = %.1f\", i, d, i * d))"]},
+
+        {"kind":"expect","text":"The view holds the expected value.","code":["view.get() == \"4 * 0.5 = 2.0\""]},
+
+        {"kind":"when","text":"We update the first property.","code":["integerVar.set(9)"]},
+
+        {"kind":"then","text":"The view holds the expected value.","code":["view.get() == \"9 * 0.5 = 4.5\""]},
+
+        {"kind":"when","text":"We update the second property.","code":["doubleVar.set(1d/3d)"]},
+
+        {"kind":"then","text":"The view holds the expected value.","code":["view.get() == \"9 * 0.3 = 3.0\""]},
+
+        {"kind":"when","text":"We set a value so that the combiner returns `null`.","code":["integerVar.set(null)"]},
+
+        {"kind":"then","text":"The view is not updated and still retains the old value.","code":["view.get() == \"9 * 0.3 = 3.0\""]},
+
+        {"kind":"when","text":"We set a value so that the combiner returns throws an exception","code":["integerVar.set(9)","doubleVar.set(null)"]},
+
+        {"kind":"then","text":"The view is not updated and still retains the old value.","code":["view.get() == \"9 * 0.3 = 3.0\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You can combine different types into a nullable composite property view.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            You can combine properties of different types into a nullable live view. The view itself can also be of any\n            type.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create a property of type `Integer` and another property of type `Double`.","code":["Var<Integer> integerVar = Var.ofNullable(Integer.class, 4)","Var<Double> doubleVar = Var.ofNullable(Double.class, 0.5d)"]},
+
+        {"kind":"and","text":"A composite view of the two properties.","code":["Val<String> view = Val.viewOfNullable(String.class, integerVar, doubleVar, (i, d) -> i == null ? null : String.format(\"%d * %.1f = %.1f\", i, d, i * d))"]},
+
+        {"kind":"expect","text":"The view holds the expected value.","code":["view.get() == \"4 * 0.5 = 2.0\""]},
+
+        {"kind":"when","text":"We update the first property.","code":["integerVar.set(9)"]},
+
+        {"kind":"then","text":"The view holds the expected value.","code":["view.get() == \"9 * 0.5 = 4.5\""]},
+
+        {"kind":"when","text":"We update the second property.","code":["doubleVar.set(1d/3d)"]},
+
+        {"kind":"then","text":"The view holds the expected value.","code":["view.get() == \"9 * 0.3 = 3.0\""]},
+
+        {"kind":"when","text":"We set a value so that the combiner returns `null`.","code":["integerVar.set(null)"]},
+
+        {"kind":"then","text":"The view should be empty.","code":["view.isEmpty()"]},
+
+        {"kind":"when","text":"We set a value so that the combiner throws an exception","code":["integerVar.set(9)","doubleVar.set(null)"]},
+
+        {"kind":"then","text":"The view should be empty.","code":["view.isEmpty()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The change listeners of the parents of composite properties are garbage collected when the composite is no longer referenced strongly.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A composite property registers weak action listeners on its parent parent properties\n            it is actively viewing.\n            These weak listeners are automatically removed when the composite is garbage collected.\n            So when the property composite is no longer referenced strongly, it should be\n            garbage collected and the weak listeners should be removed\n            from the original properties as well.\n\n            We can verify this by checking the reported number of change listeners.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We have two parent properties, a long based property nad an enum property based on the `TimeUnit` enum.","code":["var longProperty = Var.of(0L)","var unitProperty = Var.of(TimeUnit.SECONDS)"]},
+
+        {"kind":"expect","text":"Initially there are no change listeners registered on the properties.","code":["unitProperty.numberOfChangeListeners() == 0","longProperty.numberOfChangeListeners() == 0"]},
+
+        {"kind":"when","text":"We create four (nullable and not-nullable) composite properties that are referenced strongly.","code":["var composite1 = Val.viewOfNullable(longProperty, unitProperty, (l, u) -> l + u.toMillis(1))","var composite2 = Val.viewOf(longProperty, unitProperty, (l, u) -> l + u.toMillis(1))","var composite3 = Val.viewOfNullable(String.class, longProperty, unitProperty, (l, u) -> l + \" \" + u)","var composite4 = Val.viewOf(String.class, longProperty, unitProperty, (l, u) -> l + \" \" + u)"]},
+
+        {"kind":"then","text":"The two parent properties have 4 change listeners registered.","code":["longProperty.numberOfChangeListeners() == 4","unitProperty.numberOfChangeListeners() == 4"]},
+
+        {"kind":"when","text":"We create four more views which we do not reference strongly.","code":["Val.viewOfNullable(longProperty, unitProperty, (l, u) -> l + u.toMillis(1))","Val.viewOf(longProperty, unitProperty, (l, u) -> l + u.toMillis(1))","Val.viewOfNullable(String.class, longProperty, unitProperty, (l, u) -> l + \" \" + u)","Val.viewOf(String.class, longProperty, unitProperty, (l, u) -> l + \" \" + u)"]},
+
+        {"kind":"and","text":"We wait for the garbage collector to run.","code":["waitForGarbageCollection()","Thread.sleep(500)"]},
+
+        {"kind":"then","text":"The two parent properties still have 4 change listeners registered.","code":["longProperty.numberOfChangeListeners() == 4","unitProperty.numberOfChangeListeners() == 4"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    }
+  
+  ],
+  "generator":"https://github.com/renatoathaydes/spock-reports"
+}

@@ -1,0 +1,300 @@
+{
+  "className":"sprouts.Common_Property_Views",
+  "title":"Common Property Views",
+  "narrative":"A property or property list is more than just a wrapper around values.\n    These interfaces have rich APIs that exposes a plethora of methods,\n    many of which are designed to inform you about\n    their contents without actually exposing them to you.\n\n    The relevant methods here are `Val::isEmpty`, `Val::isPresent` and `Vals::size`.\n    But these are not going to be conversed in this specification.\n    Instead we will focus on their \"views\", which can be created\n    through the `Val::viewIsEmpty`, `Val::viewIsPresent` and `Vals::viewSize` methods.\n\n    Each of these methods return a property which will always be \"up to date\"\n    with respect to the thing that is observed, and will be updated\n    automatically when the observed thing changes.",
+  "subjects":["sprouts.Var","sprouts.Val","sprouts.Vars","sprouts.Vals"],
+  "statistics":{
+    "runs":"12",
+    "successRate":"100.0%",
+    "failures":"0",
+    "errors":"0",
+    "skipped":"0",
+    "duration":"?"
+  },
+  "headers":[],"tags":{},"see":[],
+  "features":[ 
+    {
+      "id":"The `viewIsEmpty()` method returns a property that is true when the original property is empty, and false otherwise.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Calling `viewIsEmpty()` on a property will\n            be a view on the `isEmpty()` method of the property.\n            So when the boolean returned by `isEmpty()` changes,\n            the value of the view will change too.\n\n            Note that in this test we use a nullable property!\n            This is be cause only a nullable property can be empty.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A nullable property which is not empty.","code":["Var<String> name = Var.ofNullable(String, \"John\")"]},
+
+        {"kind":"and","text":"A view of the \"emptiness\" of the property.","code":["Val<Boolean> isEmpty = name.viewIsEmpty()"]},
+
+        {"kind":"expect","text":"The view is false initially.","code":["!isEmpty.get()"]},
+
+        {"kind":"when","text":"We change the value of the property to null.","code":["name.set(null)"]},
+
+        {"kind":"then","text":"The view becomes true.","code":["isEmpty.get()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A `viewIsEmpty()` property from a non nullable property is always false.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A non-nullable property does not permit null items,\n            which means that it cannot be empty.\n            Therefore, the view returned by `viewIsEmpty()`\n            will always be false.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A non-nullable property.","code":["Var<String> name = Var.of(String, \"John\")"]},
+
+        {"kind":"and","text":"A view of thr `isEmpty()` flag of the property.","code":["Val<Boolean> isEmpty = name.viewIsEmpty()"]},
+
+        {"kind":"expect","text":"Initially, the view is false.","code":["!isEmpty.get()"]},
+
+        {"kind":"when","text":"We change the value of the property to an empty string.","code":["name.set(\"\")"]},
+
+        {"kind":"then","text":"The view is still false, because the property does not contain null!","code":["!isEmpty.get()"]},
+
+        {"kind":"when","text":"We try to sneak in a null value to make it empty...","code":["name.set(null)"]},
+
+        {"kind":"then","text":"Boom! The property fights back by throwing an exception.","code":["thrown(NullPointerException)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `viewIsPresent()` method returns a property that is true when the original property is not empty, and false otherwise.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Calling `viewIsPresent()` on a property will\n            be a view on the `isPresent()` method of the property.\n            So when the boolean returned by `isPresent()` changes,\n            the value of the view will change too.\n\n            Note that in this test we use a nullable property!\n            This is be cause only a nullable property can be empty.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A nullable property which is not empty.","code":["Var<Integer> age = Var.ofNullable(Integer, 25)"]},
+
+        {"kind":"and","text":"A view of the \"presence\" of the item of the age property.","code":["Val<Boolean> isPresent = age.viewIsPresent()"]},
+
+        {"kind":"expect","text":"The view is true initially, because 25 is not null.","code":["isPresent.get()"]},
+
+        {"kind":"when","text":"We change the value of the property to null, to make it empty.","code":["age.set(null)"]},
+
+        {"kind":"then","text":"The view becomes false, because now the property has null as its item.","code":["!isPresent.get()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A `viewIsPresent()` property from a non nullable property is always true.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A non-nullable property does not permit null items,\n            which means that it cannot be empty.\n            Therefore, the view returned by `viewIsPresent()`\n            will always be true.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A non-nullable property.","code":["Var<Integer> age = Var.of(Integer, 25)"]},
+
+        {"kind":"and","text":"A view of the `isPresent()` flag of the property.","code":["Val<Boolean> isPresent = age.viewIsPresent()"]},
+
+        {"kind":"expect","text":"The view is true initially, because 25 is not null.","code":["isPresent.get()"]},
+
+        {"kind":"when","text":"We try to change the value of the property to null.","code":["age.set(null)"]},
+
+        {"kind":"then","text":"The property fights back by throwing an exception.","code":["thrown(NullPointerException)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `viewSize()` method returns a property that is equal to the size of the original property.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Calling `viewSize()` on a property list\n            will be a view on the `size()` method of said property list.\n            So when the integer returned by `size()` changes,\n            the value of the view will change too.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A non empty property list containing a few japanes words.","code":["Vars<String> words = Vars.of(\"ブランコツリー\",\"は\",\"いい\",\"です\")"]},
+
+        {"kind":"and","text":"A view on the size of the property list.","code":["Val<Integer> size = words.viewSize()"]},
+
+        {"kind":"expect","text":"The view is 4 initially.","code":["size.get() == 4"]},
+
+        {"kind":"when","text":"We add a word to the property list.","code":["words.add(\"ね\")"]},
+
+        {"kind":"then","text":"The view becomes 5.","code":["size.get() == 5"]},
+
+        {"kind":"and","text":"\n                The sentence becomes \"ブランコツリーはいいですね\",\n                which means \"SwingTree is nice, isn't it?\"\n           ","code":["words.toList() == [\"ブランコツリー\",\"は\",\"いい\",\"です\",\"ね\"]"]},
+
+        {"kind":"when","text":"We remove a word from the property list.","code":["words.removeAt(0)"]},
+
+        {"kind":"then","text":"The view becomes 4 again.","code":["size.get() == 4"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"We can \"view the emptiness\" of a property list.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The method `viewIsEmpty()` on a property list\n            will return a property that is true when the list is empty,\n            and false otherwise.\n\n            Whenever the boolean returned by `isEmpty()` changes,\n            the value of the view will change too.\n\n            So this is effectively a live view on the `isEmpty()` method of the property list.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A list of 2 words say ing \"cute cat\" in japanese.","code":["Vars<String> words = Vars.of(\"かわいい\",\"猫\")"]},
+
+        {"kind":"and","text":"A view on the emptiness of the property list.","code":["Val<Boolean> isEmpty = words.viewIsEmpty()"]},
+
+        {"kind":"expect","text":"The view is false initially.","code":["!isEmpty.get()"]},
+
+        {"kind":"when","text":"We remove all the words from the property list.","code":["words.clear()"]},
+
+        {"kind":"then","text":"The view becomes true.","code":["isEmpty.get()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"We can \"view the presence of items\" of a property list.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The method `viewIsNotEmpty()` on a property list\n            will return a property that is true when the list is not empty,\n            and false otherwise.\n\n            Whenever the boolean returned by `isNotEmpty()` changes,\n            the value of the view will change too.\n\n            So this is effectively a live view on the `isNotEmpty()` method of the property list.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"An empty list of words.","code":["Vars<String> words = Vars.of(String)"]},
+
+        {"kind":"and","text":"A view on the presence of the items in the property list.","code":["Val<Boolean> isNotEmpty = words.viewIsNotEmpty()"]},
+
+        {"kind":"expect","text":"The view is false initially.","code":["!isNotEmpty.get()"]},
+
+        {"kind":"when","text":"We add the japanese word for \"cute\" to the property list.","code":["words.add(\"かわいい\")"]},
+
+        {"kind":"then","text":"The view becomes true.","code":["isNotEmpty.get()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use `viewAsInt(int,Function)` to view a nullable property as a non null integer.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `viewAsInt(int,Function)` method creates and returns an integer based live property view\n            from a nullable property of any type that uses a default value to represent null and a function\n            to convert the non null value to an integer.\n            The view will be updated automatically\n            when the original property changes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A String property holding a japanese sentence.","code":["Var<String> sentence = Var.ofNullable(String, \"ブランコツリーはいいですね\")"]},
+
+        {"kind":"and","text":"A view on the length of the sentence with a unique default value.","code":["Val<Integer> length = sentence.viewAsInt(42,String::length)"]},
+
+        {"kind":"expect","text":"The view is 13 initially and it confirms that it is indeed a view.","code":["length.get() == 13","length.isView()"]},
+
+        {"kind":"when","text":"We change the value of the property to null.","code":["sentence.set(null)"]},
+
+        {"kind":"then","text":"The view becomes 42.","code":["length.get() == 42"]},
+
+        {"kind":"when","text":"We change the value of the property to an empty string.","code":["sentence.set(\"\")"]},
+
+        {"kind":"then","text":"The view becomes 0.","code":["length.get() == 0"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use `viewAsDouble(double,Function)` to view a nullable property as a non null double.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `viewAsDouble(double,Function)` method creates and returns a double based live property view\n            from a nullable property of any type that uses a default value to represent null and a function\n            to convert the non null value to a double.\n            The view will be updated automatically\n            when the original property changes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A String property holding an english sentence.","code":["Var<String> sentence = Var.ofNullable(String, \"SwingTree is nice, isn't it?\")"]},
+
+        {"kind":"and","text":"A view on the average word length of the sentence with a unique default value.","code":["Val<Double> averageWordLength = sentence.viewAsDouble(-0.5, s -> {","                                    if ( s == null )","                                        return null","                                    var words = s.split(\" \") as List<String>","                                    return words.stream().mapToInt(String::length).average().orElse(-1)","                                })"]},
+
+        {"kind":"expect","text":"The view is 4.0 initially and it confirms that it is indeed a view.","code":["averageWordLength.get() == 4.8","averageWordLength.isView()"]},
+
+        {"kind":"when","text":"We change the value of the property to null.","code":["sentence.set(null)"]},
+
+        {"kind":"then","text":"The view becomes -0.5.","code":["averageWordLength.get() == -0.5"]},
+
+        {"kind":"when","text":"We change the value of the property to an empty string.","code":["sentence.set(\"\")"]},
+
+        {"kind":"then","text":"The view contains 0.0 because the average of an empty list is 0.","code":["averageWordLength.get() == 0.0"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use the `viewAsString(String,Function)` method to view a nullable property as a non null String.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `viewAsString(String,Function)` method creates and returns a String based live property view\n            from a nullable property of any type that uses a default value to represent null and a function\n            to convert the non null value to a String.\n            The view will be updated automatically\n            when the original property changes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A property holding nullable `TimeUnit` enum items.","code":["Var<TimeUnit> timeUnit = Var.ofNullable(TimeUnit, TimeUnit.SECONDS)"]},
+
+        {"kind":"and","text":"A view on the lowercase name of the time unit with a unique default value.","code":["Val<String> lowerCaseName = timeUnit.viewAsString(\"unknown\", u -> u.name().toLowerCase())"]},
+
+        {"kind":"expect","text":"The view is \"seconds\" initially and it confirms that it is indeed a view.","code":["lowerCaseName.get() == \"seconds\"","lowerCaseName.isView()"]},
+
+        {"kind":"when","text":"We change the value of the property to null.","code":["timeUnit.set(null)"]},
+
+        {"kind":"then","text":"The view becomes \"unknown\" because the property is empty.","code":["lowerCaseName.get() == \"unknown\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Properties can be garbage collected, even if they are observed by a composite view.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            If you create a composite property of two other properties,\n            then these two properties may be garbage collected if they are not used anymore\n            even if you still hold onto the composite property.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two properties we will dereference later.","code":["Var<DayOfWeek> day = Var.of(DayOfWeek.MONDAY)","Var<String> name = Var.of(\"John\")"]},
+
+        {"kind":"and","text":"A composite property that observes the two properties.","code":["Val<String> composite = Val.viewOf(name, day, (n,d) -> n + \" \" + d.name().toLowerCase())"]},
+
+        {"kind":"expect","text":"The composite property is \"John monday\" initially.","code":["composite.get() == \"John monday\""]},
+
+        {"kind":"when","text":"We wrap the two properties in `WeakReference` objects.","code":["def dayRef = new WeakReference(day)","def nameRef = new WeakReference(name)"]},
+
+        {"kind":"and","text":"We dereference the strong references to the two properties.","code":["day = null","name = null"]},
+
+        {"kind":"and","text":"We wait for the garbage collector to do its job.","code":["waitForGarbageCollection()"]},
+
+        {"kind":"then","text":"The composite property is still \"John monday\".","code":["composite.get() == \"John monday\""]},
+
+        {"kind":"and","text":"The two properties are gone.","code":["dayRef.get() == null","nameRef.get() == null"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Properties can be garbage collected, even if they are observed by a nullable composite view.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            If you create a nullable composite property of two other properties,\n            then these two properties may be garbage collected if they are not used anymore\n            even if you still hold onto the composite property.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two properties we will dereference later.","code":["Var<Month> month = Var.of(Month.JANUARY)","Var<String> name = Var.of(\"Linda\")"]},
+
+        {"kind":"and","text":"A nullable composite property that observes the two properties.","code":["Val<String> composite = Val.viewOfNullable(name, month, (n,m) -> n + \" \" + m.name().toLowerCase())"]},
+
+        {"kind":"expect","text":"The composite property is \"Linda january\" initially.","code":["composite.get() == \"Linda january\""]},
+
+        {"kind":"when","text":"We wrap the two properties in `WeakReference` objects.","code":["def monthRef = new WeakReference(month)","def nameRef = new WeakReference(name)"]},
+
+        {"kind":"and","text":"We dereference the strong references to the two properties.","code":["month = null","name = null"]},
+
+        {"kind":"and","text":"We wait for the garbage collector to do its job.","code":["waitForGarbageCollection()"]},
+
+        {"kind":"then","text":"The composite property is still \"Linda january\".","code":["composite.get() == \"Linda january\""]},
+
+        {"kind":"and","text":"The two properties are gone.","code":["monthRef.get() == null","nameRef.get() == null"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    }
+  
+  ],
+  "generator":"https://github.com/renatoathaydes/spock-reports"
+}
