@@ -986,10 +986,7 @@ class Property_Lenses_Spec extends Specification
             waitForGarbageCollection()
             Thread.sleep(500)
         then : 'Every reference is still present.'
-            refs[0].get() != null
-            refs[1].get() != null
-            refs[2].get() != null
-            refs[3].get() != null
+            refs.every( it -> it.get() != null )
 
         when : 'We remove the last lens from the chain.'
             view3 = null
