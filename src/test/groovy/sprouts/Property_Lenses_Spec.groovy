@@ -924,6 +924,85 @@ class Property_Lenses_Spec extends Specification
             lens.numberOfChangeListeners() == 0
     }
 
+    def 'A chain of lenses may not be garbage collected.'()
+    {
+        reportInfo """
+            Every lens holds a reference to the source property whose field it focuses on.
+            So if a chain of lenses is created, the source property will ultimately be referenced,
+            either directly or indirectly, by all lenses in the chain.
+            These references may be weak references if the parent property is not a lens itself.
+            This is also true for views, which are also always strongly referenced by a lens.
+            A plain property on the other hand is weakly referenced by the lenses.
+            So the chain of lenses may not be garbage collected if the source property 
+            is not garbage collected.
+        """
+        given : 'A property based on the `Loan` record.'
+            var loanProperty = Var.of(new Loan(
+                                                    "l0an-1d",
+                                                    new Book("Very Interesting Book",
+                                                        new Author(
+                                                            "Margarete", "Wick",
+                                                            LocalDate.of(1932, 2, 15),
+                                                            ["Very Interesting Book", "Not so..."]
+                                                        ),
+                                                        Genre.SCIENCE,
+                                                        LocalDate.of(1963, 9, 23), 932
+                                                    ),
+                                                    new Member(
+                                                        "m1d", "Lia", "Lua",
+                                                        MembershipLevel.PLATINUM,
+                                                        LocalDate.of(2015, 6, 13),
+                                                        null
+                                                    ),
+                                                    LocalDate.of(2023, 8, 12),
+                                                    LocalDate.of(2023, 9, 12),
+                                                    false
+                                                ))
+        and : 'A chain of lenses going deeper into the nested records.'
+            Val<Book>   view1 = loanProperty.zoomTo(Loan::book, Loan::withBook)
+            Val<Author> view2 = view1.zoomTo(Book::author, Book::withAuthor)
+            Val<String> view3 = view2.zoomTo(Author::firstName, Author::withFirstName)
+        and : """
+            Now we store all of these references in a list of WeakReference objects.
+            This way we can check which of the references are still present
+            after awaiting garbage collection.
+        """
+            var refs = [
+                    new WeakReference(loanProperty), new WeakReference(view1),
+                    new WeakReference(view2), new WeakReference(view3)
+                ]
+        expect : 'All references are still present after awaiting garbage collection.'
+            refs.every( it -> it.get() != null )
+        and : 'Each property has the expected number of change listeners for their respective child.'
+            loanProperty.numberOfChangeListeners() == 1
+            view1.numberOfChangeListeners() == 1
+            view2.numberOfChangeListeners() == 1
+            view3.numberOfChangeListeners() == 0
+
+        when : 'We now remove the intermediate lenses from the chain.'
+            view1 = null
+            view2 = null
+        and : 'We await garbage collection.'
+            waitForGarbageCollection()
+            Thread.sleep(500)
+        then : 'Every reference is still present.'
+            refs[0].get() != null
+            refs[1].get() != null
+            refs[2].get() != null
+            refs[3].get() != null
+
+        when : 'We remove the last lens from the chain.'
+            view3 = null
+        and : 'We await garbage collection.'
+            waitForGarbageCollection()
+            Thread.sleep(500)
+        then : 'All lenses were garbage collected.'
+            refs[0].get() != null
+            refs[1].get() == null
+            refs[2].get() == null
+            refs[3].get() == null
+    }
+
     /**
      * This method guarantees that garbage collection is
      * done unlike <code>{@link System#gc()}</code>

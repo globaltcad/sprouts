@@ -458,6 +458,12 @@ class Viewing_Properties_Spec extends Specification
                 ]
         expect : 'All references are still present after awaiting garbage collection.'
             refs.every( it -> it.get() != null )
+        and : 'Each property has the expected number of change listeners for their respective child.'
+            dayOfWeekProp.numberOfChangeListeners() == 1
+            view1.numberOfChangeListeners() == 1
+            view2.numberOfChangeListeners() == 1
+            view3.numberOfChangeListeners() == 0
+
 
         when : 'We now remove the intermediate views from the chain.'
             view1 = null
@@ -470,6 +476,14 @@ class Viewing_Properties_Spec extends Specification
             refs[1].get() != null
             refs[2].get() != null
             refs[3].get() != null
+
+        when : 'We remove the last view from the chain.'
+            view3 = null
+        then : 'All views were garbage collected, but the source is still there.'
+            refs[0].get() != null
+            refs[1].get() == null
+            refs[2].get() == null
+            refs[3].get() == null
     }
 
     /**
