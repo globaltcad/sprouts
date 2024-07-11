@@ -64,9 +64,10 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 			return Val.of(initial); // A nice little optimization: a view of an immutable property is also immutable.
 		}
 
-		final Var<U> viewProperty = PropertyView._of( targetType, initial, source );
+		final PropertyView<U> viewProperty = PropertyView._of( targetType, initial, source );
 		source.onChange(Util.VIEW_CHANNEL, Action.ofWeak( viewProperty, (innerViewProperty, v) -> {
-			final U value = nonNullMapper.apply(source.orElseNull());
+			Val<T> innerSource = innerViewProperty._getSource(0);
+			final U value = nonNullMapper.apply(innerSource.orElseNull());
 			innerViewProperty.set( value );
 		}));
 		return viewProperty;
