@@ -5,7 +5,6 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import sprouts.*;
 
-import java.lang.ref.WeakReference;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -21,77 +20,89 @@ import java.util.function.Function;
  */
 final class PropertyView&lt;T extends @Nullable Object&gt; implements Var&lt;T&gt; {
 
-<span class="fc" id="L24">	private static final Logger log = org.slf4j.LoggerFactory.getLogger(PropertyView.class);</span>
+<span class="fc" id="L23">	private static final Logger log = org.slf4j.LoggerFactory.getLogger(PropertyView.class);</span>
 
+	private static ParentRef&lt;@Nullable Val&lt;?&gt;&gt;[] _filterStrongParentRefs( Val&lt;?&gt;[] parentRefs ) {
+<span class="fc" id="L26">		ParentRef&lt;@Nullable Val&lt;?&gt;&gt;[] strongParentRefs = new ParentRef[parentRefs.length];</span>
+<span class="fc bfc" id="L27" title="All 2 branches covered.">		for ( int i = 0; i &lt; parentRefs.length; i++ ) {</span>
+<span class="fc" id="L28">			Val&lt;?&gt; property = parentRefs[i];</span>
+<span class="fc" id="L29">			Objects.requireNonNull(property);</span>
+<span class="fc" id="L30">			strongParentRefs[i] = ParentRef.of(property);</span>
+		}
+<span class="fc" id="L32">		return strongParentRefs;</span>
+	}
 
-	public static &lt;T&gt; Var&lt;@Nullable T&gt; ofNullable( Class&lt;T&gt; type, @Nullable T item ) {
-<span class="fc" id="L28">		return new PropertyView&lt;&gt;(type, item, NO_ID, new ChangeListeners&lt;&gt;(), true);</span>
+	private static &lt;T&gt; PropertyView&lt;@Nullable T&gt; _ofNullable( Class&lt;T&gt; type, @Nullable T item, Val&lt;?&gt;... strongParentRefs ) {
+<span class="fc" id="L36">		return new PropertyView&lt;&gt;(type, item, NO_ID, new ChangeListeners&lt;&gt;(), true, _filterStrongParentRefs(strongParentRefs));</span>
+	}
+
+	private static &lt;T&gt; PropertyView&lt;T&gt; _of( Class&lt;T&gt; type, T item, Val&lt;?&gt;... strongParentRefs ) {
+<span class="fc" id="L40">		return new PropertyView&lt;&gt;(type, item, NO_ID, new ChangeListeners&lt;&gt;(), false, _filterStrongParentRefs(strongParentRefs));</span>
 	}
 
 	public static &lt;T, U&gt; Val&lt;@Nullable U&gt; ofNullable(Class&lt;U&gt; type, Val&lt;T&gt; source, Function&lt;T, @Nullable U&gt; mapper) {
-<span class="fc" id="L32">		final U initialItem = mapper.apply(source.orElseNull());</span>
-<span class="pc bpc" id="L33" title="1 of 2 branches missed.">		if ( source.isImmutable() ) {</span>
-<span class="nc bnc" id="L34" title="All 2 branches missed.">			return initialItem == null ? Val.ofNull(type) : Val.of(initialItem);</span>
+<span class="fc" id="L44">		final U initialItem = mapper.apply(source.orElseNull());</span>
+<span class="pc bpc" id="L45" title="1 of 2 branches missed.">		if ( source.isImmutable() ) {</span>
+<span class="nc bnc" id="L46" title="All 2 branches missed.">			return initialItem == null ? Val.ofNull(type) : Val.of(initialItem);</span>
 		}
-<span class="fc" id="L36">		final Var&lt;@Nullable U&gt; viewProperty = PropertyView.ofNullable(type, initialItem);</span>
-<span class="fc" id="L37">		source.onChange(Util.VIEW_CHANNEL, Action.ofWeak( viewProperty, (innerViewProperty, v) -&gt; {</span>
-<span class="nc" id="L38">			innerViewProperty.set(mapper.apply(v.orElseNull()));</span>
-<span class="nc" id="L39">		}));</span>
-<span class="fc" id="L40">		return viewProperty;</span>
-	}
-
-	public static &lt;T&gt; Var&lt;T&gt; of( Class&lt;T&gt; type, T item ) {
-<span class="fc" id="L44">		return new PropertyView&lt;&gt;(type, item, NO_ID, new ChangeListeners&lt;&gt;(), false);</span>
+<span class="fc" id="L48">		final PropertyView&lt;@Nullable U&gt; viewProperty = PropertyView._ofNullable(type, initialItem, source);</span>
+<span class="fc" id="L49">		source.onChange(Util.VIEW_CHANNEL, Action.ofWeak( viewProperty, (innerViewProperty, v) -&gt; {</span>
+<span class="nc" id="L50">			innerViewProperty.set(mapper.apply(v.orElseNull()));</span>
+<span class="nc" id="L51">		}));</span>
+<span class="fc" id="L52">		return viewProperty;</span>
 	}
 
 	public static &lt;T, U&gt; Val&lt;U&gt; of( U nullObject, U errorObject, Val&lt;T&gt; source, Function&lt;T, @Nullable U&gt; mapper) {
-<span class="fc" id="L48">		Objects.requireNonNull(nullObject);</span>
-<span class="fc" id="L49">		Objects.requireNonNull(errorObject);</span>
+<span class="fc" id="L56">		Objects.requireNonNull(nullObject);</span>
+<span class="fc" id="L57">		Objects.requireNonNull(errorObject);</span>
 
-<span class="fc" id="L51">		Function&lt;T, U&gt; nonNullMapper = Util.nonNullMapper(nullObject, errorObject, mapper);</span>
+<span class="fc" id="L59">		Function&lt;T, U&gt; nonNullMapper = Util.nonNullMapper(nullObject, errorObject, mapper);</span>
 
-<span class="fc" id="L53">		final U initial = nonNullMapper.apply(source.orElseNull());</span>
-<span class="fc" id="L54">		final Class&lt;U&gt; targetType = (Class&lt;U&gt;) initial.getClass();</span>
-<span class="pc bpc" id="L55" title="1 of 2 branches missed.">		if ( source.isImmutable() ) {</span>
-<span class="nc" id="L56">			return Val.of(initial); // A nice little optimization: a view of an immutable property is also immutable.</span>
+<span class="fc" id="L61">		final U initial = nonNullMapper.apply(source.orElseNull());</span>
+<span class="fc" id="L62">		final Class&lt;U&gt; targetType = (Class&lt;U&gt;) initial.getClass();</span>
+<span class="pc bpc" id="L63" title="1 of 2 branches missed.">		if ( source.isImmutable() ) {</span>
+<span class="nc" id="L64">			return Val.of(initial); // A nice little optimization: a view of an immutable property is also immutable.</span>
 		}
 
-<span class="fc" id="L59">		final Var&lt;U&gt; viewProperty = PropertyView.of( targetType, initial );</span>
-<span class="fc" id="L60">		source.onChange(Util.VIEW_CHANNEL, Action.ofWeak( viewProperty, (innerViewProperty, v) -&gt; {</span>
-<span class="fc" id="L61">			final U value = nonNullMapper.apply(source.orElseNull());</span>
-<span class="fc" id="L62">			innerViewProperty.set( value );</span>
-<span class="fc" id="L63">		}));</span>
-<span class="fc" id="L64">		return viewProperty;</span>
+<span class="fc" id="L67">		final PropertyView&lt;U&gt; viewProperty = PropertyView._of( targetType, initial, source );</span>
+<span class="fc" id="L68">		source.onChange(Util.VIEW_CHANNEL, Action.ofWeak( viewProperty, (innerViewProperty, v) -&gt; {</span>
+<span class="fc" id="L69">			@Nullable Val&lt;T&gt; innerSource = innerViewProperty._getSource(0);</span>
+<span class="pc bpc" id="L70" title="1 of 2 branches missed.">			if ( innerSource == null )</span>
+<span class="nc" id="L71">				return;</span>
+<span class="fc" id="L72">			final U value = nonNullMapper.apply(innerSource.orElseNull());</span>
+<span class="fc" id="L73">			innerViewProperty.set( value );</span>
+<span class="fc" id="L74">		}));</span>
+<span class="fc" id="L75">		return viewProperty;</span>
 	}
 
 	public static &lt;U, T&gt; Val&lt;T&gt; of( Class&lt;T&gt; type, Val&lt;U&gt; parent, Function&lt;U, T&gt; mapper ) {
-<span class="fc" id="L68">		@Nullable T initialItem = mapper.apply(parent.orElseNull());</span>
-<span class="pc bpc" id="L69" title="2 of 4 branches missed.">		if ( parent.isMutable() &amp;&amp; parent instanceof Var ) {</span>
-<span class="fc" id="L70">			Var&lt;U&gt; source = (Var&lt;U&gt;) parent;</span>
-<span class="fc" id="L71">			PropertyView&lt;T&gt; view = new PropertyView&lt;T&gt;(type, initialItem, NO_ID, new ChangeListeners&lt;&gt;(), false );</span>
-<span class="fc" id="L72">			source.onChange(From.ALL, Action.ofWeak(view, (innerViewProperty, v) -&gt; {</span>
-<span class="fc" id="L73">				innerViewProperty.set(mapper.apply(v.orElseNull()));</span>
-<span class="fc" id="L74">			}));</span>
-<span class="fc" id="L75">			return view;</span>
+<span class="fc" id="L79">		@Nullable T initialItem = mapper.apply(parent.orElseNull());</span>
+<span class="pc bpc" id="L80" title="2 of 4 branches missed.">		if ( parent.isMutable() &amp;&amp; parent instanceof Var ) {</span>
+<span class="fc" id="L81">			Var&lt;U&gt; source = (Var&lt;U&gt;) parent;</span>
+<span class="fc" id="L82">			PropertyView&lt;T&gt; view = PropertyView._of( type, initialItem, parent );</span>
+<span class="fc" id="L83">			source.onChange(From.ALL, Action.ofWeak(view, (innerViewProperty, v) -&gt; {</span>
+<span class="fc" id="L84">				innerViewProperty.set(mapper.apply(v.orElseNull()));</span>
+<span class="fc" id="L85">			}));</span>
+<span class="fc" id="L86">			return view;</span>
 		}
 		else // A nice little optimization: a view of an immutable property is also immutable!
-<span class="nc bnc" id="L78" title="All 2 branches missed.">			return ( initialItem == null ? Val.ofNull(type) : Val.of(initialItem) );</span>
+<span class="nc bnc" id="L89" title="All 2 branches missed.">			return ( initialItem == null ? Val.ofNull(type) : Val.of(initialItem) );</span>
 	}
 
 	public static &lt;T extends @Nullable Object, U extends @Nullable Object&gt; Val&lt;@NonNull T&gt; viewOf( Val&lt;T&gt; first, Val&lt;U&gt; second, BiFunction&lt;T, U, @NonNull T&gt; combiner ) {
-<span class="fc" id="L82">		return of( first, second, combiner );</span>
+<span class="fc" id="L93">		return of( first, second, combiner );</span>
 	}
 
 	public static &lt;T extends @Nullable Object, U extends @Nullable Object&gt; Val&lt;@Nullable T&gt; viewOfNullable( Val&lt;T&gt; first, Val&lt;U&gt; second, BiFunction&lt;T, U, @Nullable T&gt; combiner ) {
-<span class="fc" id="L86">		return ofNullable( first, second, combiner );</span>
+<span class="fc" id="L97">		return ofNullable( first, second, combiner );</span>
 	}
 
 	public static &lt;T extends @Nullable Object, U extends @Nullable Object, R&gt; Val&lt;R&gt; viewOf(Class&lt;R&gt; type, Val&lt;T&gt; first, Val&lt;U&gt; second, BiFunction&lt;T, U, R&gt; combiner) {
-<span class="fc" id="L90">		return of( type, first, second, combiner );</span>
+<span class="fc" id="L101">		return of( type, first, second, combiner );</span>
 	}
 
 	public static &lt;T extends @Nullable Object, U extends @Nullable Object, R&gt; Val&lt;@Nullable R&gt; viewOfNullable(Class&lt;R&gt; type, Val&lt;T&gt; first, Val&lt;U&gt; second, BiFunction&lt;T, U, @Nullable R&gt; combiner) {
-<span class="fc" id="L94">		return ofNullable( type, first, second, combiner );</span>
+<span class="fc" id="L105">		return ofNullable( type, first, second, combiner );</span>
 	}
 
 	private static &lt;T extends @Nullable Object, U extends @Nullable Object&gt; Val&lt;@NonNull T&gt; of(
@@ -99,101 +110,97 @@ final class PropertyView&lt;T extends @Nullable Object&gt; implements Var&lt;T&g
 		Val&lt;U&gt; second,
 		BiFunction&lt;T, U, @NonNull T&gt; combiner
 	) {
-<span class="fc" id="L102">		String id = _compositeIdFrom(first, second);</span>
+<span class="fc" id="L113">		String id = _compositeIdFrom(first, second);</span>
 
-<span class="fc" id="L104">		BiFunction&lt;Val&lt;T&gt;, Val&lt;U&gt;, @Nullable T&gt; fullCombiner = (p1, p2) -&gt; {</span>
+<span class="fc" id="L115">		BiFunction&lt;Val&lt;T&gt;, Val&lt;U&gt;, @Nullable T&gt; fullCombiner = (p1, p2) -&gt; {</span>
 			try {
-<span class="fc" id="L106">				return combiner.apply(p1.orElseNull(), p2.orElseNull());</span>
-<span class="fc" id="L107">			} catch ( Exception e ) {</span>
-<span class="fc" id="L108">				return null;</span>
+<span class="fc" id="L117">				return combiner.apply(p1.orElseNull(), p2.orElseNull());</span>
+<span class="fc" id="L118">			} catch ( Exception e ) {</span>
+<span class="fc" id="L119">				return null;</span>
 			}
 		};
 
-<span class="fc" id="L112">		T initial = fullCombiner.apply(first, second);</span>
-<span class="fc" id="L113">		WeakReference&lt;Val&lt;T&gt;&gt; weakFirst = new WeakReference&lt;&gt;(first);</span>
-<span class="fc" id="L114">		WeakReference&lt;Val&lt;U&gt;&gt; weakSecond = new WeakReference&lt;&gt;(second);</span>
-<span class="fc" id="L115">		Objects.requireNonNull(initial,&quot;The result of the combiner function is null, but the property does not allow null items!&quot;);</span>
-<span class="fc" id="L116">		BiConsumer&lt;Var&lt;T&gt;,Val&lt;T&gt;&gt; firstListener = (innerResult,v) -&gt; {</span>
-<span class="fc" id="L117">			Val&lt;U&gt; innerSecond = weakSecond.get();</span>
-<span class="pc bpc" id="L118" title="1 of 2 branches missed.">			if (innerSecond == null)</span>
-<span class="nc" id="L119">				return;</span>
-<span class="fc" id="L120">			T newItem = fullCombiner.apply(v, innerSecond);</span>
-<span class="fc bfc" id="L121" title="All 2 branches covered.">			if (newItem == null)</span>
-<span class="fc" id="L122">				log.error(</span>
+<span class="fc" id="L123">		T initial = fullCombiner.apply(first, second);</span>
+<span class="fc" id="L124">		Objects.requireNonNull(initial,&quot;The result of the combiner function is null, but the property does not allow null items!&quot;);</span>
+<span class="fc" id="L125">		BiConsumer&lt;PropertyView&lt;T&gt;,Val&lt;T&gt;&gt; firstListener = (innerResult,v) -&gt; {</span>
+<span class="fc" id="L126">			Val&lt;U&gt; innerSecond = innerResult._getSource(1);</span>
+<span class="pc bpc" id="L127" title="1 of 2 branches missed.">			if (innerSecond == null)</span>
+<span class="nc" id="L128">				return;</span>
+<span class="fc" id="L129">			T newItem = fullCombiner.apply(v, innerSecond);</span>
+<span class="fc bfc" id="L130" title="All 2 branches covered.">			if (newItem == null)</span>
+<span class="fc" id="L131">				log.error(</span>
 					&quot;Invalid combiner result! The combination of the first item '{}' (changed) and the second &quot; +
 					&quot;item '{}' was null and null is not allowed! The old item '{}' is retained!&quot;,
-<span class="fc" id="L125">					v.orElseNull(), innerSecond.orElseNull(), innerResult.orElseNull()</span>
+<span class="fc" id="L134">					v.orElseNull(), innerSecond.orElseNull(), innerResult.orElseNull()</span>
 				);
 			else
-<span class="fc" id="L128">				innerResult.set(From.ALL, newItem);</span>
-<span class="fc" id="L129">		};</span>
-<span class="fc" id="L130">		BiConsumer&lt;Var&lt;T&gt;,Val&lt;U&gt;&gt; secondListener = (innerResult,v) -&gt; {</span>
-<span class="fc" id="L131">			Val&lt;T&gt; innerFirst = weakFirst.get();</span>
-<span class="pc bpc" id="L132" title="1 of 2 branches missed.">			if (innerFirst == null)</span>
-<span class="nc" id="L133">				return;</span>
-<span class="fc" id="L134">			T newItem = fullCombiner.apply(innerFirst, v);</span>
-<span class="pc bpc" id="L135" title="1 of 2 branches missed.">			if (newItem == null)</span>
-<span class="nc" id="L136">				log.error(</span>
+<span class="fc" id="L137">				innerResult.set(From.ALL, newItem);</span>
+<span class="fc" id="L138">		};</span>
+<span class="fc" id="L139">		BiConsumer&lt;PropertyView&lt;T&gt;,Val&lt;U&gt;&gt; secondListener = (innerResult,v) -&gt; {</span>
+<span class="fc" id="L140">			Val&lt;T&gt; innerFirst = innerResult._getSource(0);</span>
+<span class="pc bpc" id="L141" title="1 of 2 branches missed.">			if (innerFirst == null)</span>
+<span class="nc" id="L142">				return;</span>
+<span class="fc" id="L143">			T newItem = fullCombiner.apply(innerFirst, v);</span>
+<span class="pc bpc" id="L144" title="1 of 2 branches missed.">			if (newItem == null)</span>
+<span class="nc" id="L145">				log.error(</span>
 					&quot;Invalid combiner result! The combination of the first item '{}' and the second &quot; +
 					&quot;item '{}' (changed) was null and null is not allowed! The old item '{}' is retained!&quot;,
-<span class="nc" id="L139">					innerFirst.orElseNull(), v.orElseNull(), innerResult.orElseNull()</span>
+<span class="nc" id="L148">					innerFirst.orElseNull(), v.orElseNull(), innerResult.orElseNull()</span>
 				);
 			else
-<span class="fc" id="L142">				innerResult.set(From.ALL, newItem);</span>
-<span class="fc" id="L143">		};</span>
+<span class="fc" id="L151">				innerResult.set(From.ALL, newItem);</span>
+<span class="fc" id="L152">		};</span>
 
-<span class="fc" id="L145">		boolean firstIsImmutable = first.isImmutable();</span>
-<span class="fc" id="L146">		boolean secondIsImmutable = second.isImmutable();</span>
-<span class="pc bpc" id="L147" title="3 of 4 branches missed.">		if ( firstIsImmutable &amp;&amp; secondIsImmutable ) {</span>
-<span class="nc bnc" id="L148" title="All 2 branches missed.">			return initial == null ? Val.ofNull(first.type()) : Val.of(initial);</span>
+<span class="fc" id="L154">		boolean firstIsImmutable = first.isImmutable();</span>
+<span class="fc" id="L155">		boolean secondIsImmutable = second.isImmutable();</span>
+<span class="pc bpc" id="L156" title="3 of 4 branches missed.">		if ( firstIsImmutable &amp;&amp; secondIsImmutable ) {</span>
+<span class="nc bnc" id="L157" title="All 2 branches missed.">			return initial == null ? Val.ofNull(first.type()) : Val.of(initial);</span>
 		}
 
-<span class="fc" id="L151">		Var&lt;T&gt; result = PropertyView.of(first.type(), initial ).withId(id);</span>
-<span class="pc bpc" id="L152" title="1 of 2 branches missed.">		if ( !firstIsImmutable )</span>
-<span class="fc" id="L153">			first.onChange(From.ALL, Action.ofWeak( result, firstListener ));</span>
-<span class="pc bpc" id="L154" title="1 of 2 branches missed.">		if ( !secondIsImmutable )</span>
-<span class="fc" id="L155">			second.onChange(From.ALL, Action.ofWeak( result, secondListener ));</span>
-<span class="fc" id="L156">		return result;</span>
+<span class="fc" id="L160">		PropertyView&lt;T&gt; result = PropertyView._of( first.type(), initial, first, second ).withId(id);</span>
+<span class="pc bpc" id="L161" title="1 of 2 branches missed.">		if ( !firstIsImmutable )</span>
+<span class="fc" id="L162">			first.onChange(From.ALL, Action.ofWeak( result, firstListener ));</span>
+<span class="pc bpc" id="L163" title="1 of 2 branches missed.">		if ( !secondIsImmutable )</span>
+<span class="fc" id="L164">			second.onChange(From.ALL, Action.ofWeak( result, secondListener ));</span>
+<span class="fc" id="L165">		return result;</span>
 	}
 
 	private static &lt;T extends @Nullable Object, U extends @Nullable Object&gt; Val&lt;T&gt; ofNullable( Val&lt;T&gt; first, Val&lt;U&gt; second, BiFunction&lt;T, U, T&gt; combiner ) {
 
-<span class="fc" id="L161">		String id = _compositeIdFrom(first, second);</span>
+<span class="fc" id="L170">		String id = _compositeIdFrom(first, second);</span>
 
-<span class="fc" id="L163">		BiFunction&lt;Val&lt;T&gt;, Val&lt;U&gt;, @Nullable T&gt; fullCombiner = (p1, p2) -&gt; {</span>
+<span class="fc" id="L172">		BiFunction&lt;Val&lt;T&gt;, Val&lt;U&gt;, @Nullable T&gt; fullCombiner = (p1, p2) -&gt; {</span>
 			try {
-<span class="fc" id="L165">				return combiner.apply(p1.orElseNull(), p2.orElseNull());</span>
-<span class="nc" id="L166">			} catch ( Exception e ) {</span>
-<span class="nc" id="L167">				return null;</span>
+<span class="fc" id="L174">				return combiner.apply(p1.orElseNull(), p2.orElseNull());</span>
+<span class="nc" id="L175">			} catch ( Exception e ) {</span>
+<span class="nc" id="L176">				return null;</span>
 			}
 		};
 
-<span class="fc" id="L171">		T initial = fullCombiner.apply(first, second);</span>
+<span class="fc" id="L180">		T initial = fullCombiner.apply(first, second);</span>
 
-<span class="fc" id="L173">		boolean firstIsImmutable = first.isImmutable();</span>
-<span class="fc" id="L174">		boolean secondIsImmutable = second.isImmutable();</span>
-<span class="pc bpc" id="L175" title="3 of 4 branches missed.">		if ( firstIsImmutable &amp;&amp; secondIsImmutable ) {</span>
-<span class="nc bnc" id="L176" title="All 2 branches missed.">			return initial == null ? Val.ofNull(first.type()) : Val.of(initial);</span>
+<span class="fc" id="L182">		boolean firstIsImmutable = first.isImmutable();</span>
+<span class="fc" id="L183">		boolean secondIsImmutable = second.isImmutable();</span>
+<span class="pc bpc" id="L184" title="3 of 4 branches missed.">		if ( firstIsImmutable &amp;&amp; secondIsImmutable ) {</span>
+<span class="nc bnc" id="L185" title="All 2 branches missed.">			return initial == null ? Val.ofNull(first.type()) : Val.of(initial);</span>
 		}
 
-<span class="fc" id="L179">		Var&lt;@Nullable T&gt; result = PropertyView.ofNullable(first.type(), initial ).withId(id);</span>
-<span class="fc" id="L180">		WeakReference&lt;Val&lt;T&gt;&gt; weakFirst = new WeakReference&lt;&gt;(first);</span>
-<span class="fc" id="L181">		WeakReference&lt;Val&lt;U&gt;&gt; weakSecond = new WeakReference&lt;&gt;(second);</span>
-<span class="pc bpc" id="L182" title="1 of 2 branches missed.">		if ( !firstIsImmutable )</span>
-<span class="fc" id="L183">			first.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -&gt; {</span>
-<span class="fc" id="L184">				Val&lt;U&gt; innerSecond = weakSecond.get();</span>
-<span class="pc bpc" id="L185" title="1 of 2 branches missed.">				if ( innerSecond == null )</span>
-<span class="nc" id="L186">					return;</span>
-<span class="fc" id="L187">				innerResult.set(From.ALL, fullCombiner.apply(v, innerSecond) );</span>
-<span class="fc" id="L188">			}));</span>
-<span class="pc bpc" id="L189" title="1 of 2 branches missed.">		if ( !secondIsImmutable )</span>
-<span class="fc" id="L190">			second.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -&gt; {</span>
-<span class="fc" id="L191">				Val&lt;T&gt; innerFirst = weakFirst.get();</span>
-<span class="pc bpc" id="L192" title="1 of 2 branches missed.">				if ( innerFirst == null )</span>
+<span class="fc" id="L188">		PropertyView&lt;@Nullable T&gt; result = PropertyView._ofNullable( first.type(), initial, first, second ).withId(id);</span>
+<span class="pc bpc" id="L189" title="1 of 2 branches missed.">		if ( !firstIsImmutable )</span>
+<span class="fc" id="L190">			first.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -&gt; {</span>
+<span class="fc" id="L191">				Val&lt;U&gt; innerSecond = innerResult._getSource(1);</span>
+<span class="pc bpc" id="L192" title="1 of 2 branches missed.">				if ( innerSecond == null )</span>
 <span class="nc" id="L193">					return;</span>
-<span class="fc" id="L194">				innerResult.set(From.ALL, fullCombiner.apply(innerFirst, v) );</span>
+<span class="fc" id="L194">				innerResult.set(From.ALL, fullCombiner.apply(v, innerSecond) );</span>
 <span class="fc" id="L195">			}));</span>
-<span class="fc" id="L196">		return result;</span>
+<span class="pc bpc" id="L196" title="1 of 2 branches missed.">		if ( !secondIsImmutable )</span>
+<span class="fc" id="L197">			second.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -&gt; {</span>
+<span class="fc" id="L198">				Val&lt;T&gt; innerFirst = innerResult._getSource(0);</span>
+<span class="pc bpc" id="L199" title="1 of 2 branches missed.">				if ( innerFirst == null )</span>
+<span class="nc" id="L200">					return;</span>
+<span class="fc" id="L201">				innerResult.set(From.ALL, fullCombiner.apply(innerFirst, v) );</span>
+<span class="fc" id="L202">			}));</span>
+<span class="fc" id="L203">		return result;</span>
 	}
 
 	private static &lt;T extends @Nullable Object, U extends @Nullable Object, R&gt; Val&lt;R&gt; of(
@@ -202,56 +209,54 @@ final class PropertyView&lt;T extends @Nullable Object&gt; implements Var&lt;T&g
 		Val&lt;U&gt; second,
 		BiFunction&lt;T,U,R&gt; combiner
 	) {
-<span class="fc" id="L205">		String id = _compositeIdFrom(first, second);</span>
+<span class="fc" id="L212">		String id = _compositeIdFrom(first, second);</span>
 
-<span class="fc" id="L207">		BiFunction&lt;Val&lt;T&gt;, Val&lt;U&gt;, @Nullable R&gt; fullCombiner = (p1, p2) -&gt; {</span>
+<span class="fc" id="L214">		BiFunction&lt;Val&lt;T&gt;, Val&lt;U&gt;, @Nullable R&gt; fullCombiner = (p1, p2) -&gt; {</span>
 			try {
-<span class="fc" id="L209">				return combiner.apply(p1.orElseNull(), p2.orElseNull());</span>
-<span class="fc" id="L210">			} catch ( Exception e ) {</span>
-<span class="fc" id="L211">				return null;</span>
+<span class="fc" id="L216">				return combiner.apply(p1.orElseNull(), p2.orElseNull());</span>
+<span class="fc" id="L217">			} catch ( Exception e ) {</span>
+<span class="fc" id="L218">				return null;</span>
 			}
 		};
 
-<span class="fc" id="L215">		@Nullable R initial = fullCombiner.apply(first, second);</span>
+<span class="fc" id="L222">		@Nullable R initial = fullCombiner.apply(first, second);</span>
 
-<span class="pc bpc" id="L217" title="1 of 2 branches missed.">		if (initial == null)</span>
-<span class="nc" id="L218">			throw new NullPointerException(&quot;The result of the combiner function is null, but the property does not allow null items!&quot;);</span>
+<span class="pc bpc" id="L224" title="1 of 2 branches missed.">		if (initial == null)</span>
+<span class="nc" id="L225">			throw new NullPointerException(&quot;The result of the combiner function is null, but the property does not allow null items!&quot;);</span>
 
-<span class="fc" id="L220">		Var&lt;R&gt; result = PropertyView.of(type, initial ).withId(id);</span>
-<span class="fc" id="L221">		WeakReference&lt;Val&lt;T&gt;&gt; weakFirst = new WeakReference&lt;&gt;(first);</span>
-<span class="fc" id="L222">		WeakReference&lt;Val&lt;U&gt;&gt; weakSecond = new WeakReference&lt;&gt;(second);</span>
+<span class="fc" id="L227">		PropertyView&lt;R&gt; result = PropertyView._of(type, initial, first, second ).withId(id);</span>
 
-<span class="fc" id="L224">		first.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -&gt; {</span>
-<span class="fc" id="L225">			Val&lt;U&gt; innerSecond = weakSecond.get();</span>
-<span class="pc bpc" id="L226" title="1 of 2 branches missed.">			if ( innerSecond == null )</span>
-<span class="nc" id="L227">				return;</span>
-<span class="fc" id="L228">			@Nullable R newItem = fullCombiner.apply(v, innerSecond);</span>
-<span class="fc bfc" id="L229" title="All 2 branches covered.">			if (newItem == null)</span>
-<span class="fc" id="L230">				log.error(</span>
+<span class="fc" id="L229">		first.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -&gt; {</span>
+<span class="fc" id="L230">			Val&lt;U&gt; innerSecond = innerResult._getSource(1);</span>
+<span class="pc bpc" id="L231" title="1 of 2 branches missed.">			if ( innerSecond == null )</span>
+<span class="nc" id="L232">				return;</span>
+<span class="fc" id="L233">			@Nullable R newItem = fullCombiner.apply(v, innerSecond);</span>
+<span class="fc bfc" id="L234" title="All 2 branches covered.">			if (newItem == null)</span>
+<span class="fc" id="L235">				log.error(</span>
 					&quot;Invalid combiner result! The combination of the first item '{}' (changed) &quot; +
 					&quot;and the second item '{}' was null and null is not allowed! &quot; +
 					&quot;The old item '{}' is retained!&quot;,
-<span class="fc" id="L234">					v.orElseNull(), innerSecond.orElseNull(), innerResult.orElseNull()</span>
+<span class="fc" id="L239">					v.orElseNull(), innerSecond.orElseNull(), innerResult.orElseNull()</span>
 				);
 			else
-<span class="fc" id="L237">				innerResult.set(From.ALL, newItem);</span>
-<span class="fc" id="L238">		}));</span>
-<span class="fc" id="L239">		second.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -&gt; {</span>
-<span class="fc" id="L240">			Val&lt;T&gt; innerFirst = weakFirst.get();</span>
-<span class="pc bpc" id="L241" title="1 of 2 branches missed.">			if ( innerFirst == null )</span>
-<span class="nc" id="L242">				return;</span>
-<span class="fc" id="L243">			@Nullable R newItem = fullCombiner.apply(innerFirst, v);</span>
-<span class="fc bfc" id="L244" title="All 2 branches covered.">			if (newItem == null)</span>
-<span class="fc" id="L245">				log.error(</span>
+<span class="fc" id="L242">				innerResult.set(From.ALL, newItem);</span>
+<span class="fc" id="L243">		}));</span>
+<span class="fc" id="L244">		second.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -&gt; {</span>
+<span class="fc" id="L245">			Val&lt;T&gt; innerFirst = innerResult._getSource(0);</span>
+<span class="pc bpc" id="L246" title="1 of 2 branches missed.">			if ( innerFirst == null )</span>
+<span class="nc" id="L247">				return;</span>
+<span class="fc" id="L248">			@Nullable R newItem = fullCombiner.apply(innerFirst, v);</span>
+<span class="fc bfc" id="L249" title="All 2 branches covered.">			if (newItem == null)</span>
+<span class="fc" id="L250">				log.error(</span>
 					&quot;Invalid combiner result! The combination of the first item '{}' and the second &quot; +
 					&quot;item '{}' (changed) was null and null is not allowed! &quot; +
 					&quot;The old item '{}' is retained!&quot;,
-<span class="fc" id="L249">					innerFirst.orElseNull(), v.orElseNull(), innerResult.orElseNull()</span>
+<span class="fc" id="L254">					innerFirst.orElseNull(), v.orElseNull(), innerResult.orElseNull()</span>
 				);
 			else
-<span class="fc" id="L252">				innerResult.set(From.ALL, newItem);</span>
-<span class="fc" id="L253">		}));</span>
-<span class="fc" id="L254">		return result;</span>
+<span class="fc" id="L257">				innerResult.set(From.ALL, newItem);</span>
+<span class="fc" id="L258">		}));</span>
+<span class="fc" id="L259">		return result;</span>
 	}
 
 	private static &lt;T extends @Nullable Object, U extends @Nullable Object, R&gt; Val&lt;@Nullable R&gt; ofNullable(
@@ -260,43 +265,41 @@ final class PropertyView&lt;T extends @Nullable Object&gt; implements Var&lt;T&g
 	    Val&lt;U&gt;                        second,
 	    BiFunction&lt;T, U, @Nullable R&gt; combiner
 	) {
-<span class="fc" id="L263">		String id = _compositeIdFrom(first, second);</span>
+<span class="fc" id="L268">		String id = _compositeIdFrom(first, second);</span>
 
-<span class="fc" id="L265">		BiFunction&lt;Val&lt;T&gt;, Val&lt;U&gt;, @Nullable R&gt; fullCombiner = (p1, p2) -&gt; {</span>
+<span class="fc" id="L270">		BiFunction&lt;Val&lt;T&gt;, Val&lt;U&gt;, @Nullable R&gt; fullCombiner = (p1, p2) -&gt; {</span>
 			try {
-<span class="fc" id="L267">				return combiner.apply(p1.orElseNull(), p2.orElseNull());</span>
-<span class="fc" id="L268">			} catch ( Exception e ) {</span>
-<span class="fc" id="L269">				return null;</span>
+<span class="fc" id="L272">				return combiner.apply(p1.orElseNull(), p2.orElseNull());</span>
+<span class="fc" id="L273">			} catch ( Exception e ) {</span>
+<span class="fc" id="L274">				return null;</span>
 			}
 		};
 
-<span class="fc" id="L273">		Var&lt;@Nullable R&gt; result =  PropertyView.ofNullable(type, fullCombiner.apply(first, second) ).withId(id);</span>
-<span class="fc" id="L274">		WeakReference&lt;Val&lt;T&gt;&gt; weakFirst = new WeakReference&lt;&gt;(first);</span>
-<span class="fc" id="L275">		WeakReference&lt;Val&lt;U&gt;&gt; weakSecond = new WeakReference&lt;&gt;(second);</span>
-<span class="fc" id="L276">		first.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -&gt; {</span>
-<span class="fc" id="L277">			Val&lt;U&gt; innerSecond = weakSecond.get();</span>
-<span class="pc bpc" id="L278" title="1 of 2 branches missed.">			if ( innerSecond == null )</span>
-<span class="nc" id="L279">				return;</span>
-<span class="fc" id="L280">			innerResult.set(From.ALL, fullCombiner.apply(v, innerSecond));</span>
-<span class="fc" id="L281">		}));</span>
-<span class="fc" id="L282">		second.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -&gt; {</span>
-<span class="fc" id="L283">			Val&lt;T&gt; innerFirst = weakFirst.get();</span>
-<span class="pc bpc" id="L284" title="1 of 2 branches missed.">			if ( innerFirst == null )</span>
-<span class="nc" id="L285">				return;</span>
-<span class="fc" id="L286">			innerResult.set(From.ALL, fullCombiner.apply(innerFirst, v));</span>
-<span class="fc" id="L287">		}));</span>
-<span class="fc" id="L288">		return result;</span>
+<span class="fc" id="L278">		PropertyView&lt;@Nullable R&gt; result =  PropertyView._ofNullable( type, fullCombiner.apply(first, second), first, second ).withId(id);</span>
+<span class="fc" id="L279">		first.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -&gt; {</span>
+<span class="fc" id="L280">			Val&lt;U&gt; innerSecond = innerResult._getSource(1);</span>
+<span class="pc bpc" id="L281" title="1 of 2 branches missed.">			if ( innerSecond == null )</span>
+<span class="nc" id="L282">				return;</span>
+<span class="fc" id="L283">			innerResult.set(From.ALL, fullCombiner.apply(v, innerSecond));</span>
+<span class="fc" id="L284">		}));</span>
+<span class="fc" id="L285">		second.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -&gt; {</span>
+<span class="fc" id="L286">			Val&lt;T&gt; innerFirst = innerResult._getSource(0);</span>
+<span class="pc bpc" id="L287" title="1 of 2 branches missed.">			if ( innerFirst == null )</span>
+<span class="nc" id="L288">				return;</span>
+<span class="fc" id="L289">			innerResult.set(From.ALL, fullCombiner.apply(innerFirst, v));</span>
+<span class="fc" id="L290">		}));</span>
+<span class="fc" id="L291">		return result;</span>
 	}
 
 	private static String _compositeIdFrom(Val&lt;?&gt; first, Val&lt;?&gt; second) {
-<span class="fc" id="L292">		String id = &quot;&quot;;</span>
-<span class="pc bpc" id="L293" title="3 of 4 branches missed.">		if ( !first.id().isEmpty() &amp;&amp; !second.id().isEmpty() )</span>
-<span class="nc" id="L294">			id = first.id() + &quot;_and_&quot; + second.id();</span>
-<span class="pc bpc" id="L295" title="1 of 2 branches missed.">		else if ( !first.id().isEmpty() )</span>
-<span class="nc" id="L296">			id = first.id();</span>
-<span class="pc bpc" id="L297" title="1 of 2 branches missed.">		else if ( !second.id().isEmpty() )</span>
-<span class="nc" id="L298">			id = second.id();</span>
-<span class="fc" id="L299">		return id;</span>
+<span class="fc" id="L295">		String id = &quot;&quot;;</span>
+<span class="pc bpc" id="L296" title="3 of 4 branches missed.">		if ( !first.id().isEmpty() &amp;&amp; !second.id().isEmpty() )</span>
+<span class="nc" id="L297">			id = first.id() + &quot;_and_&quot; + second.id();</span>
+<span class="pc bpc" id="L298" title="1 of 2 branches missed.">		else if ( !first.id().isEmpty() )</span>
+<span class="nc" id="L299">			id = first.id();</span>
+<span class="pc bpc" id="L300" title="1 of 2 branches missed.">		else if ( !second.id().isEmpty() )</span>
+<span class="nc" id="L301">			id = second.id();</span>
+<span class="fc" id="L302">		return id;</span>
 	}
 
 	private final ChangeListeners&lt;T&gt; _changeListeners;
@@ -307,153 +310,153 @@ final class PropertyView&lt;T extends @Nullable Object&gt; implements Var&lt;T&g
 
 	@Nullable private T _currentItem;
 
+	private final ParentRef&lt;@Nullable Val&lt;?&gt;&gt;[] _strongParentRefs;
 
-	private PropertyView(
-        Class&lt;T&gt;    type,
-        String      id,
-        boolean     allowsNull,
-        @Nullable T iniValue // may be null
-<span class="fc" id="L316">    ) {</span>
-<span class="fc" id="L317">		Objects.requireNonNull(id);</span>
-<span class="fc" id="L318">		Objects.requireNonNull(type);</span>
-<span class="fc" id="L319">		_type     = type;</span>
-<span class="fc" id="L320">		_id       = id;</span>
-<span class="fc" id="L321">		_nullable = allowsNull;</span>
-<span class="fc" id="L322">		_currentItem = iniValue;</span>
-<span class="fc" id="L323">		_changeListeners = new ChangeListeners&lt;&gt;();</span>
-
-<span class="fc bfc" id="L325" title="All 2 branches covered.">		if ( _currentItem != null ) {</span>
-			// We check if the type is correct
-<span class="pc bpc" id="L327" title="1 of 2 branches missed.">			if ( !_type.isAssignableFrom(_currentItem.getClass()) )</span>
-<span class="nc" id="L328">				throw new IllegalArgumentException(</span>
-						&quot;The provided type of the initial item is not compatible &quot; +
-						&quot;with the actual type of the variable&quot;
-					);
-		}
-<span class="pc bpc" id="L333" title="1 of 2 branches missed.">		if ( !ID_PATTERN.matcher(_id).matches() )</span>
-<span class="nc" id="L334">			throw new IllegalArgumentException(</span>
-				&quot;The provided id '&quot;+_id+&quot;' is not valid! It must match &quot; +
-<span class="nc" id="L336">				&quot;the pattern '&quot;+ID_PATTERN.pattern()+&quot;'.&quot;</span>
-			);
-<span class="pc bpc" id="L338" title="1 of 4 branches missed.">		if ( !allowsNull &amp;&amp; iniValue == null )</span>
-<span class="nc" id="L339">			throw new IllegalArgumentException(</span>
-						&quot;The provided initial item is null, &quot; +
-						&quot;but this property view does not allow null items!&quot;
-					);
-<span class="fc" id="L343">	}</span>
 
 	private PropertyView(
         Class&lt;T&gt; type,
         @Nullable T iniValue,
         String id,
         ChangeListeners&lt;T&gt; changeListeners,
-        boolean allowsNull
-    ) {
-<span class="fc" id="L352">		this( type, id, allowsNull, iniValue );</span>
-<span class="fc" id="L353">		Objects.requireNonNull(id);</span>
-<span class="fc" id="L354">		Objects.requireNonNull(type);</span>
-<span class="fc" id="L355">		Objects.requireNonNull(changeListeners);</span>
-<span class="fc" id="L356">	}</span>
+        boolean allowsNull,
+		ParentRef&lt;@Nullable Val&lt;?&gt;&gt;[] strongParentRefs
+<span class="fc" id="L323">    ) {</span>
+<span class="fc" id="L324">		Objects.requireNonNull(id);</span>
+<span class="fc" id="L325">		Objects.requireNonNull(type);</span>
+<span class="fc" id="L326">		Objects.requireNonNull(changeListeners);</span>
+<span class="fc" id="L327">		Objects.requireNonNull(strongParentRefs);</span>
+<span class="fc" id="L328">		_type             = type;</span>
+<span class="fc" id="L329">		_id               = id;</span>
+<span class="fc" id="L330">		_nullable         = allowsNull;</span>
+<span class="fc" id="L331">		_currentItem      = iniValue;</span>
+<span class="fc" id="L332">		_changeListeners  = new ChangeListeners&lt;&gt;();</span>
+<span class="fc" id="L333">		_strongParentRefs = strongParentRefs;</span>
+
+<span class="fc bfc" id="L335" title="All 2 branches covered.">		if ( _currentItem != null ) {</span>
+			// We check if the type is correct
+<span class="pc bpc" id="L337" title="1 of 2 branches missed.">			if ( !_type.isAssignableFrom(_currentItem.getClass()) )</span>
+<span class="nc" id="L338">				throw new IllegalArgumentException(</span>
+						&quot;The provided type of the initial item is not compatible &quot; +
+								&quot;with the actual type of the variable&quot;
+				);
+		}
+<span class="pc bpc" id="L343" title="1 of 2 branches missed.">		if ( !ID_PATTERN.matcher(_id).matches() )</span>
+<span class="nc" id="L344">			throw new IllegalArgumentException(</span>
+					&quot;The provided id '&quot;+_id+&quot;' is not valid! It must match &quot; +
+<span class="nc" id="L346">							&quot;the pattern '&quot;+ID_PATTERN.pattern()+&quot;'.&quot;</span>
+			);
+<span class="pc bpc" id="L348" title="1 of 4 branches missed.">		if ( !allowsNull &amp;&amp; iniValue == null )</span>
+<span class="nc" id="L349">			throw new IllegalArgumentException(</span>
+					&quot;The provided initial item is null, &quot; +
+							&quot;but this property view does not allow null items!&quot;
+			);
+<span class="fc" id="L353">	}</span>
+
+	private &lt;P&gt; @Nullable Val&lt;P&gt; _getSource(int index ) {
+<span class="pc bpc" id="L356" title="2 of 4 branches missed.">		if ( index &lt; 0 || index &gt;= _strongParentRefs.length )</span>
+<span class="nc" id="L357">			throw new IndexOutOfBoundsException(&quot;The index &quot;+index+&quot; is out of bounds!&quot;);</span>
+<span class="fc" id="L358">		return (Val) _strongParentRefs[index].get();</span>
+	}
 
 	/** {@inheritDoc} */
-	@Override public Var&lt;T&gt; withId( String id ) {
-<span class="fc" id="L360">        return new PropertyView&lt;&gt;(_type, _currentItem, id, _changeListeners, _nullable);</span>
+	@Override public PropertyView&lt;T&gt; withId( String id ) {
+<span class="fc" id="L363">        return new PropertyView&lt;&gt;(_type, _currentItem, id, _changeListeners, _nullable, _strongParentRefs);</span>
 	}
 
 	/** {@inheritDoc} */
 	@Override
 	public Var&lt;T&gt; onChange( Channel channel, Action&lt;Val&lt;T&gt;&gt; action ) {
-<span class="fc" id="L366">		_changeListeners.onChange(channel, action);</span>
-<span class="fc" id="L367">		return this;</span>
+<span class="fc" id="L369">		_changeListeners.onChange(channel, action);</span>
+<span class="fc" id="L370">		return this;</span>
 	}
 
 	/** {@inheritDoc} */
 	@Override public Var&lt;T&gt; fireChange( Channel channel ) {
-<span class="fc" id="L372">		_changeListeners.fireChange(this, channel);</span>
-<span class="fc" id="L373">		return this;</span>
+<span class="fc" id="L375">		_changeListeners.fireChange(this, channel);</span>
+<span class="fc" id="L376">		return this;</span>
 	}
 
 	@Override
 	public final boolean isMutable() {
-<span class="fc" id="L378">		return true;</span>
+<span class="fc" id="L381">		return true;</span>
 	}
 
 	@Override
 	public boolean isView() {
-<span class="fc" id="L383">		return true;</span>
+<span class="fc" id="L386">		return true;</span>
 	}
 
 	/** {@inheritDoc} */
 	@Override
 	public Var&lt;T&gt; set( Channel channel, T newItem ) {
-<span class="fc" id="L389">		Objects.requireNonNull(channel);</span>
-<span class="fc bfc" id="L390" title="All 2 branches covered.">		if ( _setInternal(newItem) )</span>
-<span class="fc" id="L391">			this.fireChange(channel);</span>
-<span class="fc" id="L392">		return this;</span>
+<span class="fc" id="L392">		Objects.requireNonNull(channel);</span>
+<span class="fc bfc" id="L393" title="All 2 branches covered.">		if ( _setInternal(newItem) )</span>
+<span class="fc" id="L394">			this.fireChange(channel);</span>
+<span class="fc" id="L395">		return this;</span>
 	}
 
 	private boolean _setInternal( T newValue ) {
-<span class="pc bpc" id="L396" title="1 of 4 branches missed.">		if ( !_nullable &amp;&amp; newValue == null )</span>
-<span class="nc" id="L397">			throw new NullPointerException(</span>
+<span class="pc bpc" id="L399" title="1 of 4 branches missed.">		if ( !_nullable &amp;&amp; newValue == null )</span>
+<span class="nc" id="L400">			throw new NullPointerException(</span>
 					&quot;This property is configured to not allow null items! &quot; +
 					&quot;If you want your property to allow null items, use the 'ofNullable(Class, T)' factory method.&quot;
 				);
 
-<span class="fc bfc" id="L402" title="All 2 branches covered.">		if ( !Objects.equals(_currentItem, newValue ) ) {</span>
+<span class="fc bfc" id="L405" title="All 2 branches covered.">		if ( !Objects.equals(_currentItem, newValue ) ) {</span>
 			// First we check if the item is compatible with the type
-<span class="pc bpc" id="L404" title="1 of 4 branches missed.">			if ( newValue != null &amp;&amp; !_type.isAssignableFrom(newValue.getClass()) )</span>
-<span class="nc" id="L405">				throw new IllegalArgumentException(</span>
-<span class="nc" id="L406">						&quot;The provided type '&quot;+newValue.getClass()+&quot;' of the new item is not compatible &quot; +</span>
+<span class="pc bpc" id="L407" title="1 of 4 branches missed.">			if ( newValue != null &amp;&amp; !_type.isAssignableFrom(newValue.getClass()) )</span>
+<span class="nc" id="L408">				throw new IllegalArgumentException(</span>
+<span class="nc" id="L409">						&quot;The provided type '&quot;+newValue.getClass()+&quot;' of the new item is not compatible &quot; +</span>
 						&quot;with the type '&quot;+_type+&quot;' of this property&quot;
 					);
 
-<span class="fc" id="L410">			_currentItem = newValue;</span>
-<span class="fc" id="L411">			return true;</span>
+<span class="fc" id="L413">			_currentItem = newValue;</span>
+<span class="fc" id="L414">			return true;</span>
 		}
-<span class="fc" id="L413">		return false;</span>
+<span class="fc" id="L416">		return false;</span>
 	}
 
 	@Override
 	public Observable subscribe( Observer observer ) {
-<span class="fc" id="L418">		_changeListeners.onChange( observer );</span>
-<span class="fc" id="L419">		return this;</span>
+<span class="fc" id="L421">		_changeListeners.onChange( observer );</span>
+<span class="fc" id="L422">		return this;</span>
 	}
 
 	@Override
 	public Observable unsubscribe( Subscriber subscriber ) {
-<span class="fc" id="L424">		_changeListeners.unsubscribe(subscriber);</span>
-<span class="fc" id="L425">		return this;</span>
+<span class="fc" id="L427">		_changeListeners.unsubscribe(subscriber);</span>
+<span class="fc" id="L428">		return this;</span>
 	}
 
 	public final long numberOfChangeListeners() {
-<span class="fc" id="L429">		return _changeListeners.numberOfChangeListeners();</span>
+<span class="fc" id="L432">		return _changeListeners.numberOfChangeListeners();</span>
 	}
 
 	/** {@inheritDoc} */
-<span class="fc" id="L433">	@Override public final Class&lt;T&gt; type() { return _type; }</span>
+<span class="fc" id="L436">	@Override public final Class&lt;T&gt; type() { return _type; }</span>
 
 	/** {@inheritDoc} */
-<span class="fc" id="L436">	@Override public final String id() { return _id; }</span>
+<span class="fc" id="L439">	@Override public final String id() { return _id; }</span>
 
 	/** {@inheritDoc} */
 	@Override
-<span class="fc" id="L440">	public final @Nullable T orElseNull() { return _currentItem; }</span>
+<span class="fc" id="L443">	public final @Nullable T orElseNull() { return _currentItem; }</span>
 
 	/** {@inheritDoc} */
-<span class="fc" id="L443">	@Override public final boolean allowsNull() { return _nullable; }</span>
+<span class="fc" id="L446">	@Override public final boolean allowsNull() { return _nullable; }</span>
 
 	@Override
 	public final String toString() {
-<span class="fc" id="L447">		String item = this.mapTo(String.class, Object::toString).orElse(&quot;null&quot;);</span>
-<span class="pc bpc" id="L448" title="1 of 2 branches missed.">		String id = this.id() == null ? &quot;?&quot; : this.id();</span>
-<span class="fc bfc" id="L449" title="All 2 branches covered.">		if ( id.equals(NO_ID) ) id = &quot;?&quot;;</span>
-<span class="pc bpc" id="L450" title="1 of 2 branches missed.">		String type = ( type() == null ? &quot;?&quot; : type().getSimpleName() );</span>
-<span class="pc bpc" id="L451" title="1 of 2 branches missed.">		if ( type.equals(&quot;Object&quot;) ) type = &quot;?&quot;;</span>
-<span class="pc bpc" id="L452" title="3 of 4 branches missed.">		if ( type.equals(&quot;String&quot;) &amp;&amp; this.isPresent() ) item = &quot;\&quot;&quot; + item + &quot;\&quot;&quot;;</span>
-<span class="pc bpc" id="L453" title="1 of 2 branches missed.">		if (_nullable) type = type + &quot;?&quot;;</span>
-<span class="fc" id="L454">		String name = &quot;View&quot;;</span>
-<span class="fc bfc" id="L455" title="All 2 branches covered.">		String content = ( id.equals(&quot;?&quot;) ? item : id + &quot;=&quot; + item );</span>
-<span class="fc" id="L456">		return name + &quot;&lt;&quot; + type + &quot;&gt;&quot; + &quot;[&quot; + content + &quot;]&quot;;</span>
+<span class="fc" id="L450">		String item = this.mapTo(String.class, Object::toString).orElse(&quot;null&quot;);</span>
+<span class="pc bpc" id="L451" title="1 of 2 branches missed.">		String id = this.id() == null ? &quot;?&quot; : this.id();</span>
+<span class="fc bfc" id="L452" title="All 2 branches covered.">		if ( id.equals(NO_ID) ) id = &quot;?&quot;;</span>
+<span class="pc bpc" id="L453" title="1 of 2 branches missed.">		String type = ( type() == null ? &quot;?&quot; : type().getSimpleName() );</span>
+<span class="pc bpc" id="L454" title="1 of 2 branches missed.">		if ( type.equals(&quot;Object&quot;) ) type = &quot;?&quot;;</span>
+<span class="pc bpc" id="L455" title="3 of 4 branches missed.">		if ( type.equals(&quot;String&quot;) &amp;&amp; this.isPresent() ) item = &quot;\&quot;&quot; + item + &quot;\&quot;&quot;;</span>
+<span class="pc bpc" id="L456" title="1 of 2 branches missed.">		if (_nullable) type = type + &quot;?&quot;;</span>
+<span class="fc" id="L457">		String name = &quot;View&quot;;</span>
+<span class="fc bfc" id="L458" title="All 2 branches covered.">		String content = ( id.equals(&quot;?&quot;) ? item : id + &quot;=&quot; + item );</span>
+<span class="fc" id="L459">		return name + &quot;&lt;&quot; + type + &quot;&gt;&quot; + &quot;[&quot; + content + &quot;]&quot;;</span>
 	}
 
 }

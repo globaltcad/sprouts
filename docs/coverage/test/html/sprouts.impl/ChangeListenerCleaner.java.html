@@ -79,14 +79,14 @@ final class ChangeListenerCleaner
 <span class="fc" id="L79">        synchronized ( _referenceQueue ) {</span>
 <span class="fc" id="L80">            _toBeCleaned.add(new ReferenceWithCleanup&lt;&gt;(o, action, _referenceQueue));</span>
 <span class="fc bfc" id="L81" title="All 2 branches covered.">            if ( _toBeCleaned.size() == 1 ) {</span>
-<span class="pc bpc" id="L82" title="1 of 2 branches missed.">                if ( !_thread.isAlive() ) {</span>
+<span class="fc bfc" id="L82" title="All 2 branches covered.">                if ( !_thread.isAlive() ) {</span>
 <span class="fc" id="L83">                    _thread.start();</span>
                 }
                 else {
                     // We notify the cleaner thread that there are new items to be cleaned
-<span class="nc" id="L87">                    synchronized ( _thread ) {</span>
-<span class="nc" id="L88">                        _thread.notify();</span>
-<span class="nc" id="L89">                    }</span>
+<span class="fc" id="L87">                    synchronized ( _thread ) {</span>
+<span class="fc" id="L88">                        _thread.notify();</span>
+<span class="fc" id="L89">                    }</span>
                 }
             }
 <span class="fc" id="L92">        }</span>
@@ -97,16 +97,16 @@ final class ChangeListenerCleaner
 <span class="nc" id="L97">            _thread.start();</span>
         }
 <span class="pc bpc" id="L99" title="1 of 2 branches missed.">        while ( _thread.isAlive() ) {</span>
-<span class="pc bpc" id="L100" title="1 of 2 branches missed.">            while ( !_toBeCleaned.isEmpty() ) {</span>
+<span class="fc bfc" id="L100" title="All 2 branches covered.">            while ( !_toBeCleaned.isEmpty() ) {</span>
 <span class="fc" id="L101">                checkCleanup();</span>
             }
             try {
-<span class="nc" id="L104">                synchronized ( _thread ) {</span>
-<span class="nc" id="L105">                    _thread.wait();</span>
-<span class="nc" id="L106">                }</span>
+<span class="fc" id="L104">                synchronized ( _thread ) {</span>
+<span class="fc" id="L105">                    _thread.wait();</span>
+<span class="fc" id="L106">                }</span>
 <span class="nc" id="L107">            } catch (Exception e) {</span>
 <span class="nc" id="L108">                log.error(&quot;Failed to make cleaner thread wait for cleaning notification!&quot;, e);</span>
-<span class="nc" id="L109">            }</span>
+<span class="pc" id="L109">            }</span>
         }
 <span class="nc" id="L111">    }</span>
 

@@ -4,7 +4,7 @@
   "narrative":"Both the read only `Val` and the mutable `Var` are observable properties.\n    As a consequence, they expose convenient methods to observe their changes\n    in the form of \"views\", which are themselves observable properties\n    that are a live view of the original property which gets updated\n    automatically when the original property changes.\n\n    This is especially useful when you want to observe a property\n    of one type as a property of another type, or when you want to\n    observe a property with some transformation applied to it.\n\n    This specification shows how to create views from both nullable and non-nullable properties,",
   "subjects":["sprouts.Val","sprouts.Val"],
   "statistics":{
-    "runs":"13",
+    "runs":"14",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -332,6 +332,39 @@
         {"kind":"then","text":"The listener is not notified of the new value of the view.","code":["trace == [\"SEPTEMBER\", \"NOVEMBER\"]"]},
 
         {"kind":"and","text":"There are no change listeners registered.","code":["view.numberOfChangeListeners() == 0"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A chain of views may not be garbage collected.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Every view holds a reference to the source property it is viewing.\n            So if a chain of views is created, the source property will be referenced by all views in the chain.\n            These references may be weak references if the parent property is not a view itself.\n            This is also true for lenses, which are also always strong references.\n            A plain property on the other hand is weakly referenced by the views.\n            So the chain of views may not be garbage collected if the source property is not garbage collected.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A property based on an enum.","code":["var dayOfWeekProp = Var.of(DayOfWeek.FRIDAY)"]},
+
+        {"kind":"and","text":"A chain of views.","code":["Val<String> view1 = dayOfWeekProp.viewAsString(DayOfWeek::name)","Val<String> view2 = view1.view(s -> s + \" is a good day\")","Val<String> view3 = view2.view(s -> s + \" to have a party\")"]},
+
+        {"kind":"and","text":"\n            Now we store all of these references in a list of WeakReference objects.\n            This way we can check which of the references are still present\n            after awaiting garbage collection.\n        ","code":["var refs = [","        new WeakReference(dayOfWeekProp), new WeakReference(view1),","        new WeakReference(view2), new WeakReference(view3)","    ]"]},
+
+        {"kind":"expect","text":"All references are still present after awaiting garbage collection.","code":["refs.every( it -> it.get() != null )"]},
+
+        {"kind":"and","text":"Each property has the expected number of change listeners for their respective child.","code":["dayOfWeekProp.numberOfChangeListeners() == 1","view1.numberOfChangeListeners() == 1","view2.numberOfChangeListeners() == 1","view3.numberOfChangeListeners() == 0"]},
+
+        {"kind":"when","text":"We now remove the intermediate views from the chain.","code":["view1 = null","view2 = null"]},
+
+        {"kind":"and","text":"We await garbage collection.","code":["waitForGarbageCollection()","Thread.sleep(500)"]},
+
+        {"kind":"then","text":"Every reference is still present.","code":["refs.every( it -> it.get() != null )"]},
+
+        {"kind":"when","text":"We remove the last view from the chain.","code":["view3 = null"]},
+
+        {"kind":"and","text":"We await garbage collection.","code":["waitForGarbageCollection()","Thread.sleep(500)"]},
+
+        {"kind":"then","text":"All views were garbage collected, but the source is still there.","code":["refs[0].get() != null","refs[1].get() == null","refs[2].get() == null","refs[3].get() == null"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }
