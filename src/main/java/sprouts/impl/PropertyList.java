@@ -282,7 +282,9 @@ final class PropertyList<T extends @Nullable Object> implements Vars<T> {
             throw new UnsupportedOperationException("This is an immutable list.");
 
         if ( vals.allowsNull() != this.allowsNull() )
-            throw new IllegalArgumentException("The null safety of the given list does not match this list.");
+            throw new IllegalArgumentException(
+                    "The null safety of the given property list does not match this list."
+                );
 
         if (vals.isEmpty())
             return this;
@@ -291,15 +293,21 @@ final class PropertyList<T extends @Nullable Object> implements Vars<T> {
             Val<T> val = vals.at(i);
             _checkNullSafetyOf(val);
 
-            if ( val instanceof Var ) {
-                if ( !val.isMutable() ) {
-                    _variables.add(Var.of(val.get()));
-                } else {
-                    _variables.add((Var<T>) val);
-                }
+            if ( val.isImmutable() ) {
+                _variables.add(
+                    this.allowsNull() ?
+                        Var.ofNullable(val.type(), val.orElseNull()) :
+                        Var.of(val.get())
+                );
             }
+            else if ( val instanceof Var )
+                _variables.add((Var<T>) val);
             else
-                _variables.add(Var.of(val.get()));
+                _variables.add(
+                    this.allowsNull() ?
+                        Var.ofNullable(val.type(), val.orElseNull()) :
+                        Var.of(val.get())
+                );
         }
 
         _triggerAction( Change.ADD, size() - vals.size(), vals, null);
