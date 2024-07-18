@@ -1138,6 +1138,25 @@ class Properties_List_Spec extends Specification
             vars.toList() == ["a", null, "c", "d", null, "f", null, "h1", "h2", null, null, "i1", "i2"]
     }
 
+    def 'You can add properties to a nullable "Vars" list that from an immutable property list.'() {
+        reportInfo """  
+            A nullable "Vars" list is able to handle null values. 
+            So you can add an immutable nullable property list to it.
+            Under the hood, the immutable properties will be added
+            to the list in the form of mutable properties.
+        """
+        given: 'A nullable "Vals" instance with a few properties, including null properties.'
+            var vars = Vars.ofNullable(String.class, "a", null, "c")
+        when: 'We add "1" and "2" to the list.'
+            vars.addAll(Vals.ofNullable(String.class, "1", "2"))
+        then: 'They were added successfully.'
+            vars.toList() == ["a", null, "c", "1", "2"]
+        when: 'We add another immutable "Vals" through the `addAll` method.'
+            vars.addAll(Vals.ofNullable(String.class, null, "x", "y"))
+        then: 'All of the items were added successfully, including the null references.'
+            vars.toList() == ["a", null, "c", "1", "2", null, "x", "y"]
+    }
+
     def 'The change delegate contains information about changes made to a "Vars" list by adding a list of properties.'() {
         reportInfo """    
             When you add a list of properties to a "Vars" list, the change delegate contains information about the  
