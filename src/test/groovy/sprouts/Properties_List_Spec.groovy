@@ -1895,4 +1895,89 @@ class Properties_List_Spec extends Specification
             thrown(IllegalArgumentException)
     }
 
+    def 'Use `addAt(int,Val)` to set the item as a new property and use `addAt(int,Var)` to set the supplied property.'()
+    {
+        reportInfo """
+            The `Vars` property list exposes two overloaded methods to set a property at a given index.
+            The `addAt(int, Val)` method adds the item wrapped in a new independent property, while the
+            `addAt(int, Var)` method actually takes the supplied property reference and then 
+            puts it in the list at the given index.
+            
+            The reason why the `addAt(int, Val)` creates a copy of the property is because the `Val`
+            type is a read only view on a potentially mutable `Var` property. So an API consumer
+            expects that it's state is encapsulated and not affected by changes to the original property.
+            
+            In this example we demonstrate this difference by adding a simple property
+            with a change listener to the list and then setting the property at a given index
+            using both methods.
+        """
+        given : 'A simple String based property with a listener and a list tracking changes.'
+            var trace = []
+            var property = Var.of("?")
+            property.onChange(From.ALL, { trace << it.get() })
+        and : 'A property list with some japanese food properties.'
+            var foods = Vars.of("寿司", "ラーメン", "カレー", "うどん", "おにぎり")
+        and : 'We use the two different methods to add the question mark property in the list.'
+            foods.addAt(1, (Val<String>) property)
+            foods.addAt(3, (Var<String>) property)
+        expect : 'The property is added to the list and the property did not change.'
+            foods.toList() == ["寿司", "?", "ラーメン", "?", "カレー", "うどん", "おにぎり"]
+            trace == []
+
+        when : 'We change the property item at index 1...'
+            foods.at(1).set("!")
+        then : 'The property at index 1 is changed but the initial property did not change.'
+            foods.toList() == ["寿司", "!", "ラーメン", "?", "カレー", "うどん", "おにぎり"]
+            trace == []
+            property.get() == "?"
+        when : 'We change the property item at index 3...'
+            foods.at(3).set("!")
+        then : 'The property at index 3 is changed, and this time the initial property changed as well.'
+            foods.toList() == ["寿司", "!", "ラーメン", "!", "カレー", "うどん", "おにぎり"]
+            trace == ["!"]
+            property.get() == "!"
+    }
+
+    def 'Use `setAt(int,Val)` to set the item as a new property and use `setAt(int,Var)` to set the supplied property.'()
+    {
+        reportInfo """
+            The `Vars` property list exposes two overloaded methods to set a property at a given index.
+            The `setAt(int, Val)` method adds the item wrapped in a new independent property, while the
+            `setAt(int, Var)` method actually takes the supplied property reference and then 
+            puts it in the list at the given index.
+            
+            The reason why the `setAt(int, Val)` creates a copy of the property is because the `Val`
+            type is a read only view on a potentially mutable `Var` property. So an API consumer
+            expects that it's state is encapsulated and not affected by changes to the original property.
+            
+            In this example we demonstrate this difference by adding a simple property
+            with a change listener to the list and then setting the property at a given index
+            using both methods.
+        """
+        given : 'A simple String based property with a listener and a list tracking changes.'
+            var trace = []
+            var property = Var.of("?")
+            property.onChange(From.ALL, { trace << it.get() })
+        and : 'A property list with some japanese food properties.'
+            var foods = Vars.of("寿司", "ラーメン", "カレー", "うどん", "おにぎり")
+        and : 'We use the two different methods to add the question mark property in the list.'
+            foods.setAt(1, (Val<String>) property)
+            foods.setAt(3, (Var<String>) property)
+        expect : 'The property is added to the list and the property did not change.'
+            foods.toList() == ["寿司", "?", "カレー", "?", "おにぎり"]
+            trace == []
+
+        when : 'We change the property item at index 1...'
+            foods.at(1).set("!")
+        then : 'The property at index 1 is changed but the initial property did not change.'
+            foods.toList() == ["寿司", "!", "カレー", "?", "おにぎり"]
+            trace == []
+            property.get() == "?"
+        when : 'We change the property item at index 3...'
+            foods.at(3).set("!")
+        then : 'The property at index 3 is changed, and this time the initial property changed as well.'
+            foods.toList() == ["寿司", "!", "カレー", "!", "おにぎり"]
+            trace == ["!"]
+            property.get() == "!"
+    }
 }
