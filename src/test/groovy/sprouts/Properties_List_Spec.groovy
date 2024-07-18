@@ -1980,4 +1980,57 @@ class Properties_List_Spec extends Specification
             trace == ["!"]
             property.get() == "!"
     }
+
+    def 'Use `addAll(Vals)` to add the items as a new properties and use `addAll(Vars)` to add them unchanged.'()
+    {
+        reportInfo """
+            The `Vars` property list exposes two overloaded methods to add a list of properties.
+            The `addAll(Vals)` method adds the items wrapped in new independent properties, while the
+            `addAll(Vars)` method actually takes the supplied properties and then 
+            puts them in the list unchanged.
+            
+            The reason why the `addAll(Vals)` creates a copy of the properties is because the `Vals`
+            type is a read only view on a potentially mutable `Vars` property list. So an API consumer
+            expects that it's state is encapsulated and not affected by changes to the original property list.
+            
+            In this example we demonstrate this difference by adding a simple property
+            with a change listener to the list and then adding a list of properties
+            using both methods.
+        """
+        given : 'Two simple String based properties with listeners and a list tracking changes.'
+            var trace = []
+            var property1 = Var.of("?")
+            var property2 = Var.of("!")
+            property1.onChange(From.ALL, { trace << it.get() })
+            property2.onChange(From.ALL, { trace << it.get() })
+        and : 'A property list with some indian food properties.'
+            var foods = Vars.of("दाल", "चावल")
+        and : 'A short list containing a the two properties.'
+            var properties = Vals.of(property1, property2)
+
+        when : 'We use the two different methods to add the properties in the list.'
+            foods.addAll((Vals<String>) properties)
+            foods.addAll((Vars<String>) properties)
+        then : 'The properties are added to the list and the properties did not change.'
+            foods.toList() == ["दाल", "चावल", "?", "!", "?", "!"]
+            trace == []
+
+        when : 'We modify the items at index 2 and 3...'
+            foods.at(2).set("x")
+            foods.at(3).set("y")
+        then : 'The properties at index 2 and 3 are changed but the initial properties did not change.'
+            foods.toList() == ["दाल", "चावल", "x", "y", "?", "!"]
+            trace == []
+            property1.get() == "?"
+            property2.get() == "!"
+
+        when : 'We change the property item at index 4 and 5 on the other hand...'
+            foods.at(4).set("+")
+            foods.at(5).set("-")
+        then : 'The properties at index 4 and 5 are changed as well as the initial properties.'
+            foods.toList() == ["दाल", "चावल", "x", "y", "+", "-"]
+            trace == ["+", "-"]
+            property1.get() == "+"
+            property2.get() == "-"
+    }
 }
