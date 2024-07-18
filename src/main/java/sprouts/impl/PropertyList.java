@@ -278,18 +278,7 @@ final class PropertyList<T extends @Nullable Object> implements Vars<T> {
     /** {@inheritDoc} */
     @Override
     public Vars<T> addAll( Vals<T> properties ) {
-        if ( _isImmutable )
-            throw new UnsupportedOperationException(
-                    "Attempted to add to an immutable property list for item type '" + type() + "'. " +
-                    "Properties cannot be added to an immutable property list."
-                );
-
-        if ( properties.allowsNull() != this.allowsNull() )
-            throw new IllegalArgumentException(
-                    "The null safety of the given property list does not match this list."
-                );
-
-        if ( properties.isEmpty() )
+        if ( !_checkCanAdd(properties) )
             return this;
 
         for ( int i = 0; i < properties.size(); i++ ) {
@@ -315,6 +304,39 @@ final class PropertyList<T extends @Nullable Object> implements Vars<T> {
 
         _triggerAction( Change.ADD, size() - properties.size(), properties, null);
         return this;
+    }
+
+    @Override
+    public Vars<T> addAll( Vars<T> properties ) {
+        if ( !_checkCanAdd(properties) )
+            return this;
+
+        for ( int i = 0; i < properties.size(); i++ ) {
+            Var<T> toBeAdded = properties.at(i);
+            _checkNullSafetyOf(toBeAdded);
+            _variables.add(toBeAdded);
+        }
+
+        _triggerAction( Change.ADD, size() - properties.size(), properties, null);
+        return this;
+    }
+
+    private boolean _checkCanAdd( Vals<T> properties ) {
+        if ( _isImmutable )
+            throw new UnsupportedOperationException(
+                    "Attempted to add to an immutable property list for item type '" + type() + "'. " +
+                    "Properties cannot be added to an immutable property list."
+                );
+
+        if ( properties.allowsNull() != this.allowsNull() )
+            throw new IllegalArgumentException(
+                    "The null safety of the given property list does not match this list."
+                );
+
+        if ( properties.isEmpty() )
+            return false;
+
+        return true;
     }
 
     /** {@inheritDoc} */
