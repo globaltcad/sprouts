@@ -277,40 +277,43 @@ final class PropertyList<T extends @Nullable Object> implements Vars<T> {
 
     /** {@inheritDoc} */
     @Override
-    public Vars<T> addAll( Vals<T> vals ) {
+    public Vars<T> addAll( Vals<T> properties ) {
         if ( _isImmutable )
-            throw new UnsupportedOperationException("This is an immutable list.");
+            throw new UnsupportedOperationException(
+                    "Attempted to add to an immutable property list for item type '" + type() + "'. " +
+                    "Properties cannot be added to an immutable property list."
+                );
 
-        if ( vals.allowsNull() != this.allowsNull() )
+        if ( properties.allowsNull() != this.allowsNull() )
             throw new IllegalArgumentException(
                     "The null safety of the given property list does not match this list."
                 );
 
-        if (vals.isEmpty())
+        if ( properties.isEmpty() )
             return this;
 
-        for ( int i = 0; i < vals.size(); i++ ) {
-            Val<T> val = vals.at(i);
-            _checkNullSafetyOf(val);
+        for ( int i = 0; i < properties.size(); i++ ) {
+            Val<T> toBeAdded = properties.at(i);
+            _checkNullSafetyOf(toBeAdded);
 
-            if ( val.isImmutable() ) {
+            if ( toBeAdded.isImmutable() ) {
                 _variables.add(
                     this.allowsNull() ?
-                        Var.ofNullable(val.type(), val.orElseNull()) :
-                        Var.of(val.get())
+                        Var.ofNullable(toBeAdded.type(), toBeAdded.orElseNull()) :
+                        Var.of(toBeAdded.get())
                 );
             }
-            else if ( val instanceof Var )
-                _variables.add((Var<T>) val);
+            else if ( toBeAdded instanceof Var )
+                _variables.add((Var<T>) toBeAdded);
             else
                 _variables.add(
                     this.allowsNull() ?
-                        Var.ofNullable(val.type(), val.orElseNull()) :
-                        Var.of(val.get())
+                        Var.ofNullable(toBeAdded.type(), toBeAdded.orElseNull()) :
+                        Var.of(toBeAdded.get())
                 );
         }
 
-        _triggerAction( Change.ADD, size() - vals.size(), vals, null);
+        _triggerAction( Change.ADD, size() - properties.size(), properties, null);
         return this;
     }
 
