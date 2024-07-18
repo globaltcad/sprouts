@@ -2,9 +2,9 @@ package sprouts.impl;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
-import sprouts.*;
 import sprouts.Observable;
 import sprouts.Observer;
+import sprouts.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -272,37 +272,6 @@ final class PropertyList<T extends @Nullable Object> implements Vars<T> {
 
         _triggerAction(Change.SET, from, newVars, oldVars);
 
-        return this;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public Vars<T> addAll( Vals<T> properties ) {
-        if ( !_checkCanAdd(properties) )
-            return this;
-
-        for ( int i = 0; i < properties.size(); i++ ) {
-            Val<T> toBeAdded = properties.at(i);
-            _checkNullSafetyOf(toBeAdded);
-
-            if ( toBeAdded.isImmutable() ) {
-                _variables.add(
-                    this.allowsNull() ?
-                        Var.ofNullable(toBeAdded.type(), toBeAdded.orElseNull()) :
-                        Var.of(toBeAdded.get())
-                );
-            }
-            else if ( toBeAdded instanceof Var )
-                _variables.add((Var<T>) toBeAdded);
-            else
-                _variables.add(
-                    this.allowsNull() ?
-                        Var.ofNullable(toBeAdded.type(), toBeAdded.orElseNull()) :
-                        Var.of(toBeAdded.get())
-                );
-        }
-
-        _triggerAction( Change.ADD, size() - properties.size(), properties, null);
         return this;
     }
 
