@@ -2067,4 +2067,37 @@ class Properties_List_Spec extends Specification
         then : 'An exception is thrown because the property is null.'
             thrown(IllegalArgumentException)
     }
+
+    def 'Using `setAt(int,Val)`, you can place the item of a nullable property into a non-nullable list if the item is present.'()
+    {
+        reportInfo """
+            The `setAt(int, Val)` method is designed to ensure that the value
+            of a property is placed into a property list in the form of a new independent property.
+            This means that as long as the value of the property is not null, the property can be placed
+            into a non-nullable property list.
+        """
+        given : 'A non-nullable property list and a nullable property.'
+            var properties = Vars.of("a", "b", "c")
+            var nullable = Var.ofNullable(String.class, "x")
+        when : 'We set the nullable property at an index in the list.'
+            properties.setAt(1, (Val<String>) nullable)
+        then : 'The property is placed in the list.'
+            properties.toList() == ["a", "x", "c"]
+        when : 'We change the value of the nullable property.'
+            nullable.set("y")
+        then : 'The property in the list is not affected.'
+            properties.toList() == ["a", "x", "c"]
+        when : 'We set the nullable property at another index in the list.'
+            properties.setAt(2, (Val<String>) nullable)
+        then : 'The property is placed in the list.'
+            properties.toList() == ["a", "x", "y"]
+        when : """
+            We now try to set null to the property list by setting
+            the nullable property to null and adding it to the list.
+        """
+            nullable.set(null)
+            properties.setAt(2, (Val<String>) nullable)
+        then : 'An exception is thrown because the property is null.'
+            thrown(IllegalArgumentException)
+    }
 }
