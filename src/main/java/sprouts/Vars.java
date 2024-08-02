@@ -254,7 +254,9 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
     /**
      * Adds the provided property to the end of the list.
      * Note that this may have unwanted side effects in case of the supplied property
-     * having change listeners attached to it.
+     * having change listeners attached to it. <br>
+     * Use {@link #add(Val)} to add the item of the property to the list
+     * in the form of a new mutable {@link Var} property to avoid side effects.
      *
      * @param var the property to add.
      * @return {@code this} list of properties.
@@ -267,17 +269,18 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
     }
 
     /**
-     * Wraps the item of the provided {@link Val} in a new {@link Var} property
-     * and adds it to the end of the property list.
+     * Wraps the item of the provided {@link Val} in a new mutable {@link Var} property
+     * and adds it to the end of this property list. <br>
+     * Use {@link #add(Var)} to add the property itself to the list.
      *
-     * @param var The value to add as a property item.
+     * @param val The property whose item should be added to this property list.
      * @return {@code this} list of properties.
-     * @throws NullPointerException if {@code null} is not allowed and the {@code var} is {@code null}.
-     * @throws NullPointerException if the {@code var} is {@code null}.
+     * @throws NullPointerException if {@code null} is not allowed and the {@code val} is {@code null}.
+     * @throws NullPointerException if the {@code val} is {@code null}.
      */
-    default Vars<T> add( Val<T> var ) {
-        Objects.requireNonNull(var);
-        return addAt( size(), var );
+    default Vars<T> add( Val<T> val ) {
+        Objects.requireNonNull(val);
+        return addAt( size(), val );
     }
 
     /**
