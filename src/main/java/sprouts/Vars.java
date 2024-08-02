@@ -642,13 +642,19 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
      * @param index the index at which to add the property.
      * @param val   the value to add as a property item.
      * @return {@code this} list of properties.
-     * @throws NullPointerException if {@code null} is not allowed and the {@code val} is {@code null}.
+     * @throws NullPointerException if {@code null} is not allowed and the supplied {@code val} is {@code null}.
      */
     default Vars<T> addAt( int index, Val<T> val ) {
-        if ( val.allowsNull() )
-            return addAt(index, Var.ofNullable(val.type(), val.orElseNull()));
+        Objects.requireNonNull(val);
+        if ( this.allowsNull() )
+            return addAt( index, Var.ofNullable(val.type(), val.orElseNull()) );
+        else if ( val.isPresent() )
+            return addAt( index, Var.of(val.get()) );
         else
-            return addAt(index, Var.of(val.get()));
+            throw new IllegalArgumentException(
+                        "Attempted to add an empty property (null) to a " +
+                        "property list that does not allow null values."
+                    );
     }
 
     /**
