@@ -2100,4 +2100,34 @@ class Properties_List_Spec extends Specification
         then : 'An exception is thrown because the property is null.'
             thrown(IllegalArgumentException)
     }
+
+    def 'A non-null property list can accept a nullable list through "addAll(Vals)" as long as there are no nulls in the list.'()
+    {
+        reportInfo """
+            The `addAll(Vals)` method is designed to ensure that the values
+            of a property list are added to another property list in the form of new independent properties.
+            This always works as long as there is no null-item in the list
+            passed to the `addAll` method.
+            
+            Note that this is different to `addAll(Vars)`, which will add the properties
+            as they are, without creating new independent properties,
+            and so will throw an exception if it has a different null-ness... 
+        """
+        given : 'A non-nullable property list and a nullable property list.'
+            var properties = Vars.of("a", "b", "c")
+            var nullable = Vars.ofNullable(String.class, "x", "y", "z")
+        when : 'We add the nullable property list to the list by upcasting it to a `Vals` type.'
+            properties.addAll((Vals<String>) nullable)
+        then : 'The properties are added to the list.'
+            properties.toList() == ["a", "b", "c", "x", "y", "z"]
+
+        when : """
+            We now try to add null to the property list by setting
+            one of the nullable properties to null and adding it to the list.
+        """
+            nullable.at(1).set(null)
+            properties.addAll((Vals<String>) nullable)
+        then : 'An exception is thrown because of this null item.'
+            thrown(IllegalArgumentException)
+    }
 }
