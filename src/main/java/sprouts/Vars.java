@@ -827,15 +827,15 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
      * @return {@code this} list of properties, to allow for method chaining.
      * @throws NullPointerException if the supplied property list is null.
      * @throws IllegalArgumentException if the list allows {@code null} and at least one
-     *                                  property does not allow {@code null}.
+     *                                  property is empty (contains {@code null}).
      */
     default Vars<T> addAll( Vals<T> vals ) {
         Objects.requireNonNull(vals);
         Vars<T> cloned = allowsNull() ? Vars.ofNullable(type()) : Vars.of(type());
         for ( int i = 0; i < vals.size(); i++ ) {
             Val<T> toBeAdded = vals.at(i);
-            if ( !this.allowsNull() && toBeAdded.allowsNull() )
-                throw new IllegalArgumentException("Null values are not allowed in this property list.");
+            if ( !this.allowsNull() && toBeAdded.isEmpty() )
+                throw new IllegalArgumentException("Null items are not allowed in this property list.");
 
             cloned.add(
                 this.allowsNull() ?
