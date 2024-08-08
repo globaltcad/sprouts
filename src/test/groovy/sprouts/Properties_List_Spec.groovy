@@ -1895,4 +1895,239 @@ class Properties_List_Spec extends Specification
             thrown(IllegalArgumentException)
     }
 
+    def 'Use `addAt(int,Val)` to set the item as a new property and use `addAt(int,Var)` to set the supplied property.'()
+    {
+        reportInfo """
+            The `Vars` property list exposes two overloaded methods to set a property at a given index.
+            The `addAt(int, Val)` method adds the item wrapped in a new independent property, while the
+            `addAt(int, Var)` method actually takes the supplied property reference and then 
+            puts it in the list at the given index.
+            
+            The reason why the `addAt(int, Val)` creates a copy of the property is because the `Val`
+            type is a read only view on a potentially mutable `Var` property. So an API consumer
+            expects that it's state is encapsulated and not affected by changes to the original property.
+            
+            In this example we demonstrate this difference by adding a simple property
+            with a change listener to the list and then setting the property at a given index
+            using both methods.
+        """
+        given : 'A simple String based property with a listener and a list tracking changes.'
+            var trace = []
+            var property = Var.of("?")
+            property.onChange(From.ALL, { trace << it.get() })
+        and : 'A property list with some japanese food properties.'
+            var foods = Vars.of("寿司", "ラーメン", "カレー", "うどん", "おにぎり")
+        and : 'We use the two different methods to add the question mark property in the list.'
+            foods.addAt(1, (Val<String>) property)
+            foods.addAt(3, (Var<String>) property)
+        expect : 'The property is added to the list and the property did not change.'
+            foods.toList() == ["寿司", "?", "ラーメン", "?", "カレー", "うどん", "おにぎり"]
+            trace == []
+
+        when : 'We change the property item at index 1...'
+            foods.at(1).set("!")
+        then : 'The property at index 1 is changed but the initial property did not change.'
+            foods.toList() == ["寿司", "!", "ラーメン", "?", "カレー", "うどん", "おにぎり"]
+            trace == []
+            property.get() == "?"
+        when : 'We change the property item at index 3...'
+            foods.at(3).set("!")
+        then : 'The property at index 3 is changed, and this time the initial property changed as well.'
+            foods.toList() == ["寿司", "!", "ラーメン", "!", "カレー", "うどん", "おにぎり"]
+            trace == ["!"]
+            property.get() == "!"
+    }
+
+    def 'Use `setAt(int,Val)` to set the item as a new property and use `setAt(int,Var)` to set the supplied property.'()
+    {
+        reportInfo """
+            The `Vars` property list exposes two overloaded methods to set a property at a given index.
+            The `setAt(int, Val)` method adds the item wrapped in a new independent property, while the
+            `setAt(int, Var)` method actually takes the supplied property reference and then 
+            puts it in the list at the given index.
+            
+            The reason why the `setAt(int, Val)` creates a copy of the property is because the `Val`
+            type is a read only view on a potentially mutable `Var` property. So an API consumer
+            expects that it's state is encapsulated and not affected by changes to the original property.
+            
+            In this example we demonstrate this difference by adding a simple property
+            with a change listener to the list and then setting the property at a given index
+            using both methods.
+        """
+        given : 'A simple String based property with a listener and a list tracking changes.'
+            var trace = []
+            var property = Var.of("?")
+            property.onChange(From.ALL, { trace << it.get() })
+        and : 'A property list with some japanese food properties.'
+            var foods = Vars.of("寿司", "ラーメン", "カレー", "うどん", "おにぎり")
+        and : 'We use the two different methods to add the question mark property in the list.'
+            foods.setAt(1, (Val<String>) property)
+            foods.setAt(3, (Var<String>) property)
+        expect : 'The property is added to the list and the property did not change.'
+            foods.toList() == ["寿司", "?", "カレー", "?", "おにぎり"]
+            trace == []
+
+        when : 'We change the property item at index 1...'
+            foods.at(1).set("!")
+        then : 'The property at index 1 is changed but the initial property did not change.'
+            foods.toList() == ["寿司", "!", "カレー", "?", "おにぎり"]
+            trace == []
+            property.get() == "?"
+        when : 'We change the property item at index 3...'
+            foods.at(3).set("!")
+        then : 'The property at index 3 is changed, and this time the initial property changed as well.'
+            foods.toList() == ["寿司", "!", "カレー", "!", "おにぎり"]
+            trace == ["!"]
+            property.get() == "!"
+    }
+
+    def 'Use `addAll(Vals)` to add the items as a new properties and use `addAll(Vars)` to add them unchanged.'()
+    {
+        reportInfo """
+            The `Vars` property list exposes two overloaded methods to add a list of properties.
+            The `addAll(Vals)` method adds the items wrapped in new independent properties, while the
+            `addAll(Vars)` method actually takes the supplied properties and then 
+            puts them in the list unchanged.
+            
+            The reason why the `addAll(Vals)` creates a copy of the properties is because the `Vals`
+            type is a read only view on a potentially mutable `Vars` property list. So an API consumer
+            expects that it's state is encapsulated and not affected by changes to the original property list.
+            
+            In this example we demonstrate this difference by adding a simple property
+            with a change listener to the list and then adding a list of properties
+            using both methods.
+        """
+        given : 'Two simple String based properties with listeners and a list tracking changes.'
+            var trace = []
+            var property1 = Var.of("?")
+            var property2 = Var.of("!")
+            property1.onChange(From.ALL, { trace << it.get() })
+            property2.onChange(From.ALL, { trace << it.get() })
+        and : 'A property list with some indian food properties.'
+            var foods = Vars.of("दाल", "चावल")
+        and : 'A short list containing a the two properties.'
+            var properties = Vals.of(property1, property2)
+
+        when : 'We use the two different methods to add the properties in the list.'
+            foods.addAll((Vals<String>) properties)
+            foods.addAll((Vars<String>) properties)
+        then : 'The properties are added to the list and the properties did not change.'
+            foods.toList() == ["दाल", "चावल", "?", "!", "?", "!"]
+            trace == []
+
+        when : 'We modify the items at index 2 and 3...'
+            foods.at(2).set("x")
+            foods.at(3).set("y")
+        then : 'The properties at index 2 and 3 are changed but the initial properties did not change.'
+            foods.toList() == ["दाल", "चावल", "x", "y", "?", "!"]
+            trace == []
+            property1.get() == "?"
+            property2.get() == "!"
+
+        when : 'We change the property item at index 4 and 5 on the other hand...'
+            foods.at(4).set("+")
+            foods.at(5).set("-")
+        then : 'The properties at index 4 and 5 are changed as well as the initial properties.'
+            foods.toList() == ["दाल", "चावल", "x", "y", "+", "-"]
+            trace == ["+", "-"]
+            property1.get() == "+"
+            property2.get() == "-"
+    }
+
+    def 'Using `addAt(int,Val)`, you can add a nullable property to a non-nullable list if the item is present.'()
+    {
+        reportInfo """
+            The `addAt(int, Val)` method is designed to ensure that the value
+            of a property is added to a property list in the form of a new independent property.
+            This means that as long as the value of the property is not null, the property can be added
+            to a non-nullable property list.
+        """
+        given : 'A non-nullable property list and a nullable property.'
+            var properties = Vars.of("a", "b", "c")
+            var nullable = Var.ofNullable(String.class, "x")
+        when : 'We add the nullable property to the list.'
+            properties.addAt(1, (Val<String>) nullable)
+        then : 'The property is added to the list.'
+            properties.toList() == ["a", "x", "b", "c"]
+        when : 'We change the value of the nullable property.'
+            nullable.set("y")
+        then : 'The property in the list is not affected.'
+            properties.toList() == ["a", "x", "b", "c"]
+        when : 'We add the nullable property to the list at another index.'
+            properties.addAt(3, (Val<String>) nullable)
+        then : 'The property is added to the list.'
+            properties.toList() == ["a", "x", "b", "y", "c"]
+
+        when : """
+            We now try to add null to the property list by setting
+            the nullable property to null and adding it to the list.
+        """
+            nullable.set(null)
+            properties.addAt(4, (Val<String>) nullable)
+        then : 'An exception is thrown because the property is null.'
+            thrown(IllegalArgumentException)
+    }
+
+    def 'Using `setAt(int,Val)`, you can place the item of a nullable property into a non-nullable list if the item is present.'()
+    {
+        reportInfo """
+            The `setAt(int, Val)` method is designed to ensure that the value
+            of a property is placed into a property list in the form of a new independent property.
+            This means that as long as the value of the property is not null, the property can be placed
+            into a non-nullable property list.
+        """
+        given : 'A non-nullable property list and a nullable property.'
+            var properties = Vars.of("a", "b", "c")
+            var nullable = Var.ofNullable(String.class, "x")
+        when : 'We set the nullable property at an index in the list.'
+            properties.setAt(1, (Val<String>) nullable)
+        then : 'The property is placed in the list.'
+            properties.toList() == ["a", "x", "c"]
+        when : 'We change the value of the nullable property.'
+            nullable.set("y")
+        then : 'The property in the list is not affected.'
+            properties.toList() == ["a", "x", "c"]
+        when : 'We set the nullable property at another index in the list.'
+            properties.setAt(2, (Val<String>) nullable)
+        then : 'The property is placed in the list.'
+            properties.toList() == ["a", "x", "y"]
+        when : """
+            We now try to set null to the property list by setting
+            the nullable property to null and adding it to the list.
+        """
+            nullable.set(null)
+            properties.setAt(2, (Val<String>) nullable)
+        then : 'An exception is thrown because the property is null.'
+            thrown(IllegalArgumentException)
+    }
+
+    def 'A non-null property list can accept a nullable list through "addAll(Vals)" as long as there are no nulls in the list.'()
+    {
+        reportInfo """
+            The `addAll(Vals)` method is designed to ensure that the values
+            of a property list are added to another property list in the form of new independent properties.
+            This always works as long as there is no null-item in the list
+            passed to the `addAll` method.
+            
+            Note that this is different to `addAll(Vars)`, which will add the properties
+            as they are, without creating new independent properties,
+            and so will throw an exception if it has a different null-ness... 
+        """
+        given : 'A non-nullable property list and a nullable property list.'
+            var properties = Vars.of("a", "b", "c")
+            var nullable = Vars.ofNullable(String.class, "x", "y", "z")
+        when : 'We add the nullable property list to the list by upcasting it to a `Vals` type.'
+            properties.addAll((Vals<String>) nullable)
+        then : 'The properties are added to the list.'
+            properties.toList() == ["a", "b", "c", "x", "y", "z"]
+
+        when : """
+            We now try to add null to the property list by setting
+            one of the nullable properties to null and adding it to the list.
+        """
+            nullable.at(1).set(null)
+            properties.addAll((Vals<String>) nullable)
+        then : 'An exception is thrown because of this null item.'
+            thrown(IllegalArgumentException)
+    }
 }

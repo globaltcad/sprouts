@@ -252,13 +252,36 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
     }
 
     /**
-     * Adds the provided property to the list.
+     * Adds the provided property to the end of the list.
+     * Note that this may have unwanted side effects in case of the supplied property
+     * having change listeners attached to it. <br>
+     * Use {@link #add(Val)} to add the item of the property to the list
+     * in the form of a new mutable {@link Var} property to avoid side effects.
      *
      * @param var the property to add.
      * @return {@code this} list of properties.
      * @throws IllegalArgumentException if the list allows {@code null} and the property does not allow {@code null}.
+     * @throws NullPointerException     if the {@code var} is {@code null}.
      */
-    default Vars<T> add( Var<T> var ) { return addAt( size(), var ); }
+    default Vars<T> add( Var<T> var ) {
+        Objects.requireNonNull(var);
+        return addAt( size(), var );
+    }
+
+    /**
+     * Wraps the item of the provided {@link Val} in a new mutable {@link Var} property
+     * and adds it to the end of this property list. <br>
+     * Use {@link #add(Var)} to add the property itself to the list.
+     *
+     * @param val The property whose item should be added to this property list.
+     * @return {@code this} list of properties.
+     * @throws NullPointerException if {@code null} is not allowed and the {@code val} is {@code null}.
+     * @throws NullPointerException if the {@code val} is {@code null}.
+     */
+    default Vars<T> add( Val<T> val ) {
+        Objects.requireNonNull(val);
+        return addAt( size(), val );
+    }
 
     /**
      * Removes the property at the specified index.
@@ -358,8 +381,10 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
      *
      * @param var the property to remove.
      * @return {@code this} list of properties.
+     * @throws NullPointerException if the {@code var} is {@code null}.
      */
     default Vars<T> remove( Var<T> var ) {
+        Objects.requireNonNull(var);
         int index = indexOf(var);
         return index < 0 ? this : removeRange( index, index + 1 );
     }
@@ -371,8 +396,10 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
      * @param var the property to remove.
      * @return {@code this} list of properties.
      * @throws NoSuchElementException if the property is not found.
+     * @throws NullPointerException  if the {@code var} is {@code null}.
      */
     default Vars<T> removeOrThrow( Var<T> var ) {
+        Objects.requireNonNull(var);
         int index = indexOf(var);
         if ( index < 0 )
             throw new NoSuchElementException("No such element: " + var);
@@ -592,13 +619,43 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
 
     /**
      * Adds the provided property to the list at the specified index.
+     * Note that this may have unwanted side effects in case of the supplied property
+     * having change listeners attached to it.
+     * Use {@link #addAt(int, Val)} to only add the item of the property
+     * in the form of a new {@link Var} property to avoid side effects.
      *
      * @param index The index at which to add the property.
      * @param var   The property to add.
      * @return {@code this} list of properties.
      * @throws IllegalArgumentException if the list allows {@code null} and the property does not allow {@code null}.
      */
-    Vars<T> addAt(int index, Var<T> var);
+    Vars<T> addAt( int index, Var<T> var );
+
+    /**
+     * Wraps the item of the provided {@link Val} in a new {@link Var} property
+     * and adds it to the list at the specified index.
+     * This method is useful when you want to add the item of a property
+     * to a list without side effects. <br>
+     * If you want to add a complete property reference to
+     * this list, use the {@link #addAt(int, Var)} method instead.
+     *
+     * @param index the index at which to add the property.
+     * @param val   the value to add as a property item.
+     * @return {@code this} list of properties.
+     * @throws NullPointerException if {@code null} is not allowed and the supplied {@code val} is {@code null}.
+     */
+    default Vars<T> addAt( int index, Val<T> val ) {
+        Objects.requireNonNull(val);
+        if ( this.allowsNull() )
+            return addAt( index, Var.ofNullable(val.type(), val.orElseNull()) );
+        else if ( val.isPresent() )
+            return addAt( index, Var.of(val.get()) );
+        else
+            throw new IllegalArgumentException(
+                        "Attempted to add an empty property (null) to a " +
+                        "property list that does not allow null values."
+                    );
+    }
 
     /**
      * Wraps the provided value in a property and sets it at the specified index
@@ -649,6 +706,32 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
     Vars<T> setAt( int index, Var<T> var );
 
     /**
+     * Wraps the item of the provided {@link Val} in a new {@link Var} property
+     * and sets it at the specified index effectively replacing the property at that index.
+     * This method is useful when you want to set the item of a property
+     * in a list without side effects. <br>
+     * If you want to replace the full property reference at a particular position in
+     * this list, use the {@link #setAt(int, Var)} method instead.
+     *
+     * @param index The index at which to set the property.
+     * @param val   The value to set as a property item.
+     * @return {@code this} list of properties.
+     * @throws NullPointerException if {@code null} is not allowed and the supplied {@code val} is {@code null}.
+     */
+    default Vars<T> setAt( int index, Val<T> val ) {
+        Objects.requireNonNull(val);
+        if ( this.allowsNull() )
+            return setAt( index, Var.ofNullable(val.type(), val.orElseNull()) );
+        else if ( val.isPresent() )
+            return setAt( index, Var.of(val.get()) );
+        else
+            throw new IllegalArgumentException(
+                        "Attempted to add an empty property (null) to a " +
+                        "property list that does not allow null values."
+                    );
+    }
+
+    /**
      * Places the provided property in the specified sequence, effectively replacing the properties at the specified
      * sequence with the given property.
      * <p>
@@ -669,8 +752,8 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
     }
 
     /**
-     * Wraps the specified value in distinct properties and sets them in the specified range, effectively replacing the
-     * properties in the specified range.
+     * Wraps the specified value in distinct properties and sets them in the specified range,
+     * effectively replacing the properties in the specified range.
      *
      * @param from  the start index, inclusive.
      * @param to    the end index, exclusive.
@@ -729,14 +812,52 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
     }
 
     /**
-     * Iterates over the supplied property list, and appends
-     * the values of the list to {@code this} list.
+     * Iterates over the supplied properties, and
+     * adds their items to this list in the form of new
+     * property instances.
+     * This method deliberately adds copies instead of the properties
+     * themselves due to the provided type being {@link Vals},
+     * which implies a read only addition.
+     * If you want to add the actual properties objects directly
+     * (including all the listeners associated with the properties),
+     * use {@link #addAll(Vars)}.
      *
-     * @param vals The properties to add.
-     * @return {@code this} list of properties.
-     * @throws NullPointerException if {@code null} is not allowed and one of the {@code vals} is empty.
+     * @param vals The properties, whose items should be added to this list
+     *             in the form of new {@link Var} properties.
+     * @return {@code this} list of properties, to allow for method chaining.
+     * @throws NullPointerException if the supplied property list is null.
+     * @throws IllegalArgumentException if the list allows {@code null} and at least one
+     *                                  property is empty (contains {@code null}).
      */
-    Vars<T> addAll( Vals<T> vals );
+    default Vars<T> addAll( Vals<T> vals ) {
+        Objects.requireNonNull(vals);
+        Vars<T> cloned = allowsNull() ? Vars.ofNullable(type()) : Vars.of(type());
+        for ( int i = 0; i < vals.size(); i++ ) {
+            Val<T> toBeAdded = vals.at(i);
+            if ( !this.allowsNull() && toBeAdded.isEmpty() )
+                throw new IllegalArgumentException("Null items are not allowed in this property list.");
+
+            cloned.add(
+                this.allowsNull() ?
+                    Var.ofNullable(toBeAdded.type(), toBeAdded.orElseNull()) :
+                    Var.of(toBeAdded.get())
+            );
+        }
+        return addAll(cloned);
+    }
+
+    /**
+     * Adds all properties from the provided list of properties to {@code this} list.
+     * This method differs from {@link #addAll(Vals)} in that it adds the actual property objects
+     * directly (including their listeners and possible side effects).
+     * Use {@link #addAll(Vals)} if you want to add only the items of the properties.
+     *
+     * @param vars The list of properties to add.
+     * @return {@code this} list of properties.
+     * @throws IllegalArgumentException if the list allows {@code null} and at least one
+     *                                  property does not allow {@code null}.
+     */
+    Vars<T> addAll( Vars<T> vars );
 
     /**
      * Removes all properties from {@code this} list that are not contained in the provided list of properties.
