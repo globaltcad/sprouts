@@ -48,7 +48,7 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
         Objects.requireNonNull(nullObject, "Null object must not be null");
         Objects.requireNonNull(getter, "Getter must not be null");
         Objects.requireNonNull(wither, "Wither must not be null");
-        Class<B> type = (Class<B>) nullObject.getClass();
+        Class<B> itemType = Util.expectedClassFromItem(nullObject);
         Function<T,B> nullSafeGetter = newParentValue -> {
             if ( newParentValue == null )
                 return nullObject;
@@ -63,7 +63,7 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
         };
         B initialValue = nullSafeGetter.apply(source.orElseNull());
         return new PropertyLens<>(
-                type,
+                itemType,
                 Val.NO_ID,
                 false,//does not allow null
                 initialValue, //may NOT be null
