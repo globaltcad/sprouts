@@ -5,6 +5,7 @@ import spock.lang.Specification
 import spock.lang.Subject
 import spock.lang.Title
 
+import java.time.DayOfWeek
 import java.util.function.Consumer
 
 @Title("Properties")
@@ -36,6 +37,13 @@ import java.util.function.Consumer
 @Subject([Val, Var])
 class Properties_Spec extends Specification
 {
+    public enum Food {
+        TOFU { @Override public String toString() { return "Tofu"; } },
+        TEMPEH { @Override public String toString() { return "Tempeh"; } },
+        SEITAN { @Override public String toString() { return "Seitan"; } },
+        NATTO { @Override public String toString() { return "Natto"; } }
+    }
+
     def 'Properties are simple wrappers around a value'()
     {
         given : 'We create a property using the "of" factory method.'
@@ -531,6 +539,78 @@ class Properties_Spec extends Specification
             property.updateNullable( it -> "Hello World" )
         then : 'The item of the property is updated.'
             property.orElseNull() == "Hello World"
+    }
+
+    def 'A property will find the correct type of an item, even if it is an anonymous class based enum constant.'() {
+        reportInfo """
+
+            An interesting little quirk of the Java language is that
+            you can have enum constants of the same enum type but with
+            different `Class` instances!
+            An example of this would be:
+            
+            ```java
+                public enum Food {
+                    TOFU { @Override public String toString() { return "Tofu"; } },
+                    TEMPEH { @Override public String toString() { return "Tempeh"; } },
+                    SEITAN { @Override public String toString() { return "Seitan"; } },
+                    NATTO { @Override public String toString() { return "Natto"; } }
+                }
+            ```
+            Believe it or not but expressions like `Food.TOFU.getClass() == Food.SEITAN.getClass()`
+            or even `Food.TOFU.getClass() == Food.class` are actually both `false`!
+            This is because the enum constants defined above are actually based
+            on anonymous classes. More specifically this is due to the curly brackets
+            followed after the constant declaration itself.
+            
+            This could potentially lead to bugs when creating a property from such an enum constant.
+            More specifically `Var.of(Food.NATTO).type() == Var.ofNull(Food.class)` would lead to 
+            being evaluated as false **despite the fact that they both have the same generic type**.
+            
+            Don't worry however, Sprouts knows this, and it will account for these kinds of enums.
+        """
+        given : 'We create various kinds of properties of various kinds of enums:'
+            var mutableNonNullFood = Var.of(Food.NATTO)
+            var mutableNullableFood = Var.ofNullable(Food, Food.TOFU)
+            var immutableNonNullFood = Val.of(Food.SEITAN)
+            var immutableNullableFood = Val.ofNullable(Food, null)
+            var viewNonNullFood = mutableNonNullFood.viewAs(Food, { it })
+            var viewNullableFood = mutableNullableFood.viewAs(Food, { it })
+            var lensNonNullFood = mutableNonNullFood.zoomTo({it}, {a, it -> it })
+            var lensNullableFood = mutableNullableFood.zoomToNullable(Food, {it}, {a, it -> it })
+        expect : 'All of these properties have the same type: `Food`.'
+            mutableNonNullFood.type() == Food.class
+            mutableNullableFood.type() == Food.class
+            immutableNonNullFood.type() == Food.class
+            immutableNullableFood.type() == Food.class
+            viewNonNullFood.type() == Food.class
+            viewNullableFood.type() == Food.class
+            lensNonNullFood.type() == Food.class
+            lensNullableFood.type() == Food.class
+
+        when : """
+            We do same thing for another enum, which is not based on 
+            anonymous classes then we get the same result.
+            So just to be thorough, let's check the same correctness
+            for the `DayOfWeek` enum!
+        """
+            mutableNonNullFood = Var.of(DayOfWeek.MONDAY)
+            mutableNullableFood = Var.ofNullable(DayOfWeek, DayOfWeek.TUESDAY)
+            immutableNonNullFood = Val.of(DayOfWeek.WEDNESDAY)
+            immutableNullableFood = Val.ofNullable(DayOfWeek, null)
+            viewNonNullFood = mutableNonNullFood.viewAs(DayOfWeek, { it })
+            viewNullableFood = mutableNullableFood.viewAs(DayOfWeek, { it })
+            lensNonNullFood = mutableNonNullFood.zoomTo({it}, {a, it -> it })
+            lensNullableFood = mutableNullableFood.zoomToNullable(DayOfWeek, {it}, {a, it -> it })
+        then : 'Again, all of these properties have the same type: `DayOfWeek`.'
+            mutableNonNullFood.type() == DayOfWeek.class
+            mutableNullableFood.type() == DayOfWeek.class
+            immutableNonNullFood.type() == DayOfWeek.class
+            immutableNullableFood.type() == DayOfWeek.class
+            viewNonNullFood.type() == DayOfWeek.class
+            viewNullableFood.type() == DayOfWeek.class
+            lensNonNullFood.type() == DayOfWeek.class
+            lensNullableFood.type() == DayOfWeek.class
     }
 
 }
