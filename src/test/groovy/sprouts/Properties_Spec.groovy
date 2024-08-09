@@ -561,7 +561,7 @@ class Properties_Spec extends Specification
             or even `Food.TOFU.getClass() == Food.class` are actually both `false`!
             This is because the enum constants defined above are actually based
             on anonymous classes. More specifically this is due to the curly brackets
-            followed after the constant declaration itself.
+            followed after the constants declaration itself.
             
             This could potentially lead to bugs when creating a property from such an enum constant.
             More specifically `Var.of(Food.NATTO).type() == Var.ofNull(Food.class)` would lead to 
