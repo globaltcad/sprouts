@@ -24,7 +24,8 @@ final class Property<T extends @Nullable Object> implements Var<T> {
 
 	public static <T> Var<T> of( boolean immutable, T iniValue ) {
 		Objects.requireNonNull(iniValue);
-		return new Property<T>( immutable, (Class<T>) iniValue.getClass(), iniValue, NO_ID, new ChangeListeners<>(), false );
+		Class<T> itemType = Util.expectedClassFromItem(iniValue);
+		return new Property<T>( immutable, itemType, iniValue, NO_ID, new ChangeListeners<>(), false );
 	}
 
 
