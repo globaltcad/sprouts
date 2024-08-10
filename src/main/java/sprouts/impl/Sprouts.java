@@ -184,7 +184,7 @@ public final class Sprouts implements SproutsFactory
     @Override
     public <T, B> Var<B> lensOf(Var<T> source, Function<T, B> getter, BiFunction<T, B, T> wither) {
         B initialValue = getter.apply(source.orElseNull());
-        Class<B> type = (Class<B>) initialValue.getClass();
+        Class<B> type = Util.expectedClassFromItem(initialValue);
         return new PropertyLens<>(
                 type,
                 Val.NO_ID,
@@ -347,7 +347,8 @@ public final class Sprouts implements SproutsFactory
 	@Override public <V> Result<V> resultOf( V value, List<Problem> problems ) {
 		Objects.requireNonNull(value);
 		problems = Collections.unmodifiableList(new ArrayList<>(Objects.requireNonNull(problems)));
-		return new ResultImpl<>(ResultImpl.ID, (Class<V>) value.getClass(), problems, value);
+        Class<V> itemType = Util.expectedClassFromItem(value);
+		return new ResultImpl<>(ResultImpl.ID, itemType, problems, value);
 	}
 
 	@Override public <V> Result<V> resultOf( Class<V> type, List<Problem> problems ) {

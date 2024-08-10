@@ -6,8 +6,6 @@ import spock.lang.Subject
 import spock.lang.Title
 
 import java.time.DayOfWeek
-import java.time.Month
-import java.util.concurrent.TimeUnit
 import java.util.function.Supplier
 
 @Title("Results")
@@ -25,6 +23,13 @@ import java.util.function.Supplier
 @Subject([Result, Val, Problem])
 class Result_Spec extends Specification
 {
+    public enum Food {
+        TOFU { @Override public String toString() { return "Tofu"; } },
+        TEMPEH { @Override public String toString() { return "Tempeh"; } },
+        SEITAN { @Override public String toString() { return "Seitan"; } },
+        NATTO { @Override public String toString() { return "Natto"; } }
+    }
+
     def 'We can create a result from any kind of value.'()
     {
         expect :
@@ -285,4 +290,39 @@ class Result_Spec extends Specification
             !result.isMutable()
     }
 
+    def 'A result will find the correct type of an item, even if it is an anonymous class based enum constant.'() {
+        reportInfo """
+
+            An interesting little quirk of the Java language is that
+            you can have enum constants of the same enum type but with
+            different `Class` instances!
+            An example of this would be:
+            
+            ```java
+                public enum Food {
+                    TOFU { @Override public String toString() { return "Tofu"; } },
+                    TEMPEH { @Override public String toString() { return "Tempeh"; } },
+                    SEITAN { @Override public String toString() { return "Seitan"; } },
+                    NATTO { @Override public String toString() { return "Natto"; } }
+                }
+            ```
+            Believe it or not but expressions like `Food.TOFU.getClass() == Food.SEITAN.getClass()`
+            or even `Food.TOFU.getClass() == Food.class` are actually both `false`!
+            This is because the enum constants defined above are actually based
+            on anonymous classes. More specifically this is due to the curly brackets
+            followed after the constants declaration itself.
+            
+            This could potentially lead to bugs when creating a result property from such an enum constant.
+            More specifically `Result.of(Food.NATTO).type() == Result.of(Food.class, null)` would lead to 
+            being evaluated as false **despite the fact that they both have the same generic type**.
+            
+            Don't worry however, Sprouts knows this, and it will account for these kinds of enums.
+        """
+        given : 'We create various `Result` instances using the `Food` enum as a basis.'
+            var nonNull = Result.of(Food.NATTO)
+            var nullable = Result.of(Food, Food.TEMPEH)
+        expect : 'The type of the result is correctly identified.'
+            nonNull.type() == Food
+            nullable.type() == Food
+    }
 }
