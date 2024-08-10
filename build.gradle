@@ -22,12 +22,9 @@ String GROUP_ID = "io.github.globaltcad"
 String PROJECT  = "sprouts"
 String VERSION  = "2.0.0-M8"
 
-
 group GROUP_ID
 version VERSION
 
-sourceCompatibility = 8
-targetCompatibility = 8
 
 repositories {
     mavenCentral()
@@ -189,6 +186,8 @@ artifacts {
 }
 
 java {
+    sourceCompatibility = 8
+    targetCompatibility = 8
     withJavadocJar()
     withSourcesJar()
 }
