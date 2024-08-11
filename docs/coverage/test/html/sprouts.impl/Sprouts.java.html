@@ -184,7 +184,7 @@ public final class Sprouts implements SproutsFactory
     @Override
     public &lt;T, B&gt; Var&lt;B&gt; lensOf(Var&lt;T&gt; source, Function&lt;T, B&gt; getter, BiFunction&lt;T, B, T&gt; wither) {
 <span class="fc" id="L186">        B initialValue = getter.apply(source.orElseNull());</span>
-<span class="fc" id="L187">        Class&lt;B&gt; type = (Class&lt;B&gt;) initialValue.getClass();</span>
+<span class="fc" id="L187">        Class&lt;B&gt; type = Util.expectedClassFromItem(initialValue);</span>
 <span class="fc" id="L188">        return new PropertyLens&lt;&gt;(</span>
                 type,
                 Val.NO_ID,
@@ -347,73 +347,74 @@ public final class Sprouts implements SproutsFactory
 	@Override public &lt;V&gt; Result&lt;V&gt; resultOf( V value, List&lt;Problem&gt; problems ) {
 <span class="fc" id="L348">		Objects.requireNonNull(value);</span>
 <span class="fc" id="L349">		problems = Collections.unmodifiableList(new ArrayList&lt;&gt;(Objects.requireNonNull(problems)));</span>
-<span class="fc" id="L350">		return new ResultImpl&lt;&gt;(ResultImpl.ID, (Class&lt;V&gt;) value.getClass(), problems, value);</span>
+<span class="fc" id="L350">        Class&lt;V&gt; itemType = Util.expectedClassFromItem(value);</span>
+<span class="fc" id="L351">		return new ResultImpl&lt;&gt;(ResultImpl.ID, itemType, problems, value);</span>
 	}
 
 	@Override public &lt;V&gt; Result&lt;V&gt; resultOf( Class&lt;V&gt; type, List&lt;Problem&gt; problems ) {
-<span class="fc" id="L354">		Objects.requireNonNull(type);</span>
-<span class="fc" id="L355">		problems = Collections.unmodifiableList(new ArrayList&lt;&gt;(Objects.requireNonNull(problems)));</span>
-<span class="fc" id="L356">		return new ResultImpl&lt;&gt;(ResultImpl.ID, type, problems, null);</span>
+<span class="fc" id="L355">		Objects.requireNonNull(type);</span>
+<span class="fc" id="L356">		problems = Collections.unmodifiableList(new ArrayList&lt;&gt;(Objects.requireNonNull(problems)));</span>
+<span class="fc" id="L357">		return new ResultImpl&lt;&gt;(ResultImpl.ID, type, problems, null);</span>
 	}
 
 	@Override public &lt;V&gt; Result&lt;V&gt; resultOf( Class&lt;V&gt; type, @Nullable V value, List&lt;Problem&gt; problems ) {
-<span class="fc" id="L360">		Objects.requireNonNull(type);</span>
-<span class="fc" id="L361">		problems = Collections.unmodifiableList(new ArrayList&lt;&gt;(Objects.requireNonNull(problems)));</span>
-<span class="fc" id="L362">		return new ResultImpl&lt;&gt;(ResultImpl.ID, type, problems, value);</span>
+<span class="fc" id="L361">		Objects.requireNonNull(type);</span>
+<span class="fc" id="L362">		problems = Collections.unmodifiableList(new ArrayList&lt;&gt;(Objects.requireNonNull(problems)));</span>
+<span class="fc" id="L363">		return new ResultImpl&lt;&gt;(ResultImpl.ID, type, problems, value);</span>
 	}
 
 	@Override public &lt;V&gt; Result&lt;V&gt; resultOf( Class&lt;V&gt; type, @Nullable V value, Problem problem ) {
-<span class="nc" id="L366">		Objects.requireNonNull(type);</span>
-<span class="nc" id="L367">		Objects.requireNonNull(problem);</span>
-<span class="nc" id="L368">		return new ResultImpl&lt;&gt;(ResultImpl.ID, type, Collections.singletonList(problem), value);</span>
+<span class="nc" id="L367">		Objects.requireNonNull(type);</span>
+<span class="nc" id="L368">		Objects.requireNonNull(problem);</span>
+<span class="nc" id="L369">		return new ResultImpl&lt;&gt;(ResultImpl.ID, type, Collections.singletonList(problem), value);</span>
 	}
 
 	@Override public &lt;V&gt; Result&lt;V&gt; resultOf( Class&lt;V&gt; type, Problem problem ) {
-<span class="fc" id="L372">		Objects.requireNonNull(type);</span>
-<span class="fc" id="L373">		Objects.requireNonNull(problem);</span>
-<span class="fc" id="L374">		return new ResultImpl&lt;&gt;(ResultImpl.ID, type, Collections.singletonList(problem), null);</span>
+<span class="fc" id="L373">		Objects.requireNonNull(type);</span>
+<span class="fc" id="L374">		Objects.requireNonNull(problem);</span>
+<span class="fc" id="L375">		return new ResultImpl&lt;&gt;(ResultImpl.ID, type, Collections.singletonList(problem), null);</span>
 	}
 
 	@Override public &lt;V&gt; Result&lt;List&lt;V&gt;&gt; resultOfList( Class&lt;V&gt; type, Problem problem ) {
-<span class="nc" id="L378">		Objects.requireNonNull(type);</span>
-<span class="nc" id="L379">		Objects.requireNonNull(problem);</span>
-<span class="nc" id="L380">		return (Result&lt;List&lt;V&gt;&gt;) (Result) new ResultImpl&lt;&gt;(ResultImpl.ID, List.class, Collections.singletonList(problem), null);</span>
+<span class="nc" id="L379">		Objects.requireNonNull(type);</span>
+<span class="nc" id="L380">		Objects.requireNonNull(problem);</span>
+<span class="nc" id="L381">		return (Result&lt;List&lt;V&gt;&gt;) (Result) new ResultImpl&lt;&gt;(ResultImpl.ID, List.class, Collections.singletonList(problem), null);</span>
 	}
 
 	@Override public &lt;V&gt; Result&lt;List&lt;V&gt;&gt; resultOfList( Class&lt;V&gt; type, List&lt;V&gt; list ) {
-<span class="fc" id="L384">		Objects.requireNonNull(type);</span>
-<span class="fc" id="L385">		Objects.requireNonNull(list);</span>
+<span class="fc" id="L385">		Objects.requireNonNull(type);</span>
+<span class="fc" id="L386">		Objects.requireNonNull(list);</span>
 		// We check the types of the list elements are of the correct type.
-<span class="fc" id="L387">		boolean matches = list.stream().filter(Objects::nonNull).allMatch(e -&gt; type.isAssignableFrom(e.getClass()));</span>
-<span class="pc bpc" id="L388" title="1 of 2 branches missed.">		if ( !matches )</span>
-<span class="nc" id="L389">			throw new IllegalArgumentException(&quot;List elements must be of type &quot; + type.getName());</span>
-<span class="fc" id="L390">		return (Result&lt;List&lt;V&gt;&gt;) (Result) new ResultImpl&lt;&gt;(ResultImpl.ID, List.class, Collections.emptyList(), list);</span>
+<span class="fc" id="L388">		boolean matches = list.stream().filter(Objects::nonNull).allMatch(e -&gt; type.isAssignableFrom(e.getClass()));</span>
+<span class="pc bpc" id="L389" title="1 of 2 branches missed.">		if ( !matches )</span>
+<span class="nc" id="L390">			throw new IllegalArgumentException(&quot;List elements must be of type &quot; + type.getName());</span>
+<span class="fc" id="L391">		return (Result&lt;List&lt;V&gt;&gt;) (Result) new ResultImpl&lt;&gt;(ResultImpl.ID, List.class, Collections.emptyList(), list);</span>
 	}
 
 	@Override public &lt;V&gt; Result&lt;List&lt;V&gt;&gt; resultOfList( Class&lt;V&gt; type, List&lt;V&gt; list, List&lt;Problem&gt; problems ) {
-<span class="fc" id="L394">		Objects.requireNonNull(type);</span>
-<span class="fc" id="L395">		Objects.requireNonNull(list);</span>
-<span class="fc" id="L396">		boolean matches = list.stream().filter(Objects::nonNull).allMatch(e -&gt; type.isAssignableFrom(e.getClass()));</span>
-<span class="pc bpc" id="L397" title="1 of 2 branches missed.">		if ( !matches )</span>
-<span class="nc" id="L398">			throw new IllegalArgumentException(&quot;List elements must be of type &quot; + type.getName());</span>
-<span class="fc" id="L399">		problems = Collections.unmodifiableList(new ArrayList&lt;&gt;(Objects.requireNonNull(problems)));</span>
-<span class="fc" id="L400">		return (Result&lt;List&lt;V&gt;&gt;) (Result) new ResultImpl&lt;&gt;(ResultImpl.ID, List.class, problems, list);</span>
+<span class="fc" id="L395">		Objects.requireNonNull(type);</span>
+<span class="fc" id="L396">		Objects.requireNonNull(list);</span>
+<span class="fc" id="L397">		boolean matches = list.stream().filter(Objects::nonNull).allMatch(e -&gt; type.isAssignableFrom(e.getClass()));</span>
+<span class="pc bpc" id="L398" title="1 of 2 branches missed.">		if ( !matches )</span>
+<span class="nc" id="L399">			throw new IllegalArgumentException(&quot;List elements must be of type &quot; + type.getName());</span>
+<span class="fc" id="L400">		problems = Collections.unmodifiableList(new ArrayList&lt;&gt;(Objects.requireNonNull(problems)));</span>
+<span class="fc" id="L401">		return (Result&lt;List&lt;V&gt;&gt;) (Result) new ResultImpl&lt;&gt;(ResultImpl.ID, List.class, problems, list);</span>
 	}
 
     @Override
     public &lt;V&gt; Result&lt;V&gt; resultOfTry( Class&lt;V&gt; type, Supplier&lt;V&gt; supplier ) {
-<span class="fc" id="L405">        Objects.requireNonNull(type);</span>
-<span class="fc" id="L406">        Objects.requireNonNull(supplier);</span>
+<span class="fc" id="L406">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L407">        Objects.requireNonNull(supplier);</span>
         try {
-<span class="fc" id="L408">            return resultOf(type, supplier.get());</span>
-<span class="fc" id="L409">        } catch (Exception e) {</span>
-<span class="fc" id="L410">            return resultOf(type, Problem.of(e));</span>
+<span class="fc" id="L409">            return resultOf(type, supplier.get());</span>
+<span class="fc" id="L410">        } catch (Exception e) {</span>
+<span class="fc" id="L411">            return resultOf(type, Problem.of(e));</span>
         }
     }
 
     @Override
     public &lt;O, D&gt; WeakAction&lt;O, D&gt; actionOfWeak( O owner, BiConsumer&lt;O, D&gt; action ) {
-<span class="fc" id="L416">        return new WeakActionImpl&lt;&gt;(owner, action);</span>
+<span class="fc" id="L417">        return new WeakActionImpl&lt;&gt;(owner, action);</span>
     }
 
 }
