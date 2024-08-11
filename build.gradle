@@ -20,14 +20,11 @@ println "Static analysis enabled: $WE_CAN_DO_STATIC_ANALYSIS"
 
 String GROUP_ID = "io.github.globaltcad"
 String PROJECT  = "sprouts"
-String VERSION  = "2.0.0-M7"
-
+String VERSION  = "2.0.0-M8"
 
 group GROUP_ID
 version VERSION
 
-sourceCompatibility = 8
-targetCompatibility = 8
 
 repositories {
     mavenCentral()
@@ -44,7 +41,7 @@ dependencies {
     else
         errorprone "com.google.errorprone:error_prone_core:2.9.+"
 
-    implementation group: 'org.jspecify', name: 'jspecify', version: '1.+'
+    implementation group: 'org.jspecify', name: 'jspecify', version: '[1+, )'
 
     // Logging :
     implementation group: 'org.slf4j', name: 'slf4j-api', version: '[1+, )'
@@ -189,6 +186,8 @@ artifacts {
 }
 
 java {
+    sourceCompatibility = 8
+    targetCompatibility = 8
     withJavadocJar()
     withSourcesJar()
 }

@@ -68,15 +68,19 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	 *  <pre>{@code
 	 *      Val.ofNullable(String.class, null);
 	 *  }</pre>
-	 *  <p>
+	 *  Note that it is required to supply a {@link Class} to ensure that the property
+	 *  can return a valid type when {@link Val#type()} is called.
+	 *
 	 * @param type The type of the item wrapped by the property.
 	 *             This is used to check if the item is of the correct type.
 	 * @param item The initial item of the property.
 	 *              This may be null.
 	 * @param <T> The type of the wrapped item.
 	 * @return A new {@link Val} instance.
+	 * @throws NullPointerException If the type is null.
 	 */
 	static <T> Val<@Nullable T> ofNullable( Class<T> type, @Nullable T item ) {
+		Objects.requireNonNull(type);
 		return Sprouts.factory().valOfNullable( type, item );
 	}
 
@@ -84,13 +88,17 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	 *  A more concise version of {@link #ofNullable(Class, Object)}
 	 *  which is equivalent to {@code Var.ofNullable(type, null)}. <br>
 	 *  The {@link Val} instances returned by this factory method, are nullable, which
-	 *  means their {@link #allowsNull()} method will always yield {@code true}.
+	 *  means their {@link #allowsNull()} method will always yield {@code true}. <br>
+	 *  Note that it is required to supply a {@link Class} to ensure that the property
+	 *  can return a valid type when {@link Val#type()} is called.
 	 *
 	 * @param type The type of the item wrapped by the property.
 	 * @return A new {@link Val} instance.
 	 * @param <T> The type of the wrapped item.
+	 * @throws NullPointerException If the supplied type is null.
 	 */
 	static <T> Val<@Nullable T> ofNull( Class<T> type ) {
+		Objects.requireNonNull(type);
 		return Sprouts.factory().valOfNull( type );
 	}
 
@@ -102,8 +110,11 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	 * @param item The initial item of the property which must not be null.
 	 * @param <T> The type of the item held by the {@link Val}!
 	 * @return A new {@link Val} instance wrapping the given item.
+	 * @throws NullPointerException If the supplied item is null.
+	 *                              Use {@link #ofNullable(Class, Object)} if the item may be null.
 	 */
 	static <T> Val<T> of( T item ) {
+		Objects.requireNonNull(item);
 		return Sprouts.factory().valOf( item );
 	}
 
@@ -115,6 +126,8 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	 * @param toBeCopied The {@link Val} to be copied.
 	 * @return A new {@link Val} instance.
 	 * @param <T> The type of the item held by the {@link Val}!
+	 * @throws NullPointerException If the supplied {@link Val} is null.
+	 * @throws NoSuchElementException If the item of the supplied {@link Val} is null.
 	 */
 	static <T> Val<T> of( Val<T> toBeCopied ) {
 		Objects.requireNonNull(toBeCopied);
@@ -129,6 +142,8 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	 * @param toBeCopied The {@link Val} to be copied.
 	 * @return A new {@link Val} instance.
 	 * @param <T> The type of the item held by the {@link Val}!
+	 * @throws NullPointerException If the supplied {@link Val} is null.
+	 *                              Does not throw however, if the item of the supplied {@link Val} is null.
 	 */
 	static <T extends @Nullable Object> Val<@Nullable T> ofNullable( Val<T> toBeCopied ) {
 		Objects.requireNonNull(toBeCopied);

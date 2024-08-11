@@ -59,7 +59,7 @@ final class PropertyView&lt;T extends @Nullable Object&gt; implements Var&lt;T&g
 <span class="fc" id="L59">		Function&lt;T, U&gt; nonNullMapper = Util.nonNullMapper(nullObject, errorObject, mapper);</span>
 
 <span class="fc" id="L61">		final U initial = nonNullMapper.apply(source.orElseNull());</span>
-<span class="fc" id="L62">		final Class&lt;U&gt; targetType = (Class&lt;U&gt;) initial.getClass();</span>
+<span class="fc" id="L62">		final Class&lt;U&gt; targetType = Util.expectedClassFromItem(initial);</span>
 <span class="pc bpc" id="L63" title="1 of 2 branches missed.">		if ( source.isImmutable() ) {</span>
 <span class="nc" id="L64">			return Val.of(initial); // A nice little optimization: a view of an immutable property is also immutable.</span>
 		}

@@ -80,7 +80,9 @@ public interface Var<T extends @Nullable Object> extends Val<T>
 	 *  <pre>{@code
 	 *      Var.ofNullable(String.class, null);
 	 *  }</pre>
-	 *  <p>
+	 *  Note that it is required to supply a {@link Class} to ensure that the property
+	 *  can return a valid type when {@link Var#type()} is called.
+	 *
 	 * @param type The type of the item wrapped by the property.
 	 *             This is not only used to check if the item is of the correct type,
 	 *             but also so that the property knows its type, even if the
@@ -88,8 +90,10 @@ public interface Var<T extends @Nullable Object> extends Val<T>
 	 * @param item The initial item of the property, which may be null.
 	 * @param <T> The type of the wrapped item.
 	 * @return A new {@link Var} instance.
+	 * @throws NullPointerException If the given type is null.
 	 */
 	static <T> Var<@Nullable T> ofNullable( Class<T> type, @Nullable T item ) {
+		Objects.requireNonNull(type);
 		return Sprouts.factory().varOfNullable( type, item );
 	}
 
