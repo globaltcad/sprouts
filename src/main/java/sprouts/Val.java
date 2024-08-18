@@ -996,7 +996,7 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	 * @param action The lambda which will be called whenever the item wrapped by this {@link Var} changes.
 	 * @return The {@link Val} instance itself.
 	 */
-	Val<T> onChange( Channel channel, Action<Val<T>> action );
+	Val<T> onChange( Channel channel, Action<ValDelegate<T>> action );
 
 	/**
 	 *  Triggers all observer lambdas for the given {@link Channel}.

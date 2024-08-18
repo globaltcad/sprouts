@@ -128,7 +128,7 @@ final class Property<T extends @Nullable Object> implements Var<T> {
 
 	/** {@inheritDoc} */
 	@Override
-	public Var<T> onChange( Channel channel, Action<Val<T>> action ) {
+	public Var<T> onChange( Channel channel, Action<ValDelegate<T>> action ) {
 		_changeListeners.onChange(channel, action);
 		return this;
 	}

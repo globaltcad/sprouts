@@ -485,6 +485,43 @@ class Viewing_Properties_Spec extends Specification
             refs[3].get() == null
     }
 
+    def 'The channel of a property change event will propagate to its views.'()
+    {
+        reportInfo """
+            Every mutation to a property can have a channel associated with it.
+            You can call the `Var.set(Channel,T)` method to mutate the property with a custom channel,
+            and then in your change listeners you can check the channel on the property delegate!
+            
+            This exact same principle is also true for the views of a property
+            whose change event listeners will also receive the channel of the origin property.
+        """
+        given : 'A property based on an enum and 3 different views.'
+            var monthProperty = Var.of(Month.AUGUST)
+            var intView = monthProperty.viewAsInt(Month::ordinal)
+            var stringView = monthProperty.viewAsString(Month::name)
+            var firstMonthOfQuarter = monthProperty.view(Month::firstMonthOfQuarter)
+        and : 'A trace list and a change listener that listens to changes on the views.'
+            var trace1 = []
+            var trace2 = []
+            var trace3 = []
+            intView.onChange(From.ALL, i -> trace1 << i.channel())
+            stringView.onChange(From.VIEW, s -> trace2 << s.channel())
+            firstMonthOfQuarter.onChange(From.VIEW_MODEL, m -> trace3 << m.channel())
+        expect : 'The trace list is empty and there are no change listeners registered.'
+            trace1.isEmpty()
+            trace2.isEmpty()
+            trace3.isEmpty()
+
+        when : 'We change the value of the property 3 times with different channels and values.'
+            monthProperty.set(From.ALL, Month.JANUARY)
+            monthProperty.set(From.VIEW, Month.NOVEMBER)
+            monthProperty.set(From.VIEW_MODEL, Month.SEPTEMBER)
+        then : 'The listeners are notified of the new value of the views with the correct channels.'
+            trace1 == [From.ALL, From.VIEW, From.VIEW_MODEL]
+            trace2 == [From.ALL, From.VIEW]
+            trace3 == [From.ALL, From.VIEW_MODEL]
+    }
+
     /**
      * This method guarantees that garbage collection is
      * done unlike <code>{@link System#gc()}</code>

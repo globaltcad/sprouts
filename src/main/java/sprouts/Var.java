@@ -328,7 +328,7 @@ public interface Var<T extends @Nullable Object> extends Val<T>
 	/**
 	 * {@inheritDoc}
 	 */
-	@Override Var<T> onChange( Channel channel, Action<Val<T>> action );
+	@Override Var<T> onChange( Channel channel, Action<ValDelegate<T>> action );
 
 	/**
 	 *  If the item is present, then this applies the provided mapping function to it,

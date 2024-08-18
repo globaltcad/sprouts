@@ -141,7 +141,7 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
                 T newValue = thisLens._fetchItemFromParent();
                 if (!Objects.equals(thisLens._lastItem, newValue)) {
                     thisLens._lastItem = newValue;
-                    thisLens.fireChange(From.ALL);
+                    thisLens.fireChange(v.channel());
                 }
             }));
         }
@@ -175,7 +175,7 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
         return fetchedValue;
     }
 
-    private void _setInParentAndInternally(@Nullable T newItem) {
+    private void _setInParentAndInternally(Channel channel, @Nullable T newItem) {
         @Nullable Var<A> parent = _parent.get();
         if ( parent == null ) {
             _lastItem = newItem;
@@ -185,7 +185,7 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
         try {
             A newParentItem = _setter.apply(parent.orElseNull(), newItem);
             _lastItem = newItem;
-            parent.set(newParentItem);
+            parent.set(channel, newParentItem);
         } catch ( Exception e ) {
             log.error(
                     "Property lens "+_idForError(_id)+"(for item type '"+_type+"') failed to update its " +
@@ -256,7 +256,7 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
     }
 
     @Override
-    public Var<T> onChange( Channel channel, Action<Val<T>> action ) {
+    public Var<T> onChange( Channel channel, Action<ValDelegate<T>> action ) {
         _changeListeners.onChange(channel, action);
         return this;
     }
@@ -271,12 +271,12 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
     @Override
     public final Var<T> set( Channel channel, T newItem ) {
         Objects.requireNonNull(channel);
-        if ( _setInternal(newItem) )
+        if ( _setInternal(channel, newItem) )
             this.fireChange(channel);
         return this;
     }
 
-    private boolean _setInternal( T newValue ) {
+    private boolean _setInternal( Channel channel, T newValue ) {
         if ( !_nullable && newValue == null )
             throw new NullPointerException(
                     "This property is configured to not allow null values! " +
@@ -293,7 +293,7 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
                                 "with the expected item type '"+_type+"' of this property lens."
                 );
 
-            _setInParentAndInternally(newValue);
+            _setInParentAndInternally(channel, newValue);
             return true;
         }
         return false;

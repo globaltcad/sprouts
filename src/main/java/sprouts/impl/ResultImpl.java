@@ -113,7 +113,7 @@ final class ResultImpl<V> implements Result<V>
 	}
 
 	@Override
-	public Val<V> onChange( Channel channel, Action<Val<V>> displayAction ) {
+	public Val<V> onChange( Channel channel, Action<ValDelegate<V>> displayAction ) {
 		Objects.requireNonNull(displayAction);
 		/* A Result is immutable, so this method is not supported */
 		return this;
