@@ -46,19 +46,6 @@ import java.util.regex.Pattern;
  * @param <T> The type of the item held by this {@link Val}.
  */
 public interface Val<T extends @Nullable Object> extends Observable {
-	/**
-	 *  The default id for properties which do not have an id.
-	 */
-	String NO_ID = "";
-	/**
-	 *  The regex {@link Pattern} used to validate property ids.
-	 *  All ids must match this pattern.
-	 */
-	Pattern ID_PATTERN = Pattern.compile("[a-zA-Z0-9_]*");
-	/**
-	 *  The default channel used for change events.
-	 */
-	From DEFAULT_CHANNEL = From.VIEW_MODEL;
 
 	/**
 	 *  Use this factory method to create a new {@link Val} instance
@@ -941,20 +928,20 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	 *  view model to a JSON object, or similar formats.
 	 *  <p>
 	 *  You can retrieve the id of a property by calling the {@link #id()} method.<br>
-	 *  An id may <b>not be null</b>, please use the {@link #NO_ID} constant
+	 *  An id may <b>not be null</b>, please use the {@link Sprouts#defaultId()} constant
 	 *  or an empty string to indicate that a property has no id.
 	 *
 	 * @param id The id of the property, which is used to identify it.
-	 *           It may <b>not be null</b>, please use the {@link #NO_ID} constant
+	 *           It may <b>not be null</b>, please use the {@link Sprouts#defaultId()} constant
 	 * @return A new {@link Val} instance with the given id.
 	 */
 	Val<T> withId( String id );
 
 	/**
 	 *  A convenient method to check if this property has not been assigned an id. <br>
-	 *  This is the same as calling {@code !hasID()} or {@code id().equals(NO_ID)}.
+	 *  This is the same as calling {@code !hasID()} or {@code id().equals(Sprouts.defaultId())}.
 	 * @return True when this property has not been assigned an id or
-	 * 				the id is equal to the {@link #NO_ID} constant.
+	 * 				the id is equal to the {@link Sprouts#defaultId()} constant.
 	 */
 	default boolean hasNoID() {
 		return !hasID();
@@ -965,9 +952,9 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	 *  This is the same as calling {@code !id().equals(NO_ID)}.
 	 *
 	 * @return The truth value determining if this property has been assigned an id,
-	 *  	 		or if <b>id is not equal to the {@link #NO_ID} constant</b>.
+	 *  	 		or if <b>id is not equal to the {@link Sprouts#defaultId()} constant</b>.
 	 */
-	default boolean hasID() { return !NO_ID.equals(id()); }
+	default boolean hasID() { return !Sprouts.factory().defaultId().equals(id()); }
 
 	/**
 	 *  This returns the type of the item wrapped by this {@link Var}

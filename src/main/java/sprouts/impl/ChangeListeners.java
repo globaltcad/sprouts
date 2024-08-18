@@ -8,8 +8,6 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-import static sprouts.Val.DEFAULT_CHANNEL;
-
 final class ChangeListeners<T>
 {
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(ChangeListeners.class);
@@ -43,7 +41,7 @@ final class ChangeListeners<T>
     }
 
     public final void onChange( Observer observer ) {
-        onChange(DEFAULT_CHANNEL, new SproutChangeListener<>(observer) );
+        onChange(Sprouts.factory().defaultChannel(), new SproutChangeListener<>(observer) );
     }
 
 	public void fireChange( Val<T> owner, Channel channel ) {

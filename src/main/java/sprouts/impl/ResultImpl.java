@@ -152,7 +152,7 @@ final class ResultImpl<V> implements Result<V>
 	public String toString() {
         String value = this.mapTo(String.class, Object::toString).orElse("null");
         String id = this.id() == null ? "?" : this.id();
-        if ( id.equals(NO_ID) ) id = "?";
+        if ( id.equals(Sprouts.factory().defaultId()) ) id = "?";
         String type = ( type() == null ? "?" : type().getSimpleName() );
         if ( type.equals("Object") )
 			type = "?";

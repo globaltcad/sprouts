@@ -4,7 +4,6 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import sprouts.*;
 
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -13,6 +12,7 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 import java.util.stream.StreamSupport;
 
 /**
@@ -20,10 +20,17 @@ import java.util.stream.StreamSupport;
  *  which serves implementations of the various property types in the Sprouts library,
  *  like {@link Event}, {@link Val}, {@link Var}, {@link Vals} and {@link Vars}.
  *  The methods implemented here are used by the various factory methods of the sprouts API like
- *  {@link Var#of(Object)}, {@link Vals#of(Object, Object[])}, {@link Result#of(Object)}...
+ *  {@link Var#of(Object)}, {@link Vals#of(Object, Object[])}, {@link Result#of(Object)}...<br>
+ *  <b>So technically speaking, this is a configurable singleton, so be careful when using it
+ *  as it effectively maintains global + mutable state!</b>
  */
 public final class Sprouts implements SproutsFactory
 {
+    private static final Pattern DEFAULT_ID_PATTERN = Pattern.compile("[a-zA-Z0-9_]*");
+
+    private static SproutsFactory FACTORY = new Sprouts();
+
+
     /**
      *  A {@link SproutsFactory} is used by the various factory methods of this API like
      *  {@link Var#of(Object)}, {@link Vals#of(Object, Object[])}, {@link Result#of(Object)}...
@@ -41,6 +48,10 @@ public final class Sprouts implements SproutsFactory
      *  to create instances of these properties. <br>
      *  You can use a custom {@link SproutsFactory} to instantiate and serve your own
      *  implementations of the various property types in the Sprouts library. <br>
+     *  <p><b>
+     *      WARNING: This is a global + mutable state, so be careful when using it <br>
+     *      as it will have global side effects on the various factory methods of this API.
+     *  </b>
      *
      *  @param factory The factory to be used by the various factory methods of this API.
      *  @throws NullPointerException if the factory is null.
@@ -49,8 +60,6 @@ public final class Sprouts implements SproutsFactory
         Objects.requireNonNull(factory);
         FACTORY = factory;
     }
-    
-    private static SproutsFactory FACTORY = new Sprouts();
 
     private Sprouts() {}
 
@@ -187,7 +196,7 @@ public final class Sprouts implements SproutsFactory
         Class<B> type = Util.expectedClassFromItem(initialValue);
         return new PropertyLens<>(
                 type,
-                Val.NO_ID,
+                Sprouts.factory().defaultId(),
                 false,//does not allow null
                 initialValue, //may NOT be null
                 ParentRef.of(source),
@@ -415,6 +424,21 @@ public final class Sprouts implements SproutsFactory
     @Override
     public <O, D> WeakAction<O, D> actionOfWeak( O owner, BiConsumer<O, D> action ) {
         return new WeakActionImpl<>(owner, action);
+    }
+
+    @Override
+    public String defaultId() {
+        return "";
+    }
+
+    @Override
+    public Pattern idPattern() {
+        return DEFAULT_ID_PATTERN;
+    }
+
+    @Override
+    public Channel defaultChannel() {
+        return From.VIEW_MODEL;
     }
 
 }

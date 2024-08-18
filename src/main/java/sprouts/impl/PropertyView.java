@@ -33,11 +33,11 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 	}
 
 	private static <T> PropertyView<@Nullable T> _ofNullable( Class<T> type, @Nullable T item, Val<?>... strongParentRefs ) {
-		return new PropertyView<>(type, item, NO_ID, new ChangeListeners<>(), true, _filterStrongParentRefs(strongParentRefs));
+		return new PropertyView<>(type, item, Sprouts.factory().defaultId(), new ChangeListeners<>(), true, _filterStrongParentRefs(strongParentRefs));
 	}
 
 	private static <T> PropertyView<T> _of( Class<T> type, T item, Val<?>... strongParentRefs ) {
-		return new PropertyView<>(type, item, NO_ID, new ChangeListeners<>(), false, _filterStrongParentRefs(strongParentRefs));
+		return new PropertyView<>(type, item, Sprouts.factory().defaultId(), new ChangeListeners<>(), false, _filterStrongParentRefs(strongParentRefs));
 	}
 
 	public static <T, U> Val<@Nullable U> ofNullable(Class<U> type, Val<T> source, Function<T, @Nullable U> mapper) {
@@ -340,10 +340,10 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 								"with the actual type of the variable"
 				);
 		}
-		if ( !ID_PATTERN.matcher(_id).matches() )
+		if ( !Sprouts.factory().idPattern().matcher(_id).matches() )
 			throw new IllegalArgumentException(
 					"The provided id '"+_id+"' is not valid! It must match " +
-							"the pattern '"+ID_PATTERN.pattern()+"'."
+							"the pattern '"+Sprouts.factory().idPattern().pattern()+"'."
 			);
 		if ( !allowsNull && iniValue == null )
 			throw new IllegalArgumentException(
@@ -449,7 +449,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 	public final String toString() {
 		String item = this.mapTo(String.class, Object::toString).orElse("null");
 		String id = this.id() == null ? "?" : this.id();
-		if ( id.equals(NO_ID) ) id = "?";
+		if ( id.equals(Sprouts.factory().defaultId()) ) id = "?";
 		String type = ( type() == null ? "?" : type().getSimpleName() );
 		if ( type.equals("Object") ) type = "?";
 		if ( type.equals("String") && this.isPresent() ) item = "\"" + item + "\"";

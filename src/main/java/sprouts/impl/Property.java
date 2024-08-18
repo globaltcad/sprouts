@@ -15,17 +15,17 @@ import java.util.Objects;
 final class Property<T extends @Nullable Object> implements Var<T> {
 
 	public static <T> Var<@Nullable T> ofNullable( boolean immutable, Class<T> type, @Nullable T value ) {
-		return new Property<T>( immutable, type, value, NO_ID, new ChangeListeners<>(), true );
+		return new Property<T>( immutable, type, value, Sprouts.factory().defaultId(), new ChangeListeners<>(), true );
 	}
 
 	public static <T> Var<T> of( boolean immutable, Class<T> type, T value ) {
-		return new Property<T>( immutable, type, value, NO_ID, new ChangeListeners<>(), false );
+		return new Property<T>( immutable, type, value, Sprouts.factory().defaultId(), new ChangeListeners<>(), false );
 	}
 
 	public static <T> Var<T> of( boolean immutable, T iniValue ) {
 		Objects.requireNonNull(iniValue);
 		Class<T> itemType = Util.expectedClassFromItem(iniValue);
-		return new Property<T>( immutable, itemType, iniValue, NO_ID, new ChangeListeners<>(), false );
+		return new Property<T>( immutable, itemType, iniValue, Sprouts.factory().defaultId(), new ChangeListeners<>(), false );
 	}
 
 
@@ -64,7 +64,7 @@ final class Property<T extends @Nullable Object> implements Var<T> {
 						"The provided type of the initial value is not compatible with the actual type of the variable"
 					);
 		}
-		if ( !ID_PATTERN.matcher(_id).matches() )
+		if ( !Sprouts.factory().idPattern().matcher(_id).matches() )
 			throw new IllegalArgumentException("The provided id '"+_id+"' is not valid!");
 		if ( !allowsNull && iniValue == null )
 			throw new IllegalArgumentException("The provided initial value is null, but the property does not allow null values!");
@@ -159,7 +159,7 @@ final class Property<T extends @Nullable Object> implements Var<T> {
 	public final String toString() {
 		String value = this.mapTo(String.class, Object::toString).orElse("null");
 		String id = this.id() == null ? "?" : this.id();
-		if ( id.equals(NO_ID) ) id = "?";
+		if ( id.equals(Sprouts.factory().defaultId()) ) id = "?";
 		String type = ( type() == null ? "?" : type().getSimpleName() );
 		if ( type.equals("Object") ) type = "?";
 		if ( type.equals("String") && this.isPresent() ) value = "\"" + value + "\"";

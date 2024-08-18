@@ -156,7 +156,7 @@ public interface Var<T extends @Nullable Object> extends Val<T>
 	 * @return This very wrapper instance, in order to enable method chaining.
 	 */
 	default Var<T> set( T newItem ) {
-		return this.set(DEFAULT_CHANNEL, newItem);
+		return this.set(Sprouts.factory().defaultChannel(), newItem);
 	}
 
 	/**
@@ -201,7 +201,7 @@ public interface Var<T extends @Nullable Object> extends Val<T>
 	 * @throws NullPointerException If the given mapper is null.
 	 */
 	default Var<T> update( Function<T,@Nullable T> mapper ) {
-		return update(DEFAULT_CHANNEL, mapper);
+		return update(Sprouts.factory().defaultChannel(), mapper);
 	}
 
 	/**
@@ -274,7 +274,7 @@ public interface Var<T extends @Nullable Object> extends Val<T>
 	 * @throws NullPointerException If the given mapper is null.
 	 */
 	default Var<T> updateNullable( Function<@Nullable T,@Nullable T> mapper ) {
-		return this.updateNullable(DEFAULT_CHANNEL, mapper);
+		return this.updateNullable(Sprouts.factory().defaultChannel(), mapper);
 	}
 
 	/**
