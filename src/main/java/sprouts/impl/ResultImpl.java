@@ -113,7 +113,7 @@ final class ResultImpl<V> implements Result<V>
 	}
 
 	@Override
-	public Val<V> onChange( Channel channel, Action<Val<V>> displayAction ) {
+	public Val<V> onChange( Channel channel, Action<ValDelegate<V>> displayAction ) {
 		Objects.requireNonNull(displayAction);
 		/* A Result is immutable, so this method is not supported */
 		return this;
@@ -152,7 +152,7 @@ final class ResultImpl<V> implements Result<V>
 	public String toString() {
         String value = this.mapTo(String.class, Object::toString).orElse("null");
         String id = this.id() == null ? "?" : this.id();
-        if ( id.equals(NO_ID) ) id = "?";
+        if ( id.equals(Sprouts.factory().defaultId()) ) id = "?";
         String type = ( type() == null ? "?" : type().getSimpleName() );
         if ( type.equals("Object") )
 			type = "?";

@@ -8,8 +8,6 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-import static sprouts.Val.DEFAULT_CHANNEL;
-
 final class ChangeListeners<T>
 {
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(ChangeListeners.class);
@@ -31,28 +29,28 @@ final class ChangeListeners<T>
         return _actions.computeIfAbsent(channel, k->new ChannelListeners<>());
     }
 
-    private void _removeActionIf( Predicate<Action<Val<T>>> predicate ) {
+    private void _removeActionIf( Predicate<Action<ValDelegate<T>>> predicate ) {
         for ( ChannelListeners<T> actions : _actions.values() )
             actions.removeIf(predicate);
     }
 
-    public void onChange( Channel channel, Action<Val<T>> action ) {
+    public void onChange( Channel channel, Action<ValDelegate<T>> action ) {
         Objects.requireNonNull(channel);
         Objects.requireNonNull(action);
         _getActionsFor(channel).add(action);
     }
 
     public final void onChange( Observer observer ) {
-        onChange(DEFAULT_CHANNEL, new SproutChangeListener<>(observer) );
+        onChange(Sprouts.factory().defaultChannel(), new SproutChangeListener<>(observer) );
     }
 
 	public void fireChange( Val<T> owner, Channel channel ) {
 		if ( channel == From.ALL)
 			for ( Channel key : _actions.keySet() )
-                _getActionsFor(key).trigger( owner );
+                _getActionsFor(key).trigger( channel, owner );
 		else {
-            _getActionsFor(channel).trigger( owner );
-            _getActionsFor(From.ALL).trigger( owner );
+            _getActionsFor(channel).trigger( channel, owner );
+            _getActionsFor(From.ALL).trigger( channel, owner );
 		}
 	}
 
@@ -76,7 +74,7 @@ final class ChangeListeners<T>
 
     private static final class ChannelListeners<T> {
 
-        private final List<Action<Val<T>>> _channelActions = new ArrayList<>();
+        private final List<Action<ValDelegate<T>>> _channelActions = new ArrayList<>();
 
 
         public ChannelListeners() {}
@@ -85,7 +83,7 @@ final class ChangeListeners<T>
             _channelActions.addAll(other._channelActions);
         }
 
-        public void add( Action<Val<T>> action ) {
+        public void add( Action<ValDelegate<T>> action ) {
             _getActions( actions -> {
                 if ( action instanceof WeakAction ) {
                     WeakAction<?,?> wa = (WeakAction<?,?>) action;
@@ -105,11 +103,11 @@ final class ChangeListeners<T>
             });
         }
 
-        public void removeIf( Predicate<Action<Val<T>>> predicate ) {
+        public void removeIf( Predicate<Action<ValDelegate<T>>> predicate ) {
             _getActions( actions -> actions.removeIf(predicate) );
         }
 
-        private synchronized long _getActions(Consumer<List<Action<Val<T>>>> receiver) {
+        private synchronized long _getActions(Consumer<List<Action<ValDelegate<T>>>> receiver) {
             receiver.accept(_channelActions);
             return _channelActions.size();
         }
@@ -118,12 +116,12 @@ final class ChangeListeners<T>
             return _getActions( actions -> {} );
         }
 
-        public void trigger( Val<T> owner ) {
-            Val<T> clone = Val.ofNullable(owner); // We clone this property to avoid concurrent modification
+        public void trigger( Channel channel, Val<T> owner ) {
+            ValDelegate<T> delegate = new ValDelegateImpl<>(channel, Val.ofNullable(owner)); // We clone this property to avoid concurrent modification
             _getActions( actions -> {
-                for ( Action<Val<T>> action : actions ) // We copy the list to avoid concurrent modification
+                for ( Action<ValDelegate<T>> action : actions ) // We copy the list to avoid concurrent modification
                     try {
-                        action.accept(clone);
+                        action.accept(delegate);
                     } catch ( Exception e ) {
                         log.error(
                             "An error occurred while executing " +

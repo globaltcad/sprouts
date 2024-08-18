@@ -33,11 +33,11 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 	}
 
 	private static <T> PropertyView<@Nullable T> _ofNullable( Class<T> type, @Nullable T item, Val<?>... strongParentRefs ) {
-		return new PropertyView<>(type, item, NO_ID, new ChangeListeners<>(), true, _filterStrongParentRefs(strongParentRefs));
+		return new PropertyView<>(type, item, Sprouts.factory().defaultId(), new ChangeListeners<>(), true, _filterStrongParentRefs(strongParentRefs));
 	}
 
 	private static <T> PropertyView<T> _of( Class<T> type, T item, Val<?>... strongParentRefs ) {
-		return new PropertyView<>(type, item, NO_ID, new ChangeListeners<>(), false, _filterStrongParentRefs(strongParentRefs));
+		return new PropertyView<>(type, item, Sprouts.factory().defaultId(), new ChangeListeners<>(), false, _filterStrongParentRefs(strongParentRefs));
 	}
 
 	public static <T, U> Val<@Nullable U> ofNullable(Class<U> type, Val<T> source, Function<T, @Nullable U> mapper) {
@@ -47,7 +47,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 		}
 		final PropertyView<@Nullable U> viewProperty = PropertyView._ofNullable(type, initialItem, source);
 		source.onChange(Util.VIEW_CHANNEL, Action.ofWeak( viewProperty, (innerViewProperty, v) -> {
-			innerViewProperty.set(mapper.apply(v.orElseNull()));
+			innerViewProperty.set(v.channel(), mapper.apply(v.orElseNull()));
 		}));
 		return viewProperty;
 	}
@@ -70,7 +70,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 			if ( innerSource == null )
 				return;
 			final U value = nonNullMapper.apply(innerSource.orElseNull());
-			innerViewProperty.set( value );
+			innerViewProperty.set( v.channel(), value );
 		}));
 		return viewProperty;
 	}
@@ -81,7 +81,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 			Var<U> source = (Var<U>) parent;
 			PropertyView<T> view = PropertyView._of( type, initialItem, parent );
 			source.onChange(From.ALL, Action.ofWeak(view, (innerViewProperty, v) -> {
-				innerViewProperty.set(mapper.apply(v.orElseNull()));
+				innerViewProperty.set(v.channel(), mapper.apply(v.orElseNull()));
 			}));
 			return view;
 		}
@@ -122,7 +122,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 
 		T initial = fullCombiner.apply(first, second);
 		Objects.requireNonNull(initial,"The result of the combiner function is null, but the property does not allow null items!");
-		BiConsumer<PropertyView<T>,Val<T>> firstListener = (innerResult,v) -> {
+		BiConsumer<PropertyView<T>,ValDelegate<T>> firstListener = (innerResult,v) -> {
 			Val<U> innerSecond = innerResult._getSource(1);
 			if (innerSecond == null)
 				return;
@@ -136,7 +136,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 			else
 				innerResult.set(From.ALL, newItem);
 		};
-		BiConsumer<PropertyView<T>,Val<U>> secondListener = (innerResult,v) -> {
+		BiConsumer<PropertyView<T>,ValDelegate<U>> secondListener = (innerResult,v) -> {
 			Val<T> innerFirst = innerResult._getSource(0);
 			if (innerFirst == null)
 				return;
@@ -191,14 +191,14 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 				Val<U> innerSecond = innerResult._getSource(1);
 				if ( innerSecond == null )
 					return;
-				innerResult.set(From.ALL, fullCombiner.apply(v, innerSecond) );
+				innerResult.set(v.channel(), fullCombiner.apply(v, innerSecond) );
 			}));
 		if ( !secondIsImmutable )
 			second.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
 				Val<T> innerFirst = innerResult._getSource(0);
 				if ( innerFirst == null )
 					return;
-				innerResult.set(From.ALL, fullCombiner.apply(innerFirst, v) );
+				innerResult.set(v.channel(), fullCombiner.apply(innerFirst, v) );
 			}));
 		return result;
 	}
@@ -239,7 +239,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 					v.orElseNull(), innerSecond.orElseNull(), innerResult.orElseNull()
 				);
 			else
-				innerResult.set(From.ALL, newItem);
+				innerResult.set(v.channel(), newItem);
 		}));
 		second.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
 			Val<T> innerFirst = innerResult._getSource(0);
@@ -254,7 +254,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 					innerFirst.orElseNull(), v.orElseNull(), innerResult.orElseNull()
 				);
 			else
-				innerResult.set(From.ALL, newItem);
+				innerResult.set(v.channel(), newItem);
 		}));
 		return result;
 	}
@@ -280,13 +280,13 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 			Val<U> innerSecond = innerResult._getSource(1);
 			if ( innerSecond == null )
 				return;
-			innerResult.set(From.ALL, fullCombiner.apply(v, innerSecond));
+			innerResult.set(v.channel(), fullCombiner.apply(v, innerSecond));
 		}));
 		second.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
 			Val<T> innerFirst = innerResult._getSource(0);
 			if ( innerFirst == null )
 				return;
-			innerResult.set(From.ALL, fullCombiner.apply(innerFirst, v));
+			innerResult.set(v.channel(), fullCombiner.apply(innerFirst, v));
 		}));
 		return result;
 	}
@@ -340,10 +340,10 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 								"with the actual type of the variable"
 				);
 		}
-		if ( !ID_PATTERN.matcher(_id).matches() )
+		if ( !Sprouts.factory().idPattern().matcher(_id).matches() )
 			throw new IllegalArgumentException(
 					"The provided id '"+_id+"' is not valid! It must match " +
-							"the pattern '"+ID_PATTERN.pattern()+"'."
+							"the pattern '"+Sprouts.factory().idPattern().pattern()+"'."
 			);
 		if ( !allowsNull && iniValue == null )
 			throw new IllegalArgumentException(
@@ -365,7 +365,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 
 	/** {@inheritDoc} */
 	@Override
-	public Var<T> onChange( Channel channel, Action<Val<T>> action ) {
+	public Var<T> onChange( Channel channel, Action<ValDelegate<T>> action ) {
 		_changeListeners.onChange(channel, action);
 		return this;
 	}
@@ -449,7 +449,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 	public final String toString() {
 		String item = this.mapTo(String.class, Object::toString).orElse("null");
 		String id = this.id() == null ? "?" : this.id();
-		if ( id.equals(NO_ID) ) id = "?";
+		if ( id.equals(Sprouts.factory().defaultId()) ) id = "?";
 		String type = ( type() == null ? "?" : type().getSimpleName() );
 		if ( type.equals("Object") ) type = "?";
 		if ( type.equals("String") && this.isPresent() ) item = "\"" + item + "\"";

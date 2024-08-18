@@ -1000,6 +1000,90 @@ class Property_Lenses_Spec extends Specification
             refs[3].get() == null
     }
 
+    def 'The channel of a property change event will propagate to its lenses.'()
+    {
+        reportInfo """
+            Every mutation to a property can have a channel associated with it.
+            You can call the `Var.set(Channel,T)` method to mutate the property with a custom channel,
+            and then in your change listeners you can check the channel on the property delegate!
+            
+            This exact same principle is also true for the lenses of a property
+            whose change event listeners will also receive the channel of the origin property.
+        """
+        given : 'We have a book property and 3 lenses focusing on different fields of the book.'
+            var book = new Book("The Book", new Author("John", "Doe", LocalDate.of(1980, 2, 15), ["New Book"]), Genre.HISTORY, LocalDate.of(2010, 7, 24), 374)
+            var bookProperty = Var.of(book)
+            var titleLens = bookProperty.zoomTo(Book::title, Book::withTitle)
+            var authorLens = bookProperty.zoomTo(Book::author, Book::withAuthor)
+            var genreLens = bookProperty.zoomTo(Book::genre, Book::withGenre)
+        and : 'We create trace lists for each lens to observe different channels of the change events.'
+            var titleTrace = []
+            var authorTrace = []
+            var genreTrace = []
+            titleLens.onChange(From.ALL, it -> titleTrace << it.channel() )
+            authorLens.onChange(From.VIEW, it -> authorTrace << it.channel() )
+            genreLens.onChange(From.VIEW_MODEL, it -> genreTrace << it.channel() )
+        expect : 'Initially, the traces are all empty.'
+            titleTrace.isEmpty()
+            authorTrace.isEmpty()
+            genreTrace.isEmpty()
+
+        when : """
+            We first change something unrelated to the lenses by 
+            updating the page count field on different channels.
+        """
+            bookProperty.set(From.ALL, book.withPageCount(1))
+            bookProperty.set(From.VIEW, book.withPageCount(2))
+            bookProperty.set(From.VIEW_MODEL, book.withPageCount(3))
+            book = bookProperty.get()
+        then : 'The traces should all still be empty, because the do not focus on page counts.'
+            titleTrace.isEmpty() && authorTrace.isEmpty() && genreTrace.isEmpty()
+
+        when : 'We now update the title of the book on 3 different channels...'
+            bookProperty.set(From.ALL, book.withTitle("New Title 1"))
+            bookProperty.set(From.VIEW, book.withTitle("New Title 2"))
+            bookProperty.set(From.VIEW_MODEL, book.withTitle("New Title 3"))
+            book = bookProperty.get()
+        then : """
+            ...only the title trace should have recorded the channel of the change events.
+            Note that it received all change events. This is because the "ALL" channel
+            is unique in that is always receives all change events, 
+            regardless of the channel they were sent with.
+        """
+            titleTrace == [From.ALL, From.VIEW, From.VIEW_MODEL]
+            authorTrace.isEmpty()
+            genreTrace.isEmpty()
+
+        when : 'We update the author of the book on 3 different channels...'
+            bookProperty.set(From.ALL, book.withAuthor(book.author().withFirstName("Megan")))
+            bookProperty.set(From.VIEW, book.withAuthor(book.author().withFirstName("Maggie")))
+            bookProperty.set(From.VIEW_MODEL, book.withAuthor(book.author().withFirstName("Kyle")))
+            book = bookProperty.get()
+        then : """
+            ...only the author trace should have recorded the channel of the change events.
+            But contrary to the title trace, the author trace only recorded the VIEW 
+            and the VIEW_MODEL channel, because the author lens is not listening to the ALL channel.
+        """
+            titleTrace == [From.ALL, From.VIEW, From.VIEW_MODEL]
+            authorTrace == [From.ALL, From.VIEW]
+            genreTrace.isEmpty()
+
+        when : 'We lastly update the genre of the book on 3 different channels...'
+            bookProperty.set(From.ALL, book.withGenre(Genre.FANTASY))
+            bookProperty.set(From.VIEW, book.withGenre(Genre.SCIENCE))
+            bookProperty.set(From.VIEW_MODEL, book.withGenre(Genre.HISTORY))
+            book = bookProperty.get()
+        then : """
+            ...only the genre trace should have recorded the channel of the change events.
+            But contrary to the title trace, the genre
+            trace only recorded the VIEW_MODEL channel, because the genre lens is not 
+            listening to the ALL and VIEW channels.
+        """
+            titleTrace == [From.ALL, From.VIEW, From.VIEW_MODEL]
+            authorTrace == [From.ALL, From.VIEW]
+            genreTrace == [From.ALL, From.VIEW_MODEL]
+    }
+
     /**
      * This method guarantees that garbage collection is
      * done unlike <code>{@link System#gc()}</code>

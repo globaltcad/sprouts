@@ -35,14 +35,13 @@ class Property_Event_Delegates_Spec extends Specification
             property.onChange(From.VIEW_MODEL,  it -> delegate = it )
         when : 'We change the property.'
             property.set(42)
-        then : 'The exposed delegate is equal to the property.'
-            delegate == property
-        and : 'The delegate is however not identical to the property.'
-            delegate !== property
+        then : 'The exposed delegate has the expected String representation and channel.'
+            delegate.toString() == "ValDelegate<Integer?>[42]"
+            delegate.channel() == From.VIEW_MODEL
         when : 'We try to mutate the delegate...'
             delegate.set(0)
         then : '...we get an exception.'
-            thrown(UnsupportedOperationException)
+            thrown(MissingMethodException)
     }
 
     def 'The delegate of a property user action exposes a property that is an immutable clone.'()
@@ -62,14 +61,13 @@ class Property_Event_Delegates_Spec extends Specification
             property.onChange(From.VIEW, it -> delegate = it )
         when : 'We change the property.'
             property.set(From.VIEW, 7)
-        then : 'The exposed delegate is equal to the property.'
-            delegate == property
-        and : 'The delegate is however not identical to the property.'
-            delegate !== property
+        then : 'The exposed delegate has the expected String representation and channel.'
+            delegate.toString() == "ValDelegate<Integer?>[7]"
+            delegate.channel() == From.VIEW
         when : 'We try to mutate the delegate...'
             delegate.set(From.VIEW, 0)
         then : '...we get an exception.'
-            thrown(UnsupportedOperationException)
+            thrown(MissingMethodException)
     }
 
     def 'The delegate of a property list change action exposes a list that is an immutable clone.'()
