@@ -149,18 +149,33 @@ public interface SproutsFactory
 	<O,D> WeakAction<O,D> actionOfWeak( O owner, BiConsumer<O, D> action );
 
 	/**
+	 *   The default id for properties which do not have an id explicitly specified.
+	 *   The id of a property is used to identify it in the system or as part of a view model
+	 *   and convert it into other data formats like key/value based data stores.
+	 *
 	 *  @return The default id for properties which do not have an id explicitly specified.
+	 *          This must never return {@code null} and it is recommended to be a constant
+	 *          or cached object due to this method being called frequently.
 	 */
 	String defaultId();
 
 	/**
 	 *  The regex {@link Pattern} used to validate property ids.
 	 *  All ids must match this pattern.
+	 *
+	 *  @return The regex {@link Pattern} used to validate property ids.
+	 *          This must never return {@code null} and it is recommended to be a constant
+	 *          or cached object due to this method being called frequently.
 	 */
 	Pattern idPattern();
 
 	/**
 	 *  The default channel used for change events.
+	 *  This channel is used to give events a chanel when no channel is explicitly specified.
+	 *
+	 * @return The default channel used for change events.
+	 * 	       This must never return {@code null} and it is recommended to be a constant
+	 * 	       or cached object due to this method being called frequently.
 	 */
 	Channel defaultChannel();
 
