@@ -25,13 +25,11 @@
 
         {"kind":"when","text":"We change the property.","code":["property.set(42)"]},
 
-        {"kind":"then","text":"The exposed delegate is equal to the property.","code":["delegate == property"]},
-
-        {"kind":"and","text":"The delegate is however not identical to the property.","code":["delegate !== property"]},
+        {"kind":"then","text":"The exposed delegate has the expected String representation and channel.","code":["delegate.toString() == \"ValDelegate<Integer?>[42]\"","delegate.channel() == From.VIEW_MODEL"]},
 
         {"kind":"when","text":"We try to mutate the delegate...","code":["delegate.set(0)"]},
 
-        {"kind":"then","text":"...we get an exception.","code":["thrown(UnsupportedOperationException)"]}
+        {"kind":"then","text":"...we get an exception.","code":["thrown(MissingMethodException)"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -48,13 +46,11 @@
 
         {"kind":"when","text":"We change the property.","code":["property.set(From.VIEW, 7)"]},
 
-        {"kind":"then","text":"The exposed delegate is equal to the property.","code":["delegate == property"]},
-
-        {"kind":"and","text":"The delegate is however not identical to the property.","code":["delegate !== property"]},
+        {"kind":"then","text":"The exposed delegate has the expected String representation and channel.","code":["delegate.toString() == \"ValDelegate<Integer?>[7]\"","delegate.channel() == From.VIEW"]},
 
         {"kind":"when","text":"We try to mutate the delegate...","code":["delegate.set(From.VIEW, 0)"]},
 
-        {"kind":"then","text":"...we get an exception.","code":["thrown(UnsupportedOperationException)"]}
+        {"kind":"then","text":"...we get an exception.","code":["thrown(MissingMethodException)"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },

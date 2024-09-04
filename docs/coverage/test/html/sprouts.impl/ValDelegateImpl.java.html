@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ValDelegateImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sprouts</a> &gt; <a href="index.source.html" class="el_package">sprouts.impl</a> &gt; <span class="el_source">ValDelegateImpl.java</span></div><h1>ValDelegateImpl.java</h1><pre class="source lang-java linenums">package sprouts.impl;
+
+import org.jspecify.annotations.Nullable;
+import sprouts.*;
+
+import java.util.Objects;
+import java.util.function.Function;
+
+final class ValDelegateImpl&lt;T&gt; implements ValDelegate&lt;T&gt; {
+
+    private final Channel channel;
+    private final Val&lt;T&gt;  value;
+
+<span class="fc" id="L14">    ValDelegateImpl( Channel channel, Val&lt;T&gt; value ) {</span>
+<span class="fc" id="L15">        this.channel = Objects.requireNonNull(channel);</span>
+<span class="fc" id="L16">        this.value   = Objects.requireNonNull(value);</span>
+<span class="fc" id="L17">    }</span>
+
+    @Override
+    public Channel channel() {
+<span class="fc" id="L21">        return channel;</span>
+    }
+
+    @Override
+    public @Nullable T orElseNull() {
+<span class="fc" id="L26">        return value.orElseNull();</span>
+    }
+
+    @Override
+    public Val&lt;T&gt; map(Function&lt;T, T&gt; mapper) {
+<span class="nc" id="L31">        return value.map(mapper);</span>
+    }
+
+    @Override
+    public String id() {
+<span class="nc" id="L36">        return value.id();</span>
+    }
+
+    @Override
+    public Val&lt;T&gt; withId(String id) {
+<span class="nc" id="L41">        return value.withId(id);</span>
+    }
+
+    @Override
+    public Class&lt;T&gt; type() {
+<span class="nc" id="L46">        return value.type();</span>
+    }
+
+    @Override
+    public Val&lt;T&gt; onChange(Channel channel, Action&lt;ValDelegate&lt;T&gt;&gt; action) {
+<span class="nc" id="L51">        return this;</span>
+    }
+
+    @Override
+    public Val&lt;T&gt; fireChange(Channel channel) {
+<span class="nc" id="L56">        return this;</span>
+    }
+
+    @Override
+    public boolean allowsNull() {
+<span class="nc" id="L61">        return value.allowsNull();</span>
+    }
+
+    @Override
+    public boolean isMutable() {
+<span class="nc" id="L66">        return value.isMutable();</span>
+    }
+
+    @Override
+    public Observable subscribe(Observer observer) {
+<span class="nc" id="L71">        return this;</span>
+    }
+
+    @Override
+    public Observable unsubscribe(Subscriber observer) {
+<span class="nc" id="L76">        return this;</span>
+    }
+
+    @Override
+    public String toString() {
+<span class="fc" id="L81">        return &quot;ValDelegate&quot; + value.toString().substring(3);</span>
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+<span class="nc bnc" id="L86" title="All 2 branches missed.">        if (obj == null) return false;</span>
+<span class="nc bnc" id="L87" title="All 2 branches missed.">        if (obj == this) return true;</span>
+<span class="nc bnc" id="L88" title="All 2 branches missed.">        if ( obj.getClass() != this.getClass() ) return false;</span>
+<span class="nc" id="L89">        ValDelegateImpl&lt;?&gt; other = (ValDelegateImpl&lt;?&gt;) obj;</span>
+<span class="nc bnc" id="L90" title="All 2 branches missed.">        return this.channel.equals(other.channel) &amp;&amp;</span>
+<span class="nc bnc" id="L91" title="All 2 branches missed.">                this.value.equals(other.value);</span>
+    }
+
+    @Override
+    public int hashCode() {
+<span class="nc" id="L96">        return Objects.hash(channel, value);</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

@@ -156,7 +156,7 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
 	 * @return This very wrapper instance, in order to enable method chaining.
 	 */
 	default Var&lt;T&gt; set( T newItem ) {
-<span class="fc" id="L159">		return this.set(DEFAULT_CHANNEL, newItem);</span>
+<span class="fc" id="L159">		return this.set(Sprouts.factory().defaultChannel(), newItem);</span>
 	}
 
 	/**
@@ -201,7 +201,7 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
 	 * @throws NullPointerException If the given mapper is null.
 	 */
 	default Var&lt;T&gt; update( Function&lt;T,@Nullable T&gt; mapper ) {
-<span class="fc" id="L204">		return update(DEFAULT_CHANNEL, mapper);</span>
+<span class="fc" id="L204">		return update(Sprouts.factory().defaultChannel(), mapper);</span>
 	}
 
 	/**
@@ -274,7 +274,7 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
 	 * @throws NullPointerException If the given mapper is null.
 	 */
 	default Var&lt;T&gt; updateNullable( Function&lt;@Nullable T,@Nullable T&gt; mapper ) {
-<span class="fc" id="L277">		return this.updateNullable(DEFAULT_CHANNEL, mapper);</span>
+<span class="fc" id="L277">		return this.updateNullable(Sprouts.factory().defaultChannel(), mapper);</span>
 	}
 
 	/**
@@ -328,7 +328,7 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
 	/**
 	 * {@inheritDoc}
 	 */
-	@Override Var&lt;T&gt; onChange( Channel channel, Action&lt;Val&lt;T&gt;&gt; action );
+	@Override Var&lt;T&gt; onChange( Channel channel, Action&lt;ValDelegate&lt;T&gt;&gt; action );
 
 	/**
 	 *  If the item is present, then this applies the provided mapping function to it,

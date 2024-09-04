@@ -113,7 +113,7 @@ final class ResultImpl&lt;V&gt; implements Result&lt;V&gt;
 	}
 
 	@Override
-	public Val&lt;V&gt; onChange( Channel channel, Action&lt;Val&lt;V&gt;&gt; displayAction ) {
+	public Val&lt;V&gt; onChange( Channel channel, Action&lt;ValDelegate&lt;V&gt;&gt; displayAction ) {
 <span class="nc" id="L117">		Objects.requireNonNull(displayAction);</span>
 		/* A Result is immutable, so this method is not supported */
 <span class="nc" id="L119">		return this;</span>
@@ -152,7 +152,7 @@ final class ResultImpl&lt;V&gt; implements Result&lt;V&gt;
 	public String toString() {
 <span class="fc" id="L153">        String value = this.mapTo(String.class, Object::toString).orElse(&quot;null&quot;);</span>
 <span class="pc bpc" id="L154" title="1 of 2 branches missed.">        String id = this.id() == null ? &quot;?&quot; : this.id();</span>
-<span class="fc bfc" id="L155" title="All 2 branches covered.">        if ( id.equals(NO_ID) ) id = &quot;?&quot;;</span>
+<span class="fc bfc" id="L155" title="All 2 branches covered.">        if ( id.equals(Sprouts.factory().defaultId()) ) id = &quot;?&quot;;</span>
 <span class="pc bpc" id="L156" title="1 of 2 branches missed.">        String type = ( type() == null ? &quot;?&quot; : type().getSimpleName() );</span>
 <span class="pc bpc" id="L157" title="1 of 2 branches missed.">        if ( type.equals(&quot;Object&quot;) )</span>
 <span class="nc" id="L158">			type = &quot;?&quot;;</span>

@@ -4,7 +4,7 @@
   "narrative":"Both the read only `Val` and the mutable `Var` are observable properties.\n    As a consequence, they expose convenient methods to observe their changes\n    in the form of \"views\", which are themselves observable properties\n    that are a live view of the original property which gets updated\n    automatically when the original property changes.\n\n    This is especially useful when you want to observe a property\n    of one type as a property of another type, or when you want to\n    observe a property with some transformation applied to it.\n\n    This specification shows how to create views from both nullable and non-nullable properties,",
   "subjects":["sprouts.Val","sprouts.Val"],
   "statistics":{
-    "runs":"14",
+    "runs":"15",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -365,6 +365,27 @@
         {"kind":"and","text":"We await garbage collection.","code":["waitForGarbageCollection()","Thread.sleep(500)"]},
 
         {"kind":"then","text":"All views were garbage collected, but the source is still there.","code":["refs[0].get() != null","refs[1].get() == null","refs[2].get() == null","refs[3].get() == null"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The channel of a property change event will propagate to its views.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Every mutation to a property can have a channel associated with it.\n            You can call the `Var.set(Channel,T)` method to mutate the property with a custom channel,\n            and then in your change listeners you can check the channel on the property delegate!\n\n            This exact same principle is also true for the views of a property\n            whose change event listeners will also receive the channel of the origin property.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A property based on an enum and 3 different views.","code":["var monthProperty = Var.of(Month.AUGUST)","var intView = monthProperty.viewAsInt(Month::ordinal)","var stringView = monthProperty.viewAsString(Month::name)","var firstMonthOfQuarter = monthProperty.view(Month::firstMonthOfQuarter)"]},
+
+        {"kind":"and","text":"A trace list and a change listener that listens to changes on the views.","code":["var trace1 = []","var trace2 = []","var trace3 = []","intView.onChange(From.ALL, i -> trace1 << i.channel())","stringView.onChange(From.VIEW, s -> trace2 << s.channel())","firstMonthOfQuarter.onChange(From.VIEW_MODEL, m -> trace3 << m.channel())"]},
+
+        {"kind":"expect","text":"The trace list is empty and there are no change listeners registered.","code":["trace1.isEmpty()","trace2.isEmpty()","trace3.isEmpty()"]},
+
+        {"kind":"when","text":"We change the value of the property 3 times with different channels and values.","code":["monthProperty.set(From.ALL, Month.JANUARY)","monthProperty.set(From.VIEW, Month.NOVEMBER)","monthProperty.set(From.VIEW_MODEL, Month.SEPTEMBER)"]},
+
+        {"kind":"then","text":"The listeners are notified of the new value of the views with the correct channels.","code":["trace1 == [From.ALL, From.VIEW, From.VIEW_MODEL]","trace2 == [From.ALL, From.VIEW]","trace3 == [From.ALL, From.VIEW_MODEL]"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }
