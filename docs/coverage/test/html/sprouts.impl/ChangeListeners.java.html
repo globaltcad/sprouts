@@ -8,131 +8,129 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-import static sprouts.Val.DEFAULT_CHANNEL;
-
 final class ChangeListeners&lt;T&gt;
 {
-<span class="fc" id="L15">    private static final Logger log = org.slf4j.LoggerFactory.getLogger(ChangeListeners.class);</span>
+<span class="fc" id="L13">    private static final Logger log = org.slf4j.LoggerFactory.getLogger(ChangeListeners.class);</span>
 
-<span class="fc" id="L17">    private final Map&lt;Channel, ChannelListeners&lt;T&gt;&gt; _actions = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc" id="L15">    private final Map&lt;Channel, ChannelListeners&lt;T&gt;&gt; _actions = new LinkedHashMap&lt;&gt;();</span>
 
 
-<span class="fc" id="L20">    public ChangeListeners() {}</span>
+<span class="fc" id="L18">    public ChangeListeners() {}</span>
 
-<span class="fc" id="L22">    public ChangeListeners(ChangeListeners&lt;T&gt; other) {</span>
-<span class="fc" id="L23">        _copyFrom(other);</span>
-<span class="fc" id="L24">    }</span>
+<span class="fc" id="L20">    public ChangeListeners(ChangeListeners&lt;T&gt; other) {</span>
+<span class="fc" id="L21">        _copyFrom(other);</span>
+<span class="fc" id="L22">    }</span>
 
     private void _copyFrom(ChangeListeners&lt;T&gt; other) {
-<span class="fc" id="L27">        other._actions.forEach( (k, v) -&gt; _actions.put(k, new ChannelListeners&lt;&gt;(v)) );</span>
-<span class="fc" id="L28">    }</span>
+<span class="fc" id="L25">        other._actions.forEach( (k, v) -&gt; _actions.put(k, new ChannelListeners&lt;&gt;(v)) );</span>
+<span class="fc" id="L26">    }</span>
 
     private ChannelListeners&lt;T&gt; _getActionsFor(Channel channel ) {
-<span class="fc" id="L31">        return _actions.computeIfAbsent(channel, k-&gt;new ChannelListeners&lt;&gt;());</span>
+<span class="fc" id="L29">        return _actions.computeIfAbsent(channel, k-&gt;new ChannelListeners&lt;&gt;());</span>
     }
 
-    private void _removeActionIf( Predicate&lt;Action&lt;Val&lt;T&gt;&gt;&gt; predicate ) {
-<span class="fc bfc" id="L35" title="All 2 branches covered.">        for ( ChannelListeners&lt;T&gt; actions : _actions.values() )</span>
-<span class="fc" id="L36">            actions.removeIf(predicate);</span>
-<span class="fc" id="L37">    }</span>
+    private void _removeActionIf( Predicate&lt;Action&lt;ValDelegate&lt;T&gt;&gt;&gt; predicate ) {
+<span class="fc bfc" id="L33" title="All 2 branches covered.">        for ( ChannelListeners&lt;T&gt; actions : _actions.values() )</span>
+<span class="fc" id="L34">            actions.removeIf(predicate);</span>
+<span class="fc" id="L35">    }</span>
 
-    public void onChange( Channel channel, Action&lt;Val&lt;T&gt;&gt; action ) {
-<span class="fc" id="L40">        Objects.requireNonNull(channel);</span>
-<span class="fc" id="L41">        Objects.requireNonNull(action);</span>
-<span class="fc" id="L42">        _getActionsFor(channel).add(action);</span>
-<span class="fc" id="L43">    }</span>
+    public void onChange( Channel channel, Action&lt;ValDelegate&lt;T&gt;&gt; action ) {
+<span class="fc" id="L38">        Objects.requireNonNull(channel);</span>
+<span class="fc" id="L39">        Objects.requireNonNull(action);</span>
+<span class="fc" id="L40">        _getActionsFor(channel).add(action);</span>
+<span class="fc" id="L41">    }</span>
 
     public final void onChange( Observer observer ) {
-<span class="fc" id="L46">        onChange(DEFAULT_CHANNEL, new SproutChangeListener&lt;&gt;(observer) );</span>
-<span class="fc" id="L47">    }</span>
+<span class="fc" id="L44">        onChange(Sprouts.factory().defaultChannel(), new SproutChangeListener&lt;&gt;(observer) );</span>
+<span class="fc" id="L45">    }</span>
 
 	public void fireChange( Val&lt;T&gt; owner, Channel channel ) {
-<span class="fc bfc" id="L50" title="All 2 branches covered.">		if ( channel == From.ALL)</span>
-<span class="fc bfc" id="L51" title="All 2 branches covered.">			for ( Channel key : _actions.keySet() )</span>
-<span class="fc" id="L52">                _getActionsFor(key).trigger( owner );</span>
+<span class="fc bfc" id="L48" title="All 2 branches covered.">		if ( channel == From.ALL)</span>
+<span class="fc bfc" id="L49" title="All 2 branches covered.">			for ( Channel key : _actions.keySet() )</span>
+<span class="fc" id="L50">                _getActionsFor(key).trigger( channel, owner );</span>
 		else {
-<span class="fc" id="L54">            _getActionsFor(channel).trigger( owner );</span>
-<span class="fc" id="L55">            _getActionsFor(From.ALL).trigger( owner );</span>
+<span class="fc" id="L52">            _getActionsFor(channel).trigger( channel, owner );</span>
+<span class="fc" id="L53">            _getActionsFor(From.ALL).trigger( channel, owner );</span>
 		}
-<span class="fc" id="L57">	}</span>
+<span class="fc" id="L55">	}</span>
 
     public void unsubscribe( Subscriber subscriber ) {
-<span class="fc" id="L60">        _removeActionIf( a -&gt; {</span>
-<span class="fc bfc" id="L61" title="All 2 branches covered.">                if ( a instanceof SproutChangeListener ) {</span>
-<span class="fc" id="L62">                    SproutChangeListener&lt;?&gt; pcl = (SproutChangeListener&lt;?&gt;) a;</span>
-<span class="pc bpc" id="L63" title="1 of 2 branches missed.">                    return pcl.listener() == subscriber;</span>
+<span class="fc" id="L58">        _removeActionIf( a -&gt; {</span>
+<span class="fc bfc" id="L59" title="All 2 branches covered.">                if ( a instanceof SproutChangeListener ) {</span>
+<span class="fc" id="L60">                    SproutChangeListener&lt;?&gt; pcl = (SproutChangeListener&lt;?&gt;) a;</span>
+<span class="pc bpc" id="L61" title="1 of 2 branches missed.">                    return pcl.listener() == subscriber;</span>
                 }
                 else
-<span class="fc" id="L66">                    return Objects.equals(a, subscriber);</span>
+<span class="fc" id="L64">                    return Objects.equals(a, subscriber);</span>
             });
-<span class="fc" id="L68">    }</span>
+<span class="fc" id="L66">    }</span>
 
     public long numberOfChangeListeners() {
-<span class="fc" id="L71">        return _actions.values()</span>
-<span class="fc" id="L72">                            .stream()</span>
-<span class="fc" id="L73">                            .mapToLong(ChannelListeners::numberOfChangeListeners)</span>
-<span class="fc" id="L74">                            .sum();</span>
+<span class="fc" id="L69">        return _actions.values()</span>
+<span class="fc" id="L70">                            .stream()</span>
+<span class="fc" id="L71">                            .mapToLong(ChannelListeners::numberOfChangeListeners)</span>
+<span class="fc" id="L72">                            .sum();</span>
     }
 
     private static final class ChannelListeners&lt;T&gt; {
 
-<span class="fc" id="L79">        private final List&lt;Action&lt;Val&lt;T&gt;&gt;&gt; _channelActions = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L77">        private final List&lt;Action&lt;ValDelegate&lt;T&gt;&gt;&gt; _channelActions = new ArrayList&lt;&gt;();</span>
 
 
-<span class="fc" id="L82">        public ChannelListeners() {}</span>
+<span class="fc" id="L80">        public ChannelListeners() {}</span>
 
-<span class="fc" id="L84">        public ChannelListeners(ChannelListeners&lt;T&gt; other ) {</span>
-<span class="fc" id="L85">            _channelActions.addAll(other._channelActions);</span>
-<span class="fc" id="L86">        }</span>
+<span class="fc" id="L82">        public ChannelListeners(ChannelListeners&lt;T&gt; other ) {</span>
+<span class="fc" id="L83">            _channelActions.addAll(other._channelActions);</span>
+<span class="fc" id="L84">        }</span>
 
-        public void add( Action&lt;Val&lt;T&gt;&gt; action ) {
-<span class="fc" id="L89">            _getActions( actions -&gt; {</span>
-<span class="fc bfc" id="L90" title="All 2 branches covered.">                if ( action instanceof WeakAction ) {</span>
-<span class="fc" id="L91">                    WeakAction&lt;?,?&gt; wa = (WeakAction&lt;?,?&gt;) action;</span>
-<span class="fc" id="L92">                    wa.owner().ifPresent( owner -&gt; {</span>
-<span class="fc" id="L93">                        actions.add(action);</span>
-<span class="fc" id="L94">                        ChangeListenerCleaner.getInstance()</span>
-<span class="fc" id="L95">                                .register(owner, () -&gt; {</span>
-<span class="fc" id="L96">                                    _getActions( innerActions -&gt; {</span>
-<span class="fc" id="L97">                                        innerActions.remove(wa);</span>
-<span class="fc" id="L98">                                        wa.clear();</span>
-<span class="fc" id="L99">                                    });</span>
-<span class="fc" id="L100">                                });</span>
-<span class="fc" id="L101">                    });</span>
-<span class="fc" id="L102">                }</span>
+        public void add( Action&lt;ValDelegate&lt;T&gt;&gt; action ) {
+<span class="fc" id="L87">            _getActions( actions -&gt; {</span>
+<span class="fc bfc" id="L88" title="All 2 branches covered.">                if ( action instanceof WeakAction ) {</span>
+<span class="fc" id="L89">                    WeakAction&lt;?,?&gt; wa = (WeakAction&lt;?,?&gt;) action;</span>
+<span class="fc" id="L90">                    wa.owner().ifPresent( owner -&gt; {</span>
+<span class="fc" id="L91">                        actions.add(action);</span>
+<span class="fc" id="L92">                        ChangeListenerCleaner.getInstance()</span>
+<span class="fc" id="L93">                                .register(owner, () -&gt; {</span>
+<span class="fc" id="L94">                                    _getActions( innerActions -&gt; {</span>
+<span class="fc" id="L95">                                        innerActions.remove(wa);</span>
+<span class="fc" id="L96">                                        wa.clear();</span>
+<span class="fc" id="L97">                                    });</span>
+<span class="fc" id="L98">                                });</span>
+<span class="fc" id="L99">                    });</span>
+<span class="fc" id="L100">                }</span>
                 else
-<span class="fc" id="L104">                    actions.add(action);</span>
-<span class="fc" id="L105">            });</span>
-<span class="fc" id="L106">        }</span>
+<span class="fc" id="L102">                    actions.add(action);</span>
+<span class="fc" id="L103">            });</span>
+<span class="fc" id="L104">        }</span>
 
-        public void removeIf( Predicate&lt;Action&lt;Val&lt;T&gt;&gt;&gt; predicate ) {
-<span class="fc" id="L109">            _getActions( actions -&gt; actions.removeIf(predicate) );</span>
-<span class="fc" id="L110">        }</span>
+        public void removeIf( Predicate&lt;Action&lt;ValDelegate&lt;T&gt;&gt;&gt; predicate ) {
+<span class="fc" id="L107">            _getActions( actions -&gt; actions.removeIf(predicate) );</span>
+<span class="fc" id="L108">        }</span>
 
-        private synchronized long _getActions(Consumer&lt;List&lt;Action&lt;Val&lt;T&gt;&gt;&gt;&gt; receiver) {
-<span class="fc" id="L113">            receiver.accept(_channelActions);</span>
-<span class="fc" id="L114">            return _channelActions.size();</span>
+        private synchronized long _getActions(Consumer&lt;List&lt;Action&lt;ValDelegate&lt;T&gt;&gt;&gt;&gt; receiver) {
+<span class="fc" id="L111">            receiver.accept(_channelActions);</span>
+<span class="fc" id="L112">            return _channelActions.size();</span>
         }
 
         private long numberOfChangeListeners() {
-<span class="fc" id="L118">            return _getActions( actions -&gt; {} );</span>
+<span class="fc" id="L116">            return _getActions( actions -&gt; {} );</span>
         }
 
-        public void trigger( Val&lt;T&gt; owner ) {
-<span class="fc" id="L122">            Val&lt;T&gt; clone = Val.ofNullable(owner); // We clone this property to avoid concurrent modification</span>
-<span class="fc" id="L123">            _getActions( actions -&gt; {</span>
-<span class="fc bfc" id="L124" title="All 2 branches covered.">                for ( Action&lt;Val&lt;T&gt;&gt; action : actions ) // We copy the list to avoid concurrent modification</span>
+        public void trigger( Channel channel, Val&lt;T&gt; owner ) {
+<span class="fc" id="L120">            ValDelegate&lt;T&gt; delegate = new ValDelegateImpl&lt;&gt;(channel, Val.ofNullable(owner)); // We clone this property to avoid concurrent modification</span>
+<span class="fc" id="L121">            _getActions( actions -&gt; {</span>
+<span class="fc bfc" id="L122" title="All 2 branches covered.">                for ( Action&lt;ValDelegate&lt;T&gt;&gt; action : actions ) // We copy the list to avoid concurrent modification</span>
                     try {
-<span class="fc" id="L126">                        action.accept(clone);</span>
-<span class="fc" id="L127">                    } catch ( Exception e ) {</span>
-<span class="fc" id="L128">                        log.error(</span>
+<span class="fc" id="L124">                        action.accept(delegate);</span>
+<span class="fc" id="L125">                    } catch ( Exception e ) {</span>
+<span class="fc" id="L126">                        log.error(</span>
                             &quot;An error occurred while executing &quot; +
                             &quot;action '&quot;+action+&quot;' for property '&quot;+owner+&quot;'&quot;,
                             e
                         );
-<span class="fc" id="L133">                    }</span>
-<span class="fc" id="L134">            });</span>
-<span class="fc" id="L135">        }</span>
+<span class="fc" id="L131">                    }</span>
+<span class="fc" id="L132">            });</span>
+<span class="fc" id="L133">        }</span>
 
     }
 

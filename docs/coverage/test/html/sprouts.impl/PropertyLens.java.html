@@ -64,7 +64,7 @@ final class PropertyLens&lt;A extends @Nullable Object, T extends @Nullable Obje
 <span class="fc" id="L64">        B initialValue = nullSafeGetter.apply(source.orElseNull());</span>
 <span class="fc" id="L65">        return new PropertyLens&lt;&gt;(</span>
                 itemType,
-                Val.NO_ID,
+<span class="fc" id="L67">                Sprouts.factory().defaultId(),</span>
                 false,//does not allow null
                 initialValue, //may NOT be null
 <span class="fc" id="L70">                ParentRef.of(source),</span>
@@ -93,7 +93,7 @@ final class PropertyLens&lt;A extends @Nullable Object, T extends @Nullable Obje
 <span class="fc" id="L93">        B initialValue = nullSafeGetter.apply(source.orElseNull());</span>
 <span class="fc" id="L94">        return new PropertyLens&lt;&gt;(</span>
                 type,
-                Val.NO_ID,
+<span class="fc" id="L96">                Sprouts.factory().defaultId(),</span>
                 true,//allows null
                 initialValue, //may be null
 <span class="fc" id="L99">                ParentRef.of(source),</span>
@@ -141,13 +141,13 @@ final class PropertyLens&lt;A extends @Nullable Object, T extends @Nullable Obje
 <span class="fc" id="L141">                T newValue = thisLens._fetchItemFromParent();</span>
 <span class="fc bfc" id="L142" title="All 2 branches covered.">                if (!Objects.equals(thisLens._lastItem, newValue)) {</span>
 <span class="fc" id="L143">                    thisLens._lastItem = newValue;</span>
-<span class="fc" id="L144">                    thisLens.fireChange(From.ALL);</span>
+<span class="fc" id="L144">                    thisLens.fireChange(v.channel());</span>
                 }
 <span class="fc" id="L146">            }));</span>
         }
 
-<span class="pc bpc" id="L149" title="1 of 2 branches missed.">        if ( !ID_PATTERN.matcher(_id).matches() )</span>
-<span class="nc" id="L150">            throw new IllegalArgumentException(&quot;The provided id '&quot;+_id+&quot;' is not valid! It must match the pattern '&quot;+ID_PATTERN.pattern()+&quot;'&quot;);</span>
+<span class="pc bpc" id="L149" title="1 of 2 branches missed.">        if ( !Sprouts.factory().idPattern().matcher(_id).matches() )</span>
+<span class="nc" id="L150">            throw new IllegalArgumentException(&quot;The provided id '&quot;+_id+&quot;' is not valid! It must match the pattern '&quot;+Sprouts.factory().idPattern().pattern()+&quot;'&quot;);</span>
 <span class="pc bpc" id="L151" title="1 of 4 branches missed.">        if ( !allowsNull &amp;&amp; initialItem == null )</span>
 <span class="nc" id="L152">            throw new IllegalArgumentException(&quot;The provided initial value is null, but the property does not allow null values!&quot;);</span>
 <span class="fc" id="L153">    }</span>
@@ -175,7 +175,7 @@ final class PropertyLens&lt;A extends @Nullable Object, T extends @Nullable Obje
 <span class="fc" id="L175">        return fetchedValue;</span>
     }
 
-    private void _setInParentAndInternally(@Nullable T newItem) {
+    private void _setInParentAndInternally(Channel channel, @Nullable T newItem) {
 <span class="fc" id="L179">        @Nullable Var&lt;A&gt; parent = _parent.get();</span>
 <span class="pc bpc" id="L180" title="1 of 2 branches missed.">        if ( parent == null ) {</span>
 <span class="nc" id="L181">            _lastItem = newItem;</span>
@@ -185,7 +185,7 @@ final class PropertyLens&lt;A extends @Nullable Object, T extends @Nullable Obje
         try {
 <span class="fc" id="L186">            A newParentItem = _setter.apply(parent.orElseNull(), newItem);</span>
 <span class="fc" id="L187">            _lastItem = newItem;</span>
-<span class="fc" id="L188">            parent.set(newParentItem);</span>
+<span class="fc" id="L188">            parent.set(channel, newParentItem);</span>
 <span class="fc" id="L189">        } catch ( Exception e ) {</span>
 <span class="fc" id="L190">            log.error(</span>
 <span class="fc" id="L191">                    &quot;Property lens &quot;+_idForError(_id)+&quot;(for item type '&quot;+_type+&quot;') failed to update its &quot; +</span>
@@ -240,7 +240,7 @@ final class PropertyLens&lt;A extends @Nullable Object, T extends @Nullable Obje
     public final String toString() {
 <span class="fc" id="L241">        String value = this.mapTo(String.class, Object::toString).orElse(&quot;null&quot;);</span>
 <span class="pc bpc" id="L242" title="1 of 2 branches missed.">        String id = this.id() == null ? &quot;?&quot; : this.id();</span>
-<span class="fc bfc" id="L243" title="All 2 branches covered.">        if ( id.equals(NO_ID) ) id = &quot;?&quot;;</span>
+<span class="fc bfc" id="L243" title="All 2 branches covered.">        if ( id.equals(Sprouts.factory().defaultId()) ) id = &quot;?&quot;;</span>
 <span class="pc bpc" id="L244" title="1 of 2 branches missed.">        String type = ( type() == null ? &quot;?&quot; : type().getSimpleName() );</span>
 <span class="pc bpc" id="L245" title="1 of 2 branches missed.">        if ( type.equals(&quot;Object&quot;) ) type = &quot;?&quot;;</span>
 <span class="pc bpc" id="L246" title="1 of 4 branches missed.">        if ( type.equals(&quot;String&quot;) &amp;&amp; this.isPresent() ) value = &quot;\&quot;&quot; + value + &quot;\&quot;&quot;;</span>
@@ -256,7 +256,7 @@ final class PropertyLens&lt;A extends @Nullable Object, T extends @Nullable Obje
     }
 
     @Override
-    public Var&lt;T&gt; onChange( Channel channel, Action&lt;Val&lt;T&gt;&gt; action ) {
+    public Var&lt;T&gt; onChange( Channel channel, Action&lt;ValDelegate&lt;T&gt;&gt; action ) {
 <span class="fc" id="L260">        _changeListeners.onChange(channel, action);</span>
 <span class="fc" id="L261">        return this;</span>
     }
@@ -271,12 +271,12 @@ final class PropertyLens&lt;A extends @Nullable Object, T extends @Nullable Obje
     @Override
     public final Var&lt;T&gt; set( Channel channel, T newItem ) {
 <span class="fc" id="L273">        Objects.requireNonNull(channel);</span>
-<span class="fc bfc" id="L274" title="All 2 branches covered.">        if ( _setInternal(newItem) )</span>
+<span class="fc bfc" id="L274" title="All 2 branches covered.">        if ( _setInternal(channel, newItem) )</span>
 <span class="fc" id="L275">            this.fireChange(channel);</span>
 <span class="fc" id="L276">        return this;</span>
     }
 
-    private boolean _setInternal( T newValue ) {
+    private boolean _setInternal( Channel channel, T newValue ) {
 <span class="fc bfc" id="L280" title="All 4 branches covered.">        if ( !_nullable &amp;&amp; newValue == null )</span>
 <span class="fc" id="L281">            throw new NullPointerException(</span>
                     &quot;This property is configured to not allow null values! &quot; +
@@ -293,7 +293,7 @@ final class PropertyLens&lt;A extends @Nullable Object, T extends @Nullable Obje
                                 &quot;with the expected item type '&quot;+_type+&quot;' of this property lens.&quot;
                 );
 
-<span class="fc" id="L296">            _setInParentAndInternally(newValue);</span>
+<span class="fc" id="L296">            _setInParentAndInternally(channel, newValue);</span>
 <span class="fc" id="L297">            return true;</span>
         }
 <span class="fc" id="L299">        return false;</span>

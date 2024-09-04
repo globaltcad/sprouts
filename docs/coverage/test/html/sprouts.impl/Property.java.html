@@ -15,17 +15,17 @@ import java.util.Objects;
 final class Property&lt;T extends @Nullable Object&gt; implements Var&lt;T&gt; {
 
 	public static &lt;T&gt; Var&lt;@Nullable T&gt; ofNullable( boolean immutable, Class&lt;T&gt; type, @Nullable T value ) {
-<span class="fc" id="L18">		return new Property&lt;T&gt;( immutable, type, value, NO_ID, new ChangeListeners&lt;&gt;(), true );</span>
+<span class="fc" id="L18">		return new Property&lt;T&gt;( immutable, type, value, Sprouts.factory().defaultId(), new ChangeListeners&lt;&gt;(), true );</span>
 	}
 
 	public static &lt;T&gt; Var&lt;T&gt; of( boolean immutable, Class&lt;T&gt; type, T value ) {
-<span class="fc" id="L22">		return new Property&lt;T&gt;( immutable, type, value, NO_ID, new ChangeListeners&lt;&gt;(), false );</span>
+<span class="fc" id="L22">		return new Property&lt;T&gt;( immutable, type, value, Sprouts.factory().defaultId(), new ChangeListeners&lt;&gt;(), false );</span>
 	}
 
 	public static &lt;T&gt; Var&lt;T&gt; of( boolean immutable, T iniValue ) {
 <span class="fc" id="L26">		Objects.requireNonNull(iniValue);</span>
 <span class="fc" id="L27">		Class&lt;T&gt; itemType = Util.expectedClassFromItem(iniValue);</span>
-<span class="fc" id="L28">		return new Property&lt;T&gt;( immutable, itemType, iniValue, NO_ID, new ChangeListeners&lt;&gt;(), false );</span>
+<span class="fc" id="L28">		return new Property&lt;T&gt;( immutable, itemType, iniValue, Sprouts.factory().defaultId(), new ChangeListeners&lt;&gt;(), false );</span>
 	}
 
 
@@ -64,7 +64,7 @@ final class Property&lt;T extends @Nullable Object&gt; implements Var&lt;T&gt; {
 						&quot;The provided type of the initial value is not compatible with the actual type of the variable&quot;
 					);
 		}
-<span class="pc bpc" id="L67" title="1 of 2 branches missed.">		if ( !ID_PATTERN.matcher(_id).matches() )</span>
+<span class="pc bpc" id="L67" title="1 of 2 branches missed.">		if ( !Sprouts.factory().idPattern().matcher(_id).matches() )</span>
 <span class="nc" id="L68">			throw new IllegalArgumentException(&quot;The provided id '&quot;+_id+&quot;' is not valid!&quot;);</span>
 <span class="pc bpc" id="L69" title="1 of 4 branches missed.">		if ( !allowsNull &amp;&amp; iniValue == null )</span>
 <span class="nc" id="L70">			throw new IllegalArgumentException(&quot;The provided initial value is null, but the property does not allow null values!&quot;);</span>
@@ -128,7 +128,7 @@ final class Property&lt;T extends @Nullable Object&gt; implements Var&lt;T&gt; {
 
 	/** {@inheritDoc} */
 	@Override
-	public Var&lt;T&gt; onChange( Channel channel, Action&lt;Val&lt;T&gt;&gt; action ) {
+	public Var&lt;T&gt; onChange( Channel channel, Action&lt;ValDelegate&lt;T&gt;&gt; action ) {
 <span class="fc" id="L132">		_changeListeners.onChange(channel, action);</span>
 <span class="fc" id="L133">		return this;</span>
 	}
@@ -159,7 +159,7 @@ final class Property&lt;T extends @Nullable Object&gt; implements Var&lt;T&gt; {
 	public final String toString() {
 <span class="fc" id="L160">		String value = this.mapTo(String.class, Object::toString).orElse(&quot;null&quot;);</span>
 <span class="pc bpc" id="L161" title="1 of 2 branches missed.">		String id = this.id() == null ? &quot;?&quot; : this.id();</span>
-<span class="fc bfc" id="L162" title="All 2 branches covered.">		if ( id.equals(NO_ID) ) id = &quot;?&quot;;</span>
+<span class="fc bfc" id="L162" title="All 2 branches covered.">		if ( id.equals(Sprouts.factory().defaultId()) ) id = &quot;?&quot;;</span>
 <span class="pc bpc" id="L163" title="1 of 2 branches missed.">		String type = ( type() == null ? &quot;?&quot; : type().getSimpleName() );</span>
 <span class="pc bpc" id="L164" title="1 of 2 branches missed.">		if ( type.equals(&quot;Object&quot;) ) type = &quot;?&quot;;</span>
 <span class="fc bfc" id="L165" title="All 4 branches covered.">		if ( type.equals(&quot;String&quot;) &amp;&amp; this.isPresent() ) value = &quot;\&quot;&quot; + value + &quot;\&quot;&quot;;</span>
