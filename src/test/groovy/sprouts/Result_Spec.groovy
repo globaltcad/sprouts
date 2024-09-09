@@ -325,4 +325,96 @@ class Result_Spec extends Specification
             nonNull.type() == Food
             nullable.type() == Food
     }
+
+    def 'You can peek into a `Result` to look at all of its ´Problem´s.'()
+    {
+        reportInfo """
+            A `Result` can be peeked into to look at all of its problems.
+            This is especially useful for logging what went wrong while
+            still being able to have a more declarative control flow.
+        """
+        given : 'A result with some problems.'
+            var result = Result.of(42, [
+                Problem.of("too large", "Who can count that far?"),
+                Problem.of("too even", "The customer doesn't like even numbers."),
+                Problem.of("not a prime", "Prime numbers sell better.")
+            ])
+        and : 'A trace variable we use to verify that the peek was successful.'
+            var trace = null
+        when : 'We peek into the result.'
+            result.peekAtProblems( problems -> trace = problems.collect( it -> it.title() ) )
+        then : 'The trace variable contains the titles of the problems.'
+            trace == ["too large", "too even", "not a prime"]
+    }
+
+    def 'An exception occurring when peeking at the problems of a ´Result´ will produce a ´Result´ with yet another problem.'()
+    {
+        reportInfo """
+            A `Result` can be peeked into to look at all of its problems, usually these 
+            problems are coming from exceptions that occurred during the operation that produced the result.
+            Unfortunately, exceptions can happen anywhere, even when peeking at the problems.
+            In such cases, the exception is caught and turned into a problem.
+        """
+        given : 'A result with some problems.'
+            var result = Result.of('§' as char, [
+                Problem.of("Looks too much like \$", "The customer might get confused."),
+                Problem.of("Not a letter", "The customer wants a letter."),
+                Problem.of("Confused Developer", "Why is this even on my keyboard?")
+            ])
+
+        when : 'We peek into the result.'
+            var peekedResult = result.peekAtProblems( problems -> { throw new IllegalArgumentException("foo") } )
+        then : 'No exception reaches the caller, instead the exception is turned into a problem.'
+            noExceptionThrown()
+        and : 'The peeked result has an additional problem.'
+            peekedResult.problems().size() == 4
+        and : 'Because ´Result´s are immutable, the original result still has the same problems.'
+            result.problems().size() == 3
+    }
+
+    def 'You can peek into a `Result` to look at each ´Problem´ individually.'()
+    {
+        reportInfo """
+            A `Result` can be peeked into to look at each of its problems individually.
+            This is similar to the `peekAtProblems` method but instead of getting a list of problems,
+            you get to look at each problem individually.
+        """
+        given : 'A result with some problems.'
+            var result = Result.of(42, [
+                Problem.of("too large", "Who can count that far?"),
+                Problem.of("too even", "The customer doesn't like even numbers."),
+                Problem.of("not a prime", "Prime numbers sell better.")
+            ])
+        and : 'A trace variable we use to verify that the peek was successful.'
+            var trace = []
+        when : 'We peek into the result.'
+            result.peekAtEachProblem(problem -> trace << problem.title() )
+        then : 'The trace variable contains the titles of the problems.'
+            trace == ["too large", "too even", "not a prime"]
+    }
+
+    def 'An exception occurring when peeking at each problem of a ´Result´ will produce a ´Result´ with even more problems.'()
+    {
+        reportInfo """
+            A `Result` can be peeked into to look at each of its problems individually. Usually these 
+            problems are coming from exceptions that occurred during the operation that produced the result.
+            Unfortunately, exceptions can happen anywhere, even when peeking at individual problems.
+            In such cases, the exception is caught and turned into a problem.
+        """
+        given : 'A result with some problems.'
+            var result = Result.of('§' as char, [
+                Problem.of("Looks too much like \$", "The customer might get confused."),
+                Problem.of("Not a letter", "The customer wants a letter."),
+                Problem.of("Confused Developer", "Why is this even on my keyboard?")
+            ])
+
+        when : 'We peek into the result.'
+            var peekedResult = result.peekAtEachProblem( problem -> { throw new IllegalArgumentException("foo") } )
+        then : 'No exception reaches the caller, instead the exception is turned into a problem.'
+            noExceptionThrown()
+        and : 'The peeked result has three additional problems, one for each prior problem.'
+            peekedResult.problems().size() == 6
+        and : 'Because ´Result´s are immutable, the original result still has the same problems.'
+            result.problems().size() == 3
+    }
 }

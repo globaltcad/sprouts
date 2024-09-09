@@ -1,15 +1,20 @@
 package sprouts.impl;
 
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import sprouts.*;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 final class ResultImpl<V> implements Result<V>
 {
+	private static final Logger log = LoggerFactory.getLogger(ResultImpl.class);
+
     public static final String ID = "";
 
     private final String        _id;
@@ -40,6 +45,55 @@ final class ResultImpl<V> implements Result<V>
 
 	/** {@inheritDoc} */
 	@Override public List<Problem> problems() { return _problems; }
+
+	/** {@inheritDoc} */
+	@Override
+	public Result<V> peekAtProblems( Consumer<List<Problem>> consumer ) {
+		Objects.requireNonNull(consumer);
+		try {
+			consumer.accept(problems());
+		} catch ( Exception e ) {
+			List<Problem> newProblems = new ArrayList<>(problems());
+			newProblems.add( Problem.of(e) );
+			/*
+				An exception in this the user lambda is most likely completely unwanted,
+				but we also do not want to halt the application because of it.
+				So let's do two things here to make sure this does not go
+				unnoticed:
+					1. Log the exception
+					2. Add it as a problem.
+			*/
+			log.error("An exception occurred while peeking at the problems of a result.", e);
+			return Result.of( type(), this.orElseNull(), newProblems );
+		}
+		return this;
+	}
+
+	/** {@inheritDoc} */
+	@Override
+	public Result<V> peekAtEachProblem( Consumer<Problem> consumer ) {
+		Objects.requireNonNull(consumer);
+		Result<V> result = this;
+		for ( Problem problem : problems() ) {
+			try {
+				consumer.accept(problem);
+			} catch ( Exception e ) {
+				List<Problem> newProblems = new ArrayList<>(result.problems());
+				newProblems.add( Problem.of(e) );
+				/*
+					An exception in this the user lambda is most likely completely unwanted,
+					but we also do not want to halt the application because of it.
+					So let's do two things here to make sure this does not go
+					unnoticed:
+						1. Log the exception
+						2. Add it as a problem.
+				*/
+				log.error("An exception occurred while peeking at the problems of a result.", e);
+				result = Result.of( type(), result.orElseNull(), newProblems );
+			}
+		}
+		return result;
+	}
 
 	/** {@inheritDoc} */
 	@Override

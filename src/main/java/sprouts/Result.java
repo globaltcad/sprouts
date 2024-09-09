@@ -4,7 +4,10 @@ package sprouts;
 import org.jspecify.annotations.Nullable;
 import sprouts.impl.Sprouts;
 
-import java.util.*;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -14,6 +17,13 @@ import java.util.function.Supplier;
  * 	which describe what went wrong in the process of obtaining the value wrapped by the result.
  * 	So usually, if the result is not present, there will most likely be a list of {@link Problem}s
  * 	explaining why the value is not present and what went wrong.
+ *  <br>
+ *  The {@link Result} relies on this {@link Problem} type instead of
+ *  raw {@link Exception} types, due to the fact that not every runtime issue is
+ *  or should necessarily be produced by an exception.
+ *  If you do not want to disturb the control flow of your application
+ *  by throwing an exception, you can simply create a {@link Problem} as part of a {@link Result}
+ *  and continue processing as usual.
  *
  * @param <V> The type of the item wrapped by this result.
  */
@@ -225,6 +235,35 @@ public interface Result<V> extends Val<V>
 	 * 	@return {@code true} if this result is present, {@code false} otherwise.
 	 */
 	default boolean hasProblems() { return !problems().isEmpty(); }
+
+	/**
+	 *  Allows you to peek at the list of problems associated with this result
+	 *  through a {@link Consumer} which receives the list of all problems.
+	 *  If an exception is thrown during the process of peeking at the problems,
+	 *  the exception is caught, logged and a new result is returned
+	 *  with the exception as a problem.
+	 *  <p>
+	 *  This method is useful for debugging and logging purposes.
+	 *
+	 * @param consumer The consumer to receive the list of problems.
+	 * @return This result.
+	 * @throws NullPointerException if the consumer is null.
+	 */
+	Result<V> peekAtProblems( Consumer<List<Problem>> consumer );
+
+	/**
+	 *  Allows you to peek at each individual problem associated with this result
+	 *  through a {@link Consumer} which receives a single problem at a time.
+	 *  Any exceptions thrown during the process of peeking at the problems are caught
+	 *  logged and then returned as new problems inside a new result.
+	 *  <p>
+	 *  This method is useful for debugging and logging purposes.
+	 *
+	 * @param consumer The consumer to receive each problem.
+	 * @return This result.
+	 * @throws NullPointerException if the consumer is null.
+	 */
+	Result<V> peekAtEachProblem( Consumer<Problem> consumer );
 
 	/**
 	 *  Safely maps the value of this result to a new value of a different type
