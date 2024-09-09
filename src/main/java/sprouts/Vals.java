@@ -205,6 +205,10 @@ public interface Vals<T extends @Nullable Object> extends Iterable<T>, Observabl
      */
     int size();
 
+    default <U> Vals<U> view( U nullObject, U errorObject, Function<T, @Nullable U> mapper ) {
+        return Sprouts.factory().viewOf(nullObject, errorObject, this, mapper);
+    }
+
     /**
      *  Exposes an integer based property that is a live view on the {@link #size()} of the list of properties.
      *  This means that whenever the size of the list of properties changes, the integer item of the returned property
