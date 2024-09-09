@@ -16,10 +16,15 @@ final class PropertyListView {
         Objects.requireNonNull(errorObject);
 
         final Class<U> targetType = Util.expectedClassFromItem(nullObject);
+        Function<T, U> nonNullMapper = Util.nonNullMapper(nullObject, errorObject, mapper);
 
         Vars<U> view = Vars.of(targetType);
         for (int i = 0; i < source.size(); i++) {
-            view.addAt(i, source.at(i).view(nullObject, errorObject, mapper));
+            Val<T> t = source.at(i);
+            final U u = nonNullMapper.apply(t.orElseNull());
+            Var<U> v = Var.of(u);
+            t.onChange(From.ALL, delegate -> v.set(From.ALL, nonNullMapper.apply(delegate.orElseNull())));
+            view.addAt(i, v);
         }
 
         source.onChange(delegate -> {
@@ -28,10 +33,10 @@ final class PropertyListView {
                     onRemove(delegate, view);
                     break;
                 case ADD:
-                    onAdd(delegate, source, view, nullObject, errorObject, mapper);
+                    onAdd(delegate, source, view, nonNullMapper);
                     break;
                 case SET:
-                    onSet(delegate, source, view, nullObject, errorObject, mapper);
+                    onSet(delegate, source, view, nonNullMapper);
                     break;
                 case CLEAR:
                     view.clear();
@@ -56,42 +61,46 @@ final class PropertyListView {
         view.removeAt(delegate.index(), delegate.oldValues().size());
     }
 
-    private static <T, U> void onAdd(ValsDelegate<T> delegate, Vals<T> source, Vars<U> view, U nullObject, U errorObject, Function<T, @Nullable U> mapper) {
+    private static <T, U> void onAdd(ValsDelegate<T> delegate, Vals<T> source, Vars<U> view, Function<T, U> mapper) {
         assert delegate.changeType() == Change.ADD;
 
         if (delegate.newValues().isEmpty() || delegate.index() < 0)
             throw new NotImplementedException(); // todo: implement
 
-        List<Val<U>> newViews = new ArrayList<>();
+        List<Var<U>> newViews = new ArrayList<>();
 
         for (int i = 0; i < delegate.newValues().size(); i++) {
-            newViews.add(source.at(delegate.index() + i).view(nullObject, errorObject, mapper));
+            Val<T> t = source.at(delegate.index() + i);
+            final U u = mapper.apply(t.orElseNull());
+            Var<U> v = Var.of(u);
+            t.onChange(From.ALL, d -> v.set(From.ALL, mapper.apply(d.orElseNull())));
+            newViews.add(v);
         }
 
         // todo: add at once
         for (int i = 0; i < delegate.newValues().size(); i++) {
-            // todo: fix me
-            // we try to add a property view to the list, but the value is wrapped in a new property. So changes are not reflected!
             view.addAt(delegate.index() + i, newViews.get(i));
         }
     }
 
-    private static <T, U> void onSet(ValsDelegate<T> delegate, Vals<T> source, Vars<U> view, U nullObject, U errorObject, Function<T, @Nullable U> mapper) {
+    private static <T, U> void onSet(ValsDelegate<T> delegate, Vals<T> source, Vars<U> view, Function<T, U> mapper) {
         assert delegate.changeType() == Change.SET;
 
         if (delegate.newValues().isEmpty() || delegate.index() < 0)
             throw new NotImplementedException(); // todo: implement
 
-        List<Val<U>> newViews = new ArrayList<>();
+        List<Var<U>> newViews = new ArrayList<>();
 
         for (int i = 0; i < delegate.newValues().size(); i++) {
-            newViews.add(source.at(delegate.index() + i).view(nullObject, errorObject, mapper));
+            Val<T> t = source.at(delegate.index() + i);
+            final U u = mapper.apply(t.orElseNull());
+            Var<U> v = Var.of(u);
+            t.onChange(From.ALL, d -> v.set(From.ALL, mapper.apply(d.orElseNull())));
+            newViews.add(v);
         }
 
         // todo: set at once
         for (int i = 0; i < delegate.newValues().size(); i++) {
-            // todo: fix me
-            // we try to add a property view to the list, but the value is wrapped in a new property. So changes are not reflected!
             view.setAt(delegate.index() + i, newViews.get(i));
         }
     }
