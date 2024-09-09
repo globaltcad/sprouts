@@ -27,6 +27,12 @@ import java.util.Optional;
  *  and collect all the relevant problems that occurred so that
  *  they can then either be logged or presented to the user
  *  in a more graceful way.
+ *  <br>
+ *  The {@link Result} relies on this {@link Problem} type instead of
+ *  exceptions due to the fact that not every runtime issue is necessarily produced
+ *  by an exception. If you do not want to disturb the control flow of your application
+ *  by throwing an exception, you can simply create a {@link Problem} as part of a {@link Result}
+ *  and continue processing.
  */
 public interface Problem
 {

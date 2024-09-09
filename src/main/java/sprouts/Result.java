@@ -17,6 +17,13 @@ import java.util.function.Supplier;
  * 	which describe what went wrong in the process of obtaining the value wrapped by the result.
  * 	So usually, if the result is not present, there will most likely be a list of {@link Problem}s
  * 	explaining why the value is not present and what went wrong.
+ *  <br>
+ *  The {@link Result} relies on this {@link Problem} type instead of
+ *  raw {@link Exception} types, due to the fact that not every runtime issue is
+ *  or should necessarily be produced by an exception.
+ *  If you do not want to disturb the control flow of your application
+ *  by throwing an exception, you can simply create a {@link Problem} as part of a {@link Result}
+ *  and continue processing as usual.
  *
  * @param <V> The type of the item wrapped by this result.
  */
