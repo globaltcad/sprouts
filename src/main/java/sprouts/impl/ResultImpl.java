@@ -15,19 +15,14 @@ final class ResultImpl<V> implements Result<V>
 {
 	private static final Logger log = LoggerFactory.getLogger(ResultImpl.class);
 
-    public static final String ID = "";
-
-    private final String        _id;
 	private final Class<V>      _type;
 	private final List<Problem> _problems;
 	@Nullable private final V   _value;
 
 
-	public ResultImpl( String id, Class<V> type, List<Problem> problems, @Nullable V value ) {
+	public ResultImpl( Class<V> type, List<Problem> problems, @Nullable V value ) {
 		Objects.requireNonNull(type);
-		Objects.requireNonNull(id);
 		Objects.requireNonNull(problems);
-		_id       = id;
 		_type     = type;
 		_problems = problems;
 		_value    = value;
@@ -35,13 +30,6 @@ final class ResultImpl<V> implements Result<V>
 
 	/** {@inheritDoc} */
 	@Override public Class<V> type() { return _type; }
-
-	/** {@inheritDoc} */
-	@Override public String id() { return _id; }
-
-	/** {@inheritDoc} */
-	@Override
-	public Val<V> withId( String id ) { return new ResultImpl<>(id, _type, _problems, _value); }
 
 	/** {@inheritDoc} */
 	@Override public List<Problem> problems() { return _problems; }
@@ -143,82 +131,20 @@ final class ResultImpl<V> implements Result<V>
 		}
 	}
 
-	/** {@inheritDoc} */
-	@Override
-	public <U> Val<U> viewAs(Class<U> type, Function<V, U> mapper) {
-		Objects.requireNonNull(type);
-		Objects.requireNonNull(mapper);
-		return Val.ofNullable(this._type, this._value).viewAs(type, mapper);
-	}
-
-	@Override
-	public <U> Val<U> view( U nullObject, U errorObject, Function<V, U> mapper) {
-		Objects.requireNonNull(nullObject);
-		Objects.requireNonNull(errorObject);
-		Objects.requireNonNull(mapper);
-		return Val.ofNullable(this._type, this._value).view( nullObject, errorObject, mapper);
-	}
-
-	@Override
-	public <U> Val<@Nullable U> viewAsNullable(Class<U> type, Function<V, @Nullable U> mapper) {
-		Objects.requireNonNull(type);
-		Objects.requireNonNull(mapper);
-		return Val.ofNullable(this._type, this._value).viewAs(type, mapper);
-	}
-
-	@Override
-	public Val<V> onChange( Channel channel, Action<ValDelegate<V>> displayAction ) {
-		Objects.requireNonNull(displayAction);
-		/* A Result is immutable, so this method is not supported */
-		return this;
-	}
-
-	@Override
-	public Val<V> fireChange( Channel channel ) {
-		Objects.requireNonNull(channel);
-		/* A Result is immutable, so this method is not supported */
-		return this;
-	}
-
-	/** {@inheritDoc} */
-	@Override public boolean allowsNull() { return true; }
-
-	@Override
-	public boolean isMutable() {
-		return false;
-	}
-
-	@Override
-	public Observable subscribe( Observer observer ) {
-		Objects.requireNonNull(observer);
-		/* A Result is immutable, so this method is not supported */
-		return this;
-	}
-
-	@Override
-	public Observable unsubscribe( Subscriber subscriber ) {
-		Objects.requireNonNull(subscriber);
-		/* A Result is immutable, so this method is not supported */
-		return this;
-	}
-
 	@Override
 	public String toString() {
         String value = this.mapTo(String.class, Object::toString).orElse("null");
-        String id = this.id() == null ? "?" : this.id();
-        if ( id.equals(Sprouts.factory().defaultId()) ) id = "?";
         String type = ( type() == null ? "?" : type().getSimpleName() );
         if ( type.equals("Object") )
 			type = "?";
         if ( type.equals("String") && this.isPresent() )
 			value = "\"" + value + "\"";
-        String content = ( id.equals("?") ? value : id + "=" + value );
-        return "Result<" + type + ">" + "[" + content + "]";
+        return "Result<" + type + ">" + "[" + value + "]";
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(_id, _type, _value, _problems);
+		return Objects.hash(_type, _value, _problems);
 	}
 
 	@Override
@@ -227,7 +153,6 @@ final class ResultImpl<V> implements Result<V>
 		if ( obj == this ) return true;
 		if ( obj instanceof Result ) {
 			Result<?> other = (Result<?>) obj;
-			if ( !Objects.equals(other.id(), _id)             ) return false;
 			if ( !Objects.equals(other.type(), _type)         ) return false;
 			if ( !Objects.equals(other.problems(), _problems) ) return false;
 			return

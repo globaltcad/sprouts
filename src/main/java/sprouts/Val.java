@@ -45,7 +45,7 @@ import java.util.regex.Pattern;
  * @see Var A mutable subclass of this class.
  * @param <T> The type of the item held by this {@link Val}.
  */
-public interface Val<T extends @Nullable Object> extends Observable {
+public interface Val<T extends @Nullable Object> extends Observable, Maybe<T> {
 
 	/**
 	 *  Use this factory method to create a new {@link Val} instance
@@ -278,97 +278,86 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	}
 
 	/**
-	 * This method is intended to be used for when you want to wrap non-nullable types.
-	 * So if an item is present (not null), it returns the item, otherwise however
-	 * {@code NoSuchElementException} will be thrown.
-	 * If you simply want to get the item of this property irrespective of
-	 * it being null or not, use {@link #orElseNull()} to avoid an exception.
-	 * However, if this property wraps a nullable type, which is not intended to be null,
-	 * please use {@link #orElseThrow()} to make this intention clear.
-	 * The {@link #orElseThrow()} method is functionally identical to this method.
+	 * If an item is present, returns a {@code Val} describing the item,
+	 * otherwise returns a {@code Val} produced by the supplying function.
 	 *
-	 * @return the non-{@code null} item described by this {@code Val}
-	 * @throws NoSuchElementException if no item is present
+	 * @param supplier the supplying function that produces a {@code Val}
+	 *        to be returned
+	 * @return returns a {@code Val} describing the item of this
+	 *         {@code Val}, if an item is present, otherwise a
+	 *         {@code Val} produced by the supplying function.
+	 * @throws NullPointerException if the supplying function is {@code null} or
+	 *         produces a {@code null} result
 	 */
-	default @NonNull T get() { return orElseThrow(); }
+	@Override
+	default Val<T> or( Supplier<? extends Maybe<? extends T>> supplier ) {
+		Objects.requireNonNull(supplier);
+		if ( isPresent() )
+			return this;
 
-	/**
-	 * If an item is present, returns the item, otherwise returns
-	 * {@code other}.
-	 *
-	 * @param other the item to be returned, if no item is present.
-	 *        May be {@code null}.
-	 * @return the item, if present, otherwise {@code other}
-	 */
-	default @Nullable T orElseNullable( @Nullable T other ) {
-		return orElseNull() != null ? Objects.requireNonNull(orElseNull()) : other;
+		@SuppressWarnings("unchecked")
+		Maybe<T> r = (Maybe<T>) supplier.get();
+		Objects.requireNonNull(r);
+		if ( r instanceof Val )
+			return (Val<T>) r;
+		else
+			return Val.ofNullable(r.type(), r.orElseNull());
 	}
 
 	/**
-	 * If an item is present, returns the item, otherwise returns
-	 * {@code other}.
+	 *  If the item is present, applies the provided mapping function to it,
+	 *  and returns it wrapped in a new {@link Val} instance. <br>
+	 *  If the item is not present, then an empty {@link Val} instance is returned. <br>
+	 *  <p>
+	 *  But note that the resulting property does not constitute a live view of this property
+	 *  and will not be updated when this property changes. <br>
+	 *  It is functionally very similar to the {@link Optional#map(Function)} method. <br>
+	 *  <p>
+	 *  <b>
+	 *      If you want to map to a property which is an automatically updated live view of this property,
+	 *      then use the {@link #view(Function)} method instead.
+	 *  </b>
+	 *  This is essentially the same as {@link Optional#map(Function)} but based on {@link Val}
+	 *  as the wrapper instead of {@link Optional}.
 	 *
-	 * @param other the item to be returned, if no item is present.
-	 *        May not be {@code null}.
-	 * @return the item, if present, otherwise {@code other}
+	 * @param mapper the mapping function to apply to an item, if present
+	 * @return A new property either empty (containing null) or containing the result of applying
+	 * 			the mapping function to the item of this property.
 	 */
-	default @NonNull T orElse( @NonNull T other ) {
-		Objects.requireNonNull(other);
-		return isPresent() ? get() : other;
-	}
+	@Override
+	Val<T> map( Function<T, T> mapper );
 
 	/**
-	 * If an item is present, returns the item, otherwise returns the result
-	 * produced by the supplying function.
+	 *  If the item is present, applies the provided mapping function to it,
+	 *  and returns it wrapped in a new {@link Val} instance. <br>
+	 *  If the item is not present, then an empty {@link Val} instance is returned. <br>
+	 *  <p>
+	 *  But note that the resulting property does not constitute a live view of this property
+	 *  and will not be updated when this property changes. <br>
+	 *  It is functionally very similar to the {@link Optional#map(Function)} method. <br>
+	 *  <p>
+	 *  <b>
+	 *      If you want to map to a property which is an automatically updated live view of this property,
+	 *      then use the {@link #viewAs(Class, Function)} method instead.
+	 *  </b>
 	 *
-	 * @param supplier the supplying function that produces an item to be returned
-	 * @return the item, if present, otherwise the result produced by the
-	 *         supplying function
-	 * @throws NullPointerException if no item is present and the supplying
-	 *         function is {@code null}
+	 * @param type The type of the item returned from the mapping function
+	 * @param mapper the mapping function to apply to an item, if present
+	 * @return A new property either empty (containing null) or containing the result of applying
+	 * 			the mapping function to the item of this property.
+	 * @param <U> The type of the item returned from the mapping function
 	 */
-	default T orElseGet( Supplier<? extends T> supplier ) {
-		return this.isPresent() ? orElseThrow() : supplier.get();
-	}
+	@Override
+	default <U> Val<U> mapTo( Class<U> type, java.util.function.Function<T, U> mapper ) {
+		if ( !isPresent() )
+			return !isMutable() ? Val.ofNull( type ) : Var.ofNull( type );
 
-	/**
-	 * If an item is present, returns the item, otherwise returns
-	 * {@code null}.
-	 *
-	 * @return the item, if present, otherwise {@code null}
-	 */
-	@Nullable T orElseNull();
+		U newValue = mapper.apply( get() );
 
-	/**
-	 * If an item is present, returns the item, otherwise throws
-	 * {@code NoSuchElementException}.
-	 *
-	 * @return the non-{@code null} item described by this {@code Val}
-	 * @throws NoSuchElementException if no item is present
-	 */
-	default @NonNull T orElseThrow() {
-		// This class is similar to optional, so if the value is null, we throw an exception!
-		T value = orElseNull();
-		if ( Objects.isNull(value) )
-			throw new NoSuchElementException("No value present");
-		return value;
-	}
-
-	/**
-	 * If an item is present, returns {@code true}, otherwise {@code false}.
-	 *
-	 * @return {@code true} if an item is present, otherwise {@code false}
-	 */
-	default boolean isPresent() { return orElseNull() != null; }
-
-	/**
-	 * If an item is  not present, returns {@code true}, otherwise
-	 * {@code false}.
-	 *
-	 * @return  {@code true} if an item is not present, otherwise {@code false}
-	 */
-	default boolean isEmpty() {
-		return !isPresent();
+		if ( !isMutable() )
+			return Val.ofNullable( type, newValue );
+		else
+			return Var.ofNullable( type, newValue );
 	}
 
 	/**
@@ -401,115 +390,6 @@ public interface Val<T extends @Nullable Object> extends Observable {
 		else
 			return viewAs(Boolean.class, Objects::isNull);
 	}
-
-	/**
-	 * If an item is present, performs the given action with the item,
-	 * otherwise does nothing.
-	 *
-	 * @param action the action to be performed, if an item is present
-	 * @throws NullPointerException if item is present and the given action is
-	 *         {@code null}
-	 */
-	default void ifPresent( Consumer<T> action ) {
-		if ( this.isPresent() )
-			action.accept( get() );
-	}
-
-	/**
-	 * If an item is present, performs the given action with the item,
-	 * otherwise performs the given empty-based action.
-	 *
-	 * @param action the action to be performed, if an item is present
-	 * @param emptyAction the empty-based action to be performed, if no item is
-	 *        present
-	 * @throws NullPointerException if an item is present and the given action
-	 *         is {@code null}, or no item is present and the given empty-based
-	 *         action is {@code null}.
-	 */
-	default void ifPresentOrElse( Consumer<? super T> action, Runnable emptyAction ) {
-		if ( isPresent() )
-			action.accept(get());
-		else
-			emptyAction.run();
-	}
-
-	/**
-	 * If an item is present, returns a {@code Val} describing the item,
-	 * otherwise returns a {@code Val} produced by the supplying function.
-	 *
-	 * @param supplier the supplying function that produces a {@code Val}
-	 *        to be returned
-	 * @return returns a {@code Val} describing the item of this
-	 *         {@code Val}, if an item is present, otherwise a
-	 *         {@code Val} produced by the supplying function.
-	 * @throws NullPointerException if the supplying function is {@code null} or
-	 *         produces a {@code null} result
-	 */
-	default Val<T> or( Supplier<? extends Val<? extends T>> supplier ) {
-		Objects.requireNonNull(supplier);
-		if ( isPresent() )
-			return this;
-
-		@SuppressWarnings("unchecked")
-		Val<T> r = (Val<T>) supplier.get();
-		Objects.requireNonNull(r);
-		return r;
-	}
-
-	/**
-	 *  If the item is present, applies the provided mapping function to it,
-	 *  and returns it wrapped in a new {@link Val} instance. <br>
-	 *  If the item is not present, then an empty {@link Val} instance is returned. <br>
-	 *  <p>
-	 *  But note that the resulting property does not constitute a live view of this property
-	 *  and will not be updated when this property changes. <br>
-	 *  It is functionally very similar to the {@link Optional#map(Function)} method. <br>
-	 *  <p>
-	 *  <b>
-	 *      If you want to map to a property which is an automatically updated live view of this property,
-	 *      then use the {@link #view(Function)} method instead.
-	 *  </b>
-	 *  This is essentially the same as {@link Optional#map(Function)} but based on {@link Val}
-	 *  as the wrapper instead of {@link Optional}.
-	 *
-	 * @param mapper the mapping function to apply to an item, if present
-	 * @return A new property either empty (containing null) or containing the result of applying
-	 * 			the mapping function to the item of this property.
-	 */
-	Val<T> map( Function<T, T> mapper );
-
-	/**
-	 *  If the item is present, applies the provided mapping function to it,
-	 *  and returns it wrapped in a new {@link Val} instance. <br>
-	 *  If the item is not present, then an empty {@link Val} instance is returned. <br>
-	 *  <p>
-	 *  But note that the resulting property does not constitute a live view of this property
-	 *  and will not be updated when this property changes. <br>
-	 *  It is functionally very similar to the {@link Optional#map(Function)} method. <br>
-	 *  <p>
-	 *  <b>
-	 *      If you want to map to a property which is an automatically updated live view of this property,
-	 *      then use the {@link #viewAs(Class, Function)} method instead.
-	 *  </b>
-	 *
-	 * @param type The type of the item returned from the mapping function
-	 * @param mapper the mapping function to apply to an item, if present
-	 * @return A new property either empty (containing null) or containing the result of applying
-	 * 			the mapping function to the item of this property.
-	 * @param <U> The type of the item returned from the mapping function
-	 */
-	default <U> Val<U> mapTo( Class<U> type, java.util.function.Function<T, U> mapper ) {
-		if ( !isPresent() )
-			return !isMutable() ? Val.ofNull( type ) : Var.ofNull( type );
-
-		U newValue = mapper.apply( get() );
-
-		if ( !isMutable() )
-			return Val.ofNullable( type, newValue );
-		else
-			return Var.ofNullable( type, newValue );
-	}
-
 
 	/**
 	 * Use this to create a live view of this property through a new property based on the provided mapping function.
@@ -812,37 +692,6 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	}
 
 	/**
-	 *  This method simply returns a {@link String} representation of the wrapped item
-	 *  which would otherwise be accessed via the {@link #orElseThrow()} method.
-	 *  Calling it should not have any side effects. <br>
-	 *  The string conversion is based on the {@link String#valueOf(Object)} method,
-	 *  and if the item is null, the string "EMPTY" will be returned.
-	 *
-	 * @return The {@link String} representation of the item wrapped by an implementation of this interface.
-	 */
-	default String itemAsString() {
-		return this.mapTo(String.class, String::valueOf).orElse("null");
-	}
-
-	/**
-	 *  This method returns a {@link String} representation of the type of the wrapped item.
-	 *  Calling it should not have any side effects.
-	 *
-	 * @return A simple {@link String} representation of the type of the item wrapped by an implementation of this interface.
-	 */
-	default String typeAsString() { return this.type().getName(); }
-
-	/**
-	 *  This method check if the provided item is equal to the item wrapped by this {@link Var} instance.
-	 *
-	 * @param otherItem The other item of the same type as is wrapped by this.
-	 * @return The truth value determining if the provided item is equal to the wrapped item.
-	 */
-	default boolean is( @Nullable T otherItem ) {
-		return equals(otherItem, orElseNull());
-	}
-
-	/**
 	 *  This method check if the item by the provided property
 	 *  is equal to the item wrapped by this {@link Var} instance.
 	 *
@@ -853,15 +702,6 @@ public interface Val<T extends @Nullable Object> extends Observable {
 		Objects.requireNonNull(other);
 		return is( other.orElseNull() );
 	}
-
-	/**
-	 *  This method check if the provided item is not equal to the item wrapped by this {@link Val} instance.
-	 *  This is the opposite of {@link #is(Object)} which returns true if the items are equal.
-	 *
-	 * @param otherItem The other item of the same type as is wrapped by this.
-	 * @return The truth value determining if the provided item is not equal to the wrapped item.
-	 */
-	default boolean isNot( @Nullable T otherItem ) { return !is(otherItem); }
 
 	/**
 	 *  This method check if the item of the provided property
@@ -955,21 +795,6 @@ public interface Val<T extends @Nullable Object> extends Observable {
 	 *  	 		or if <b>id is not equal to the {@link Sprouts#defaultId()} constant</b>.
 	 */
 	default boolean hasID() { return !Sprouts.factory().defaultId().equals(id()); }
-
-	/**
-	 *  This returns the type of the item wrapped by this {@link Var}
-	 *  which can be accessed by calling the {@link Var#orElseThrow()} method.
-	 *
-	 * @return The type of the item wrapped by the {@link Var}.
-	 */
-	Class<T> type();
-
-	/**
-	 *  Use this to turn this property to an {@link Optional} which can be used to
-	 *  interact with the item wrapped by this {@link Val} in a more functional way.
-	 * @return An {@link Optional} wrapping the item wrapped by this {@link Val}.
-	 */
-	default Optional<T> toOptional() { return Optional.ofNullable(this.orElseNull()); }
 
 	/**
 	 *  Use this to register an observer lambda for a particular {@link Channel},

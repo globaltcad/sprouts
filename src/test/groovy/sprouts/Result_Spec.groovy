@@ -78,14 +78,12 @@ class Result_Spec extends Specification
             optional.get() == 42
     }
 
-    def 'Just like a `Val` property, a `Result` has a type and id.'()
+    def 'Just like a `Val` property, a `Result` has a type.'()
     {
         given : 'A result.'
             def result = Result.of(42)
         expect : 'The result has a type.'
             result.type() == Integer
-        and : 'The result has an empty id.'
-            result.id().isEmpty()
     }
 
     def 'You can create a `Result` from a list.'()
@@ -243,11 +241,6 @@ class Result_Spec extends Specification
             def result = Result.of(DayOfWeek.MONDAY)
         expect : 'The string representation of the result.'
             result.toString() == "Result<DayOfWeek>[MONDAY]"
-
-        when : 'We update the result with a String id.'
-            result = result.withId("foo")
-        then : 'The string representation of the result reflects the id.'
-            result.toString() == "Result<DayOfWeek>[foo=MONDAY]"
     }
 
     def 'The equality of two `Result` instances is based on the type and the item of the result.'()
@@ -265,20 +258,14 @@ class Result_Spec extends Specification
             Result.of(Integer).hashCode() == Result.of(Integer).hashCode()
 
         and : 'The following results are not equal and they have different hash codes.'
-            Result.of(42) != Result.of(43).withId("foo")
-            Result.of(42).hashCode() != Result.of(43).withId("foo").hashCode()
-
             Result.of(Integer) != Result.of(String)
             Result.of(Integer).hashCode() != Result.of(String).hashCode()
-
-            Result.of(Integer) != Result.of(Integer).withId("foo")
-            Result.of(Integer).hashCode() != Result.of(Integer).withId("foo").hashCode()
 
             Result.of(42) != Result.of(Integer)
             Result.of(42).hashCode() != Result.of(Integer).hashCode()
     }
 
-    def 'A `Result` tells us that it is immutable.'()
+    def 'A `Result` is not mutable.'()
     {
         reportInfo """
             A `Result` is an immutable value type which means that
@@ -286,8 +273,12 @@ class Result_Spec extends Specification
         """
         given : 'A result.'
             def result = Result.of(42)
-        expect : 'The `isMutable()` method returns false.'
-            !result.isMutable()
+        expect : 'We cannot change the value of the result.'
+            result.get() == 42
+        when : 'We try to change the value of the result.'
+            result.set(43)
+        then : 'An exception is thrown.'
+            thrown(MissingMethodException)
     }
 
     def 'A result will find the correct type of an item, even if it is an anonymous class based enum constant.'() {

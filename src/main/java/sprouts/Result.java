@@ -27,7 +27,7 @@ import java.util.function.Supplier;
  *
  * @param <V> The type of the item wrapped by this result.
  */
-public interface Result<V> extends Val<V>
+public interface Result<V> extends Maybe<V>
 {
 	/**
 	 *  A factory method for creating an empty result
