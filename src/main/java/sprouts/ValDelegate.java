@@ -8,7 +8,7 @@ package sprouts;
  *
  * @param <T> The type of the value wrapped by the delegated property...
  */
-public interface ValDelegate<T> extends Val<T>
+public interface ValDelegate<T> extends Maybe<T>
 {
     /**
      *  The {@link Channel} constant from which the change originated.
