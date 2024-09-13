@@ -16,7 +16,13 @@ import java.util.function.Supplier;
  *  like the {@link Result} type. <br>
  *  Its API is very similar to the {@link Optional} type, with the difference
  *  that a {@link Maybe} implementation is always aware of the {@link #type()}
- *  of the thing that is a wrapper for.
+ *  of the thing that is a wrapper for. <br>
+ *  Note that contrary to the popular known {@link Optional} type, a {@link Maybe}
+ *  does not have a {@code .get()} method.<br>
+ *  Instead, it has a {@link #orElseThrowUnchecked()} method
+ *  which deliberately clear about the fact that it may throw an unchecked exception
+ *  if the item is missing, so that a user of this API can make an informed decision
+ *  about how to handle the case where the item is missing.
  *
  * @param <T> The type of the thing that this {@link Maybe} is a wrapper and representative of.
  */
@@ -36,21 +42,6 @@ public interface Maybe<T>
 	 * @return An {@link Optional} wrapping the item wrapped by this {@link Maybe}.
 	 */
 	default Optional<T> toOptional() { return Optional.ofNullable(this.orElseNull()); }
-
-	/**
-	 * This method is intended to be used for when you want to wrap non-nullable types.
-	 * So if an item is present (not null), it returns the item, otherwise however
-	 * {@code NoSuchElementException} will be thrown.
-	 * If you simply want to get the item of this {@link Maybe} irrespective of
-	 * it being null or not, use {@link #orElseNull()} to avoid an exception.
-	 * However, if this property wraps a nullable type, which is not intended to be null,
-	 * please use {@link #orElseThrow()} to make this intention clear.
-	 * The {@link #orElseThrow()} method is functionally identical to this method.
-	 *
-	 * @return the non-{@code null} item described by this {@code Val}
-	 * @throws NoSuchElementException if no item is present
-	 */
-	default @NonNull T get() { return orElseThrow(); }
 
 	/**
 	 * If an item is present, returns the item, otherwise returns
@@ -74,7 +65,7 @@ public interface Maybe<T>
 	 */
 	default @NonNull T orElse( @NonNull T other ) {
 		Objects.requireNonNull(other);
-		return isPresent() ? get() : other;
+		return isPresent() ? orElseThrowUnchecked() : other;
 	}
 
 	/**
@@ -88,7 +79,7 @@ public interface Maybe<T>
 	 *         function is {@code null}
 	 */
 	default T orElseGet( Supplier<? extends T> supplier ) {
-		return this.isPresent() ? orElseThrow() : supplier.get();
+		return this.isPresent() ? orElseThrowUnchecked() : supplier.get();
 	}
 
 	/**
@@ -101,16 +92,49 @@ public interface Maybe<T>
 
 	/**
 	 * If an item is present, returns the item, otherwise throws
-	 * {@code NoSuchElementException}.
+	 * an unchecked {@code NoSuchElementException}. You may use this if
+	 * you are fine with the control flow of your application being
+	 * interacted with by an unchecked exception. <br>
+	 * It is recommended to use {@link #orElseThrow()} instead, which
+	 * throws a checked {@code MissingItemException} that you must handle
+	 * explicitly in your code. <br>
+	 * If you can resort to an alternative value when in case the item
+	 * of this {@link Maybe} is missing, use {@link #orElse(Object)} or
+	 * {@link #orElseGet(Supplier)} instead of the throw methods.
 	 *
 	 * @return the non-{@code null} item described by this {@code Val}
 	 * @throws NoSuchElementException if no item is present
 	 */
-	default @NonNull T orElseThrow() {
+	default @NonNull T orElseThrowUnchecked() {
 		// This class is similar to optional, so if the value is null, we throw an exception!
 		T value = orElseNull();
 		if ( Objects.isNull(value) )
 			throw new NoSuchElementException("No value present");
+		return value;
+	}
+
+	/**
+	 * If an item is present, returns the item, otherwise throws
+	 * a checked {@code MissingItemException}, requiring you to handle it
+	 * explicitly in your code. If you want to access the item without
+	 * handling an exception, use {@link #orElseThrowUnchecked()},
+	 * which throws the unchecked {@code NoSuchElementException},
+	 * a subclass of {@code RuntimeException}. <br>
+	 * The preferred way to unpack the item of this {@link Maybe} is to use
+	 * this method, as it makes your intention clear and forces you to handle
+	 * the case where the item is missing. <br>
+	 * If you can resort to an alternative value when the item is missing,
+	 * use {@link #orElse(Object)} or {@link #orElseGet(Supplier)} instead
+	 * any of the throw methods.
+	 *
+	 * @return the non-{@code null} item described by this {@code Val}
+	 * @throws MissingItemException if no item is present
+	 */
+	default @NonNull T orElseThrow() throws MissingItemException {
+		// This class is similar to optional, so if the value is null, we throw an exception!
+		T value = orElseNull();
+		if ( Objects.isNull(value) )
+			throw new MissingItemException("No value present");
 		return value;
 	}
 
@@ -181,7 +205,7 @@ public interface Maybe<T>
      */
     default void ifPresent( Consumer<T> action ) {
         if ( this.isPresent() )
-            action.accept( get() );
+            action.accept( orElseThrowUnchecked() );
     }
 
     /**
@@ -197,7 +221,7 @@ public interface Maybe<T>
      */
     default void ifPresentOrElse( Consumer<? super T> action, Runnable emptyAction ) {
         if ( isPresent() )
-            action.accept(get());
+            action.accept( orElseThrowUnchecked() );
         else
             emptyAction.run();
     }

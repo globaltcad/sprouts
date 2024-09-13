@@ -278,6 +278,24 @@ public interface Val<T extends @Nullable Object> extends Observable, Maybe<T> {
 	}
 
 	/**
+	 * This method is intended to be used for when you want to wrap non-nullable types.
+	 * So if an item is present (not null), it returns the item, otherwise however
+	 * {@code NoSuchElementException} will be thrown.
+	 * If you simply want to get the item of this {@link Val} irrespective of
+	 * it being null or not, use {@link #orElseNull()} to avoid an exception.
+	 * However, if this result wraps a nullable type, which is not intended to be null,
+	 * please use {@link #orElseThrow()} or {@link #orElseThrowUnchecked()} to
+	 * make this intention clear to the reader of your code.
+	 * The {@link #orElseThrowUnchecked()} method is functionally identical to this method.
+	 *
+	 * @return The non-{@code null} item described by this {@code Val}.
+	 * @throws NoSuchElementException if no item is present.
+	 */
+	default @NonNull T get() {
+		return orElseThrowUnchecked();
+	}
+
+	/**
 	 * If an item is present, returns a {@code Val} describing the item,
 	 * otherwise returns a {@code Val} produced by the supplying function.
 	 *

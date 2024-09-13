@@ -180,7 +180,7 @@ final class Property<T extends @Nullable Object> implements Var<T> {
 			Val<?> other = (Val<?>) obj;
 			if ( other.type() != _type) return false;
 			if ( other.orElseNull() == null ) return _value == null;
-			return Val.equals( other.orElseThrow(), _value); // Arrays are compared with Arrays.equals
+			return Val.equals( other.orElseThrowUnchecked(), _value); // Arrays are compared with Arrays.equals
 		}
 		return false;
 	}

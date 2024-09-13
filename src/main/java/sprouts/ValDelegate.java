@@ -1,5 +1,9 @@
 package sprouts;
 
+import org.jspecify.annotations.NonNull;
+
+import java.util.NoSuchElementException;
+
 /**
  *  A context object passed to the various types of change listeners registered
  *  on a property such as {@link Val} and {@link Var}.
@@ -10,6 +14,24 @@ package sprouts;
  */
 public interface ValDelegate<T> extends Maybe<T>
 {
+    /**
+     * This method is intended to be used for when you want to wrap non-nullable types.
+     * So if an item is present (not null), it returns the item, otherwise however
+     * {@code NoSuchElementException} will be thrown.
+     * If you simply want to get the item of this {@link ValDelegate} irrespective of
+     * it being null or not, use {@link #orElseNull()} to avoid an exception.
+	 * However, if this result wraps a nullable type, which is not intended to be null,
+	 * please use {@link #orElseThrow()} or {@link #orElseThrowUnchecked()} to
+	 * make this intention clear to the reader of your code.
+	 * The {@link #orElseThrowUnchecked()} method is functionally identical to this method.
+     *
+     * @return the non-{@code null} item described by this {@code Val}
+     * @throws NoSuchElementException if no item is present
+     */
+    default @NonNull T get() {
+        return orElseThrowUnchecked();
+    }
+
     /**
      *  The {@link Channel} constant from which the change originated.
      *  A channel is typically one of the {@link From} enum constants
