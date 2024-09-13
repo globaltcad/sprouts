@@ -4,7 +4,7 @@ package sprouts;
  *  A checked exception thrown when an item is missing from a
  *  {@link Maybe} object.
  */
-public class MissingItemException extends Exception
+public final class MissingItemException extends Exception
 {
     public MissingItemException() {
         super();
