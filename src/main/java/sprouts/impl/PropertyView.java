@@ -112,7 +112,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 	) {
 		String id = _compositeIdFrom(first, second);
 
-		BiFunction<Val<T>, Val<U>, @Nullable T> fullCombiner = (p1, p2) -> {
+		BiFunction<Maybe<T>, Maybe<U>, @Nullable T> fullCombiner = (p1, p2) -> {
 			try {
 				return combiner.apply(p1.orElseNull(), p2.orElseNull());
 			} catch ( Exception e ) {
@@ -169,7 +169,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 
 		String id = _compositeIdFrom(first, second);
 
-		BiFunction<Val<T>, Val<U>, @Nullable T> fullCombiner = (p1, p2) -> {
+		BiFunction<Maybe<T>, Maybe<U>, @Nullable T> fullCombiner = (p1, p2) -> {
 			try {
 				return combiner.apply(p1.orElseNull(), p2.orElseNull());
 			} catch ( Exception e ) {
@@ -211,7 +211,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 	) {
 		String id = _compositeIdFrom(first, second);
 
-		BiFunction<Val<T>, Val<U>, @Nullable R> fullCombiner = (p1, p2) -> {
+		BiFunction<Maybe<T>, Maybe<U>, @Nullable R> fullCombiner = (p1, p2) -> {
 			try {
 				return combiner.apply(p1.orElseNull(), p2.orElseNull());
 			} catch ( Exception e ) {
@@ -267,7 +267,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 	) {
 		String id = _compositeIdFrom(first, second);
 
-		BiFunction<Val<T>, Val<U>, @Nullable R> fullCombiner = (p1, p2) -> {
+		BiFunction<Maybe<T>, Maybe<U>, @Nullable R> fullCombiner = (p1, p2) -> {
 			try {
 				return combiner.apply(p1.orElseNull(), p2.orElseNull());
 			} catch ( Exception e ) {

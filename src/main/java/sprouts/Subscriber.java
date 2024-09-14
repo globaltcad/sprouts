@@ -9,7 +9,9 @@ package sprouts;
  *  <b>
  *      Do not implement this interface directly!
  *      Instead, implement either {@link Observer} or {@link Action}.
- * </b>
+ * </b><br>
+ * In future versions of Java, this interface may be made sealed to prevent
+ * other classes from implementing it.
  */
 public /*sealed*/ interface Subscriber /* permits Observer, Action */
 {

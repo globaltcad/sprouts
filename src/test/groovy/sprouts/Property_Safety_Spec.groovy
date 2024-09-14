@@ -95,14 +95,24 @@ class Property_Safety_Spec extends Specification
                 ]
     }
 
-    def 'An empty property will throw an exception if you try to access its value.'()
+    def 'An empty property can throw an un-exception if you try to access its value.'()
+    {
+        given : 'We create a property...'
+            Val<Long> property = Val.ofNullable(Long, null)
+        when : 'We try to access the value of the property.'
+            property.orElseThrowUnchecked()
+        then : 'The property will throw an exception.'
+            thrown(NoSuchElementException)
+    }
+
+    def 'An empty property can throw a cached exception if you try to access its value.'()
     {
         given : 'We create a property...'
             Val<Long> property = Val.ofNullable(Long, null)
         when : 'We try to access the value of the property.'
             property.orElseThrow()
         then : 'The property will throw an exception.'
-            thrown(NoSuchElementException)
+            thrown(MissingItemException)
     }
 
     def 'The "orElseNull" method should be used instead of "orElseThrow" if you are fine with null items.'()
@@ -119,8 +129,28 @@ class Property_Safety_Spec extends Specification
             property.orElseNull() == null
             property.isEmpty()
             !property.isPresent()
-        when : 'We try to access the value of the property through "orElseThroe".'
+        when : 'We try to access the value of the property through "orElseThrow".'
             property.orElseThrow()
+        then : 'The property will throw an exception.'
+            thrown(MissingItemException)
+    }
+
+    def 'The "orElseNull" method should be used instead of "orElseThrowUnchecked" if you are fine with null items.'()
+    {
+        reportInfo """
+            Note that accessing the value of an empty property using the "orElseThrowUnchecked" method
+            will throw an exception if it is null!
+            Use "orElseNull" if you are fine with your property being empty 
+            and to also make this intend clear.
+        """
+        given : 'We create a property...'
+            Val<Long> property = Val.ofNullable(Long, null)
+        expect : 'The property is empty.'
+            property.orElseNull() == null
+            property.isEmpty()
+            !property.isPresent()
+        when : 'We try to access the value of the property through "orElseThrowUnchecked".'
+            property.orElseThrowUnchecked()
         then : 'The property will throw an exception.'
             thrown(NoSuchElementException)
     }

@@ -27,53 +27,18 @@ final class ValDelegateImpl<T> implements ValDelegate<T> {
     }
 
     @Override
-    public Val<T> map(Function<T, T> mapper) {
+    public Maybe<T> map(Function<T, T> mapper) {
         return value.map(mapper);
     }
 
     @Override
-    public String id() {
-        return value.id();
-    }
-
-    @Override
-    public Val<T> withId(String id) {
-        return value.withId(id);
+    public <U> Maybe<U> mapTo(Class<U> type, Function<T, U> mapper) {
+        return value.mapTo(type, mapper);
     }
 
     @Override
     public Class<T> type() {
         return value.type();
-    }
-
-    @Override
-    public Val<T> onChange(Channel channel, Action<ValDelegate<T>> action) {
-        return this;
-    }
-
-    @Override
-    public Val<T> fireChange(Channel channel) {
-        return this;
-    }
-
-    @Override
-    public boolean allowsNull() {
-        return value.allowsNull();
-    }
-
-    @Override
-    public boolean isMutable() {
-        return value.isMutable();
-    }
-
-    @Override
-    public Observable subscribe(Observer observer) {
-        return this;
-    }
-
-    @Override
-    public Observable unsubscribe(Subscriber observer) {
-        return this;
     }
 
     @Override

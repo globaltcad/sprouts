@@ -1,10 +1,12 @@
 package sprouts;
 
 
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import sprouts.impl.Sprouts;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -27,7 +29,7 @@ import java.util.function.Supplier;
  *
  * @param <V> The type of the item wrapped by this result.
  */
-public interface Result<V> extends Val<V>
+public interface Result<V> extends Maybe<V>
 {
 	/**
 	 *  A factory method for creating an empty result
@@ -210,6 +212,24 @@ public interface Result<V> extends Val<V>
 		Objects.requireNonNull(type);
 		Objects.requireNonNull(supplier);
 		return Sprouts.factory().resultOfTry(type, supplier);
+	}
+
+	/**
+	 * This method is intended to be used for when you want to wrap non-nullable types.
+	 * So if an item is present (not null), it returns the item, otherwise however
+	 * {@code NoSuchElementException} will be thrown.
+	 * If you simply want to get the item of this {@link Result} irrespective of
+	 * it being null or not, use {@link #orElseNull()} to avoid an exception.
+	 * However, if this result wraps a nullable type, which is not intended to be null,
+	 * please use {@link #orElseThrow()} or {@link #orElseThrowUnchecked()} to
+	 * make this intention clear to the reader of your code.
+	 * The {@link #orElseThrowUnchecked()} method is functionally identical to this method.
+	 *
+	 * @return the non-{@code null} item described by this {@code Val}
+	 * @throws NoSuchElementException if no item is present
+	 */
+	default @NonNull V get() {
+		return orElseThrowUnchecked();
 	}
 
 	/**
