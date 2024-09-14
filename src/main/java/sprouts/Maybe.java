@@ -20,8 +20,8 @@ import java.util.function.Supplier;
  *  Note that contrary to the popular known {@link Optional} type, a {@link Maybe}
  *  does not have a {@code .get()} method.<br>
  *  Instead, it has a {@link #orElseThrowUnchecked()} method
- *  which deliberately clear about the fact that it may throw an unchecked exception
- *  if the item is missing, so that a user of this API can make an informed decision
+ *  which is deliberately clear about the fact that it may throw an unchecked exception
+ *  if the item is missing so that a user of this API can make an informed decision
  *  about how to handle the case where the item is missing.
  *
  * @param <T> The type of the thing that this {@link Maybe} is a wrapper and representative of.
@@ -254,16 +254,17 @@ public interface Maybe<T>
      *  and returns it wrapped in a new {@link Maybe} instance. <br>
      *  If the item is not present, then an empty {@link Maybe} instance is returned. <br>
      *  <p>
-     *  But note that the resulting property does not constitute a live view of this property
-     *  and will not be updated when this property changes. <br>
+	 *  But note that the resulting {@link Maybe} is in no way a live view of this {@link Maybe}
+	 *  and will not be updated when this instance changes. This is because a {@link Maybe}
+	 *  is an immutable monadic type. <br>
      *  It is functionally very similar to the {@link Optional#map(Function)} method. <br>
      *  <p>
      *  This is essentially the same as {@link Optional#map(Function)} but based on {@link Maybe}
      *  as the wrapper instead of {@link Optional}.
      *
      * @param mapper the mapping function to apply to an item, if present
-     * @return A new property either empty (containing null) or containing the result of applying
-     * 			the mapping function to the item of this property.
+     * @return A new {@link Maybe} either empty (containing null) or containing the result of applying
+     * 			the mapping function to the item wrapped by this {@link Maybe}.
      */
     Maybe<T> map( Function<T, T> mapper );
 
@@ -272,14 +273,15 @@ public interface Maybe<T>
      *  and returns it wrapped in a new {@link Maybe} instance. <br>
      *  If the item is not present, then an empty {@link Maybe} instance is returned. <br>
      *  <p>
-     *  But note that the resulting property does not constitute a live view of this property
-     *  and will not be updated when this property changes. <br>
-     *  It is functionally very similar to the {@link Optional#map(Function)} method. <br>
+     *  But note that the resulting {@link Maybe} is in no way a live view of this {@link Maybe}
+     *  and will not be updated when this instance changes. This is because a {@link Maybe}
+	 *  is an immutable monadic type. <br>
+     *  It is functionally similar to the {@link Optional#map(Function)} method. <br>
      *
      * @param type The type of the item returned from the mapping function
      * @param mapper the mapping function to apply to an item, if present
-     * @return A new property either empty (containing null) or containing the result of applying
-     * 			the mapping function to the item of this property.
+     * @return A new maybe either empty (containing null) or containing the result of applying
+     * 			the mapping function to the item of this maybe.
      * @param <U> The type of the item returned from the mapping function
      */
     <U> Maybe<U> mapTo( Class<U> type, java.util.function.Function<T, U> mapper );
