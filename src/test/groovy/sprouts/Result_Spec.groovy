@@ -33,9 +33,12 @@ class Result_Spec extends Specification
     def 'We can create a result from any kind of value.'()
     {
         expect :
-            Result.of(42).get() == 42
-            Result.of("foo").get() == "foo"
-            Result.of([1, 2, 3]).get() == [1, 2, 3]
+            Result.of(42).is(42)
+            Result.of("foo").is("foo")
+            Result.of([1, 2, 3]).is([1, 2, 3])
+            Result.of(42).orElseThrowUnchecked() == 42
+            Result.of("foo").orElseThrowUnchecked() == "foo"
+            Result.of([1, 2, 3]).orElseThrowUnchecked() == [1, 2, 3]
     }
 
     def 'A result can be created from multiple problems.'()
@@ -65,7 +68,8 @@ class Result_Spec extends Specification
         when : 'We map the result to another result with the value plus one.'
             def mapped = result.map { it + 1 }
         then : 'The mapped result has the value of the result plus one.'
-            mapped.get() == 43
+            mapped.is(43)
+            mapped.orElseThrowUnchecked() == 43
     }
 
     def 'Results can be turned into an Optional.'()
@@ -97,7 +101,7 @@ class Result_Spec extends Specification
         when : 'We create a result from the list.'
             def result = Result.ofList(Integer, values)
         then : 'The result has the list as its value.'
-            result.get() == values
+            result.orElseThrowUnchecked() == values
         and : 'The result has no problems.'
             result.problems().isEmpty()
     }
@@ -119,7 +123,7 @@ class Result_Spec extends Specification
         when : 'We create a result from the list.'
             def result = Result.ofList(Integer, values, problems)
         then : 'The result has the list as its value.'
-            result.get() == values
+            result.orElseThrowUnchecked() == values
         and : 'The result has the problems.'
             result.problems() == problems
     }
@@ -216,7 +220,7 @@ class Result_Spec extends Specification
         when : 'We create a result from the supplier with the `doFail` flag set to false.'
             def result = Result.ofTry(String.class, supplier)
         then : 'No exception is thrown, which means the result has the value.'
-            result.get() == "bar"
+            result.orElseThrowUnchecked() == "bar"
         and : 'The result has no problems.'
             result.problems().isEmpty()
 
@@ -274,7 +278,8 @@ class Result_Spec extends Specification
         given : 'A result.'
             def result = Result.of(42)
         expect : 'We cannot change the value of the result.'
-            result.get() == 42
+            result.is(42)
+            result.orElseThrowUnchecked() == 42
         when : 'We try to change the value of the result.'
             result.set(43)
         then : 'An exception is thrown.'

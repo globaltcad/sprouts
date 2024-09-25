@@ -215,24 +215,6 @@ public interface Result<V> extends Maybe<V>
 	}
 
 	/**
-	 * This method is intended to be used for when you want to wrap non-nullable types.
-	 * So if an item is present (not null), it returns the item, otherwise however
-	 * {@code NoSuchElementException} will be thrown.
-	 * If you simply want to get the item of this {@link Result} irrespective of
-	 * it being null or not, use {@link #orElseNull()} to avoid an exception.
-	 * However, if this result wraps a nullable type, which is not intended to be null,
-	 * please use {@link #orElseThrow()} or {@link #orElseThrowUnchecked()} to
-	 * make this intention clear to the reader of your code.
-	 * The {@link #orElseThrowUnchecked()} method is functionally identical to this method.
-	 *
-	 * @return the non-{@code null} item described by this {@code Val}
-	 * @throws NoSuchElementException if no item is present
-	 */
-	default @NonNull V get() {
-		return orElseThrowUnchecked();
-	}
-
-	/**
 	 *  Exposes a list of {@link Problem}s associated with this result item.
 	 *  A problem is a description of what went wrong in the process of obtaining
 	 *  the value wrapped by this result.
