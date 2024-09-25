@@ -710,66 +710,6 @@ public interface Val<T extends @Nullable Object> extends Observable, Maybe<T> {
 	}
 
 	/**
-	 *  This method check if the item by the provided property
-	 *  is equal to the item wrapped by this {@link Var} instance.
-	 *
-	 * @param other The other property of the same type as is wrapped by this.
-	 * @return The truth value determining if the item of the supplied property is equal to the wrapped item.
-	 */
-	default boolean is( Val<@Nullable T> other ) {
-		Objects.requireNonNull(other);
-		return is( other.orElseNull() );
-	}
-
-	/**
-	 *  This method check if the item of the provided property
-	 *  is not equal to the item wrapped by this {@link Val} instance.
-	 *  This is the opposite of {@link #is(Val)} which returns true if the items are equal.
-	 *
-	 * @param other The other property of the same type as is wrapped by this.
-	 * @return The truth value determining if the item of the supplied property is not equal to the wrapped item.
-	 */
-	default boolean isNot( Val<@Nullable T> other ) { return !is(other); }
-
-	/**
-	 *  This method checks if at least one of the provided items is equal to
-	 *  the item wrapped by this {@link Var} instance.
-	 *
-	 * @param first The first item of the same type as is wrapped by this.
-	 * @param second The second item of the same type as is wrapped by this.
-	 * @param otherValues The other items of the same type as is wrapped by this.
-	 * @return The truth value determining if the provided item is equal to the wrapped item.
-	 */
-	@SuppressWarnings("unchecked")
-	default boolean isOneOf( @Nullable T first, @Nullable T second, @Nullable T... otherValues ) {
-		if ( this.is(first) ) return true;
-		if ( this.is(second) ) return true;
-		Objects.requireNonNull(otherValues);
-		for ( T otherValue : otherValues )
-			if ( is(otherValue) ) return true;
-		return false;
-	}
-
-	/**
-	 *  This checks if at least one of the items of the provided properties
-	 *  is equal to the item wrapped by this {@link Var} instance.
-	 *
-	 * @param first The first property of the same type as is wrapped by this.
-	 * @param second The second property of the same type as is wrapped by this.
-	 * @param otherValues The other properties of the same type as is wrapped by this.
-	 * @return The truth value determining if the item of the supplied property is equal to the wrapped item.
-	 */
-	@SuppressWarnings("unchecked")
-	default boolean isOneOf( Val<@Nullable T> first, Val<@Nullable T> second, Val<@Nullable T>... otherValues ) {
-		if ( this.is(first) ) return true;
-		if ( this.is(second) ) return true;
-		Objects.requireNonNull(otherValues);
-		for ( Val<T> otherValue : otherValues )
-			if ( is(otherValue) ) return true;
-		return false;
-	}
-
-	/**
 	 *  Returns the name/id of the property which is useful for debugging as well as
 	 *  persisting their state by using them as keys for whatever storage data structure one chooses. <br>
 	 *  For example, when converting a property based model to a JSON object, the id of the properties

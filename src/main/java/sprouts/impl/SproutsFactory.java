@@ -5,6 +5,7 @@ import org.jspecify.annotations.Nullable;
 import sprouts.*;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -21,6 +22,28 @@ public interface SproutsFactory
 	Event event();
 
 	Event eventOf( Event.Executor executor );
+
+	default <T> Maybe<@Nullable T> maybeOfNullable( Class<T> type, @Nullable T item ) {
+		return valOfNullable( type, item );
+	}
+
+	default <T> Maybe<@Nullable T> maybeOfNull( Class<T> type ) {
+		return valOfNull( type );
+	}
+
+	default <T> Maybe<T> maybeOf( T item ) {
+		return valOf( item );
+	}
+
+	default <T> Maybe<T> maybeOf( Maybe<T> toBeCopied ) {
+		Objects.requireNonNull(toBeCopied);
+		return valOf( toBeCopied.orElseThrowUnchecked() );
+	}
+
+	default <T extends @Nullable Object> Maybe<@Nullable T> maybeOfNullable( Maybe<T> toBeCopied ) {
+		Objects.requireNonNull(toBeCopied);
+		return valOfNullable( toBeCopied.type(), toBeCopied.orElseNull() );
+	}
 
 	<T> Val<@Nullable T> valOfNullable( Class<T> type, @Nullable T item );
 

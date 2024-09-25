@@ -2,6 +2,7 @@ package sprouts;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import sprouts.impl.Sprouts;
 
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -28,6 +29,96 @@ import java.util.function.Supplier;
  */
 public interface Maybe<T>
 {
+	/**
+	 *  Use this factory method to create a new {@link Maybe} instance
+	 *  whose item may or may not be null.
+	 *  <p>
+	 *  <b>Example:</b>
+	 *  <pre>{@code
+	 *      Maybe.ofNullable(String.class, null);
+	 *  }</pre>
+	 *  Note that it is required to supply a {@link Class} to ensure that this wrapper
+	 *  can return a valid type when {@link Maybe#type()} is called.
+	 *
+	 * @param type The type of the item wrapped by the wrapper.
+	 *             This is used to check if the item is of the correct type.
+	 * @param item The initial item of the wrapper.
+	 *              This may be null.
+	 * @param <T> The type of the wrapped item.
+	 * @return A new {@link Maybe} instance.
+	 * @throws NullPointerException If the type is null.
+	 */
+	static <T> Maybe<@Nullable T> ofNullable( Class<T> type, @Nullable T item ) {
+		Objects.requireNonNull(type);
+		return Sprouts.factory().maybeOfNullable( type, item );
+	}
+
+	/**
+	 *  A more concise version of {@link #ofNullable(Class, Object)}
+	 *  which is equivalent to {@code Var.ofNullable(type, null)}. <br>
+	 *  The {@link Maybe} instances returned by this factory method will be empty,
+	 *  but still know which type it represents.<br>
+	 *  So it is required to supply a {@link Class} to ensure that the wrapper
+	 *  can return a valid type when {@link Maybe#type()} is called.
+	 *
+	 * @param type The type of the item wrapped by the monad.
+	 * @return A new {@link Maybe} instance.
+	 * @param <T> The type of the wrapped item.
+	 * @throws NullPointerException If the supplied type is null.
+	 */
+	static <T> Maybe<@Nullable T> ofNull( Class<T> type ) {
+		Objects.requireNonNull(type);
+		return Sprouts.factory().maybeOfNull( type );
+	}
+
+	/**
+	 * 	This factory method returns a {@code Maybe} describing the given non-{@code null}
+	 * 	item similar to {@link Optional#of(Object)}, but specifically
+	 * 	designed for use with Swing-Tree.
+	 *
+	 * @param item The initial item of the wrapper which must not be null.
+	 * @param <T> The type of the item held by the {@link Maybe}!
+	 * @return A new {@link Maybe} instance wrapping the given item.
+	 * @throws NullPointerException If the supplied item is null.
+	 *                              Use {@link #ofNullable(Class, Object)} if the item may be null.
+	 */
+	static <T> Maybe<T> of( T item ) {
+		Objects.requireNonNull(item);
+		return Sprouts.factory().maybeOf( item );
+	}
+
+	/**
+	 *  A factory method for creating a new {@link Maybe} instance
+	 *  which is effectively an immutable copy of the given {@link Maybe}.
+	 *  The provided {@link Maybe} must not contain a null item.
+	 *
+	 * @param toBeCopied The {@link Maybe} to be copied.
+	 * @return A new {@link Maybe} instance.
+	 * @param <T> The type of the item held by the {@link Maybe}!
+	 * @throws NullPointerException If the supplied {@link Maybe} is null.
+	 * @throws NoSuchElementException If the item of the supplied {@link Maybe} is null.
+	 */
+	static <T> Maybe<T> of( Maybe<T> toBeCopied ) {
+		Objects.requireNonNull(toBeCopied);
+		return Sprouts.factory().maybeOf( toBeCopied );
+	}
+
+	/**
+	 *  A factory method for creating a new {@link Maybe} instance
+	 *  which is effectively an immutable copy of the given {@link Maybe}.
+	 *  The provided {@link Maybe} may contain a null item.
+	 *
+	 * @param toBeCopied The {@link Maybe} to be copied.
+	 * @return A new {@link Maybe} instance.
+	 * @param <T> The type of the item held by the {@link Maybe}!
+	 * @throws NullPointerException If the supplied {@link Maybe} is null.
+	 *                              Does not throw however, if the item of the supplied {@link Maybe} is null.
+	 */
+	static <T extends @Nullable Object> Maybe<@Nullable T> ofNullable( Maybe<T> toBeCopied ) {
+		Objects.requireNonNull(toBeCopied);
+		return Sprouts.factory().maybeOfNullable( toBeCopied );
+	}
+
 	/**
 	 *  This returns the type of the item wrapped by this {@link Maybe}
 	 *  which can be accessed by calling the {@link Maybe#orElseThrow()} method.
@@ -102,7 +193,7 @@ public interface Maybe<T>
 	 * of this {@link Maybe} is missing, use {@link #orElse(Object)} or
 	 * {@link #orElseGet(Supplier)} instead of the throw methods.
 	 *
-	 * @return the non-{@code null} item described by this {@code Val}
+	 * @return the non-{@code null} item described by this {@code Maybe}
 	 * @throws NoSuchElementException if no item is present
 	 */
 	default @NonNull T orElseThrowUnchecked() {
@@ -127,7 +218,7 @@ public interface Maybe<T>
 	 * use {@link #orElse(Object)} or {@link #orElseGet(Supplier)} instead
 	 * any of the throw methods.
 	 *
-	 * @return the non-{@code null} item described by this {@code Val}
+	 * @return the non-{@code null} item described by this {@code Maybe}
 	 * @throws MissingItemException if no item is present
 	 */
 	default @NonNull T orElseThrow() throws MissingItemException {
@@ -170,13 +261,73 @@ public interface Maybe<T>
 	}
 
 	/**
-	 *  This method check if the provided item is not equal to the item wrapped by this {@link Val} instance.
+	 *  This method check if the provided item is not equal to the item wrapped by this {@link Maybe} instance.
 	 *  This is the opposite of {@link #is(Object)} which returns true if the items are equal.
 	 *
 	 * @param otherItem The other item of the same type as is wrapped by this.
 	 * @return The truth value determining if the provided item is not equal to the wrapped item.
 	 */
 	default boolean isNot( @Nullable T otherItem ) { return !is(otherItem); }
+
+	/**
+	 *  This method check if the item by the provided wrapper
+	 *  is equal to the item wrapped by this {@link Maybe} instance.
+	 *
+	 * @param other The other wrapper of the same type as is wrapped by this.
+	 * @return The truth value determining if the item of the supplied wrapper is equal to the wrapped item.
+	 */
+	default boolean is( Maybe<@Nullable T> other ) {
+		Objects.requireNonNull(other);
+		return is( other.orElseNull() );
+	}
+
+	/**
+	 *  This method check if the item of the provided wrapper
+	 *  is not equal to the item wrapped by this {@link Maybe} wrapper instance.
+	 *  This is the opposite of {@link #is(Maybe)} which returns true if the items are equal.
+	 *
+	 * @param other The other wrapper of the same type as is wrapped by this.
+	 * @return The truth value determining if the item of the supplied wrapper is not equal to the wrapped item.
+	 */
+	default boolean isNot( Maybe<@Nullable T> other ) { return !is(other); }
+
+	/**
+	 *  This method checks if at least one of the provided items is equal to
+	 *  the item wrapped by this {@link Maybe} instance.
+	 *
+	 * @param first The first item of the same type as is wrapped by this.
+	 * @param second The second item of the same type as is wrapped by this.
+	 * @param otherValues The other items of the same type as is wrapped by this.
+	 * @return The truth value determining if the provided item is equal to the wrapped item.
+	 */
+	@SuppressWarnings("unchecked")
+	default boolean isOneOf( @Nullable T first, @Nullable T second, @Nullable T... otherValues ) {
+		if ( this.is(first) ) return true;
+		if ( this.is(second) ) return true;
+		Objects.requireNonNull(otherValues);
+		for ( T otherValue : otherValues )
+			if ( is(otherValue) ) return true;
+		return false;
+	}
+
+	/**
+	 *  This checks if at least one of the items of the provided properties
+	 *  is equal to the item wrapped by this {@link Maybe} instance.
+	 *
+	 * @param first The first wrapper of the same type as is wrapped by this.
+	 * @param second The second wrapper of the same type as is wrapped by this.
+	 * @param otherValues The other properties of the same type as is wrapped by this.
+	 * @return The truth value determining if the item of the supplied wrapper is equal to the wrapped item.
+	 */
+	@SuppressWarnings("unchecked")
+	default boolean isOneOf( Maybe<@Nullable T> first, Maybe<@Nullable T> second, Maybe<@Nullable T>... otherValues ) {
+		if ( this.is(first) ) return true;
+		if ( this.is(second) ) return true;
+		Objects.requireNonNull(otherValues);
+		for ( Maybe<T> otherValue : otherValues )
+			if ( is(otherValue) ) return true;
+		return false;
+	}
 
 	/**
 	 * If an item is present, returns {@code true}, otherwise {@code false}.
