@@ -45,11 +45,19 @@ public interface Action<D> extends Subscriber
     }
 
     /**
-     *  Executes the action.
+     *  Executes the action.<br>
+     *  Note that this method deliberately requires the handling of checked exceptions
+     *  at its invocation sites because there may be any number of implementations
+     *  hiding behind this interface, and so when you invoke this method it is unwise
+     *  to assume that your control flow will not be interrupted by exceptions.
      *
      * @param delegate A delegate for providing relevant context to the action.
+     * @throws Exception If during the execution of this method an error occurs.
+     *                   Due to this being a generic interface, the likelihood of
+     *                   exceptions being thrown is high and so it is recommended
+     *                   to handle them at the invocation site.
      */
-    void accept( D delegate );
+    void accept( D delegate ) throws Exception;
 
     /**
      *  Returns a new {@link Action} that will execute this action
