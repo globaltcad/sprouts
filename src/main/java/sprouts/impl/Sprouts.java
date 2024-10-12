@@ -2,6 +2,7 @@ package sprouts.impl;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
 import sprouts.*;
 
 import java.util.ArrayList;
@@ -26,6 +27,8 @@ import java.util.stream.StreamSupport;
  */
 public final class Sprouts implements SproutsFactory
 {
+    private static final Logger log = org.slf4j.LoggerFactory.getLogger(Sprouts.class);
+
     private static final Pattern DEFAULT_ID_PATTERN = Pattern.compile("[a-zA-Z0-9_]*");
 
     private static SproutsFactory FACTORY = new Sprouts();
@@ -70,7 +73,15 @@ public final class Sprouts implements SproutsFactory
         return new Event() {
             private final List<Observer> observers = new ArrayList<>();
 
-            @Override public void fire() { observers.forEach( Observer::invoke); }
+            @Override public void fire() {
+                observers.forEach( observer -> {
+                    try {
+                        observer.invoke();
+                    } catch (Exception e) {
+                        log.error("Error invoking observer!", e);
+                    }
+                });
+            }
             @Override
             public Event subscribe( Observer observer) {
                 observers.add(observer);
@@ -93,7 +104,17 @@ public final class Sprouts implements SproutsFactory
             private final List<Observer> observers = new ArrayList<>();
 
             @Override
-            public void fire() { executor.execute( () -> observers.forEach( Observer::invoke) ); }
+            public void fire() {
+                executor.execute( () -> {
+                    observers.forEach( observer -> {
+                        try {
+                            observer.invoke();
+                        } catch (Exception e) {
+                            log.error("Error invoking observer!", e);
+                        }
+                    });
+                });
+            }
             @Override
             public Event subscribe(Observer observer) {
                 observers.add(observer);
