@@ -21,7 +21,7 @@ public interface Observer extends Subscriber
 	/**
 	 *  Executes this callback.
 	 */
-	void invoke();
+	void invoke() throws Exception;
 
 	/**
 	 *  Returns a new {@link Observer} that will execute this callback

@@ -17,5 +17,7 @@ final class SproutChangeListener<D> implements Action<D>
     Observer listener() { return _observer; }
 
     @Override
-    public void accept( D delegate ) { _observer.invoke(); }
+    public void accept( D delegate ) throws Exception {
+        _observer.invoke();
+    }
 }
