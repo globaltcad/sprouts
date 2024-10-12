@@ -336,6 +336,39 @@ class Common_Property_Views extends Specification
     }
 
 
+    def 'Events processed by an `Observer` registered through the `subscribe` method will be invoked on all channels.'()
+    {
+        reportInfo """
+            An `Observer` registered through the `subscribe` method will be invoked on all channels.
+            This is because the `Observer` is not channel-specific and will be notified of all kinds
+            of changes happening to a regular property.
+        """
+        given : 'A property that will be observed by an `Observer`.'
+            Var<String> personName = Var.of("John")
+            var trace = []
+        and : 'An observer which records if the change event was triggered.'
+            Observer observer = { trace << "!" }
+        and : 'We subscribe the observer.'
+            personName.subscribe(observer)
+
+        when : 'We change the property on 3 different channels, with one no-change.'
+            personName.set(sprouts.From.ALL, "Linda")
+            personName.set(sprouts.From.VIEW, "Timmy")
+            personName.set(sprouts.From.VIEW, "Timmy") // No change
+            personName.set(sprouts.From.VIEW_MODEL, "Tommy")
+        then : 'The observer is triggered three times.'
+            trace == ["!","!","!"]
+
+        when : 'We unsubscribe the observer.'
+            personName.unsubscribe(observer)
+        and : 'Again, we change the property on 3 different channels, with one no-change.'
+            personName.set(sprouts.From.ALL, "Linda")
+            personName.set(sprouts.From.ALL, "Linda") // No change
+            personName.set(sprouts.From.VIEW, "Timmy")
+            personName.set(sprouts.From.VIEW_MODEL, "Tommy")
+        then : 'The observer is not triggered anymore.'
+            trace == ["!","!","!"]
+    }
     /**
      * This method guarantees that garbage collection is
      * done unlike <code>{@link System#gc()}</code>

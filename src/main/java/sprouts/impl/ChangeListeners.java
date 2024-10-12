@@ -41,7 +41,7 @@ final class ChangeListeners<T>
     }
 
     public final void onChange( Observer observer ) {
-        onChange(Sprouts.factory().defaultChannel(), new SproutChangeListener<>(observer) );
+        onChange(Sprouts.factory().defaultObservableChannel(), new SproutChangeListener<>(observer) );
     }
 
 	public void fireChange( Val<T> owner, Channel channel ) {

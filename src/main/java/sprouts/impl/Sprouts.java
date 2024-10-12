@@ -462,4 +462,9 @@ public final class Sprouts implements SproutsFactory
         return From.VIEW_MODEL;
     }
 
+    @Override
+    public Channel defaultObservableChannel() {
+        return From.ALL;
+    }
+
 }
