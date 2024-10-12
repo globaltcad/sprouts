@@ -97,23 +97,18 @@ class Observable_Properties_and_Events_Spec extends Specification
             instead of the regular `onChange(From.VIEW_MODEL, ..)` observers.
             This distinction exists to allow for a clear separation between events dispatched
             from the UI and events dispatched from the model (the application logic).
-            
-            `Observer` implementations are also considered to be part of the model,
-            and as such should not be triggered by UI events.
         """
         given : 'We create a simple String property.'
             var property = Var.of("Hello")
-        and : 'We also view the property as an observable.'
-            Observable observable = property
-        and : 'Finally we make sure that we can track changes to the property.'
-            var observer = Mock(Observer)
-            observable.subscribe(observer)
+        and : 'We make sure that we can track changes to the property.'
+            var action = Mock(Action)
+            property.onChange(From.VIEW_MODEL, action)
 
         when : 'We change the property.'
             property.set(From.VIEW, "World")
 
         then : 'The observer is not notified.'
-            0 * observer.invoke()
+            0 * action.accept(Mock(ValDelegate))
     }
 
     def 'Property list objects (`Vals` and `Vars`) can also be treated as `Observable`.'()

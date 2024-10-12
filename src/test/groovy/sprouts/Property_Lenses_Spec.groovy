@@ -1084,6 +1084,41 @@ class Property_Lenses_Spec extends Specification
             genreTrace == [From.ALL, From.VIEW_MODEL]
     }
 
+    def 'Events processed by an `Observer` registered through the `subscribe` method will be invoked on all channels.'()
+    {
+        reportInfo """
+            An `Observer` registered through the `subscribe` method will be invoked on all channels.
+            This is because the `Observer` is not channel-specific and will be notified of all kinds
+            of changes happening to a property lens.
+        """
+        given : 'We have an `Author` property and an observer that listens to changes on the property.'
+            var author = new Author("John", "Doe", LocalDate.of(1829, 8, 12), ["Book1", "Book2"])
+            var authorProperty = Var.of(author)
+            var trace = []
+        and : 'An observer which records if the change event was triggered.'
+            Observer observer = { trace << "!" }
+        and : 'We subscribe the observer.'
+            authorProperty.subscribe(observer)
+
+        when : 'We change three different fields on three different channels, with one no-change.'
+            authorProperty.set(From.ALL, author.withFirstName("Lilo"))
+            authorProperty.set(From.VIEW, author.withLastName("Schmidt"))
+            authorProperty.set(From.VIEW, author.withLastName("Schmidt")) // No change
+            authorProperty.set(From.VIEW_MODEL, author.withBooks(["Good Book", "Nice Book"]))
+        then : 'The observer was notified of all changes.'
+            trace == ["!", "!", "!"]
+
+        when : 'We unsubscribe the observer.'
+            authorProperty.unsubscribe(observer)
+        and : 'Then again change three different fields on three different channels.'
+            authorProperty.set(From.ALL, author.withFirstName("Jane"))
+            authorProperty.set(From.ALL, author.withFirstName("Jane")) // No change
+            authorProperty.set(From.VIEW, author.withLastName("Mayer"))
+            authorProperty.set(From.VIEW_MODEL, author.withBooks(["Great Book", "Awesome Book"]))
+        then : 'The observer was not notified of any changes.'
+            trace == ["!", "!", "!"]
+    }
+
     /**
      * This method guarantees that garbage collection is
      * done unlike <code>{@link System#gc()}</code>
