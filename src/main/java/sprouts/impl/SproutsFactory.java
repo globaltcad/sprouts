@@ -202,4 +202,13 @@ public interface SproutsFactory
 	 */
 	Channel defaultChannel();
 
+	/**
+	 *  The default channel used for {@link Observable} events,
+	 *  registered through the {@link Observable#subscribe(Observer)} method.
+	 *
+	 * @return The default channel used for change events.
+	 * 	       This must never return {@code null} and it is recommended to be a constant
+	 * 	       or cached object due to this method being called frequently.
+	 */
+	Channel defaultObservableChannel();
 }
