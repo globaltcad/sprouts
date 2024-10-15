@@ -52,10 +52,10 @@ public interface Action<D> extends Subscriber
      *  to assume that your control flow will not be interrupted by exceptions.
      *
      * @param delegate A delegate for providing relevant context to the action.
-     * @throws Exception If during the execution of this method an error occurs.
-     *                   Due to this being a generic interface, the likelihood of
-     *                   exceptions being thrown is high and so it is recommended
-     *                   to handle them at the invocation site.
+     * @throws Exception If during the execution of this method an error occurs.<br>
+     *                   Due to this being an interface with any number of implementations,
+     *                   the likelihood of exceptions being thrown is extremely high,
+     *                   and so it is recommended to handle them at the invocation site.
      */
     void accept( D delegate ) throws Exception;
 

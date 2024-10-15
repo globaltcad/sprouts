@@ -20,6 +20,10 @@ public interface Observer extends Subscriber
 {
 	/**
 	 *  Executes this callback.
+     * @throws Exception If during the execution of this method an error occurs.<br>
+     *                   Due to this being an interface with any number of implementations,
+	 *                   the likelihood of exceptions being thrown is extremely high,
+	 *                   and so it is recommended to handle them at the invocation site.
 	 */
 	void invoke() throws Exception;
 
