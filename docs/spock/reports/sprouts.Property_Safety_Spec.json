@@ -4,7 +4,7 @@
   "narrative":"Properties are a core concept in Sprouts. They are in essence\n    just wrapper classes used to represent the state of your views.\n    Because of this, it is important that properties are\n    are nullable only when they need to be, and that they are\n    mutable only when they need to be.",
   "subjects":["sprouts.Val","sprouts.Var","sprouts.Vals","sprouts.Vars"],
   "statistics":{
-    "runs":"12",
+    "runs":"14",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -90,7 +90,24 @@
     },
   
     {
-      "id":"An empty property will throw an exception if you try to access its value.",
+      "id":"An empty property can throw an un-exception if you try to access its value.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create a property...","code":["Val<Long> property = Val.ofNullable(Long, null)"]},
+
+        {"kind":"when","text":"We try to access the value of the property.","code":["property.orElseThrowUnchecked()"]},
+
+        {"kind":"then","text":"The property will throw an exception.","code":["thrown(NoSuchElementException)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"An empty property can throw a cached exception if you try to access its value.",
       "result":"PASS",
       "duration":"?",
       "iterations":{
@@ -101,7 +118,7 @@
 
         {"kind":"when","text":"We try to access the value of the property.","code":["property.orElseThrow()"]},
 
-        {"kind":"then","text":"The property will throw an exception.","code":["thrown(NoSuchElementException)"]}
+        {"kind":"then","text":"The property will throw an exception.","code":["thrown(MissingItemException)"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -118,7 +135,26 @@
 
         {"kind":"expect","text":"The property is empty.","code":["property.orElseNull() == null","property.isEmpty()","!property.isPresent()"]},
 
-        {"kind":"when","text":"We try to access the value of the property through \"orElseThroe\".","code":["property.orElseThrow()"]},
+        {"kind":"when","text":"We try to access the value of the property through \"orElseThrow\".","code":["property.orElseThrow()"]},
+
+        {"kind":"then","text":"The property will throw an exception.","code":["thrown(MissingItemException)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The \"orElseNull\" method should be used instead of \"orElseThrowUnchecked\" if you are fine with null items.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Note that accessing the value of an empty property using the \"orElseThrowUnchecked\" method\n            will throw an exception if it is null!\n            Use \"orElseNull\" if you are fine with your property being empty \n            and to also make this intend clear.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create a property...","code":["Val<Long> property = Val.ofNullable(Long, null)"]},
+
+        {"kind":"expect","text":"The property is empty.","code":["property.orElseNull() == null","property.isEmpty()","!property.isPresent()"]},
+
+        {"kind":"when","text":"We try to access the value of the property through \"orElseThrowUnchecked\".","code":["property.orElseThrowUnchecked()"]},
 
         {"kind":"then","text":"The property will throw an exception.","code":["thrown(NoSuchElementException)"]}
       ],
