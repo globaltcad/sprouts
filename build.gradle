@@ -48,8 +48,8 @@ dependencies {
     // Note that we are lenient with the version of slf4j, as we do not want to force a specific version on the user.
 
     // Testing :
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.2'    // mandatory dependencies for using Spock
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.11.2'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.11.2'    // mandatory dependencies for using Spock
 
     testImplementation group: 'com.athaydes', name: 'spock-reports', version: '2.5.1-groovy-4.0'
     testImplementation group: 'org.spockframework', name: 'spock-core', version: '2.3-groovy-4.0'
@@ -57,10 +57,6 @@ dependencies {
     // if you don't already have slf4j-api and an implementation of it in the classpath, add this! (needed for reports)
     testImplementation 'org.slf4j:slf4j-api:1.7.30'
     testCompileOnly 'org.slf4j:slf4j-simple:1.7.30'
-
-    testRuntimeOnly group: 'net.bytebuddy', name: 'byte-buddy', version: '1.11.15' // allows mocking of classes (in addition to interfaces)
-    testRuntimeOnly group: 'org.objenesis', name: 'objenesis', version: '3.2'      // allows mocking of classes without default constructor (together with ByteBuddy or CGLIB)
-
 }
 
 if ( WE_CAN_DO_STATIC_ANALYSIS ) {
