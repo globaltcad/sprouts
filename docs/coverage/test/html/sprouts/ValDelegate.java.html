@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ValDelegate.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sprouts</a> &gt; <a href="index.source.html" class="el_package">sprouts</a> &gt; <span class="el_source">ValDelegate.java</span></div><h1>ValDelegate.java</h1><pre class="source lang-java linenums">package sprouts;
+
+import org.jspecify.annotations.NonNull;
+
+import java.util.NoSuchElementException;
+
+/**
+ *  A context object passed to the various types of change listeners registered
+ *  on a property such as {@link Val} and {@link Var}.
+ *  It exposes the state of the current property as well as the
+ *  {@link Channel} constant from which the change originated.
+ *
+ * @param &lt;T&gt; The type of the value wrapped by the delegated property...
+ */
+public interface ValDelegate&lt;T&gt; extends Maybe&lt;T&gt;
+{
+    /**
+     * This method is intended to be used for when you want to wrap non-nullable types.
+     * So if an item is present (not null), it returns the item, otherwise however
+     * {@code NoSuchElementException} will be thrown.
+     * If you simply want to get the item of this {@link ValDelegate} irrespective of
+     * it being null or not, use {@link #orElseNull()} to avoid an exception.
+	 * However, if this result wraps a nullable type, which is not intended to be null,
+	 * please use {@link #orElseThrow()} or {@link #orElseThrowUnchecked()} to
+	 * make this intention clear to the reader of your code.
+	 * The {@link #orElseThrowUnchecked()} method is functionally identical to this method.
+     *
+     * @return the non-{@code null} item described by this {@code Val}
+     * @throws NoSuchElementException if no item is present
+     */
+    default @NonNull T get() {
+<span class="fc" id="L32">        return orElseThrowUnchecked();</span>
+    }
+
+    /**
+     *  The {@link Channel} constant from which the change originated.
+     *  A channel is typically one of the {@link From} enum constants
+     *  which is used to selectively listen to changes from different sources.
+     *  You may want to define your own channels for your specific use case.
+     *  This information can then also be used in your {@link Action}s
+     *  to perform different tasks based on the channel from which the change originated.
+     *
+     *  @return The {@link Channel} constant from which the change originated,
+     *          usually one of the {@link From} enum constants.
+     */
+    Channel channel();
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

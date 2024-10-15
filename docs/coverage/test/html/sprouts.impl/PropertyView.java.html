@@ -112,7 +112,7 @@ final class PropertyView&lt;T extends @Nullable Object&gt; implements Var&lt;T&g
 	) {
 <span class="fc" id="L113">		String id = _compositeIdFrom(first, second);</span>
 
-<span class="fc" id="L115">		BiFunction&lt;Val&lt;T&gt;, Val&lt;U&gt;, @Nullable T&gt; fullCombiner = (p1, p2) -&gt; {</span>
+<span class="fc" id="L115">		BiFunction&lt;Maybe&lt;T&gt;, Maybe&lt;U&gt;, @Nullable T&gt; fullCombiner = (p1, p2) -&gt; {</span>
 			try {
 <span class="fc" id="L117">				return combiner.apply(p1.orElseNull(), p2.orElseNull());</span>
 <span class="fc" id="L118">			} catch ( Exception e ) {</span>
@@ -169,7 +169,7 @@ final class PropertyView&lt;T extends @Nullable Object&gt; implements Var&lt;T&g
 
 <span class="fc" id="L170">		String id = _compositeIdFrom(first, second);</span>
 
-<span class="fc" id="L172">		BiFunction&lt;Val&lt;T&gt;, Val&lt;U&gt;, @Nullable T&gt; fullCombiner = (p1, p2) -&gt; {</span>
+<span class="fc" id="L172">		BiFunction&lt;Maybe&lt;T&gt;, Maybe&lt;U&gt;, @Nullable T&gt; fullCombiner = (p1, p2) -&gt; {</span>
 			try {
 <span class="fc" id="L174">				return combiner.apply(p1.orElseNull(), p2.orElseNull());</span>
 <span class="nc" id="L175">			} catch ( Exception e ) {</span>
@@ -211,7 +211,7 @@ final class PropertyView&lt;T extends @Nullable Object&gt; implements Var&lt;T&g
 	) {
 <span class="fc" id="L212">		String id = _compositeIdFrom(first, second);</span>
 
-<span class="fc" id="L214">		BiFunction&lt;Val&lt;T&gt;, Val&lt;U&gt;, @Nullable R&gt; fullCombiner = (p1, p2) -&gt; {</span>
+<span class="fc" id="L214">		BiFunction&lt;Maybe&lt;T&gt;, Maybe&lt;U&gt;, @Nullable R&gt; fullCombiner = (p1, p2) -&gt; {</span>
 			try {
 <span class="fc" id="L216">				return combiner.apply(p1.orElseNull(), p2.orElseNull());</span>
 <span class="fc" id="L217">			} catch ( Exception e ) {</span>
@@ -267,7 +267,7 @@ final class PropertyView&lt;T extends @Nullable Object&gt; implements Var&lt;T&g
 	) {
 <span class="fc" id="L268">		String id = _compositeIdFrom(first, second);</span>
 
-<span class="fc" id="L270">		BiFunction&lt;Val&lt;T&gt;, Val&lt;U&gt;, @Nullable R&gt; fullCombiner = (p1, p2) -&gt; {</span>
+<span class="fc" id="L270">		BiFunction&lt;Maybe&lt;T&gt;, Maybe&lt;U&gt;, @Nullable R&gt; fullCombiner = (p1, p2) -&gt; {</span>
 			try {
 <span class="fc" id="L272">				return combiner.apply(p1.orElseNull(), p2.orElseNull());</span>
 <span class="fc" id="L273">			} catch ( Exception e ) {</span>

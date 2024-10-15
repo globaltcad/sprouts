@@ -4,7 +4,7 @@
   "narrative":"A property or property list is more than just a wrapper around values.\n    These interfaces have rich APIs that exposes a plethora of methods,\n    many of which are designed to inform you about\n    their contents without actually exposing them to you.\n\n    The relevant methods here are `Val::isEmpty`, `Val::isPresent` and `Vals::size`.\n    But these are not going to be conversed in this specification.\n    Instead we will focus on their \"views\", which can be created\n    through the `Val::viewIsEmpty`, `Val::viewIsPresent` and `Vals::viewSize` methods.\n\n    Each of these methods return a property which will always be \"up to date\"\n    with respect to the thing that is observed, and will be updated\n    automatically when the observed thing changes.",
   "subjects":["sprouts.Var","sprouts.Val","sprouts.Vars","sprouts.Vals"],
   "statistics":{
-    "runs":"12",
+    "runs":"13",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -291,6 +291,33 @@
         {"kind":"then","text":"The composite property is still \"Linda january\".","code":["composite.get() == \"Linda january\""]},
 
         {"kind":"and","text":"The two properties are gone.","code":["monthRef.get() == null","nameRef.get() == null"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Events processed by an `Observer` registered through the `subscribe` method will be invoked on all channels.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            An `Observer` registered through the `subscribe` method will be invoked on all channels.\n            This is because the `Observer` is not channel-specific and will be notified of all kinds\n            of changes happening to a regular property.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A property that will be observed by an `Observer`.","code":["Var<String> personName = Var.of(\"John\")","var trace = []"]},
+
+        {"kind":"and","text":"An observer which records if the change event was triggered.","code":["Observer observer = { trace << \"!\" }"]},
+
+        {"kind":"and","text":"We subscribe the observer.","code":["personName.subscribe(observer)"]},
+
+        {"kind":"when","text":"We change the property on 3 different channels, with one no-change.","code":["personName.set(sprouts.From.ALL, \"Linda\")","personName.set(sprouts.From.VIEW, \"Timmy\")","personName.set(sprouts.From.VIEW, \"Timmy\") // No change","personName.set(sprouts.From.VIEW_MODEL, \"Tommy\")"]},
+
+        {"kind":"then","text":"The observer is triggered three times.","code":["trace == [\"!\",\"!\",\"!\"]"]},
+
+        {"kind":"when","text":"We unsubscribe the observer.","code":["personName.unsubscribe(observer)"]},
+
+        {"kind":"and","text":"Again, we change the property on 3 different channels, with one no-change.","code":["personName.set(sprouts.From.ALL, \"Linda\")","personName.set(sprouts.From.ALL, \"Linda\") // No change","personName.set(sprouts.From.VIEW, \"Timmy\")","personName.set(sprouts.From.VIEW_MODEL, \"Tommy\")"]},
+
+        {"kind":"then","text":"The observer is not triggered anymore.","code":["trace == [\"!\",\"!\",\"!\"]"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }
