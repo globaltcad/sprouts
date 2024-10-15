@@ -11,7 +11,7 @@ plugins {
     id 'signing'
     id 'io.github.gradle-nexus.publish-plugin' version '1.3.0'
     // For static null checking:
-    id "net.ltgt.errorprone" version "4.0.1"
+    id "net.ltgt.errorprone" version "3.1.0"
 }
 
 // If current version >= 11 we can do static analysis:
