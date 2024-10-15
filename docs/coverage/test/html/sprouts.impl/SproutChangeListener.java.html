@@ -17,6 +17,8 @@ final class SproutChangeListener&lt;D&gt; implements Action&lt;D&gt;
 <span class="fc" id="L17">    Observer listener() { return _observer; }</span>
 
     @Override
-<span class="fc" id="L20">    public void accept( D delegate ) { _observer.invoke(); }</span>
+    public void accept( D delegate ) throws Exception {
+<span class="fc" id="L21">        _observer.invoke();</span>
+<span class="fc" id="L22">    }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

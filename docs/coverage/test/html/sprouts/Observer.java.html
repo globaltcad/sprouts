@@ -20,8 +20,12 @@ public interface Observer extends Subscriber
 {
 	/**
 	 *  Executes this callback.
+     * @throws Exception If during the execution of this method an error occurs.&lt;br&gt;
+     *                   Due to this being an interface with any number of implementations,
+	 *                   the likelihood of exceptions being thrown is extremely high,
+	 *                   and so it is recommended to handle them at the invocation site.
 	 */
-	void invoke();
+	void invoke() throws Exception;
 
 	/**
 	 *  Returns a new {@link Observer} that will execute this callback
@@ -32,11 +36,11 @@ public interface Observer extends Subscriber
 	 *  and then the given callback.
 	 */
 	default Observer andThen( Observer other ) {
-<span class="nc" id="L35">		Objects.requireNonNull(other);</span>
-<span class="nc" id="L36">		return () -&gt; {</span>
-<span class="nc" id="L37">			this.invoke();</span>
-<span class="nc" id="L38">			other.invoke();</span>
-<span class="nc" id="L39">		};</span>
+<span class="nc" id="L39">		Objects.requireNonNull(other);</span>
+<span class="nc" id="L40">		return () -&gt; {</span>
+<span class="nc" id="L41">			this.invoke();</span>
+<span class="nc" id="L42">			other.invoke();</span>
+<span class="nc" id="L43">		};</span>
 	}
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

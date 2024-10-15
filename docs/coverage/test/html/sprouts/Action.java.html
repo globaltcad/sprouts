@@ -45,11 +45,19 @@ public interface Action&lt;D&gt; extends Subscriber
     }
 
     /**
-     *  Executes the action.
+     *  Executes the action.&lt;br&gt;
+     *  Note that this method deliberately requires the handling of checked exceptions
+     *  at its invocation sites because there may be any number of implementations
+     *  hiding behind this interface, and so when you invoke this method it is unwise
+     *  to assume that your control flow will not be interrupted by exceptions.
      *
      * @param delegate A delegate for providing relevant context to the action.
+     * @throws Exception If during the execution of this method an error occurs.&lt;br&gt;
+     *                   Due to this being an interface with any number of implementations,
+     *                   the likelihood of exceptions being thrown is extremely high,
+     *                   and so it is recommended to handle them at the invocation site.
      */
-    void accept( D delegate );
+    void accept( D delegate ) throws Exception;
 
     /**
      *  Returns a new {@link Action} that will execute this action
@@ -60,10 +68,10 @@ public interface Action&lt;D&gt; extends Subscriber
      *  and then the given action.
      */
     default Action&lt;D&gt; andThen( Action&lt;D&gt; other ) {
-<span class="nc" id="L63">        return delegate -&gt; {</span>
-<span class="nc" id="L64">            this.accept(delegate);</span>
-<span class="nc" id="L65">            other.accept(delegate);</span>
-<span class="nc" id="L66">        };</span>
+<span class="nc" id="L71">        return delegate -&gt; {</span>
+<span class="nc" id="L72">            this.accept(delegate);</span>
+<span class="nc" id="L73">            other.accept(delegate);</span>
+<span class="nc" id="L74">        };</span>
     }
 
 }

@@ -180,7 +180,7 @@ final class Property&lt;T extends @Nullable Object&gt; implements Var&lt;T&gt; {
 <span class="fc" id="L180">			Val&lt;?&gt; other = (Val&lt;?&gt;) obj;</span>
 <span class="fc bfc" id="L181" title="All 2 branches covered.">			if ( other.type() != _type) return false;</span>
 <span class="pc bpc" id="L182" title="1 of 4 branches missed.">			if ( other.orElseNull() == null ) return _value == null;</span>
-<span class="fc" id="L183">			return Val.equals( other.orElseThrow(), _value); // Arrays are compared with Arrays.equals</span>
+<span class="fc" id="L183">			return Val.equals( other.orElseThrowUnchecked(), _value); // Arrays are compared with Arrays.equals</span>
 		}
 <span class="nc" id="L185">		return false;</span>
 	}
