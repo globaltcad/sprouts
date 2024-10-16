@@ -122,7 +122,7 @@ public interface Result<V> extends Maybe<V>
 	 * @param <V> The type of the value.
 	 * @throws NullPointerException if any of the parameters are null.
 	 */
-	static <V> Result<V> of( Class<V> type, V value, Problem problem ) {
+	static <V> Result<V> of( Class<V> type, @Nullable V value, Problem problem ) {
 		Objects.requireNonNull(type);
 		Objects.requireNonNull(problem);
 		return Sprouts.factory().resultOf(type, value, problem);
