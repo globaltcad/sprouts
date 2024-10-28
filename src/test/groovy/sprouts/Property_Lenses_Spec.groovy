@@ -1119,6 +1119,55 @@ class Property_Lenses_Spec extends Specification
             trace == ["!", "!", "!"]
     }
 
+    def 'A lens on a property an effect on a view on this same property, even if it is de-referenced.'()
+    {
+        reportInfo """
+            A lens is essentially just a narrow view on a property.
+            So when the original property is no longer referenced, the lens
+            will still maintain the state of the original property.
+            So this means that another view on the same property 
+            will continue to be updated correctly through the 
+            lens even if the link between the two is no
+            longer accessible.
+        """
+        given : 'We create a simple property for the  `Author` record.'
+            var author = new Author("Lisa", "Su", LocalDate.of(1969, 11, 7), ["Ryzen", "Epyc"])
+            var authorProperty = Var.of(author)
+            var authorRef = new WeakReference(authorProperty)
+        and : 'We create a lens as well as a view, both focusing on the first name of the author.'
+            var firstNameLens = authorProperty.zoomTo(Author::firstName, Author::withFirstName)
+            var firstNameView = authorProperty.viewAsString(Author::firstName)
+        and : 'We create a trace list for the view, to observe the changes from mutating the lens.'
+            var trace = []
+            firstNameView.onChange(From.ALL, it -> trace << it.get())
+
+        expect : 'The initial values are correct.'
+            firstNameLens.get() == "Lisa"
+            firstNameView.get() == "Lisa"
+            trace.isEmpty()
+
+        when : 'We change the first name of the author through the lens....'
+            firstNameLens.set("Lisa-Marie")
+        then : 'The lens and the view should have the new first name.'
+            firstNameLens.get() == "Lisa-Marie"
+            firstNameView.get() == "Lisa-Marie"
+            trace == ["Lisa-Marie"]
+
+        when : 'We de-reference the original property.'
+            authorProperty = null
+        and : 'We wait for the garbage collector to run.'
+            waitForGarbageCollection()
+        then : 'The author property did not get garbage collected.'
+            authorRef.get() != null
+
+        when : 'We change the first name of the author through the lens again...'
+            firstNameLens.set("Lisa-Marie-Anne")
+        then : 'The lens and the view should have the new first name.'
+            firstNameLens.get() == "Lisa-Marie-Anne"
+            firstNameView.get() == "Lisa-Marie-Anne"
+            trace == ["Lisa-Marie", "Lisa-Marie-Anne"]
+    }
+
     /**
      * This method guarantees that garbage collection is
      * done unlike <code>{@link System#gc()}</code>
