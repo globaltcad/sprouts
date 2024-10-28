@@ -335,6 +335,66 @@ class Common_Property_Views extends Specification
             nameRef.get() == null
     }
 
+    def 'A composite view of 2 properties will not break if the first observed property is garbage collected.'()
+    {
+        reportInfo """
+            If you create a composite property of two other properties
+            and one of these source properties is garbage collected,
+            then the composite property will still be updated
+            based on the last known value of the collected property.
+        """
+        given :
+            Var<String> a = Var.of("A")
+            Var<String> b = Var.of("B")
+            Val<String> c = Val.viewOf(a, b, (x, y) -> x + y)
+            var weakA = new WeakReference(a)
+        expect :
+            c.get() == "AB"
+        when : 'We get rid of the only strong reference to the first property.'
+            a = null
+        and : 'We wait for the garbage collector to do its job.'
+            waitForGarbageCollection()
+        then : 'We can confirm, the first property `a` was garbage collected:'
+            weakA.get() == null
+        when : 'We then change the value of the second property.'
+            b.set("b")
+        then : """
+            Despite the fact that the first property `a` was garbage collected,
+            the composite property `c` is still updated based on the last known value of `a`.
+        """
+            c.get() == "Ab"
+    }
+
+    def 'A composite view of 2 properties will not break if the second observed property is garbage collected.'()
+    {
+        reportInfo """
+            If you create a composite property of two other properties
+            and the second property is garbage collected,
+            then the composite property will still be updated
+            from the state of the first property and the last
+            known state of the second property.
+        """
+        given :
+            Var<String> a = Var.of("A")
+            Var<String> b = Var.of("B")
+            Val<String> c = Val.viewOf(a, b, (x, y) -> x + y)
+            var weakB = new WeakReference(b)
+        expect :
+            c.get() == "AB"
+        when : 'We get rid of the only strong reference to the second property.'
+            b = null
+        and : 'We wait for the garbage collector to do its job.'
+            waitForGarbageCollection()
+        then : 'We can confirm, the second property `b` was garbage collected:'
+            weakB.get() == null
+        when : 'We change the value of the first property...'
+            a.set("a")
+        then : """
+            Despite the fact that the second property `b` was garbage collected before,
+            the composite property `c` is still updated based on the last known value of `b`.
+        """
+            c.get() == "aB"
+    }
 
     def 'Events processed by an `Observer` registered through the `subscribe` method will be invoked on all channels.'()
     {
