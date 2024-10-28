@@ -220,7 +220,7 @@ public final class Sprouts implements SproutsFactory
                 Sprouts.factory().defaultId(),
                 false,//does not allow null
                 initialValue, //may NOT be null
-                ParentRef.of(source),
+                source,
                 getter,
                 wither,
                 null
