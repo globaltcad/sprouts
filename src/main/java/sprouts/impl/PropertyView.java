@@ -138,8 +138,6 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 		};
 		BiConsumer<PropertyView<T>,ValDelegate<U>> secondListener = (innerResult,v) -> {
 			Val<T> innerFirst = innerResult._getSource(0);
-			if (innerFirst == null)
-				return;
 			T newItem = fullCombiner.apply(innerFirst, v);
 			if (newItem == null)
 				log.error(
@@ -189,15 +187,11 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 		if ( !firstIsImmutable )
 			first.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
 				Val<U> innerSecond = innerResult._getSource(1);
-				if ( innerSecond == null )
-					return;
 				innerResult.set(v.channel(), fullCombiner.apply(v, innerSecond) );
 			}));
 		if ( !secondIsImmutable )
 			second.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
 				Val<T> innerFirst = innerResult._getSource(0);
-				if ( innerFirst == null )
-					return;
 				innerResult.set(v.channel(), fullCombiner.apply(innerFirst, v) );
 			}));
 		return result;
@@ -228,8 +222,6 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 
 		first.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
 			Val<U> innerSecond = innerResult._getSource(1);
-			if ( innerSecond == null )
-				return;
 			@Nullable R newItem = fullCombiner.apply(v, innerSecond);
 			if (newItem == null)
 				log.error(
@@ -243,8 +235,6 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 		}));
 		second.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
 			Val<T> innerFirst = innerResult._getSource(0);
-			if ( innerFirst == null )
-				return;
 			@Nullable R newItem = fullCombiner.apply(innerFirst, v);
 			if (newItem == null)
 				log.error(
@@ -278,14 +268,10 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 		PropertyView<@Nullable R> result =  PropertyView._ofNullable( type, fullCombiner.apply(first, second), first, second ).withId(id);
 		first.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
 			Val<U> innerSecond = innerResult._getSource(1);
-			if ( innerSecond == null )
-				return;
 			innerResult.set(v.channel(), fullCombiner.apply(v, innerSecond));
 		}));
 		second.onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
 			Val<T> innerFirst = innerResult._getSource(0);
-			if ( innerFirst == null )
-				return;
 			innerResult.set(v.channel(), fullCombiner.apply(innerFirst, v));
 		}));
 		return result;
@@ -310,7 +296,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 
 	@Nullable private T _currentItem;
 
-	private final ParentRef<@Nullable Val<?>>[] _strongParentRefs;
+	private final ParentRef<Val<?>>[] _strongParentRefs;
 
 
 	private PropertyView(
@@ -319,7 +305,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
         String id,
         ChangeListeners<T> changeListeners,
         boolean allowsNull,
-		ParentRef<@Nullable Val<?>>[] strongParentRefs
+		ParentRef<Val<?>>[] strongParentRefs
     ) {
 		Objects.requireNonNull(id);
 		Objects.requireNonNull(type);
@@ -352,7 +338,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T> {
 			);
 	}
 
-	private <P> @Nullable Val<P> _getSource(int index ) {
+	private <P> Val<P> _getSource( int index ) {
 		if ( index < 0 || index >= _strongParentRefs.length )
 			throw new IndexOutOfBoundsException("The index "+index+" is out of bounds!");
 		return (Val) _strongParentRefs[index].get();

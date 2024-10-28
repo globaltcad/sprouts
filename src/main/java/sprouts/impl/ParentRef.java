@@ -21,18 +21,17 @@ import java.lang.ref.WeakReference;
  */
 interface ParentRef<V extends Val<?>> {
 
-    static <T extends Val<?>> ParentRef<T> of( Reference<T> ref ) {
-        return ref::get;
-    }
-
     static <T extends Val<?>> ParentRef<T> of( T value ) {
         if ( value.isView() || value.isLens() )
-            return ()->value;
-        else
-            return of(new WeakReference<>(value));
+            return () -> value;
+        else {
+            WeakReference<T> ref = new WeakReference<>(value);
+            Class<?> type = value.type();
+            Object initialItem = value.orElseNull();
+            return new TransientParentRef<>(ref, type, initialItem);
+        }
     }
 
-    @Nullable
     V get();
 
 }
