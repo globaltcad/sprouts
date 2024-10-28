@@ -67,7 +67,7 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
                 Sprouts.factory().defaultId(),
                 false,//does not allow null
                 initialValue, //may NOT be null
-                ParentRef.of(source),
+                source,
                 nullSafeGetter,
                 nullSafeWither,
                 null
@@ -96,7 +96,7 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
                 Sprouts.factory().defaultId(),
                 true,//allows null
                 initialValue, //may be null
-                ParentRef.of(source),
+                source,
                 nullSafeGetter,
                 nullSafeWither,
                 null
@@ -107,7 +107,7 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
     private final String             _id;
     private final boolean            _nullable;
     private final Class<T>           _type;
-    private final ParentRef<Var<A>>  _parent;
+    private final Var<A>             _parent;
     Function<A,@Nullable T>          _getter;
     BiFunction<A,@Nullable T,A>      _setter;
 
@@ -119,7 +119,7 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
             String                          id,
             boolean                         allowsNull,
             @Nullable T                     initialItem, // may be null
-            ParentRef<Var<A>>               parent,
+            Var<A>                          parent,
             Function<A,@Nullable T>         getter,
             BiFunction<A,@Nullable T,A>     wither,
             @Nullable ChangeListeners<T>    changeListeners
@@ -135,8 +135,7 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
         _changeListeners = changeListeners == null ? new ChangeListeners<>() : new ChangeListeners<>(changeListeners);
 
         _lastItem = initialItem;
-        Var<A> foundParent = parent.get();
-        foundParent.onChange(From.ALL, Action.ofWeak(this, (thisLens, v) -> {
+        parent.onChange(From.ALL, Action.ofWeak(this, (thisLens, v) -> {
             T newValue = thisLens._fetchItemFromParent();
             if (!Objects.equals(thisLens._lastItem, newValue)) {
                 thisLens._lastItem = newValue;
@@ -156,13 +155,12 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
 
     private @Nullable T _fetchItemFromParent() {
         T fetchedValue = _lastItem;
-        Var<A> parent = _parent.get();
         try {
-            fetchedValue = _getter.apply(parent.orElseNull());
+            fetchedValue = _getter.apply(_parent.orElseNull());
         } catch ( Exception e ) {
             log.error(
                     "Failed to fetch item of type '"+_type+"' for property lens "+ _idForError(_id) +
-                    "from parent property "+ _idForError(parent.id())+"(with item type '"+parent.type()+"') " +
+                    "from parent property "+ _idForError(_parent.id())+"(with item type '"+_parent.type()+"') " +
                     "using the current getter lambda.",
                     e
             );
@@ -171,15 +169,14 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
     }
 
     private void _setInParentAndInternally(Channel channel, @Nullable T newItem) {
-        Var<A> parent = _parent.get();
         try {
-            A newParentItem = _setter.apply(parent.orElseNull(), newItem);
+            A newParentItem = _setter.apply(_parent.orElseNull(), newItem);
             _lastItem = newItem;
-            parent.set(channel, newParentItem);
+            _parent.set(channel, newParentItem);
         } catch ( Exception e ) {
             log.error(
                     "Property lens "+_idForError(_id)+"(for item type '"+_type+"') failed to update its " +
-                    "parent property '"+_idForError(parent.id())+"' (with item type '"+parent.type()+"') " +
+                    "parent property '"+_idForError(_parent.id())+"' (with item type '"+_parent.type()+"') " +
                     "using the current setter lambda!",
                     e
             );
