@@ -122,7 +122,7 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
 	 * @param &lt;V&gt; The type of the value.
 	 * @throws NullPointerException if any of the parameters are null.
 	 */
-	static &lt;V&gt; Result&lt;V&gt; of( Class&lt;V&gt; type, V value, Problem problem ) {
+	static &lt;V&gt; Result&lt;V&gt; of( Class&lt;V&gt; type, @Nullable V value, Problem problem ) {
 <span class="nc" id="L126">		Objects.requireNonNull(type);</span>
 <span class="nc" id="L127">		Objects.requireNonNull(problem);</span>
 <span class="nc" id="L128">		return Sprouts.factory().resultOf(type, value, problem);</span>

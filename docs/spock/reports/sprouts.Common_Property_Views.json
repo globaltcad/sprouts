@@ -4,7 +4,7 @@
   "narrative":"A property or property list is more than just a wrapper around values.\n    These interfaces have rich APIs that exposes a plethora of methods,\n    many of which are designed to inform you about\n    their contents without actually exposing them to you.\n\n    The relevant methods here are `Val::isEmpty`, `Val::isPresent` and `Vals::size`.\n    But these are not going to be conversed in this specification.\n    Instead we will focus on their \"views\", which can be created\n    through the `Val::viewIsEmpty`, `Val::viewIsPresent` and `Vals::viewSize` methods.\n\n    Each of these methods return a property which will always be \"up to date\"\n    with respect to the thing that is observed, and will be updated\n    automatically when the observed thing changes.",
   "subjects":["sprouts.Var","sprouts.Val","sprouts.Vars","sprouts.Vals"],
   "statistics":{
-    "runs":"13",
+    "runs":"15",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -291,6 +291,56 @@
         {"kind":"then","text":"The composite property is still \"Linda january\".","code":["composite.get() == \"Linda january\""]},
 
         {"kind":"and","text":"The two properties are gone.","code":["monthRef.get() == null","nameRef.get() == null"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A composite view of 2 properties will not break if the first observed property is garbage collected.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            If you create a composite property of two other properties\n            and one of these source properties is garbage collected,\n            then the composite property will still be updated\n            based on the last known value of the collected property.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["Var<String> a = Var.of(\"A\")","Var<String> b = Var.of(\"B\")","Val<String> c = Val.viewOf(a, b, (x, y) -> x + y)","var weakA = new WeakReference(a)"]},
+
+        {"kind":"expect","text":"","code":["c.get() == \"AB\""]},
+
+        {"kind":"when","text":"We get rid of the only strong reference to the first property.","code":["a = null"]},
+
+        {"kind":"and","text":"We wait for the garbage collector to do its job.","code":["waitForGarbageCollection()"]},
+
+        {"kind":"then","text":"We can confirm, the first property `a` was garbage collected:","code":["weakA.get() == null"]},
+
+        {"kind":"when","text":"We then change the value of the second property.","code":["b.set(\"b\")"]},
+
+        {"kind":"then","text":"\n            Despite the fact that the first property `a` was garbage collected,\n            the composite property `c` is still updated based on the last known value of `a`.\n        ","code":["c.get() == \"Ab\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A composite view of 2 properties will not break if the second observed property is garbage collected.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            If you create a composite property of two other properties\n            and the second property is garbage collected,\n            then the composite property will still be updated\n            from the state of the first property and the last\n            known state of the second property.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["Var<String> a = Var.of(\"A\")","Var<String> b = Var.of(\"B\")","Val<String> c = Val.viewOf(a, b, (x, y) -> x + y)","var weakB = new WeakReference(b)"]},
+
+        {"kind":"expect","text":"","code":["c.get() == \"AB\""]},
+
+        {"kind":"when","text":"We get rid of the only strong reference to the second property.","code":["b = null"]},
+
+        {"kind":"and","text":"We wait for the garbage collector to do its job.","code":["waitForGarbageCollection()"]},
+
+        {"kind":"then","text":"We can confirm, the second property `b` was garbage collected:","code":["weakB.get() == null"]},
+
+        {"kind":"when","text":"We change the value of the first property...","code":["a.set(\"a\")"]},
+
+        {"kind":"then","text":"\n            Despite the fact that the second property `b` was garbage collected before,\n            the composite property `c` is still updated based on the last known value of `b`.\n        ","code":["c.get() == \"aB\""]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
