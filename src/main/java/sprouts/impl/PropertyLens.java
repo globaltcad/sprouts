@@ -136,15 +136,13 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
 
         _lastItem = initialItem;
         Var<A> foundParent = parent.get();
-        if ( foundParent != null ) {
-            foundParent.onChange(From.ALL, Action.ofWeak(this, (thisLens, v) -> {
-                T newValue = thisLens._fetchItemFromParent();
-                if (!Objects.equals(thisLens._lastItem, newValue)) {
-                    thisLens._lastItem = newValue;
-                    thisLens.fireChange(v.channel());
-                }
-            }));
-        }
+        foundParent.onChange(From.ALL, Action.ofWeak(this, (thisLens, v) -> {
+            T newValue = thisLens._fetchItemFromParent();
+            if (!Objects.equals(thisLens._lastItem, newValue)) {
+                thisLens._lastItem = newValue;
+                thisLens.fireChange(v.channel());
+            }
+        }));
 
         if ( !Sprouts.factory().idPattern().matcher(_id).matches() )
             throw new IllegalArgumentException("The provided id '"+_id+"' is not valid! It must match the pattern '"+Sprouts.factory().idPattern().pattern()+"'");
@@ -158,10 +156,7 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
 
     private @Nullable T _fetchItemFromParent() {
         T fetchedValue = _lastItem;
-        @Nullable Var<A> parent = _parent.get();
-        if ( parent == null )
-            return fetchedValue;
-
+        Var<A> parent = _parent.get();
         try {
             fetchedValue = _getter.apply(parent.orElseNull());
         } catch ( Exception e ) {
@@ -176,12 +171,7 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
     }
 
     private void _setInParentAndInternally(Channel channel, @Nullable T newItem) {
-        @Nullable Var<A> parent = _parent.get();
-        if ( parent == null ) {
-            _lastItem = newItem;
-            return;
-        }
-
+        Var<A> parent = _parent.get();
         try {
             A newParentItem = _setter.apply(parent.orElseNull(), newItem);
             _lastItem = newItem;
