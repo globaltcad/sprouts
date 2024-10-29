@@ -1168,6 +1168,45 @@ class Property_Lenses_Spec extends Specification
             trace == ["Lisa-Marie", "Lisa-Marie-Anne"]
     }
 
+    def 'A lens stays in memory when there is a view on it.'()
+    {
+        reportInfo """
+            A lens is a narrowed down mutable view on a property.
+            So when a view is then created on this lens and the lens
+            is de-referenced, then it must be kept in memory as long
+            as the source property is still in memory.
+            
+            This is because modifications to the source property
+            must be propagated through the lens to the view.
+        """
+        given : 'We create a simple property for the  `Memebr` record, a lens, and a view.'
+            var member = new Member("42", "Lilly", "Lemon", MembershipLevel.GOLD, LocalDate.of(2019, 7, 24), null)
+            var memberProperty = Var.of(member)
+            var nameLens = memberProperty.zoomTo(Member::firstName, Member::withFirstName)
+            var nameView = nameLens.viewAsString(it -> it.toUpperCase())
+            var weakRef = new WeakReference(nameLens)
+        and : 'We create a trace list for the view, to observe the changes from mutating the lens.'
+            var trace = []
+            nameView.onChange(From.ALL, it -> trace << it.get())
+
+        expect : 'The initial values are correct.'
+            nameLens.get() == "Lilly"
+            nameView.get() == "LILLY"
+            trace.isEmpty()
+
+        when : 'We now de-reference the lens and wait for the garbage collector to run.'
+            nameLens = null
+            waitForGarbageCollection()
+        then : 'The lens did not get garbage collected.'
+            weakRef.get() != null
+
+        when : 'We change the first name of the member through the view.'
+            memberProperty.set(member.withFirstName("Sally"))
+        then : 'The view should have the new first name, despite the lens being de-referenced.'
+            nameView.get() == "SALLY"
+            trace == ["SALLY"]
+    }
+
     /**
      * This method guarantees that garbage collection is
      * done unlike <code>{@link System#gc()}</code>
