@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import sprouts.Observer;
 import sprouts.*;
 
+import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -89,13 +90,9 @@ final class ChangeListeners<T>
                     WeakAction<?,?> wa = (WeakAction<?,?>) action;
                     wa.owner().ifPresent( owner -> {
                         actions.add(action);
-                        ChangeListenerCleaner.getInstance()
-                                .register(owner, () -> {
-                                    _getActions( innerActions -> {
-                                        innerActions.remove(wa);
-                                        wa.clear();
-                                    });
-                                });
+                        WeakReference<ChannelListeners<?>> weakThis = new WeakReference<>(this);
+                        ChannelCleaner cleaner = new ChannelCleaner(weakThis, wa);
+                        ChangeListenerCleaner.getInstance().register(owner, cleaner);
                     });
                 }
                 else
@@ -132,6 +129,35 @@ final class ChangeListeners<T>
             });
         }
 
+    }
+
+    private static final class ChannelCleaner implements Runnable {
+        private final WeakReference<ChannelListeners<?>> weakThis;
+        private final WeakAction<?,?> wa;
+
+        private ChannelCleaner(WeakReference<ChannelListeners<?>> weakThis, WeakAction<?, ?> wa) {
+            this.weakThis = weakThis;
+            this.wa = wa;
+        }
+
+        @Override
+        public void run() {
+            ChannelListeners<?> strongThis = weakThis.get();
+            if ( strongThis == null )
+                return;
+
+            strongThis._getActions( innerActions -> {
+                try {
+                    wa.clear();
+                } catch ( Exception e ) {
+                    log.error(
+                            "An error occurred while clearing the weak action '{}' during the process of " +
+                            "removing it from the list of change actions.", wa, e
+                        );
+                }
+                innerActions.remove(wa);
+            });
+        }
     }
 
 }
