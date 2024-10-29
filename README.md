@@ -51,7 +51,7 @@ dependencies {
 ...or by using a custom commit hash instead:
 ```
 dependencies {
-	implementation 'com.github.globaltcad:sprouts:627fcdf'//Any commit hash...
+	implementation 'com.github.globaltcad:sprouts:a191929'//Any commit hash...
 }
 ```
 ---
