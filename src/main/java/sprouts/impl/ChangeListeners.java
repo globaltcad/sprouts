@@ -73,6 +73,21 @@ final class ChangeListeners<T>
                             .sum();
     }
 
+    @Override
+    public final String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(this.getClass().getSimpleName()).append("[");
+        for ( Channel key : _actions.keySet() ) {
+            try {
+                sb.append(key).append("->").append(_actions.get(key)).append(", ");
+            } catch ( Exception e ) {
+                log.error("An error occurred while trying to get the number of change listeners for channel '{}'", key, e);
+            }
+        }
+        sb.append("]");
+        return sb.toString();
+    }
+
     private static final class ChannelListeners<T> {
 
         private final List<Action<ValDelegate<T>>> _channelActions = new ArrayList<>();
@@ -127,6 +142,21 @@ final class ChangeListeners<T>
                         );
                     }
             });
+        }
+
+        @Override
+        public final String toString() {
+            StringBuilder sb = new StringBuilder();
+            sb.append(this.getClass().getSimpleName()).append("[");
+            for ( Action<ValDelegate<T>> action : _channelActions ) {
+                try {
+                    sb.append(action).append(", ");
+                } catch ( Exception e ) {
+                    log.error("An error occurred while trying to get the string representation of the action '{}'", action, e);
+                }
+            }
+            sb.append("]");
+            return sb.toString();
         }
 
     }

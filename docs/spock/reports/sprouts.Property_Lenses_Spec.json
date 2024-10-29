@@ -4,7 +4,7 @@
   "narrative":"The Sprouts Property Lens is based on the Lens design pattern.\n    The Lens design pattern is a functional programming \n    technique used to simplify the process of accessing and updating parts of \n    a nested (immutable) data structures into a new instance of the data structure.\n\n    A Lens is essentially a pair of functions: \n    one to get a value from a specific part of a data structure (like a record), \n    and another to set or update that value while producing a new \n    instance of the data structure. This pattern is particularly useful with Java records, \n    which are immutable by design, as it allows for clean and concise manipulation \n    of deeply nested fields without breaking immutability.\n\n    Now what does this have to do with Sprouts properties?\n    After all, the MVVM properties of this library are mutable \n    wrapper types with regular getter and setter methods.\n    Although properties are mutable, their items are expected to\n    be immutable data carriers, such as ints, doubles, strings or records.\n    In case of records (or other custom value oriented data types),\n    there is really no limit to how deeply nested the data structure can be.\n    You may even want to model your entire application state as a single record\n    composed of other records, lists, maps and primitives.\n    This is where the Property Lens comes in:\n\n    You can create a lens property from any regular property\n    holding an immutable data structure, and then use the lens property\n    like a regular property.\n\n    Under the hood the lens property will use the lens pattern to access\n    and update the nested data structure of the original property.\n\n    In this specification we will demonstrate how to create and use\n    lens properties and also explore edge cases and limitations.\n\n    In this Specification we are using the following \n    data structure classes:\n    ````java\n        import java.time.LocalDate;\n        import java.util.List;\n\n        // Enums\n        enum Genre {\n            FICTION, NON_FICTION, SCIENCE, FANTASY, BIOGRAPHY, HISTORY\n        }\n\n        enum MembershipLevel {\n            BASIC, SILVER, GOLD, PLATINUM\n        }\n\n        // Records\n        public record Author(String firstName, String lastName, LocalDate birthDate, List<String> books) {\n            public Author withFirstName(String firstName) {\n                return new Author(firstName, this.lastName, this.birthDate, this.books);\n            }\n\n            public Author withLastName(String lastName) {\n                return new Author(this.firstName, lastName, this.birthDate, this.books);\n            }\n\n            public Author withBirthDate(LocalDate birthDate) {\n                return new Author(this.firstName, this.lastName, birthDate, this.books);\n            }\n\n            public Author withBooks(List<String> books) {\n                return new Author(this.firstName, this.lastName, this.birthDate, books);\n            }\n        }\n\n        public record Book(String title, Author author, Genre genre, LocalDate publicationDate, int pageCount) {\n            public Book withTitle(String title) {\n                return new Book(title, this.author, this.genre, this.publicationDate, this.pageCount);\n            }\n\n            public Book withAuthor(Author author) {\n                return new Book(this.title, author, this.genre, this.publicationDate, this.pageCount);\n            }\n\n            public Book withGenre(Genre genre) {\n                return new Book(this.title, this.author, genre, this.publicationDate, this.pageCount);\n            }\n\n            public Book withPublicationDate(LocalDate publicationDate) {\n                return new Book(this.title, this.author, this.genre, publicationDate, this.pageCount);\n            }\n\n            public Book withPageCount(int pageCount) {\n                return new Book(this.title, this.author, this.genre, this.publicationDate, pageCount);\n            }\n        }\n\n        public record Member(String memberId, String firstName, String lastName, MembershipLevel membershipLevel, LocalDate joinDate, String email) {\n            public Member withMemberId(String memberId) {\n                return new Member(memberId, this.firstName, this.lastName, this.membershipLevel, this.joinDate, this.email);\n            }\n\n            public Member withFirstName(String firstName) {\n                return new Member(this.memberId, firstName, this.lastName, this.membershipLevel, this.joinDate, this.email);\n            }\n\n            public Member withLastName(String lastName) {\n                return new Member(this.memberId, this.firstName, lastName, this.membershipLevel, this.joinDate, this.email);\n            }\n\n            public Member withMembershipLevel(MembershipLevel membershipLevel) {\n                return new Member(this.memberId, this.firstName, this.lastName, membershipLevel, this.joinDate, this.email);\n            }\n\n            public Member withJoinDate(LocalDate joinDate) {\n                return new Member(this.memberId, this.firstName, this.lastName, this.membershipLevel, joinDate, this.email);\n            }\n\n            public Member withEmail(String email) {\n                return new Member(this.memberId, this.firstName, this.lastName, this.membershipLevel, this.joinDate, email);\n            }\n        }\n\n        public record Loan(String loanId, Book book, Member member, LocalDate loanDate, LocalDate returnDate, boolean returned) {\n            public Loan withLoanId(String loanId) {\n                return new Loan(loanId, this.book, this.member, this.loanDate, this.returnDate, this.returned);\n            }\n\n            public Loan withBook(Book book) {\n                return new Loan(this.loanId, book, this.member, this.loanDate, this.returnDate, this.returned);\n            }\n\n            public Loan withMember(Member member) {\n                return new Loan(this.loanId, this.book, member, this.loanDate, this.returnDate, this.returned);\n            }\n\n            public Loan withLoanDate(LocalDate loanDate) {\n                return new Loan(this.loanId, this.book, this.member, loanDate, this.returnDate, this.returned);\n            }\n\n            public Loan withReturnDate(LocalDate returnDate) {\n                return new Loan(this.loanId, this.book, this.member, this.loanDate, returnDate, this.returned);\n            }\n\n            public Loan withReturned(boolean returned) {\n                return new Loan(this.loanId, this.book, this.member, this.loanDate, this.returnDate, returned);\n            }\n        }\n        ```",
   "subjects":["sprouts.impl.PropertyLens","sprouts.Var"],
   "statistics":{
-    "runs":"22",
+    "runs":"24",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -549,6 +549,64 @@
         {"kind":"and","text":"Then again change three different fields on three different channels.","code":["authorProperty.set(From.ALL, author.withFirstName(\"Jane\"))","authorProperty.set(From.ALL, author.withFirstName(\"Jane\")) // No change","authorProperty.set(From.VIEW, author.withLastName(\"Mayer\"))","authorProperty.set(From.VIEW_MODEL, author.withBooks([\"Great Book\", \"Awesome Book\"]))"]},
 
         {"kind":"then","text":"The observer was not notified of any changes.","code":["trace == [\"!\", \"!\", \"!\"]"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A lens on a property an effect on a view on this same property, even if it is de-referenced.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A lens is essentially just a narrow view on a property.\n            So when the original property is no longer referenced, the lens\n            will still maintain the state of the original property.\n            So this means that another view on the same property \n            will continue to be updated correctly through the \n            lens even if the link between the two is no\n            longer accessible.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create a simple property for the  `Author` record.","code":["var author = new Author(\"Lisa\", \"Su\", LocalDate.of(1969, 11, 7), [\"Ryzen\", \"Epyc\"])","var authorProperty = Var.of(author)","var authorRef = new WeakReference(authorProperty)"]},
+
+        {"kind":"and","text":"We create a lens as well as a view, both focusing on the first name of the author.","code":["var firstNameLens = authorProperty.zoomTo(Author::firstName, Author::withFirstName)","var firstNameView = authorProperty.viewAsString(Author::firstName)"]},
+
+        {"kind":"and","text":"We create a trace list for the view, to observe the changes from mutating the lens.","code":["var trace = []","firstNameView.onChange(From.ALL, it -> trace << it.get())"]},
+
+        {"kind":"expect","text":"The initial values are correct.","code":["firstNameLens.get() == \"Lisa\"","firstNameView.get() == \"Lisa\"","trace.isEmpty()"]},
+
+        {"kind":"when","text":"We change the first name of the author through the lens....","code":["firstNameLens.set(\"Lisa-Marie\")"]},
+
+        {"kind":"then","text":"The lens and the view should have the new first name.","code":["firstNameLens.get() == \"Lisa-Marie\"","firstNameView.get() == \"Lisa-Marie\"","trace == [\"Lisa-Marie\"]"]},
+
+        {"kind":"when","text":"We de-reference the original property.","code":["authorProperty = null"]},
+
+        {"kind":"and","text":"We wait for the garbage collector to run.","code":["waitForGarbageCollection()"]},
+
+        {"kind":"then","text":"The author property did not get garbage collected.","code":["authorRef.get() != null"]},
+
+        {"kind":"when","text":"We change the first name of the author through the lens again...","code":["firstNameLens.set(\"Lisa-Marie-Anne\")"]},
+
+        {"kind":"then","text":"The lens and the view should have the new first name.","code":["firstNameLens.get() == \"Lisa-Marie-Anne\"","firstNameView.get() == \"Lisa-Marie-Anne\"","trace == [\"Lisa-Marie\", \"Lisa-Marie-Anne\"]"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A lens stays in memory when there is a view on it.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A lens is a narrowed down mutable view on a property.\n            So when a view is then created on this lens and the lens\n            is de-referenced, then it must be kept in memory as long\n            as the source property is still in memory.\n\n            This is because modifications to the source property\n            must be propagated through the lens to the view.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create a simple property for the  `Memebr` record, a lens, and a view.","code":["var member = new Member(\"42\", \"Lilly\", \"Lemon\", MembershipLevel.GOLD, LocalDate.of(2019, 7, 24), null)","var memberProperty = Var.of(member)","var nameLens = memberProperty.zoomTo(Member::firstName, Member::withFirstName)","var nameView = nameLens.viewAsString(it -> it.toUpperCase())","var weakRef = new WeakReference(nameLens)"]},
+
+        {"kind":"and","text":"We create a trace list for the view, to observe the changes from mutating the lens.","code":["var trace = []","nameView.onChange(From.ALL, it -> trace << it.get())"]},
+
+        {"kind":"expect","text":"The initial values are correct.","code":["nameLens.get() == \"Lilly\"","nameView.get() == \"LILLY\"","trace.isEmpty()"]},
+
+        {"kind":"when","text":"We now de-reference the lens and wait for the garbage collector to run.","code":["nameLens = null","waitForGarbageCollection()"]},
+
+        {"kind":"then","text":"The lens did not get garbage collected.","code":["weakRef.get() != null"]},
+
+        {"kind":"when","text":"We change the first name of the member through the view.","code":["memberProperty.set(member.withFirstName(\"Sally\"))"]},
+
+        {"kind":"then","text":"The view should have the new first name, despite the lens being de-referenced.","code":["nameView.get() == \"SALLY\"","trace == [\"SALLY\"]"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }
