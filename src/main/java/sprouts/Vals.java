@@ -12,19 +12,21 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 /**
- *  An immutable view of a list of immutably viewed properties that can be observed,
- *  iterated over, mapped, filtered, turned into a stream, and more.
+ *  A read only API of a list of read-only viewed properties that can be observed,
+ *  iterated over, mapped, filtered, turned into a stream, and more. <br>
+ *  Use {@link #view()} to create a weakly referenced {@link Viewables} instance
+ *  that can be observed for changes using the {@link Viewables#onChange(Action)} method.
  * 	<p>
  * 	Note that the name of this class is short for "values". This name was deliberately chosen because
  * 	it is short, concise and yet clearly conveys the same meaning as other names used to model this
- * 	kind of pattern, like "properties", "observable objects", "observable values", "observable properts", etc.
+ * 	kind of pattern, like "properties", "observable objects", "observable values", "observable properties", etc.
  * 	<p>
  * 	<b>Please take a look at the <a href="https://globaltcad.github.io/sprouts/">living sprouts documentation</a>
  * 	where you can browse a large collection of examples demonstrating how to use the API of this class.</b>
  *
  * @param <T> The type of the properties.
  */
-public interface Vals<T extends @Nullable Object> extends Iterable<T>, Observable {
+public interface Vals<T extends @Nullable Object> extends Iterable<T> {
 
     /**
      *  Create a new empty {@link Vals} instance.
@@ -205,7 +207,32 @@ public interface Vals<T extends @Nullable Object> extends Iterable<T>, Observabl
      */
     int size();
 
-    default <U> Vals<U> view( U nullObject, U errorObject, Function<T, @Nullable U> mapper ) {
+    /**
+     *  Creates a weakly referenced {@link Viewables} instance from this list of properties,
+     *  which is functionally equivalent to this list of properties, except that you can
+     *  register change listeners on it using the {@link Viewables#onChange(Action)} method.
+     *
+     * @return A weakly referenced {@link Viewables} instance.
+     */
+    default Viewables<T> view() {
+        return Viewables.cast(this); // TODO: create this through factory
+    }
+
+    /**
+     *  Creates a weakly referenced {@link Viewables} instance from this list of properties
+     *  and a dynamic mapper function that maps the items of the properties to another type.
+     *  The mapper function is called during the process of creating the {@link Viewables}
+     *  and whenever the items of the properties change.
+     *  The {@link Viewables} instance created this way can be observed for changes
+     *  using the {@link Viewables#onChange(Action)} method.
+     *
+     * @param nullObject The null object of the new type, which is used when the mapper returns null.
+     * @param errorObject The error object of the new type, which is used when the mapper throws an exception.
+     * @param mapper The mapper function that maps the items of the properties to another type.
+     * @return A weakly referenced {@link Viewables} instance.
+     * @param <U> The type of the items in the new {@link Viewables} instance.
+     */
+    default <U> Viewables<U> view( U nullObject, U errorObject, Function<T, @Nullable U> mapper ) {
         return Sprouts.factory().viewOf(nullObject, errorObject, this, mapper);
     }
 
@@ -217,10 +244,10 @@ public interface Vals<T extends @Nullable Object> extends Iterable<T>, Observabl
      *        The integer item of the returned property will be updated
      *        whenever the size of the list of properties changes.
      */
-    default Val<Integer> viewSize() {
+    default Viewable<Integer> viewSize() {
         Var<Integer> size = Var.of(size());
-        onChange( v -> size.set(v.vals().size()) );
-        return size;
+        Viewables.cast(this).onChange( v -> size.set(v.vals().size()) );
+        return Viewable.cast(size);
     }
 
     /**
@@ -232,10 +259,10 @@ public interface Vals<T extends @Nullable Object> extends Iterable<T>, Observabl
      *         the boolean item of the returned property will be updated
      *         accordingly.
      */
-    default Val<Boolean> viewIsEmpty() {
+    default Viewable<Boolean> viewIsEmpty() {
         Var<Boolean> empty = Var.of(isEmpty());
-        onChange( v -> empty.set(v.vals().isEmpty()) );
-        return empty;
+        Viewables.cast(this).onChange( v -> empty.set(v.vals().isEmpty()) );
+        return Viewable.cast(empty);
     }
 
     /**
@@ -247,10 +274,10 @@ public interface Vals<T extends @Nullable Object> extends Iterable<T>, Observabl
      *         the boolean item of the returned property will be updated
      *         accordingly.
      */
-    default Val<Boolean> viewIsNotEmpty() {
+    default Viewable<Boolean> viewIsNotEmpty() {
         Var<Boolean> notEmpty = Var.of(isNotEmpty());
-        onChange( v -> notEmpty.set(v.vals().isNotEmpty()) );
-        return notEmpty;
+        Viewables.cast(this).onChange( v -> notEmpty.set(v.vals().isNotEmpty()) );
+        return Viewable.cast(notEmpty);
     }
 
     /**
@@ -381,14 +408,6 @@ public interface Vals<T extends @Nullable Object> extends Iterable<T>, Observabl
         }
         return true;
     }
-
-    /**
-     *  Similar to {@link Viewable#onChange(Channel, Action)} but for a list of properties.
-     *
-     * @param action The action to perform when the list of properties is shown (which is called when its state changes).
-     * @return This list of properties.
-     */
-    Vals<T> onChange( Action<ValsDelegate<T>> action );
 
     /**
      *  Similar to {@link Var#fireChange(Channel)} but for a list of properties.
@@ -536,4 +555,6 @@ public interface Vals<T extends @Nullable Object> extends Iterable<T>, Observabl
      * @return True if this list of properties is mutable, false if it is immutable.
      */
     boolean isMutable();
+
+    boolean isView();
 }

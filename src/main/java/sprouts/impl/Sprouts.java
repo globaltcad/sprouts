@@ -201,7 +201,7 @@ public final class Sprouts implements SproutsFactory
     }
 
     @Override
-    public <T, U> Vals<U> viewOf(U nullObject, U errorObject, Vals<T> source, Function<T, @Nullable U> mapper) {
+    public <T, U> Viewables<U> viewOf(U nullObject, U errorObject, Vals<T> source, Function<T, @Nullable U> mapper) {
         Objects.requireNonNull(nullObject);
         Objects.requireNonNull(errorObject);
         Objects.requireNonNull(source);

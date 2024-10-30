@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
  *  A base class for {@link Vars} implementations, a property list
  *  with support for registering change listeners.
  */
-final class PropertyList<T extends @Nullable Object> implements Vars<T> {
+final class PropertyList<T extends @Nullable Object> implements Vars<T>, Viewables<T> {
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(PropertyList.class);
 
     public static <T> Vars<T> of( boolean immutable, Class<T> type ) {
@@ -414,6 +414,11 @@ final class PropertyList<T extends @Nullable Object> implements Vars<T> {
         return !_isImmutable;
     }
 
+    @Override
+    public boolean isView() {
+        return false;
+    }
+
     private ValsDelegate<T> _createDelegate(
             int index, Change type, @Nullable Var<T> newVal, @Nullable Var<T> oldVal
     ) {
@@ -555,7 +560,8 @@ final class PropertyList<T extends @Nullable Object> implements Vars<T> {
 
     @Override
     public Observable subscribe( Observer observer ) {
-        return this.onChange( new SproutChangeListener<>(observer) );
+        this.onChange( new SproutChangeListener<>(observer) );
+        return this;
     }
 
     @Override

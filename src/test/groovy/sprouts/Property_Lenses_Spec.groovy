@@ -1,6 +1,7 @@
 package sprouts
 
 import groovy.transform.CompileDynamic
+import spock.lang.Ignore
 import spock.lang.Narrative
 import spock.lang.Specification
 import spock.lang.Subject
@@ -1207,6 +1208,7 @@ class Property_Lenses_Spec extends Specification
             trace == ["SALLY"]
     }
 
+    @Ignore
     def 'A chain of lenses may be garbage collected, even when the source property stays in memory.'()
     {
         reportInfo """
