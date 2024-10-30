@@ -379,7 +379,7 @@ public interface Vals<T extends @Nullable Object> extends Iterable<T>, Observabl
     }
 
     /**
-     *  Similar to {@link Var#onChange(Channel, Action)} but for a list of properties.
+     *  Similar to {@link Viewable#onChange(Channel, Action)} but for a list of properties.
      *
      * @param action The action to perform when the list of properties is shown (which is called when its state changes).
      * @return This list of properties.

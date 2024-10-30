@@ -9,30 +9,35 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiFunction;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.regex.Pattern;
 
 /**
- * 	A read only view on a wrapped item which can be observed for changes
- * 	using {@link Action}s registered through the {@link #onChange(Channel, Action)} method,
+ * 	A read only wrapper around an item which can be mapped to a weakly referenced {@link Viewable}
+ * 	to then be observed for changes using {@link Action}s registered through the
+ * 	{@link Viewable#onChange(Channel, Action)} method,
  * 	where the {@link Channel} is used to distinguish between changes from
- * 	different sources (usually application layers like the view model or the view).
- * 	The API of this is very similar to the {@link Optional} API in the
- * 	sense that it is a null safe wrapper around a single item, which may also be missing (null).
+ * 	different sources (usually application layers like the view model or the view).<br>
+ * 	Use {@link #view()} to access a simple no-op life view of the item of this property
+ * 	and register change listeners on it to react to state changes.
+ * 	When the {@link Viewable} is no longer referenced strongly in your code,
+ * 	then it will be garbage collected alongside all of its listeners.<br>
  * 	<p>
- * 	The {@link Channel} supplied to the {@link #onChange(Channel, Action)} method to register an {@link Action}
+ * 	The {@link Channel} supplied to the {@link Viewable#onChange(Channel, Action)} method to register an {@link Action}
  * 	callback is expected to be a simple constant, usually one of the {@link From} constants
  * 	like for example {@link From#VIEW_MODEL} or {@link From#VIEW}.
  * 	You may fire a change event for a particular channel using the {@link #fireChange(Channel)} method or
  * 	in case the property is also a mutable {@link Var}, then through the {@link Var#set(Channel, Object)}.<br>
  * 	Note that {@link Var#set(Object)} method defaults to the {@link From#VIEW_MODEL} channel.
  * 	<p>
- * 	If you no longer need to observe changes on this property, then you can remove the registered {@link Action}
- * 	callback using the {@link #unsubscribe(Subscriber)} method ({@link Action} is also a {@link Subscriber}).
+ * 	If you no longer need to observe changes a {@link Viewable} created from this property,
+ * 	then you can remove any registered {@link Action} callback using
+ * 	the {@link Viewable#unsubscribe(Subscriber)} method ({@link Action} is also a {@link Subscriber}).
  * 	<p>
- * 	Note that the name of this class is short for "value". This name was deliberately chosen because
+ * 	Note that the name of this class is short for "value".
+ *  Its API is inspired by the {@link Optional} API in the
+ *  sense that it is a null safe wrapper around a single item, which may also be missing (null).
+ *  The name of this class was deliberately chosen because
  * 	it is short, concise and yet clearly conveys the same meaning as other names used to model this
  * 	kind of pattern, like "property", "observable object", "observable value", "observable property", etc.
  *  Using {@link Var} and {@link Val} as names also allows for the distinction between
@@ -43,9 +48,11 @@ import java.util.regex.Pattern;
  * 	where you can browse a large collection of examples demonstrating how to use the API of this class.</b>
  *
  * @see Var A mutable subclass of this class.
+ * @see Viewable A weakly referenced, read only live view of mutable properties
+ *               to be used for registering change listeners.
  * @param <T> The type of the item held by this {@link Val}.
  */
-public interface Val<T extends @Nullable Object> extends Observable, Maybe<T> {
+public interface Val<T extends @Nullable Object> extends Maybe<T> {
 
 	/**
 	 *  Use this factory method to create a new {@link Val} instance
@@ -166,7 +173,7 @@ public interface Val<T extends @Nullable Object> extends Observable, Maybe<T> {
 	 * @throws NullPointerException If the combiner function returns a {@code null} reference
 	 *                              <b>when it is first called</b>.
 	 */
-	static <T extends @Nullable Object, U extends @Nullable Object> Val<@NonNull T> viewOf(Val<T> first, Val<U> second, BiFunction<T, U, @NonNull T> combiner ) {
+	static <T extends @Nullable Object, U extends @Nullable Object> Viewable<@NonNull T> viewOf( Val<T> first, Val<U> second, BiFunction<T, U, @NonNull T> combiner ) {
 		Objects.requireNonNull(first);
 		Objects.requireNonNull(second);
 		Objects.requireNonNull(combiner);
@@ -195,9 +202,9 @@ public interface Val<T extends @Nullable Object> extends Observable, Maybe<T> {
 	 *                 the second argument is the item of the second property.
 	 * @param <T>      The type of the item of the first property and the returned property.
 	 * @param <U>      The type of the second property.
-	 * @return A new nullable {@link Val} instance which is a live view of the two given properties.
+	 * @return A new nullable {@link Viewable} instance which is a live view of the two given properties.
 	 */
-	static <T extends @Nullable Object, U extends @Nullable Object> Val<@Nullable T> viewOfNullable(Val<T> first, Val<U> second, BiFunction<T, U, @Nullable T> combiner ) {
+	static <T extends @Nullable Object, U extends @Nullable Object> Viewable<@Nullable T> viewOfNullable(Val<T> first, Val<U> second, BiFunction<T, U, @Nullable T> combiner ) {
 		Objects.requireNonNull(first);
 		Objects.requireNonNull(second);
 		Objects.requireNonNull(combiner);
@@ -231,11 +238,11 @@ public interface Val<T extends @Nullable Object> extends Observable, Maybe<T> {
 	 * @param <T>      The type of the first property.
 	 * @param <U>      The type of the second property.
 	 * @param <R>      The type of the returned property.
-	 * @return A new {@link Val} instance which is a live view of the two given properties.
+	 * @return A new {@link Viewable} instance which is a live view of the two given properties.
 	 * @throws NullPointerException If the combiner function returns a {@code null} reference
 	 *                              <b>when it is first called</b>.
 	 */
-	static <T extends @Nullable Object, U extends @Nullable Object, R> Val<R> viewOf(Class<R> type, Val<T> first, Val<U> second, BiFunction<T, U, R> combiner ) {
+	static <T extends @Nullable Object, U extends @Nullable Object, R> Viewable<R> viewOf(Class<R> type, Val<T> first, Val<U> second, BiFunction<T, U, R> combiner ) {
 		Objects.requireNonNull(type);
 		Objects.requireNonNull(first);
 		Objects.requireNonNull(second);
@@ -267,9 +274,9 @@ public interface Val<T extends @Nullable Object> extends Observable, Maybe<T> {
 	 * @param <T>      The type of the first property.
 	 * @param <U>      The type of the second property.
 	 * @param <R>      The type of the returned property.
-	 * @return A new {@link Val} instance which is a live view of the two given properties.
+	 * @return A new {@link Viewable} instance which is a live view of the two given properties.
 	 */
-	static <T extends @Nullable Object, U extends @Nullable Object, R> Val<@Nullable R> viewOfNullable(Class<R> type, Val<T> first, Val<U> second, BiFunction<T, U, @Nullable R> combiner ) {
+	static <T extends @Nullable Object, U extends @Nullable Object, R> Viewable<@Nullable R> viewOfNullable(Class<R> type, Val<T> first, Val<U> second, BiFunction<T, U, @Nullable R> combiner ) {
 		Objects.requireNonNull(type);
 		Objects.requireNonNull(first);
 		Objects.requireNonNull(second);
@@ -379,6 +386,16 @@ public interface Val<T extends @Nullable Object> extends Observable, Maybe<T> {
 	}
 
 	/**
+	 *  Returns a no-op {@link Viewable} of this {@link Val} to
+	 *  be used for registering change listeners (see {@link Viewable#onChange(Channel, Action)}).
+	 * @return A weakly referenced {@link Viewable} to be used for registering
+	 *         change listeners.
+	 */
+	default Viewable<T> view() {
+		return Sprouts.factory().viewOf(this);
+	}
+
+	/**
 	 *  Creates and returns a boolean property which is a live view of the {@link #isPresent()}
 	 *  flag of this property.
 	 *
@@ -387,9 +404,9 @@ public interface Val<T extends @Nullable Object> extends Observable, Maybe<T> {
 	 *         So whenever the {@link #isPresent()} flag of this property changes,
 	 *         the item of the returned property will be updated to reflect the change.
 	 */
-	default Val<Boolean> viewIsPresent() {
+	default Viewable<Boolean> viewIsPresent() {
 		if ( !this.allowsNull() )
-			return Val.of( true );
+			return Viewable.cast(Val.of( true ));
 		return viewAs(Boolean.class, Objects::nonNull);
 	}
 
@@ -402,9 +419,9 @@ public interface Val<T extends @Nullable Object> extends Observable, Maybe<T> {
 	 *         So whenever the {@link #isEmpty()} flag of this property changes,
 	 *         the item of the returned property will be updated to reflect the change.
 	 */
-	default Val<Boolean> viewIsEmpty() {
+	default Viewable<Boolean> viewIsEmpty() {
 		if ( !this.allowsNull() )
-			return Val.of( false );
+			return Viewable.cast(Val.of( false ));
 		else
 			return viewAs(Boolean.class, Objects::isNull);
 	}
@@ -426,7 +443,7 @@ public interface Val<T extends @Nullable Object> extends Observable, Maybe<T> {
 	 * @param <U>    The type of the item returned from the mapping function
 	 * @return A property that is a live view of this property based on the provided mapping function.
 	 */
-	default <U> Val<U> viewAs( Class<U> type, Function<T, U> mapper ) {
+	default <U> Viewable<U> viewAs( Class<U> type, Function<T, U> mapper ) {
 		return Sprouts.factory().viewOf( type, this, mapper );
 	}
 
@@ -448,7 +465,7 @@ public interface Val<T extends @Nullable Object> extends Observable, Maybe<T> {
 	 * @param <U>        The type of the resulting property.
 	 * @return A property that is a live view of this property based on the provided mapping function and null object.
 	 */
-	default <U> Val<U> view( U nullObject, Function<T, @Nullable U> mapper ) {
+	default <U> Viewable<U> view( U nullObject, Function<T, @Nullable U> mapper ) {
 		return view(nullObject, nullObject, mapper);
 	}
 
@@ -471,7 +488,7 @@ public interface Val<T extends @Nullable Object> extends Observable, Maybe<T> {
 	 * @param <U>         The type of the resulting property.
 	 * @return A property that is a live view of this property based on the provided mapping function and null object.
 	 */
-	default <U> Val<U> view( U nullObject, U errorObject, Function<T, @Nullable U> mapper ) {
+	default <U> Viewable<U> view( U nullObject, U errorObject, Function<T, @Nullable U> mapper ) {
 		return Sprouts.factory().viewOf(nullObject, errorObject, this, mapper);
 	}
 
@@ -487,7 +504,7 @@ public interface Val<T extends @Nullable Object> extends Observable, Maybe<T> {
 	 * @param <U>    The type of the resulting property.
 	 * @return A nullable property that is a live view of this property based on the provided mapping function.
 	 */
-	default <U> Val<@Nullable U> viewAsNullable( Class<U> type, Function<T, @Nullable U> mapper ) {
+	default <U> Viewable<@Nullable U> viewAsNullable( Class<U> type, Function<T, @Nullable U> mapper ) {
 		return Sprouts.factory().viewOfNullable( type, this, mapper );
 	}
 
@@ -515,7 +532,7 @@ public interface Val<T extends @Nullable Object> extends Observable, Maybe<T> {
 	 * @param mapper the mapping function to apply to an item, if present
 	 * @return A property that is a live view of this property based on the provided mapping function.
 	 */
-	default Val<T> view( Function<T, T> mapper ) {
+	default Viewable<T> view( Function<T, T> mapper ) {
 		return viewAs( type(), mapper );
 	}
 
@@ -537,7 +554,7 @@ public interface Val<T extends @Nullable Object> extends Observable, Maybe<T> {
 	 * @param mapper The mapping function to map the item of this property to a {@link String}.
 	 * @return A property that is a live view of this property based on the provided mapping function.
 	 */
-	default Val<String> viewAsString( String nullObject, Function<T, @Nullable String> mapper ) {
+	default Viewable<String> viewAsString( String nullObject, Function<T, @Nullable String> mapper ) {
 		Objects.requireNonNull(nullObject);
 		return view(nullObject, nullObject, mapper);
 	}
@@ -559,7 +576,7 @@ public interface Val<T extends @Nullable Object> extends Observable, Maybe<T> {
 	 * @param mapper The mapping function to map the item of this property to a {@link String}.
 	 * @return A property that is a live view of this property based on the provided mapping function.
 	 */
-	default Val<String> viewAsString( Function<T, @Nullable String> mapper ) {
+	default Viewable<String> viewAsString( Function<T, @Nullable String> mapper ) {
 		return view("", "", mapper);
 	}
 
@@ -578,7 +595,7 @@ public interface Val<T extends @Nullable Object> extends Observable, Maybe<T> {
 	 *
 	 * @return A property that is a live view of this property based on the provided mapping function.
 	 */
-	default Val<String> viewAsString() {
+	default Viewable<String> viewAsString() {
 		return view("", "", v -> v == null ? null  : v.toString());}
 
 	/**
@@ -599,7 +616,7 @@ public interface Val<T extends @Nullable Object> extends Observable, Maybe<T> {
 	 * @param mapper The mapping function to map the item of this property to a {@link Double}.
 	 * @return A property that is a live view of this property based on the provided mapping function.
 	 */
-	default Val<Double> viewAsDouble( double nullObject, Function<T, @Nullable Double> mapper ) {
+	default Viewable<Double> viewAsDouble( double nullObject, Function<T, @Nullable Double> mapper ) {
 		return view(nullObject, Double.NaN, mapper);
 	}
 
@@ -621,7 +638,7 @@ public interface Val<T extends @Nullable Object> extends Observable, Maybe<T> {
 	 * @param mapper The mapping function to map the item of this property to a {@link Double}.
 	 * @return A property that is a live view of this property based on the provided mapping function.
 	 */
-	default Val<Double> viewAsDouble( Function<T, @Nullable Double> mapper ) {
+	default Viewable<Double> viewAsDouble( Function<T, @Nullable Double> mapper ) {
 		return view(0.0, Double.NaN, mapper);
 	}
 
@@ -641,7 +658,7 @@ public interface Val<T extends @Nullable Object> extends Observable, Maybe<T> {
 	 *
 	 * @return A {@link Double} property that is a live view of this property.
 	 */
-	default Val<Double> viewAsDouble() {
+	default Viewable<Double> viewAsDouble() {
 		return view( 0.0, Double.NaN, v -> v == null ? null : Double.parseDouble( v.toString() ));
 	}
 
@@ -663,7 +680,7 @@ public interface Val<T extends @Nullable Object> extends Observable, Maybe<T> {
 	 * @param mapper The mapping function to map the item of this property to a {@link Integer}.
 	 * @return A property that is a live view of this property based on the provided mapping function.
 	 */
-	default Val<Integer> viewAsInt( int nullObject, Function<T, @Nullable Integer> mapper ) {
+	default Viewable<Integer> viewAsInt( int nullObject, Function<T, @Nullable Integer> mapper ) {
 		return view(nullObject, nullObject, mapper);
 	}
 
@@ -685,7 +702,7 @@ public interface Val<T extends @Nullable Object> extends Observable, Maybe<T> {
 	 * @param mapper The mapping function to map the item of this property to a {@link Integer}.
 	 * @return A property that is a live view of this property based on the provided mapping function.
 	 */
-	default Val<Integer> viewAsInt( Function<T, @Nullable Integer> mapper ) {
+	default Viewable<Integer> viewAsInt( Function<T, @Nullable Integer> mapper ) {
 		return view(0, 0, mapper);
 	}
 
@@ -705,7 +722,7 @@ public interface Val<T extends @Nullable Object> extends Observable, Maybe<T> {
 	 *
 	 * @return A {@link Integer} property that is a live view of this property.
 	 */
-	default Val<Integer> viewAsInt() {
+	default Viewable<Integer> viewAsInt() {
 		return view(0, 0, v -> v == null ? null : Integer.parseInt(v.toString()));
 	}
 
@@ -755,22 +772,8 @@ public interface Val<T extends @Nullable Object> extends Observable, Maybe<T> {
 	default boolean hasID() { return !Sprouts.factory().defaultId().equals(id()); }
 
 	/**
-	 *  Use this to register an observer lambda for a particular {@link Channel},
-	 *  which will be called whenever the item
-	 *  wrapped by this {@link Val} changes through the {@code Var::set(Channel, T)} method.
-	 *  The lambda will receive the current item of this property.
-	 *  The default channel is {@link From#VIEW_MODEL}, so if you use the {@code Var::set(T)} method
-	 *  then the observer lambdas registered through this method will be called.
-	 *
-	 * @param channel The channel from which the item is set.
-	 * @param action The lambda which will be called whenever the item wrapped by this {@link Var} changes.
-	 * @return The {@link Val} instance itself.
-	 */
-	Val<T> onChange( Channel channel, Action<ValDelegate<T>> action );
-
-	/**
 	 *  Triggers all observer lambdas for the given {@link Channel}.
-	 *  Change listeners may be registered using the {@link #onChange(Channel, Action)} method.
+	 *  Change listeners may be registered using the {@link Viewable#onChange(Channel, Action)} method.
 	 *  Note that when the {@code Var::set(T)} method is called
 	 *  then this will automatically translate to {@code fireChange(From.VIEW_MODEL)}.
 	 *  So it is supposed to be used by the view to update the UI components.

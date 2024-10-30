@@ -153,7 +153,13 @@ public final class Sprouts implements SproutsFactory
     }
 
     @Override
-    public <T extends @Nullable Object, U extends @Nullable Object> Val<@NonNull T> viewOf(Val<T> first, Val<U> second, BiFunction<T, U, @NonNull T> combiner ) {
+    public <T> Viewable<T> viewOf(Val<T> source) {
+        Objects.requireNonNull(source);
+        return PropertyView.of( source );
+    }
+
+    @Override
+    public <T extends @Nullable Object, U extends @Nullable Object> Viewable<@NonNull T> viewOf(Val<T> first, Val<U> second, BiFunction<T, U, @NonNull T> combiner ) {
         Objects.requireNonNull(first);
         Objects.requireNonNull(second);
         Objects.requireNonNull(combiner);
@@ -161,7 +167,7 @@ public final class Sprouts implements SproutsFactory
     }
 
     @Override
-    public <T extends @Nullable Object, U extends @Nullable Object> Val<@Nullable T> viewOfNullable(Val<T> first, Val<U> second, BiFunction<T, U, @Nullable T> combiner ) {
+    public <T extends @Nullable Object, U extends @Nullable Object> Viewable<@Nullable T> viewOfNullable(Val<T> first, Val<U> second, BiFunction<T, U, @Nullable T> combiner ) {
         Objects.requireNonNull(first);
         Objects.requireNonNull(second);
         Objects.requireNonNull(combiner);
@@ -169,7 +175,7 @@ public final class Sprouts implements SproutsFactory
     }
 
     @Override
-    public <T extends @Nullable Object, U extends @Nullable Object, R> Val<R> viewOf(Class<R> type, Val<T> first, Val<U> second, BiFunction<T, U, R> combiner) {
+    public <T extends @Nullable Object, U extends @Nullable Object, R> Viewable<R> viewOf(Class<R> type, Val<T> first, Val<U> second, BiFunction<T, U, R> combiner) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(first);
         Objects.requireNonNull(second);
@@ -178,7 +184,7 @@ public final class Sprouts implements SproutsFactory
     }
 
     @Override
-    public <T extends @Nullable Object, U extends @Nullable Object, R> Val<@Nullable R> viewOfNullable(Class<R> type, Val<T> first, Val<U> second, BiFunction<T, U, @Nullable R> combiner) {
+    public <T extends @Nullable Object, U extends @Nullable Object, R> Viewable<@Nullable R> viewOfNullable(Class<R> type, Val<T> first, Val<U> second, BiFunction<T, U, @Nullable R> combiner) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(first);
         Objects.requireNonNull(second);
@@ -187,7 +193,7 @@ public final class Sprouts implements SproutsFactory
     }
 
     @Override
-    public <T, U> Val<T> viewOf(Class<T> type, Val<U> source, Function<U, T> mapper) {
+    public <T, U> Viewable<T> viewOf(Class<T> type, Val<U> source, Function<U, T> mapper) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(source);
         Objects.requireNonNull(mapper);
@@ -195,7 +201,7 @@ public final class Sprouts implements SproutsFactory
     }
 
     @Override
-    public <T, U> Val<U> viewOf(U nullObject, U errorObject, Val<T> source, Function<T, @Nullable U> mapper) {
+    public <T, U> Viewable<U> viewOf(U nullObject, U errorObject, Val<T> source, Function<T, @Nullable U> mapper) {
         Objects.requireNonNull(nullObject);
 		Objects.requireNonNull(errorObject);
         Objects.requireNonNull(source);
@@ -204,7 +210,7 @@ public final class Sprouts implements SproutsFactory
     }
 
     @Override
-    public <T, U> Val<@Nullable U> viewOfNullable(Class<U> type, Val<T> source, Function<T, @Nullable U> mapper) {
+    public <T, U> Viewable<@Nullable U> viewOfNullable(Class<U> type, Val<T> source, Function<T, @Nullable U> mapper) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(source);
         Objects.requireNonNull(mapper);
