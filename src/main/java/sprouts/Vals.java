@@ -210,7 +210,14 @@ public interface Vals<T extends @Nullable Object> extends Iterable<T> {
     /**
      *  Creates a weakly referenced {@link Viewables} instance from this list of properties,
      *  which is functionally equivalent to this list of properties, except that you can
-     *  register change listeners on it using the {@link Viewables#onChange(Action)} method.
+     *  register change listeners on it using the {@link Viewables#onChange(Action)} method.<br>
+     *  <b>
+     *      Warning: <br>
+     *      If you have change listeners registered the {@link Viewables} instance returned by this method,
+     *      and you do not hold a reference to it,
+     *      then it will be garbage collected alongside all of its change listeners.<br>
+     *      So if there are changes in this list afterwords, the change listeners will not be called!
+     *  </b>
      *
      * @return A weakly referenced {@link Viewables} instance.
      */
@@ -224,7 +231,14 @@ public interface Vals<T extends @Nullable Object> extends Iterable<T> {
      *  The mapper function is called during the process of creating the {@link Viewables}
      *  and whenever the items of the properties change.
      *  The {@link Viewables} instance created this way can be observed for changes
-     *  using the {@link Viewables#onChange(Action)} method.
+     *  using the {@link Viewables#onChange(Action)} method.<br>
+     *  <b>
+     *      Warning: <br>
+     *      If you have change listeners registered the {@link Viewables} instance returned by this method,
+     *      and you do not hold a reference to it,
+     *      then it will be garbage collected alongside all of its change listeners.<br>
+     *      So if there are changes in this list afterwords, the change listeners will not be called!
+     *  </b>
      *
      * @param nullObject The null object of the new type, which is used when the mapper returns null.
      * @param errorObject The error object of the new type, which is used when the mapper throws an exception.
