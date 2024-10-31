@@ -421,8 +421,6 @@ public interface Val<T extends @Nullable Object> extends Maybe<T> {
 	 *         the item of the returned property will be updated to reflect the change.
 	 */
 	default Viewable<Boolean> viewIsPresent() {
-		if ( !this.allowsNull() )
-			return Viewable.cast(Val.of( true ));
 		return viewAs(Boolean.class, Objects::nonNull);
 	}
 
@@ -443,10 +441,7 @@ public interface Val<T extends @Nullable Object> extends Maybe<T> {
 	 *         the item of the returned property will be updated to reflect the change.
 	 */
 	default Viewable<Boolean> viewIsEmpty() {
-		if ( !this.allowsNull() )
-			return Viewable.cast(Val.of( false ));
-		else
-			return viewAs(Boolean.class, Objects::isNull);
+		return viewAs(Boolean.class, Objects::isNull);
 	}
 
 	/**

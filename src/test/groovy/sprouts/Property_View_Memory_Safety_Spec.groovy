@@ -7,8 +7,11 @@ import spock.lang.Title
 
 import java.lang.ref.WeakReference
 import java.time.DayOfWeek
+import java.time.LocalDateTime
 import java.time.Month
+import java.time.MonthDay
 import java.util.concurrent.TimeUnit
+import java.util.function.Supplier
 
 @Title('Viewing Properties')
 @Narrative('''
@@ -315,6 +318,129 @@ class Property_View_Memory_Safety_Spec extends Specification
             the composite property `c` is still updated based on the last known value of `b`.
         """
             c.get() == "aB"
+    }
+
+    def 'Even if property views have change listeners, they will be garbage collected if you do not reference them.'(
+        Supplier<Val<?>> propertySupplier
+    ) {
+        reportInfo """
+            A property view registers a weak action listener on the original parent property
+            it is actively viewing. These weak listeners are automatically removed 
+            when the view becomes eligible for garbage collection.
+            So when the property view is no longer referenced strongly in your code, 
+            it will be garbage collected together with all of its change listeners.
+            
+            So when the source property changes, or when you fire a change event on a source property
+            manually, the change listeners of the view will not be triggered anymore.
+        """
+        given : 'We create the property and reference it strongly.'
+            Val<?> property = propertySupplier.get()
+        and : 'Then we create a view of the property which we also reference weakly.'
+            Val<?> view = property.view()
+            var weakView = new WeakReference(view)
+        and : 'Finally a hashmap used as a trace for every channel.'
+            var trace = [(From.VIEW_MODEL): [], (From.VIEW):[], (From.ALL): []]
+        and : 'We register an observer for every channel.'
+            view.onChange(From.VIEW_MODEL, it -> trace[it.channel()] << "View Model")
+            view.onChange(From.VIEW, it -> trace[it.channel()] << "View")
+            view.onChange(From.ALL, it -> trace[it.channel()] << "All")
+
+        when : 'We now fire a change event on every channel.'
+            property.fireChange(From.VIEW_MODEL)
+            property.fireChange(From.VIEW)
+            property.fireChange(From.ALL)
+        then : 'The trace shows that every observer was triggered.'
+            trace[From.VIEW_MODEL] == ["View Model", "All"]
+            trace[From.VIEW] == ["View", "All"]
+            trace[From.ALL] == ["View Model", "View", "All"]
+
+        when : 'We now get rid of the strong reference to the view.'
+            view = null
+        and : 'We wait for the garbage collector to do its job.'
+            waitForGarbageCollection()
+        then : 'The view is gone.'
+            weakView.get() == null
+
+        when : 'We now clear the trace and fire on every channel again.'
+            trace[From.VIEW_MODEL].clear()
+            trace[From.VIEW].clear()
+            trace[From.ALL].clear()
+            property.fireChange(From.VIEW_MODEL)
+            property.fireChange(From.VIEW)
+            property.fireChange(From.ALL)
+        then : 'The trace shows that no observer was triggered.'
+            trace[From.VIEW_MODEL] == []
+            trace[From.VIEW] == []
+            trace[From.ALL] == []
+
+        where :
+            propertySupplier << [
+                { Var.of(42) },
+                { Var.of("Hello") },
+                { Var.of(DayOfWeek.MONDAY) },
+                { Var.of(Month.JANUARY) },
+                { Var.ofNull(Integer) },
+                { Var.ofNull(String) },
+                { Var.ofNull(DayOfWeek) },
+                { Var.ofNull(Month) },
+                { Vars.of(1, 2, 3).viewSize() },
+                { Var.of(LocalDateTime.now()).zoomTo(LocalDateTime::getMinute, LocalDateTime::withMinute) },
+
+                { Var.of(42).view() },
+                { Var.of("Hello").view() },
+                { Var.of(DayOfWeek.MONDAY).view() },
+                { Var.of(Month.JANUARY).view() },
+                { Var.ofNull(Integer).view() },
+                { Var.ofNull(String).view() },
+                { Var.ofNull(DayOfWeek).view() },
+                { Var.ofNull(Month).view() },
+                { Vars.of(1, 2, 3).viewSize().view() },
+                { Var.of(LocalDateTime.now()).zoomTo(LocalDateTime::getMinute, LocalDateTime::withMinute).view() },
+
+                { Var.of(42).viewAsString() },
+                { Var.of("Hello").viewAsString() },
+                { Var.of(DayOfWeek.MONDAY).viewAsString() },
+                { Var.of(Month.JANUARY).viewAsString() },
+                { Var.ofNull(Integer).viewAsString() },
+                { Var.ofNull(String).viewAsString() },
+                { Var.ofNull(DayOfWeek).viewAsString() },
+                { Var.ofNull(Month).viewAsString() },
+                { Vars.of(1, 2, 3).viewSize().viewAsString() },
+                { Var.of(LocalDateTime.now()).zoomTo(LocalDateTime::getMinute, LocalDateTime::withMinute).viewAsString() },
+
+                { Var.of(42).viewIsPresent() },
+                { Var.of("Hello").viewIsPresent() },
+                { Var.of(DayOfWeek.MONDAY).viewIsPresent() },
+                { Var.of(Month.JANUARY).viewIsPresent() },
+                { Var.ofNull(Integer).viewIsPresent() },
+                { Var.ofNull(String).viewIsPresent() },
+                { Var.ofNull(DayOfWeek).viewIsPresent() },
+                { Var.ofNull(Month).viewIsPresent() },
+                { Vars.of(1, 2, 3).viewSize().viewIsPresent() },
+                { Var.of(LocalDateTime.now()).zoomTo(LocalDateTime::getMinute, LocalDateTime::withMinute).viewIsPresent() },
+
+                { Var.of(42).viewIsEmpty() },
+                { Var.of("Hello").viewIsEmpty() },
+                { Var.of(DayOfWeek.MONDAY).viewIsEmpty() },
+                { Var.of(Month.JANUARY).viewIsEmpty() },
+                { Var.ofNull(Integer).viewIsEmpty() },
+                { Var.ofNull(String).viewIsEmpty() },
+                { Var.ofNull(DayOfWeek).viewIsEmpty() },
+                { Var.ofNull(Month).viewIsEmpty() },
+                { Vars.of(1, 2, 3).viewSize().viewIsEmpty() },
+                { Var.of(LocalDateTime.now()).zoomTo(LocalDateTime::getMinute, LocalDateTime::withMinute).viewIsEmpty() },
+
+                { Var.of("Hello").viewAsInt( s -> s.length() ) },
+                { Var.of("World").viewAsDouble( s -> s.length() / 1.5 ) },
+                { Var.of(42).viewAsNullable( MonthDay, i -> i < 0 ? null : MonthDay.of(1, i % 28) ) },
+                { Var.of(42).viewAs( MonthDay, i -> MonthDay.of(1, i % 28) ) },
+                { Var.of(64).viewAs( DayOfWeek, i -> DayOfWeek.of(i % 7) ) },
+                { Var.ofNull(String).viewAsInt( s -> s.length() ) },
+                { Var.ofNull(String).viewAsDouble( s -> s.length() / 1.5 ) },
+                { Var.ofNull(Integer).viewAsNullable( DayOfWeek, i -> i < 0 ? null : i ) },
+                { Var.ofNull(Integer).view( DayOfWeek.MONDAY, i -> DayOfWeek.of(i % 7) ) },
+                { Vars.of('a', 'b', 'c').viewSize() },
+            ]
     }
 
     /**
