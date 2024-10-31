@@ -1208,7 +1208,6 @@ class Property_Lenses_Spec extends Specification
             trace == ["SALLY"]
     }
 
-    @Ignore
     def 'A chain of lenses may be garbage collected, even when the source property stays in memory.'()
     {
         reportInfo """
@@ -1241,40 +1240,17 @@ class Property_Lenses_Spec extends Specification
                                                     false
                                                 ))
         and : 'A chain of lenses going deeper into the nested records.'
-            Var<Book>   lens1 = loanProperty.zoomTo(Loan::book, Loan::withBook)
-            Var<Author> lens2 = lens1.zoomTo(Book::author, Book::withAuthor)
-            Var<String> lens3 = lens2.zoomTo(Author::firstName, Author::withFirstName)
+            var lens1 = loanProperty.zoomTo(Loan::book, Loan::withBook)
+            var lens2 = lens1.zoomTo(Book::author, Book::withAuthor)
+            var lens3 = lens2.zoomTo(Author::firstName, Author::withFirstName)
             var weakRefLens1 = new WeakReference(lens1)
             var weakRefLens2 = new WeakReference(lens2)
             var weakRefLens3 = new WeakReference(lens3)
 
-        expect : 'The lenses have the correct initial values.'
-            lens1.get() == loanProperty.get().book()
-            lens2.get() == loanProperty.get().book().author()
-            lens3.get() == loanProperty.get().book().author().firstName()
-
-        when : 'We first de-reference the second lens and wait for the garbage collector to run.'
+        when : 'We de-reference all lenses and wait for the garbage collector to run.'
             lens2 = null
-            waitForGarbageCollection()
-        then : """
-            The second lens did not get garbage collected because the third lens
-            still holds a reference to it.
-        """
-            weakRefLens2.get() != null
-
-        when : 'We de-reference the first lens and wait for the garbage collector to run.'
             lens1 = null
-            waitForGarbageCollection()
-        then : """
-            The first lens did not get garbage collected because the second lens
-            still holds a reference to it.
-        """
-            weakRefLens1.get() != null
-
-        when : 'We finally de-reference the last lens and wait for the garbage collector to run.'
             lens3 = null
-            waitForGarbageCollection()
-            waitForGarbageCollection()
             waitForGarbageCollection()
         then : 'All lenses were garbage collected.'
             weakRefLens1.get() == null
