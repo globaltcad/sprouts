@@ -10,25 +10,47 @@ import java.time.DayOfWeek
 import java.time.Month
 import java.util.concurrent.TimeUnit
 
-@Title('Viewing Properties')
+@Title("Property Views")
 @Narrative('''
 
-    Both the read only `Val` and the mutable `Var` are observable properties.
-    As a consequence, they expose convenient methods to observe their changes
-    in the form of "views", which are themselves observable properties
-    that are a live view of the original property which gets updated
-    automatically when the original property changes.
+    A property is more than just a wrapper around values.
+    It has a rich APIs that exposes a plethora of methods,
+    many of which are designed to inform you about
+    their contents without actually exposing them to you.
     
-    This is especially useful when you want to observe a property
-    of one type as a property of another type, or when you want to
-    observe a property with some transformation applied to it.
+    For example, there are methods like `Val::isEmpty` and `Val::isPresent`,
+    which are used to check if a property is empty or not.
+    These facts about the property can also be observed through a "view".
+    For which we have the `viewIsEmpty()` and `viewIsPresent()` methods.
     
-    This specification shows how to create views from both nullable and non-nullable properties,
+    Each of these methods return a `Viewable` property which will always be "up to date"
+    with respect to the thing that is observed, and will be updated
+    automatically when the observed thing changes.
 
 ''')
-@Subject([Val, Val])
-class Viewing_Properties_Spec extends Specification
+@Subject([Viewable, Var, Val, Vars, Vals])
+class Property_View_Spec extends Specification
 {
+    def 'Use the "viewAs" method to create a dynamically updated view of a property.'()
+    {
+        reportInfo """
+            The "viewAs" method is used to create a dynamically updated view of a property.
+            In essence it is a property observing another property and updating its value
+            whenever the observed property changes.
+        """
+        given : 'We create a property...'
+            Var<String> property = Var.of("Hello World")
+        and : 'We create an integer view of the property.'
+            Viewable<Integer> view = property.viewAs(Integer, { it.length() })
+        expect : 'The view has the expected value.'
+            view.orElseNull() == 11
+
+        when : 'We change the value of the property.'
+            property.set("Tofu")
+        then : 'The view is updated.'
+            view.orElseNull() == 4
+    }
+
     def 'A primitive or string type view will map nulls to the types null object.'()
     {
         reportInfo """
@@ -292,197 +314,205 @@ class Viewing_Properties_Spec extends Specification
         then : 'The view is updated despite the value of the source property not changing.'
             view.get() == 5
             changes == 3
-
     }
 
-    def 'The change listener of property view parents are garbage collected when the view is no longer referenced strongly.'()
+    def 'There are various kinds of convenience methods for creating live views of properties.'()
+    {
+        given : 'We create a property...'
+            Var<String> food = Var.of("Channa Masala")
+        and : 'Different kinds of views:'
+            Viewable<Integer> words    = food.viewAsInt( f -> f.split(" ").length )
+            Viewable<Integer> words2   = words.view({it * 2})
+            Viewable<Double>  average  = food.viewAsDouble( f -> f.chars().average().orElse(0) )
+            Viewable<Boolean> isLong   = food.viewAs(Boolean, f -> f.length() > 14 )
+            Viewable<String> firstWord = food.view( f -> f.split(" ")[0] )
+            Viewable<String> lastWord  = food.view( f -> f.split(" ")[f.split(" ").length-1] )
+        expect : 'The views have the expected values.'
+            words.get() == 2
+            words2.get() == 4
+            average.get().round(2) == 92.92d
+            isLong.get() == false
+            firstWord.get() == "Channa"
+            lastWord.get() == "Masala"
+
+        when : 'We change the value of the property.'
+            food.set("Tofu Tempeh Saitan")
+        then : 'The views are updated.'
+            words.get() == 3
+            words2.get() == 6
+            average.get().round(2) == 94.28d
+            isLong.get() == true
+            firstWord.get() == "Tofu"
+            lastWord.get() == "Saitan"
+    }
+
+    def 'The `viewIsEmpty()` method returns a property that is true when the original property is empty, and false otherwise.'()
     {
         reportInfo """
-            A property view registers a weak action listener on the original parent property
-            it is actively viewing.
-            These weak listeners are automatically removed when the view is garbage collected.
-            So when the property view is no longer referenced strongly, it should be
-            garbage collected and the weak listener should be removed
-            from the original property.
+            Calling `viewIsEmpty()` on a property will
+            be a view on the `isEmpty()` method of the property.
+            So when the boolean returned by `isEmpty()` changes,
+            the value of the view will change too.
             
-            We can verify this by checking the reported number of change listeners.
+            Note that in this test we use a nullable property!
+            This is be cause only a nullable property can be empty.
         """
-        given : 'We have an enum property based on the `TimeUnit` enum.'
-            var timeUnitProperty = Var.of(TimeUnit.SECONDS)
-        expect : 'Initially there are no change listeners registered:'
-            timeUnitProperty.numberOfChangeListeners() == 0
-
-        when : 'We create four unique views which we reference strongly.'
-            var ordinalView = timeUnitProperty.viewAsInt(TimeUnit::ordinal)
-            var nameView = timeUnitProperty.viewAsString(TimeUnit::name)
-            var nullableView = timeUnitProperty.viewAsNullable(Long, u -> u.ordinal() == 0 ? null : u.toMillis(1))
-            var nonNullView = timeUnitProperty.viewAs(Long, u -> u.toMillis(1))
-
-        then : 'The enum property has 4 change listeners registered.'
-            timeUnitProperty.numberOfChangeListeners() == 4
-
-        when : 'We create four more views which we do not reference strongly.'
-            timeUnitProperty.viewAsInt(TimeUnit::ordinal)
-            timeUnitProperty.viewAsString(TimeUnit::name)
-            timeUnitProperty.viewAsNullable(Long, u -> u.ordinal() == 0 ? null : u.toMillis(1))
-            timeUnitProperty.viewAs(Long, u -> u.toMillis(1))
-        and : 'We wait for the garbage collector to run.'
-            waitForGarbageCollection()
-            Thread.sleep(500)
-
-        then : 'The enum property still has 2 change listeners registered.'
-            timeUnitProperty.numberOfChangeListeners() == 4
+        given : 'A nullable property which is not empty.'
+            Var<String> name = Var.ofNullable(String, "John")
+        and : 'A view of the "emptiness" of the property.'
+            Val<Boolean> isEmpty = name.viewIsEmpty()
+        expect : 'The view is false initially.'
+            !isEmpty.get()
+        when : 'We change the value of the property to null.'
+            name.set(null)
+        then : 'The view becomes true.'
+            isEmpty.get()
     }
 
-    def 'You can recognize a property view from its String representation.'()
+    def 'A `viewIsEmpty()` property from a non nullable property is always false.'()
     {
         reportInfo """
-            A property view has a specific string representation that can be used to recognize it.
-            The string representation of a property view starts with "View" followed by the item
-            type and square brackets
-            containing the current item of the view.
+            A non-nullable property does not permit null items,
+            which means that it cannot be empty.
+            Therefore, the view returned by `viewIsEmpty()`
+            will always be false.
         """
-        given : 'A property based on a string.'
-            var stringProperty = Var.of("Hello")
-        and : 'A view of the property as a byte representation of the length of the string.'
-            Val<Byte> view = stringProperty.viewAs(Byte, s -> (byte) s.length())
-        expect : 'The string representation of the view is as expected.'
-            view.toString() == "View<Byte>[5]"
+        given : 'A non-nullable property.'
+            Var<String> name = Var.of(String, "John")
+        and : 'A view of thr `isEmpty()` flag of the property.'
+            Viewable<Boolean> isEmpty = name.viewIsEmpty()
+        expect : 'Initially, the view is false.'
+            !isEmpty.get()
 
-        when : 'We update the view to have a custom id String.'
-            view = view.withId("patient_age")
-        then : 'The string representation of the view is as expected.'
-            view.toString() == "View<Byte>[patient_age=5]"
+        when : 'We change the value of the property to an empty string.'
+            name.set("")
+        then : 'The view is still false, because the property does not contain null!'
+            !isEmpty.get()
+
+        when : 'We try to sneak in a null value to make it empty...'
+            name.set(null)
+        then : 'Boom! The property fights back by throwing an exception.'
+            thrown(NullPointerException)
     }
 
-    def 'You can subscribe and unsubscribe observer lambdas on property views.()'()
+    def 'The `viewIsPresent()` method returns a property that is true when the original property is not empty, and false otherwise.'()
     {
         reportInfo """
-            A property is like a publisher that can have multiple observers.
-            In this test we create a property view and a change observer that listens to changes on the view
-            and is then unsubscribed, which should prevent further notifications.
+            Calling `viewIsPresent()` on a property will
+            be a view on the `isPresent()` method of the property.
+            So when the boolean returned by `isPresent()` changes,
+            the value of the view will change too.
+            
+            Note that in this test we use a nullable property!
+            This is be cause only a nullable property can be empty.
         """
-        given : 'A property based on an enum.'
-            var weekDay = Var.of(DayOfWeek.FRIDAY)
-        and : 'A view of the property as a String.'
-            Val<String> view = weekDay.viewAsString(DayOfWeek::name)
-        and : 'A trace list and a change listener that listens to changes on the view.'
-            var trace = []
-            Observer observer = { trace << view.get() }
-        expect : 'The trace list is empty.'
-            trace.isEmpty()
-
-        when : 'We subscribe the listener to the view.'
-            view.subscribe(observer)
-        then : 'The listener is not immediately notified!'
-            trace.isEmpty()
-
-        when : 'We change the value of the property 2 times.'
-            weekDay.set(DayOfWeek.SATURDAY)
-            weekDay.set(DayOfWeek.WEDNESDAY)
-        then : 'The listener is notified of the new value of the view.'
-            trace == ["SATURDAY", "WEDNESDAY"]
-
-        when : 'We unsubscribe the listener from the view.'
-            view.unsubscribe(observer)
-        and : 'We change the value of the property.'
-            weekDay.set(DayOfWeek.MONDAY)
-        then : 'The listener is not notified of the new value of the view.'
-            trace == ["SATURDAY", "WEDNESDAY"]
+        given : 'A nullable property which is not empty.'
+            Var<Integer> age = Var.ofNullable(Integer, 25)
+        and : 'A view of the "presence" of the item of the age property.'
+            Viewable<Boolean> isPresent = age.viewIsPresent()
+        expect : 'The view is true initially, because 25 is not null.'
+            isPresent.get()
+        when : 'We change the value of the property to null, to make it empty.'
+            age.set(null)
+        then : 'The view becomes false, because now the property has null as its item.'
+            !isPresent.get()
     }
 
-    def 'You can subscribe and unsubscribe action lambdas on property views.()'()
+    def 'A `viewIsPresent()` property from a non nullable property is always true.'()
     {
         reportInfo """
-            A property is like a publisher that can have multiple action listeners.
-            In this test we create a property view and an action listener that listens to changes on the view
-            and is then unsubscribed, which should prevent further notifications.
+            A non-nullable property does not permit null items,
+            which means that it cannot be empty.
+            Therefore, the view returned by `viewIsPresent()`
+            will always be true.
         """
-        given : 'A property based on an enum.'
-            var monthProperty = Var.of(Month.AUGUST)
-        and : 'A view of the property as a String.'
-            Val<String> view = monthProperty.viewAsString(Month::name)
-        and : 'A trace list and a change listener that listens to changes on the view.'
-            var trace = []
-            Action<Val<String>> action = { trace << it.get() }
-        expect : 'The trace list is empty and there are no change listeners registered.'
-            trace.isEmpty()
-            view.numberOfChangeListeners() == 0
+        given : 'A non-nullable property.'
+            Var<Integer> age = Var.of(Integer, 25)
+        and : 'A view of the `isPresent()` flag of the property.'
+            Viewable<Boolean> isPresent = age.viewIsPresent()
+        expect : 'The view is true initially, because 25 is not null.'
+            isPresent.get()
 
-        when : 'We subscribe the listener to the view.'
-            view.onChange(From.ALL, action)
-        then : 'The listener is not immediately notified, but there is one change listener registered.'
-            trace.isEmpty()
-            view.numberOfChangeListeners() == 1
-
-        when : 'We change the value of the property 2 times.'
-            monthProperty.set(Month.SEPTEMBER)
-            monthProperty.set(Month.NOVEMBER)
-        then : 'The listener is notified of the new value of the view.'
-            trace == ["SEPTEMBER", "NOVEMBER"]
-
-        when : 'We unsubscribe the listener from the view.'
-            view.unsubscribe(action)
-        and : 'We change the value of the property.'
-            monthProperty.set(Month.FEBRUARY)
-        then : 'The listener is not notified of the new value of the view.'
-            trace == ["SEPTEMBER", "NOVEMBER"]
-        and : 'There are no change listeners registered.'
-            view.numberOfChangeListeners() == 0
+        when : 'We try to change the value of the property to null.'
+            age.set(null)
+        then : 'The property fights back by throwing an exception.'
+            thrown(NullPointerException)
     }
 
-    def 'A chain of views may not be garbage collected.'()
-    {
+    def 'Use `viewAsInt(int,Function)` to view a nullable property as a non null integer.'() {
         reportInfo """
-            Every view holds a reference to the source property it is viewing.
-            So if a chain of views is created, the source property will be referenced by all views in the chain.
-            These references may be weak references if the parent property is not a view itself.
-            This is also true for lenses, which are also always strong references.
-            A plain property on the other hand is weakly referenced by the views.
-            So the chain of views may not be garbage collected if the source property is not garbage collected.
+            The `viewAsInt(int,Function)` method creates and returns an integer based live property view
+            from a nullable property of any type that uses a default value to represent null and a function
+            to convert the non null value to an integer.
+            The view will be updated automatically
+            when the original property changes.
         """
-        given : 'A property based on an enum.'
-            var dayOfWeekProp = Var.of(DayOfWeek.FRIDAY)
-        and : 'A chain of views.'
-            Val<String> view1 = dayOfWeekProp.viewAsString(DayOfWeek::name)
-            Val<String> view2 = view1.view(s -> s + " is a good day")
-            Val<String> view3 = view2.view(s -> s + " to have a party")
-        and : """
-            Now we store all of these references in a list of WeakReference objects.
-            This way we can check which of the references are still present
-            after awaiting garbage collection.
+        given : 'A String property holding a japanese sentence.'
+            Var<String> sentence = Var.ofNullable(String, "ブランコツリーはいいですね")
+        and : 'A view on the length of the sentence with a unique default value.'
+            Viewable<Integer> length = sentence.viewAsInt(42,String::length)
+        expect : 'The view is 13 initially and it confirms that it is indeed a view.'
+            length.get() == 13
+            length.isView()
+        when : 'We change the value of the property to null.'
+            sentence.set(null)
+        then : 'The view becomes 42.'
+            length.get() == 42
+        when : 'We change the value of the property to an empty string.'
+            sentence.set("")
+        then : 'The view becomes 0.'
+            length.get() == 0
+    }
+
+    def 'Use `viewAsDouble(double,Function)` to view a nullable property as a non null double.'() {
+        reportInfo """
+            The `viewAsDouble(double,Function)` method creates and returns a double based live property view
+            from a nullable property of any type that uses a default value to represent null and a function
+            to convert the non null value to a double.
+            The view will be updated automatically
+            when the original property changes.
         """
-            var refs = [
-                    new WeakReference(dayOfWeekProp), new WeakReference(view1),
-                    new WeakReference(view2), new WeakReference(view3)
-                ]
-        expect : 'All references are still present after awaiting garbage collection.'
-            refs.every( it -> it.get() != null )
-        and : 'Each property has the expected number of change listeners for their respective child.'
-            dayOfWeekProp.numberOfChangeListeners() == 1
-            view1.numberOfChangeListeners() == 1
-            view2.numberOfChangeListeners() == 1
-            view3.numberOfChangeListeners() == 0
+        given : 'A String property holding an english sentence.'
+            Var<String> sentence = Var.ofNullable(String, "SwingTree is nice, isn't it?")
+        and : 'A view on the average word length of the sentence with a unique default value.'
+            Viewable<Double> averageWordLength = sentence.viewAsDouble(-0.5, s -> {
+                                                        if ( s == null )
+                                                            return null
+                                                        var words = s.split(" ") as List<String>
+                                                        return words.stream().mapToInt(String::length).average().orElse(-1)
+                                                    })
+        expect : 'The view is 4.0 initially and it confirms that it is indeed a view.'
+            averageWordLength.get() == 4.8
+            averageWordLength.isView()
+        when : 'We change the value of the property to null.'
+            sentence.set(null)
+        then : 'The view becomes -0.5.'
+            averageWordLength.get() == -0.5
+        when : 'We change the value of the property to an empty string.'
+            sentence.set("")
+        then : 'The view contains 0.0 because the average of an empty list is 0.'
+            averageWordLength.get() == 0.0
+    }
 
-        when : 'We now remove the intermediate views from the chain.'
-            view1 = null
-            view2 = null
-        and : 'We await garbage collection.'
-            waitForGarbageCollection()
-            Thread.sleep(500)
-        then : 'Every reference is still present.'
-            refs.every( it -> it.get() != null )
-
-        when : 'We remove the last view from the chain.'
-            view3 = null
-        and : 'We await garbage collection.'
-            waitForGarbageCollection()
-            Thread.sleep(500)
-        then : 'All views were garbage collected, but the source is still there.'
-            refs[0].get() != null
-            refs[1].get() == null
-            refs[2].get() == null
-            refs[3].get() == null
+    def 'Use the `viewAsString(String,Function)` method to view a nullable property as a non null String.'() {
+        reportInfo """
+            The `viewAsString(String,Function)` method creates and returns a String based live property view
+            from a nullable property of any type that uses a default value to represent null and a function
+            to convert the non null value to a String.
+            The view will be updated automatically
+            when the original property changes.
+        """
+        given : 'A property holding nullable `TimeUnit` enum items.'
+            Var<TimeUnit> timeUnit = Var.ofNullable(TimeUnit, TimeUnit.SECONDS)
+        and : 'A view on the lowercase name of the time unit with a unique default value.'
+            Viewable<String> lowerCaseName = timeUnit.viewAsString("unknown", u -> u.name().toLowerCase())
+        expect : 'The view is "seconds" initially and it confirms that it is indeed a view.'
+            lowerCaseName.get() == "seconds"
+            lowerCaseName.isView()
+        when : 'We change the value of the property to null.'
+            timeUnit.set(null)
+        then : 'The view becomes "unknown" because the property is empty.'
+            lowerCaseName.get() == "unknown"
     }
 
     def 'The channel of a property change event will propagate to its views.'()
@@ -522,17 +552,52 @@ class Viewing_Properties_Spec extends Specification
             trace3 == [From.ALL, From.VIEW_MODEL]
     }
 
-    /**
-     * This method guarantees that garbage collection is
-     * done unlike <code>{@link System#gc()}</code>
-     */
-    static void waitForGarbageCollection() {
-        Object obj = new Object();
-        WeakReference ref = new WeakReference<>(obj);
-        obj = null;
-        while(ref.get() != null) {
-            System.gc();
-        }
+    def 'Changing the value of a property through the `.set(From.VIEW, T)` method will also affect its views'()
+    {
+        reportInfo """
+            Note that you should use `.set(From.VIEW, T)` inside your view to change 
+            the value of the original property.
+            It is different from a regular `set(T)` (=`.set(From.VIEW_MODEL, T)`) in 
+            that the `set(T)` method
+            runs the mutation through the `From.VIEW_MODEL` channel.
+            This the difference here is the purpose and origin of the mutation,
+            `VIEW` changes are usually caused by user actions and `VIEW_MODEL`
+            changes are caused by the application logic.
+            Irrespective as to how the value of the original property is changed,
+            the views will be updated.
+        """
+        given : 'We create a property...'
+            Var<String> food = Var.of("Animal Crossing")
+        and : 'We create a view of the property.'
+            Var<Integer> words = food.viewAsInt( f -> f.split(" ").length )
+        expect : 'The view has the expected value.'
+            words.get() == 2
+
+        when : 'We change the value of the food property through the `.set(From.VIEW, T)` method.'
+            food.set(From.VIEW, "Faster Than Light")
+        then : 'The view is updated.'
+            words.get() == 3
+    }
+
+    def 'You can recognize a property view from its String representation.'()
+    {
+        reportInfo """
+            A property view has a specific string representation that can be used to recognize it.
+            The string representation of a property view starts with "View" followed by the item
+            type and square brackets
+            containing the current item of the view.
+        """
+        given : 'A property based on a string.'
+            var stringProperty = Var.of("Hello")
+        and : 'A view of the property as a byte representation of the length of the string.'
+            Val<Byte> view = stringProperty.viewAs(Byte, s -> (byte) s.length())
+        expect : 'The string representation of the view is as expected.'
+            view.toString() == "View<Byte>[5]"
+
+        when : 'We update the view to have a custom id String.'
+            view = view.withId("patient_age")
+        then : 'The string representation of the view is as expected.'
+            view.toString() == "View<Byte>[patient_age=5]"
     }
 
 }

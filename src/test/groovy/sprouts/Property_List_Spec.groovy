@@ -21,7 +21,7 @@ import java.util.function.Consumer
     
 ''')
 @Subject([Vals, Vars])
-class Properties_List_Spec extends Specification
+class Property_List_Spec extends Specification
 {
 
     def 'Multiple properties can be modelled through the "Vars" and "Vals" classes.'()

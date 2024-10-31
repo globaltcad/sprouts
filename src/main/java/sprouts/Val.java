@@ -401,7 +401,7 @@ public interface Val<T extends @Nullable Object> extends Maybe<T> {
 	 *         change listeners.
 	 */
 	default Viewable<T> view() {
-		return Sprouts.factory().viewOf(this);
+		return Viewable.cast(this);//Sprouts.factory().viewOf(this);
 	}
 
 	/**
