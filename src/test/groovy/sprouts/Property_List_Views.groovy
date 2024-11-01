@@ -163,10 +163,90 @@ class Property_List_Views extends Specification
             additionTrace == [["JUNE"], []]
 
         when : 'We clear the source property list.'
-            months.clear()
+            months.popLast(2)
         then : 'The view receives the change event.'
-            removalTrace == [[], ["MARCH"], ["JANUARY", "MAY", "JUNE"]]
+            removalTrace == [[], ["MARCH"], ["MAY", "JUNE"]]
             additionTrace == [["JUNE"], [], []]
+
+        when : 'We add a two months to the source property list.'
+            months.addAll(Month.JULY, Month.AUGUST)
+        then : 'The view receives the change event.'
+            removalTrace == [[], ["MARCH"], ["MAY", "JUNE"], []]
+            additionTrace == [["JUNE"], [], [], ["JULY", "AUGUST"]]
+
+        when : 'We call `addAllAt(2, Month.SEPTEMBER, Month.OCTOBER)` on the source property list.'
+            months.addAllAt(2, Month.SEPTEMBER, Month.OCTOBER)
+        then : 'The view receives the change event.'
+            removalTrace == [[], ["MARCH"], ["MAY", "JUNE"], [], []]
+            additionTrace == [["JUNE"], [], [], ["JULY", "AUGUST"], ["SEPTEMBER", "OCTOBER"]]
+
+        when : 'We remove the range of months from the source property list.'
+            months.removeRange(1, 3)
+        then : 'The view receives the change event.'
+            removalTrace == [[], ["MARCH"], ["MAY", "JUNE"], [], [], ["JULY", "SEPTEMBER"]]
+            additionTrace == [["JUNE"], [], [], ["JULY", "AUGUST"], ["SEPTEMBER", "OCTOBER"], []]
+        and : 'Finally, we check if the view and source property have the expected contents:'
+            names.toList() == ["JANUARY", "OCTOBER", "AUGUST"]
+            months.toList() == [Month.JANUARY, Month.OCTOBER, Month.AUGUST]
+    }
+
+    def 'A property list view created using `view()` will receive change events from its source.'()
+    {
+        reportInfo """
+            A property list view created using `view()` is a no-op view
+            which will receive change events from its source, so that 
+            it is always in sync with the source and can be used as a
+            way to receive change events from the source.
+        """
+        given : 'A property list of 3 months of the year and its view.'
+            Vars<Month> months = Vars.of(Month.JANUARY,Month.MARCH,Month.MAY)
+            Viewables<Month> view = months.view()
+        and : 'A listener that records the changes and notes the new values.'
+            var removalTrace = []
+            var additionTrace = []
+            view.onChange({ removalTrace << it.oldValues().toList().collect({it.name()}) })
+            view.onChange({ additionTrace << it.newValues().toList().collect({it.name()}) })
+        expect : 'Initially, the traces are empty.'
+            removalTrace.isEmpty()
+            additionTrace.isEmpty()
+        when : 'We add a month to the source property list.'
+            months.add(Month.JUNE)
+        then : 'The view receives the change event.'
+            removalTrace == [[]]
+            additionTrace == [["JUNE"]]
+
+        when : 'We remove a month from the source property list.'
+            months.removeAt(1)
+        then : 'The view receives the change event.'
+            removalTrace == [[], ["MARCH"]]
+            additionTrace == [["JUNE"], []]
+
+        when : 'We clear the source property list.'
+            months.popLast(2)
+        then : 'The view receives the change event.'
+            removalTrace == [[], ["MARCH"], ["MAY", "JUNE"]]
+            additionTrace == [["JUNE"], [], []]
+
+        when : 'We add a two months to the source property list.'
+            months.addAll(Month.JULY, Month.AUGUST)
+        then : 'The view receives the change event.'
+            removalTrace == [[], ["MARCH"], ["MAY", "JUNE"], []]
+            additionTrace == [["JUNE"], [], [], ["JULY", "AUGUST"]]
+
+        when : 'We call `addAllAt(2, Month.SEPTEMBER, Month.OCTOBER)` on the source property list.'
+            months.addAllAt(2, Month.SEPTEMBER, Month.OCTOBER)
+        then : 'The view receives the change event.'
+            removalTrace == [[], ["MARCH"], ["MAY", "JUNE"], [], []]
+            additionTrace == [["JUNE"], [], [], ["JULY", "AUGUST"], ["SEPTEMBER", "OCTOBER"]]
+
+        when : 'We remove the range of months from the source property list.'
+            months.removeRange(1, 3)
+        then : 'The view receives the change event.'
+            removalTrace == [[], ["MARCH"], ["MAY", "JUNE"], [], [], ["JULY", "SEPTEMBER"]]
+            additionTrace == [["JUNE"], [], [], ["JULY", "AUGUST"], ["SEPTEMBER", "OCTOBER"], []]
+        and : 'Finally, we check if the view and source property have the expected contents:'
+            view.toList() == [Month.JANUARY, Month.OCTOBER, Month.AUGUST]
+            months.toList() == [Month.JANUARY, Month.OCTOBER, Month.AUGUST]
     }
 
     /**

@@ -276,17 +276,20 @@ final class PropertyList<T extends @Nullable Object> implements Vars<T>, Viewabl
     }
 
     @Override
-    public Vars<T> addAll( Vars<T> properties ) {
-        if ( !_checkCanAdd(properties) )
+    public Vars<T> addAllAt( int index, Vars<T> vars ) {
+        if ( !_checkCanAdd(vars) )
             return this;
 
-        for ( int i = 0; i < properties.size(); i++ ) {
-            Var<T> toBeAdded = properties.at(i);
+        if ( index < 0 || index > size() )
+            throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + size());
+
+        for ( int i = 0; i < vars.size(); i++ ) {
+            Var<T> toBeAdded = vars.at(i);
             _checkNullSafetyOf(toBeAdded);
-            _variables.add(toBeAdded);
+            _variables.add(index + i, toBeAdded);
         }
 
-        _triggerAction( Change.ADD, size() - properties.size(), properties, null);
+        _triggerAction( Change.ADD, index, vars, null );
         return this;
     }
 

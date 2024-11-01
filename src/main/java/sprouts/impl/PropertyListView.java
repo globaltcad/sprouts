@@ -33,7 +33,7 @@ final class PropertyListView {
                     onRemove(delegate, view);
                     break;
                 case ADD:
-                    onAdd(delegate, source, view, nonNullMapper);
+                    onAdd(delegate, source, view, nonNullMapper, targetType);
                     break;
                 case SET:
                     onSet(delegate, source, view, nonNullMapper);
@@ -61,13 +61,13 @@ final class PropertyListView {
         view.removeAt(delegate.index(), delegate.oldValues().size());
     }
 
-    private static <T, U> void onAdd(ValsDelegate<T> delegate, Vals<T> source, Vars<U> view, Function<T, U> mapper) {
+    private static <T, U> void onAdd(ValsDelegate<T> delegate, Vals<T> source, Vars<U> view, Function<T, U> mapper, Class<U> targetType) {
         assert delegate.changeType() == Change.ADD;
 
         if (delegate.newValues().isEmpty() || delegate.index() < 0)
             throw new NotImplementedException(); // todo: implement
 
-        List<Var<U>> newViews = new ArrayList<>();
+        Vars<U> newViews = Vars.of(targetType);
 
         for (int i = 0; i < delegate.newValues().size(); i++) {
             Val<T> t = source.at(delegate.index() + i);
@@ -77,10 +77,7 @@ final class PropertyListView {
             newViews.add(v);
         }
 
-        // todo: add at once
-        for (int i = 0; i < delegate.newValues().size(); i++) {
-            view.addAt(delegate.index() + i, newViews.get(i));
-        }
+        view.addAllAt(delegate.index(), newViews);
     }
 
     private static <T, U> void onSet(ValsDelegate<T> delegate, Vals<T> source, Vars<U> view, Function<T, U> mapper) {
