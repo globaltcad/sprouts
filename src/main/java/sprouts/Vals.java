@@ -570,5 +570,15 @@ public interface Vals<T extends @Nullable Object> extends Iterable<T> {
      */
     boolean isMutable();
 
+    /**
+     *  Tells you whether this list of properties is a view or not.
+     *  A view is created from one of the many "view" methods on the {@link Vals} interface.
+     *  These are weakly referenced by the original list of properties,
+     *  which ensures that they are garbage collected together with their
+     *  potentially memory leaking change listeners as soon as you no longer
+     *  hold a (strong) reference to the view.
+     *
+     * @return True if this list of properties is a view, false if it is not.
+     */
     boolean isView();
 }

@@ -422,7 +422,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 		return this;
 	}
 
-	private boolean _setInternal( T newValue ) {
+	private boolean _setInternal( @Nullable T newValue ) {
 		if ( !_nullable && newValue == null )
 			throw new NullPointerException(
 					"This property is configured to not allow null items! " +

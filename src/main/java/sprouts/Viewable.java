@@ -34,6 +34,21 @@ import java.util.Optional;
  */
 public interface Viewable<T> extends Val<T>, Observable {
 
+    /**
+     *  Casts the given {@link Val} instance to a {@link Viewable} instance.
+     *  This allows you to access the {@link Viewable} API on the given {@link Val} instance,
+     *  which allows you to register change listeners directly on the property.<br>
+     *  <b>
+     *      WARNING:
+     *      The change listeners registered on the given {@link Val} instance will not
+     *      be garbage collected automatically. You must remove them manually
+     *      when no longer needed.
+     *  </b>
+     *
+     * @param val The {@link Val} instance to cast.
+     * @param <T> The type of the item held by the {@link Val} instance.
+     * @return The given {@link Val} instance cast to a {@link Viewable} instance.
+     */
     static <T> Viewable<T> cast( Val<T> val ) {
         return Viewable.class.cast(val);
     }

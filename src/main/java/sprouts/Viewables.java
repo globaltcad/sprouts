@@ -30,6 +30,21 @@ package sprouts;
  */
 public interface Viewables<T> extends Vals<T>, Observable
 {
+    /**
+     *  Casts the given {@link Vals} instance to a {@link Viewables} instance.
+     *  This allows you to access the {@link Viewables} API on the given {@link Vals} instance,
+     *  which allows you to register change listeners directly on the list of properties.<br>
+     *  <b>
+     *      WARNING:
+     *      The change listeners registered on the given {@link Vals} instance will not
+     *      be garbage collected automatically. You must remove them manually
+     *      when no longer needed.
+     *  </b>
+     *
+     * @param vals The {@link Vals} instance to cast.
+     * @param <T> The type of the items held by the {@link Vals} instance.
+     * @return The given {@link Vals} instance cast to a {@link Viewables} instance.
+     */
     static <T> Viewables<T> cast( Vals<T> vals ) {
         return Viewables.class.cast(vals);
     }

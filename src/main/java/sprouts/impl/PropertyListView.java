@@ -2,10 +2,7 @@ package sprouts.impl;
 
 import org.jspecify.annotations.Nullable;
 import sprouts.*;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
@@ -46,7 +43,7 @@ final class PropertyListView {
                 case SORT:
                 case REVERT:
                 case DISTINCT:
-                    throw new NotImplementedException(); // todo: implement
+                    throw new UnsupportedOperationException(); // todo: implement
             }
         });
 
@@ -57,7 +54,7 @@ final class PropertyListView {
         assert delegate.changeType() == Change.REMOVE;
 
         if (delegate.oldValues().isEmpty() || delegate.index() < 0)
-            throw new NotImplementedException(); // todo: implement
+            throw new UnsupportedOperationException(); // todo: implement
         view.removeAt(delegate.index(), delegate.oldValues().size());
     }
 
@@ -65,7 +62,7 @@ final class PropertyListView {
         assert delegate.changeType() == Change.ADD;
 
         if (delegate.newValues().isEmpty() || delegate.index() < 0)
-            throw new NotImplementedException(); // todo: implement
+            throw new UnsupportedOperationException(); // todo: implement
 
         Vars<U> newViews = Vars.of(targetType);
 
@@ -84,7 +81,7 @@ final class PropertyListView {
         assert delegate.changeType() == Change.SET;
 
         if (delegate.newValues().isEmpty() || delegate.index() < 0)
-            throw new NotImplementedException(); // todo: implement
+            throw new UnsupportedOperationException(); // todo: implement
 
         Vars<U> newViews = Vars.of(view.type());
 
