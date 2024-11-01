@@ -102,6 +102,72 @@ class Property_List_Views extends Specification
             isNotEmpty.get()
     }
 
+    def 'The `view(U,U,Function<T,U>)` method creates a dynamically updated life view of its source list.'()
+    {
+        reportInfo """
+            Similar to `Val.view(U,U,Function<T,U>)`, the `Vals.view(U,U,Function<T,U>)` method
+            creates a sort of read only clone of the original property list, which gets
+            updated automatically whenever the original list changes.
+        """
+        given : 'A property list of 3 days of the week.'
+            Vars<DayOfWeek> days = Vars.of(DayOfWeek.MONDAY,DayOfWeek.WEDNESDAY,DayOfWeek.FRIDAY)
+        and : 'A view on the names of the days of the week.'
+            Viewables<String> names = days.view("null", "error", DayOfWeek::name)
+        expect : 'The view contains ["MONDAY","WEDNESDAY","FRIDAY"] initially.'
+            names.toList() == ["MONDAY","WEDNESDAY","FRIDAY"]
+
+        when : 'We add a day to the source property list.'
+            days.add(DayOfWeek.SATURDAY)
+        then : 'The view becomes ["MONDAY","WEDNESDAY","FRIDAY","SATURDAY"].'
+            names.toList() == ["MONDAY","WEDNESDAY","FRIDAY","SATURDAY"]
+
+        when : 'We now remove a day from the property list.'
+            days.removeAt(0)
+        then : 'The view becomes ["WEDNESDAY","FRIDAY","SATURDAY"].'
+            names.toList() == ["WEDNESDAY","FRIDAY","SATURDAY"]
+
+        when : 'The source list is cleared.'
+            days.clear()
+        then : 'The view becomes empty.'
+            names.toList() == []
+    }
+
+    def 'A property list view created using `view(U,U,Function<T,U>)` will receive change events from its source.'()
+    {
+        reportInfo """
+            A property list view created using `view(U,U,Function<T,U>)`
+            will receive change events from its source.
+        """
+        given : 'A property list of 3 months of the year.'
+            Vars<Month> months = Vars.of(Month.JANUARY,Month.MARCH,Month.MAY)
+        and : 'A view on the names of the months of the year.'
+            Viewables<String> names = months.view("null", "error", Month::name)
+        and : 'A listener that records the changes and notes the new values.'
+            var removalTrace = []
+            var additionTrace = []
+            names.onChange({ removalTrace << it.oldValues().toList() })
+            names.onChange({ additionTrace << it.newValues().toList() })
+        expect : 'Initially, the traces are empty.'
+            removalTrace.isEmpty()
+            additionTrace.isEmpty()
+        when : 'We add a month to the source property list.'
+            months.add(Month.JUNE)
+        then : 'The view receives the change event.'
+            removalTrace == [[]]
+            additionTrace == [["JUNE"]]
+
+        when : 'We remove a month from the source property list.'
+            months.removeAt(1)
+        then : 'The view receives the change event.'
+            removalTrace == [[], ["MARCH"]]
+            additionTrace == [["JUNE"], []]
+
+        when : 'We clear the source property list.'
+            months.clear()
+        then : 'The view receives the change event.'
+            removalTrace == [[], ["MARCH"], ["JANUARY", "MAY", "JUNE"]]
+            additionTrace == [["JUNE"], [], []]
+    }
 
     /**
      * This method guarantees that garbage collection is
