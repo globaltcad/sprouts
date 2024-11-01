@@ -222,7 +222,7 @@ public interface Vals<T extends @Nullable Object> extends Iterable<T> {
      * @return A weakly referenced {@link Viewables} instance.
      */
     default Viewables<T> view() {
-        return Viewables.cast(this); // TODO: create this through factory
+        return Sprouts.factory().viewOf(this);
     }
 
     /**

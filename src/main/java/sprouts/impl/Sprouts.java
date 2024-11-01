@@ -193,6 +193,12 @@ public final class Sprouts implements SproutsFactory
     }
 
     @Override
+    public <T> Viewables<T> viewOf(Vals<T> source) {
+        Objects.requireNonNull(source);
+        return Viewables.cast(source); // TODO: Implement
+    }
+
+    @Override
     public <T, U> Viewable<T> viewOf(Class<T> type, Val<U> source, Function<U, T> mapper) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(source);
