@@ -2239,4 +2239,35 @@ class Property_List_Spec extends Specification
         then : 'An exception is thrown because of this null item.'
             thrown(IllegalArgumentException)
     }
+
+    def 'The various `setAllAt(int,..)` methods can throw index out of bounds exceptions.'()
+    {
+        reportInfo """
+            If you use the `setAllAt(int,..)` methods to set a range of properties at a given index,
+            then you can get an `IndexOutOfBoundsException` if the index together with the size of the
+            properties to set, exceeds the size of the targeted property list.
+        """
+        given : 'A property list with some properties.'
+            var properties = Vars.of("a", "b", "c", "d")
+
+        when : 'We try to exceed the size by supplying a var args array that is too large.'
+            properties.setAllAt(2, "x", "y", "z")
+        then : 'An exception is thrown because the last index is out of bounds.'
+            thrown(IndexOutOfBoundsException)
+
+        when : 'We try to exceed the size by supplying a `Vals` list that is too large.'
+            properties.setAllAt(2, Vals.of("x", "y", "z"))
+        then : 'An exception is thrown because the last index is out of bounds.'
+            thrown(IndexOutOfBoundsException)
+
+        when : 'We try to exceed the size by supplying a `Vars` list that is too large.'
+            properties.setAllAt(2, Vars.of("x", "y", "z"))
+        then : 'An exception is thrown because the last index is out of bounds.'
+            thrown(IndexOutOfBoundsException)
+
+        when : 'We try to set a range of items at an index that is out of bounds.'
+            properties.setAllAt(-1, "x", "y", "z")
+        then : 'An exception is thrown because the start index is out of bounds.'
+            thrown(IndexOutOfBoundsException)
+    }
 }
