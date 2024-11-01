@@ -569,7 +569,7 @@ class Property_View_Spec extends Specification
         given : 'We create a property...'
             Var<String> food = Var.of("Animal Crossing")
         and : 'We create a view of the property.'
-            Var<Integer> words = food.viewAsInt( f -> f.split(" ").length )
+            Viewable<Integer> words = food.viewAsInt( f -> f.split(" ").length )
         expect : 'The view has the expected value.'
             words.get() == 2
 

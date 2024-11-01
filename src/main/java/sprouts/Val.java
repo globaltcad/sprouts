@@ -352,7 +352,13 @@ public interface Val<T extends @Nullable Object> extends Maybe<T> {
 	 * 			the mapping function to the item of this property.
 	 */
 	@Override
-	Val<T> map( Function<T, T> mapper );
+	default Val<T> map( Function<T, T> mapper ) {
+		if ( !isPresent() )
+			return Val.ofNull( type() );
+
+		T newValue = mapper.apply( get() );
+		return allowsNull() ? Val.ofNullable( type(), newValue ) : Val.of( newValue );
+	}
 
 	/**
 	 *  If the item is present, applies the provided mapping function to it,

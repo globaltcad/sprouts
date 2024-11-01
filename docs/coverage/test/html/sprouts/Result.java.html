@@ -1,12 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Result.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sprouts</a> &gt; <a href="index.source.html" class="el_package">sprouts</a> &gt; <span class="el_source">Result.java</span></div><h1>Result.java</h1><pre class="source lang-java linenums">package sprouts;
 
 
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import sprouts.impl.Sprouts;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -41,8 +39,8 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
 	 * @throws NullPointerException if the type is null.
 	 */
 	static &lt;V&gt; Result&lt;V&gt; of( Class&lt;V&gt; type ) {
-<span class="fc" id="L44">		Objects.requireNonNull(type);</span>
-<span class="fc" id="L45">		return Sprouts.factory().resultOf(type);</span>
+<span class="fc" id="L42">		Objects.requireNonNull(type);</span>
+<span class="fc" id="L43">		return Sprouts.factory().resultOf(type);</span>
 	}
 
 	/**
@@ -53,8 +51,8 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
 	 * @throws NullPointerException if the value is null.
 	 */
 	static &lt;V&gt; Result&lt;V&gt; of( V value ) {
-<span class="fc" id="L56">		Objects.requireNonNull(value);</span>
-<span class="fc" id="L57">		return Sprouts.factory().resultOf(value);</span>
+<span class="fc" id="L54">		Objects.requireNonNull(value);</span>
+<span class="fc" id="L55">		return Sprouts.factory().resultOf(value);</span>
 	}
 
 	/**
@@ -69,8 +67,8 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
 	 * @throws NullPointerException if the type is null.
 	 */
 	static &lt;V&gt; Result&lt;V&gt; of( Class&lt;V&gt; type, @Nullable V value ) {
-<span class="fc" id="L72">		Objects.requireNonNull(type);</span>
-<span class="fc" id="L73">		return Sprouts.factory().resultOf(type, value);</span>
+<span class="fc" id="L70">		Objects.requireNonNull(type);</span>
+<span class="fc" id="L71">		return Sprouts.factory().resultOf(type, value);</span>
 	}
 
 	/**
@@ -82,8 +80,8 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
 	 * @throws NullPointerException if the value or problems are null.
 	 */
 	static &lt;V&gt; Result&lt;V&gt; of( V value, List&lt;Problem&gt; problems ) {
-<span class="fc" id="L85">		Objects.requireNonNull(value);</span>
-<span class="fc" id="L86">		return Sprouts.factory().resultOf(value, problems);</span>
+<span class="fc" id="L83">		Objects.requireNonNull(value);</span>
+<span class="fc" id="L84">		return Sprouts.factory().resultOf(value, problems);</span>
 	}
 
 	/**
@@ -95,8 +93,8 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
 	 * @throws NullPointerException if the type or problems are null.
 	 */
 	static &lt;V&gt; Result&lt;V&gt; of( Class&lt;V&gt; type, List&lt;Problem&gt; problems ) {
-<span class="fc" id="L98">		Objects.requireNonNull(type);</span>
-<span class="fc" id="L99">		return Sprouts.factory().resultOf(type, problems);</span>
+<span class="fc" id="L96">		Objects.requireNonNull(type);</span>
+<span class="fc" id="L97">		return Sprouts.factory().resultOf(type, problems);</span>
 	}
 
 	/**
@@ -109,8 +107,8 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
 	 * @throws NullPointerException if the type or problems are null.
 	 */
 	static &lt;V&gt; Result&lt;V&gt; of( Class&lt;V&gt; type, @Nullable V value, List&lt;Problem&gt; problems ) {
-<span class="fc" id="L112">		Objects.requireNonNull(type);</span>
-<span class="fc" id="L113">		return Sprouts.factory().resultOf(type, value, problems);</span>
+<span class="fc" id="L110">		Objects.requireNonNull(type);</span>
+<span class="fc" id="L111">		return Sprouts.factory().resultOf(type, value, problems);</span>
 	}
 
 	/**
@@ -123,9 +121,9 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
 	 * @throws NullPointerException if any of the parameters are null.
 	 */
 	static &lt;V&gt; Result&lt;V&gt; of( Class&lt;V&gt; type, @Nullable V value, Problem problem ) {
-<span class="nc" id="L126">		Objects.requireNonNull(type);</span>
-<span class="nc" id="L127">		Objects.requireNonNull(problem);</span>
-<span class="nc" id="L128">		return Sprouts.factory().resultOf(type, value, problem);</span>
+<span class="nc" id="L124">		Objects.requireNonNull(type);</span>
+<span class="nc" id="L125">		Objects.requireNonNull(problem);</span>
+<span class="nc" id="L126">		return Sprouts.factory().resultOf(type, value, problem);</span>
 	}
 
 	/**
@@ -137,9 +135,9 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
 	 * @throws NullPointerException if any of the parameters are null.
 	 */
 	static &lt;V&gt; Result&lt;V&gt; of( Class&lt;V&gt; type, Problem problem ) {
-<span class="nc" id="L140">		Objects.requireNonNull(type);</span>
-<span class="nc" id="L141">		Objects.requireNonNull(problem);</span>
-<span class="nc" id="L142">		return Sprouts.factory().resultOf(type, problem);</span>
+<span class="nc" id="L138">		Objects.requireNonNull(type);</span>
+<span class="nc" id="L139">		Objects.requireNonNull(problem);</span>
+<span class="nc" id="L140">		return Sprouts.factory().resultOf(type, problem);</span>
 	}
 
 	/**
@@ -151,9 +149,9 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
 	 * @throws NullPointerException if any of the parameters are null.
 	 */
 	static &lt;V&gt; Result&lt;List&lt;V&gt;&gt; ofList( Class&lt;V&gt; type, Problem problem ) {
-<span class="nc" id="L154">		Objects.requireNonNull(type);</span>
-<span class="nc" id="L155">		Objects.requireNonNull(problem);</span>
-<span class="nc" id="L156">		return Sprouts.factory().resultOfList(type, problem);</span>
+<span class="nc" id="L152">		Objects.requireNonNull(type);</span>
+<span class="nc" id="L153">		Objects.requireNonNull(problem);</span>
+<span class="nc" id="L154">		return Sprouts.factory().resultOfList(type, problem);</span>
 	}
 
 	/**
@@ -167,13 +165,13 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
 	 * @throws NullPointerException if any of the parameters are null.
 	 */
 	static &lt;V&gt; Result&lt;List&lt;V&gt;&gt; ofList( Class&lt;V&gt; type, List&lt;V&gt; list ) {
-<span class="fc" id="L170">		Objects.requireNonNull(type);</span>
-<span class="fc" id="L171">		Objects.requireNonNull(list);</span>
+<span class="fc" id="L168">		Objects.requireNonNull(type);</span>
+<span class="fc" id="L169">		Objects.requireNonNull(list);</span>
 		// We check the types of the list elements are of the correct type.
-<span class="fc" id="L173">		boolean matches = list.stream().filter(Objects::nonNull).allMatch(e -&gt; type.isAssignableFrom(e.getClass()));</span>
-<span class="pc bpc" id="L174" title="1 of 2 branches missed.">		if ( !matches )</span>
-<span class="nc" id="L175">			throw new IllegalArgumentException(&quot;List elements must be of type &quot; + type.getName());</span>
-<span class="fc" id="L176">		return Sprouts.factory().resultOfList(type, list);</span>
+<span class="fc" id="L171">		boolean matches = list.stream().filter(Objects::nonNull).allMatch(e -&gt; type.isAssignableFrom(e.getClass()));</span>
+<span class="pc bpc" id="L172" title="1 of 2 branches missed.">		if ( !matches )</span>
+<span class="nc" id="L173">			throw new IllegalArgumentException(&quot;List elements must be of type &quot; + type.getName());</span>
+<span class="fc" id="L174">		return Sprouts.factory().resultOfList(type, list);</span>
 	}
 
 	/**
@@ -188,13 +186,13 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
 	 * @throws NullPointerException if any of the parameters are null.
 	 */
 	static &lt;V&gt; Result&lt;List&lt;V&gt;&gt; ofList( Class&lt;V&gt; type, List&lt;V&gt; list, List&lt;Problem&gt; problems ) {
-<span class="fc" id="L191">		Objects.requireNonNull(type);</span>
-<span class="fc" id="L192">		Objects.requireNonNull(list);</span>
-<span class="fc" id="L193">		boolean matches = list.stream().filter(Objects::nonNull).allMatch(e -&gt; type.isAssignableFrom(e.getClass()));</span>
-<span class="pc bpc" id="L194" title="1 of 2 branches missed.">		if ( !matches )</span>
-<span class="nc" id="L195">			throw new IllegalArgumentException(&quot;List elements must be of type &quot; + type.getName());</span>
+<span class="fc" id="L189">		Objects.requireNonNull(type);</span>
+<span class="fc" id="L190">		Objects.requireNonNull(list);</span>
+<span class="fc" id="L191">		boolean matches = list.stream().filter(Objects::nonNull).allMatch(e -&gt; type.isAssignableFrom(e.getClass()));</span>
+<span class="pc bpc" id="L192" title="1 of 2 branches missed.">		if ( !matches )</span>
+<span class="nc" id="L193">			throw new IllegalArgumentException(&quot;List elements must be of type &quot; + type.getName());</span>
 
-<span class="fc" id="L197">		return Sprouts.factory().resultOfList(type, list, problems);</span>
+<span class="fc" id="L195">		return Sprouts.factory().resultOfList(type, list, problems);</span>
 	}
 
 	/**
@@ -209,9 +207,9 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
 	 * @throws NullPointerException if the type or supplier is null.
 	 */
 	static &lt;V&gt; Result&lt;V&gt; ofTry( Class&lt;V&gt; type, Supplier&lt;V&gt; supplier ) {
-<span class="fc" id="L212">		Objects.requireNonNull(type);</span>
-<span class="fc" id="L213">		Objects.requireNonNull(supplier);</span>
-<span class="fc" id="L214">		return Sprouts.factory().resultOfTry(type, supplier);</span>
+<span class="fc" id="L210">		Objects.requireNonNull(type);</span>
+<span class="fc" id="L211">		Objects.requireNonNull(supplier);</span>
+<span class="fc" id="L212">		return Sprouts.factory().resultOfTry(type, supplier);</span>
 	}
 
 	/**
@@ -236,7 +234,7 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
 	 *
 	 * 	@return {@code true} if this result is present, {@code false} otherwise.
 	 */
-<span class="nc bnc" id="L239" title="All 2 branches missed.">	default boolean hasProblems() { return !problems().isEmpty(); }</span>
+<span class="nc bnc" id="L237" title="All 2 branches missed.">	default boolean hasProblems() { return !problems().isEmpty(); }</span>
 
 	/**
 	 *  Allows you to peek at the list of problems associated with this result
