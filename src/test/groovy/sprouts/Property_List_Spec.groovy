@@ -2087,6 +2087,62 @@ class Property_List_Spec extends Specification
             property2.get() == "-"
     }
 
+    def 'Use `setAllAt(int, Vals)` to set items as new properties and use `setAllAt(int, Vars)` to set them unchanged.'()
+    {
+        reportInfo """
+            The `Vars` property list exposes two overloaded methods to replace a sequence properties starting
+            at a given index. The `setAllAt(int, Vals)` method adds the items wrapped in new independent properties, 
+            while the `setAllAt(int, Vars)` method actually takes the supplied properties and then 
+            puts them in the list unchanged.
+            
+            The reason why the `setAllAt(int, Vals)` creates a copy of the properties is because the `Vals`
+            type is a read only view on a potentially mutable `Vars` property list. So an API consumer
+            expects that it's state is encapsulated and not affected by changes to the original property list.
+            
+            In this example we demonstrate this difference by adding a simple property
+            with a change listener to the list and then adding a list of properties
+            using both methods.
+            
+            Note that `setAllAt` is different from `addAllAt` in that it replaces the properties at the given index
+            whereas `addAllAt` adds the properties at the given index (so the list grows).
+        """
+        given : 'Two simple String based properties with listeners and a list tracking changes.'
+            var trace = []
+            var property1 = Var.of("?")
+            var property2 = Var.of("!")
+            property1.onChange(From.ALL, { trace << it.get() })
+            property2.onChange(From.ALL, { trace << it.get() })
+        and : 'A property list with some random string based properties.'
+            var foods = Vars.of("दाल", "1", "2", "3", "4", "चावल")
+        and : 'A short list containing a the two properties.'
+            var properties = Vals.of(property1, property2)
+
+        when : 'We use the two different methods to set the properties in the list.'
+            foods.setAllAt(1, (Vals<String>) properties)
+            foods.setAllAt(3, (Vars<String>) properties)
+        then : 'The properties are added to the list and the properties did not change.'
+            foods.toList() == ["दाल", "?", "!", "?", "!", "चावल"]
+            trace == []
+
+        when : 'We modify the items at index 2 and 4...'
+            foods.at(1).set("x")
+            foods.at(2).set("y")
+        then : 'The properties at index 1 and 2 are changed but the initial properties did not change.'
+            foods.toList() == ["दाल", "x", "y", "?", "!", "चावल"]
+            trace == []
+            property1.get() == "?"
+            property2.get() == "!"
+
+        when : 'We change the property item at index 3 and 5 on the other hand...'
+            foods.at(3).set("+")
+            foods.at(4).set("-")
+        then : 'The properties at index 3 and 4 are changed as well as the initial properties.'
+            foods.toList() == ["दाल", "x", "y", "+", "-", "चावल"]
+            trace == ["+", "-"]
+            property1.get() == "+"
+            property2.get() == "-"
+    }
+
     def 'Using `addAt(int,Val)`, you can add a nullable property to a non-nullable list if the item is present.'()
     {
         reportInfo """
