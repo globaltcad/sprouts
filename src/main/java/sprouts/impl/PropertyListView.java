@@ -86,7 +86,7 @@ final class PropertyListView {
         if (delegate.newValues().isEmpty() || delegate.index() < 0)
             throw new NotImplementedException(); // todo: implement
 
-        List<Var<U>> newViews = new ArrayList<>();
+        Vars<U> newViews = Vars.of(view.type());
 
         for (int i = 0; i < delegate.newValues().size(); i++) {
             Val<T> t = source.at(delegate.index() + i);
@@ -96,10 +96,7 @@ final class PropertyListView {
             newViews.add(v);
         }
 
-        // todo: set at once
-        for (int i = 0; i < delegate.newValues().size(); i++) {
-            view.setAt(delegate.index() + i, newViews.get(i));
-        }
+        view.setAllAt(delegate.index(), newViews);
     }
 
 }

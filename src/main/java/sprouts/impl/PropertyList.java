@@ -224,7 +224,8 @@ final class PropertyList<T extends @Nullable Object> implements Vars<T>, Viewabl
     /** {@inheritDoc} */
     @Override
     public Vars<T> setRange(int from, int to, T value) {
-        if (_isImmutable) throw new UnsupportedOperationException("This is an immutable list.");
+        if (_isImmutable)
+            throw new UnsupportedOperationException("This is an immutable list.");
         if (from < 0 || to > _variables.size() || from > to)
             throw new IndexOutOfBoundsException("From: " + from + ", To: " + to + ", Size: " + _variables.size());
 
@@ -252,7 +253,8 @@ final class PropertyList<T extends @Nullable Object> implements Vars<T>, Viewabl
     /** {@inheritDoc} */
     @Override
     public Vars<T> setRange(int from, int to, Var<T> value) {
-        if (_isImmutable) throw new UnsupportedOperationException("This is an immutable list.");
+        if (_isImmutable)
+            throw new UnsupportedOperationException("This is an immutable list.");
         if (from < 0 || to > _variables.size() || from > to)
             throw new IndexOutOfBoundsException("From: " + from + ", To: " + to + ", Size: " + _variables.size());
 
@@ -277,6 +279,8 @@ final class PropertyList<T extends @Nullable Object> implements Vars<T>, Viewabl
 
     @Override
     public Vars<T> addAllAt( int index, Vars<T> vars ) {
+        if (_isImmutable)
+            throw new UnsupportedOperationException("This is an immutable list.");
         if ( !_checkCanAdd(vars) )
             return this;
 
@@ -290,6 +294,34 @@ final class PropertyList<T extends @Nullable Object> implements Vars<T>, Viewabl
         }
 
         _triggerAction( Change.ADD, index, vars, null );
+        return this;
+    }
+
+    @Override
+    public Vars<T> setAllAt(int index, Vars<T> vars) {
+        if ( !_checkCanAdd(vars) )
+            return this;
+
+        if ( index < 0 || index > size() )
+            throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + size());
+
+        int end = index + vars.size();
+
+        if ( end > size() )
+            throw new IndexOutOfBoundsException("Index: " + end + ", Size: " + size());
+
+        Vars<T> oldVars = (Vars<T>) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));
+        Vars<T> newVars = (Vars<T>) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));
+
+        for ( int i = 0; i < vars.size(); i++ ) {
+            Var<T> toBeAdded = vars.at(i);
+            _checkNullSafetyOf(toBeAdded);
+            Var<T> old = _variables.set(index + i, toBeAdded);
+            newVars.add(toBeAdded);
+            oldVars.add(old);
+        }
+
+        _triggerAction( Change.SET, index, newVars, oldVars );
         return this;
     }
 

@@ -188,6 +188,15 @@ class Property_List_Views extends Specification
         and : 'Finally, we check if the view and source property have the expected contents:'
             names.toList() == ["JANUARY", "OCTOBER", "AUGUST"]
             months.toList() == [Month.JANUARY, Month.OCTOBER, Month.AUGUST]
+
+        when : 'We set a range to a particular month.'
+            months.setRange(0, 2, Month.JUNE)
+        then : 'The view receives the change event.'
+            removalTrace == [[], ["MARCH"], ["MAY", "JUNE"], [], [], ["JULY", "SEPTEMBER"], ["JANUARY", "OCTOBER"]]
+            additionTrace == [["JUNE"], [], [], ["JULY", "AUGUST"], ["SEPTEMBER", "OCTOBER"], [], ["JUNE", "JUNE"]]
+        and : 'Finally we check again if the view and source property have the expected contents:'
+            names.toList() == ["JUNE", "JUNE", "AUGUST"]
+            months.toList() == [Month.JUNE, Month.JUNE, Month.AUGUST]
     }
 
     def 'A property list view created using `view()` will receive change events from its source.'()
@@ -244,9 +253,19 @@ class Property_List_Views extends Specification
         then : 'The view receives the change event.'
             removalTrace == [[], ["MARCH"], ["MAY", "JUNE"], [], [], ["JULY", "SEPTEMBER"]]
             additionTrace == [["JUNE"], [], [], ["JULY", "AUGUST"], ["SEPTEMBER", "OCTOBER"], []]
-        and : 'Finally, we check if the view and source property have the expected contents:'
+
+        and : 'We check if the view and source property have the expected contents:'
             view.toList() == [Month.JANUARY, Month.OCTOBER, Month.AUGUST]
             months.toList() == [Month.JANUARY, Month.OCTOBER, Month.AUGUST]
+
+        when : 'We set a range to a particular month.'
+            months.setRange(0, 2, Month.JUNE)
+        then : 'The view receives the change event.'
+            removalTrace == [[], ["MARCH"], ["MAY", "JUNE"], [], [], ["JULY", "SEPTEMBER"], ["JANUARY", "OCTOBER"]]
+            additionTrace == [["JUNE"], [], [], ["JULY", "AUGUST"], ["SEPTEMBER", "OCTOBER"], [], ["JUNE", "JUNE"]]
+        and : 'Finally we check again if the view and source property have the expected contents:'
+            view.toList() == [Month.JUNE, Month.JUNE, Month.AUGUST]
+            months.toList() == [Month.JUNE, Month.JUNE, Month.AUGUST]
     }
 
     /**

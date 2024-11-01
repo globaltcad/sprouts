@@ -523,7 +523,8 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
     default Vars<T> removeIf( Predicate<Var<T>> predicate ) {
         Vars<T> vars = allowsNull() ? Vars.ofNullable(type()) : Vars.of(type());
         for ( int i = size() - 1; i >= 0; i-- )
-            if ( predicate.test(at(i)) ) vars.add(at(i));
+            if ( predicate.test(at(i)) )
+                vars.add(at(i));
 
         this.removeAll(vars); // remove from this list at once and trigger events only once!
         return this;
@@ -539,7 +540,8 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
     default Vars<T> popIf( Predicate<Var<T>> predicate ) {
         Vars<T> vars = allowsNull() ? Vars.ofNullable(type()) : Vars.of(type());
         for ( int i = size() - 1; i >= 0; i-- )
-            if ( predicate.test(at(i)) ) vars.add(at(i) );
+            if ( predicate.test(at(i)) )
+                vars.add(at(i) );
 
         this.removeAll(vars); // remove from this list at once and trigger events only once!
         return vars.revert();
@@ -555,7 +557,8 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
     default Vars<T> removeIfItem( Predicate<T> predicate ) {
         Vars<T> vars = (Vars<T>) (allowsNull() ? Vars.ofNullable(type()) : Vars.of(type()));
         for ( int i = size() - 1; i >= 0; i-- )
-            if ( predicate.test(this.at(i).get()) ) vars.add(this.at(i));
+            if ( predicate.test(this.at(i).get()) )
+                vars.add(this.at(i));
 
         this.removeAll(vars); // remove from this list at once and trigger events only once!
         return this;
@@ -571,7 +574,8 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
     default Vars<T> popIfItem( Predicate<T> predicate ) {
         Vars<T> vars = (Vars<T>) (allowsNull() ? Vars.ofNullable(type()) : Vars.of(type()));
         for ( int i = size() - 1; i >= 0; i-- )
-            if ( predicate.test(at(i).get()) ) vars.add(at(i));
+            if ( predicate.test(at(i).get()) )
+                vars.add(at(i));
 
         this.removeAll(vars); // remove from this list at once and trigger events only once!
         return vars.revert();
@@ -809,7 +813,8 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
      */
     default Vars<T> addAll( Iterable<T> items ) {
         Vars<T> vars = (Vars<T>) (allowsNull() ? Vars.ofNullable(type()) : Vars.of(type()));
-        for ( T v : items ) vars.add(v);
+        for ( T v : items )
+            vars.add(v);
         return addAll(vars);
     }
 
@@ -875,7 +880,8 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
     @SuppressWarnings("unchecked")
     default Vars<T> addAllAt( int index, T... items ) {
         Vars<T> vars = allowsNull() ? Vars.ofNullable(type()) : Vars.of(type());
-        for ( T v : items ) vars.add(v);
+        for ( T v : items )
+            vars.add(v);
         return addAllAt(index, vars);
     }
 
@@ -890,7 +896,8 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
      */
     default Vars<T> addAllAt( int index, Iterable<T> items ) {
         Vars<T> vars = (Vars<T>) (allowsNull() ? Vars.ofNullable(type()) : Vars.of(type()));
-        for ( T v : items ) vars.add(v);
+        for ( T v : items )
+            vars.add(v);
         return addAllAt(index, vars);
     }
 
@@ -903,7 +910,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
      * which implies a read only addition.
      * If you want to add the actual properties objects directly
      * (including all the listeners associated with the properties),
-     * use {@link #addAll(Vars)}.
+     * use {@link #addAllAt(int,Vars)}.
      *
      * @param index The index at which to add the properties.
      * @param vals The properties, whose items should be added to this list
@@ -933,9 +940,9 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
     /**
      * Adds all properties from the provided list of properties to {@code this} list
      * at a specified index.
-     * This method differs from {@link #addAll(Vals)} in that it adds the actual property objects
+     * This method differs from {@link #addAllAt(int,Vals)} in that it adds the actual property objects
      * directly (including their listeners and possible side effects).
-     * Use {@link #addAll(Vals)} if you want to add only the items of the properties.
+     * Use {@link #addAllAt(int,Vals)} if you want to add only the items of the properties.
      *
      * @param index The index at which to add the properties.
      * @param vars The list of properties to add.
@@ -945,6 +952,96 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
      */
     Vars<T> addAllAt( int index, Vars<T> vars );
 
+    /**
+     * Wraps each provided item in a property and
+     * overwrites the existing properties in this
+     * property list, starting at the specified index.
+     *
+     * @param index The index at which to replace the current properties
+     *              with new properties created from the array of items.
+     * @param items The array of values to set as property items.
+     * @return {@code this} list of properties.
+     * @throws NullPointerException if {@code null} is not allowed and one of the {@code items} is {@code null}.
+     * @throws IndexOutOfBoundsException if {@code index} is negative, or {@code index} is greater than or equal to the
+     *                                  size of this {@code Vars} object.
+     */
+    @SuppressWarnings("unchecked")
+    default Vars<T> setAllAt( int index, T... items ) {
+        Vars<T> vars = allowsNull() ? Vars.ofNullable(type()) : Vars.of(type());
+        for ( T v : items )
+            vars.add(v);
+        return setAllAt(index, vars);
+    }
+
+    /**
+     * Iterates over the supplied values, and sets
+     * them in this list as properties starting at the specified index.
+     * This method will replace the properties in the specified range.
+     *
+     * @param index The index at which to set the properties.
+     * @param items The values to set as property items.
+     * @return {@code this} list of properties.
+     * @throws NullPointerException if {@code null} is not allowed and one of the {@code items} is {@code null}.
+     * @throws IndexOutOfBoundsException if {@code index} is negative, or {@code index} is greater than or equal to the
+     *                                  size of this {@code Vars} object.
+     */
+    default Vars<T> setAllAt( int index, Iterable<T> items ) {
+        Vars<T> vars = (Vars<T>) (allowsNull() ? Vars.ofNullable(type()) : Vars.of(type()));
+        for ( T v : items )
+            vars.add(v);
+        return setAllAt(index, vars);
+    }
+
+    /**
+     * Iterates over the supplied properties, and
+     * sets their items in this list in the form of new
+     * property instances starting at the specified index.
+     * This method deliberately adds copies instead of the properties
+     * themselves due to the provided type being {@link Vals},
+     * which implies a read only addition.
+     * If you want to set the actual properties objects directly
+     * (including all the listeners associated with the properties),
+     * use {@link #setAllAt(int,Vars)}.
+     *
+     * @param index The index at which to set the properties.
+     * @param vals The properties, whose items should be set in this list
+     *             in the form of new {@link Var} properties.
+     * @return {@code this} list of properties, to allow for method chaining.
+     * @throws NullPointerException if the supplied property list is null.
+     * @throws IllegalArgumentException if the list allows {@code null} and at least one
+     *                                  property is empty (contains {@code null}).
+     */
+    default Vars<T> setAllAt( int index, Vals<T> vals ) {
+        Objects.requireNonNull(vals);
+        Vars<T> cloned = allowsNull() ? Vars.ofNullable(type()) : Vars.of(type());
+        for ( int i = 0; i < vals.size(); i++ ) {
+            Val<T> toBeAdded = vals.at(i);
+            if ( !this.allowsNull() && toBeAdded.isEmpty() )
+                throw new IllegalArgumentException("Null items are not allowed in this property list.");
+
+            cloned.add(
+                    this.allowsNull() ?
+                            Var.ofNullable(toBeAdded.type(), toBeAdded.orElseNull()) :
+                            Var.of(toBeAdded.get())
+            );
+        }
+        return setAllAt(index, cloned);
+    }
+
+    /**
+     * Sets all properties from the provided list of properties to {@code this} list
+     * at a specified index.
+     * This method differs from {@link #setAllAt(int,Vals)} in that it sets the actual property objects
+     * directly (including their listeners and possible side effects).
+     * Use {@link #setAllAt(int,Vals)} if you want to set only the items of the properties.
+     *
+     * @param index The index at which to set the properties.
+     * @param vars The list of properties to set.
+     * @return {@code this} list of properties.
+     * @throws IllegalArgumentException if the list allows {@code null} and at least one
+     *                                  property does not allow {@code null}.
+     */
+    Vars<T> setAllAt( int index, Vars<T> vars );
 
     /**
      * Removes all properties from {@code this} list that are not contained in the provided list of properties.
