@@ -268,6 +268,43 @@ class Property_List_Views extends Specification
             months.toList() == [Month.JUNE, Month.JUNE, Month.AUGUST]
     }
 
+    def 'The properties of a list view can themselves be observed for changes in the source properties'()
+    {
+        reportInfo """
+            The properties of a list view can be accessed using 
+            the `Val<T> at(int)` method.
+            This returns a new property that will be updated
+            whenever the value at the given index in the source list changes.
+        """
+        given : 'A property list of 3 days of the week and two types of views.'
+            Vars<DayOfWeek> days = Vars.of(DayOfWeek.MONDAY,DayOfWeek.WEDNESDAY,DayOfWeek.FRIDAY)
+            Vals<String> names = days.view("null", "error", DayOfWeek::name)
+            Viewable<String> firstDay  = names.at(0).view()
+            Viewable<String> secondDay = names.at(1).view()
+            Viewable<String> thirdDay  = names.at(2).view()
+        and : 'Two trace lists to record the changes.'
+            var viewTrace = []
+        and : 'Listeners to record the changes.'
+            firstDay.onChange(From.ALL, { viewTrace << "0: "+it.get() })
+            secondDay.onChange(From.ALL, { viewTrace << "1: "+it.get() })
+            thirdDay.onChange(From.ALL, { viewTrace << "2: "+it.get() })
+
+        when : 'We change the first day in the list.'
+            days.at(0).set(DayOfWeek.SUNDAY)
+        then : 'The view of the first day receives the change event.'
+            viewTrace == ["0: SUNDAY"]
+
+        when : 'We change the second day in the list.'
+            days.at(1).set(DayOfWeek.TUESDAY)
+        then : 'The view of the second day receives the change event.'
+            viewTrace == ["0: SUNDAY", "1: TUESDAY"]
+
+        when : 'We change the third day in the list.'
+            days.at(2).set(DayOfWeek.THURSDAY)
+        then : 'The view of the third day receives the change event.'
+            viewTrace == ["0: SUNDAY", "1: TUESDAY", "2: THURSDAY"]
+    }
+
     /**
      * This method guarantees that garbage collection is
      * done unlike <code>{@link System#gc()}</code>
