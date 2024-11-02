@@ -16,7 +16,7 @@ import spock.lang.Title
 
 ''')
 @Subject([UserRegistrationViewModel])
-class MVVM_Unit_Test_Spec extends Specification
+class MVVM_Usage_Spec extends Specification
 {
 
     def 'The registration view model will display feedback about invalid inputs.'()

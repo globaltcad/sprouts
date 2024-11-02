@@ -8,7 +8,6 @@ import spock.lang.Title
 import java.lang.ref.WeakReference
 import java.time.DayOfWeek
 import java.time.Month
-import java.util.concurrent.TimeUnit
 
 @Title("Property List Views")
 @Narrative('''
@@ -23,7 +22,7 @@ import java.util.concurrent.TimeUnit
     
 ''')
 @Subject([Viewables, Vars, Vals])
-class Property_List_Views extends Specification
+class Property_List_View_Spec extends Specification
 {
     def 'The `viewSize()` method returns a property that is equal to the size of the original property.'() {
         reportInfo """
