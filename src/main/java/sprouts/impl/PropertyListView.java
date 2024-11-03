@@ -43,7 +43,8 @@ final class PropertyListView {
                 case SORT:
                 case REVERT:
                 case DISTINCT:
-                    throw new UnsupportedOperationException(); // todo: implement
+                default:
+                    onUpdateAll(source, view, nonNullMapper);
             }
         });
 
@@ -94,6 +95,17 @@ final class PropertyListView {
         }
 
         view.setAllAt(delegate.index(), newViews);
+    }
+
+    private static <T, U> void onUpdateAll(Vals<T> source, Vars<U> view, Function<T, U> mapper) {
+        view.clear();
+        for (int i = 0; i < source.size(); i++) {
+            Val<T> t = source.at(i);
+            final U u = mapper.apply(t.orElseNull());
+            Var<U> v = Var.of(u);
+            Viewable.cast(t).onChange(From.ALL, d -> v.set(From.ALL, mapper.apply(d.orElseNull())));
+            view.add(v);
+        }
     }
 
 }
