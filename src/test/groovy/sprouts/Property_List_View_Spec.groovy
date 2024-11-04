@@ -196,6 +196,16 @@ class Property_List_View_Spec extends Specification
         and : 'Finally we check again if the view and source property have the expected contents:'
             names.toList() == ["JUNE", "JUNE", "AUGUST"]
             months.toList() == [Month.JUNE, Month.JUNE, Month.AUGUST]
+
+        when : 'We make the source list distinct.'
+            months.makeDistinct()
+        then : 'The view is updated.'
+            names.toList() == ["JUNE", "AUGUST"]
+            months.toList() == [Month.JUNE, Month.AUGUST]
+
+        and : 'The traces recorded the change.'
+            removalTrace == [[], ["MARCH"], ["MAY", "JUNE"], [], [], ["JULY", "SEPTEMBER"], ["JANUARY", "OCTOBER"], []]
+            additionTrace == [["JUNE"], [], [], ["JULY", "AUGUST"], ["SEPTEMBER", "OCTOBER"], [], ["JUNE", "JUNE"], []]
     }
 
     def 'A property list view created using `view()` will receive change events from its source.'()
@@ -265,6 +275,15 @@ class Property_List_View_Spec extends Specification
         and : 'Finally we check again if the view and source property have the expected contents:'
             view.toList() == [Month.JUNE, Month.JUNE, Month.AUGUST]
             months.toList() == [Month.JUNE, Month.JUNE, Month.AUGUST]
+
+        when : 'We make the source list distinct.'
+            months.makeDistinct()
+        then : 'The view is updated.'
+            view.toList() == [Month.JUNE, Month.AUGUST]
+            months.toList() == [Month.JUNE, Month.AUGUST]
+        and : 'The traces recorded the change.'
+            removalTrace == [[], ["MARCH"], ["MAY", "JUNE"], [], [], ["JULY", "SEPTEMBER"], ["JANUARY", "OCTOBER"], []]
+            additionTrace == [["JUNE"], [], [], ["JULY", "AUGUST"], ["SEPTEMBER", "OCTOBER"], [], ["JUNE", "JUNE"], []]
     }
 
     def 'The properties of a list view can themselves be observed for changes in the source properties'()
