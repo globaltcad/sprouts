@@ -2,9 +2,9 @@ package sprouts.impl;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
-import sprouts.*;
 import sprouts.Observable;
 import sprouts.Observer;
+import sprouts.*;
 
 import java.util.*;
 import java.util.function.Function;
@@ -21,12 +21,12 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
         Function<T, U> nonNullMapper = Util.nonNullMapper(nullObject, errorObject, mapper);
 
         PropertyListView<U> view = new PropertyListView<>(false, targetType, source.allowsNull());
+        Function<Val<T>, Var<U>> sourcePropToViewProp = prop -> {
+            return (Var<U>) prop.view(nullObject, errorObject, nonNullMapper);
+        };
         for (int i = 0; i < source.size(); i++) {
-            Val<T> t = source.at(i);
-            final U u = nonNullMapper.apply(t.orElseNull());
-            Var<U> v = Var.of(u);
-            Viewable.cast(t).onChange(From.ALL, delegate -> v.set(From.ALL, nonNullMapper.apply(delegate.orElseNull())));
-            view.addAt(i, v);
+            Var<U> viewable = sourcePropToViewProp.apply(source.at(i));
+            view._variables.add(i, viewable);
         }
 
         Viewables.cast(source).onChange(delegate -> {
@@ -37,10 +37,10 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
                     onRemove(delegate, view);
                     break;
                 case ADD:
-                    onAdd(delegate, source, view, nonNullMapper, targetType);
+                    onAdd(delegate, source, view, targetType, sourcePropToViewProp);
                     break;
                 case SET:
-                    onSet(delegate, source, view, nonNullMapper);
+                    onSet(delegate, source, view, sourcePropToViewProp);
                     break;
                 case CLEAR:
                     view.clear();
@@ -55,7 +55,7 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
                     view.makeDistinct();
                     break;
                 default:
-                    onUpdateAll(source, view, nonNullMapper);
+                    onUpdateAll(source, view, sourcePropToViewProp);
             }
         });
 
@@ -70,7 +70,13 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
         view.removeAt(delegate.index(), delegate.oldValues().size());
     }
 
-    private static <T, U> void onAdd(ValsDelegate<T> delegate, Vals<T> source, Vars<U> view, Function<T, U> mapper, Class<U> targetType) {
+    private static <T, U> void onAdd(
+            ValsDelegate<T>          delegate,
+            Vals<T>                  source,
+            Vars<U>                  view,
+            Class<U>                 targetType,
+            Function<Val<T>, Var<U>> sourcePropToViewProp
+    ) {
         assert delegate.changeType() == Change.ADD;
 
         if (delegate.newValues().isEmpty() || delegate.index() < 0)
@@ -80,16 +86,18 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
 
         for (int i = 0; i < delegate.newValues().size(); i++) {
             Val<T> t = source.at(delegate.index() + i);
-            final U u = mapper.apply(t.orElseNull());
-            Var<U> v = Var.of(u);
-            Viewable.cast(t).onChange(From.ALL, d -> v.set(From.ALL, mapper.apply(d.orElseNull())));
-            newViews.add(v);
+            newViews.add(sourcePropToViewProp.apply(t));
         }
 
         view.addAllAt(delegate.index(), newViews);
     }
 
-    private static <T, U> void onSet(ValsDelegate<T> delegate, Vals<T> source, Vars<U> view, Function<T, U> mapper) {
+    private static <T, U> void onSet(
+            ValsDelegate<T>          delegate,
+            Vals<T>                  source,
+            Vars<U>                  view,
+            Function<Val<T>, Var<U>> sourcePropToViewProp
+    ) {
         assert delegate.changeType() == Change.SET;
 
         if (delegate.newValues().isEmpty() || delegate.index() < 0)
@@ -99,34 +107,29 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
 
         for (int i = 0; i < delegate.newValues().size(); i++) {
             Val<T> t = source.at(delegate.index() + i);
-            final U u = mapper.apply(t.orElseNull());
-            Var<U> v = Var.of(u);
-            Viewable.cast(t).onChange(From.ALL, d -> v.set(From.ALL, mapper.apply(d.orElseNull())));
-            newViews.add(v);
+            newViews.add(sourcePropToViewProp.apply(t));
         }
 
         view.setAllAt(delegate.index(), newViews);
     }
 
-    private static <T, U> void onUpdateAll(Vals<T> source, Vars<U> view, Function<T, U> mapper) {
+    private static <T, U> void onUpdateAll(
+            Vals<T>                  source,
+            Vars<U>                  view,
+            Function<Val<T>, Var<U>> sourcePropToViewProp
+    ) {
         view.clear();
         for (int i = 0; i < source.size(); i++) {
             Val<T> t = source.at(i);
-            final U u = mapper.apply(t.orElseNull());
-            Var<U> v = Var.of(u);
-            Viewable.cast(t).onChange(From.ALL, d -> v.set(From.ALL, mapper.apply(d.orElseNull())));
-            view.add(v);
+            view.add(sourcePropToViewProp.apply(t));
         }
     }
 
 
-
-
-
     private final List<Var<T>> _variables = new ArrayList<>();
-    private final boolean _isImmutable;
-    private final boolean _allowsNull;
-    private final Class<T> _type;
+    private final boolean      _isImmutable;
+    private final boolean      _allowsNull;
+    private final Class<T>     _type;
 
     private final List<Action<ValsDelegate<T>>> _viewActions = new ArrayList<>();
 
