@@ -1,7 +1,6 @@
 package sprouts.impl;
 
 import org.jspecify.annotations.Nullable;
-import org.slf4j.Logger;
 import sprouts.Observable;
 import sprouts.Observer;
 import sprouts.*;
@@ -11,7 +10,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Viewables<T> {
-    private static final Logger log = org.slf4j.LoggerFactory.getLogger(PropertyListView.class);
 
     public static <T, U> Viewables<U> of(U nullObject, U errorObject, Vals<T> source, Function<T, @Nullable U> mapper) {
         Objects.requireNonNull(nullObject);
@@ -131,7 +129,7 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
     private final boolean      _allowsNull;
     private final Class<T>     _type;
 
-    private final List<Action<ValsDelegate<T>>> _viewActions = new ArrayList<>();
+    private final PropertyListChangeListeners<T> _changeListeners = new PropertyListChangeListeners<>();
 
 
     @SafeVarargs
@@ -453,7 +451,7 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
     /** {@inheritDoc} */
     @Override
     public Vals<T> onChange( Action<ValsDelegate<T>> action ) {
-        _viewActions.add(action);
+        _changeListeners.onChange(action);
         return this;
     }
 
@@ -476,72 +474,23 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
 
     @Override
     public boolean isView() {
-        return false;
-    }
-
-    private ValsDelegate<T> _createDelegate(
-            int index, Change type, @Nullable Var<T> newVal, @Nullable Var<T> oldVal
-    ) {
-        Var[] cloned = _variables.stream().map(Val::ofNullable).toArray(Var[]::new);
-        Vals<T> clone = Vals.ofNullable(_type, cloned);
-        /*
-            Note that we just created a deep copy of the property list, so we can safely
-            pass the clone to the delegate. This is important because the delegate
-            is passed to the action which might be executed on a different thread.
-        */
-        Vals<T> newValues = newVal == null ? Vals.ofNullable(_type) : Vals.ofNullable(_type, Val.ofNullable(newVal));
-        Vals<T> oldValues = oldVal == null ? Vals.ofNullable(_type) : Vals.ofNullable(_type, Val.ofNullable(oldVal));
-        return new PropertyListDelegate<>(type, index, newValues, oldValues, clone);
-    }
-
-    private ValsDelegate<T> _createDelegate(
-            int index, Change type, @Nullable Vals<T> newVals, @Nullable Vals<T> oldVals
-    ) {
-        @SuppressWarnings("unchecked")
-        Val<T>[] cloned = _variables.stream().map(var -> _allowsNull ? Val.ofNullable(var) : Val.of(var)).toArray(Val[]::new);
-        @SuppressWarnings("unchecked")
-        Val<T>[] newCloned = newVals == null ? new Val[0] : newVals.stream().map(v -> _allowsNull ? Val.ofNullable(_type, v) : Val.of(v)).toArray(Val[]::new);
-        @SuppressWarnings("unchecked")
-        Val<T>[] oldCloned = oldVals == null ? new Val[0] : oldVals.stream().map(v -> _allowsNull ? Val.ofNullable(_type, v) : Val.of(v)).toArray(Val[]::new);
-        Vals<T> clone = (Vals<T>) (_allowsNull ? Vals.ofNullable(_type, cloned) : Vals.of(_type, Arrays.asList(cloned)));
-        Vals<T> newClone = (Vals<T>) (_allowsNull ? Vals.ofNullable(_type, newCloned) : Vals.of(_type, Arrays.asList(newCloned)));
-        Vals<T> oldClone = (Vals<T>) (_allowsNull ? Vals.ofNullable(_type, oldCloned) : Vals.of(_type, Arrays.asList(oldCloned)));
-        /*
-            Note that we just created a deep copy of the property list, so we can safely
-            pass the clone to the delegate. This is important because the delegate
-            is passed to the action which might be executed on a different thread.
-        */
-        return new PropertyListDelegate<>(type, index, newClone, oldClone, clone);
+        return true;
     }
 
     private void _triggerAction(
-            Change type, int index, @Nullable Var<T> newVal, @Nullable Var<T> oldVal
+        Change type, int index, @Nullable Var<T> newVal, @Nullable Var<T> oldVal
     ) {
-        ValsDelegate<T> listChangeDelegate = _createDelegate(index, type, newVal, oldVal);
-
-        for ( Action<ValsDelegate<T>> action : _viewActions )
-            try {
-                action.accept(listChangeDelegate);
-            } catch ( Exception e ) {
-                log.error("Error in change action '{}'.", action, e);
-            }
+        _changeListeners._triggerAction(type, index, newVal, oldVal, this);
     }
 
     private void _triggerAction(Change type) {
-        _triggerAction(type, -1, (Vals<T>) null, null);
+        _changeListeners._triggerAction(type, this);
     }
 
     private void _triggerAction(
-            Change type, int index, @Nullable Vals<T> newVals, @Nullable Vals<T> oldVals
+    Change type, int index, @Nullable Vals<T> newVals, @Nullable Vals<T> oldVals
     ) {
-        ValsDelegate<T> listChangeDelegate = _createDelegate(index, type, newVals, oldVals);
-
-        for (Action<ValsDelegate<T>> action : _viewActions)
-            try {
-                action.accept(listChangeDelegate);
-            } catch (Exception e) {
-                log.error("Error in change action '{}'.", action, e);
-            }
+        _changeListeners._triggerAction(type, index, newVals, oldVals, this);
     }
 
     /** {@inheritDoc} */
@@ -619,17 +568,7 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
 
     @Override
     public Observable unsubscribe( Subscriber subscriber ) {
-        for ( Action<?> a : new ArrayList<>(_viewActions) )
-            if ( a instanceof SproutChangeListener ) {
-                SproutChangeListener<?> pcl = (SproutChangeListener<?>) a;
-                if ( Objects.equals(pcl.listener(), subscriber) ) {
-                    _viewActions.remove(a);
-                    return this;
-                }
-            }
-            else if ( Objects.equals(a, subscriber) )
-                _viewActions.remove(a);
-
+        _changeListeners.unsubscribe(subscriber);
         return this;
     }
 }
