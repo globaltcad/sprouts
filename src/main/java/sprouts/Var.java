@@ -10,12 +10,14 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
- * 	A mutable wrapper for an item which can be observed for changes
- * 	using {@link Action}s registered through the {@link #onChange(Channel, Action)} method,
+ * 	A mutable wrapper for an item which can also be mapped to a weakly referenced{@link Viewable} to
+ * 	be observed for changes using {@link Action}s registered through the {@link Viewable#onChange(Channel, Action)} method,
  * 	where the {@link Channel} is used to distinguish between changes from
- * 	different sources (usually application layers like the view model or the view).
+ * 	different sources (usually application layers like the view model or the view).<br>
+ *  Use {@link #view()} to access a simple no-op life view of the item of this property
+ *  and register change listeners on it to react to state changes.
  * 	<p>
- * 	The {@link Channel} constant passed to {@link #onChange(Channel, Action)} ensures that the
+ * 	The {@link Channel} constant passed to {@link Viewable#onChange(Channel, Action)} ensures that the
  * 	corresponding {@link Action} callback is only invoked when the
  * 	{@link #fireChange(Channel)} method or the {@link Var#set(Channel, Object)}
  *  method is invoked with the same {@link Channel}.
@@ -26,11 +28,11 @@ import java.util.function.Function;
  * 	which is intended to be used for state changes as part of your core business logic.
  *  <p>
  * 	So for example if you have a {@link Var} which represents the username
- * 	of a form, then inside your UI you can register a callback using {@link #onChange(Channel, Action)}
+ * 	of a form, then inside your UI you can register a callback using {@link Viewable#onChange(Channel, Action)}
  * 	using the channel {@link From#VIEW_MODEL} which
  * 	will update the UI accordingly when {@link #set(Object)} is called inside you view model. <br>
  * 	On the other hand, when the UI changes the property through the {@code #set(From.View, object)}
- * 	method, all {@link #onChange(Channel, Action)} with the channel {@link From#VIEW} listeners
+ * 	method, all {@link Viewable#onChange(Channel, Action)} with the channel {@link From#VIEW} listeners
  * 	will be notified. <br>
  * 	Consider the following example property in your view model:
  * 	<pre>{@code
@@ -52,9 +54,9 @@ import java.util.function.Function;
  * 		username.set( "" ) // triggers 'fireChange(From.VIEW_MODEL)'
  * 	}</pre>
  * 	<p>
- * 	If you no longer need to observe a property, you can use the {@link #unsubscribe(Subscriber)}
+ * 	If you no longer need to observe a property, you can use the {@link Viewable#unsubscribe(Subscriber)}
  * 	method to remove all {@link Action}s (which are also {@link Subscriber}s) registered
- * 	through {@link #onChange(Channel, Action)}.
+ * 	through {@link Viewable#onChange(Channel, Action)}.
  * 	<p>
  * 	Note that the name of this class is short for "variable". This name was deliberately chosen because
  * 	it is short, concise and yet clearly conveys the same meaning as other names used to model this
@@ -66,6 +68,9 @@ import java.util.function.Function;
  * 	<b>Please take a look at the <a href="https://globaltcad.github.io/sprouts/">living sprouts documentation</a>
  * 	where you can browse a large collection of examples demonstrating how to use the API of this class.</b>
  *
+ * @see Val A super type of this class with a read-only API.
+ * @see Viewable A weakly referenced, read only live view of mutable properties
+ *               to be used for registering change listeners.
  * @param <T> The type of the wrapped item.
  */
 public interface Var<T extends @Nullable Object> extends Val<T>
@@ -324,11 +329,6 @@ public interface Var<T extends @Nullable Object> extends Val<T>
 	 * @return A new {@link Var} instance with the given id.
 	 */
 	@Override Var<T> withId( String id );
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override Var<T> onChange( Channel channel, Action<ValDelegate<T>> action );
 
 	/**
 	 *  If the item is present, then this applies the provided mapping function to it,

@@ -4,7 +4,9 @@ package sprouts;
  *  Describes how a {@link Vars} instance was mutated.
  *  Instances of this are part of the {@link ValsDelegate} API,
  *  which are exposed to the {@link Action} change event observers
- *  registered through {@link Vars#onChange(Action)}.
+ *  registered through {@link Viewables#onChange(Action)}.
+ *  You can create a {@link Viewables} from a {@link Vars} property list
+ *  using the {@link Vars#view()} method.
  */
 public enum Change
 {

@@ -6,109 +6,134 @@ import sprouts.Observer;
 import sprouts.*;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
-/**
- *  A base class for {@link Vars} implementations, a property list
- *  with support for registering change listeners.
- */
-final class PropertyList<T extends @Nullable Object> implements Vars<T>, Viewables<T> {
+final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Viewables<T> {
 
-    public static <T> Vars<T> of( boolean immutable, Class<T> type ) {
-        Objects.requireNonNull(type);
-        return new PropertyList<T>( immutable, type, false );
+    public static <T, U> Viewables<U> of(U nullObject, U errorObject, Vals<T> source, Function<T, @Nullable U> mapper) {
+        Objects.requireNonNull(nullObject);
+        Objects.requireNonNull(errorObject);
+
+        final Class<U> targetType = Util.expectedClassFromItem(nullObject);
+        Function<T, U> nonNullMapper = Util.nonNullMapper(nullObject, errorObject, mapper);
+
+        PropertyListView<U> view = new PropertyListView<>(false, targetType, source.allowsNull());
+        Function<Val<T>, Var<U>> sourcePropToViewProp = prop -> {
+            return (Var<U>) prop.view(nullObject, errorObject, nonNullMapper);
+        };
+        for (int i = 0; i < source.size(); i++) {
+            Var<U> viewable = sourcePropToViewProp.apply(source.at(i));
+            view._variables.add(i, viewable);
+        }
+
+        Viewables.cast(source).onChange(delegate -> {
+            switch (delegate.changeType()) {
+                case NONE:
+                    break;
+                case REMOVE:
+                    onRemove(delegate, view);
+                    break;
+                case ADD:
+                    onAdd(delegate, source, view, targetType, sourcePropToViewProp);
+                    break;
+                case SET:
+                    onSet(delegate, source, view, sourcePropToViewProp);
+                    break;
+                case CLEAR:
+                    view.clear();
+                    break;
+                case SORT:
+                    view.sort();
+                    break;
+                case REVERT:
+                    view.revert();
+                    break;
+                case DISTINCT:
+                    view.makeDistinct();
+                    break;
+                default:
+                    onUpdateAll(source, view, sourcePropToViewProp);
+            }
+        });
+
+        return Viewables.cast(view);
     }
 
-    @SafeVarargs
-    public static <T> Vars<T> of( boolean immutable, Class<T> type, Var<T>... vars ) {
-        Objects.requireNonNull(type);
-        Objects.requireNonNull(vars);
-        return new PropertyList<T>( immutable, type, false, vars );
+    private static <T, U> void onRemove(ValsDelegate<T> delegate, Vars<U> view) {
+        assert delegate.changeType() == Change.REMOVE;
+
+        if (delegate.oldValues().isEmpty() || delegate.index() < 0)
+            throw new UnsupportedOperationException(); // todo: implement
+        view.removeAt(delegate.index(), delegate.oldValues().size());
     }
 
-    @SafeVarargs
-    public static <T> Vars<T> of( boolean immutable, Class<T> type, T... vars ) {
-        Objects.requireNonNull(type);
-        Objects.requireNonNull(vars);
-        Var<T>[] array = new Var[vars.length];
-        for ( int i = 0; i < vars.length; i++ )
-            array[i] = Property.of( immutable, vars[i] );
-        return new PropertyList<T>( immutable, type, false, array );
+    private static <T, U> void onAdd(
+            ValsDelegate<T>          delegate,
+            Vals<T>                  source,
+            Vars<U>                  view,
+            Class<U>                 targetType,
+            Function<Val<T>, Var<U>> sourcePropToViewProp
+    ) {
+        assert delegate.changeType() == Change.ADD;
+
+        if (delegate.newValues().isEmpty() || delegate.index() < 0)
+            throw new UnsupportedOperationException(); // todo: implement
+
+        Vars<U> newViews = Vars.of(targetType);
+
+        for (int i = 0; i < delegate.newValues().size(); i++) {
+            Val<T> t = source.at(delegate.index() + i);
+            newViews.add(sourcePropToViewProp.apply(t));
+        }
+
+        view.addAllAt(delegate.index(), newViews);
     }
 
-    @SafeVarargs
-    public static <T> Vars<T> of( boolean immutable, Var<T> first, Var<T>... rest ) {
-        Objects.requireNonNull(first);
-        Objects.requireNonNull(rest);
-        Var<T>[] vars = new Var[rest.length+1];
-        vars[0] = first;
-        System.arraycopy(rest, 0, vars, 1, rest.length);
-        return of(immutable, first.type(), vars);
+    private static <T, U> void onSet(
+            ValsDelegate<T>          delegate,
+            Vals<T>                  source,
+            Vars<U>                  view,
+            Function<Val<T>, Var<U>> sourcePropToViewProp
+    ) {
+        assert delegate.changeType() == Change.SET;
+
+        if (delegate.newValues().isEmpty() || delegate.index() < 0)
+            throw new UnsupportedOperationException(); // todo: implement
+
+        Vars<U> newViews = Vars.of(view.type());
+
+        for (int i = 0; i < delegate.newValues().size(); i++) {
+            Val<T> t = source.at(delegate.index() + i);
+            newViews.add(sourcePropToViewProp.apply(t));
+        }
+
+        view.setAllAt(delegate.index(), newViews);
     }
 
-    @SafeVarargs
-    public static <T> Vars<T> of( boolean immutable, T first, T... rest ) {
-        Objects.requireNonNull(first);
-        Objects.requireNonNull(rest);
-        Var<T>[] vars = new Var[rest.length+1];
-        vars[0] = Property.of( immutable, first );
-        for ( int i = 0; i < rest.length; i++ )
-            vars[ i + 1 ] = Property.of( immutable, rest[ i ] );
-        return of(immutable, vars[0].type(), vars);
-    }
-
-    public static <T> Vars<T> of( boolean immutable, Class<T> type, Iterable<Var<T>> vars ) {
-        Objects.requireNonNull(type);
-        Objects.requireNonNull(vars);
-        List<Var<T>> list = new ArrayList<>();
-        vars.forEach( list::add );
-        Var<T>[] array = new Var[list.size()];
-        return new PropertyList<T>( immutable, type, false, list.toArray(array) );
-    }
-
-    public static <T> Vars<T> ofNullable( boolean immutable, Class<T> type ){
-        Objects.requireNonNull(type);
-        return new PropertyList<T>( immutable, type, true, new Var[0] );
-    }
-
-    @SafeVarargs
-    public static <T> Vars<T> ofNullable( boolean immutable, Class<T> type, Var<T>... vars ) {
-        Objects.requireNonNull(type);
-        Objects.requireNonNull(vars);
-        return new PropertyList<T>( immutable, type, true, vars );
-    }
-
-    @SafeVarargs
-    public static <T> Vars<@Nullable T> ofNullable( boolean immutable, Class<T> type, @Nullable T... vars ) {
-        Objects.requireNonNull(type);
-        Objects.requireNonNull(vars);
-        Var<T>[] array = new Var[vars.length];
-        for ( int i = 0; i < vars.length; i++ )
-            array[i] = Property.ofNullable( immutable, type, vars[i]);
-        return new PropertyList<T>( immutable, type, true, array );
-    }
-
-    @SafeVarargs
-    public static <T> Vars<T> ofNullable( boolean immutable, Var<T> first, Var<T>... vars ) {
-        Objects.requireNonNull(first);
-        Objects.requireNonNull(vars);
-        Var<T>[] array = new Var[vars.length+1];
-        array[0] = first;
-        System.arraycopy(vars, 0, array, 1, vars.length);
-        return ofNullable(immutable, first.type(), array);
+    private static <T, U> void onUpdateAll(
+            Vals<T>                  source,
+            Vars<U>                  view,
+            Function<Val<T>, Var<U>> sourcePropToViewProp
+    ) {
+        view.clear();
+        for (int i = 0; i < source.size(); i++) {
+            Val<T> t = source.at(i);
+            view.add(sourcePropToViewProp.apply(t));
+        }
     }
 
 
     private final List<Var<T>> _variables = new ArrayList<>();
-    private final boolean _isImmutable;
-    private final boolean _allowsNull;
-    private final Class<T> _type;
+    private final boolean      _isImmutable;
+    private final boolean      _allowsNull;
+    private final Class<T>     _type;
 
     private final PropertyListChangeListeners<T> _changeListeners = new PropertyListChangeListeners<>();
 
 
     @SafeVarargs
-    private PropertyList(boolean isImmutable, Class<T> type, boolean allowsNull, Var<T>... vals) {
+    private PropertyListView(boolean isImmutable, Class<T> type, boolean allowsNull, Var<T>... vals) {
         _isImmutable = isImmutable;
         _type        = type;
         _allowsNull  = allowsNull;
@@ -449,11 +474,11 @@ final class PropertyList<T extends @Nullable Object> implements Vars<T>, Viewabl
 
     @Override
     public boolean isView() {
-        return false;
+        return true;
     }
 
     private void _triggerAction(
-            Change type, int index, @Nullable Var<T> newVal, @Nullable Var<T> oldVal
+        Change type, int index, @Nullable Var<T> newVal, @Nullable Var<T> oldVal
     ) {
         _changeListeners._triggerAction(type, index, newVal, oldVal, this);
     }
@@ -463,7 +488,7 @@ final class PropertyList<T extends @Nullable Object> implements Vars<T>, Viewabl
     }
 
     private void _triggerAction(
-            Change type, int index, @Nullable Vals<T> newVals, @Nullable Vals<T> oldVals
+    Change type, int index, @Nullable Vals<T> newVals, @Nullable Vals<T> oldVals
     ) {
         _changeListeners._triggerAction(type, index, newVals, oldVals, this);
     }
@@ -485,9 +510,7 @@ final class PropertyList<T extends @Nullable Object> implements Vars<T>, Viewabl
                                     .map( o -> o.itemAsString() + ( o.hasID() ? "(" + o.id() + ")" : "" ) )
                                     .collect(Collectors.joining(", "));
 
-        String prefix = _isImmutable ? "Vals" : "Vars";
-
-        return prefix + "<" + _type.getSimpleName() + ">[" + entries + "]";
+        return "Views<" + _type.getSimpleName() + ">[" + entries + "]";
     }
 
     /** {@inheritDoc} */
@@ -495,18 +518,13 @@ final class PropertyList<T extends @Nullable Object> implements Vars<T>, Viewabl
     public final boolean equals( Object obj ) {
         if( obj == null ) return false;
         if( obj == this ) return true;
-        if ( !_isImmutable ) {
-            return false;
-        }
         if( obj instanceof Vals ) {
-            if ( obj instanceof PropertyList) {
-                PropertyList<?> other = (PropertyList<?>) obj;
-                if ( !other._isImmutable )
-                    return false;
-            }
             @SuppressWarnings("unchecked")
             Vals<T> other = (Vals<T>) obj;
-            if ( size() != other.size() ) return false;
+            if ( other.isMutable() != this.isMutable() )
+                return false;
+            if ( size() != other.size() )
+                return false;
             for ( int i = 0; i < size(); i++ )
                 if ( !this.at(i).equals(other.at(i)) ) return false;
 

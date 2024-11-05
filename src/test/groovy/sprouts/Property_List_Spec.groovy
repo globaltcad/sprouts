@@ -21,7 +21,7 @@ import java.util.function.Consumer
     
 ''')
 @Subject([Vals, Vars])
-class Properties_List_Spec extends Specification
+class Property_List_Spec extends Specification
 {
 
     def 'Multiple properties can be modelled through the "Vars" and "Vals" classes.'()
@@ -2034,6 +2034,115 @@ class Properties_List_Spec extends Specification
             property2.get() == "-"
     }
 
+    def 'Use `addAllAt(int, Vals)` to add the items as a new properties and use `addAllAt(int, Vars)` to add them unchanged.'()
+    {
+        reportInfo """
+            The `Vars` property list exposes two overloaded methods to add a list of properties at a given index.
+            The `addAllAt(int, Vals)` method adds the items wrapped in new independent properties, while the
+            `addAllAt(int, Vars)` method actually takes the supplied properties and then 
+            puts them in the list unchanged.
+            
+            The reason why the `addAllAt(int, Vals)` creates a copy of the properties is because the `Vals`
+            type is a read only view on a potentially mutable `Vars` property list. So an API consumer
+            expects that it's state is encapsulated and not affected by changes to the original property list.
+            
+            In this example we demonstrate this difference by adding a simple property
+            with a change listener to the list and then adding a list of properties
+            using both methods.
+        """
+        given : 'Two simple String based properties with listeners and a list tracking changes.'
+            var trace = []
+            var property1 = Var.of("?")
+            var property2 = Var.of("!")
+            property1.onChange(From.ALL, { trace << it.get() })
+            property2.onChange(From.ALL, { trace << it.get() })
+        and : 'A property list with some indian food properties.'
+            var foods = Vars.of("दाल", "चावल")
+        and : 'A short list containing a the two properties.'
+            var properties = Vals.of(property1, property2)
+
+        when : 'We use the two different methods to add the properties in the list.'
+            foods.addAllAt(1, (Vals<String>) properties)
+            foods.addAllAt(3, (Vars<String>) properties)
+        then : 'The properties are added to the list and the properties did not change.'
+            foods.toList() == ["दाल", "?", "!", "?", "!", "चावल"]
+            trace == []
+
+        when : 'We modify the items at index 2 and 4...'
+            foods.at(1).set("x")
+            foods.at(2).set("y")
+        then : 'The properties at index 1 and 2 are changed but the initial properties did not change.'
+            foods.toList() == ["दाल", "x", "y", "?", "!", "चावल"]
+            trace == []
+            property1.get() == "?"
+            property2.get() == "!"
+
+        when : 'We change the property item at index 3 and 5 on the other hand...'
+            foods.at(3).set("+")
+            foods.at(4).set("-")
+        then : 'The properties at index 3 and 4 are changed as well as the initial properties.'
+            foods.toList() == ["दाल", "x", "y", "+", "-", "चावल"]
+            trace == ["+", "-"]
+            property1.get() == "+"
+            property2.get() == "-"
+    }
+
+    def 'Use `setAllAt(int, Vals)` to set items as new properties and use `setAllAt(int, Vars)` to set them unchanged.'()
+    {
+        reportInfo """
+            The `Vars` property list exposes two overloaded methods to replace a sequence properties starting
+            at a given index. The `setAllAt(int, Vals)` method adds the items wrapped in new independent properties, 
+            while the `setAllAt(int, Vars)` method actually takes the supplied properties and then 
+            puts them in the list unchanged.
+            
+            The reason why the `setAllAt(int, Vals)` creates a copy of the properties is because the `Vals`
+            type is a read only view on a potentially mutable `Vars` property list. So an API consumer
+            expects that it's state is encapsulated and not affected by changes to the original property list.
+            
+            In this example we demonstrate this difference by adding a simple property
+            with a change listener to the list and then adding a list of properties
+            using both methods.
+            
+            Note that `setAllAt` is different from `addAllAt` in that it replaces the properties at the given index
+            whereas `addAllAt` adds the properties at the given index (so the list grows).
+        """
+        given : 'Two simple String based properties with listeners and a list tracking changes.'
+            var trace = []
+            var property1 = Var.of("?")
+            var property2 = Var.of("!")
+            property1.onChange(From.ALL, { trace << it.get() })
+            property2.onChange(From.ALL, { trace << it.get() })
+        and : 'A property list with some random string based properties.'
+            var foods = Vars.of("दाल", "1", "2", "3", "4", "चावल")
+        and : 'A short list containing a the two properties.'
+            var properties = Vals.of(property1, property2)
+
+        when : 'We use the two different methods to set the properties in the list.'
+            foods.setAllAt(1, (Vals<String>) properties)
+            foods.setAllAt(3, (Vars<String>) properties)
+        then : 'The properties are added to the list and the properties did not change.'
+            foods.toList() == ["दाल", "?", "!", "?", "!", "चावल"]
+            trace == []
+
+        when : 'We modify the items at index 2 and 4...'
+            foods.at(1).set("x")
+            foods.at(2).set("y")
+        then : 'The properties at index 1 and 2 are changed but the initial properties did not change.'
+            foods.toList() == ["दाल", "x", "y", "?", "!", "चावल"]
+            trace == []
+            property1.get() == "?"
+            property2.get() == "!"
+
+        when : 'We change the property item at index 3 and 5 on the other hand...'
+            foods.at(3).set("+")
+            foods.at(4).set("-")
+        then : 'The properties at index 3 and 4 are changed as well as the initial properties.'
+            foods.toList() == ["दाल", "x", "y", "+", "-", "चावल"]
+            trace == ["+", "-"]
+            property1.get() == "+"
+            property2.get() == "-"
+    }
+
     def 'Using `addAt(int,Val)`, you can add a nullable property to a non-nullable list if the item is present.'()
     {
         reportInfo """
@@ -2129,5 +2238,36 @@ class Properties_List_Spec extends Specification
             properties.addAll((Vals<String>) nullable)
         then : 'An exception is thrown because of this null item.'
             thrown(IllegalArgumentException)
+    }
+
+    def 'The various `setAllAt(int,..)` methods can throw index out of bounds exceptions.'()
+    {
+        reportInfo """
+            If you use the `setAllAt(int,..)` methods to set a range of properties at a given index,
+            then you can get an `IndexOutOfBoundsException` if the index together with the size of the
+            properties to set, exceeds the size of the targeted property list.
+        """
+        given : 'A property list with some properties.'
+            var properties = Vars.of("a", "b", "c", "d")
+
+        when : 'We try to exceed the size by supplying a var args array that is too large.'
+            properties.setAllAt(2, "x", "y", "z")
+        then : 'An exception is thrown because the last index is out of bounds.'
+            thrown(IndexOutOfBoundsException)
+
+        when : 'We try to exceed the size by supplying a `Vals` list that is too large.'
+            properties.setAllAt(2, Vals.of("x", "y", "z"))
+        then : 'An exception is thrown because the last index is out of bounds.'
+            thrown(IndexOutOfBoundsException)
+
+        when : 'We try to exceed the size by supplying a `Vars` list that is too large.'
+            properties.setAllAt(2, Vars.of("x", "y", "z"))
+        then : 'An exception is thrown because the last index is out of bounds.'
+            thrown(IndexOutOfBoundsException)
+
+        when : 'We try to set a range of items at an index that is out of bounds.'
+            properties.setAllAt(-1, "x", "y", "z")
+        then : 'An exception is thrown because the start index is out of bounds.'
+            thrown(IndexOutOfBoundsException)
     }
 }

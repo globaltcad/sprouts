@@ -55,19 +55,25 @@ public interface SproutsFactory
 
 	<T extends @Nullable Object> Val<@Nullable T> valOfNullable( Val<T> toBeCopied );
 
-	<T extends @Nullable Object, U extends @Nullable Object> Val<@NonNull T> viewOf(Val<T> first, Val<U> second, BiFunction<T, U, @NonNull T> combiner );
+	<T extends @Nullable Object> Viewable<T> viewOf( Val<T> source );
 
-	<T extends @Nullable Object, U extends @Nullable Object> Val<@Nullable T> viewOfNullable( Val<T> first, Val<U> second, BiFunction<T, U, @Nullable T> combiner );
+	<T extends @Nullable Object, U extends @Nullable Object> Viewable<@NonNull T> viewOf(Val<T> first, Val<U> second, BiFunction<T, U, @NonNull T> combiner );
 
-	<T extends @Nullable Object, U extends @Nullable Object, R> Val<R> viewOf(Class<R> type, Val<T> first, Val<U> second, BiFunction<T,U,R> combiner);
+	<T extends @Nullable Object, U extends @Nullable Object> Viewable<@Nullable T> viewOfNullable( Val<T> first, Val<U> second, BiFunction<T, U, @Nullable T> combiner );
 
-	<T extends @Nullable Object, U extends @Nullable Object, R> Val<@Nullable R> viewOfNullable(Class<R> type, Val<T> first, Val<U> second, BiFunction<T, U, @Nullable R> combiner);
+	<T extends @Nullable Object, U extends @Nullable Object, R> Viewable<R> viewOf(Class<R> type, Val<T> first, Val<U> second, BiFunction<T,U,R> combiner);
 
-	<T extends @Nullable Object, U extends @Nullable Object> Val<T> viewOf( Class<T> type, Val<U> source, Function<U, T> mapper );
+	<T extends @Nullable Object, U extends @Nullable Object, R> Viewable<@Nullable R> viewOfNullable(Class<R> type, Val<T> first, Val<U> second, BiFunction<T, U, @Nullable R> combiner);
 
-	<T extends @Nullable Object, U extends @Nullable Object> Val<U> viewOf( U nullObject, U errorObject, Val<T> source, Function<T, @Nullable U> mapper );
+	<T extends @Nullable Object> Viewables<T> viewOf( Vals<T> source );
 
-	<T extends @Nullable Object, U extends @Nullable Object> Val<@Nullable U> viewOfNullable( Class<U> type, Val<T> source, Function<T, @Nullable U> mapper );
+	<T extends @Nullable Object, U> Viewables<U> viewOf( U nullObject, U errorObject, Vals<T> source, Function<T, @Nullable U> mapper );
+
+	<T extends @Nullable Object, U extends @Nullable Object> Viewable<T> viewOf( Class<T> type, Val<U> source, Function<U, T> mapper );
+
+	<T extends @Nullable Object, U extends @Nullable Object> Viewable<U> viewOf( U nullObject, U errorObject, Val<T> source, Function<T, @Nullable U> mapper );
+
+	<T extends @Nullable Object, U extends @Nullable Object> Viewable<@Nullable U> viewOfNullable( Class<U> type, Val<T> source, Function<T, @Nullable U> mapper );
 
 	<T extends @Nullable Object, B extends @Nullable Object> Var<B> lensOf( Var<T> source, Function<T,B> getter, BiFunction<T,B,T> wither );
 

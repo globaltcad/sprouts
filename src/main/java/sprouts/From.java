@@ -4,7 +4,7 @@ package sprouts;
  *  An implementation of the {@link Channel} marker interface
  *  which is used to identify the source of a change in a {@link Var} or {@link Val} property.
  * 	<p>
- * 	This is typically used by the {@link Var#onChange(Channel, Action)} method to register an {@link Action} callback
+ * 	This is typically used by the {@link Viewable#onChange(Channel, Action)} method to register an {@link Action} callback
  * 	for a particular {@link Channel} constant (like for example {@link From#VIEW_MODEL} or {@link From#VIEW}) which
  * 	will then be invoked when the {@link Var#fireChange(Channel)} method or the {@link Var#set(Channel, Object)}
  * 	method is called using the same {@link Channel} as previously used to register the callback.

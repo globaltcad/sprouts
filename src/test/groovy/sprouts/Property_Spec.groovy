@@ -35,7 +35,7 @@ import java.util.function.Consumer
     
 ''')
 @Subject([Val, Var])
-class Properties_Spec extends Specification
+class Property_Spec extends Specification
 {
     public enum Food {
         TOFU { @Override public String toString() { return "Tofu"; } },
@@ -104,56 +104,6 @@ class Properties_Spec extends Specification
             Val<String> empty = Val.ofNullable(String, null)
         then : 'The property is empty, regardless of how we map it.'
             empty.mapTo(Integer, it -> it.length() ) == Val.ofNullable(Integer, null)
-    }
-
-    def 'Use the "viewAs" method to create a dynamically updated view of a property.'()
-    {
-        reportInfo """
-            The "viewAs" method is used to create a dynamically updated view of a property.
-            In essence it is a property observing another property and updating its value
-            whenever the observed property changes.
-        """
-        given : 'We create a property...'
-            Var<String> property = Var.of("Hello World")
-        and : 'We create an integer view of the property.'
-            Val<Integer> view = property.viewAs(Integer, { it.length() })
-        expect : 'The view has the expected value.'
-            view.orElseNull() == 11
-
-        when : 'We change the value of the property.'
-            property.set("Tofu")
-        then : 'The view is updated.'
-            view.orElseNull() == 4
-    }
-
-    def 'There are various kinds of convenience methods for creating live view of properties.'()
-    {
-        given : 'We create a property...'
-            Var<String> food = Var.of("Channa Masala")
-        and : 'Different kinds of views:'
-            Var<Integer> words    = food.viewAsInt( f -> f.split(" ").length )
-            Var<Integer> words2   = words.view({it * 2})
-            Var<Double>  average  = food.viewAsDouble( f -> f.chars().average().orElse(0) )
-            Var<Boolean> isLong   = food.viewAs(Boolean, f -> f.length() > 14 )
-            Var<String> firstWord = food.view( f -> f.split(" ")[0] )
-            Var<String> lastWord  = food.view( f -> f.split(" ")[f.split(" ").length-1] )
-        expect : 'The views have the expected values.'
-            words.get() == 2
-            words2.get() == 4
-            average.get().round(2) == 92.92d
-            isLong.get() == false
-            firstWord.get() == "Channa"
-            lastWord.get() == "Masala"
-
-        when : 'We change the value of the property.'
-            food.set("Tofu Tempeh Saitan")
-        then : 'The views are updated.'
-            words.get() == 3
-            words2.get() == 6
-            average.get().round(2) == 94.28d
-            isLong.get() == true
-            firstWord.get() == "Tofu"
-            lastWord.get() == "Saitan"
     }
 
     def 'The "ifPresent" method allows us to see if a property has a value or not.'()

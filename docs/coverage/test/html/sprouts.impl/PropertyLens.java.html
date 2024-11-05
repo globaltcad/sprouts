@@ -40,7 +40,7 @@ import java.util.function.Function;
  *             such as a record, value object, or a primitive.
  *
  */
-final class PropertyLens&lt;A extends @Nullable Object, T extends @Nullable Object&gt; implements Var&lt;T&gt;
+final class PropertyLens&lt;A extends @Nullable Object, T extends @Nullable Object&gt; implements Var&lt;T&gt;, Viewable&lt;T&gt;
 {
 <span class="fc" id="L45">    private static final Logger log = org.slf4j.LoggerFactory.getLogger(PropertyLens.class);</span>
 
@@ -135,7 +135,7 @@ final class PropertyLens&lt;A extends @Nullable Object, T extends @Nullable Obje
 <span class="fc bfc" id="L135" title="All 2 branches covered.">        _changeListeners = changeListeners == null ? new ChangeListeners&lt;&gt;() : new ChangeListeners&lt;&gt;(changeListeners);</span>
 
 <span class="fc" id="L137">        _lastItem = initialItem;</span>
-<span class="fc" id="L138">        parent.onChange(From.ALL, Action.ofWeak(this, (thisLens, v) -&gt; {</span>
+<span class="fc" id="L138">        Viewable.cast(parent).onChange(From.ALL, Action.ofWeak(this, (thisLens, v) -&gt; {</span>
 <span class="fc" id="L139">            T newValue = thisLens._fetchItemFromParent();</span>
 <span class="fc bfc" id="L140" title="All 2 branches covered.">            if (!Objects.equals(thisLens._lastItem, newValue)) {</span>
 <span class="fc" id="L141">                thisLens._lastItem = newValue;</span>
@@ -243,7 +243,7 @@ final class PropertyLens&lt;A extends @Nullable Object, T extends @Nullable Obje
     }
 
     @Override
-    public Var&lt;T&gt; onChange( Channel channel, Action&lt;ValDelegate&lt;T&gt;&gt; action ) {
+    public Viewable&lt;T&gt; onChange( Channel channel, Action&lt;ValDelegate&lt;T&gt;&gt; action ) {
 <span class="fc" id="L247">        _changeListeners.onChange(channel, action);</span>
 <span class="fc" id="L248">        return this;</span>
     }

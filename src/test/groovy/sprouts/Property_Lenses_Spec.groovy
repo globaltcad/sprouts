@@ -1,6 +1,7 @@
 package sprouts
 
 import groovy.transform.CompileDynamic
+import spock.lang.Ignore
 import spock.lang.Narrative
 import spock.lang.Specification
 import spock.lang.Subject
@@ -1205,6 +1206,56 @@ class Property_Lenses_Spec extends Specification
         then : 'The view should have the new first name, despite the lens being de-referenced.'
             nameView.get() == "SALLY"
             trace == ["SALLY"]
+    }
+
+    def 'A chain of lenses may be garbage collected, even when the source property stays in memory.'()
+    {
+        reportInfo """
+            A chain of lenses is similar to a chain of views with the difference that
+            a lens is mutable and can be used to modify the source property.
+            But just like views, lenses can be garbage collected if they are no longer
+            referenced anywhere except by the source property, which
+            only holds a weak reference to the lenses.
+        """
+        given : 'A property based on the `Loan` record.'
+            var loanProperty = Var.of(new Loan(
+                                                    "abcd",
+                                                    new Book("Average Book",
+                                                        new Author(
+                                                            "Margarete", "Wick",
+                                                            LocalDate.of(1912, 3, 15),
+                                                            ["Very Interesting Book", "Not so..."]
+                                                        ),
+                                                        Genre.SCIENCE,
+                                                        LocalDate.of(1963, 8, 13), 932
+                                                    ),
+                                                    new Member(
+                                                        "m1d", "Haruka", "Lee",
+                                                        MembershipLevel.PLATINUM,
+                                                        LocalDate.of(2005, 6, 13),
+                                                        null
+                                                    ),
+                                                    LocalDate.of(2023, 8, 12),
+                                                    LocalDate.of(2023, 9, 12),
+                                                    false
+                                                ))
+        and : 'A chain of lenses going deeper into the nested records.'
+            var lens1 = loanProperty.zoomTo(Loan::book, Loan::withBook)
+            var lens2 = lens1.zoomTo(Book::author, Book::withAuthor)
+            var lens3 = lens2.zoomTo(Author::firstName, Author::withFirstName)
+            var weakRefLens1 = new WeakReference(lens1)
+            var weakRefLens2 = new WeakReference(lens2)
+            var weakRefLens3 = new WeakReference(lens3)
+
+        when : 'We de-reference all lenses and wait for the garbage collector to run.'
+            lens2 = null
+            lens1 = null
+            lens3 = null
+            waitForGarbageCollection()
+        then : 'All lenses were garbage collected.'
+            weakRefLens1.get() == null
+            weakRefLens2.get() == null
+            weakRefLens3.get() == null
     }
 
     /**

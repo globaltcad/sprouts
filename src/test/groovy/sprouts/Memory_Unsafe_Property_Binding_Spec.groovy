@@ -1,28 +1,9 @@
 package sprouts
 
-import spock.lang.Narrative
 import spock.lang.Specification
-import spock.lang.Subject
-import spock.lang.Title
 
-@Title("Property Binding")
-@Narrative('''
-
-    The core motivation behind the creation of the Sprouts library
-    is to provide a simple and powerful way to model the state 
-    as well as business logic of your UI without actually depending on it.
-    
-    To make the decoupling between your UI and the UIs state and logic 
-    possible you need to bind Sprouts properties to UI components.
-    This is done through the use of change listeners and event listeners
-    and so called `Channel`s, which are used to distinguish between
-    different types of events.
-    
-''')
-@Subject([Val, Var])
-class Property_Binding_Spec extends Specification
+class Memory_Unsafe_Property_Binding_Spec extends Specification
 {
-
     def 'Properties can be bound by subscribing to them using the `onChange(..)` method.'()
     {
         reportInfo"""
@@ -37,11 +18,10 @@ class Property_Binding_Spec extends Specification
 
         given : 'We create a mutable property...'
             Var<String> mutable = Var.of("Tempeh")
-            Viewable<String> viewable = mutable.view()
         and : 'Something we want to have a side effect on:'
             var list = []
         when : 'We subscribe to the property using the `onChange(..)` method.'
-            viewable.onChange(From.VIEW_MODEL, it -> list.add(it.orElseNull()) )
+            Viewable.cast(mutable).onChange(From.VIEW_MODEL, it -> list.add(it.orElseNull()) )
         and : 'We change the value of the property.'
             mutable.set("Tofu")
         then : 'The side effect is executed.'
@@ -63,12 +43,11 @@ class Property_Binding_Spec extends Specification
         """
         given : 'A property that will be observed by an `Observer`.'
             Var<String> personName = Var.of("John")
-            Viewable<String> viewable = personName.view()
             var trace = []
         and : 'An observer which records if the change event was triggered.'
             Observer observer = { trace << "!" }
         and : 'We subscribe the observer.'
-            viewable.subscribe(observer)
+            Viewable.cast(personName).subscribe(observer)
 
         when : 'We change the property on 3 different channels, with one no-change.'
             personName.set(From.ALL, "Linda")
@@ -79,7 +58,7 @@ class Property_Binding_Spec extends Specification
             trace == ["!","!","!"]
 
         when : 'We unsubscribe the observer.'
-            viewable.unsubscribe(observer)
+            Viewable.cast(personName).unsubscribe(observer)
         and : 'Again, we change the property on 3 different channels, with one no-change.'
             personName.set(From.ALL, "Linda")
             personName.set(From.ALL, "Linda") // No change
@@ -100,16 +79,14 @@ class Property_Binding_Spec extends Specification
 
         given : 'We create a property...'
             Var<String> property = Var.of("Hello World")
-            Viewable<String> viewable = property.view()
         and : 'we bind 1 subscriber to the property.'
             var list1 = []
-            viewable.onChange(From.VIEW_MODEL, it -> list1.add(it.orElseNull()) )
+            Viewable.cast(property).onChange(From.VIEW_MODEL, it -> list1.add(it.orElseNull()) )
         and : 'We create a new property with a different id.'
             Val<String> property2 = property.withId("XY")
-            Viewable<String> viewable2 = property2.view()
         and : 'Another subscriber to the new property.'
             var list2 = []
-            viewable2.onChange(From.VIEW_MODEL, it -> list2.add(it.orElseNull()) )
+            Viewable.cast(property2).onChange(From.VIEW_MODEL, it -> list2.add(it.orElseNull()) )
 
         when : 'We change the value of the original property.'
             property.set("Tofu")
@@ -149,10 +126,9 @@ class Property_Binding_Spec extends Specification
             var modelListener = []
             var anyListener = []
             var property = Var.of(":)")
-            Viewable<String> viewable = property.view()
-            viewable.onChange(From.VIEW, it -> viewListener << it.orElseThrow() )
-            viewable.onChange(From.VIEW_MODEL, it -> modelListener << it.orElseNull() )
-            viewable.onChange(From.ALL, it -> anyListener << it.orElseThrow() )
+            Viewable.cast(property).onChange(From.VIEW, it -> viewListener << it.orElseThrow() )
+            Viewable.cast(property).onChange(From.VIEW_MODEL, it -> modelListener << it.orElseNull() )
+            Viewable.cast(property).onChange(From.ALL, it -> anyListener << it.orElseThrow() )
 
         when : 'We change the state of the property multiple times using the `set(Channel, T)` method.'
             property.set(From.VIEW, ":(")
@@ -181,9 +157,8 @@ class Property_Binding_Spec extends Specification
             var showListener = []
             var modelListener = []
             var property = Var.of(":)")
-            Viewable<String> viewable = property.view()
-            viewable.onChange(From.ALL, it ->{modelListener << it.orElseThrow()})
-            viewable.onChange(From.VIEW_MODEL, it -> showListener << it.orElseNull() )
+            Viewable.cast(property).onChange(From.ALL, it ->{modelListener << it.orElseThrow()})
+            Viewable.cast(property).onChange(From.VIEW_MODEL, it -> showListener << it.orElseNull() )
 
         when : 'We change the state of the property using the "set(T)" method.'
             property.set(":(")

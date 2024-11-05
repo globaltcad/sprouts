@@ -12,7 +12,7 @@ import java.util.Objects;
  * 
  * @param &lt;T&gt; The type of the value wrapped by a given property...
  */
-final class Property&lt;T extends @Nullable Object&gt; implements Var&lt;T&gt; {
+final class Property&lt;T extends @Nullable Object&gt; implements Var&lt;T&gt;, Viewable&lt;T&gt; {
 
 	public static &lt;T&gt; Var&lt;@Nullable T&gt; ofNullable( boolean immutable, Class&lt;T&gt; type, @Nullable T value ) {
 <span class="fc" id="L18">		return new Property&lt;T&gt;( immutable, type, value, Sprouts.factory().defaultId(), new ChangeListeners&lt;&gt;(), true );</span>
@@ -128,7 +128,7 @@ final class Property&lt;T extends @Nullable Object&gt; implements Var&lt;T&gt; {
 
 	/** {@inheritDoc} */
 	@Override
-	public Var&lt;T&gt; onChange( Channel channel, Action&lt;ValDelegate&lt;T&gt;&gt; action ) {
+	public Viewable&lt;T&gt; onChange( Channel channel, Action&lt;ValDelegate&lt;T&gt;&gt; action ) {
 <span class="fc" id="L132">		_changeListeners.onChange(channel, action);</span>
 <span class="fc" id="L133">		return this;</span>
 	}

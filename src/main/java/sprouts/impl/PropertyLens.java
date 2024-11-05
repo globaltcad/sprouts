@@ -40,7 +40,7 @@ import java.util.function.Function;
  *             such as a record, value object, or a primitive.
  *
  */
-final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object> implements Var<T>
+final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object> implements Var<T>, Viewable<T>
 {
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(PropertyLens.class);
 
@@ -135,7 +135,7 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
         _changeListeners = changeListeners == null ? new ChangeListeners<>() : new ChangeListeners<>(changeListeners);
 
         _lastItem = initialItem;
-        parent.onChange(From.ALL, Action.ofWeak(this, (thisLens, v) -> {
+        Viewable.cast(parent).onChange(From.ALL, Action.ofWeak(this, (thisLens, v) -> {
             T newValue = thisLens._fetchItemFromParent();
             if (!Objects.equals(thisLens._lastItem, newValue)) {
                 thisLens._lastItem = newValue;
@@ -243,7 +243,7 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
     }
 
     @Override
-    public Var<T> onChange( Channel channel, Action<ValDelegate<T>> action ) {
+    public Viewable<T> onChange( Channel channel, Action<ValDelegate<T>> action ) {
         _changeListeners.onChange(channel, action);
         return this;
     }
