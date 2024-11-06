@@ -5,6 +5,7 @@ import sprouts.Observable;
 import sprouts.Observer;
 import sprouts.*;
 
+import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -27,36 +28,40 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
             view._variables.add(i, viewable);
         }
 
-        Viewables.cast(source).onChange(delegate -> {
+        WeakReference<Vals<T>> weakSource = new WeakReference<>(source);
+        Viewables.cast(source).onChange(new WeakActionImpl<>(view, (innerView, delegate) -> {
+            Vals<T> innerSource = weakSource.get();
+            if (innerSource == null) {
+                return;
+            }
             switch (delegate.changeType()) {
                 case NONE:
                     break;
                 case REMOVE:
-                    onRemove(delegate, view);
+                    onRemove(delegate, innerView);
                     break;
                 case ADD:
-                    onAdd(delegate, source, view, targetType, sourcePropToViewProp);
+                    onAdd(delegate, innerSource, innerView, targetType, sourcePropToViewProp);
                     break;
                 case SET:
-                    onSet(delegate, source, view, sourcePropToViewProp);
+                    onSet(delegate, innerSource, innerView, sourcePropToViewProp);
                     break;
                 case CLEAR:
-                    view.clear();
+                    innerView.clear();
                     break;
                 case SORT:
-                    view.sort();
+                    innerView.sort();
                     break;
                 case REVERT:
-                    view.revert();
+                    innerView.revert();
                     break;
                 case DISTINCT:
-                    view.makeDistinct();
+                    innerView.makeDistinct();
                     break;
                 default:
-                    onUpdateAll(source, view, sourcePropToViewProp);
+                    onUpdateAll(innerSource, innerView, sourcePropToViewProp);
             }
-        });
-
+        }));
         return Viewables.cast(view);
     }
 
