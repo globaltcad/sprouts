@@ -35,19 +35,33 @@ import java.util.Optional;
 public interface Viewable<T> extends Val<T>, Observable {
 
     /**
-     *  Casts the given {@link Val} instance to a {@link Viewable} instance.
-     *  This allows you to access the {@link Viewable} API on the given {@link Val} instance,
-     *  which allows you to register change listeners directly on the property.<br>
-     *  <b>
+     *  Regular properties, created from the various factory methods in {@link Val} and {@link Var},
+     *  (may) also implement the {@link Viewable} interface internally. <br>
+     *  Although {@link Val} and {@link Var} do not extend {@link Viewable} directly,
+     *  you may cast them to a {@link Viewable} to get access to the {@link Viewable} API.<br>
+     *  <p>
+     *  This method is a convenience method which allows you to cast
+     *  the given {@link Val} instance to a {@link Viewable}.<br>
+     *  The main intention of this method is to allow you to register change listeners
+     *  on the given {@link Val} instance, which will be called whenever the item
+     *  viewed by this {@link Viewable} changes through the {@code Var::set(Channel, T)} method.<br>
+     *  <p><b>
      *      WARNING:
-     *      The change listeners registered on the given {@link Val} instance will not
+     *      The change listeners registered on the cast property will not
      *      be garbage collected automatically. You must remove them manually
-     *      when no longer needed.
+     *      when no longer needed. <br>
      *  </b>
+     *  <p>
+     *  If you want to protect yourself from memory leaks caused by change listeners,
+     *  create a {@link Viewable} instance through the {@link Val#view()} method,
+     *  and register change listeners on that instance instead.<br>
+     *  The {@link Viewable} instance created through the {@link Val#view()} method
+     *  will be garbage collected automatically when no longer needed, and all
+     *  change listeners registered on it will be removed automatically.
      *
-     * @param val The {@link Val} instance to cast.
+     * @param val The {@link Val} instance to cast to a {@link Viewable}.
      * @param <T> The type of the item held by the {@link Val} instance.
-     * @return The given {@link Val} instance cast to a {@link Viewable} instance.
+     * @return The supplied {@link Val} instance cast to a {@link Viewable} instance.
      */
     static <T> Viewable<T> cast( Val<T> val ) {
         return Viewable.class.cast(val);
