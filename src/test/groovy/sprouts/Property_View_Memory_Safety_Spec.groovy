@@ -13,23 +13,29 @@ import java.time.MonthDay
 import java.util.concurrent.TimeUnit
 import java.util.function.Supplier
 
-@Title('Viewing Properties')
+@Title('Property View Memory Safety')
 @Narrative('''
 
-    Both the read only `Val` and the mutable `Var` are observable properties.
-    As a consequence, they expose convenient methods to observe their changes
-    in the form of "views", which are themselves observable properties
-    that are a live view of the original property which gets updated
+    Both the read only `Val` and the mutable `Var` are designed to be
+    used as part of a view model in a Model-View-ViewModel (MVVM) architecture
+    or Model-View-Intent (MVI) architecture.
+    As a consequence, they need to be observable in some way.
+    This is done by registering change listeners on 
+    the "views" of properties, which are weakly referenced
+    live views of the original property which gets updated
     automatically when the original property changes.
+    You can then subscribe to these views to get notified
+    of changes to the original property.
     
     This is especially useful when you want to observe a property
     of one type as a property of another type, or when you want to
     observe a property with some transformation applied to it.
     
     This specification shows how to create views from both nullable and non-nullable properties,
+    and it demonstrates how they may be garbage collected when they are no longer referenced.
 
 ''')
-@Subject([Val, Val])
+@Subject([Val, Var, Viewable])
 class Property_View_Memory_Safety_Spec extends Specification
 {
     def 'The change listener of property view parents are garbage collected when the view is no longer referenced strongly.'()

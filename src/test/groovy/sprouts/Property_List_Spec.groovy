@@ -211,46 +211,45 @@ class Property_List_Spec extends Specification
             This is useful when you want to combine two property lists into one.
         """
         given : 'A "Vars" class with three properties.'
-            var vars1 = Vars.of("Racoon", "Squirrel", "Turtle")
+            var links = Vars.of("https://www.dominionmovement.com/", "https://www.nationearth.com/")
         and : 'A "Vars" class with three properties.'
-            var vars2 = Vars.of("Piglet", "Rooster", "Rabbit")
+            var animals = Vars.of("Piglet", "Rooster", "Bunny")
         expect : 'The "Vars" classes have three properties.'
-            vars1.size() == 3
-            vars2.size() == 3
+            links.size() == 2
+            animals.size() == 3
         when : 'We add the properties of the second "Vars" class to the first "Vars" class.'
-            vars1.addAll(vars2)
+            links.addAll(animals)
         then : 'The "Vars" class has six properties.'
-            vars1.size() == 6
+            links.size() == 5
         and : 'The properties of the second "Vars" class have been added to the first "Vars" class.'
-            vars1.at(0).get() == "Racoon"
-            vars1.at(1).get() == "Squirrel"
-            vars1.at(2).get() == "Turtle"
-            vars1.at(3).get() == "Piglet"
-            vars1.at(4).get() == "Rooster"
-            vars1.at(5).get() == "Rabbit"
+            links.at(0).get() == "https://www.dominionmovement.com/"
+            links.at(1).get() == "https://www.nationearth.com/"
+            links.at(2).get() == "Piglet"
+            links.at(3).get() == "Rooster"
+            links.at(4).get() == "Bunny"
     }
 
     def 'The "Vars" is a list of properties which can grow and shrink.'()
     {
         given : 'A "Vars" class with two properties.'
-            var vars = Vars.of("Kachori", "Dal Biji")
+            var snacks = Vars.of("Kachori", "Dal Biji")
         expect : 'The "Vars" class has two properties.'
-            vars.size() == 2
-            vars.at(0).get() == "Kachori"
-            vars.at(1).get() == "Dal Biji"
+            snacks.size() == 2
+            snacks.at(0).get() == "Kachori"
+            snacks.at(1).get() == "Dal Biji"
         when : 'We add a new property to the "Vars" class.'
-            vars.add("Chapati")
+            snacks.add("Chapati")
         then : 'The "Vars" class has three properties.'
-            vars.size() == 3
-            vars.at(0).get() == "Kachori"
-            vars.at(1).get() == "Dal Biji"
-            vars.at(2).get() == "Chapati"
+            snacks.size() == 3
+            snacks.at(0).get() == "Kachori"
+            snacks.at(1).get() == "Dal Biji"
+            snacks.at(2).get() == "Chapati"
         when : 'We remove a property from the "Vars" class.'
-            vars.remove("Dal Biji")
+            snacks.remove("Dal Biji")
         then : 'The "Vars" class has two properties.'
-            vars.size() == 2
-            vars.at(0).get() == "Kachori"
-            vars.at(1).get() == "Chapati"
+            snacks.size() == 2
+            snacks.at(0).get() == "Kachori"
+            snacks.at(1).get() == "Chapati"
     }
 
     def 'Both the "Vars" and immutable "Vals" types can be used for functional programming.'()
@@ -341,8 +340,8 @@ class Property_List_Spec extends Specification
             Action<Val<Integer>> action1 = it -> { changes << "Something happened to the property." }
             Action<Val<Integer>> action2 = it -> { changes << "Something happened to the list." }
         and : 'Now we register change listeners on both objects.'
-            prop.onChange(From.VIEW_MODEL, action1)
-            list.onChange(action2)
+            Viewable.cast(prop).onChange(From.VIEW_MODEL, action1)
+            Viewables.cast(list).onChange(action2)
 
         when : 'We modify the properties in various ways...'
             prop.set(42)
@@ -356,8 +355,8 @@ class Property_List_Spec extends Specification
             changes.size() == 6
 
         when : 'We remove the property and list.'
-            prop.unsubscribe(action1)
-            list.unsubscribe(action2)
+            Viewable.cast(prop).unsubscribe(action1)
+            Viewables.cast(list).unsubscribe(action2)
         and : 'We do some more unique modifications...'
             prop.set(73)
             list.add(4)
@@ -556,16 +555,16 @@ class Property_List_Spec extends Specification
             To remove a range of properties and get the removed properties you can use the `popRange` method.
             This can be seen as a generalization of the `popFirst` and `popLast` methods.
         """
-        given : 'A `Vars` instance with six properties.'
-            var vars = Vars.of("Racoon", "Squirrel", "Turtle", "Piglet", "Rooster", "Rabbit")
-            expect : 'The `Vars` instance has six properties.'
-            vars.size() == 6
+        given : 'A `Vars` instance with six properties of fallacy names.'
+            var fallacies = Vars.of("Ad Hominem", "Naturalistic Fallacy", "Tu Quoque", "Red Herring", "Appeal to Tradition", "Strawman")
+        expect : 'The `Vars` instance has six properties.'
+            fallacies.size() == 6
         when : 'We pop the two entries between index `1` and index `3` from the list.'
-            var vars2 = vars.popRange(1, 3)
+            var vars2 = fallacies.popRange(1, 3)
         then : 'The popped `Vars` instance has two properties.'
             vars2.size() == 2
             and : 'The popped `Vars` instance contains the expected values.'
-            vars2.toList() == ["Squirrel", "Turtle"]
+            vars2.toList() == ["Naturalistic Fallacy", "Tu Quoque"]
     }
 
     def 'You can pop a sequence of `n` entries from a property list.'() {
@@ -574,15 +573,15 @@ class Property_List_Spec extends Specification
             This can be seen as a generalization of the `popFirst` and `popLast` methods.
         """
         given : 'A `Vars` instance with six properties.'
-            var vars = Vars.of("Racoon", "Squirrel", "Turtle", "Piglet", "Rooster", "Rabbit")
+            var traits = Vars.of("Strength", "Sentience", "Consciousness", "Speed", "Anger", "Intelligence")
         expect : 'The `Vars` instance has six properties.'
-            vars.size() == 6
+            traits.size() == 6
         when : 'We pop the two entries starting at index `1` from the list.'
-            var vars2 = vars.popAt(1, 2)
+            var relevantTraits = traits.popAt(1, 2)
         then : 'The popped `Vars` instance has two properties.'
-            vars2.size() == 2
+            relevantTraits.size() == 2
         and : 'The popped `Vars` instance contains the expected values.'
-            vars2.toList() == ["Squirrel", "Turtle"]
+            relevantTraits.toList() == ["Sentience", "Consciousness"]
     }
 
     def 'The "popAt" method return the removed property.'()
@@ -764,7 +763,7 @@ class Property_List_Spec extends Specification
             var vars = Vars.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
         and : 'A change listener that counts the number of changes.'
             var changeCount = 0
-            vars.onChange { changeCount++ }
+            Viewables.cast(vars).onChange( it -> { changeCount++ } )
         when : 'We mutate the list using the given mutator.'
             mutator.accept(vars)
         then : 'The change listener has only been triggered once.'
@@ -804,7 +803,7 @@ class Property_List_Spec extends Specification
             var vars = Vars.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
         and : 'A change listener that counts the number of changes.'
             var changeCount = 0
-            vars.onChange { changeCount++ }
+            Viewables.cast(vars).onChange( it -> { changeCount++ } )
         when : 'We call "retainAll" with a list that contains all items.'
             vars.retainAll(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
         then : 'The change listener has not been triggered.'
@@ -887,7 +886,7 @@ class Property_List_Spec extends Specification
             var vars = Vars.of("a", "d", "e")
         and : 'We register a listener that will record the last change for us.'
             var change = null
-            vars.onChange({ change = it })
+            Viewables.cast(vars).onChange({ change = it })
         when : 'We add a property to the list with the `add` method.'
             vars.add("f")
         then : 'The `newValues` of the change delegate should be a property list with the added property.'
@@ -935,7 +934,7 @@ class Property_List_Spec extends Specification
             var vars = Vars.of("a", "b", "c", "d", "e", "f", "g", "h")
         and : 'We register a listener that will record the last change for us.'
             var change = null
-            vars.onChange({ change = it })
+            Viewables.cast(vars).onChange({ change = it })
         when : 'We remove the last property of the list with the `removeLast` method.'
             vars.removeLast()
         then : 'The `newValues` of the change delegate should be an empty property list.'
@@ -1167,7 +1166,7 @@ class Property_List_Spec extends Specification
             var vars = Vars.of("a", "d", "e")
         and : 'We register a listener that will record the last change for us.'
             var change = null
-            vars.onChange({ change = it })
+            Viewables.cast(vars).onChange({ change = it })
         when : 'We add a list of values to the list with the `addAll` method.'
             vars.addAll("f", "g")
         then : 'The `newValues` of the change delegate should be a property list with the added property.'
@@ -1213,7 +1212,7 @@ class Property_List_Spec extends Specification
             var vars = Vars.of("a", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "k", "p", "f", "h", "l", "m", "n", "p")
         and : 'We register a listener that will record the last change for us.'
             var change = null
-            vars.onChange({ change = it })
+            Viewables.cast(vars).onChange( it -> { change = it })
         when : 'We remove a list of values from the list with the `removeAll` method.'
             vars.removeAll("f", "g")
         then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
@@ -1292,7 +1291,7 @@ class Property_List_Spec extends Specification
             var vars = Vars.of("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z")
         and : 'We register a listener that will record the last change for us.'
             var change = null
-            vars.onChange({ change = it })
+            Viewables.cast(vars).onChange( it -> { change = it })
         when : 'We remove a sequence of values from the list with the `removeFirst` method.'
             vars.removeFirst(4)
         then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
@@ -1382,9 +1381,9 @@ class Property_List_Spec extends Specification
             var varsNullable = Vars.ofNullable(String.class, "a", "b", null, "d")
         and : 'We register a listener that will record the last change for us.'
             var change = null
-            vars.onChange({ change = it })
+            Viewables.cast(vars).onChange(it -> { change = it })
             var changeNullable = null
-            varsNullable.onChange({ changeNullable = it })
+            Viewables.cast(varsNullable).onChange( it -> { changeNullable = it })
         when : 'We remove all properties from the list with the `clear` method.'
             vars.clear()
         then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
@@ -1419,7 +1418,7 @@ class Property_List_Spec extends Specification
             var vars = Vars.of("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "a", "b", "c", "d")
         and : 'We register a listener that will record the last change for us.'
             var change = null
-            vars.onChange({ change = it })
+            Viewables.cast(vars).onChange(it -> { change = it })
         when : 'We use the `retainAll` method to remove all properties from the list that are not contained in a given list of properties.'
             vars.retainAll(Vals.of("d", "c", "f", "g", "h", "i", "j", "x"))
         then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
@@ -1471,8 +1470,8 @@ class Property_List_Spec extends Specification
             var vars2 = Vars.ofNullable(String.class, "a", "b", null, "d", null, null, "g", "h", "i", "j", "a", "b", "c", "d")
         and : 'We register a listener that will record the last change for us.'
             var change = null
-            vars1.onChange({ change = it })
-            vars2.onChange({ change = it })
+            Viewables.cast(vars1).onChange( it -> { change = it })
+            Viewables.cast(vars2).onChange( it -> { change = it })
         when : 'We use the `retainAll` method to remove all properties from the list that are not contained in a given list of properties.'
             vars1.retainAll(Vals.ofNullable(String.class, "b", "d", "g", "h", "i", "j"))
         then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
@@ -1507,7 +1506,7 @@ class Property_List_Spec extends Specification
             var vars = Vars.of("a", "b", "c", "d", "e", "f", "g", "h", "i", "j")
         and : 'We register a listener that will record the last change for us.'
             var change = null
-            vars.onChange({ change = it })
+            Viewables.cast(vars).onChange( it -> { change = it })
         when : 'We use the `setRange` method to set all properties within the given range to new properties containing the given value.'
             vars.setRange(2, 5, "x")
         then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
@@ -1544,7 +1543,7 @@ class Property_List_Spec extends Specification
             var vars = Vars.of("a", "b", "c", "d", "e", "f", "g", "h", "i", "j")
         and : 'We register a listener that will record the last change for us.'
             var change = null
-            vars.onChange({ change = it })
+            Viewables.cast(vars).onChange( it -> { change = it })
         when : 'We use the `setAt` method to set all properties starting at the given index to new properties containing the given value.'
             vars.setAt(2, 3, "x")
         then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
@@ -1581,7 +1580,7 @@ class Property_List_Spec extends Specification
         var vars = Vars.ofNullable(String.class, "a", "b", null, "d", null, null, "g", "h", "i", "j")
         and : 'We register a listener that will record the last change for us.'
             var change = null
-            vars.onChange({ change = it })
+            Viewables.cast(vars).onChange( it -> { change = it })
         when : 'We use the `setRange` method to set all properties within the given range to new properties containing the given value.'
             vars.setRange(2, 5, (String) null)
         then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
@@ -1618,7 +1617,7 @@ class Property_List_Spec extends Specification
             var vars = Vars.ofNullable(String.class, "a", "b", null, "d", null, null, "g", "h", "i", "j")
         and : 'We register a listener that will record the last change for us.'
             var change = null
-            vars.onChange({ change = it })
+            Viewables.cast(vars).onChange( it -> { change = it })
         when : 'We use the `setAt` method to set all properties within the given sequence to new properties containing the given value.'
             vars.setAt(2, 3, (String) null)
         then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
@@ -1914,7 +1913,7 @@ class Property_List_Spec extends Specification
         given : 'A simple String based property with a listener and a list tracking changes.'
             var trace = []
             var property = Var.of("?")
-            property.onChange(From.ALL, { trace << it.get() })
+            Viewable.cast(property).onChange(From.ALL, { trace << it.get() })
         and : 'A property list with some japanese food properties.'
             var foods = Vars.of("寿司", "ラーメン", "カレー", "うどん", "おにぎり")
         and : 'We use the two different methods to add the question mark property in the list.'
@@ -1957,7 +1956,7 @@ class Property_List_Spec extends Specification
         given : 'A simple String based property with a listener and a list tracking changes.'
             var trace = []
             var property = Var.of("?")
-            property.onChange(From.ALL, { trace << it.get() })
+            Viewable.cast(property).onChange(From.ALL, it -> { trace << it.get() })
         and : 'A property list with some japanese food properties.'
             var foods = Vars.of("寿司", "ラーメン", "カレー", "うどん", "おにぎり")
         and : 'We use the two different methods to add the question mark property in the list.'
@@ -2001,8 +2000,8 @@ class Property_List_Spec extends Specification
             var trace = []
             var property1 = Var.of("?")
             var property2 = Var.of("!")
-            property1.onChange(From.ALL, { trace << it.get() })
-            property2.onChange(From.ALL, { trace << it.get() })
+            Viewable.cast(property1).onChange(From.ALL, it -> { trace << it.get() })
+            Viewable.cast(property2).onChange(From.ALL, it -> { trace << it.get() })
         and : 'A property list with some indian food properties.'
             var foods = Vars.of("दाल", "चावल")
         and : 'A short list containing a the two properties.'
@@ -2054,8 +2053,8 @@ class Property_List_Spec extends Specification
             var trace = []
             var property1 = Var.of("?")
             var property2 = Var.of("!")
-            property1.onChange(From.ALL, { trace << it.get() })
-            property2.onChange(From.ALL, { trace << it.get() })
+            Viewable.cast(property1).onChange(From.ALL, it -> { trace << it.get() })
+            Viewable.cast(property2).onChange(From.ALL, it -> { trace << it.get() })
         and : 'A property list with some indian food properties.'
             var foods = Vars.of("दाल", "चावल")
         and : 'A short list containing a the two properties.'
@@ -2110,8 +2109,8 @@ class Property_List_Spec extends Specification
             var trace = []
             var property1 = Var.of("?")
             var property2 = Var.of("!")
-            property1.onChange(From.ALL, { trace << it.get() })
-            property2.onChange(From.ALL, { trace << it.get() })
+            Viewable.cast(property1).onChange(From.ALL, it -> { trace << it.get() })
+            Viewable.cast(property2).onChange(From.ALL, it -> { trace << it.get() })
         and : 'A property list with some random string based properties.'
             var foods = Vars.of("दाल", "1", "2", "3", "4", "चावल")
         and : 'A short list containing a the two properties.'

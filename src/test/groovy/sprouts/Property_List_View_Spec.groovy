@@ -5,7 +5,6 @@ import spock.lang.Specification
 import spock.lang.Subject
 import spock.lang.Title
 
-import java.lang.ref.WeakReference
 import java.time.DayOfWeek
 import java.time.Month
 
@@ -323,16 +322,33 @@ class Property_List_View_Spec extends Specification
             viewTrace == ["0: SUNDAY", "1: TUESDAY", "2: THURSDAY"]
     }
 
-    /**
-     * This method guarantees that garbage collection is
-     * done unlike <code>{@link System#gc()}</code>
-     */
-    static void waitForGarbageCollection() {
-        Object obj = new Object();
-        WeakReference ref = new WeakReference<>(obj);
-        obj = null;
-        while(ref.get() != null) {
-            System.gc();
-        }
+    def 'Calling `revert()` on a property list will also revert its views.'()
+    {
+        reportInfo """
+            The view of a property list (a `Viewables<T>`) is a live view
+            on the source property list. This means that whenever the source
+            property list changes, the view will change too.
+            This is also true for the `revert()` operation.
+            So calling `revert()` on a property list will also revert its views.
+        """
+        given : 'A property list of 4 educational documentaries.'
+            Vars<String> documentaries = Vars.of("Dominion", "Land of Hope and Glory", "Earthlings", "Cowspiracy")
+        and : 'A double view on the property list, representing the average word length of each documentary.'
+            Viewables<Double> lengths = documentaries.view(0,0, it -> {
+                double wordCount = it.split(" ").length
+                return wordCount == 0 ? 0 : it.length() / wordCount
+            })
+        and : 'Finally, we also create a list for tracking the change events.'
+            var viewTrace = [:]
+            lengths.onChange(it->{ viewTrace.put(it.changeType(), it.newValues()) })
+
+        expect : 'The view has the correct initial state:'
+            lengths.toList() == [8.0, 4.4, 10.0, 10.0]
+
+        when : 'We revert the source property list.'
+            documentaries.revert()
+        then : 'The view is also reverted.'
+            lengths.toList() == [10.0, 10.0, 4.4, 8.0]
     }
+
 }
