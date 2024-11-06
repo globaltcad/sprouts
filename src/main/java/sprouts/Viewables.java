@@ -31,19 +31,34 @@ package sprouts;
 public interface Viewables<T> extends Vals<T>, Observable
 {
     /**
-     *  Casts the given {@link Vals} instance to a {@link Viewables} instance.
-     *  This allows you to access the {@link Viewables} API on the given {@link Vals} instance,
-     *  which allows you to register change listeners directly on the list of properties.<br>
-     *  <b>
+     *  Regular properties, created from the various factory methods in {@link Vals} and {@link Vars},
+     *  (may) also implement the {@link Viewables} interface internally. <br>
+     *  Although {@link Vals} and {@link Vars} do not extend {@link Viewables} directly,
+     *  you may cast them to a {@link Viewables} to get access to the {@link Viewables} API.<br>
+     *  <p>
+     *  This method is a convenience method which allows you to cast
+     *  the given {@link Vals} instance to a {@link Viewables}.<br>
+     *  The main intention of this method is to allow you to register change listeners
+     *  on the given {@link Vals} instance, which will be called whenever the items
+     *  viewed by this {@link Viewables} changes after operations to
+     *  the source property list.
+     *  <p><b>
      *      WARNING:
-     *      The change listeners registered on the given {@link Vals} instance will not
+     *      The change listeners registered on the cast property list will not
      *      be garbage collected automatically. You must remove them manually
-     *      when no longer needed.
+     *      when no longer needed. <br>
      *  </b>
+     *  <p>
+     *  If you want to protect yourself from memory leaks caused by change listeners,
+     *  create a {@link Viewables} instance through the {@link Vals#view()} method,
+     *  and register change listeners on that instance instead.<br>
+     *  The {@link Viewables} instance created through the {@link Vals#view()} method
+     *  will be garbage collected automatically when no longer needed, and all
+     *  change listeners registered on it will be removed automatically.
      *
-     * @param vals The {@link Vals} instance to cast.
-     * @param <T> The type of the items held by the {@link Vals} instance.
-     * @return The given {@link Vals} instance cast to a {@link Viewables} instance.
+     * @param vals The {@link Vals} instance to cast to a {@link Viewables}.
+     * @param <T> The type of the item held by the {@link Vals} instance.
+     * @return The supplied {@link Vals} instance cast to a {@link Viewables} instance.
      */
     static <T> Viewables<T> cast( Vals<T> vals ) {
         return Viewables.class.cast(vals);
