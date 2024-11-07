@@ -19,7 +19,7 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
         final Class<U> targetType = Util.expectedClassFromItem(nullObject);
         Function<T, U> nonNullMapper = Util.nonNullMapper(nullObject, errorObject, mapper);
 
-        PropertyListView<U> view = new PropertyListView<>(false, targetType, source.allowsNull());
+        PropertyListView<U> view = new PropertyListView<>(false, targetType, source.allowsNull(), source);
         Function<Val<T>, Var<U>> sourcePropToViewProp = prop -> {
             return (Var<U>) prop.view(nullObject, errorObject, nonNullMapper);
         };
@@ -135,13 +135,14 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
     private final Class<T>     _type;
 
     private final PropertyListChangeListeners<T> _changeListeners = new PropertyListChangeListeners<>();
-
+    private final ParentListRef<Vals<?>> _parentRef;
 
     @SafeVarargs
-    private PropertyListView(boolean isImmutable, Class<T> type, boolean allowsNull, Var<T>... vals) {
+    private PropertyListView(boolean isImmutable, Class<T> type, boolean allowsNull, Vals<?> source, Var<T>... vals) {
         _isImmutable = isImmutable;
         _type        = type;
         _allowsNull  = allowsNull;
+        _parentRef   = ParentListRef.of(source);
         _variables.addAll(Arrays.asList(vals));
         _checkNullSafety();
     }
