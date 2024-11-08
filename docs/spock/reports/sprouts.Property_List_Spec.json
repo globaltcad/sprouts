@@ -1,10 +1,10 @@
 {
-  "className":"sprouts.Properties_List_Spec",
+  "className":"sprouts.Property_List_Spec",
   "title":"Lists of Properties",
   "narrative":"Just like properties you can create lists of properties\n    and then bind them to UI components.\n    They are a powerful tool to model the state \n    as well as business logic of your UI without actually depending on it.\n    This is especially useful for testing your UIs logic.\n    This specification shows how to use the various\n    methods exposed by the property lists classes, \n    namely \"Vals\" (immutable) and \"Vars\" (mutable).",
   "subjects":["sprouts.Vals","sprouts.Vars"],
   "statistics":{
-    "runs":"100",
+    "runs":"103",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -205,17 +205,17 @@
       "tags":{},"see":[],"extraInfo":["\n            The properties of one property list can be added to another property list.\n            This is useful when you want to combine two property lists into one.\n        "]
       },
       "blocks":[
-        {"kind":"given","text":"A \"Vars\" class with three properties.","code":["var vars1 = Vars.of(\"Racoon\", \"Squirrel\", \"Turtle\")"]},
+        {"kind":"given","text":"A \"Vars\" class with three properties.","code":["var links = Vars.of(\"https://www.dominionmovement.com/\", \"https://www.nationearth.com/\")"]},
 
-        {"kind":"and","text":"A \"Vars\" class with three properties.","code":["var vars2 = Vars.of(\"Piglet\", \"Rooster\", \"Rabbit\")"]},
+        {"kind":"and","text":"A \"Vars\" class with three properties.","code":["var animals = Vars.of(\"Piglet\", \"Rooster\", \"Bunny\")"]},
 
-        {"kind":"expect","text":"The \"Vars\" classes have three properties.","code":["vars1.size() == 3","vars2.size() == 3"]},
+        {"kind":"expect","text":"The \"Vars\" classes have three properties.","code":["links.size() == 2","animals.size() == 3"]},
 
-        {"kind":"when","text":"We add the properties of the second \"Vars\" class to the first \"Vars\" class.","code":["vars1.addAll(vars2)"]},
+        {"kind":"when","text":"We add the properties of the second \"Vars\" class to the first \"Vars\" class.","code":["links.addAll(animals)"]},
 
-        {"kind":"then","text":"The \"Vars\" class has six properties.","code":["vars1.size() == 6"]},
+        {"kind":"then","text":"The \"Vars\" class has six properties.","code":["links.size() == 5"]},
 
-        {"kind":"and","text":"The properties of the second \"Vars\" class have been added to the first \"Vars\" class.","code":["vars1.at(0).get() == \"Racoon\"","vars1.at(1).get() == \"Squirrel\"","vars1.at(2).get() == \"Turtle\"","vars1.at(3).get() == \"Piglet\"","vars1.at(4).get() == \"Rooster\"","vars1.at(5).get() == \"Rabbit\""]}
+        {"kind":"and","text":"The properties of the second \"Vars\" class have been added to the first \"Vars\" class.","code":["links.at(0).get() == \"https://www.dominionmovement.com/\"","links.at(1).get() == \"https://www.nationearth.com/\"","links.at(2).get() == \"Piglet\"","links.at(3).get() == \"Rooster\"","links.at(4).get() == \"Bunny\""]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -228,17 +228,17 @@
       "tags":{},"see":[],"extraInfo":[]
       },
       "blocks":[
-        {"kind":"given","text":"A \"Vars\" class with two properties.","code":["var vars = Vars.of(\"Kachori\", \"Dal Biji\")"]},
+        {"kind":"given","text":"A \"Vars\" class with two properties.","code":["var snacks = Vars.of(\"Kachori\", \"Dal Biji\")"]},
 
-        {"kind":"expect","text":"The \"Vars\" class has two properties.","code":["vars.size() == 2","vars.at(0).get() == \"Kachori\"","vars.at(1).get() == \"Dal Biji\""]},
+        {"kind":"expect","text":"The \"Vars\" class has two properties.","code":["snacks.size() == 2","snacks.at(0).get() == \"Kachori\"","snacks.at(1).get() == \"Dal Biji\""]},
 
-        {"kind":"when","text":"We add a new property to the \"Vars\" class.","code":["vars.add(\"Chapati\")"]},
+        {"kind":"when","text":"We add a new property to the \"Vars\" class.","code":["snacks.add(\"Chapati\")"]},
 
-        {"kind":"then","text":"The \"Vars\" class has three properties.","code":["vars.size() == 3","vars.at(0).get() == \"Kachori\"","vars.at(1).get() == \"Dal Biji\"","vars.at(2).get() == \"Chapati\""]},
+        {"kind":"then","text":"The \"Vars\" class has three properties.","code":["snacks.size() == 3","snacks.at(0).get() == \"Kachori\"","snacks.at(1).get() == \"Dal Biji\"","snacks.at(2).get() == \"Chapati\""]},
 
-        {"kind":"when","text":"We remove a property from the \"Vars\" class.","code":["vars.remove(\"Dal Biji\")"]},
+        {"kind":"when","text":"We remove a property from the \"Vars\" class.","code":["snacks.remove(\"Dal Biji\")"]},
 
-        {"kind":"then","text":"The \"Vars\" class has two properties.","code":["vars.size() == 2","vars.at(0).get() == \"Kachori\"","vars.at(1).get() == \"Chapati\""]}
+        {"kind":"then","text":"The \"Vars\" class has two properties.","code":["snacks.size() == 2","snacks.at(0).get() == \"Kachori\"","snacks.at(1).get() == \"Chapati\""]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -352,13 +352,13 @@
 
         {"kind":"and","text":"","code":["Action<Val<Integer>> action1 = it -> { changes << \"Something happened to the property.\" }","Action<Val<Integer>> action2 = it -> { changes << \"Something happened to the list.\" }"]},
 
-        {"kind":"and","text":"Now we register change listeners on both objects.","code":["prop.onChange(From.VIEW_MODEL, action1)","list.onChange(action2)"]},
+        {"kind":"and","text":"Now we register change listeners on both objects.","code":["Viewable.cast(prop).onChange(From.VIEW_MODEL, action1)","Viewables.cast(list).onChange(action2)"]},
 
         {"kind":"when","text":"We modify the properties in various ways...","code":["prop.set(42)","list.add(1)","list.removeAt(1)","list.setAt(0, 2)","list.addAt(1, 3)","list.remove(3)"]},
 
         {"kind":"then","text":"The listeners will have been called 6 times.","code":["changes.size() == 6"]},
 
-        {"kind":"when","text":"We remove the property and list.","code":["prop.unsubscribe(action1)","list.unsubscribe(action2)"]},
+        {"kind":"when","text":"We remove the property and list.","code":["Viewable.cast(prop).unsubscribe(action1)","Viewables.cast(list).unsubscribe(action2)"]},
 
         {"kind":"and","text":"We do some more unique modifications...","code":["prop.set(73)","list.add(4)","list.removeAt(1)","list.setAt(0, 3)","list.addAt(1, 4)","list.remove(4)"]},
 
@@ -554,15 +554,15 @@
       "tags":{},"see":[],"extraInfo":["\n            To remove a range of properties and get the removed properties you can use the `popRange` method.\n            This can be seen as a generalization of the `popFirst` and `popLast` methods.\n        "]
       },
       "blocks":[
-        {"kind":"given","text":"A `Vars` instance with six properties.","code":["var vars = Vars.of(\"Racoon\", \"Squirrel\", \"Turtle\", \"Piglet\", \"Rooster\", \"Rabbit\")"]},
+        {"kind":"given","text":"A `Vars` instance with six properties of fallacy names.","code":["var fallacies = Vars.of(\"Ad Hominem\", \"Naturalistic Fallacy\", \"Tu Quoque\", \"Red Herring\", \"Appeal to Tradition\", \"Strawman\")"]},
 
-        {"kind":"expect","text":"The `Vars` instance has six properties.","code":["vars.size() == 6"]},
+        {"kind":"expect","text":"The `Vars` instance has six properties.","code":["fallacies.size() == 6"]},
 
-        {"kind":"when","text":"We pop the two entries between index `1` and index `3` from the list.","code":["var vars2 = vars.popRange(1, 3)"]},
+        {"kind":"when","text":"We pop the two entries between index `1` and index `3` from the list.","code":["var vars2 = fallacies.popRange(1, 3)"]},
 
         {"kind":"then","text":"The popped `Vars` instance has two properties.","code":["vars2.size() == 2"]},
 
-        {"kind":"and","text":"The popped `Vars` instance contains the expected values.","code":["vars2.toList() == [\"Squirrel\", \"Turtle\"]"]}
+        {"kind":"and","text":"The popped `Vars` instance contains the expected values.","code":["vars2.toList() == [\"Naturalistic Fallacy\", \"Tu Quoque\"]"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -575,15 +575,15 @@
       "tags":{},"see":[],"extraInfo":["\n            To remove a sequence of properties and get the removed properties you can use the `popAt` method.\n            This can be seen as a generalization of the `popFirst` and `popLast` methods.\n        "]
       },
       "blocks":[
-        {"kind":"given","text":"A `Vars` instance with six properties.","code":["var vars = Vars.of(\"Racoon\", \"Squirrel\", \"Turtle\", \"Piglet\", \"Rooster\", \"Rabbit\")"]},
+        {"kind":"given","text":"A `Vars` instance with six properties.","code":["var traits = Vars.of(\"Strength\", \"Sentience\", \"Consciousness\", \"Speed\", \"Anger\", \"Intelligence\")"]},
 
-        {"kind":"expect","text":"The `Vars` instance has six properties.","code":["vars.size() == 6"]},
+        {"kind":"expect","text":"The `Vars` instance has six properties.","code":["traits.size() == 6"]},
 
-        {"kind":"when","text":"We pop the two entries starting at index `1` from the list.","code":["var vars2 = vars.popAt(1, 2)"]},
+        {"kind":"when","text":"We pop the two entries starting at index `1` from the list.","code":["var relevantTraits = traits.popAt(1, 2)"]},
 
-        {"kind":"then","text":"The popped `Vars` instance has two properties.","code":["vars2.size() == 2"]},
+        {"kind":"then","text":"The popped `Vars` instance has two properties.","code":["relevantTraits.size() == 2"]},
 
-        {"kind":"and","text":"The popped `Vars` instance contains the expected values.","code":["vars2.toList() == [\"Squirrel\", \"Turtle\"]"]}
+        {"kind":"and","text":"The popped `Vars` instance contains the expected values.","code":["relevantTraits.toList() == [\"Sentience\", \"Consciousness\"]"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -748,7 +748,7 @@
       "blocks":[
         {"kind":"given","text":"A \"Vars\" instance having a few properties.","code":["var vars = Vars.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)"]},
 
-        {"kind":"and","text":"A change listener that counts the number of changes.","code":["var changeCount = 0","vars.onChange { changeCount++ }"]},
+        {"kind":"and","text":"A change listener that counts the number of changes.","code":["var changeCount = 0","Viewables.cast(vars).onChange( it -> { changeCount++ } )"]},
 
         {"kind":"when","text":"We mutate the list using the given mutator.","code":["mutator.accept(vars)"]},
 
@@ -769,7 +769,7 @@
       "blocks":[
         {"kind":"given","text":"A \"Vars\" instance having a few properties.","code":["var vars = Vars.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)"]},
 
-        {"kind":"and","text":"A change listener that counts the number of changes.","code":["var changeCount = 0","vars.onChange { changeCount++ }"]},
+        {"kind":"and","text":"A change listener that counts the number of changes.","code":["var changeCount = 0","Viewables.cast(vars).onChange( it -> { changeCount++ } )"]},
 
         {"kind":"when","text":"We mutate the list using the given mutator.","code":["mutator.accept(vars)"]},
 
@@ -790,7 +790,7 @@
       "blocks":[
         {"kind":"given","text":"A \"Vars\" instance having a few properties.","code":["var vars = Vars.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)"]},
 
-        {"kind":"and","text":"A change listener that counts the number of changes.","code":["var changeCount = 0","vars.onChange { changeCount++ }"]},
+        {"kind":"and","text":"A change listener that counts the number of changes.","code":["var changeCount = 0","Viewables.cast(vars).onChange( it -> { changeCount++ } )"]},
 
         {"kind":"when","text":"We mutate the list using the given mutator.","code":["mutator.accept(vars)"]},
 
@@ -811,7 +811,7 @@
       "blocks":[
         {"kind":"given","text":"A \"Vars\" instance having a few properties.","code":["var vars = Vars.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)"]},
 
-        {"kind":"and","text":"A change listener that counts the number of changes.","code":["var changeCount = 0","vars.onChange { changeCount++ }"]},
+        {"kind":"and","text":"A change listener that counts the number of changes.","code":["var changeCount = 0","Viewables.cast(vars).onChange( it -> { changeCount++ } )"]},
 
         {"kind":"when","text":"We mutate the list using the given mutator.","code":["mutator.accept(vars)"]},
 
@@ -832,7 +832,7 @@
       "blocks":[
         {"kind":"given","text":"A \"Vars\" instance having a few properties.","code":["var vars = Vars.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)"]},
 
-        {"kind":"and","text":"A change listener that counts the number of changes.","code":["var changeCount = 0","vars.onChange { changeCount++ }"]},
+        {"kind":"and","text":"A change listener that counts the number of changes.","code":["var changeCount = 0","Viewables.cast(vars).onChange( it -> { changeCount++ } )"]},
 
         {"kind":"when","text":"We mutate the list using the given mutator.","code":["mutator.accept(vars)"]},
 
@@ -853,7 +853,7 @@
       "blocks":[
         {"kind":"given","text":"A \"Vars\" instance having a few properties.","code":["var vars = Vars.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)"]},
 
-        {"kind":"and","text":"A change listener that counts the number of changes.","code":["var changeCount = 0","vars.onChange { changeCount++ }"]},
+        {"kind":"and","text":"A change listener that counts the number of changes.","code":["var changeCount = 0","Viewables.cast(vars).onChange( it -> { changeCount++ } )"]},
 
         {"kind":"when","text":"We mutate the list using the given mutator.","code":["mutator.accept(vars)"]},
 
@@ -874,7 +874,7 @@
       "blocks":[
         {"kind":"given","text":"A \"Vars\" instance having a few properties.","code":["var vars = Vars.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)"]},
 
-        {"kind":"and","text":"A change listener that counts the number of changes.","code":["var changeCount = 0","vars.onChange { changeCount++ }"]},
+        {"kind":"and","text":"A change listener that counts the number of changes.","code":["var changeCount = 0","Viewables.cast(vars).onChange( it -> { changeCount++ } )"]},
 
         {"kind":"when","text":"We mutate the list using the given mutator.","code":["mutator.accept(vars)"]},
 
@@ -895,7 +895,7 @@
       "blocks":[
         {"kind":"given","text":"A \"Vars\" instance having a few properties.","code":["var vars = Vars.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)"]},
 
-        {"kind":"and","text":"A change listener that counts the number of changes.","code":["var changeCount = 0","vars.onChange { changeCount++ }"]},
+        {"kind":"and","text":"A change listener that counts the number of changes.","code":["var changeCount = 0","Viewables.cast(vars).onChange( it -> { changeCount++ } )"]},
 
         {"kind":"when","text":"We mutate the list using the given mutator.","code":["mutator.accept(vars)"]},
 
@@ -916,7 +916,7 @@
       "blocks":[
         {"kind":"given","text":"A \"Vars\" instance having a few properties.","code":["var vars = Vars.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)"]},
 
-        {"kind":"and","text":"A change listener that counts the number of changes.","code":["var changeCount = 0","vars.onChange { changeCount++ }"]},
+        {"kind":"and","text":"A change listener that counts the number of changes.","code":["var changeCount = 0","Viewables.cast(vars).onChange( it -> { changeCount++ } )"]},
 
         {"kind":"when","text":"We mutate the list using the given mutator.","code":["mutator.accept(vars)"]},
 
@@ -937,7 +937,7 @@
       "blocks":[
         {"kind":"given","text":"A \"Vars\" instance having a few properties.","code":["var vars = Vars.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)"]},
 
-        {"kind":"and","text":"A change listener that counts the number of changes.","code":["var changeCount = 0","vars.onChange { changeCount++ }"]},
+        {"kind":"and","text":"A change listener that counts the number of changes.","code":["var changeCount = 0","Viewables.cast(vars).onChange( it -> { changeCount++ } )"]},
 
         {"kind":"when","text":"We mutate the list using the given mutator.","code":["mutator.accept(vars)"]},
 
@@ -958,7 +958,7 @@
       "blocks":[
         {"kind":"given","text":"A \"Vars\" instance having a few properties.","code":["var vars = Vars.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)"]},
 
-        {"kind":"and","text":"A change listener that counts the number of changes.","code":["var changeCount = 0","vars.onChange { changeCount++ }"]},
+        {"kind":"and","text":"A change listener that counts the number of changes.","code":["var changeCount = 0","Viewables.cast(vars).onChange( it -> { changeCount++ } )"]},
 
         {"kind":"when","text":"We mutate the list using the given mutator.","code":["mutator.accept(vars)"]},
 
@@ -979,7 +979,7 @@
       "blocks":[
         {"kind":"given","text":"A \"Vars\" instance having a few properties.","code":["var vars = Vars.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)"]},
 
-        {"kind":"and","text":"A change listener that counts the number of changes.","code":["var changeCount = 0","vars.onChange { changeCount++ }"]},
+        {"kind":"and","text":"A change listener that counts the number of changes.","code":["var changeCount = 0","Viewables.cast(vars).onChange( it -> { changeCount++ } )"]},
 
         {"kind":"when","text":"We mutate the list using the given mutator.","code":["mutator.accept(vars)"]},
 
@@ -1000,7 +1000,7 @@
       "blocks":[
         {"kind":"given","text":"A \"Vars\" instance having a few properties.","code":["var vars = Vars.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)"]},
 
-        {"kind":"and","text":"A change listener that counts the number of changes.","code":["var changeCount = 0","vars.onChange { changeCount++ }"]},
+        {"kind":"and","text":"A change listener that counts the number of changes.","code":["var changeCount = 0","Viewables.cast(vars).onChange( it -> { changeCount++ } )"]},
 
         {"kind":"when","text":"We mutate the list using the given mutator.","code":["mutator.accept(vars)"]},
 
@@ -1021,7 +1021,7 @@
       "blocks":[
         {"kind":"given","text":"A \"Vars\" instance having a few properties.","code":["var vars = Vars.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)"]},
 
-        {"kind":"and","text":"A change listener that counts the number of changes.","code":["var changeCount = 0","vars.onChange { changeCount++ }"]},
+        {"kind":"and","text":"A change listener that counts the number of changes.","code":["var changeCount = 0","Viewables.cast(vars).onChange( it -> { changeCount++ } )"]},
 
         {"kind":"when","text":"We mutate the list using the given mutator.","code":["mutator.accept(vars)"]},
 
@@ -1042,7 +1042,7 @@
       "blocks":[
         {"kind":"given","text":"A \"Vars\" instance having a few properties.","code":["var vars = Vars.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)"]},
 
-        {"kind":"and","text":"A change listener that counts the number of changes.","code":["var changeCount = 0","vars.onChange { changeCount++ }"]},
+        {"kind":"and","text":"A change listener that counts the number of changes.","code":["var changeCount = 0","Viewables.cast(vars).onChange( it -> { changeCount++ } )"]},
 
         {"kind":"when","text":"We mutate the list using the given mutator.","code":["mutator.accept(vars)"]},
 
@@ -1063,7 +1063,7 @@
       "blocks":[
         {"kind":"given","text":"A \"Vars\" instance having a few properties.","code":["var vars = Vars.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)"]},
 
-        {"kind":"and","text":"A change listener that counts the number of changes.","code":["var changeCount = 0","vars.onChange { changeCount++ }"]},
+        {"kind":"and","text":"A change listener that counts the number of changes.","code":["var changeCount = 0","Viewables.cast(vars).onChange( it -> { changeCount++ } )"]},
 
         {"kind":"when","text":"We mutate the list using the given mutator.","code":["mutator.accept(vars)"]},
 
@@ -1084,7 +1084,7 @@
       "blocks":[
         {"kind":"given","text":"A \"Vars\" instance having a few properties.","code":["var vars = Vars.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)"]},
 
-        {"kind":"and","text":"A change listener that counts the number of changes.","code":["var changeCount = 0","vars.onChange { changeCount++ }"]},
+        {"kind":"and","text":"A change listener that counts the number of changes.","code":["var changeCount = 0","Viewables.cast(vars).onChange( it -> { changeCount++ } )"]},
 
         {"kind":"when","text":"We mutate the list using the given mutator.","code":["mutator.accept(vars)"]},
 
@@ -1105,7 +1105,7 @@
       "blocks":[
         {"kind":"given","text":"A \"Vars\" instance having a few properties.","code":["var vars = Vars.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)"]},
 
-        {"kind":"and","text":"A change listener that counts the number of changes.","code":["var changeCount = 0","vars.onChange { changeCount++ }"]},
+        {"kind":"and","text":"A change listener that counts the number of changes.","code":["var changeCount = 0","Viewables.cast(vars).onChange( it -> { changeCount++ } )"]},
 
         {"kind":"when","text":"We mutate the list using the given mutator.","code":["mutator.accept(vars)"]},
 
@@ -1126,7 +1126,7 @@
       "blocks":[
         {"kind":"given","text":"A \"Vars\" instance having a few properties.","code":["var vars = Vars.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)"]},
 
-        {"kind":"and","text":"A change listener that counts the number of changes.","code":["var changeCount = 0","vars.onChange { changeCount++ }"]},
+        {"kind":"and","text":"A change listener that counts the number of changes.","code":["var changeCount = 0","Viewables.cast(vars).onChange( it -> { changeCount++ } )"]},
 
         {"kind":"when","text":"We mutate the list using the given mutator.","code":["mutator.accept(vars)"]},
 
@@ -1147,7 +1147,7 @@
       "blocks":[
         {"kind":"given","text":"A \"Vars\" instance having a few properties.","code":["var vars = Vars.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)"]},
 
-        {"kind":"and","text":"A change listener that counts the number of changes.","code":["var changeCount = 0","vars.onChange { changeCount++ }"]},
+        {"kind":"and","text":"A change listener that counts the number of changes.","code":["var changeCount = 0","Viewables.cast(vars).onChange( it -> { changeCount++ } )"]},
 
         {"kind":"when","text":"We mutate the list using the given mutator.","code":["mutator.accept(vars)"]},
 
@@ -1168,7 +1168,7 @@
       "blocks":[
         {"kind":"given","text":"A \"Vars\" instance having a few properties.","code":["var vars = Vars.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)"]},
 
-        {"kind":"and","text":"A change listener that counts the number of changes.","code":["var changeCount = 0","vars.onChange { changeCount++ }"]},
+        {"kind":"and","text":"A change listener that counts the number of changes.","code":["var changeCount = 0","Viewables.cast(vars).onChange( it -> { changeCount++ } )"]},
 
         {"kind":"when","text":"We mutate the list using the given mutator.","code":["mutator.accept(vars)"]},
 
@@ -1189,7 +1189,7 @@
       "blocks":[
         {"kind":"given","text":"A \"Vars\" instance having a few properties.","code":["var vars = Vars.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)"]},
 
-        {"kind":"and","text":"A change listener that counts the number of changes.","code":["var changeCount = 0","vars.onChange { changeCount++ }"]},
+        {"kind":"and","text":"A change listener that counts the number of changes.","code":["var changeCount = 0","Viewables.cast(vars).onChange( it -> { changeCount++ } )"]},
 
         {"kind":"when","text":"We mutate the list using the given mutator.","code":["mutator.accept(vars)"]},
 
@@ -1210,7 +1210,7 @@
       "blocks":[
         {"kind":"given","text":"A \"Vars\" instance having a few properties.","code":["var vars = Vars.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)"]},
 
-        {"kind":"and","text":"A change listener that counts the number of changes.","code":["var changeCount = 0","vars.onChange { changeCount++ }"]},
+        {"kind":"and","text":"A change listener that counts the number of changes.","code":["var changeCount = 0","Viewables.cast(vars).onChange( it -> { changeCount++ } )"]},
 
         {"kind":"when","text":"We mutate the list using the given mutator.","code":["mutator.accept(vars)"]},
 
@@ -1231,7 +1231,7 @@
       "blocks":[
         {"kind":"given","text":"A \"Vars\" instance having a few properties.","code":["var vars = Vars.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)"]},
 
-        {"kind":"and","text":"A change listener that counts the number of changes.","code":["var changeCount = 0","vars.onChange { changeCount++ }"]},
+        {"kind":"and","text":"A change listener that counts the number of changes.","code":["var changeCount = 0","Viewables.cast(vars).onChange( it -> { changeCount++ } )"]},
 
         {"kind":"when","text":"We mutate the list using the given mutator.","code":["mutator.accept(vars)"]},
 
@@ -1252,7 +1252,7 @@
       "blocks":[
         {"kind":"given","text":"A \"Vars\" instance having a few properties.","code":["var vars = Vars.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)"]},
 
-        {"kind":"and","text":"A change listener that counts the number of changes.","code":["var changeCount = 0","vars.onChange { changeCount++ }"]},
+        {"kind":"and","text":"A change listener that counts the number of changes.","code":["var changeCount = 0","Viewables.cast(vars).onChange( it -> { changeCount++ } )"]},
 
         {"kind":"when","text":"We mutate the list using the given mutator.","code":["mutator.accept(vars)"]},
 
@@ -1273,7 +1273,7 @@
       "blocks":[
         {"kind":"given","text":"A \"Vars\" instance having a few properties.","code":["var vars = Vars.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)"]},
 
-        {"kind":"and","text":"A change listener that counts the number of changes.","code":["var changeCount = 0","vars.onChange { changeCount++ }"]},
+        {"kind":"and","text":"A change listener that counts the number of changes.","code":["var changeCount = 0","Viewables.cast(vars).onChange( it -> { changeCount++ } )"]},
 
         {"kind":"when","text":"We call \"retainAll\" with a list that contains all items.","code":["vars.retainAll(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)"]},
 
@@ -1385,7 +1385,7 @@
       "blocks":[
         {"kind":"given","text":"A \"Vars\" instance having a few properties.","code":["var vars = Vars.of(\"a\", \"d\", \"e\")"]},
 
-        {"kind":"and","text":"We register a listener that will record the last change for us.","code":["var change = null","vars.onChange({ change = it })"]},
+        {"kind":"and","text":"We register a listener that will record the last change for us.","code":["var change = null","Viewables.cast(vars).onChange({ change = it })"]},
 
         {"kind":"when","text":"We add a property to the list with the `add` method.","code":["vars.add(\"f\")"]},
 
@@ -1432,7 +1432,7 @@
       "blocks":[
         {"kind":"given","text":"A \"Vars\" instance having a few properties.","code":["var vars = Vars.of(\"a\", \"b\", \"c\", \"d\", \"e\", \"f\", \"g\", \"h\")"]},
 
-        {"kind":"and","text":"We register a listener that will record the last change for us.","code":["var change = null","vars.onChange({ change = it })"]},
+        {"kind":"and","text":"We register a listener that will record the last change for us.","code":["var change = null","Viewables.cast(vars).onChange({ change = it })"]},
 
         {"kind":"when","text":"We remove the last property of the list with the `removeLast` method.","code":["vars.removeLast()"]},
 
@@ -1677,7 +1677,7 @@
       "blocks":[
         {"kind":"given","text":"A \"Vars\" instance having a few properties.","code":["var vars = Vars.of(\"a\", \"d\", \"e\")"]},
 
-        {"kind":"and","text":"We register a listener that will record the last change for us.","code":["var change = null","vars.onChange({ change = it })"]},
+        {"kind":"and","text":"We register a listener that will record the last change for us.","code":["var change = null","Viewables.cast(vars).onChange({ change = it })"]},
 
         {"kind":"when","text":"We add a list of values to the list with the `addAll` method.","code":["vars.addAll(\"f\", \"g\")"]},
 
@@ -1722,7 +1722,7 @@
       "blocks":[
         {"kind":"given","text":"A \"Vars\" instance having a few properties.","code":["var vars = Vars.of(\"a\", \"d\", \"e\", \"f\", \"g\", \"h\", \"i\", \"j\", \"k\", \"l\", \"m\", \"n\", \"o\", \"k\", \"p\", \"f\", \"h\", \"l\", \"m\", \"n\", \"p\")"]},
 
-        {"kind":"and","text":"We register a listener that will record the last change for us.","code":["var change = null","vars.onChange({ change = it })"]},
+        {"kind":"and","text":"We register a listener that will record the last change for us.","code":["var change = null","Viewables.cast(vars).onChange( it -> { change = it })"]},
 
         {"kind":"when","text":"We remove a list of values from the list with the `removeAll` method.","code":["vars.removeAll(\"f\", \"g\")"]},
 
@@ -1797,7 +1797,7 @@
       "blocks":[
         {"kind":"given","text":"A \"Vars\" instance having a few properties.","code":["var vars = Vars.of(\"a\", \"b\", \"c\", \"d\", \"e\", \"f\", \"g\", \"h\", \"i\", \"j\", \"k\", \"l\", \"m\", \"n\", \"o\", \"p\", \"q\", \"r\", \"s\", \"t\", \"u\", \"v\", \"w\", \"x\", \"y\", \"z\")"]},
 
-        {"kind":"and","text":"We register a listener that will record the last change for us.","code":["var change = null","vars.onChange({ change = it })"]},
+        {"kind":"and","text":"We register a listener that will record the last change for us.","code":["var change = null","Viewables.cast(vars).onChange( it -> { change = it })"]},
 
         {"kind":"when","text":"We remove a sequence of values from the list with the `removeFirst` method.","code":["vars.removeFirst(4)"]},
 
@@ -1882,7 +1882,7 @@
       "blocks":[
         {"kind":"given","text":"A nullable and a non-nullable \"Vars\" instance with some properties.","code":["var vars = Vars.of(\"a\", \"b\", \"c\", \"d\")","var varsNullable = Vars.ofNullable(String.class, \"a\", \"b\", null, \"d\")"]},
 
-        {"kind":"and","text":"We register a listener that will record the last change for us.","code":["var change = null","vars.onChange({ change = it })","var changeNullable = null","varsNullable.onChange({ changeNullable = it })"]},
+        {"kind":"and","text":"We register a listener that will record the last change for us.","code":["var change = null","Viewables.cast(vars).onChange(it -> { change = it })","var changeNullable = null","Viewables.cast(varsNullable).onChange( it -> { changeNullable = it })"]},
 
         {"kind":"when","text":"We remove all properties from the list with the `clear` method.","code":["vars.clear()"]},
 
@@ -1917,7 +1917,7 @@
       "blocks":[
         {"kind":"given","text":"A \"Vars\" instance with some properties.","code":["var vars = Vars.of(\"a\", \"b\", \"c\", \"d\", \"e\", \"f\", \"g\", \"h\", \"i\", \"j\", \"a\", \"b\", \"c\", \"d\")"]},
 
-        {"kind":"and","text":"We register a listener that will record the last change for us.","code":["var change = null","vars.onChange({ change = it })"]},
+        {"kind":"and","text":"We register a listener that will record the last change for us.","code":["var change = null","Viewables.cast(vars).onChange(it -> { change = it })"]},
 
         {"kind":"when","text":"We use the `retainAll` method to remove all properties from the list that are not contained in a given list of properties.","code":["vars.retainAll(Vals.of(\"d\", \"c\", \"f\", \"g\", \"h\", \"i\", \"j\", \"x\"))"]},
 
@@ -1966,7 +1966,7 @@
       "blocks":[
         {"kind":"given","text":"A nullable \"Vars\" instance with some properties.","code":["var vars1 = Vars.ofNullable(String.class, \"a\", \"b\", null, \"d\", null, null, \"g\", \"h\", \"i\", \"j\", \"a\", \"b\", \"c\", \"d\")","var vars2 = Vars.ofNullable(String.class, \"a\", \"b\", null, \"d\", null, null, \"g\", \"h\", \"i\", \"j\", \"a\", \"b\", \"c\", \"d\")"]},
 
-        {"kind":"and","text":"We register a listener that will record the last change for us.","code":["var change = null","vars1.onChange({ change = it })","vars2.onChange({ change = it })"]},
+        {"kind":"and","text":"We register a listener that will record the last change for us.","code":["var change = null","Viewables.cast(vars1).onChange( it -> { change = it })","Viewables.cast(vars2).onChange( it -> { change = it })"]},
 
         {"kind":"when","text":"We use the `retainAll` method to remove all properties from the list that are not contained in a given list of properties.","code":["vars1.retainAll(Vals.ofNullable(String.class, \"b\", \"d\", \"g\", \"h\", \"i\", \"j\"))"]},
 
@@ -2001,7 +2001,7 @@
       "blocks":[
         {"kind":"given","text":"A `Vars` instance with some properties.","code":["var vars = Vars.of(\"a\", \"b\", \"c\", \"d\", \"e\", \"f\", \"g\", \"h\", \"i\", \"j\")"]},
 
-        {"kind":"and","text":"We register a listener that will record the last change for us.","code":["var change = null","vars.onChange({ change = it })"]},
+        {"kind":"and","text":"We register a listener that will record the last change for us.","code":["var change = null","Viewables.cast(vars).onChange( it -> { change = it })"]},
 
         {"kind":"when","text":"We use the `setRange` method to set all properties within the given range to new properties containing the given value.","code":["vars.setRange(2, 5, \"x\")"]},
 
@@ -2036,7 +2036,7 @@
       "blocks":[
         {"kind":"given","text":"A `Vars` instance with some properties.","code":["var vars = Vars.of(\"a\", \"b\", \"c\", \"d\", \"e\", \"f\", \"g\", \"h\", \"i\", \"j\")"]},
 
-        {"kind":"and","text":"We register a listener that will record the last change for us.","code":["var change = null","vars.onChange({ change = it })"]},
+        {"kind":"and","text":"We register a listener that will record the last change for us.","code":["var change = null","Viewables.cast(vars).onChange( it -> { change = it })"]},
 
         {"kind":"when","text":"We use the `setAt` method to set all properties starting at the given index to new properties containing the given value.","code":["vars.setAt(2, 3, \"x\")"]},
 
@@ -2071,7 +2071,7 @@
       "blocks":[
         {"kind":"given","text":"A nullable `Vars` instance with some properties.","code":["var vars = Vars.ofNullable(String.class, \"a\", \"b\", null, \"d\", null, null, \"g\", \"h\", \"i\", \"j\")"]},
 
-        {"kind":"and","text":"We register a listener that will record the last change for us.","code":["var change = null","vars.onChange({ change = it })"]},
+        {"kind":"and","text":"We register a listener that will record the last change for us.","code":["var change = null","Viewables.cast(vars).onChange( it -> { change = it })"]},
 
         {"kind":"when","text":"We use the `setRange` method to set all properties within the given range to new properties containing the given value.","code":["vars.setRange(2, 5, (String) null)"]},
 
@@ -2106,7 +2106,7 @@
       "blocks":[
         {"kind":"given","text":"A nullable `Vars` instance with some properties.","code":["var vars = Vars.ofNullable(String.class, \"a\", \"b\", null, \"d\", null, null, \"g\", \"h\", \"i\", \"j\")"]},
 
-        {"kind":"and","text":"We register a listener that will record the last change for us.","code":["var change = null","vars.onChange({ change = it })"]},
+        {"kind":"and","text":"We register a listener that will record the last change for us.","code":["var change = null","Viewables.cast(vars).onChange( it -> { change = it })"]},
 
         {"kind":"when","text":"We use the `setAt` method to set all properties within the given sequence to new properties containing the given value.","code":["vars.setAt(2, 3, (String) null)"]},
 
@@ -2387,7 +2387,7 @@
       "tags":{},"see":[],"extraInfo":["\n            The `Vars` property list exposes two overloaded methods to set a property at a given index.\n            The `addAt(int, Val)` method adds the item wrapped in a new independent property, while the\n            `addAt(int, Var)` method actually takes the supplied property reference and then \n            puts it in the list at the given index.\n\n            The reason why the `addAt(int, Val)` creates a copy of the property is because the `Val`\n            type is a read only view on a potentially mutable `Var` property. So an API consumer\n            expects that it's state is encapsulated and not affected by changes to the original property.\n\n            In this example we demonstrate this difference by adding a simple property\n            with a change listener to the list and then setting the property at a given index\n            using both methods.\n        "]
       },
       "blocks":[
-        {"kind":"given","text":"A simple String based property with a listener and a list tracking changes.","code":["var trace = []","var property = Var.of(\"?\")","property.onChange(From.ALL, { trace << it.get() })"]},
+        {"kind":"given","text":"A simple String based property with a listener and a list tracking changes.","code":["var trace = []","var property = Var.of(\"?\")","Viewable.cast(property).onChange(From.ALL, { trace << it.get() })"]},
 
         {"kind":"and","text":"A property list with some japanese food properties.","code":["var foods = Vars.of(\"寿司\", \"ラーメン\", \"カレー\", \"うどん\", \"おにぎり\")"]},
 
@@ -2414,7 +2414,7 @@
       "tags":{},"see":[],"extraInfo":["\n            The `Vars` property list exposes two overloaded methods to set a property at a given index.\n            The `setAt(int, Val)` method adds the item wrapped in a new independent property, while the\n            `setAt(int, Var)` method actually takes the supplied property reference and then \n            puts it in the list at the given index.\n\n            The reason why the `setAt(int, Val)` creates a copy of the property is because the `Val`\n            type is a read only view on a potentially mutable `Var` property. So an API consumer\n            expects that it's state is encapsulated and not affected by changes to the original property.\n\n            In this example we demonstrate this difference by adding a simple property\n            with a change listener to the list and then setting the property at a given index\n            using both methods.\n        "]
       },
       "blocks":[
-        {"kind":"given","text":"A simple String based property with a listener and a list tracking changes.","code":["var trace = []","var property = Var.of(\"?\")","property.onChange(From.ALL, { trace << it.get() })"]},
+        {"kind":"given","text":"A simple String based property with a listener and a list tracking changes.","code":["var trace = []","var property = Var.of(\"?\")","Viewable.cast(property).onChange(From.ALL, it -> { trace << it.get() })"]},
 
         {"kind":"and","text":"A property list with some japanese food properties.","code":["var foods = Vars.of(\"寿司\", \"ラーメン\", \"カレー\", \"うどん\", \"おにぎり\")"]},
 
@@ -2441,7 +2441,7 @@
       "tags":{},"see":[],"extraInfo":["\n            The `Vars` property list exposes two overloaded methods to add a list of properties.\n            The `addAll(Vals)` method adds the items wrapped in new independent properties, while the\n            `addAll(Vars)` method actually takes the supplied properties and then \n            puts them in the list unchanged.\n\n            The reason why the `addAll(Vals)` creates a copy of the properties is because the `Vals`\n            type is a read only view on a potentially mutable `Vars` property list. So an API consumer\n            expects that it's state is encapsulated and not affected by changes to the original property list.\n\n            In this example we demonstrate this difference by adding a simple property\n            with a change listener to the list and then adding a list of properties\n            using both methods.\n        "]
       },
       "blocks":[
-        {"kind":"given","text":"Two simple String based properties with listeners and a list tracking changes.","code":["var trace = []","var property1 = Var.of(\"?\")","var property2 = Var.of(\"!\")","property1.onChange(From.ALL, { trace << it.get() })","property2.onChange(From.ALL, { trace << it.get() })"]},
+        {"kind":"given","text":"Two simple String based properties with listeners and a list tracking changes.","code":["var trace = []","var property1 = Var.of(\"?\")","var property2 = Var.of(\"!\")","Viewable.cast(property1).onChange(From.ALL, it -> { trace << it.get() })","Viewable.cast(property2).onChange(From.ALL, it -> { trace << it.get() })"]},
 
         {"kind":"and","text":"A property list with some indian food properties.","code":["var foods = Vars.of(\"दाल\", \"चावल\")"]},
 
@@ -2458,6 +2458,64 @@
         {"kind":"when","text":"We change the property item at index 4 and 5 on the other hand...","code":["foods.at(4).set(\"+\")","foods.at(5).set(\"-\")"]},
 
         {"kind":"then","text":"The properties at index 4 and 5 are changed as well as the initial properties.","code":["foods.toList() == [\"दाल\", \"चावल\", \"x\", \"y\", \"+\", \"-\"]","trace == [\"+\", \"-\"]","property1.get() == \"+\"","property2.get() == \"-\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use `addAllAt(int, Vals)` to add the items as a new properties and use `addAllAt(int, Vars)` to add them unchanged.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `Vars` property list exposes two overloaded methods to add a list of properties at a given index.\n            The `addAllAt(int, Vals)` method adds the items wrapped in new independent properties, while the\n            `addAllAt(int, Vars)` method actually takes the supplied properties and then \n            puts them in the list unchanged.\n\n            The reason why the `addAllAt(int, Vals)` creates a copy of the properties is because the `Vals`\n            type is a read only view on a potentially mutable `Vars` property list. So an API consumer\n            expects that it's state is encapsulated and not affected by changes to the original property list.\n\n            In this example we demonstrate this difference by adding a simple property\n            with a change listener to the list and then adding a list of properties\n            using both methods.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two simple String based properties with listeners and a list tracking changes.","code":["var trace = []","var property1 = Var.of(\"?\")","var property2 = Var.of(\"!\")","Viewable.cast(property1).onChange(From.ALL, it -> { trace << it.get() })","Viewable.cast(property2).onChange(From.ALL, it -> { trace << it.get() })"]},
+
+        {"kind":"and","text":"A property list with some indian food properties.","code":["var foods = Vars.of(\"दाल\", \"चावल\")"]},
+
+        {"kind":"and","text":"A short list containing a the two properties.","code":["var properties = Vals.of(property1, property2)"]},
+
+        {"kind":"when","text":"We use the two different methods to add the properties in the list.","code":["foods.addAllAt(1, (Vals<String>) properties)","foods.addAllAt(3, (Vars<String>) properties)"]},
+
+        {"kind":"then","text":"The properties are added to the list and the properties did not change.","code":["foods.toList() == [\"दाल\", \"?\", \"!\", \"?\", \"!\", \"चावल\"]","trace == []"]},
+
+        {"kind":"when","text":"We modify the items at index 2 and 4...","code":["foods.at(1).set(\"x\")","foods.at(2).set(\"y\")"]},
+
+        {"kind":"then","text":"The properties at index 1 and 2 are changed but the initial properties did not change.","code":["foods.toList() == [\"दाल\", \"x\", \"y\", \"?\", \"!\", \"चावल\"]","trace == []","property1.get() == \"?\"","property2.get() == \"!\""]},
+
+        {"kind":"when","text":"We change the property item at index 3 and 5 on the other hand...","code":["foods.at(3).set(\"+\")","foods.at(4).set(\"-\")"]},
+
+        {"kind":"then","text":"The properties at index 3 and 4 are changed as well as the initial properties.","code":["foods.toList() == [\"दाल\", \"x\", \"y\", \"+\", \"-\", \"चावल\"]","trace == [\"+\", \"-\"]","property1.get() == \"+\"","property2.get() == \"-\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use `setAllAt(int, Vals)` to set items as new properties and use `setAllAt(int, Vars)` to set them unchanged.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `Vars` property list exposes two overloaded methods to replace a sequence properties starting\n            at a given index. The `setAllAt(int, Vals)` method adds the items wrapped in new independent properties, \n            while the `setAllAt(int, Vars)` method actually takes the supplied properties and then \n            puts them in the list unchanged.\n\n            The reason why the `setAllAt(int, Vals)` creates a copy of the properties is because the `Vals`\n            type is a read only view on a potentially mutable `Vars` property list. So an API consumer\n            expects that it's state is encapsulated and not affected by changes to the original property list.\n\n            In this example we demonstrate this difference by adding a simple property\n            with a change listener to the list and then adding a list of properties\n            using both methods.\n\n            Note that `setAllAt` is different from `addAllAt` in that it replaces the properties at the given index\n            whereas `addAllAt` adds the properties at the given index (so the list grows).\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two simple String based properties with listeners and a list tracking changes.","code":["var trace = []","var property1 = Var.of(\"?\")","var property2 = Var.of(\"!\")","Viewable.cast(property1).onChange(From.ALL, it -> { trace << it.get() })","Viewable.cast(property2).onChange(From.ALL, it -> { trace << it.get() })"]},
+
+        {"kind":"and","text":"A property list with some random string based properties.","code":["var foods = Vars.of(\"दाल\", \"1\", \"2\", \"3\", \"4\", \"चावल\")"]},
+
+        {"kind":"and","text":"A short list containing a the two properties.","code":["var properties = Vals.of(property1, property2)"]},
+
+        {"kind":"when","text":"We use the two different methods to set the properties in the list.","code":["foods.setAllAt(1, (Vals<String>) properties)","foods.setAllAt(3, (Vars<String>) properties)"]},
+
+        {"kind":"then","text":"The properties are added to the list and the properties did not change.","code":["foods.toList() == [\"दाल\", \"?\", \"!\", \"?\", \"!\", \"चावल\"]","trace == []"]},
+
+        {"kind":"when","text":"We modify the items at index 2 and 4...","code":["foods.at(1).set(\"x\")","foods.at(2).set(\"y\")"]},
+
+        {"kind":"then","text":"The properties at index 1 and 2 are changed but the initial properties did not change.","code":["foods.toList() == [\"दाल\", \"x\", \"y\", \"?\", \"!\", \"चावल\"]","trace == []","property1.get() == \"?\"","property2.get() == \"!\""]},
+
+        {"kind":"when","text":"We change the property item at index 3 and 5 on the other hand...","code":["foods.at(3).set(\"+\")","foods.at(4).set(\"-\")"]},
+
+        {"kind":"then","text":"The properties at index 3 and 4 are changed as well as the initial properties.","code":["foods.toList() == [\"दाल\", \"x\", \"y\", \"+\", \"-\", \"चावल\"]","trace == [\"+\", \"-\"]","property1.get() == \"+\"","property2.get() == \"-\""]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -2537,6 +2595,35 @@
         {"kind":"when","text":"\n            We now try to add null to the property list by setting\n            one of the nullable properties to null and adding it to the list.\n        ","code":["nullable.at(1).set(null)","properties.addAll((Vals<String>) nullable)"]},
 
         {"kind":"then","text":"An exception is thrown because of this null item.","code":["thrown(IllegalArgumentException)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The various `setAllAt(int,..)` methods can throw index out of bounds exceptions.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            If you use the `setAllAt(int,..)` methods to set a range of properties at a given index,\n            then you can get an `IndexOutOfBoundsException` if the index together with the size of the\n            properties to set, exceeds the size of the targeted property list.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A property list with some properties.","code":["var properties = Vars.of(\"a\", \"b\", \"c\", \"d\")"]},
+
+        {"kind":"when","text":"We try to exceed the size by supplying a var args array that is too large.","code":["properties.setAllAt(2, \"x\", \"y\", \"z\")"]},
+
+        {"kind":"then","text":"An exception is thrown because the last index is out of bounds.","code":["thrown(IndexOutOfBoundsException)"]},
+
+        {"kind":"when","text":"We try to exceed the size by supplying a `Vals` list that is too large.","code":["properties.setAllAt(2, Vals.of(\"x\", \"y\", \"z\"))"]},
+
+        {"kind":"then","text":"An exception is thrown because the last index is out of bounds.","code":["thrown(IndexOutOfBoundsException)"]},
+
+        {"kind":"when","text":"We try to exceed the size by supplying a `Vars` list that is too large.","code":["properties.setAllAt(2, Vars.of(\"x\", \"y\", \"z\"))"]},
+
+        {"kind":"then","text":"An exception is thrown because the last index is out of bounds.","code":["thrown(IndexOutOfBoundsException)"]},
+
+        {"kind":"when","text":"We try to set a range of items at an index that is out of bounds.","code":["properties.setAllAt(-1, \"x\", \"y\", \"z\")"]},
+
+        {"kind":"then","text":"An exception is thrown because the start index is out of bounds.","code":["thrown(IndexOutOfBoundsException)"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }

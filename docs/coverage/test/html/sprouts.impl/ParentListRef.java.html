@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ParentListRef.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sprouts</a> &gt; <a href="index.source.html" class="el_package">sprouts.impl</a> &gt; <span class="el_source">ParentListRef.java</span></div><h1>ParentListRef.java</h1><pre class="source lang-java linenums">package sprouts.impl;
+
+import org.jspecify.annotations.Nullable;
+import sprouts.Val;
+import sprouts.Vals;
+
+import java.lang.ref.WeakReference;
+
+/**
+ *  The {@link PropertyListView} has a ref to a parent property list.
+ *  It may or may not make sense to
+ *  keep a strong reference to the parent.&lt;br&gt;
+ *
+ * @param &lt;V&gt; The type of the parent property list.
+ */
+interface ParentListRef&lt;V extends Vals&lt;?&gt;&gt; {
+
+    static &lt;T extends Vals&lt;?&gt;&gt; ParentListRef&lt;T&gt; of( T value ) {
+<span class="fc bfc" id="L19" title="All 2 branches covered.">        if ( value.isView() )</span>
+<span class="pc" id="L20">            return () -&gt; value;</span>
+        else {
+<span class="fc" id="L22">            WeakReference&lt;T&gt; ref = new WeakReference&lt;&gt;(value);</span>
+<span class="fc" id="L23">            return ref::get;</span>
+        }
+    }
+
+    @Nullable V get();
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

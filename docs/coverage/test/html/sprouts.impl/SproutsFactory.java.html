@@ -65,6 +65,8 @@ public interface SproutsFactory
 
 	&lt;T extends @Nullable Object, U extends @Nullable Object, R&gt; Viewable&lt;@Nullable R&gt; viewOfNullable(Class&lt;R&gt; type, Val&lt;T&gt; first, Val&lt;U&gt; second, BiFunction&lt;T, U, @Nullable R&gt; combiner);
 
+	&lt;T extends @Nullable Object&gt; Viewables&lt;T&gt; viewOf( Vals&lt;T&gt; source );
+
 	&lt;T extends @Nullable Object, U&gt; Viewables&lt;U&gt; viewOf( U nullObject, U errorObject, Vals&lt;T&gt; source, Function&lt;T, @Nullable U&gt; mapper );
 
 	&lt;T extends @Nullable Object, U extends @Nullable Object&gt; Viewable&lt;T&gt; viewOf( Class&lt;T&gt; type, Val&lt;U&gt; source, Function&lt;U, T&gt; mapper );

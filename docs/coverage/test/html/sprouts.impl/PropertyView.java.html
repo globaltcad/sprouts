@@ -422,7 +422,7 @@ final class PropertyView&lt;T extends @Nullable Object&gt; implements Var&lt;T&g
 <span class="nc" id="L422">		return this;</span>
 	}
 
-	private boolean _setInternal( T newValue ) {
+	private boolean _setInternal( @Nullable T newValue ) {
 <span class="pc bpc" id="L426" title="1 of 4 branches missed.">		if ( !_nullable &amp;&amp; newValue == null )</span>
 <span class="nc" id="L427">			throw new NullPointerException(</span>
 					&quot;This property is configured to not allow null items! &quot; +

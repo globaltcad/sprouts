@@ -222,7 +222,7 @@ public interface Vals&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&gt
      * @return A weakly referenced {@link Viewables} instance.
      */
     default Viewables&lt;T&gt; view() {
-<span class="fc" id="L225">        return Viewables.cast(this); // TODO: create this through factory</span>
+<span class="fc" id="L225">        return Sprouts.factory().viewOf(this);</span>
     }
 
     /**
@@ -570,6 +570,16 @@ public interface Vals&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&gt
      */
     boolean isMutable();
 
+    /**
+     *  Tells you whether this list of properties is a view or not.
+     *  A view is created from one of the many &quot;view&quot; methods on the {@link Vals} interface.
+     *  These are weakly referenced by the original list of properties,
+     *  which ensures that they are garbage collected together with their
+     *  potentially memory leaking change listeners as soon as you no longer
+     *  hold a (strong) reference to the view.
+     *
+     * @return True if this list of properties is a view, false if it is not.
+     */
     boolean isView();
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

@@ -4,42 +4,44 @@
  *  Describes how a {@link Vars} instance was mutated.
  *  Instances of this are part of the {@link ValsDelegate} API,
  *  which are exposed to the {@link Action} change event observers
- *  registered through {@link Vars#onChange(Action)}.
+ *  registered through {@link Viewables#onChange(Action)}.
+ *  You can create a {@link Viewables} from a {@link Vars} property list
+ *  using the {@link Vars#view()} method.
  */
-<span class="fc" id="L9">public enum Change</span>
+<span class="fc" id="L11">public enum Change</span>
 {
     /**
      *  Indicates that a new value was added to the {@link Vars} instance.
      */
-<span class="fc" id="L14">    ADD,</span>
+<span class="fc" id="L16">    ADD,</span>
     /**
      *  Indicates that a value was removed from the {@link Vars} instance.
      */
-<span class="fc" id="L18">    REMOVE,</span>
+<span class="fc" id="L20">    REMOVE,</span>
     /**
      *  Indicates that a value was updated in the {@link Vars} instance.
      */
-<span class="fc" id="L22">    SET,</span>
+<span class="fc" id="L24">    SET,</span>
     /**
      *  Indicates that the {@link Vars} instance was cleared.
      */
-<span class="fc" id="L26">    CLEAR,</span>
+<span class="fc" id="L28">    CLEAR,</span>
     /**
      *  Indicates that the elements in the {@link Vars} instance were sorted.
      */
-<span class="fc" id="L30">    SORT,</span>
+<span class="fc" id="L32">    SORT,</span>
     /**
      *  Indicates that the duplicates in the {@link Vars} instance were removed.
      */
-<span class="fc" id="L34">    DISTINCT,</span>
+<span class="fc" id="L36">    DISTINCT,</span>
     /**
      *  Indicates tht the order of the elements in the {@link Vars} instance was reversed.
      */
-<span class="fc" id="L38">    REVERT,</span>
+<span class="fc" id="L40">    REVERT,</span>
     /**
      *  Indicates that the {@link Vars} instance was not mutate
      *  (But the change event was still triggered).
      */
-<span class="fc" id="L43">    NONE</span>
+<span class="fc" id="L45">    NONE</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>
