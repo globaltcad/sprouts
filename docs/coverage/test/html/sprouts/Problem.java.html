@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Problem.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sprouts</a> &gt; <a href="index.source.html" class="el_package">sprouts</a> &gt; <span class="el_source">Problem.java</span></div><h1>Problem.java</h1><pre class="source lang-java linenums">package sprouts;
+
+import java.util.Objects;
+import java.util.Optional;
+
+/**
+ *  A problem is a wrapper for information describing an issue
+ *  that can be reported and attached to a {@link Result}.
+ *  It is used to describe what went wrong in a process.
+ *  Like for example the process of obtaining a value,
+ *  which is why it is also part of a {@link Result} that does not contain a value (null). &lt;br&gt;
+ *  The {@link Problem} exposes various properties that describe what went wrong,
+ *  such as a title, a description, an optional reporter object and an
+ *  optional {@link Exception} that was thrown while obtaining the value. &lt;br&gt;
+ *  &lt;br&gt;
+ *  This type has been designed to complement Java exceptions.
+ *  Exceptions are great for us developers, because they halt
+ *  the current execution and give us a stack trace we can debug,
+ *  but they do not always fail as gracefully as a user might expect.
+ *  In a complex system where lots of things can go wrong
+ *  you want to catch exceptions and then collect
+ *  them in a list of problems like so:
+ *  &lt;pre&gt;{@code
+ *  	thingsThatWentWrong.add(Problem.of(myException));
+ *  }&lt;/pre&gt;
+ *  This way your application continues to run
+ *  and collect all the relevant problems that occurred so that
+ *  they can then either be logged or presented to the user
+ *  in a more graceful way.
+ *  &lt;br&gt;
+ *  The {@link Result} relies on this {@link Problem} type instead of
+ *  exceptions due to the fact that not every runtime issue is necessarily produced
+ *  by an exception. If you do not want to disturb the control flow of your application
+ *  by throwing an exception, you can simply create a {@link Problem} as part of a {@link Result}
+ *  and continue processing.
+ */
+public interface Problem
+{
+	/**
+	 *  A factory method for creating a problem from an {@link Exception}.
+	 *  The title of the problem will be the name of the exception class,
+	 *  the description will be the message of the exception (or cause if there is no message).
+	 *  The exception will be stored in the problem and can be retrieved with {@link #exception()}.
+	 *
+	 * @param e The exception to create a problem from.
+	 * @return A problem that describes the given exception.
+	 */
+	static Problem of( Exception e ) {
+<span class="fc" id="L49">		Objects.requireNonNull(e);</span>
+<span class="fc" id="L50">		String message = e.getMessage();</span>
+<span class="pc bpc" id="L51" title="2 of 4 branches missed.">		if ( message == null || message.isEmpty() ) message = String.valueOf(e.getCause());</span>
+<span class="pc bpc" id="L52" title="2 of 4 branches missed.">		if ( message == null || message.isEmpty() ) message = e.toString();</span>
+<span class="fc" id="L53">		Objects.requireNonNull(message);</span>
+<span class="fc" id="L54">		String finalMessage = message;</span>
+<span class="fc" id="L55">		return new Problem() {</span>
+<span class="fc" id="L56">			@Override public Optional&lt;Exception&gt; exception() { return Optional.of(e); }</span>
+<span class="fc" id="L57">			@Override public String title() { return e.getClass().getSimpleName(); }</span>
+<span class="fc" id="L58">			@Override public String description() { return finalMessage; }</span>
+<span class="nc" id="L59">			@Override public String toString() { return String.format(&quot;%s:\n%s&quot;, title(), description()); }</span>
+		};
+	}
+
+	/**
+	 *  A factory method for creating a problem with a title (and no description).
+	 *
+	 * @param title The title of the problem, which may not be null.
+	 * @return A problem with the given title and description.
+	 */
+<span class="fc" id="L69">	static Problem of( String title ) { return of(title, &quot;&quot;); }</span>
+
+	/**
+	 *  A factory method for creating a problem with a title and a description.
+	 *
+	 * @param title The title of the problem, which may not be null.
+	 * @param description The description of the problem, which may not be null.
+	 * @return A problem with the given title and description.
+	 */
+	static Problem of( String title, String description ) {
+<span class="fc" id="L79">		Objects.requireNonNull(title);</span>
+<span class="fc" id="L80">		Objects.requireNonNull(description);</span>
+<span class="fc" id="L81">		return new Problem() {</span>
+<span class="fc" id="L82">			@Override public String title() { return title; }</span>
+<span class="nc" id="L83">			@Override public String description() { return description; }</span>
+<span class="nc" id="L84">			@Override public String toString() { return String.format(&quot;%s:\n%s&quot;, title, description); }</span>
+		};
+	}
+
+	/**
+	 *  A factory method for creating a problem with a title, a description and a reporter.
+	 *
+	 * @param reporter    The reporter of the problem, which may not be null.
+	 * @param title       The title of the problem, which may not be null.
+	 * @param description The description of the problem, which may not be null.
+	 * @return A problem with the given title and description.
+	 */
+	static Problem of( Object reporter, String title, String description ) {
+<span class="fc" id="L97">		Objects.requireNonNull(reporter);</span>
+<span class="fc" id="L98">		Objects.requireNonNull(title);</span>
+<span class="fc" id="L99">		Objects.requireNonNull(description);</span>
+<span class="fc" id="L100">		return new Problem() {</span>
+<span class="fc" id="L101">			@Override public Optional&lt;Object&gt; reporter() { return Optional.of(reporter); }</span>
+<span class="nc" id="L102">			@Override public String title() { return title; }</span>
+<span class="nc" id="L103">			@Override public String description() { return description; }</span>
+<span class="nc" id="L104">			@Override public String toString() { return String.format(&quot;%s:\n%s&quot;, title, description); }</span>
+		};
+	}
+
+	/**
+	 *  Every problem has a title, which serves as a short, descriptive identifier.
+	 *  If a problem object is created from an exception, the title will be the name of the exception class.
+	 *
+	 * @return The title of the problem, which may not be null (but may be empty).
+	 */
+	String title();
+
+	/**
+	 *  A problem may have a description, which provides more detailed information about what went wrong.
+	 *  If a problem object is created from an exception, the description will be the message
+	 *  of the exception (or cause if there is no message).
+	 *
+	 * @return The description of the problem, which may not be null (but may be empty).
+	 */
+	String description();
+
+	/**
+	 *  A problem object may or may not have an exception attached to it.
+	 *  It is assumed that this exception is the cause of the problem.
+	 *
+	 * @return The exception that was thrown while obtaining the value, if any.
+	 */
+<span class="nc" id="L131">	default Optional&lt;Exception&gt; exception() { return Optional.empty(); }</span>
+
+	/**
+	 *  A problem object may or may not have a reporter attached to it.
+	 *  It is expected to be the object where the problem originated from.
+	 *
+	 * @return The object that reported the problem, if any.
+	 */
+<span class="fc" id="L139">	default Optional&lt;Object&gt; reporter() { return Optional.empty(); }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

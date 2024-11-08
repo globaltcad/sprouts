@@ -1,0 +1,492 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Sprouts.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sprouts</a> &gt; <a href="index.source.html" class="el_package">sprouts.impl</a> &gt; <span class="el_source">Sprouts.java</span></div><h1>Sprouts.java</h1><pre class="source lang-java linenums">package sprouts.impl;
+
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import sprouts.*;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.regex.Pattern;
+import java.util.stream.StreamSupport;
+
+/**
+ *  Exposes an API for configuring the {@link SproutsFactory},
+ *  which serves implementations of the various property types in the Sprouts library,
+ *  like {@link Event}, {@link Val}, {@link Var}, {@link Vals} and {@link Vars}.
+ *  The methods implemented here are used by the various factory methods of the sprouts API like
+ *  {@link Var#of(Object)}, {@link Vals#of(Object, Object[])}, {@link Result#of(Object)}...&lt;br&gt;
+ *  &lt;b&gt;So technically speaking, this is a configurable singleton, so be careful when using it
+ *  as it effectively maintains global + mutable state!&lt;/b&gt;
+ */
+public final class Sprouts implements SproutsFactory
+{
+<span class="fc" id="L30">    private static final Logger log = org.slf4j.LoggerFactory.getLogger(Sprouts.class);</span>
+
+<span class="fc" id="L32">    private static final Pattern DEFAULT_ID_PATTERN = Pattern.compile(&quot;[a-zA-Z0-9_]*&quot;);</span>
+
+<span class="fc" id="L34">    private static SproutsFactory FACTORY = new Sprouts();</span>
+
+
+    /**
+     *  A {@link SproutsFactory} is used by the various factory methods of this API like
+     *  {@link Var#of(Object)}, {@link Vals#of(Object, Object[])}, {@link Result#of(Object)}...
+     *  to create instances of these properties. &lt;br&gt;
+     *  You can plug in your own factory implementation through the {@link #setFactory(SproutsFactory)} method,
+     *  where you can then serve your own implementations of the various property types in the Sprouts library.
+     *
+     *  @return The default factory for creating instances of the various property types in the Sprouts library.
+     */
+<span class="fc" id="L46">    public static SproutsFactory factory() { return FACTORY; }</span>
+
+    /**
+     *  Sets the factory to be used by the various factory methods of this API like
+     *  {@link Var#of(Object)}, {@link Vals#of(Object, Object[])}, {@link Result#of(Object)}...
+     *  to create instances of these properties. &lt;br&gt;
+     *  You can use a custom {@link SproutsFactory} to instantiate and serve your own
+     *  implementations of the various property types in the Sprouts library. &lt;br&gt;
+     *  &lt;p&gt;&lt;b&gt;
+     *      WARNING: This is a global + mutable state, so be careful when using it &lt;br&gt;
+     *      as it will have global side effects on the various factory methods of this API.
+     *  &lt;/b&gt;
+     *
+     *  @param factory The factory to be used by the various factory methods of this API.
+     *  @throws NullPointerException if the factory is null.
+     */
+    public static void setFactory( SproutsFactory factory ) {
+<span class="nc" id="L63">        Objects.requireNonNull(factory);</span>
+<span class="nc" id="L64">        FACTORY = factory;</span>
+<span class="nc" id="L65">    }</span>
+
+    private Sprouts() {}
+
+
+    @Override
+    public Event event() {
+
+<span class="fc" id="L73">        return new Event() {</span>
+<span class="fc" id="L74">            private final List&lt;Observer&gt; observers = new ArrayList&lt;&gt;();</span>
+
+            @Override public void fire() {
+<span class="fc" id="L77">                observers.forEach( observer -&gt; {</span>
+                    try {
+<span class="fc" id="L79">                        observer.invoke();</span>
+<span class="nc" id="L80">                    } catch (Exception e) {</span>
+<span class="nc" id="L81">                        log.error(&quot;Error invoking observer!&quot;, e);</span>
+<span class="fc" id="L82">                    }</span>
+<span class="fc" id="L83">                });</span>
+<span class="fc" id="L84">            }</span>
+            @Override
+            public Event subscribe( Observer observer) {
+<span class="fc" id="L87">                observers.add(observer);</span>
+<span class="fc" id="L88">                return this;</span>
+            }
+            @Override
+            public Observable unsubscribe( Subscriber subscriber) {
+<span class="pc bpc" id="L92" title="1 of 2 branches missed.">                if ( subscriber instanceof Observer )</span>
+<span class="fc" id="L93">                    observers.remove( (Observer) subscriber );</span>
+<span class="fc" id="L94">                return this;</span>
+            }
+<span class="fc" id="L96">            @Override public void unsubscribeAll() { observers.clear(); }</span>
+        };
+    }
+
+    @Override
+    public Event eventOf( Event.Executor executor ) {
+
+<span class="fc" id="L103">        return new Event() {</span>
+<span class="fc" id="L104">            private final List&lt;Observer&gt; observers = new ArrayList&lt;&gt;();</span>
+
+            @Override
+            public void fire() {
+<span class="fc" id="L108">                executor.execute( () -&gt; {</span>
+<span class="fc" id="L109">                    observers.forEach( observer -&gt; {</span>
+                        try {
+<span class="fc" id="L111">                            observer.invoke();</span>
+<span class="nc" id="L112">                        } catch (Exception e) {</span>
+<span class="nc" id="L113">                            log.error(&quot;Error invoking observer!&quot;, e);</span>
+<span class="fc" id="L114">                        }</span>
+<span class="fc" id="L115">                    });</span>
+<span class="fc" id="L116">                });</span>
+<span class="fc" id="L117">            }</span>
+            @Override
+            public Event subscribe(Observer observer) {
+<span class="fc" id="L120">                observers.add(observer);</span>
+<span class="fc" id="L121">                return this;</span>
+            }
+            @Override
+            public Observable unsubscribe( Subscriber subscriber ) {
+<span class="nc bnc" id="L125" title="All 2 branches missed.">                if ( subscriber instanceof Observer )</span>
+<span class="nc" id="L126">                    observers.remove( (Observer) subscriber );</span>
+<span class="nc" id="L127">                return this;</span>
+            }
+<span class="nc" id="L129">            @Override public void unsubscribeAll() { observers.clear(); }</span>
+        };
+    }
+
+    @Override public &lt;T&gt; Val&lt;@Nullable T&gt; valOfNullable( Class&lt;T&gt; type, @Nullable T item ) {
+<span class="fc" id="L134">        return Property.ofNullable( true, type, item );</span>
+    }
+
+    @Override public &lt;T&gt; Val&lt;@Nullable T&gt; valOfNull( Class&lt;T&gt; type ) {
+<span class="fc" id="L138">        return Property.ofNullable( true, type, null );</span>
+    }
+
+    @Override public &lt;T&gt; Val&lt;T&gt; valOf( T item ) {
+<span class="fc" id="L142">        return Property.of( true, item );</span>
+    }
+
+    @Override public &lt;T&gt; Val&lt;T&gt; valOf( Val&lt;T&gt; toBeCopied ) {
+<span class="fc" id="L146">        Objects.requireNonNull(toBeCopied);</span>
+<span class="fc" id="L147">        return Val.of( toBeCopied.get() ).withId( toBeCopied.id() );</span>
+    }
+
+    @Override public &lt;T&gt; Val&lt;@Nullable T&gt; valOfNullable( Val&lt;@Nullable T&gt; toBeCopied ) {
+<span class="fc" id="L151">        Objects.requireNonNull(toBeCopied);</span>
+<span class="fc" id="L152">        return Val.ofNullable( toBeCopied.type(), toBeCopied.orElseNull() ).withId( toBeCopied.id() );</span>
+    }
+
+    @Override
+    public &lt;T&gt; Viewable&lt;T&gt; viewOf(Val&lt;T&gt; source) {
+<span class="fc" id="L157">        Objects.requireNonNull(source);</span>
+<span class="fc" id="L158">        return PropertyView.of( source );</span>
+    }
+
+    @Override
+    public &lt;T extends @Nullable Object, U extends @Nullable Object&gt; Viewable&lt;@NonNull T&gt; viewOf(Val&lt;T&gt; first, Val&lt;U&gt; second, BiFunction&lt;T, U, @NonNull T&gt; combiner ) {
+<span class="fc" id="L163">        Objects.requireNonNull(first);</span>
+<span class="fc" id="L164">        Objects.requireNonNull(second);</span>
+<span class="fc" id="L165">        Objects.requireNonNull(combiner);</span>
+<span class="fc" id="L166">        return PropertyView.viewOf( first, second, combiner );</span>
+    }
+
+    @Override
+    public &lt;T extends @Nullable Object, U extends @Nullable Object&gt; Viewable&lt;@Nullable T&gt; viewOfNullable(Val&lt;T&gt; first, Val&lt;U&gt; second, BiFunction&lt;T, U, @Nullable T&gt; combiner ) {
+<span class="fc" id="L171">        Objects.requireNonNull(first);</span>
+<span class="fc" id="L172">        Objects.requireNonNull(second);</span>
+<span class="fc" id="L173">        Objects.requireNonNull(combiner);</span>
+<span class="fc" id="L174">        return PropertyView.viewOfNullable( first, second, combiner );</span>
+    }
+
+    @Override
+    public &lt;T extends @Nullable Object, U extends @Nullable Object, R&gt; Viewable&lt;R&gt; viewOf(Class&lt;R&gt; type, Val&lt;T&gt; first, Val&lt;U&gt; second, BiFunction&lt;T, U, R&gt; combiner) {
+<span class="fc" id="L179">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L180">        Objects.requireNonNull(first);</span>
+<span class="fc" id="L181">        Objects.requireNonNull(second);</span>
+<span class="fc" id="L182">        Objects.requireNonNull(combiner);</span>
+<span class="fc" id="L183">        return PropertyView.viewOf( type, first, second, combiner );</span>
+    }
+
+    @Override
+    public &lt;T extends @Nullable Object, U extends @Nullable Object, R&gt; Viewable&lt;@Nullable R&gt; viewOfNullable(Class&lt;R&gt; type, Val&lt;T&gt; first, Val&lt;U&gt; second, BiFunction&lt;T, U, @Nullable R&gt; combiner) {
+<span class="fc" id="L188">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L189">        Objects.requireNonNull(first);</span>
+<span class="fc" id="L190">        Objects.requireNonNull(second);</span>
+<span class="fc" id="L191">        Objects.requireNonNull(combiner);</span>
+<span class="fc" id="L192">        return PropertyView.viewOfNullable( type, first, second, combiner );</span>
+    }
+
+    @Override
+    public &lt;T&gt; Viewables&lt;T&gt; viewOf(Vals&lt;T&gt; source) {
+<span class="fc" id="L197">        Objects.requireNonNull(source);</span>
+<span class="fc" id="L198">        return Viewables.cast(source); // TODO: Implement</span>
+    }
+
+    @Override
+    public &lt;T, U&gt; Viewable&lt;T&gt; viewOf(Class&lt;T&gt; type, Val&lt;U&gt; source, Function&lt;U, T&gt; mapper) {
+<span class="fc" id="L203">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L204">        Objects.requireNonNull(source);</span>
+<span class="fc" id="L205">        Objects.requireNonNull(mapper);</span>
+<span class="fc" id="L206">        return PropertyView.of(type, source, mapper);</span>
+    }
+
+    @Override
+    public &lt;T, U&gt; Viewables&lt;U&gt; viewOf(U nullObject, U errorObject, Vals&lt;T&gt; source, Function&lt;T, @Nullable U&gt; mapper) {
+<span class="fc" id="L211">        Objects.requireNonNull(nullObject);</span>
+<span class="fc" id="L212">        Objects.requireNonNull(errorObject);</span>
+<span class="fc" id="L213">        Objects.requireNonNull(source);</span>
+<span class="fc" id="L214">        Objects.requireNonNull(mapper);</span>
+<span class="fc" id="L215">        return PropertyListView.of(nullObject, errorObject, source, mapper);</span>
+    }
+
+    @Override
+    public &lt;T, U&gt; Viewable&lt;U&gt; viewOf(U nullObject, U errorObject, Val&lt;T&gt; source, Function&lt;T, @Nullable U&gt; mapper) {
+<span class="fc" id="L220">        Objects.requireNonNull(nullObject);</span>
+<span class="fc" id="L221">		Objects.requireNonNull(errorObject);</span>
+<span class="fc" id="L222">        Objects.requireNonNull(source);</span>
+<span class="fc" id="L223">        Objects.requireNonNull(mapper);</span>
+<span class="fc" id="L224">		return PropertyView.of(nullObject, errorObject, source, mapper);</span>
+    }
+
+    @Override
+    public &lt;T, U&gt; Viewable&lt;@Nullable U&gt; viewOfNullable(Class&lt;U&gt; type, Val&lt;T&gt; source, Function&lt;T, @Nullable U&gt; mapper) {
+<span class="fc" id="L229">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L230">        Objects.requireNonNull(source);</span>
+<span class="fc" id="L231">        Objects.requireNonNull(mapper);</span>
+<span class="fc" id="L232">        return PropertyView.ofNullable(type, source, mapper);</span>
+    }
+
+    @Override
+    public &lt;T, B&gt; Var&lt;B&gt; lensOf(Var&lt;T&gt; source, Function&lt;T, B&gt; getter, BiFunction&lt;T, B, T&gt; wither) {
+<span class="fc" id="L237">        B initialValue = getter.apply(source.orElseNull());</span>
+<span class="fc" id="L238">        Class&lt;B&gt; type = Util.expectedClassFromItem(initialValue);</span>
+<span class="fc" id="L239">        return new PropertyLens&lt;&gt;(</span>
+                type,
+<span class="fc" id="L241">                Sprouts.factory().defaultId(),</span>
+                false,//does not allow null
+                initialValue, //may NOT be null
+                source,
+                getter,
+                wither,
+                null
+            );
+    }
+
+    @Override
+    public &lt;T, B&gt; Var&lt;B&gt; lensOf(Var&lt;T&gt; source, B nullObject, Function&lt;T, B&gt; getter, BiFunction&lt;T, B, T&gt; wither) {
+<span class="fc" id="L253">        Objects.requireNonNull(nullObject, &quot;Null object must not be null&quot;);</span>
+<span class="fc" id="L254">        Objects.requireNonNull(getter, &quot;Getter must not be null&quot;);</span>
+<span class="fc" id="L255">        Objects.requireNonNull(wither, &quot;Wither must not be null&quot;);</span>
+<span class="fc" id="L256">        return PropertyLens.of(source, nullObject, getter, wither);</span>
+    }
+
+    @Override
+    public &lt;T, B&gt; Var&lt;B&gt; lensOfNullable(Class&lt;B&gt; type, Var&lt;T&gt; source, Function&lt;T, B&gt; getter, BiFunction&lt;T, B, T&gt; wither) {
+<span class="fc" id="L261">        Objects.requireNonNull(type, &quot;Type must not be null&quot;);</span>
+<span class="fc" id="L262">		Objects.requireNonNull(getter, &quot;Getter must not be null&quot;);</span>
+<span class="fc" id="L263">		Objects.requireNonNull(wither, &quot;Wither must not be null&quot;);</span>
+<span class="fc" id="L264">		return PropertyLens.ofNullable(type, source, getter, wither);</span>
+    }
+
+    @Override public &lt;T&gt; Var&lt;T&gt; varOfNullable(Class&lt;T&gt; type, @Nullable T item ) {
+<span class="fc" id="L268">        return Property.ofNullable( false, type, item );</span>
+    }
+
+    @Override public &lt;T&gt; Var&lt;T&gt; varOfNull(Class&lt;T&gt; type ) {
+<span class="fc" id="L272">        return Property.ofNullable( false, type, null );</span>
+    }
+
+    @Override public &lt;T&gt; Var&lt;T&gt; varOf(T item ) {
+<span class="fc" id="L276">        return Property.of( false, item );</span>
+    }
+
+    @Override public &lt;T, V extends T&gt; Var&lt;T&gt; varOf(Class&lt;T&gt; type, V item ) {
+<span class="fc" id="L280">        return Property.of( false, type, item );</span>
+    }
+
+    @Override public &lt;T&gt; Vals&lt;T&gt; valsOf(Class&lt;T&gt; type ) {
+<span class="fc" id="L284">        return PropertyList.of( true, type );</span>
+    }
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    @Override public &lt;T&gt; Vals&lt;T&gt; valsOf(Class&lt;T&gt; type, Val&lt;T&gt;... vars ) {
+<span class="nc" id="L289">        return PropertyList.of( true, type, (Var&lt;T&gt;[]) vars );</span>
+    }
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    @Override public &lt;T&gt; Vals&lt;T&gt; valsOf(Val&lt;T&gt; first, Val&lt;T&gt;... rest ) {
+<span class="fc" id="L294">        Var&lt;T&gt;[] vars = new Var[rest.length];</span>
+<span class="fc" id="L295">        System.arraycopy(rest, 0, vars, 0, rest.length);</span>
+<span class="fc" id="L296">        return PropertyList.of( true, (Var&lt;T&gt;) first, vars );</span>
+    }
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+<span class="fc" id="L300">    @Override public &lt;T&gt; Vals&lt;T&gt; valsOf( T first, T... rest ) { return PropertyList.of( true, first, rest); }</span>
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+<span class="fc" id="L303">    @Override public &lt;T&gt; Vals&lt;T&gt; valsOf( Class&lt;T&gt; type, T... items ) { return PropertyList.of( true, type, items ); }</span>
+
+    @Override public &lt;T&gt; Vals&lt;T&gt; valsOf( Class&lt;T&gt; type, Iterable&lt;Val&lt;T&gt;&gt; properties ) {
+<span class="fc" id="L306">        return PropertyList.of( true, type, (Iterable) properties );</span>
+    }
+
+    @Override public &lt;T&gt; Vals&lt;T&gt; valsOf( Class&lt;T&gt; type, Vals&lt;T&gt; vals ) {
+<span class="fc" id="L310">        T[] values = (T[]) vals.stream().toArray(Object[]::new);</span>
+<span class="fc" id="L311">        return PropertyList.of(true, type, values);</span>
+    }
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    @Override public &lt;T&gt; Vals&lt;@Nullable T&gt; valsOfNullable( Class&lt;T&gt; type, Val&lt;@Nullable T&gt;... vals ) {
+<span class="fc" id="L316">        Var&lt;T&gt;[] vars = new Var[vals.length];</span>
+<span class="fc" id="L317">        System.arraycopy(vals, 0, vars, 0, vals.length);</span>
+<span class="fc" id="L318">        return PropertyList.ofNullable( true, type, vars );</span>
+    }
+
+    @Override public &lt;T&gt; Vals&lt;@Nullable T&gt; valsOfNullable( Class&lt;T&gt; type ) {
+<span class="fc" id="L322">        return PropertyList.ofNullable( true, type );</span>
+    }
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    @Override public &lt;T&gt; Vals&lt;@Nullable T&gt; valsOfNullable( Class&lt;T&gt; type, @Nullable T... items ) {
+<span class="fc" id="L327">        return PropertyList.ofNullable( true, type, items );</span>
+    }
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    @Override public &lt;T&gt; Vals&lt;@Nullable T&gt; valsOfNullable( Val&lt;@Nullable T&gt; first, Val&lt;@Nullable T&gt;... rest ) {
+<span class="fc" id="L332">        Var&lt;T&gt;[] vars = new Var[rest.length];</span>
+<span class="fc" id="L333">        System.arraycopy(rest, 0, vars, 0, rest.length);</span>
+<span class="fc" id="L334">        return PropertyList.ofNullable( true, (Var&lt;T&gt;) first, vars );</span>
+    }
+
+    @Override
+    public &lt;T&gt; Vals&lt;@Nullable T&gt; valsOfNullable(Class&lt;T&gt; type, Vals&lt;@Nullable T&gt; vals) {
+<span class="fc" id="L339">        T[] values = (T[]) vals.stream().toArray(Object[]::new);</span>
+<span class="fc" id="L340">        return valsOfNullable(type, values);</span>
+    }
+
+    @Override
+    public &lt;T&gt; Vars&lt;T&gt; varsOfNullable(Class&lt;T&gt; type, Iterable&lt;Var&lt;T&gt;&gt; vars) {
+<span class="fc" id="L345">        Var&lt;@Nullable T&gt;[] varsArray = (Var&lt;@Nullable T&gt;[]) StreamSupport.stream(vars.spliterator(), false).toArray(Var[]::new);</span>
+<span class="fc" id="L346">        return varsOfNullable(type,  varsArray);</span>
+    }
+
+
+	@SuppressWarnings(&quot;unchecked&quot;)
+<span class="fc" id="L351">	@Override public &lt;T&gt; Vars&lt;T&gt; varsOf( Class&lt;T&gt; type, Var&lt;T&gt;... vars ) { return PropertyList.of( false, type, vars ); }</span>
+
+<span class="fc" id="L353">	@Override public &lt;T&gt; Vars&lt;T&gt; varsOf( Class&lt;T&gt; type ) { return PropertyList.of( false, type ); }</span>
+
+	@SuppressWarnings(&quot;unchecked&quot;)
+<span class="fc" id="L356">	@Override public &lt;T&gt; Vars&lt;T&gt; varsOf( Var&lt;T&gt; first, Var&lt;T&gt;... rest ) { return PropertyList.of( false, first, rest ); }</span>
+
+	@SuppressWarnings(&quot;unchecked&quot;)
+<span class="fc" id="L359">	@Override public &lt;T&gt; Vars&lt;T&gt; varsOf( T first, T... rest ) { return PropertyList.of( false, first, rest ); }</span>
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+<span class="nc" id="L362">    @Override public &lt;T&gt; Vars&lt;T&gt; varsOf( Class&lt;T&gt; type, T... items ) { return PropertyList.of( false, type, items ); }</span>
+
+<span class="fc" id="L364">	@Override public &lt;T&gt; Vars&lt;T&gt; varsOf( Class&lt;T&gt; type, Iterable&lt;Var&lt;T&gt;&gt; vars ) { return PropertyList.of( false, type, vars ); }</span>
+
+	@SuppressWarnings(&quot;unchecked&quot;)
+	@Override public &lt;T&gt; Vars&lt;@Nullable T&gt; varsOfNullable( Class&lt;T&gt; type, Var&lt;@Nullable T&gt;... vars ) {
+<span class="fc" id="L368">		return PropertyList.ofNullable( false, type, vars );</span>
+	}
+
+<span class="fc" id="L371">	@Override public &lt;T&gt; Vars&lt;@Nullable T&gt; varsOfNullable( Class&lt;T&gt; type ) { return PropertyList.ofNullable( false, type ); }</span>
+
+	@SuppressWarnings(&quot;unchecked&quot;)
+	@Override public &lt;T&gt; Vars&lt;@Nullable T&gt; varsOfNullable( Class&lt;T&gt; type, @Nullable T... values ) {
+<span class="fc" id="L375">		return PropertyList.ofNullable( false, type, values );</span>
+	}
+
+	@SuppressWarnings(&quot;unchecked&quot;)
+	@Override public &lt;T&gt; Vars&lt;@Nullable T&gt; varsOfNullable( Var&lt;@Nullable T&gt; first, Var&lt;@Nullable T&gt;... rest ) {
+<span class="nc" id="L380">		return PropertyList.ofNullable( false, first, rest );</span>
+	}
+
+	@Override public &lt;V&gt; Result&lt;V&gt; resultOf( Class&lt;V&gt; type ) {
+<span class="fc" id="L384">		Objects.requireNonNull(type);</span>
+<span class="fc" id="L385">		return new ResultImpl&lt;&gt;(type, Collections.emptyList(), null);</span>
+	}
+
+	@Override public &lt;V&gt; Result&lt;V&gt; resultOf( V value ) {
+<span class="fc" id="L389">		Objects.requireNonNull(value);</span>
+<span class="fc" id="L390">		return resultOf(value, Collections.emptyList());</span>
+	}
+
+	@Override public &lt;V&gt; Result&lt;V&gt; resultOf( Class&lt;V&gt; type, @Nullable V value ) {
+<span class="fc" id="L394">		Objects.requireNonNull(type);</span>
+<span class="fc" id="L395">		return resultOf(type, value, Collections.emptyList());</span>
+	}
+
+	@Override public &lt;V&gt; Result&lt;V&gt; resultOf( V value, List&lt;Problem&gt; problems ) {
+<span class="fc" id="L399">		Objects.requireNonNull(value);</span>
+<span class="fc" id="L400">		problems = Collections.unmodifiableList(new ArrayList&lt;&gt;(Objects.requireNonNull(problems)));</span>
+<span class="fc" id="L401">        Class&lt;V&gt; itemType = Util.expectedClassFromItem(value);</span>
+<span class="fc" id="L402">		return new ResultImpl&lt;&gt;(itemType, problems, value);</span>
+	}
+
+	@Override public &lt;V&gt; Result&lt;V&gt; resultOf( Class&lt;V&gt; type, List&lt;Problem&gt; problems ) {
+<span class="fc" id="L406">		Objects.requireNonNull(type);</span>
+<span class="fc" id="L407">		problems = Collections.unmodifiableList(new ArrayList&lt;&gt;(Objects.requireNonNull(problems)));</span>
+<span class="fc" id="L408">		return new ResultImpl&lt;&gt;(type, problems, null);</span>
+	}
+
+	@Override public &lt;V&gt; Result&lt;V&gt; resultOf( Class&lt;V&gt; type, @Nullable V value, List&lt;Problem&gt; problems ) {
+<span class="fc" id="L412">		Objects.requireNonNull(type);</span>
+<span class="fc" id="L413">		problems = Collections.unmodifiableList(new ArrayList&lt;&gt;(Objects.requireNonNull(problems)));</span>
+<span class="fc" id="L414">		return new ResultImpl&lt;&gt;(type, problems, value);</span>
+	}
+
+	@Override public &lt;V&gt; Result&lt;V&gt; resultOf( Class&lt;V&gt; type, @Nullable V value, Problem problem ) {
+<span class="nc" id="L418">		Objects.requireNonNull(type);</span>
+<span class="nc" id="L419">		Objects.requireNonNull(problem);</span>
+<span class="nc" id="L420">		return new ResultImpl&lt;&gt;(type, Collections.singletonList(problem), value);</span>
+	}
+
+	@Override public &lt;V&gt; Result&lt;V&gt; resultOf( Class&lt;V&gt; type, Problem problem ) {
+<span class="fc" id="L424">		Objects.requireNonNull(type);</span>
+<span class="fc" id="L425">		Objects.requireNonNull(problem);</span>
+<span class="fc" id="L426">		return new ResultImpl&lt;&gt;(type, Collections.singletonList(problem), null);</span>
+	}
+
+	@Override public &lt;V&gt; Result&lt;List&lt;V&gt;&gt; resultOfList( Class&lt;V&gt; type, Problem problem ) {
+<span class="nc" id="L430">		Objects.requireNonNull(type);</span>
+<span class="nc" id="L431">		Objects.requireNonNull(problem);</span>
+<span class="nc" id="L432">		return (Result&lt;List&lt;V&gt;&gt;) (Result) new ResultImpl&lt;&gt;(List.class, Collections.singletonList(problem), null);</span>
+	}
+
+	@Override public &lt;V&gt; Result&lt;List&lt;V&gt;&gt; resultOfList( Class&lt;V&gt; type, List&lt;V&gt; list ) {
+<span class="fc" id="L436">		Objects.requireNonNull(type);</span>
+<span class="fc" id="L437">		Objects.requireNonNull(list);</span>
+		// We check the types of the list elements are of the correct type.
+<span class="fc" id="L439">		boolean matches = list.stream().filter(Objects::nonNull).allMatch(e -&gt; type.isAssignableFrom(e.getClass()));</span>
+<span class="pc bpc" id="L440" title="1 of 2 branches missed.">		if ( !matches )</span>
+<span class="nc" id="L441">			throw new IllegalArgumentException(&quot;List elements must be of type &quot; + type.getName());</span>
+<span class="fc" id="L442">		return (Result&lt;List&lt;V&gt;&gt;) (Result) new ResultImpl&lt;&gt;(List.class, Collections.emptyList(), list);</span>
+	}
+
+	@Override public &lt;V&gt; Result&lt;List&lt;V&gt;&gt; resultOfList( Class&lt;V&gt; type, List&lt;V&gt; list, List&lt;Problem&gt; problems ) {
+<span class="fc" id="L446">		Objects.requireNonNull(type);</span>
+<span class="fc" id="L447">		Objects.requireNonNull(list);</span>
+<span class="fc" id="L448">		boolean matches = list.stream().filter(Objects::nonNull).allMatch(e -&gt; type.isAssignableFrom(e.getClass()));</span>
+<span class="pc bpc" id="L449" title="1 of 2 branches missed.">		if ( !matches )</span>
+<span class="nc" id="L450">			throw new IllegalArgumentException(&quot;List elements must be of type &quot; + type.getName());</span>
+<span class="fc" id="L451">		problems = Collections.unmodifiableList(new ArrayList&lt;&gt;(Objects.requireNonNull(problems)));</span>
+<span class="fc" id="L452">		return (Result&lt;List&lt;V&gt;&gt;) (Result) new ResultImpl&lt;&gt;(List.class, problems, list);</span>
+	}
+
+    @Override
+    public &lt;V&gt; Result&lt;V&gt; resultOfTry( Class&lt;V&gt; type, Supplier&lt;V&gt; supplier ) {
+<span class="fc" id="L457">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L458">        Objects.requireNonNull(supplier);</span>
+        try {
+<span class="fc" id="L460">            return resultOf(type, supplier.get());</span>
+<span class="fc" id="L461">        } catch (Exception e) {</span>
+<span class="fc" id="L462">            return resultOf(type, Problem.of(e));</span>
+        }
+    }
+
+    @Override
+    public &lt;O, D&gt; WeakAction&lt;O, D&gt; actionOfWeak( O owner, BiConsumer&lt;O, D&gt; action ) {
+<span class="fc" id="L468">        return new WeakActionImpl&lt;&gt;(owner, action);</span>
+    }
+
+    @Override
+    public String defaultId() {
+<span class="fc" id="L473">        return &quot;&quot;;</span>
+    }
+
+    @Override
+    public Pattern idPattern() {
+<span class="fc" id="L478">        return DEFAULT_ID_PATTERN;</span>
+    }
+
+    @Override
+    public Channel defaultChannel() {
+<span class="fc" id="L483">        return From.VIEW_MODEL;</span>
+    }
+
+    @Override
+    public Channel defaultObservableChannel() {
+<span class="fc" id="L488">        return From.ALL;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>
