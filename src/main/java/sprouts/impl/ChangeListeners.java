@@ -2,13 +2,14 @@ package sprouts.impl;
 
 import org.slf4j.Logger;
 import sprouts.Action;
+import sprouts.Subscriber;
 import sprouts.WeakAction;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 
 final class ChangeListeners<D> {
 
@@ -30,7 +31,7 @@ final class ChangeListeners<D> {
                 wa.owner().ifPresent(owner -> {
                     actions.add(action);
                     WeakReference<ChangeListeners<?>> weakThis = new WeakReference<>(this);
-                    ChannelCleaner cleaner = new ChannelCleaner(weakThis, wa);
+                    AutomaticUnSubscriber cleaner = new AutomaticUnSubscriber(weakThis, wa);
                     ChangeListenerCleaner.getInstance().register(owner, cleaner);
                 });
             } else
@@ -38,8 +39,15 @@ final class ChangeListeners<D> {
         });
     }
 
-    void removeIf(Predicate<Action<D>> predicate) {
-        getActions(actions -> actions.removeIf(predicate));
+    void unsubscribe(Subscriber subscriber) {
+        getActions(actions -> actions.removeIf( a -> {
+            if ( a instanceof SproutChangeListener ) {
+                SproutChangeListener<?> pcl = (SproutChangeListener<?>) a;
+                return pcl.listener() == subscriber;
+            }
+            else
+                return Objects.equals(a, subscriber);
+        }));
     }
 
     synchronized long getActions(Consumer<List<Action<D>>> receiver) {
@@ -52,7 +60,7 @@ final class ChangeListeners<D> {
         });
     }
 
-    void fire(D delegate) {
+    void fireChange(D delegate) {
         getActions(actions -> {
             for (Action<D> action : actions) // We copy the list to avoid concurrent modification
                 try {
@@ -82,11 +90,11 @@ final class ChangeListeners<D> {
         return sb.toString();
     }
 
-    private static final class ChannelCleaner implements Runnable {
+    private static final class AutomaticUnSubscriber implements Runnable {
         private final WeakReference<ChangeListeners<?>> weakThis;
         private final WeakAction<?, ?> wa;
 
-        private ChannelCleaner(WeakReference<ChangeListeners<?>> weakThis, WeakAction<?, ?> wa) {
+        private AutomaticUnSubscriber(WeakReference<ChangeListeners<?>> weakThis, WeakAction<?, ?> wa) {
             this.weakThis = weakThis;
             this.wa = wa;
         }

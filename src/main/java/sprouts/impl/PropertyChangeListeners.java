@@ -5,7 +5,6 @@ import sprouts.Observer;
 import sprouts.*;
 
 import java.util.*;
-import java.util.function.Predicate;
 
 public final class PropertyChangeListeners<T>
 {
@@ -32,14 +31,8 @@ public final class PropertyChangeListeners<T>
     }
 
     public void unsubscribe( Subscriber subscriber ) {
-        _removeActionIf( a -> {
-            if ( a instanceof SproutChangeListener ) {
-                SproutChangeListener<?> pcl = (SproutChangeListener<?>) a;
-                return pcl.listener() == subscriber;
-            }
-            else
-                return Objects.equals(a, subscriber);
-        });
+        for ( ChangeListeners<ValDelegate<T>> actions : _actions.values() )
+            actions.unsubscribe(subscriber);
     }
 
 	public void fireChange( Val<T> owner, Channel channel ) {
@@ -47,10 +40,10 @@ public final class PropertyChangeListeners<T>
         // We clone this property to avoid concurrent modification
 		if ( channel == From.ALL)
 			for ( Channel key : _actions.keySet() )
-                _getActionsFor(key).fire( delegate );
+                _getActionsFor(key).fireChange( delegate );
 		else {
-            _getActionsFor(channel).fire( delegate );
-            _getActionsFor(From.ALL).fire( delegate );
+            _getActionsFor(channel).fireChange( delegate );
+            _getActionsFor(From.ALL).fireChange( delegate );
 		}
 	}
 
@@ -65,13 +58,8 @@ public final class PropertyChangeListeners<T>
         other._actions.forEach( (k, v) -> _actions.put(k, new ChangeListeners<>(v)) );
     }
 
-    private ChangeListeners<ValDelegate<T>> _getActionsFor(Channel channel ) {
+    private ChangeListeners<ValDelegate<T>> _getActionsFor( Channel channel ) {
         return _actions.computeIfAbsent(channel, k->new ChangeListeners<>());
-    }
-
-    private void _removeActionIf( Predicate<Action<ValDelegate<T>>> predicate ) {
-        for ( ChangeListeners<ValDelegate<T>> actions : _actions.values() )
-            actions.removeIf(predicate);
     }
 
     @Override
