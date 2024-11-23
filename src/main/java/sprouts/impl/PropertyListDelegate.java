@@ -11,12 +11,18 @@ final class PropertyListDelegate<T> implements sprouts.ValsDelegate<T> {
     private final Vals<T> oldValues;
     private final Vals<T> vals;
 
-    PropertyListDelegate(Change changeType, int index, Vals<T> newValues, Vals<T> oldValues, Vals<T> vals) {
+    PropertyListDelegate(
+        Change changeType,
+        int index,
+        Vals<T> newValues,
+        Vals<T> oldValues,
+        Vals<T> vals
+    ) {
         this.changeType = changeType;
-        this.index = index;
-        this.newValues = newValues;
-        this.oldValues = oldValues;
-        this.vals = vals;
+        this.index      = index;
+        this.newValues  = newValues;
+        this.oldValues  = oldValues;
+        this.vals       = vals;
     }
 
     @Override

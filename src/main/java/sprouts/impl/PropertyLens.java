@@ -13,13 +13,12 @@ import java.util.function.Function;
  * technique used to simplify the process of accessing and updating parts of
  * a nested (immutable) data structures into a new instance of the data structure.
  * It is essentially a pair of functions, one to get a value from a specific
- * part of a data structure (like a record),
- * and another to set or update that value while producing a new
+ * part of a data structure, and another to set or update that value while producing a new
  * instance of the data structure. This pattern is particularly useful with Java records,
- * which are immutable by design, as it allows for clean and concise manipulation
+ * which are immutable by design, as it allows for clean and concise transformative updates
  * of deeply nested fields without breaking immutability.
  * <p>
- * Now what does this have to do with Sprouts properties?
+ * <b>Now what does this have to do with Sprouts properties?</b>
  * After all, the MVVM properties of this library are mutable
  * wrapper types with regular getter and setter methods.
  * Although properties are mutable, their items are expected to
@@ -32,13 +31,13 @@ import java.util.function.Function;
  * <b>This is where the Property Lens comes in:</b><br>
  * You can create a lens property from any regular property
  * holding an immutable data structure, and then use the lens property
- * like a regular property. <br>
+ * like a regular mutable {@link Var} property. <br>
+ * This lets you interact with an immutable field as if it were mutable.
  * Under the hood the lens property will use the lens pattern to access
- * and update the nested data structure of the original property.
+ * and update the nested data structure of the original property automatically.
  *
  *  @param <T> The type of the value, which is expected to be an immutable data carrier,
  *             such as a record, value object, or a primitive.
- *
  */
 final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object> implements Var<T>, Viewable<T>
 {
@@ -103,7 +102,7 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
         );
     }
 
-    private final ChangeListeners<T> _changeListeners;
+    private final PropertyChangeListeners<T> _changeListeners;
     private final String             _id;
     private final boolean            _nullable;
     private final Class<T>           _type;
@@ -122,7 +121,7 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
             Var<A>                          parent,
             Function<A,@Nullable T>         getter,
             BiFunction<A,@Nullable T,A>     wither,
-            @Nullable ChangeListeners<T>    changeListeners
+            @Nullable PropertyChangeListeners<T> changeListeners
     ) {
         Objects.requireNonNull(id);
         Objects.requireNonNull(type);
@@ -132,7 +131,7 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
         _parent          = parent;
         _getter          = getter;
         _setter          = wither;
-        _changeListeners = changeListeners == null ? new ChangeListeners<>() : new ChangeListeners<>(changeListeners);
+        _changeListeners = changeListeners == null ? new PropertyChangeListeners<>() : new PropertyChangeListeners<>(changeListeners);
 
         _lastItem = initialItem;
         Viewable.cast(parent).onChange(From.ALL, Action.ofWeak(this, (thisLens, v) -> {

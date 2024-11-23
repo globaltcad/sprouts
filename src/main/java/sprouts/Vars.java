@@ -769,7 +769,26 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
      *                                   {@code Vars} object, or {@code from} is greater than {@code to}.
      * @throws NullPointerException      if {@code null} is not allowed and the {@code item} is {@code null}.
      */
-    Vars<T> setRange(int from, int to, T value);
+    default Vars<T> setRange(int from, int to, T value) {
+        if ( !isMutable() )
+            throw new UnsupportedOperationException("This is an immutable list.");
+        if ( from < 0 || to > size() || from > to )
+            throw new IndexOutOfBoundsException("From: " + from + ", To: " + to + ", Size: " + size());
+
+        if ( !allowsNull() )
+            Objects.requireNonNull(value);
+
+        if ( from == to )
+            return this;
+
+        Vars<T> toBeSet = (Vars<T>) (allowsNull() ? Vars.ofNullable(type()) : Vars.of(type()));
+        for ( int i = from; i < to; i++ ) {
+            Var<T> newProperty = allowsNull() ? Var.ofNullable(type(), value) : Var.of(value);
+            toBeSet.add(newProperty);
+        }
+
+        return setAllAt( from, toBeSet );
+    }
 
     /**
      * Places the provided property in the specified range, effectively replacing the properties in the specified range
@@ -786,7 +805,22 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
      *                                   {@code Vars} object, or {@code from} is greater than {@code to}.
      * @throws IllegalArgumentException  if the list allows {@code null} and the property does not allow {@code null}.
      */
-    Vars<T> setRange(int from, int to, Var<T> value);
+    default Vars<T> setRange(int from, int to, Var<T> value)  {
+        if ( !isMutable() )
+            throw new UnsupportedOperationException("This is an immutable list.");
+        if ( from < 0 || to > size() || from > to )
+            throw new IndexOutOfBoundsException("From: " + from + ", To: " + to + ", Size: " + size());
+
+        if ( from == to )
+            return (Vars<T>) this;
+
+        Vars<T> toBeSet = (Vars<T>) (allowsNull() ? Vars.ofNullable(type()) : Vars.of(type()));
+        for ( int i = from; i < to; i++ ) {
+            toBeSet.add(value);
+        }
+
+        return setAllAt(from, toBeSet);
+    }
 
     /**
      * Wraps each provided item in a property and appends it to this

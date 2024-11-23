@@ -22,6 +22,11 @@ final class ValDelegateImpl<T> implements ValDelegate<T> {
     }
 
     @Override
+    public String id() {
+        return value.id();
+    }
+
+    @Override
     public @Nullable T orElseNull() {
         return value.orElseNull();
     }

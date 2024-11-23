@@ -161,7 +161,7 @@ final class PropertyList<T extends @Nullable Object> implements Vars<T>, Viewabl
 
     /** {@inheritDoc} */
     @Override
-    public Vars<T> popRange(int from, int to) {
+    public Vars<T> popRange( int from, int to ) {
         if ( _isImmutable ) throw new UnsupportedOperationException("This is an immutable list.");
         if ( from < 0 || to > _variables.size() || from > to )
             throw new IndexOutOfBoundsException("From: " + from + ", To: " + to + ", Size: " + _variables.size());
@@ -182,7 +182,7 @@ final class PropertyList<T extends @Nullable Object> implements Vars<T>, Viewabl
 
     /** {@inheritDoc} */
     @Override
-    public Vars<T> removeRange(int from, int to) {
+    public Vars<T> removeRange( int from, int to ) {
         if ( _isImmutable ) throw new UnsupportedOperationException("This is an immutable list.");
         if ( from < 0 || to > _variables.size() || from > to )
             throw new IndexOutOfBoundsException("From: " + from + ", To: " + to + ", Size: " + _variables.size());
@@ -219,62 +219,6 @@ final class PropertyList<T extends @Nullable Object> implements Vars<T>, Viewabl
         return this;
     }
 
-    /** {@inheritDoc} */
-    @Override
-    public Vars<T> setRange(int from, int to, T value) {
-        if (_isImmutable)
-            throw new UnsupportedOperationException("This is an immutable list.");
-        if (from < 0 || to > _variables.size() || from > to)
-            throw new IndexOutOfBoundsException("From: " + from + ", To: " + to + ", Size: " + _variables.size());
-
-        if (!_allowsNull)
-            Objects.requireNonNull(value);
-
-        if (from == to)
-            return this;
-
-        Vars<T> oldVars = (Vars<T>) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));
-        Vars<T> newVars = (Vars<T>) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));
-
-        for (int i = from; i < to; i++) {
-            Var<T> n = _allowsNull ? Var.ofNullable(_type, value) : Var.of(value);
-            Var<T> o = _variables.set(i, n);
-            newVars.add(n);
-            oldVars.add(o);
-        }
-
-        _triggerAction(Change.SET, from, newVars, oldVars);
-
-        return this;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public Vars<T> setRange(int from, int to, Var<T> value) {
-        if (_isImmutable)
-            throw new UnsupportedOperationException("This is an immutable list.");
-        if (from < 0 || to > _variables.size() || from > to)
-            throw new IndexOutOfBoundsException("From: " + from + ", To: " + to + ", Size: " + _variables.size());
-
-        _checkNullSafetyOf(value);
-
-        if (from == to)
-            return (Vars<T>) this;
-
-        Vars<T> oldVars = (Vars<T>) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));
-        Vars<T> newVars = (Vars<T>) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));
-
-        for (int i = from; i < to; i++) {
-            Var<T> o = _variables.set(i, value);
-            newVars.add(value);
-            oldVars.add(o);
-        }
-
-        _triggerAction(Change.SET, from, newVars, oldVars);
-
-        return this;
-    }
-
     @Override
     public Vars<T> addAllAt( int index, Vars<T> vars ) {
         if (_isImmutable)
@@ -296,7 +240,7 @@ final class PropertyList<T extends @Nullable Object> implements Vars<T>, Viewabl
     }
 
     @Override
-    public Vars<T> setAllAt(int index, Vars<T> vars) {
+    public Vars<T> setAllAt( int index, Vars<T> vars ) {
         if ( !_checkCanAdd(vars) )
             return this;
 
@@ -455,17 +399,17 @@ final class PropertyList<T extends @Nullable Object> implements Vars<T>, Viewabl
     private void _triggerAction(
             Change type, int index, @Nullable Var<T> newVal, @Nullable Var<T> oldVal
     ) {
-        _changeListeners._triggerAction(type, index, newVal, oldVal, this);
+        _changeListeners.fireChange(type, index, newVal, oldVal, this);
     }
 
     private void _triggerAction(Change type) {
-        _changeListeners._triggerAction(type, this);
+        _changeListeners.fireChange(type, this);
     }
 
     private void _triggerAction(
             Change type, int index, @Nullable Vals<T> newVals, @Nullable Vals<T> oldVals
     ) {
-        _changeListeners._triggerAction(type, index, newVals, oldVals, this);
+        _changeListeners.fireChange(type, index, newVals, oldVals, this);
     }
 
     /** {@inheritDoc} */
@@ -544,7 +488,7 @@ final class PropertyList<T extends @Nullable Object> implements Vars<T>, Viewabl
 
     @Override
     public Observable subscribe( Observer observer ) {
-        this.onChange( new SproutChangeListener<>(observer) );
+        _changeListeners.onChange( observer );
         return this;
     }
 

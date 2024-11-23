@@ -29,7 +29,7 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
         }
 
         WeakReference<Vals<T>> weakSource = new WeakReference<>(source);
-        Viewables.cast(source).onChange(new WeakActionImpl<>(view, (innerView, delegate) -> {
+        Viewables.cast(source).onChange(Action.ofWeak(view, (innerView, delegate) -> {
             Vals<T> innerSource = weakSource.get();
             if (innerSource == null) {
                 return;
@@ -486,17 +486,17 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
     private void _triggerAction(
         Change type, int index, @Nullable Var<T> newVal, @Nullable Var<T> oldVal
     ) {
-        _changeListeners._triggerAction(type, index, newVal, oldVal, this);
+        _changeListeners.fireChange(type, index, newVal, oldVal, this);
     }
 
     private void _triggerAction(Change type) {
-        _changeListeners._triggerAction(type, this);
+        _changeListeners.fireChange(type, this);
     }
 
     private void _triggerAction(
     Change type, int index, @Nullable Vals<T> newVals, @Nullable Vals<T> oldVals
     ) {
-        _changeListeners._triggerAction(type, index, newVals, oldVals, this);
+        _changeListeners.fireChange(type, index, newVals, oldVals, this);
     }
 
     /** {@inheritDoc} */
