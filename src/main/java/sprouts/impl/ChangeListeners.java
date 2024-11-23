@@ -129,7 +129,7 @@ final class ChangeListeners<T>
         }
 
         public void trigger( Channel channel, Val<T> owner ) {
-            ValDelegate<T> delegate = new ValDelegateImpl<>(channel, Val.ofNullable(owner)); // We clone this property to avoid concurrent modification
+            ValDelegate<T> delegate = Sprouts.factory().delegateOf(Val.ofNullable(owner), channel); // We clone this property to avoid concurrent modification
             _getActions( actions -> {
                 for ( Action<ValDelegate<T>> action : actions ) // We copy the list to avoid concurrent modification
                     try {

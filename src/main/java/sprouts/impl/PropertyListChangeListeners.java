@@ -20,7 +20,7 @@ final class PropertyListChangeListeners<T extends @Nullable Object>
         _viewActions.add(action);
     }
 
-    public void subscribe(Observer observer ) {
+    public void subscribe( Observer observer ) {
         this.onChange( new SproutChangeListener<>(observer) );
     }
 
@@ -82,7 +82,7 @@ final class PropertyListChangeListeners<T extends @Nullable Object>
         */
         Vals<T> newValues = newVal == null ? Vals.ofNullable(_type) : Vals.ofNullable(_type, Val.ofNullable(newVal));
         Vals<T> oldValues = oldVal == null ? Vals.ofNullable(_type) : Vals.ofNullable(_type, Val.ofNullable(oldVal));
-        return new PropertyListDelegate<>(type, index, newValues, oldValues, clone);
+        return Sprouts.factory().delegateOf(clone, type, index, newValues, oldValues);
     }
 
     private ValsDelegate<T> _createDelegate(
@@ -104,7 +104,7 @@ final class PropertyListChangeListeners<T extends @Nullable Object>
             pass the clone to the delegate. This is important because the delegate
             is passed to the action which might be executed on a different thread.
         */
-        return new PropertyListDelegate<>(type, index, newClone, oldClone, clone);
+        return Sprouts.factory().delegateOf(clone, type, index, newClone, oldClone);
     }
 
 }

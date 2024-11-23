@@ -44,4 +44,13 @@ public interface ValDelegate<T> extends Maybe<T>
      *          usually one of the {@link From} enum constants.
      */
     Channel channel();
+
+    /**
+     *  Exposes the id of the property that was listened to.
+     *  This is useful when you want to identify the property that changed
+     *  in a listener that listens to multiple properties.
+     *
+     *  @return The id of the property that was listened to.
+     */
+    String id();
 }

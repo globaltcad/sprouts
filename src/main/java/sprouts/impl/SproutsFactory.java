@@ -19,6 +19,16 @@ import java.util.regex.Pattern;
  */
 public interface SproutsFactory
 {
+	<T> ValDelegate<T> delegateOf( Val<T> source, Channel channel );
+
+	<T> ValsDelegate<T> delegateOf(
+		Vals<T> source,
+        Change  changeType,
+        int     index,
+        Vals<T> newValues,
+        Vals<T> oldValues
+    );
+
 	Event event();
 
 	Event eventOf( Event.Executor executor );
