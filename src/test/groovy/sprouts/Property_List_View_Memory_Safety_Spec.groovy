@@ -49,19 +49,19 @@ class Property_List_View_Memory_Safety_Spec extends Specification
             Viewables<String> names = eras.view("null", "error", JapaneseEra::toString)
             WeakReference<Viewables<String>> namesRef = new WeakReference<>(names)
         and : 'A list to record the changes and a listener to record the changes.'
-            var viewTrace = []
-            names.onChange({ viewTrace << it.vals().toList() })
+            var traceOfChanges = []
+            names.onChange({ traceOfChanges << it.vals().toList() })
         expect : 'The trace is empty initially.'
-            viewTrace.isEmpty()
+            traceOfChanges.isEmpty()
 
         when : 'We remove an era from the source property list.'
             eras.removeAt(1)
         then : 'The view is updated and the trace records the change.'
-            viewTrace == [["Heisei","Taisho"]]
+            traceOfChanges == [["Heisei","Taisho"]]
 
         when : 'We remove the reference to the view, clear the trace and wait for garbage collection.'
             names = null
-            viewTrace.clear()
+            traceOfChanges.clear()
             waitForGarbageCollection()
         then : 'The view is garbage collected!'
             namesRef.get() == null
@@ -69,7 +69,7 @@ class Property_List_View_Memory_Safety_Spec extends Specification
         when : 'We try to trigger a change in the source property list.'
             eras.add(JapaneseEra.REIWA)
         then : 'The view is not updated and the trace is empty.'
-            viewTrace == []
+            traceOfChanges == []
     }
 
     def 'The views of individual properties of a property list view can be garbage collected.'()
@@ -90,25 +90,25 @@ class Property_List_View_Memory_Safety_Spec extends Specification
             WeakReference<Viewable<Integer>> joeyRef = new WeakReference<>(joey)
             WeakReference<Viewable<Integer>> edRef = new WeakReference<>(ed)
         and : 'A list to record the changes and a listener to record the changes.'
-            var viewTrace = []
-            gary.onChange(From.ALL, { viewTrace << it.get() })
-            joey.onChange(From.ALL, { viewTrace << it.get() })
-            ed.onChange(From.ALL, { viewTrace << it.get() })
+            var traceOfChanges = []
+            gary.onChange(From.ALL, { traceOfChanges << it.get() })
+            joey.onChange(From.ALL, { traceOfChanges << it.get() })
+            ed.onChange(From.ALL, { traceOfChanges << it.get() })
         expect : 'The trace is empty initially.'
-            viewTrace.isEmpty()
+            traceOfChanges.isEmpty()
 
         when : 'We mutate all the names.'
             people.at(0).set("Richard Burgess")
             people.at(1).set("Joe Armstrong")
             people.at(2).set("Edward Wren")
         then : 'The views are updated and the trace records the changes.'
-            viewTrace == [15, 13, 11]
+            traceOfChanges == [15, 13, 11]
 
         when : 'We remove the references to the views, clear the trace and wait for garbage collection.'
             gary = null
             joey = null
             ed = null
-            viewTrace.clear()
+            traceOfChanges.clear()
             waitForGarbageCollection()
         then : 'The views are garbage collected!'
             garyRef.get() == null
@@ -120,7 +120,7 @@ class Property_List_View_Memory_Safety_Spec extends Specification
             people.at(1).set("y")
             people.at(2).set("z")
         then : 'The views are not updated and the trace is still empty.'
-            viewTrace == []
+            traceOfChanges == []
     }
 
     def 'A chain of views remains in memory, as long as the last view is still referenced.'()
