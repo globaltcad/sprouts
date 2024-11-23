@@ -11,39 +11,28 @@ import java.time.chrono.JapaneseEra
 @Title('Property List View Memory Safety')
 @Narrative('''
 
-    Both the read only `Vals` and the mutable `Vars` are designed to be
-    used as part of a view model in a Model-View-ViewModel (MVVM) architecture
-    or Model-View-Intent (MVI) architecture.
-    As a consequence, they need to be observable in some way.
-    This is done by registering change listeners on 
-    their so called "views", which are weakly referenced
-    live views of the original property lists which get updated
-    automatically when the original property changes.
-    You can then subscribe to these views to get notified
-    of changes to the original property.
-    
-    This is especially useful when you want to observe a property list
-    of one type as a property list of another type, or when you want to
-    observe a property lists with some transformation applied to them.
-    
-    This specification shows how to create views from both nullable and non-nullable property lists,
-    and it demonstrates how they may be garbage collected when they are no longer referenced.
+    `Vals` (read-only) and `Vars` (mutable) are used in MVVM or MVI architectures.
+    This is why they need to be observable, which is achieved by registering change listeners on their "views".
+    These views are weakly referenced and automatically updated when the original property changes.
+    You can subscribe to these views to get notified of changes.
 
+    This is useful for observing a property list of one type as another type or with transformations applied.
+
+    This specification demonstrates creating views from nullable and non-nullable property lists,
+    and shows how they may be garbage collected when no longer referenced.
+    
 ''')
 @Subject([Vals, Vars, Viewables, Viewable])
 class Property_List_View_Memory_Safety_Spec extends Specification
 {
-    def 'The view of a property list will be garbage collected if no longer referenced.'()
+    def 'A property list view is garbage collected when no longer referenced'()
     {
         reportInfo """
-            The property list view is a live view on the source property list,
-            which gets updated whenever the source list changes.
-            But the source list does not hold a reference to the view,
-            so if the view is no longer referenced, it will be garbage collected.
-            This also includes all of the change listeners that were attached to it.
-            So they will not be updated anymore.
+            The property list view automatically updates with changes to the source list.
+            The source list does not reference the view strongly, so it will be garbage collected if not referenced.
+            This includes all attached change listeners, which will no longer be updated.
         """
-        given : 'A property list of 3 japanese eras.'
+        given : 'A property list containing 3 Japanese eras'
             Vars<JapaneseEra> eras = Vars.of(JapaneseEra.HEISEI,JapaneseEra.SHOWA,JapaneseEra.TAISHO)
         and : 'A view on the names of the japanese eras and a weak reference to the view.'
             Viewables<String> names = eras.view("null", "error", JapaneseEra::toString)
@@ -56,7 +45,7 @@ class Property_List_View_Memory_Safety_Spec extends Specification
 
         when : 'We remove an era from the source property list.'
             eras.removeAt(1)
-        then : 'The view is updated and the trace records the change.'
+        then : 'The view updates and the trace records the change'
             traceOfChanges == [["Heisei","Taisho"]]
 
         when : 'We remove the reference to the view, clear the trace and wait for garbage collection.'
