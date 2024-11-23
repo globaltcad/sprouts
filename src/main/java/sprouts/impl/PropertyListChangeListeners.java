@@ -4,20 +4,15 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import sprouts.*;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
 
 public final class PropertyListChangeListeners<T extends @Nullable Object>
 {
-    private static final Logger log = org.slf4j.LoggerFactory.getLogger(PropertyListChangeListeners.class);
-
-    private final List<Action<ValsDelegate<T>>> _viewActions = new ArrayList<>();
+    private final ChangeListeners<ValsDelegate<T>> _actions = new ChangeListeners<>();
 
 
     public void onChange( Action<ValsDelegate<T>> action ) {
-        _viewActions.add(action);
+        _actions.add(action);
     }
 
     public void onChange( Observer observer ) {
@@ -25,16 +20,7 @@ public final class PropertyListChangeListeners<T extends @Nullable Object>
     }
 
     public void unsubscribe( Subscriber subscriber ) {
-        for ( Action<?> a : new ArrayList<>(_viewActions) )
-            if ( a instanceof SproutChangeListener ) {
-                SproutChangeListener<?> pcl = (SproutChangeListener<?>) a;
-                if ( Objects.equals(pcl.listener(), subscriber) ) {
-                    _viewActions.remove(a);
-                    return;
-                }
-            }
-            else if ( Objects.equals(a, subscriber) )
-                _viewActions.remove(a);
+        _actions.unsubscribe(subscriber);
     }
 
     public void fireChange(Change type, Vars<T> source) {
@@ -45,26 +31,14 @@ public final class PropertyListChangeListeners<T extends @Nullable Object>
             Change type, int index, @Nullable Var<T> newVal, @Nullable Var<T> oldVal, Vars<T> source
     ) {
         ValsDelegate<T> listChangeDelegate = _createDelegate(index, type, newVal, oldVal, source);
-
-        for ( Action<ValsDelegate<T>> action : _viewActions )
-            try {
-                action.accept(listChangeDelegate);
-            } catch ( Exception e ) {
-                log.error("Error in change action '{}'.", action, e);
-            }
+        _actions.fireChange(listChangeDelegate);
     }
 
     public void fireChange(
             Change type, int index, @Nullable Vals<T> newVals, @Nullable Vals<T> oldVals, Vars<T> source
     ) {
         ValsDelegate<T> listChangeDelegate = _createDelegate(index, type, newVals, oldVals, source);
-
-        for (Action<ValsDelegate<T>> action : _viewActions)
-            try {
-                action.accept(listChangeDelegate);
-            } catch (Exception e) {
-                log.error("Error in change action '{}'.", action, e);
-            }
+        _actions.fireChange(listChangeDelegate);
     }
 
     private ValsDelegate<T> _createDelegate(
