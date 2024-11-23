@@ -13,28 +13,36 @@ import java.util.concurrent.TimeUnit
 @Title("Property Views")
 @Narrative('''
 
-    A property is more than just a wrapper around values.
-    It has a rich APIs that exposes a plethora of methods,
-    many of which are designed to inform you about
-    their contents without actually exposing them to you.
+    Properties are designed to be observable, which means that you can "react"
+    to their items being replaced by new items. This sort of "reaction"
+    to changes is typically done through the "observer pattern", where you
+    register change listeners on a property that are invoked whenever the
+    property item changes...
     
-    For example, there are methods like `Val::isEmpty` and `Val::isPresent`,
-    which are used to check if a property is empty or not.
-    These facts about the property can also be observed through a "view".
-    For which we have the `viewIsEmpty()` and `viewIsPresent()` methods.
+    Contrary to what you might might expect, you cannot register change listeners
+    on properties directly!
+    This is to prevent you from creating memory leaks, which happen very often 
+    due to change listeners not being unregistered when they are no longer needed.
+    To fix this, Sprouts provides the concept of a "property view" in
+    the form of instances of the `Viewable` type, 
+    which is a weakly referenced live property onto which you can safely register 
+    your change listeners. 
+    And when you no longer use the view (by holding a reference to it), 
+    it will be garbage collected along with all of the change listeners 
+    that were registered on it.
     
-    Each of these methods return a `Viewable` property which will always be "up to date"
-    with respect to the thing that is observed, and will be updated
-    automatically when the observed thing changes.
+    But if you keep a reference to the view and a change occurs on the source property,
+    then the view will be updated and all of the change listeners will be notified
+    of the change.
 
 ''')
 @Subject([Viewable, Var, Val, Vars, Vals])
 class Property_View_Spec extends Specification
 {
-    def 'Use the "viewAs" method to create a dynamically updated view of a property.'()
+    def 'Use the `viewAs` method to create a dynamically updated view of a property.'()
     {
         reportInfo """
-            The "viewAs" method is used to create a dynamically updated view of a property.
+            The `viewAs` method is used to create a dynamically updated view of a property.
             In essence it is a property observing another property and updating its value
             whenever the observed property changes.
         """
@@ -127,10 +135,10 @@ class Property_View_Spec extends Specification
             randomString.get() == "Random"
     }
 
-    def 'Use the "view" to create a view of a property of the same type.'()
+    def 'Use the `view(Function)` method to create a view of a property of the same type.'()
     {
         reportInfo """
-            The "view" method can be used to create a view of a property of the same type,
+            The `view(Function)` method can be used to create a view of a property of the same type,
             but with some transformation applied to it.
         """
         given : 'A property...'
