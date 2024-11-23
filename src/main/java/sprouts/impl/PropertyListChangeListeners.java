@@ -9,7 +9,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-final class PropertyListChangeListeners<T extends @Nullable Object>
+public final class PropertyListChangeListeners<T extends @Nullable Object>
 {
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(PropertyListChangeListeners.class);
 
@@ -20,10 +20,9 @@ final class PropertyListChangeListeners<T extends @Nullable Object>
         _viewActions.add(action);
     }
 
-    public void subscribe( Observer observer ) {
+    public void onChange( Observer observer ) {
         this.onChange( new SproutChangeListener<>(observer) );
     }
-
 
     public void unsubscribe( Subscriber subscriber ) {
         for ( Action<?> a : new ArrayList<>(_viewActions) )
@@ -38,12 +37,11 @@ final class PropertyListChangeListeners<T extends @Nullable Object>
                 _viewActions.remove(a);
     }
 
-
-    void _triggerAction(Change type, Vars<T> source) {
-        _triggerAction(type, -1, (Vals<T>) null, null, source);
+    public void fireChange(Change type, Vars<T> source) {
+        fireChange(type, -1, (Vals<T>) null, null, source);
     }
 
-    void _triggerAction(
+    public void fireChange(
             Change type, int index, @Nullable Var<T> newVal, @Nullable Var<T> oldVal, Vars<T> source
     ) {
         ValsDelegate<T> listChangeDelegate = _createDelegate(index, type, newVal, oldVal, source);
@@ -56,7 +54,7 @@ final class PropertyListChangeListeners<T extends @Nullable Object>
             }
     }
 
-    void _triggerAction(
+    public void fireChange(
             Change type, int index, @Nullable Vals<T> newVals, @Nullable Vals<T> oldVals, Vars<T> source
     ) {
         ValsDelegate<T> listChangeDelegate = _createDelegate(index, type, newVals, oldVals, source);

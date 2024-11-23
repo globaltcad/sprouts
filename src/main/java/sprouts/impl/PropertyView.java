@@ -33,11 +33,11 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 	}
 
 	private static <T> PropertyView<@Nullable T> _ofNullable( Class<T> type, @Nullable T item, Val<?>... strongParentRefs ) {
-		return new PropertyView<>(type, item, Sprouts.factory().defaultId(), new ChangeListeners<>(), true, _filterStrongParentRefs(strongParentRefs));
+		return new PropertyView<>(type, item, Sprouts.factory().defaultId(), new PropertyChangeListeners<>(), true, _filterStrongParentRefs(strongParentRefs));
 	}
 
 	private static <T> PropertyView<T> _of( Class<T> type, T item, Val<?>... strongParentRefs ) {
-		return new PropertyView<>(type, item, Sprouts.factory().defaultId(), new ChangeListeners<>(), false, _filterStrongParentRefs(strongParentRefs));
+		return new PropertyView<>(type, item, Sprouts.factory().defaultId(), new PropertyChangeListeners<>(), false, _filterStrongParentRefs(strongParentRefs));
 	}
 
 	public static <T, U> Viewable<@Nullable U> ofNullable(Class<U> type, Val<T> source, Function<T, @Nullable U> mapper) {
@@ -329,7 +329,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 		return id;
 	}
 
-	private final ChangeListeners<T> _changeListeners;
+	private final PropertyChangeListeners<T> _changeListeners;
 
     private final String _id;
 	private final boolean _nullable;
@@ -344,7 +344,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
         Class<T> type,
         @Nullable T iniValue,
         String id,
-        ChangeListeners<T> changeListeners,
+        PropertyChangeListeners<T> changeListeners,
         boolean allowsNull,
 		ParentRef<Val<?>>[] strongParentRefs
     ) {
@@ -356,7 +356,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 		_id               = id;
 		_nullable         = allowsNull;
 		_currentItem      = iniValue;
-		_changeListeners  = new ChangeListeners<>();
+		_changeListeners  = new PropertyChangeListeners<>();
 		_strongParentRefs = strongParentRefs;
 
 		if ( _currentItem != null ) {

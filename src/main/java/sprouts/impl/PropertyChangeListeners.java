@@ -9,20 +9,59 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-final class ChangeListeners<T>
+public final class PropertyChangeListeners<T>
 {
-    private static final Logger log = org.slf4j.LoggerFactory.getLogger(ChangeListeners.class);
+    private static final Logger log = org.slf4j.LoggerFactory.getLogger(PropertyChangeListeners.class);
 
     private final Map<Channel, ChannelListeners<T>> _actions = new LinkedHashMap<>();
 
 
-    public ChangeListeners() {}
+    public PropertyChangeListeners() {}
 
-    public ChangeListeners(ChangeListeners<T> other) {
+    public PropertyChangeListeners( PropertyChangeListeners<T> other ) {
         _copyFrom(other);
     }
 
-    private void _copyFrom(ChangeListeners<T> other) {
+
+    public void onChange( Channel channel, Action<ValDelegate<T>> action ) {
+        Objects.requireNonNull(channel);
+        Objects.requireNonNull(action);
+        _getActionsFor(channel).add(action);
+    }
+
+    public void onChange( Observer observer ) {
+        onChange(Sprouts.factory().defaultObservableChannel(), new SproutChangeListener<>(observer) );
+    }
+
+    public void unsubscribe( Subscriber subscriber ) {
+        _removeActionIf( a -> {
+            if ( a instanceof SproutChangeListener ) {
+                SproutChangeListener<?> pcl = (SproutChangeListener<?>) a;
+                return pcl.listener() == subscriber;
+            }
+            else
+                return Objects.equals(a, subscriber);
+        });
+    }
+
+	public void fireChange( Val<T> owner, Channel channel ) {
+		if ( channel == From.ALL)
+			for ( Channel key : _actions.keySet() )
+                _getActionsFor(key).fire( channel, owner );
+		else {
+            _getActionsFor(channel).fire( channel, owner );
+            _getActionsFor(From.ALL).fire( channel, owner );
+		}
+	}
+
+    public long numberOfChangeListeners() {
+        return _actions.values()
+                            .stream()
+                            .mapToLong(ChannelListeners::numberOfChangeListeners)
+                            .sum();
+    }
+
+    private void _copyFrom(PropertyChangeListeners<T> other) {
         other._actions.forEach( (k, v) -> _actions.put(k, new ChannelListeners<>(v)) );
     }
 
@@ -33,44 +72,6 @@ final class ChangeListeners<T>
     private void _removeActionIf( Predicate<Action<ValDelegate<T>>> predicate ) {
         for ( ChannelListeners<T> actions : _actions.values() )
             actions.removeIf(predicate);
-    }
-
-    public void onChange( Channel channel, Action<ValDelegate<T>> action ) {
-        Objects.requireNonNull(channel);
-        Objects.requireNonNull(action);
-        _getActionsFor(channel).add(action);
-    }
-
-    public final void onChange( Observer observer ) {
-        onChange(Sprouts.factory().defaultObservableChannel(), new SproutChangeListener<>(observer) );
-    }
-
-	public void fireChange( Val<T> owner, Channel channel ) {
-		if ( channel == From.ALL)
-			for ( Channel key : _actions.keySet() )
-                _getActionsFor(key).trigger( channel, owner );
-		else {
-            _getActionsFor(channel).trigger( channel, owner );
-            _getActionsFor(From.ALL).trigger( channel, owner );
-		}
-	}
-
-    public void unsubscribe( Subscriber subscriber ) {
-        _removeActionIf( a -> {
-                if ( a instanceof SproutChangeListener ) {
-                    SproutChangeListener<?> pcl = (SproutChangeListener<?>) a;
-                    return pcl.listener() == subscriber;
-                }
-                else
-                    return Objects.equals(a, subscriber);
-            });
-    }
-
-    public long numberOfChangeListeners() {
-        return _actions.values()
-                            .stream()
-                            .mapToLong(ChannelListeners::numberOfChangeListeners)
-                            .sum();
     }
 
     @Override
@@ -95,12 +96,12 @@ final class ChangeListeners<T>
 
         public ChannelListeners() {}
 
-        public ChannelListeners(ChannelListeners<T> other ) {
+        public ChannelListeners( ChannelListeners<T> other ) {
             _channelActions.addAll(other._channelActions);
         }
 
         public void add( Action<ValDelegate<T>> action ) {
-            _getActions( actions -> {
+            getActions(actions -> {
                 if ( action instanceof WeakAction ) {
                     WeakAction<?,?> wa = (WeakAction<?,?>) action;
                     wa.owner().ifPresent( owner -> {
@@ -115,22 +116,22 @@ final class ChangeListeners<T>
             });
         }
 
-        public void removeIf( Predicate<Action<ValDelegate<T>>> predicate ) {
-            _getActions( actions -> actions.removeIf(predicate) );
+        void removeIf( Predicate<Action<ValDelegate<T>>> predicate ) {
+            getActions(actions -> actions.removeIf(predicate) );
         }
 
-        private synchronized long _getActions(Consumer<List<Action<ValDelegate<T>>>> receiver) {
+        synchronized long getActions( Consumer<List<Action<ValDelegate<T>>>> receiver ) {
             receiver.accept(_channelActions);
             return _channelActions.size();
         }
 
-        private long numberOfChangeListeners() {
-            return _getActions( actions -> {} );
+        long numberOfChangeListeners() {
+            return getActions(actions -> {} );
         }
 
-        public void trigger( Channel channel, Val<T> owner ) {
+        void fire( Channel channel, Val<T> owner ) {
             ValDelegate<T> delegate = Sprouts.factory().delegateOf(Val.ofNullable(owner), channel); // We clone this property to avoid concurrent modification
-            _getActions( actions -> {
+            getActions(actions -> {
                 for ( Action<ValDelegate<T>> action : actions ) // We copy the list to avoid concurrent modification
                     try {
                         action.accept(delegate);
@@ -176,7 +177,7 @@ final class ChangeListeners<T>
             if ( strongThis == null )
                 return;
 
-            strongThis._getActions( innerActions -> {
+            strongThis.getActions(innerActions -> {
                 try {
                     wa.clear();
                 } catch ( Exception e ) {

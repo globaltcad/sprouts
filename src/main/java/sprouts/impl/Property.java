@@ -15,21 +15,21 @@ import java.util.Objects;
 final class Property<T extends @Nullable Object> implements Var<T>, Viewable<T> {
 
 	public static <T> Var<@Nullable T> ofNullable( boolean immutable, Class<T> type, @Nullable T value ) {
-		return new Property<T>( immutable, type, value, Sprouts.factory().defaultId(), new ChangeListeners<>(), true );
+		return new Property<T>( immutable, type, value, Sprouts.factory().defaultId(), new PropertyChangeListeners<>(), true );
 	}
 
 	public static <T> Var<T> of( boolean immutable, Class<T> type, T value ) {
-		return new Property<T>( immutable, type, value, Sprouts.factory().defaultId(), new ChangeListeners<>(), false );
+		return new Property<T>( immutable, type, value, Sprouts.factory().defaultId(), new PropertyChangeListeners<>(), false );
 	}
 
 	public static <T> Var<T> of( boolean immutable, T iniValue ) {
 		Objects.requireNonNull(iniValue);
 		Class<T> itemType = Util.expectedClassFromItem(iniValue);
-		return new Property<T>( immutable, itemType, iniValue, Sprouts.factory().defaultId(), new ChangeListeners<>(), false );
+		return new Property<T>( immutable, itemType, iniValue, Sprouts.factory().defaultId(), new PropertyChangeListeners<>(), false );
 	}
 
 
-	private final ChangeListeners<T> _changeListeners;
+	private final PropertyChangeListeners<T> _changeListeners;
 	private final String   _id;
 	private final Class<T> _type;
 
@@ -44,7 +44,7 @@ final class Property<T extends @Nullable Object> implements Var<T>, Viewable<T> 
 		Class<T>           type,
 		@Nullable T        iniValue,
 		String             id,
-		ChangeListeners<T> changeListeners,
+		PropertyChangeListeners<T> changeListeners,
 		boolean            allowsNull
 	) {
 		Objects.requireNonNull(id);
@@ -55,7 +55,7 @@ final class Property<T extends @Nullable Object> implements Var<T>, Viewable<T> 
 		_nullable        = allowsNull;
 		_isImmutable     = immutable;
 		_value           = iniValue;
-		_changeListeners = new ChangeListeners<>(changeListeners);
+		_changeListeners = new PropertyChangeListeners<>(changeListeners);
 
 		if ( _value != null ) {
 			// We check if the type is correct

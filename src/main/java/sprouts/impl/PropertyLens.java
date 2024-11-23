@@ -103,7 +103,7 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
         );
     }
 
-    private final ChangeListeners<T> _changeListeners;
+    private final PropertyChangeListeners<T> _changeListeners;
     private final String             _id;
     private final boolean            _nullable;
     private final Class<T>           _type;
@@ -122,7 +122,7 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
             Var<A>                          parent,
             Function<A,@Nullable T>         getter,
             BiFunction<A,@Nullable T,A>     wither,
-            @Nullable ChangeListeners<T>    changeListeners
+            @Nullable PropertyChangeListeners<T> changeListeners
     ) {
         Objects.requireNonNull(id);
         Objects.requireNonNull(type);
@@ -132,7 +132,7 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
         _parent          = parent;
         _getter          = getter;
         _setter          = wither;
-        _changeListeners = changeListeners == null ? new ChangeListeners<>() : new ChangeListeners<>(changeListeners);
+        _changeListeners = changeListeners == null ? new PropertyChangeListeners<>() : new PropertyChangeListeners<>(changeListeners);
 
         _lastItem = initialItem;
         Viewable.cast(parent).onChange(From.ALL, Action.ofWeak(this, (thisLens, v) -> {
