@@ -11,7 +11,7 @@ import java.time.chrono.JapaneseEra
 @Title('Property List View Memory Safety')
 @Narrative('''
 
-    `Vals` (read-only) and `Vars` (mutable) are used in MVVM or MVI architectures.
+    `Vals` (read-only) and `Vars` (mutable) are designed to be used in MVVM or MVI architectures.
     This is why they need to be observable, which is achieved by registering change listeners on their "views".
     These views are weakly referenced and automatically updated when the original property changes.
     You can subscribe to these views to get notified of changes.
@@ -33,8 +33,8 @@ class Property_List_View_Memory_Safety_Spec extends Specification
             This includes all attached change listeners, which will no longer be updated.
         """
         given : 'A property list containing 3 Japanese eras'
-            Vars<JapaneseEra> eras = Vars.of(JapaneseEra.HEISEI,JapaneseEra.SHOWA,JapaneseEra.TAISHO)
-        and : 'A view on the names of the japanese eras and a weak reference to the view.'
+            Vars<JapaneseEra> eras = Vars.of(JapaneseEra.HEISEI, JapaneseEra.SHOWA, JapaneseEra.TAISHO)
+        and : 'A view on the names of the Japanese eras and a weak reference to the view.'
             Viewables<String> names = eras.view("null", "error", JapaneseEra::toString)
             WeakReference<Viewables<String>> namesRef = new WeakReference<>(names)
         and : 'A list to record the changes and a listener to record the changes.'
@@ -45,10 +45,10 @@ class Property_List_View_Memory_Safety_Spec extends Specification
 
         when : 'We remove an era from the source property list.'
             eras.removeAt(1)
-        then : 'The view updates and the trace records the change'
-            traceOfChanges == [["Heisei","Taisho"]]
+        then : 'The view updates and the trace records the change.'
+            traceOfChanges == [["Heisei", "Taisho"]]
 
-        when : 'We remove the reference to the view, clear the trace and wait for garbage collection.'
+        when : 'We remove the reference to the view, clear the trace, and wait for garbage collection.'
             names = null
             traceOfChanges.clear()
             waitForGarbageCollection()
@@ -93,7 +93,7 @@ class Property_List_View_Memory_Safety_Spec extends Specification
         then : 'The views are updated and the trace records the changes.'
             traceOfChanges == [15, 13, 11]
 
-        when : 'We remove the references to the views, clear the trace and wait for garbage collection.'
+        when : 'We remove the references to the views, clear the trace, and wait for garbage collection.'
             gary = null
             joey = null
             ed = null
@@ -118,7 +118,6 @@ class Property_List_View_Memory_Safety_Spec extends Specification
             You can create a chain of views from a property list view.
             As long as the last view in the chain is still referenced, the whole chain will remain in memory,
             even if the intermediate views are no longer referenced.
-            But if the last view is no longer referenced, the whole chain will be garbage collected.
         """
         given : 'A property list of 2 links.'
             Vars<String> links = Vars.of("https://www.dominionmovement.com/", "https://www.landofhopeandglory.org/")
@@ -147,7 +146,7 @@ class Property_List_View_Memory_Safety_Spec extends Specification
             You can create a chain of views from a property list view.
             As long as the last view in the chain is still referenced, the whole chain will remain in memory,
             even if the intermediate views are no longer referenced.
-            But if the last view is no longer referenced, the whole chain will be garbage collected.    
+            But if the last view is no longer referenced, the whole chain will be garbage collected.
         """
         given : 'A property list of 2 links.'
             Vars<String> links = Vars.of("https://www.dominionmovement.com/", "https://www.landofhopeandglory.org/")
