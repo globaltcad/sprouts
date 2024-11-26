@@ -1,11 +1,13 @@
 package sprouts.impl;
 
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sprouts.*;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -26,6 +28,15 @@ final class ResultImpl<V> implements Result<V>
 		_type     = type;
 		_problems = problems;
 		_value    = value;
+	}
+
+	/** {@inheritDoc} */
+	public @NonNull V orElseThrow() throws MissingItemException {
+		// This class is similar to optional, so if the value is null, we throw an exception!
+		V value = orElseNull();
+		if ( Objects.isNull(value) )
+			throw new MissingItemException("Expected item to be present in result!", this._problems);
+		return value;
 	}
 
 	/** {@inheritDoc} */

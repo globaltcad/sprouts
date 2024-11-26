@@ -40,10 +40,11 @@ class Event_Spec extends Specification
     {
         given : 'A listener.'
             var listener = Mock(Observer)
-        and : 'An event.'
+        and : 'An event with a custom executor and an observable created from the event.'
             var event = Event.using(Event.Executor.SAME_THREAD)
+            var observable = event.observable()
         when : 'We register the listener with the event.'
-            event.subscribe(listener)
+            observable.subscribe(listener)
         and : 'We fire the event.'
             event.fire()
         then : 'The listener is notified.'
@@ -54,8 +55,10 @@ class Event_Spec extends Specification
     {
         given : 'A listener.'
             var listener = Mock(Observer)
-        and : 'An event with the mock listener set.'
-            var event = Event.of(listener)
+        and : 'An event with an observable created from the event onto which the listener is registered.'
+            var event = Event.create()
+            var observable = event.observable()
+            observable.subscribe(listener)
         when : 'We fire the event.'
             event.fire()
         then : 'The listener is notified.'
@@ -66,16 +69,17 @@ class Event_Spec extends Specification
     {
         given : 'A listener.'
             var listener = Mock(Observer)
-        and : 'An event.'
+        and : 'An event and an observable created from the event.'
             var event = Event.create()
+            var observable = event.observable()
         when : 'We register the listener with the event.'
-            event.subscribe(listener)
+            observable.subscribe(listener)
         and : 'We fire the event.'
             event.fire()
         then : 'The listener is notified.'
             1 * listener.invoke()
         when : 'We unsubscribe the listener from the event.'
-            event.unsubscribe(listener)
+            observable.unsubscribe(listener)
         and : 'We fire the event.'
             event.fire()
         then : 'The listener is not notified again.'
@@ -88,12 +92,13 @@ class Event_Spec extends Specification
             var listener1 = Mock(Observer)
             var listener2 = Mock(Observer)
             var listener3 = Mock(Observer)
-        and : 'An event.'
+        and : 'An event and an observable created from the event.'
             var event = Event.create()
+            var observable = event.observable()
         when : 'We register the listeners with the event.'
-            event.subscribe(listener1)
-            event.subscribe(listener2)
-            event.subscribe(listener3)
+            observable.subscribe(listener1)
+            observable.subscribe(listener2)
+            observable.subscribe(listener3)
         and : 'We fire the event.'
             event.fire()
         then : 'The listeners are notified.'
@@ -101,7 +106,7 @@ class Event_Spec extends Specification
             1 * listener2.invoke()
             1 * listener3.invoke()
         when : 'We unsubscribe all listeners from the event.'
-            event.unsubscribeAll()
+            observable.unsubscribeAll()
         and : 'We fire the event again.'
             event.fire()
         then : 'The listeners are not notified again.'

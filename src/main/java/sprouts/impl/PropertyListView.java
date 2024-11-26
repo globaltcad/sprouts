@@ -577,4 +577,9 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
         _changeListeners.unsubscribe(subscriber);
         return this;
     }
+
+    @Override
+    public void unsubscribeAll() {
+        _changeListeners.unsubscribeAll();
+    }
 }

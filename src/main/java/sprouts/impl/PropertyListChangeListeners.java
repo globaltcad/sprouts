@@ -23,6 +23,10 @@ public final class PropertyListChangeListeners<T extends @Nullable Object>
         _actions.unsubscribe(subscriber);
     }
 
+    public void unsubscribeAll() {
+        _actions.unsubscribeAll();
+    }
+
     public void fireChange(Change type, Vars<T> source) {
         fireChange(type, -1, (Vals<T>) null, null, source);
     }

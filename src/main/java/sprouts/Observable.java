@@ -1,5 +1,7 @@
 package sprouts;
 
+import java.util.Objects;
+
 /**
  *  This represents an event that can be observed but not triggered.
  *  It is used to register {@link Observer}s to, so that they can be notified when
@@ -12,6 +14,19 @@ package sprouts;
  */
 public interface Observable
 {
+    /**
+     *  Casts the given {@link Event} to an {@link Observable}.
+     *  This is a convenience method that allows you to cast an {@link Event} to an {@link Observable}
+     *  without having to use the {@link Observable} interface.
+     *
+     * @param event The {@link Event} to cast.
+     * @return The given {@link Event} cast to an {@link Observable}.
+     */
+    static Observable cast( Event event ) {
+        Objects.requireNonNull(event);
+        return Observable.class.cast(event);
+    }
+
     /**
      *  Subscribes the given listener to this {@link Observable}
      *  so that it can be notified when something happens.
@@ -32,4 +47,10 @@ public interface Observable
      * @return This {@link Observable}, to allow for chaining.
      */
     Observable unsubscribe( Subscriber observer );
+
+    /**
+     * Unsubscribes all listeners from this {@link Observable}.
+     */
+    void unsubscribeAll();
+
 }

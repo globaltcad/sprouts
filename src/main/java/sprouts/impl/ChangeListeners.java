@@ -50,6 +50,10 @@ final class ChangeListeners<D> {
         }));
     }
 
+    void unsubscribeAll() {
+        getActions(List::clear);
+    }
+
     synchronized long getActions(Consumer<List<Action<D>>> receiver) {
         receiver.accept(_actions);
         return _actions.size();
