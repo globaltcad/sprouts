@@ -27,12 +27,9 @@ import java.util.stream.StreamSupport;
  */
 public final class Sprouts implements SproutsFactory
 {
-    private static final Logger log = org.slf4j.LoggerFactory.getLogger(Sprouts.class);
-
     private static final Pattern DEFAULT_ID_PATTERN = Pattern.compile("[a-zA-Z0-9_]*");
 
     private static SproutsFactory FACTORY = new Sprouts();
-
 
     /**
      *  A {@link SproutsFactory} is used by the various factory methods of this API like
@@ -79,65 +76,12 @@ public final class Sprouts implements SproutsFactory
 
     @Override
     public Event event() {
-
-        return new Event() {
-            private final List<Observer> observers = new ArrayList<>();
-
-            @Override public void fire() {
-                observers.forEach( observer -> {
-                    try {
-                        observer.invoke();
-                    } catch (Exception e) {
-                        log.error("Error invoking observer!", e);
-                    }
-                });
-            }
-            @Override
-            public Event subscribe( Observer observer) {
-                observers.add(observer);
-                return this;
-            }
-            @Override
-            public Observable unsubscribe( Subscriber subscriber) {
-                if ( subscriber instanceof Observer )
-                    observers.remove( (Observer) subscriber );
-                return this;
-            }
-            @Override public void unsubscribeAll() { observers.clear(); }
-        };
+        return eventOf( Runnable::run );
     }
 
     @Override
     public Event eventOf( Event.Executor executor ) {
-
-        return new Event() {
-            private final List<Observer> observers = new ArrayList<>();
-
-            @Override
-            public void fire() {
-                executor.execute( () -> {
-                    observers.forEach( observer -> {
-                        try {
-                            observer.invoke();
-                        } catch (Exception e) {
-                            log.error("Error invoking observer!", e);
-                        }
-                    });
-                });
-            }
-            @Override
-            public Event subscribe(Observer observer) {
-                observers.add(observer);
-                return this;
-            }
-            @Override
-            public Observable unsubscribe( Subscriber subscriber ) {
-                if ( subscriber instanceof Observer )
-                    observers.remove( (Observer) subscriber );
-                return this;
-            }
-            @Override public void unsubscribeAll() { observers.clear(); }
-        };
+        return new EventImpl(executor);
     }
 
     @Override public <T> Val<@Nullable T> valOfNullable( Class<T> type, @Nullable T item ) {

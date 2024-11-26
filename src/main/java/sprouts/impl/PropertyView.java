@@ -455,6 +455,11 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 		return this;
 	}
 
+	@Override
+	public void unsubscribeAll() {
+		_changeListeners.unsubscribeAll();
+	}
+
 	public final long numberOfChangeListeners() {
 		return _changeListeners.numberOfChangeListeners();
 	}

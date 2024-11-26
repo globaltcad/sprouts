@@ -297,6 +297,11 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
         return this;
     }
 
+    @Override
+    public void unsubscribeAll() {
+        _changeListeners.unsubscribeAll();
+    }
+
     public final long numberOfChangeListeners() {
         return _changeListeners.numberOfChangeListeners();
     }
