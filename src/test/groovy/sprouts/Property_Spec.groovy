@@ -314,10 +314,10 @@ class Property_Spec extends Specification
         given : 'We create a property with a non-null item.'
             var property = Var.of("Hello World")
         when : 'We compare the item of the property with another item using the above mentioned methods.'
-            var is1 = property.is("Hello World")
-            var is2 = property.is("Hello World!")
-            var isNot1 = property.isNot("Hello World")
-            var isNot2 = property.isNot("Hello World!")
+            var is1      = property.is("Hello World")
+            var is2      = property.is("Hello World!")
+            var isNot1   = property.isNot("Hello World")
+            var isNot2   = property.isNot("Hello World!")
             var isOneOf1 = property.isOneOf("Hello World", "Goodbye World")
             var isOneOf2 = property.isOneOf("Hello World!", "Goodbye World")
         then : 'The results are as expected.'
@@ -329,7 +329,7 @@ class Property_Spec extends Specification
             !isOneOf2
     }
 
-    def 'Conveniently compare properties with another item using "is", "isOneOf" or "isNot"'()
+    def 'Conveniently compare properties with other properties using "is", "isOneOf" or "isNot"'()
     {
         reportInfo """
             Properties represent the items that they hold, so when comparing them with each other
@@ -345,10 +345,10 @@ class Property_Spec extends Specification
             var property2 = Var.of("Hello World!")
             var property3 = Var.of("Goodbye World")
         when : 'We compare the item of the property with another item using the above mentioned methods.'
-            var is1 = property1.is(Var.of("Hello World"))
-            var is2 = property1.is(property3)
-            var isNot1 = property1.isNot(Var.of("Hello World"))
-            var isNot2 = property1.isNot(property3)
+            var is1      = property1.is(Var.of("Hello World"))
+            var is2      = property1.is(property3)
+            var isNot1   = property1.isNot(Var.of("Hello World"))
+            var isNot2   = property1.isNot(property3)
             var isOneOf1 = property1.isOneOf(property2, property3)
             var isOneOf2 = property1.isOneOf(property3, Var.of("Hello World"), property2)
         then : 'The results are as expected.'
@@ -363,9 +363,10 @@ class Property_Spec extends Specification
     def 'Use `typeAsString()` to get the type of a property as a string.'()
     {
         reportInfo """
-            The `typeAsString()` method is used to get the type of a property as a string.
-            It simply takes the result of calling `type()` on the property and
-            calls `getName()` on it to get the type as a string.
+            As the name suggests, the `typeAsString()` method returns the type of
+            a property as a string containing the fully qualified class name.
+            
+            So it is a convince method equivalent to `property.type().getName()`.
         """
         given : 'A property with a non-null item.'
             var property = Var.of("Hello World")
@@ -373,25 +374,27 @@ class Property_Spec extends Specification
             property.typeAsString() == "java.lang.String"
     }
 
-    def 'Use the `withId(String id)` method to create a new property with a String based id.'()
+    def 'Use `withId(String id)` to create a new property with a new String based id.'()
     {
         reportInfo """
-            The `withId(String id)` method is used to create a new property with a String based id.
-            This is useful when you want to give a property a unique identifier.
-            It may serve as a key in a map or as a way to identify the property in a log message.
+            Every property has an id, which is exposed through the `id()` method.
+            Using `withId(String id)`, you can create a new property with 
+            the same item but a different id.
+            This attribute may serve as a key in a map or as a way to identify the 
+            property in a log message where it is easier to read than the item itself.
             You may also want to use it when converting a set of properties to another
-            data format like JSON or XML.
+            data format like JSON, XML or even database tables.
         """
         given : 'A regular immutable property without an id.'
-            var property = Val.of("Hello World")
-        expect : 'The property has no id.'
+            var property = Val.of("https://www.dominionmovement.com/watch")
+        expect : 'Initially the property has no id in the sense that it is an empty String.'
             property.id().isEmpty()
             property.hasNoID()
             !property.hasID()
-        when : 'We create a new property with an id.'
-            var propertyWithId = property.withId("XY")
+        when : 'We create a new property with an id that describes the item.'
+            var propertyWithId = property.withId("link_to_a_documentary")
         then : 'The new property has the expected id.'
-            propertyWithId.id() == "XY"
+            propertyWithId.id() == "link_to_a_documentary"
             propertyWithId.hasID()
             !propertyWithId.hasNoID()
     }
@@ -416,7 +419,7 @@ class Property_Spec extends Specification
             property.get() == [name: "Alice", age: 43]
     }
 
-    def 'You may not pass a null function to the `update(Function)` method.'()
+    def 'You may not pass a `null` reference to the `update(Function)` method.'()
     {
         given : 'A property with a non-null item.'
             var property = Var.of("Hello World")
@@ -436,13 +439,20 @@ class Property_Spec extends Specification
             thrown(RuntimeException)
     }
 
-    def 'You cannot map null items of a property through the `update(Function)` method.'()
+    def 'You cannot map `null` items of a property through the `update(Function)` method.'()
     {
         reportInfo """
-            The `update(Function)` method is used to update the item of a property.
-            If the item of the property is null, the function is not called.
-            This is useful when you want to update the item of a property
-            only if it is not null.
+            Just like the `java.util.Optional` class, the properties in
+            sprouts treat `null` references as "the absence of something",
+            which is why the `map(Function)` method of an `Optional` only applies
+            the function to non-null items, whereas null items are ignored.
+            This is based on the simple rationale that "you cannot map something that is not there".
+            
+            The `update(Function)` method of a property is designed with the
+            same philosophy in mind, which is why the function is only applied
+            he `update(Function)` method of a property
+            only applies the function to non-null items as well.
+            
         """
         given : 'A property with a null item.'
             var property = Var.ofNullable(String, null)
