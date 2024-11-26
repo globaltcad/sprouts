@@ -5,6 +5,8 @@ import spock.lang.Specification
 import spock.lang.Subject
 import spock.lang.Title
 
+import java.lang.ref.WeakReference
+
 @Title("Events")
 @Narrative('''
 
@@ -26,10 +28,11 @@ class Event_Spec extends Specification
     {
         given : 'A mocked observer.'
             var observer = Mock(Observer)
-        and : 'An event.'
+        and : 'An event and an observable created from the event.'
             var event = Event.create()
+            var observable = event.observable()
         when : 'We register the observer with the event.'
-            event.subscribe(observer)
+            observable.subscribe(observer)
         and : 'We fire the event.'
             event.fire()
         then : 'The listener is notified.'
@@ -113,5 +116,54 @@ class Event_Spec extends Specification
             0 * listener1.invoke()
             0 * listener2.invoke()
             0 * listener3.invoke()
+    }
+
+    def 'The `Observable` of an `Event` can be garbage collected alongside its `Observer`s.'()
+    {
+        reportInfo """
+            The `Observable` is an event forwarder that is weakly referenced by the `Event`,
+            so that when the `Observable` is no longer referenced in the client code,
+            it can be garbage collected alongside its listeners.
+            The purpose of this feature is to prevent memory leaks due to forgotten listeners.
+            Listeners in the form of `Observer` instances can directly or indirectly 
+            have references to all sorts of memory, so it is important that they are garbage collected
+            when they are no longer needed.
+        """
+        given : 'A mocked observer.'
+            var observer = Mock(Observer)
+        and : 'An event and an observable created from the event.'
+            var event = Event.create()
+            var observable = event.observable()
+        and : 'A weak reference to the observable.'
+            WeakReference<Observable> observableRef = new WeakReference<>(observable)
+        when : 'We register the observer with the event.'
+            observable.subscribe(observer)
+        and : 'We fire the event.'
+            event.fire()
+        then : 'The listener is notified.'
+            1 * observer.invoke()
+        when : 'We remove the reference to the observable and wait for garbage collection.'
+            observable = null
+            waitForGarbageCollection()
+        then : 'The observable is garbage collected!'
+            observableRef.get() == null
+
+        when : 'We fire the event again.'
+            event.fire()
+        then : 'The listener is not notified again.'
+            0 * observer.invoke()
+    }
+
+    /**
+     * This method guarantees that garbage collection is
+     * done unlike <code>{@link System#gc()}</code>
+     */
+    static void waitForGarbageCollection() {
+        Object obj = new Object();
+        WeakReference ref = new WeakReference<>(obj);
+        obj = null;
+        while(ref.get() != null) {
+            System.gc();
+        }
     }
 }
