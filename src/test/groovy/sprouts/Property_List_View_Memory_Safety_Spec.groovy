@@ -11,57 +11,46 @@ import java.time.chrono.JapaneseEra
 @Title('Property List View Memory Safety')
 @Narrative('''
 
-    Both the read only `Vals` and the mutable `Vars` are designed to be
-    used as part of a view model in a Model-View-ViewModel (MVVM) architecture
-    or Model-View-Intent (MVI) architecture.
-    As a consequence, they need to be observable in some way.
-    This is done by registering change listeners on 
-    their so called "views", which are weakly referenced
-    live views of the original property lists which get updated
-    automatically when the original property changes.
-    You can then subscribe to these views to get notified
-    of changes to the original property.
-    
-    This is especially useful when you want to observe a property list
-    of one type as a property list of another type, or when you want to
-    observe a property lists with some transformation applied to them.
-    
-    This specification shows how to create views from both nullable and non-nullable property lists,
-    and it demonstrates how they may be garbage collected when they are no longer referenced.
+    `Vals` (read-only) and `Vars` (mutable) are designed to be used in MVVM or MVI architectures.
+    This is why they need to be observable, which is achieved by registering change listeners on their "views".
+    These views are weakly referenced and automatically updated when the original property changes.
+    You can subscribe to these views to get notified of changes.
 
+    This is useful for observing a property list of one type as another type or with transformations applied.
+
+    This specification demonstrates creating views from nullable and non-nullable property lists,
+    and shows how they may be garbage collected when no longer referenced.
+    
 ''')
 @Subject([Vals, Vars, Viewables, Viewable])
 class Property_List_View_Memory_Safety_Spec extends Specification
 {
-    def 'The view of a property list will be garbage collected if no longer referenced.'()
+    def 'A property list view is garbage collected when no longer referenced'()
     {
         reportInfo """
-            The property list view is a live view on the source property list,
-            which gets updated whenever the source list changes.
-            But the source list does not hold a reference to the view,
-            so if the view is no longer referenced, it will be garbage collected.
-            This also includes all of the change listeners that were attached to it.
-            So they will not be updated anymore.
+            The property list view automatically updates with changes to the source list.
+            The source list does not reference the view strongly, so it will be garbage collected if not referenced.
+            This includes all attached change listeners, which will no longer be updated.
         """
-        given : 'A property list of 3 japanese eras.'
-            Vars<JapaneseEra> eras = Vars.of(JapaneseEra.HEISEI,JapaneseEra.SHOWA,JapaneseEra.TAISHO)
-        and : 'A view on the names of the japanese eras and a weak reference to the view.'
+        given : 'A property list containing 3 Japanese eras'
+            Vars<JapaneseEra> eras = Vars.of(JapaneseEra.HEISEI, JapaneseEra.SHOWA, JapaneseEra.TAISHO)
+        and : 'A view on the names of the Japanese eras and a weak reference to the view.'
             Viewables<String> names = eras.view("null", "error", JapaneseEra::toString)
             WeakReference<Viewables<String>> namesRef = new WeakReference<>(names)
         and : 'A list to record the changes and a listener to record the changes.'
-            var viewTrace = []
-            names.onChange({ viewTrace << it.vals().toList() })
+            var traceOfChanges = []
+            names.onChange({ traceOfChanges << it.vals().toList() })
         expect : 'The trace is empty initially.'
-            viewTrace.isEmpty()
+            traceOfChanges.isEmpty()
 
         when : 'We remove an era from the source property list.'
             eras.removeAt(1)
-        then : 'The view is updated and the trace records the change.'
-            viewTrace == [["Heisei","Taisho"]]
+        then : 'The view updates and the trace records the change.'
+            traceOfChanges == [["Heisei", "Taisho"]]
 
-        when : 'We remove the reference to the view, clear the trace and wait for garbage collection.'
+        when : 'We remove the reference to the view, clear the trace, and wait for garbage collection.'
             names = null
-            viewTrace.clear()
+            traceOfChanges.clear()
             waitForGarbageCollection()
         then : 'The view is garbage collected!'
             namesRef.get() == null
@@ -69,7 +58,7 @@ class Property_List_View_Memory_Safety_Spec extends Specification
         when : 'We try to trigger a change in the source property list.'
             eras.add(JapaneseEra.REIWA)
         then : 'The view is not updated and the trace is empty.'
-            viewTrace == []
+            traceOfChanges == []
     }
 
     def 'The views of individual properties of a property list view can be garbage collected.'()
@@ -90,25 +79,25 @@ class Property_List_View_Memory_Safety_Spec extends Specification
             WeakReference<Viewable<Integer>> joeyRef = new WeakReference<>(joey)
             WeakReference<Viewable<Integer>> edRef = new WeakReference<>(ed)
         and : 'A list to record the changes and a listener to record the changes.'
-            var viewTrace = []
-            gary.onChange(From.ALL, { viewTrace << it.get() })
-            joey.onChange(From.ALL, { viewTrace << it.get() })
-            ed.onChange(From.ALL, { viewTrace << it.get() })
+            var traceOfChanges = []
+            gary.onChange(From.ALL, { traceOfChanges << it.get() })
+            joey.onChange(From.ALL, { traceOfChanges << it.get() })
+            ed.onChange(From.ALL, { traceOfChanges << it.get() })
         expect : 'The trace is empty initially.'
-            viewTrace.isEmpty()
+            traceOfChanges.isEmpty()
 
         when : 'We mutate all the names.'
             people.at(0).set("Richard Burgess")
             people.at(1).set("Joe Armstrong")
             people.at(2).set("Edward Wren")
         then : 'The views are updated and the trace records the changes.'
-            viewTrace == [15, 13, 11]
+            traceOfChanges == [15, 13, 11]
 
-        when : 'We remove the references to the views, clear the trace and wait for garbage collection.'
+        when : 'We remove the references to the views, clear the trace, and wait for garbage collection.'
             gary = null
             joey = null
             ed = null
-            viewTrace.clear()
+            traceOfChanges.clear()
             waitForGarbageCollection()
         then : 'The views are garbage collected!'
             garyRef.get() == null
@@ -120,7 +109,7 @@ class Property_List_View_Memory_Safety_Spec extends Specification
             people.at(1).set("y")
             people.at(2).set("z")
         then : 'The views are not updated and the trace is still empty.'
-            viewTrace == []
+            traceOfChanges == []
     }
 
     def 'A chain of views remains in memory, as long as the last view is still referenced.'()
@@ -129,7 +118,6 @@ class Property_List_View_Memory_Safety_Spec extends Specification
             You can create a chain of views from a property list view.
             As long as the last view in the chain is still referenced, the whole chain will remain in memory,
             even if the intermediate views are no longer referenced.
-            But if the last view is no longer referenced, the whole chain will be garbage collected.
         """
         given : 'A property list of 2 links.'
             Vars<String> links = Vars.of("https://www.dominionmovement.com/", "https://www.landofhopeandglory.org/")
@@ -158,7 +146,7 @@ class Property_List_View_Memory_Safety_Spec extends Specification
             You can create a chain of views from a property list view.
             As long as the last view in the chain is still referenced, the whole chain will remain in memory,
             even if the intermediate views are no longer referenced.
-            But if the last view is no longer referenced, the whole chain will be garbage collected.    
+            But if the last view is no longer referenced, the whole chain will be garbage collected.
         """
         given : 'A property list of 2 links.'
             Vars<String> links = Vars.of("https://www.dominionmovement.com/", "https://www.landofhopeandglory.org/")

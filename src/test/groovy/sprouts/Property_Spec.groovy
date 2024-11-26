@@ -44,50 +44,57 @@ class Property_Spec extends Specification
         NATTO { @Override public String toString() { return "Natto"; } }
     }
 
-    def 'Properties are simple wrappers around a value'()
+    def 'Properties are simple wrappers around an item'()
     {
         given : 'We create a property using the "of" factory method.'
             Var<String> property = Var.of("Hello World")
 
-        expect : 'The property has the same value as the value we passed to the factory method.'
+        expect : 'The property has the same item as the one we passed to the factory method.'
             property.orElseNull() == "Hello World"
     }
 
     def 'There are 2 types of properties, an immutable property, and its mutable sub-type.'()
     {
         reportInfo """
-            Mutable properties are called "Var" and immutable properties are called "Val".
+            Mutable properties are called `Var` and immutable properties are called `Val`.
             This distinction exists so that you can better encapsulating the mutable parts
             of you business logic and UI state.
             So if you want your UI to only display but not change a
-            property expose Val, if on the other hand it should
-            be able to change the state of the property, use Var!
+            property, then expose `Val`, if on the other hand it should
+            be able to change the state of the property, use `Var`!
         """
-        given : 'We create a mutable property...'
+        given : 'We have a mutable property with an integer as item.'
             Var<Integer> mutable = Var.of(42)
-        expect : 'The property stores the value 42.'
+        expect : 'The property stores the expected number 42.'
             mutable.orElseNull() == 42
-        and : "It has the expected type."
+        and : 'In order to ensure better type safety, the property knows about the expected type.'
             mutable.type() == Integer.class
 
-        when : 'We change the value of the mutable property.'
+        when : 'We change the value of the mutable property...'
             mutable.set(69)
-        then : 'The property stores the new value.'
+        then : 'It now stores the new item.'
             mutable.orElseNull() == 69
 
-        when : 'We now downcast the mutable property to an immutable property.'
+        when : 'We downcast the mutable property to view it as an immutable property (even though it is not).'
             Val<Integer> immutable = mutable
-        then : 'The immutable property will only expose the "get()" method, but not "set(..)".'
+        then : 'The immutable property will only expose the `get()` method, but not `set(..)`.'
             immutable.orElseNull() == 69
     }
 
-    def 'Properties not only have a value but also a type and id!'()
+    def 'Properties not only have an item but also a type and id!'()
     {
+        reportInfo """
+            Unfortunately, Java has something called type erasure, which means that
+            the type of a generic class is not available at runtime.
+            This is why the Sprouts library stores the type of the item
+            in the property itself, and if you want to wrap null items
+            you need to provide the type explicitly!
+        """
         given : 'We create a property with an id...'
             Val<String> property = Var.ofNullable(String, "Hello World").withId("XY")
         expect : 'The property has the expected id.'
             property.id() == "XY"
-        and : 'The property has the expected type.'
+        and : 'The property also has the expected type.'
             property.type() == String.class
     }
 
@@ -106,17 +113,17 @@ class Property_Spec extends Specification
             empty.mapTo(Integer, it -> it.length() ) == Val.ofNullable(Integer, null)
     }
 
-    def 'The "ifPresent" method allows us to see if a property has a value or not.'()
+    def 'The `ifPresent` method allows us to see if a property has an item or not.'()
     {
         given : 'We create a property...'
             Val<String> property = Val.of("Hello World")
-        and : 'We create a consumer that will be called if the property has a value.'
-            var list = []
-            Consumer<String> consumer = { list.add(it) }
-        when : 'We call the "ifPresent(..)" method on the property.'
+        and : 'We create a consumer that will be called if the property has an item.'
+            var trace = []
+            Consumer<String> consumer = { trace.add(it) }
+        when : 'We call the `ifPresent(..)` method on the property.'
             property.ifPresent( consumer )
         then : 'The consumer is called.'
-            list == ["Hello World"]
+            trace == ["Hello World"]
     }
 
     def 'The `get()` method will throw an exception if there is no element present.'()
@@ -138,15 +145,22 @@ class Property_Spec extends Specification
 
     def 'The equality and hash code of a mutable property is based on its identity!'()
     {
+        reportInfo """
+            Mutable properties belong to the programming paradigm of
+            place-oriented programming, because a mutation implies a change
+            at a specific place in memory.
+            This is why the equality of mutable properties is based on their identity
+            and not on their value.
+        """
         given : 'We create various kinds of properties...'
-            Var<Integer> num = Var.of(1)
+            Var<Integer> num  = Var.of(1)
             Var<Long>    num2 = Var.of(1L)
-            Var<String>  str = Var.of("Hello World")
+            Var<String>  str  = Var.of("Hello World")
             Var<String>  str2 = Var.ofNullable(String, null)
             Var<String>  str3 = Var.ofNullable(String, null)
             Var<Boolean> bool = Var.ofNullable(Boolean, null)
-            Var<int[]> arr1 = Var.of(new int[]{1,2,3})
-            Var<int[]> arr2 = Var.of(new int[]{1,2,3})
+            Var<int[]> arr1   = Var.of(new int[]{1,2,3})
+            Var<int[]> arr2   = Var.of(new int[]{1,2,3})
         expect : 'The properties are equal if they have the same identity.'
             num.equals(num2) == false
             num.equals(str)  == false
@@ -167,6 +181,16 @@ class Property_Spec extends Specification
 
     def 'The equality and hash code of an immutable property are based on its value, type and id!'()
     {
+        reportInfo """
+            Immutable properties are value-oriented, because they are
+            direct representations of the value they hold.
+            It makes no sense to treat two property instances with the same
+            value, type and id as different, because their location in memory
+            is irrelevant, since this piece of memory can not be changed.
+            
+            This is why the equality and hash code of immutable properties
+            are based on their value, type and id.
+        """
         given : 'We create various kinds of properties...'
             Val<Integer> num = Val.of(1)
             Val<Long>    num2 = Val.of(1L)
@@ -197,8 +221,8 @@ class Property_Spec extends Specification
     def 'A property constructed using the `of` factory method, does not allow null items.'()
     {
         reportInfo """
-            The `of(..)` factory method is used to create a property that does not allow null items.
-            If you try to set an item to null, the property will throw an exception.
+            The `of(..)` factory method is used to create a property that does not allow `null` items.
+            If you try to set an item to `null`, the property will throw an exception.
         """
         given : 'A property constructed using the "of" factory method.'
             var property = Var.of("Hello World")
@@ -237,17 +261,22 @@ class Property_Spec extends Specification
             v8.toString() == 'Var<Integer?>[maybe_int=7]'
     }
 
-    def 'Whether a property is a `Var` or `Val` can be seen in their String representaions.'()
+    def 'You can see if a property is a `Var` or `Val` by looking at their String representations.'()
     {
         reportInfo """
-            The string representation of a property will tell you whether it is a `Var` or `Val`.
+            The string representation of a property will tell you whether it is a `Var` or `Val`,
+            and if it has an id or not.
         """
         given : 'Two properties, one mutable and one immutable.'
             var v1 = Var.of("Apple")
             var v2 = Val.of("Berry")
+            var v3 = Var.of("Kiwi").withId("fruit")
+            var v4 = Val.of("Banana").withId("also_fruit")
         expect :
             v1.toString() == 'Var<String>["Apple"]'
             v2.toString() == 'Val<String>["Berry"]'
+            v3.toString() == 'Var<String>[fruit="Kiwi"]'
+            v4.toString() == 'Val<String>[also_fruit="Banana"]'
     }
 
     def 'A property can be converted to an `Optional`.'()
@@ -285,10 +314,10 @@ class Property_Spec extends Specification
         given : 'We create a property with a non-null item.'
             var property = Var.of("Hello World")
         when : 'We compare the item of the property with another item using the above mentioned methods.'
-            var is1 = property.is("Hello World")
-            var is2 = property.is("Hello World!")
-            var isNot1 = property.isNot("Hello World")
-            var isNot2 = property.isNot("Hello World!")
+            var is1      = property.is("Hello World")
+            var is2      = property.is("Hello World!")
+            var isNot1   = property.isNot("Hello World")
+            var isNot2   = property.isNot("Hello World!")
             var isOneOf1 = property.isOneOf("Hello World", "Goodbye World")
             var isOneOf2 = property.isOneOf("Hello World!", "Goodbye World")
         then : 'The results are as expected.'
@@ -300,7 +329,7 @@ class Property_Spec extends Specification
             !isOneOf2
     }
 
-    def 'Conveniently compare properties with another item using "is", "isOneOf" or "isNot"'()
+    def 'Conveniently compare properties with other properties using "is", "isOneOf" or "isNot"'()
     {
         reportInfo """
             Properties represent the items that they hold, so when comparing them with each other
@@ -316,10 +345,10 @@ class Property_Spec extends Specification
             var property2 = Var.of("Hello World!")
             var property3 = Var.of("Goodbye World")
         when : 'We compare the item of the property with another item using the above mentioned methods.'
-            var is1 = property1.is(Var.of("Hello World"))
-            var is2 = property1.is(property3)
-            var isNot1 = property1.isNot(Var.of("Hello World"))
-            var isNot2 = property1.isNot(property3)
+            var is1      = property1.is(Var.of("Hello World"))
+            var is2      = property1.is(property3)
+            var isNot1   = property1.isNot(Var.of("Hello World"))
+            var isNot2   = property1.isNot(property3)
             var isOneOf1 = property1.isOneOf(property2, property3)
             var isOneOf2 = property1.isOneOf(property3, Var.of("Hello World"), property2)
         then : 'The results are as expected.'
@@ -334,9 +363,10 @@ class Property_Spec extends Specification
     def 'Use `typeAsString()` to get the type of a property as a string.'()
     {
         reportInfo """
-            The `typeAsString()` method is used to get the type of a property as a string.
-            It simply takes the result of calling `type()` on the property and
-            calls `getName()` on it to get the type as a string.
+            As the name suggests, the `typeAsString()` method returns the type of
+            a property as a string containing the fully qualified class name.
+            
+            So it is a convince method equivalent to `property.type().getName()`.
         """
         given : 'A property with a non-null item.'
             var property = Var.of("Hello World")
@@ -344,25 +374,27 @@ class Property_Spec extends Specification
             property.typeAsString() == "java.lang.String"
     }
 
-    def 'Use the `withId(String id)` method to create a new property with a String based id.'()
+    def 'Use `withId(String id)` to create a new property with a new String based id.'()
     {
         reportInfo """
-            The `withId(String id)` method is used to create a new property with a String based id.
-            This is useful when you want to give a property a unique identifier.
-            It may serve as a key in a map or as a way to identify the property in a log message.
+            Every property has an id, which is exposed through the `id()` method.
+            Using `withId(String id)`, you can create a new property with 
+            the same item but a different id.
+            This attribute may serve as a key in a map or as a way to identify the 
+            property in a log message where it is easier to read than the item itself.
             You may also want to use it when converting a set of properties to another
-            data format like JSON or XML.
+            data format like JSON, XML or even database tables.
         """
         given : 'A regular immutable property without an id.'
-            var property = Val.of("Hello World")
-        expect : 'The property has no id.'
+            var property = Val.of("https://www.dominionmovement.com/watch")
+        expect : 'Initially the property has no id in the sense that it is an empty String.'
             property.id().isEmpty()
             property.hasNoID()
             !property.hasID()
-        when : 'We create a new property with an id.'
-            var propertyWithId = property.withId("XY")
+        when : 'We create a new property with an id that describes the item.'
+            var propertyWithId = property.withId("link_to_a_documentary")
         then : 'The new property has the expected id.'
-            propertyWithId.id() == "XY"
+            propertyWithId.id() == "link_to_a_documentary"
             propertyWithId.hasID()
             !propertyWithId.hasNoID()
     }
@@ -387,7 +419,7 @@ class Property_Spec extends Specification
             property.get() == [name: "Alice", age: 43]
     }
 
-    def 'You may not pass a null function to the `update(Function)` method.'()
+    def 'You may not pass a `null` reference to the `update(Function)` method.'()
     {
         given : 'A property with a non-null item.'
             var property = Var.of("Hello World")
@@ -407,13 +439,20 @@ class Property_Spec extends Specification
             thrown(RuntimeException)
     }
 
-    def 'You cannot map null items of a property through the `update(Function)` method.'()
+    def 'You cannot map `null` items of a property through the `update(Function)` method.'()
     {
         reportInfo """
-            The `update(Function)` method is used to update the item of a property.
-            If the item of the property is null, the function is not called.
-            This is useful when you want to update the item of a property
-            only if it is not null.
+            Just like the `java.util.Optional` class, the properties in
+            sprouts treat `null` references as "the absence of something",
+            which is why the `map(Function)` method of an `Optional` only applies
+            the function to non-null items, whereas null items are ignored.
+            This is based on the simple rationale that "you cannot map something that is not there".
+            
+            The `update(Function)` method of a property is designed with the
+            same philosophy in mind, which is why the function is only applied
+            he `update(Function)` method of a property
+            only applies the function to non-null items as well.
+            
         """
         given : 'A property with a null item.'
             var property = Var.ofNullable(String, null)

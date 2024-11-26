@@ -12,12 +12,13 @@ import java.time.Month
 @Narrative('''
 
     A property list is more than just a wrapper around values.
-    This interfaces has a rich API that exposes a plethora of methods,
+    This interface has a rich API that exposes a plethora of methods,
     many of which are designed to inform you about
     their contents without actually exposing them to you.
-    
+
     For these facts about any property list, we can create views.
-    These views are observables live properties that are updated
+    These views are observable live properties that are updated
+    whenever the source property list changes.
     
 ''')
 @Subject([Viewables, Vars, Vals])
@@ -26,12 +27,11 @@ class Property_List_View_Spec extends Specification
     def 'The `viewSize()` method returns a property that is equal to the size of the original property.'() {
         reportInfo """
             Calling `viewSize()` on a property list
-            will be a view on the `size()` method of said property list.
-            So when the integer returned by `size()` changes,
-            the value of the view will change too.
+            will create a view on the `size()` method attribute of the property list.
+            When the size of the list changes, the value of the view will change as well.
         """
-        given : 'A non empty property list containing a few japanese words.'
-            Vars<String> words = Vars.of("ブランコツリー","は","いい","です")
+        given : 'A non-empty property list containing a few Japanese words.'
+            Vars<String> words = Vars.of("ブランコツリー", "は", "いい", "です")
         and : 'A view on the size of the property list.'
             Viewable<Integer> size = words.viewSize()
         expect : 'The view is 4 initially.'
@@ -44,7 +44,7 @@ class Property_List_View_Spec extends Specification
                 The sentence becomes "ブランコツリーはいいですね",
                 which means "SwingTree is nice, isn't it?"
            """
-            words.toList() == ["ブランコツリー","は","いい","です","ね"]
+            words.toList() == ["ブランコツリー", "は", "いい", "です", "ね"]
 
         when : 'We remove a word from the property list.'
             words.removeAt(0)
@@ -64,8 +64,8 @@ class Property_List_View_Spec extends Specification
 
             So this is effectively a live view on the `isEmpty()` method of the property list.
         """
-        given : 'A list of 2 words say ing "cute cat" in japanese.'
-            Vars<String> words = Vars.of("かわいい","猫")
+        given : 'A list of 2 words saying "cute cat" in Japanese.'
+            Vars<String> words = Vars.of("かわいい", "猫")
         and : 'A view on the emptiness of the property list.'
             Viewable<Boolean> isEmpty = words.viewIsEmpty()
         expect : 'The view is false initially.'
@@ -94,35 +94,35 @@ class Property_List_View_Spec extends Specification
             Viewable<Boolean> isNotEmpty = words.viewIsNotEmpty()
         expect : 'The view is false initially.'
             !isNotEmpty.get()
-        when : 'We add the japanese word for "cute" to the property list.'
+        when : 'We add the Japanese word for "cute" to the property list.'
             words.add("かわいい")
         then : 'The view becomes true.'
             isNotEmpty.get()
     }
 
-    def 'The `view(U,U,Function<T,U>)` method creates a dynamically updated life view of its source list.'()
+    def 'The `view(U,U,Function<T,U>)` method creates a dynamically updated live view of its source list.'()
     {
         reportInfo """
             Similar to `Val.view(U,U,Function<T,U>)`, the `Vals.view(U,U,Function<T,U>)` method
-            creates a sort of read only clone of the original property list, which gets
+            creates a read-only clone of the original property list, which gets
             updated automatically whenever the original list changes.
         """
         given : 'A property list of 3 days of the week.'
-            Vars<DayOfWeek> days = Vars.of(DayOfWeek.MONDAY,DayOfWeek.WEDNESDAY,DayOfWeek.FRIDAY)
+            Vars<DayOfWeek> days = Vars.of(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY, DayOfWeek.FRIDAY)
         and : 'A view on the names of the days of the week.'
             Viewables<String> names = days.view("null", "error", DayOfWeek::name)
-        expect : 'The view contains ["MONDAY","WEDNESDAY","FRIDAY"] initially.'
-            names.toList() == ["MONDAY","WEDNESDAY","FRIDAY"]
+        expect : 'The view contains ["MONDAY", "WEDNESDAY", "FRIDAY"] initially.'
+            names.toList() == ["MONDAY", "WEDNESDAY", "FRIDAY"]
 
         when : 'We add a day to the source property list.'
             days.add(DayOfWeek.SATURDAY)
-        then : 'The view becomes ["MONDAY","WEDNESDAY","FRIDAY","SATURDAY"].'
-            names.toList() == ["MONDAY","WEDNESDAY","FRIDAY","SATURDAY"]
+        then : 'The view becomes ["MONDAY", "WEDNESDAY", "FRIDAY", "SATURDAY"].'
+            names.toList() == ["MONDAY", "WEDNESDAY", "FRIDAY", "SATURDAY"]
 
         when : 'We now remove a day from the property list.'
             days.removeAt(0)
-        then : 'The view becomes ["WEDNESDAY","FRIDAY","SATURDAY"].'
-            names.toList() == ["WEDNESDAY","FRIDAY","SATURDAY"]
+        then : 'The view becomes ["WEDNESDAY", "FRIDAY", "SATURDAY"].'
+            names.toList() == ["WEDNESDAY", "FRIDAY", "SATURDAY"]
 
         when : 'The source list is cleared.'
             days.clear()
@@ -137,7 +137,7 @@ class Property_List_View_Spec extends Specification
             will receive change events from its source.
         """
         given : 'A property list of 3 months of the year.'
-            Vars<Month> months = Vars.of(Month.JANUARY,Month.MARCH,Month.MAY)
+            Vars<Month> months = Vars.of(Month.JANUARY, Month.MARCH, Month.MAY)
         and : 'A view on the names of the months of the year.'
             Viewables<String> names = months.view("null", "error", Month::name)
         and : 'A listener that records the changes and notes the new values.'
@@ -166,7 +166,7 @@ class Property_List_View_Spec extends Specification
             removalTrace == [[], ["MARCH"], ["MAY", "JUNE"]]
             additionTrace == [["JUNE"], [], []]
 
-        when : 'We add a two months to the source property list.'
+        when : 'We add two months to the source property list.'
             months.addAll(Month.JULY, Month.AUGUST)
         then : 'The view receives the change event.'
             removalTrace == [[], ["MARCH"], ["MAY", "JUNE"], []]
@@ -192,7 +192,7 @@ class Property_List_View_Spec extends Specification
         then : 'The view receives the change event.'
             removalTrace == [[], ["MARCH"], ["MAY", "JUNE"], [], [], ["JULY", "SEPTEMBER"], ["JANUARY", "OCTOBER"]]
             additionTrace == [["JUNE"], [], [], ["JULY", "AUGUST"], ["SEPTEMBER", "OCTOBER"], [], ["JUNE", "JUNE"]]
-        and : 'Finally we check again if the view and source property have the expected contents:'
+        and : 'Finally, we check again if the view and source property have the expected contents:'
             names.toList() == ["JUNE", "JUNE", "AUGUST"]
             months.toList() == [Month.JUNE, Month.JUNE, Month.AUGUST]
 
@@ -211,18 +211,18 @@ class Property_List_View_Spec extends Specification
     {
         reportInfo """
             A property list view created using `view()` is a no-op view
-            which will receive change events from its source, so that 
+            which will receive change events from its source, so that
             it is always in sync with the source and can be used as a
             way to receive change events from the source.
         """
         given : 'A property list of 3 months of the year and its view.'
-            Vars<Month> months = Vars.of(Month.JANUARY,Month.MARCH,Month.MAY)
+            Vars<Month> months = Vars.of(Month.JANUARY, Month.MARCH, Month.MAY)
             Viewables<Month> view = months.view()
         and : 'A listener that records the changes and notes the new values.'
             var removalTrace = []
             var additionTrace = []
-            view.onChange({ removalTrace << it.oldValues().toList().collect({it.name()}) })
-            view.onChange({ additionTrace << it.newValues().toList().collect({it.name()}) })
+            view.onChange({ removalTrace << it.oldValues().toList().collect({ it.name() }) })
+            view.onChange({ additionTrace << it.newValues().toList().collect({ it.name() }) })
         expect : 'Initially, the traces are empty.'
             removalTrace.isEmpty()
             additionTrace.isEmpty()
@@ -244,7 +244,7 @@ class Property_List_View_Spec extends Specification
             removalTrace == [[], ["MARCH"], ["MAY", "JUNE"]]
             additionTrace == [["JUNE"], [], []]
 
-        when : 'We add a two months to the source property list.'
+        when : 'We add two months to the source property list.'
             months.addAll(Month.JULY, Month.AUGUST)
         then : 'The view receives the change event.'
             removalTrace == [[], ["MARCH"], ["MAY", "JUNE"], []]
@@ -271,7 +271,7 @@ class Property_List_View_Spec extends Specification
         then : 'The view receives the change event.'
             removalTrace == [[], ["MARCH"], ["MAY", "JUNE"], [], [], ["JULY", "SEPTEMBER"], ["JANUARY", "OCTOBER"]]
             additionTrace == [["JUNE"], [], [], ["JULY", "AUGUST"], ["SEPTEMBER", "OCTOBER"], [], ["JUNE", "JUNE"]]
-        and : 'Finally we check again if the view and source property have the expected contents:'
+        and : 'Finally, we check again if the view and source property have the expected contents:'
             view.toList() == [Month.JUNE, Month.JUNE, Month.AUGUST]
             months.toList() == [Month.JUNE, Month.JUNE, Month.AUGUST]
 
@@ -285,16 +285,16 @@ class Property_List_View_Spec extends Specification
             additionTrace == [["JUNE"], [], [], ["JULY", "AUGUST"], ["SEPTEMBER", "OCTOBER"], [], ["JUNE", "JUNE"], []]
     }
 
-    def 'The properties of a list view can themselves be observed for changes in the source properties'()
+    def 'The properties of a list view can themselves be observed for changes in the source properties.'()
     {
         reportInfo """
-            The properties of a list view can be accessed using 
+            The properties of a list view can be accessed using
             the `Val<T> at(int)` method.
             This returns a new property that will be updated
             whenever the value at the given index in the source list changes.
         """
         given : 'A property list of 3 days of the week and two types of views.'
-            Vars<DayOfWeek> days = Vars.of(DayOfWeek.MONDAY,DayOfWeek.WEDNESDAY,DayOfWeek.FRIDAY)
+            Vars<DayOfWeek> days = Vars.of(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY, DayOfWeek.FRIDAY)
             Vals<String> names = days.view("null", "error", DayOfWeek::name)
             Viewable<String> firstDay  = names.at(0).view()
             Viewable<String> secondDay = names.at(1).view()
@@ -302,9 +302,9 @@ class Property_List_View_Spec extends Specification
         and : 'Two trace lists to record the changes.'
             var viewTrace = []
         and : 'Listeners to record the changes.'
-            firstDay.onChange(From.ALL, { viewTrace << "0: "+it.get() })
-            secondDay.onChange(From.ALL, { viewTrace << "1: "+it.get() })
-            thirdDay.onChange(From.ALL, { viewTrace << "2: "+it.get() })
+            firstDay.onChange(From.ALL, { viewTrace << "0: " + it.get() })
+            secondDay.onChange(From.ALL, { viewTrace << "1: " + it.get() })
+            thirdDay.onChange(From.ALL, { viewTrace << "2: " + it.get() })
 
         when : 'We change the first day in the list.'
             days.at(0).set(DayOfWeek.SUNDAY)
@@ -334,7 +334,7 @@ class Property_List_View_Spec extends Specification
         given : 'A property list of 4 educational documentaries.'
             Vars<String> documentaries = Vars.of("Dominion", "Land of Hope and Glory", "Earthlings", "Cowspiracy")
         and : 'A double view on the property list, representing the average word length of each documentary.'
-            Viewables<Double> lengths = documentaries.view(0,0, it -> {
+            Viewables<Double> lengths = documentaries.view(0, 0, it -> {
                 double wordCount = it.split(" ").length
                 return wordCount == 0 ? 0 : it.length() / wordCount
             })
