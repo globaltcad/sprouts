@@ -4,6 +4,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import sprouts.impl.Sprouts;
 
+import java.util.Collections;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
@@ -225,7 +226,7 @@ public interface Maybe<T>
 		// This class is similar to optional, so if the value is null, we throw an exception!
 		T value = orElseNull();
 		if ( Objects.isNull(value) )
-			throw new MissingItemException("No value present");
+			throw new MissingItemException("No value present", Collections.emptyList());
 		return value;
 	}
 

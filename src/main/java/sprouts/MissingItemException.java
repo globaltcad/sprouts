@@ -1,24 +1,34 @@
 package sprouts;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 /**
  *  A checked exception thrown when an item is missing from a
  *  {@link Maybe} object.
  */
 public final class MissingItemException extends Exception
 {
-    public MissingItemException() {
-        super();
+    private final List<Problem> problems = new ArrayList<>();
+
+
+    public MissingItemException(String message, List<Problem> problems) {
+        super(message, problems.stream().findFirst().flatMap(Problem::exception).orElse(null));
+        this.problems.addAll(problems);
     }
 
-    public MissingItemException(String message) {
-        super(message);
+    public List<Problem> problems() {
+        return Collections.unmodifiableList(problems);
     }
 
-    public MissingItemException(String message, Throwable cause) {
-        super(message, cause);
+    @Override
+    public void printStackTrace() {
+        super.printStackTrace();
+        for ( Problem problem : problems ) {
+            if ( problem.exception().isPresent() )
+                problem.exception().get().printStackTrace();
+        }
     }
 
-    public MissingItemException(Throwable cause) {
-        super(cause);
-    }
 }
