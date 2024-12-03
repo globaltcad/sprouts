@@ -40,7 +40,7 @@ public interface Action<D> extends Subscriber
      * @param <D> The type of the delegate that will be passed to this event handler.
      * @param <O> The type of the owner.
      */
-    static <O, D> WeakAction<O, D> ofWeak( O owner, BiConsumer<O, D> action ) {
+    static <O, D> Action<D> ofWeak( O owner, BiConsumer<O, D> action ) {
         return Sprouts.factory().actionOfWeak(owner, action);
     }
 
