@@ -19,6 +19,10 @@ public enum Change
      */
     REMOVE,
     /**
+     *  Indicates that one or more values remain in the {@link Vars} instance.
+     */
+    RETAIN,
+    /**
      *  Indicates that a value was updated in the {@link Vars} instance.
      */
     SET,
