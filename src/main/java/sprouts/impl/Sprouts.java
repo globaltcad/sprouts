@@ -310,7 +310,7 @@ public final class Sprouts implements SproutsFactory
 
     @Override
     public <T> Tuple<T> tupleOf(Class<T> type ) {
-        return new TupleImpl<>(false, type, (T[]) new Object[0], null);
+        return new TupleImpl<>(false, type, null, null);
     }
 
     @Override
@@ -340,7 +340,7 @@ public final class Sprouts implements SproutsFactory
     public <T> Tuple<T> tupleOf(Class<T> type, Iterable<T> iterable ) {
         List<T> items = new ArrayList<>();
         iterable.forEach(items::add);
-        return new TupleImpl<>(false, type, items.toArray((T[]) new Object[0]), null);
+        return new TupleImpl<>(false, type, items);
     }
 
     @Override
@@ -354,7 +354,7 @@ public final class Sprouts implements SproutsFactory
 
     @Override
     public <T> Tuple<@Nullable T> tupleOfNullable(Class<T> type ) {
-        return new TupleImpl<>(true, type, (T[]) new Object[0], null);
+        return new TupleImpl<>(true, type, null, null);
     }
 
     @Override
@@ -376,7 +376,7 @@ public final class Sprouts implements SproutsFactory
     public <T> Tuple<@Nullable T> tupleOfNullable(Class<T> type, Iterable<@Nullable T> iterable) {
         List<T> items = new ArrayList<>();
         iterable.forEach(items::add);
-        return new TupleImpl<>(true, type, items.toArray((T[]) new Object[0]), null);
+        return new TupleImpl<>(true, type, items);
     }
 
 
