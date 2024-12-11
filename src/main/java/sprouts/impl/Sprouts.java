@@ -2,7 +2,6 @@ package sprouts.impl;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
-import org.slf4j.Logger;
 import sprouts.*;
 
 import java.util.ArrayList;
@@ -298,6 +297,86 @@ public final class Sprouts implements SproutsFactory
     public <T> Vars<T> varsOfNullable(Class<T> type, Iterable<Var<T>> vars) {
         Var<@Nullable T>[] varsArray = (Var<@Nullable T>[]) StreamSupport.stream(vars.spliterator(), false).toArray(Var[]::new);
         return varsOfNullable(type,  varsArray);
+    }
+
+    @Override
+    public <T> Tuple<T> tupleOf(Class<T> type, Maybe<T>... maybes ) {
+        T[] items = (T[]) new Object[maybes.length];
+        for (int i = 0; i < maybes.length; i++) {
+            items[i] = maybes[i].orElseNull();
+        }
+        return new TupleImpl<>(false, type, items, null);
+    }
+
+    @Override
+    public <T> Tuple<T> tupleOf(Class<T> type ) {
+        return new TupleImpl<>(false, type, (T[]) new Object[0], null);
+    }
+
+    @Override
+    public <T> Tuple<T> tupleOf(Maybe<T> first, Maybe<T>... rest ) {
+        T[] items = (T[]) new Object[rest.length + 1];
+        items[0] = first.orElseNull();
+        for (int i = 0; i < rest.length; i++) {
+            items[i + 1] = rest[i].orElseNull();
+        }
+        return new TupleImpl<>(false, Util.expectedClassFromItem(first.orElseThrowUnchecked()), items, null);
+    }
+
+    @Override
+    public <T> Tuple<T> tupleOf(T first, T... rest ) {
+        T[] items = (T[]) new Object[rest.length + 1];
+        items[0] = first;
+        System.arraycopy(rest, 0, items, 1, rest.length);
+        return new TupleImpl<>(false, Util.expectedClassFromItem(first), items, null);
+    }
+
+    @Override
+    public <T> Tuple<T> tupleOf(Class<T> type, T... items ) {
+        return new TupleImpl<>(false, type, items, null);
+    }
+
+    @Override
+    public <T> Tuple<T> tupleOf(Class<T> type, Iterable<T> iterable ) {
+        List<T> items = new ArrayList<>();
+        iterable.forEach(items::add);
+        return new TupleImpl<>(false, type, items.toArray((T[]) new Object[0]), null);
+    }
+
+    @Override
+    public <T> Tuple<@Nullable T> tupleOfNullable(Class<T> type, Maybe<@Nullable T>... maybes ) {
+        T[] items = (T[]) new Object[maybes.length];
+        for (int i = 0; i < maybes.length; i++) {
+            items[i] = maybes[i].orElseNull();
+        }
+        return new TupleImpl<>(true, type, items, null);
+    }
+
+    @Override
+    public <T> Tuple<@Nullable T> tupleOfNullable(Class<T> type ) {
+        return new TupleImpl<>(true, type, (T[]) new Object[0], null);
+    }
+
+    @Override
+    public <T> Tuple<@Nullable T> tupleOfNullable(Class<T> type, @Nullable T... values ) {
+        return new TupleImpl<>(true, type, values, null);
+    }
+
+    @Override
+    public <T> Tuple<@Nullable T> tupleOfNullable(Maybe<@Nullable T> first, Maybe<@Nullable T>... rest) {
+        T[] items = (T[]) new Object[rest.length + 1];
+        items[0] = first.orElseNull();
+        for (int i = 0; i < rest.length; i++) {
+            items[i + 1] = rest[i].orElseNull();
+        }
+        return new TupleImpl<>(true, first.type(), items, null);
+    }
+
+    @Override
+    public <T> Tuple<@Nullable T> tupleOfNullable(Class<T> type, Iterable<@Nullable T> iterable) {
+        List<T> items = new ArrayList<>();
+        iterable.forEach(items::add);
+        return new TupleImpl<>(true, type, items.toArray((T[]) new Object[0]), null);
     }
 
 
