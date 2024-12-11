@@ -268,7 +268,7 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Tu
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("Vec<");
+        sb.append("Tuple<");
         sb.append(_type.getSimpleName());
         if ( allowsNull() )
             sb.append("?");

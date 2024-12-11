@@ -10,11 +10,11 @@ import java.util.function.Consumer
 import java.util.function.Predicate
 import java.util.stream.Stream
 
-@Title("Functional Vector")
+@Title("Tuples for Functional Programming")
 @Narrative('''
 
     Functional programming is a core concept in Sprouts,
-    which is why we provide the `Vec` type representing
+    which is why we provide the `Tuple` type representing
     an immutable array of elements which can be transformed
     and filtered in a functional way.
 
@@ -101,7 +101,7 @@ class Tuple_Spec extends Specification
             Tuple.of(1, 2, 3) | { tuple -> tuple.none { it > 1 } } || false
     }
 
-    def 'Vector implementations know about their last operation.'(
+    def 'Tuple implementations know about their last operation.'(
             Tuple<Object>          input,
             Closure<Tuple<Object>> operation,
             Change                 change,
@@ -164,8 +164,8 @@ class Tuple_Spec extends Specification
         expect : 'The tuples have different string representations.'
             words1.toString() != words2.toString()
         and : 'These look as follows:'
-            words1.toString() == "Vec<String?>[soy milk, 豆乳, sojamilch]"
-            words2.toString() == "Vec<String>[soy milk, 豆乳, sojamilch]"
+            words1.toString() == "Tuple<String?>[soy milk, 豆乳, sojamilch]"
+            words2.toString() == "Tuple<String>[soy milk, 豆乳, sojamilch]"
     }
 
     def 'Two tuples are equal, even if they were produced by different operations.'()
@@ -334,24 +334,24 @@ class Tuple_Spec extends Specification
         given : 'A Java stream of Numbers.'
             var stream = Stream.of(42, 7 as byte, 3.14d, 2.71f, 999L)
         when : 'We collect the stream to a Sprouts tuple.'
-            var vec = stream.collect(Tuple.collectorOf(Number))
+            var tuple = stream.collect(Tuple.collectorOf(Number))
         then : 'The tuple has the expected contents.'
-            vec == Tuple.of(Number, 42, 7 as byte, 3.14d, 2.71f, 999L)
+            tuple == Tuple.of(Number, 42, 7 as byte, 3.14d, 2.71f, 999L)
     }
 
     def 'You can collect a stream of items into a tuple with a custom collector.'()
     {
         when : 'We collect the stream of items into a Sprouts tuple with a custom collector.'
-            var vec1 = Stream.of("hello", "world", "from", "Sprouts")
+            var tuple1 = Stream.of("hello", "world", "from", "Sprouts")
                                         .collect(Tuple.collectorOf(String))
         then : 'The tuple has the expected contents.'
-            vec1 == Tuple.of(String, "hello", "world", "from", "Sprouts")
+            tuple1 == Tuple.of(String, "hello", "world", "from", "Sprouts")
 
         when : 'We collect the stream of partially null items into a Sprouts tuple with a custom collector.'
-            var vec2 = Stream.of("hello", null, "from", null, "Sprouts")
+            var tuple2 = Stream.of("hello", null, "from", null, "Sprouts")
                                         .collect(Tuple.collectorOfNullable(String))
         then : 'The tuple has the expected contents.'
-            vec2 == Tuple.ofNullable(String, "hello", null, "from", null, "Sprouts")
+            tuple2 == Tuple.ofNullable(String, "hello", null, "from", null, "Sprouts")
     }
 
     def 'Collecting a stream of items with nulls into a non-nullable tuple throws an exception.'()
