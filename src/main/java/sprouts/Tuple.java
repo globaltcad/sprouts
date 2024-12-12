@@ -372,28 +372,26 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @return The {@link Maybe} at the specified index.
      * @throws IndexOutOfBoundsException if the index is negative, or greater than or equal to the size of the tuple.
      */
-    Maybe<T> at( int index );
+    T get( int index );
 
     /**
-     *  Exposes the first item in the tuple of items
-     *  wrapped by a {@link Maybe} instance.
+     *  Exposes the first item in the tuple of items.
      * @return The first item in the tuple.
      */
-    default Maybe<T> first() {
+    default T first() {
         if ( this.isEmpty() )
             throw new NoSuchElementException("There is no such item in the tuple. The tuple is empty.");
-        return at(0);
+        return get(0);
     }
 
     /**
-     *  Exposes the last item in the tuple of items
-     *  wrapped by a {@link Maybe} instance.
+     *  Exposes the last item in the tuple of items.
      * @return The last item in the tuple.
      */
-    default Maybe<T> last() {
+    default T last() {
         if ( this.isEmpty() )
             throw new NoSuchElementException("There is no such item in the tuple. The tuple is empty.");
-        return at(size() - 1);
+        return get(size() - 1);
     }
 
     /**
@@ -759,7 +757,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
         List<T> itemsToKeep = new ArrayList<>();
         int singleSequenceIndex = size() > 0 ? -2 : -1;
         for ( int i = 0; i < size(); i++ ) {
-            T item = at(i).orElseNull();
+            T item = get(i);
             if ( !predicate.test(item) ) {
                 itemsToKeep.add(item);
             } else {
@@ -789,7 +787,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
         List<T> filteredItems = new ArrayList<>();
         int singleSequenceIndex = size() > 0 ? -2 : -1;
         for ( int i = 0; i < size(); i++ ) {
-            T item = at(i).orElseNull();
+            T item = get(i);
             if ( predicate.test(item) ) {
                 filteredItems.add(item);
                 if ( singleSequenceIndex != -1 ) {
@@ -844,7 +842,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @param item The non-null item to add or {@code null} if the item should not be added.
      * @return A new tuple of items with the desired change.
      */
-    default Tuple<T> addIfPresentAt( int index, @Nullable T item ) {
+    default Tuple<T> addIfNonNullAt( int index, @Nullable T item ) {
         return ( item == null ? this : addAt(index, item) );
     }
 
@@ -1280,21 +1278,17 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      *        supplied mapper function to the corresponding item in this tuple.
      * @throws NullPointerException if the type or the mapper is {@code null}.
      */
-    default <U extends @Nullable Object> Tuple<@Nullable U> mapTo(
-        Class<@NonNull U>      type,
-        Function<@NonNull T,U> mapper
+    default <U extends @Nullable Object> Tuple<U> mapTo(
+        Class<U>      type,
+        Function<T,U> mapper
     ) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(mapper);
         U[] array = (U[]) Array.newInstance(type, size());
         int i = 0;
         for ( T v : this ) {
-            if ( v != null ) {
-                U m = mapper.apply( v );
-                array[i++] = m;
-            } else {
-                array[i++] = null;
-            }
+            U m = mapper.apply( v );
+            array[i++] = m;
         }
         return new TupleImpl<>( allowsNull(), type, array, TupleDiff.of(this, Change.SET, 0, size()) );
     }

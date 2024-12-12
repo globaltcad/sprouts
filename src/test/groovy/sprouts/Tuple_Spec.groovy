@@ -76,6 +76,7 @@ class Tuple_Spec extends Specification
             Tuple.of(1, 2, 3)       | { tuple -> tuple.removeIf { it < 2 } }           || Tuple.of(2, 3)
             Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.removeIf { it > 2 && it < 5 } } || Tuple.of(1, 2, 5)
             Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.removeIf { it < 2 || it > 4 } } || Tuple.of(2, 3, 4)
+            Tuple.of(1, 2, 3, 1, 2) | { tuple -> tuple.makeDistinct() }                || Tuple.of(1, 2, 3)
     }
 
     def 'The tuple predicates behave as expected.'(
@@ -432,6 +433,67 @@ class Tuple_Spec extends Specification
             Tuple.of(1, 2, 3) | { tuple -> tuple.setAllAt(1, Maybe.ofNull(Integer)) }
             Tuple.of(1, 2, 3) | { tuple -> tuple.setAt(1, 2, Maybe.ofNull(Integer)) }
             Tuple.of(1, 2, 3) | { tuple -> tuple.setRange(0, 3, Maybe.ofNull(Integer)) }
+    }
+
+    def 'It is possible to create and use a tuple of nullable ints.'()
+    {
+        reportInfo """
+            The `Tuple` class supports both nullable and non-nullable tuples.
+            So it is possible to create a nullable tuple of ints.
+        """
+        given : 'A nullable tuple of ints.'
+            def tuple = Tuple.ofNullable(Integer, 1, null, 3, 4, null)
+
+        expect : 'The tuple contains the expected values.'
+            tuple.get(0) == 1
+            tuple.get(1) == null
+            tuple.get(2) == 3
+            tuple.get(3) == 4
+            tuple.get(4) == null
+
+        when : 'We turn the tuple into a list.'
+            def list = tuple.toList()
+        then : 'The list also contains the expected values.'
+            list == [1, null, 3, 4, null]
+
+        when : 'We remove a chunk in the middle of the tuple.'
+            tuple = tuple.removeRange(1, 4)
+        then : 'The tuple has the expected contents.'
+            tuple == Tuple.ofNullable(Integer, 1, null)
+    }
+
+    def 'When mapping a tuple with `null` values, the result will be a nullable tuple.'()
+    {
+        given : 'A tuple with some `null` values.'
+            var tuple = Tuple.ofNullable(Integer, 1, null, 3, null, 5)
+        when : 'We map the tuple to a new tuple.'
+            var result = tuple.mapTo(String, { it?.toString() })
+        then : 'The result is a nullable tuple.'
+            result == Tuple.ofNullable(String, "1", null, "3", null, "5")
+
+        when : 'We now map the `null` entries to something else.'
+            result = result.mapTo(String, { it == null ? "?" : it })
+        then : 'The result is still a nullable tuple, but with different contents.'
+            result == Tuple.ofNullable(String, "1", "?", "3", "?", "5")
+    }
+
+    def 'The `addIfNonNullAt` method will not add `null` values to a non-nullable tuple.'()
+    {
+        given : 'A non-nullable tuple of strings.'
+            var tuple = Tuple.of(String, "hello", "world")
+        when : 'We try to add a `null` value at the beginning of the tuple.'
+            tuple = tuple.addIfNonNullAt(0, null)
+        then : 'The tuple remains unchanged.'
+            tuple == Tuple.of(String, "hello", "world")
+        when : 'We try to add a `null` value at the end of the tuple.'
+            tuple = tuple.addIfNonNullAt(2, null)
+        then : 'The tuple remains unchanged.'
+            tuple == Tuple.of(String, "hello", "world")
+
+        when : 'Finally, we try to add something which is not `null`.'
+            tuple = tuple.addIfNonNullAt(1, "little")
+        then : 'The tuple has the expected contents.'
+            tuple == Tuple.of(String, "hello", "little", "world")
     }
 
 }

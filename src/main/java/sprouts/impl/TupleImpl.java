@@ -1,11 +1,10 @@
  package sprouts.impl;
 
-import org.jspecify.annotations.Nullable;
-import sprouts.Change;
-import sprouts.Maybe;
-import sprouts.Tuple;
+ import org.jspecify.annotations.Nullable;
+ import sprouts.Change;
+ import sprouts.Tuple;
 
-import java.util.*;
+ import java.util.*;
 
 public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, TupleDiffOwner
 {
@@ -20,7 +19,7 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Tu
         Class<T> type,
         List<T> items
     ) {
-        this(allowsNull, type, _createArrayFromList(type, items), null);
+        this(allowsNull, type, _createArrayFromList(type, allowsNull, items), null);
     }
 
     @SuppressWarnings("NullAway")
@@ -33,7 +32,7 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Tu
         Objects.requireNonNull(type);
         _allowsNull     = allowsNull;
         _type           = type;
-        _data           = ( items == null ? _createArray(type, 0) : _tryFlatten(items,type) );
+        _data           = ( items == null ? _createArray(type, allowsNull, 0) : _tryFlatten(items,type,allowsNull) );
         _diffToPrevious = diffToPrevious;
         if ( !allowsNull ) {
             _each(_data, type, item -> {
@@ -55,12 +54,12 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Tu
     }
 
     @Override
-    public Maybe<T> at( int index ) {
-        @Nullable T item = _getAt(index, _data, _type);
-        if ( _allowsNull || item == null )
-            return Maybe.ofNullable( _type, item );
-        else
-            return Maybe.of( item );
+    @SuppressWarnings("NullAway")
+    public T get( int index ) {
+        T item = _getAt(index, _data, _type);
+        if ( !_allowsNull && item == null )
+            throw new NullPointerException();
+        return item;
     }
 
     @Override
@@ -75,7 +74,7 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Tu
         if ( from > to )
             throw new IllegalArgumentException();
         int newSize = (to - from);
-        Object newItems = _createArray(_type, newSize);
+        Object newItems = _createArray(_type, _allowsNull, newSize);
         System.arraycopy(_data, from, newItems, 0, newSize);
         TupleDiff diff = TupleDiff.of(this, Change.RETAIN, from, newSize);
         return new TupleImpl<>(_allowsNull, _type, newItems, diff);
@@ -89,7 +88,7 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Tu
             throw new IllegalArgumentException();
         int numberOfItemsToRemove = to - from;
         int newSize = _length(_data) - numberOfItemsToRemove;
-        Object newItems = _createArray(_type, newSize);
+        Object newItems = _createArray(_type, _allowsNull, newSize);
         System.arraycopy(_data, 0, newItems, 0, from);
         System.arraycopy(_data, to, newItems, from, _length(_data) - to);
         TupleDiff diff = TupleDiff.of(this, Change.REMOVE, from, numberOfItemsToRemove);
@@ -112,7 +111,7 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Tu
                 indicesOfThingsToKeep[newSize] = -1;
             }
         }
-        Object newItems = _createArray(_type, newSize);
+        Object newItems = _createArray(_type, _allowsNull, newSize);
         for ( int i = 0; i < newSize; i++ ) {
             int index = indicesOfThingsToKeep[i];
             if ( index != -1 )
@@ -128,7 +127,7 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Tu
             throw new NullPointerException();
         if ( index < 0 || index > _length(_data) )
             throw new IndexOutOfBoundsException();
-        Object newItems = _createArray(_type, _length(_data) + 1);
+        Object newItems = _createArray(_type, _allowsNull, _length(_data) + 1);
         System.arraycopy(_data, 0, newItems, 0, index);
         _setAt(index, item, newItems);
         System.arraycopy(_data, index, newItems, index + 1, _length(_data) - index);
@@ -140,7 +139,7 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Tu
     public Tuple<T> setAt( int index, T item ) {
         if ( index < 0 || index >= _length(_data) )
             throw new IndexOutOfBoundsException();
-        Object newItems = _clone(_data);
+        Object newItems = _clone(_data, _type, _allowsNull);
         _setAt(index, item, newItems);
         TupleDiff diff = TupleDiff.of(this, Change.SET, index, 1);
         return new TupleImpl<>(_allowsNull, _type, newItems, diff);
@@ -153,10 +152,10 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Tu
             throw new NullPointerException();
         if ( index < 0 || index > _length(_data) )
             throw new IndexOutOfBoundsException();
-        Object newItems = _createArray(_type, _length(_data) + tuple.size());
+        Object newItems = _createArray(_type, _allowsNull, _length(_data) + tuple.size());
         System.arraycopy(_data, 0, newItems, 0, index);
         for (int i = 0; i < tuple.size(); i++ )
-            _setAt(index + i, tuple.at(i).orElseNull(), newItems);
+            _setAt(index + i, tuple.get(i), newItems);
         System.arraycopy(_data, index, newItems, index + tuple.size(), _length(_data) - index);
         TupleDiff diff = TupleDiff.of(this, Change.ADD, index, tuple.size());
         return new TupleImpl<>(_allowsNull, _type, newItems, diff);
@@ -168,9 +167,9 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Tu
             throw new NullPointerException();
         if ( index < 0 || index + tuple.size() > _length(_data) )
             throw new IndexOutOfBoundsException();
-        Object newItems = _clone(_data);
+        Object newItems = _clone(_data, _type, _allowsNull);
         for (int i = 0; i < tuple.size(); i++ )
-            _setAt(index + i, tuple.at(i).orElseNull(), newItems);
+            _setAt(index + i, tuple.get(i), newItems);
         TupleDiff diff = TupleDiff.of(this, Change.SET, index, tuple.size());
         return new TupleImpl<>(_allowsNull, _type, newItems, diff);
     }
@@ -190,7 +189,7 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Tu
                 indicesOfThingsToKeep[newSize] = -1;
             }
         }
-        Object newItems = _createArray(_type, newSize);
+        Object newItems = _createArray(_type, _allowsNull, newSize);
         for ( int i = 0; i < newSize; i++ ) {
             int index = indicesOfThingsToKeep[i];
             if ( index != -1 )
@@ -208,7 +207,7 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Tu
 
     @Override
     public Tuple<T> sort(Comparator<T> comparator ) {
-        Object newItems = _clone(_data);
+        Object newItems = _clone(_data, _type, _allowsNull);
         _sort(newItems, comparator);
         TupleDiff diff = TupleDiff.of(this, Change.SORT, -1, _length(_data));
         return new TupleImpl<>(_allowsNull, _type, newItems, diff);
@@ -217,7 +216,7 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Tu
     @Override
     public Tuple<T> makeDistinct() {
         int newSize = 0;
-        Object newItems = _createArray(_type, _length(_data));
+        Object newItems = _createArray(_type, _allowsNull, _length(_data));
         for ( int i = 0; i < _length(_data); i++ ) {
             T item = _getAt(i, _data, _type);
             if ( indexOf(item) == newSize ) {
@@ -227,7 +226,7 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Tu
         }
         if ( newSize == _length(_data) )
             return this;
-        Object distinctItems = _createArray(_type, newSize);
+        Object distinctItems = _createArray(_type, _allowsNull, newSize);
         System.arraycopy(newItems, 0, distinctItems, 0, newSize);
         TupleDiff diff = TupleDiff.of(this, Change.DISTINCT, -1, _length(_data) - newSize);
         return new TupleImpl<>(_allowsNull, _type, distinctItems, diff);
@@ -237,7 +236,7 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Tu
     public Tuple<T> revert() {
         if ( _length(_data) < 2 )
             return this;
-        Object newItems = _clone(_data);
+        Object newItems = _clone(_data, _type, _allowsNull);
         for ( int i = 0; i < _length(newItems) / 2; i++ ) {
             T temp = _getAt(i, newItems, _type);
             _setAt(i, _getAt(_length(newItems) - i - 1, newItems, _type), newItems);
@@ -296,7 +295,7 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Tu
         if ( !other.type().equals(_type) )
             return false;
         for ( int i = 0; i < this.size(); i++ ) {
-            if ( !this.at(i).equals(other.at(i)) )
+            if ( !Objects.equals( this.get(i), other.get(i) ) )
                 return false;
         }
         return true;
@@ -317,8 +316,8 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Tu
         return Optional.ofNullable(_diffToPrevious);
     }
     
-    private static Object _createArray( Class<?> type, int size ) {
-        type = _toActualPrimitive(type);
+    private static Object _createArray( Class<?> type, boolean nullable, int size ) {
+        type = _toActualPrimitive(type, nullable);
         if ( type.isPrimitive() ) {
             if ( type == boolean.class )
                 return new boolean[size];
@@ -340,7 +339,9 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Tu
         return java.lang.reflect.Array.newInstance(type, size);
     }
 
-    private static Class<?> _toActualPrimitive( Class<?> type ) {
+    private static Class<?> _toActualPrimitive( Class<?> type, boolean nullable ) {
+        if ( nullable )
+            return type; // We can't convert to a primitive type if it is nullable
         /*
             We can't use type.isPrimitive() because it returns false for
             the wrapper classes of primitive types. For example, type.isPrimitive()
@@ -369,16 +370,16 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Tu
         return type;
     }
 
-    private static Object _createArrayFromList( Class<?> type, List<?> list ) {
-        Object array = _createArray(type, list.size());
+    private static Object _createArrayFromList( Class<?> type, boolean nullable, List<?> list ) {
+        Object array = _createArray(type, nullable, list.size());
         for ( int i = 0; i < list.size(); i++ ) {
             _setAt(i, list.get(i), array);
         }
         return array;
     }
 
-    private static Object _tryFlatten( Object array, Class<?> type ) {
-        type = _toActualPrimitive(type);
+    private static Object _tryFlatten( Object array, Class<?> type, boolean nullable ) {
+        type = _toActualPrimitive(type, nullable);
         if ( type == byte.class && array instanceof Object[] ) {
             byte[] flattened = new byte[((Object[]) array).length];
             for ( int i = 0; i < flattened.length; i++ ) {
@@ -466,9 +467,9 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Tu
         return java.lang.reflect.Array.getLength(array);
     }
     
-    private static Object _clone( Object array ) {
+    private static Object _clone( Object array, Class<?> type, boolean nullable ) {
         int length = _length(array);
-        Object clone = _createArray(array.getClass().getComponentType(), length);
+        Object clone = _createArray(type, nullable, length);
         System.arraycopy(array, 0, clone, 0, length);
         return clone;
     }
