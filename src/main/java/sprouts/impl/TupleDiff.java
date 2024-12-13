@@ -6,7 +6,7 @@ import sprouts.Tuple;
 import java.util.Optional;
 
 /**
- *  A {@link TupleDiff} object hold meta information of a {@link Tuple} instance
+ *  A {@link TupleDiff} object holds meta information about a {@link Tuple} instance
  *  which describes how the {@link Tuple} was transformed from its previous state.<br>
  *  <p>
  *  So for example, if the {@link Tuple#removeFirst(int)}
@@ -15,11 +15,15 @@ import java.util.Optional;
  *  a {@link #change()} == {@link Change#REMOVE},
  *  {@link #index()} == 0 and {@link #count()} == 3.<br>
  *  <p>
- *  The purpose of this class is quite simply that it provides meta information
- *  that is extremely useful for efficient binding and change propagation to other
+ *  The purpose of this class is to provides meta information specifically
+ *  for efficient binding and change propagation to other
  *  data structures, such as UI components, databases, or network services.<br>
+ *  More specifically, it allows a change listener to synchronize to the
+ *  {@link Tuple} state changes in an optimized way, by only updating its
+ *  own target data structure according to the information provided by the
+ *  {@link TupleDiff} instance.<br>
  *  <p>
- *  So in practice, you would synchronize to a tuple efficiently by first checking if
+ *  In practice, you would only do this optimized sync to a tuple after first checking if
  *  {@link #isSuccessorOf(TupleDiff)} is true, and then update the target data structure
  *  with the information provided by the {@link TupleDiff} instance.
  */
