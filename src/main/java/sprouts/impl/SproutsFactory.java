@@ -6,10 +6,7 @@ import sprouts.*;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
-import java.util.function.Function;
-import java.util.function.Supplier;
+import java.util.function.*;
 import java.util.regex.Pattern;
 
 /**
@@ -186,6 +183,8 @@ public interface SproutsFactory
 	<V> Result<V> resultOfTry( Class<V> type, Supplier<V> supplier );
 
 	<O,D> WeakAction<O,D> actionOfWeak( O owner, BiConsumer<O, D> action );
+
+	<O> WeakObserver<O> observerOfWeak(O owner, Consumer<O> action );
 
 	/**
 	 *   The default id for properties which do not have an id explicitly specified.

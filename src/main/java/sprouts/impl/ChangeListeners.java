@@ -41,11 +41,13 @@ final class ChangeListeners<D> {
 
     void unsubscribe(Subscriber subscriber) {
         getActions(actions -> actions.removeIf( a -> {
-            if ( a instanceof SproutChangeListener ) {
-                SproutChangeListener<?> pcl = (SproutChangeListener<?>) a;
+            if ( a instanceof ObserverAsActionImpl) {
+                ObserverAsActionImpl<?> pcl = (ObserverAsActionImpl<?>) a;
                 return pcl.listener() == subscriber;
-            }
-            else
+            } else if ( a instanceof WeakObserverAsActionImpl ) {
+                WeakObserverAsActionImpl<?, ?> pcl = (WeakObserverAsActionImpl<?, ?>) a;
+                return pcl.listener() == subscriber;
+            } else
                 return Objects.equals(a, subscriber);
         }));
     }

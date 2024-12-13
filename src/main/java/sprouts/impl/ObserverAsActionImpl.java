@@ -5,12 +5,12 @@ import sprouts.Observer;
 
 import java.util.Objects;
 
-final class SproutChangeListener<D> implements Action<D>
+final class ObserverAsActionImpl<D> implements Action<D>
 {
     private final Observer _observer;
 
 
-    SproutChangeListener( Observer observer ) {
+    ObserverAsActionImpl( Observer observer ) {
         _observer = Objects.requireNonNull(observer);
     }
 

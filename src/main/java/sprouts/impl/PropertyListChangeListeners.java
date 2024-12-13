@@ -1,7 +1,6 @@
 package sprouts.impl;
 
 import org.jspecify.annotations.Nullable;
-import org.slf4j.Logger;
 import sprouts.*;
 
 import java.util.Arrays;
@@ -16,7 +15,10 @@ public final class PropertyListChangeListeners<T extends @Nullable Object>
     }
 
     public void onChange( Observer observer ) {
-        this.onChange( new SproutChangeListener<>(observer) );
+        if ( observer instanceof WeakObserverImpl)
+            this.onChange( new WeakObserverAsActionImpl<>( (WeakObserverImpl<?>) observer ) );
+        else
+            this.onChange( new ObserverAsActionImpl<>(observer) );
     }
 
     public void unsubscribe( Subscriber subscriber ) {

@@ -27,7 +27,10 @@ public final class PropertyChangeListeners<T>
     }
 
     public void onChange( Observer observer ) {
-        onChange(Sprouts.factory().defaultObservableChannel(), new SproutChangeListener<>(observer) );
+        if ( observer instanceof WeakObserverImpl)
+            this.onChange(Sprouts.factory().defaultObservableChannel(), new WeakObserverAsActionImpl<>( (WeakObserverImpl<?>) observer ) );
+        else
+            this.onChange(Sprouts.factory().defaultObservableChannel(), new ObserverAsActionImpl<>(observer) );
     }
 
     public void unsubscribe( Subscriber subscriber ) {

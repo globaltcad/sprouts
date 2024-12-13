@@ -5,6 +5,8 @@ import spock.lang.Specification
 import spock.lang.Subject
 import spock.lang.Title
 
+import java.lang.ref.WeakReference
+
 @Title("Property Binding")
 @Narrative('''
 
@@ -198,6 +200,87 @@ class Property_Binding_Spec extends Specification
             showListener == [":("]
         and : 'The view model actions are triggered as expected.'
             modelListener == [":(", ":|"]
+    }
+
+    def 'A `WeakAction` is removed and garbage collected together with its owner.'()
+    {
+        reportInfo """
+            You are not supposed to register an action directly onto a property.
+            Instead you should use the `.view()` of the property to register an action.
+            But if you really need to register an action directly onto a property
+            you may want to consider using a `WeakAction` to avoid memory leaks.
+            
+            A weak action is a special kind of action that has a weakly referenced "owner".
+            This owner determines if the action is still alive or not and should be removed
+            after the owner.
+        """
+        given : 'A property and an owner:'
+            var property = Var.of("I am a some text in a property.")
+            var owner = new Object()
+        and : 'A trace list to record the side effect.'
+            var trace = []
+        and : 'Finally we register a weak action on the property.'
+            Viewable.cast(property).onChange(From.ALL, Action.ofWeak(owner, (o, it) -> trace << it.orElseThrow()))
+
+        when : 'We change the property.'
+            property.set("I am a new text.")
+        then : 'The side effect is executed.'
+            trace == ["I am a new text."]
+
+        when : 'We remove the owner and then wait for the garbage collector to remove the weak action.'
+            owner = null
+            waitForGarbageCollection()
+        and : 'We change the lens again...'
+            property.set("I am yet another text.")
+        then : 'The side effect is not executed anymore.'
+            trace == ["I am a new text."]
+    }
+
+    def 'A `WeakObserver` is removed and garbage collected together with its owner.'()
+    {
+        reportInfo """
+            You are not supposed to register an observer directly onto a property.
+            Instead you should use the `.view()` of the property to register an observer.
+            But if you really need to register an observer directly onto a property
+            you may want to consider using a `WeakObserver` to avoid memory leaks.
+            
+            A weak observer is a special kind of observer that has a weakly referenced "owner".
+            This owner determines if the observer is still alive or not and should be removed
+            after the owner.
+        """
+        given : 'A property and an owner:'
+            var property = Var.of(42)
+            var owner = new Object()
+        and : 'A trace list to record the side effects.'
+            var trace = []
+        and : 'Finally we register a weak observer on the property.'
+            Viewable.cast(property).subscribe(Observer.ofWeak(owner,{trace << "!"}))
+
+        when : 'We change the property.'
+            property.set(43)
+        then : 'The side effect is executed.'
+            trace == ["!"]
+
+        when : 'We remove the owner and then wait for the garbage collector to remove the weak observer.'
+            owner = null
+            waitForGarbageCollection()
+        and : 'We change the property again.'
+            property.set(44)
+        then : 'The side effect is not executed anymore.'
+            trace == ["!"]
+    }
+
+    /**
+     * This method guarantees that garbage collection is
+     * done unlike <code>{@link System#gc()}</code>
+     */
+    static void waitForGarbageCollection() {
+        Object obj = new Object();
+        WeakReference ref = new WeakReference<>(obj);
+        obj = null;
+        while(ref.get() != null) {
+            System.gc();
+        }
     }
 
 }

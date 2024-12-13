@@ -608,4 +608,85 @@ class Property_View_Spec extends Specification
             view.toString() == "View<Byte>[patient_age=5]"
     }
 
+    def 'A `WeakAction` is removed and garbage collected together with its owner.'()
+    {
+        reportInfo """
+            You can register an action directly onto a view, which is itself already 
+            memory leak safe. But i you want to create a memory leak safe action,
+            you may want to consider using a `WeakAction` to avoid memory leaks.
+            
+            A weak action is a special kind of action that has a weakly referenced "owner".
+            This owner determines if the action is still alive or not and should be removed
+            after the owner.
+        """
+        given : 'A property, its viewable and an owner:'
+            var property = Var.of("I am a some text in a property.")
+            var viewable = property.view()
+            var owner = new Object()
+        and : 'A trace list to record the side effect.'
+            var trace = []
+        and : 'Finally we register a weak action on the property.'
+            viewable.onChange(From.ALL, Action.ofWeak(owner, (o, it) -> trace << it.orElseThrow()))
+
+        when : 'We change the source property.'
+            property.set("I am a new text.")
+        then : 'The side effect is executed.'
+            trace == ["I am a new text."]
+
+        when : 'We remove the owner and then wait for the garbage collector to remove the weak action.'
+            owner = null
+            waitForGarbageCollection()
+        and : 'We change the source property again...'
+            property.set("I am yet another text.")
+        then : 'The side effect is not executed anymore.'
+            trace == ["I am a new text."]
+    }
+
+    def 'A `WeakObserver` is removed and garbage collected together with its owner.'()
+    {
+        reportInfo """
+            You can register an action directly onto a view, which is itself already 
+            memory leak safe. But i you want to create a memory leak safe observer,
+            you may want to consider using a `WeakObserver` to avoid memory leaks.
+            
+            A weak observer is a special kind of observer that has a weakly referenced "owner".
+            This owner determines if the action is still alive or not and should be removed
+            after the owner.
+        """
+        given : 'A property, its viewable and an owner:'
+            var property = Var.of(42)
+            var viewable = property.view()
+            var owner = new Object()
+        and : 'A trace list to record the side effects.'
+            var trace = []
+        and : 'Finally we register a weak observer on the property.'
+            viewable.subscribe(Observer.ofWeak(owner,{trace << "!"}))
+
+        when : 'We change the source property.'
+            property.set(43)
+        then : 'The side effect is executed.'
+            trace == ["!"]
+
+        when : 'We remove the owner and then wait for the garbage collector to remove the weak observer.'
+            owner = null
+            waitForGarbageCollection()
+        and : 'We change the source property again.'
+            property.set(44)
+        then : 'The side effect is not executed anymore.'
+            trace == ["!"]
+    }
+
+    /**
+     * This method guarantees that garbage collection is
+     * done unlike <code>{@link System#gc()}</code>
+     */
+    static void waitForGarbageCollection() {
+        Object obj = new Object();
+        WeakReference ref = new WeakReference<>(obj);
+        obj = null;
+        while(ref.get() != null) {
+            System.gc();
+        }
+    }
+
 }
