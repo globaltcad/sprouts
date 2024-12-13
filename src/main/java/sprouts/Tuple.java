@@ -41,7 +41,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      *  to collect a stream of items into a new tuple of non-nullable items.
      *  Here is an example demonstrating how this method may be used:<br>
      *  <pre>{@code
-     *    var vec = Stream.of("a", "b", "c")
+     *    var tuple = Stream.of("a", "b", "c")
      *                .map(String::toUpperCase)
      *                .collect(Tuple.collectorOf(String.class));
      *  }</pre>
@@ -65,7 +65,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      *  Use this to collect a stream of items into a new tuple of nullable items.
      *  Here is an example of how to use this method:<br>
      *  <pre>{@code
-     *    var vec = Stream.of("a", "b", "c")
+     *    var tuple = Stream.of("a", "b", "c")
      *                .map(String::toUpperCase)
      *                .collect(Tuple.collectorOfNullable(String.class));
      *  }</pre>
@@ -466,7 +466,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @param item The non-null item to add or {@code null} if the item should not be added.
      * @return A new tuple of items with the desired change.
      */
-    default Tuple<T> addIfPresent( @Nullable T item ) {
+    default Tuple<T> addIfNonNull( @Nullable T item ) {
         return ( item == null ? this : add(item) );
     }
 
@@ -563,7 +563,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @return A new tuple of items with the desired change,
      *          and if the item is {@code null}, this tuple is returned unchanged.
      */
-    default Tuple<T> removeIfPresent( @Nullable T item ) {
+    default Tuple<T> removeIfNonNull( @Nullable T item ) {
         return ( item == null ? this : remove(item) );
     }
 
@@ -609,7 +609,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @return A new tuple of items without the first occurrence of the item,
      *         or the same tuple if the item is {@code null}.
      */
-    default Tuple<T> removeFirstFoundIfPresent( @Nullable T item ) {
+    default Tuple<T> removeFirstFoundIfNonNull( @Nullable T item ) {
         return ( item == null ? this : removeFirstFound(item) );
     }
 
@@ -664,7 +664,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
     }
 
     /**
-     * Removes the first iem from the tuple,
+     * Removes the first item from the tuple,
      * or does nothing if the tuple is empty.
      *
      * @return A new tuple of items with the desired change.
@@ -804,23 +804,34 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
     }
 
     /**
-     * Removes all items from the tuple that are contained in the provided
-     * tuple of items.
+     * Creates a new tuple of items without the items of the provided
+     * tuple of items. This is also true for duplicate items.
      *
-     * @param items the tuple of items to remove.
+     * @param items the tuple of items to have removed in the new tuple.
      * @return A new tuple of items with the desired change.
      */
     Tuple<T> removeAll( Tuple<T> items );
 
     /**
-     * Removes all items from the tuple whose items are contained in the provided
-     * array of items and returns them in a new tuple.
+     *  Removes all the items of the provided array from the tuple.
+     *  This is also true for duplicate items.
      *
-     * @param items the tuple of items to remove.
+     * @param items the tuple of items to have removed in the new tuple.
      * @return A new tuple of items with the desired change.
      */
     default Tuple<T> removeAll( T... items ) {
         return removeAll( allowsNull() ? Tuple.ofNullable(type(), items) : Tuple.of(type(), items) );
+    }
+
+    /**
+     *  Removes all the items of the provided iterable from the tuple.
+     *  This is also true for duplicate items.
+     *
+     * @param items the tuple of items to have removed in the new tuple.
+     * @return A new tuple of items with the desired change.
+     */
+    default Tuple<T> removeAll( Iterable<T> items ) {
+        return removeAll( Tuple.of(type(), items) );
     }
 
     /**
@@ -838,7 +849,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      *  Creates a new tuple of items where the supplied item is inserted at
      *  the specified index if, and only if, the item is not null.
      *
-     * @param index The index at which to add the item.
+     * @param index The index at which to add the item if it is not null.
      * @param item The non-null item to add or {@code null} if the item should not be added.
      * @return A new tuple of items with the desired change.
      */
@@ -1199,8 +1210,8 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
 
     /**
      * Creates and returns a new tuple from this one where all items from the provided tuple of items,
-     * are set starting at the specified index, effectively substituting the items in the specified range
-     * of this tuple.
+     * are set starting at the specified index, effectively replacing the items in the specified range
+     * of this tuple in the new tuple.
      *
      * @param index The index at which to set the items.
      * @param tuple The tuple of items to set.
@@ -1211,7 +1222,8 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
     Tuple<T> setAllAt( int index, Tuple<T> tuple );
 
     /**
-     * Removes all items from {@code this} tuple that are not contained in the provided tuple of items.
+     *  Retains only the items in this tuple that are contained in the provided tuple of items.
+     *  This is also true for duplicate items.
      *
      * @param tuple The tuple of items to retain. All other items will be removed.
      * @return A new tuple of items with the desired change.

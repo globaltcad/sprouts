@@ -60,10 +60,12 @@ class Tuple_Spec extends Specification
             Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.slice(1, 3) }                   || Tuple.of(2, 3)
             Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.sliceFirst(3) }                 || Tuple.of(1, 2, 3)
             Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.sliceLast(3) }                  || Tuple.of(3, 4, 5)
+            Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.sliceAt(1, 3) }                 || Tuple.of(2, 3, 4)
             Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.removeRange(1, 3) }             || Tuple.of(1, 4, 5)
             Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.setAt(1, 10) }                  || Tuple.of(1, 10, 3, 4, 5)
             Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.addAt(1, 10) }                  || Tuple.of(1, 10, 2, 3, 4, 5)
             Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.removeAt(1) }                   || Tuple.of(1, 3, 4, 5)
+            Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.removeAt(1, 2) }                || Tuple.of(1, 4, 5)
             Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.add(10) }                       || Tuple.of(1, 2, 3, 4, 5, 10)
             Tuple.of(1, 2, 3)       | { tuple -> tuple.addAll(10, 20) }                || Tuple.of(1, 2, 3, 10, 20)
             Tuple.of(1, 2, 3)       | { tuple -> tuple.addAll(Tuple.of(10, 20)) }      || Tuple.of(1, 2, 3, 10, 20)
@@ -77,6 +79,10 @@ class Tuple_Spec extends Specification
             Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.removeIf { it > 2 && it < 5 } } || Tuple.of(1, 2, 5)
             Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.removeIf { it < 2 || it > 4 } } || Tuple.of(2, 3, 4)
             Tuple.of(1, 2, 3, 1, 2) | { tuple -> tuple.makeDistinct() }                || Tuple.of(1, 2, 3)
+            Tuple.of(1, 2)          | { tuple -> tuple.addIfNonNull(null) }            || Tuple.of(1, 2)
+            Tuple.of(1, 2)          | { tuple -> tuple.addIfNonNull(3) }               || Tuple.of(1, 2, 3)
+            Tuple.of(1, 2)          | { tuple -> tuple.addIfNonNullAt(1,null) }        || Tuple.of(1, 2)
+            Tuple.of(1, 2)          | { tuple -> tuple.addIfNonNullAt(1,3) }           || Tuple.of(1, 3, 2)
     }
 
     def 'The tuple predicates behave as expected.'(
@@ -89,17 +95,20 @@ class Tuple_Spec extends Specification
         then : 'The result has the expected truth value.'
             result == expected
         where :
-            input             | predicate                          || expected
-            Tuple.of(Byte)    | Tuple::isEmpty                     || true
-            Tuple.of(1, 2, 3) | Tuple::isEmpty                     || false
-            Tuple.of(Byte)    | Tuple::isNotEmpty                  || false
-            Tuple.of(1, 2, 3) | Tuple::isNotEmpty                  || true
-            Tuple.of(1, 2, 3) | { tuple -> tuple.all { it > 0 } }  || true
-            Tuple.of(1, 2, 3) | { tuple -> tuple.all { it > 1 } }  || false
-            Tuple.of(1, 2, 3) | { tuple -> tuple.any { it > 0 } }  || true
-            Tuple.of(1, 2, 3) | { tuple -> tuple.any { it > 1 } }  || true
-            Tuple.of(1, 2, 3) | { tuple -> tuple.none { it > 0 } } || false
-            Tuple.of(1, 2, 3) | { tuple -> tuple.none { it > 1 } } || false
+            input                                 | predicate                             || expected
+            Tuple.of(Byte)                        | Tuple::isEmpty                        || true
+            Tuple.of(1, 2, 3)                     | Tuple::isEmpty                        || false
+            Tuple.of(Byte)                        | Tuple::isNotEmpty                     || false
+            Tuple.of(1, 2, 3)                     | Tuple::isNotEmpty                     || true
+            Tuple.of(1, 2, 3)                     | { tuple -> tuple.all { it > 0 } }     || true
+            Tuple.of(1, 2, 3)                     | { tuple -> tuple.all { it > 1 } }     || false
+            Tuple.of(1, 2, 3)                     | { tuple -> tuple.any { it > 0 } }     || true
+            Tuple.of(1, 2, 3)                     | { tuple -> tuple.any { it > 1 } }     || true
+            Tuple.ofNullable(Integer, 1, null, 3) | { tuple -> tuple.any { it == null } } || true
+            Tuple.of(1, 2, 3)                     | { tuple -> tuple.none { it > 0 } }    || false
+            Tuple.of(1, 2, 3)                     | { tuple -> tuple.none { it > 1 } }    || false
+            Tuple.of(1, 2, 3)                     | { tuple -> tuple.anyNull() }          || false
+            Tuple.ofNullable(Integer, 1, null, 3) | { tuple -> tuple.anyNull() }          || true
     }
 
     def 'Tuple implementations know about their last operation.'(
@@ -139,10 +148,12 @@ class Tuple_Spec extends Specification
             Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.slice(1, 3) }                   || Change.RETAIN |  1    | 2
             Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.sliceFirst(3) }                 || Change.RETAIN |  0    | 3
             Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.sliceLast(3) }                  || Change.RETAIN |  2    | 3
+            Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.sliceAt(1, 3) }                 || Change.RETAIN |  1    | 3
             Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.removeRange(1, 3) }             || Change.REMOVE |  1    | 2
             Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.setAt(1, 10) }                  || Change.SET    |  1    | 1
             Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.addAt(1, 10) }                  || Change.ADD    |  1    | 1
             Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.removeAt(1) }                   || Change.REMOVE |  1    | 1
+            Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.removeAt(1, 2) }                || Change.REMOVE |  1    | 2
             Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.add(10) }                       || Change.ADD    |  5    | 1
             Tuple.of(1, 2, 3)       | { tuple -> tuple.addAll(10, 20) }                || Change.ADD    |  3    | 2
             Tuple.of(1, 2, 3)       | { tuple -> tuple.addAll(Tuple.of(10, 20)) }      || Change.ADD    |  3    | 2
@@ -364,6 +375,16 @@ class Tuple_Spec extends Specification
             thrown(NullPointerException)
     }
 
+    def 'Use the `removeFirstFound(T)` method to remove the first occurrence of an element.'()
+    {
+        given : 'A tuple with some elements.'
+            var words = Tuple.of("This", "day", "is", "a" ,"very", "nice", "day")
+        when : 'We remove the first occurrence of the word "day".'
+            words = words.removeFirstFound("day")
+        then : 'The first occurrence of the word "day" was removed.'
+            words == Tuple.of("This", "is", "a", "very", "nice", "day")
+    }
+
     def 'The `removeFirstFoundOrThrow(T)` method will throw an exception if the element is not present.'()
     {
         given : 'A tuple with some elements.'
@@ -496,4 +517,78 @@ class Tuple_Spec extends Specification
             tuple == Tuple.of(String, "hello", "little", "world")
     }
 
+    def 'Use the `removeIfNonNull(@Nullable T)` method to remove all non-null occurrences of an element.'()
+    {
+        given : 'A tuple with some elements.'
+            var words = Tuple.of("That", "day", "is", "a" ,"very", "very", "nice", "day")
+        when : 'We remove all non-null occurrences of the word "very".'
+            words = words.removeIfNonNull("very")
+        then : 'All non-null occurrences of the word "very" were removed.'
+            words == Tuple.of("That", "day", "is", "a", "nice", "day")
+
+        when : 'We call the method with a `null` argument.'
+            words = words.removeIfNonNull(null)
+        then : 'The tuple remains unchanged.'
+            words == Tuple.of("That", "day", "is", "a", "nice", "day")
+    }
+
+    def 'The `removeAll(T...)` method removes all occurrences of the given elements from the tuple.'()
+    {
+        given : 'A tuple with some duplicate elements.'
+            var numbers = Tuple.of(4, 2, 2, 7, 4, 2, 3, 4, 7)
+        when : 'We remove all occurrences of the numbers 2 and 4.'
+            numbers = numbers.removeAll(2, 4)
+        then : 'All occurrences of the numbers 2 and 4 were removed.'
+            numbers == Tuple.of(7, 3, 7)
+    }
+
+    def 'The `removeAll(Tuple<T>)` method removes all occurrences of the elements from the tuple.'()
+    {
+        given : 'A tuple with some duplicate elements.'
+            var numbers = Tuple.of(4, 2, 2, 7, 4, 2, 3, 4, 7)
+        when : 'We remove all occurrences of the numbers 2 and 4.'
+            numbers = numbers.removeAll(Tuple.of(2, 4))
+        then : 'All occurrences of the numbers 2 and 4 were removed.'
+            numbers == Tuple.of(7, 3, 7)
+    }
+
+    def 'The `removeAll(Iterable<T>)` method removes all occurrences of the elements from the tuple.'()
+    {
+        given : 'A tuple with some duplicate elements.'
+            var numbers = Tuple.of(4, 2, 2, 7, 4, 2, 3, 4, 7)
+        when : 'We remove all occurrences of the numbers 2 and 4.'
+            numbers = numbers.removeAll([2, 4])
+        then : 'All occurrences of the numbers 2 and 4 were removed.'
+            numbers == Tuple.of(7, 3, 7)
+    }
+
+    def 'The `retainAll(T...)` method retains only the given elements in the tuple.'()
+    {
+        given : 'A tuple with some duplicate elements.'
+            var numbers = Tuple.of(4, 2, 2, 7, 4, 2, 3, 4, 7)
+        when : 'We retain only the numbers 2 and 4.'
+            numbers = numbers.retainAll(2, 4)
+        then : 'Only all the numbers 2 and 4 are left over.'
+            numbers == Tuple.of(4, 2, 2, 4, 2, 4)
+    }
+
+    def 'The `retainAll(Tuple<T>)` method retains only the elements from the tuple.'()
+    {
+        given : 'A tuple with some duplicate elements.'
+            var numbers = Tuple.of(4, 2, 2, 7, 4, 2, 3, 4, 7)
+        when : 'We retain only the numbers 2 and 4.'
+            numbers = numbers.retainAll(Tuple.of(2, 4))
+        then : 'Only the numbers 2 and 4 are left over.'
+            numbers == Tuple.of(4, 2, 2, 4, 2, 4)
+    }
+
+    def 'The `retainAll(Iterable<T>)` method retains only the elements from the tuple.'()
+    {
+        given : 'A tuple with some duplicate elements.'
+            var numbers = Tuple.of(4, 2, 2, 7, 4, 2, 3, 4, 7)
+        when : 'We retain only the numbers 2 and 4.'
+            numbers = numbers.retainAll([2, 4])
+        then : 'Only the numbers 2 and 4 are left over.'
+            numbers == Tuple.of(4, 2, 2, 4, 2, 4)
+    }
 }
