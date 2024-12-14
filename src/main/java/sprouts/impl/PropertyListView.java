@@ -568,7 +568,7 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
 
     @Override
     public Observable subscribe( Observer observer ) {
-        this.onChange( new SproutChangeListener<>(observer) );
+        _changeListeners.onChange(observer);
         return this;
     }
 

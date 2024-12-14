@@ -1,6 +1,7 @@
 package sprouts;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 
 /**
  *  This represents an event that can be observed but not triggered.

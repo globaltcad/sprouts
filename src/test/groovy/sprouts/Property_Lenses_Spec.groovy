@@ -10,6 +10,7 @@ import sprouts.impl.PropertyLens
 
 import java.lang.ref.WeakReference
 import java.time.LocalDate
+import java.time.Month
 
 @Title("Property Lenses")
 @Narrative('''
@@ -1256,6 +1257,86 @@ class Property_Lenses_Spec extends Specification
             weakRefLens1.get() == null
             weakRefLens2.get() == null
             weakRefLens3.get() == null
+    }
+
+    def 'A `WeakAction` is removed and garbage collected together with its owner.'()
+    {
+        reportInfo """
+            You are not supposed to register an action directly onto a lens property.
+            Instead you should use the `.view()` of the lens to register an action.
+            But if you really need to register an action directly onto a property
+            you may want to consider using a `WeakAction` to avoid memory leaks.
+            
+            A weak action is a special kind of action that has a weakly referenced "owner".
+            This owner determines if the action is still alive or not and should be removed
+            after the owner.
+            
+            Warning! Never reference the owner in the action itself, not even indirectly!
+            This will effectively turn your owner and action into memory leaks.
+        """
+        given : 'We first create a base property for the lens:'
+            var author = new Author("John", "Doe", LocalDate.of(1829, 8, 12), ["Book1", "Book2"])
+            var authorProperty = Var.of(author)
+        and : 'A lens and an owner:'
+            var nameLens = authorProperty.zoomTo(Author::firstName, Author::withFirstName)
+            var owner = new Object()
+        and : 'A trace list to record the side effect.'
+            var trace = []
+        and : 'Finally we register a weak action on the property.'
+            Viewable.cast(nameLens).onChange(From.ALL, Action.ofWeak(owner, (o, it) -> trace << it.orElseThrow()))
+
+        when : 'We change the lens...'
+            nameLens.set("William")
+        then : 'The side effect is executed.'
+            trace == ["William"]
+
+        when : 'We remove the owner and then wait for the garbage collector to remove the weak action.'
+            owner = null
+            waitForGarbageCollection()
+        and : 'We change the lens again...'
+            nameLens.set("Hannah")
+        then : 'The side effect is not executed anymore.'
+            trace == ["William"]
+    }
+
+    def 'A `WeakObserver` is removed and garbage collected together with its owner.'()
+    {
+        reportInfo """
+            You are not supposed to register an observer directly onto a lens property.
+            Instead you should get a `.view()` (Viewable) to register an observer.
+            But if you really need to register an observer directly onto a property
+            you may want to consider using a `WeakObserver` to avoid memory leaks.
+            
+            A weak observer is a special kind of observer that has a weakly referenced "owner".
+            This owner determines if the observer is still alive or not and should be removed
+            after the owner.
+            
+            Warning! Never reference the owner in the observer itself, not even indirectly!
+            This will effectively turn your owner and observer into memory leaks.
+        """
+        given : 'We first create a base property for the lens:'
+            var date = LocalDate.of(2021, 8, 12)
+            var dateProperty = Var.of(date)
+        and : 'A lens and an owner:'
+            var monthLens = dateProperty.zoomTo(LocalDate::getMonth, (d, m) -> d.withMonth(m.getValue()))
+            var owner = new Object()
+        and : 'A trace list to record the side effect.'
+            var trace = []
+        and : 'Finally we register a weak observer on the property.'
+            Viewable.cast(monthLens).subscribe(Observer.ofWeak(owner,{trace<<"!"}))
+
+        when : 'We change the lens...'
+            monthLens.set(Month.JANUARY)
+        then : 'The side effect is executed.'
+            trace == ["!"]
+
+        when : 'We remove the owner and then wait for the garbage collector to remove the weak observer.'
+            owner = null
+            waitForGarbageCollection()
+        and : 'We change the lens again...'
+            monthLens.set(Month.FEBRUARY)
+        then : 'The side effect is not executed anymore.'
+            trace == ["!"]
     }
 
     /**
