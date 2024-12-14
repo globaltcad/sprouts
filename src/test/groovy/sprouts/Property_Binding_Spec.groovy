@@ -213,6 +213,9 @@ class Property_Binding_Spec extends Specification
             A weak action is a special kind of action that has a weakly referenced "owner".
             This owner determines if the action is still alive or not and should be removed
             after the owner.
+            
+            Warning! Never reference the owner in the action itself, not even indirectly!
+            This will effectively turn your owner and action into memory leaks.
         """
         given : 'A property and an owner:'
             var property = Var.of("I am a some text in a property.")
@@ -247,6 +250,9 @@ class Property_Binding_Spec extends Specification
             A weak observer is a special kind of observer that has a weakly referenced "owner".
             This owner determines if the observer is still alive or not and should be removed
             after the owner.
+            
+            Warning! Never reference the owner in the observer itself, not even indirectly!
+            This will effectively turn your owner and observer into memory leaks.
         """
         given : 'A property and an owner:'
             var property = Var.of(42)

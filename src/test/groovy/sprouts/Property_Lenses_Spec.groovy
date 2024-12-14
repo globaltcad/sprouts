@@ -1270,6 +1270,9 @@ class Property_Lenses_Spec extends Specification
             A weak action is a special kind of action that has a weakly referenced "owner".
             This owner determines if the action is still alive or not and should be removed
             after the owner.
+            
+            Warning! Never reference the owner in the action itself, not even indirectly!
+            This will effectively turn your owner and action into memory leaks.
         """
         given : 'We first create a base property for the lens:'
             var author = new Author("John", "Doe", LocalDate.of(1829, 8, 12), ["Book1", "Book2"])
@@ -1307,6 +1310,9 @@ class Property_Lenses_Spec extends Specification
             A weak observer is a special kind of observer that has a weakly referenced "owner".
             This owner determines if the observer is still alive or not and should be removed
             after the owner.
+            
+            Warning! Never reference the owner in the observer itself, not even indirectly!
+            This will effectively turn your owner and observer into memory leaks.
         """
         given : 'We first create a base property for the lens:'
             var date = LocalDate.of(2021, 8, 12)

@@ -184,7 +184,7 @@ public interface SproutsFactory
 
 	<O,D> WeakAction<O,D> actionOfWeak( O owner, BiConsumer<O, D> action );
 
-	<O> WeakObserver<O> observerOfWeak(O owner, Consumer<O> action );
+	<O> WeakObserver<O> observerOfWeak( O owner, Consumer<O> action );
 
 	/**
 	 *   The default id for properties which do not have an id explicitly specified.
