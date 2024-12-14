@@ -158,6 +158,36 @@ public interface SproutsFactory
 	<T> Vars<@Nullable T> varsOfNullable(Class<T> type, Iterable<Var<@Nullable T>> vars);
 
 
+	@SuppressWarnings("unchecked")
+	<T> Tuple<T> tupleOf( Class<T> type, Maybe<T>... vars );
+
+	<T> Tuple<T> tupleOf( Class<T> type );
+
+	@SuppressWarnings("unchecked")
+	<T> Tuple<T> tupleOf( Maybe<T> first, Maybe<T>... rest );
+
+	@SuppressWarnings("unchecked")
+	<T> Tuple<T> tupleOf( T first, T... rest );
+
+	@SuppressWarnings("unchecked")
+	<T> Tuple<T> tupleOf( Class<T> type, T... items );
+
+	<T> Tuple<T> tupleOf( Class<T> type, Iterable<T> vars );
+
+	@SuppressWarnings("unchecked")
+	<T> Tuple<@Nullable T> tupleOfNullable( Class<T> type, Maybe<@Nullable T>... vars );
+
+	<T> Tuple<@Nullable T> tupleOfNullable( Class<T> type );
+
+	@SuppressWarnings("unchecked")
+	<T> Tuple<@Nullable T> tupleOfNullable( Class<T> type, @Nullable T... values );
+
+	@SuppressWarnings("unchecked")
+	<T> Tuple<@Nullable T> tupleOfNullable( Maybe<@Nullable T> first, Maybe<@Nullable T>... rest );
+
+	<T> Tuple<@Nullable T> tupleOfNullable( Class<T> type, Iterable<@Nullable T> iterable );
+
+
 	<V> Result<V> resultOf( Class<V> type );
 
 	<V> Result<V> resultOf( V value );
@@ -182,7 +212,7 @@ public interface SproutsFactory
 
 	<V> Result<V> resultOfTry( Class<V> type, Supplier<V> supplier );
 
-	<O,D> WeakAction<O,D> actionOfWeak( O owner, BiConsumer<O, D> action );
+	<O,D> WeakAction<O,D> actionOfWeak(O owner, BiConsumer<O, D> action );
 
 	<O> WeakObserver<O> observerOfWeak( O owner, Consumer<O> action );
 
