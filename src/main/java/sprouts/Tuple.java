@@ -1,6 +1,5 @@
 package sprouts;
 
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import sprouts.impl.Sprouts;
 import sprouts.impl.TupleDiff;
