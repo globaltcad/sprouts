@@ -130,7 +130,7 @@ class Tuple_Spec extends Specification
         then : '...we get the expected values.'
             diff.change() == change
             diff.index().orElse(-1) == index
-            diff.count() == count
+            diff.size() == count
 
         where : 'The use the following input, operation, and expected change information.'
             input                   | operation                                        || change        | index | count

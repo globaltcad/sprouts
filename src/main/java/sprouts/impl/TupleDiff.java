@@ -8,13 +8,13 @@ import java.util.Optional;
 
 /**
  *  A {@link TupleDiff} object holds meta information about a {@link Tuple} instance
- *  which describes how the {@link Tuple} was transformed from its previous state.<br>
+ *  that describes how the {@link Tuple} was transformed from its previous state.<br>
  *  <p>
  *  So for example, if the {@link Tuple#removeFirst(int)}
  *  method was called with a count of 3, then the resulting {@link Tuple}
  *  will internally maintain a {@link TupleDiff} instance with
  *  a {@link #change()} == {@link Change#REMOVE},
- *  {@link #index()} == 0 and {@link #count()} == 3.<br>
+ *  {@link #index()} == 0 and {@link #size()} == 3.<br>
  *  <p>
  *  The purpose of this class is to provides meta information specifically
  *  for efficient binding and change propagation to other
@@ -43,10 +43,10 @@ public final class TupleDiff
      * @param origin The {@link Tuple} instance to create a {@link TupleDiff} for.
      * @param change The type of change that occurred in the {@link Tuple}.
      * @param index The index at which the change occurred in the {@link Tuple}.
-     * @param count The number of items that were affected by the change in the {@link Tuple}.
+     * @param size The number of items that were affected by the change in the {@link Tuple}.
      * @return A new {@link TupleDiff} instance with the given parameters.
      */
-    public static TupleDiff of( Tuple<?> origin, Change change, int index, int count ) {
+    public static TupleDiff of( Tuple<?> origin, Change change, int index, int size ) {
         if ( origin instanceof TupleDiffOwner) {
             Optional<TupleDiff> previous = ((TupleDiffOwner) origin).differenceFromPrevious();
             if ( previous.isPresent() ) {
@@ -55,28 +55,28 @@ public final class TupleDiff
                         prev._version.next(),
                         change,
                         index,
-                        count
+                        size
                     );
             }
         }
-        return new TupleDiff( Version.create(), change, index, count );
+        return new TupleDiff( Version.create(), change, index, size );
     }
 
     private final Version _version;
     private final Change  _change;
     private final int     _index;
-    private final int     _count;
+    private final int     _size;
 
     private TupleDiff(
         Version version,
         Change change,
         int    index,
-        int    count
+        int    size
     ) {
         _version = version;
         _change  = change;
         _index   = index;
-        _count   = count;
+        _size    = size;
     }
 
     /**
@@ -88,7 +88,7 @@ public final class TupleDiff
      *  <p>
      *  When trying to do optimized synchronization to {@link Tuple} state changes,
      *  don't forget to call this method before using {@link #change()}, {@link #index()},
-     *  and {@link #count()} to update the target data structure.
+     *  and {@link #size()} to update the target data structure.
      *
      * @param other The {@link TupleDiff} to check if this {@link TupleDiff} is a successor of.
      * @return True if this {@link TupleDiff} is a successor of the given {@link TupleDiff}.
@@ -120,11 +120,13 @@ public final class TupleDiff
     }
 
     /**
-     *  The number of items that were affected by the change in the {@link Tuple}.
+     *  The size of the difference is the number of items that were
+     *  affected by the change in the {@link Tuple}.
+     *
      *  @return The number of items affected by the change.
      */
-    public int count() {
-        return _count;
+    public int size() {
+        return _size;
     }
 
     @Override
@@ -133,7 +135,7 @@ public final class TupleDiff
                     "version="   + _version   + ", " +
                     "change="    + _change    + ", " +
                     "index="     + _index     + ", " +
-                    "count="     + _count     +
+                    "size="      + _size      +
                 "]";
     }
 }
