@@ -46,7 +46,7 @@ final class PropertyListDelegate<T> implements sprouts.ValsDelegate<T> {
     }
 
     @Override
-    public Vals<T> vals() {
+    public Vals<T> currentValues() {
         return vals;
     }
 
@@ -57,7 +57,7 @@ final class PropertyListDelegate<T> implements sprouts.ValsDelegate<T> {
                 "changeType=" + changeType() + ", " +
                 "newValues=" + newValues() + ", " +
                 "oldValues=" + oldValues() + ", " +
-                "vals=" + vals() +
+                "vals=" + currentValues() +
                 ']';
     }
 }

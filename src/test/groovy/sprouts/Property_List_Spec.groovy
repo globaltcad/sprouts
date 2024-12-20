@@ -1176,8 +1176,8 @@ class Property_List_Spec extends Specification
             change.oldValues().isEmpty()
         and : 'The `index` of the change points to the added properties.'
             change.index() == 3
-        and : 'The `vals` should contain the added properties'
-            change.vals() == Vals.of("a", "d", "e", "f", "g")
+        and : 'The `currentValues` should contain the added properties'
+            change.currentValues() == Vals.of("a", "d", "e", "f", "g")
         when : 'We add properties list to the list using the `addAll` method.'
             vars.addAll(Vars.of("h", "i", "j"))
         then : 'The `newValues` should contain the added property.'
@@ -1187,8 +1187,8 @@ class Property_List_Spec extends Specification
             change.oldValues().isEmpty()
         and : 'The `index` of the change points to the added properties.'
             change.index() == 5
-        and : 'The `vals` should contain the added properties'
-            change.vals() == Vals.of("a", "d", "e", "f", "g", "h", "i", "j")
+        and : 'The `currentValues` should contain the added properties'
+            change.currentValues() == Vals.of("a", "d", "e", "f", "g", "h", "i", "j")
         when : 'We add list of properties to the list using the `addAll` method.'
             vars.addAll(Arrays.asList("k", "l", "m", "n"))
         then : 'The `newValues` should contain the added property.'
@@ -1198,8 +1198,8 @@ class Property_List_Spec extends Specification
             change.oldValues().isEmpty()
         and : 'The `index` of the change points to the added properties.'
             change.index() == 8
-        and : 'The `vals` should contain the added properties'
-            change.vals() == Vals.of("a", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n")
+        and : 'The `currentValues` should contain the added properties'
+            change.currentValues() == Vals.of("a", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n")
     }
 
     def 'The change delegate contains information about changes made to a "Vars" list by removing a list of properties.'() {
@@ -1222,8 +1222,8 @@ class Property_List_Spec extends Specification
             change.newValues().isEmpty()
         and : 'The `index` of the change is `-1`.'
             change.index() == -1
-        and : 'The `vals` should not contain the removed properties'
-            change.vals() == Vals.of("a", "d", "e", "h", "i", "j", "k", "l", "m", "n", "o", "k", "p", "h", "l", "m", "n", "p")
+        and : 'The `currentValues` should not contain the removed properties'
+            change.currentValues() == Vals.of("a", "d", "e", "h", "i", "j", "k", "l", "m", "n", "o", "k", "p", "h", "l", "m", "n", "p")
         when : 'We remove a property list from the list with the `removeAll` method.'
             vars.removeAll(Vals.of("h", "i", "j"))
         then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
@@ -1233,8 +1233,8 @@ class Property_List_Spec extends Specification
             change.newValues().isEmpty()
         and : 'The `index` of the change is `-1`.'
             change.index() == -1
-        and : 'The `vals` should not contain the removed properties'
-            change.vals() == Vals.of("a", "d", "e", "k", "l", "m", "n", "o", "k", "p", "l", "m", "n", "p")
+        and : 'The `currentValues` should not contain the removed properties'
+            change.currentValues() == Vals.of("a", "d", "e", "k", "l", "m", "n", "o", "k", "p", "l", "m", "n", "p")
         when : 'Now we remove properties from the list based on a predicate with the `removeIf` method.'
             vars.removeIf(var -> "l" == var.orElseNull() || "m" == var.orElseNull())
         then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
@@ -1244,8 +1244,8 @@ class Property_List_Spec extends Specification
             change.newValues().isEmpty()
         and : 'The `index` of the change is `-1`.'
             change.index() == -1
-        and : 'The `vals` should not contain the removed properties'
-            change.vals() == Vals.of("a", "d", "e", "k", "n", "o", "k", "p", "n", "p")
+        and : 'The `currentValues` should not contain the removed properties'
+            change.currentValues() == Vals.of("a", "d", "e", "k", "n", "o", "k", "p", "n", "p")
         when : 'We can also remove properties from the list based on a predicate with the `popIf` method.'
             vars.popIf(var -> "e" == var.orElseNull() || "p" == var.orElseNull())
         then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
@@ -1255,8 +1255,8 @@ class Property_List_Spec extends Specification
             change.newValues().isEmpty()
         and : 'The `index` of the change is `-1`.'
             change.index() == -1
-        and : 'The `vals` should not contain the removed properties'
-            change.vals() == Vals.of("a", "d", "k", "n", "o", "k", "n")
+        and : 'The `currentValues` should not contain the removed properties'
+            change.currentValues() == Vals.of("a", "d", "k", "n", "o", "k", "n")
         when : 'We remove values from the list based on a predicate using the `removeIfItem` method.'
             vars.removeIfItem(v -> "a" == v || "n" == v)
         then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
@@ -1266,8 +1266,8 @@ class Property_List_Spec extends Specification
             change.newValues().isEmpty()
         and : 'The `index` of the change is `-1`.'
             change.index() == -1
-        and : 'The `vals` should not contain the removed properties'
-            change.vals() == Vals.of("d", "k", "o", "k")
+        and : 'The `currentValues` should not contain the removed properties'
+            change.currentValues() == Vals.of("d", "k", "o", "k")
         when : 'We remove values from the list based on a predicate using the `popIfItem` method.'
             vars.popIfItem(v -> "d" == v || "k" == v)
         then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
@@ -1277,8 +1277,8 @@ class Property_List_Spec extends Specification
             change.newValues().isEmpty()
         and : 'The `index` of the change is `-1`.'
             change.index() == -1
-        and : 'The `vals` should not contain the removed properties'
-            change.vals() == Vals.of("o")
+        and : 'The `currentValues` should not contain the removed properties'
+            change.currentValues() == Vals.of("o")
     }
 
     def 'The change delegate contains information about changes made to a "Vars" list by removing a sequence of properties.'() {
@@ -1301,8 +1301,8 @@ class Property_List_Spec extends Specification
             change.newValues().isEmpty()
         and : 'The `index` of the change is the index of the first property removed.'
             change.index() == 0
-        and : 'The `vals` should not contain the removed properties'
-            change.vals() == Vals.of("e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z")
+        and : 'The `currentValues` should not contain the removed properties'
+            change.currentValues() == Vals.of("e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z")
         when : 'We remove a sequence of values from the list with the `removeLast` method.'
             vars.removeLast(4)
         then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
@@ -1312,8 +1312,8 @@ class Property_List_Spec extends Specification
             change.newValues().isEmpty()
         and : 'The `index` of the change is the index of the first property removed.'
             change.index() == 18
-        and : 'The `vals` should not contain the removed properties'
-            change.vals() == Vals.of("e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v")
+        and : 'The `currentValues` should not contain the removed properties'
+            change.currentValues() == Vals.of("e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v")
         when : 'We remove a range of values from the list with the `removeRange` method.'
             vars.removeRange(1, 3)
         then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
@@ -1323,8 +1323,8 @@ class Property_List_Spec extends Specification
             change.newValues().isEmpty()
         and : 'The `index` of the change is the index of the first property removed.'
             change.index() == 1
-        and : 'The `vals` should not contain the removed properties'
-            change.vals() == Vals.of("e", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v")
+        and : 'The `currentValues` should not contain the removed properties'
+            change.currentValues() == Vals.of("e", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v")
         when : 'We remove a sequence of values from the list with the `removeAt` method.'
             vars.removeAt(2, 2)
         then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
@@ -1334,8 +1334,8 @@ class Property_List_Spec extends Specification
             change.newValues().isEmpty()
         and : 'The `index` of the change is the index of the first property removed.'
             change.index() == 2
-        and : 'The `vals` should not contain the removed properties'
-            change.vals() == Vals.of("e", "h", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v")
+        and : 'The `currentValues` should not contain the removed properties'
+            change.currentValues() == Vals.of("e", "h", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v")
         when : 'We remove a sequence of values from the list with the `popFirst` method.'
             vars.popFirst(3)
         then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
@@ -1345,8 +1345,8 @@ class Property_List_Spec extends Specification
             change.newValues().isEmpty()
         and : 'The `index` of the change is the index of the first property removed.'
             change.index() == 0
-        and : 'The `vals` should not contain the removed properties'
-            change.vals() == Vals.of("l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v")
+        and : 'The `currentValues` should not contain the removed properties'
+            change.currentValues() == Vals.of("l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v")
         when : 'We remove a sequence of values from the list with the `popLast` method.'
             vars.popLast(4)
         then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
@@ -1356,8 +1356,8 @@ class Property_List_Spec extends Specification
             change.newValues().isEmpty()
         and : 'The `index` of the change is the index of the first property removed.'
             change.index() == 7
-        and : 'The `vals` should not contain the removed properties'
-            change.vals() == Vals.of("l", "m", "n", "o", "p", "q", "r")
+        and : 'The `currentValues` should not contain the removed properties'
+            change.currentValues() == Vals.of("l", "m", "n", "o", "p", "q", "r")
         when : 'We remove a sequence of values from the list with the `popRange` method.'
             vars.popRange(2, 5)
         then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
@@ -1367,8 +1367,8 @@ class Property_List_Spec extends Specification
             change.newValues().isEmpty()
         and : 'The `index` of the change is the index of the first property removed.'
             change.index() == 2
-        and : 'The `vals` should not contain the removed properties'
-            change.vals() == Vals.of("l", "m", "q", "r")
+        and : 'The `currentValues` should not contain the removed properties'
+            change.currentValues() == Vals.of("l", "m", "q", "r")
     }
 
     def 'The change delegate contains information about changes made to a "Vars" list by clearing the list.'() {
@@ -1393,8 +1393,8 @@ class Property_List_Spec extends Specification
             change.newValues().isEmpty()
         and : 'The `index` of the change is the index of the first property removed.'
             change.index() == 0
-        and : 'The `vals` should be an empty property list'
-            change.vals().isEmpty()
+        and : 'The `currentValues` should be an empty property list'
+            change.currentValues().isEmpty()
         when : 'We remove all properties from the nullable list with the `clear` method.'
             varsNullable.clear()
         then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
@@ -1404,8 +1404,8 @@ class Property_List_Spec extends Specification
             changeNullable.newValues().isEmpty()
         and : 'The `index` of the change is the index of the first property removed.'
             changeNullable.index() == 0
-        and : 'The `vals` should be an empty property list'
-            changeNullable.vals().isEmpty()
+        and : 'The `currentValues` should be an empty property list'
+            changeNullable.currentValues().isEmpty()
     }
 
     def 'The change delegate contains information about changes made to a "Vars" list by removing a set of properties.'() {
@@ -1428,8 +1428,8 @@ class Property_List_Spec extends Specification
             change.newValues().isEmpty()
         and : 'The `index` of the change is `-1`.'
             change.index() == -1
-        and : 'The `vals` should only contained the retained properties.'
-            change.vals() == Vals.of("c", "d", "f", "g", "h", "i", "j", "c", "d")
+        and : 'The `currentValues` should only contained the retained properties.'
+            change.currentValues() == Vals.of("c", "d", "f", "g", "h", "i", "j", "c", "d")
         when : 'We use the `retainAll` method to remove all properties from the list that are not contained in a given list of values.'
             vars.retainAll("a", "g", "h", "i", "j")
         then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
@@ -1439,8 +1439,8 @@ class Property_List_Spec extends Specification
             change.newValues().isEmpty()
         and : 'The `index` of the change is `-1`.'
             change.index() == -1
-        and : 'The `vals` should only contained the retained properties.'
-            change.vals() == Vals.of("g", "h", "i", "j")
+        and : 'The `currentValues` should only contained the retained properties.'
+            change.currentValues() == Vals.of("g", "h", "i", "j")
         when : 'When the `retainAll` method is used and no property is removed.'
             change = null
             vars.retainAll("a", "g", "h", "i", "j")
@@ -1455,8 +1455,8 @@ class Property_List_Spec extends Specification
             change.newValues().isEmpty()
         and : 'The `index` of the change is `-1`.'
             change.index() == -1
-        and : 'The `vals` should be an empty property list'
-            change.vals().isEmpty()
+        and : 'The `currentValues` should be an empty property list'
+            change.currentValues().isEmpty()
     }
 
     def 'The change delegate contains information about changes made to a nullable "Vars" list by removing a set of properties.'() {
@@ -1481,8 +1481,8 @@ class Property_List_Spec extends Specification
             change.newValues().isEmpty()
         and : 'The `index` of the change is `-1`.'
             change.index() == -1
-        and : 'The `vals` should only contained the retained properties.'
-            change.vals() == Vals.ofNullable(String.class, "b", "d", "g", "h", "i", "j", "b", "d")
+        and : 'The `currentValues` should only contained the retained properties.'
+            change.currentValues() == Vals.ofNullable(String.class, "b", "d", "g", "h", "i", "j", "b", "d")
         when : 'We use the `retainAll` method to remove all properties from the list that are not contained in a given list of properties.'
             vars2.retainAll(Vals.ofNullable(String.class, null, "a", "b", "d"))
         then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
@@ -1492,8 +1492,8 @@ class Property_List_Spec extends Specification
             change.newValues().isEmpty()
         and : 'The `index` of the change is `-1`.'
             change.index() == -1
-        and : 'The `vals` should only contained the retained properties.'
-            change.vals() == Vals.ofNullable(String.class, "a", "b", null, "d", null, null, "a", "b", "d")
+        and : 'The `currentValues` should only contained the retained properties.'
+            change.currentValues() == Vals.ofNullable(String.class, "a", "b", null, "d", null, null, "a", "b", "d")
     }
 
     def 'The change delegate contains information about changes made to a `Vars` list by setting a range properties.'() {
@@ -1517,8 +1517,8 @@ class Property_List_Spec extends Specification
             change.newValues() == Vals.of("x", "x", "x")
         and : 'The `index` of the change is `2`.'
             change.index() == 2
-        and : 'The `vals` should contain the expected properties.'
-            change.vals() == Vals.of("a", "b", "x", "x", "x", "f", "g", "h", "i", "j")
+        and : 'The `currentValues` should contain the expected properties.'
+            change.currentValues() == Vals.of("a", "b", "x", "x", "x", "f", "g", "h", "i", "j")
         when : 'We use the `setRange` method to set all properties within the given range to the given property.'
             vars.setRange(4, 8, Var.of("z"))
         then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
@@ -1529,8 +1529,8 @@ class Property_List_Spec extends Specification
             change.newValues() == Vals.of("z", "z", "z", "z")
         and : 'The `index` of the change is `4`.'
             change.index() == 4
-        and : 'The `vals` should contain the expected properties.'
-            change.vals() == Vals.of("a", "b", "x", "x", "z", "z", "z", "z", "i", "j")
+        and : 'The `currentValues` should contain the expected properties.'
+            change.currentValues() == Vals.of("a", "b", "x", "x", "z", "z", "z", "z", "i", "j")
     }
 
     def 'The change delegate contains information about changes made to a `Vars` list by setting a sequence properties.'() {
@@ -1554,8 +1554,8 @@ class Property_List_Spec extends Specification
             change.newValues() == Vals.of("x", "x", "x")
         and : 'The `index` of the change is `2`.'
             change.index() == 2
-        and : 'The `vals` should contain the expected properties.'
-            change.vals() == Vals.of("a", "b", "x", "x", "x", "f", "g", "h", "i", "j")
+        and : 'The `currentValues` should contain the expected properties.'
+            change.currentValues() == Vals.of("a", "b", "x", "x", "x", "f", "g", "h", "i", "j")
         when : 'We use the `setAt` method to set all properties within the given sequence to the given property.'
             vars.setAt(4, 4, Var.of("z"))
         then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
@@ -1566,8 +1566,8 @@ class Property_List_Spec extends Specification
             change.newValues() == Vals.of("z", "z", "z", "z")
         and : 'The `index` of the change is `4`.'
             change.index() == 4
-        and : 'The `vals` should contain the expected properties.'
-            change.vals() == Vals.of("a", "b", "x", "x", "z", "z", "z", "z", "i", "j")
+        and : 'The `currentValues` should contain the expected properties.'
+            change.currentValues() == Vals.of("a", "b", "x", "x", "z", "z", "z", "z", "i", "j")
     }
 
     def 'The change delegate contains information about changes made to a nullable `Vars` list by setting a range properties.'() {
@@ -1591,8 +1591,8 @@ class Property_List_Spec extends Specification
             change.newValues() == Vals.ofNullable(String.class, (String) null, (String) null, (String) null)
         and : 'The `index` of the change is `2`.'
             change.index() == 2
-        and : 'The `vals` should contain the expected properties.'
-            change.vals() == Vals.ofNullable(String.class, "a", "b", null, null, null, null, "g", "h", "i", "j")
+        and : 'The `currentValues` should contain the expected properties.'
+            change.currentValues() == Vals.ofNullable(String.class, "a", "b", null, null, null, null, "g", "h", "i", "j")
         when : 'We use the `setRange` method to set all properties within the given range to the given property.'
             vars.setRange(5, 9, Var.ofNull(String.class))
         then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
@@ -1603,8 +1603,8 @@ class Property_List_Spec extends Specification
             change.newValues() == Vals.ofNullable(String.class, (String) null, (String) null, (String) null, (String) null)
         and : 'The `index` of the change is `4`.'
             change.index() == 5
-        and : 'The `vals` should contain the expected properties.'
-            change.vals() == Vals.ofNullable(String.class, "a", "b", null, null, null, null, null, null, null, "j")
+        and : 'The `currentValues` should contain the expected properties.'
+            change.currentValues() == Vals.ofNullable(String.class, "a", "b", null, null, null, null, null, null, null, "j")
     }
 
     def 'The change delegate contains information about changes made to a nullable `Vars` list by setting a sequence properties.'() {
@@ -1628,9 +1628,9 @@ class Property_List_Spec extends Specification
             change.newValues() == Vals.ofNullable(String.class, (String) null, (String) null, (String) null)
         and : 'The `index` of the change is `2`.'
             change.index() == 2
-        and : 'The `vals` should contain the expected properties.'
+        and : 'The `currentValues` should contain the expected properties.'
 
-        change.vals() == Vals.ofNullable(String.class, "a", "b", null, null, null, null, "g", "h", "i", "j")
+        change.currentValues() == Vals.ofNullable(String.class, "a", "b", null, null, null, null, "g", "h", "i", "j")
         when : 'We use the `setAt` method to set all properties within the given sequence to the given property.'
             vars.setAt(5, 4, Var.ofNull(String.class))
         then : 'The `oldValues` of the change delegate should be a property list with the removed properties.'
@@ -1641,8 +1641,8 @@ class Property_List_Spec extends Specification
             change.newValues() == Vals.ofNullable(String.class, (String) null, (String) null, (String) null, (String) null)
         and : 'The `index` of the change is `4`.'
             change.index() == 5
-        and : 'The `vals` should contain the expected properties.'
-            change.vals() == Vals.ofNullable(String.class, "a", "b", null, null, null, null, null, null, null, "j")
+        and : 'The `currentValues` should contain the expected properties.'
+            change.currentValues() == Vals.ofNullable(String.class, "a", "b", null, null, null, null, null, null, null, "j")
     }
 
     def 'You can create a mapped version of a property list.'() {

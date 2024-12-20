@@ -260,7 +260,7 @@ public interface Vals<T extends @Nullable Object> extends Iterable<T> {
      */
     default Viewable<Integer> viewSize() {
         Var<Integer> size = Var.of(size());
-        Viewables.cast(this).onChange( v -> size.set(v.vals().size()) );
+        Viewables.cast(this).onChange( v -> size.set(v.currentValues().size()) );
         return Viewable.cast(size);
     }
 
@@ -275,7 +275,7 @@ public interface Vals<T extends @Nullable Object> extends Iterable<T> {
      */
     default Viewable<Boolean> viewIsEmpty() {
         Var<Boolean> empty = Var.of(isEmpty());
-        Viewables.cast(this).onChange( v -> empty.set(v.vals().isEmpty()) );
+        Viewables.cast(this).onChange( v -> empty.set(v.currentValues().isEmpty()) );
         return Viewable.cast(empty);
     }
 
@@ -290,7 +290,7 @@ public interface Vals<T extends @Nullable Object> extends Iterable<T> {
      */
     default Viewable<Boolean> viewIsNotEmpty() {
         Var<Boolean> notEmpty = Var.of(isNotEmpty());
-        Viewables.cast(this).onChange( v -> notEmpty.set(v.vals().isNotEmpty()) );
+        Viewables.cast(this).onChange( v -> notEmpty.set(v.currentValues().isNotEmpty()) );
         return Viewable.cast(notEmpty);
     }
 

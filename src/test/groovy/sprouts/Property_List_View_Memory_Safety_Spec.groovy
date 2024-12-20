@@ -39,7 +39,7 @@ class Property_List_View_Memory_Safety_Spec extends Specification
             WeakReference<Viewables<String>> namesRef = new WeakReference<>(names)
         and : 'A list to record the changes and a listener to record the changes.'
             var traceOfChanges = []
-            names.onChange({ traceOfChanges << it.vals().toList() })
+            names.onChange({ traceOfChanges << it.currentValues().toList() })
         expect : 'The trace is empty initially.'
             traceOfChanges.isEmpty()
 
