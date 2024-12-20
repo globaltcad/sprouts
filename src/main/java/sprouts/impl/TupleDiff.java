@@ -2,6 +2,7 @@ package sprouts.impl;
 
 import sprouts.Change;
 import sprouts.Tuple;
+import sprouts.Version;
 
 import java.util.Optional;
 
@@ -29,8 +30,6 @@ import java.util.Optional;
  */
 public final class TupleDiff
 {
-    private static int _lineageIdCounter = 0;
-
     /**
      *  Creates a new {@link TupleDiff} instance from a source {@link Tuple} instance
      *  and how it was changed to a new state. <br>
@@ -53,35 +52,31 @@ public final class TupleDiff
             if ( previous.isPresent() ) {
                 TupleDiff prev = previous.get();
                 return new TupleDiff(
-                        prev._lineage,
-                        prev._successor+1,
+                        prev._version.next(),
                         change,
                         index,
                         count
                     );
             }
         }
-        return new TupleDiff( ++_lineageIdCounter, 0, change, index, count );
+        return new TupleDiff( Version.create(), change, index, count );
     }
 
-    private final int    _lineage;
-    private final int    _successor;
-    private final Change _change;
-    private final int    _index;
-    private final int    _count;
+    private final Version _version;
+    private final Change  _change;
+    private final int     _index;
+    private final int     _count;
 
     private TupleDiff(
-        int    lineage,
-        int    successor,
+        Version version,
         Change change,
         int    index,
         int    count
     ) {
-        _lineage   = lineage;
-        _successor = successor;
-        _change    = change;
-        _index     = index;
-        _count     = count;
+        _version = version;
+        _change  = change;
+        _index   = index;
+        _count   = count;
     }
 
     /**
@@ -99,7 +94,7 @@ public final class TupleDiff
      * @return True if this {@link TupleDiff} is a successor of the given {@link TupleDiff}.
      */
     public boolean isSuccessorOf( TupleDiff other ) {
-        return _lineage == other._lineage && (_successor + 1) == other._successor;
+        return _version.isSuccessorOf( other._version );
     }
 
     /**
@@ -135,8 +130,7 @@ public final class TupleDiff
     @Override
     public String toString() {
         return this.getClass().getSimpleName() + "[" +
-                    "lineage="   + _lineage   + ", " +
-                    "successor=" + _successor + ", " +
+                    "version="   + _version   + ", " +
                     "change="    + _change    + ", " +
                     "index="     + _index     + ", " +
                     "count="     + _count     +
