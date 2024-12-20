@@ -55,5 +55,5 @@ public interface ValsDelegate<T>
      *  Exposes a read only property list after the change has been applied.
      * @return An immutable copy of the property list after the change has been applied.
      */
-    Vals<T> vals();
+    Vals<T> currentValues();
 }

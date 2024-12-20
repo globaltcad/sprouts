@@ -90,12 +90,12 @@ class Property_Event_Delegates_Spec extends Specification
         when : 'We add an element to the property list.'
             propertyList.add(42)
         then : 'The exposed delegate is equal to the property list.'
-            delegate.vals().toList() == propertyList.toList()
+            delegate.currentValues().toList() == propertyList.toList()
         and : 'The delegate is however not identical to the property list.'
-            delegate.vals() !== propertyList
+            delegate.currentValues() !== propertyList
         when : 'We try to mutate the delegate...'
-            delegate.vals().add(0)
-        then : '...we get an exception.'
+            delegate.currentValues().add(0)
+        then : '...we get an exception because the delegate is readonly.'
             thrown(UnsupportedOperationException)
     }
 
@@ -119,12 +119,12 @@ class Property_Event_Delegates_Spec extends Specification
         when : 'We add an element to the property list.'
             propertyList.add(42)
         then : 'The exposed delegate is equal to the property list.'
-            delegate.vals().toList() == propertyList.toList()
+            delegate.currentValues().toList() == propertyList.toList()
         and : 'The delegate is however not identical to the property list.'
-            delegate.vals() !== propertyList
+            delegate.currentValues() !== propertyList
         when : 'We try to mutate the delegate...'
-            delegate.vals().add(0)
-        then : '...we get an exception.'
+            delegate.currentValues().add(0)
+        then : '...we get an exception because the current values are readonly.'
             thrown(UnsupportedOperationException)
     }
 

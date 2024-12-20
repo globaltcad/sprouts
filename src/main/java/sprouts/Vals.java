@@ -16,13 +16,13 @@ import java.util.stream.StreamSupport;
  *  iterated over, mapped, filtered, turned into a stream, and more. <br>
  *  Use {@link #view()} to create a weakly referenced {@link Viewables} instance
  *  that can be observed for changes using the {@link Viewables#onChange(Action)} method.
- * 	<p>
- * 	Note that the name of this class is short for "values". This name was deliberately chosen because
- * 	it is short, concise and yet clearly conveys the same meaning as other names used to model this
- * 	kind of pattern, like "properties", "observable objects", "observable values", "observable properties", etc.
- * 	<p>
- * 	<b>Please take a look at the <a href="https://globaltcad.github.io/sprouts/">living sprouts documentation</a>
- * 	where you can browse a large collection of examples demonstrating how to use the API of this class.</b>
+ *     <p>
+ *     Note that the name of this class is short for "values". This name was deliberately chosen because
+ *     it is short, concise and yet clearly conveys the same meaning as other names used to model this
+ *     kind of pattern, like "properties", "observable objects", "observable values", "observable properties", etc.
+ *     <p>
+ *     <b>Please take a look at the <a href="https://globaltcad.github.io/sprouts/">living sprouts documentation</a>
+ *     where you can browse a large collection of examples demonstrating how to use the API of this class.</b>
  *
  * @param <T> The type of the properties.
  */
@@ -260,7 +260,7 @@ public interface Vals<T extends @Nullable Object> extends Iterable<T> {
      */
     default Viewable<Integer> viewSize() {
         Var<Integer> size = Var.of(size());
-        Viewables.cast(this).onChange( v -> size.set(v.vals().size()) );
+        Viewables.cast(this).onChange( v -> size.set(v.currentValues().size()) );
         return Viewable.cast(size);
     }
 
@@ -275,7 +275,7 @@ public interface Vals<T extends @Nullable Object> extends Iterable<T> {
      */
     default Viewable<Boolean> viewIsEmpty() {
         Var<Boolean> empty = Var.of(isEmpty());
-        Viewables.cast(this).onChange( v -> empty.set(v.vals().isEmpty()) );
+        Viewables.cast(this).onChange( v -> empty.set(v.currentValues().isEmpty()) );
         return Viewable.cast(empty);
     }
 
@@ -290,7 +290,7 @@ public interface Vals<T extends @Nullable Object> extends Iterable<T> {
      */
     default Viewable<Boolean> viewIsNotEmpty() {
         Var<Boolean> notEmpty = Var.of(isNotEmpty());
-        Viewables.cast(this).onChange( v -> notEmpty.set(v.vals().isNotEmpty()) );
+        Viewables.cast(this).onChange( v -> notEmpty.set(v.currentValues().isNotEmpty()) );
         return Viewable.cast(notEmpty);
     }
 
