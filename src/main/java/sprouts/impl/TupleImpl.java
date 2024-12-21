@@ -8,10 +8,10 @@
 
 public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, TupleDiffOwner
 {
-    private final boolean _allowsNull;
-    private final Class<T> _type;
-    private final Object _data;
-    private final @Nullable TupleDiff _diffToPrevious;
+    private final boolean   _allowsNull;
+    private final Class<T>  _type;
+    private final Object    _data;
+    private final TupleDiff _diffToPrevious;
 
     @SuppressWarnings("NullAway")
     public TupleImpl(
@@ -33,7 +33,7 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Tu
         _allowsNull     = allowsNull;
         _type           = type;
         _data           = ( items == null ? _createArray(type, allowsNull, 0) : _tryFlatten(items,type,allowsNull) );
-        _diffToPrevious = diffToPrevious;
+        _diffToPrevious = ( diffToPrevious == null ? TupleDiff.initial() : diffToPrevious );
         if ( !allowsNull ) {
             _each(_data, type, item -> {
                 if ( item == null )
