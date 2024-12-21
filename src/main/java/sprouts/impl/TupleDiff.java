@@ -62,6 +62,10 @@ public final class TupleDiff
         return new TupleDiff( Version.create(), change, index, size );
     }
 
+    public static TupleDiff initial() {
+        return new TupleDiff( Version.create(), Change.NONE, -1, 0 );
+    }
+
     private final Version _version;
     private final Change  _change;
     private final int     _index;

@@ -10,7 +10,17 @@ import java.util.Optional;
  *  When using the observer pattern, the observer can keep track of the changes
  *  and update the target sequence accordingly.<br>
  *  This is mostly a Sprouts internal interface and is not intended for widespread use,
- *  but rather a well contained optimization technique.
+ *  but rather a well contained optimization technique.<br>
+ *  <br>
+ *  Note that this is deliberately not part of the public API because
+ *  it is an internal optimization technique that breaks the promise of
+ *  the {@link sprouts.Tuple} interface of having an identity solely based
+ *  on the contents of the tuple. Due to the {@link TupleDiff} being part
+ *  of the tuple, if the {@link TupleDiff} were a public property of the tuple, then
+ *  the "true value based" identity of the tuple would also have to be based
+ *  on this diff, which would make tuples with the same contents but different
+ *  diffs not equal to each other. This would be a violation of the contract
+ *  of the {@link sprouts.Tuple} interface.
  */
 public interface TupleDiffOwner
 {
