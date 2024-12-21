@@ -25,7 +25,7 @@ import java.util.Optional;
  *  {@link TupleDiff} instance.<br>
  *  <p>
  *  In practice, you would only do this optimized sync to a tuple after first checking if
- *  {@link #isSuccessorOf(TupleDiff)} is true, and then update the target data structure
+ *  {@link #isDirectSuccessorOf(TupleDiff)} is true, and then update the target data structure
  *  with the information provided by the {@link TupleDiff} instance.
  */
 public final class TupleDiff
@@ -98,7 +98,7 @@ public final class TupleDiff
      * @return True if this {@link TupleDiff} is a successor of the given {@link TupleDiff}.
      */
     public boolean isDirectSuccessorOf( TupleDiff other ) {
-        return _version.isSuccessorOf( other._version );
+        return _version.isDirectSuccessorOf( other._version );
     }
 
     /**
