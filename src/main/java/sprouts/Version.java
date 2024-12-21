@@ -2,8 +2,8 @@ package sprouts;
 
 /**
  *  This is a value object representing a unique ID consisting
- *  of a lineage and succession number allowing you to identify something
- *  and also determine the order in which instances were created
+ *  of two numbers, a lineage and succession, allowing you to identify something
+ *  and also determine the order in which something was created
  *  and updated. <br>
  *  This is intended to be used to emulate identity in
  *  your value objects, which is useful for tracking changes
@@ -156,10 +156,25 @@ public final class Version
     }
 
     /**
+     *  Determines if this version object is a direct successor of another version object.
+     *  This is the case if the lineage of this version object is the same as the
+     *  lineage of the other version object and the succession of this version object
+     *  is exactly one greater than the succession of the other version object.
+     *
+     * @param other The other version object to compare this version object to.
+     * @return True if this version object is a successor of the other version object, false otherwise.
+     */
+    public boolean isDirectSuccessorOf( Version other ) {
+        long otherLineage = other.lineage();
+        long otherSuccession = other.succession();
+        return _lineage == otherLineage && _succession == otherSuccession + 1;
+    }
+
+    /**
      *  Determines if this version object is a successor of another version object.
      *  This is the case if the lineage of this version object is the same as the
      *  lineage of the other version object and the succession of this version object
-     *  is one greater than the succession of the other version object.
+     *  is greater than the succession of the other version object.
      *
      * @param other The other version object to compare this version object to.
      * @return True if this version object is a successor of the other version object, false otherwise.
@@ -167,14 +182,29 @@ public final class Version
     public boolean isSuccessorOf( Version other ) {
         long otherLineage = other.lineage();
         long otherSuccession = other.succession();
-        return _lineage == otherLineage && (_succession + 1) == otherSuccession;
+        return _lineage == otherLineage && _succession > otherSuccession;
+    }
+
+    /**
+     *  Determines if this version object is a direct predecessor of another version object.
+     *  This is the case if the lineage of this version object is the same as the
+     *  lineage of the other version object and the succession of this version object
+     *  is exactly one less than the succession of the other version object.
+     *
+     * @param other The other version object to compare this version object to.
+     * @return True if this version object is a predecessor of the other version object, false otherwise.
+     */
+    public boolean isDirectPredecessorOf( Version other ) {
+        long otherLineage = other.lineage();
+        long otherSuccession = other.succession();
+        return _lineage == otherLineage && _succession == otherSuccession - 1;
     }
 
     /**
      *  Determines if this version object is a predecessor of another version object.
      *  This is the case if the lineage of this version object is the same as the
      *  lineage of the other version object and the succession of this version object
-     *  is one less than the succession of the other version object.
+     *  is less than the succession of the other version object.
      *
      * @param other The other version object to compare this version object to.
      * @return True if this version object is a predecessor of the other version object, false otherwise.
@@ -182,7 +212,7 @@ public final class Version
     public boolean isPredecessorOf( Version other ) {
         long otherLineage = other.lineage();
         long otherSuccession = other.succession();
-        return _lineage == otherLineage && (_succession - 1) == otherSuccession;
+        return _lineage == otherLineage && _succession < otherSuccession;
     }
 
     @Override

@@ -97,7 +97,7 @@ public final class TupleDiff
      * @param other The {@link TupleDiff} to check if this {@link TupleDiff} is a successor of.
      * @return True if this {@link TupleDiff} is a successor of the given {@link TupleDiff}.
      */
-    public boolean isSuccessorOf( TupleDiff other ) {
+    public boolean isDirectSuccessorOf( TupleDiff other ) {
         return _version.isSuccessorOf( other._version );
     }
 
