@@ -62,14 +62,25 @@ public final class TupleDiff
         return new TupleDiff( Version.create(), change, index, size );
     }
 
+    /**
+     *  Creates a new {@link TupleDiff} instance that represents the initial state
+     *  of a {@link Tuple} instance. <br>
+     *  This is used to create a {@link TupleDiff} instance that
+     *  represents the state of an initial {@link Tuple} instance and at the beginning of a
+     *  potential chain of transformations.
+     *
+     * @return A new {@link TupleDiff} instance that represents the initial state of a {@link Tuple}.
+     */
     public static TupleDiff initial() {
         return new TupleDiff( Version.create(), Change.NONE, -1, 0 );
     }
+
 
     private final Version _version;
     private final Change  _change;
     private final int     _index;
     private final int     _size;
+
 
     private TupleDiff(
         Version version,
@@ -131,6 +142,18 @@ public final class TupleDiff
      */
     public int size() {
         return _size;
+    }
+
+    /**
+     *  The version of the {@link Tuple} state to which this {@link TupleDiff} belongs.
+     *  This is used as a bases for determining if this {@link TupleDiff} is a successor
+     *  of another {@link TupleDiff} instance in a linear chain of transformations.
+     *  (See {@link #isDirectSuccessorOf(TupleDiff)}).
+     *
+     *  @return The version of the {@link Tuple} state.
+     */
+    public Version version() {
+        return _version;
     }
 
     @Override
