@@ -376,7 +376,7 @@ class Property_List_Spec extends Specification
         and : 'A list where we are going to record changes.'
             var changes = []
         and : 'Now we register a change action listener on the `Vars` class.'
-            vars.onChange{ changes << it.changeType() }
+            Viewables.cast(vars).onChange{ changes << it.changeType() }
 
         when : 'We modify the property in various ways...'
             vars.addAt(1, 1)
@@ -1087,11 +1087,11 @@ class Property_List_Spec extends Specification
         given: 'A nullable "Vals" instance with a few properties, including `null` properties.'
             var vars = Vars.ofNullable(String.class, "a", "b", "c", "d", null, null, "g", "h", null, "j", "k", null, "m", null, "o")
         when: 'We remove an empty (`null`) property with the `remove` method.'
-            vars.remove((String) null)
+            vars.removeFirstFound((String) null)
         then: 'The `null` property is removed from the property list.'
             vars.toList() == ["a", "b", "c", "d", null, "g", "h", null, "j", "k", null, "m", null, "o"]
         when: 'We remove an empty (`null`) property with the `remove` method.'
-            vars.remove(Val.ofNullable(String.class, null))
+            vars.removeFirstFound(Val.ofNullable(String.class, null))
         then: 'The `null` property is removed from the property list.'
             vars.toList() == ["a", "b", "c", "d", "g", "h", null, "j", "k", null, "m", null, "o"]
         when: 'We remove an empty (`null`) property with the `removeAt` method.'
@@ -2268,5 +2268,30 @@ class Property_List_Spec extends Specification
             properties.setAllAt(-1, "x", "y", "z")
         then : 'An exception is thrown because the start index is out of bounds.'
             thrown(IndexOutOfBoundsException)
+    }
+
+    def 'The `remove(..)` methods remove all matching occurrences of a property from the list.'()
+    {
+        reportInfo """
+            The `remove(..)` methods remove all matching occurrences of a property from the list.
+            The `remove(..)` methods are overloaded to accept both `Val` and `Var` properties.
+        """
+        given : 'A property list with some properties.'
+            var properties = Vars.of(1, 7, 2, 1, 4, 2, 6, 8, 3, 3, 2, 9, 2, 6, 1, 5, 5, 2)
+
+        when : 'We use the `remove(T)` method to remove all occurrences of a property.'
+            properties.remove(2)
+        then : 'All occurrences of the property are removed from the list.'
+            properties.toList() == [1, 7, 1, 4, 6, 8, 3, 3, 9, 6, 1, 5, 5]
+
+        when : 'We use the `remove(Var<T>)` method to remove all occurrences of a property.'
+            properties.remove(properties.at(2))
+        then : 'All occurrences of the property are removed from the list.'
+            properties.toList() == [1, 7, 4, 6, 8, 3, 3, 9, 6, 1, 5, 5]
+
+        when : 'We try to remove a property which is not in the list but has an item that is in the list...'
+            properties.remove(Var.of(1))
+        then : 'The list remains unchanged.'
+            properties.toList() == [1, 7, 4, 6, 8, 3, 3, 9, 6, 1, 5, 5]
     }
 }

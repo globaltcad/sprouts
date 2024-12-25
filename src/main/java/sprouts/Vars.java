@@ -351,26 +351,61 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
     Vars<T> popRange(int from, int to);
 
     /**
-     * Removes the property containing the provided value from the list.
-     * If the value is not found, the list is unchanged.
+     *  Removes every occurrence of the supplied item from the list.
+     * @param item The item to remove from the entire list.
+     * @return This list.
+     */
+    default Vars<T> remove( T item ) {
+        int index = this.indexOf(item);
+        while ( index >= 0 ) {
+            removeAt(index);
+            index = this.indexOf(item);
+        }
+        return this;
+    }
+
+    /**
+     * Removes the first found property containing the provided item from the list.
+     * If such a property is not found, the list remains unchanged.
      *
-     * @param value the value to remove.
+     * @param item the value to remove.
      * @return {@code this} list of properties.
      */
-    default Vars<T> remove( T value ) {
-        int index = indexOf(value);
+    default Vars<T> removeFirstFound( T item ) {
+        int index = indexOf(item);
         return index < 0 ? this : removeRange( index, index + 1 );
     }
 
     /**
-     * Removes the property containing the provided value from the list.
+     * Removes every property containing the provided item from the list.
+     * If no such property is found, a {@link NoSuchElementException} is thrown.
+     *
+     * @param item the value to remove.
+     * @return {@code this} list of properties.
+     * @throws NoSuchElementException if the value is not found.
+     */
+    default Vars<T> removeOrThrow( T item ) {
+        int index = indexOf(item);
+        if ( index < 0 )
+            throw new NoSuchElementException("No such element: " + item);
+        while ( index >= 0 ) {
+            removeAt(index);
+            index = this.indexOf(item);
+        }
+        return this;
+    }
+
+    /**
+     * Removes the first occurrence of a property containing the supplied item from the list.
+     * If there are multiple occurrences of such properties in the list, then only the first
+     * one will be removed.
      * If the value is not found, a {@link NoSuchElementException} is thrown.
      *
      * @param value the value to remove.
      * @return {@code this} list of properties.
      * @throws NoSuchElementException if the value is not found.
      */
-    default Vars<T> removeOrThrow( T value ) {
+    default Vars<T> removeFirstFoundOrThrow( T value ) {
         int index = indexOf(value);
         if ( index < 0 )
             throw new NoSuchElementException("No such element: " + value);
@@ -378,8 +413,8 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
     }
 
     /**
-     * Removes the provided property from the list.
-     * If the property is not found, the list is unchanged.
+     * Removes every occurrence of the provided property from the list.
+     * If the property is not found, the list remains unchanged.
      *
      * @param var the property to remove.
      * @return {@code this} list of properties.
@@ -388,11 +423,32 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
     default Vars<T> remove( Var<T> var ) {
         Objects.requireNonNull(var);
         int index = indexOf(var);
+        while ( index >= 0 ) {
+            removeAt(index);
+            index = this.indexOf(var);
+        }
+        return this;
+    }
+
+    /**
+     * Removes the provided property from the list
+     * at its first found occurrence. If there are multiple
+     * occurrences of the same property in the list, then only the first
+     * one will be removed, and if the property is not found,
+     * the list is unchanged.
+     *
+     * @param var the property to remove.
+     * @return {@code this} list of properties.
+     * @throws NullPointerException if the {@code var} is {@code null}.
+     */
+    default Vars<T> removeFirstFound( Var<T> var ) {
+        Objects.requireNonNull(var);
+        int index = indexOf(var);
         return index < 0 ? this : removeRange( index, index + 1 );
     }
 
     /**
-     * Removes the provided property from the list.
+     * Removes every occurrence of the provided property from the list.
      * If the property is not found, a {@link NoSuchElementException} is thrown.
      *
      * @param var the property to remove.
@@ -401,6 +457,27 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
      * @throws NullPointerException  if the {@code var} is {@code null}.
      */
     default Vars<T> removeOrThrow( Var<T> var ) {
+        Objects.requireNonNull(var);
+        int index = indexOf(var);
+        if ( index < 0 )
+            throw new NoSuchElementException("No such element: " + var);
+        while ( index >= 0 ) {
+            removeAt(index);
+            index = this.indexOf(var);
+        }
+        return this;
+    }
+
+    /**
+     * Removes the first found occurrence of the provided property from the list.
+     * If the property is not found, a {@link NoSuchElementException} is thrown.
+     *
+     * @param var the property to remove.
+     * @return {@code this} list of properties.
+     * @throws NoSuchElementException if the property is not found.
+     * @throws NullPointerException  if the {@code var} is {@code null}.
+     */
+    default Vars<T> removeFirstFoundOrThrow( Var<T> var ) {
         Objects.requireNonNull(var);
         int index = indexOf(var);
         if ( index < 0 )
