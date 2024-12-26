@@ -34,7 +34,7 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
             if (innerSource == null) {
                 return;
             }
-            switch (delegate.changeType()) {
+            switch (delegate.change()) {
                 case NONE:
                     break;
                 case REMOVE:
@@ -66,11 +66,11 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
     }
 
     private static <T, U> void onRemove(ValsDelegate<T> delegate, Vars<U> view) {
-        assert delegate.changeType() == Change.REMOVE;
-
-        if (delegate.oldValues().isEmpty() || delegate.index() < 0)
+        assert delegate.change() == Change.REMOVE;
+        int index = delegate.index().orElse(-1);
+        if (delegate.oldValues().isEmpty() || index < 0)
             throw new UnsupportedOperationException(); // todo: implement
-        view.removeAt(delegate.index(), delegate.oldValues().size());
+        view.removeAt(index, delegate.oldValues().size());
     }
 
     private static <T, U> void onAdd(
@@ -80,19 +80,20 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
             Class<U>                 targetType,
             Function<Val<T>, Var<U>> sourcePropToViewProp
     ) {
-        assert delegate.changeType() == Change.ADD;
+        assert delegate.change() == Change.ADD;
+        int index = delegate.index().orElse(-1);
 
-        if (delegate.newValues().isEmpty() || delegate.index() < 0)
+        if (delegate.newValues().isEmpty() || index < 0)
             throw new UnsupportedOperationException(); // todo: implement
 
         Vars<U> newViews = Vars.of(targetType);
 
         for (int i = 0; i < delegate.newValues().size(); i++) {
-            Val<T> t = source.at(delegate.index() + i);
+            Val<T> t = source.at(index + i);
             newViews.add(sourcePropToViewProp.apply(t));
         }
 
-        view.addAllAt(delegate.index(), newViews);
+        view.addAllAt(index, newViews);
     }
 
     private static <T, U> void onSet(
@@ -101,19 +102,20 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
             Vars<U>                  view,
             Function<Val<T>, Var<U>> sourcePropToViewProp
     ) {
-        assert delegate.changeType() == Change.SET;
+        assert delegate.change() == Change.SET;
+        int index = delegate.index().orElse(-1);
 
-        if (delegate.newValues().isEmpty() || delegate.index() < 0)
+        if (delegate.newValues().isEmpty() || index < 0)
             throw new UnsupportedOperationException(); // todo: implement
 
         Vars<U> newViews = Vars.of(view.type());
 
         for (int i = 0; i < delegate.newValues().size(); i++) {
-            Val<T> t = source.at(delegate.index() + i);
+            Val<T> t = source.at(index + i);
             newViews.add(sourcePropToViewProp.apply(t));
         }
 
-        view.setAllAt(delegate.index(), newViews);
+        view.setAllAt(index, newViews);
     }
 
     private static <T, U> void onUpdateAll(

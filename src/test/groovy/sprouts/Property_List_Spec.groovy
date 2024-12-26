@@ -315,7 +315,7 @@ class Property_List_Spec extends Specification
         and : 'A list where we are going to record changes.'
             var changes = []
         and : 'Now we register a "show" listener on the "Vars" class.'
-            vars.onChange{ changes << it.index() }
+            vars.onChange{ changes << it.index().orElse(-1) }
 
         when : 'We modify the property in various ways...'
             vars.addAt(1, 1)
@@ -376,7 +376,7 @@ class Property_List_Spec extends Specification
         and : 'A list where we are going to record changes.'
             var changes = []
         and : 'Now we register a change action listener on the `Vars` class.'
-            Viewables.cast(vars).onChange{ changes << it.changeType() }
+            Viewables.cast(vars).onChange{ changes << it.change() }
 
         when : 'We modify the property in various ways...'
             vars.addAt(1, 1)
@@ -419,7 +419,7 @@ class Property_List_Spec extends Specification
         and : 'A regular list where we are going to record changes.'
             var changes = []
         and : 'Now we register a "show" change listener on the properties.'
-            vars.onChange({ changes << it.changeType() })
+            vars.onChange({ changes << it.change() })
 
         when : 'We sort the list.'
             vars.sort()
@@ -511,7 +511,7 @@ class Property_List_Spec extends Specification
                                             )
         and : 'We register a listener which will record changes for us.'
             var changes = []
-            vars.onChange({ changes << it.changeType() })
+            vars.onChange({ changes << it.change() })
 
         when : 'We call the "makeDistinct" method.'
             vars.makeDistinct()
@@ -895,7 +895,7 @@ class Property_List_Spec extends Specification
         and : 'The `oldValues` of the change should be an empty property list.'
             change.oldValues().isEmpty()
         and : 'The `index` of the change points to the added property.'
-            change.index() == 3
+            change.index().get() == 3
         when : 'We add a property to the list using the `add` method.'
             vars.add(Var.of("g"))
         then : 'The `newValues` should contain the added property.'
@@ -904,7 +904,7 @@ class Property_List_Spec extends Specification
         and : 'The `oldValues` method should be an empty list.'
             change.oldValues().isEmpty()
         and : 'The `index` of the change points to the added property.'
-            change.index() == 4
+            change.index().get() == 4
         when : 'We add a property to the list using the `addAt` method.'
             vars.addAt(1, "b")
         then : 'The `newValues` should contain the added property.'
@@ -913,7 +913,7 @@ class Property_List_Spec extends Specification
         and : 'The `oldValues` method should be an empty list.'
             change.oldValues().isEmpty()
         and : 'The `index` of the change points to the added property.'
-            change.index() == 1
+            change.index().get() == 1
         when : 'We add a property to the list using the `add` method.'
             vars.addAt(2, Var.of("c"))
         then : 'The `newValues` should contain the added property.'
@@ -922,7 +922,7 @@ class Property_List_Spec extends Specification
         and : 'The `oldValues` method should be an empty list.'
             change.oldValues().isEmpty()
         and : 'The `index` of the change points to the added property.'
-            change.index() == 2
+            change.index().get() == 2
     }
 
     def 'The change delegate contains information about changes made to a "Vars" list by removing properties.'() {
@@ -943,7 +943,7 @@ class Property_List_Spec extends Specification
             change.oldValues().size() == 1
             change.oldValues().at(0).get() == "h"
         and : 'The `index` of the change points to the position of the removed property.'
-            change.index() == 7
+            change.index().get() == 7
         when : 'We remove the second property of the list with the `removeAt` method.'
             vars.removeAt(1)
         then : 'The `newValues` should be an empty property list.'
@@ -952,7 +952,7 @@ class Property_List_Spec extends Specification
             change.oldValues().size() == 1
             change.oldValues().at(0).get() == "b"
         and : 'The `index` of the change points to the position of the removed property.'
-            change.index() == 1
+            change.index().get() == 1
         when : 'We remove the first property with the `removeFirst` method.'
             vars.removeFirst()
         then : 'The `newValues` should be an empty property list.'
@@ -961,7 +961,7 @@ class Property_List_Spec extends Specification
             change.oldValues().size() == 1
             change.oldValues().at(0).get() == "a"
         and : 'The `index` of the change points to the position of the removed property.'
-            change.index() == 0
+            change.index().get() == 0
         when : 'We remove a property with the `remove` method.'
             vars.remove("d")
         then : 'The `newValues` should be an empty property list.'
@@ -970,7 +970,7 @@ class Property_List_Spec extends Specification
             change.oldValues().size() == 1
             change.oldValues().at(0).get() == "d"
         and : 'The `index` of the change points to the position of the removed property.'
-            change.index() == 1
+            change.index().get() == 1
         when : 'We remove a property with the `remove` method.'
             vars.remove(Val.of("f"))
         then : 'The `newValues` should be an empty property list.'
@@ -979,7 +979,7 @@ class Property_List_Spec extends Specification
             change.oldValues().size() == 1
             change.oldValues().at(0).get() == "f"
         and : 'The `index` of the change points to the position of the removed property.'
-            change.index() == 2
+            change.index().get() == 2
 
         when : 'We reset the change and then try to remove a new mutable property.'
             change = null
@@ -1175,7 +1175,7 @@ class Property_List_Spec extends Specification
         and : 'The `oldValues` of the change should be an empty property list.'
             change.oldValues().isEmpty()
         and : 'The `index` of the change points to the added properties.'
-            change.index() == 3
+            change.index().get() == 3
         and : 'The `currentValues` should contain the added properties'
             change.currentValues() == Vals.of("a", "d", "e", "f", "g")
         when : 'We add properties list to the list using the `addAll` method.'
@@ -1186,7 +1186,7 @@ class Property_List_Spec extends Specification
         and : 'The `oldValues` method should be an empty list.'
             change.oldValues().isEmpty()
         and : 'The `index` of the change points to the added properties.'
-            change.index() == 5
+            change.index().get() == 5
         and : 'The `currentValues` should contain the added properties'
             change.currentValues() == Vals.of("a", "d", "e", "f", "g", "h", "i", "j")
         when : 'We add list of properties to the list using the `addAll` method.'
@@ -1197,7 +1197,7 @@ class Property_List_Spec extends Specification
         and : 'The `oldValues` method should be an empty list.'
             change.oldValues().isEmpty()
         and : 'The `index` of the change points to the added properties.'
-            change.index() == 8
+            change.index().get() == 8
         and : 'The `currentValues` should contain the added properties'
             change.currentValues() == Vals.of("a", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n")
     }
@@ -1221,7 +1221,7 @@ class Property_List_Spec extends Specification
         and : 'The `newValues` of the change should be an empty property list.'
             change.newValues().isEmpty()
         and : 'The `index` of the change is `-1`.'
-            change.index() == -1
+            !change.index().isPresent()
         and : 'The `currentValues` should not contain the removed properties'
             change.currentValues() == Vals.of("a", "d", "e", "h", "i", "j", "k", "l", "m", "n", "o", "k", "p", "h", "l", "m", "n", "p")
         when : 'We remove a property list from the list with the `removeAll` method.'
@@ -1232,7 +1232,7 @@ class Property_List_Spec extends Specification
         and : 'The `newValues` of the change should be an empty property list.'
             change.newValues().isEmpty()
         and : 'The `index` of the change is `-1`.'
-            change.index() == -1
+            !change.index().isPresent()
         and : 'The `currentValues` should not contain the removed properties'
             change.currentValues() == Vals.of("a", "d", "e", "k", "l", "m", "n", "o", "k", "p", "l", "m", "n", "p")
         when : 'Now we remove properties from the list based on a predicate with the `removeIf` method.'
@@ -1243,7 +1243,7 @@ class Property_List_Spec extends Specification
         and : 'The `newValues` of the change should be an empty property list.'
             change.newValues().isEmpty()
         and : 'The `index` of the change is `-1`.'
-            change.index() == -1
+            !change.index().isPresent()
         and : 'The `currentValues` should not contain the removed properties'
             change.currentValues() == Vals.of("a", "d", "e", "k", "n", "o", "k", "p", "n", "p")
         when : 'We can also remove properties from the list based on a predicate with the `popIf` method.'
@@ -1254,7 +1254,7 @@ class Property_List_Spec extends Specification
         and : 'The `newValues` of the change should be an empty property list.'
             change.newValues().isEmpty()
         and : 'The `index` of the change is `-1`.'
-            change.index() == -1
+            !change.index().isPresent()
         and : 'The `currentValues` should not contain the removed properties'
             change.currentValues() == Vals.of("a", "d", "k", "n", "o", "k", "n")
         when : 'We remove values from the list based on a predicate using the `removeIfItem` method.'
@@ -1265,7 +1265,7 @@ class Property_List_Spec extends Specification
         and : 'The `newValues` of the change should be an empty property list.'
             change.newValues().isEmpty()
         and : 'The `index` of the change is `-1`.'
-            change.index() == -1
+            !change.index().isPresent()
         and : 'The `currentValues` should not contain the removed properties'
             change.currentValues() == Vals.of("d", "k", "o", "k")
         when : 'We remove values from the list based on a predicate using the `popIfItem` method.'
@@ -1276,7 +1276,7 @@ class Property_List_Spec extends Specification
         and : 'The `newValues` of the change should be an empty property list.'
             change.newValues().isEmpty()
         and : 'The `index` of the change is `-1`.'
-            change.index() == -1
+            !change.index().isPresent()
         and : 'The `currentValues` should not contain the removed properties'
             change.currentValues() == Vals.of("o")
     }
@@ -1300,7 +1300,7 @@ class Property_List_Spec extends Specification
         and : 'The `newValues` of the change should be an empty property list.'
             change.newValues().isEmpty()
         and : 'The `index` of the change is the index of the first property removed.'
-            change.index() == 0
+            change.index().get() == 0
         and : 'The `currentValues` should not contain the removed properties'
             change.currentValues() == Vals.of("e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z")
         when : 'We remove a sequence of values from the list with the `removeLast` method.'
@@ -1311,7 +1311,7 @@ class Property_List_Spec extends Specification
         and : 'The `newValues` of the change should be an empty property list.'
             change.newValues().isEmpty()
         and : 'The `index` of the change is the index of the first property removed.'
-            change.index() == 18
+            change.index().get() == 18
         and : 'The `currentValues` should not contain the removed properties'
             change.currentValues() == Vals.of("e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v")
         when : 'We remove a range of values from the list with the `removeRange` method.'
@@ -1322,7 +1322,7 @@ class Property_List_Spec extends Specification
         and : 'The `newValues` of the change should be an empty property list.'
             change.newValues().isEmpty()
         and : 'The `index` of the change is the index of the first property removed.'
-            change.index() == 1
+            change.index().get() == 1
         and : 'The `currentValues` should not contain the removed properties'
             change.currentValues() == Vals.of("e", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v")
         when : 'We remove a sequence of values from the list with the `removeAt` method.'
@@ -1333,7 +1333,7 @@ class Property_List_Spec extends Specification
         and : 'The `newValues` of the change should be an empty property list.'
             change.newValues().isEmpty()
         and : 'The `index` of the change is the index of the first property removed.'
-            change.index() == 2
+            change.index().get() == 2
         and : 'The `currentValues` should not contain the removed properties'
             change.currentValues() == Vals.of("e", "h", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v")
         when : 'We remove a sequence of values from the list with the `popFirst` method.'
@@ -1344,7 +1344,7 @@ class Property_List_Spec extends Specification
         and : 'The `newValues` of the change should be an empty property list.'
             change.newValues().isEmpty()
         and : 'The `index` of the change is the index of the first property removed.'
-            change.index() == 0
+            change.index().get() == 0
         and : 'The `currentValues` should not contain the removed properties'
             change.currentValues() == Vals.of("l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v")
         when : 'We remove a sequence of values from the list with the `popLast` method.'
@@ -1355,7 +1355,7 @@ class Property_List_Spec extends Specification
         and : 'The `newValues` of the change should be an empty property list.'
             change.newValues().isEmpty()
         and : 'The `index` of the change is the index of the first property removed.'
-            change.index() == 7
+            change.index().get() == 7
         and : 'The `currentValues` should not contain the removed properties'
             change.currentValues() == Vals.of("l", "m", "n", "o", "p", "q", "r")
         when : 'We remove a sequence of values from the list with the `popRange` method.'
@@ -1366,7 +1366,7 @@ class Property_List_Spec extends Specification
         and : 'The `newValues` of the change should be an empty property list.'
             change.newValues().isEmpty()
         and : 'The `index` of the change is the index of the first property removed.'
-            change.index() == 2
+            change.index().get() == 2
         and : 'The `currentValues` should not contain the removed properties'
             change.currentValues() == Vals.of("l", "m", "q", "r")
     }
@@ -1392,7 +1392,7 @@ class Property_List_Spec extends Specification
         and : 'The `newValues` of the change should be an empty property list.'
             change.newValues().isEmpty()
         and : 'The `index` of the change is the index of the first property removed.'
-            change.index() == 0
+            change.index().get() == 0
         and : 'The `currentValues` should be an empty property list'
             change.currentValues().isEmpty()
         when : 'We remove all properties from the nullable list with the `clear` method.'
@@ -1403,7 +1403,7 @@ class Property_List_Spec extends Specification
         and : 'The `newValues` of the change should be an empty property list.'
             changeNullable.newValues().isEmpty()
         and : 'The `index` of the change is the index of the first property removed.'
-            changeNullable.index() == 0
+            changeNullable.index().get() == 0
         and : 'The `currentValues` should be an empty property list'
             changeNullable.currentValues().isEmpty()
     }
@@ -1427,7 +1427,7 @@ class Property_List_Spec extends Specification
         and : 'The `newValues` of the change should be an empty property list.'
             change.newValues().isEmpty()
         and : 'The `index` of the change is `-1`.'
-            change.index() == -1
+            !change.index().isPresent()
         and : 'The `currentValues` should only contained the retained properties.'
             change.currentValues() == Vals.of("c", "d", "f", "g", "h", "i", "j", "c", "d")
         when : 'We use the `retainAll` method to remove all properties from the list that are not contained in a given list of values.'
@@ -1438,7 +1438,7 @@ class Property_List_Spec extends Specification
         and : 'The `newValues` of the change should be an empty property list.'
             change.newValues().isEmpty()
         and : 'The `index` of the change is `-1`.'
-            change.index() == -1
+            !change.index().isPresent()
         and : 'The `currentValues` should only contained the retained properties.'
             change.currentValues() == Vals.of("g", "h", "i", "j")
         when : 'When the `retainAll` method is used and no property is removed.'
@@ -1454,7 +1454,7 @@ class Property_List_Spec extends Specification
         and : 'The `newValues` of the change should be an empty property list.'
             change.newValues().isEmpty()
         and : 'The `index` of the change is `-1`.'
-            change.index() == -1
+            !change.index().isPresent()
         and : 'The `currentValues` should be an empty property list'
             change.currentValues().isEmpty()
     }
@@ -1480,7 +1480,7 @@ class Property_List_Spec extends Specification
         and : 'The `newValues` of the change should be an empty property list.'
             change.newValues().isEmpty()
         and : 'The `index` of the change is `-1`.'
-            change.index() == -1
+            !change.index().isPresent()
         and : 'The `currentValues` should only contained the retained properties.'
             change.currentValues() == Vals.ofNullable(String.class, "b", "d", "g", "h", "i", "j", "b", "d")
         when : 'We use the `retainAll` method to remove all properties from the list that are not contained in a given list of properties.'
@@ -1491,7 +1491,7 @@ class Property_List_Spec extends Specification
         and : 'The `newValues` of the change should be an empty property list.'
             change.newValues().isEmpty()
         and : 'The `index` of the change is `-1`.'
-            change.index() == -1
+            !change.index().isPresent()
         and : 'The `currentValues` should only contained the retained properties.'
             change.currentValues() == Vals.ofNullable(String.class, "a", "b", null, "d", null, null, "a", "b", "d")
     }
@@ -1516,7 +1516,7 @@ class Property_List_Spec extends Specification
             change.newValues().size() == 3
             change.newValues() == Vals.of("x", "x", "x")
         and : 'The `index` of the change is `2`.'
-            change.index() == 2
+            change.index().get() == 2
         and : 'The `currentValues` should contain the expected properties.'
             change.currentValues() == Vals.of("a", "b", "x", "x", "x", "f", "g", "h", "i", "j")
         when : 'We use the `setRange` method to set all properties within the given range to the given property.'
@@ -1528,7 +1528,7 @@ class Property_List_Spec extends Specification
             change.newValues().size() == 4
             change.newValues() == Vals.of("z", "z", "z", "z")
         and : 'The `index` of the change is `4`.'
-            change.index() == 4
+            change.index().get() == 4
         and : 'The `currentValues` should contain the expected properties.'
             change.currentValues() == Vals.of("a", "b", "x", "x", "z", "z", "z", "z", "i", "j")
     }
@@ -1553,7 +1553,7 @@ class Property_List_Spec extends Specification
             change.newValues().size() == 3
             change.newValues() == Vals.of("x", "x", "x")
         and : 'The `index` of the change is `2`.'
-            change.index() == 2
+            change.index().get() == 2
         and : 'The `currentValues` should contain the expected properties.'
             change.currentValues() == Vals.of("a", "b", "x", "x", "x", "f", "g", "h", "i", "j")
         when : 'We use the `setAt` method to set all properties within the given sequence to the given property.'
@@ -1565,7 +1565,7 @@ class Property_List_Spec extends Specification
             change.newValues().size() == 4
             change.newValues() == Vals.of("z", "z", "z", "z")
         and : 'The `index` of the change is `4`.'
-            change.index() == 4
+            change.index().get() == 4
         and : 'The `currentValues` should contain the expected properties.'
             change.currentValues() == Vals.of("a", "b", "x", "x", "z", "z", "z", "z", "i", "j")
     }
@@ -1590,7 +1590,7 @@ class Property_List_Spec extends Specification
             change.newValues().size() == 3
             change.newValues() == Vals.ofNullable(String.class, (String) null, (String) null, (String) null)
         and : 'The `index` of the change is `2`.'
-            change.index() == 2
+            change.index().get() == 2
         and : 'The `currentValues` should contain the expected properties.'
             change.currentValues() == Vals.ofNullable(String.class, "a", "b", null, null, null, null, "g", "h", "i", "j")
         when : 'We use the `setRange` method to set all properties within the given range to the given property.'
@@ -1602,7 +1602,7 @@ class Property_List_Spec extends Specification
             change.newValues().size() == 4
             change.newValues() == Vals.ofNullable(String.class, (String) null, (String) null, (String) null, (String) null)
         and : 'The `index` of the change is `4`.'
-            change.index() == 5
+            change.index().get() == 5
         and : 'The `currentValues` should contain the expected properties.'
             change.currentValues() == Vals.ofNullable(String.class, "a", "b", null, null, null, null, null, null, null, "j")
     }
@@ -1627,7 +1627,7 @@ class Property_List_Spec extends Specification
             change.newValues().size() == 3
             change.newValues() == Vals.ofNullable(String.class, (String) null, (String) null, (String) null)
         and : 'The `index` of the change is `2`.'
-            change.index() == 2
+            change.index().get() == 2
         and : 'The `currentValues` should contain the expected properties.'
 
         change.currentValues() == Vals.ofNullable(String.class, "a", "b", null, null, null, null, "g", "h", "i", "j")
@@ -1640,7 +1640,7 @@ class Property_List_Spec extends Specification
             change.newValues().size() == 4
             change.newValues() == Vals.ofNullable(String.class, (String) null, (String) null, (String) null, (String) null)
         and : 'The `index` of the change is `4`.'
-            change.index() == 5
+            change.index().get() == 5
         and : 'The `currentValues` should contain the expected properties.'
             change.currentValues() == Vals.ofNullable(String.class, "a", "b", null, null, null, null, null, null, null, "j")
     }
