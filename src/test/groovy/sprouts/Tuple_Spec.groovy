@@ -591,4 +591,34 @@ class Tuple_Spec extends Specification
         then : 'Only the numbers 2 and 4 are left over.'
             numbers == Tuple.of(4, 2, 2, 4, 2, 4)
     }
+
+    def 'Internally, a tuple has a sort of signature to determine the line of succession.'() {
+        given :
+            var root = Tuple.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+            var left = root.slice(0, 5)
+            var right = root.slice(5, 10)
+            var left2 = left.slice(0, 3)
+            var right2 = left.slice(3, 5)
+        when :
+            var rootDiff = (root as TupleDiffOwner).differenceFromPrevious().get()
+            var leftDiff = (left as TupleDiffOwner).differenceFromPrevious().get()
+            var rightDiff = (right as TupleDiffOwner).differenceFromPrevious().get()
+            var left2Diff = (left2 as TupleDiffOwner).differenceFromPrevious().get()
+            var right2Diff = (right2 as TupleDiffOwner).differenceFromPrevious().get()
+        then :
+            leftDiff.isDirectSuccessorOf(rootDiff)
+            rightDiff.isDirectSuccessorOf(rootDiff)
+            left2Diff.isDirectSuccessorOf(leftDiff)
+            right2Diff.isDirectSuccessorOf(leftDiff)
+        and :
+            !leftDiff.isDirectSuccessorOf(rightDiff)
+            !rightDiff.isDirectSuccessorOf(leftDiff)
+            !left2Diff.isDirectSuccessorOf(right2Diff)
+            !right2Diff.isDirectSuccessorOf(left2Diff)
+        and :
+            !rootDiff.isDirectSuccessorOf(leftDiff)
+            !rootDiff.isDirectSuccessorOf(rightDiff)
+            !rootDiff.isDirectSuccessorOf(left2Diff)
+            !rootDiff.isDirectSuccessorOf(right2Diff)
+    }
 }
