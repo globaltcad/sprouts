@@ -6,12 +6,12 @@
 
  import java.util.*;
 
-public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, TupleDiffOwner
+public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, SequenceDiffOwner
 {
     private final boolean   _allowsNull;
     private final Class<T>  _type;
     private final Object    _data;
-    private final TupleDiff _diffToPrevious;
+    private final SequenceDiff _diffToPrevious;
 
     @SuppressWarnings("NullAway")
     public TupleImpl(
@@ -27,13 +27,13 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Tu
         boolean allowsNull,
         Class<T> type,
         @Nullable Object items,
-        @Nullable TupleDiff diffToPrevious
+        @Nullable SequenceDiff diffToPrevious
     ) {
         Objects.requireNonNull(type);
         _allowsNull     = allowsNull;
         _type           = type;
         _data           = ( items == null ? _createArray(type, allowsNull, 0) : _tryFlatten(items,type,allowsNull) );
-        _diffToPrevious = ( diffToPrevious == null ? TupleDiff.initial() : diffToPrevious );
+        _diffToPrevious = ( diffToPrevious == null ? SequenceDiff.initial() : diffToPrevious );
         if ( !allowsNull ) {
             _each(_data, type, item -> {
                 if ( item == null )
@@ -76,7 +76,7 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Tu
         int newSize = (to - from);
         Object newItems = _createArray(_type, _allowsNull, newSize);
         System.arraycopy(_data, from, newItems, 0, newSize);
-        TupleDiff diff = TupleDiff.of(this, Change.RETAIN, from, newSize);
+        SequenceDiff diff = SequenceDiff.of(this, Change.RETAIN, from, newSize);
         return new TupleImpl<>(_allowsNull, _type, newItems, diff);
     }
 
@@ -91,7 +91,7 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Tu
         Object newItems = _createArray(_type, _allowsNull, newSize);
         System.arraycopy(_data, 0, newItems, 0, from);
         System.arraycopy(_data, to, newItems, from, _length(_data) - to);
-        TupleDiff diff = TupleDiff.of(this, Change.REMOVE, from, numberOfItemsToRemove);
+        SequenceDiff diff = SequenceDiff.of(this, Change.REMOVE, from, numberOfItemsToRemove);
         return new TupleImpl<>(_allowsNull, _type, newItems, diff);
     }
 
@@ -117,7 +117,7 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Tu
             if ( index != -1 )
                 _setAt(i, _getAt(index, _data, _type), newItems);
         }
-        TupleDiff diff = TupleDiff.of(this, Change.REMOVE, -1, this.size() - newSize);
+        SequenceDiff diff = SequenceDiff.of(this, Change.REMOVE, -1, this.size() - newSize);
         return new TupleImpl<>(_allowsNull, _type, newItems, diff);
     }
 
@@ -131,7 +131,7 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Tu
         System.arraycopy(_data, 0, newItems, 0, index);
         _setAt(index, item, newItems);
         System.arraycopy(_data, index, newItems, index + 1, _length(_data) - index);
-        TupleDiff diff = TupleDiff.of(this, Change.ADD, index, 1);
+        SequenceDiff diff = SequenceDiff.of(this, Change.ADD, index, 1);
         return new TupleImpl<>(_allowsNull, _type, newItems, diff);
     }
 
@@ -141,7 +141,7 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Tu
             throw new IndexOutOfBoundsException();
         Object newItems = _clone(_data, _type, _allowsNull);
         _setAt(index, item, newItems);
-        TupleDiff diff = TupleDiff.of(this, Change.SET, index, 1);
+        SequenceDiff diff = SequenceDiff.of(this, Change.SET, index, 1);
         return new TupleImpl<>(_allowsNull, _type, newItems, diff);
     }
 
@@ -157,7 +157,7 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Tu
         for (int i = 0; i < tuple.size(); i++ )
             _setAt(index + i, tuple.get(i), newItems);
         System.arraycopy(_data, index, newItems, index + tuple.size(), _length(_data) - index);
-        TupleDiff diff = TupleDiff.of(this, Change.ADD, index, tuple.size());
+        SequenceDiff diff = SequenceDiff.of(this, Change.ADD, index, tuple.size());
         return new TupleImpl<>(_allowsNull, _type, newItems, diff);
     }
 
@@ -170,7 +170,7 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Tu
         Object newItems = _clone(_data, _type, _allowsNull);
         for (int i = 0; i < tuple.size(); i++ )
             _setAt(index + i, tuple.get(i), newItems);
-        TupleDiff diff = TupleDiff.of(this, Change.SET, index, tuple.size());
+        SequenceDiff diff = SequenceDiff.of(this, Change.SET, index, tuple.size());
         return new TupleImpl<>(_allowsNull, _type, newItems, diff);
     }
 
@@ -195,13 +195,13 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Tu
             if ( index != -1 )
                 _setAt(i, _getAt(index, _data, _type), newItems);
         }
-        TupleDiff diff = TupleDiff.of(this, Change.RETAIN, -1, this.size() - newSize);
+        SequenceDiff diff = SequenceDiff.of(this, Change.RETAIN, -1, this.size() - newSize);
         return new TupleImpl<>(_allowsNull, _type, newItems, diff);
     }
 
     @Override
     public Tuple<T> clear() {
-        TupleDiff diff = TupleDiff.of(this, Change.CLEAR, 0, _length(_data));
+        SequenceDiff diff = SequenceDiff.of(this, Change.CLEAR, 0, _length(_data));
         return new TupleImpl<>(_allowsNull, _type, null, diff);
     }
 
@@ -209,7 +209,7 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Tu
     public Tuple<T> sort(Comparator<T> comparator ) {
         Object newItems = _clone(_data, _type, _allowsNull);
         _sort(newItems, comparator);
-        TupleDiff diff = TupleDiff.of(this, Change.SORT, -1, _length(_data));
+        SequenceDiff diff = SequenceDiff.of(this, Change.SORT, -1, _length(_data));
         return new TupleImpl<>(_allowsNull, _type, newItems, diff);
     }
 
@@ -228,7 +228,7 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Tu
             return this;
         Object distinctItems = _createArray(_type, _allowsNull, newSize);
         System.arraycopy(newItems, 0, distinctItems, 0, newSize);
-        TupleDiff diff = TupleDiff.of(this, Change.DISTINCT, -1, _length(_data) - newSize);
+        SequenceDiff diff = SequenceDiff.of(this, Change.DISTINCT, -1, _length(_data) - newSize);
         return new TupleImpl<>(_allowsNull, _type, distinctItems, diff);
     }
 
@@ -242,7 +242,7 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Tu
             _setAt(i, _getAt(_length(newItems) - i - 1, newItems, _type), newItems);
             _setAt(_length(newItems) - i - 1, temp, newItems);
         }
-        TupleDiff diff = TupleDiff.of(this, Change.REVERT, -1, _length(_data));
+        SequenceDiff diff = SequenceDiff.of(this, Change.REVERT, -1, _length(_data));
         return new TupleImpl<>(_allowsNull, _type, newItems, diff);
     }
 
@@ -312,7 +312,7 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Tu
     }
 
     @Override
-    public Optional<TupleDiff> differenceFromPrevious() {
+    public Optional<SequenceDiff> differenceFromPrevious() {
         return Optional.ofNullable(_diffToPrevious);
     }
     

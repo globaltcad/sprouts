@@ -7,12 +7,12 @@ import sprouts.Version;
 import java.util.Optional;
 
 /**
- *  A {@link TupleDiff} object holds meta information about a {@link Tuple} instance
+ *  A {@link SequenceDiff} object holds meta information about a {@link Tuple} instance
  *  that describes how the {@link Tuple} was transformed from its previous state.<br>
  *  <p>
  *  So for example, if the {@link Tuple#removeFirst(int)}
  *  method was called with a count of 3, then the resulting {@link Tuple}
- *  will internally maintain a {@link TupleDiff} instance with
+ *  will internally maintain a {@link SequenceDiff} instance with
  *  a {@link #change()} == {@link Change#REMOVE},
  *  {@link #index()} == 0 and {@link #size()} == 3.<br>
  *  <p>
@@ -22,55 +22,59 @@ import java.util.Optional;
  *  More specifically, it allows a change listener to synchronize to the
  *  {@link Tuple} state changes in an optimized way, by only updating its
  *  own target data structure according to the information provided by the
- *  {@link TupleDiff} instance.<br>
+ *  {@link SequenceDiff} instance.<br>
  *  <p>
  *  In practice, you would only do this optimized sync to a tuple after first checking if
- *  {@link #isDirectSuccessorOf(TupleDiff)} is true, and then update the target data structure
- *  with the information provided by the {@link TupleDiff} instance.
+ *  {@link #isDirectSuccessorOf(SequenceDiff)} is true, and then update the target data structure
+ *  with the information provided by the {@link SequenceDiff} instance.<br>
+ *  <p>
+ *  Although this class is specifically designed for the {@link Tuple} type,
+ *  you may also use this class with other immutable value based sequenced collections
+ *  to do optimized synchronization to state changes.
  */
-public final class TupleDiff
+public final class SequenceDiff
 {
     /**
-     *  Creates a new {@link TupleDiff} instance from a source {@link Tuple} instance
+     *  Creates a new {@link SequenceDiff} instance from a source {@link Tuple} instance
      *  and how it was changed to a new state. <br>
-     *  If the given {@link Tuple} instance is a {@link TupleDiffOwner}, then
-     *  this method will attempt to retrieve the previous {@link TupleDiff}
-     *  instance and create a new {@link TupleDiff} instance that is a successor
+     *  If the given {@link Tuple} instance is a {@link SequenceDiffOwner}, then
+     *  this method will attempt to retrieve the previous {@link SequenceDiff}
+     *  instance and create a new {@link SequenceDiff} instance that is a successor
      *  of the previous one. <br>
-     *  If the {@link Tuple} instance is not a {@link TupleDiffOwner}, then
-     *  a new {@link TupleDiff} instance is created with a new lineage.
+     *  If the {@link Tuple} instance is not a {@link SequenceDiffOwner}, then
+     *  a new {@link SequenceDiff} instance is created with a new lineage.
      *
-     * @param origin The {@link Tuple} instance to create a {@link TupleDiff} for.
+     * @param origin The {@link Tuple} instance to create a {@link SequenceDiff} for.
      * @param change The type of change that occurred in the {@link Tuple}.
      * @param index The index at which the change occurred in the {@link Tuple}.
      * @param size The number of items that were affected by the change in the {@link Tuple}.
-     * @return A new {@link TupleDiff} instance with the given parameters.
+     * @return A new {@link SequenceDiff} instance with the given parameters.
      */
-    public static TupleDiff of( Tuple<?> origin, Change change, int index, int size ) {
-        if ( origin instanceof TupleDiffOwner ) {
-            Optional<TupleDiff> previous = ((TupleDiffOwner) origin).differenceFromPrevious();
+    public static SequenceDiff of(Tuple<?> origin, Change change, int index, int size ) {
+        if ( origin instanceof SequenceDiffOwner) {
+            Optional<SequenceDiff> previous = ((SequenceDiffOwner) origin).differenceFromPrevious();
             if ( previous.isPresent() )
-                return TupleDiff.ofPrevious(previous.get(), change, index, size);
+                return SequenceDiff.ofPrevious(previous.get(), change, index, size);
         }
-        return new TupleDiff( Version.create(), change, index, size, 0 );
+        return new SequenceDiff( Version.create(), change, index, size, 0 );
     }
 
-    private static TupleDiff ofPrevious( TupleDiff previous, Change change, int index, int size ) {
-        return new TupleDiff(previous._version.next(), change, index, size, previous._signature);
+    private static SequenceDiff ofPrevious(SequenceDiff previous, Change change, int index, int size ) {
+        return new SequenceDiff(previous._version.next(), change, index, size, previous._signature);
     }
 
 
     /**
-     *  Creates a new {@link TupleDiff} instance that represents the initial state
+     *  Creates a new {@link SequenceDiff} instance that represents the initial state
      *  of a {@link Tuple} instance. <br>
-     *  This is used to create a {@link TupleDiff} instance that
+     *  This is used to create a {@link SequenceDiff} instance that
      *  represents the state of an initial {@link Tuple} instance and at the beginning of a
      *  potential chain of transformations.
      *
-     * @return A new {@link TupleDiff} instance that represents the initial state of a {@link Tuple}.
+     * @return A new {@link SequenceDiff} instance that represents the initial state of a {@link Tuple}.
      */
-    public static TupleDiff initial() {
-        return new TupleDiff( Version.create(), Change.NONE, -1, 0, 0 );
+    public static SequenceDiff initial() {
+        return new SequenceDiff( Version.create(), Change.NONE, -1, 0, 0 );
     }
 
 
@@ -81,7 +85,7 @@ public final class TupleDiff
     private final int     _size;
 
 
-    private TupleDiff(
+    private SequenceDiff(
         Version version,
         Change  change,
         int     index,
@@ -106,29 +110,29 @@ public final class TupleDiff
     }
 
     /**
-     *  The successor of a {@link TupleDiff} is computed deterministically from a previous {@link TupleDiff}.
-     *  To ensure that this line of succession is unique, the signature of the a {@link TupleDiff}
+     *  The successor of a {@link SequenceDiff} is computed deterministically from a previous {@link SequenceDiff}.
+     *  To ensure that this line of succession is unique, the signature of the a {@link SequenceDiff}
      *  is based on a lineage, succession and hashcode number. <br>
      *  <br>
-     *  We can use this information to determine if this {@link TupleDiff} is a successor
-     *  of another {@link TupleDiff} instance in a linear chain of transformations.
+     *  We can use this information to determine if this {@link SequenceDiff} is a successor
+     *  of another {@link SequenceDiff} instance in a linear chain of transformations.
      *  Which is exactly what this method does. <br>
      *  <p>
      *  When trying to do optimized synchronization to {@link Tuple} state changes,
      *  don't forget to call this method before using {@link #change()}, {@link #index()},
      *  and {@link #size()} to update the target data structure.
      *
-     * @param other The {@link TupleDiff} to check if this {@link TupleDiff} is a successor of.
-     * @return True if this {@link TupleDiff} is a successor of the given {@link TupleDiff}.
+     * @param other The {@link SequenceDiff} to check if this {@link SequenceDiff} is a successor of.
+     * @return True if this {@link SequenceDiff} is a successor of the given {@link SequenceDiff}.
      */
-    public boolean isDirectSuccessorOf( TupleDiff other ) {
-        TupleDiff logicalSuccessor = TupleDiff.ofPrevious( other, _change, _index, _size );
+    public boolean isDirectSuccessorOf( SequenceDiff other ) {
+        SequenceDiff logicalSuccessor = SequenceDiff.ofPrevious( other, _change, _index, _size );
         return this.equals( logicalSuccessor );
     }
 
     /**
      *  The type of change that occurred between the previous
-     *  and current {@link Tuple} state (to which this {@link TupleDiff} belongs).
+     *  and current {@link Tuple} state (to which this {@link SequenceDiff} belongs).
      *  @return The type of change that occurred in the {@link Tuple}.
      *  @see Change
      */
@@ -159,10 +163,10 @@ public final class TupleDiff
     }
 
     /**
-     *  The version of the {@link Tuple} state to which this {@link TupleDiff} belongs.
-     *  This is used as a bases for determining if this {@link TupleDiff} is a successor
-     *  of another {@link TupleDiff} instance in a linear chain of transformations.
-     *  (See {@link #isDirectSuccessorOf(TupleDiff)}).
+     *  The version of the {@link Tuple} state to which this {@link SequenceDiff} belongs.
+     *  This is used as a bases for determining if this {@link SequenceDiff} is a successor
+     *  of another {@link SequenceDiff} instance in a linear chain of transformations.
+     *  (See {@link #isDirectSuccessorOf(SequenceDiff)}).
      *
      *  @return The version of the {@link Tuple} state.
      */
@@ -171,12 +175,12 @@ public final class TupleDiff
     }
 
     /**
-     *  The signature of this {@link TupleDiff} instance.
+     *  The signature of this {@link SequenceDiff} instance.
      *  This is a hash code that is based on the {@link #version()}, {@link #change()},
-     *  {@link #index()}, {@link #size()}, and the signature of the previous {@link TupleDiff}
+     *  {@link #index()}, {@link #size()}, and the signature of the previous {@link SequenceDiff}
      *  instance in the chain of transformations.
      *
-     *  @return The signature of this {@link TupleDiff} instance.
+     *  @return The signature of this {@link SequenceDiff} instance.
      */
     public long signature() {
         return _signature;
@@ -197,7 +201,7 @@ public final class TupleDiff
     public boolean equals( Object obj ) {
         if ( this == obj ) return true;
         if ( obj == null || getClass() != obj.getClass() ) return false;
-        TupleDiff that = (TupleDiff) obj;
+        SequenceDiff that = (SequenceDiff) obj;
         return _version.equals( that._version ) &&
                _change == that._change &&
                _index == that._index &&
