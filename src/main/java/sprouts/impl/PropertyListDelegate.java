@@ -3,6 +3,9 @@ package sprouts.impl;
 import sprouts.Change;
 import sprouts.Vals;
 
+import java.util.Objects;
+import java.util.Optional;
+
 final class PropertyListDelegate<T> implements sprouts.ValsDelegate<T> {
 
     private final Change changeType;
@@ -26,13 +29,13 @@ final class PropertyListDelegate<T> implements sprouts.ValsDelegate<T> {
     }
 
     @Override
-    public Change changeType() {
+    public Change change() {
         return changeType;
     }
 
     @Override
-    public int index() {
-        return index;
+    public Optional<Integer> index() {
+        return index < 0 ? Optional.empty() : Optional.of(index);
     }
 
     @Override
@@ -53,11 +56,11 @@ final class PropertyListDelegate<T> implements sprouts.ValsDelegate<T> {
     @Override
     public String toString() {
         return "ValsDelegate[" +
-                "index=" + index() + ", " +
-                "changeType=" + changeType() + ", " +
-                "newValues=" + newValues() + ", " +
-                "oldValues=" + oldValues() + ", " +
-                "vals=" + currentValues() +
+                    "index=" + index().map(Objects::toString).orElse("?") + ", " +
+                    "change=" + change() + ", " +
+                    "newValues=" + newValues() + ", " +
+                    "oldValues=" + oldValues() + ", " +
+                    "currentValues=" + currentValues() +
                 ']';
     }
 }

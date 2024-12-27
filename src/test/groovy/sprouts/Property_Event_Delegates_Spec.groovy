@@ -133,11 +133,11 @@ class Property_Event_Delegates_Spec extends Specification
         given : 'A property list.'
             var propertyList = Vars.of(1, 2, 3)
             var delegate = null
-            propertyList.onChange( it -> delegate = it )
+            Viewables.cast(propertyList).onChange( it -> delegate = it )
         when : 'We add an element to the property list.'
             propertyList.add(42)
         then : 'The delegate has a descriptive string representation.'
-            delegate.toString() == 'ValsDelegate[index=3, changeType=ADD, newValues=Vals<Integer>[42], oldValues=Vals<Integer>[], vals=Vals<Integer>[1, 2, 3, 42]]'
+            delegate.toString() == 'ValsDelegate[index=3, change=ADD, newValues=Vals<Integer>[42], oldValues=Vals<Integer>[], currentValues=Vals<Integer>[1, 2, 3, 42]]'
     }
 
 }

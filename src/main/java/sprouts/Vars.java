@@ -12,20 +12,25 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
- * A list of mutable properties that can be observed for changes by
- * {@link Subscriber} types (see {@link Observer} and {@link sprouts.Action}).
- * Contrary to the supertype {@link Vals}, this interface provides methods for mutating the list. <br>
- * If you want register change listeners to the list use {@link #view()} to create a weakly referenced
- * {@link Viewables} instance that can be observed for changes through {@link Viewables#onChange(Action)}. <br>
+ * A mutable list of mutable properties designed for MVVM, that can be observed for changes
+ * through a {@link #view()} by registering {@link Subscriber} types on it like
+ * {@link Observer}s and {@link sprouts.Action}s.
+ * So you can only observe changes actively by calling {@link #view()} and then registering change listeners
+ * onto the returned {@link Viewables} delegate, which is a weakly referenced state delegate.
+ * Take a look at {@link Viewables#onChange(Action)} for more information. <br>
+ * <br>
+ * If you want to encapsulate the mutability of this type, consider taking a look at the
+ * {@link Vals} supertype, which you can use for upcasting. <br>
  * Use {@link Viewables#subscribe(Observer)} if you want to be notified of changes to the list
- * without any further information about the change itself. Note that this {@link Viewables}
+ * without any further information about the kind of change itself. Note that a {@link Viewables}
  * will be garbage collected alongside all of its change listeners when no longer referenced.
+ * So make sure to keep a reference to it around where your are actively listening for changes.
  * <p>
  * The name of this class is short for "variables". This name was deliberately chosen because
  * it is short, and yet clearly conveys the same meaning as other names used to model this
  * kind of pattern, like "properties", "observable objects", "observable values", "observable properties", etc.
  * <p>
- * <b>Please take a look at the <a href="https://globaltcad.github.io/sprouts/">living sprouts documentation</a>
+ * <b>You may also want to take a look at the <a href="https://globaltcad.github.io/sprouts/">living sprouts documentation</a>
  * where you can browse a large collection of examples demonstrating how to use the API of this class.</b>
  *
  * @param <T> The type of the properties.

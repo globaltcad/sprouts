@@ -340,7 +340,7 @@ class Property_List_View_Spec extends Specification
             })
         and : 'Finally, we also create a list for tracking the change events.'
             var viewTrace = [:]
-            lengths.onChange(it->{ viewTrace.put(it.changeType(), it.newValues()) })
+            lengths.onChange(it->{ viewTrace.put(it.change(), it.newValues()) })
 
         expect : 'The view has the correct initial state:'
             lengths.toList() == [8.0, 4.4, 10.0, 10.0]

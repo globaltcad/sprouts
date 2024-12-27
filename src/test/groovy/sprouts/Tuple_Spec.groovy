@@ -4,7 +4,7 @@ import spock.lang.Narrative
 import spock.lang.Specification
 import spock.lang.Subject
 import spock.lang.Title
-import sprouts.impl.TupleDiffOwner
+import sprouts.impl.SequenceDiffOwner
 
 import java.util.function.Consumer
 import java.util.function.Predicate
@@ -121,12 +121,12 @@ class Tuple_Spec extends Specification
         when : 'We apply an operation on the input and get a result.'
             var result = operation(input)
         then : 'The result tuple implements an interface for accessing the last operation.'
-            result instanceof TupleDiffOwner
+            result instanceof SequenceDiffOwner
         and : 'The last operation exists, because the result is a product of an operation.'
-            (result as TupleDiffOwner).differenceFromPrevious().isPresent()
+            (result as SequenceDiffOwner).differenceFromPrevious().isPresent()
 
         when : 'We access the operation information...'
-            var diff = (result as TupleDiffOwner).differenceFromPrevious().get()
+            var diff = (result as SequenceDiffOwner).differenceFromPrevious().get()
         then : '...we get the expected values.'
             diff.change() == change
             diff.index().orElse(-1) == index
@@ -190,8 +190,8 @@ class Tuple_Spec extends Specification
         expect : 'The tuples are equal.'
             tuple1 == tuple2
         when : 'Peeking inside, we get the diff objects.'
-            var diff1 = (tuple1 as TupleDiffOwner).differenceFromPrevious().get()
-            var diff2 = (tuple2 as TupleDiffOwner).differenceFromPrevious().get()
+            var diff1 = (tuple1 as SequenceDiffOwner).differenceFromPrevious().get()
+            var diff2 = (tuple2 as SequenceDiffOwner).differenceFromPrevious().get()
         then : 'The diff objects are different.'
             diff1 != diff2
     }
@@ -590,5 +590,35 @@ class Tuple_Spec extends Specification
             numbers = numbers.retainAll([2, 4])
         then : 'Only the numbers 2 and 4 are left over.'
             numbers == Tuple.of(4, 2, 2, 4, 2, 4)
+    }
+
+    def 'Internally, a tuple has a sort of signature to determine the line of succession.'() {
+        given :
+            var root = Tuple.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+            var left = root.slice(0, 5)
+            var right = root.slice(5, 10)
+            var left2 = left.slice(0, 3)
+            var right2 = left.slice(3, 5)
+        when :
+            var rootDiff = (root as SequenceDiffOwner).differenceFromPrevious().get()
+            var leftDiff = (left as SequenceDiffOwner).differenceFromPrevious().get()
+            var rightDiff = (right as SequenceDiffOwner).differenceFromPrevious().get()
+            var left2Diff = (left2 as SequenceDiffOwner).differenceFromPrevious().get()
+            var right2Diff = (right2 as SequenceDiffOwner).differenceFromPrevious().get()
+        then :
+            leftDiff.isDirectSuccessorOf(rootDiff)
+            rightDiff.isDirectSuccessorOf(rootDiff)
+            left2Diff.isDirectSuccessorOf(leftDiff)
+            right2Diff.isDirectSuccessorOf(leftDiff)
+        and :
+            !leftDiff.isDirectSuccessorOf(rightDiff)
+            !rightDiff.isDirectSuccessorOf(leftDiff)
+            !left2Diff.isDirectSuccessorOf(right2Diff)
+            !right2Diff.isDirectSuccessorOf(left2Diff)
+        and :
+            !rootDiff.isDirectSuccessorOf(leftDiff)
+            !rootDiff.isDirectSuccessorOf(rightDiff)
+            !rootDiff.isDirectSuccessorOf(left2Diff)
+            !rootDiff.isDirectSuccessorOf(right2Diff)
     }
 }

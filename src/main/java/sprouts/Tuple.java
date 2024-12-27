@@ -2,7 +2,7 @@ package sprouts;
 
 import org.jspecify.annotations.Nullable;
 import sprouts.impl.Sprouts;
-import sprouts.impl.TupleDiff;
+import sprouts.impl.SequenceDiff;
 import sprouts.impl.TupleImpl;
 
 import java.lang.reflect.Array;
@@ -770,7 +770,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
         }
         T[] newItems = (T[]) Array.newInstance(type(), itemsToKeep.size());
         itemsToKeep.toArray(newItems);
-        return new TupleImpl<>(allowsNull(), type(), newItems, TupleDiff.of(this, Change.REMOVE, singleSequenceIndex, size() - newItems.length));
+        return new TupleImpl<>(allowsNull(), type(), newItems, SequenceDiff.of(this, Change.REMOVE, singleSequenceIndex, size() - newItems.length));
     }
 
     /**
@@ -799,7 +799,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
         }
         T[] newItems = (T[]) Array.newInstance(type(), filteredItems.size());
         filteredItems.toArray(newItems);
-        return new TupleImpl<>(allowsNull(), type(), newItems, TupleDiff.of(this, Change.RETAIN, singleSequenceIndex, newItems.length));
+        return new TupleImpl<>(allowsNull(), type(), newItems, SequenceDiff.of(this, Change.RETAIN, singleSequenceIndex, newItems.length));
     }
 
     /**
@@ -1277,7 +1277,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
         for ( T v : this ) {
             mappedItems[i++] = mapper.apply( v );
         }
-        return new TupleImpl<>( allowsNull(), type(), mappedItems, TupleDiff.of(this, Change.SET, 0, size()) );
+        return new TupleImpl<>( allowsNull(), type(), mappedItems, SequenceDiff.of(this, Change.SET, 0, size()) );
     }
 
     /**
@@ -1301,7 +1301,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
             U m = mapper.apply( v );
             array[i++] = m;
         }
-        return new TupleImpl<>( allowsNull(), type, array, TupleDiff.of(this, Change.SET, 0, size()) );
+        return new TupleImpl<>( allowsNull(), type, array, SequenceDiff.of(this, Change.SET, 0, size()) );
     }
 
     /**

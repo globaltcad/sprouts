@@ -19,7 +19,7 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
         final Class<U> targetType = Util.expectedClassFromItem(nullObject);
         Function<T, U> nonNullMapper = Util.nonNullMapper(nullObject, errorObject, mapper);
 
-        PropertyListView<U> view = new PropertyListView<>(false, targetType, source.allowsNull(), source);
+        PropertyListView<U> view = new PropertyListView<>(targetType, source.allowsNull(), source);
         Function<Val<T>, Var<U>> sourcePropToViewProp = prop -> {
             return (Var<U>) prop.view(nullObject, errorObject, nonNullMapper);
         };
@@ -34,7 +34,7 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
             if (innerSource == null) {
                 return;
             }
-            switch (delegate.changeType()) {
+            switch (delegate.change()) {
                 case NONE:
                     break;
                 case REMOVE:
@@ -65,60 +65,63 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
         return Viewables.cast(view);
     }
 
-    private static <T, U> void onRemove(ValsDelegate<T> delegate, Vars<U> view) {
-        assert delegate.changeType() == Change.REMOVE;
-
-        if (delegate.oldValues().isEmpty() || delegate.index() < 0)
+    private static <T, U> void onRemove(ValsDelegate<T> delegate, PropertyListView<U> view) {
+        assert delegate.change() == Change.REMOVE;
+        int index = delegate.index().orElse(-1);
+        if (delegate.oldValues().isEmpty() || index < 0)
             throw new UnsupportedOperationException(); // todo: implement
-        view.removeAt(delegate.index(), delegate.oldValues().size());
+
+        view.removeAt(index, delegate.oldValues().size());
     }
 
     private static <T, U> void onAdd(
             ValsDelegate<T>          delegate,
             Vals<T>                  source,
-            Vars<U>                  view,
+            PropertyListView<U>      view,
             Class<U>                 targetType,
             Function<Val<T>, Var<U>> sourcePropToViewProp
     ) {
-        assert delegate.changeType() == Change.ADD;
+        assert delegate.change() == Change.ADD;
+        int index = delegate.index().orElse(-1);
 
-        if (delegate.newValues().isEmpty() || delegate.index() < 0)
+        if (delegate.newValues().isEmpty() || index < 0)
             throw new UnsupportedOperationException(); // todo: implement
 
         Vars<U> newViews = Vars.of(targetType);
 
         for (int i = 0; i < delegate.newValues().size(); i++) {
-            Val<T> t = source.at(delegate.index() + i);
+            Val<T> t = source.at(index + i);
             newViews.add(sourcePropToViewProp.apply(t));
         }
 
-        view.addAllAt(delegate.index(), newViews);
+        view.addAllAt(index, newViews);
     }
 
     private static <T, U> void onSet(
             ValsDelegate<T>          delegate,
             Vals<T>                  source,
-            Vars<U>                  view,
+            PropertyListView<U>      view,
             Function<Val<T>, Var<U>> sourcePropToViewProp
     ) {
-        assert delegate.changeType() == Change.SET;
+        assert delegate.change() == Change.SET;
+        int index = delegate.index().orElse(-1);
 
-        if (delegate.newValues().isEmpty() || delegate.index() < 0)
+        if (delegate.newValues().isEmpty() || index < 0)
             throw new UnsupportedOperationException(); // todo: implement
 
         Vars<U> newViews = Vars.of(view.type());
 
         for (int i = 0; i < delegate.newValues().size(); i++) {
-            Val<T> t = source.at(delegate.index() + i);
+            Val<T> t = source.at(index + i);
             newViews.add(sourcePropToViewProp.apply(t));
         }
 
-        view.setAllAt(delegate.index(), newViews);
+        view.setAllAt(index, newViews);
     }
 
     private static <T, U> void onUpdateAll(
             Vals<T>                  source,
-            Vars<U>                  view,
+            PropertyListView<U>      view,
             Function<Val<T>, Var<U>> sourcePropToViewProp
     ) {
         view.clear();
@@ -130,16 +133,15 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
 
 
     private final List<Var<T>> _variables = new ArrayList<>();
-    private final boolean      _isImmutable;
     private final boolean      _allowsNull;
     private final Class<T>     _type;
 
     private final PropertyListChangeListeners<T> _changeListeners = new PropertyListChangeListeners<>();
     private final ParentListRef<Vals<?>> _parentRef;
 
+
     @SafeVarargs
-    private PropertyListView(boolean isImmutable, Class<T> type, boolean allowsNull, Vals<?> source, Var<T>... vals) {
-        _isImmutable = isImmutable;
+    private PropertyListView(Class<T> type, boolean allowsNull, Vals<?> source, Var<T>... vals) {
         _type        = type;
         _allowsNull  = allowsNull;
         _parentRef   = ParentListRef.of(source);
@@ -148,19 +150,22 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
     }
 
     /** {@inheritDoc} */
-    @Override public final Var<T> at( int index ) { return _variables.get(index); }
+    @Override public final Var<T> at( int index ) {
+        return _variables.get(index);
+    }
 
     /** {@inheritDoc} */
-    @Override public final Class<T> type() { return _type; }
+    @Override public final Class<T> type() {
+        return _type;
+    }
 
     /** {@inheritDoc} */
-    @Override public final int size() { return _variables.size(); }
+    @Override public final int size() {
+        return _variables.size();
+    }
 
     /** {@inheritDoc} */
     @Override public Vars<T> removeAll( Vals<T> properties ) {
-        if ( _isImmutable )
-            throw new UnsupportedOperationException("This is an immutable list.");
-
         Vars<T> removal = _allowsNull ? Vars.ofNullable(_type) : Vars.of(_type);
 
         if ( properties.isMutable() ) {
@@ -180,8 +185,6 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
     /** {@inheritDoc} */
     @Override
     public Vars<T> addAt( int index, Var<T> value ) {
-        if ( _isImmutable )
-            throw new UnsupportedOperationException("This is an immutable list.");
         if ( this.allowsNull() != value.allowsNull() )
             throw new IllegalArgumentException("The null safety of the given property does not match this list.");
         _checkNullSafetyOf(value);
@@ -193,7 +196,6 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
     /** {@inheritDoc} */
     @Override
     public Vars<T> popRange(int from, int to) {
-        if ( _isImmutable ) throw new UnsupportedOperationException("This is an immutable list.");
         if ( from < 0 || to > _variables.size() || from > to )
             throw new IndexOutOfBoundsException("From: " + from + ", To: " + to + ", Size: " + _variables.size());
 
@@ -214,7 +216,6 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
     /** {@inheritDoc} */
     @Override
     public Vars<T> removeRange(int from, int to) {
-        if ( _isImmutable ) throw new UnsupportedOperationException("This is an immutable list.");
         if ( from < 0 || to > _variables.size() || from > to )
             throw new IndexOutOfBoundsException("From: " + from + ", To: " + to + ", Size: " + _variables.size());
 
@@ -235,7 +236,6 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
     /** {@inheritDoc} */
     @Override
     public Vars<T> setAt( int index, Var<T> value ) {
-        if ( _isImmutable ) throw new UnsupportedOperationException("This is an immutable list.");
         if ( index < 0 || index >= _variables.size() )
             throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + _variables.size());
 
@@ -253,8 +253,6 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
     /** {@inheritDoc} */
     @Override
     public Vars<T> setRange(int from, int to, T value) {
-        if (_isImmutable)
-            throw new UnsupportedOperationException("This is an immutable list.");
         if (from < 0 || to > _variables.size() || from > to)
             throw new IndexOutOfBoundsException("From: " + from + ", To: " + to + ", Size: " + _variables.size());
 
@@ -282,8 +280,6 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
     /** {@inheritDoc} */
     @Override
     public Vars<T> setRange(int from, int to, Var<T> value) {
-        if (_isImmutable)
-            throw new UnsupportedOperationException("This is an immutable list.");
         if (from < 0 || to > _variables.size() || from > to)
             throw new IndexOutOfBoundsException("From: " + from + ", To: " + to + ", Size: " + _variables.size());
 
@@ -308,8 +304,6 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
 
     @Override
     public Vars<T> addAllAt( int index, Vars<T> vars ) {
-        if (_isImmutable)
-            throw new UnsupportedOperationException("This is an immutable list.");
         if ( !_checkCanAdd(vars) )
             return this;
 
@@ -355,12 +349,6 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
     }
 
     private boolean _checkCanAdd( Vals<T> properties ) {
-        if ( _isImmutable )
-            throw new UnsupportedOperationException(
-                    "Attempted to add to an immutable property list for item type '" + type() + "'. " +
-                    "Properties cannot be added to an immutable property list."
-                );
-
         if ( properties.allowsNull() != this.allowsNull() )
             throw new IllegalArgumentException(
                     "The null safety of the given property list does not match this list."
@@ -375,9 +363,6 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
     /** {@inheritDoc} */
     @Override
     public Vars<T> retainAll( Vals<T> vars ) {
-        if ( _isImmutable )
-            throw new UnsupportedOperationException("This is an immutable list.");
-
         Vars<T> old = _allowsNull ? Vars.ofNullable(_type) : Vars.of(_type);
 
         if ( vars.isMutable() ) {
@@ -407,8 +392,6 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
     /** {@inheritDoc} */
     @Override
     public Vars<T> clear() {
-        if ( _isImmutable ) throw new UnsupportedOperationException("This is an immutable list.");
-
         Vars<T> vars = (Vars<T>) (_allowsNull ? Vars.ofNullable(_type, _variables) : Vars.of(_type, _variables));
 
         _variables.clear();
@@ -419,7 +402,6 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
     /** {@inheritDoc} */
     @Override
     public void sort( Comparator<T> comparator ) {
-        if ( _isImmutable ) throw new UnsupportedOperationException("This is an immutable list.");
         _variables.sort( ( a, b ) -> comparator.compare( a.orElseNull(), b.orElseNull() ) );
         _triggerAction( Change.SORT );
     }
@@ -427,7 +409,6 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
     /** {@inheritDoc} */
     @Override
     public final void makeDistinct() {
-        if ( _isImmutable ) throw new UnsupportedOperationException("This is an immutable list.");
         Set<T> checked = new HashSet<>();
         List<Var<T>> retained = new ArrayList<>();
         for ( Var<T> property : _variables ) {
@@ -475,7 +456,7 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
 
     @Override
     public boolean isMutable() {
-        return !_isImmutable;
+        return true;
     }
 
     @Override
@@ -522,31 +503,13 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
     /** {@inheritDoc} */
     @Override
     public final boolean equals( Object obj ) {
-        if( obj == null ) return false;
-        if( obj == this ) return true;
-        if( obj instanceof Vals ) {
-            @SuppressWarnings("unchecked")
-            Vals<T> other = (Vals<T>) obj;
-            if ( other.isMutable() != this.isMutable() )
-                return false;
-            if ( size() != other.size() )
-                return false;
-            for ( int i = 0; i < size(); i++ )
-                if ( !this.at(i).equals(other.at(i)) ) return false;
-
-            return true;
-        }
-        return false;
+        return this == obj;
     }
 
     /** {@inheritDoc} */
     @Override
     public final int hashCode() {
-        if ( !_isImmutable ) {
-            return System.identityHashCode(this);
-        }
-        int hash = _variables.stream().mapToInt(Objects::hashCode).sum();
-        return 31 * hash + _type.hashCode();
+        return System.identityHashCode(this);
     }
 
     private void _checkNullSafety() {

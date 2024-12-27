@@ -1,5 +1,7 @@
 package sprouts;
 
+import java.util.Optional;
+
 /**
  *  A context object passed to the various types of change listeners registered
  *  in property lists such as {@link Vals} and {@link Vars}.
@@ -20,6 +22,7 @@ public interface ValsDelegate<T>
      *          <ul>
      *              <li>{@link Change#ADD}</li>
      *              <li>{@link Change#REMOVE}</li>
+     *              <li>{@link Change#RETAIN}</li>
      *              <li>{@link Change#SET}</li>
      *              <li>{@link Change#SORT}</li>
      *              <li>{@link Change#CLEAR}</li>
@@ -27,16 +30,16 @@ public interface ValsDelegate<T>
      *              <li>{@link Change#NONE}</li>
      *          </ul>
      */
-    Change changeType();
+    Change change();
 
     /**
      *  Exposes the index at which the {@link Change} on the property list took place.<br>
      *  Note that in case of the type of mutation be non-specific to a particular index,
-     *  like a list clear or a list sort, this method will return -1.
-     *  @return The index at which a list mutation took place or -1
+     *  like a list clear or a list sort, this method will return an empty {@link Optional}.
+     *  @return The index at which a list mutation took place or an empty {@link Optional}
      *          if the change does not involve a particular index, like a list clear or a list sort.
      */
-    int index();
+    Optional<Integer> index();
 
     /**
      *  Exposes a read only property list of old values which were removed from the property list.
