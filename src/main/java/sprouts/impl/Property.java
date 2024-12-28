@@ -100,22 +100,22 @@ final class Property<T extends @Nullable Object> implements Var<T>, Viewable<T> 
         Objects.requireNonNull(channel);
         if ( _isImmutable )
             throw new UnsupportedOperationException("This variable is immutable!");
-        ItemChange change = _setInternal(newItem);
-        if ( change != ItemChange.NONE )
-            this.fireChange(channel, change);
+        ItemPair<T> pair = _setInternal(newItem);
+        if ( pair.change() != ItemChange.NONE )
+            this.fireChange(channel, pair);
         return this;
     }
 
-    private ItemChange _setInternal( T newValue ) {
+    private ItemPair<T> _setInternal( T newValue ) {
         if ( !_nullable && newValue == null )
             throw new NullPointerException(
                     "This property is configured to not allow null values! " +
                     "If you want your property to allow null values, use the 'ofNullable(Class, T)' factory method."
                 );
 
-        ItemChange change = Util._itemChangeTypeOf(_type, newValue, _value);
+        ItemPair<T> pair = new ItemPair<>(_type, newValue, _value);
 
-        if ( change != ItemChange.NONE ) {
+        if ( pair.change() != ItemChange.NONE ) {
             // First we check if the value is compatible with the type
             if ( newValue != null && !_type.isAssignableFrom(newValue.getClass()) )
                 throw new IllegalArgumentException(
@@ -125,7 +125,7 @@ final class Property<T extends @Nullable Object> implements Var<T>, Viewable<T> 
 
             _value = newValue;
         }
-        return change;
+        return pair;
     }
 
     /** {@inheritDoc} */
@@ -137,11 +137,11 @@ final class Property<T extends @Nullable Object> implements Var<T>, Viewable<T> 
 
     /** {@inheritDoc} */
     @Override public Var<T> fireChange( Channel channel ) {
-        this.fireChange(channel, ItemChange.NONE);
+        this.fireChange(channel, new ItemPair<>(this));
         return this;
     }
 
-    void fireChange( Channel channel, ItemChange change ) {
+    void fireChange( Channel channel, ItemPair<T> change ) {
         _changeListeners.fireChange(this, channel, change);
     }
 

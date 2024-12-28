@@ -136,10 +136,10 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
         _lastItem = initialItem;
         Viewable.cast(parent).onChange(From.ALL, Action.ofWeak(this, (thisLens, v) -> {
             T newValue = thisLens._fetchItemFromParent();
-            ItemChange change = Util._itemChangeTypeOf(thisLens._type, newValue, thisLens._lastItem);
-            if ( change != ItemChange.NONE ) {
+            ItemPair<T> pair = new ItemPair<>(thisLens._type, newValue, thisLens._lastItem);
+            if ( pair.change() != ItemChange.NONE ) {
                 thisLens._lastItem = newValue;
-                thisLens.fireChange(v.channel(), change);
+                thisLens.fireChange(v.channel(), pair);
             }
         }));
 
@@ -250,25 +250,25 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
 
     /** {@inheritDoc} */
     @Override public final Var<T> fireChange( Channel channel ) {
-        this.fireChange(channel, ItemChange.NONE);
+        this.fireChange(channel, new ItemPair<>(this));
         return this;
     }
 
-    void fireChange( Channel channel, ItemChange change ) {
-        _changeListeners.fireChange(this, channel, change);
+    void fireChange( Channel channel, ItemPair<T> pair ) {
+        _changeListeners.fireChange(this, channel, pair);
     }
 
     /** {@inheritDoc} */
     @Override
     public final Var<T> set( Channel channel, T newItem ) {
         Objects.requireNonNull(channel);
-        ItemChange change = _setInternal(channel, newItem);
-        if ( change != ItemChange.NONE )
-            this.fireChange(channel, change);
+        ItemPair<T> pair = _setInternal(channel, newItem);
+        if ( pair.change() != ItemChange.NONE )
+            this.fireChange(channel, pair);
         return this;
     }
 
-    private ItemChange _setInternal( Channel channel, T newValue ) {
+    private ItemPair<T> _setInternal( Channel channel, T newValue ) {
         if ( !_nullable && newValue == null )
             throw new NullPointerException(
                     "This property is configured to not allow null values! " +
@@ -277,9 +277,9 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
 
         T oldValue = _item();
 
-        ItemChange change = Util._itemChangeTypeOf(_type, newValue, oldValue);
+        ItemPair<T> pair = new ItemPair<>(_type, newValue, oldValue);
 
-        if ( change != ItemChange.NONE ) {
+        if ( pair.change() != ItemChange.NONE ) {
             // First we check if the value is compatible with the type
             if ( newValue != null && !_type.isAssignableFrom(newValue.getClass()) )
                 throw new IllegalArgumentException(
@@ -289,7 +289,7 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
 
             _setInParentAndInternally(channel, newValue);
         }
-        return change;
+        return pair;
     }
 
     @Override

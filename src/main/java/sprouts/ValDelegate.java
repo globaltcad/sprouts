@@ -1,9 +1,5 @@
 package sprouts;
 
-import org.jspecify.annotations.NonNull;
-
-import java.util.NoSuchElementException;
-
 /**
  *  A context object passed to the various types of change listeners registered
  *  on a property such as {@link Val} and {@link Var}.
@@ -12,25 +8,34 @@ import java.util.NoSuchElementException;
  *
  * @param <T> The type of the value wrapped by the delegated property...
  */
-public interface ValDelegate<T> extends Maybe<T>
+public interface ValDelegate<T>
 {
     /**
-     * This method is intended to be used for when you want to wrap non-nullable types.
-     * So if an item is present (not null), it returns the item, otherwise however
-     * {@code NoSuchElementException} will be thrown.
-     * If you simply want to get the item of this {@link ValDelegate} irrespective of
-     * it being null or not, use {@link #orElseNull()} to avoid an exception.
-     * However, if this result wraps a nullable type, which is not intended to be null,
-     * please use {@link #orElseThrow()} or {@link #orElseThrowUnchecked()} to
-     * make this intention clear to the reader of your code.
-     * The {@link #orElseThrowUnchecked()} method is functionally identical to this method.
+     *  Exposes the type of the property that was listened to.
      *
-     * @return the non-{@code null} item described by this {@code Val}
-     * @throws NoSuchElementException if no item is present
+     * @return The type of the property that was listened to.
      */
-    default @NonNull T get() {
-        return orElseThrowUnchecked();
-    }
+    Class<T> type();
+
+    /**
+     *  Exposes the value of the property that was listened to
+     *  in an {@link Maybe} wrapper. If the new value is {@code null},
+     *  then the {@link Maybe} will be empty.
+     *
+     * @return An {@link Maybe} containing the new value of the property,
+     *          or an empty {@link Maybe} if the new value is {@code null}.
+     */
+    Maybe<T> currentValue();
+
+    /**
+     *  Exposes the old value of the property that was listened to
+     *  in an {@link Maybe} wrapper. If the old value was {@code null},
+     *  then the {@link Maybe} will be empty.
+     *
+     * @return An {@link Maybe} containing the old value of the property,
+     *          or an empty {@link Maybe} if the old value was {@code null}.
+     */
+    Maybe<T> oldValue();
 
     /**
      *  The {@link Channel} constant from which the change originated.

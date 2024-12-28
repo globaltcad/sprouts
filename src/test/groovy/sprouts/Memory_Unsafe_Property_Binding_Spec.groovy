@@ -21,7 +21,7 @@ class Memory_Unsafe_Property_Binding_Spec extends Specification
         and : 'Something we want to have a side effect on:'
             var list = []
         when : 'We subscribe to the property using the `onChange(..)` method.'
-            Viewable.cast(mutable).onChange(From.VIEW_MODEL, it -> list.add(it.orElseNull()) )
+            Viewable.cast(mutable).onChange(From.VIEW_MODEL, it -> list.add(it.currentValue().orElseNull()) )
         and : 'We change the value of the property.'
             mutable.set("Tofu")
         then : 'The side effect is executed.'
@@ -81,12 +81,12 @@ class Memory_Unsafe_Property_Binding_Spec extends Specification
             Var<String> property = Var.of("Hello World")
         and : 'we bind 1 subscriber to the property.'
             var list1 = []
-            Viewable.cast(property).onChange(From.VIEW_MODEL, it -> list1.add(it.orElseNull()) )
+            Viewable.cast(property).onChange(From.VIEW_MODEL, it -> list1.add(it.currentValue().orElseNull()) )
         and : 'We create a new property with a different id.'
             Val<String> property2 = property.withId("XY")
         and : 'Another subscriber to the new property.'
             var list2 = []
-            Viewable.cast(property2).onChange(From.VIEW_MODEL, it -> list2.add(it.orElseNull()) )
+            Viewable.cast(property2).onChange(From.VIEW_MODEL, it -> list2.add(it.currentValue().orElseNull()) )
 
         when : 'We change the value of the original property.'
             property.set("Tofu")
@@ -126,9 +126,9 @@ class Memory_Unsafe_Property_Binding_Spec extends Specification
             var modelListener = []
             var anyListener = []
             var property = Var.of(":)")
-            Viewable.cast(property).onChange(From.VIEW, it -> viewListener << it.orElseThrow() )
-            Viewable.cast(property).onChange(From.VIEW_MODEL, it -> modelListener << it.orElseNull() )
-            Viewable.cast(property).onChange(From.ALL, it -> anyListener << it.orElseThrow() )
+            Viewable.cast(property).onChange(From.VIEW, it -> viewListener << it.currentValue().orElseThrow() )
+            Viewable.cast(property).onChange(From.VIEW_MODEL, it -> modelListener << it.currentValue().orElseNull() )
+            Viewable.cast(property).onChange(From.ALL, it -> anyListener << it.currentValue().orElseThrow() )
 
         when : 'We change the state of the property multiple times using the `set(Channel, T)` method.'
             property.set(From.VIEW, ":(")
@@ -157,8 +157,8 @@ class Memory_Unsafe_Property_Binding_Spec extends Specification
             var showListener = []
             var modelListener = []
             var property = Var.of(":)")
-            Viewable.cast(property).onChange(From.ALL, it ->{modelListener << it.orElseThrow()})
-            Viewable.cast(property).onChange(From.VIEW_MODEL, it -> showListener << it.orElseNull() )
+            Viewable.cast(property).onChange(From.ALL, it ->{modelListener << it.currentValue().orElseThrow()})
+            Viewable.cast(property).onChange(From.VIEW_MODEL, it -> showListener << it.currentValue().orElseNull() )
 
         when : 'We change the state of the property using the "set(T)" method.'
             property.set(":(")

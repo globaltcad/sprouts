@@ -43,8 +43,12 @@ public final class PropertyChangeListeners<T>
             actions.unsubscribeAll();
     }
 
-    public void fireChange( Val<T> owner, Channel channel, ItemChange change ) {
-        ValDelegate<T> delegate = Sprouts.factory().delegateOf(Val.ofNullable(owner), channel, change);
+    void fireChange(
+        Val<T> owner,
+        Channel channel,
+        ItemPair<T> pair
+    ) {
+        ValDelegate<T> delegate = Sprouts.factory().delegateOf(owner, channel, pair.change(), pair.newValue());
         // We clone this property to avoid concurrent modification
         if ( channel == From.ALL)
             for ( Channel key : _actions.keySet() )

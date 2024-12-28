@@ -36,7 +36,7 @@ class Property_Event_Delegates_Spec extends Specification
         when : 'We change the property.'
             property.set(42)
         then : 'The exposed delegate has the expected String representation and channel.'
-            delegate.toString() == "ValDelegate<Integer?>[42]"
+            delegate.toString() == "ValDelegate<Integer>[channel=VIEW_MODEL, change=VALUE, newValue=42, oldValue=42, id='']"
             delegate.channel() == From.VIEW_MODEL
         when : 'We try to mutate the delegate...'
             delegate.set(0)
@@ -62,7 +62,7 @@ class Property_Event_Delegates_Spec extends Specification
         when : 'We change the property.'
             property.set(From.VIEW, 7)
         then : 'The exposed delegate has the expected String representation and channel.'
-            delegate.toString() == "ValDelegate<Integer?>[7]"
+            delegate.toString() == "ValDelegate<Integer>[channel=VIEW, change=VALUE, newValue=7, oldValue=7, id='']"
             delegate.channel() == From.VIEW
         when : 'We try to mutate the delegate...'
             delegate.set(From.VIEW, 0)

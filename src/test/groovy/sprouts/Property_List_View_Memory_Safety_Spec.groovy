@@ -80,9 +80,9 @@ class Property_List_View_Memory_Safety_Spec extends Specification
             WeakReference<Viewable<Integer>> edRef = new WeakReference<>(ed)
         and : 'A list to record the changes and a listener to record the changes.'
             var traceOfChanges = []
-            gary.onChange(From.ALL, { traceOfChanges << it.get() })
-            joey.onChange(From.ALL, { traceOfChanges << it.get() })
-            ed.onChange(From.ALL, { traceOfChanges << it.get() })
+            gary.onChange(From.ALL, { traceOfChanges << it.currentValue().orElseNull() })
+            joey.onChange(From.ALL, { traceOfChanges << it.currentValue().orElseNull() })
+            ed.onChange(From.ALL, { traceOfChanges << it.currentValue().orElseNull() })
         expect : 'The trace is empty initially.'
             traceOfChanges.isEmpty()
 

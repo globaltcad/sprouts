@@ -302,9 +302,9 @@ class Property_List_View_Spec extends Specification
         and : 'Two trace lists to record the changes.'
             var viewTrace = []
         and : 'Listeners to record the changes.'
-            firstDay.onChange(From.ALL, { viewTrace << "0: " + it.get() })
-            secondDay.onChange(From.ALL, { viewTrace << "1: " + it.get() })
-            thirdDay.onChange(From.ALL, { viewTrace << "2: " + it.get() })
+            firstDay.onChange(From.ALL, { viewTrace << "0: " + it.currentValue().orElseNull() })
+            secondDay.onChange(From.ALL, { viewTrace << "1: " + it.currentValue().orElseNull() })
+            thirdDay.onChange(From.ALL, { viewTrace << "2: " + it.currentValue().orElseNull() })
 
         when : 'We change the first day in the list.'
             days.at(0).set(DayOfWeek.SUNDAY)

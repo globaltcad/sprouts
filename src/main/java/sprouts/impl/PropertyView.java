@@ -47,8 +47,8 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 		}
 		final PropertyView<@Nullable U> viewProperty = PropertyView._ofNullable(type, initialItem, source);
 		Viewable.cast(source).onChange(Util.VIEW_CHANNEL, Action.ofWeak( viewProperty, (innerViewProperty, v) -> {
-			ItemChange change = innerViewProperty._setInternal(mapper.apply(v.orElseNull()));
-			innerViewProperty.fireChange(v.channel(), change);
+			ItemPair<U> pair = innerViewProperty._setInternal(mapper.apply(v.currentValue().orElseNull()));
+			innerViewProperty.fireChange(v.channel(), pair);
 		}));
 		return viewProperty;
 	}
@@ -71,8 +71,8 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 			if ( innerSource == null )
 				return;
 			final U value = nonNullMapper.apply(innerSource.orElseNull());
-			ItemChange change = innerViewProperty._setInternal(value);
-			innerViewProperty.fireChange(v.channel(), change);
+			ItemPair<U> pair = innerViewProperty._setInternal(value);
+			innerViewProperty.fireChange(v.channel(), pair);
 		}));
 		return viewProperty;
 	}
@@ -96,8 +96,8 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 			if ( innerSource == null )
 				return;
 
-			ItemChange change = innerViewProperty._setInternal(v.orElseNull());
-			innerViewProperty.fireChange(v.channel(), change);
+			ItemPair<T> pair = innerViewProperty._setInternal(v.currentValue().orElseNull());
+			innerViewProperty.fireChange(v.channel(), pair);
 		}));
 		return viewProperty;
 	}
@@ -108,9 +108,9 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 			Var<U> source = (Var<U>) parent;
 			PropertyView<T> view = PropertyView._of( type, initialItem, parent );
 			Viewable.cast(source).onChange(From.ALL, Action.ofWeak(view, (innerViewProperty, v) -> {
-				T newItem = mapper.apply(v.orElseNull());
-				ItemChange change = innerViewProperty._setInternal(newItem);
-				innerViewProperty.fireChange(v.channel(), change);
+				T newItem = mapper.apply(v.currentValue().orElseNull());
+				ItemPair<T> pair = innerViewProperty._setInternal(newItem);
+				innerViewProperty.fireChange(v.channel(), pair);
 			}));
 			return view;
 		}
@@ -155,30 +155,30 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 			Val<U> innerSecond = innerResult._getSource(1);
 			if (innerSecond == null)
 				return;
-			T newItem = fullCombiner.apply(v, innerSecond);
+			T newItem = fullCombiner.apply(v.currentValue(), innerSecond);
 			if (newItem == null)
 				log.error(
 					"Invalid combiner result! The combination of the first item '{}' (changed) and the second " +
 					"item '{}' was null and null is not allowed! The old item '{}' is retained!",
-					v.orElseNull(), innerSecond.orElseNull(), innerResult.orElseNull()
+					v.currentValue().orElseNull(), innerSecond.orElseNull(), innerResult.orElseNull()
 				);
 			else {
-				ItemChange change = innerResult._setInternal(newItem);
-				innerResult.fireChange(From.ALL, change);
+				ItemPair<T> pair = innerResult._setInternal(newItem);
+				innerResult.fireChange(From.ALL, pair);
 			}
 		};
 		BiConsumer<PropertyView<T>,ValDelegate<U>> secondListener = (innerResult,v) -> {
 			Val<T> innerFirst = innerResult._getSource(0);
-			T newItem = fullCombiner.apply(innerFirst, v);
+			T newItem = fullCombiner.apply(innerFirst, v.currentValue());
 			if (newItem == null)
 				log.error(
 					"Invalid combiner result! The combination of the first item '{}' and the second " +
 					"item '{}' (changed) was null and null is not allowed! The old item '{}' is retained!",
-					innerFirst.orElseNull(), v.orElseNull(), innerResult.orElseNull()
+					innerFirst.orElseNull(), v.currentValue().orElseNull(), innerResult.orElseNull()
 				);
 			else {
-				ItemChange change = innerResult._setInternal(newItem);
-				innerResult.fireChange(From.ALL, change);
+				ItemPair<T> pair = innerResult._setInternal(newItem);
+				innerResult.fireChange(From.ALL, pair);
 			}
 		};
 
@@ -220,14 +220,14 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 		if ( !firstIsImmutable )
 			Viewable.cast(first).onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
 				Val<U> innerSecond = innerResult._getSource(1);
-				ItemChange change = innerResult._setInternal(fullCombiner.apply(v, innerSecond));
-				innerResult.fireChange(v.channel(), change);
+				ItemPair<T> pair = innerResult._setInternal(fullCombiner.apply(v.currentValue(), innerSecond));
+				innerResult.fireChange(v.channel(), pair);
 			}));
 		if ( !secondIsImmutable )
 			Viewable.cast(second).onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
 				Val<T> innerFirst = innerResult._getSource(0);
-				ItemChange change = innerResult._setInternal(fullCombiner.apply(innerFirst, v));
-				innerResult.fireChange(v.channel(), change);
+				ItemPair<T> pair = innerResult._setInternal(fullCombiner.apply(innerFirst, v.currentValue()));
+				innerResult.fireChange(v.channel(), pair);
 			}));
 		return result;
 	}
@@ -257,32 +257,32 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 
 		Viewable.cast(first).onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
 			Val<U> innerSecond = innerResult._getSource(1);
-			@Nullable R newItem = fullCombiner.apply(v, innerSecond);
+			@Nullable R newItem = fullCombiner.apply(v.currentValue(), innerSecond);
 			if (newItem == null)
 				log.error(
 					"Invalid combiner result! The combination of the first item '{}' (changed) " +
 					"and the second item '{}' was null and null is not allowed! " +
 					"The old item '{}' is retained!",
-					v.orElseNull(), innerSecond.orElseNull(), innerResult.orElseNull()
+					v.currentValue().orElseNull(), innerSecond.orElseNull(), innerResult.orElseNull()
 				);
 			else {
-				ItemChange change = innerResult._setInternal(newItem);
-				innerResult.fireChange(v.channel(), change);
+				ItemPair<R> pair = innerResult._setInternal(newItem);
+				innerResult.fireChange(v.channel(), pair);
 			}
 		}));
 		Viewable.cast(second).onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
 			Val<T> innerFirst = innerResult._getSource(0);
-			@Nullable R newItem = fullCombiner.apply(innerFirst, v);
+			@Nullable R newItem = fullCombiner.apply(innerFirst, v.currentValue());
 			if (newItem == null)
 				log.error(
 					"Invalid combiner result! The combination of the first item '{}' and the second " +
 					"item '{}' (changed) was null and null is not allowed! " +
 					"The old item '{}' is retained!",
-					innerFirst.orElseNull(), v.orElseNull(), innerResult.orElseNull()
+					innerFirst.orElseNull(), v.currentValue().orElseNull(), innerResult.orElseNull()
 				);
 			else {
-				ItemChange change = innerResult._setInternal(newItem);
-				innerResult.fireChange(v.channel(), change);
+				ItemPair<R> pair = innerResult._setInternal(newItem);
+				innerResult.fireChange(v.channel(), pair);
 			}
 		}));
 		return result;
@@ -307,13 +307,13 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 		PropertyView<@Nullable R> result =  PropertyView._ofNullable( type, fullCombiner.apply(first, second), first, second ).withId(id);
 		Viewable.cast(first).onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
 			Val<U> innerSecond = innerResult._getSource(1);
-			ItemChange change = innerResult._setInternal(fullCombiner.apply(v, innerSecond));
-			innerResult.fireChange(v.channel(), change);
+			ItemPair<R> pair = innerResult._setInternal(fullCombiner.apply(v.currentValue(), innerSecond));
+			innerResult.fireChange(v.channel(), pair);
 		}));
 		Viewable.cast(second).onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
 			Val<T> innerFirst = innerResult._getSource(0);
-			ItemChange change = innerResult._setInternal(fullCombiner.apply(innerFirst, v));
-			innerResult.fireChange(v.channel(), change);
+			ItemPair<R> pair = innerResult._setInternal(fullCombiner.apply(innerFirst, v.currentValue()));
+			innerResult.fireChange(v.channel(), pair);
 		}));
 		return result;
 	}
@@ -399,12 +399,12 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 
 	/** {@inheritDoc} */
 	@Override public Var<T> fireChange( Channel channel ) {
-		this.fireChange(channel, ItemChange.NONE);
+		this.fireChange(channel, new ItemPair<>(this));
 		return this;
 	}
 
-	void fireChange( Channel channel, ItemChange change ) {
-		_changeListeners.fireChange(this, channel, change);
+	void fireChange( Channel channel, ItemPair<T> pair ) {
+		_changeListeners.fireChange(this, channel, pair);
 	}
 
 	@Override
@@ -421,22 +421,22 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 	@Override
 	public Var<T> set( Channel channel, T newItem ) {
 		Objects.requireNonNull(channel);
-		ItemChange change = _setInternal(newItem);
-		if ( change != ItemChange.NONE )
-			this.fireChange(channel, change);
+		ItemPair<T> pair = _setInternal(newItem);
+		if ( pair.change() != ItemChange.NONE )
+			this.fireChange(channel, pair);
 		return this;
 	}
 
-	private ItemChange _setInternal( @Nullable T newValue ) {
+	private ItemPair<T> _setInternal( @Nullable T newValue ) {
 		if ( !_nullable && newValue == null )
 			throw new NullPointerException(
 					"This property is configured to not allow null items! " +
 					"If you want your property to allow null items, use the 'ofNullable(Class, T)' factory method."
 				);
 
-		ItemChange change = Util._itemChangeTypeOf(_type, newValue, _currentItem);
+		ItemPair<T> pair = new ItemPair<>(_type, newValue, _currentItem);
 
-		if ( change != ItemChange.NONE ) {
+		if ( pair.change() != ItemChange.NONE ) {
 			// First we check if the item is compatible with the type
 			if ( newValue != null && !_type.isAssignableFrom(newValue.getClass()) )
 				throw new IllegalArgumentException(
@@ -446,7 +446,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 
 			_currentItem = newValue;
 		}
-		return change;
+		return pair;
 	}
 
 	@Override

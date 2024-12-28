@@ -626,7 +626,7 @@ class Property_View_Spec extends Specification
         and : 'A trace list to record the side effect.'
             var trace = []
         and : 'Finally we register a weak action on the property.'
-            viewable.onChange(From.ALL, Action.ofWeak(owner, (o, it) -> trace << it.orElseThrow()))
+            viewable.onChange(From.ALL, Action.ofWeak(owner, (o, it) -> trace << it.currentValue().orElseThrow()))
 
         when : 'We change the source property.'
             property.set("I am a new text.")
