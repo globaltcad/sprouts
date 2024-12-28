@@ -53,4 +53,20 @@ public interface ValDelegate<T> extends Maybe<T>
      *  @return The id of the property that was listened to.
      */
     String id();
+
+    /**
+     *  The type of change that occurred in the property.
+     *  This information can be used to perform different actions
+     *  that are specific to the type of change.
+     *
+     *  @return The mutation type of the change which may be one of the following:
+     *          <ul>
+     *              <li>{@link ItemChange#NONE}</li>
+     *              <li>{@link ItemChange#VALUE}</li>
+     *              <li>{@link ItemChange#TO_NULL_REFERENCE}</li>
+     *              <li>{@link ItemChange#TO_NON_NULL_REFERENCE}</li>
+     *              <li>{@link ItemChange#IDENTITY}</li>
+     *          </ul>
+     */
+    ItemChange change();
 }

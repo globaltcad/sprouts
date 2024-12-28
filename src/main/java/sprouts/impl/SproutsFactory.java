@@ -16,7 +16,7 @@ import java.util.regex.Pattern;
  */
 public interface SproutsFactory
 {
-	<T> ValDelegate<T> delegateOf( Val<T> source, Channel channel );
+	<T> ValDelegate<T> delegateOf( Val<T> source, Channel channel, ItemChange change );
 
 	<T> ValsDelegate<T> delegateOf(
 		Vals<T> source,

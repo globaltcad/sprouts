@@ -8,12 +8,14 @@ import java.util.function.Function;
 
 final class ValDelegateImpl<T> implements ValDelegate<T> {
 
-    private final Channel channel;
-    private final Val<T>  value;
+    private final Channel    channel;
+    private final Val<T>     value;
+    private final ItemChange change;
 
-    ValDelegateImpl( Channel channel, Val<T> value ) {
+    ValDelegateImpl( Channel channel, Val<T> value, ItemChange change ) {
         this.channel = Objects.requireNonNull(channel);
         this.value   = Objects.requireNonNull(value);
+        this.change  = Objects.requireNonNull(change);
     }
 
     @Override
@@ -24,6 +26,11 @@ final class ValDelegateImpl<T> implements ValDelegate<T> {
     @Override
     public String id() {
         return value.id();
+    }
+
+    @Override
+    public ItemChange change() {
+        return change;
     }
 
     @Override

@@ -61,8 +61,8 @@ public final class Sprouts implements SproutsFactory
 
 
     @Override
-    public <T> ValDelegate<T> delegateOf(Val<T> source, Channel channel) {
-        return new ValDelegateImpl<>(channel, source);
+    public <T> ValDelegate<T> delegateOf(Val<T> source, Channel channel, ItemChange change) {
+        return new ValDelegateImpl<>(channel, source, change);
     }
 
     @Override
