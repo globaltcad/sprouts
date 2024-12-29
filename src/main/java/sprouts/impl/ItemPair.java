@@ -1,7 +1,7 @@
 package sprouts.impl;
 
 import org.jspecify.annotations.Nullable;
-import sprouts.ItemChange;
+import sprouts.SingleChange;
 import sprouts.Val;
 
 import java.util.Objects;
@@ -9,7 +9,7 @@ import java.util.Objects;
 final class ItemPair<T> {
 
     private final Class<T>    _type;
-    private final ItemChange  _change;
+    private final SingleChange _change;
     private final @Nullable T _oldValue;
     private final @Nullable T _newValue;
 
@@ -19,7 +19,7 @@ final class ItemPair<T> {
 
     ItemPair(Class<T> type, @Nullable T newValue, @Nullable T oldValue) {
         _type    = Objects.requireNonNull(type);
-        _change  = ItemChange.of(type, newValue, oldValue);
+        _change  = SingleChange.of(type, newValue, oldValue);
         _newValue = newValue;
         _oldValue = oldValue;
     }
@@ -28,7 +28,7 @@ final class ItemPair<T> {
         return _type;
     }
 
-    ItemChange change() {
+    SingleChange change() {
         return _change;
     }
 

@@ -422,7 +422,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 	public Var<T> set( Channel channel, T newItem ) {
 		Objects.requireNonNull(channel);
 		ItemPair<T> pair = _setInternal(newItem);
-		if ( pair.change() != ItemChange.NONE )
+		if ( pair.change() != SingleChange.NONE )
 			this.fireChange(channel, pair);
 		return this;
 	}
@@ -436,7 +436,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 
 		ItemPair<T> pair = new ItemPair<>(_type, newValue, _currentItem);
 
-		if ( pair.change() != ItemChange.NONE ) {
+		if ( pair.change() != SingleChange.NONE ) {
 			// First we check if the item is compatible with the type
 			if ( newValue != null && !_type.isAssignableFrom(newValue.getClass()) )
 				throw new IllegalArgumentException(

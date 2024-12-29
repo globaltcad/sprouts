@@ -66,7 +66,7 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
     }
 
     private static <T, U> void onRemove(ValsDelegate<T> delegate, PropertyListView<U> view) {
-        assert delegate.change() == Change.REMOVE;
+        assert delegate.change() == SequenceChange.REMOVE;
         int index = delegate.index().orElse(-1);
         if (delegate.oldValues().isEmpty() || index < 0)
             throw new UnsupportedOperationException(); // todo: implement
@@ -81,7 +81,7 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
             Class<U>                 targetType,
             Function<Val<T>, Var<U>> sourcePropToViewProp
     ) {
-        assert delegate.change() == Change.ADD;
+        assert delegate.change() == SequenceChange.ADD;
         int index = delegate.index().orElse(-1);
 
         if (delegate.newValues().isEmpty() || index < 0)
@@ -103,7 +103,7 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
             PropertyListView<U>      view,
             Function<Val<T>, Var<U>> sourcePropToViewProp
     ) {
-        assert delegate.change() == Change.SET;
+        assert delegate.change() == SequenceChange.SET;
         int index = delegate.index().orElse(-1);
 
         if (delegate.newValues().isEmpty() || index < 0)
@@ -178,7 +178,7 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
                     removal.add( _variables.remove(i) );
         }
 
-        _triggerAction( Change.REMOVE, -1, null, removal.revert() );
+        _triggerAction( SequenceChange.REMOVE, -1, null, removal.revert() );
         return this;
     }
 
@@ -189,7 +189,7 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
             throw new IllegalArgumentException("The null safety of the given property does not match this list.");
         _checkNullSafetyOf(value);
         _variables.add(index, value);
-        _triggerAction( Change.ADD, index, value, null );
+        _triggerAction( SequenceChange.ADD, index, value, null );
         return this;
     }
 
@@ -208,7 +208,7 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
         for ( Var<T> var : subList ) vars.add(var);
         subList.clear();
 
-        _triggerAction( Change.REMOVE, from, null, vars );
+        _triggerAction( SequenceChange.REMOVE, from, null, vars );
 
         return vars;
     }
@@ -228,7 +228,7 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
         for ( Var<T> var : subList ) removal.add(var);
         subList.clear();
 
-        _triggerAction( Change.REMOVE, from, null, removal );
+        _triggerAction( SequenceChange.REMOVE, from, null, removal );
 
         return this;
     }
@@ -245,7 +245,7 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
 
         if ( !old.equals(value) ) {
             _variables.set(index, value);
-            _triggerAction(Change.SET, index, value, old);
+            _triggerAction(SequenceChange.SET, index, value, old);
         }
         return this;
     }
@@ -272,7 +272,7 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
             oldVars.add(o);
         }
 
-        _triggerAction(Change.SET, from, newVars, oldVars);
+        _triggerAction(SequenceChange.SET, from, newVars, oldVars);
 
         return this;
     }
@@ -297,7 +297,7 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
             oldVars.add(o);
         }
 
-        _triggerAction(Change.SET, from, newVars, oldVars);
+        _triggerAction(SequenceChange.SET, from, newVars, oldVars);
 
         return this;
     }
@@ -316,7 +316,7 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
             _variables.add(index + i, toBeAdded);
         }
 
-        _triggerAction( Change.ADD, index, vars, null );
+        _triggerAction( SequenceChange.ADD, index, vars, null );
         return this;
     }
 
@@ -344,7 +344,7 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
             oldVars.add(old);
         }
 
-        _triggerAction( Change.SET, index, newVars, oldVars );
+        _triggerAction( SequenceChange.SET, index, newVars, oldVars );
         return this;
     }
 
@@ -384,7 +384,7 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
         }
 
         if ( !old.isEmpty() )
-            _triggerAction( Change.REMOVE, -1, null, old );
+            _triggerAction( SequenceChange.REMOVE, -1, null, old );
 
         return this;
     }
@@ -395,7 +395,7 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
         Vars<T> vars = (Vars<T>) (_allowsNull ? Vars.ofNullable(_type, _variables) : Vars.of(_type, _variables));
 
         _variables.clear();
-        _triggerAction( Change.CLEAR, 0, null, vars);
+        _triggerAction( SequenceChange.CLEAR, 0, null, vars);
         return this;
     }
 
@@ -403,7 +403,7 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
     @Override
     public void sort( Comparator<T> comparator ) {
         _variables.sort( ( a, b ) -> comparator.compare( a.orElseNull(), b.orElseNull() ) );
-        _triggerAction( Change.SORT );
+        _triggerAction( SequenceChange.SORT );
     }
 
     /** {@inheritDoc} */
@@ -420,7 +420,7 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
         }
         _variables.clear();
         _variables.addAll(retained);
-        _triggerAction( Change.DISTINCT );
+        _triggerAction( SequenceChange.DISTINCT );
     }
 
     @Override
@@ -431,7 +431,7 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
             _variables.set( i, at(size - i - 1) );
             _variables.set( size - i - 1, tmp );
         }
-        _triggerAction( Change.REVERT );
+        _triggerAction( SequenceChange.REVERT );
         return this;
     }
 
@@ -445,7 +445,7 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
     /** {@inheritDoc} */
     @Override
     public Vals<T> fireChange() {
-        _triggerAction( Change.NONE );
+        _triggerAction( SequenceChange.NONE );
         return this;
     }
 
@@ -465,17 +465,17 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
     }
 
     private void _triggerAction(
-        Change type, int index, @Nullable Var<T> newVal, @Nullable Var<T> oldVal
+            SequenceChange type, int index, @Nullable Var<T> newVal, @Nullable Var<T> oldVal
     ) {
         _changeListeners.fireChange(type, index, newVal, oldVal, this);
     }
 
-    private void _triggerAction(Change type) {
+    private void _triggerAction(SequenceChange type) {
         _changeListeners.fireChange(type, this);
     }
 
     private void _triggerAction(
-    Change type, int index, @Nullable Vals<T> newVals, @Nullable Vals<T> oldVals
+            SequenceChange type, int index, @Nullable Vals<T> newVals, @Nullable Vals<T> oldVals
     ) {
         _changeListeners.fireChange(type, index, newVals, oldVals, this);
     }

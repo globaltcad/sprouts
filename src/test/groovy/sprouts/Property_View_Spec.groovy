@@ -574,28 +574,28 @@ class Property_View_Spec extends Specification
             then the item is considered to NOT have changed its identity!
         """
         given :
-            var value1 = new HasIdentity<Long>() {
+            var value1 = new HasId<Long>() {
                 @Override Long id() { return 42L }
             }
-            var value2 = new HasIdentity<Long>() {
+            var value2 = new HasId<Long>() {
                 @Override Long id() { return 42L }
             }
-            var value3 = new HasIdentity<Long>() {
+            var value3 = new HasId<Long>() {
                 @Override Long id() { return 43L }
                 @Override
-                boolean equals(Object obj) { return obj instanceof HasIdentity && ((HasIdentity)obj).id() == this.id() }
+                boolean equals(Object obj) { return obj instanceof HasId && ((HasId)obj).id() == this.id() }
                 @Override
                 int hashCode() { return Objects.hash(id()) }
             }
-            var value4 = new HasIdentity<Long>() {
+            var value4 = new HasId<Long>() {
                 @Override Long id() { return 43L }
                 @Override
-                boolean equals(Object obj) { return obj instanceof HasIdentity && ((HasIdentity)obj).id() == this.id() }
+                boolean equals(Object obj) { return obj instanceof HasId && ((HasId)obj).id() == this.id() }
                 @Override
                 int hashCode() { return Objects.hash(id()) }
             }
         and : 'A property with a couple of views.'
-            var property = Var.ofNullable(HasIdentity, value1)
+            var property = Var.ofNullable(HasId, value1)
             var view = property.view()
         and : 'A trace list and a change listener that listens to changes on the views.'
             var trace = []
@@ -604,32 +604,32 @@ class Property_View_Spec extends Specification
         when : 'We change the item of the property to a new item with the same value.'
             property.set(value2)
         then : 'The listeners are notified of the type of change the property experienced.'
-            trace == [ItemChange.VALUE]
+            trace == [SingleChange.VALUE]
 
         when : 'We change the item of the property to a new item with a different identity.'
             property.set(value3)
         then : 'The listeners are notified of an identity change, because 42 != 43.'
-            trace == [ItemChange.VALUE, ItemChange.ID]
+            trace == [SingleChange.VALUE, SingleChange.ID]
 
         when : 'We change the item of the property to a new item with the same value and identity.'
             property.set(value4)
         then : 'The listeners are not notified because the item did not change in terms of value or identity.'
-            trace == [ItemChange.VALUE, ItemChange.ID]
+            trace == [SingleChange.VALUE, SingleChange.ID]
 
         when : 'We change the item of the property back to the original item.'
             property.set(value1)
         then : 'The listeners are notified of an identity change.'
-            trace == [ItemChange.VALUE, ItemChange.ID, ItemChange.ID]
+            trace == [SingleChange.VALUE, SingleChange.ID, SingleChange.ID]
 
         when : 'We change the item of the property to null.'
             property.set(null)
         then : 'The listeners are notified of a change to a null reference.'
-            trace == [ItemChange.VALUE, ItemChange.ID, ItemChange.ID, ItemChange.TO_NULL_REFERENCE]
+            trace == [SingleChange.VALUE, SingleChange.ID, SingleChange.ID, SingleChange.TO_NULL_REFERENCE]
 
         when : 'We change the item of the property back to the original item.'
             property.set(value1)
         then : 'The listeners are notified of a change to a non-null reference.'
-            trace == [ItemChange.VALUE, ItemChange.ID, ItemChange.ID, ItemChange.TO_NULL_REFERENCE, ItemChange.TO_NON_NULL_REFERENCE]
+            trace == [SingleChange.VALUE, SingleChange.ID, SingleChange.ID, SingleChange.TO_NULL_REFERENCE, SingleChange.TO_NON_NULL_REFERENCE]
     }
 
     def 'Changing the value of a property through the `.set(From.VIEW, T)` method will also affect its views'()

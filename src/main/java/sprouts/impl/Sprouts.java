@@ -64,7 +64,7 @@ public final class Sprouts implements SproutsFactory
     public <T> ValDelegate<T> delegateOf(
         Val<T> source,
         Channel channel,
-        ItemChange change,
+        SingleChange change,
         @Nullable T newValue
     ) {
         return new ValDelegateImpl<>(channel, change, source.id(), source.type(), newValue, source.orElseNull());
@@ -73,7 +73,7 @@ public final class Sprouts implements SproutsFactory
     @Override
     public <T> ValsDelegate<T> delegateOf(
         Vals<T> source,
-        Change changeType,
+        SequenceChange changeType,
         int index,
         Vals<T> newValues,
         Vals<T> oldValues

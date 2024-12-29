@@ -19,13 +19,13 @@ public interface SproutsFactory
     <T> ValDelegate<T> delegateOf(
         Val<T> source,
         Channel channel,
-        ItemChange change,
+        SingleChange change,
         @Nullable T newValue
     );
 
     <T> ValsDelegate<T> delegateOf(
         Vals<T> source,
-        Change  changeType,
+        SequenceChange changeType,
         int     index,
         Vals<T> newValues,
         Vals<T> oldValues

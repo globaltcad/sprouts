@@ -66,12 +66,12 @@ public interface ValDelegate<T>
      *
      *  @return The mutation type of the change which may be one of the following:
      *          <ul>
-     *              <li>{@link ItemChange#NONE}</li>
-     *              <li>{@link ItemChange#VALUE}</li>
-     *              <li>{@link ItemChange#TO_NULL_REFERENCE}</li>
-     *              <li>{@link ItemChange#TO_NON_NULL_REFERENCE}</li>
-     *              <li>{@link ItemChange#ID}</li>
+     *              <li>{@link SingleChange#NONE}</li>
+     *              <li>{@link SingleChange#VALUE}</li>
+     *              <li>{@link SingleChange#TO_NULL_REFERENCE}</li>
+     *              <li>{@link SingleChange#TO_NON_NULL_REFERENCE}</li>
+     *              <li>{@link SingleChange#ID}</li>
      *          </ul>
      */
-    ItemChange change();
+    SingleChange change();
 }

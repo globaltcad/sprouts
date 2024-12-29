@@ -137,7 +137,7 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
         Viewable.cast(parent).onChange(From.ALL, Action.ofWeak(this, (thisLens, v) -> {
             T newValue = thisLens._fetchItemFromParent();
             ItemPair<T> pair = new ItemPair<>(thisLens._type, newValue, thisLens._lastItem);
-            if ( pair.change() != ItemChange.NONE ) {
+            if ( pair.change() != SingleChange.NONE ) {
                 thisLens._lastItem = newValue;
                 thisLens.fireChange(v.channel(), pair);
             }
@@ -263,7 +263,7 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
     public final Var<T> set( Channel channel, T newItem ) {
         Objects.requireNonNull(channel);
         ItemPair<T> pair = _setInternal(channel, newItem);
-        if ( pair.change() != ItemChange.NONE )
+        if ( pair.change() != SingleChange.NONE )
             this.fireChange(channel, pair);
         return this;
     }
@@ -279,7 +279,7 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
 
         ItemPair<T> pair = new ItemPair<>(_type, newValue, oldValue);
 
-        if ( pair.change() != ItemChange.NONE ) {
+        if ( pair.change() != SingleChange.NONE ) {
             // First we check if the value is compatible with the type
             if ( newValue != null && !_type.isAssignableFrom(newValue.getClass()) )
                 throw new IllegalArgumentException(

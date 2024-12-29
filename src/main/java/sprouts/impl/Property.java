@@ -101,7 +101,7 @@ final class Property<T extends @Nullable Object> implements Var<T>, Viewable<T> 
         if ( _isImmutable )
             throw new UnsupportedOperationException("This variable is immutable!");
         ItemPair<T> pair = _setInternal(newItem);
-        if ( pair.change() != ItemChange.NONE )
+        if ( pair.change() != SingleChange.NONE )
             this.fireChange(channel, pair);
         return this;
     }
@@ -115,7 +115,7 @@ final class Property<T extends @Nullable Object> implements Var<T>, Viewable<T> 
 
         ItemPair<T> pair = new ItemPair<>(_type, newValue, _value);
 
-        if ( pair.change() != ItemChange.NONE ) {
+        if ( pair.change() != SingleChange.NONE ) {
             // First we check if the value is compatible with the type
             if ( newValue != null && !_type.isAssignableFrom(newValue.getClass()) )
                 throw new IllegalArgumentException(

@@ -2,7 +2,7 @@ package sprouts.impl;
 
 import org.jspecify.annotations.Nullable;
 import sprouts.Channel;
-import sprouts.ItemChange;
+import sprouts.SingleChange;
 import sprouts.Maybe;
 import sprouts.ValDelegate;
 
@@ -11,7 +11,7 @@ import java.util.Objects;
 final class ValDelegateImpl<T> implements ValDelegate<T> {
 
     private final Channel    channel;
-    private final ItemChange change;
+    private final SingleChange change;
     private final String     id;
     private final Class<T>   type;
     private final @Nullable T currentValue;
@@ -19,7 +19,7 @@ final class ValDelegateImpl<T> implements ValDelegate<T> {
 
 
     ValDelegateImpl(
-        Channel channel, ItemChange change, String id, Class<T> type, @Nullable T newValue, @Nullable T oldValue
+            Channel channel, SingleChange change, String id, Class<T> type, @Nullable T newValue, @Nullable T oldValue
     ) {
         this.channel      = Objects.requireNonNull(channel);
         this.change       = Objects.requireNonNull(change);
@@ -50,7 +50,7 @@ final class ValDelegateImpl<T> implements ValDelegate<T> {
     }
 
     @Override
-    public ItemChange change() {
+    public SingleChange change() {
         return change;
     }
 
