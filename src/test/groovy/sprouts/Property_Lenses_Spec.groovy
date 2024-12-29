@@ -286,11 +286,11 @@ class Property_Lenses_Spec extends Specification
             var birthDateTrace = []
             var booksTrace = []
             var authorTrace = []
-            firstNameLens.onChange(From.ALL,it -> firstNameTrace << it.get() )
-            lastNameLens.onChange(From.ALL,it -> lastNameTrace << it.get() )
-            birthDateLens.onChange(From.ALL,it -> birthDateTrace << it.get() )
-            booksLens.onChange(From.ALL,it -> booksTrace << it.get() )
-            authorProperty.onChange(From.ALL,it -> authorTrace << it.get() )
+            firstNameLens.onChange(From.ALL,it -> firstNameTrace << it.currentValue().orElseNull() )
+            lastNameLens.onChange(From.ALL,it -> lastNameTrace << it.currentValue().orElseNull() )
+            birthDateLens.onChange(From.ALL,it -> birthDateTrace << it.currentValue().orElseNull() )
+            booksLens.onChange(From.ALL,it -> booksTrace << it.currentValue().orElseNull() )
+            authorProperty.onChange(From.ALL,it -> authorTrace << it.currentValue().orElseNull() )
 
         expect: 'Initial values are correct:'
             firstNameLens.get() == author.firstName()
@@ -414,10 +414,10 @@ class Property_Lenses_Spec extends Specification
             var memberTrace = []
             var authorTrace = []
 
-            loanProperty.onChange(From.ALL, it -> loanTrace << it.get())
-            bookLens.onChange(From.ALL, it -> bookTrace << it.get())
-            memberLens.onChange(From.ALL, it -> memberTrace << it.get())
-            authorLens.onChange(From.ALL, it -> authorTrace << it.get())
+            loanProperty.onChange(From.ALL, it -> loanTrace << it.currentValue().orElseNull())
+            bookLens.onChange(From.ALL, it -> bookTrace << it.currentValue().orElseNull())
+            memberLens.onChange(From.ALL, it -> memberTrace << it.currentValue().orElseNull())
+            authorLens.onChange(From.ALL, it -> authorTrace << it.currentValue().orElseNull())
 
         expect: """
             The initial values are correct.
@@ -475,8 +475,8 @@ class Property_Lenses_Spec extends Specification
             var emailLens = memberProperty.zoomToNullable(String.class, Member::email, Member::withEmail)
             var memberTrace = []
             var emailTrace = []
-            memberProperty.onChange(From.ALL, it -> memberTrace << it.get())
-            emailLens.onChange(From.ALL, it -> emailTrace << it.get())
+            memberProperty.onChange(From.ALL, it -> memberTrace << it.currentValue().orElseNull())
+            emailLens.onChange(From.ALL, it -> emailTrace << it.currentValue().orElseNull())
 
         expect: """
             Initial values are correct:
@@ -1141,7 +1141,7 @@ class Property_Lenses_Spec extends Specification
             var firstNameView = authorProperty.viewAsString(Author::firstName)
         and : 'We create a trace list for the view, to observe the changes from mutating the lens.'
             var trace = []
-            firstNameView.onChange(From.ALL, it -> trace << it.get())
+            firstNameView.onChange(From.ALL, it -> trace << it.currentValue().orElseNull())
 
         expect : 'The initial values are correct.'
             firstNameLens.get() == "Lisa"
@@ -1189,7 +1189,7 @@ class Property_Lenses_Spec extends Specification
             var weakRef = new WeakReference(nameLens)
         and : 'We create a trace list for the view, to observe the changes from mutating the lens.'
             var trace = []
-            nameView.onChange(From.ALL, it -> trace << it.get())
+            nameView.onChange(From.ALL, it -> trace << it.currentValue().orElseNull())
 
         expect : 'The initial values are correct.'
             nameLens.get() == "Lilly"
@@ -1283,7 +1283,7 @@ class Property_Lenses_Spec extends Specification
         and : 'A trace list to record the side effect.'
             var trace = []
         and : 'Finally we register a weak action on the property.'
-            Viewable.cast(nameLens).onChange(From.ALL, Action.ofWeak(owner, (o, it) -> trace << it.orElseThrow()))
+            Viewable.cast(nameLens).onChange(From.ALL, Action.ofWeak(owner, (o, it) -> trace << it.currentValue().orElseThrow()))
 
         when : 'We change the lens...'
             nameLens.set("William")

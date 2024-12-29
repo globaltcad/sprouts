@@ -1,19 +1,42 @@
 package sprouts.impl;
 
 import org.jspecify.annotations.Nullable;
-import sprouts.*;
+import sprouts.Channel;
+import sprouts.SingleChange;
+import sprouts.Maybe;
+import sprouts.ValDelegate;
 
 import java.util.Objects;
-import java.util.function.Function;
 
 final class ValDelegateImpl<T> implements ValDelegate<T> {
 
-    private final Channel channel;
-    private final Val<T>  value;
+    private final Channel    channel;
+    private final SingleChange change;
+    private final String     id;
+    private final Class<T>   type;
+    private final @Nullable T currentValue;
+    private final @Nullable T oldValue;
 
-    ValDelegateImpl( Channel channel, Val<T> value ) {
-        this.channel = Objects.requireNonNull(channel);
-        this.value   = Objects.requireNonNull(value);
+
+    ValDelegateImpl(
+            Channel channel, SingleChange change, String id, Class<T> type, @Nullable T newValue, @Nullable T oldValue
+    ) {
+        this.channel      = Objects.requireNonNull(channel);
+        this.change       = Objects.requireNonNull(change);
+        this.id           = Objects.requireNonNull(id);
+        this.type         = Objects.requireNonNull(type);
+        this.currentValue = newValue;
+        this.oldValue     = oldValue;
+    }
+
+    @Override
+    public Maybe<T> currentValue() {
+        return Maybe.ofNullable(type, currentValue);
+    }
+
+    @Override
+    public Maybe<T> oldValue() {
+        return Maybe.ofNullable(type, oldValue);
     }
 
     @Override
@@ -23,32 +46,28 @@ final class ValDelegateImpl<T> implements ValDelegate<T> {
 
     @Override
     public String id() {
-        return value.id();
+        return id;
     }
 
     @Override
-    public @Nullable T orElseNull() {
-        return value.orElseNull();
-    }
-
-    @Override
-    public Maybe<T> map(Function<T, T> mapper) {
-        return value.map(mapper);
-    }
-
-    @Override
-    public <U> Maybe<U> mapTo(Class<U> type, Function<T, U> mapper) {
-        return value.mapTo(type, mapper);
+    public SingleChange change() {
+        return change;
     }
 
     @Override
     public Class<T> type() {
-        return value.type();
+        return type;
     }
 
     @Override
     public String toString() {
-        return "ValDelegate" + value.toString().substring(3);
+        return "ValDelegate<"+type.getSimpleName()+">[" +
+                    "channel="   + channel       + ", " +
+                    "change="    + change        + ", " +
+                    "newValue="  + currentValue  + ", " +
+                    "oldValue="  + oldValue      + ", " +
+                    "id='"        + id           + "'" +
+                "]";
     }
 
     @Override
@@ -58,12 +77,16 @@ final class ValDelegateImpl<T> implements ValDelegate<T> {
         if ( obj.getClass() != this.getClass() ) return false;
         ValDelegateImpl<?> other = (ValDelegateImpl<?>) obj;
         return this.channel.equals(other.channel) &&
-                this.value.equals(other.value);
+                this.change.equals(other.change) &&
+                this.id.equals(other.id) &&
+                this.type.equals(other.type) &&
+                Objects.equals(this.currentValue, other.currentValue) &&
+                Objects.equals(this.oldValue, other.oldValue);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(channel, value);
+        return Objects.hash( channel, change, id, type, currentValue, oldValue );
     }
 
 }

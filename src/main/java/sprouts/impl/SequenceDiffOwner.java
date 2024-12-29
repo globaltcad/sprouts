@@ -1,12 +1,14 @@
 package sprouts.impl;
 
+import sprouts.SequenceChange;
+
 import java.util.Optional;
 
 /**
  *  This interface is a sort of marker interface for {@link sprouts.Tuple}
  *  implementations that can provide a {@link SequenceDiff} object that
  *  describes the difference between the current tuple and a previous one (if any),
- *  in terms of a {@link sprouts.Change}, the index of the change, and the number of changes.
+ *  in terms of a {@link SequenceChange}, the index of the change, and the number of changes.
  *  When using the observer pattern, the observer can keep track of the changes
  *  and update the target sequence accordingly.<br>
  *  This is mostly a Sprouts internal interface and is not intended for widespread use,
@@ -30,7 +32,7 @@ public interface SequenceDiffOwner
 {
     /**
      *  Provides a {@link SequenceDiff} object that describes the difference between the current tuple
-     *  and a previous one (if any), in terms of a {@link sprouts.Change}, the index of the change,
+     *  and a previous one (if any), in terms of a {@link SequenceChange}, the index of the change,
      *  and the number of changes.
      *  Use this at a consumer side to keep track of the changes and update the target object
      *  only according to the changes that have occurred, instead of rebuilding the target sequence

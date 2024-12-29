@@ -226,7 +226,7 @@ public interface Maybe<T>
         // This class is similar to optional, so if the value is null, we throw an exception!
         T value = orElseNull();
         if ( Objects.isNull(value) )
-            throw new MissingItemException("No value present", Collections.emptyList());
+            throw new MissingItemException("No value present", Tuple.of(Problem.class));
         return value;
     }
 

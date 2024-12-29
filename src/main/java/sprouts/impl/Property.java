@@ -100,19 +100,22 @@ final class Property<T extends @Nullable Object> implements Var<T>, Viewable<T> 
         Objects.requireNonNull(channel);
         if ( _isImmutable )
             throw new UnsupportedOperationException("This variable is immutable!");
-        if ( _setInternal(newItem) )
-            this.fireChange(channel);
+        ItemPair<T> pair = _setInternal(newItem);
+        if ( pair.change() != SingleChange.NONE )
+            this.fireChange(channel, pair);
         return this;
     }
 
-    private boolean _setInternal( T newValue ) {
+    private ItemPair<T> _setInternal( T newValue ) {
         if ( !_nullable && newValue == null )
             throw new NullPointerException(
                     "This property is configured to not allow null values! " +
                     "If you want your property to allow null values, use the 'ofNullable(Class, T)' factory method."
                 );
 
-        if ( !Objects.equals( _value, newValue ) ) {
+        ItemPair<T> pair = new ItemPair<>(_type, newValue, _value);
+
+        if ( pair.change() != SingleChange.NONE ) {
             // First we check if the value is compatible with the type
             if ( newValue != null && !_type.isAssignableFrom(newValue.getClass()) )
                 throw new IllegalArgumentException(
@@ -121,9 +124,8 @@ final class Property<T extends @Nullable Object> implements Var<T>, Viewable<T> 
                     );
 
             _value = newValue;
-            return true;
         }
-        return false;
+        return pair;
     }
 
     /** {@inheritDoc} */
@@ -135,8 +137,12 @@ final class Property<T extends @Nullable Object> implements Var<T>, Viewable<T> 
 
     /** {@inheritDoc} */
     @Override public Var<T> fireChange( Channel channel ) {
-        _changeListeners.fireChange(this, channel);
+        this.fireChange(channel, new ItemPair<>(this));
         return this;
+    }
+
+    void fireChange( Channel channel, ItemPair<T> change ) {
+        _changeListeners.fireChange(this, channel, change);
     }
 
     @Override

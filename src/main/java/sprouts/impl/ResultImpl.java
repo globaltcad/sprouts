@@ -6,9 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sprouts.*;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -17,16 +14,16 @@ final class ResultImpl<V> implements Result<V>
 {
 	private static final Logger log = LoggerFactory.getLogger(ResultImpl.class);
 
-	private final Class<V>      _type;
-	private final List<Problem> _problems;
-	@Nullable private final V   _value;
+	private final Class<V>       _type;
+	private final Tuple<Problem> _problems;
+	@Nullable private final V    _value;
 
 
-	public ResultImpl( Class<V> type, List<Problem> problems, @Nullable V value ) {
+	public ResultImpl( Class<V> type, Iterable<Problem> problems, @Nullable V value ) {
 		Objects.requireNonNull(type);
 		Objects.requireNonNull(problems);
 		_type     = type;
-		_problems = problems;
+		_problems = Tuple.of(Problem.class, problems);
 		_value    = value;
 	}
 
@@ -43,17 +40,16 @@ final class ResultImpl<V> implements Result<V>
 	@Override public Class<V> type() { return _type; }
 
 	/** {@inheritDoc} */
-	@Override public List<Problem> problems() { return _problems; }
+	@Override public Tuple<Problem> problems() { return _problems; }
 
 	/** {@inheritDoc} */
 	@Override
-	public Result<V> peekAtProblems( Consumer<List<Problem>> consumer ) {
+	public Result<V> peekAtProblems( Consumer<Tuple<Problem>> consumer ) {
 		Objects.requireNonNull(consumer);
 		try {
 			consumer.accept(problems());
 		} catch ( Exception e ) {
-			List<Problem> newProblems = new ArrayList<>(problems());
-			newProblems.add( Problem.of(e) );
+			Tuple<Problem> newProblems = problems().add( Problem.of(e) );
 			/*
 				An exception in this the user lambda is most likely completely unwanted,
 				but we also do not want to halt the application because of it.
@@ -77,8 +73,7 @@ final class ResultImpl<V> implements Result<V>
 			try {
 				consumer.accept(problem);
 			} catch ( Exception e ) {
-				List<Problem> newProblems = new ArrayList<>(result.problems());
-				newProblems.add( Problem.of(e) );
+				Tuple<Problem> newProblems = result.problems().add( Problem.of(e) );
 				/*
 					An exception in this the user lambda is most likely completely unwanted,
 					but we also do not want to halt the application because of it.
@@ -115,8 +110,7 @@ final class ResultImpl<V> implements Result<V>
 			else
 				return Result.of(newValue, problems());
 		} catch ( Exception e ) {
-			List<Problem> newProblems = new ArrayList<>(problems());
-			newProblems.add( Problem.of(e) );
+			Tuple<Problem> newProblems = problems().add( Problem.of(e) );
 			return Result.of( type(), newProblems );
 		}
 	}
@@ -136,8 +130,7 @@ final class ResultImpl<V> implements Result<V>
 			else
 				return Result.of( newValue, problems() );
 		} catch ( Exception e ) {
-			List<Problem> newProblems = new ArrayList<>(problems());
-			newProblems.add( Problem.of(e) );
+			Tuple<Problem> newProblems = problems().add( Problem.of(e) );
 			return Result.of( type, newProblems );
 		}
 	}

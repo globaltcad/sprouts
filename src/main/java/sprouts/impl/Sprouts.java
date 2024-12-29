@@ -61,12 +61,23 @@ public final class Sprouts implements SproutsFactory
 
 
     @Override
-    public <T> ValDelegate<T> delegateOf(Val<T> source, Channel channel) {
-        return new ValDelegateImpl<>(channel, source);
+    public <T> ValDelegate<T> delegateOf(
+        Val<T> source,
+        Channel channel,
+        SingleChange change,
+        @Nullable T newValue
+    ) {
+        return new ValDelegateImpl<>(channel, change, source.id(), source.type(), newValue, source.orElseNull());
     }
 
     @Override
-    public <T> ValsDelegate<T> delegateOf(Vals<T> source, Change changeType, int index, Vals<T> newValues, Vals<T> oldValues) {
+    public <T> ValsDelegate<T> delegateOf(
+        Vals<T> source,
+        SequenceChange changeType,
+        int index,
+        Vals<T> newValues,
+        Vals<T> oldValues
+    ) {
         return new PropertyListDelegate<>(changeType, index, newValues, oldValues, source);
     }
 
@@ -168,10 +179,10 @@ public final class Sprouts implements SproutsFactory
     @Override
     public <T, U> Viewable<U> viewOf(U nullObject, U errorObject, Val<T> source, Function<T, @Nullable U> mapper) {
         Objects.requireNonNull(nullObject);
-		Objects.requireNonNull(errorObject);
+        Objects.requireNonNull(errorObject);
         Objects.requireNonNull(source);
         Objects.requireNonNull(mapper);
-		return PropertyView.of(nullObject, errorObject, source, mapper);
+        return PropertyView.of(nullObject, errorObject, source, mapper);
     }
 
     @Override
@@ -209,9 +220,9 @@ public final class Sprouts implements SproutsFactory
     @Override
     public <T, B> Var<B> lensOfNullable(Class<B> type, Var<T> source, Function<T, B> getter, BiFunction<T, B, T> wither) {
         Objects.requireNonNull(type, "Type must not be null");
-		Objects.requireNonNull(getter, "Getter must not be null");
-		Objects.requireNonNull(wither, "Wither must not be null");
-		return PropertyLens.ofNullable(type, source, getter, wither);
+        Objects.requireNonNull(getter, "Getter must not be null");
+        Objects.requireNonNull(wither, "Wither must not be null");
+        return PropertyLens.ofNullable(type, source, getter, wither);
     }
 
     @Override public <T> Var<T> varOfNullable(Class<T> type, @Nullable T item ) {
@@ -377,110 +388,111 @@ public final class Sprouts implements SproutsFactory
     }
 
 
-	@SuppressWarnings("unchecked")
-	@Override public <T> Vars<T> varsOf( Class<T> type, Var<T>... vars ) { return PropertyList.of( false, type, vars ); }
+    @SuppressWarnings("unchecked")
+    @Override public <T> Vars<T> varsOf( Class<T> type, Var<T>... vars ) { return PropertyList.of( false, type, vars ); }
 
-	@Override public <T> Vars<T> varsOf( Class<T> type ) { return PropertyList.of( false, type ); }
+    @Override public <T> Vars<T> varsOf( Class<T> type ) { return PropertyList.of( false, type ); }
 
-	@SuppressWarnings("unchecked")
-	@Override public <T> Vars<T> varsOf( Var<T> first, Var<T>... rest ) { return PropertyList.of( false, first, rest ); }
+    @SuppressWarnings("unchecked")
+    @Override public <T> Vars<T> varsOf( Var<T> first, Var<T>... rest ) { return PropertyList.of( false, first, rest ); }
 
-	@SuppressWarnings("unchecked")
-	@Override public <T> Vars<T> varsOf( T first, T... rest ) { return PropertyList.of( false, first, rest ); }
+    @SuppressWarnings("unchecked")
+    @Override public <T> Vars<T> varsOf( T first, T... rest ) { return PropertyList.of( false, first, rest ); }
 
     @SuppressWarnings("unchecked")
     @Override public <T> Vars<T> varsOf( Class<T> type, T... items ) { return PropertyList.of( false, type, items ); }
 
-	@Override public <T> Vars<T> varsOf( Class<T> type, Iterable<Var<T>> vars ) { return PropertyList.of( false, type, vars ); }
+    @Override public <T> Vars<T> varsOf( Class<T> type, Iterable<Var<T>> vars ) { return PropertyList.of( false, type, vars ); }
 
-	@SuppressWarnings("unchecked")
-	@Override public <T> Vars<@Nullable T> varsOfNullable( Class<T> type, Var<@Nullable T>... vars ) {
-		return PropertyList.ofNullable( false, type, vars );
-	}
+    @SuppressWarnings("unchecked")
+    @Override public <T> Vars<@Nullable T> varsOfNullable( Class<T> type, Var<@Nullable T>... vars ) {
+        return PropertyList.ofNullable( false, type, vars );
+    }
 
-	@Override public <T> Vars<@Nullable T> varsOfNullable( Class<T> type ) { return PropertyList.ofNullable( false, type ); }
+    @Override public <T> Vars<@Nullable T> varsOfNullable( Class<T> type ) { return PropertyList.ofNullable( false, type ); }
 
-	@SuppressWarnings("unchecked")
-	@Override public <T> Vars<@Nullable T> varsOfNullable( Class<T> type, @Nullable T... values ) {
-		return PropertyList.ofNullable( false, type, values );
-	}
+    @SuppressWarnings("unchecked")
+    @Override public <T> Vars<@Nullable T> varsOfNullable( Class<T> type, @Nullable T... values ) {
+        return PropertyList.ofNullable( false, type, values );
+    }
 
-	@SuppressWarnings("unchecked")
-	@Override public <T> Vars<@Nullable T> varsOfNullable( Var<@Nullable T> first, Var<@Nullable T>... rest ) {
-		return PropertyList.ofNullable( false, first, rest );
-	}
+    @SuppressWarnings("unchecked")
+    @Override public <T> Vars<@Nullable T> varsOfNullable( Var<@Nullable T> first, Var<@Nullable T>... rest ) {
+        return PropertyList.ofNullable( false, first, rest );
+    }
 
-	@Override public <V> Result<V> resultOf( Class<V> type ) {
-		Objects.requireNonNull(type);
-		return new ResultImpl<>(type, Collections.emptyList(), null);
-	}
+    @Override public <V> Result<V> resultOf( Class<V> type ) {
+        Objects.requireNonNull(type);
+        return new ResultImpl<>(type, Collections.emptyList(), null);
+    }
 
-	@Override public <V> Result<V> resultOf( V value ) {
-		Objects.requireNonNull(value);
-		return resultOf(value, Collections.emptyList());
-	}
+    @Override public <V> Result<V> resultOf( V value ) {
+        Objects.requireNonNull(value);
+        return resultOf(value, Collections.emptyList());
+    }
 
-	@Override public <V> Result<V> resultOf( Class<V> type, @Nullable V value ) {
-		Objects.requireNonNull(type);
-		return resultOf(type, value, Collections.emptyList());
-	}
+    @Override public <V> Result<V> resultOf( Class<V> type, @Nullable V value ) {
+        Objects.requireNonNull(type);
+        return resultOf(type, value, Collections.emptyList());
+    }
 
-	@Override public <V> Result<V> resultOf( V value, List<Problem> problems ) {
-		Objects.requireNonNull(value);
-		problems = Collections.unmodifiableList(new ArrayList<>(Objects.requireNonNull(problems)));
+    @Override public <V> Result<V> resultOf( V value, Iterable<Problem> problems ) {
+        Objects.requireNonNull(value);
+        Objects.requireNonNull(problems);
         Class<V> itemType = Util.expectedClassFromItem(value);
-		return new ResultImpl<>(itemType, problems, value);
-	}
+        return new ResultImpl<>(itemType, problems, value);
+    }
 
-	@Override public <V> Result<V> resultOf( Class<V> type, List<Problem> problems ) {
-		Objects.requireNonNull(type);
-		problems = Collections.unmodifiableList(new ArrayList<>(Objects.requireNonNull(problems)));
-		return new ResultImpl<>(type, problems, null);
-	}
+    @Override public <V> Result<V> resultOf( Class<V> type, Iterable<Problem> problems ) {
+        Objects.requireNonNull(type);
+        Objects.requireNonNull(problems);
+        return new ResultImpl<>(type, problems, null);
+    }
 
-	@Override public <V> Result<V> resultOf( Class<V> type, @Nullable V value, List<Problem> problems ) {
-		Objects.requireNonNull(type);
-		problems = Collections.unmodifiableList(new ArrayList<>(Objects.requireNonNull(problems)));
-		return new ResultImpl<>(type, problems, value);
-	}
+    @Override public <V> Result<V> resultOf( Class<V> type, @Nullable V value, Iterable<Problem> problems ) {
+        Objects.requireNonNull(type);
+        Objects.requireNonNull(problems);
+        return new ResultImpl<>(type, problems, value);
+    }
 
-	@Override public <V> Result<V> resultOf( Class<V> type, @Nullable V value, Problem problem ) {
-		Objects.requireNonNull(type);
-		Objects.requireNonNull(problem);
-		return new ResultImpl<>(type, Collections.singletonList(problem), value);
-	}
+    @Override public <V> Result<V> resultOf( Class<V> type, @Nullable V value, Problem problem ) {
+        Objects.requireNonNull(type);
+        Objects.requireNonNull(problem);
+        return new ResultImpl<>(type, Collections.singletonList(problem), value);
+    }
 
-	@Override public <V> Result<V> resultOf( Class<V> type, Problem problem ) {
-		Objects.requireNonNull(type);
-		Objects.requireNonNull(problem);
-		return new ResultImpl<>(type, Collections.singletonList(problem), null);
-	}
+    @Override public <V> Result<V> resultOf( Class<V> type, Problem problem ) {
+        Objects.requireNonNull(type);
+        Objects.requireNonNull(problem);
+        return new ResultImpl<>(type, Collections.singletonList(problem), null);
+    }
 
-	@Override public <V> Result<List<V>> resultOfList( Class<V> type, Problem problem ) {
-		Objects.requireNonNull(type);
-		Objects.requireNonNull(problem);
-		return (Result<List<V>>) (Result) new ResultImpl<>(List.class, Collections.singletonList(problem), null);
-	}
+    @Override public <V> Result<List<V>> resultOfList( Class<V> type, Problem problem ) {
+        Objects.requireNonNull(type);
+        Objects.requireNonNull(problem);
+        return (Result<List<V>>) (Result) new ResultImpl<>(List.class, Collections.singletonList(problem), null);
+    }
 
-	@Override public <V> Result<List<V>> resultOfList( Class<V> type, List<V> list ) {
-		Objects.requireNonNull(type);
-		Objects.requireNonNull(list);
-		// We check the types of the list elements are of the correct type.
-		boolean matches = list.stream().filter(Objects::nonNull).allMatch(e -> type.isAssignableFrom(e.getClass()));
-		if ( !matches )
-			throw new IllegalArgumentException("List elements must be of type " + type.getName());
-		return (Result<List<V>>) (Result) new ResultImpl<>(List.class, Collections.emptyList(), list);
-	}
+    @Override public <V> Result<List<V>> resultOfList( Class<V> type, List<V> list ) {
+        Objects.requireNonNull(type);
+        Objects.requireNonNull(list);
+        // We check the types of the list elements are of the correct type.
+        boolean matches = list.stream().filter(Objects::nonNull).allMatch(e -> type.isAssignableFrom(e.getClass()));
+        if ( !matches )
+            throw new IllegalArgumentException("List elements must be of type " + type.getName());
+        return (Result<List<V>>) (Result) new ResultImpl<>(List.class, Collections.emptyList(), list);
+    }
 
-	@Override public <V> Result<List<V>> resultOfList( Class<V> type, List<V> list, List<Problem> problems ) {
-		Objects.requireNonNull(type);
-		Objects.requireNonNull(list);
-		boolean matches = list.stream().filter(Objects::nonNull).allMatch(e -> type.isAssignableFrom(e.getClass()));
-		if ( !matches )
-			throw new IllegalArgumentException("List elements must be of type " + type.getName());
-		problems = Collections.unmodifiableList(new ArrayList<>(Objects.requireNonNull(problems)));
-		return (Result<List<V>>) (Result) new ResultImpl<>(List.class, problems, list);
-	}
+    @Override public <V> Result<List<V>> resultOfList( Class<V> type, List<V> list, Iterable<Problem> problems ) {
+        Objects.requireNonNull(type);
+        Objects.requireNonNull(list);
+        Objects.requireNonNull(problems);
+        boolean matches = list.stream().filter(Objects::nonNull).allMatch(e -> type.isAssignableFrom(e.getClass()));
+        if ( !matches )
+            throw new IllegalArgumentException("List elements must be of type " + type.getName());
+        
+        return (Result<List<V>>) (Result) new ResultImpl<>(List.class, problems, list);
+    }
 
     @Override
     public <V> Result<V> resultOfTry( Class<V> type, Supplier<V> supplier ) {

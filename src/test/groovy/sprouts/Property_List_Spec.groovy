@@ -387,7 +387,7 @@ class Property_List_Spec extends Specification
         then : 'The change listener has been called four times.'
             changes.size() == 4
         and : 'The change listener has been called with the correct indices.'
-            changes == [Change.ADD, Change.SET, Change.REMOVE, Change.ADD]
+            changes == [SequenceChange.ADD, SequenceChange.SET, SequenceChange.REMOVE, SequenceChange.ADD]
     }
 
     def 'Lists of properties can be sorted based on their natural order through the `sort` method.'()
@@ -427,7 +427,7 @@ class Property_List_Spec extends Specification
         then : 'The listener has been called once.'
             changes.size() == 1
         and : 'It reports the correct type of change/mutation.'
-            changes == [Change.SORT]
+            changes == [SequenceChange.SORT]
     }
 
     def 'You can create a "Vars" list from a regular List of properties.'()
@@ -519,7 +519,7 @@ class Property_List_Spec extends Specification
             vars.size() == 3
             vars.toList() == [3.1415f, 2.7182f, 1.6180f]
         and : 'The "show" listeners have been called.'
-            changes == [Change.DISTINCT]
+            changes == [SequenceChange.DISTINCT]
     }
 
     def 'Leading and trailing items can be popped off a property list.'()
@@ -1913,7 +1913,7 @@ class Property_List_Spec extends Specification
         given : 'A simple String based property with a listener and a list tracking changes.'
             var trace = []
             var property = Var.of("?")
-            Viewable.cast(property).onChange(From.ALL, { trace << it.get() })
+            Viewable.cast(property).onChange(From.ALL, { trace << it.currentValue().orElseNull() })
         and : 'A property list with some japanese food properties.'
             var foods = Vars.of("寿司", "ラーメン", "カレー", "うどん", "おにぎり")
         and : 'We use the two different methods to add the question mark property in the list.'
@@ -1956,7 +1956,7 @@ class Property_List_Spec extends Specification
         given : 'A simple String based property with a listener and a list tracking changes.'
             var trace = []
             var property = Var.of("?")
-            Viewable.cast(property).onChange(From.ALL, it -> { trace << it.get() })
+            Viewable.cast(property).onChange(From.ALL, it -> { trace << it.currentValue().orElseNull() })
         and : 'A property list with some japanese food properties.'
             var foods = Vars.of("寿司", "ラーメン", "カレー", "うどん", "おにぎり")
         and : 'We use the two different methods to add the question mark property in the list.'
@@ -2000,8 +2000,8 @@ class Property_List_Spec extends Specification
             var trace = []
             var property1 = Var.of("?")
             var property2 = Var.of("!")
-            Viewable.cast(property1).onChange(From.ALL, it -> { trace << it.get() })
-            Viewable.cast(property2).onChange(From.ALL, it -> { trace << it.get() })
+            Viewable.cast(property1).onChange(From.ALL, it -> { trace << it.currentValue().orElseNull() })
+            Viewable.cast(property2).onChange(From.ALL, it -> { trace << it.currentValue().orElseNull() })
         and : 'A property list with some indian food properties.'
             var foods = Vars.of("दाल", "चावल")
         and : 'A short list containing a the two properties.'
@@ -2053,8 +2053,8 @@ class Property_List_Spec extends Specification
             var trace = []
             var property1 = Var.of("?")
             var property2 = Var.of("!")
-            Viewable.cast(property1).onChange(From.ALL, it -> { trace << it.get() })
-            Viewable.cast(property2).onChange(From.ALL, it -> { trace << it.get() })
+            Viewable.cast(property1).onChange(From.ALL, it -> { trace << it.currentValue().orElseNull() })
+            Viewable.cast(property2).onChange(From.ALL, it -> { trace << it.currentValue().orElseNull() })
         and : 'A property list with some indian food properties.'
             var foods = Vars.of("दाल", "चावल")
         and : 'A short list containing a the two properties.'
@@ -2109,8 +2109,8 @@ class Property_List_Spec extends Specification
             var trace = []
             var property1 = Var.of("?")
             var property2 = Var.of("!")
-            Viewable.cast(property1).onChange(From.ALL, it -> { trace << it.get() })
-            Viewable.cast(property2).onChange(From.ALL, it -> { trace << it.get() })
+            Viewable.cast(property1).onChange(From.ALL, it -> { trace << it.currentValue().orElseNull() })
+            Viewable.cast(property2).onChange(From.ALL, it -> { trace << it.currentValue().orElseNull() })
         and : 'A property list with some random string based properties.'
             var foods = Vars.of("दाल", "1", "2", "3", "4", "चावल")
         and : 'A short list containing a the two properties.'

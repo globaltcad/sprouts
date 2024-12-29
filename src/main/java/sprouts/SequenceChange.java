@@ -8,7 +8,7 @@ package sprouts;
  *  You can create a {@link Viewables} from a {@link Vars} property list
  *  using the {@link Vars#view()} method.
  */
-public enum Change
+public enum SequenceChange
 {
     /**
      *  Indicates that a new value was added to the {@link Vars} instance.

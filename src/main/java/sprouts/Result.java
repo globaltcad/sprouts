@@ -79,7 +79,7 @@ public interface Result<V> extends Maybe<V>
      * @param <V> The type of the value.
      * @throws NullPointerException if the value or problems are null.
      */
-    static <V> Result<V> of( V value, List<Problem> problems ) {
+    static <V> Result<V> of( V value, Iterable<Problem> problems ) {
         Objects.requireNonNull(value);
         return Sprouts.factory().resultOf(value, problems);
     }
@@ -92,7 +92,7 @@ public interface Result<V> extends Maybe<V>
      * @param <V> The type of the value.
      * @throws NullPointerException if the type or problems are null.
      */
-    static <V> Result<V> of( Class<V> type, List<Problem> problems ) {
+    static <V> Result<V> of( Class<V> type, Iterable<Problem> problems ) {
         Objects.requireNonNull(type);
         return Sprouts.factory().resultOf(type, problems);
     }
@@ -106,7 +106,7 @@ public interface Result<V> extends Maybe<V>
      * @param <V> The type of the value.
      * @throws NullPointerException if the type or problems are null.
      */
-    static <V> Result<V> of( Class<V> type, @Nullable V value, List<Problem> problems ) {
+    static <V> Result<V> of( Class<V> type, @Nullable V value, Iterable<Problem> problems ) {
         Objects.requireNonNull(type);
         return Sprouts.factory().resultOf(type, value, problems);
     }
@@ -185,7 +185,7 @@ public interface Result<V> extends Maybe<V>
      * @return A result with the given list and problems.
      * @throws NullPointerException if any of the parameters are null.
      */
-    static <V> Result<List<V>> ofList( Class<V> type, List<V> list, List<Problem> problems ) {
+    static <V> Result<List<V>> ofList( Class<V> type, List<V> list, Iterable<Problem> problems ) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(list);
         boolean matches = list.stream().filter(Objects::nonNull).allMatch(e -> type.isAssignableFrom(e.getClass()));
@@ -222,7 +222,7 @@ public interface Result<V> extends Maybe<V>
      *
      *  @return The list of {@link Problem}s associated with this result item.
      */
-    List<Problem> problems();
+    Tuple<Problem> problems();
 
     /**
      *  Checks if this result has {@link Problem}s associated with it.
@@ -249,7 +249,7 @@ public interface Result<V> extends Maybe<V>
      * @return This result.
      * @throws NullPointerException if the consumer is null.
      */
-    Result<V> peekAtProblems( Consumer<List<Problem>> consumer );
+    Result<V> peekAtProblems( Consumer<Tuple<Problem>> consumer );
 
     /**
      *  Allows you to peek at each individual problem associated with this result

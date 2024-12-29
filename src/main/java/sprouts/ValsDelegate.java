@@ -20,20 +20,20 @@ public interface ValsDelegate<T>
      *
      *  @return The mutation type of the change which may be one of the following:
      *          <ul>
-     *              <li>{@link Change#ADD}</li>
-     *              <li>{@link Change#REMOVE}</li>
-     *              <li>{@link Change#RETAIN}</li>
-     *              <li>{@link Change#SET}</li>
-     *              <li>{@link Change#SORT}</li>
-     *              <li>{@link Change#CLEAR}</li>
-     *              <li>{@link Change#DISTINCT}</li>
-     *              <li>{@link Change#NONE}</li>
+     *              <li>{@link SequenceChange#ADD}</li>
+     *              <li>{@link SequenceChange#REMOVE}</li>
+     *              <li>{@link SequenceChange#RETAIN}</li>
+     *              <li>{@link SequenceChange#SET}</li>
+     *              <li>{@link SequenceChange#SORT}</li>
+     *              <li>{@link SequenceChange#CLEAR}</li>
+     *              <li>{@link SequenceChange#DISTINCT}</li>
+     *              <li>{@link SequenceChange#NONE}</li>
      *          </ul>
      */
-    Change change();
+    SequenceChange change();
 
     /**
-     *  Exposes the index at which the {@link Change} on the property list took place.<br>
+     *  Exposes the index at which the {@link SequenceChange} on the property list took place.<br>
      *  Note that in case of the type of mutation be non-specific to a particular index,
      *  like a list clear or a list sort, this method will return an empty {@link Optional}.
      *  @return The index at which a list mutation took place or an empty {@link Optional}

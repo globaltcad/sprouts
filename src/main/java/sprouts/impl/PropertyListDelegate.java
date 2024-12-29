@@ -1,6 +1,6 @@
 package sprouts.impl;
 
-import sprouts.Change;
+import sprouts.SequenceChange;
 import sprouts.Vals;
 
 import java.util.Objects;
@@ -8,14 +8,14 @@ import java.util.Optional;
 
 final class PropertyListDelegate<T> implements sprouts.ValsDelegate<T> {
 
-    private final Change changeType;
+    private final SequenceChange changeType;
     private final int index;
     private final Vals<T> newValues;
     private final Vals<T> oldValues;
     private final Vals<T> vals;
 
     PropertyListDelegate(
-        Change changeType,
+        SequenceChange changeType,
         int index,
         Vals<T> newValues,
         Vals<T> oldValues,
@@ -29,7 +29,7 @@ final class PropertyListDelegate<T> implements sprouts.ValsDelegate<T> {
     }
 
     @Override
-    public Change change() {
+    public SequenceChange change() {
         return changeType;
     }
 

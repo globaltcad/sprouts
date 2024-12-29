@@ -1,6 +1,6 @@
 package sprouts.impl;
 
-import sprouts.Change;
+import sprouts.SequenceChange;
 import sprouts.Tuple;
 import sprouts.Version;
 
@@ -13,7 +13,7 @@ import java.util.Optional;
  *  So for example, if the {@link Tuple#removeFirst(int)}
  *  method was called with a count of 3, then the resulting {@link Tuple}
  *  will internally maintain a {@link SequenceDiff} instance with
- *  a {@link #change()} == {@link Change#REMOVE},
+ *  a {@link #change()} == {@link SequenceChange#REMOVE},
  *  {@link #index()} == 0 and {@link #size()} == 3.<br>
  *  <p>
  *  The purpose of this class is to provides meta information specifically
@@ -50,7 +50,7 @@ public final class SequenceDiff
      * @param size The number of items that were affected by the change in the {@link Tuple}.
      * @return A new {@link SequenceDiff} instance with the given parameters.
      */
-    public static SequenceDiff of(Tuple<?> origin, Change change, int index, int size ) {
+    public static SequenceDiff of(Tuple<?> origin, SequenceChange change, int index, int size ) {
         if ( origin instanceof SequenceDiffOwner) {
             Optional<SequenceDiff> previous = ((SequenceDiffOwner) origin).differenceFromPrevious();
             if ( previous.isPresent() )
@@ -59,7 +59,7 @@ public final class SequenceDiff
         return new SequenceDiff( Version.create(), change, index, size, 0 );
     }
 
-    private static SequenceDiff ofPrevious(SequenceDiff previous, Change change, int index, int size ) {
+    private static SequenceDiff ofPrevious(SequenceDiff previous, SequenceChange change, int index, int size ) {
         return new SequenceDiff(previous._version.next(), change, index, size, previous._signature);
     }
 
@@ -74,20 +74,20 @@ public final class SequenceDiff
      * @return A new {@link SequenceDiff} instance that represents the initial state of a {@link Tuple}.
      */
     public static SequenceDiff initial() {
-        return new SequenceDiff( Version.create(), Change.NONE, -1, 0, 0 );
+        return new SequenceDiff( Version.create(), SequenceChange.NONE, -1, 0, 0 );
     }
 
 
     private final long    _signature;
     private final Version _version;
-    private final Change  _change;
+    private final SequenceChange _change;
     private final int     _index;
     private final int     _size;
 
 
     private SequenceDiff(
         Version version,
-        Change  change,
+        SequenceChange change,
         int     index,
         int     size,
         long    previousSignature // The hash code of the previous diff instance.
@@ -99,7 +99,7 @@ public final class SequenceDiff
         _size      = size;
     }
 
-    private static long _hash( Version version, Change change, int index, int size, long signature ) {
+    private static long _hash(Version version, SequenceChange change, int index, int size, long signature ) {
         long result = 1L;
         result = 31L * result + signature;
         result = 31L * result + version.hashCode();
@@ -134,9 +134,9 @@ public final class SequenceDiff
      *  The type of change that occurred between the previous
      *  and current {@link Tuple} state (to which this {@link SequenceDiff} belongs).
      *  @return The type of change that occurred in the {@link Tuple}.
-     *  @see Change
+     *  @see SequenceChange
      */
-    public Change change() {
+    public SequenceChange change() {
         return _change;
     }
 
@@ -144,7 +144,7 @@ public final class SequenceDiff
      *  The index at which the change occurred in the {@link Tuple}.
      *  @return An {@link Optional} containing the index at which the change occurred,
      *          or an empty {@link Optional} if the change is non-specific to
-     *          a particular location in the {@link Tuple}, like a {@link Change#SORT}.
+     *          a particular location in the {@link Tuple}, like a {@link SequenceChange#SORT}.
      */
     public Optional<Integer> index() {
         return _index < 0
