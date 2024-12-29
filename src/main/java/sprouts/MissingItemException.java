@@ -10,16 +10,16 @@ import java.util.List;
  */
 public final class MissingItemException extends Exception
 {
-    private final List<Problem> problems = new ArrayList<>();
+    private final Tuple<Problem> problems;
 
 
-    public MissingItemException(String message, List<Problem> problems) {
+    public MissingItemException(String message, Tuple<Problem> problems) {
         super(message, problems.stream().findFirst().flatMap(Problem::exception).orElse(null));
-        this.problems.addAll(problems);
+        this.problems =  problems;
     }
 
-    public List<Problem> problems() {
-        return Collections.unmodifiableList(problems);
+    public Tuple<Problem> problems() {
+        return problems;
     }
 
     @Override

@@ -52,13 +52,17 @@ class Result_Spec extends Specification
         when : 'We create a result from the problems.'
             def result = Result.of(Integer, problems)
         then : 'The result has the problems.'
-            result.problems() == problems
+            result.problems().toList() == problems
         and : 'Although they are the same problems, they are not the same instances.'
-            result.problems() !== problems
+            result.problems().toList() !== problems
         when : 'We try to mutate the problems.'
-            result.problems().add(null)
+            result.problems().toList().add(null)
         then : 'An exception is thrown.'
             thrown(UnsupportedOperationException)
+        when : 'We try to add null to the problems.'
+            result.problems().add(null)
+        then : 'Another exception is thrown.'
+            thrown(NullPointerException)
     }
 
     def 'The items of a `Result` can be mapped using mapping functions.'()
@@ -125,7 +129,7 @@ class Result_Spec extends Specification
         then : 'The result has the list as its value.'
             result.orElseThrowUnchecked() == values
         and : 'The result has the problems.'
-            result.problems() == problems
+            result.problems().toList() == problems
     }
 
     def 'An empty `Result` can be mapped to any property type without an exception being thrown.'()
