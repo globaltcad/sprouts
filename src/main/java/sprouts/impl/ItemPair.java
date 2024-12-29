@@ -19,7 +19,7 @@ final class ItemPair<T> {
 
     ItemPair(Class<T> type, @Nullable T newValue, @Nullable T oldValue) {
         _type    = Objects.requireNonNull(type);
-        _change  = Util._itemChangeTypeOf(type, newValue, oldValue);
+        _change  = ItemChange.of(type, newValue, oldValue);
         _newValue = newValue;
         _oldValue = oldValue;
     }

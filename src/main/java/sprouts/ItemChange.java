@@ -1,5 +1,9 @@
 package sprouts;
 
+import org.jspecify.annotations.Nullable;
+
+import java.util.Objects;
+
 /**
  *  A set of constants that describe how a property item has changed.
  *  So when a property is mutated, like for example through the {@link Var#set(Object)} method,
@@ -13,7 +17,7 @@ package sprouts;
  *      <li>{@link #TO_NULL_REFERENCE} - The item changed from a non-null reference to a null reference.</li>
  *      <li>{@link #TO_NON_NULL_REFERENCE} - The item changed from a null reference to a non-null reference.</li>
  *      <li>{@link #VALUE} - The item changed its value in terms of {@link Object#equals(Object)} returning false.</li>
- *      <li>{@link #IDENTITY} - The item implements {@link HasIdentity} and changed its {@link HasIdentity#identity()}.</li>
+ *      <li>{@link #ID} - The item implements {@link HasIdentity} and changed its {@link HasIdentity#id()}.</li>
  *  </ul>
  *
  * @see HasIdentity
@@ -42,7 +46,30 @@ public enum ItemChange
      */
     VALUE,
     /**
-     *  The item implements {@link HasIdentity} and changed its {@link HasIdentity#identity()}.
+     *  The item implements {@link HasIdentity} and changed its {@link HasIdentity#id()}.
+     *  Note that this will never be the case if the item is not an instance of {@link HasIdentity}.
+     *  This is because Sprouts assumes all its items to be value objects by default.
+     *  So if {@link Object#equals(Object)} returns true, but {@code ==} returns false,
+     *  then the item is considered to <b>not</b> have changed its identity!
      */
-    IDENTITY
+    ID;
+
+    public static <T> ItemChange of( Class<T> type, @Nullable T newValue, @Nullable T oldValue ) {
+        if ( Objects.equals( oldValue, newValue ) )
+            return NONE;
+        if ( oldValue == null )
+            return TO_NON_NULL_REFERENCE;
+        if ( newValue == null )
+            return TO_NULL_REFERENCE;
+        if ( !HasIdentity.class.isAssignableFrom(type) )
+            return VALUE;
+
+        Object formerIdentity  = ((HasIdentity<?>) oldValue).id();
+        Object currentIdentity = ((HasIdentity<?>) newValue).id();
+        boolean equalIdentity = Objects.equals(formerIdentity, currentIdentity);
+        if ( equalIdentity )
+            return VALUE;
+        else
+            return ID;
+    }
 }

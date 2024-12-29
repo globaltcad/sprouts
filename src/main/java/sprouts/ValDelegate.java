@@ -70,7 +70,7 @@ public interface ValDelegate<T>
      *              <li>{@link ItemChange#VALUE}</li>
      *              <li>{@link ItemChange#TO_NULL_REFERENCE}</li>
      *              <li>{@link ItemChange#TO_NON_NULL_REFERENCE}</li>
-     *              <li>{@link ItemChange#IDENTITY}</li>
+     *              <li>{@link ItemChange#ID}</li>
      *          </ul>
      */
     ItemChange change();

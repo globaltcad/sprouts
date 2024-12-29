@@ -6,7 +6,6 @@ import spock.lang.Subject
 import spock.lang.Title
 
 import java.lang.ref.WeakReference
-import java.time.DayOfWeek
 import java.time.Month
 import java.util.concurrent.TimeUnit
 
@@ -558,6 +557,79 @@ class Property_View_Spec extends Specification
             trace1 == [From.ALL, From.VIEW, From.VIEW_MODEL]
             trace2 == [From.ALL, From.VIEW]
             trace3 == [From.ALL, From.VIEW_MODEL]
+    }
+
+    def 'The `onChange` event delegate tells you the type of change the property experienced.'() {
+        reportInfo """
+            The `onChange` event delegate tells you the type of change the property experienced.
+            The type of change is represented by an enum with the following values:
+            - `NONE` no change occurred.
+            - `TO_NULL_REFERENCE` the property changed from a non-null item to a null item.
+            - `TO_NON_NULL_REFERENCE` the property changed from a null item to a non-null item.
+            - `VALUE` the `Object.equals(Object)` method returned `false` for the old and new items.
+            - `IDENTITY` the old and new items implement `HasIdentity` and their `.id()` objets are not equal!
+            Note that this will never be the case if the item is not an instance of `HasIdentity`.
+            This is because Sprouts assumes all its items to be value objects by default.
+            So if `Object.equals(Object)` returns true, but a `==` comparison returns false,
+            then the item is considered to NOT have changed its identity!
+        """
+        given :
+            var value1 = new HasIdentity<Long>() {
+                @Override Long id() { return 42L }
+            }
+            var value2 = new HasIdentity<Long>() {
+                @Override Long id() { return 42L }
+            }
+            var value3 = new HasIdentity<Long>() {
+                @Override Long id() { return 43L }
+                @Override
+                boolean equals(Object obj) { return obj instanceof HasIdentity && ((HasIdentity)obj).id() == this.id() }
+                @Override
+                int hashCode() { return Objects.hash(id()) }
+            }
+            var value4 = new HasIdentity<Long>() {
+                @Override Long id() { return 43L }
+                @Override
+                boolean equals(Object obj) { return obj instanceof HasIdentity && ((HasIdentity)obj).id() == this.id() }
+                @Override
+                int hashCode() { return Objects.hash(id()) }
+            }
+        and : 'A property with a couple of views.'
+            var property = Var.ofNullable(HasIdentity, value1)
+            var view = property.view()
+        and : 'A trace list and a change listener that listens to changes on the views.'
+            var trace = []
+            view.onChange(From.ALL, v -> trace << v.change())
+
+        when : 'We change the item of the property to a new item with the same value.'
+            property.set(value2)
+        then : 'The listeners are notified of the type of change the property experienced.'
+            trace == [ItemChange.VALUE]
+
+        when : 'We change the item of the property to a new item with a different identity.'
+            property.set(value3)
+        then : 'The listeners are notified of an identity change, because 42 != 43.'
+            trace == [ItemChange.VALUE, ItemChange.ID]
+
+        when : 'We change the item of the property to a new item with the same value and identity.'
+            property.set(value4)
+        then : 'The listeners are not notified because the item did not change in terms of value or identity.'
+            trace == [ItemChange.VALUE, ItemChange.ID]
+
+        when : 'We change the item of the property back to the original item.'
+            property.set(value1)
+        then : 'The listeners are notified of an identity change.'
+            trace == [ItemChange.VALUE, ItemChange.ID, ItemChange.ID]
+
+        when : 'We change the item of the property to null.'
+            property.set(null)
+        then : 'The listeners are notified of a change to a null reference.'
+            trace == [ItemChange.VALUE, ItemChange.ID, ItemChange.ID, ItemChange.TO_NULL_REFERENCE]
+
+        when : 'We change the item of the property back to the original item.'
+            property.set(value1)
+        then : 'The listeners are notified of a change to a non-null reference.'
+            trace == [ItemChange.VALUE, ItemChange.ID, ItemChange.ID, ItemChange.TO_NULL_REFERENCE, ItemChange.TO_NON_NULL_REFERENCE]
     }
 
     def 'Changing the value of a property through the `.set(From.VIEW, T)` method will also affect its views'()
