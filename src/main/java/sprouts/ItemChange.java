@@ -13,10 +13,10 @@ package sprouts;
  *      <li>{@link #TO_NULL_REFERENCE} - The item changed from a non-null reference to a null reference.</li>
  *      <li>{@link #TO_NON_NULL_REFERENCE} - The item changed from a null reference to a non-null reference.</li>
  *      <li>{@link #VALUE} - The item changed its value in terms of {@link Object#equals(Object)} returning false.</li>
- *      <li>{@link #IDENTITY} - The item implements {@link WithIdentity} and changed its {@link WithIdentity#identity()}.</li>
+ *      <li>{@link #IDENTITY} - The item implements {@link HasIdentity} and changed its {@link HasIdentity#identity()}.</li>
  *  </ul>
  *
- * @see WithIdentity
+ * @see HasIdentity
  * @see sprouts.ValDelegate
  */
 public enum ItemChange
@@ -42,7 +42,7 @@ public enum ItemChange
      */
     VALUE,
     /**
-     *  The item implements {@link WithIdentity} and changed its {@link WithIdentity#identity()}.
+     *  The item implements {@link HasIdentity} and changed its {@link HasIdentity#identity()}.
      */
     IDENTITY
 }

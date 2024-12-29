@@ -3,7 +3,7 @@ package sprouts.impl;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import sprouts.From;
-import sprouts.WithIdentity;
+import sprouts.HasIdentity;
 import sprouts.ItemChange;
 
 import java.util.Objects;
@@ -22,11 +22,11 @@ final class Util {
             return ItemChange.TO_NON_NULL_REFERENCE;
         if ( newValue == null )
             return ItemChange.TO_NULL_REFERENCE;
-        if ( !WithIdentity.class.isAssignableFrom(type) )
+        if ( !HasIdentity.class.isAssignableFrom(type) )
             return ItemChange.VALUE;
 
-        Object formerIdentity  = ((WithIdentity<?>) oldValue).identity();
-        Object currentIdentity = ((WithIdentity<?>) newValue).identity();
+        Object formerIdentity  = ((HasIdentity<?>) oldValue).identity();
+        Object currentIdentity = ((HasIdentity<?>) newValue).identity();
         boolean equalIdentity = Objects.equals(formerIdentity, currentIdentity);
         if ( equalIdentity )
             return ItemChange.VALUE;

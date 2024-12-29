@@ -14,7 +14,7 @@ package sprouts;
  *
  * @param <I> The type of the unique identifier for this property item.
  */
-public interface WithIdentity<I> {
+public interface HasIdentity<I> {
 
     /**
      *  The unique identifier for this value object.
