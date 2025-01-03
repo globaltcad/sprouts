@@ -46,8 +46,8 @@ class Tuple_Spec extends Specification
 
         where :
             input                   | operation                                        || expected
-            Tuple.of(Byte)          | Tuple::revert                                    || Tuple.of(Byte)
-            Tuple.of(1, 2, 3)       | Tuple::revert                                    || Tuple.of(3, 2, 1)
+            Tuple.of(Byte)          | Tuple::reversed                                  || Tuple.of(Byte)
+            Tuple.of(1, 2, 3)       | Tuple::reversed                                  || Tuple.of(3, 2, 1)
             Tuple.of(3, 2, 1, 0)    | Tuple::removeFirst                               || Tuple.of(2, 1, 0)
             Tuple.of(3, 2, 1, 0)    | Tuple::removeLast                                || Tuple.of(3, 2, 1)
             Tuple.of(1, 2, 3)       | { tuple -> tuple.map { it } }                    || Tuple.of(1, 2, 3)
@@ -133,39 +133,39 @@ class Tuple_Spec extends Specification
             diff.size() == count
 
         where : 'The use the following input, operation, and expected change information.'
-            input                   | operation                                        || change                | index | count
-            Tuple.of(3, 2, 1, 0)    | Tuple::revert                                    || SequenceChange.REVERT | -1 | 4
-            Tuple.of(1, 2, 3)       | Tuple::revert                                    || SequenceChange.REVERT | -1 | 3
-            Tuple.of(3, 2, 1, 0)    | Tuple::removeFirst                               || SequenceChange.REMOVE |  0 | 1
-            Tuple.of(3, 2, 1, 0)    | Tuple::removeLast                                || SequenceChange.REMOVE |  3 | 1
-            Tuple.of(1, 2, 3)       | { tuple -> tuple.map { it } }                    || SequenceChange.SET    |  0 | 3
-            Tuple.of(1, 2, 3)       | { tuple -> tuple.map { it * 2 } }                || SequenceChange.SET    |  0 | 3
-            Tuple.of(3, 6)          | { tuple -> tuple.mapTo(String,{it+" cents"}) }   || SequenceChange.SET    |  0 | 2
-            Tuple.of(1, 2, 3)       | { tuple -> tuple.retainIf { it > 1 } }           || SequenceChange.RETAIN |  1 | 2
-            Tuple.of(1, 2, 3)       | { tuple -> tuple.retainIf { it < 2 } }           || SequenceChange.RETAIN |  0 | 1
-            Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.retainIf { it > 2 && it < 5 } } || SequenceChange.RETAIN |  2 | 2
-            Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.retainIf { it < 2 || it > 4 } } || SequenceChange.RETAIN | -1 | 2
-            Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.slice(1, 3) }                   || SequenceChange.RETAIN |  1 | 2
-            Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.sliceFirst(3) }                 || SequenceChange.RETAIN |  0 | 3
-            Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.sliceLast(3) }                  || SequenceChange.RETAIN |  2 | 3
-            Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.sliceAt(1, 3) }                 || SequenceChange.RETAIN |  1 | 3
-            Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.removeRange(1, 3) }             || SequenceChange.REMOVE |  1 | 2
-            Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.setAt(1, 10) }                  || SequenceChange.SET    |  1 | 1
-            Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.addAt(1, 10) }                  || SequenceChange.ADD    |  1 | 1
-            Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.removeAt(1) }                   || SequenceChange.REMOVE |  1 | 1
-            Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.removeAt(1, 2) }                || SequenceChange.REMOVE |  1 | 2
-            Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.add(10) }                       || SequenceChange.ADD    |  5 | 1
-            Tuple.of(1, 2, 3)       | { tuple -> tuple.addAll(10, 20) }                || SequenceChange.ADD    |  3 | 2
-            Tuple.of(1, 2, 3)       | { tuple -> tuple.addAll(Tuple.of(10, 20)) }      || SequenceChange.ADD    |  3 | 2
-            Tuple.of(1, 2, 3)       | { tuple -> tuple.addAll([10, 20]) }              || SequenceChange.ADD    |  3 | 2
-            Tuple.of(1, 2, 3)       | { tuple -> tuple.clear() }                       || SequenceChange.CLEAR  |  0 | 3
-            Tuple.of(1, 2, 3)       | { tuple -> tuple.addAllAt(1, 10, 20) }           || SequenceChange.ADD    |  1 | 2
-            Tuple.of(1, 2, 3)       | { tuple -> tuple.addAllAt(1, Tuple.of(10, 20)) } || SequenceChange.ADD    |  1 | 2
-            Tuple.of(1, 2, 3)       | { tuple -> tuple.addAllAt(1, [10, 20]) }         || SequenceChange.ADD    |  1 | 2
-            Tuple.of(1, 2, 3)       | { tuple -> tuple.removeIf { it > 1 } }           || SequenceChange.REMOVE |  1 | 2
-            Tuple.of(1, 2, 3)       | { tuple -> tuple.removeIf { it < 2 } }           || SequenceChange.REMOVE |  0 | 1
-            Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.removeIf { it > 2 && it < 5 } } || SequenceChange.REMOVE |  2 | 2
-            Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.removeIf { it < 2 || it > 4 } } || SequenceChange.REMOVE | -1 | 2
+            input                   | operation                                        || change                 | index | count
+            Tuple.of(3, 2, 1, 0)    | Tuple::reversed                                  || SequenceChange.REVERSE | -1 | 4
+            Tuple.of(1, 2, 3)       | Tuple::reversed                                  || SequenceChange.REVERSE | -1 | 3
+            Tuple.of(3, 2, 1, 0)    | Tuple::removeFirst                               || SequenceChange.REMOVE  |  0 | 1
+            Tuple.of(3, 2, 1, 0)    | Tuple::removeLast                                || SequenceChange.REMOVE  |  3 | 1
+            Tuple.of(1, 2, 3)       | { tuple -> tuple.map { it } }                    || SequenceChange.SET     |  0 | 3
+            Tuple.of(1, 2, 3)       | { tuple -> tuple.map { it * 2 } }                || SequenceChange.SET     |  0 | 3
+            Tuple.of(3, 6)          | { tuple -> tuple.mapTo(String,{it+" cents"}) }   || SequenceChange.SET     |  0 | 2
+            Tuple.of(1, 2, 3)       | { tuple -> tuple.retainIf { it > 1 } }           || SequenceChange.RETAIN  |  1 | 2
+            Tuple.of(1, 2, 3)       | { tuple -> tuple.retainIf { it < 2 } }           || SequenceChange.RETAIN  |  0 | 1
+            Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.retainIf { it > 2 && it < 5 } } || SequenceChange.RETAIN  |  2 | 2
+            Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.retainIf { it < 2 || it > 4 } } || SequenceChange.RETAIN  | -1 | 2
+            Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.slice(1, 3) }                   || SequenceChange.RETAIN  |  1 | 2
+            Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.sliceFirst(3) }                 || SequenceChange.RETAIN  |  0 | 3
+            Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.sliceLast(3) }                  || SequenceChange.RETAIN  |  2 | 3
+            Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.sliceAt(1, 3) }                 || SequenceChange.RETAIN  |  1 | 3
+            Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.removeRange(1, 3) }             || SequenceChange.REMOVE  |  1 | 2
+            Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.setAt(1, 10) }                  || SequenceChange.SET     |  1 | 1
+            Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.addAt(1, 10) }                  || SequenceChange.ADD     |  1 | 1
+            Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.removeAt(1) }                   || SequenceChange.REMOVE  |  1 | 1
+            Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.removeAt(1, 2) }                || SequenceChange.REMOVE  |  1 | 2
+            Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.add(10) }                       || SequenceChange.ADD     |  5 | 1
+            Tuple.of(1, 2, 3)       | { tuple -> tuple.addAll(10, 20) }                || SequenceChange.ADD     |  3 | 2
+            Tuple.of(1, 2, 3)       | { tuple -> tuple.addAll(Tuple.of(10, 20)) }      || SequenceChange.ADD     |  3 | 2
+            Tuple.of(1, 2, 3)       | { tuple -> tuple.addAll([10, 20]) }              || SequenceChange.ADD     |  3 | 2
+            Tuple.of(1, 2, 3)       | { tuple -> tuple.clear() }                       || SequenceChange.CLEAR   |  0 | 3
+            Tuple.of(1, 2, 3)       | { tuple -> tuple.addAllAt(1, 10, 20) }           || SequenceChange.ADD     |  1 | 2
+            Tuple.of(1, 2, 3)       | { tuple -> tuple.addAllAt(1, Tuple.of(10, 20)) } || SequenceChange.ADD     |  1 | 2
+            Tuple.of(1, 2, 3)       | { tuple -> tuple.addAllAt(1, [10, 20]) }         || SequenceChange.ADD     |  1 | 2
+            Tuple.of(1, 2, 3)       | { tuple -> tuple.removeIf { it > 1 } }           || SequenceChange.REMOVE  |  1 | 2
+            Tuple.of(1, 2, 3)       | { tuple -> tuple.removeIf { it < 2 } }           || SequenceChange.REMOVE  |  0 | 1
+            Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.removeIf { it > 2 && it < 5 } } || SequenceChange.REMOVE  |  2 | 2
+            Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.removeIf { it < 2 || it > 4 } } || SequenceChange.REMOVE  | -1 | 2
     }
 
     def 'You can tell two tuples with different nullability apart from their String representations.'()
@@ -185,7 +185,7 @@ class Tuple_Spec extends Specification
         given : 'An initial tuple:'
             var tuple = Tuple.of("a", "b", "c")
         and : 'Two tuples with the same contents, but produced by different operations:'
-            var tuple1 = tuple.revert().removeFirst().removeLast()
+            var tuple1 = tuple.reversed().removeFirst().removeLast()
             var tuple2 = tuple.removeIf({ it == "a" }).removeIf({ it == "c" })
         expect : 'The tuples are equal.'
             tuple1 == tuple2

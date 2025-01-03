@@ -346,7 +346,7 @@ class Property_List_View_Spec extends Specification
             lengths.toList() == [8.0, 4.4, 10.0, 10.0]
 
         when : 'We revert the source property list.'
-            documentaries.revert()
+            documentaries.reversed()
         then : 'The view is also reverted.'
             lengths.toList() == [10.0, 10.0, 4.4, 8.0]
     }

@@ -794,7 +794,7 @@ class Property_List_Spec extends Specification
                 { it.retainAll(Vars.of(1)) },
                 { it.retainAll(Vars.of(2, 3)) },
                 { it.clear() },
-                { it.revert() }
+                { it.reversed() }
             ]
     }
 

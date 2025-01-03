@@ -626,7 +626,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
                 vars.add(at(i) );
 
         this.removeAll(vars); // remove from this list at once and trigger events only once!
-        return vars.revert();
+        return vars.reversed();
     }
 
     /**
@@ -660,7 +660,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
                 vars.add(at(i));
 
         this.removeAll(vars); // remove from this list at once and trigger events only once!
-        return vars.revert();
+        return vars.reversed();
     }
 
     /**
@@ -1262,5 +1262,5 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
      *
      * @return {@code this} list.
      */
-    Vars<T> revert();
+    Vars<T> reversed();
 }

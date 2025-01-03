@@ -142,7 +142,7 @@ final class PropertyList<T extends @Nullable Object> implements Vars<T>, Viewabl
                     removal.add( _variables.remove(i) );
         }
 
-        _triggerAction( SequenceChange.REMOVE, -1, null, removal.revert() );
+        _triggerAction( SequenceChange.REMOVE, -1, null, removal.reversed() );
         return this;
     }
 
@@ -356,14 +356,14 @@ final class PropertyList<T extends @Nullable Object> implements Vars<T>, Viewabl
     }
 
     @Override
-    public Vars<T> revert() {
+    public Vars<T> reversed() {
         int size = size();
         for ( int i = 0; i < size / 2; i++ ) {
             Var<T> tmp = at(i);
             _variables.set( i, at(size - i - 1) );
             _variables.set( size - i - 1, tmp );
         }
-        _triggerAction( SequenceChange.REVERT );
+        _triggerAction( SequenceChange.REVERSE );
         return this;
     }
 
