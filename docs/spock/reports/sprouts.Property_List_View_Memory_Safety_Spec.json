@@ -1,7 +1,7 @@
 {
   "className":"sprouts.Property_List_View_Memory_Safety_Spec",
   "title":"Property List View Memory Safety",
-  "narrative":"Both the read only `Vals` and the mutable `Vars` are designed to be\n    used as part of a view model in a Model-View-ViewModel (MVVM) architecture\n    or Model-View-Intent (MVI) architecture.\n    As a consequence, they need to be observable in some way.\n    This is done by registering change listeners on \n    their so called \"views\", which are weakly referenced\n    live views of the original property lists which get updated\n    automatically when the original property changes.\n    You can then subscribe to these views to get notified\n    of changes to the original property.\n\n    This is especially useful when you want to observe a property list\n    of one type as a property list of another type, or when you want to\n    observe a property lists with some transformation applied to them.\n\n    This specification shows how to create views from both nullable and non-nullable property lists,\n    and it demonstrates how they may be garbage collected when they are no longer referenced.",
+  "narrative":"`Vals` (read-only) and `Vars` (mutable) are designed to be used in MVVM or MVI architectures.\n    This is why they need to be observable, which is achieved by registering change listeners on their \"views\".\n    These views are weakly referenced and automatically updated when the original property changes.\n    You can subscribe to these views to get notified of changes.\n\n    This is useful for observing a property list of one type as another type or with transformations applied.\n\n    This specification demonstrates creating views from nullable and non-nullable property lists,\n    and shows how they may be garbage collected when no longer referenced.",
   "subjects":["sprouts.Vals","sprouts.Vars","sprouts.Viewables","sprouts.Viewable"],
   "statistics":{
     "runs":"5",
@@ -14,32 +14,32 @@
   "headers":[],"tags":{},"see":[],
   "features":[ 
     {
-      "id":"The view of a property list will be garbage collected if no longer referenced.",
+      "id":"A property list view is garbage collected when no longer referenced",
       "result":"PASS",
       "duration":"?",
       "iterations":{
-      "tags":{},"see":[],"extraInfo":["\n            The property list view is a live view on the source property list,\n            which gets updated whenever the source list changes.\n            But the source list does not hold a reference to the view,\n            so if the view is no longer referenced, it will be garbage collected.\n            This also includes all of the change listeners that were attached to it.\n            So they will not be updated anymore.\n        "]
+      "tags":{},"see":[],"extraInfo":["\n            The property list view automatically updates with changes to the source list.\n            The source list does not reference the view strongly, so it will be garbage collected if not referenced.\n            This includes all attached change listeners, which will no longer be updated.\n        "]
       },
       "blocks":[
-        {"kind":"given","text":"A property list of 3 japanese eras.","code":["Vars<JapaneseEra> eras = Vars.of(JapaneseEra.HEISEI,JapaneseEra.SHOWA,JapaneseEra.TAISHO)"]},
+        {"kind":"given","text":"A property list containing 3 Japanese eras","code":["Vars<JapaneseEra> eras = Vars.of(JapaneseEra.HEISEI, JapaneseEra.SHOWA, JapaneseEra.TAISHO)"]},
 
-        {"kind":"and","text":"A view on the names of the japanese eras and a weak reference to the view.","code":["Viewables<String> names = eras.view(\"null\", \"error\", JapaneseEra::toString)","WeakReference<Viewables<String>> namesRef = new WeakReference<>(names)"]},
+        {"kind":"and","text":"A view on the names of the Japanese eras and a weak reference to the view.","code":["Viewables<String> names = eras.view(\"null\", \"error\", JapaneseEra::toString)","WeakReference<Viewables<String>> namesRef = new WeakReference<>(names)"]},
 
-        {"kind":"and","text":"A list to record the changes and a listener to record the changes.","code":["var viewTrace = []","names.onChange({ viewTrace << it.vals().toList() })"]},
+        {"kind":"and","text":"A list to record the changes and a listener to record the changes.","code":["var traceOfChanges = []","names.onChange({ traceOfChanges << it.currentValues().toList() })"]},
 
-        {"kind":"expect","text":"The trace is empty initially.","code":["viewTrace.isEmpty()"]},
+        {"kind":"expect","text":"The trace is empty initially.","code":["traceOfChanges.isEmpty()"]},
 
         {"kind":"when","text":"We remove an era from the source property list.","code":["eras.removeAt(1)"]},
 
-        {"kind":"then","text":"The view is updated and the trace records the change.","code":["viewTrace == [[\"Heisei\",\"Taisho\"]]"]},
+        {"kind":"then","text":"The view updates and the trace records the change.","code":["traceOfChanges == [[\"Heisei\", \"Taisho\"]]"]},
 
-        {"kind":"when","text":"We remove the reference to the view, clear the trace and wait for garbage collection.","code":["names = null","viewTrace.clear()","waitForGarbageCollection()"]},
+        {"kind":"when","text":"We remove the reference to the view, clear the trace, and wait for garbage collection.","code":["names = null","traceOfChanges.clear()","waitForGarbageCollection()"]},
 
         {"kind":"then","text":"The view is garbage collected!","code":["namesRef.get() == null"]},
 
         {"kind":"when","text":"We try to trigger a change in the source property list.","code":["eras.add(JapaneseEra.REIWA)"]},
 
-        {"kind":"then","text":"The view is not updated and the trace is empty.","code":["viewTrace == []"]}
+        {"kind":"then","text":"The view is not updated and the trace is empty.","code":["traceOfChanges == []"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -58,21 +58,21 @@
 
         {"kind":"and","text":"Weak references to the property views.","code":["WeakReference<Viewable<Integer>> garyRef = new WeakReference<>(gary)","WeakReference<Viewable<Integer>> joeyRef = new WeakReference<>(joey)","WeakReference<Viewable<Integer>> edRef = new WeakReference<>(ed)"]},
 
-        {"kind":"and","text":"A list to record the changes and a listener to record the changes.","code":["var viewTrace = []","gary.onChange(From.ALL, { viewTrace << it.get() })","joey.onChange(From.ALL, { viewTrace << it.get() })","ed.onChange(From.ALL, { viewTrace << it.get() })"]},
+        {"kind":"and","text":"A list to record the changes and a listener to record the changes.","code":["var traceOfChanges = []","gary.onChange(From.ALL, { traceOfChanges << it.currentValue().orElseNull() })","joey.onChange(From.ALL, { traceOfChanges << it.currentValue().orElseNull() })","ed.onChange(From.ALL, { traceOfChanges << it.currentValue().orElseNull() })"]},
 
-        {"kind":"expect","text":"The trace is empty initially.","code":["viewTrace.isEmpty()"]},
+        {"kind":"expect","text":"The trace is empty initially.","code":["traceOfChanges.isEmpty()"]},
 
         {"kind":"when","text":"We mutate all the names.","code":["people.at(0).set(\"Richard Burgess\")","people.at(1).set(\"Joe Armstrong\")","people.at(2).set(\"Edward Wren\")"]},
 
-        {"kind":"then","text":"The views are updated and the trace records the changes.","code":["viewTrace == [15, 13, 11]"]},
+        {"kind":"then","text":"The views are updated and the trace records the changes.","code":["traceOfChanges == [15, 13, 11]"]},
 
-        {"kind":"when","text":"We remove the references to the views, clear the trace and wait for garbage collection.","code":["gary = null","joey = null","ed = null","viewTrace.clear()","waitForGarbageCollection()"]},
+        {"kind":"when","text":"We remove the references to the views, clear the trace, and wait for garbage collection.","code":["gary = null","joey = null","ed = null","traceOfChanges.clear()","waitForGarbageCollection()"]},
 
         {"kind":"then","text":"The views are garbage collected!","code":["garyRef.get() == null","joeyRef.get() == null","edRef.get() == null"]},
 
         {"kind":"when","text":"We try to trigger a change in the source property list.","code":["people.at(0).set(\"x\")","people.at(1).set(\"y\")","people.at(2).set(\"z\")"]},
 
-        {"kind":"then","text":"The views are not updated and the trace is still empty.","code":["viewTrace == []"]}
+        {"kind":"then","text":"The views are not updated and the trace is still empty.","code":["traceOfChanges == []"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -82,7 +82,7 @@
       "result":"PASS",
       "duration":"?",
       "iterations":{
-      "tags":{},"see":[],"extraInfo":["\n            You can create a chain of views from a property list view.\n            As long as the last view in the chain is still referenced, the whole chain will remain in memory,\n            even if the intermediate views are no longer referenced.\n            But if the last view is no longer referenced, the whole chain will be garbage collected.\n        "]
+      "tags":{},"see":[],"extraInfo":["\n            You can create a chain of views from a property list view.\n            As long as the last view in the chain is still referenced, the whole chain will remain in memory,\n            even if the intermediate views are no longer referenced.\n        "]
       },
       "blocks":[
         {"kind":"given","text":"A property list of 2 links.","code":["Vars<String> links = Vars.of(\"https://www.dominionmovement.com/\", \"https://www.landofhopeandglory.org/\")"]},
@@ -103,7 +103,7 @@
       "result":"PASS",
       "duration":"?",
       "iterations":{
-      "tags":{},"see":[],"extraInfo":["\n            You can create a chain of views from a property list view.\n            As long as the last view in the chain is still referenced, the whole chain will remain in memory,\n            even if the intermediate views are no longer referenced.\n            But if the last view is no longer referenced, the whole chain will be garbage collected.    \n        "]
+      "tags":{},"see":[],"extraInfo":["\n            You can create a chain of views from a property list view.\n            As long as the last view in the chain is still referenced, the whole chain will remain in memory,\n            even if the intermediate views are no longer referenced.\n            But if the last view is no longer referenced, the whole chain will be garbage collected.\n        "]
       },
       "blocks":[
         {"kind":"given","text":"A property list of 2 links.","code":["Vars<String> links = Vars.of(\"https://www.dominionmovement.com/\", \"https://www.landofhopeandglory.org/\")"]},

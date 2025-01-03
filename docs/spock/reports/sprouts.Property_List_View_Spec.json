@@ -1,7 +1,7 @@
 {
   "className":"sprouts.Property_List_View_Spec",
   "title":"Property List Views",
-  "narrative":"A property list is more than just a wrapper around values.\n    This interfaces has a rich API that exposes a plethora of methods,\n    many of which are designed to inform you about\n    their contents without actually exposing them to you.\n\n    For these facts about any property list, we can create views.\n    These views are observables live properties that are updated",
+  "narrative":"A property list is more than just a wrapper around values.\n    This interface has a rich API that exposes a plethora of methods,\n    many of which are designed to inform you about\n    their contents without actually exposing them to you.\n\n    For these facts about any property list, we can create views.\n    These views are observable live properties that are updated\n    whenever the source property list changes.",
   "subjects":["sprouts.Viewables","sprouts.Vars","sprouts.Vals"],
   "statistics":{
     "runs":"8",
@@ -18,10 +18,10 @@
       "result":"PASS",
       "duration":"?",
       "iterations":{
-      "tags":{},"see":[],"extraInfo":["\n            Calling `viewSize()` on a property list\n            will be a view on the `size()` method of said property list.\n            So when the integer returned by `size()` changes,\n            the value of the view will change too.\n        "]
+      "tags":{},"see":[],"extraInfo":["\n            Calling `viewSize()` on a property list\n            will create a view on the `size()` method attribute of the property list.\n            When the size of the list changes, the value of the view will change as well.\n        "]
       },
       "blocks":[
-        {"kind":"given","text":"A non empty property list containing a few japanese words.","code":["Vars<String> words = Vars.of(\"ブランコツリー\",\"は\",\"いい\",\"です\")"]},
+        {"kind":"given","text":"A non-empty property list containing a few Japanese words.","code":["Vars<String> words = Vars.of(\"ブランコツリー\", \"は\", \"いい\", \"です\")"]},
 
         {"kind":"and","text":"A view on the size of the property list.","code":["Viewable<Integer> size = words.viewSize()"]},
 
@@ -31,7 +31,7 @@
 
         {"kind":"then","text":"The view becomes 5.","code":["size.get() == 5"]},
 
-        {"kind":"and","text":"\n                The sentence becomes \"ブランコツリーはいいですね\",\n                which means \"SwingTree is nice, isn't it?\"\n           ","code":["words.toList() == [\"ブランコツリー\",\"は\",\"いい\",\"です\",\"ね\"]"]},
+        {"kind":"and","text":"\n                The sentence becomes \"ブランコツリーはいいですね\",\n                which means \"SwingTree is nice, isn't it?\"\n           ","code":["words.toList() == [\"ブランコツリー\", \"は\", \"いい\", \"です\", \"ね\"]"]},
 
         {"kind":"when","text":"We remove a word from the property list.","code":["words.removeAt(0)"]},
 
@@ -48,7 +48,7 @@
       "tags":{},"see":[],"extraInfo":["\n            The method `viewIsEmpty()` on a property list\n            will return a property that is true when the list is empty,\n            and false otherwise.\n\n            Whenever the boolean returned by `isEmpty()` changes,\n            the value of the view will change too.\n\n            So this is effectively a live view on the `isEmpty()` method of the property list.\n        "]
       },
       "blocks":[
-        {"kind":"given","text":"A list of 2 words say ing \"cute cat\" in japanese.","code":["Vars<String> words = Vars.of(\"かわいい\",\"猫\")"]},
+        {"kind":"given","text":"A list of 2 words saying \"cute cat\" in Japanese.","code":["Vars<String> words = Vars.of(\"かわいい\", \"猫\")"]},
 
         {"kind":"and","text":"A view on the emptiness of the property list.","code":["Viewable<Boolean> isEmpty = words.viewIsEmpty()"]},
 
@@ -75,7 +75,7 @@
 
         {"kind":"expect","text":"The view is false initially.","code":["!isNotEmpty.get()"]},
 
-        {"kind":"when","text":"We add the japanese word for \"cute\" to the property list.","code":["words.add(\"かわいい\")"]},
+        {"kind":"when","text":"We add the Japanese word for \"cute\" to the property list.","code":["words.add(\"かわいい\")"]},
 
         {"kind":"then","text":"The view becomes true.","code":["isNotEmpty.get()"]}
       ],
@@ -83,26 +83,26 @@
     },
   
     {
-      "id":"The `view(U,U,Function<T,U>)` method creates a dynamically updated life view of its source list.",
+      "id":"The `view(U,U,Function<T,U>)` method creates a dynamically updated live view of its source list.",
       "result":"PASS",
       "duration":"?",
       "iterations":{
-      "tags":{},"see":[],"extraInfo":["\n            Similar to `Val.view(U,U,Function<T,U>)`, the `Vals.view(U,U,Function<T,U>)` method\n            creates a sort of read only clone of the original property list, which gets\n            updated automatically whenever the original list changes.\n        "]
+      "tags":{},"see":[],"extraInfo":["\n            Similar to `Val.view(U,U,Function<T,U>)`, the `Vals.view(U,U,Function<T,U>)` method\n            creates a read-only clone of the original property list, which gets\n            updated automatically whenever the original list changes.\n        "]
       },
       "blocks":[
-        {"kind":"given","text":"A property list of 3 days of the week.","code":["Vars<DayOfWeek> days = Vars.of(DayOfWeek.MONDAY,DayOfWeek.WEDNESDAY,DayOfWeek.FRIDAY)"]},
+        {"kind":"given","text":"A property list of 3 days of the week.","code":["Vars<DayOfWeek> days = Vars.of(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY, DayOfWeek.FRIDAY)"]},
 
         {"kind":"and","text":"A view on the names of the days of the week.","code":["Viewables<String> names = days.view(\"null\", \"error\", DayOfWeek::name)"]},
 
-        {"kind":"expect","text":"The view contains [\"MONDAY\",\"WEDNESDAY\",\"FRIDAY\"] initially.","code":["names.toList() == [\"MONDAY\",\"WEDNESDAY\",\"FRIDAY\"]"]},
+        {"kind":"expect","text":"The view contains [\"MONDAY\", \"WEDNESDAY\", \"FRIDAY\"] initially.","code":["names.toList() == [\"MONDAY\", \"WEDNESDAY\", \"FRIDAY\"]"]},
 
         {"kind":"when","text":"We add a day to the source property list.","code":["days.add(DayOfWeek.SATURDAY)"]},
 
-        {"kind":"then","text":"The view becomes [\"MONDAY\",\"WEDNESDAY\",\"FRIDAY\",\"SATURDAY\"].","code":["names.toList() == [\"MONDAY\",\"WEDNESDAY\",\"FRIDAY\",\"SATURDAY\"]"]},
+        {"kind":"then","text":"The view becomes [\"MONDAY\", \"WEDNESDAY\", \"FRIDAY\", \"SATURDAY\"].","code":["names.toList() == [\"MONDAY\", \"WEDNESDAY\", \"FRIDAY\", \"SATURDAY\"]"]},
 
         {"kind":"when","text":"We now remove a day from the property list.","code":["days.removeAt(0)"]},
 
-        {"kind":"then","text":"The view becomes [\"WEDNESDAY\",\"FRIDAY\",\"SATURDAY\"].","code":["names.toList() == [\"WEDNESDAY\",\"FRIDAY\",\"SATURDAY\"]"]},
+        {"kind":"then","text":"The view becomes [\"WEDNESDAY\", \"FRIDAY\", \"SATURDAY\"].","code":["names.toList() == [\"WEDNESDAY\", \"FRIDAY\", \"SATURDAY\"]"]},
 
         {"kind":"when","text":"The source list is cleared.","code":["days.clear()"]},
 
@@ -119,7 +119,7 @@
       "tags":{},"see":[],"extraInfo":["\n            A property list view created using `view(U,U,Function<T,U>)`\n            will receive change events from its source.\n        "]
       },
       "blocks":[
-        {"kind":"given","text":"A property list of 3 months of the year.","code":["Vars<Month> months = Vars.of(Month.JANUARY,Month.MARCH,Month.MAY)"]},
+        {"kind":"given","text":"A property list of 3 months of the year.","code":["Vars<Month> months = Vars.of(Month.JANUARY, Month.MARCH, Month.MAY)"]},
 
         {"kind":"and","text":"A view on the names of the months of the year.","code":["Viewables<String> names = months.view(\"null\", \"error\", Month::name)"]},
 
@@ -139,7 +139,7 @@
 
         {"kind":"then","text":"The view receives the change event.","code":["removalTrace == [[], [\"MARCH\"], [\"MAY\", \"JUNE\"]]","additionTrace == [[\"JUNE\"], [], []]"]},
 
-        {"kind":"when","text":"We add a two months to the source property list.","code":["months.addAll(Month.JULY, Month.AUGUST)"]},
+        {"kind":"when","text":"We add two months to the source property list.","code":["months.addAll(Month.JULY, Month.AUGUST)"]},
 
         {"kind":"then","text":"The view receives the change event.","code":["removalTrace == [[], [\"MARCH\"], [\"MAY\", \"JUNE\"], []]","additionTrace == [[\"JUNE\"], [], [], [\"JULY\", \"AUGUST\"]]"]},
 
@@ -157,7 +157,7 @@
 
         {"kind":"then","text":"The view receives the change event.","code":["removalTrace == [[], [\"MARCH\"], [\"MAY\", \"JUNE\"], [], [], [\"JULY\", \"SEPTEMBER\"], [\"JANUARY\", \"OCTOBER\"]]","additionTrace == [[\"JUNE\"], [], [], [\"JULY\", \"AUGUST\"], [\"SEPTEMBER\", \"OCTOBER\"], [], [\"JUNE\", \"JUNE\"]]"]},
 
-        {"kind":"and","text":"Finally we check again if the view and source property have the expected contents:","code":["names.toList() == [\"JUNE\", \"JUNE\", \"AUGUST\"]","months.toList() == [Month.JUNE, Month.JUNE, Month.AUGUST]"]},
+        {"kind":"and","text":"Finally, we check again if the view and source property have the expected contents:","code":["names.toList() == [\"JUNE\", \"JUNE\", \"AUGUST\"]","months.toList() == [Month.JUNE, Month.JUNE, Month.AUGUST]"]},
 
         {"kind":"when","text":"We make the source list distinct.","code":["months.makeDistinct()"]},
 
@@ -173,12 +173,12 @@
       "result":"PASS",
       "duration":"?",
       "iterations":{
-      "tags":{},"see":[],"extraInfo":["\n            A property list view created using `view()` is a no-op view\n            which will receive change events from its source, so that \n            it is always in sync with the source and can be used as a\n            way to receive change events from the source.\n        "]
+      "tags":{},"see":[],"extraInfo":["\n            A property list view created using `view()` is a no-op view\n            which will receive change events from its source, so that\n            it is always in sync with the source and can be used as a\n            way to receive change events from the source.\n        "]
       },
       "blocks":[
-        {"kind":"given","text":"A property list of 3 months of the year and its view.","code":["Vars<Month> months = Vars.of(Month.JANUARY,Month.MARCH,Month.MAY)","Viewables<Month> view = months.view()"]},
+        {"kind":"given","text":"A property list of 3 months of the year and its view.","code":["Vars<Month> months = Vars.of(Month.JANUARY, Month.MARCH, Month.MAY)","Viewables<Month> view = months.view()"]},
 
-        {"kind":"and","text":"A listener that records the changes and notes the new values.","code":["var removalTrace = []","var additionTrace = []","view.onChange({ removalTrace << it.oldValues().toList().collect({it.name()}) })","view.onChange({ additionTrace << it.newValues().toList().collect({it.name()}) })"]},
+        {"kind":"and","text":"A listener that records the changes and notes the new values.","code":["var removalTrace = []","var additionTrace = []","view.onChange({ removalTrace << it.oldValues().toList().collect({ it.name() }) })","view.onChange({ additionTrace << it.newValues().toList().collect({ it.name() }) })"]},
 
         {"kind":"expect","text":"Initially, the traces are empty.","code":["removalTrace.isEmpty()","additionTrace.isEmpty()"]},
 
@@ -194,7 +194,7 @@
 
         {"kind":"then","text":"The view receives the change event.","code":["removalTrace == [[], [\"MARCH\"], [\"MAY\", \"JUNE\"]]","additionTrace == [[\"JUNE\"], [], []]"]},
 
-        {"kind":"when","text":"We add a two months to the source property list.","code":["months.addAll(Month.JULY, Month.AUGUST)"]},
+        {"kind":"when","text":"We add two months to the source property list.","code":["months.addAll(Month.JULY, Month.AUGUST)"]},
 
         {"kind":"then","text":"The view receives the change event.","code":["removalTrace == [[], [\"MARCH\"], [\"MAY\", \"JUNE\"], []]","additionTrace == [[\"JUNE\"], [], [], [\"JULY\", \"AUGUST\"]]"]},
 
@@ -212,7 +212,7 @@
 
         {"kind":"then","text":"The view receives the change event.","code":["removalTrace == [[], [\"MARCH\"], [\"MAY\", \"JUNE\"], [], [], [\"JULY\", \"SEPTEMBER\"], [\"JANUARY\", \"OCTOBER\"]]","additionTrace == [[\"JUNE\"], [], [], [\"JULY\", \"AUGUST\"], [\"SEPTEMBER\", \"OCTOBER\"], [], [\"JUNE\", \"JUNE\"]]"]},
 
-        {"kind":"and","text":"Finally we check again if the view and source property have the expected contents:","code":["view.toList() == [Month.JUNE, Month.JUNE, Month.AUGUST]","months.toList() == [Month.JUNE, Month.JUNE, Month.AUGUST]"]},
+        {"kind":"and","text":"Finally, we check again if the view and source property have the expected contents:","code":["view.toList() == [Month.JUNE, Month.JUNE, Month.AUGUST]","months.toList() == [Month.JUNE, Month.JUNE, Month.AUGUST]"]},
 
         {"kind":"when","text":"We make the source list distinct.","code":["months.makeDistinct()"]},
 
@@ -224,18 +224,18 @@
     },
   
     {
-      "id":"The properties of a list view can themselves be observed for changes in the source properties",
+      "id":"The properties of a list view can themselves be observed for changes in the source properties.",
       "result":"PASS",
       "duration":"?",
       "iterations":{
-      "tags":{},"see":[],"extraInfo":["\n            The properties of a list view can be accessed using \n            the `Val<T> at(int)` method.\n            This returns a new property that will be updated\n            whenever the value at the given index in the source list changes.\n        "]
+      "tags":{},"see":[],"extraInfo":["\n            The properties of a list view can be accessed using\n            the `Val<T> at(int)` method.\n            This returns a new property that will be updated\n            whenever the value at the given index in the source list changes.\n        "]
       },
       "blocks":[
-        {"kind":"given","text":"A property list of 3 days of the week and two types of views.","code":["Vars<DayOfWeek> days = Vars.of(DayOfWeek.MONDAY,DayOfWeek.WEDNESDAY,DayOfWeek.FRIDAY)","Vals<String> names = days.view(\"null\", \"error\", DayOfWeek::name)","Viewable<String> firstDay  = names.at(0).view()","Viewable<String> secondDay = names.at(1).view()","Viewable<String> thirdDay  = names.at(2).view()"]},
+        {"kind":"given","text":"A property list of 3 days of the week and two types of views.","code":["Vars<DayOfWeek> days = Vars.of(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY, DayOfWeek.FRIDAY)","Vals<String> names = days.view(\"null\", \"error\", DayOfWeek::name)","Viewable<String> firstDay  = names.at(0).view()","Viewable<String> secondDay = names.at(1).view()","Viewable<String> thirdDay  = names.at(2).view()"]},
 
         {"kind":"and","text":"Two trace lists to record the changes.","code":["var viewTrace = []"]},
 
-        {"kind":"and","text":"Listeners to record the changes.","code":["firstDay.onChange(From.ALL, { viewTrace << \"0: \"+it.get() })","secondDay.onChange(From.ALL, { viewTrace << \"1: \"+it.get() })","thirdDay.onChange(From.ALL, { viewTrace << \"2: \"+it.get() })"]},
+        {"kind":"and","text":"Listeners to record the changes.","code":["firstDay.onChange(From.ALL, { viewTrace << \"0: \" + it.currentValue().orElseNull() })","secondDay.onChange(From.ALL, { viewTrace << \"1: \" + it.currentValue().orElseNull() })","thirdDay.onChange(From.ALL, { viewTrace << \"2: \" + it.currentValue().orElseNull() })"]},
 
         {"kind":"when","text":"We change the first day in the list.","code":["days.at(0).set(DayOfWeek.SUNDAY)"]},
 
@@ -262,13 +262,13 @@
       "blocks":[
         {"kind":"given","text":"A property list of 4 educational documentaries.","code":["Vars<String> documentaries = Vars.of(\"Dominion\", \"Land of Hope and Glory\", \"Earthlings\", \"Cowspiracy\")"]},
 
-        {"kind":"and","text":"A double view on the property list, representing the average word length of each documentary.","code":["Viewables<Double> lengths = documentaries.view(0,0, it -> {","    double wordCount = it.split(\" \").length","    return wordCount == 0 ? 0 : it.length() / wordCount","})"]},
+        {"kind":"and","text":"A double view on the property list, representing the average word length of each documentary.","code":["Viewables<Double> lengths = documentaries.view(0, 0, it -> {","    double wordCount = it.split(\" \").length","    return wordCount == 0 ? 0 : it.length() / wordCount","})"]},
 
-        {"kind":"and","text":"Finally, we also create a list for tracking the change events.","code":["var viewTrace = [:]","lengths.onChange(it->{ viewTrace.put(it.changeType(), it.newValues()) })"]},
+        {"kind":"and","text":"Finally, we also create a list for tracking the change events.","code":["var viewTrace = [:]","lengths.onChange(it->{ viewTrace.put(it.change(), it.newValues()) })"]},
 
         {"kind":"expect","text":"The view has the correct initial state:","code":["lengths.toList() == [8.0, 4.4, 10.0, 10.0]"]},
 
-        {"kind":"when","text":"We revert the source property list.","code":["documentaries.revert()"]},
+        {"kind":"when","text":"We revert the source property list.","code":["documentaries.reversed()"]},
 
         {"kind":"then","text":"The view is also reverted.","code":["lengths.toList() == [10.0, 10.0, 4.4, 8.0]"]}
       ],

@@ -25,7 +25,7 @@
 
         {"kind":"and","text":"Something we want to have a side effect on:","code":["var list = []"]},
 
-        {"kind":"when","text":"We subscribe to the property using the `onChange(..)` method.","code":["Viewable.cast(mutable).onChange(From.VIEW_MODEL, it -> list.add(it.orElseNull()) )"]},
+        {"kind":"when","text":"We subscribe to the property using the `onChange(..)` method.","code":["Viewable.cast(mutable).onChange(From.VIEW_MODEL, it -> list.add(it.currentValue().orElseNull()) )"]},
 
         {"kind":"and","text":"We change the value of the property.","code":["mutable.set(\"Tofu\")"]},
 
@@ -75,11 +75,11 @@
       "blocks":[
         {"kind":"given","text":"We create a property...","code":["Var<String> property = Var.of(\"Hello World\")"]},
 
-        {"kind":"and","text":"we bind 1 subscriber to the property.","code":["var list1 = []","Viewable.cast(property).onChange(From.VIEW_MODEL, it -> list1.add(it.orElseNull()) )"]},
+        {"kind":"and","text":"we bind 1 subscriber to the property.","code":["var list1 = []","Viewable.cast(property).onChange(From.VIEW_MODEL, it -> list1.add(it.currentValue().orElseNull()) )"]},
 
         {"kind":"and","text":"We create a new property with a different id.","code":["Val<String> property2 = property.withId(\"XY\")"]},
 
-        {"kind":"and","text":"Another subscriber to the new property.","code":["var list2 = []","Viewable.cast(property2).onChange(From.VIEW_MODEL, it -> list2.add(it.orElseNull()) )"]},
+        {"kind":"and","text":"Another subscriber to the new property.","code":["var list2 = []","Viewable.cast(property2).onChange(From.VIEW_MODEL, it -> list2.add(it.currentValue().orElseNull()) )"]},
 
         {"kind":"when","text":"We change the value of the original property.","code":["property.set(\"Tofu\")"]},
 
@@ -100,7 +100,7 @@
       "tags":{},"see":[],"extraInfo":["\n            Sprouts was designed to support MVVM for Swing,\n            unfortunately however raw Swing makes it very difficult to implement MVVM\n            as the models of Swing components are not observable.\n            A JButton mode for example does not have a property that you can bind to.\n            Instead what we need are precise updates to the UI components without\n            triggering any looping event callbacks.\n            This is why the concept of \"channels\" was introduced.\n            You may call `set(From.VIEW, ..)` on a property to change its state\n            from the frontend, meaning that only observers registered through the\n            same channel will be notified.\n            So in this case the change will only be noticed by observers\n            registered using `onChange(From.VIEW, ..)`. \n            Note that on the other hand, the regular `set(T)` method is \n            equivalent to `set(From.VIEW_MODEL, T)`, meaning that it will\n            notify observers registered using `onChange(From.VIEW_MODEL, ..)`\n            instead of `onChange(From.VIEW, ..)`.\n        "]
       },
       "blocks":[
-        {"kind":"given","text":"A simple property with a view and model actions.","code":["var viewListener = []","var modelListener = []","var anyListener = []","var property = Var.of(\":)\")","Viewable.cast(property).onChange(From.VIEW, it -> viewListener << it.orElseThrow() )","Viewable.cast(property).onChange(From.VIEW_MODEL, it -> modelListener << it.orElseNull() )","Viewable.cast(property).onChange(From.ALL, it -> anyListener << it.orElseThrow() )"]},
+        {"kind":"given","text":"A simple property with a view and model actions.","code":["var viewListener = []","var modelListener = []","var anyListener = []","var property = Var.of(\":)\")","Viewable.cast(property).onChange(From.VIEW, it -> viewListener << it.currentValue().orElseThrow() )","Viewable.cast(property).onChange(From.VIEW_MODEL, it -> modelListener << it.currentValue().orElseNull() )","Viewable.cast(property).onChange(From.ALL, it -> anyListener << it.currentValue().orElseThrow() )"]},
 
         {"kind":"when","text":"We change the state of the property multiple times using the `set(Channel, T)` method.","code":["property.set(From.VIEW, \":(\")","property.set(From.VIEW_MODEL, \":|\")","property.set(From.ALL, \":D\")"]},
 
@@ -121,7 +121,7 @@
       "tags":{},"see":[],"extraInfo":["\n            The `From.ALL` channel is a special channel that will notify you of all changes\n            to the property, regardless of which channel was used to trigger the change.\n            This is useful if you want to react to all changes to a property.\n\n            Your view for example might want to react to all changes to a property\n            to update the UI accordingly.\n        "]
       },
       "blocks":[
-        {"kind":"given","text":"A simple property with a view and model actions.","code":["var showListener = []","var modelListener = []","var property = Var.of(\":)\")","Viewable.cast(property).onChange(From.ALL, it ->{modelListener << it.orElseThrow()})","Viewable.cast(property).onChange(From.VIEW_MODEL, it -> showListener << it.orElseNull() )"]},
+        {"kind":"given","text":"A simple property with a view and model actions.","code":["var showListener = []","var modelListener = []","var property = Var.of(\":)\")","Viewable.cast(property).onChange(From.ALL, it ->{modelListener << it.currentValue().orElseThrow()})","Viewable.cast(property).onChange(From.VIEW_MODEL, it -> showListener << it.currentValue().orElseNull() )"]},
 
         {"kind":"when","text":"We change the state of the property using the \"set(T)\" method.","code":["property.set(\":(\")"]},
 

@@ -1,10 +1,10 @@
 {
   "className":"sprouts.Event_Spec",
   "title":"Events",
-  "narrative":"Sprouts models events using 2 simple interfaces, \n    the `sprouts.Observable` interface\n    and the trigger-able `Event` interface where `Event` is a sub type of `Observable`.\n    The `Event` interface is used to fire events, and because it extends the `Observable` interface\n    it allows you to listen to an event through the registration of `Observer` instances.\n\n    `Event`s can be created using various factory methods (like for example `Event.create()`),\n    one of which even allows the specification of a custom `Event.Executor`\n    which can be used to control on which thread(s) the event is fired.",
+  "narrative":"Sprouts models events using 2 simple interfaces,\n    the `sprouts.Observable` interface\n    and the trigger-able `Event` interface where `Event` is a sub type of `Observable`.\n    The `Event` interface is used to fire events, and because it extends the `Observable` interface\n    it allows you to listen to an event through the registration of `Observer` instances.\n\n    `Event`s can be created using various factory methods (like for example `Event.create()`),\n    one of which even allows the specification of a custom `Event.Executor`\n    which can be used to control on which thread(s) the event is fired.",
   "subjects":["sprouts.Event","sprouts.Observer","sprouts.Observable"],
   "statistics":{
-    "runs":"5",
+    "runs":"7",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -23,9 +23,9 @@
       "blocks":[
         {"kind":"given","text":"A mocked observer.","code":["var observer = Mock(Observer)"]},
 
-        {"kind":"and","text":"An event.","code":["var event = Event.create()"]},
+        {"kind":"and","text":"An event and an observable created from the event.","code":["var event = Event.create()","var observable = event.observable()"]},
 
-        {"kind":"when","text":"We register the observer with the event.","code":["event.subscribe(observer)"]},
+        {"kind":"when","text":"We register the observer with the event.","code":["observable.subscribe(observer)"]},
 
         {"kind":"and","text":"We fire the event.","code":["event.fire()"]},
 
@@ -44,9 +44,9 @@
       "blocks":[
         {"kind":"given","text":"A listener.","code":["var listener = Mock(Observer)"]},
 
-        {"kind":"and","text":"An event.","code":["var event = Event.using(Event.Executor.SAME_THREAD)"]},
+        {"kind":"and","text":"An event with a custom executor and an observable created from the event.","code":["var event = Event.using(Event.Executor.SAME_THREAD)","var observable = event.observable()"]},
 
-        {"kind":"when","text":"We register the listener with the event.","code":["event.subscribe(listener)"]},
+        {"kind":"when","text":"We register the listener with the event.","code":["observable.subscribe(listener)"]},
 
         {"kind":"and","text":"We fire the event.","code":["event.fire()"]},
 
@@ -65,7 +65,7 @@
       "blocks":[
         {"kind":"given","text":"A listener.","code":["var listener = Mock(Observer)"]},
 
-        {"kind":"and","text":"An event with the mock listener set.","code":["var event = Event.of(listener)"]},
+        {"kind":"and","text":"An event with an observable created from the event onto which the listener is registered.","code":["var event = Event.create()","var observable = event.observable()","observable.subscribe(listener)"]},
 
         {"kind":"when","text":"We fire the event.","code":["event.fire()"]},
 
@@ -84,15 +84,15 @@
       "blocks":[
         {"kind":"given","text":"A listener.","code":["var listener = Mock(Observer)"]},
 
-        {"kind":"and","text":"An event.","code":["var event = Event.create()"]},
+        {"kind":"and","text":"An event and an observable created from the event.","code":["var event = Event.create()","var observable = event.observable()"]},
 
-        {"kind":"when","text":"We register the listener with the event.","code":["event.subscribe(listener)"]},
+        {"kind":"when","text":"We register the listener with the event.","code":["observable.subscribe(listener)"]},
 
         {"kind":"and","text":"We fire the event.","code":["event.fire()"]},
 
         {"kind":"then","text":"The listener is notified.","code":["1 * listener.invoke()"]},
 
-        {"kind":"when","text":"We unsubscribe the listener from the event.","code":["event.unsubscribe(listener)"]},
+        {"kind":"when","text":"We unsubscribe the listener from the event.","code":["observable.unsubscribe(listener)"]},
 
         {"kind":"and","text":"We fire the event.","code":["event.fire()"]},
 
@@ -111,19 +111,77 @@
       "blocks":[
         {"kind":"given","text":"A few mocked listeners.","code":["var listener1 = Mock(Observer)","var listener2 = Mock(Observer)","var listener3 = Mock(Observer)"]},
 
-        {"kind":"and","text":"An event.","code":["var event = Event.create()"]},
+        {"kind":"and","text":"An event and an observable created from the event.","code":["var event = Event.create()","var observable = event.observable()"]},
 
-        {"kind":"when","text":"We register the listeners with the event.","code":["event.subscribe(listener1)","event.subscribe(listener2)","event.subscribe(listener3)"]},
+        {"kind":"when","text":"We register the listeners with the event.","code":["observable.subscribe(listener1)","observable.subscribe(listener2)","observable.subscribe(listener3)"]},
 
         {"kind":"and","text":"We fire the event.","code":["event.fire()"]},
 
         {"kind":"then","text":"The listeners are notified.","code":["1 * listener1.invoke()","1 * listener2.invoke()","1 * listener3.invoke()"]},
 
-        {"kind":"when","text":"We unsubscribe all listeners from the event.","code":["event.unsubscribeAll()"]},
+        {"kind":"when","text":"We unsubscribe all listeners from the event.","code":["observable.unsubscribeAll()"]},
 
         {"kind":"and","text":"We fire the event again.","code":["event.fire()"]},
 
         {"kind":"then","text":"The listeners are not notified again.","code":["0 * listener1.invoke()","0 * listener2.invoke()","0 * listener3.invoke()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `Observable` of an `Event` can be garbage collected alongside its `Observer`s.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `Observable` is an event forwarder that is weakly referenced by the `Event`,\n            so that when the `Observable` is no longer referenced in the client code,\n            it can be garbage collected alongside its listeners.\n            The purpose of this feature is to prevent memory leaks due to forgotten listeners.\n            Listeners in the form of `Observer` instances can directly or indirectly \n            have references to all sorts of memory, so it is important that they are garbage collected\n            when they are no longer needed.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A mocked observer.","code":["var observer = Mock(Observer)"]},
+
+        {"kind":"and","text":"An event and an observable created from the event.","code":["var event = Event.create()","var observable = event.observable()"]},
+
+        {"kind":"and","text":"A weak reference to the observable.","code":["WeakReference<Observable> observableRef = new WeakReference<>(observable)"]},
+
+        {"kind":"when","text":"We register the observer with the event.","code":["observable.subscribe(observer)"]},
+
+        {"kind":"and","text":"We fire the event.","code":["event.fire()"]},
+
+        {"kind":"then","text":"The listener is notified.","code":["1 * observer.invoke()"]},
+
+        {"kind":"when","text":"We remove the reference to the observable and wait for garbage collection.","code":["observable = null","waitForGarbageCollection()"]},
+
+        {"kind":"then","text":"The observable is garbage collected!","code":["observableRef.get() == null"]},
+
+        {"kind":"when","text":"We fire the event again.","code":["event.fire()"]},
+
+        {"kind":"then","text":"The listener is not notified again.","code":["0 * observer.invoke()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A `WeakObserver` is removed and garbage collected together with its owner.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            You are not supposed to register an observer directly onto an event!\n            Instead you should create an `.observable()` of the event to register your listener.\n            If, however, you really need to register an observer directly onto an event\n            you may want to consider using a `WeakObserver` to avoid memory leaks.\n\n            A weak observer is a special kind of observer that has a weakly referenced \"owner\".\n            This owner determines if the observer is still alive or not and should be removed\n            after the owner is no longer reachable (i.e. garbage collected).\n\n            Warning! Never reference the owner in the observer itself, not even indirectly!\n            This will effectively turn your owner and observer into memory leaks.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"An event and an owner:","code":["var event = Event.create()","var owner = new Object()"]},
+
+        {"kind":"and","text":"A trace list to record the side effect.","code":["var trace = []","var controlTrace = []"]},
+
+        {"kind":"and","text":"We register a weak observer on the event as well as a regular observer.","code":["Observable.cast(event).subscribe(Observer.ofWeak(owner, { trace << \"!\" }))","Observable.cast(event).subscribe({ controlTrace << \"!\" })"]},
+
+        {"kind":"when","text":"We trigger the event.","code":["event.fire()"]},
+
+        {"kind":"then","text":"The side effect is executed and both observers are triggered.","code":["trace == [\"!\"]","controlTrace == [\"!\"]"]},
+
+        {"kind":"when","text":"We remove the owner and then wait for the garbage collector to remove the weak observer.","code":["owner = null","waitForGarbageCollection()"]},
+
+        {"kind":"and","text":"We trigger the event again.","code":["event.fire()"]},
+
+        {"kind":"then","text":"The weak observer is removed and not triggered anymore.","code":["trace == [\"!\"]","controlTrace == [\"!\",\"!\"]"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }

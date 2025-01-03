@@ -25,7 +25,7 @@
 
         {"kind":"when","text":"We change the property.","code":["property.set(42)"]},
 
-        {"kind":"then","text":"The exposed delegate has the expected String representation and channel.","code":["delegate.toString() == \"ValDelegate<Integer?>[42]\"","delegate.channel() == From.VIEW_MODEL"]},
+        {"kind":"then","text":"The exposed delegate has the expected String representation and channel.","code":["delegate.toString() == \"ValDelegate<Integer>[channel=VIEW_MODEL, change=VALUE, newValue=42, oldValue=42, id='']\"","delegate.channel() == From.VIEW_MODEL"]},
 
         {"kind":"when","text":"We try to mutate the delegate...","code":["delegate.set(0)"]},
 
@@ -46,7 +46,7 @@
 
         {"kind":"when","text":"We change the property.","code":["property.set(From.VIEW, 7)"]},
 
-        {"kind":"then","text":"The exposed delegate has the expected String representation and channel.","code":["delegate.toString() == \"ValDelegate<Integer?>[7]\"","delegate.channel() == From.VIEW"]},
+        {"kind":"then","text":"The exposed delegate has the expected String representation and channel.","code":["delegate.toString() == \"ValDelegate<Integer>[channel=VIEW, change=VALUE, newValue=7, oldValue=7, id='']\"","delegate.channel() == From.VIEW"]},
 
         {"kind":"when","text":"We try to mutate the delegate...","code":["delegate.set(From.VIEW, 0)"]},
 
@@ -67,25 +67,25 @@
 
         {"kind":"when","text":"We add an element to the property list.","code":["propertyList.add(42)"]},
 
-        {"kind":"then","text":"The exposed delegate is equal to the property list.","code":["delegate.vals().toList() == propertyList.toList()"]},
+        {"kind":"then","text":"The exposed delegate is equal to the property list.","code":["delegate.currentValues().toList() == propertyList.toList()"]},
 
-        {"kind":"and","text":"The delegate is however not identical to the property list.","code":["delegate.vals() !== propertyList"]},
+        {"kind":"and","text":"The delegate is however not identical to the property list.","code":["delegate.currentValues() !== propertyList"]},
 
-        {"kind":"when","text":"We try to mutate the delegate...","code":["delegate.vals().add(0)"]},
+        {"kind":"when","text":"We try to mutate the delegate...","code":["delegate.currentValues().add(0)"]},
 
-        {"kind":"then","text":"...we get an exception.","code":["thrown(UnsupportedOperationException)","reportInfo \"\"\"","    The delegate of the a property list not only exposes various kinds of","    information describing how the list changed, it also exposes","    an immutable clone of the property list after the change.","    This clone is conceptually a snapshot of the property list at the time of the change.","    The reason for this is because the change action might be executed on a different thread","    than the thread that changed the property list.","    This means that the property list might have changed again before the change action is executed","    causing the change action to receive a delegate that is not representative of true change","    that occurred.","\"\"\""]},
+        {"kind":"then","text":"...we get an exception because the delegate is readonly.","code":["thrown(UnsupportedOperationException)","reportInfo \"\"\"","    The delegate of the a property list not only exposes various kinds of","    information describing how the list changed, it also exposes","    an immutable clone of the property list after the change.","    This clone is conceptually a snapshot of the property list at the time of the change.","    The reason for this is because the change action might be executed on a different thread","    than the thread that changed the property list.","    This means that the property list might have changed again before the change action is executed","    causing the change action to receive a delegate that is not representative of true change","    that occurred.","\"\"\""]},
 
         {"kind":"given","text":"A property list.","code":["var propertyList = Vars.of(1, 2, 3)","var delegate = null","propertyList.onChange( it -> delegate = it )"]},
 
         {"kind":"when","text":"We add an element to the property list.","code":["propertyList.add(42)"]},
 
-        {"kind":"then","text":"The exposed delegate is equal to the property list.","code":["delegate.vals().toList() == propertyList.toList()"]},
+        {"kind":"then","text":"The exposed delegate is equal to the property list.","code":["delegate.currentValues().toList() == propertyList.toList()"]},
 
-        {"kind":"and","text":"The delegate is however not identical to the property list.","code":["delegate.vals() !== propertyList"]},
+        {"kind":"and","text":"The delegate is however not identical to the property list.","code":["delegate.currentValues() !== propertyList"]},
 
-        {"kind":"when","text":"We try to mutate the delegate...","code":["delegate.vals().add(0)"]},
+        {"kind":"when","text":"We try to mutate the delegate...","code":["delegate.currentValues().add(0)"]},
 
-        {"kind":"then","text":"...we get an exception.","code":["thrown(UnsupportedOperationException)"]}
+        {"kind":"then","text":"...we get an exception because the current values are readonly.","code":["thrown(UnsupportedOperationException)"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -102,25 +102,25 @@
 
         {"kind":"when","text":"We add an element to the property list.","code":["propertyList.add(42)"]},
 
-        {"kind":"then","text":"The exposed delegate is equal to the property list.","code":["delegate.vals().toList() == propertyList.toList()"]},
+        {"kind":"then","text":"The exposed delegate is equal to the property list.","code":["delegate.currentValues().toList() == propertyList.toList()"]},
 
-        {"kind":"and","text":"The delegate is however not identical to the property list.","code":["delegate.vals() !== propertyList"]},
+        {"kind":"and","text":"The delegate is however not identical to the property list.","code":["delegate.currentValues() !== propertyList"]},
 
-        {"kind":"when","text":"We try to mutate the delegate...","code":["delegate.vals().add(0)"]},
+        {"kind":"when","text":"We try to mutate the delegate...","code":["delegate.currentValues().add(0)"]},
 
-        {"kind":"then","text":"...we get an exception.","code":["thrown(UnsupportedOperationException)","reportInfo \"\"\"","    The delegate of the a property list not only exposes various kinds of","    information describing how the list changed, it also exposes","    an immutable clone of the property list after the change.","    This clone is conceptually a snapshot of the property list at the time of the change.","    The reason for this is because the change action might be executed on a different thread","    than the thread that changed the property list.","    This means that the property list might have changed again before the change action is executed","    causing the change action to receive a delegate that is not representative of true change","    that occurred.","\"\"\""]},
+        {"kind":"then","text":"...we get an exception because the delegate is readonly.","code":["thrown(UnsupportedOperationException)","reportInfo \"\"\"","    The delegate of the a property list not only exposes various kinds of","    information describing how the list changed, it also exposes","    an immutable clone of the property list after the change.","    This clone is conceptually a snapshot of the property list at the time of the change.","    The reason for this is because the change action might be executed on a different thread","    than the thread that changed the property list.","    This means that the property list might have changed again before the change action is executed","    causing the change action to receive a delegate that is not representative of true change","    that occurred.","\"\"\""]},
 
         {"kind":"given","text":"A property list.","code":["var propertyList = Vars.of(1, 2, 3)","var delegate = null","propertyList.onChange( it -> delegate = it )"]},
 
         {"kind":"when","text":"We add an element to the property list.","code":["propertyList.add(42)"]},
 
-        {"kind":"then","text":"The exposed delegate is equal to the property list.","code":["delegate.vals().toList() == propertyList.toList()"]},
+        {"kind":"then","text":"The exposed delegate is equal to the property list.","code":["delegate.currentValues().toList() == propertyList.toList()"]},
 
-        {"kind":"and","text":"The delegate is however not identical to the property list.","code":["delegate.vals() !== propertyList"]},
+        {"kind":"and","text":"The delegate is however not identical to the property list.","code":["delegate.currentValues() !== propertyList"]},
 
-        {"kind":"when","text":"We try to mutate the delegate...","code":["delegate.vals().add(0)"]},
+        {"kind":"when","text":"We try to mutate the delegate...","code":["delegate.currentValues().add(0)"]},
 
-        {"kind":"then","text":"...we get an exception.","code":["thrown(UnsupportedOperationException)"]}
+        {"kind":"then","text":"...we get an exception because the current values are readonly.","code":["thrown(UnsupportedOperationException)"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -133,11 +133,11 @@
       "tags":{},"see":[],"extraInfo":[]
       },
       "blocks":[
-        {"kind":"given","text":"A property list.","code":["var propertyList = Vars.of(1, 2, 3)","var delegate = null","propertyList.onChange( it -> delegate = it )"]},
+        {"kind":"given","text":"A property list.","code":["var propertyList = Vars.of(1, 2, 3)","var delegate = null","Viewables.cast(propertyList).onChange( it -> delegate = it )"]},
 
         {"kind":"when","text":"We add an element to the property list.","code":["propertyList.add(42)"]},
 
-        {"kind":"then","text":"The delegate has a descriptive string representation.","code":["delegate.toString() == 'ValsDelegate[index=3, changeType=ADD, newValues=Vals<Integer>[42], oldValues=Vals<Integer>[], vals=Vals<Integer>[1, 2, 3, 42]]'"]}
+        {"kind":"then","text":"The delegate has a descriptive string representation.","code":["delegate.toString() == 'ValsDelegate[index=3, change=ADD, newValues=Vals<Integer>[42], oldValues=Vals<Integer>[], currentValues=Vals<Integer>[1, 2, 3, 42]]'"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }
