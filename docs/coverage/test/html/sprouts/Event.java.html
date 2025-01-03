@@ -7,13 +7,26 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.function.Consumer;
 
 /**
- *  An event is something that can be observed as well as triggered,
- *  and it is used to inform a set of subscribers that something has happened.
- *  It allows for the registration of {@link Observer}s which are invoked when the {@link #fire()} method is called.
+ *  An event is something that can be triggered and reacted through {@link Observable}s
+ *  created by the {@link #observable()} method.
+ *  It is a form of the observer pattern
+ *  where an {@link Event} is a source of events (or notifications) and the {@link Observable}s
+ *  are the objects where you register to receive these notifications through your
+ *  implementations of the functional interface {@link Observer}.
+ *  &lt;p&gt;
+ *  The registered {@link Observer}s are invoked when the {@link #fire()} method is called
+ *  on the {@link Event}.
  *  Contrary to events received by property observers (see {@link sprouts.Action}), observing an {@link Event}
  *  does not involve any state.
+ *  &lt;p&gt;
+ *  Note that you need to maintain a reference to an {@link Observable} onto which
+ *  you have registered one or more {@link Observer}s in order to keep receiving notifications.
+ *  This is because the {@link Observable} is weakly referenced and will be garbage collected
+ *  along with all its observers if there are no strong references to it.
+ *  This is a feature, not a bug, as it allows you to avoid memory leaks in your code
+ *  by automatically unsubscribing from events when you no longer need them.
  */
-public interface Event extends Observable
+public interface Event
 {
     /**
      * Triggers this {@link Event}, which means that all registered listeners will be notified.
@@ -21,35 +34,21 @@ public interface Event extends Observable
     void fire();
 
     /**
-     * Subscribes the given listener to this {@link Event}.
-     * @param observer The listener to subscribe.
-     * @return This {@link Event}, to allow for method chaining.
+     *  Creates a weakly referenced {@link Observable} that can be used to subscribe to this {@link Event}
+     *  by registering {@link Observer}s that will be notified when the {@link #fire()} method is called.
+     *  When the {@link Observable} is no longer referenced in your code, it will be garbage collected
+     *  along with all its observers.
+     *
+     * @return A new {@link Observable} that can be used to subscribe to this {@link Event}.
      */
-    @Override
-    Event subscribe( Observer observer);
-
-    /**
-     * Unsubscribes all listeners from this {@link Event}.
-     */
-    void unsubscribeAll();
-
-    /**
-     * Creates a new {@link Event} that can be observed and triggered.
-     * @param observer The first listener to subscribe to the new {@link Event}.
-     * @return A new {@link Event}.
-     */
-    static Event of( Observer observer ) {
-<span class="fc" id="L42">        Event event = create();</span>
-<span class="fc" id="L43">        event.subscribe(observer);</span>
-<span class="fc" id="L44">        return event;</span>
-    }
+    Observable observable();
 
     /**
      * Creates a new empty {@link Event} that can be observed and triggered.
      * @return A new {@link Event}.
      */
     static Event create() {
-<span class="fc" id="L52">        return Sprouts.factory().event();</span>
+<span class="fc" id="L51">        return Sprouts.factory().event();</span>
     }
 
     /**
@@ -60,8 +59,8 @@ public interface Event extends Observable
      * @return A new {@link Event}.
      */
     static Event using( Executor executor ) {
-<span class="fc" id="L63">        Objects.requireNonNull(executor);</span>
-<span class="fc" id="L64">        return Sprouts.factory().eventOf( executor );</span>
+<span class="fc" id="L62">        Objects.requireNonNull(executor);</span>
+<span class="fc" id="L63">        return Sprouts.factory().eventOf( executor );</span>
     }
 
 
@@ -76,16 +75,16 @@ public interface Event extends Observable
         /**
          *  A basic {@link Executor} that executes the given {@link Runnable} on the same thread.
          */
-<span class="fc" id="L79">        Executor SAME_THREAD = Runnable::run;</span>
+<span class="fc" id="L78">        Executor SAME_THREAD = Runnable::run;</span>
         /**
          *  A {@link Executor} that executes the given {@link Runnable} on a new thread.
          */
-<span class="pc" id="L83">        Executor NEW_THREAD = runnable -&gt; new Thread( runnable ).start();</span>
+<span class="pc" id="L82">        Executor NEW_THREAD = runnable -&gt; new Thread( runnable ).start();</span>
         /**
          *  A {@link Executor} that executes the given {@link Runnable} on the
          *  {@link ForkJoinPool#commonPool()} (which is a shared, static pool).
          */
-<span class="fc" id="L88">        Executor FORK_JOIN_POOL = ForkJoinPool.commonPool()::execute;</span>
+<span class="fc" id="L87">        Executor FORK_JOIN_POOL = ForkJoinPool.commonPool()::execute;</span>
 
         /**
          *  Executes the given {@link Runnable}.

@@ -13,13 +13,12 @@ import java.util.function.Function;
  * technique used to simplify the process of accessing and updating parts of
  * a nested (immutable) data structures into a new instance of the data structure.
  * It is essentially a pair of functions, one to get a value from a specific
- * part of a data structure (like a record),
- * and another to set or update that value while producing a new
+ * part of a data structure, and another to set or update that value while producing a new
  * instance of the data structure. This pattern is particularly useful with Java records,
- * which are immutable by design, as it allows for clean and concise manipulation
+ * which are immutable by design, as it allows for clean and concise transformative updates
  * of deeply nested fields without breaking immutability.
  * &lt;p&gt;
- * Now what does this have to do with Sprouts properties?
+ * &lt;b&gt;Now what does this have to do with Sprouts properties?&lt;/b&gt;
  * After all, the MVVM properties of this library are mutable
  * wrapper types with regular getter and setter methods.
  * Although properties are mutable, their items are expected to
@@ -32,39 +31,39 @@ import java.util.function.Function;
  * &lt;b&gt;This is where the Property Lens comes in:&lt;/b&gt;&lt;br&gt;
  * You can create a lens property from any regular property
  * holding an immutable data structure, and then use the lens property
- * like a regular property. &lt;br&gt;
+ * like a regular mutable {@link Var} property. &lt;br&gt;
+ * This lets you interact with an immutable field as if it were mutable.
  * Under the hood the lens property will use the lens pattern to access
- * and update the nested data structure of the original property.
+ * and update the nested data structure of the original property automatically.
  *
  *  @param &lt;T&gt; The type of the value, which is expected to be an immutable data carrier,
  *             such as a record, value object, or a primitive.
- *
  */
 final class PropertyLens&lt;A extends @Nullable Object, T extends @Nullable Object&gt; implements Var&lt;T&gt;, Viewable&lt;T&gt;
 {
-<span class="fc" id="L45">    private static final Logger log = org.slf4j.LoggerFactory.getLogger(PropertyLens.class);</span>
+<span class="fc" id="L44">    private static final Logger log = org.slf4j.LoggerFactory.getLogger(PropertyLens.class);</span>
 
     public static &lt;T, B&gt; Var&lt;B&gt; of(Var&lt;T&gt; source, B nullObject, Function&lt;T, B&gt; getter, BiFunction&lt;T, B, T&gt; wither) {
-<span class="fc" id="L48">        Objects.requireNonNull(nullObject, &quot;Null object must not be null&quot;);</span>
-<span class="fc" id="L49">        Objects.requireNonNull(getter, &quot;Getter must not be null&quot;);</span>
-<span class="fc" id="L50">        Objects.requireNonNull(wither, &quot;Wither must not be null&quot;);</span>
-<span class="fc" id="L51">        Class&lt;B&gt; itemType = Util.expectedClassFromItem(nullObject);</span>
-<span class="fc" id="L52">        Function&lt;T,B&gt; nullSafeGetter = newParentValue -&gt; {</span>
-<span class="fc bfc" id="L53" title="All 2 branches covered.">            if ( newParentValue == null )</span>
-<span class="fc" id="L54">                return nullObject;</span>
+<span class="fc" id="L47">        Objects.requireNonNull(nullObject, &quot;Null object must not be null&quot;);</span>
+<span class="fc" id="L48">        Objects.requireNonNull(getter, &quot;Getter must not be null&quot;);</span>
+<span class="fc" id="L49">        Objects.requireNonNull(wither, &quot;Wither must not be null&quot;);</span>
+<span class="fc" id="L50">        Class&lt;B&gt; itemType = Util.expectedClassFromItem(nullObject);</span>
+<span class="fc" id="L51">        Function&lt;T,B&gt; nullSafeGetter = newParentValue -&gt; {</span>
+<span class="fc bfc" id="L52" title="All 2 branches covered.">            if ( newParentValue == null )</span>
+<span class="fc" id="L53">                return nullObject;</span>
 
-<span class="fc" id="L56">            return getter.apply(newParentValue);</span>
+<span class="fc" id="L55">            return getter.apply(newParentValue);</span>
         };
-<span class="fc" id="L58">        BiFunction&lt;T,B,T&gt; nullSafeWither = (parentValue, newValue) -&gt; {</span>
-<span class="pc bpc" id="L59" title="1 of 2 branches missed.">            if ( parentValue == null )</span>
-<span class="nc" id="L60">                return null;</span>
+<span class="fc" id="L57">        BiFunction&lt;T,B,T&gt; nullSafeWither = (parentValue, newValue) -&gt; {</span>
+<span class="pc bpc" id="L58" title="1 of 2 branches missed.">            if ( parentValue == null )</span>
+<span class="nc" id="L59">                return null;</span>
 
-<span class="fc" id="L62">            return wither.apply(parentValue, newValue);</span>
+<span class="fc" id="L61">            return wither.apply(parentValue, newValue);</span>
         };
-<span class="fc" id="L64">        B initialValue = nullSafeGetter.apply(source.orElseNull());</span>
-<span class="fc" id="L65">        return new PropertyLens&lt;&gt;(</span>
+<span class="fc" id="L63">        B initialValue = nullSafeGetter.apply(source.orElseNull());</span>
+<span class="fc" id="L64">        return new PropertyLens&lt;&gt;(</span>
                 itemType,
-<span class="fc" id="L67">                Sprouts.factory().defaultId(),</span>
+<span class="fc" id="L66">                Sprouts.factory().defaultId(),</span>
                 false,//does not allow null
                 initialValue, //may NOT be null
                 source,
@@ -75,25 +74,25 @@ final class PropertyLens&lt;A extends @Nullable Object, T extends @Nullable Obje
     }
 
     public static &lt;T, B&gt; Var&lt;B&gt; ofNullable(Class&lt;B&gt; type, Var&lt;T&gt; source, Function&lt;T, B&gt; getter, BiFunction&lt;T, B, T&gt; wither) {
-<span class="fc" id="L78">        Objects.requireNonNull(type, &quot;Type must not be null&quot;);</span>
-<span class="fc" id="L79">        Objects.requireNonNull(getter, &quot;Getter must not be null&quot;);</span>
-<span class="fc" id="L80">        Objects.requireNonNull(wither, &quot;Wither must not be null&quot;);</span>
-<span class="fc" id="L81">        Function&lt;T,B&gt; nullSafeGetter = newParentValue -&gt; {</span>
-<span class="fc bfc" id="L82" title="All 2 branches covered.">            if ( newParentValue == null )</span>
-<span class="fc" id="L83">                return null;</span>
+<span class="fc" id="L77">        Objects.requireNonNull(type, &quot;Type must not be null&quot;);</span>
+<span class="fc" id="L78">        Objects.requireNonNull(getter, &quot;Getter must not be null&quot;);</span>
+<span class="fc" id="L79">        Objects.requireNonNull(wither, &quot;Wither must not be null&quot;);</span>
+<span class="fc" id="L80">        Function&lt;T,B&gt; nullSafeGetter = newParentValue -&gt; {</span>
+<span class="fc bfc" id="L81" title="All 2 branches covered.">            if ( newParentValue == null )</span>
+<span class="fc" id="L82">                return null;</span>
 
-<span class="fc" id="L85">            return getter.apply(newParentValue);</span>
+<span class="fc" id="L84">            return getter.apply(newParentValue);</span>
         };
-<span class="fc" id="L87">        BiFunction&lt;T,B,T&gt; nullSafeWither = (parentValue, newValue) -&gt; {</span>
-<span class="pc bpc" id="L88" title="1 of 2 branches missed.">            if ( parentValue == null )</span>
-<span class="nc" id="L89">                return null;</span>
+<span class="fc" id="L86">        BiFunction&lt;T,B,T&gt; nullSafeWither = (parentValue, newValue) -&gt; {</span>
+<span class="pc bpc" id="L87" title="1 of 2 branches missed.">            if ( parentValue == null )</span>
+<span class="nc" id="L88">                return null;</span>
 
-<span class="fc" id="L91">            return wither.apply(parentValue, newValue);</span>
+<span class="fc" id="L90">            return wither.apply(parentValue, newValue);</span>
         };
-<span class="fc" id="L93">        B initialValue = nullSafeGetter.apply(source.orElseNull());</span>
-<span class="fc" id="L94">        return new PropertyLens&lt;&gt;(</span>
+<span class="fc" id="L92">        B initialValue = nullSafeGetter.apply(source.orElseNull());</span>
+<span class="fc" id="L93">        return new PropertyLens&lt;&gt;(</span>
                 type,
-<span class="fc" id="L96">                Sprouts.factory().defaultId(),</span>
+<span class="fc" id="L95">                Sprouts.factory().defaultId(),</span>
                 true,//allows null
                 initialValue, //may be null
                 source,
@@ -103,7 +102,7 @@ final class PropertyLens&lt;A extends @Nullable Object, T extends @Nullable Obje
         );
     }
 
-    private final ChangeListeners&lt;T&gt; _changeListeners;
+    private final PropertyChangeListeners&lt;T&gt; _changeListeners;
     private final String             _id;
     private final boolean            _nullable;
     private final Class&lt;T&gt;           _type;
@@ -122,24 +121,25 @@ final class PropertyLens&lt;A extends @Nullable Object, T extends @Nullable Obje
             Var&lt;A&gt;                          parent,
             Function&lt;A,@Nullable T&gt;         getter,
             BiFunction&lt;A,@Nullable T,A&gt;     wither,
-            @Nullable ChangeListeners&lt;T&gt;    changeListeners
-<span class="fc" id="L126">    ) {</span>
-<span class="fc" id="L127">        Objects.requireNonNull(id);</span>
-<span class="fc" id="L128">        Objects.requireNonNull(type);</span>
-<span class="fc" id="L129">        _type            = type;</span>
-<span class="fc" id="L130">        _id              = id;</span>
-<span class="fc" id="L131">        _nullable        = allowsNull;</span>
-<span class="fc" id="L132">        _parent          = parent;</span>
-<span class="fc" id="L133">        _getter          = getter;</span>
-<span class="fc" id="L134">        _setter          = wither;</span>
-<span class="fc bfc" id="L135" title="All 2 branches covered.">        _changeListeners = changeListeners == null ? new ChangeListeners&lt;&gt;() : new ChangeListeners&lt;&gt;(changeListeners);</span>
+            @Nullable PropertyChangeListeners&lt;T&gt; changeListeners
+<span class="fc" id="L125">    ) {</span>
+<span class="fc" id="L126">        Objects.requireNonNull(id);</span>
+<span class="fc" id="L127">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L128">        _type            = type;</span>
+<span class="fc" id="L129">        _id              = id;</span>
+<span class="fc" id="L130">        _nullable        = allowsNull;</span>
+<span class="fc" id="L131">        _parent          = parent;</span>
+<span class="fc" id="L132">        _getter          = getter;</span>
+<span class="fc" id="L133">        _setter          = wither;</span>
+<span class="fc bfc" id="L134" title="All 2 branches covered.">        _changeListeners = changeListeners == null ? new PropertyChangeListeners&lt;&gt;() : new PropertyChangeListeners&lt;&gt;(changeListeners);</span>
 
-<span class="fc" id="L137">        _lastItem = initialItem;</span>
-<span class="fc" id="L138">        Viewable.cast(parent).onChange(From.ALL, Action.ofWeak(this, (thisLens, v) -&gt; {</span>
-<span class="fc" id="L139">            T newValue = thisLens._fetchItemFromParent();</span>
-<span class="fc bfc" id="L140" title="All 2 branches covered.">            if (!Objects.equals(thisLens._lastItem, newValue)) {</span>
+<span class="fc" id="L136">        _lastItem = initialItem;</span>
+<span class="fc" id="L137">        Viewable.cast(parent).onChange(From.ALL, Action.ofWeak(this, (thisLens, v) -&gt; {</span>
+<span class="fc" id="L138">            T newValue = thisLens._fetchItemFromParent();</span>
+<span class="fc" id="L139">            ItemPair&lt;T&gt; pair = new ItemPair&lt;&gt;(thisLens._type, newValue, thisLens._lastItem);</span>
+<span class="fc bfc" id="L140" title="All 2 branches covered.">            if ( pair.change() != SingleChange.NONE ) {</span>
 <span class="fc" id="L141">                thisLens._lastItem = newValue;</span>
-<span class="fc" id="L142">                thisLens.fireChange(v.channel());</span>
+<span class="fc" id="L142">                thisLens.fireChange(v.channel(), pair);</span>
             }
 <span class="fc" id="L144">        }));</span>
 
@@ -230,8 +230,8 @@ final class PropertyLens&lt;A extends @Nullable Object, T extends @Nullable Obje
 <span class="fc bfc" id="L230" title="All 2 branches covered.">        if ( id.equals(Sprouts.factory().defaultId()) ) id = &quot;?&quot;;</span>
 <span class="pc bpc" id="L231" title="1 of 2 branches missed.">        String type = ( type() == null ? &quot;?&quot; : type().getSimpleName() );</span>
 <span class="pc bpc" id="L232" title="1 of 2 branches missed.">        if ( type.equals(&quot;Object&quot;) ) type = &quot;?&quot;;</span>
-<span class="pc bpc" id="L233" title="1 of 4 branches missed.">        if ( type.equals(&quot;String&quot;) &amp;&amp; this.isPresent() ) value = &quot;\&quot;&quot; + value + &quot;\&quot;&quot;;</span>
-<span class="fc bfc" id="L234" title="All 2 branches covered.">        if (_nullable) type = type + &quot;?&quot;;</span>
+<span class="pc bpc" id="L233" title="3 of 4 branches missed.">        if ( type.equals(&quot;String&quot;) &amp;&amp; this.isPresent() ) value = &quot;\&quot;&quot; + value + &quot;\&quot;&quot;;</span>
+<span class="pc bpc" id="L234" title="1 of 2 branches missed.">        if (_nullable) type = type + &quot;?&quot;;</span>
 <span class="fc" id="L235">        String name = &quot;Lens&quot;;</span>
 <span class="fc bfc" id="L236" title="All 2 branches covered.">        String content = ( id.equals(&quot;?&quot;) ? value : id + &quot;=&quot; + value );</span>
 <span class="fc" id="L237">        return name + &quot;&lt;&quot; + type + &quot;&gt;&quot; + &quot;[&quot; + content + &quot;]&quot;;</span>
@@ -250,56 +250,67 @@ final class PropertyLens&lt;A extends @Nullable Object, T extends @Nullable Obje
 
     /** {@inheritDoc} */
     @Override public final Var&lt;T&gt; fireChange( Channel channel ) {
-<span class="fc" id="L253">        _changeListeners.fireChange(this, channel);</span>
+<span class="fc" id="L253">        this.fireChange(channel, new ItemPair&lt;&gt;(this));</span>
 <span class="fc" id="L254">        return this;</span>
     }
+
+    void fireChange( Channel channel, ItemPair&lt;T&gt; pair ) {
+<span class="fc" id="L258">        _changeListeners.fireChange(this, channel, pair);</span>
+<span class="fc" id="L259">    }</span>
 
     /** {@inheritDoc} */
     @Override
     public final Var&lt;T&gt; set( Channel channel, T newItem ) {
-<span class="fc" id="L260">        Objects.requireNonNull(channel);</span>
-<span class="fc bfc" id="L261" title="All 2 branches covered.">        if ( _setInternal(channel, newItem) )</span>
-<span class="fc" id="L262">            this.fireChange(channel);</span>
-<span class="fc" id="L263">        return this;</span>
+<span class="fc" id="L264">        Objects.requireNonNull(channel);</span>
+<span class="fc" id="L265">        ItemPair&lt;T&gt; pair = _setInternal(channel, newItem);</span>
+<span class="fc bfc" id="L266" title="All 2 branches covered.">        if ( pair.change() != SingleChange.NONE )</span>
+<span class="fc" id="L267">            this.fireChange(channel, pair);</span>
+<span class="fc" id="L268">        return this;</span>
     }
 
-    private boolean _setInternal( Channel channel, T newValue ) {
-<span class="fc bfc" id="L267" title="All 4 branches covered.">        if ( !_nullable &amp;&amp; newValue == null )</span>
-<span class="fc" id="L268">            throw new NullPointerException(</span>
+    private ItemPair&lt;T&gt; _setInternal( Channel channel, T newValue ) {
+<span class="fc bfc" id="L272" title="All 4 branches covered.">        if ( !_nullable &amp;&amp; newValue == null )</span>
+<span class="fc" id="L273">            throw new NullPointerException(</span>
                     &quot;This property is configured to not allow null values! &quot; +
                             &quot;If you want your property to allow null values, use the 'ofNullable(Class, T)' factory method.&quot;
             );
 
-<span class="fc" id="L273">        T oldValue = _item();</span>
+<span class="fc" id="L278">        T oldValue = _item();</span>
 
-<span class="fc bfc" id="L275" title="All 2 branches covered.">        if ( !Objects.equals( oldValue, newValue ) ) {</span>
+<span class="fc" id="L280">        ItemPair&lt;T&gt; pair = new ItemPair&lt;&gt;(_type, newValue, oldValue);</span>
+
+<span class="fc bfc" id="L282" title="All 2 branches covered.">        if ( pair.change() != SingleChange.NONE ) {</span>
             // First we check if the value is compatible with the type
-<span class="pc bpc" id="L277" title="1 of 4 branches missed.">            if ( newValue != null &amp;&amp; !_type.isAssignableFrom(newValue.getClass()) )</span>
-<span class="nc" id="L278">                throw new IllegalArgumentException(</span>
-<span class="nc" id="L279">                        &quot;The provided type '&quot;+newValue.getClass()+&quot;' of the new value is not compatible &quot; +</span>
+<span class="pc bpc" id="L284" title="1 of 4 branches missed.">            if ( newValue != null &amp;&amp; !_type.isAssignableFrom(newValue.getClass()) )</span>
+<span class="nc" id="L285">                throw new IllegalArgumentException(</span>
+<span class="nc" id="L286">                        &quot;The provided type '&quot;+newValue.getClass()+&quot;' of the new value is not compatible &quot; +</span>
                                 &quot;with the expected item type '&quot;+_type+&quot;' of this property lens.&quot;
                 );
 
-<span class="fc" id="L283">            _setInParentAndInternally(channel, newValue);</span>
-<span class="fc" id="L284">            return true;</span>
+<span class="fc" id="L290">            _setInParentAndInternally(channel, newValue);</span>
         }
-<span class="fc" id="L286">        return false;</span>
+<span class="fc" id="L292">        return pair;</span>
     }
 
     @Override
     public final sprouts.Observable subscribe(Observer observer ) {
-<span class="fc" id="L291">        _changeListeners.onChange( observer );</span>
-<span class="fc" id="L292">        return this;</span>
+<span class="fc" id="L297">        _changeListeners.onChange( observer );</span>
+<span class="fc" id="L298">        return this;</span>
     }
 
     @Override
     public final Observable unsubscribe(Subscriber subscriber ) {
-<span class="fc" id="L297">        _changeListeners.unsubscribe(subscriber);</span>
-<span class="fc" id="L298">        return this;</span>
+<span class="fc" id="L303">        _changeListeners.unsubscribe(subscriber);</span>
+<span class="fc" id="L304">        return this;</span>
     }
 
+    @Override
+    public void unsubscribeAll() {
+<span class="nc" id="L309">        _changeListeners.unsubscribeAll();</span>
+<span class="nc" id="L310">    }</span>
+
     public final long numberOfChangeListeners() {
-<span class="fc" id="L302">        return _changeListeners.numberOfChangeListeners();</span>
+<span class="fc" id="L313">        return _changeListeners.numberOfChangeListeners();</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>
