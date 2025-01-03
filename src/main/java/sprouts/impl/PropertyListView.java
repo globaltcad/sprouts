@@ -52,8 +52,8 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
                 case SORT:
                     innerView.sort();
                     break;
-                case REVERT:
-                    innerView.revert();
+                case REVERSE:
+                    innerView.reversed();
                     break;
                 case DISTINCT:
                     innerView.makeDistinct();
@@ -178,7 +178,7 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
                     removal.add( _variables.remove(i) );
         }
 
-        _triggerAction( SequenceChange.REMOVE, -1, null, removal.revert() );
+        _triggerAction( SequenceChange.REMOVE, -1, null, removal.reversed() );
         return this;
     }
 
@@ -424,14 +424,14 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
     }
 
     @Override
-    public Vars<T> revert() {
+    public Vars<T> reversed() {
         int size = size();
         for ( int i = 0; i < size / 2; i++ ) {
             Var<T> tmp = at(i);
             _variables.set( i, at(size - i - 1) );
             _variables.set( size - i - 1, tmp );
         }
-        _triggerAction( SequenceChange.REVERT );
+        _triggerAction( SequenceChange.REVERSE );
         return this;
     }
 

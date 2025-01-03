@@ -233,7 +233,7 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Se
     }
 
     @Override
-    public Tuple<T> revert() {
+    public Tuple<T> reversed() {
         if ( _length(_data) < 2 )
             return this;
         Object newItems = _clone(_data, _type, _allowsNull);
@@ -242,7 +242,7 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Se
             _setAt(i, _getAt(_length(newItems) - i - 1, newItems, _type), newItems);
             _setAt(_length(newItems) - i - 1, temp, newItems);
         }
-        SequenceDiff diff = SequenceDiff.of(this, SequenceChange.REVERT, -1, _length(_data));
+        SequenceDiff diff = SequenceDiff.of(this, SequenceChange.REVERSE, -1, _length(_data));
         return new TupleImpl<>(_allowsNull, _type, newItems, diff);
     }
 

@@ -41,7 +41,7 @@ public enum SequenceChange
     /**
      *  Indicates tht the order of the elements in the {@link Vars} instance was reversed.
      */
-    REVERT,
+    REVERSE,
     /**
      *  Indicates that the {@link Vars} instance was not mutate
      *  (But the change event was still triggered).

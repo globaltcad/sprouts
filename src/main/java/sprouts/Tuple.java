@@ -1364,6 +1364,6 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      *
      * @return A new tuple of items with the items in reverse order.
      */
-    Tuple<T> revert();
+    Tuple<T> reversed();
 
 }
