@@ -1,7 +1,7 @@
 {
   "className":"sprouts.Property_Spec",
   "title":"Properties",
-  "narrative":"Properties are a powerful tool to model the state \n    as well as business logic of your UI without actually depending on it.\n    This is especially useful for testing your UIs logic (in a view model for example).\n    This is the core motivation behind the creation of the Sprouts library.\n\n    In Sprouts, properties are represented by the `Var` and `Val` classes.\n\n    You might be wondering, what is a `Var` or `Val` and what does \n    it have to do with the common concept of a property?\n\n    The answer is quite simply that the sprouts API uses the \n    names `Var` and `Val` to refer to 2 common types of properties.\n    The name `Var` translates to \"variable\" and `Val` to \"value\"\n    which are also words that convey the meaning of a property\n    yet they allow us to distinguish between mutable and immutable properties\n    without having to resort to unnecessary prefixes like \"mutable\" or \"immutable\".\n\n    So when the sprouts documentation refers to properties, it is\n    referring to the `Var` and `Val` classes.\n\n    This specification introduces you to their API and shows you how to use them.",
+  "narrative":"Properties are a powerful tool to model the state\n    as well as business logic of your UI without actually depending on it.\n    This is especially useful for testing your UIs logic (in a view model for example).\n    This is the core motivation behind the creation of the Sprouts library.\n\n    In Sprouts, properties are represented by the `Var` and `Val` classes.\n\n    You might be wondering, what is a `Var` or `Val` and what does\n    it have to do with the common concept of a property?\n\n    The answer is quite simply that the sprouts API uses the\n    names `Var` and `Val` to refer to 2 common types of properties.\n    The name `Var` translates to \"variable\" and `Val` to \"value\"\n    which are also words that convey the meaning of a property\n    yet they allow us to distinguish between mutable and immutable properties\n    without having to resort to unnecessary prefixes like \"mutable\" or \"immutable\".\n\n    So when the sprouts documentation refers to properties, it is\n    referring to the `Var` and `Val` classes.\n\n    This specification introduces you to their API and shows you how to use them.",
   "subjects":["sprouts.Val","sprouts.Var"],
   "statistics":{
     "runs":"25",
@@ -14,7 +14,7 @@
   "headers":[],"tags":{},"see":[],
   "features":[ 
     {
-      "id":"Properties are simple wrappers around a value",
+      "id":"Properties are simple wrappers around an item",
       "result":"PASS",
       "duration":"?",
       "iterations":{
@@ -23,7 +23,7 @@
       "blocks":[
         {"kind":"given","text":"We create a property using the \"of\" factory method.","code":["Var<String> property = Var.of(\"Hello World\")"]},
 
-        {"kind":"expect","text":"The property has the same value as the value we passed to the factory method.","code":["property.orElseNull() == \"Hello World\""]}
+        {"kind":"expect","text":"The property has the same item as the one we passed to the factory method.","code":["property.orElseNull() == \"Hello World\""]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -33,39 +33,39 @@
       "result":"PASS",
       "duration":"?",
       "iterations":{
-      "tags":{},"see":[],"extraInfo":["\n            Mutable properties are called \"Var\" and immutable properties are called \"Val\".\n            This distinction exists so that you can better encapsulating the mutable parts\n            of you business logic and UI state.\n            So if you want your UI to only display but not change a\n            property expose Val, if on the other hand it should\n            be able to change the state of the property, use Var!\n        "]
+      "tags":{},"see":[],"extraInfo":["\n            Mutable properties are called `Var` and immutable properties are called `Val`.\n            This distinction exists so that you can better encapsulating the mutable parts\n            of you business logic and UI state.\n            So if you want your UI to only display but not change a\n            property, then expose `Val`, if on the other hand it should\n            be able to change the state of the property, use `Var`!\n        "]
       },
       "blocks":[
-        {"kind":"given","text":"We create a mutable property...","code":["Var<Integer> mutable = Var.of(42)"]},
+        {"kind":"given","text":"We have a mutable property with an integer as item.","code":["Var<Integer> mutable = Var.of(42)"]},
 
-        {"kind":"expect","text":"The property stores the value 42.","code":["mutable.orElseNull() == 42"]},
+        {"kind":"expect","text":"The property stores the expected number 42.","code":["mutable.orElseNull() == 42"]},
 
-        {"kind":"and","text":"It has the expected type.","code":["mutable.type() == Integer.class"]},
+        {"kind":"and","text":"In order to ensure better type safety, the property knows about the expected type.","code":["mutable.type() == Integer.class"]},
 
-        {"kind":"when","text":"We change the value of the mutable property.","code":["mutable.set(69)"]},
+        {"kind":"when","text":"We change the value of the mutable property...","code":["mutable.set(69)"]},
 
-        {"kind":"then","text":"The property stores the new value.","code":["mutable.orElseNull() == 69"]},
+        {"kind":"then","text":"It now stores the new item.","code":["mutable.orElseNull() == 69"]},
 
-        {"kind":"when","text":"We now downcast the mutable property to an immutable property.","code":["Val<Integer> immutable = mutable"]},
+        {"kind":"when","text":"We downcast the mutable property to view it as an immutable property (even though it is not).","code":["Val<Integer> immutable = mutable"]},
 
-        {"kind":"then","text":"The immutable property will only expose the \"get()\" method, but not \"set(..)\".","code":["immutable.orElseNull() == 69"]}
+        {"kind":"then","text":"The immutable property will only expose the `get()` method, but not `set(..)`.","code":["immutable.orElseNull() == 69"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
   
     {
-      "id":"Properties not only have a value but also a type and id!",
+      "id":"Properties not only have an item but also a type and id!",
       "result":"PASS",
       "duration":"?",
       "iterations":{
-      "tags":{},"see":[],"extraInfo":[]
+      "tags":{},"see":[],"extraInfo":["\n            Unfortunately, Java has something called type erasure, which means that\n            the type of a generic class is not available at runtime.\n            This is why the Sprouts library stores the type of the item\n            in the property itself, and if you want to wrap null items\n            you need to provide the type explicitly!\n        "]
       },
       "blocks":[
         {"kind":"given","text":"We create a property with an id...","code":["Val<String> property = Var.ofNullable(String, \"Hello World\").withId(\"XY\")"]},
 
         {"kind":"expect","text":"The property has the expected id.","code":["property.id() == \"XY\""]},
 
-        {"kind":"and","text":"The property has the expected type.","code":["property.type() == String.class"]}
+        {"kind":"and","text":"The property also has the expected type.","code":["property.type() == String.class"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -92,7 +92,7 @@
     },
   
     {
-      "id":"The \"ifPresent\" method allows us to see if a property has a value or not.",
+      "id":"The `ifPresent` method allows us to see if a property has an item or not.",
       "result":"PASS",
       "duration":"?",
       "iterations":{
@@ -101,11 +101,11 @@
       "blocks":[
         {"kind":"given","text":"We create a property...","code":["Val<String> property = Val.of(\"Hello World\")"]},
 
-        {"kind":"and","text":"We create a consumer that will be called if the property has a value.","code":["var list = []","Consumer<String> consumer = { list.add(it) }"]},
+        {"kind":"and","text":"We create a consumer that will be called if the property has an item.","code":["var trace = []","Consumer<String> consumer = { trace.add(it) }"]},
 
-        {"kind":"when","text":"We call the \"ifPresent(..)\" method on the property.","code":["property.ifPresent( consumer )"]},
+        {"kind":"when","text":"We call the `ifPresent(..)` method on the property.","code":["property.ifPresent( consumer )"]},
 
-        {"kind":"then","text":"The consumer is called.","code":["list == [\"Hello World\"]"]}
+        {"kind":"then","text":"The consumer is called.","code":["trace == [\"Hello World\"]"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -132,10 +132,10 @@
       "result":"PASS",
       "duration":"?",
       "iterations":{
-      "tags":{},"see":[],"extraInfo":[]
+      "tags":{},"see":[],"extraInfo":["\n            Mutable properties belong to the programming paradigm of\n            place-oriented programming, because a mutation implies a change\n            at a specific place in memory.\n            This is why the equality of mutable properties is based on their identity\n            and not on their value.\n        "]
       },
       "blocks":[
-        {"kind":"given","text":"We create various kinds of properties...","code":["Var<Integer> num = Var.of(1)","Var<Long>    num2 = Var.of(1L)","Var<String>  str = Var.of(\"Hello World\")","Var<String>  str2 = Var.ofNullable(String, null)","Var<String>  str3 = Var.ofNullable(String, null)","Var<Boolean> bool = Var.ofNullable(Boolean, null)","Var<int[]> arr1 = Var.of(new int[]{1,2,3})","Var<int[]> arr2 = Var.of(new int[]{1,2,3})"]},
+        {"kind":"given","text":"We create various kinds of properties...","code":["Var<Integer> num  = Var.of(1)","Var<Long>    num2 = Var.of(1L)","Var<String>  str  = Var.of(\"Hello World\")","Var<String>  str2 = Var.ofNullable(String, null)","Var<String>  str3 = Var.ofNullable(String, null)","Var<Boolean> bool = Var.ofNullable(Boolean, null)","Var<int[]> arr1   = Var.of(new int[]{1,2,3})","Var<int[]> arr2   = Var.of(new int[]{1,2,3})"]},
 
         {"kind":"expect","text":"The properties are equal if they have the same identity.","code":["num.equals(num2) == false","num.equals(str)  == false","num.equals(str2) == false"]},
 
@@ -153,7 +153,7 @@
       "result":"PASS",
       "duration":"?",
       "iterations":{
-      "tags":{},"see":[],"extraInfo":[]
+      "tags":{},"see":[],"extraInfo":["\n            Immutable properties are value-oriented, because they are\n            direct representations of the value they hold.\n            It makes no sense to treat two property instances with the same\n            value, type and id as different, because their location in memory\n            is irrelevant, since this piece of memory can not be changed.\n\n            This is why the equality and hash code of immutable properties\n            are based on their value, type and id.\n        "]
       },
       "blocks":[
         {"kind":"given","text":"We create various kinds of properties...","code":["Val<Integer> num = Val.of(1)","Val<Long>    num2 = Val.of(1L)","Val<String>  str = Val.of(\"Hello World\")","Val<String>  str2 = Val.ofNullable(String, null)","Val<String>  str3 = Val.ofNullable(String, null)","Val<Boolean> bool = Val.ofNullable(Boolean, null)","Val<int[]> arr1 = Val.of(new int[]{1,2,3})","Val<int[]> arr2 = Val.of(new int[]{1,2,3})"]},
@@ -174,7 +174,7 @@
       "result":"PASS",
       "duration":"?",
       "iterations":{
-      "tags":{},"see":[],"extraInfo":["\n            The `of(..)` factory method is used to create a property that does not allow null items.\n            If you try to set an item to null, the property will throw an exception.\n        "]
+      "tags":{},"see":[],"extraInfo":["\n            The `of(..)` factory method is used to create a property that does not allow `null` items.\n            If you try to set an item to `null`, the property will throw an exception.\n        "]
       },
       "blocks":[
         {"kind":"given","text":"A property constructed using the \"of\" factory method.","code":["var property = Var.of(\"Hello World\")"]},
@@ -206,16 +206,16 @@
     },
   
     {
-      "id":"Whether a property is a `Var` or `Val` can be seen in their String representaions.",
+      "id":"You can see if a property is a `Var` or `Val` by looking at their String representations.",
       "result":"PASS",
       "duration":"?",
       "iterations":{
-      "tags":{},"see":[],"extraInfo":["\n            The string representation of a property will tell you whether it is a `Var` or `Val`.\n        "]
+      "tags":{},"see":[],"extraInfo":["\n            The string representation of a property will tell you whether it is a `Var` or `Val`,\n            and if it has an id or not.\n        "]
       },
       "blocks":[
-        {"kind":"given","text":"Two properties, one mutable and one immutable.","code":["var v1 = Var.of(\"Apple\")","var v2 = Val.of(\"Berry\")"]},
+        {"kind":"given","text":"Two properties, one mutable and one immutable.","code":["var v1 = Var.of(\"Apple\")","var v2 = Val.of(\"Berry\")","var v3 = Var.of(\"Kiwi\").withId(\"fruit\")","var v4 = Val.of(\"Banana\").withId(\"also_fruit\")"]},
 
-        {"kind":"expect","text":"","code":["v1.toString() == 'Var<String>[\"Apple\"]'","v2.toString() == 'Val<String>[\"Berry\"]'"]}
+        {"kind":"expect","text":"","code":["v1.toString() == 'Var<String>[\"Apple\"]'","v2.toString() == 'Val<String>[\"Berry\"]'","v3.toString() == 'Var<String>[fruit=\"Kiwi\"]'","v4.toString() == 'Val<String>[also_fruit=\"Banana\"]'"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -251,7 +251,7 @@
       "blocks":[
         {"kind":"given","text":"We create a property with a non-null item.","code":["var property = Var.of(\"Hello World\")"]},
 
-        {"kind":"when","text":"We compare the item of the property with another item using the above mentioned methods.","code":["var is1 = property.is(\"Hello World\")","var is2 = property.is(\"Hello World!\")","var isNot1 = property.isNot(\"Hello World\")","var isNot2 = property.isNot(\"Hello World!\")","var isOneOf1 = property.isOneOf(\"Hello World\", \"Goodbye World\")","var isOneOf2 = property.isOneOf(\"Hello World!\", \"Goodbye World\")"]},
+        {"kind":"when","text":"We compare the item of the property with another item using the above mentioned methods.","code":["var is1      = property.is(\"Hello World\")","var is2      = property.is(\"Hello World!\")","var isNot1   = property.isNot(\"Hello World\")","var isNot2   = property.isNot(\"Hello World!\")","var isOneOf1 = property.isOneOf(\"Hello World\", \"Goodbye World\")","var isOneOf2 = property.isOneOf(\"Hello World!\", \"Goodbye World\")"]},
 
         {"kind":"then","text":"The results are as expected.","code":["is1","!is2","!isNot1","isNot2","isOneOf1","!isOneOf2"]}
       ],
@@ -259,7 +259,7 @@
     },
   
     {
-      "id":"Conveniently compare properties with another item using \"is\", \"isOneOf\" or \"isNot\"",
+      "id":"Conveniently compare properties with other properties using \"is\", \"isOneOf\" or \"isNot\"",
       "result":"PASS",
       "duration":"?",
       "iterations":{
@@ -268,7 +268,7 @@
       "blocks":[
         {"kind":"given","text":"We create a property with a non-null item.","code":["var property1 = Var.of(\"Hello World\")","var property2 = Var.of(\"Hello World!\")","var property3 = Var.of(\"Goodbye World\")"]},
 
-        {"kind":"when","text":"We compare the item of the property with another item using the above mentioned methods.","code":["var is1 = property1.is(Var.of(\"Hello World\"))","var is2 = property1.is(property3)","var isNot1 = property1.isNot(Var.of(\"Hello World\"))","var isNot2 = property1.isNot(property3)","var isOneOf1 = property1.isOneOf(property2, property3)","var isOneOf2 = property1.isOneOf(property3, Var.of(\"Hello World\"), property2)"]},
+        {"kind":"when","text":"We compare the item of the property with another item using the above mentioned methods.","code":["var is1      = property1.is(Var.of(\"Hello World\"))","var is2      = property1.is(property3)","var isNot1   = property1.isNot(Var.of(\"Hello World\"))","var isNot2   = property1.isNot(property3)","var isOneOf1 = property1.isOneOf(property2, property3)","var isOneOf2 = property1.isOneOf(property3, Var.of(\"Hello World\"), property2)"]},
 
         {"kind":"then","text":"The results are as expected.","code":["is1","!is2","!isNot1","isNot2","!isOneOf1","isOneOf2"]}
       ],
@@ -280,7 +280,7 @@
       "result":"PASS",
       "duration":"?",
       "iterations":{
-      "tags":{},"see":[],"extraInfo":["\n            The `typeAsString()` method is used to get the type of a property as a string.\n            It simply takes the result of calling `type()` on the property and\n            calls `getName()` on it to get the type as a string.\n        "]
+      "tags":{},"see":[],"extraInfo":["\n            As the name suggests, the `typeAsString()` method returns the type of\n            a property as a string containing the fully qualified class name.\n\n            So it is a convince method equivalent to `property.type().getName()`.\n        "]
       },
       "blocks":[
         {"kind":"given","text":"A property with a non-null item.","code":["var property = Var.of(\"Hello World\")"]},
@@ -291,20 +291,20 @@
     },
   
     {
-      "id":"Use the `withId(String id)` method to create a new property with a String based id.",
+      "id":"Use `withId(String id)` to create a new property with a new String based id.",
       "result":"PASS",
       "duration":"?",
       "iterations":{
-      "tags":{},"see":[],"extraInfo":["\n            The `withId(String id)` method is used to create a new property with a String based id.\n            This is useful when you want to give a property a unique identifier.\n            It may serve as a key in a map or as a way to identify the property in a log message.\n            You may also want to use it when converting a set of properties to another\n            data format like JSON or XML.\n        "]
+      "tags":{},"see":[],"extraInfo":["\n            Every property has an id, which is exposed through the `id()` method.\n            Using `withId(String id)`, you can create a new property with \n            the same item but a different id.\n            This attribute may serve as a key in a map or as a way to identify the \n            property in a log message where it is easier to read than the item itself.\n            You may also want to use it when converting a set of properties to another\n            data format like JSON, XML or even database tables.\n        "]
       },
       "blocks":[
-        {"kind":"given","text":"A regular immutable property without an id.","code":["var property = Val.of(\"Hello World\")"]},
+        {"kind":"given","text":"A regular immutable property without an id.","code":["var property = Val.of(\"https://www.dominionmovement.com/watch\")"]},
 
-        {"kind":"expect","text":"The property has no id.","code":["property.id().isEmpty()","property.hasNoID()","!property.hasID()"]},
+        {"kind":"expect","text":"Initially the property has no id in the sense that it is an empty String.","code":["property.id().isEmpty()","property.hasNoID()","!property.hasID()"]},
 
-        {"kind":"when","text":"We create a new property with an id.","code":["var propertyWithId = property.withId(\"XY\")"]},
+        {"kind":"when","text":"We create a new property with an id that describes the item.","code":["var propertyWithId = property.withId(\"link_to_a_documentary\")"]},
 
-        {"kind":"then","text":"The new property has the expected id.","code":["propertyWithId.id() == \"XY\"","propertyWithId.hasID()","!propertyWithId.hasNoID()"]}
+        {"kind":"then","text":"The new property has the expected id.","code":["propertyWithId.id() == \"link_to_a_documentary\"","propertyWithId.hasID()","!propertyWithId.hasNoID()"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -327,7 +327,7 @@
     },
   
     {
-      "id":"You may not pass a null function to the `update(Function)` method.",
+      "id":"You may not pass a `null` reference to the `update(Function)` method.",
       "result":"PASS",
       "duration":"?",
       "iterations":{
@@ -361,11 +361,11 @@
     },
   
     {
-      "id":"You cannot map null items of a property through the `update(Function)` method.",
+      "id":"You cannot map `null` items of a property through the `update(Function)` method.",
       "result":"PASS",
       "duration":"?",
       "iterations":{
-      "tags":{},"see":[],"extraInfo":["\n            The `update(Function)` method is used to update the item of a property.\n            If the item of the property is null, the function is not called.\n            This is useful when you want to update the item of a property\n            only if it is not null.\n        "]
+      "tags":{},"see":[],"extraInfo":["\n            Just like the `java.util.Optional` class, the properties in\n            sprouts treat `null` references as \"the absence of something\",\n            which is why the `map(Function)` method of an `Optional` only applies\n            the function to non-null items, whereas null items are ignored.\n            This is based on the simple rationale that \"you cannot map something that is not there\".\n\n            The `update(Function)` method of a property is designed with the\n            same philosophy in mind, which is why the function is only applied\n            he `update(Function)` method of a property\n            only applies the function to non-null items as well.\n\n        "]
       },
       "blocks":[
         {"kind":"given","text":"A property with a null item.","code":["var property = Var.ofNullable(String, null)"]},

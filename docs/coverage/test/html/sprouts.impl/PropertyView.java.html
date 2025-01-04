@@ -33,11 +33,11 @@ final class PropertyView&lt;T extends @Nullable Object&gt; implements Var&lt;T&g
 	}
 
 	private static &lt;T&gt; PropertyView&lt;@Nullable T&gt; _ofNullable( Class&lt;T&gt; type, @Nullable T item, Val&lt;?&gt;... strongParentRefs ) {
-<span class="fc" id="L36">		return new PropertyView&lt;&gt;(type, item, Sprouts.factory().defaultId(), new ChangeListeners&lt;&gt;(), true, _filterStrongParentRefs(strongParentRefs));</span>
+<span class="fc" id="L36">		return new PropertyView&lt;&gt;(type, item, Sprouts.factory().defaultId(), new PropertyChangeListeners&lt;&gt;(), true, _filterStrongParentRefs(strongParentRefs));</span>
 	}
 
 	private static &lt;T&gt; PropertyView&lt;T&gt; _of( Class&lt;T&gt; type, T item, Val&lt;?&gt;... strongParentRefs ) {
-<span class="fc" id="L40">		return new PropertyView&lt;&gt;(type, item, Sprouts.factory().defaultId(), new ChangeListeners&lt;&gt;(), false, _filterStrongParentRefs(strongParentRefs));</span>
+<span class="fc" id="L40">		return new PropertyView&lt;&gt;(type, item, Sprouts.factory().defaultId(), new PropertyChangeListeners&lt;&gt;(), false, _filterStrongParentRefs(strongParentRefs));</span>
 	}
 
 	public static &lt;T, U&gt; Viewable&lt;@Nullable U&gt; ofNullable(Class&lt;U&gt; type, Val&lt;T&gt; source, Function&lt;T, @Nullable U&gt; mapper) {
@@ -47,8 +47,8 @@ final class PropertyView&lt;T extends @Nullable Object&gt; implements Var&lt;T&g
 		}
 <span class="fc" id="L48">		final PropertyView&lt;@Nullable U&gt; viewProperty = PropertyView._ofNullable(type, initialItem, source);</span>
 <span class="fc" id="L49">		Viewable.cast(source).onChange(Util.VIEW_CHANNEL, Action.ofWeak( viewProperty, (innerViewProperty, v) -&gt; {</span>
-<span class="nc" id="L50">			innerViewProperty._setInternal(mapper.apply(v.orElseNull()));</span>
-<span class="nc" id="L51">			innerViewProperty.fireChange(v.channel());</span>
+<span class="nc" id="L50">			ItemPair&lt;U&gt; pair = innerViewProperty._setInternal(mapper.apply(v.currentValue().orElseNull()));</span>
+<span class="nc" id="L51">			innerViewProperty.fireChange(v.channel(), pair);</span>
 <span class="nc" id="L52">		}));</span>
 <span class="fc" id="L53">		return viewProperty;</span>
 	}
@@ -71,8 +71,8 @@ final class PropertyView&lt;T extends @Nullable Object&gt; implements Var&lt;T&g
 <span class="pc bpc" id="L71" title="1 of 2 branches missed.">			if ( innerSource == null )</span>
 <span class="nc" id="L72">				return;</span>
 <span class="fc" id="L73">			final U value = nonNullMapper.apply(innerSource.orElseNull());</span>
-<span class="fc" id="L74">			innerViewProperty._setInternal(value);</span>
-<span class="fc" id="L75">			innerViewProperty.fireChange(v.channel());</span>
+<span class="fc" id="L74">			ItemPair&lt;U&gt; pair = innerViewProperty._setInternal(value);</span>
+<span class="fc" id="L75">			innerViewProperty.fireChange(v.channel(), pair);</span>
 <span class="fc" id="L76">		}));</span>
 <span class="fc" id="L77">		return viewProperty;</span>
 	}
@@ -96,8 +96,8 @@ final class PropertyView&lt;T extends @Nullable Object&gt; implements Var&lt;T&g
 <span class="pc bpc" id="L96" title="1 of 2 branches missed.">			if ( innerSource == null )</span>
 <span class="nc" id="L97">				return;</span>
 
-<span class="fc" id="L99">			innerViewProperty._setInternal(v.orElseNull());</span>
-<span class="fc" id="L100">			innerViewProperty.fireChange(v.channel());</span>
+<span class="fc" id="L99">			ItemPair&lt;T&gt; pair = innerViewProperty._setInternal(v.currentValue().orElseNull());</span>
+<span class="fc" id="L100">			innerViewProperty.fireChange(v.channel(), pair);</span>
 <span class="fc" id="L101">		}));</span>
 <span class="fc" id="L102">		return viewProperty;</span>
 	}
@@ -108,9 +108,9 @@ final class PropertyView&lt;T extends @Nullable Object&gt; implements Var&lt;T&g
 <span class="fc" id="L108">			Var&lt;U&gt; source = (Var&lt;U&gt;) parent;</span>
 <span class="fc" id="L109">			PropertyView&lt;T&gt; view = PropertyView._of( type, initialItem, parent );</span>
 <span class="fc" id="L110">			Viewable.cast(source).onChange(From.ALL, Action.ofWeak(view, (innerViewProperty, v) -&gt; {</span>
-<span class="fc" id="L111">				T newItem = mapper.apply(v.orElseNull());</span>
-<span class="fc" id="L112">				innerViewProperty._setInternal(newItem);</span>
-<span class="fc" id="L113">				innerViewProperty.fireChange(v.channel());</span>
+<span class="fc" id="L111">				T newItem = mapper.apply(v.currentValue().orElseNull());</span>
+<span class="fc" id="L112">				ItemPair&lt;T&gt; pair = innerViewProperty._setInternal(newItem);</span>
+<span class="fc" id="L113">				innerViewProperty.fireChange(v.channel(), pair);</span>
 <span class="fc" id="L114">			}));</span>
 <span class="fc" id="L115">			return view;</span>
 		}
@@ -155,30 +155,30 @@ final class PropertyView&lt;T extends @Nullable Object&gt; implements Var&lt;T&g
 <span class="fc" id="L155">			Val&lt;U&gt; innerSecond = innerResult._getSource(1);</span>
 <span class="pc bpc" id="L156" title="1 of 2 branches missed.">			if (innerSecond == null)</span>
 <span class="nc" id="L157">				return;</span>
-<span class="fc" id="L158">			T newItem = fullCombiner.apply(v, innerSecond);</span>
+<span class="fc" id="L158">			T newItem = fullCombiner.apply(v.currentValue(), innerSecond);</span>
 <span class="fc bfc" id="L159" title="All 2 branches covered.">			if (newItem == null)</span>
 <span class="fc" id="L160">				log.error(</span>
 					&quot;Invalid combiner result! The combination of the first item '{}' (changed) and the second &quot; +
 					&quot;item '{}' was null and null is not allowed! The old item '{}' is retained!&quot;,
-<span class="fc" id="L163">					v.orElseNull(), innerSecond.orElseNull(), innerResult.orElseNull()</span>
+<span class="fc" id="L163">					v.currentValue().orElseNull(), innerSecond.orElseNull(), innerResult.orElseNull()</span>
 				);
 			else {
-<span class="fc" id="L166">				innerResult._setInternal(newItem);</span>
-<span class="fc" id="L167">				innerResult.fireChange(From.ALL);</span>
+<span class="fc" id="L166">				ItemPair&lt;T&gt; pair = innerResult._setInternal(newItem);</span>
+<span class="fc" id="L167">				innerResult.fireChange(From.ALL, pair);</span>
 			}
 <span class="fc" id="L169">		};</span>
 <span class="fc" id="L170">		BiConsumer&lt;PropertyView&lt;T&gt;,ValDelegate&lt;U&gt;&gt; secondListener = (innerResult,v) -&gt; {</span>
 <span class="fc" id="L171">			Val&lt;T&gt; innerFirst = innerResult._getSource(0);</span>
-<span class="fc" id="L172">			T newItem = fullCombiner.apply(innerFirst, v);</span>
+<span class="fc" id="L172">			T newItem = fullCombiner.apply(innerFirst, v.currentValue());</span>
 <span class="pc bpc" id="L173" title="1 of 2 branches missed.">			if (newItem == null)</span>
 <span class="nc" id="L174">				log.error(</span>
 					&quot;Invalid combiner result! The combination of the first item '{}' and the second &quot; +
 					&quot;item '{}' (changed) was null and null is not allowed! The old item '{}' is retained!&quot;,
-<span class="nc" id="L177">					innerFirst.orElseNull(), v.orElseNull(), innerResult.orElseNull()</span>
+<span class="nc" id="L177">					innerFirst.orElseNull(), v.currentValue().orElseNull(), innerResult.orElseNull()</span>
 				);
 			else {
-<span class="fc" id="L180">				innerResult._setInternal(newItem);</span>
-<span class="fc" id="L181">				innerResult.fireChange(From.ALL);</span>
+<span class="fc" id="L180">				ItemPair&lt;T&gt; pair = innerResult._setInternal(newItem);</span>
+<span class="fc" id="L181">				innerResult.fireChange(From.ALL, pair);</span>
 			}
 <span class="fc" id="L183">		};</span>
 
@@ -220,14 +220,14 @@ final class PropertyView&lt;T extends @Nullable Object&gt; implements Var&lt;T&g
 <span class="pc bpc" id="L220" title="1 of 2 branches missed.">		if ( !firstIsImmutable )</span>
 <span class="fc" id="L221">			Viewable.cast(first).onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -&gt; {</span>
 <span class="fc" id="L222">				Val&lt;U&gt; innerSecond = innerResult._getSource(1);</span>
-<span class="fc" id="L223">				innerResult._setInternal(fullCombiner.apply(v, innerSecond));</span>
-<span class="fc" id="L224">				innerResult.fireChange(v.channel());</span>
+<span class="fc" id="L223">				ItemPair&lt;T&gt; pair = innerResult._setInternal(fullCombiner.apply(v.currentValue(), innerSecond));</span>
+<span class="fc" id="L224">				innerResult.fireChange(v.channel(), pair);</span>
 <span class="fc" id="L225">			}));</span>
 <span class="pc bpc" id="L226" title="1 of 2 branches missed.">		if ( !secondIsImmutable )</span>
 <span class="fc" id="L227">			Viewable.cast(second).onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -&gt; {</span>
 <span class="fc" id="L228">				Val&lt;T&gt; innerFirst = innerResult._getSource(0);</span>
-<span class="fc" id="L229">				innerResult._setInternal(fullCombiner.apply(innerFirst, v));</span>
-<span class="fc" id="L230">				innerResult.fireChange(v.channel());</span>
+<span class="fc" id="L229">				ItemPair&lt;T&gt; pair = innerResult._setInternal(fullCombiner.apply(innerFirst, v.currentValue()));</span>
+<span class="fc" id="L230">				innerResult.fireChange(v.channel(), pair);</span>
 <span class="fc" id="L231">			}));</span>
 <span class="fc" id="L232">		return result;</span>
 	}
@@ -257,32 +257,32 @@ final class PropertyView&lt;T extends @Nullable Object&gt; implements Var&lt;T&g
 
 <span class="fc" id="L258">		Viewable.cast(first).onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -&gt; {</span>
 <span class="fc" id="L259">			Val&lt;U&gt; innerSecond = innerResult._getSource(1);</span>
-<span class="fc" id="L260">			@Nullable R newItem = fullCombiner.apply(v, innerSecond);</span>
+<span class="fc" id="L260">			@Nullable R newItem = fullCombiner.apply(v.currentValue(), innerSecond);</span>
 <span class="fc bfc" id="L261" title="All 2 branches covered.">			if (newItem == null)</span>
 <span class="fc" id="L262">				log.error(</span>
 					&quot;Invalid combiner result! The combination of the first item '{}' (changed) &quot; +
 					&quot;and the second item '{}' was null and null is not allowed! &quot; +
 					&quot;The old item '{}' is retained!&quot;,
-<span class="fc" id="L266">					v.orElseNull(), innerSecond.orElseNull(), innerResult.orElseNull()</span>
+<span class="fc" id="L266">					v.currentValue().orElseNull(), innerSecond.orElseNull(), innerResult.orElseNull()</span>
 				);
 			else {
-<span class="fc" id="L269">				innerResult._setInternal(newItem);</span>
-<span class="fc" id="L270">				innerResult.fireChange(v.channel());</span>
+<span class="fc" id="L269">				ItemPair&lt;R&gt; pair = innerResult._setInternal(newItem);</span>
+<span class="fc" id="L270">				innerResult.fireChange(v.channel(), pair);</span>
 			}
 <span class="fc" id="L272">		}));</span>
 <span class="fc" id="L273">		Viewable.cast(second).onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -&gt; {</span>
 <span class="fc" id="L274">			Val&lt;T&gt; innerFirst = innerResult._getSource(0);</span>
-<span class="fc" id="L275">			@Nullable R newItem = fullCombiner.apply(innerFirst, v);</span>
+<span class="fc" id="L275">			@Nullable R newItem = fullCombiner.apply(innerFirst, v.currentValue());</span>
 <span class="fc bfc" id="L276" title="All 2 branches covered.">			if (newItem == null)</span>
 <span class="fc" id="L277">				log.error(</span>
 					&quot;Invalid combiner result! The combination of the first item '{}' and the second &quot; +
 					&quot;item '{}' (changed) was null and null is not allowed! &quot; +
 					&quot;The old item '{}' is retained!&quot;,
-<span class="fc" id="L281">					innerFirst.orElseNull(), v.orElseNull(), innerResult.orElseNull()</span>
+<span class="fc" id="L281">					innerFirst.orElseNull(), v.currentValue().orElseNull(), innerResult.orElseNull()</span>
 				);
 			else {
-<span class="fc" id="L284">				innerResult._setInternal(newItem);</span>
-<span class="fc" id="L285">				innerResult.fireChange(v.channel());</span>
+<span class="fc" id="L284">				ItemPair&lt;R&gt; pair = innerResult._setInternal(newItem);</span>
+<span class="fc" id="L285">				innerResult.fireChange(v.channel(), pair);</span>
 			}
 <span class="fc" id="L287">		}));</span>
 <span class="fc" id="L288">		return result;</span>
@@ -307,13 +307,13 @@ final class PropertyView&lt;T extends @Nullable Object&gt; implements Var&lt;T&g
 <span class="fc" id="L307">		PropertyView&lt;@Nullable R&gt; result =  PropertyView._ofNullable( type, fullCombiner.apply(first, second), first, second ).withId(id);</span>
 <span class="fc" id="L308">		Viewable.cast(first).onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -&gt; {</span>
 <span class="fc" id="L309">			Val&lt;U&gt; innerSecond = innerResult._getSource(1);</span>
-<span class="fc" id="L310">			innerResult._setInternal(fullCombiner.apply(v, innerSecond));</span>
-<span class="fc" id="L311">			innerResult.fireChange(v.channel());</span>
+<span class="fc" id="L310">			ItemPair&lt;R&gt; pair = innerResult._setInternal(fullCombiner.apply(v.currentValue(), innerSecond));</span>
+<span class="fc" id="L311">			innerResult.fireChange(v.channel(), pair);</span>
 <span class="fc" id="L312">		}));</span>
 <span class="fc" id="L313">		Viewable.cast(second).onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -&gt; {</span>
 <span class="fc" id="L314">			Val&lt;T&gt; innerFirst = innerResult._getSource(0);</span>
-<span class="fc" id="L315">			innerResult._setInternal(fullCombiner.apply(innerFirst, v));</span>
-<span class="fc" id="L316">			innerResult.fireChange(v.channel());</span>
+<span class="fc" id="L315">			ItemPair&lt;R&gt; pair = innerResult._setInternal(fullCombiner.apply(innerFirst, v.currentValue()));</span>
+<span class="fc" id="L316">			innerResult.fireChange(v.channel(), pair);</span>
 <span class="fc" id="L317">		}));</span>
 <span class="fc" id="L318">		return result;</span>
 	}
@@ -329,7 +329,7 @@ final class PropertyView&lt;T extends @Nullable Object&gt; implements Var&lt;T&g
 <span class="fc" id="L329">		return id;</span>
 	}
 
-	private final ChangeListeners&lt;T&gt; _changeListeners;
+	private final PropertyChangeListeners&lt;T&gt; _changeListeners;
 
     private final String _id;
 	private final boolean _nullable;
@@ -344,7 +344,7 @@ final class PropertyView&lt;T extends @Nullable Object&gt; implements Var&lt;T&g
         Class&lt;T&gt; type,
         @Nullable T iniValue,
         String id,
-        ChangeListeners&lt;T&gt; changeListeners,
+        PropertyChangeListeners&lt;T&gt; changeListeners,
         boolean allowsNull,
 		ParentRef&lt;Val&lt;?&gt;&gt;[] strongParentRefs
 <span class="fc" id="L350">    ) {</span>
@@ -356,7 +356,7 @@ final class PropertyView&lt;T extends @Nullable Object&gt; implements Var&lt;T&g
 <span class="fc" id="L356">		_id               = id;</span>
 <span class="fc" id="L357">		_nullable         = allowsNull;</span>
 <span class="fc" id="L358">		_currentItem      = iniValue;</span>
-<span class="fc" id="L359">		_changeListeners  = new ChangeListeners&lt;&gt;();</span>
+<span class="fc" id="L359">		_changeListeners  = new PropertyChangeListeners&lt;&gt;();</span>
 <span class="fc" id="L360">		_strongParentRefs = strongParentRefs;</span>
 
 <span class="fc bfc" id="L362" title="All 2 branches covered.">		if ( _currentItem != null ) {</span>
@@ -399,91 +399,102 @@ final class PropertyView&lt;T extends @Nullable Object&gt; implements Var&lt;T&g
 
 	/** {@inheritDoc} */
 	@Override public Var&lt;T&gt; fireChange( Channel channel ) {
-<span class="fc" id="L402">		_changeListeners.fireChange(this, channel);</span>
+<span class="fc" id="L402">		this.fireChange(channel, new ItemPair&lt;&gt;(this));</span>
 <span class="fc" id="L403">		return this;</span>
 	}
 
+	void fireChange( Channel channel, ItemPair&lt;T&gt; pair ) {
+<span class="fc" id="L407">		_changeListeners.fireChange(this, channel, pair);</span>
+<span class="fc" id="L408">	}</span>
+
 	@Override
 	public final boolean isMutable() {
-<span class="fc" id="L408">		return true;</span>
+<span class="fc" id="L412">		return true;</span>
 	}
 
 	@Override
 	public boolean isView() {
-<span class="fc" id="L413">		return true;</span>
+<span class="fc" id="L417">		return true;</span>
 	}
 
 	/** {@inheritDoc} */
 	@Override
 	public Var&lt;T&gt; set( Channel channel, T newItem ) {
-<span class="nc" id="L419">		Objects.requireNonNull(channel);</span>
-<span class="nc bnc" id="L420" title="All 2 branches missed.">		if ( _setInternal(newItem) )</span>
-<span class="nc" id="L421">			this.fireChange(channel);</span>
-<span class="nc" id="L422">		return this;</span>
+<span class="nc" id="L423">		Objects.requireNonNull(channel);</span>
+<span class="nc" id="L424">		ItemPair&lt;T&gt; pair = _setInternal(newItem);</span>
+<span class="nc bnc" id="L425" title="All 2 branches missed.">		if ( pair.change() != SingleChange.NONE )</span>
+<span class="nc" id="L426">			this.fireChange(channel, pair);</span>
+<span class="nc" id="L427">		return this;</span>
 	}
 
-	private boolean _setInternal( @Nullable T newValue ) {
-<span class="pc bpc" id="L426" title="1 of 4 branches missed.">		if ( !_nullable &amp;&amp; newValue == null )</span>
-<span class="nc" id="L427">			throw new NullPointerException(</span>
+	private ItemPair&lt;T&gt; _setInternal( @Nullable T newValue ) {
+<span class="pc bpc" id="L431" title="1 of 4 branches missed.">		if ( !_nullable &amp;&amp; newValue == null )</span>
+<span class="nc" id="L432">			throw new NullPointerException(</span>
 					&quot;This property is configured to not allow null items! &quot; +
 					&quot;If you want your property to allow null items, use the 'ofNullable(Class, T)' factory method.&quot;
 				);
 
-<span class="fc bfc" id="L432" title="All 2 branches covered.">		if ( !Objects.equals(_currentItem, newValue ) ) {</span>
+<span class="fc" id="L437">		ItemPair&lt;T&gt; pair = new ItemPair&lt;&gt;(_type, newValue, _currentItem);</span>
+
+<span class="fc bfc" id="L439" title="All 2 branches covered.">		if ( pair.change() != SingleChange.NONE ) {</span>
 			// First we check if the item is compatible with the type
-<span class="pc bpc" id="L434" title="1 of 4 branches missed.">			if ( newValue != null &amp;&amp; !_type.isAssignableFrom(newValue.getClass()) )</span>
-<span class="nc" id="L435">				throw new IllegalArgumentException(</span>
-<span class="nc" id="L436">						&quot;The provided type '&quot;+newValue.getClass()+&quot;' of the new item is not compatible &quot; +</span>
+<span class="pc bpc" id="L441" title="1 of 4 branches missed.">			if ( newValue != null &amp;&amp; !_type.isAssignableFrom(newValue.getClass()) )</span>
+<span class="nc" id="L442">				throw new IllegalArgumentException(</span>
+<span class="nc" id="L443">						&quot;The provided type '&quot;+newValue.getClass()+&quot;' of the new item is not compatible &quot; +</span>
 						&quot;with the type '&quot;+_type+&quot;' of this property&quot;
 					);
 
-<span class="fc" id="L440">			_currentItem = newValue;</span>
-<span class="fc" id="L441">			return true;</span>
+<span class="fc" id="L447">			_currentItem = newValue;</span>
 		}
-<span class="fc" id="L443">		return false;</span>
+<span class="fc" id="L449">		return pair;</span>
 	}
 
 	@Override
 	public Observable subscribe( Observer observer ) {
-<span class="fc" id="L448">		_changeListeners.onChange( observer );</span>
-<span class="fc" id="L449">		return this;</span>
+<span class="fc" id="L454">		_changeListeners.onChange( observer );</span>
+<span class="fc" id="L455">		return this;</span>
 	}
 
 	@Override
 	public Observable unsubscribe( Subscriber subscriber ) {
-<span class="fc" id="L454">		_changeListeners.unsubscribe(subscriber);</span>
-<span class="fc" id="L455">		return this;</span>
+<span class="fc" id="L460">		_changeListeners.unsubscribe(subscriber);</span>
+<span class="fc" id="L461">		return this;</span>
 	}
+
+	@Override
+	public void unsubscribeAll() {
+<span class="nc" id="L466">		_changeListeners.unsubscribeAll();</span>
+<span class="nc" id="L467">	}</span>
 
 	public final long numberOfChangeListeners() {
-<span class="fc" id="L459">		return _changeListeners.numberOfChangeListeners();</span>
+<span class="fc" id="L470">		return _changeListeners.numberOfChangeListeners();</span>
 	}
 
 	/** {@inheritDoc} */
-<span class="fc" id="L463">	@Override public final Class&lt;T&gt; type() { return _type; }</span>
+<span class="fc" id="L474">	@Override public final Class&lt;T&gt; type() { return _type; }</span>
 
 	/** {@inheritDoc} */
-<span class="fc" id="L466">	@Override public final String id() { return _id; }</span>
+<span class="fc" id="L477">	@Override public final String id() { return _id; }</span>
 
 	/** {@inheritDoc} */
 	@Override
-<span class="fc" id="L470">	public final @Nullable T orElseNull() { return _currentItem; }</span>
+<span class="fc" id="L481">	public final @Nullable T orElseNull() { return _currentItem; }</span>
 
 	/** {@inheritDoc} */
-<span class="fc" id="L473">	@Override public final boolean allowsNull() { return _nullable; }</span>
+<span class="fc" id="L484">	@Override public final boolean allowsNull() { return _nullable; }</span>
 
 	@Override
 	public final String toString() {
-<span class="fc" id="L477">		String item = this.mapTo(String.class, Object::toString).orElse(&quot;null&quot;);</span>
-<span class="pc bpc" id="L478" title="1 of 2 branches missed.">		String id = this.id() == null ? &quot;?&quot; : this.id();</span>
-<span class="fc bfc" id="L479" title="All 2 branches covered.">		if ( id.equals(Sprouts.factory().defaultId()) ) id = &quot;?&quot;;</span>
-<span class="pc bpc" id="L480" title="1 of 2 branches missed.">		String type = ( type() == null ? &quot;?&quot; : type().getSimpleName() );</span>
-<span class="pc bpc" id="L481" title="1 of 2 branches missed.">		if ( type.equals(&quot;Object&quot;) ) type = &quot;?&quot;;</span>
-<span class="pc bpc" id="L482" title="3 of 4 branches missed.">		if ( type.equals(&quot;String&quot;) &amp;&amp; this.isPresent() ) item = &quot;\&quot;&quot; + item + &quot;\&quot;&quot;;</span>
-<span class="pc bpc" id="L483" title="1 of 2 branches missed.">		if (_nullable) type = type + &quot;?&quot;;</span>
-<span class="fc" id="L484">		String name = &quot;View&quot;;</span>
-<span class="fc bfc" id="L485" title="All 2 branches covered.">		String content = ( id.equals(&quot;?&quot;) ? item : id + &quot;=&quot; + item );</span>
-<span class="fc" id="L486">		return name + &quot;&lt;&quot; + type + &quot;&gt;&quot; + &quot;[&quot; + content + &quot;]&quot;;</span>
+<span class="fc" id="L488">		String item = this.mapTo(String.class, Object::toString).orElse(&quot;null&quot;);</span>
+<span class="pc bpc" id="L489" title="1 of 2 branches missed.">		String id = this.id() == null ? &quot;?&quot; : this.id();</span>
+<span class="fc bfc" id="L490" title="All 2 branches covered.">		if ( id.equals(Sprouts.factory().defaultId()) ) id = &quot;?&quot;;</span>
+<span class="pc bpc" id="L491" title="1 of 2 branches missed.">		String type = ( type() == null ? &quot;?&quot; : type().getSimpleName() );</span>
+<span class="pc bpc" id="L492" title="1 of 2 branches missed.">		if ( type.equals(&quot;Object&quot;) ) type = &quot;?&quot;;</span>
+<span class="pc bpc" id="L493" title="3 of 4 branches missed.">		if ( type.equals(&quot;String&quot;) &amp;&amp; this.isPresent() ) item = &quot;\&quot;&quot; + item + &quot;\&quot;&quot;;</span>
+<span class="pc bpc" id="L494" title="1 of 2 branches missed.">		if (_nullable) type = type + &quot;?&quot;;</span>
+<span class="fc" id="L495">		String name = &quot;View&quot;;</span>
+<span class="fc bfc" id="L496" title="All 2 branches covered.">		String content = ( id.equals(&quot;?&quot;) ? item : id + &quot;=&quot; + item );</span>
+<span class="fc" id="L497">		return name + &quot;&lt;&quot; + type + &quot;&gt;&quot; + &quot;[&quot; + content + &quot;]&quot;;</span>
 	}
 
 }

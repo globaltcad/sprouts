@@ -21,16 +21,21 @@ public interface Action&lt;D&gt; extends Subscriber
     /**
      *  A factory method for creating a new {@link Action} instance
      *  with a weakly referenced owner.
-     *  When the owner is garbage collected then the action will no longer be executed
-     *  and eventually be garbage collected itself.&lt;br&gt;
+     *  When the owner is garbage collected then the action will no longer be executed,
+     *  removed and eventually be garbage automatically as well.&lt;br&gt;
+     *  &lt;br&gt;
      *  &lt;b&gt;
-     *      Keep in mind that the owner and action may only
-     *      be garbage collected if there are no other strong references to them.
-     *      This includes the action itself, which may not hold a strong reference to the owner!
-     *      In order to allow you to access the owner of the action,
-     *      it is passed as a parameter to the supplied {@link BiConsumer}
-     *      as the first argument.
+     *      WARNING: &lt;br&gt;
+     *      If you reference the owner in the action lambda, may it be directly or indirectly,
+     *      then you will end up with a memory leak, as the owner will never be garbage collected!
      *  &lt;/b&gt;
+     *  &lt;br&gt;
+     *  This is because the action lambda is strongly held until the owner is collected, and
+     *  the owner may only be garbage collected if there are no other strong references to it.
+     *  This includes the action lambda itself, which may not hold a strong reference to the owner!
+     *  To access the owner of the action in the actions {@link BiConsumer},
+     *  it is passed to it as its first argument.
+     *  &lt;b&gt;Use that parameter instead of the owner reference.&lt;/b&gt;
      *
      * @param owner The owner of the action, which is weakly referenced
      *              and determines the lifetime of the action.
@@ -41,7 +46,7 @@ public interface Action&lt;D&gt; extends Subscriber
      * @param &lt;O&gt; The type of the owner.
      */
     static &lt;O, D&gt; WeakAction&lt;O, D&gt; ofWeak( O owner, BiConsumer&lt;O, D&gt; action ) {
-<span class="fc" id="L44">        return Sprouts.factory().actionOfWeak(owner, action);</span>
+<span class="fc" id="L49">        return Sprouts.factory().actionOfWeak(owner, action);</span>
     }
 
     /**
@@ -68,10 +73,10 @@ public interface Action&lt;D&gt; extends Subscriber
      *  and then the given action.
      */
     default Action&lt;D&gt; andThen( Action&lt;D&gt; other ) {
-<span class="nc" id="L71">        return delegate -&gt; {</span>
-<span class="nc" id="L72">            this.accept(delegate);</span>
-<span class="nc" id="L73">            other.accept(delegate);</span>
-<span class="nc" id="L74">        };</span>
+<span class="nc" id="L76">        return delegate -&gt; {</span>
+<span class="nc" id="L77">            this.accept(delegate);</span>
+<span class="nc" id="L78">            other.accept(delegate);</span>
+<span class="nc" id="L79">        };</span>
     }
 
 }

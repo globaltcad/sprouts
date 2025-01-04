@@ -1,10 +1,10 @@
 {
   "className":"sprouts.Property_View_Spec",
   "title":"Property Views",
-  "narrative":"A property is more than just a wrapper around values.\n    It has a rich APIs that exposes a plethora of methods,\n    many of which are designed to inform you about\n    their contents without actually exposing them to you.\n\n    For example, there are methods like `Val::isEmpty` and `Val::isPresent`,\n    which are used to check if a property is empty or not.\n    These facts about the property can also be observed through a \"view\".\n    For which we have the `viewIsEmpty()` and `viewIsPresent()` methods.\n\n    Each of these methods return a `Viewable` property which will always be \"up to date\"\n    with respect to the thing that is observed, and will be updated\n    automatically when the observed thing changes.",
+  "narrative":"Properties are designed to be observable, which means that you can \"react\"\n    to their items being replaced by new items. This sort of \"reaction\"\n    to changes is typically done through the \"observer pattern\", where you\n    register change listeners on a property that are invoked whenever the\n    property item changes...\n\n    Contrary to what you might might expect, you cannot register change listeners\n    on properties directly!\n    This is to prevent you from creating memory leaks, which happen very often\n    due to change listeners not being unregistered when they are no longer needed.\n    To fix this, Sprouts provides the concept of a \"property view\" in\n    the form of instances of the `Viewable` type,\n    which is a weakly referenced live property onto which you can safely register\n    your change listeners.\n    And when you no longer use the view (by holding a reference to it),\n    it will be garbage collected along with all of the change listeners\n    that were registered on it.\n\n    But if you keep a reference to the view and a change occurs on the source property,\n    then the view will be updated and all of the change listeners will be notified\n    of the change.",
   "subjects":["sprouts.Viewable","sprouts.Var","sprouts.Val","sprouts.Vars","sprouts.Vals"],
   "statistics":{
-    "runs":"21",
+    "runs":"24",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -14,11 +14,11 @@
   "headers":[],"tags":{},"see":[],
   "features":[ 
     {
-      "id":"Use the \"viewAs\" method to create a dynamically updated view of a property.",
+      "id":"Use the `viewAs` method to create a dynamically updated view of a property.",
       "result":"PASS",
       "duration":"?",
       "iterations":{
-      "tags":{},"see":[],"extraInfo":["\n            The \"viewAs\" method is used to create a dynamically updated view of a property.\n            In essence it is a property observing another property and updating its value\n            whenever the observed property changes.\n        "]
+      "tags":{},"see":[],"extraInfo":["\n            The `viewAs` method is used to create a dynamically updated view of a property.\n            In essence it is a property observing another property and updating its value\n            whenever the observed property changes.\n        "]
       },
       "blocks":[
         {"kind":"given","text":"We create a property...","code":["Var<String> property = Var.of(\"Hello World\")"]},
@@ -81,11 +81,11 @@
     },
   
     {
-      "id":"Use the \"view\" to create a view of a property of the same type.",
+      "id":"Use the `view(Function)` method to create a view of a property of the same type.",
       "result":"PASS",
       "duration":"?",
       "iterations":{
-      "tags":{},"see":[],"extraInfo":["\n            The \"view\" method can be used to create a view of a property of the same type,\n            but with some transformation applied to it.\n        "]
+      "tags":{},"see":[],"extraInfo":["\n            The `view(Function)` method can be used to create a view of a property of the same type,\n            but with some transformation applied to it.\n        "]
       },
       "blocks":[
         {"kind":"given","text":"A property...","code":["Var<String> name = Var.of(\"John\")"]},
@@ -445,6 +445,47 @@
     },
   
     {
+      "id":"The `onChange` event delegate tells you the type of change the property experienced.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `onChange` event delegate tells you the type of change the property experienced.\n            The type of change is represented by an enum with the following values:\n            - `NONE` no change occurred.\n            - `TO_NULL_REFERENCE` the property changed from a non-null item to a null item.\n            - `TO_NON_NULL_REFERENCE` the property changed from a null item to a non-null item.\n            - `VALUE` the `Object.equals(Object)` method returned `false` for the old and new items.\n            - `IDENTITY` the old and new items implement `HasIdentity` and their `.id()` objets are not equal!\n            Note that this will never be the case if the item is not an instance of `HasIdentity`.\n            This is because Sprouts assumes all its items to be value objects by default.\n            So if `Object.equals(Object)` returns true, but a `==` comparison returns false,\n            then the item is considered to NOT have changed its identity!\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var value1 = new HasId<Long>() {","    @Override Long id() { return 42L }","}","var value2 = new HasId<Long>() {","    @Override Long id() { return 42L }","}","var value3 = new HasId<Long>() {","    @Override Long id() { return 43L }","    @Override","    boolean equals(Object obj) { return obj instanceof HasId && ((HasId)obj).id() == this.id() }","    @Override","    int hashCode() { return Objects.hash(id()) }","}","var value4 = new HasId<Long>() {","    @Override Long id() { return 43L }","    @Override","    boolean equals(Object obj) { return obj instanceof HasId && ((HasId)obj).id() == this.id() }","    @Override","    int hashCode() { return Objects.hash(id()) }","}"]},
+
+        {"kind":"and","text":"A property with a couple of views.","code":["var property = Var.ofNullable(HasId, value1)","var view = property.view()"]},
+
+        {"kind":"and","text":"A trace list and a change listener that listens to changes on the views.","code":["var trace = []","view.onChange(From.ALL, v -> trace << v.change())"]},
+
+        {"kind":"when","text":"We change the item of the property to a new item with the same value.","code":["property.set(value2)"]},
+
+        {"kind":"then","text":"The listeners are notified of the type of change the property experienced.","code":["trace == [SingleChange.VALUE]"]},
+
+        {"kind":"when","text":"We change the item of the property to a new item with a different identity.","code":["property.set(value3)"]},
+
+        {"kind":"then","text":"The listeners are notified of an identity change, because 42 != 43.","code":["trace == [SingleChange.VALUE, SingleChange.ID]"]},
+
+        {"kind":"when","text":"We change the item of the property to a new item with the same value and identity.","code":["property.set(value4)"]},
+
+        {"kind":"then","text":"The listeners are not notified because the item did not change in terms of value or identity.","code":["trace == [SingleChange.VALUE, SingleChange.ID]"]},
+
+        {"kind":"when","text":"We change the item of the property back to the original item.","code":["property.set(value1)"]},
+
+        {"kind":"then","text":"The listeners are notified of an identity change.","code":["trace == [SingleChange.VALUE, SingleChange.ID, SingleChange.ID]"]},
+
+        {"kind":"when","text":"We change the item of the property to null.","code":["property.set(null)"]},
+
+        {"kind":"then","text":"The listeners are notified of a change to a null reference.","code":["trace == [SingleChange.VALUE, SingleChange.ID, SingleChange.ID, SingleChange.TO_NULL_REFERENCE]"]},
+
+        {"kind":"when","text":"We change the item of the property back to the original item.","code":["property.set(value1)"]},
+
+        {"kind":"then","text":"The listeners are notified of a change to a non-null reference.","code":["trace == [SingleChange.VALUE, SingleChange.ID, SingleChange.ID, SingleChange.TO_NULL_REFERENCE, SingleChange.TO_NON_NULL_REFERENCE]"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
       "id":"Changing the value of a property through the `.set(From.VIEW, T)` method will also affect its views",
       "result":"PASS",
       "duration":"?",
@@ -482,6 +523,60 @@
         {"kind":"when","text":"We update the view to have a custom id String.","code":["view = view.withId(\"patient_age\")"]},
 
         {"kind":"then","text":"The string representation of the view is as expected.","code":["view.toString() == \"View<Byte>[patient_age=5]\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A `WeakAction` is removed and garbage collected together with its owner.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            You can register an action directly onto a view, which is itself already \n            memory leak safe. But i you want to create a memory leak safe action,\n            you may want to consider using a `WeakAction` to avoid memory leaks.\n\n            A weak action is a special kind of action that has a weakly referenced \"owner\".\n            This owner determines if the action is still alive or not and should be removed\n            after the owner.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A property, its viewable and an owner:","code":["var property = Var.of(\"I am a some text in a property.\")","var viewable = property.view()","var owner = new Object()"]},
+
+        {"kind":"and","text":"A trace list to record the side effect.","code":["var trace = []"]},
+
+        {"kind":"and","text":"Finally we register a weak action on the property.","code":["viewable.onChange(From.ALL, Action.ofWeak(owner, (o, it) -> trace << it.currentValue().orElseThrow()))"]},
+
+        {"kind":"when","text":"We change the source property.","code":["property.set(\"I am a new text.\")"]},
+
+        {"kind":"then","text":"The side effect is executed.","code":["trace == [\"I am a new text.\"]"]},
+
+        {"kind":"when","text":"We remove the owner and then wait for the garbage collector to remove the weak action.","code":["owner = null","waitForGarbageCollection()"]},
+
+        {"kind":"and","text":"We change the source property again...","code":["property.set(\"I am yet another text.\")"]},
+
+        {"kind":"then","text":"The side effect is not executed anymore.","code":["trace == [\"I am a new text.\"]"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A `WeakObserver` is removed and garbage collected together with its owner.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            You can register an action directly onto a view, which is itself already \n            memory leak safe. But i you want to create a memory leak safe observer,\n            you may want to consider using a `WeakObserver` to avoid memory leaks.\n\n            A weak observer is a special kind of observer that has a weakly referenced \"owner\".\n            This owner determines if the action is still alive or not and should be removed\n            after the owner.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A property, its viewable and an owner:","code":["var property = Var.of(42)","var viewable = property.view()","var owner = new Object()"]},
+
+        {"kind":"and","text":"A trace list to record the side effects.","code":["var trace = []"]},
+
+        {"kind":"and","text":"Finally we register a weak observer on the property.","code":["viewable.subscribe(Observer.ofWeak(owner,{trace << \"!\"}))"]},
+
+        {"kind":"when","text":"We change the source property.","code":["property.set(43)"]},
+
+        {"kind":"then","text":"The side effect is executed.","code":["trace == [\"!\"]"]},
+
+        {"kind":"when","text":"We remove the owner and then wait for the garbage collector to remove the weak observer.","code":["owner = null","waitForGarbageCollection()"]},
+
+        {"kind":"and","text":"We change the source property again.","code":["property.set(44)"]},
+
+        {"kind":"then","text":"The side effect is not executed anymore.","code":["trace == [\"!\"]"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }

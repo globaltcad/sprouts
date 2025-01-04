@@ -1,10 +1,10 @@
 {
   "className":"sprouts.Property_Binding_Spec",
   "title":"Property Binding",
-  "narrative":"The core motivation behind the creation of the Sprouts library\n    is to provide a simple and powerful way to model the state \n    as well as business logic of your UI without actually depending on it.\n\n    To make the decoupling between your UI and the UIs state and logic \n    possible you need to bind Sprouts properties to UI components.\n    This is done through the use of change listeners and event listeners\n    and so called `Channel`s, which are used to distinguish between\n    different types of events.",
+  "narrative":"The core motivation behind the creation of the Sprouts library\n    is to provide a simple and powerful way to model the state\n    as well as business logic of your UI without actually depending on it.\n\n    To make the decoupling between your UI and the UIs state and logic\n    possible you need to bind Sprouts properties to UI components.\n    This is done through the use of change listeners and event listeners\n    and so called `Channel`s, which are used to distinguish between\n    different types of events.",
   "subjects":["sprouts.Val","sprouts.Var"],
   "statistics":{
-    "runs":"5",
+    "runs":"7",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -25,7 +25,7 @@
 
         {"kind":"and","text":"Something we want to have a side effect on:","code":["var list = []"]},
 
-        {"kind":"when","text":"We subscribe to the property using the `onChange(..)` method.","code":["viewable.onChange(From.VIEW_MODEL, it -> list.add(it.orElseNull()) )"]},
+        {"kind":"when","text":"We subscribe to the property using the `onChange(..)` method.","code":["viewable.onChange(From.VIEW_MODEL, it -> list.add(it.currentValue().orElseNull()) )"]},
 
         {"kind":"and","text":"We change the value of the property.","code":["mutable.set(\"Tofu\")"]},
 
@@ -75,11 +75,11 @@
       "blocks":[
         {"kind":"given","text":"We create a property...","code":["Var<String> property = Var.of(\"Hello World\")","Viewable<String> viewable = property.view()"]},
 
-        {"kind":"and","text":"we bind 1 subscriber to the property.","code":["var list1 = []","viewable.onChange(From.VIEW_MODEL, it -> list1.add(it.orElseNull()) )"]},
+        {"kind":"and","text":"we bind 1 subscriber to the property.","code":["var list1 = []","viewable.onChange(From.VIEW_MODEL, it -> list1.add(it.currentValue().orElseNull()) )"]},
 
         {"kind":"and","text":"We create a new property with a different id.","code":["Val<String> property2 = property.withId(\"XY\")","Viewable<String> viewable2 = property2.view()"]},
 
-        {"kind":"and","text":"Another subscriber to the new property.","code":["var list2 = []","viewable2.onChange(From.VIEW_MODEL, it -> list2.add(it.orElseNull()) )"]},
+        {"kind":"and","text":"Another subscriber to the new property.","code":["var list2 = []","viewable2.onChange(From.VIEW_MODEL, it -> list2.add(it.currentValue().orElseNull()) )"]},
 
         {"kind":"when","text":"We change the value of the original property.","code":["property.set(\"Tofu\")"]},
 
@@ -100,7 +100,7 @@
       "tags":{},"see":[],"extraInfo":["\n            Sprouts was designed to support MVVM for Swing,\n            unfortunately however raw Swing makes it very difficult to implement MVVM\n            as the models of Swing components are not observable.\n            A JButton mode for example does not have a property that you can bind to.\n            Instead what we need are precise updates to the UI components without\n            triggering any looping event callbacks.\n            This is why the concept of \"channels\" was introduced.\n            You may call `set(From.VIEW, ..)` on a property to change its state\n            from the frontend, meaning that only observers registered through the\n            same channel will be notified.\n            So in this case the change will only be noticed by observers\n            registered using `onChange(From.VIEW, ..)`. \n            Note that on the other hand, the regular `set(T)` method is \n            equivalent to `set(From.VIEW_MODEL, T)`, meaning that it will\n            notify observers registered using `onChange(From.VIEW_MODEL, ..)`\n            instead of `onChange(From.VIEW, ..)`.\n        "]
       },
       "blocks":[
-        {"kind":"given","text":"A simple property with a view and model actions.","code":["var viewListener = []","var modelListener = []","var anyListener = []","var property = Var.of(\":)\")","Viewable<String> viewable = property.view()","viewable.onChange(From.VIEW, it -> viewListener << it.orElseThrow() )","viewable.onChange(From.VIEW_MODEL, it -> modelListener << it.orElseNull() )","viewable.onChange(From.ALL, it -> anyListener << it.orElseThrow() )"]},
+        {"kind":"given","text":"A simple property with a view and model actions.","code":["var viewListener = []","var modelListener = []","var anyListener = []","var property = Var.of(\":)\")","Viewable<String> viewable = property.view()","viewable.onChange(From.VIEW, it -> viewListener << it.currentValue().orElseThrow() )","viewable.onChange(From.VIEW_MODEL, it -> modelListener << it.currentValue().orElseNull() )","viewable.onChange(From.ALL, it -> anyListener << it.currentValue().orElseThrow() )"]},
 
         {"kind":"when","text":"We change the state of the property multiple times using the `set(Channel, T)` method.","code":["property.set(From.VIEW, \":(\")","property.set(From.VIEW_MODEL, \":|\")","property.set(From.ALL, \":D\")"]},
 
@@ -121,7 +121,7 @@
       "tags":{},"see":[],"extraInfo":["\n            The `From.ALL` channel is a special channel that will notify you of all changes\n            to the property, regardless of which channel was used to trigger the change.\n            This is useful if you want to react to all changes to a property.\n\n            Your view for example might want to react to all changes to a property\n            to update the UI accordingly.\n        "]
       },
       "blocks":[
-        {"kind":"given","text":"A simple property with a view and model actions.","code":["var showListener = []","var modelListener = []","var property = Var.of(\":)\")","Viewable<String> viewable = property.view()","viewable.onChange(From.ALL, it ->{modelListener << it.orElseThrow()})","viewable.onChange(From.VIEW_MODEL, it -> showListener << it.orElseNull() )"]},
+        {"kind":"given","text":"A simple property with a view and model actions.","code":["var showListener = []","var modelListener = []","var property = Var.of(\":)\")","Viewable<String> viewable = property.view()","viewable.onChange(From.ALL, it ->{modelListener << it.currentValue().orElseThrow()})","viewable.onChange(From.VIEW_MODEL, it -> showListener << it.currentValue().orElseNull() )"]},
 
         {"kind":"when","text":"We change the state of the property using the \"set(T)\" method.","code":["property.set(\":(\")"]},
 
@@ -134,6 +134,60 @@
         {"kind":"then","text":"The `VIEW_MODEL` actions are NOT triggered, because the `.set(From.VIEW, T)` method only triggers `VIEW` actions.","code":["showListener == [\":(\"]"]},
 
         {"kind":"and","text":"The view model actions are triggered as expected.","code":["modelListener == [\":(\", \":|\"]"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A `WeakAction` is removed and garbage collected together with its owner.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            You are not supposed to register an action directly onto a property.\n            Instead you should use the `.view()` of the property to register an action.\n            But if you really need to register an action directly onto a property\n            you may want to consider using a `WeakAction` to avoid memory leaks.\n\n            A weak action is a special kind of action that has a weakly referenced \"owner\".\n            This owner determines if the action is still alive or not and should be removed\n            after the owner.\n\n            Warning! Never reference the owner in the action itself, not even indirectly!\n            This will effectively turn your owner and action into memory leaks.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A property and an owner:","code":["var property = Var.of(\"I am a some text in a property.\")","var owner = new Object()"]},
+
+        {"kind":"and","text":"A trace list to record the side effect.","code":["var trace = []"]},
+
+        {"kind":"and","text":"Finally we register a weak action on the property.","code":["Viewable.cast(property).onChange(From.ALL, Action.ofWeak(owner, (o, it) -> trace << it.currentValue().orElseThrow()))"]},
+
+        {"kind":"when","text":"We change the property.","code":["property.set(\"I am a new text.\")"]},
+
+        {"kind":"then","text":"The side effect is executed.","code":["trace == [\"I am a new text.\"]"]},
+
+        {"kind":"when","text":"We remove the owner and then wait for the garbage collector to remove the weak action.","code":["owner = null","waitForGarbageCollection()"]},
+
+        {"kind":"and","text":"We change the lens again...","code":["property.set(\"I am yet another text.\")"]},
+
+        {"kind":"then","text":"The side effect is not executed anymore.","code":["trace == [\"I am a new text.\"]"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A `WeakObserver` is removed and garbage collected together with its owner.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            You are not supposed to register an observer directly onto a property.\n            Instead you should use the `.view()` of the property to register an observer.\n            But if you really need to register an observer directly onto a property\n            you may want to consider using a `WeakObserver` to avoid memory leaks.\n\n            A weak observer is a special kind of observer that has a weakly referenced \"owner\".\n            This owner determines if the observer is still alive or not and should be removed\n            after the owner.\n\n            Warning! Never reference the owner in the observer itself, not even indirectly!\n            This will effectively turn your owner and observer into memory leaks.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A property and an owner:","code":["var property = Var.of(42)","var owner = new Object()"]},
+
+        {"kind":"and","text":"A trace list to record the side effects.","code":["var trace = []"]},
+
+        {"kind":"and","text":"Finally we register a weak observer on the property.","code":["Viewable.cast(property).subscribe(Observer.ofWeak(owner,{trace << \"!\"}))"]},
+
+        {"kind":"when","text":"We change the property.","code":["property.set(43)"]},
+
+        {"kind":"then","text":"The side effect is executed.","code":["trace == [\"!\"]"]},
+
+        {"kind":"when","text":"We remove the owner and then wait for the garbage collector to remove the weak observer.","code":["owner = null","waitForGarbageCollection()"]},
+
+        {"kind":"and","text":"We change the property again.","code":["property.set(44)"]},
+
+        {"kind":"then","text":"The side effect is not executed anymore.","code":["trace == [\"!\"]"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }

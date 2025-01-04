@@ -38,13 +38,17 @@
 
         {"kind":"when","text":"We create a result from the problems.","code":["def result = Result.of(Integer, problems)"]},
 
-        {"kind":"then","text":"The result has the problems.","code":["result.problems() == problems"]},
+        {"kind":"then","text":"The result has the problems.","code":["result.problems().toList() == problems"]},
 
-        {"kind":"and","text":"Although they are the same problems, they are not the same instances.","code":["result.problems() !== problems"]},
+        {"kind":"and","text":"Although they are the same problems, they are not the same instances.","code":["result.problems().toList() !== problems"]},
 
-        {"kind":"when","text":"We try to mutate the problems.","code":["result.problems().add(null)"]},
+        {"kind":"when","text":"We try to mutate the problems.","code":["result.problems().toList().add(null)"]},
 
-        {"kind":"then","text":"An exception is thrown.","code":["thrown(UnsupportedOperationException)"]}
+        {"kind":"then","text":"An exception is thrown.","code":["thrown(UnsupportedOperationException)"]},
+
+        {"kind":"when","text":"We try to add null to the problems.","code":["result.problems().add(null)"]},
+
+        {"kind":"then","text":"Another exception is thrown.","code":["thrown(NullPointerException)"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -133,7 +137,7 @@
 
         {"kind":"then","text":"The result has the list as its value.","code":["result.orElseThrowUnchecked() == values"]},
 
-        {"kind":"and","text":"The result has the problems.","code":["result.problems() == problems"]}
+        {"kind":"and","text":"The result has the problems.","code":["result.problems().toList() == problems"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },

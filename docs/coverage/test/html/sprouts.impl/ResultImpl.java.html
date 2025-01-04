@@ -1,48 +1,55 @@
 <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ResultImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sprouts</a> &gt; <a href="index.source.html" class="el_package">sprouts.impl</a> &gt; <span class="el_source">ResultImpl.java</span></div><h1>ResultImpl.java</h1><pre class="source lang-java linenums">package sprouts.impl;
 
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sprouts.*;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 final class ResultImpl&lt;V&gt; implements Result&lt;V&gt;
 {
-<span class="fc" id="L16">	private static final Logger log = LoggerFactory.getLogger(ResultImpl.class);</span>
+<span class="fc" id="L15">	private static final Logger log = LoggerFactory.getLogger(ResultImpl.class);</span>
 
-	private final Class&lt;V&gt;      _type;
-	private final List&lt;Problem&gt; _problems;
-	@Nullable private final V   _value;
+	private final Class&lt;V&gt;       _type;
+	private final Tuple&lt;Problem&gt; _problems;
+	@Nullable private final V    _value;
 
 
-<span class="fc" id="L23">	public ResultImpl( Class&lt;V&gt; type, List&lt;Problem&gt; problems, @Nullable V value ) {</span>
-<span class="fc" id="L24">		Objects.requireNonNull(type);</span>
-<span class="fc" id="L25">		Objects.requireNonNull(problems);</span>
-<span class="fc" id="L26">		_type     = type;</span>
-<span class="fc" id="L27">		_problems = problems;</span>
-<span class="fc" id="L28">		_value    = value;</span>
-<span class="fc" id="L29">	}</span>
-
-	/** {@inheritDoc} */
-<span class="fc" id="L32">	@Override public Class&lt;V&gt; type() { return _type; }</span>
+<span class="fc" id="L22">	public ResultImpl( Class&lt;V&gt; type, Iterable&lt;Problem&gt; problems, @Nullable V value ) {</span>
+<span class="fc" id="L23">		Objects.requireNonNull(type);</span>
+<span class="fc" id="L24">		Objects.requireNonNull(problems);</span>
+<span class="fc" id="L25">		_type     = type;</span>
+<span class="fc" id="L26">		_problems = Tuple.of(Problem.class, problems);</span>
+<span class="fc" id="L27">		_value    = value;</span>
+<span class="fc" id="L28">	}</span>
 
 	/** {@inheritDoc} */
-<span class="fc" id="L35">	@Override public List&lt;Problem&gt; problems() { return _problems; }</span>
+	public @NonNull V orElseThrow() throws MissingItemException {
+		// This class is similar to optional, so if the value is null, we throw an exception!
+<span class="nc" id="L33">		V value = orElseNull();</span>
+<span class="nc bnc" id="L34" title="All 2 branches missed.">		if ( Objects.isNull(value) )</span>
+<span class="nc" id="L35">			throw new MissingItemException(&quot;Expected item to be present in result!&quot;, this._problems);</span>
+<span class="nc" id="L36">		return value;</span>
+	}
+
+	/** {@inheritDoc} */
+<span class="fc" id="L40">	@Override public Class&lt;V&gt; type() { return _type; }</span>
+
+	/** {@inheritDoc} */
+<span class="fc" id="L43">	@Override public Tuple&lt;Problem&gt; problems() { return _problems; }</span>
 
 	/** {@inheritDoc} */
 	@Override
-	public Result&lt;V&gt; peekAtProblems( Consumer&lt;List&lt;Problem&gt;&gt; consumer ) {
-<span class="fc" id="L40">		Objects.requireNonNull(consumer);</span>
+	public Result&lt;V&gt; peekAtProblems( Consumer&lt;Tuple&lt;Problem&gt;&gt; consumer ) {
+<span class="fc" id="L48">		Objects.requireNonNull(consumer);</span>
 		try {
-<span class="fc" id="L42">			consumer.accept(problems());</span>
-<span class="fc" id="L43">		} catch ( Exception e ) {</span>
-<span class="fc" id="L44">			List&lt;Problem&gt; newProblems = new ArrayList&lt;&gt;(problems());</span>
-<span class="fc" id="L45">			newProblems.add( Problem.of(e) );</span>
+<span class="fc" id="L50">			consumer.accept(problems());</span>
+<span class="fc" id="L51">		} catch ( Exception e ) {</span>
+<span class="fc" id="L52">			Tuple&lt;Problem&gt; newProblems = problems().add( Problem.of(e) );</span>
 			/*
 				An exception in this the user lambda is most likely completely unwanted,
 				but we also do not want to halt the application because of it.
@@ -51,23 +58,22 @@ final class ResultImpl&lt;V&gt; implements Result&lt;V&gt;
 					1. Log the exception
 					2. Add it as a problem.
 			*/
-<span class="fc" id="L54">			log.error(&quot;An exception occurred while peeking at the problems of a result.&quot;, e);</span>
-<span class="fc" id="L55">			return Result.of( type(), this.orElseNull(), newProblems );</span>
-<span class="fc" id="L56">		}</span>
-<span class="fc" id="L57">		return this;</span>
+<span class="fc" id="L61">			log.error(&quot;An exception occurred while peeking at the problems of a result.&quot;, e);</span>
+<span class="fc" id="L62">			return Result.of( type(), this.orElseNull(), newProblems );</span>
+<span class="fc" id="L63">		}</span>
+<span class="fc" id="L64">		return this;</span>
 	}
 
 	/** {@inheritDoc} */
 	@Override
 	public Result&lt;V&gt; peekAtEachProblem( Consumer&lt;Problem&gt; consumer ) {
-<span class="fc" id="L63">		Objects.requireNonNull(consumer);</span>
-<span class="fc" id="L64">		Result&lt;V&gt; result = this;</span>
-<span class="fc bfc" id="L65" title="All 2 branches covered.">		for ( Problem problem : problems() ) {</span>
+<span class="fc" id="L70">		Objects.requireNonNull(consumer);</span>
+<span class="fc" id="L71">		Result&lt;V&gt; result = this;</span>
+<span class="fc bfc" id="L72" title="All 2 branches covered.">		for ( Problem problem : problems() ) {</span>
 			try {
-<span class="fc" id="L67">				consumer.accept(problem);</span>
-<span class="fc" id="L68">			} catch ( Exception e ) {</span>
-<span class="fc" id="L69">				List&lt;Problem&gt; newProblems = new ArrayList&lt;&gt;(result.problems());</span>
-<span class="fc" id="L70">				newProblems.add( Problem.of(e) );</span>
+<span class="fc" id="L74">				consumer.accept(problem);</span>
+<span class="fc" id="L75">			} catch ( Exception e ) {</span>
+<span class="fc" id="L76">				Tuple&lt;Problem&gt; newProblems = result.problems().add( Problem.of(e) );</span>
 				/*
 					An exception in this the user lambda is most likely completely unwanted,
 					but we also do not want to halt the application because of it.
@@ -76,89 +82,87 @@ final class ResultImpl&lt;V&gt; implements Result&lt;V&gt;
 						1. Log the exception
 						2. Add it as a problem.
 				*/
-<span class="fc" id="L79">				log.error(&quot;An exception occurred while peeking at the problems of a result.&quot;, e);</span>
-<span class="fc" id="L80">				result = Result.of( type(), result.orElseNull(), newProblems );</span>
-<span class="fc" id="L81">			}</span>
-<span class="fc" id="L82">		}</span>
-<span class="fc" id="L83">		return result;</span>
+<span class="fc" id="L85">				log.error(&quot;An exception occurred while peeking at the problems of a result.&quot;, e);</span>
+<span class="fc" id="L86">				result = Result.of( type(), result.orElseNull(), newProblems );</span>
+<span class="fc" id="L87">			}</span>
+<span class="fc" id="L88">		}</span>
+<span class="fc" id="L89">		return result;</span>
 	}
 
 	/** {@inheritDoc} */
 	@Override
-<span class="nc bnc" id="L88" title="All 2 branches missed.">	public @Nullable V orElseNullable( @Nullable V other ) { return _value == null ? other : _value; }</span>
+<span class="nc bnc" id="L94" title="All 2 branches missed.">	public @Nullable V orElseNullable( @Nullable V other ) { return _value == null ? other : _value; }</span>
 
 	/** {@inheritDoc} */
-<span class="fc" id="L91">	@Override public @Nullable V orElseNull() { return _value; }</span>
+<span class="fc" id="L97">	@Override public @Nullable V orElseNull() { return _value; }</span>
 
 	/** {@inheritDoc} */
 	@Override
 	public Result&lt;V&gt; map( Function&lt;V, V&gt; mapper ) {
-<span class="fc" id="L96">		Objects.requireNonNull(mapper);</span>
-<span class="pc bpc" id="L97" title="1 of 2 branches missed.">		if ( !isPresent() )</span>
-<span class="nc" id="L98">			return Result.of( type() );</span>
+<span class="fc" id="L102">		Objects.requireNonNull(mapper);</span>
+<span class="pc bpc" id="L103" title="1 of 2 branches missed.">		if ( !isPresent() )</span>
+<span class="nc" id="L104">			return Result.of( type() );</span>
 
 		try {
-<span class="fc" id="L101">			V newValue = mapper.apply(Objects.requireNonNull(_value));</span>
-<span class="pc bpc" id="L102" title="1 of 2 branches missed.">			if (newValue == null)</span>
-<span class="nc" id="L103">				return Result.of(type(), problems());</span>
+<span class="fc" id="L107">			V newValue = mapper.apply(Objects.requireNonNull(_value));</span>
+<span class="pc bpc" id="L108" title="1 of 2 branches missed.">			if (newValue == null)</span>
+<span class="nc" id="L109">				return Result.of(type(), problems());</span>
 			else
-<span class="fc" id="L105">				return Result.of(newValue, problems());</span>
-<span class="fc" id="L106">		} catch ( Exception e ) {</span>
-<span class="fc" id="L107">			List&lt;Problem&gt; newProblems = new ArrayList&lt;&gt;(problems());</span>
-<span class="fc" id="L108">			newProblems.add( Problem.of(e) );</span>
-<span class="fc" id="L109">			return Result.of( type(), newProblems );</span>
+<span class="fc" id="L111">				return Result.of(newValue, problems());</span>
+<span class="fc" id="L112">		} catch ( Exception e ) {</span>
+<span class="fc" id="L113">			Tuple&lt;Problem&gt; newProblems = problems().add( Problem.of(e) );</span>
+<span class="fc" id="L114">			return Result.of( type(), newProblems );</span>
 		}
 	}
 
 	/** {@inheritDoc} */
 	@Override
 	public &lt;U&gt; Result&lt;U&gt; mapTo( Class&lt;U&gt; type, Function&lt;V, U&gt; mapper ) {
-<span class="fc" id="L116">		Objects.requireNonNull(type);</span>
-<span class="fc" id="L117">		Objects.requireNonNull(mapper);</span>
-<span class="fc bfc" id="L118" title="All 2 branches covered.">		if ( !isPresent() )</span>
-<span class="fc" id="L119">			return Result.of( type, problems() );</span>
+<span class="fc" id="L121">		Objects.requireNonNull(type);</span>
+<span class="fc" id="L122">		Objects.requireNonNull(mapper);</span>
+<span class="fc bfc" id="L123" title="All 2 branches covered.">		if ( !isPresent() )</span>
+<span class="fc" id="L124">			return Result.of( type, problems() );</span>
 
 		try {
-<span class="fc" id="L122">			U newValue = mapper.apply( Objects.requireNonNull(_value) );</span>
-<span class="pc bpc" id="L123" title="1 of 2 branches missed.">			if (newValue == null)</span>
-<span class="nc" id="L124">				return Result.of( type );</span>
+<span class="fc" id="L127">			U newValue = mapper.apply( Objects.requireNonNull(_value) );</span>
+<span class="pc bpc" id="L128" title="1 of 2 branches missed.">			if (newValue == null)</span>
+<span class="nc" id="L129">				return Result.of( type );</span>
 			else
-<span class="fc" id="L126">				return Result.of( newValue, problems() );</span>
-<span class="fc" id="L127">		} catch ( Exception e ) {</span>
-<span class="fc" id="L128">			List&lt;Problem&gt; newProblems = new ArrayList&lt;&gt;(problems());</span>
-<span class="fc" id="L129">			newProblems.add( Problem.of(e) );</span>
-<span class="fc" id="L130">			return Result.of( type, newProblems );</span>
+<span class="fc" id="L131">				return Result.of( newValue, problems() );</span>
+<span class="fc" id="L132">		} catch ( Exception e ) {</span>
+<span class="fc" id="L133">			Tuple&lt;Problem&gt; newProblems = problems().add( Problem.of(e) );</span>
+<span class="fc" id="L134">			return Result.of( type, newProblems );</span>
 		}
 	}
 
 	@Override
 	public String toString() {
-<span class="fc" id="L136">        String value = this.mapTo(String.class, Object::toString).orElse(&quot;null&quot;);</span>
-<span class="pc bpc" id="L137" title="1 of 2 branches missed.">        String type = ( type() == null ? &quot;?&quot; : type().getSimpleName() );</span>
-<span class="pc bpc" id="L138" title="1 of 2 branches missed.">        if ( type.equals(&quot;Object&quot;) )</span>
-<span class="nc" id="L139">			type = &quot;?&quot;;</span>
-<span class="pc bpc" id="L140" title="3 of 4 branches missed.">        if ( type.equals(&quot;String&quot;) &amp;&amp; this.isPresent() )</span>
-<span class="nc" id="L141">			value = &quot;\&quot;&quot; + value + &quot;\&quot;&quot;;</span>
-<span class="fc" id="L142">        return &quot;Result&lt;&quot; + type + &quot;&gt;&quot; + &quot;[&quot; + value + &quot;]&quot;;</span>
+<span class="fc" id="L140">        String value = this.mapTo(String.class, Object::toString).orElse(&quot;null&quot;);</span>
+<span class="pc bpc" id="L141" title="1 of 2 branches missed.">        String type = ( type() == null ? &quot;?&quot; : type().getSimpleName() );</span>
+<span class="pc bpc" id="L142" title="1 of 2 branches missed.">        if ( type.equals(&quot;Object&quot;) )</span>
+<span class="nc" id="L143">			type = &quot;?&quot;;</span>
+<span class="pc bpc" id="L144" title="3 of 4 branches missed.">        if ( type.equals(&quot;String&quot;) &amp;&amp; this.isPresent() )</span>
+<span class="nc" id="L145">			value = &quot;\&quot;&quot; + value + &quot;\&quot;&quot;;</span>
+<span class="fc" id="L146">        return &quot;Result&lt;&quot; + type + &quot;&gt;&quot; + &quot;[&quot; + value + &quot;]&quot;;</span>
 	}
 
 	@Override
 	public int hashCode() {
-<span class="fc" id="L147">		return Objects.hash(_type, _value, _problems);</span>
+<span class="fc" id="L151">		return Objects.hash(_type, _value, _problems);</span>
 	}
 
 	@Override
 	public boolean equals( Object obj ) {
-<span class="pc bpc" id="L152" title="1 of 2 branches missed.">		if ( obj == null ) return false;</span>
-<span class="pc bpc" id="L153" title="1 of 2 branches missed.">		if ( obj == this ) return true;</span>
-<span class="pc bpc" id="L154" title="1 of 2 branches missed.">		if ( obj instanceof Result ) {</span>
-<span class="fc" id="L155">			Result&lt;?&gt; other = (Result&lt;?&gt;) obj;</span>
-<span class="fc bfc" id="L156" title="All 2 branches covered.">			if ( !Objects.equals(other.type(), _type)         ) return false;</span>
-<span class="pc bpc" id="L157" title="1 of 2 branches missed.">			if ( !Objects.equals(other.problems(), _problems) ) return false;</span>
-<span class="fc" id="L158">			return</span>
-<span class="fc" id="L159">				Val.equals( other.orElseNull(), _value ); // Arrays are compared with Arrays.equals</span>
+<span class="pc bpc" id="L156" title="1 of 2 branches missed.">		if ( obj == null ) return false;</span>
+<span class="pc bpc" id="L157" title="1 of 2 branches missed.">		if ( obj == this ) return true;</span>
+<span class="pc bpc" id="L158" title="1 of 2 branches missed.">		if ( obj instanceof Result ) {</span>
+<span class="fc" id="L159">			Result&lt;?&gt; other = (Result&lt;?&gt;) obj;</span>
+<span class="fc bfc" id="L160" title="All 2 branches covered.">			if ( !Objects.equals(other.type(), _type)         ) return false;</span>
+<span class="pc bpc" id="L161" title="1 of 2 branches missed.">			if ( !Objects.equals(other.problems(), _problems) ) return false;</span>
+<span class="fc" id="L162">			return</span>
+<span class="fc" id="L163">				Val.equals( other.orElseNull(), _value ); // Arrays are compared with Arrays.equals</span>
 		}
-<span class="nc" id="L161">		return false;</span>
+<span class="nc" id="L165">		return false;</span>
 	}
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

@@ -1,7 +1,7 @@
 {
   "className":"sprouts.Property_View_Memory_Safety_Spec",
   "title":"Property View Memory Safety",
-  "narrative":"Both the read only `Val` and the mutable `Var` are designed to be\n    used as part of a view model in a Model-View-ViewModel (MVVM) architecture\n    or Model-View-Intent (MVI) architecture.\n    As a consequence, they need to be observable in some way.\n    This is done by registering change listeners on \n    the \"views\" of properties, which are weakly referenced\n    live views of the original property which gets updated\n    automatically when the original property changes.\n    You can then subscribe to these views to get notified\n    of changes to the original property.\n\n    This is especially useful when you want to observe a property\n    of one type as a property of another type, or when you want to\n    observe a property with some transformation applied to it.\n\n    This specification shows how to create views from both nullable and non-nullable properties,\n    and it demonstrates how they may be garbage collected when they are no longer referenced.",
+  "narrative":"Both the read only `Val` and the mutable `Var` are designed to be\n    used as part of a view model in a Model-View-ViewModel (MVVM) architecture\n    or Model-View-Intent (MVI) architecture.\n    As a consequence, they need to be observable in some way.\n    This is done by registering change listeners on\n    the \"views\" of properties, which are weakly referenced\n    live views of the original property which gets updated\n    automatically when the original property changes.\n    You can then subscribe to these views to get notified\n    of changes to the original property.\n\n    This is especially useful when you want to observe a property\n    of one type as a property of another type, or when you want to\n    observe a property with some transformation applied to it.\n\n    This specification shows how to create views from both nullable and non-nullable properties,\n    and it demonstrates how they may be garbage collected when they are no longer referenced.",
   "subjects":["sprouts.Val","sprouts.Var","sprouts.Viewable"],
   "statistics":{
     "runs":"68",
@@ -83,7 +83,7 @@
 
         {"kind":"and","text":"A view of the property as a String.","code":["Val<String> view = monthProperty.viewAsString(Month::name)"]},
 
-        {"kind":"and","text":"A trace list and a change listener that listens to changes on the view.","code":["var trace = []","Action<Val<String>> action = { trace << it.get() }"]},
+        {"kind":"and","text":"A trace list and a change listener that listens to changes on the view.","code":["var trace = []","Action<Val<String>> action = { trace << it.currentValue().orElseNull() }"]},
 
         {"kind":"expect","text":"The trace list is empty and there are no change listeners registered.","code":["trace.isEmpty()","view.numberOfChangeListeners() == 0"]},
 

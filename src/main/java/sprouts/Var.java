@@ -23,7 +23,7 @@ import java.util.function.Function;
  *  method is invoked with the same {@link Channel}.
  *  Usually you will use the {@link From} constants to distinguish between
  *  important application layers using the {@link From#VIEW_MODEL} or {@link From#VIEW} channels.
- *  p>
+ *  <p>
  *  Note that {@link Var#set(Object)} method defaults to the {@link From#VIEW_MODEL} channel,
  *  which is intended to be used for state changes as part of your core business logic.
  *  <p>
