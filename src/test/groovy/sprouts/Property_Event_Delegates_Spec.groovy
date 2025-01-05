@@ -32,7 +32,7 @@ class Property_Event_Delegates_Spec extends Specification
         given : 'A property.'
             var property = Var.of(1)
             var delegate = null
-            property.onChange(From.VIEW_MODEL,  it -> delegate = it )
+            Viewable.cast(property).onChange(From.VIEW_MODEL,  it -> delegate = it )
         when : 'We change the property.'
             property.set(42)
         then : 'The exposed delegate has the expected String representation and channel.'
@@ -42,6 +42,68 @@ class Property_Event_Delegates_Spec extends Specification
             delegate.set(0)
         then : '...we get an exception.'
             thrown(MissingMethodException)
+    }
+
+    def 'The delegate of a property exposes you to the current and previous value of the property.'()
+    {
+        given : 'A property.'
+            var property = Var.of(7)
+            var delegate = null
+            Viewable.cast(property).onChange(From.VIEW_MODEL,  it -> delegate = it )
+        when : 'We change the property.'
+            property.set(42)
+        then : 'The exposed delegate has the expected current and previous value.'
+            delegate.currentValue().orElseNull() == 42
+            delegate.oldValue().orElseNull() == 7
+    }
+
+    def 'The delegate of a property view exposes you to the current and previous value of the property.'()
+    {
+        given : 'A property.'
+            var property = Var.of(7)
+            var view = property.view()
+            var delegate = null
+            view.onChange(From.VIEW_MODEL,  it -> delegate = it )
+        when : 'We change the property.'
+            property.set(42)
+        then : 'The exposed delegate has the expected current and previous value.'
+            delegate.currentValue().orElseNull() == 42
+            delegate.oldValue().orElseNull() == 7
+    }
+
+    def 'The delegate of a property tells you how the property has changed.'()
+    {
+        given : 'A property.'
+            var property = Var.of(7)
+            var delegate = null
+            Viewable.cast(property).onChange(From.VIEW_MODEL,  it -> delegate = it )
+        when : 'We change the property.'
+            property.set(42)
+        then : 'The exposed delegate tells you how the property has changed.'
+            delegate.change() == SingleChange.VALUE
+
+        when : 'We do not change anything and instead just fire the change event.'
+            property.fireChange(From.ALL)
+        then : 'The exposed delegate tells you that the property has not changed.'
+            delegate.change() == SingleChange.NONE
+    }
+
+    def 'The delegate of a property view tells you how the property has changed.'()
+    {
+        given : 'A property.'
+            var property = Var.of(7)
+            var view = property.view()
+            var delegate = null
+            view.onChange(From.VIEW_MODEL,  it -> delegate = it )
+        when : 'We change the property.'
+            property.set(42)
+        then : 'The exposed delegate tells you how the property has changed.'
+            delegate.change() == SingleChange.VALUE
+
+        when : 'We do not change anything and instead just fire the change event.'
+            property.fireChange(From.ALL)
+        then : 'The exposed delegate tells you that the property has not changed.'
+            delegate.change() == SingleChange.NONE
     }
 
     def 'The delegate of a property user action exposes a property that is an immutable clone.'()
@@ -58,7 +120,7 @@ class Property_Event_Delegates_Spec extends Specification
         given : 'A property.'
             var property = Var.of(1)
             var delegate = null
-            property.onChange(From.VIEW, it -> delegate = it )
+            Viewable.cast(property).onChange(From.VIEW, it -> delegate = it )
         when : 'We change the property.'
             property.set(From.VIEW, 7)
         then : 'The exposed delegate has the expected String representation and channel.'
@@ -86,7 +148,7 @@ class Property_Event_Delegates_Spec extends Specification
         given : 'A property list.'
             var propertyList = Vars.of(1, 2, 3)
             var delegate = null
-            propertyList.onChange( it -> delegate = it )
+            Viewables.cast(propertyList).onChange( it -> delegate = it )
         when : 'We add an element to the property list.'
             propertyList.add(42)
         then : 'The exposed delegate is equal to the property list.'
@@ -115,7 +177,7 @@ class Property_Event_Delegates_Spec extends Specification
         given : 'A property list.'
             var propertyList = Vars.of(1, 2, 3)
             var delegate = null
-            propertyList.onChange( it -> delegate = it )
+            Viewables.cast(propertyList).onChange( it -> delegate = it )
         when : 'We add an element to the property list.'
             propertyList.add(42)
         then : 'The exposed delegate is equal to the property list.'
