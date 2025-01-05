@@ -20,7 +20,8 @@ public interface SproutsFactory
         Val<T> source,
         Channel channel,
         SingleChange change,
-        @Nullable T newValue
+        @Nullable T newValue,
+        @Nullable T oldValue
     );
 
     <T> ValsDelegate<T> delegateOf(
