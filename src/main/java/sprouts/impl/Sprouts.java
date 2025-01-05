@@ -65,9 +65,10 @@ public final class Sprouts implements SproutsFactory
         Val<T> source,
         Channel channel,
         SingleChange change,
-        @Nullable T newValue
+        @Nullable T newValue,
+        @Nullable T oldValue
     ) {
-        return new ValDelegateImpl<>(channel, change, source.id(), source.type(), newValue, source.orElseNull());
+        return new ValDelegateImpl<>(channel, change, source.id(), source.type(), newValue, oldValue);
     }
 
     @Override

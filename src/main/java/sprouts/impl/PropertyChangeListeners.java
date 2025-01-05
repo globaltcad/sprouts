@@ -1,5 +1,6 @@
 package sprouts.impl;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import sprouts.Observer;
 import sprouts.*;
@@ -43,12 +44,16 @@ public final class PropertyChangeListeners<T>
             actions.unsubscribeAll();
     }
 
+    public void fireChange( Val<T> owner, Channel channel, @Nullable T newValue, @Nullable T oldValue ) {
+        fireChange(owner, channel, new ItemPair<>(owner.type(), newValue, oldValue));
+    }
+
     void fireChange(
         Val<T> owner,
         Channel channel,
         ItemPair<T> pair
     ) {
-        ValDelegate<T> delegate = Sprouts.factory().delegateOf(owner, channel, pair.change(), pair.newValue());
+        ValDelegate<T> delegate = Sprouts.factory().delegateOf(owner, channel, pair.change(), pair.newValue(), pair.oldValue());
         // We clone this property to avoid concurrent modification
         if ( channel == From.ALL)
             for ( Channel key : _actions.keySet() )
