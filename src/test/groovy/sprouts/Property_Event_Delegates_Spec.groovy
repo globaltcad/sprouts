@@ -42,6 +42,14 @@ class Property_Event_Delegates_Spec extends Specification
             delegate.set(0)
         then : '...we get an exception.'
             thrown(MissingMethodException)
+        when : 'We try to mutate the current value...'
+            delegate.currentValue().set(0)
+        then : '...we get an exception.'
+            thrown(Exception)
+        when : 'We try to mutate the ol value...'
+            delegate.oldValue().set(0)
+        then : '...we get an exception.'
+            thrown(Exception)
     }
 
     def 'The delegate of a property exposes you to the current and previous value of the property.'()
