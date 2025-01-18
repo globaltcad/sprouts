@@ -3,44 +3,55 @@ package sprouts.impl;
 import org.slf4j.Logger;
 import sprouts.Action;
 import sprouts.Subscriber;
+import sprouts.Tuple;
 import sprouts.WeakAction;
 
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 final class ChangeListeners<D> {
 
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(ChangeListeners.class);
 
-    private final List<Action<D>> _actions = new ArrayList<>();
+    private final AtomicReference<Tuple<Action<D>>> _actions = new AtomicReference(Tuple.of(Action.class));
 
 
     ChangeListeners() {}
 
     ChangeListeners(ChangeListeners<D> other) {
-        _actions.addAll(other._actions);
+        _setState(other._getState());
+    }
+
+    private void _setState(Tuple<Action<D>> actions) {
+        _actions.set(actions);
+    }
+
+    @SuppressWarnings("NullAway")
+    private Tuple<Action<D>> _getState() {
+        return _actions.get();
     }
 
     void add(Action<D> action) {
-        getActions(actions -> {
+        updateActions(actions -> {
             if (action instanceof WeakAction) {
                 WeakAction<?, ?> wa = (WeakAction<?, ?>) action;
-                wa.owner().ifPresent(owner -> {
-                    actions.add(action);
-                    WeakReference<ChangeListeners<?>> weakThis = new WeakReference<>(this);
-                    AutomaticUnSubscriber cleaner = new AutomaticUnSubscriber(weakThis, wa);
-                    ChangeListenerCleaner.getInstance().register(owner, cleaner);
-                });
+                return wa.owner().map(owner -> {
+                            WeakReference<ChangeListeners<?>> weakThis = new WeakReference<>(this);
+                            AutomaticUnSubscriber cleaner = new AutomaticUnSubscriber(weakThis, wa);
+                            ChangeListenerCleaner.getInstance().register(owner, cleaner);
+                            return actions.add(action);
+                        })
+                        .orElse(actions);
             } else
-                actions.add(action);
+                return actions.add(action);
         });
     }
 
     void unsubscribe(Subscriber subscriber) {
-        getActions(actions -> actions.removeIf( a -> {
+        updateActions(actions -> actions.removeIf( a -> {
             if ( a instanceof ObserverAsActionImpl) {
                 ObserverAsActionImpl<?> pcl = (ObserverAsActionImpl<?>) a;
                 return pcl.listener() == subscriber;
@@ -53,17 +64,23 @@ final class ChangeListeners<D> {
     }
 
     void unsubscribeAll() {
-        getActions(List::clear);
+        _setState((Tuple) Tuple.of(Action.class));
     }
 
-    synchronized long getActions(Consumer<List<Action<D>>> receiver) {
-        receiver.accept(_actions);
-        return _actions.size();
+    long getActions(Consumer<Tuple<Action<D>>> receiver) {
+        Tuple<Action<D>> actions = _getState();
+        receiver.accept(actions);
+        return actions.size();
+    }
+
+    void updateActions(Function<Tuple<Action<D>>, Tuple<Action<D>>> receiver) {
+        Tuple<Action<D>> actions = _getState();
+        actions = receiver.apply(actions);
+        _setState(actions);
     }
 
     long numberOfChangeListeners() {
-        return getActions(actions -> {
-        });
+        return getActions(actions -> {});
     }
 
     void fireChange(D delegate) {
@@ -85,7 +102,7 @@ final class ChangeListeners<D> {
     public final String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(this.getClass().getSimpleName()).append("[");
-        for (Action<D> action : _actions) {
+        for (Action<D> action : _getState()) {
             try {
                 sb.append(action).append(", ");
             } catch (Exception e) {
@@ -111,7 +128,7 @@ final class ChangeListeners<D> {
             if (strongThis == null)
                 return;
 
-            strongThis.getActions(innerActions -> {
+            strongThis.updateActions(innerActions -> {
                 try {
                     wa.clear();
                 } catch (Exception e) {
@@ -120,7 +137,7 @@ final class ChangeListeners<D> {
                         "removing it from the list of change actions.", wa, e
                     );
                 }
-                innerActions.remove(wa);
+                return innerActions.remove((Action) wa);
             });
         }
     }
