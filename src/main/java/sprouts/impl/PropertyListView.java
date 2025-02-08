@@ -408,7 +408,7 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
 
     /** {@inheritDoc} */
     @Override
-    public final void makeDistinct() {
+    public final Vars<T> makeDistinct() {
         Set<T> checked = new HashSet<>();
         List<Var<T>> retained = new ArrayList<>();
         for ( Var<T> property : _variables ) {
@@ -421,6 +421,7 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
         _variables.clear();
         _variables.addAll(retained);
         _triggerAction( SequenceChange.DISTINCT );
+        return this;
     }
 
     @Override
