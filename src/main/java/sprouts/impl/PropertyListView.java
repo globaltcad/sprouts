@@ -10,7 +10,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Viewables<T> {
+final class PropertyListView<T extends @Nullable Object> implements Viewables<T> {
 
     public static <T, U> Viewables<U> of(U nullObject, U errorObject, Vals<T> source, Function<T, @Nullable U> mapper) {
         Objects.requireNonNull(nullObject);
@@ -164,63 +164,29 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
         return _variables.size();
     }
 
-    /** {@inheritDoc} */
-    @Override public Vars<T> removeAll( Vals<T> properties ) {
-        Vars<T> removal = _allowsNull ? Vars.ofNullable(_type) : Vars.of(_type);
-
-        if ( properties.isMutable() ) {
-            for ( int i = size() - 1; i >= 0; i-- )
-                if ( properties.contains(this.at(i)) )
-                    removal.add( _variables.remove(i) );
-        } else {
-            for ( int i = size() - 1; i >= 0; i-- )
-                if ( properties.contains(this.at(i).orElseNull()) )
-                    removal.add( _variables.remove(i) );
-        }
-
-        _triggerAction( SequenceChange.REMOVE, -1, null, removal.reversed() );
-        return this;
+    private void removeAt( int index, int size ) {
+        removeRange(index, index + size);
     }
 
-    /** {@inheritDoc} */
-    @Override
-    public Vars<T> addAt( int index, Var<T> value ) {
+    private void add( Var<T> var ) {
+        Objects.requireNonNull(var);
+        addAt( size(), var );
+    }
+
+    private void addAt( int index, Var<T> value ) {
         if ( this.allowsNull() != value.allowsNull() )
             throw new IllegalArgumentException("The null safety of the given property does not match this list.");
         _checkNullSafetyOf(value);
         _variables.add(index, value);
         _triggerAction( SequenceChange.ADD, index, value, null );
-        return this;
     }
 
-    /** {@inheritDoc} */
-    @Override
-    public Vars<T> popRange(int from, int to) {
-        if ( from < 0 || to > _variables.size() || from > to )
-            throw new IndexOutOfBoundsException("From: " + from + ", To: " + to + ", Size: " + _variables.size());
-
-        Vars<T> vars = (Vars<T>) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));
-
-        if (from == to)
-            return vars;
-
-        List<Var<T>> subList = _variables.subList( from, to );
-        for ( Var<T> var : subList ) vars.add(var);
-        subList.clear();
-
-        _triggerAction( SequenceChange.REMOVE, from, null, vars );
-
-        return vars;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public Vars<T> removeRange(int from, int to) {
+    private void removeRange(int from, int to) {
         if ( from < 0 || to > _variables.size() || from > to )
             throw new IndexOutOfBoundsException("From: " + from + ", To: " + to + ", Size: " + _variables.size());
 
         if (from == to)
-            return this;
+            return;
 
         Vars<T> removal = (Vars<T>) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));
 
@@ -229,83 +195,11 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
         subList.clear();
 
         _triggerAction( SequenceChange.REMOVE, from, null, removal );
-
-        return this;
     }
 
-    /** {@inheritDoc} */
-    @Override
-    public Vars<T> setAt( int index, Var<T> value ) {
-        if ( index < 0 || index >= _variables.size() )
-            throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + _variables.size());
-
-        _checkNullSafetyOf(value);
-
-        Var<T> old = _variables.get(index);
-
-        if ( !old.equals(value) ) {
-            _variables.set(index, value);
-            _triggerAction(SequenceChange.SET, index, value, old);
-        }
-        return this;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public Vars<T> setRange(int from, int to, T value) {
-        if (from < 0 || to > _variables.size() || from > to)
-            throw new IndexOutOfBoundsException("From: " + from + ", To: " + to + ", Size: " + _variables.size());
-
-        if (!_allowsNull)
-            Objects.requireNonNull(value);
-
-        if (from == to)
-            return this;
-
-        Vars<T> oldVars = (Vars<T>) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));
-        Vars<T> newVars = (Vars<T>) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));
-
-        for (int i = from; i < to; i++) {
-            Var<T> n = _allowsNull ? Var.ofNullable(_type, value) : Var.of(value);
-            Var<T> o = _variables.set(i, n);
-            newVars.add(n);
-            oldVars.add(o);
-        }
-
-        _triggerAction(SequenceChange.SET, from, newVars, oldVars);
-
-        return this;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public Vars<T> setRange(int from, int to, Var<T> value) {
-        if (from < 0 || to > _variables.size() || from > to)
-            throw new IndexOutOfBoundsException("From: " + from + ", To: " + to + ", Size: " + _variables.size());
-
-        _checkNullSafetyOf(value);
-
-        if (from == to)
-            return (Vars<T>) this;
-
-        Vars<T> oldVars = (Vars<T>) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));
-        Vars<T> newVars = (Vars<T>) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));
-
-        for (int i = from; i < to; i++) {
-            Var<T> o = _variables.set(i, value);
-            newVars.add(value);
-            oldVars.add(o);
-        }
-
-        _triggerAction(SequenceChange.SET, from, newVars, oldVars);
-
-        return this;
-    }
-
-    @Override
-    public Vars<T> addAllAt( int index, Vars<T> vars ) {
+    private void addAllAt( int index, Vars<T> vars ) {
         if ( !_checkCanAdd(vars) )
-            return this;
+            return;
 
         if ( index < 0 || index > size() )
             throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + size());
@@ -317,13 +211,11 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
         }
 
         _triggerAction( SequenceChange.ADD, index, vars, null );
-        return this;
     }
 
-    @Override
-    public Vars<T> setAllAt(int index, Vars<T> vars) {
+    private void setAllAt(int index, Vars<T> vars) {
         if ( !_checkCanAdd(vars) )
-            return this;
+            return;
 
         if ( index < 0 || index > size() )
             throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + size());
@@ -345,7 +237,6 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
         }
 
         _triggerAction( SequenceChange.SET, index, newVars, oldVars );
-        return this;
     }
 
     private boolean _checkCanAdd( Vals<T> properties ) {
@@ -360,54 +251,29 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
         return true;
     }
 
-    /** {@inheritDoc} */
-    @Override
-    public Vars<T> retainAll( Vals<T> vars ) {
-        Vars<T> old = _allowsNull ? Vars.ofNullable(_type) : Vars.of(_type);
-
-        if ( vars.isMutable() ) {
-            for (Iterator<Var<T>> it = _variables.iterator(); it.hasNext();) {
-                Var<T> var = it.next();
-                if (!vars.contains(var)) {
-                    old.add(var);
-                    it.remove();
-                }
-            }
-        } else {
-            for (Iterator<Var<T>> it = _variables.iterator(); it.hasNext();) {
-                Var<T> var = it.next();
-                if (!vars.contains(var.orElseNull())) {
-                    old.add(var);
-                    it.remove();
-                }
-            }
-        }
-
-        if ( !old.isEmpty() )
-            _triggerAction( SequenceChange.REMOVE, -1, null, old );
-
-        return this;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public Vars<T> clear() {
+    private void clear() {
         Vars<T> vars = (Vars<T>) (_allowsNull ? Vars.ofNullable(_type, _variables) : Vars.of(_type, _variables));
 
         _variables.clear();
         _triggerAction( SequenceChange.CLEAR, 0, null, vars);
-        return this;
     }
 
-    /** {@inheritDoc} */
-    @Override
     public void sort( Comparator<T> comparator ) {
         _variables.sort( ( a, b ) -> comparator.compare( a.orElseNull(), b.orElseNull() ) );
         _triggerAction( SequenceChange.SORT );
     }
 
-    /** {@inheritDoc} */
-    @Override
+    private void sort() {
+        // First we have to check if the type is comparable:
+        if (Comparable.class.isAssignableFrom(type())) {
+            @SuppressWarnings("unchecked")
+            Comparator<T> comparator = (Comparator<T>) Comparator.naturalOrder();
+            sort(comparator);
+        } else {
+            throw new UnsupportedOperationException("Cannot sort a list of non-comparable types.");
+        }
+    }
+
     public final void makeDistinct() {
         Set<T> checked = new HashSet<>();
         List<Var<T>> retained = new ArrayList<>();
@@ -423,8 +289,7 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
         _triggerAction( SequenceChange.DISTINCT );
     }
 
-    @Override
-    public Vars<T> reversed() {
+    public void reversed() {
         int size = size();
         for ( int i = 0; i < size / 2; i++ ) {
             Var<T> tmp = at(i);
@@ -432,7 +297,6 @@ final class PropertyListView<T extends @Nullable Object> implements Vars<T>, Vie
             _variables.set( size - i - 1, tmp );
         }
         _triggerAction( SequenceChange.REVERSE );
-        return this;
     }
 
     /** {@inheritDoc} */

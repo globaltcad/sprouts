@@ -339,7 +339,7 @@ final class PropertyList<T extends @Nullable Object> implements Vars<T>, Viewabl
 
     /** {@inheritDoc} */
     @Override
-    public final void makeDistinct() {
+    public final Vars<T> makeDistinct() {
         if ( _isImmutable ) throw new UnsupportedOperationException("This is an immutable list.");
         Set<T> checked = new HashSet<>();
         List<Var<T>> retained = new ArrayList<>();
@@ -353,6 +353,7 @@ final class PropertyList<T extends @Nullable Object> implements Vars<T>, Viewabl
         _variables.clear();
         _variables.addAll(retained);
         _triggerAction( SequenceChange.DISTINCT );
+        return this;
     }
 
     @Override

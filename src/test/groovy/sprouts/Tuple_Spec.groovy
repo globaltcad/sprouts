@@ -621,4 +621,32 @@ class Tuple_Spec extends Specification
             !rootDiff.isDirectSuccessorOf(left2Diff)
             !rootDiff.isDirectSuccessorOf(right2Diff)
     }
+
+    def 'Any kind of tuple can be sorted.'( Tuple<Number> aTuple )
+    {
+        reportInfo """
+            The `Tuple` class supports sorting of its instances.
+            You can created a sorted copy of a tuple by calling the `sort()` method.
+        """
+        when : 'We sort the tuple through its `sort` method and then also through the Java list.'
+            var sorted = aTuple.sort()
+            var javaSorted = new ArrayList(aTuple.toList()).sort()
+        then : 'The sorting works exactly like for lists.'
+            sorted.toList() == javaSorted
+
+        where :
+            aTuple << [
+                Tuple.of(Byte, 3 as byte, -2 as byte, 13 as byte, -5 as byte, 0 as byte),
+                Tuple.of(Short, -1 as short, 4 as short, 7 as short, 1 as short, 2 as short),
+                Tuple.of(Integer, 3, 1, -5, 97, 6, 2, 1, 4, -6, 15, 3, 6, 12),
+                Tuple.of(Long, 9L, 22L, 8L, 6L, -1L, 13L, 3L, -5L, 1L, 7L),
+                Tuple.of(Float, -7.0f, -1.5f, 2.0f, 8.4f, -9.0f, 15.0f, -3.0f, 4.0f, -5.0f, 6.0f),
+                Tuple.of(Double, 8d, -3.23d, 19.9d, -2.9d, -1.2d, 0.0d, 3.0d, 1.3d, 1.5d, 4.23d),
+                Tuple.of(BigDecimal, 8.0, -3.23, 19.9, -2.9, -1.2, 0.0, 3.0, 1.3, 1.5, 4.23),
+                Tuple.of(BigInteger, 8 as BigInteger, -3 as BigInteger, 19 as BigInteger, -2 as BigInteger),
+                Tuple.of(Character, 'a' as char, '%' as char, 'Z' as char, '0' as char, '9' as char),
+                Tuple.of(Boolean, true, true, false, true, false, true, false, false, false, true, false),
+                Tuple.of(String, "hello", "world", "from", "Sprouts"),
+            ]
+    }
 }

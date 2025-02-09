@@ -1179,6 +1179,24 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
     }
 
     /**
+     * Removes all properties from {@code this} list which do not satisfy the provided predicate.
+     * So if a property matches the predicate, it will stay in the list.
+     * The predicate will be tested against the properties themselves.
+     *
+     * @param predicate the predicate to test each property.
+     * @return {@code this} list of properties.
+     */
+    default Vars<T> retainIf( Predicate<Var<T>> predicate ) {
+        Vars<T> vars = allowsNull() ? Vars.ofNullable(type()) : Vars.of(type());
+        for ( int i = size() - 1; i >= 0; i-- )
+            if ( !predicate.test(at(i)) )
+                vars.add(at(i));
+
+        this.removeAll(vars); // remove from this list at once and trigger events only once!
+        return this;
+    }
+
+    /**
      * Removes all properties from {@code this} list.
      * This is conceptually equivalent to calling {@link List#clear()} on a regular list.
      *
@@ -1255,7 +1273,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
     /**
      * Removes all duplicate properties from {@code this} list of properties.
      */
-    void makeDistinct();
+    Vars<T> makeDistinct();
 
     /**
      * Reverse the order of the properties in {@code this} list.
