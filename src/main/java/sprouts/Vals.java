@@ -308,7 +308,11 @@ public interface Vals<T extends @Nullable Object> extends Iterable<T> {
      * @return The first property in the list of properties.
      * @throws NoSuchElementException If the list is empty.
      */
-    Val<T> first();
+    default Val<T> first() {
+        if (isEmpty())
+            throw new NoSuchElementException("There is no such property in the list. The list is empty.");
+        return at(0);
+    }
 
     /**
      *  Exposes the last property in the list of properties.
@@ -317,7 +321,11 @@ public interface Vals<T extends @Nullable Object> extends Iterable<T> {
      * @return The last property in the list of properties.
      * @throws NoSuchElementException If the list is empty.
      */
-    Val<T> last();
+    default Val<T> last() {
+        if (isEmpty())
+            throw new NoSuchElementException("There is no such property in the list. The list is empty.");
+        return at(size() - 1);
+    }
 
     /**
      *  The boolean flag that indicates if the list of properties is empty,
@@ -434,7 +442,17 @@ public interface Vals<T extends @Nullable Object> extends Iterable<T> {
      * @param mapper The mapper function.
      * @return A new list of properties.
      */
-    Vals<T> map( Function<T,T> mapper );
+    default Vals<T> map( Function<T,T> mapper ) {
+        Objects.requireNonNull(mapper);
+        @SuppressWarnings("unchecked")
+        Var<T>[] vars = new Var[size()];
+        int i = 0;
+        for ( T v : this ) {
+            T m = mapper.apply( v );
+            vars[i++] = allowsNull() ? Var.ofNullable( type(), m ) : Var.of( m );
+        }
+        return Vars.of( type(), vars );
+    }
 
     /**
      * Use this for mapping a list of properties to another list of properties.
@@ -446,7 +464,14 @@ public interface Vals<T extends @Nullable Object> extends Iterable<T> {
      * @param <U>    The type of the items in the new list of properties.
      * @return A new list of properties.
      */
-    <U extends @Nullable Object> Vals<@Nullable U> mapTo( Class<U> type, Function<@NonNull T,U> mapper );
+    default <U extends @Nullable Object> Vals<@Nullable U> mapTo( Class<@NonNull U> type, Function<@NonNull T,U> mapper ) {
+        Objects.requireNonNull(type);
+        Objects.requireNonNull(mapper);
+        Vars<@Nullable U> vars = Vars.ofNullable(type);
+        for ( int i = 0; i < size(); i++ )
+            vars.add( at( i ).mapTo( type, mapper ) );
+        return vars;
+    }
 
     /**
      *  Turns this list of properties into a stream of items

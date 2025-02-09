@@ -29,26 +29,26 @@ public final class PropertyListChangeListeners<T extends @Nullable Object>
         _actions.unsubscribeAll();
     }
 
-    public void fireChange(SequenceChange type, Vars<T> source) {
+    public void fireChange(SequenceChange type, Vals<T> source) {
         fireChange(type, -1, (Vals<T>) null, null, source);
     }
 
     public void fireChange(
-            SequenceChange type, int index, @Nullable Var<T> newVal, @Nullable Var<T> oldVal, Vars<T> source
+            SequenceChange type, int index, @Nullable Var<T> newVal, @Nullable Var<T> oldVal, Vals<T> source
     ) {
         ValsDelegate<T> listChangeDelegate = _createDelegate(index, type, newVal, oldVal, source);
         _actions.fireChange(listChangeDelegate);
     }
 
     public void fireChange(
-            SequenceChange type, int index, @Nullable Vals<T> newVals, @Nullable Vals<T> oldVals, Vars<T> source
+            SequenceChange type, int index, @Nullable Vals<T> newVals, @Nullable Vals<T> oldVals, Vals<T> source
     ) {
         ValsDelegate<T> listChangeDelegate = _createDelegate(index, type, newVals, oldVals, source);
         _actions.fireChange(listChangeDelegate);
     }
 
     private ValsDelegate<T> _createDelegate(
-            int index, SequenceChange type, @Nullable Var<T> newVal, @Nullable Var<T> oldVal, Vars<T> source
+            int index, SequenceChange type, @Nullable Var<T> newVal, @Nullable Var<T> oldVal, Vals<T> source
     ) {
         Class<T> _type = source.type();
         Var[] cloned = source.toValList().stream().map(Val::ofNullable).toArray(Var[]::new);
@@ -64,7 +64,7 @@ public final class PropertyListChangeListeners<T extends @Nullable Object>
     }
 
     private ValsDelegate<T> _createDelegate(
-            int index, SequenceChange type, @Nullable Vals<T> newVals, @Nullable Vals<T> oldVals, Vars<T> source
+            int index, SequenceChange type, @Nullable Vals<T> newVals, @Nullable Vals<T> oldVals, Vals<T> source
     ) {
         boolean _allowsNull = source.allowsNull();
         Class<T> _type = source.type();
