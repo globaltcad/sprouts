@@ -645,6 +645,7 @@ class Tuple_Spec extends Specification
                 Tuple.of(BigDecimal, 8.0, -3.23, 19.9, -2.9, -1.2, 0.0, 3.0, 1.3, 1.5, 4.23),
                 Tuple.of(BigInteger, 8 as BigInteger, -3 as BigInteger, 19 as BigInteger, -2 as BigInteger),
                 Tuple.of(Character, 'a' as char, '%' as char, 'Z' as char, '0' as char, '9' as char),
+                Tuple.of(Boolean, true, true, false, true, false, true, false, false, false, true, false),
                 Tuple.of(String, "hello", "world", "from", "Sprouts"),
             ]
     }
