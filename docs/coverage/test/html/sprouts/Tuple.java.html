@@ -754,7 +754,7 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      */
     default Tuple&lt;T&gt; removeIf( Predicate&lt;T&gt; predicate ) {
 <span class="fc" id="L756">        List&lt;T&gt; itemsToKeep = new ArrayList&lt;&gt;();</span>
-<span class="pc bpc" id="L757" title="1 of 2 branches missed.">        int singleSequenceIndex = size() &gt; 0 ? -2 : -1;</span>
+<span class="fc bfc" id="L757" title="All 2 branches covered.">        int singleSequenceIndex = size() &gt; 0 ? -2 : -1;</span>
 <span class="fc bfc" id="L758" title="All 2 branches covered.">        for ( int i = 0; i &lt; size(); i++ ) {</span>
 <span class="fc" id="L759">            T item = get(i);</span>
 <span class="fc bfc" id="L760" title="All 2 branches covered.">            if ( !predicate.test(item) ) {</span>
@@ -966,22 +966,22 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @throws NullPointerException      if {@code null} is not allowed and the {@code item} is {@code null}.
      */
     default Tuple&lt;T&gt; setRange( int from, int to, T value ) {
-<span class="nc bnc" id="L969" title="All 6 branches missed.">        if ( from &lt; 0 || to &gt; size() || from &gt; to )</span>
+<span class="pc bpc" id="L969" title="3 of 6 branches missed.">        if ( from &lt; 0 || to &gt; size() || from &gt; to )</span>
 <span class="nc" id="L970">            throw new IndexOutOfBoundsException(&quot;From: &quot; + from + &quot;, To: &quot; + to + &quot;, Size: &quot; + size());</span>
 
-<span class="nc bnc" id="L972" title="All 2 branches missed.">        if ( !allowsNull() )</span>
-<span class="nc" id="L973">            Objects.requireNonNull(value);</span>
+<span class="pc bpc" id="L972" title="1 of 2 branches missed.">        if ( !allowsNull() )</span>
+<span class="fc" id="L973">            Objects.requireNonNull(value);</span>
 
-<span class="nc bnc" id="L975" title="All 2 branches missed.">        if ( from == to )</span>
+<span class="pc bpc" id="L975" title="1 of 2 branches missed.">        if ( from == to )</span>
 <span class="nc" id="L976">            return this;</span>
 
-<span class="nc bnc" id="L978" title="All 2 branches missed.">        Tuple&lt;T&gt; toBeSet = (Tuple&lt;T&gt;) (allowsNull() ? Tuple.ofNullable(type()) : Tuple.of(type()));</span>
-<span class="nc bnc" id="L979" title="All 2 branches missed.">        for ( int i = from; i &lt; to; i++ ) {</span>
-<span class="nc bnc" id="L980" title="All 2 branches missed.">            Maybe&lt;T&gt; newProperty = allowsNull() ? Maybe.ofNullable(type(), value) : Maybe.of(value);</span>
-<span class="nc" id="L981">            toBeSet = toBeSet.add(newProperty);</span>
+<span class="pc bpc" id="L978" title="1 of 2 branches missed.">        Tuple&lt;T&gt; toBeSet = (Tuple&lt;T&gt;) (allowsNull() ? Tuple.ofNullable(type()) : Tuple.of(type()));</span>
+<span class="fc bfc" id="L979" title="All 2 branches covered.">        for ( int i = from; i &lt; to; i++ ) {</span>
+<span class="pc bpc" id="L980" title="1 of 2 branches missed.">            Maybe&lt;T&gt; newProperty = allowsNull() ? Maybe.ofNullable(type(), value) : Maybe.of(value);</span>
+<span class="fc" id="L981">            toBeSet = toBeSet.add(newProperty);</span>
         }
 
-<span class="nc" id="L984">        return setAllAt( from, toBeSet );</span>
+<span class="fc" id="L984">        return setAllAt( from, toBeSet );</span>
     }
 
     /**
@@ -1341,10 +1341,10 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      */
     default Tuple&lt;T&gt; sort() {
         // First we have to check if the type is comparable:
-<span class="nc bnc" id="L1344" title="All 2 branches missed.">        if (Comparable.class.isAssignableFrom(type())) {</span>
+<span class="pc bpc" id="L1344" title="1 of 2 branches missed.">        if (Comparable.class.isAssignableFrom(type())) {</span>
             @SuppressWarnings(&quot;unchecked&quot;)
-<span class="nc" id="L1346">            Comparator&lt;T&gt; comparator = (Comparator&lt;T&gt;) Comparator.naturalOrder();</span>
-<span class="nc" id="L1347">            return sort(comparator);</span>
+<span class="fc" id="L1346">            Comparator&lt;T&gt; comparator = (Comparator&lt;T&gt;) Comparator.naturalOrder();</span>
+<span class="fc" id="L1347">            return sort(comparator);</span>
         } else {
 <span class="nc" id="L1349">            throw new UnsupportedOperationException(&quot;Cannot sort an immutable tuple of non-comparable types.&quot;);</span>
         }

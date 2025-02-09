@@ -20,7 +20,8 @@ public interface SproutsFactory
         Val&lt;T&gt; source,
         Channel channel,
         SingleChange change,
-        @Nullable T newValue
+        @Nullable T newValue,
+        @Nullable T oldValue
     );
 
     &lt;T&gt; ValsDelegate&lt;T&gt; delegateOf(
@@ -36,25 +37,25 @@ public interface SproutsFactory
     Event eventOf( Event.Executor executor );
 
     default &lt;T&gt; Maybe&lt;@Nullable T&gt; maybeOfNullable( Class&lt;T&gt; type, @Nullable T item ) {
-<span class="fc" id="L39">        return valOfNullable( type, item );</span>
+<span class="fc" id="L40">        return valOfNullable( type, item );</span>
     }
 
     default &lt;T&gt; Maybe&lt;@Nullable T&gt; maybeOfNull( Class&lt;T&gt; type ) {
-<span class="fc" id="L43">        return valOfNull( type );</span>
+<span class="fc" id="L44">        return valOfNull( type );</span>
     }
 
     default &lt;T&gt; Maybe&lt;T&gt; maybeOf( T item ) {
-<span class="fc" id="L47">        return valOf( item );</span>
+<span class="fc" id="L48">        return valOf( item );</span>
     }
 
     default &lt;T&gt; Maybe&lt;T&gt; maybeOf( Maybe&lt;T&gt; toBeCopied ) {
-<span class="nc" id="L51">        Objects.requireNonNull(toBeCopied);</span>
-<span class="nc" id="L52">        return valOf( toBeCopied.orElseThrowUnchecked() );</span>
+<span class="nc" id="L52">        Objects.requireNonNull(toBeCopied);</span>
+<span class="nc" id="L53">        return valOf( toBeCopied.orElseThrowUnchecked() );</span>
     }
 
     default &lt;T extends @Nullable Object&gt; Maybe&lt;@Nullable T&gt; maybeOfNullable( Maybe&lt;T&gt; toBeCopied ) {
-<span class="nc" id="L56">        Objects.requireNonNull(toBeCopied);</span>
-<span class="nc" id="L57">        return valOfNullable( toBeCopied.type(), toBeCopied.orElseNull() );</span>
+<span class="nc" id="L57">        Objects.requireNonNull(toBeCopied);</span>
+<span class="nc" id="L58">        return valOfNullable( toBeCopied.type(), toBeCopied.orElseNull() );</span>
     }
 
     &lt;T&gt; Val&lt;@Nullable T&gt; valOfNullable( Class&lt;T&gt; type, @Nullable T item );

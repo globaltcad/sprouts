@@ -207,10 +207,10 @@ public final class TupleImpl&lt;T extends @Nullable Object&gt; implements Tuple&
 
     @Override
     public Tuple&lt;T&gt; sort(Comparator&lt;T&gt; comparator ) {
-<span class="nc" id="L210">        Object newItems = _clone(_data, _type, _allowsNull);</span>
-<span class="nc" id="L211">        _sort(newItems, comparator);</span>
-<span class="nc" id="L212">        SequenceDiff diff = SequenceDiff.of(this, SequenceChange.SORT, -1, _length(_data));</span>
-<span class="nc" id="L213">        return new TupleImpl&lt;&gt;(_allowsNull, _type, newItems, diff);</span>
+<span class="fc" id="L210">        Object newItems = _clone(_data, _type, _allowsNull);</span>
+<span class="fc" id="L211">        _sort(newItems, comparator);</span>
+<span class="fc" id="L212">        SequenceDiff diff = SequenceDiff.of(this, SequenceChange.SORT, -1, _length(_data));</span>
+<span class="fc" id="L213">        return new TupleImpl&lt;&gt;(_allowsNull, _type, newItems, diff);</span>
     }
 
     @Override
@@ -319,22 +319,22 @@ public final class TupleImpl&lt;T extends @Nullable Object&gt; implements Tuple&
     private static Object _createArray( Class&lt;?&gt; type, boolean nullable, int size ) {
 <span class="fc" id="L320">        type = _toActualPrimitive(type, nullable);</span>
 <span class="fc bfc" id="L321" title="All 2 branches covered.">        if ( type.isPrimitive() ) {</span>
-<span class="pc bpc" id="L322" title="1 of 2 branches missed.">            if ( type == boolean.class )</span>
-<span class="nc" id="L323">                return new boolean[size];</span>
+<span class="fc bfc" id="L322" title="All 2 branches covered.">            if ( type == boolean.class )</span>
+<span class="fc" id="L323">                return new boolean[size];</span>
 <span class="fc bfc" id="L324" title="All 2 branches covered.">            if ( type == byte.class )</span>
 <span class="fc" id="L325">                return new byte[size];</span>
-<span class="pc bpc" id="L326" title="1 of 2 branches missed.">            if ( type == char.class )</span>
-<span class="nc" id="L327">                return new char[size];</span>
-<span class="pc bpc" id="L328" title="1 of 2 branches missed.">            if ( type == short.class )</span>
-<span class="nc" id="L329">                return new short[size];</span>
-<span class="pc bpc" id="L330" title="1 of 2 branches missed.">            if ( type == int.class )</span>
+<span class="fc bfc" id="L326" title="All 2 branches covered.">            if ( type == char.class )</span>
+<span class="fc" id="L327">                return new char[size];</span>
+<span class="fc bfc" id="L328" title="All 2 branches covered.">            if ( type == short.class )</span>
+<span class="fc" id="L329">                return new short[size];</span>
+<span class="fc bfc" id="L330" title="All 2 branches covered.">            if ( type == int.class )</span>
 <span class="fc" id="L331">                return new int[size];</span>
-<span class="nc bnc" id="L332" title="All 2 branches missed.">            if ( type == long.class )</span>
-<span class="nc" id="L333">                return new long[size];</span>
-<span class="nc bnc" id="L334" title="All 2 branches missed.">            if ( type == float.class )</span>
-<span class="nc" id="L335">                return new float[size];</span>
-<span class="nc bnc" id="L336" title="All 2 branches missed.">            if ( type == double.class )</span>
-<span class="nc" id="L337">                return new double[size];</span>
+<span class="fc bfc" id="L332" title="All 2 branches covered.">            if ( type == long.class )</span>
+<span class="fc" id="L333">                return new long[size];</span>
+<span class="fc bfc" id="L334" title="All 2 branches covered.">            if ( type == float.class )</span>
+<span class="fc" id="L335">                return new float[size];</span>
+<span class="pc bpc" id="L336" title="1 of 2 branches missed.">            if ( type == double.class )</span>
+<span class="fc" id="L337">                return new double[size];</span>
         }
 <span class="fc" id="L339">        return java.lang.reflect.Array.newInstance(type, size);</span>
     }
@@ -351,22 +351,22 @@ public final class TupleImpl&lt;T extends @Nullable Object&gt; implements Tuple&
             So we first convert to the actual primitive type and then check if
             it is a primitive type.
         */
-<span class="pc bpc" id="L354" title="1 of 2 branches missed.">        if ( type == Boolean.class )</span>
-<span class="nc" id="L355">            return boolean.class;</span>
+<span class="fc bfc" id="L354" title="All 2 branches covered.">        if ( type == Boolean.class )</span>
+<span class="fc" id="L355">            return boolean.class;</span>
 <span class="fc bfc" id="L356" title="All 2 branches covered.">        if ( type == Byte.class )</span>
 <span class="fc" id="L357">            return byte.class;</span>
-<span class="pc bpc" id="L358" title="1 of 2 branches missed.">        if ( type == Character.class )</span>
-<span class="nc" id="L359">            return char.class;</span>
-<span class="pc bpc" id="L360" title="1 of 2 branches missed.">        if ( type == Short.class )</span>
-<span class="nc" id="L361">            return short.class;</span>
+<span class="fc bfc" id="L358" title="All 2 branches covered.">        if ( type == Character.class )</span>
+<span class="fc" id="L359">            return char.class;</span>
+<span class="fc bfc" id="L360" title="All 2 branches covered.">        if ( type == Short.class )</span>
+<span class="fc" id="L361">            return short.class;</span>
 <span class="fc bfc" id="L362" title="All 2 branches covered.">        if ( type == Integer.class )</span>
 <span class="fc" id="L363">            return int.class;</span>
-<span class="pc bpc" id="L364" title="1 of 2 branches missed.">        if ( type == Long.class )</span>
-<span class="nc" id="L365">            return long.class;</span>
-<span class="pc bpc" id="L366" title="1 of 2 branches missed.">        if ( type == Float.class )</span>
-<span class="nc" id="L367">            return float.class;</span>
-<span class="pc bpc" id="L368" title="1 of 2 branches missed.">        if ( type == Double.class )</span>
-<span class="nc" id="L369">            return double.class;</span>
+<span class="fc bfc" id="L364" title="All 2 branches covered.">        if ( type == Long.class )</span>
+<span class="fc" id="L365">            return long.class;</span>
+<span class="fc bfc" id="L366" title="All 2 branches covered.">        if ( type == Float.class )</span>
+<span class="fc" id="L367">            return float.class;</span>
+<span class="fc bfc" id="L368" title="All 2 branches covered.">        if ( type == Double.class )</span>
+<span class="fc" id="L369">            return double.class;</span>
 <span class="fc" id="L370">        return type;</span>
     }
 
@@ -380,19 +380,19 @@ public final class TupleImpl&lt;T extends @Nullable Object&gt; implements Tuple&
 
     private static Object _tryFlatten( Object array, Class&lt;?&gt; type, boolean nullable ) {
 <span class="fc" id="L382">        type = _toActualPrimitive(type, nullable);</span>
-<span class="pc bpc" id="L383" title="3 of 4 branches missed.">        if ( type == byte.class &amp;&amp; array instanceof Object[] ) {</span>
-<span class="nc" id="L384">            byte[] flattened = new byte[((Object[]) array).length];</span>
-<span class="nc bnc" id="L385" title="All 2 branches missed.">            for ( int i = 0; i &lt; flattened.length; i++ ) {</span>
-<span class="nc" id="L386">                flattened[i] = (byte) ((Object[]) array)[i];</span>
+<span class="fc bfc" id="L383" title="All 4 branches covered.">        if ( type == byte.class &amp;&amp; array instanceof Object[] ) {</span>
+<span class="fc" id="L384">            byte[] flattened = new byte[((Object[]) array).length];</span>
+<span class="fc bfc" id="L385" title="All 2 branches covered.">            for ( int i = 0; i &lt; flattened.length; i++ ) {</span>
+<span class="fc" id="L386">                flattened[i] = (byte) ((Object[]) array)[i];</span>
             }
-<span class="nc" id="L388">            return flattened;</span>
+<span class="fc" id="L388">            return flattened;</span>
         }
-<span class="pc bpc" id="L390" title="3 of 4 branches missed.">        if ( type == short.class &amp;&amp; array instanceof Object[] ) {</span>
-<span class="nc" id="L391">            short[] flattened = new short[((Object[]) array).length];</span>
-<span class="nc bnc" id="L392" title="All 2 branches missed.">            for ( int i = 0; i &lt; flattened.length; i++ ) {</span>
-<span class="nc" id="L393">                flattened[i] = (short) ((Object[]) array)[i];</span>
+<span class="fc bfc" id="L390" title="All 4 branches covered.">        if ( type == short.class &amp;&amp; array instanceof Object[] ) {</span>
+<span class="fc" id="L391">            short[] flattened = new short[((Object[]) array).length];</span>
+<span class="fc bfc" id="L392" title="All 2 branches covered.">            for ( int i = 0; i &lt; flattened.length; i++ ) {</span>
+<span class="fc" id="L393">                flattened[i] = (short) ((Object[]) array)[i];</span>
             }
-<span class="nc" id="L395">            return flattened;</span>
+<span class="fc" id="L395">            return flattened;</span>
         }
 <span class="fc bfc" id="L397" title="All 4 branches covered.">        if ( type == int.class &amp;&amp; array instanceof Object[] ) {</span>
 <span class="fc" id="L398">            int[] flattened = new int[((Object[]) array).length];</span>
@@ -401,40 +401,40 @@ public final class TupleImpl&lt;T extends @Nullable Object&gt; implements Tuple&
             }
 <span class="fc" id="L402">            return flattened;</span>
         }
-<span class="pc bpc" id="L404" title="3 of 4 branches missed.">        if ( type == long.class &amp;&amp; array instanceof Object[] ) {</span>
-<span class="nc" id="L405">            long[] flattened = new long[((Object[]) array).length];</span>
-<span class="nc bnc" id="L406" title="All 2 branches missed.">            for ( int i = 0; i &lt; flattened.length; i++ ) {</span>
-<span class="nc" id="L407">                flattened[i] = (long) ((Object[]) array)[i];</span>
+<span class="fc bfc" id="L404" title="All 4 branches covered.">        if ( type == long.class &amp;&amp; array instanceof Object[] ) {</span>
+<span class="fc" id="L405">            long[] flattened = new long[((Object[]) array).length];</span>
+<span class="fc bfc" id="L406" title="All 2 branches covered.">            for ( int i = 0; i &lt; flattened.length; i++ ) {</span>
+<span class="fc" id="L407">                flattened[i] = (long) ((Object[]) array)[i];</span>
             }
-<span class="nc" id="L409">            return flattened;</span>
+<span class="fc" id="L409">            return flattened;</span>
         }
-<span class="pc bpc" id="L411" title="3 of 4 branches missed.">        if ( type == float.class &amp;&amp; array instanceof Object[] ) {</span>
-<span class="nc" id="L412">            float[] flattened = new float[((Object[]) array).length];</span>
-<span class="nc bnc" id="L413" title="All 2 branches missed.">            for ( int i = 0; i &lt; flattened.length; i++ ) {</span>
-<span class="nc" id="L414">                flattened[i] = (float) ((Object[]) array)[i];</span>
+<span class="fc bfc" id="L411" title="All 4 branches covered.">        if ( type == float.class &amp;&amp; array instanceof Object[] ) {</span>
+<span class="fc" id="L412">            float[] flattened = new float[((Object[]) array).length];</span>
+<span class="fc bfc" id="L413" title="All 2 branches covered.">            for ( int i = 0; i &lt; flattened.length; i++ ) {</span>
+<span class="fc" id="L414">                flattened[i] = (float) ((Object[]) array)[i];</span>
             }
-<span class="nc" id="L416">            return flattened;</span>
+<span class="fc" id="L416">            return flattened;</span>
         }
-<span class="pc bpc" id="L418" title="3 of 4 branches missed.">        if ( type == double.class &amp;&amp; array instanceof Object[] ) {</span>
-<span class="nc" id="L419">            double[] flattened = new double[((Object[]) array).length];</span>
-<span class="nc bnc" id="L420" title="All 2 branches missed.">            for ( int i = 0; i &lt; flattened.length; i++ ) {</span>
-<span class="nc" id="L421">                flattened[i] = (double) ((Object[]) array)[i];</span>
+<span class="fc bfc" id="L418" title="All 4 branches covered.">        if ( type == double.class &amp;&amp; array instanceof Object[] ) {</span>
+<span class="fc" id="L419">            double[] flattened = new double[((Object[]) array).length];</span>
+<span class="fc bfc" id="L420" title="All 2 branches covered.">            for ( int i = 0; i &lt; flattened.length; i++ ) {</span>
+<span class="fc" id="L421">                flattened[i] = (double) ((Object[]) array)[i];</span>
             }
-<span class="nc" id="L423">            return flattened;</span>
+<span class="fc" id="L423">            return flattened;</span>
         }
-<span class="pc bpc" id="L425" title="3 of 4 branches missed.">        if ( type == char.class &amp;&amp; array instanceof Object[] ) {</span>
-<span class="nc" id="L426">            char[] flattened = new char[((Object[]) array).length];</span>
-<span class="nc bnc" id="L427" title="All 2 branches missed.">            for ( int i = 0; i &lt; flattened.length; i++ ) {</span>
-<span class="nc" id="L428">                flattened[i] = (char) ((Object[]) array)[i];</span>
+<span class="fc bfc" id="L425" title="All 4 branches covered.">        if ( type == char.class &amp;&amp; array instanceof Object[] ) {</span>
+<span class="fc" id="L426">            char[] flattened = new char[((Object[]) array).length];</span>
+<span class="fc bfc" id="L427" title="All 2 branches covered.">            for ( int i = 0; i &lt; flattened.length; i++ ) {</span>
+<span class="fc" id="L428">                flattened[i] = (char) ((Object[]) array)[i];</span>
             }
-<span class="nc" id="L430">            return flattened;</span>
+<span class="fc" id="L430">            return flattened;</span>
         }
-<span class="pc bpc" id="L432" title="3 of 4 branches missed.">        if ( type == boolean.class &amp;&amp; array instanceof Object[] ) {</span>
-<span class="nc" id="L433">            boolean[] flattened = new boolean[((Object[]) array).length];</span>
-<span class="nc bnc" id="L434" title="All 2 branches missed.">            for ( int i = 0; i &lt; flattened.length; i++ ) {</span>
-<span class="nc" id="L435">                flattened[i] = (boolean) ((Object[]) array)[i];</span>
+<span class="fc bfc" id="L432" title="All 4 branches covered.">        if ( type == boolean.class &amp;&amp; array instanceof Object[] ) {</span>
+<span class="fc" id="L433">            boolean[] flattened = new boolean[((Object[]) array).length];</span>
+<span class="fc bfc" id="L434" title="All 2 branches covered.">            for ( int i = 0; i &lt; flattened.length; i++ ) {</span>
+<span class="fc" id="L435">                flattened[i] = (boolean) ((Object[]) array)[i];</span>
             }
-<span class="nc" id="L437">            return flattened;</span>
+<span class="fc" id="L437">            return flattened;</span>
         }
 <span class="fc" id="L439">        return array;</span>
     }
@@ -450,20 +450,20 @@ public final class TupleImpl&lt;T extends @Nullable Object&gt; implements Tuple&
     private static int _length( Object array ) {
 <span class="fc bfc" id="L451" title="All 2 branches covered.">        if ( array instanceof byte[] )</span>
 <span class="fc" id="L452">            return ((byte[]) array).length;</span>
-<span class="pc bpc" id="L453" title="1 of 2 branches missed.">        if ( array instanceof short[] )</span>
-<span class="nc" id="L454">            return ((short[]) array).length;</span>
+<span class="fc bfc" id="L453" title="All 2 branches covered.">        if ( array instanceof short[] )</span>
+<span class="fc" id="L454">            return ((short[]) array).length;</span>
 <span class="fc bfc" id="L455" title="All 2 branches covered.">        if ( array instanceof int[] )</span>
 <span class="fc" id="L456">            return ((int[]) array).length;</span>
-<span class="pc bpc" id="L457" title="1 of 2 branches missed.">        if ( array instanceof long[] )</span>
-<span class="nc" id="L458">            return ((long[]) array).length;</span>
-<span class="pc bpc" id="L459" title="1 of 2 branches missed.">        if ( array instanceof float[] )</span>
-<span class="nc" id="L460">            return ((float[]) array).length;</span>
-<span class="pc bpc" id="L461" title="1 of 2 branches missed.">        if ( array instanceof double[] )</span>
-<span class="nc" id="L462">            return ((double[]) array).length;</span>
-<span class="pc bpc" id="L463" title="1 of 2 branches missed.">        if ( array instanceof char[] )</span>
-<span class="nc" id="L464">            return ((char[]) array).length;</span>
-<span class="pc bpc" id="L465" title="1 of 2 branches missed.">        if ( array instanceof boolean[] )</span>
-<span class="nc" id="L466">            return ((boolean[]) array).length;</span>
+<span class="fc bfc" id="L457" title="All 2 branches covered.">        if ( array instanceof long[] )</span>
+<span class="fc" id="L458">            return ((long[]) array).length;</span>
+<span class="fc bfc" id="L459" title="All 2 branches covered.">        if ( array instanceof float[] )</span>
+<span class="fc" id="L460">            return ((float[]) array).length;</span>
+<span class="fc bfc" id="L461" title="All 2 branches covered.">        if ( array instanceof double[] )</span>
+<span class="fc" id="L462">            return ((double[]) array).length;</span>
+<span class="fc bfc" id="L463" title="All 2 branches covered.">        if ( array instanceof char[] )</span>
+<span class="fc" id="L464">            return ((char[]) array).length;</span>
+<span class="fc bfc" id="L465" title="All 2 branches covered.">        if ( array instanceof boolean[] )</span>
+<span class="fc" id="L466">            return ((boolean[]) array).length;</span>
 <span class="fc" id="L467">        return java.lang.reflect.Array.getLength(array);</span>
     }
     
@@ -475,13 +475,36 @@ public final class TupleImpl&lt;T extends @Nullable Object&gt; implements Tuple&
     }
 
     private static void _sort( Object array, Comparator&lt;?&gt; comparator ) {
-<span class="nc" id="L478">        java.util.Arrays.sort((Object[]) array, (Comparator) comparator);</span>
-<span class="nc" id="L479">    }</span>
+<span class="fc bfc" id="L478" title="All 2 branches covered.">        if ( array instanceof byte[] )</span>
+<span class="fc" id="L479">            java.util.Arrays.sort((byte[]) array);</span>
+<span class="fc bfc" id="L480" title="All 2 branches covered.">        else if ( array instanceof short[] )</span>
+<span class="fc" id="L481">            java.util.Arrays.sort((short[]) array);</span>
+<span class="fc bfc" id="L482" title="All 2 branches covered.">        else if ( array instanceof int[] )</span>
+<span class="fc" id="L483">            java.util.Arrays.sort((int[]) array);</span>
+<span class="fc bfc" id="L484" title="All 2 branches covered.">        else if ( array instanceof long[] )</span>
+<span class="fc" id="L485">            java.util.Arrays.sort((long[]) array);</span>
+<span class="fc bfc" id="L486" title="All 2 branches covered.">        else if ( array instanceof float[] )</span>
+<span class="fc" id="L487">            java.util.Arrays.sort((float[]) array);</span>
+<span class="fc bfc" id="L488" title="All 2 branches covered.">        else if ( array instanceof double[] )</span>
+<span class="fc" id="L489">            java.util.Arrays.sort((double[]) array);</span>
+<span class="fc bfc" id="L490" title="All 2 branches covered.">        else if ( array instanceof char[] )</span>
+<span class="fc" id="L491">            java.util.Arrays.sort((char[]) array);</span>
+<span class="fc bfc" id="L492" title="All 2 branches covered.">        else if ( array instanceof boolean[] ) {</span>
+<span class="fc" id="L493">            int numberOfFalse = 0;</span>
+<span class="fc bfc" id="L494" title="All 2 branches covered.">            for ( boolean b : (boolean[]) array ) {</span>
+<span class="fc bfc" id="L495" title="All 2 branches covered.">                if ( !b )</span>
+<span class="fc" id="L496">                    numberOfFalse++;</span>
+            }
+<span class="fc" id="L498">            java.util.Arrays.fill((boolean[]) array, 0, numberOfFalse, false);</span>
+<span class="fc" id="L499">            java.util.Arrays.fill((boolean[]) array, numberOfFalse, ((boolean[])array).length, true);</span>
+<span class="fc" id="L500">        } else</span>
+<span class="fc" id="L501">            java.util.Arrays.sort((Object[]) array, (Comparator) comparator);</span>
+<span class="fc" id="L502">    }</span>
     
     private static &lt;T&gt; void _each( Object array, Class&lt;T&gt; type, java.util.function.Consumer&lt;T&gt; consumer ) {
-<span class="fc bfc" id="L482" title="All 2 branches covered.">        for ( int i = 0; i &lt; _length(array); i++ ) {</span>
-<span class="fc" id="L483">            consumer.accept(_getAt(i, array, type));</span>
+<span class="fc bfc" id="L505" title="All 2 branches covered.">        for ( int i = 0; i &lt; _length(array); i++ ) {</span>
+<span class="fc" id="L506">            consumer.accept(_getAt(i, array, type));</span>
         }
-<span class="fc" id="L485">    }</span>
+<span class="fc" id="L508">    }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>
