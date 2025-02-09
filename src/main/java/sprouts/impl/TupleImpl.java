@@ -475,7 +475,30 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Se
     }
 
     private static void _sort( Object array, Comparator<?> comparator ) {
-        java.util.Arrays.sort((Object[]) array, (Comparator) comparator);
+        if ( array instanceof byte[] )
+            java.util.Arrays.sort((byte[]) array);
+        else if ( array instanceof short[] )
+            java.util.Arrays.sort((short[]) array);
+        else if ( array instanceof int[] )
+            java.util.Arrays.sort((int[]) array);
+        else if ( array instanceof long[] )
+            java.util.Arrays.sort((long[]) array);
+        else if ( array instanceof float[] )
+            java.util.Arrays.sort((float[]) array);
+        else if ( array instanceof double[] )
+            java.util.Arrays.sort((double[]) array);
+        else if ( array instanceof char[] )
+            java.util.Arrays.sort((char[]) array);
+        else if ( array instanceof boolean[] ) {
+            int numberOfTrue = 0;
+            for ( boolean b : (boolean[]) array ) {
+                if ( b )
+                    numberOfTrue++;
+            }
+            java.util.Arrays.fill((boolean[]) array, 0, numberOfTrue, true);
+            java.util.Arrays.fill((boolean[]) array, numberOfTrue, ((boolean[])array).length, false);
+        } else
+            java.util.Arrays.sort((Object[]) array, (Comparator) comparator);
     }
     
     private static <T> void _each( Object array, Class<T> type, java.util.function.Consumer<T> consumer ) {
