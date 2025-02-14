@@ -154,6 +154,24 @@ import java.time.Month
                 return new Loan(this.loanId, this.book, this.member, this.loanDate, this.returnDate, returned);
             }
         }
+        
+        static record TrainStation(String name, String description, LocalDate foundingDate, List<String> trains) {
+            public TrainStation withName(String name) {
+                return new TrainStation(name, this.description, this.foundingDate, this.trains);
+            }
+    
+            public TrainStation withDescription(String description) {
+                return new TrainStation(this.name, description, this.foundingDate, this.trains);
+            }
+    
+            public TrainStation withBirthDate(LocalDate birthDate) {
+                return new TrainStation(this.name, this.description, birthDate, this.trains);
+            }
+    
+            public TrainStation withBooks(List<String> books) {
+                return new TrainStation(this.name, this.description, this.foundingDate, books);
+            }
+        }
         ```
 ''')
 @Subject([PropertyLens, Var])
@@ -520,7 +538,7 @@ class Property_Lenses_Spec extends Specification
             stationTrace == [newStation, newStation2, newStation2.withName("Kyoto-eki")]
     }
 
-    def 'You can create lenses from other lenses to dive deeper into nested data structures.'()
+    def 'You can create lens properties from other lens properties to dive deeper into nested data structures.'()
     {
         reportInfo """
             As previously mentioned, a property lens effectively behaves like a regular property,
@@ -545,8 +563,8 @@ class Property_Lenses_Spec extends Specification
             var loanProperty = Var.of(loan)
 
         and: """
-            Create lenses for nested records and also trace lists for recording
-            state changes of the original property and all of its lenses.
+            Create property lenses for nested records and also trace lists for recording
+            state changes of the original property and all of its lens properties.
         """
             var bookLens = loanProperty.zoomTo(Loan::book, Loan::withBook)
             var memberLens = loanProperty.zoomTo(Loan::member, Loan::withMember)
@@ -557,10 +575,10 @@ class Property_Lenses_Spec extends Specification
             var memberTrace = []
             var authorTrace = []
 
-            loanProperty.onChange(From.ALL, it -> loanTrace << it.currentValue().orElseNull())
-            bookLens.onChange(From.ALL, it -> bookTrace << it.currentValue().orElseNull())
-            memberLens.onChange(From.ALL, it -> memberTrace << it.currentValue().orElseNull())
-            authorLens.onChange(From.ALL, it -> authorTrace << it.currentValue().orElseNull())
+            Viewable.cast(loanProperty).onChange(From.ALL, it -> loanTrace << it.currentValue().orElseNull())
+            Viewable.cast(bookLens).onChange(From.ALL, it -> bookTrace << it.currentValue().orElseNull())
+            Viewable.cast(memberLens).onChange(From.ALL, it -> memberTrace << it.currentValue().orElseNull())
+            Viewable.cast(authorLens).onChange(From.ALL, it -> authorTrace << it.currentValue().orElseNull())
 
         expect: """
             The initial values are correct.
