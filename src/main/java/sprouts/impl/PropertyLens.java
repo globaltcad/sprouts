@@ -5,8 +5,6 @@ import org.slf4j.Logger;
 import sprouts.*;
 
 import java.util.Objects;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 
 /**
  * The Sprouts Property Lens is based on the Lens design pattern, which is a functional programming
@@ -43,72 +41,95 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
 {
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(PropertyLens.class);
 
-    public static <T, B> Var<B> of(Var<T> source, B nullObject, Function<T, B> getter, BiFunction<T, B, T> wither) {
+    public static <T, B> Var<B> of(Var<T> source, B nullObject, Lens<T, B> lens) {
         Objects.requireNonNull(nullObject, "Null object must not be null");
-        Objects.requireNonNull(getter, "Getter must not be null");
-        Objects.requireNonNull(wither, "Wither must not be null");
+        Objects.requireNonNull(lens, "Lens must not be null");
         Class<B> itemType = Util.expectedClassFromItem(nullObject);
-        Function<T,B> nullSafeGetter = newParentValue -> {
-            if ( newParentValue == null )
-                return nullObject;
+        Lens<T, B> nullSafeLens = new Lens<T, B>() {
+            @Override
+            public B getter(T parentValue) throws Exception {
+                if ( parentValue == null )
+                    return nullObject;
 
-            return getter.apply(newParentValue);
-        };
-        BiFunction<T,B,T> nullSafeWither = (parentValue, newValue) -> {
-            if ( parentValue == null )
-                return null;
+                return lens.getter(parentValue);
+            }
 
-            return wither.apply(parentValue, newValue);
+            @Override
+            public T wither(T parentValue, B newValue) throws Exception {
+                if ( parentValue == null )
+                    return Util.fakeNonNull(null);
+
+                return lens.wither(parentValue, newValue);
+            }
         };
-        B initialValue = nullSafeGetter.apply(source.orElseNull());
+        B initialValue;
+        try {
+            initialValue = nullSafeLens.getter(Util.fakeNonNull(source.orElseNull()));
+        } catch ( Exception e ) {
+            throw new IllegalArgumentException(
+                    "Failed to fetch initial value from source property " +
+                    "using the provided lens getter.",
+                    e
+                );
+        }
         return new PropertyLens<>(
                 itemType,
                 Sprouts.factory().defaultId(),
                 false,//does not allow null
                 initialValue, //may NOT be null
                 source,
-                nullSafeGetter,
-                nullSafeWither,
+                nullSafeLens,
                 null
         );
     }
 
-    public static <T, B> Var<B> ofNullable(Class<B> type, Var<T> source, Function<T, B> getter, BiFunction<T, B, T> wither) {
+    public static <T, B> Var<B> ofNullable(Class<B> type, Var<T> source, Lens<T, B> lens) {
         Objects.requireNonNull(type, "Type must not be null");
-        Objects.requireNonNull(getter, "Getter must not be null");
-        Objects.requireNonNull(wither, "Wither must not be null");
-        Function<T,B> nullSafeGetter = newParentValue -> {
-            if ( newParentValue == null )
-                return null;
+        Objects.requireNonNull(lens, "Lens must not be null");
+        Lens<T, B> nullSafeLens = new Lens<T, B>() {
+            @Override
+            public B getter(T parentValue) throws Exception {
+                if ( parentValue == null )
+                    return Util.fakeNonNull(null);
 
-            return getter.apply(newParentValue);
-        };
-        BiFunction<T,B,T> nullSafeWither = (parentValue, newValue) -> {
-            if ( parentValue == null )
-                return null;
+                return lens.getter(parentValue);
+            }
 
-            return wither.apply(parentValue, newValue);
+            @Override
+            public T wither(T parentValue, B newValue) throws Exception {
+                if ( parentValue == null )
+                    return Util.fakeNonNull(null);
+
+                return lens.wither(parentValue, newValue);
+            }
         };
-        B initialValue = nullSafeGetter.apply(source.orElseNull());
+        B initialValue;
+        try {
+            initialValue = nullSafeLens.getter(Util.fakeNonNull(source.orElseNull()));
+        } catch ( Exception e ) {
+            throw new IllegalArgumentException(
+                    "Failed to fetch initial value from source property " +
+                    "using the provided lens getter.",
+                    e
+                );
+        }
         return new PropertyLens<>(
                 type,
                 Sprouts.factory().defaultId(),
                 true,//allows null
                 initialValue, //may be null
                 source,
-                nullSafeGetter,
-                nullSafeWither,
+                nullSafeLens,
                 null
         );
     }
 
     private final PropertyChangeListeners<T> _changeListeners;
-    private final String             _id;
-    private final boolean            _nullable;
-    private final Class<T>           _type;
-    private final Var<A>             _parent;
-    Function<A,@Nullable T>          _getter;
-    BiFunction<A,@Nullable T,A>      _setter;
+    private final String              _id;
+    private final boolean             _nullable;
+    private final Class<T>            _type;
+    private final Var<A>              _parent;
+    private final Lens<@Nullable A,@Nullable T> _lens;
 
     private @Nullable T _lastItem;
 
@@ -119,8 +140,7 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
             boolean                         allowsNull,
             @Nullable T                     initialItem, // may be null
             Var<A>                          parent,
-            Function<A,@Nullable T>         getter,
-            BiFunction<A,@Nullable T,A>     wither,
+            Lens<A,@Nullable T>             lens,
             @Nullable PropertyChangeListeners<T> changeListeners
     ) {
         Objects.requireNonNull(id);
@@ -129,8 +149,7 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
         _id              = id;
         _nullable        = allowsNull;
         _parent          = parent;
-        _getter          = getter;
-        _setter          = wither;
+        _lens            = lens;
         _changeListeners = changeListeners == null ? new PropertyChangeListeners<>() : new PropertyChangeListeners<>(changeListeners);
 
         _lastItem = initialItem;
@@ -156,12 +175,12 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
     private @Nullable T _fetchItemFromParent() {
         T fetchedValue = _lastItem;
         try {
-            fetchedValue = _getter.apply(_parent.orElseNull());
+            fetchedValue = _lens.getter(Util.fakeNonNull(_parent.orElseNull()));
         } catch ( Exception e ) {
             log.error(
                     "Failed to fetch item of type '"+_type+"' for property lens "+ _idForError(_id) +
                     "from parent property "+ _idForError(_parent.id())+"(with item type '"+_parent.type()+"') " +
-                    "using the current getter lambda.",
+                    "using the current lens getter.",
                     e
             );
         }
@@ -170,7 +189,7 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
 
     private void _setInParentAndInternally(Channel channel, @Nullable T newItem) {
         try {
-            A newParentItem = _setter.apply(_parent.orElseNull(), newItem);
+            A newParentItem = _lens.wither(Util.fakeNonNull(_parent.orElseNull()), Util.fakeNonNull(newItem));
             _lastItem = newItem;
             _parent.set(channel, newParentItem);
         } catch ( Exception e ) {
@@ -239,7 +258,7 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
 
     /** {@inheritDoc} */
     @Override public final Var<T> withId( String id ) {
-        return new PropertyLens<>(_type, id, _nullable, _item(), _parent, _getter, _setter, _changeListeners);
+        return new PropertyLens<>(_type, id, _nullable, _item(), _parent, _lens, _changeListeners);
     }
 
     @Override

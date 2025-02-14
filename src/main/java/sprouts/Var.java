@@ -383,7 +383,8 @@ public interface Var<T extends @Nullable Object> extends Val<T>
     }
 
     /**
-     * Creates a lens property (Var) that focuses on a specific field of the current data structure.
+     * Creates a lens property (Var) that focuses on a specific field on the property item type,
+     * using a getter and a wither function to access and update the field.
      * This method is used to zoom into an immutable nested data structure, allowing read and write
      * operations on a specific field via getter and wither functions.
      *
@@ -392,17 +393,17 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      * to access and update them individually.
      *
      * <pre>{@code
-     * var author = new Author("John", "Doe", LocalDate.of(1829, 8, 12), List.of("Book1", "Book2"));
-     * var authorProperty = Var.of(author);
+     *   var author = new Author("John", "Doe", LocalDate.of(1829, 8, 12), Tuple.of("Book1", "Book2"));
+     *   var authorProperty = Var.of(author);
      *
-     * // Creating lenses for Author fields
-     * var firstNameLens = authorProperty.zoomTo(Author::getFirstName, Author::withFirstName);
-     * var lastNameLens = authorProperty.zoomTo(Author::getLastName, Author::withLastName);
-     * var birthDateLens = authorProperty.zoomTo(Author::getBirthDate, Author::withBirthDate);
-     * var booksLens = authorProperty.zoomTo(Author::getBooks, Author::withBooks);
+     *   // Creating lenses for Author fields
+     *   var firstNameLens = authorProperty.zoomTo(Author::firstName, Author::withFirstName);
+     *   var lastNameLens = authorProperty.zoomTo(Author::lastName, Author::withLastName);
+     *   var birthDateLens = authorProperty.zoomTo(Author::birthDate, Author::withBirthDate);
+     *   var booksLens = authorProperty.zoomTo(Author::books, Author::withBooks);
      *
-     * // Usage example: Update the first name via the lens
-     * firstNameLens.set("Jane");
+     *   // Usage example: Update the first name via the lens
+     *   firstNameLens.set("Jane");
      * }</pre>
      *
      * @param <B>     The type of the field that the lens will focus on.
@@ -410,13 +411,59 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      * @param wither  BiFunction to set or update the value of the focused field and return a new instance
      *                of the parent object with the updated field.
      * @return A new Var that acts as a lens focusing on the specified field of the parent object.
+     * @throws NullPointerException If the given getter or wither function is null.
      */
     default <B> Var<B> zoomTo( Function<T,B> getter, BiFunction<T,B,T> wither ) {
-        return Sprouts.factory().lensOf( this, getter, wither );
+        return zoomTo( Lens.of(getter, wither) );
     }
 
     /**
-     * Creates a lens property (Var) that focuses on a specific field of the current data structure,
+     * Creates a lens property (Var) that focuses on a specific field of the current property item
+     * using a supplied {@link Lens} implementation.
+     * This method is used to zoom into an immutable nested data structure, allowing read and write
+     * operations on a specific field via getter and wither functions.
+     *
+     * <p>For example, consider a record {@code TrainStation} with various fields
+     * like {@code name}, {@code location}, and {@code platforms}. Using {@code zoomTo},
+     * you can supply a {@link Lens} implementation to create a lens for a specific field.
+     *
+     * <pre>{@code
+     *   record TrainStation(String name, String location, Tuple<Platform> platforms) {...}
+     *   var lensToPlatforms = Lens.of(TrainStation::platforms, TrainStation::withPlatforms);
+     *   // Create a TrainStation property
+     *   var station = new TrainStation("Grand Central", "New York", Tuple.of(new Platform(1), new Platform(2)));
+     *   var stationProperty = Var.of(station);
+     *   // Create a stateful lens for the platforms field
+     *   var platformsProperty = stationProperty.zoomTo(lensToPlatforms);
+     *   }</pre>
+     *   Note that the {@link Lens} is a generic interface. So instead of the {@link Lens#of(Function, BiFunction)}
+     *   factory method, you may also create more elaborate lenses through a custom implementation.<br>
+     *   The lens in the above example may also be created like so:
+     * <pre>{@code
+     *   var lensToPlatforms = new Lens<TrainStation, Tuple<Platform>>() {
+     *     @Override
+     *     public Tuple<Platform> getter( TrainStation station ) {
+     *         return station.platforms();
+     *     }
+     *     @Override
+     *     public TrainStation wither( TrainStation station, Tuple<Platform> platforms ) {
+     *         return station.withPlatforms(platforms);
+     *     }
+     *   };
+     * }</pre>
+     *
+     * @param <B>  The type of the field that the lens will focus on.
+     * @param lens The {@link Lens} implementation to focus on the specified field of the parent object.
+     * @return A new Var that acts as a lens focusing on the specified field of the parent object.
+     * @throws NullPointerException If the given lens is null.
+     */
+    default <B> Var<B> zoomTo( Lens<T,B> lens ) {
+        Objects.requireNonNull(lens);
+        return Sprouts.factory().lensOf( this, lens );
+    }
+
+    /**
+     * Creates a lens property (Var) that focuses on a specific field of the current property item,
      * allowing a default value for when the current value is null.
      * This method is useful when dealing with potentially null parent property values,
      * providing a null object to handle such cases gracefully.
@@ -428,33 +475,43 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      * worry about a {@code NullPointerException}.</b>
      *
      * <pre>{@code
-     * var bookProperty = Var.ofNull(Book.class);
-     * Publisher nullPublisher = new Publisher("Unknown");
+     *   // We declare a Book and a Publisher record
+     *   record Book(String title, Publisher publisher) {...}
+     *   record Publisher(String name) {...}
      *
-     * // Creating a lens for the Publisher field with a null object
-     * var publisherLens = bookProperty.zoomTo(nullPublisher, Book::getPublisher, Book::withPublisher);
-     * assert publisherLens.get() == nullPublisher;
+     *   // A nullable book property and a "null" publisher object
+     *   var bookProperty = Var.ofNull(Book.class);
+     *   Publisher nullPublisher = new Publisher("Unknown");
      *
-     * // Updating the book property with a new publisher
-     * var book = new Book("Some Title", new Publisher("Publisher1"));
-     * bookProperty.set(book);
-     * assert publisherLens.get() == book.getPublisher();
+     *   // Creating a null safe lens property for the publisher field
+     *   var publisherLens = bookProperty.zoomTo(nullPublisher,Book::publisher,Book::withPublisher);
+     *   assert publisherLens.get() == nullPublisher;
+     *
+     *   // Updating the book property with a new publisher
+     *   var book = new Book("Some Title", new Publisher("Publisher1"));
+     *   bookProperty.set(book);
+     *   assert publisherLens.get() == book.publisher();
      * }</pre>
      *
      * @param <B>        The type of the field that the lens will focus on.
-     * @param nullObject The object to use when the parent object is null.
+     * @param nullObject The object to use when the focused field or its parent object is null.
      * @param getter     Function to get the current value of the focused field from the parent object.
      * @param wither     BiFunction to set or update the value of the focused field and return a new instance
      *                   of the parent object with the updated field.
      * @return A new Var that acts as a lens focusing on the specified field of the parent object, using
      *         the null object when the parent object is null.
+     * @throws NullPointerException If the given getter or wither function is null.
      */
     default <B> Var<B> zoomTo( B nullObject, Function<T,B> getter, BiFunction<T,B,T> wither ) {
-        return Sprouts.factory().lensOf( this, nullObject, getter, wither );
+        return this.zoomTo( nullObject, Lens.of(getter, wither) );
+    }
+
+    default <B> Var<B> zoomTo( B nullObject, Lens<T,B> lens ) {
+        return Sprouts.factory().lensOf( this, nullObject, lens );
     }
 
     /**
-     * Creates a nullable lens property (Var) that focuses on a specific nullable field of the current data structure.
+     * Creates a nullable lens property (Var) that focuses on a specific nullable field of the current property item.
      * This method is used to zoom into an immutable nested data structure, allowing read and write operations on
      * a specific nullable field via getter and wither functions.
      *
@@ -480,7 +537,11 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      * @return A new Var that acts as a lens focusing on the specified nullable field of the parent object.
      */
     default <B extends @Nullable Object> Var<B> zoomToNullable( Class<B> type, Function<T,B> getter, BiFunction<T,B,T> wither ) {
-        return Sprouts.factory().lensOfNullable(type, this, getter, wither);
+        return this.zoomToNullable( type, Lens.of(getter, wither) );
+    }
+
+    default <B extends @Nullable Object> Var<B> zoomToNullable( Class<B> type, Lens<T,B> lens ) {
+        return Sprouts.factory().lensOfNullable(type, this, lens);
     }
 
 }
