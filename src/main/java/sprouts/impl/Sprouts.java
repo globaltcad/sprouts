@@ -1,6 +1,7 @@
 package sprouts.impl;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.NullUnmarked;
 import org.jspecify.annotations.Nullable;
 import sprouts.*;
 
@@ -195,8 +196,13 @@ public final class Sprouts implements SproutsFactory
     }
 
     @Override
-    public <T, B> Var<B> lensOf(Var<T> source, Function<T, B> getter, BiFunction<T, B, T> wither) {
-        B initialValue = getter.apply(source.orElseNull());
+    public <T, B> Var<B> lensOf(Var<T> source, Lens<T, B> lens) {
+        B initialValue;
+        try {
+            initialValue = lens.getter(Util.fakeNonNull(source.orElseNull()));
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Lens getter must not throw an exception", e);
+        }
         Class<B> type = Util.expectedClassFromItem(initialValue);
         return new PropertyLens<>(
                 type,
@@ -204,26 +210,23 @@ public final class Sprouts implements SproutsFactory
                 false,//does not allow null
                 initialValue, //may NOT be null
                 source,
-                getter,
-                wither,
+                lens,
                 null
             );
     }
 
     @Override
-    public <T, B> Var<B> lensOf(Var<T> source, B nullObject, Function<T, B> getter, BiFunction<T, B, T> wither) {
+    public <T, B> Var<B> lensOf(Var<T> source, B nullObject, Lens<T, B> lens) {
         Objects.requireNonNull(nullObject, "Null object must not be null");
-        Objects.requireNonNull(getter, "Getter must not be null");
-        Objects.requireNonNull(wither, "Wither must not be null");
-        return PropertyLens.of(source, nullObject, getter, wither);
+        Objects.requireNonNull(lens, "lens must not be null");
+        return PropertyLens.of(source, nullObject, lens);
     }
 
     @Override
-    public <T, B> Var<B> lensOfNullable(Class<B> type, Var<T> source, Function<T, B> getter, BiFunction<T, B, T> wither) {
+    public <T, B> Var<B> lensOfNullable(Class<B> type, Var<T> source, Lens<T, B> lens) {
         Objects.requireNonNull(type, "Type must not be null");
-        Objects.requireNonNull(getter, "Getter must not be null");
-        Objects.requireNonNull(wither, "Wither must not be null");
-        return PropertyLens.ofNullable(type, source, getter, wither);
+        Objects.requireNonNull(lens, "letter must not be null");
+        return PropertyLens.ofNullable(type, source, lens);
     }
 
     @Override public <T> Var<T> varOfNullable(Class<T> type, @Nullable T item ) {

@@ -1,7 +1,6 @@
 package sprouts
 
 import groovy.transform.CompileDynamic
-import spock.lang.Ignore
 import spock.lang.Narrative
 import spock.lang.Specification
 import spock.lang.Subject
@@ -257,6 +256,24 @@ class Property_Lenses_Spec extends Specification
         }
     }
 
+    static record TrainStation(String name, String description, LocalDate foundingDate, List<String> trains) {
+        public TrainStation withName(String name) {
+            return new TrainStation(name, this.description, this.foundingDate, this.trains);
+        }
+
+        public TrainStation withDescription(String description) {
+            return new TrainStation(this.name, description, this.foundingDate, this.trains);
+        }
+
+        public TrainStation withBirthDate(LocalDate birthDate) {
+            return new TrainStation(this.name, this.description, birthDate, this.trains);
+        }
+
+        public TrainStation withBooks(List<String> books) {
+            return new TrainStation(this.name, this.description, this.foundingDate, books);
+        }
+    }
+
     def 'Many lens properties can be created from a regular property.'()
     {
         reportInfo """
@@ -286,11 +303,11 @@ class Property_Lenses_Spec extends Specification
             var birthDateTrace = []
             var booksTrace = []
             var authorTrace = []
-            firstNameLens.onChange(From.ALL,it -> firstNameTrace << it.currentValue().orElseNull() )
-            lastNameLens.onChange(From.ALL,it -> lastNameTrace << it.currentValue().orElseNull() )
-            birthDateLens.onChange(From.ALL,it -> birthDateTrace << it.currentValue().orElseNull() )
-            booksLens.onChange(From.ALL,it -> booksTrace << it.currentValue().orElseNull() )
-            authorProperty.onChange(From.ALL,it -> authorTrace << it.currentValue().orElseNull() )
+            Viewable.cast(firstNameLens).onChange(From.ALL,it -> firstNameTrace << it.currentValue().orElseNull() )
+            Viewable.cast(lastNameLens).onChange(From.ALL,it -> lastNameTrace << it.currentValue().orElseNull() )
+            Viewable.cast(birthDateLens).onChange(From.ALL,it -> birthDateTrace << it.currentValue().orElseNull() )
+            Viewable.cast(booksLens).onChange(From.ALL,it -> booksTrace << it.currentValue().orElseNull() )
+            Viewable.cast(authorProperty).onChange(From.ALL,it -> authorTrace << it.currentValue().orElseNull() )
 
         expect: 'Initial values are correct:'
             firstNameLens.get() == author.firstName()
@@ -375,6 +392,132 @@ class Property_Lenses_Spec extends Specification
             birthDateTrace == [LocalDate.of(1997, 9, 3), LocalDate.of(2002, 5, 17)]
             booksTrace == [["Book3", "Book4"]]
             authorTrace == [newAuthor, newAuthor2, newAuthor2.withFirstName("Raffaela")]
+    }
+
+    def 'Many lens properties can be created from a regular property and instances of the `Lens` interface.'()
+    {
+        reportInfo """
+            Note that a lens only focuses on a single field of the targeted data structure.
+            So if the original property changes its state to a completely new instance of the data structure,
+            then the lens will only receive an update event if the focused field of the new instance is different
+            from the focused field of the old instance.
+        """
+        given: """
+            For this example we will again use the Author record
+            together with anonymous instances of the `Lens` interface
+            to demonstrate how each property of the record can be
+            accessed and updated using a lens property.
+            
+            We also assert that the lenses receive updates when the
+            the record property they focus on is updated.
+        """
+            var trainStation = new TrainStation("Shin-Osaka", "Cool", LocalDate.of(1964, 10, 1), ["Train1", "Train2"])
+            var stationProperty = Var.of(trainStation)
+        and :
+            var nameLens        = Lens.of(TrainStation::name,         TrainStation::withName)
+            var descriptionLens = Lens.of(TrainStation::description,  TrainStation::withDescription)
+            var foundingLens = Lens.of(TrainStation::foundingDate, TrainStation::withBirthDate)
+            var trainsLens    = Lens.of(TrainStation::trains,       TrainStation::withBooks)
+        and : 'We create lenses for each property of the TrainStation record:'
+            var nameLensProp = stationProperty.zoomTo(nameLens)
+            var descriptionLensProp = stationProperty.zoomTo(descriptionLens)
+            var foundingLensProp = stationProperty.zoomTo(foundingLens)
+            var trainsLensProp    = stationProperty.zoomTo(trainsLens)
+        and : 'We also create lists and listeners for recording all change events:'
+            var nameTrace = []
+            var descriptionTrace = []
+            var foundingTrace = []
+            var trainsTrace = []
+            var stationTrace = []
+            Viewable.cast(nameLensProp).onChange(From.ALL,it -> nameTrace << it.currentValue().orElseNull() )
+            Viewable.cast(descriptionLensProp).onChange(From.ALL,it -> descriptionTrace << it.currentValue().orElseNull() )
+            Viewable.cast(foundingLensProp).onChange(From.ALL,it -> foundingTrace << it.currentValue().orElseNull() )
+            Viewable.cast(trainsLensProp).onChange(From.ALL,it -> trainsTrace << it.currentValue().orElseNull() )
+            Viewable.cast(stationProperty).onChange(From.ALL,it -> stationTrace << it.currentValue().orElseNull() )
+
+        expect: 'Initial values are correct:'
+            nameLensProp.get() == trainStation.name()
+            descriptionLensProp.get() == trainStation.description()
+            foundingLensProp.get() == trainStation.foundingDate()
+            trainsLensProp.get() == trainStation.trains()
+            stationProperty.get() == trainStation
+
+        when : 'We create a completely new and completely different TrainStation record:'
+            var newStation = new TrainStation("Amsterdam-Central", "Nice", LocalDate.of(1889, 10, 15), ["Train3", "Train4"])
+            stationProperty.set(newStation)
+
+        then : 'The lenses have updated values:'
+            nameLensProp.get() == newStation.name()
+            descriptionLensProp.get() == newStation.description()
+            foundingLensProp.get() == newStation.foundingDate()
+            trainsLensProp.get() == newStation.trains()
+            stationProperty.get() == newStation
+        and : 'All change events were recorded:'
+            nameTrace == ["Amsterdam-Central"]
+            descriptionTrace == ["Nice"]
+            foundingTrace == [LocalDate.of(1889, 10, 15)]
+            trainsTrace == [["Train3", "Train4"]]
+            stationTrace == [newStation]
+
+        when : 'We update the TrainStation in a way where effectively nothing changes:'
+            stationProperty.set(newStation)
+
+        then : 'The lenses have the same values as before:'
+            nameLensProp.get() == newStation.name()
+            descriptionLensProp.get() == newStation.description()
+            foundingLensProp.get() == newStation.foundingDate()
+            trainsLensProp.get() == newStation.trains()
+            stationProperty.get() == newStation
+        and : 'No additional change events were recorded:'
+            nameTrace == ["Amsterdam-Central"]
+            descriptionTrace == ["Nice"]
+            foundingTrace == [LocalDate.of(1889, 10, 15)]
+            trainsTrace == [["Train3", "Train4"]]
+            stationTrace == [newStation]
+
+        when : 'We update the TrainStation in a way where only 2 properties change:'
+            var newStation2 = newStation.withName("Vienna-Central").withBirthDate(LocalDate.of(2014, 10, 10))
+            stationProperty.set(newStation2)
+
+        then : 'The lenses have updated values:'
+            nameLensProp.get() == newStation2.name()
+            descriptionLensProp.get() == newStation2.description()
+            foundingLensProp.get() == newStation2.foundingDate()
+            trainsLensProp.get() == newStation2.trains()
+            stationProperty.get() == newStation2
+        and : 'Only the relevant change events were recorded:'
+            nameTrace == ["Amsterdam-Central", "Vienna-Central"]
+            descriptionTrace == ["Nice"]
+            foundingTrace == [LocalDate.of(1889, 10, 15), LocalDate.of(2014, 10, 10)]
+            trainsTrace == [["Train3", "Train4"]]
+            stationTrace == [newStation, newStation2]
+
+        when : """
+            We modify one of the lenses, then this will automatically
+            update the full value of the original property.
+            The other lenses on the other hand will not receive any updates
+            because the focused field of the original property have not changed:
+        """
+            nameLensProp.set("Kyoto-eki")
+
+        then : 'The original property has updated values:'
+            stationProperty.get() == newStation2.withName("Kyoto-eki")
+        and : 'Only the relevant change events were recorded:'
+            nameTrace == ["Amsterdam-Central", "Vienna-Central", "Kyoto-eki"]
+            descriptionTrace == ["Nice"]
+            foundingTrace == [LocalDate.of(1889, 10, 15), LocalDate.of(2014, 10, 10)]
+            trainsTrace == [["Train3", "Train4"]]
+            stationTrace == [newStation, newStation2, newStation2.withName("Kyoto-eki")]
+
+        when : 'We pass a value to a lens which is equal to the current value of the lens:'
+            descriptionLensProp.set("Nice")
+
+        then : 'No change events are recorded:'
+            nameTrace == ["Amsterdam-Central", "Vienna-Central", "Kyoto-eki"]
+            descriptionTrace == ["Nice"]
+            foundingTrace == [LocalDate.of(1889, 10, 15), LocalDate.of(2014, 10, 10)]
+            trainsTrace == [["Train3", "Train4"]]
+            stationTrace == [newStation, newStation2, newStation2.withName("Kyoto-eki")]
     }
 
     def 'You can create lenses from other lenses to dive deeper into nested data structures.'()
@@ -670,10 +813,16 @@ class Property_Lenses_Spec extends Specification
             var author = new Author("John", "Doe", LocalDate.of(1829, 8, 12), ["Book1", "Book2"])
             var authorProperty = Var.of(author)
 
-        when: "Creating a lens with a null default value"
+        when: "Creating a lens property with a null default value"
             authorProperty.zoomTo(null, Author::firstName, Author::withFirstName)
 
         then: "An exception is thrown"
+            thrown(NullPointerException)
+
+        when: "Creating a lens property from a `Lens` with a null default value"
+            authorProperty.zoomTo(null, Lens.of(Author::firstName, Author::withFirstName))
+
+        then: "An exception is thrown again."
             thrown(NullPointerException)
     }
 

@@ -88,11 +88,11 @@ public interface SproutsFactory
 
     <T extends @Nullable Object, U extends @Nullable Object> Viewable<@Nullable U> viewOfNullable( Class<U> type, Val<T> source, Function<T, @Nullable U> mapper );
 
-    <T extends @Nullable Object, B extends @Nullable Object> Var<B> lensOf( Var<T> source, Function<T,B> getter, BiFunction<T,B,T> wither );
+    <T extends @Nullable Object, B extends @Nullable Object> Var<B> lensOf( Var<T> source, Lens<T, B> lens );
 
-    <T extends @Nullable Object, B extends @Nullable Object> Var<B> lensOf( Var<T> source, B nullObject, Function<T,B> getter, BiFunction<T,B,T> wither );
+    <T extends @Nullable Object, B extends @Nullable Object> Var<B> lensOf( Var<T> source, B nullObject, Lens<T, B> lens);
 
-    <T extends @Nullable Object, B extends @Nullable Object> Var<B> lensOfNullable( Class<B> type, Var<T> source, Function<T,B> getter, BiFunction<T,B,T> wither );
+    <T extends @Nullable Object, B extends @Nullable Object> Var<B> lensOfNullable( Class<B> type, Var<T> source, Lens<T, B> lens );
 
     <T> Var<@Nullable T> varOfNullable( Class<T> type, @Nullable T item );
 
