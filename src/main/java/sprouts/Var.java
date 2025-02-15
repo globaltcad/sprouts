@@ -441,11 +441,9 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      *   The lens in the above example may also be created like so:
      * <pre>{@code
      *   var lensToPlatforms = new Lens<TrainStation, Tuple<Platform>>() {
-     *     @Override
      *     public Tuple<Platform> getter( TrainStation station ) {
      *         return station.platforms();
      *     }
-     *     @Override
      *     public TrainStation wither( TrainStation station, Tuple<Platform> platforms ) {
      *         return station.withPlatforms(platforms);
      *     }
