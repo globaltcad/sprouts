@@ -308,26 +308,91 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @return True if any of the items of this tuple wraps the given value.
      */
     default boolean contains( @Nullable T value ) {
-        return indexOf(value) != -1;
+        return firstIndexOf(value) != -1;
     }
 
     /**
-     *  Use this to find the index of an item.
-     *  If the item is not found, -1 will be returned and in case
-     *  of the item having multiple occurrences, the index of the first occurrence will be returned.
+     *  Use this to find the first index of an item in the tuple sequence.
+     *  If the item is not found, -1 will be returned and in case of the item
+     *  having multiple occurrences, then only the index of the first
+     *  occurrence will be returned.
      *
      * @param value The value to search for.
      * @return The index of the {@link Maybe} that wraps the given value, or -1 if not found.
      */
-    default int indexOf( @Nullable T value )
-    {
-        int index = 0;
-        for ( T v : this ) {
-            if ( Val.equals(v,value) )
-                return index;
-            index++;
+    default int firstIndexOf( @Nullable T value ) {
+        return firstIndexStartingFrom(0, value);
+    }
+
+    /**
+     *  Use this to find the index of an item after a certain index.
+     *  If the item is not found, -1 will be returned and in case
+     *  of the item having multiple occurrences, the index of the first occurrence will be returned.
+     *
+     * @param index The index to start the search from.
+     * @param value The value to search for.
+     * @return The index of the {@link Maybe} that wraps the given value, or -1 if not found.
+     * @throws IndexOutOfBoundsException if the index is negative.
+     */
+    default int firstIndexStartingFrom(int index, @Nullable T value ) {
+        if ( index < 0 )
+            throw new IndexOutOfBoundsException("The index is negative: " + index);
+        for ( int i = index; i < size(); i++ ) {
+            if ( Val.equals(get(i), value) )
+                return i;
         }
         return -1;
+    }
+
+    /**
+     *  Use this to find the last index of an item in the tuple sequence.
+     *  If the item is not found, -1 will be returned and in case of the item
+     *  having multiple occurrences, then only the index of the last
+     *  occurrence will be returned.
+     *
+     * @param value The value to search for.
+     * @return The index of the {@link Maybe} that wraps the given value, or -1 if not found.
+     */
+    default int lastIndexOf( @Nullable T value ) {
+        return lastIndexBefore(size(), value);
+    }
+
+    /**
+     *  Use this to find the index of an item before a certain index.
+     *  If the item is not found, -1 will be returned and in case
+     *  of the item having multiple occurrences, the index of the last occurrence will be returned.
+     *
+     * @param index The index to start the search from.
+     * @param value The value to search for.
+     * @return The index of the {@link Maybe} that wraps the given value, or -1 if not found.
+     * @throws IndexOutOfBoundsException if the index is negative.
+     */
+    default int lastIndexBefore( int index, @Nullable T value ) {
+        if ( index < 0 )
+            throw new IndexOutOfBoundsException("The index is negative: " + index);
+        for ( int i = index - 1; i >= 0; i-- ) {
+            if ( Val.equals(get(i), value) )
+                return i;
+        }
+        return -1;
+    }
+
+    /**
+     *  Finds all indices of the given value in this tuple of items and
+     *  returns them as an array of integers.
+     *  If the value is not found, an empty array will be returned and
+     *  if there are multiple occurrences of the same value, all indices will be returned.
+     *
+     * @param value The value to search for.
+     * @return An array of integers with the indices of the given value in this tuple.
+     */
+    default int[] indicesOf( T value ) {
+        List<Integer> indices = new ArrayList<>();
+        for ( int i = 0; i < size(); i++ ) {
+            if ( Val.equals(get(i), value) )
+                indices.add(i);
+        }
+        return indices.stream().mapToInt(Integer::intValue).toArray();
     }
 
     /**
@@ -341,8 +406,8 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @param value The {@link Maybe} to search for in this tuple.
      * @return The index of the given {@link Maybe} in this tuple, or -1 if not found.
      */
-    default int indexOf( Maybe<T> value ) {
-        return indexOf(value.orElseNull());
+    default int firstIndexOf( Maybe<T> value ) {
+        return firstIndexOf(value.orElseNull());
     }
 
     /**
@@ -546,10 +611,10 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      */
     default Tuple<T> remove( T item ) {
         Tuple<T> result = this;
-        int index = result.indexOf(item);
+        int index = result.firstIndexOf(item);
         while ( index >= 0 ) {
             result = result.removeAt(index);
-            index = result.indexOf(item);
+            index = result.firstIndexOf(item);
         }
         return result;
     }
@@ -579,10 +644,10 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
         if ( !this.allowsNull() && item.isEmpty() )
             return this;
         Tuple<T> result = this;
-        int index = result.indexOf(item);
+        int index = result.firstIndexOf(item);
         while ( index >= 0 ) {
             result = result.removeAt(index);
-            index = result.indexOf(item);
+            index = result.firstIndexOf(item);
         }
         return result;
     }
@@ -595,7 +660,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @return A new tuple of items with the desired change.
      */
     default Tuple<T> removeFirstFound( T item ) {
-        int index = indexOf(item);
+        int index = firstIndexOf(item);
         return index < 0 ? this : removeRange( index, index + 1 );
     }
     
@@ -626,7 +691,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
         Objects.requireNonNull(maybeItem);
         if ( !allowsNull() && maybeItem.isEmpty() )
             return this;
-        int index = indexOf(maybeItem);
+        int index = firstIndexOf(maybeItem);
         return index < 0 ? this : removeRange( index, index + 1 );
     }
 
@@ -639,7 +704,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @throws NoSuchElementException if the value is not found.
      */
     default Tuple<T> removeFirstFoundOrThrow( T item ) {
-        int index = indexOf(item);
+        int index = firstIndexOf(item);
         if ( index < 0 )
             throw new NoSuchElementException("No such element: " + item);
         return removeRange( index, index + 1 );
@@ -656,7 +721,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      */
     default Tuple<T> removeFirstFoundOrThrow( Maybe<T> item ) {
         Objects.requireNonNull(item);
-        int index = indexOf(item);
+        int index = firstIndexOf(item);
         if ( index < 0 )
             throw new NoSuchElementException("No such element: " + item);
         return removeRange( index, index + 1 );

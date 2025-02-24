@@ -649,4 +649,66 @@ class Tuple_Spec extends Specification
                 Tuple.of(String, "hello", "world", "from", "Sprouts"),
             ]
     }
+
+    def 'Use `firstIndexOf` and `lastIndexOf` to find the first and last occurrence of an element.'()
+    {
+        given : 'A tuple with some elements.'
+            var words = Tuple.of("It", "is", "very", "very", "important", "to", "watch", "dominion")
+        when : 'We find the first and last occurrence of the word "very".'
+            var firstIndex = words.firstIndexOf("very")
+            var lastIndex = words.lastIndexOf("very")
+        then : 'The first and last occurrence of the word "very" are found.'
+            firstIndex == 2
+            lastIndex == 3
+    }
+
+    def 'Use `firstIndexStartingFrom` to only look for an element after a certain index.'()
+    {
+        given : 'A tuple with some elements.'
+            var words = Tuple.of("Actually", "live", "and", "let", "live", "please")
+        when : 'We query the index starting from every index in the tuple:'
+            var indexAfter0 = words.firstIndexStartingFrom(0, "live")
+            var indexAfter1 = words.firstIndexStartingFrom(1, "live")
+            var indexAfter2 = words.firstIndexStartingFrom(2, "live")
+            var indexAfter3 = words.firstIndexStartingFrom(3, "live")
+            var indexAfter4 = words.firstIndexStartingFrom(4, "live")
+            var indexAfter5 = words.firstIndexStartingFrom(5, "live")
+        then : 'The indices are found as expected.'
+            indexAfter0 == 1
+            indexAfter1 == 1
+            indexAfter2 == 4
+            indexAfter3 == 4
+            indexAfter4 == 4
+            indexAfter5 == -1
+    }
+
+    def 'Use `lastIndexBefore` to only look for an element before a certain index.'()
+    {
+        given : 'A tuple with some elements.'
+            var words = Tuple.of("Actually", "live", "and", "let", "live", "please")
+        when : 'We query the index before every index in the tuple:'
+            var indexBefore0 = words.lastIndexBefore(0, "live")
+            var indexBefore1 = words.lastIndexBefore(1, "live")
+            var indexBefore2 = words.lastIndexBefore(2, "live")
+            var indexBefore3 = words.lastIndexBefore(3, "live")
+            var indexBefore4 = words.lastIndexBefore(4, "live")
+            var indexBefore5 = words.lastIndexBefore(5, "live")
+        then : 'The indices are found as expected.'
+            indexBefore0 == -1
+            indexBefore1 == -1
+            indexBefore2 == 1
+            indexBefore3 == 1
+            indexBefore4 == 1
+            indexBefore5 == 4
+    }
+
+    def 'The `indicesOf` method returns all indices of an element in the tuple.'()
+    {
+        given : 'A tuple with some elements.'
+            var words = Tuple.of("Actually", "live", "and", "let", "live", "please")
+        when : 'We query the indices of the word "live".'
+            var indices = words.indicesOf("live")
+        then : 'The indices are found as expected.'
+            indices == [1, 4] as int[]
+    }
 }
