@@ -849,6 +849,37 @@ public interface Val<T extends @Nullable Object> extends Maybe<T> {
     }
 
     /**
+     * Creates a live view of this property as a {@link Tuple} containing items of
+     * the specified type using the given mapping function which dynamically maps
+     * the current property item {@code T} to a {@code Tuple<U>}.<br>
+     * <p>
+     * The resulting view is automatically updated whenever the value of this property changes,
+     * meaning that the mapper {@code Function<T, @Nullable Tuple<U>>} is called with the new property item
+     * and the state of the view is updated with the result of said mapping function.
+     * <p>
+     * The {@code type} parameter is used to obtain a default tuple instance (via {@code Tuple.of(type)}) which serves
+     * both as the fallback null object and error object. This means that if the mapping function returns {@code null}
+     * or throws an exception, the view will retain a default {@code Tuple} instance instead of propagating
+     * storing {@code null}, which is not allowed for this view.
+     * <p>
+     * <b>Warning:</b> If you register change listeners on the returned view and do not maintain a strong reference
+     * to it, the view along with its listeners may be garbage collected, and subsequent changes to this property
+     * will not trigger the listeners.
+     *
+     * @param type   The class representing the type of the tuple's element. This is used to create a default tuple instance.
+     * @param mapper A function that maps the value of this property to a {@link Tuple} of type {@code U}. The function
+     *               should handle {@code null} values appropriately.
+     * @param <U>    The type of the element within the tuple.
+     * @return A live view of this property as a {@link Tuple} of type {@code U}.
+     * @throws NullPointerException if either {@code type} or {@code mapper} is {@code null}.
+     */
+    default <U> Viewable<Tuple<U>> viewAsTuple( Class<U> type, Function<T, @Nullable Tuple<U>> mapper ) {
+        Objects.requireNonNull(type);
+        Objects.requireNonNull(mapper);
+        return view(Tuple.of(type), Tuple.of(type), mapper);
+    }
+
+    /**
      *  Returns the name/id of the property which is useful for debugging as well as
      *  persisting their state by using them as keys for whatever storage data structure one chooses. <br>
      *  For example, when converting a property based model to a JSON object, the id of the properties
