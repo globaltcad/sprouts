@@ -103,7 +103,7 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Se
         int[] indicesOfThingsToKeep = new int[this.size()];
         int newSize = 0;
         for ( int i = 0; i < this.size(); i++ ) {
-            int index = properties.indexOf( _getAt(i, _data, _type) );
+            int index = properties.firstIndexOf( _getAt(i, _data, _type) );
             if ( index == -1 ) {
                 indicesOfThingsToKeep[newSize] = i;
                 newSize++;
@@ -181,7 +181,7 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Se
         int[] indicesOfThingsToKeep = new int[this.size()];
         int newSize = 0;
         for ( int i = 0; i < this.size(); i++ ) {
-            int index = tuple.indexOf( _getAt(i, _data, _type) );
+            int index = tuple.firstIndexOf( _getAt(i, _data, _type) );
             if ( index != -1 ) {
                 indicesOfThingsToKeep[newSize] = i;
                 newSize++;
@@ -219,7 +219,7 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Se
         Object newItems = _createArray(_type, _allowsNull, _length(_data));
         for ( int i = 0; i < _length(_data); i++ ) {
             T item = _getAt(i, _data, _type);
-            if ( indexOf(item) == newSize ) {
+            if ( firstIndexOf(item) == newSize ) {
                 _setAt(newSize, item, newItems);
                 newSize++;
             }
