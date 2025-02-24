@@ -680,6 +680,25 @@ class Property_View_Spec extends Specification
             view.toString() == "View<Byte>[patient_age=5]"
     }
 
+    def 'Use `viewAsTuple` to create a view of a property as a tuple.'()
+    {
+        reportInfo """
+            The `viewAsTuple` method can be used to create a view of a property as a tuple.
+            The tuple is a fixed size sequence of items that can be of different types.
+            The view will be updated automatically when the original property changes.
+        """
+        given : 'A property based on a string.'
+            var movie = Var.of("dominion")
+        and : 'A view of the property as a tuple of the individual characters of the string.'
+            Val<Tuple<Character>> view = movie.viewAsTuple(Character, str -> Tuple.of(Character, str.chars.collect {it as Character}))
+        expect : 'The has the expected initial state.'
+            view.get() == Tuple.of(String, "dominion".split("")).mapTo(Character, {it[0] as Character})
+        when : 'We change the value of the property to another movie.'
+            movie.set("earthlings")
+        then : 'The state of the view is updated again.'
+            view.get() == Tuple.of(String, "earthlings".split("")).mapTo(Character, {it[0] as Character})
+    }
+
     def 'A `WeakAction` is removed and garbage collected together with its owner.'()
     {
         reportInfo """
