@@ -142,6 +142,8 @@ class Tuple_Spec extends Specification
             Tuple.of(1, 2, 3)       | { tuple -> tuple.map { it * 2 } }                || SequenceChange.SET     |  0 | 3
             Tuple.of(3, 6)          | { tuple -> tuple.mapTo(String,{it+" cents"}) }   || SequenceChange.SET     |  0 | 2
             Tuple.of(1, 2, 3)       | { tuple -> tuple.retainIf { it > 1 } }           || SequenceChange.RETAIN  |  1 | 2
+            Tuple.of(Integer, 0..6) | { tuple -> tuple.retainIf {it in 2..3||it == 5} }|| SequenceChange.RETAIN  | -1 | 3
+            Tuple.of(Integer, 0..7) | { tuple -> tuple.retainIf {it in [2, 5]} }       || SequenceChange.RETAIN  | -1 | 2
             Tuple.of(1, 2, 3)       | { tuple -> tuple.retainIf { it < 2 } }           || SequenceChange.RETAIN  |  0 | 1
             Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.retainIf { it > 2 && it < 5 } } || SequenceChange.RETAIN  |  2 | 2
             Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.retainIf { it < 2 || it > 4 } } || SequenceChange.RETAIN  | -1 | 2
@@ -163,6 +165,8 @@ class Tuple_Spec extends Specification
             Tuple.of(1, 2, 3)       | { tuple -> tuple.addAllAt(1, Tuple.of(10, 20)) } || SequenceChange.ADD     |  1 | 2
             Tuple.of(1, 2, 3)       | { tuple -> tuple.addAllAt(1, [10, 20]) }         || SequenceChange.ADD     |  1 | 2
             Tuple.of(1, 2, 3)       | { tuple -> tuple.removeIf { it > 1 } }           || SequenceChange.REMOVE  |  1 | 2
+            Tuple.of(Integer, 0..6) | { tuple -> tuple.removeIf {it in 2..3||it == 5} }|| SequenceChange.REMOVE  | -1 | 3
+            Tuple.of(Integer, 0..7) | { tuple -> tuple.removeIf {it in [2, 5]} }       || SequenceChange.REMOVE  | -1 | 2
             Tuple.of(1, 2, 3)       | { tuple -> tuple.removeIf { it < 2 } }           || SequenceChange.REMOVE  |  0 | 1
             Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.removeIf { it > 2 && it < 5 } } || SequenceChange.REMOVE  |  2 | 2
             Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.removeIf { it < 2 || it > 4 } } || SequenceChange.REMOVE  | -1 | 2
