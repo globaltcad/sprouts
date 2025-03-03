@@ -74,6 +74,13 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Se
         if ( from > to )
             throw new IllegalArgumentException();
         int newSize = (to - from);
+        if ( newSize == this.size() )
+            return this;
+        if ( newSize == 0 ) {
+            SequenceDiff diff = SequenceDiff.of(this, SequenceChange.RETAIN, -1, 0);
+            Object newItems = _createArray(_type, _allowsNull, 0);
+            return new TupleImpl<>(_allowsNull, _type, newItems, diff);
+        }
         Object newItems = _createArray(_type, _allowsNull, newSize);
         System.arraycopy(_data, from, newItems, 0, newSize);
         SequenceDiff diff = SequenceDiff.of(this, SequenceChange.RETAIN, from, newSize);
@@ -87,6 +94,13 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Se
         if ( from > to )
             throw new IllegalArgumentException();
         int numberOfItemsToRemove = to - from;
+        if ( numberOfItemsToRemove == 0 )
+            return this;
+        if ( numberOfItemsToRemove == this.size() ) {
+            SequenceDiff diff = SequenceDiff.of(this, SequenceChange.REMOVE, 0, this.size());
+            Object newItems = _createArray(_type, _allowsNull, 0);
+            return new TupleImpl<>(_allowsNull, _type, newItems, diff);
+        }
         int newSize = _length(_data) - numberOfItemsToRemove;
         Object newItems = _createArray(_type, _allowsNull, newSize);
         System.arraycopy(_data, 0, newItems, 0, from);
@@ -111,6 +125,8 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Se
                 indicesOfThingsToKeep[newSize] = -1;
             }
         }
+        if ( newSize == this.size() )
+            return this;
         Object newItems = _createArray(_type, _allowsNull, newSize);
         for ( int i = 0; i < newSize; i++ ) {
             int index = indicesOfThingsToKeep[i];
@@ -139,6 +155,8 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Se
     public Tuple<T> setAt( int index, T item ) {
         if ( index < 0 || index >= _length(_data) )
             throw new IndexOutOfBoundsException();
+        if ( Objects.equals(item, get(index)) )
+            return this;
         Object newItems = _clone(_data, _type, _allowsNull);
         _setAt(index, item, newItems);
         SequenceDiff diff = SequenceDiff.of(this, SequenceChange.SET, index, 1);
@@ -148,6 +166,8 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Se
     @Override
     public Tuple<T> addAllAt( int index, Tuple<T> tuple ) {
         Objects.requireNonNull(tuple);
+        if ( tuple.isEmpty() )
+            return this; // nothing to do
         if ( !this.allowsNull() && tuple.allowsNull() )
             throw new NullPointerException();
         if ( index < 0 || index > _length(_data) )
@@ -167,6 +187,15 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Se
             throw new NullPointerException();
         if ( index < 0 || index + tuple.size() > _length(_data) )
             throw new IndexOutOfBoundsException();
+        if ( tuple.isEmpty() )
+            return this; // nothing to do
+        boolean isAlreadyTheSame = true;
+        for (int i = 0; i < tuple.size() && isAlreadyTheSame; i++ ) {
+            if ( !Objects.equals(this.get(i+index), tuple.get(i)) )
+                isAlreadyTheSame = false;
+        }
+        if ( isAlreadyTheSame )
+            return this;
         Object newItems = _clone(_data, _type, _allowsNull);
         for (int i = 0; i < tuple.size(); i++ )
             _setAt(index + i, tuple.get(i), newItems);
@@ -176,26 +205,41 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Se
 
     @Override
     public Tuple<T> retainAll(Tuple<T> tuple) {
-        if ( tuple.isEmpty() )
-            return Tuple.of(_type);
+        if ( tuple.isEmpty() ) {
+            SequenceDiff diff = SequenceDiff.of(this, SequenceChange.RETAIN, -1, 0);
+            Object newItems = _createArray(_type, _allowsNull, 0);
+            return new TupleImpl<>(_allowsNull, _type, newItems, diff);
+        }
         int[] indicesOfThingsToKeep = new int[this.size()];
         int newSize = 0;
+        int singleSequenceIndex = size() > 0 ? -2 : -1;
+        int retainSequenceSize = 0;
         for ( int i = 0; i < this.size(); i++ ) {
             int index = tuple.firstIndexOf( _getAt(i, _data, _type) );
             if ( index != -1 ) {
                 indicesOfThingsToKeep[newSize] = i;
                 newSize++;
+                if ( singleSequenceIndex != -1 ) {
+                    if ( singleSequenceIndex == -2 )
+                        singleSequenceIndex = i;
+                    else if ( i > singleSequenceIndex + retainSequenceSize )
+                        singleSequenceIndex = -1;
+                }
+                if ( singleSequenceIndex >= 0 )
+                    retainSequenceSize++;
             } else {
                 indicesOfThingsToKeep[newSize] = -1;
             }
         }
+        if ( newSize == this.size() )
+            return this;
         Object newItems = _createArray(_type, _allowsNull, newSize);
         for ( int i = 0; i < newSize; i++ ) {
             int index = indicesOfThingsToKeep[i];
             if ( index != -1 )
                 _setAt(i, _getAt(index, _data, _type), newItems);
         }
-        SequenceDiff diff = SequenceDiff.of(this, SequenceChange.RETAIN, -1, this.size() - newSize);
+        SequenceDiff diff = SequenceDiff.of(this, SequenceChange.RETAIN, singleSequenceIndex, newSize);
         return new TupleImpl<>(_allowsNull, _type, newItems, diff);
     }
 

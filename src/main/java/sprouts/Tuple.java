@@ -1,8 +1,8 @@
 package sprouts;
 
 import org.jspecify.annotations.Nullable;
-import sprouts.impl.Sprouts;
 import sprouts.impl.SequenceDiff;
+import sprouts.impl.Sprouts;
 import sprouts.impl.TupleImpl;
 
 import java.lang.reflect.Array;
@@ -820,6 +820,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
     default Tuple<T> removeIf( Predicate<T> predicate ) {
         List<T> itemsToKeep = new ArrayList<>();
         int singleSequenceIndex = size() > 0 ? -2 : -1;
+        int removalSequenceSize = 0;
         for ( int i = 0; i < size(); i++ ) {
             T item = get(i);
             if ( !predicate.test(item) ) {
@@ -828,14 +829,19 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
                 if ( singleSequenceIndex != -1 ) {
                     if ( singleSequenceIndex == -2 )
                         singleSequenceIndex = i;
-                    else if ( i > singleSequenceIndex + itemsToKeep.size() )
+                    else if ( i > singleSequenceIndex + removalSequenceSize )
                         singleSequenceIndex = -1;
                 }
+                if ( singleSequenceIndex >= 0 )
+                    removalSequenceSize++;
             }
         }
+        if ( itemsToKeep.size() == this.size() )
+            return this;
         T[] newItems = (T[]) Array.newInstance(type(), itemsToKeep.size());
         itemsToKeep.toArray(newItems);
-        return new TupleImpl<>(allowsNull(), type(), newItems, SequenceDiff.of(this, SequenceChange.REMOVE, singleSequenceIndex, size() - newItems.length));
+        SequenceDiff diff = SequenceDiff.of(this, SequenceChange.REMOVE, singleSequenceIndex, size() - itemsToKeep.size());
+        return new TupleImpl<>(allowsNull(), type(), newItems, diff);
     }
 
     /**
@@ -850,6 +856,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
     default Tuple<T> retainIf( Predicate<T> predicate ) {
         List<T> filteredItems = new ArrayList<>();
         int singleSequenceIndex = size() > 0 ? -2 : -1;
+        int retainSequenceSize = 0;
         for ( int i = 0; i < size(); i++ ) {
             T item = get(i);
             if ( predicate.test(item) ) {
@@ -857,14 +864,19 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
                 if ( singleSequenceIndex != -1 ) {
                     if ( singleSequenceIndex == -2 )
                         singleSequenceIndex = i;
-                    else if ( i > singleSequenceIndex + filteredItems.size() )
+                    else if ( i > singleSequenceIndex + retainSequenceSize )
                         singleSequenceIndex = -1;
                 }
+                if ( singleSequenceIndex >= 0 )
+                    retainSequenceSize++;
             }
         }
+        if ( filteredItems.size() == this.size() )
+            return this;
+        SequenceDiff diff = SequenceDiff.of(this, SequenceChange.RETAIN, singleSequenceIndex, filteredItems.size());
         T[] newItems = (T[]) Array.newInstance(type(), filteredItems.size());
         filteredItems.toArray(newItems);
-        return new TupleImpl<>(allowsNull(), type(), newItems, SequenceDiff.of(this, SequenceChange.RETAIN, singleSequenceIndex, newItems.length));
+        return new TupleImpl<>(allowsNull(), type(), newItems, diff);
     }
 
     /**
