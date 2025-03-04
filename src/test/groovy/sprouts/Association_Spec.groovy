@@ -72,6 +72,11 @@ class Association_Spec extends Specification
         and : 'We can lookup any value from its corresponding key.'
             map.values() as Set == map.keySet().collect { key -> associations.get(key).orElseThrow(MissingItemException::new) } as Set
 
+        when : 'We use the `toMap()` method to convert the association to a map.'
+            var convertedMap = associations.toMap()
+        then: 'The converted map is equal to the reference map.'
+            convertedMap == map
+
         where :
             operations << [[
                         new Tuple2(Operation.ADD, 'a'),
@@ -134,17 +139,14 @@ class Association_Spec extends Specification
     ) {
         given: 'We create an association and a map as well as a closure to apply the operations to them.'
             var associations = Association.between(String, String)
-            var map = [:]
             var operationsApplier = { currentAssociations ->
                 operations.each { operation, key ->
                     switch (operation) {
                         case Operation.ADD:
                             currentAssociations = currentAssociations.put(key, "value of " + key)
-                            map[key] = "value of " + key
                             break
                         case Operation.REMOVE:
                             currentAssociations = currentAssociations.remove(key)
-                            map.remove(key)
                             break
                     }
                 }
@@ -303,6 +305,13 @@ class Association_Spec extends Specification
             mergedAssociations.size() == map.size()
             mergedAssociations.keySet() as Set == map.keySet()
             mergedAssociations.values().sort().toList() == map.values().sort()
+
+        when : 'We use the `toMap()` method to convert the association to a map.'
+            var convertedMap = mergedAssociations.toMap()
+        then: 'The converted map is equal to the reference map.'
+            convertedMap == map
+
+
         where :
             size << [10, 100, 1_000, 10_000]
     }

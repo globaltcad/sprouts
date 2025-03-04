@@ -472,13 +472,22 @@ final class AssociationImpl<K, V> implements Association<K, V> {
 
     @Override
     public Map<K, V> toMap() {
-        Map<K, V> map = new java.util.LinkedHashMap<>();
+        Map<K, V> map = new java.util.HashMap<>();
+        _toMapRecursively(map);
+        return Collections.unmodifiableMap(map);
+    }
+
+    private void _toMapRecursively(Map<K, V> map) {
         for (int i = 0; i < _length(_keysArray); i++) {
             K key = _getAt(i, _keysArray, _keyType);
             V value = _getAt(i, _valuesArray, _valueType);
             map.put(key, value);
         }
-        return java.util.Collections.unmodifiableMap(map);
+        for (AssociationImpl<K, V> branch : _branches) {
+            if (branch != null) {
+                branch._toMapRecursively(map);
+            }
+        }
     }
 
     @Override
