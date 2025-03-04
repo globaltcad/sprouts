@@ -25,6 +25,7 @@ String VERSION  = "2.0.0-M15"
 group GROUP_ID
 version VERSION
 
+[compileJava, compileTestJava, compileGroovy, compileTestGroovy]*.options*.encoding = 'UTF-8'
 
 repositories {
     mavenCentral()

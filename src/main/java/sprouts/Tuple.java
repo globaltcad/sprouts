@@ -1393,6 +1393,17 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
     }
 
     /**
+     *  Converts this tuple of items to a JDK {@link Set} of items
+     *  and then returns the resulting set.
+     *  Note that the returned set is immutable.
+     *
+     * @return An immutable {@link Set} of items in this {@link Tuple} instance.
+     */
+    default Set<T> toSet() {
+        return Collections.unmodifiableSet(stream().collect(Collectors.toSet()));
+    }
+
+    /**
      *  Turns this tuple of items into a stream of items
      *  which can be used for further functional processing.
      *  Note that the returned stream is not parallel.
