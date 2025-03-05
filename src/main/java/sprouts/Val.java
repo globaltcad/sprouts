@@ -880,6 +880,44 @@ public interface Val<T extends @Nullable Object> extends Maybe<T> {
     }
 
     /**
+     * Creates a live view of this property as a {@link Association} containing key-value pairs of
+     * the specified key type {@code K} and value type {@code V} using the supplied mapping function which dynamically maps
+     * the current property item {@code T} to a {@code Association<K, V>}.<br>
+     * <p>
+     * The resulting view is automatically updated whenever the value of this property changes,
+     * meaning that the mapper {@code Function<T, @Nullable Association<K, V>>} is called with the new property item
+     * and the state of the view is updated with the result of said mapping function.
+     * <p>
+     * The {@code keyType} and {@code valueType} parameters are used to obtain a
+     * default association instance (via {@code Association.between(keyType, valueType)}) which serves
+     * both as the fallback null object and error object. This means that if the mapping function returns {@code null}
+     * or throws an exception, the view will retain an empty default {@code Association} instance instead of propagating
+     * storing {@code null}, which is not allowed for this view.
+     * <p>
+     * <b>Warning:</b> If you register change listeners on the returned view and do not maintain a strong reference
+     * to it, the view along with its listeners may be garbage collected, and subsequent changes to this property
+     * will not trigger the listeners.
+     *
+     * @param keyType   The class representing the type of the association's key. This is used to create a default association instance.
+     *                  This parameter must not be {@code null}.
+     * @param valueType The class representing the type of the association's value. This is used to create a default association instance.
+     *                  This parameter must not be {@code null}.
+     * @param mapper    A function that maps the value of this property to an {@link Association} of type {@code K, V}.
+     *                  The function should handle {@code null} values appropriately.
+     * @param <K>       The type of the key within the association.
+     * @param <V>       The type of the value within the association.
+     * @return A live view of this property as an {@link Association} of type {@code K, V}.
+     * @throws NullPointerException if either {@code keyType}, {@code valueType}, or {@code mapper} is {@code null}.
+     */
+    default <K, V> Viewable<Association<K, V>> viewAsAssociation( Class<K> keyType, Class<V> valueType, Function<T, @Nullable Association<K, V>> mapper ) {
+        Objects.requireNonNull(keyType);
+        Objects.requireNonNull(valueType);
+        Objects.requireNonNull(mapper);
+        Association<K, V> empty = Association.between(keyType, valueType);
+        return view(empty, empty, mapper);
+    }
+
+    /**
      *  Returns the name/id of the property which is useful for debugging as well as
      *  persisting their state by using them as keys for whatever storage data structure one chooses. <br>
      *  For example, when converting a property based model to a JSON object, the id of the properties

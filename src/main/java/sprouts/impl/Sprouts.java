@@ -1,7 +1,6 @@
 package sprouts.impl;
 
 import org.jspecify.annotations.NonNull;
-import org.jspecify.annotations.NullUnmarked;
 import org.jspecify.annotations.Nullable;
 import sprouts.*;
 
@@ -391,6 +390,10 @@ public final class Sprouts implements SproutsFactory
         return new TupleImpl<>(true, type, items);
     }
 
+    @Override
+    public <K, V> Association<K, V> associationOf(Class<K> keyType, Class<V> valueType) {
+        return new AssociationImpl<>(keyType, valueType);
+    }
 
     @SuppressWarnings("unchecked")
     @Override public <T> Vars<T> varsOf( Class<T> type, Var<T>... vars ) { return PropertyList.of( false, type, vars ); }
