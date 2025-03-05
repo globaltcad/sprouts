@@ -369,8 +369,10 @@ final class AssociationImpl<K, V> implements Association<K, V> {
                 if ( branch == null ) {
                     return this;
                 } else {
-                    branch = branch._without(key, keyHash);
-                    if ( branch._size == 0 ) {
+                    AssociationImpl<K, V> newBranch = branch._without(key, keyHash);
+                    if ( newBranch == branch ) {
+                        return this;
+                    } else if ( newBranch._size == 0 ) {
                         // Maybe we can remove all branches now
                         int numberOfNonNullBranches = 0;
                         for (int i = 0; i < _branches.length; i++) {
@@ -381,9 +383,9 @@ final class AssociationImpl<K, V> implements Association<K, V> {
                         if ( numberOfNonNullBranches == 0 ) {
                             return new AssociationImpl<>(_depth, _keyType, _keysArray, _valueType, _valuesArray,  EMPTY_BRANCHES, false);
                         }
-                        branch = null;
+                        newBranch = null;
                     }
-                    return _withBranchAt(branchIndex, branch);
+                    return _withBranchAt(branchIndex, newBranch);
                 }
             }
         } else {
