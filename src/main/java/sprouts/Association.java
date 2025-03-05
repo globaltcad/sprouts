@@ -134,13 +134,13 @@ public interface Association<K, V> {
     boolean containsKey(K key);
 
     /**
-     *  Returns the value associated with the given key.
-     *  If the key is not present in this association,
-     *  then {@code null} is returned.
+     *  Returns the value associated wrapped by an {@link Optional}
+     *  with the given key if it is present in this association,
+     *  or an empty {@link Optional} if the key is not present.
      *
      * @param key The key to look up in this association.
-     * @return The value associated with the given key,
-     *         or {@code null} if the key is not present.
+     * @return An {@link Optional} containing the value associated with the key,
+     *        or {@link Optional#empty()} if the key is not present.
      */
     Optional<V> get(K key);
 
@@ -153,6 +153,7 @@ public interface Association<K, V> {
      * @param key The key to associate with the given value.
      * @param value The value to associate with the given key.
      * @return A new association with the given key-value pair.
+     * @see #put(Pair) to add a key-value pair as a {@link Pair} instance.
      */
     Association<K, V> put(K key, V value);
 
@@ -166,8 +167,11 @@ public interface Association<K, V> {
      *
      * @param entry The key-value pair to add to this association.
      * @return A new association with the given key-value pair.
+     * @see #put(Object, Object) to add a key-value pair as separate objects.
+     * @throws NullPointerException if the provided pair is {@code null}.
      */
     default Association<K, V> put(Pair<? extends K, ? extends V> entry) {
+        Objects.requireNonNull(entry, "The provided pair cannot be null.");
         return put(entry.first(), entry.second());
     }
 
@@ -198,6 +202,295 @@ public interface Association<K, V> {
 
     /**
      *  Returns a new association that is the same as this one
+     *  but with all the key-value pairs from the given association
+     *  added to it. If the given association is empty, then this
+     *  association is returned.
+     *
+     * @param other The association to add to this one.
+     * @return A new association with the key-value pairs from the given association.
+     * @throws NullPointerException if the provided association is {@code null}.
+     */
+    default Association<K, V> putAll( final Association<? extends K, ? extends V> other ) {
+        Objects.requireNonNull(other, "The provided association cannot be null.");
+        if ( other.isEmpty() )
+            return this;
+        return putAll( (Stream)other.entrySet().stream() );
+    }
+
+    /**
+     *  Returns a new association with all the key-value pairs from the
+     *  supplied {@link Map} added to it.
+     *  If the provided map is empty, then this
+     *  association is returned unchanged.
+     *
+     * @param map The {@link Map} to add to this association.
+     * @return A new association with the key-value pairs from the provided map.
+     * @throws NullPointerException if the provided map is {@code null}.
+     */
+    default Association<K, V> putAll( final Map<? extends K, ? extends V> map ) {
+        Objects.requireNonNull(map, "The provided map cannot be null.");
+        if ( map.isEmpty() )
+            return this;
+        return putAll(map.entrySet().stream().map(Pair::of));
+    }
+
+    /**
+     *  Returns a new association with all the key-value pairs from the
+     *  supplied {@link Set} of {@link Pair} instances added to it.
+     *  If the provided set is empty, then this association is
+     *  returned unchanged.
+     *
+     * @param entries The set of key-value pairs to add to this association.
+     * @return A new association with the key-value pairs from the provided set.
+     * @throws NullPointerException if the provided set is {@code null}.
+     */
+    default Association<K, V> putAll( final Set<Pair<? extends K, ? extends V>> entries ) {
+        Objects.requireNonNull(entries, "The provided set cannot be null.");
+        if ( entries.isEmpty() )
+            return this;
+        return putAll(entries.stream());
+    }
+
+    /**
+     *  Returns a new association with all the key-value pairs from the
+     *  supplied array of {@link Pair}s added to it, where the {@link Pair#first()}
+     *  is the key and the {@link Pair#second()} is the value.
+     *  If the provided array is empty, then this
+     *  association is returned unchanged.
+     *
+     * @param entries The array of key-value pairs to add to this association.
+     * @return A new association with the key-value pairs from the provided array.
+     * @throws NullPointerException if the provided array is {@code null}.
+     */
+    default Association<K, V> putAll( final Pair<? extends K, ? extends V>... entries ) {
+        Objects.requireNonNull(entries, "The provided array cannot be null.");
+        if ( entries.length == 0 )
+            return this;
+        return putAll(Arrays.stream(entries));
+    }
+
+    /**
+     *  Returns a new association with all the key-value pairs of the
+     *  supplied {@link Tuple} of {@link Pair} instances added to it,
+     *  where the {@link Pair#first()} object of each pair is the key
+     *  and the {@link Pair#second()} object is the value.
+     *  If the provided tuple is empty, then this association is returned unchanged.
+     *
+     * @param entries The tuple of key-value pairs to add to this association.
+     * @return A new association with the key-value pairs from the provided tuple.
+     * @throws NullPointerException if the provided tuple is {@code null}.
+     */
+    default Association<K, V> putAll( final Tuple<Pair<? extends K, ? extends V>> entries ) {
+        Objects.requireNonNull(entries, "The provided tuple cannot be null.");
+        if ( entries.isEmpty() )
+            return this;
+        return putAll(entries.stream());
+    }
+
+    /**
+     *  Returns a new association with all the key-value pairs from the
+     *  supplied {@link Collection} of {@link Pair} instances added to it.
+     *  If the provided collection is empty, then this
+     *  association is returned unchanged.
+     *
+     * @param entries The collection of key-value pairs to add to this association.
+     * @return A new association with the key-value pairs from the provided collection.
+     * @throws NullPointerException if the provided collection is {@code null}.
+     */
+    default Association<K, V> putAll( final Collection<Pair<? extends K, ? extends V>> entries ) {
+        Objects.requireNonNull(entries, "The provided collection cannot be null.");
+        if ( entries.isEmpty() )
+            return this;
+        return putAll(entries.stream());
+    }
+
+    /**
+     *  Returns a new association with all the key-value pairs from the
+     *  supplied {@link Stream} of {@link Pair} instances added to it.
+     *  If the provided stream is empty, then this
+     *  association is returned unchanged.
+     *
+     * @param entries The stream of key-value pairs to add to this association.
+     * @return A new association with the key-value pairs from the provided stream.
+     * @throws NullPointerException if the provided stream is {@code null}.
+     */
+    Association<K, V> putAll( final Stream<Pair<? extends K, ? extends V>> entries );
+
+    /**
+     *  Returns a new association where an existing key-value pair
+     *  is replaced with the given key-value pair if the key is
+     *  present in this association.
+     *  So this will not affect the key set of this association, but may change
+     *  the values associated with the keys.
+     *  <b>So this means that the returned association will always be of the same type as this one.</b>
+     *  If the key is not present in
+     *  this association, then this association is returned unchanged.
+     *
+     * @param key The key to associate with the given value if it is
+     *            already present in this association.
+     * @param value The value to associate with the supplied key.
+     * @return A new association where the key-value pair matching the
+     *         supplied key is replaced with the given key-value pair.
+     * @see #replace(Pair) to replace a key-value pair as a {@link Pair} instance.
+     */
+    Association<K, V> replace(K key, V value);
+
+    /**
+     *  Returns a new association where an existing key-value pair
+     *  is replaced with the given key-value pair if the key is
+     *  present in this association.
+     *  So this will not affect the key set of this association, but may change
+     *  the values associated with the keys.
+     *  <b>So this means that the returned association will always be of the same type as this one.</b>
+     *  If the key is not present in
+     *  this association, then this association is returned unchanged.
+     *
+     * @param entry The key-value pair to replace the existing key-value pair with.
+     * @return A new association where the key-value pair matching the
+     *         supplied key is replaced with the given key-value pair.
+     * @see #replace(Object, Object) to replace a key-value pair as separate objects.
+     */
+    default Association<K, V> replace(Pair<? extends K, ? extends V> entry) {
+        return replace(entry.first(), entry.second());
+    }
+
+    /**
+     *  Returns a new association where all existing key-value pairs
+     *  from this association are replaced by those in the supplied association.
+     *  This will <b>not</b> affect the key set of this association, but may change
+     *  the values associated with the keys, <b>which means that the returned association
+     *  will always be of the same size as this one.</b>
+     *  If the supplied association is empty, then this association is returned unchanged.
+     *
+     * @param other The association whose entries should replace the entries in this association.
+     * @return A new association with where the existing key-value pairs
+     *          of this association are replaced by those in the supplied association.
+     * @throws NullPointerException if the supplied association is {@code null}.
+     */
+    default Association<K, V> replaceAll(Association<? extends K, ? extends V> other) {
+        Objects.requireNonNull(other, "The provided association cannot be null.");
+        if (other.isEmpty())
+            return this;
+        return replaceAll((Stream)other.entrySet().stream());
+    }
+
+    /**
+     *  Returns a new association where all existing key-value pairs
+     *  from this association are replaced by those in the supplied {@link Map}.
+     *  This will <b>not</b> affect the key set of this association, but may change
+     *  the values associated with the keys, <b>which means that the returned
+     *  association will always be of the same size as this one.</b>
+     *  If the supplied map is empty, then this association is returned unchanged.
+     *
+     * @param map The map whose entries should replace the entries in this association.
+     * @return A new association with where the existing key-value pairs
+     *          of this association are replaced by those in the supplied map.
+     * @throws NullPointerException if the supplied map is {@code null}.
+     */
+    default Association<K, V> replaceAll(Map<? extends K, ? extends V> map) {
+        Objects.requireNonNull(map, "The provided map cannot be null.");
+        if (map.isEmpty())
+            return this;
+        return replaceAll(map.entrySet().stream().map(Pair::of));
+    }
+
+    /**
+     *  Returns a new association where all existing key-value pairs
+     *  from this association are replaced by those in the supplied {@link Set}
+     *  of {@link Pair} instances. This will <b>not</b> affect the key set of this
+     *  association, but may change the values associated with the keys, <b>which
+     *  means that the returned association will always be of the same size as this one.</b>
+     *  If the supplied set is empty, then this association is returned unchanged.
+     *
+     * @param entries The {@link Set} of key-value pairs whose entries should replace the entries in this association.
+     * @return A new association with where the existing key-value pairs
+     *         of this association are replaced by those in the supplied set.
+     * @throws NullPointerException if the supplied set is {@code null}.
+     */
+    default Association<K, V> replaceAll(Set<Pair<? extends K, ? extends V>> entries) {
+        Objects.requireNonNull(entries, "The provided set cannot be null.");
+        if (entries.isEmpty())
+            return this;
+        return replaceAll(entries.stream());
+    }
+
+    /**
+     *  Returns a new association where all existing key-value pairs
+     *  from this association are replaced by those in the supplied array
+     *  of {@link Pair} instances. This will <b>not</b> affect the key set of this
+     *  association, but may change the values associated with the keys, <b>which
+     *  means that the returned association will always be of the same size as this one.</b>
+     *  If the supplied array is empty, then this association is returned unchanged.
+     *
+     * @param entries The array of key-value {@link Pair}s whose entries should replace the entries in this association.
+     * @return A new association with where the existing key-value pairs
+     *         of this association are replaced by those in the supplied array.
+     * @throws NullPointerException if the supplied array is {@code null}.
+     */
+    default Association<K, V> replaceAll(Pair<? extends K, ? extends V>... entries) {
+        Objects.requireNonNull(entries, "The provided array cannot be null.");
+        if (entries.length == 0)
+            return this;
+        return replaceAll(Arrays.stream(entries));
+    }
+
+    /**
+     *  Returns a new association where all existing key-value pairs
+     *  from this association are replaced by those in the supplied {@link Tuple}
+     *  of {@link Pair} instances. This will <b>not</b> affect the key set of this
+     *  association, but may change the values associated with the keys, <b>which
+     *  means that the returned association will always be of the same size as this one.</b>
+     *  If the supplied tuple is empty, then this association is returned unchanged.
+     *
+     * @param entries The tuple of key-value {@link Pair}s whose entries should replace the entries in this association.
+     * @return A new association with where the existing key-value pairs
+     *         of this association are replaced by those in the supplied tuple.
+     * @throws NullPointerException if the supplied tuple is {@code null}.
+     */
+    default Association<K, V> replaceAll(Tuple<Pair<? extends K, ? extends V>> entries) {
+        Objects.requireNonNull(entries, "The provided tuple cannot be null.");
+        if (entries.isEmpty())
+            return this;
+        return replaceAll(entries.stream());
+    }
+
+    /**
+     *  Returns a new association where all existing key-value pairs
+     *  from this association are replaced by those in the supplied {@link Collection}
+     *  of {@link Pair} instances. This will <b>not</b> affect the key set of this
+     *  association, but may change the values associated with the keys, <b>which
+     *  means that the returned association will always be of the same size as this one.</b>
+     *  If the supplied collection is empty, then this association is returned unchanged.
+     *
+     * @param entries The collection of key-value {@link Pair}s whose entries should replace the entries in this association.
+     * @return A new association with where the existing key-value pairs
+     *         of this association are replaced by those in the supplied collection.
+     * @throws NullPointerException if the supplied collection is {@code null}.
+     */
+    default Association<K, V> replaceAll(Collection<Pair<? extends K, ? extends V>> entries) {
+        Objects.requireNonNull(entries, "The provided collection cannot be null.");
+        if (entries.isEmpty())
+            return this;
+        return replaceAll(entries.stream());
+    }
+
+    /**
+     *  Returns a new association where all existing key-value pairs
+     *  from this association are replaced by those in the supplied {@link Stream}
+     *  of {@link Pair} instances. This will <b>not</b> affect the key set of this
+     *  association, but may change the values associated with the keys, <b>which
+     *  means that the returned association will always be of the same size as this one.</b>
+     *  If the supplied stream is empty, then this association is returned unchanged.
+     *
+     * @param entries The stream of key-value {@link Pair}s whose entries should replace the entries in this association.
+     * @return A new association with where the existing key-value pairs
+     *         of this association are replaced by those in the supplied stream.
+     * @throws NullPointerException if the supplied stream is {@code null}.
+     */
+    Association<K, V> replaceAll(Stream<Pair<? extends K, ? extends V>> entries);
+
+    /**
+     *  Returns a new association that is the same as this one
      *  but without the given key. If the key is not present
      *  in this association, then this association is returned.
      *
@@ -205,50 +498,6 @@ public interface Association<K, V> {
      * @return A new association without the given key.
      */
     Association<K, V> remove(K key);
-
-    /**
-     *  Returns a new association that is the same as this one
-     *  but with all the key-value pairs from the given association
-     *  added to it. If the given association is empty, then this
-     *  association is returned.
-     *
-     * @param other The association to add to this one.
-     * @return A new association with the key-value pairs from the given association.
-     */
-    default Association<K, V> putAll( final Association<? extends K, ? extends V> other ) {
-        return putAll( (Stream)other.entrySet().stream() );
-    }
-
-    /**
-     *  Returns a new association that is the same as this one
-     *  but with all the key-value pairs from the given map
-     *  added to it. If the given map is empty, then this
-     *  association is returned.
-     *
-     * @param map The map to add to this association.
-     * @return A new association with the key-value pairs from the given map.
-     */
-    default Association<K, V> putAll( final Map<? extends K, ? extends V> map ) {
-        return putAll(map.entrySet().stream().map(Pair::of));
-    }
-
-    default Association<K, V> putAll( final Set<Pair<? extends K, ? extends V>> entries ) {
-        return putAll(entries.stream());
-    }
-
-    default Association<K, V> putAll( final Pair<? extends K, ? extends V>... entries ) {
-        return putAll(Arrays.stream(entries));
-    }
-
-    default Association<K, V> putAll( final Tuple<Pair<? extends K, ? extends V>> entries ) {
-        return putAll(entries.stream());
-    }
-
-    default Association<K, V> putAll( final Collection<Pair<? extends K, ? extends V>> entries ) {
-        return putAll(entries.stream());
-    }
-
-    Association<K, V> putAll( final Stream<Pair<? extends K, ? extends V>> entries );
 
     /**
      *  Returns a new association that is the same as this one
@@ -271,25 +520,6 @@ public interface Association<K, V> {
      * @return A new association with only the keys in the given set.
      */
     Association<K, V> retainAll(Set<? extends K> keys);
-
-    /**
-     *  Returns a new association where an existing key-value pair
-     *  is replaced with the given key-value pair if the key is
-     *  present in this association. If the key is not present in
-     *  this association, then this association is returned unchanged.
-     *
-     * @param key The key to associate with the given value if it is
-     *            already present in this association.
-     * @param value The value to associate with the supplied key.
-     * @return A new association with the given key-value pair if the
-     *          key is already present in this association.
-     *          Otherwise, this association is returned unchanged.
-     */
-    Association<K, V> replace(K key, V value);
-
-    Association<K, V> replaceAll(Association<? extends K, ? extends V> other);
-
-    Association<K, V> replaceAll(Map<? extends K, ? extends V> map);
 
     /**
      *  Returns a completely empty association but

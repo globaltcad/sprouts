@@ -395,6 +395,7 @@ final class AssociationImpl<K, V> implements Association<K, V> {
 
     @Override
     public Association<K, V> putAll(Stream<Pair<? extends K, ? extends V>> entries) {
+        Objects.requireNonNull(entries);
         if ( this.isEmpty() )
             return new AssociationImpl<>(_keyType, _valueType, entries);
 
@@ -441,28 +442,15 @@ final class AssociationImpl<K, V> implements Association<K, V> {
     }
 
     @Override
-    public Association<K, V> replaceAll(Association<? extends K, ? extends V> other) {
-        if ( other.isEmpty() )
-            return this;
+    public Association<K, V> replaceAll(Stream<Pair<? extends K, ? extends V>> stream) {
+        Objects.requireNonNull(stream);
         Association<K, V> result = this;
-        Association<K, V> otherCopy = (Association<K, V>) other;
-        for ( K key : other.keySet() ) {
-            result = result.replace(key, otherCopy.get(key).orElseThrow(()->
-                new IllegalArgumentException("The given association may not contain null values.")
-            ));
-        }
-        return result;
-    }
-
-    @Override
-    public Association<K, V> replaceAll(Map<? extends K, ? extends V> map) {
-        if ( map.isEmpty() )
-            return this;
-        AssociationImpl<K, V> result = this;
-        for ( K key : map.keySet() ) {
-            result = (AssociationImpl<K, V>) result.replace(key, map.get(key));
-        }
-        return result;
+        // reduce the stream to a single association
+        return stream.reduce(
+                result,
+                (acc,
+                 entry) -> acc.replace(entry.first(), entry.second()),
+                (a, b) -> a);
     }
 
     @Override
