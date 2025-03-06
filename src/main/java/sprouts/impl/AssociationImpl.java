@@ -328,7 +328,12 @@ final class AssociationImpl<K, V> implements Association<K, V> {
                         _setAt(0, value, newValuesArray);
                         return _withBranchAt(branchIndex, new AssociationImpl<>(_depth + 1, _keyType, newKeysArray, _valueType, newValuesArray, EMPTY_BRANCHES, true));
                     } else {
-                        return _withBranchAt(branchIndex, branch._with(key, keyHash, value, putIfAbsent));
+                        AssociationImpl<K, V> newBranch = branch._with(key, keyHash, value, putIfAbsent);
+                        if ( newBranch == branch ) {
+                            return this;
+                        } else {
+                            return _withBranchAt(branchIndex, newBranch);
+                        }
                     }
                 } else {
                     // We create two new branches for this node, this is where the tree grows
