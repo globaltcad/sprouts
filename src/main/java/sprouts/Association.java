@@ -35,6 +35,26 @@ import java.util.stream.Stream;
 public interface Association<K, V> {
 
     /**
+     *  An alternative to {@code Association.class} which also includes the parameter
+     *  types in the type signature of the returned association class.
+     *  This is useful when you want to use associations as items in collection
+     *  types or properties...
+     *
+     * @param keyType The key type {@code K} in the returned {@code Class<Association<K,V>>}.
+     * @param valueType The value type {@code V} in the returned {@code Class<Association<K,V>>}.
+     * @return The {@code Association.class} but with both parameter types included as {@code Class<Association<K,V>>}.
+     * @param <K> The type of keys in the association class parameter signature.
+     * @param <V> The type of values in the association class parameter signature.
+     * @throws NullPointerException If any of the supplied type parameters is null.
+     */
+    @SuppressWarnings("unchecked")
+    static <K,V> Class<Association<K,V>> classTyped(Class<K> keyType, Class<V> valueType) {
+        Objects.requireNonNull(keyType);
+        Objects.requireNonNull(valueType);
+        return (Class) Association.class;
+    }
+
+    /**
      *  Creates a new association between keys and values
      *  with the given key and value types. An association
      *  knows the types of its keys and values, and so
