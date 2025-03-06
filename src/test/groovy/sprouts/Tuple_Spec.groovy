@@ -729,6 +729,24 @@ class Tuple_Spec extends Specification
         when : 'We query the indices of the word "live".'
             var indices = words.indicesOf("live")
         then : 'The indices are found as expected.'
-            indices == [1, 4] as int[]
+            indices == Tuple.of(1, 4)
     }
+
+    def 'Use `indicesOf(T)` to get the indices of all occurrences of a tuple of integers.'() {
+        reportInfo """
+            The `indicesOf` method returns a list of all the indices of a given tuple.
+            If the property is not in the list, an empty tuple is returned.
+        """
+        given : 'A `Vars` instance with some properties.'
+            var ints = Tuple.of(1, 2, 3, 2, 4, 2, 5)
+        when : 'We get the indices of the property `2`.'
+            var indices = ints.indicesOf(2)
+        then : 'The indices of the property `2` are returned.'
+            indices == Tuple.of(1, 3, 5)
+        when : 'We get the indices of the property `6`.'
+            var indices2 = ints.indicesOf(6)
+        then : 'An empty list is returned.'
+            indices2 == Tuple.of(Integer)
+    }
+
 }

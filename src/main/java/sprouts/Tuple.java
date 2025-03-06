@@ -401,15 +401,15 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      *  if there are multiple occurrences of the same value, all indices will be returned.
      *
      * @param value The value to search for.
-     * @return An array of integers with the indices of the given value in this tuple.
+     * @return A tuple of integers representing the indices of the given value in this tuple.
      */
-    default int[] indicesOf( T value ) {
+    default Tuple<Integer> indicesOf( T value ) {
         List<Integer> indices = new ArrayList<>();
         for ( int i = 0; i < size(); i++ ) {
             if ( Val.equals(get(i), value) )
                 indices.add(i);
         }
-        return indices.stream().mapToInt(Integer::intValue).toArray();
+        return indices.stream().collect(Tuple.collectorOf(Integer.class));
     }
 
     /**

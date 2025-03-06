@@ -17,6 +17,7 @@ final class AssociationImpl<K, V> implements Association<K, V> {
     private static final long PRIME_1 = 12055296811267L;
     private static final long PRIME_2 = 53982894593057L;
 
+    private static final int MIN_BRANCHING_PER_NODE = 2;
     private static final int MAX_ENTRIES_PER_NODE = 8;
 
 
@@ -145,32 +146,34 @@ final class AssociationImpl<K, V> implements Association<K, V> {
     }
 
     private int _findValidIndexFor(final K key, final int hash) {
-        int index = _mod(hash, _length(_keysArray));
-        if ( index < 0 || index >= _length(_keysArray) ) {
+        int length = _length(_keysArray);
+        int index = _mod(hash, length);
+        if ( index < 0 || index >= length ) {
             return -1;
         }
         int tries = 0;
-        while (_getAt(index, _keysArray, _keyType) != null && !Objects.equals(_getAt(index, _keysArray, _keyType), key) && tries < _length(_keysArray)) {
-            index = _mod(index + 1, _length(_keysArray));
+        while (!Objects.equals(_getAt(index, _keysArray, _keyType), key) && tries < length) {
+            index = _mod(index + 1, length);
             tries++;
         }
-        if ( tries >= _length(_keysArray) ) {
+        if ( tries >= length ) {
             return -1;
         }
         return index;
     }
 
     private static <K> int _findValidIndexFor(final K key, final int hash, final Object keys, Class<?> type) {
-        int index = _mod(hash, _length(keys));
-        if ( index < 0 || index >= _length(keys) ) {
+        int length = _length(keys);
+        int index = _mod(hash, length);
+        if ( index < 0 || index >= length ) {
             return -1;
         }
         int tries = 0;
-        while (_getAt(index, keys, type) != null && !Objects.equals(_getAt(index, keys, type), key) && tries < _length(keys)) {
-            index = _mod(index + 1, _length(keys));
+        while (_getAt(index, keys, type) != null && !Objects.equals(_getAt(index, keys, type), key) && tries < length) {
+            index = _mod(index + 1, length);
             tries++;
         }
-        if ( tries >= _length(keys) ) {
+        if ( tries >= length ) {
             return -1;
         }
         return index;
@@ -243,7 +246,8 @@ final class AssociationImpl<K, V> implements Association<K, V> {
     }
 
     public void populateEntrySetRecursively(Set<Pair<K, V>> setOfEntries) {
-        for (int i = 0; i < _length(_keysArray); i++) {
+        int size = _length(_keysArray);
+        for (int i = 0; i < size; i++) {
             K key = _getAt(i, _keysArray, _keyType);
             V value = _getAt(i, _valuesArray, _valueType);
             Objects.requireNonNull(key);
@@ -325,11 +329,16 @@ final class AssociationImpl<K, V> implements Association<K, V> {
                         _setAt(0, value, newValuesArray);
                         return _withBranchAt(branchIndex, new AssociationImpl<>(_depth + 1, _keyType, newKeysArray, _valueType, newValuesArray, EMPTY_BRANCHES, true));
                     } else {
-                        return _withBranchAt(branchIndex, branch._with(key, keyHash, value, putIfAbsent));
+                        AssociationImpl<K, V> newBranch = branch._with(key, keyHash, value, putIfAbsent);
+                        if ( newBranch == branch ) {
+                            return this;
+                        } else {
+                            return _withBranchAt(branchIndex, newBranch);
+                        }
                     }
                 } else {
                     // We create two new branches for this node, this is where the tree grows
-                    int newBranchSize = 2 + _depth;
+                    int newBranchSize = MIN_BRANCHING_PER_NODE + _depth;
                     AssociationImpl<K, V>[] newBranches = new AssociationImpl[newBranchSize];
                     Object newKeysArray = _createArray(_keyType, ALLOWS_NULL, 1);
                     _setAt(0, key, newKeysArray);
@@ -468,7 +477,8 @@ final class AssociationImpl<K, V> implements Association<K, V> {
     }
 
     private void _toMapRecursively(Map<K, V> map) {
-        for (int i = 0; i < _length(_keysArray); i++) {
+        int size = _length(_keysArray);
+        for (int i = 0; i < size; i++) {
             K key = _getAt(i, _keysArray, _keyType);
             V value = _getAt(i, _valuesArray, _valueType);
             map.put(key, value);
@@ -484,15 +494,16 @@ final class AssociationImpl<K, V> implements Association<K, V> {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("Association[");
-        for (int i = 0; i < _length(_keysArray); i++) {
+        int size = _length(_keysArray);
+        for (int i = 0; i < size; i++) {
             K key = _getAt(i, _keysArray, _keyType);
             V value = _getAt(i, _valuesArray, _valueType);
             sb.append(_toString(key, _keyType)).append(" ↦ ").append(_toString(value, _valueType));
-            if ( i < _length(_keysArray) - 1 ) {
+            if ( i < size - 1 ) {
                 sb.append(", ");
             }
         }
-        int numberOfEntriesLeft = _size - _length(_keysArray);
+        int numberOfEntriesLeft = _size - size;
         if ( numberOfEntriesLeft > 0 ) {
             sb.append(", ...").append(numberOfEntriesLeft).append(" more entries");
         }
@@ -555,7 +566,8 @@ final class AssociationImpl<K, V> implements Association<K, V> {
 
     private long _recursiveHashCode() {
         long baseHash = 0; // -> full 64 bit improve hash distribution
-        for (int i = 0; i < _length(_keysArray); i++) {
+        int size = _length(_keysArray);
+        for (int i = 0; i < size; i++) {
             K key = _getAt(i, _keysArray, _keyType);
             V value = _getAt(i, _valuesArray, _valueType);
             baseHash += _fullKeyPairHash(key, value);

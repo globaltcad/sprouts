@@ -352,7 +352,7 @@ public interface Vals<T extends @Nullable Object> extends Iterable<T> {
      * @param value The value to search for.
      * @return True if any of the properties of this list wraps the given value.
      */
-    default boolean contains( @Nullable T value ) { return indexOf(value) != -1; }
+    default boolean contains( @Nullable T value ) { return firstIndexOf(value) != -1; }
 
     /**
      *  Use this to find the index of an item.
@@ -362,7 +362,7 @@ public interface Vals<T extends @Nullable Object> extends Iterable<T> {
      * @param value The value to search for.
      * @return The index of the property that wraps the given value, or -1 if not found.
      */
-    default int indexOf( @Nullable T value )
+    default int firstIndexOf( @Nullable T value )
     {
         int index = 0;
         for ( T v : this ) {
@@ -383,9 +383,9 @@ public interface Vals<T extends @Nullable Object> extends Iterable<T> {
      * @param value The property to search for in this list.
      * @return The index of the given property in this list, or -1 if not found.
      */
-    default int indexOf( Val<T> value ) {
+    default int firstIndexOf( Val<T> value ) {
         if ( !value.isMutable() )
-            return indexOf(value.orElseNull());
+            return firstIndexOf(value.orElseNull());
         else {
             for ( int i = 0; i < size(); i++ ) {
                 Val<T> val = at(i);
@@ -394,6 +394,24 @@ public interface Vals<T extends @Nullable Object> extends Iterable<T> {
             }
             return -1;
         }
+    }
+
+    /**
+     *  Finds all indices of the given value in this property list of items and
+     *  returns them as an array of integers.
+     *  If the value is not found, an empty array will be returned and
+     *  if there are multiple occurrences of the same value, all indices will be returned.
+     *
+     * @param value The property value to search for in this list of properties.
+     * @return A tuple of integers representing the indices of the given value in this list of properties.
+     */
+    default Tuple<Integer> indicesOf( T value ) {
+        List<Integer> indices = new ArrayList<>();
+        for ( int i = 0; i < size(); i++ ) {
+            if ( at(i).is(value) )
+                indices.add(i);
+        }
+        return indices.stream().collect(Tuple.collectorOf(Integer.class));
     }
 
     /**
@@ -407,7 +425,7 @@ public interface Vals<T extends @Nullable Object> extends Iterable<T> {
         if ( !value.isMutable() )
             return contains(value.orElseNull());
         else
-            return indexOf(value) != -1;
+            return firstIndexOf(value) != -1;
     }
 
     /**
