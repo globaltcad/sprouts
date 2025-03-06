@@ -361,10 +361,10 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
      * @return This list.
      */
     default Vars<T> remove( T item ) {
-        int index = this.indexOf(item);
+        int index = this.firstIndexOf(item);
         while ( index >= 0 ) {
             removeAt(index);
-            index = this.indexOf(item);
+            index = this.firstIndexOf(item);
         }
         return this;
     }
@@ -377,7 +377,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
      * @return {@code this} list of properties.
      */
     default Vars<T> removeFirstFound( T item ) {
-        int index = indexOf(item);
+        int index = firstIndexOf(item);
         return index < 0 ? this : removeRange( index, index + 1 );
     }
 
@@ -390,12 +390,12 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
      * @throws NoSuchElementException if the value is not found.
      */
     default Vars<T> removeOrThrow( T item ) {
-        int index = indexOf(item);
+        int index = firstIndexOf(item);
         if ( index < 0 )
             throw new NoSuchElementException("No such element: " + item);
         while ( index >= 0 ) {
             removeAt(index);
-            index = this.indexOf(item);
+            index = this.firstIndexOf(item);
         }
         return this;
     }
@@ -411,7 +411,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
      * @throws NoSuchElementException if the value is not found.
      */
     default Vars<T> removeFirstFoundOrThrow( T value ) {
-        int index = indexOf(value);
+        int index = firstIndexOf(value);
         if ( index < 0 )
             throw new NoSuchElementException("No such element: " + value);
         return removeRange( index, index + 1 );
@@ -427,10 +427,10 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
      */
     default Vars<T> remove( Var<T> var ) {
         Objects.requireNonNull(var);
-        int index = indexOf(var);
+        int index = firstIndexOf(var);
         while ( index >= 0 ) {
             removeAt(index);
-            index = this.indexOf(var);
+            index = this.firstIndexOf(var);
         }
         return this;
     }
@@ -448,7 +448,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
      */
     default Vars<T> removeFirstFound( Var<T> var ) {
         Objects.requireNonNull(var);
-        int index = indexOf(var);
+        int index = firstIndexOf(var);
         return index < 0 ? this : removeRange( index, index + 1 );
     }
 
@@ -463,12 +463,12 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
      */
     default Vars<T> removeOrThrow( Var<T> var ) {
         Objects.requireNonNull(var);
-        int index = indexOf(var);
+        int index = firstIndexOf(var);
         if ( index < 0 )
             throw new NoSuchElementException("No such element: " + var);
         while ( index >= 0 ) {
             removeAt(index);
-            index = this.indexOf(var);
+            index = this.firstIndexOf(var);
         }
         return this;
     }
@@ -484,7 +484,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
      */
     default Vars<T> removeFirstFoundOrThrow( Var<T> var ) {
         Objects.requireNonNull(var);
-        int index = indexOf(var);
+        int index = firstIndexOf(var);
         if ( index < 0 )
             throw new NoSuchElementException("No such element: " + var);
         return removeRange( index, index + 1 );

@@ -743,11 +743,28 @@ class Property_List_Spec extends Specification
             Vars.of("a", "b", "c").remove("a").toList() == ["b", "c"]
             Vars.of("a", "b", "c").add(Var.of("d")).toList() == ["a", "b", "c", "d"]
             Vars.of("a", "b", "c").add("d").toList() == ["a", "b", "c", "d"]
-            Vars.of(1, 2, 3).indexOf(2) == 1
-            Vars.of(1, 2, 3).indexOf(Var.of(2)) == -1
-            Vars.of(1, 2, 3).indexOf(Val.of(2)) == 1
-            Vars.of(1, 2, 3).indexOf(Val.of(2).get()) == 1
-            Vars.of(1, 2, 3).indexOf(Var.of(2).get()) == 1
+            Vars.of(1, 2, 3).firstIndexOf(2) == 1
+            Vars.of(1, 2, 3).firstIndexOf(Var.of(2)) == -1
+            Vars.of(1, 2, 3).firstIndexOf(Val.of(2)) == 1
+            Vars.of(1, 2, 3).firstIndexOf(Val.of(2).get()) == 1
+            Vars.of(1, 2, 3).firstIndexOf(Var.of(2).get()) == 1
+    }
+
+    def 'Use `indicesOf(T)` to get the indices of all occurrences of a property in a list.'() {
+        reportInfo """
+            The `indicesOf` method returns a list of all the indices of the given property in the list.
+            If the property is not in the list, an empty tuple is returned.
+        """
+        given : 'A `Vars` instance with some properties.'
+            var vars = Vars.of(1, 2, 3, 2, 4, 2, 5)
+        when : 'We get the indices of the property `2`.'
+            var indices = vars.indicesOf(2)
+        then : 'The indices of the property `2` are returned.'
+            indices == Tuple.of(1, 3, 5)
+        when : 'We get the indices of the property `6`.'
+            var indices2 = vars.indicesOf(6)
+        then : 'An empty list is returned.'
+            indices2 == Tuple.of(Integer)
     }
 
     def 'Various kinds of methods that mutate a property list will only trigger an "onChange" event once, even if multiple items are affected.'(
@@ -844,18 +861,18 @@ class Property_List_Spec extends Specification
         given : 'A "Vars" instance having a few properties.'
             var vars = Vars.of("a", "b", "c", "d", "e")
         expect : 'The `indexOf` method returns the index of the first occurrence of the given property.'
-            vars.indexOf("c") == 2
+            vars.firstIndexOf("c") == 2
         when : 'We set one of the properties to null.'
             vars.at(1).set("")
         then : 'The `indexOf` method returns -1 if the property is not in the list.'
-            vars.indexOf("b") == -1
-            vars.indexOf("") == 1
+            vars.firstIndexOf("b") == -1
+            vars.firstIndexOf("") == 1
         when : 'We create a list of nullable properties and set one of the properties to null.'
             vars = Vars.ofNullable(String, "a", "b", "c", "d", "e")
             vars.at(1).set(null)
         then : 'The `indexOf` method returns the index of the first occurrence of the given property.'
-            vars.indexOf("c") == 2
-            vars.indexOf(null) == 1
+            vars.firstIndexOf("c") == 2
+            vars.firstIndexOf(null) == 1
     }
 
     def 'You can easily create an empty "Vals" list.'() {
