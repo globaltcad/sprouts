@@ -21,6 +21,26 @@ import java.util.Objects;
 public final class Pair<F extends @Nullable Object,S extends @Nullable Object> {
 
     /**
+     *  An alternative to {@code Pair.class} which also includes the parameter
+     *  types in the type signature of the returned pair class.
+     *  This is useful when you want to use pair as items in collection
+     *  types or properties...
+     *
+     * @param firstType The first item type {@code F} in the returned {@code Class<Pair<F, S>>}.
+     * @param secondType The second item type {@code S} in the returned {@code Class<Pair<F, S>>}.
+     * @return The {@code Pair.class} but with both parameter types included as {@code Class<Pair<F, S>>}.
+     * @param <F> The type of first item in the pair class parameter signature.
+     * @param <S> The type of second item in the pair class parameter signature.
+     * @throws NullPointerException If any of the supplied type parameters is null.
+     */
+    @SuppressWarnings("unchecked")
+    static <F, S> Class<Pair<F, S>> classTyped(Class<F> firstType, Class<S> secondType) {
+        Objects.requireNonNull(firstType);
+        Objects.requireNonNull(secondType);
+        return (Class) Pair.class;
+    }
+
+    /**
      *  A factory method for creating a new pair with the given values.
      *
      * @param first The first value of the pair.

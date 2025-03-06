@@ -36,6 +36,23 @@ import java.util.stream.StreamSupport;
 public interface Tuple<T extends @Nullable Object> extends Iterable<T>
 {
     /**
+     *  An alternative to {@code Tuple.class} which also includes the parameter
+     *  type in the type signature of the returned tuple class.
+     *  This is useful when you want to use tuple as items in collection
+     *  types or in properties...
+     *
+     * @param itemType The item type {@code T} in the returned {@code Class<Tuple<T>>}.
+     * @return The {@code Tuple.class} but with the parameter type included as {@code Class<Tuple<T>>}.
+     * @param <T> The type of item in the tuple class parameter signature.
+     * @throws NullPointerException If the supplied type parameter is null.
+     */
+    @SuppressWarnings("unchecked")
+    static <T> Class<Tuple<T>> classTyped(Class<T> itemType) {
+        Objects.requireNonNull(itemType);
+        return (Class) Tuple.class;
+    }
+
+    /**
      *  Creates a {@link Collector} that can be used
      *  to collect a stream of items into a new tuple of non-nullable items.
      *  Here is an example demonstrating how this method may be used:<br>
