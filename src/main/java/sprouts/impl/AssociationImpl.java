@@ -246,7 +246,8 @@ final class AssociationImpl<K, V> implements Association<K, V> {
     }
 
     public void populateEntrySetRecursively(Set<Pair<K, V>> setOfEntries) {
-        for (int i = 0; i < _length(_keysArray); i++) {
+        int size = _length(_keysArray);
+        for (int i = 0; i < size; i++) {
             K key = _getAt(i, _keysArray, _keyType);
             V value = _getAt(i, _valuesArray, _valueType);
             Objects.requireNonNull(key);
@@ -476,7 +477,8 @@ final class AssociationImpl<K, V> implements Association<K, V> {
     }
 
     private void _toMapRecursively(Map<K, V> map) {
-        for (int i = 0; i < _length(_keysArray); i++) {
+        int size = _length(_keysArray);
+        for (int i = 0; i < size; i++) {
             K key = _getAt(i, _keysArray, _keyType);
             V value = _getAt(i, _valuesArray, _valueType);
             map.put(key, value);
@@ -492,15 +494,16 @@ final class AssociationImpl<K, V> implements Association<K, V> {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("Association[");
-        for (int i = 0; i < _length(_keysArray); i++) {
+        int size = _length(_keysArray);
+        for (int i = 0; i < size; i++) {
             K key = _getAt(i, _keysArray, _keyType);
             V value = _getAt(i, _valuesArray, _valueType);
             sb.append(_toString(key, _keyType)).append(" ↦ ").append(_toString(value, _valueType));
-            if ( i < _length(_keysArray) - 1 ) {
+            if ( i < size - 1 ) {
                 sb.append(", ");
             }
         }
-        int numberOfEntriesLeft = _size - _length(_keysArray);
+        int numberOfEntriesLeft = _size - size;
         if ( numberOfEntriesLeft > 0 ) {
             sb.append(", ...").append(numberOfEntriesLeft).append(" more entries");
         }
@@ -563,7 +566,8 @@ final class AssociationImpl<K, V> implements Association<K, V> {
 
     private long _recursiveHashCode() {
         long baseHash = 0; // -> full 64 bit improve hash distribution
-        for (int i = 0; i < _length(_keysArray); i++) {
+        int size = _length(_keysArray);
+        for (int i = 0; i < size; i++) {
             K key = _getAt(i, _keysArray, _keyType);
             V value = _getAt(i, _valuesArray, _valueType);
             baseHash += _fullKeyPairHash(key, value);
