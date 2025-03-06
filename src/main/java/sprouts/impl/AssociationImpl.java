@@ -146,32 +146,34 @@ final class AssociationImpl<K, V> implements Association<K, V> {
     }
 
     private int _findValidIndexFor(final K key, final int hash) {
-        int index = _mod(hash, _length(_keysArray));
-        if ( index < 0 || index >= _length(_keysArray) ) {
+        int length = _length(_keysArray);
+        int index = _mod(hash, length);
+        if ( index < 0 || index >= length ) {
             return -1;
         }
         int tries = 0;
-        while (!Objects.equals(_getAt(index, _keysArray, _keyType), key) && tries < _length(_keysArray)) {
-            index = _mod(index + 1, _length(_keysArray));
+        while (!Objects.equals(_getAt(index, _keysArray, _keyType), key) && tries < length) {
+            index = _mod(index + 1, length);
             tries++;
         }
-        if ( tries >= _length(_keysArray) ) {
+        if ( tries >= length ) {
             return -1;
         }
         return index;
     }
 
     private static <K> int _findValidIndexFor(final K key, final int hash, final Object keys, Class<?> type) {
-        int index = _mod(hash, _length(keys));
-        if ( index < 0 || index >= _length(keys) ) {
+        int length = _length(keys);
+        int index = _mod(hash, length);
+        if ( index < 0 || index >= length ) {
             return -1;
         }
         int tries = 0;
-        while (_getAt(index, keys, type) != null && !Objects.equals(_getAt(index, keys, type), key) && tries < _length(keys)) {
-            index = _mod(index + 1, _length(keys));
+        while (_getAt(index, keys, type) != null && !Objects.equals(_getAt(index, keys, type), key) && tries < length) {
+            index = _mod(index + 1, length);
             tries++;
         }
-        if ( tries >= _length(keys) ) {
+        if ( tries >= length ) {
             return -1;
         }
         return index;
