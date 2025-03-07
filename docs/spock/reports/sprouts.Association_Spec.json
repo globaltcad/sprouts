@@ -1,0 +1,1096 @@
+{
+  "className":"sprouts.Association_Spec",
+  "title":"Associations",
+  "narrative":"Sprouts is a property library with a heavy focus on origin the\n    gap between classical place oriented programming and modern\n    data oriented programming.\n    This is why sprouts has both the `Tuple` and `Association` classes.\n    The `Association` class is a value object that represents a set of\n    key-value pairs. You can think of it as an immutable map, but with\n    an API that is designed around transforming the data in the map\n    rather than mutating it.",
+  "subjects":["sprouts.Association"],
+  "statistics":{
+    "runs":"42",
+    "successRate":"100.0%",
+    "failures":"0",
+    "errors":"0",
+    "skipped":"0",
+    "duration":"?"
+  },
+  "headers":[],"tags":{},"see":[],
+  "features":[ 
+    {
+      "id":"An empty association is created by supplying the type of the key and value",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var associations = Association.between(String, Integer)"]},
+
+        {"kind":"expect","text":"","code":["associations.isEmpty()","associations.keyType() == String","associations.valueType() == Integer"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"An association is invariant to a map. [0]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var associations = Association.between(String, String)","var map = [:]","var operationsApplier = { currentAssociations ->","    operations.each { operation, key ->","        switch (operation) {","            case Operation.ADD:","                currentAssociations = currentAssociations.put(key, \"value of \" + key)","                map[key] = \"value of \" + key","                break","            case Operation.REMOVE:","                currentAssociations = currentAssociations.remove(key)","                map.remove(key)","                break","        }","    }","    return currentAssociations","}"]},
+
+        {"kind":"when","text":"We apply the operations to the associations and the map for the first time.","code":["associations = operationsApplier(associations)"]},
+
+        {"kind":"then","text":"The associations and the map are equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
+
+        {"kind":"when","text":"We apply the operations to the associations and the map a few more times.","code":["10.times { associations = operationsApplier(associations) }"]},
+
+        {"kind":"then","text":"The associations and the map are still equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
+
+        {"kind":"and","text":"We can lookup any value from its corresponding key.","code":["map.values() as Set == map.keySet().collect { key -> associations.get(key).orElseThrow(MissingItemException::new) } as Set"]},
+
+        {"kind":"when","text":"We use the `toMap()` method to convert the association to a map.","code":["var convertedMap = associations.toMap()"]},
+
+        {"kind":"then","text":"The converted map is equal to the reference map.","code":["convertedMap == map"]},
+
+        {"kind":"where","text":"","code":{"operations":["new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c')\n        ]","new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","(0..100).collect({\n            var hash = Math.abs((139 * (90 + it.hashCode())) % 100)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..1_000).collect({\n            var hash = Math.abs((31 * 139 * (500 + it.hashCode())) % 1_000)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..5_000).collect({\n            var hash = Math.abs(it % 2_000)\n            var operation = it > 2_000 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"An association is invariant to a map. [1]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var associations = Association.between(String, String)","var map = [:]","var operationsApplier = { currentAssociations ->","    operations.each { operation, key ->","        switch (operation) {","            case Operation.ADD:","                currentAssociations = currentAssociations.put(key, \"value of \" + key)","                map[key] = \"value of \" + key","                break","            case Operation.REMOVE:","                currentAssociations = currentAssociations.remove(key)","                map.remove(key)","                break","        }","    }","    return currentAssociations","}"]},
+
+        {"kind":"when","text":"We apply the operations to the associations and the map for the first time.","code":["associations = operationsApplier(associations)"]},
+
+        {"kind":"then","text":"The associations and the map are equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
+
+        {"kind":"when","text":"We apply the operations to the associations and the map a few more times.","code":["10.times { associations = operationsApplier(associations) }"]},
+
+        {"kind":"then","text":"The associations and the map are still equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
+
+        {"kind":"and","text":"We can lookup any value from its corresponding key.","code":["map.values() as Set == map.keySet().collect { key -> associations.get(key).orElseThrow(MissingItemException::new) } as Set"]},
+
+        {"kind":"when","text":"We use the `toMap()` method to convert the association to a map.","code":["var convertedMap = associations.toMap()"]},
+
+        {"kind":"then","text":"The converted map is equal to the reference map.","code":["convertedMap == map"]},
+
+        {"kind":"where","text":"","code":{"operations":["new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c')\n        ]","new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","(0..100).collect({\n            var hash = Math.abs((139 * (90 + it.hashCode())) % 100)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..1_000).collect({\n            var hash = Math.abs((31 * 139 * (500 + it.hashCode())) % 1_000)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..5_000).collect({\n            var hash = Math.abs(it % 2_000)\n            var operation = it > 2_000 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"An association is invariant to a map. [2]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var associations = Association.between(String, String)","var map = [:]","var operationsApplier = { currentAssociations ->","    operations.each { operation, key ->","        switch (operation) {","            case Operation.ADD:","                currentAssociations = currentAssociations.put(key, \"value of \" + key)","                map[key] = \"value of \" + key","                break","            case Operation.REMOVE:","                currentAssociations = currentAssociations.remove(key)","                map.remove(key)","                break","        }","    }","    return currentAssociations","}"]},
+
+        {"kind":"when","text":"We apply the operations to the associations and the map for the first time.","code":["associations = operationsApplier(associations)"]},
+
+        {"kind":"then","text":"The associations and the map are equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
+
+        {"kind":"when","text":"We apply the operations to the associations and the map a few more times.","code":["10.times { associations = operationsApplier(associations) }"]},
+
+        {"kind":"then","text":"The associations and the map are still equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
+
+        {"kind":"and","text":"We can lookup any value from its corresponding key.","code":["map.values() as Set == map.keySet().collect { key -> associations.get(key).orElseThrow(MissingItemException::new) } as Set"]},
+
+        {"kind":"when","text":"We use the `toMap()` method to convert the association to a map.","code":["var convertedMap = associations.toMap()"]},
+
+        {"kind":"then","text":"The converted map is equal to the reference map.","code":["convertedMap == map"]},
+
+        {"kind":"where","text":"","code":{"operations":["new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c')\n        ]","new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","(0..100).collect({\n            var hash = Math.abs((139 * (90 + it.hashCode())) % 100)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..1_000).collect({\n            var hash = Math.abs((31 * 139 * (500 + it.hashCode())) % 1_000)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..5_000).collect({\n            var hash = Math.abs(it % 2_000)\n            var operation = it > 2_000 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"An association is invariant to a map. [3]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var associations = Association.between(String, String)","var map = [:]","var operationsApplier = { currentAssociations ->","    operations.each { operation, key ->","        switch (operation) {","            case Operation.ADD:","                currentAssociations = currentAssociations.put(key, \"value of \" + key)","                map[key] = \"value of \" + key","                break","            case Operation.REMOVE:","                currentAssociations = currentAssociations.remove(key)","                map.remove(key)","                break","        }","    }","    return currentAssociations","}"]},
+
+        {"kind":"when","text":"We apply the operations to the associations and the map for the first time.","code":["associations = operationsApplier(associations)"]},
+
+        {"kind":"then","text":"The associations and the map are equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
+
+        {"kind":"when","text":"We apply the operations to the associations and the map a few more times.","code":["10.times { associations = operationsApplier(associations) }"]},
+
+        {"kind":"then","text":"The associations and the map are still equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
+
+        {"kind":"and","text":"We can lookup any value from its corresponding key.","code":["map.values() as Set == map.keySet().collect { key -> associations.get(key).orElseThrow(MissingItemException::new) } as Set"]},
+
+        {"kind":"when","text":"We use the `toMap()` method to convert the association to a map.","code":["var convertedMap = associations.toMap()"]},
+
+        {"kind":"then","text":"The converted map is equal to the reference map.","code":["convertedMap == map"]},
+
+        {"kind":"where","text":"","code":{"operations":["new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c')\n        ]","new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","(0..100).collect({\n            var hash = Math.abs((139 * (90 + it.hashCode())) % 100)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..1_000).collect({\n            var hash = Math.abs((31 * 139 * (500 + it.hashCode())) % 1_000)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..5_000).collect({\n            var hash = Math.abs(it % 2_000)\n            var operation = it > 2_000 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"An association is invariant to a map. [4]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var associations = Association.between(String, String)","var map = [:]","var operationsApplier = { currentAssociations ->","    operations.each { operation, key ->","        switch (operation) {","            case Operation.ADD:","                currentAssociations = currentAssociations.put(key, \"value of \" + key)","                map[key] = \"value of \" + key","                break","            case Operation.REMOVE:","                currentAssociations = currentAssociations.remove(key)","                map.remove(key)","                break","        }","    }","    return currentAssociations","}"]},
+
+        {"kind":"when","text":"We apply the operations to the associations and the map for the first time.","code":["associations = operationsApplier(associations)"]},
+
+        {"kind":"then","text":"The associations and the map are equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
+
+        {"kind":"when","text":"We apply the operations to the associations and the map a few more times.","code":["10.times { associations = operationsApplier(associations) }"]},
+
+        {"kind":"then","text":"The associations and the map are still equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
+
+        {"kind":"and","text":"We can lookup any value from its corresponding key.","code":["map.values() as Set == map.keySet().collect { key -> associations.get(key).orElseThrow(MissingItemException::new) } as Set"]},
+
+        {"kind":"when","text":"We use the `toMap()` method to convert the association to a map.","code":["var convertedMap = associations.toMap()"]},
+
+        {"kind":"then","text":"The converted map is equal to the reference map.","code":["convertedMap == map"]},
+
+        {"kind":"where","text":"","code":{"operations":["new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c')\n        ]","new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","(0..100).collect({\n            var hash = Math.abs((139 * (90 + it.hashCode())) % 100)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..1_000).collect({\n            var hash = Math.abs((31 * 139 * (500 + it.hashCode())) % 1_000)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..5_000).collect({\n            var hash = Math.abs(it % 2_000)\n            var operation = it > 2_000 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"An association is invariant to a map. [5]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var associations = Association.between(String, String)","var map = [:]","var operationsApplier = { currentAssociations ->","    operations.each { operation, key ->","        switch (operation) {","            case Operation.ADD:","                currentAssociations = currentAssociations.put(key, \"value of \" + key)","                map[key] = \"value of \" + key","                break","            case Operation.REMOVE:","                currentAssociations = currentAssociations.remove(key)","                map.remove(key)","                break","        }","    }","    return currentAssociations","}"]},
+
+        {"kind":"when","text":"We apply the operations to the associations and the map for the first time.","code":["associations = operationsApplier(associations)"]},
+
+        {"kind":"then","text":"The associations and the map are equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
+
+        {"kind":"when","text":"We apply the operations to the associations and the map a few more times.","code":["10.times { associations = operationsApplier(associations) }"]},
+
+        {"kind":"then","text":"The associations and the map are still equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
+
+        {"kind":"and","text":"We can lookup any value from its corresponding key.","code":["map.values() as Set == map.keySet().collect { key -> associations.get(key).orElseThrow(MissingItemException::new) } as Set"]},
+
+        {"kind":"when","text":"We use the `toMap()` method to convert the association to a map.","code":["var convertedMap = associations.toMap()"]},
+
+        {"kind":"then","text":"The converted map is equal to the reference map.","code":["convertedMap == map"]},
+
+        {"kind":"where","text":"","code":{"operations":["new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c')\n        ]","new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","(0..100).collect({\n            var hash = Math.abs((139 * (90 + it.hashCode())) % 100)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..1_000).collect({\n            var hash = Math.abs((31 * 139 * (500 + it.hashCode())) % 1_000)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..5_000).collect({\n            var hash = Math.abs(it % 2_000)\n            var operation = it > 2_000 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"An association is invariant to a map. [6]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var associations = Association.between(String, String)","var map = [:]","var operationsApplier = { currentAssociations ->","    operations.each { operation, key ->","        switch (operation) {","            case Operation.ADD:","                currentAssociations = currentAssociations.put(key, \"value of \" + key)","                map[key] = \"value of \" + key","                break","            case Operation.REMOVE:","                currentAssociations = currentAssociations.remove(key)","                map.remove(key)","                break","        }","    }","    return currentAssociations","}"]},
+
+        {"kind":"when","text":"We apply the operations to the associations and the map for the first time.","code":["associations = operationsApplier(associations)"]},
+
+        {"kind":"then","text":"The associations and the map are equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
+
+        {"kind":"when","text":"We apply the operations to the associations and the map a few more times.","code":["10.times { associations = operationsApplier(associations) }"]},
+
+        {"kind":"then","text":"The associations and the map are still equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
+
+        {"kind":"and","text":"We can lookup any value from its corresponding key.","code":["map.values() as Set == map.keySet().collect { key -> associations.get(key).orElseThrow(MissingItemException::new) } as Set"]},
+
+        {"kind":"when","text":"We use the `toMap()` method to convert the association to a map.","code":["var convertedMap = associations.toMap()"]},
+
+        {"kind":"then","text":"The converted map is equal to the reference map.","code":["convertedMap == map"]},
+
+        {"kind":"where","text":"","code":{"operations":["new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c')\n        ]","new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","(0..100).collect({\n            var hash = Math.abs((139 * (90 + it.hashCode())) % 100)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..1_000).collect({\n            var hash = Math.abs((31 * 139 * (500 + it.hashCode())) % 1_000)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..5_000).collect({\n            var hash = Math.abs(it % 2_000)\n            var operation = it > 2_000 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"An association is invariant to a map. [7]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var associations = Association.between(String, String)","var map = [:]","var operationsApplier = { currentAssociations ->","    operations.each { operation, key ->","        switch (operation) {","            case Operation.ADD:","                currentAssociations = currentAssociations.put(key, \"value of \" + key)","                map[key] = \"value of \" + key","                break","            case Operation.REMOVE:","                currentAssociations = currentAssociations.remove(key)","                map.remove(key)","                break","        }","    }","    return currentAssociations","}"]},
+
+        {"kind":"when","text":"We apply the operations to the associations and the map for the first time.","code":["associations = operationsApplier(associations)"]},
+
+        {"kind":"then","text":"The associations and the map are equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
+
+        {"kind":"when","text":"We apply the operations to the associations and the map a few more times.","code":["10.times { associations = operationsApplier(associations) }"]},
+
+        {"kind":"then","text":"The associations and the map are still equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
+
+        {"kind":"and","text":"We can lookup any value from its corresponding key.","code":["map.values() as Set == map.keySet().collect { key -> associations.get(key).orElseThrow(MissingItemException::new) } as Set"]},
+
+        {"kind":"when","text":"We use the `toMap()` method to convert the association to a map.","code":["var convertedMap = associations.toMap()"]},
+
+        {"kind":"then","text":"The converted map is equal to the reference map.","code":["convertedMap == map"]},
+
+        {"kind":"where","text":"","code":{"operations":["new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c')\n        ]","new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","(0..100).collect({\n            var hash = Math.abs((139 * (90 + it.hashCode())) % 100)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..1_000).collect({\n            var hash = Math.abs((31 * 139 * (500 + it.hashCode())) % 1_000)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..5_000).collect({\n            var hash = Math.abs(it % 2_000)\n            var operation = it > 2_000 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"An association is invariant to a map. [8]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var associations = Association.between(String, String)","var map = [:]","var operationsApplier = { currentAssociations ->","    operations.each { operation, key ->","        switch (operation) {","            case Operation.ADD:","                currentAssociations = currentAssociations.put(key, \"value of \" + key)","                map[key] = \"value of \" + key","                break","            case Operation.REMOVE:","                currentAssociations = currentAssociations.remove(key)","                map.remove(key)","                break","        }","    }","    return currentAssociations","}"]},
+
+        {"kind":"when","text":"We apply the operations to the associations and the map for the first time.","code":["associations = operationsApplier(associations)"]},
+
+        {"kind":"then","text":"The associations and the map are equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
+
+        {"kind":"when","text":"We apply the operations to the associations and the map a few more times.","code":["10.times { associations = operationsApplier(associations) }"]},
+
+        {"kind":"then","text":"The associations and the map are still equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
+
+        {"kind":"and","text":"We can lookup any value from its corresponding key.","code":["map.values() as Set == map.keySet().collect { key -> associations.get(key).orElseThrow(MissingItemException::new) } as Set"]},
+
+        {"kind":"when","text":"We use the `toMap()` method to convert the association to a map.","code":["var convertedMap = associations.toMap()"]},
+
+        {"kind":"then","text":"The converted map is equal to the reference map.","code":["convertedMap == map"]},
+
+        {"kind":"where","text":"","code":{"operations":["new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c')\n        ]","new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","(0..100).collect({\n            var hash = Math.abs((139 * (90 + it.hashCode())) % 100)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..1_000).collect({\n            var hash = Math.abs((31 * 139 * (500 + it.hashCode())) % 1_000)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..5_000).collect({\n            var hash = Math.abs(it % 2_000)\n            var operation = it > 2_000 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Two associations the the same operations applied to them are always equal. [0]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create an association and a map as well as a closure to apply the operations to them.","code":["var associations = Association.between(String, String)","var operationsApplier = { currentAssociations ->","    operations.each { operation, key ->","        switch (operation) {","            case Operation.ADD:","                currentAssociations = currentAssociations.put(key, \"value of \" + key)","                break","            case Operation.REMOVE:","                currentAssociations = currentAssociations.remove(key)","                break","        }","    }","    return currentAssociations","}"]},
+
+        {"kind":"when","text":"We apply the operations to two associations and the map for the first time.","code":["var associations1 = operationsApplier(associations)","var associations2 = operationsApplier(associations)"]},
+
+        {"kind":"and","text":"We apply some more custom operations on top:","code":["associations1 = associations1.put(\"Temp1\", \"_\").put(\"Temp2\", \"_\")","associations1 = associations1.remove(\"Temp1\").remove(\"Temp2\")"]},
+
+        {"kind":"then","text":"The two associations are equal.","code":["associations1 == associations2"]},
+
+        {"kind":"and","text":"Their hash codes are equal.","code":["associations1.hashCode() == associations2.hashCode()"]},
+
+        {"kind":"when","text":"We update the second association to be a bit different.","code":["associations2 = associations2.put(\"A bit\", \"different\")"]},
+
+        {"kind":"then","text":"The two associations are not equal.","code":["associations1 != associations2"]},
+
+        {"kind":"and","text":"Their hash codes are not equal.","code":["associations1.hashCode() != associations2.hashCode()"]},
+
+        {"kind":"where","text":"","code":{"operations":["new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c')\n        ]","new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","(0..100).collect({\n            var hash = Math.abs((139 * (90 + it.hashCode())) % 100)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..1_000).collect({\n            var hash = Math.abs((31 * 139 * (500 + it.hashCode())) % 1_000)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..5_000).collect({\n            var hash = Math.abs(it % 2_000)\n            var operation = it > 2_000 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Two associations the the same operations applied to them are always equal. [1]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create an association and a map as well as a closure to apply the operations to them.","code":["var associations = Association.between(String, String)","var operationsApplier = { currentAssociations ->","    operations.each { operation, key ->","        switch (operation) {","            case Operation.ADD:","                currentAssociations = currentAssociations.put(key, \"value of \" + key)","                break","            case Operation.REMOVE:","                currentAssociations = currentAssociations.remove(key)","                break","        }","    }","    return currentAssociations","}"]},
+
+        {"kind":"when","text":"We apply the operations to two associations and the map for the first time.","code":["var associations1 = operationsApplier(associations)","var associations2 = operationsApplier(associations)"]},
+
+        {"kind":"and","text":"We apply some more custom operations on top:","code":["associations1 = associations1.put(\"Temp1\", \"_\").put(\"Temp2\", \"_\")","associations1 = associations1.remove(\"Temp1\").remove(\"Temp2\")"]},
+
+        {"kind":"then","text":"The two associations are equal.","code":["associations1 == associations2"]},
+
+        {"kind":"and","text":"Their hash codes are equal.","code":["associations1.hashCode() == associations2.hashCode()"]},
+
+        {"kind":"when","text":"We update the second association to be a bit different.","code":["associations2 = associations2.put(\"A bit\", \"different\")"]},
+
+        {"kind":"then","text":"The two associations are not equal.","code":["associations1 != associations2"]},
+
+        {"kind":"and","text":"Their hash codes are not equal.","code":["associations1.hashCode() != associations2.hashCode()"]},
+
+        {"kind":"where","text":"","code":{"operations":["new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c')\n        ]","new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","(0..100).collect({\n            var hash = Math.abs((139 * (90 + it.hashCode())) % 100)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..1_000).collect({\n            var hash = Math.abs((31 * 139 * (500 + it.hashCode())) % 1_000)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..5_000).collect({\n            var hash = Math.abs(it % 2_000)\n            var operation = it > 2_000 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Two associations the the same operations applied to them are always equal. [2]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create an association and a map as well as a closure to apply the operations to them.","code":["var associations = Association.between(String, String)","var operationsApplier = { currentAssociations ->","    operations.each { operation, key ->","        switch (operation) {","            case Operation.ADD:","                currentAssociations = currentAssociations.put(key, \"value of \" + key)","                break","            case Operation.REMOVE:","                currentAssociations = currentAssociations.remove(key)","                break","        }","    }","    return currentAssociations","}"]},
+
+        {"kind":"when","text":"We apply the operations to two associations and the map for the first time.","code":["var associations1 = operationsApplier(associations)","var associations2 = operationsApplier(associations)"]},
+
+        {"kind":"and","text":"We apply some more custom operations on top:","code":["associations1 = associations1.put(\"Temp1\", \"_\").put(\"Temp2\", \"_\")","associations1 = associations1.remove(\"Temp1\").remove(\"Temp2\")"]},
+
+        {"kind":"then","text":"The two associations are equal.","code":["associations1 == associations2"]},
+
+        {"kind":"and","text":"Their hash codes are equal.","code":["associations1.hashCode() == associations2.hashCode()"]},
+
+        {"kind":"when","text":"We update the second association to be a bit different.","code":["associations2 = associations2.put(\"A bit\", \"different\")"]},
+
+        {"kind":"then","text":"The two associations are not equal.","code":["associations1 != associations2"]},
+
+        {"kind":"and","text":"Their hash codes are not equal.","code":["associations1.hashCode() != associations2.hashCode()"]},
+
+        {"kind":"where","text":"","code":{"operations":["new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c')\n        ]","new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","(0..100).collect({\n            var hash = Math.abs((139 * (90 + it.hashCode())) % 100)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..1_000).collect({\n            var hash = Math.abs((31 * 139 * (500 + it.hashCode())) % 1_000)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..5_000).collect({\n            var hash = Math.abs(it % 2_000)\n            var operation = it > 2_000 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Two associations the the same operations applied to them are always equal. [3]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create an association and a map as well as a closure to apply the operations to them.","code":["var associations = Association.between(String, String)","var operationsApplier = { currentAssociations ->","    operations.each { operation, key ->","        switch (operation) {","            case Operation.ADD:","                currentAssociations = currentAssociations.put(key, \"value of \" + key)","                break","            case Operation.REMOVE:","                currentAssociations = currentAssociations.remove(key)","                break","        }","    }","    return currentAssociations","}"]},
+
+        {"kind":"when","text":"We apply the operations to two associations and the map for the first time.","code":["var associations1 = operationsApplier(associations)","var associations2 = operationsApplier(associations)"]},
+
+        {"kind":"and","text":"We apply some more custom operations on top:","code":["associations1 = associations1.put(\"Temp1\", \"_\").put(\"Temp2\", \"_\")","associations1 = associations1.remove(\"Temp1\").remove(\"Temp2\")"]},
+
+        {"kind":"then","text":"The two associations are equal.","code":["associations1 == associations2"]},
+
+        {"kind":"and","text":"Their hash codes are equal.","code":["associations1.hashCode() == associations2.hashCode()"]},
+
+        {"kind":"when","text":"We update the second association to be a bit different.","code":["associations2 = associations2.put(\"A bit\", \"different\")"]},
+
+        {"kind":"then","text":"The two associations are not equal.","code":["associations1 != associations2"]},
+
+        {"kind":"and","text":"Their hash codes are not equal.","code":["associations1.hashCode() != associations2.hashCode()"]},
+
+        {"kind":"where","text":"","code":{"operations":["new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c')\n        ]","new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","(0..100).collect({\n            var hash = Math.abs((139 * (90 + it.hashCode())) % 100)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..1_000).collect({\n            var hash = Math.abs((31 * 139 * (500 + it.hashCode())) % 1_000)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..5_000).collect({\n            var hash = Math.abs(it % 2_000)\n            var operation = it > 2_000 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Two associations the the same operations applied to them are always equal. [4]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create an association and a map as well as a closure to apply the operations to them.","code":["var associations = Association.between(String, String)","var operationsApplier = { currentAssociations ->","    operations.each { operation, key ->","        switch (operation) {","            case Operation.ADD:","                currentAssociations = currentAssociations.put(key, \"value of \" + key)","                break","            case Operation.REMOVE:","                currentAssociations = currentAssociations.remove(key)","                break","        }","    }","    return currentAssociations","}"]},
+
+        {"kind":"when","text":"We apply the operations to two associations and the map for the first time.","code":["var associations1 = operationsApplier(associations)","var associations2 = operationsApplier(associations)"]},
+
+        {"kind":"and","text":"We apply some more custom operations on top:","code":["associations1 = associations1.put(\"Temp1\", \"_\").put(\"Temp2\", \"_\")","associations1 = associations1.remove(\"Temp1\").remove(\"Temp2\")"]},
+
+        {"kind":"then","text":"The two associations are equal.","code":["associations1 == associations2"]},
+
+        {"kind":"and","text":"Their hash codes are equal.","code":["associations1.hashCode() == associations2.hashCode()"]},
+
+        {"kind":"when","text":"We update the second association to be a bit different.","code":["associations2 = associations2.put(\"A bit\", \"different\")"]},
+
+        {"kind":"then","text":"The two associations are not equal.","code":["associations1 != associations2"]},
+
+        {"kind":"and","text":"Their hash codes are not equal.","code":["associations1.hashCode() != associations2.hashCode()"]},
+
+        {"kind":"where","text":"","code":{"operations":["new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c')\n        ]","new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","(0..100).collect({\n            var hash = Math.abs((139 * (90 + it.hashCode())) % 100)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..1_000).collect({\n            var hash = Math.abs((31 * 139 * (500 + it.hashCode())) % 1_000)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..5_000).collect({\n            var hash = Math.abs(it % 2_000)\n            var operation = it > 2_000 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Two associations the the same operations applied to them are always equal. [5]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create an association and a map as well as a closure to apply the operations to them.","code":["var associations = Association.between(String, String)","var operationsApplier = { currentAssociations ->","    operations.each { operation, key ->","        switch (operation) {","            case Operation.ADD:","                currentAssociations = currentAssociations.put(key, \"value of \" + key)","                break","            case Operation.REMOVE:","                currentAssociations = currentAssociations.remove(key)","                break","        }","    }","    return currentAssociations","}"]},
+
+        {"kind":"when","text":"We apply the operations to two associations and the map for the first time.","code":["var associations1 = operationsApplier(associations)","var associations2 = operationsApplier(associations)"]},
+
+        {"kind":"and","text":"We apply some more custom operations on top:","code":["associations1 = associations1.put(\"Temp1\", \"_\").put(\"Temp2\", \"_\")","associations1 = associations1.remove(\"Temp1\").remove(\"Temp2\")"]},
+
+        {"kind":"then","text":"The two associations are equal.","code":["associations1 == associations2"]},
+
+        {"kind":"and","text":"Their hash codes are equal.","code":["associations1.hashCode() == associations2.hashCode()"]},
+
+        {"kind":"when","text":"We update the second association to be a bit different.","code":["associations2 = associations2.put(\"A bit\", \"different\")"]},
+
+        {"kind":"then","text":"The two associations are not equal.","code":["associations1 != associations2"]},
+
+        {"kind":"and","text":"Their hash codes are not equal.","code":["associations1.hashCode() != associations2.hashCode()"]},
+
+        {"kind":"where","text":"","code":{"operations":["new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c')\n        ]","new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","(0..100).collect({\n            var hash = Math.abs((139 * (90 + it.hashCode())) % 100)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..1_000).collect({\n            var hash = Math.abs((31 * 139 * (500 + it.hashCode())) % 1_000)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..5_000).collect({\n            var hash = Math.abs(it % 2_000)\n            var operation = it > 2_000 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Two associations the the same operations applied to them are always equal. [6]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create an association and a map as well as a closure to apply the operations to them.","code":["var associations = Association.between(String, String)","var operationsApplier = { currentAssociations ->","    operations.each { operation, key ->","        switch (operation) {","            case Operation.ADD:","                currentAssociations = currentAssociations.put(key, \"value of \" + key)","                break","            case Operation.REMOVE:","                currentAssociations = currentAssociations.remove(key)","                break","        }","    }","    return currentAssociations","}"]},
+
+        {"kind":"when","text":"We apply the operations to two associations and the map for the first time.","code":["var associations1 = operationsApplier(associations)","var associations2 = operationsApplier(associations)"]},
+
+        {"kind":"and","text":"We apply some more custom operations on top:","code":["associations1 = associations1.put(\"Temp1\", \"_\").put(\"Temp2\", \"_\")","associations1 = associations1.remove(\"Temp1\").remove(\"Temp2\")"]},
+
+        {"kind":"then","text":"The two associations are equal.","code":["associations1 == associations2"]},
+
+        {"kind":"and","text":"Their hash codes are equal.","code":["associations1.hashCode() == associations2.hashCode()"]},
+
+        {"kind":"when","text":"We update the second association to be a bit different.","code":["associations2 = associations2.put(\"A bit\", \"different\")"]},
+
+        {"kind":"then","text":"The two associations are not equal.","code":["associations1 != associations2"]},
+
+        {"kind":"and","text":"Their hash codes are not equal.","code":["associations1.hashCode() != associations2.hashCode()"]},
+
+        {"kind":"where","text":"","code":{"operations":["new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c')\n        ]","new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","(0..100).collect({\n            var hash = Math.abs((139 * (90 + it.hashCode())) % 100)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..1_000).collect({\n            var hash = Math.abs((31 * 139 * (500 + it.hashCode())) % 1_000)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..5_000).collect({\n            var hash = Math.abs(it % 2_000)\n            var operation = it > 2_000 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Two associations the the same operations applied to them are always equal. [7]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create an association and a map as well as a closure to apply the operations to them.","code":["var associations = Association.between(String, String)","var operationsApplier = { currentAssociations ->","    operations.each { operation, key ->","        switch (operation) {","            case Operation.ADD:","                currentAssociations = currentAssociations.put(key, \"value of \" + key)","                break","            case Operation.REMOVE:","                currentAssociations = currentAssociations.remove(key)","                break","        }","    }","    return currentAssociations","}"]},
+
+        {"kind":"when","text":"We apply the operations to two associations and the map for the first time.","code":["var associations1 = operationsApplier(associations)","var associations2 = operationsApplier(associations)"]},
+
+        {"kind":"and","text":"We apply some more custom operations on top:","code":["associations1 = associations1.put(\"Temp1\", \"_\").put(\"Temp2\", \"_\")","associations1 = associations1.remove(\"Temp1\").remove(\"Temp2\")"]},
+
+        {"kind":"then","text":"The two associations are equal.","code":["associations1 == associations2"]},
+
+        {"kind":"and","text":"Their hash codes are equal.","code":["associations1.hashCode() == associations2.hashCode()"]},
+
+        {"kind":"when","text":"We update the second association to be a bit different.","code":["associations2 = associations2.put(\"A bit\", \"different\")"]},
+
+        {"kind":"then","text":"The two associations are not equal.","code":["associations1 != associations2"]},
+
+        {"kind":"and","text":"Their hash codes are not equal.","code":["associations1.hashCode() != associations2.hashCode()"]},
+
+        {"kind":"where","text":"","code":{"operations":["new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c')\n        ]","new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","(0..100).collect({\n            var hash = Math.abs((139 * (90 + it.hashCode())) % 100)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..1_000).collect({\n            var hash = Math.abs((31 * 139 * (500 + it.hashCode())) % 1_000)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..5_000).collect({\n            var hash = Math.abs(it % 2_000)\n            var operation = it > 2_000 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Two associations the the same operations applied to them are always equal. [8]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create an association and a map as well as a closure to apply the operations to them.","code":["var associations = Association.between(String, String)","var operationsApplier = { currentAssociations ->","    operations.each { operation, key ->","        switch (operation) {","            case Operation.ADD:","                currentAssociations = currentAssociations.put(key, \"value of \" + key)","                break","            case Operation.REMOVE:","                currentAssociations = currentAssociations.remove(key)","                break","        }","    }","    return currentAssociations","}"]},
+
+        {"kind":"when","text":"We apply the operations to two associations and the map for the first time.","code":["var associations1 = operationsApplier(associations)","var associations2 = operationsApplier(associations)"]},
+
+        {"kind":"and","text":"We apply some more custom operations on top:","code":["associations1 = associations1.put(\"Temp1\", \"_\").put(\"Temp2\", \"_\")","associations1 = associations1.remove(\"Temp1\").remove(\"Temp2\")"]},
+
+        {"kind":"then","text":"The two associations are equal.","code":["associations1 == associations2"]},
+
+        {"kind":"and","text":"Their hash codes are equal.","code":["associations1.hashCode() == associations2.hashCode()"]},
+
+        {"kind":"when","text":"We update the second association to be a bit different.","code":["associations2 = associations2.put(\"A bit\", \"different\")"]},
+
+        {"kind":"then","text":"The two associations are not equal.","code":["associations1 != associations2"]},
+
+        {"kind":"and","text":"Their hash codes are not equal.","code":["associations1.hashCode() != associations2.hashCode()"]},
+
+        {"kind":"where","text":"","code":{"operations":["new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c')\n        ]","new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","(0..100).collect({\n            var hash = Math.abs((139 * (90 + it.hashCode())) % 100)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..1_000).collect({\n            var hash = Math.abs((31 * 139 * (500 + it.hashCode())) % 1_000)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..5_000).collect({\n            var hash = Math.abs(it % 2_000)\n            var operation = it > 2_000 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You can merge two associations into one using the `putAll` method.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var associations1 = Association.between(String, Integer)","var associations2 = Association.between(String, Integer)"]},
+
+        {"kind":"when","text":"We add some values to the first association.","code":["associations1 = associations1.put(\"a\", 1).put(\"b\", 2).put(\"c\", 3)"]},
+
+        {"kind":"and","text":"We add some values to the second association.","code":["associations2 = associations2.put(\"d\", 4).put(\"e\", 5).put(\"f\", 6)"]},
+
+        {"kind":"and","text":"We merge the two associations.","code":["var mergedAssociations = associations1.putAll(associations2)"]},
+
+        {"kind":"then","text":"The merged association contains all the values from the two associations.","code":["mergedAssociations.size() == 6","mergedAssociations.get(\"a\").orElseThrow(MissingItemException::new) == 1","mergedAssociations.get(\"b\").orElseThrow(MissingItemException::new) == 2","mergedAssociations.get(\"c\").orElseThrow(MissingItemException::new) == 3","mergedAssociations.get(\"d\").orElseThrow(MissingItemException::new) == 4","mergedAssociations.get(\"e\").orElseThrow(MissingItemException::new) == 5","mergedAssociations.get(\"f\").orElseThrow(MissingItemException::new) == 6"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You remove the entries of one association from another, using the `removeAll` method.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two empty associations between strings and integers.","code":["var associations1 = Association.between(String, Integer)","var associations2 = Association.between(String, Integer)"]},
+
+        {"kind":"when","text":"We add some values to the first association.","code":["associations1 = associations1.put(\"a\", 1).put(\"b\", 2).put(\"c\", 3)"]},
+
+        {"kind":"and","text":"We add some values to the second association.","code":["associations2 = associations2.put(\"b\", 2).put(\"c\", 3).put(\"d\", 4)"]},
+
+        {"kind":"and","text":"We remove the entries of the second association from the first.","code":["var result = associations1.removeAll(associations2.keySet())"]},
+
+        {"kind":"then","text":"The result contains only the entries that were not in the second association.","code":["result.size() == 1","result.get(\"a\").orElseThrow(MissingItemException::new) == 1"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `clear` method creates an empty association with the same key and value types.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var associations = Association.between(String, Integer)","associations = associations.put(\"a\", 1).put(\"b\", 2).put(\"c\", 3)"]},
+
+        {"kind":"expect","text":"The association is not empty.","code":["!associations.isEmpty()"]},
+
+        {"kind":"when","text":"We clear the association.","code":["associations = associations.clear()"]},
+
+        {"kind":"then","text":"The association is empty.","code":["associations.isEmpty()"]},
+
+        {"kind":"and","text":"The key and value types are the same.","code":["associations.keyType() == String","associations.valueType() == Integer"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You can merge two large associations into one using the `putAll` method. [0]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create two associations and some random key and value generators.","code":["var associations1 = Association.between(String, Character)","var associations2 = Association.between(String, Character)","var indexToRandomKey = { index -> Integer.toHexString(Math.abs((929 * (42 + index as int)) % size)) }","var indexToRandomValue = { index -> Math.abs(65+(index as int)) as char }"]},
+
+        {"kind":"and","text":"We create a regular mutable map to check the results are correct.","code":["var map = [:]"]},
+
+        {"kind":"when","text":"We add some values to the first association.","code":["size.times { index ->","    var key = indexToRandomKey(index%(size/2))","    var value = indexToRandomValue(index)","    associations1 = associations1.put(key, value)","    map[key] = value","}"]},
+
+        {"kind":"and","text":"We add some values to the second association.","code":["size.times { index ->","    var key = indexToRandomKey(-index%(size/2))","    var value = indexToRandomValue(index)","    associations2 = associations2.put(key, value)","    map[key] = value","}"]},
+
+        {"kind":"and","text":"We merge the two associations.","code":["var mergedAssociations = associations1.putAll(associations2)"]},
+
+        {"kind":"then","text":"The merged association contains all the values from the two associations.","code":["mergedAssociations.size() == map.size()","mergedAssociations.keySet() as Set == map.keySet()","mergedAssociations.values().sort().toList() == map.values().sort()"]},
+
+        {"kind":"when","text":"We use the `toMap()` method to convert the association to a map.","code":["var convertedMap = mergedAssociations.toMap()"]},
+
+        {"kind":"then","text":"The converted map is equal to the reference map.","code":["convertedMap == map"]},
+
+        {"kind":"where","text":"","code":{"size":["10","100","1_000","10_000"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You can merge two large associations into one using the `putAll` method. [1]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create two associations and some random key and value generators.","code":["var associations1 = Association.between(String, Character)","var associations2 = Association.between(String, Character)","var indexToRandomKey = { index -> Integer.toHexString(Math.abs((929 * (42 + index as int)) % size)) }","var indexToRandomValue = { index -> Math.abs(65+(index as int)) as char }"]},
+
+        {"kind":"and","text":"We create a regular mutable map to check the results are correct.","code":["var map = [:]"]},
+
+        {"kind":"when","text":"We add some values to the first association.","code":["size.times { index ->","    var key = indexToRandomKey(index%(size/2))","    var value = indexToRandomValue(index)","    associations1 = associations1.put(key, value)","    map[key] = value","}"]},
+
+        {"kind":"and","text":"We add some values to the second association.","code":["size.times { index ->","    var key = indexToRandomKey(-index%(size/2))","    var value = indexToRandomValue(index)","    associations2 = associations2.put(key, value)","    map[key] = value","}"]},
+
+        {"kind":"and","text":"We merge the two associations.","code":["var mergedAssociations = associations1.putAll(associations2)"]},
+
+        {"kind":"then","text":"The merged association contains all the values from the two associations.","code":["mergedAssociations.size() == map.size()","mergedAssociations.keySet() as Set == map.keySet()","mergedAssociations.values().sort().toList() == map.values().sort()"]},
+
+        {"kind":"when","text":"We use the `toMap()` method to convert the association to a map.","code":["var convertedMap = mergedAssociations.toMap()"]},
+
+        {"kind":"then","text":"The converted map is equal to the reference map.","code":["convertedMap == map"]},
+
+        {"kind":"where","text":"","code":{"size":["10","100","1_000","10_000"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You can merge two large associations into one using the `putAll` method. [2]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create two associations and some random key and value generators.","code":["var associations1 = Association.between(String, Character)","var associations2 = Association.between(String, Character)","var indexToRandomKey = { index -> Integer.toHexString(Math.abs((929 * (42 + index as int)) % size)) }","var indexToRandomValue = { index -> Math.abs(65+(index as int)) as char }"]},
+
+        {"kind":"and","text":"We create a regular mutable map to check the results are correct.","code":["var map = [:]"]},
+
+        {"kind":"when","text":"We add some values to the first association.","code":["size.times { index ->","    var key = indexToRandomKey(index%(size/2))","    var value = indexToRandomValue(index)","    associations1 = associations1.put(key, value)","    map[key] = value","}"]},
+
+        {"kind":"and","text":"We add some values to the second association.","code":["size.times { index ->","    var key = indexToRandomKey(-index%(size/2))","    var value = indexToRandomValue(index)","    associations2 = associations2.put(key, value)","    map[key] = value","}"]},
+
+        {"kind":"and","text":"We merge the two associations.","code":["var mergedAssociations = associations1.putAll(associations2)"]},
+
+        {"kind":"then","text":"The merged association contains all the values from the two associations.","code":["mergedAssociations.size() == map.size()","mergedAssociations.keySet() as Set == map.keySet()","mergedAssociations.values().sort().toList() == map.values().sort()"]},
+
+        {"kind":"when","text":"We use the `toMap()` method to convert the association to a map.","code":["var convertedMap = mergedAssociations.toMap()"]},
+
+        {"kind":"then","text":"The converted map is equal to the reference map.","code":["convertedMap == map"]},
+
+        {"kind":"where","text":"","code":{"size":["10","100","1_000","10_000"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You can merge two large associations into one using the `putAll` method. [3]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create two associations and some random key and value generators.","code":["var associations1 = Association.between(String, Character)","var associations2 = Association.between(String, Character)","var indexToRandomKey = { index -> Integer.toHexString(Math.abs((929 * (42 + index as int)) % size)) }","var indexToRandomValue = { index -> Math.abs(65+(index as int)) as char }"]},
+
+        {"kind":"and","text":"We create a regular mutable map to check the results are correct.","code":["var map = [:]"]},
+
+        {"kind":"when","text":"We add some values to the first association.","code":["size.times { index ->","    var key = indexToRandomKey(index%(size/2))","    var value = indexToRandomValue(index)","    associations1 = associations1.put(key, value)","    map[key] = value","}"]},
+
+        {"kind":"and","text":"We add some values to the second association.","code":["size.times { index ->","    var key = indexToRandomKey(-index%(size/2))","    var value = indexToRandomValue(index)","    associations2 = associations2.put(key, value)","    map[key] = value","}"]},
+
+        {"kind":"and","text":"We merge the two associations.","code":["var mergedAssociations = associations1.putAll(associations2)"]},
+
+        {"kind":"then","text":"The merged association contains all the values from the two associations.","code":["mergedAssociations.size() == map.size()","mergedAssociations.keySet() as Set == map.keySet()","mergedAssociations.values().sort().toList() == map.values().sort()"]},
+
+        {"kind":"when","text":"We use the `toMap()` method to convert the association to a map.","code":["var convertedMap = mergedAssociations.toMap()"]},
+
+        {"kind":"then","text":"The converted map is equal to the reference map.","code":["convertedMap == map"]},
+
+        {"kind":"where","text":"","code":{"size":["10","100","1_000","10_000"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You can remove the entries of a large association from another, using the `removeAll` method. [0]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two empty associations between strings and integers.","code":["var associations1 = Association.between(String, Integer)","var associations2 = Association.between(String, Integer)","var indexToRandomKey = { index -> Integer.toHexString(Math.abs((929 * (42 + index as int)) % size)) }","var indexToRandomValue = { index -> Math.abs(65+(index as int)) }"]},
+
+        {"kind":"and","text":"We create two regular mutable maps to check the results are correct based on their `remove` method.","code":["var map1 = [:]","var map2 = [:]"]},
+
+        {"kind":"when","text":"We add some values to the first association and map.","code":["size.times { index ->","    var key = indexToRandomKey(index%(size/2))","    var value = indexToRandomValue(index)","    associations1 = associations1.put(key, value)","    map1[key] = value","}"]},
+
+        {"kind":"and","text":"We add some values to the second association and map.","code":["size.times { index ->","    var key = indexToRandomKey(-index%(size/2))","    var value = indexToRandomValue(index)","    associations2 = associations2.put(key, value)","    map2[key] = value","}"]},
+
+        {"kind":"and","text":"We remove the entries of the second association from the first.","code":["var result = associations1.removeAll(associations2.keySet())"]},
+
+        {"kind":"and","text":"We remove the entries of the second map from the first.","code":["map2.forEach { key, value -> map1.remove(key) }"]},
+
+        {"kind":"then","text":"The result contains only the entries that were not in the second association.","code":["result.size() == map1.size()","result.keySet() as Set == map1.keySet()","result.values().sort().toList() == map1.values().sort()"]},
+
+        {"kind":"where","text":"","code":{"size":["10","100","1_000","10_000"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You can remove the entries of a large association from another, using the `removeAll` method. [1]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two empty associations between strings and integers.","code":["var associations1 = Association.between(String, Integer)","var associations2 = Association.between(String, Integer)","var indexToRandomKey = { index -> Integer.toHexString(Math.abs((929 * (42 + index as int)) % size)) }","var indexToRandomValue = { index -> Math.abs(65+(index as int)) }"]},
+
+        {"kind":"and","text":"We create two regular mutable maps to check the results are correct based on their `remove` method.","code":["var map1 = [:]","var map2 = [:]"]},
+
+        {"kind":"when","text":"We add some values to the first association and map.","code":["size.times { index ->","    var key = indexToRandomKey(index%(size/2))","    var value = indexToRandomValue(index)","    associations1 = associations1.put(key, value)","    map1[key] = value","}"]},
+
+        {"kind":"and","text":"We add some values to the second association and map.","code":["size.times { index ->","    var key = indexToRandomKey(-index%(size/2))","    var value = indexToRandomValue(index)","    associations2 = associations2.put(key, value)","    map2[key] = value","}"]},
+
+        {"kind":"and","text":"We remove the entries of the second association from the first.","code":["var result = associations1.removeAll(associations2.keySet())"]},
+
+        {"kind":"and","text":"We remove the entries of the second map from the first.","code":["map2.forEach { key, value -> map1.remove(key) }"]},
+
+        {"kind":"then","text":"The result contains only the entries that were not in the second association.","code":["result.size() == map1.size()","result.keySet() as Set == map1.keySet()","result.values().sort().toList() == map1.values().sort()"]},
+
+        {"kind":"where","text":"","code":{"size":["10","100","1_000","10_000"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You can remove the entries of a large association from another, using the `removeAll` method. [2]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two empty associations between strings and integers.","code":["var associations1 = Association.between(String, Integer)","var associations2 = Association.between(String, Integer)","var indexToRandomKey = { index -> Integer.toHexString(Math.abs((929 * (42 + index as int)) % size)) }","var indexToRandomValue = { index -> Math.abs(65+(index as int)) }"]},
+
+        {"kind":"and","text":"We create two regular mutable maps to check the results are correct based on their `remove` method.","code":["var map1 = [:]","var map2 = [:]"]},
+
+        {"kind":"when","text":"We add some values to the first association and map.","code":["size.times { index ->","    var key = indexToRandomKey(index%(size/2))","    var value = indexToRandomValue(index)","    associations1 = associations1.put(key, value)","    map1[key] = value","}"]},
+
+        {"kind":"and","text":"We add some values to the second association and map.","code":["size.times { index ->","    var key = indexToRandomKey(-index%(size/2))","    var value = indexToRandomValue(index)","    associations2 = associations2.put(key, value)","    map2[key] = value","}"]},
+
+        {"kind":"and","text":"We remove the entries of the second association from the first.","code":["var result = associations1.removeAll(associations2.keySet())"]},
+
+        {"kind":"and","text":"We remove the entries of the second map from the first.","code":["map2.forEach { key, value -> map1.remove(key) }"]},
+
+        {"kind":"then","text":"The result contains only the entries that were not in the second association.","code":["result.size() == map1.size()","result.keySet() as Set == map1.keySet()","result.values().sort().toList() == map1.values().sort()"]},
+
+        {"kind":"where","text":"","code":{"size":["10","100","1_000","10_000"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You can remove the entries of a large association from another, using the `removeAll` method. [3]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two empty associations between strings and integers.","code":["var associations1 = Association.between(String, Integer)","var associations2 = Association.between(String, Integer)","var indexToRandomKey = { index -> Integer.toHexString(Math.abs((929 * (42 + index as int)) % size)) }","var indexToRandomValue = { index -> Math.abs(65+(index as int)) }"]},
+
+        {"kind":"and","text":"We create two regular mutable maps to check the results are correct based on their `remove` method.","code":["var map1 = [:]","var map2 = [:]"]},
+
+        {"kind":"when","text":"We add some values to the first association and map.","code":["size.times { index ->","    var key = indexToRandomKey(index%(size/2))","    var value = indexToRandomValue(index)","    associations1 = associations1.put(key, value)","    map1[key] = value","}"]},
+
+        {"kind":"and","text":"We add some values to the second association and map.","code":["size.times { index ->","    var key = indexToRandomKey(-index%(size/2))","    var value = indexToRandomValue(index)","    associations2 = associations2.put(key, value)","    map2[key] = value","}"]},
+
+        {"kind":"and","text":"We remove the entries of the second association from the first.","code":["var result = associations1.removeAll(associations2.keySet())"]},
+
+        {"kind":"and","text":"We remove the entries of the second map from the first.","code":["map2.forEach { key, value -> map1.remove(key) }"]},
+
+        {"kind":"then","text":"The result contains only the entries that were not in the second association.","code":["result.size() == map1.size()","result.keySet() as Set == map1.keySet()","result.values().sort().toList() == map1.values().sort()"]},
+
+        {"kind":"where","text":"","code":{"size":["10","100","1_000","10_000"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You can merge a large association and a map into a single association using the `putAll` method. [0]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create an association and a map and some random key and value generators.","code":["var associations = Association.between(String, Character)","var otherMap = [:]","var indexToRandomKey = { index -> Integer.toHexString(Math.abs((929 * (42 + index as int)) % size)) }","var indexToRandomValue = { index -> Math.abs(65+(index as int)) as char }"]},
+
+        {"kind":"and","text":"We create a regular mutable map to check the results are correct.","code":["var map = [:]"]},
+
+        {"kind":"when","text":"We add some values to the first association.","code":["size.times { index ->","    var key = indexToRandomKey(index%(size/2))","    var value = indexToRandomValue(index)","    associations = associations.put(key, value)","    map[key] = value","}"]},
+
+        {"kind":"and","text":"We add some values to the second association.","code":["size.times { index ->","    var key = indexToRandomKey(-index%(size/2))","    var value = indexToRandomValue(index)","    otherMap[key] = value","    map[key] = value","}"]},
+
+        {"kind":"and","text":"We merge the two associations.","code":["var mergedAssociations = associations.putAll(otherMap)"]},
+
+        {"kind":"then","text":"The merged association contains all the values from the two associations.","code":["mergedAssociations.size() == map.size()","mergedAssociations.keySet() as Set == map.keySet()","mergedAssociations.values().sort().toList() == map.values().sort()"]},
+
+        {"kind":"where","text":"","code":{"size":["10","100","1_000","10_000"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You can merge a large association and a map into a single association using the `putAll` method. [1]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create an association and a map and some random key and value generators.","code":["var associations = Association.between(String, Character)","var otherMap = [:]","var indexToRandomKey = { index -> Integer.toHexString(Math.abs((929 * (42 + index as int)) % size)) }","var indexToRandomValue = { index -> Math.abs(65+(index as int)) as char }"]},
+
+        {"kind":"and","text":"We create a regular mutable map to check the results are correct.","code":["var map = [:]"]},
+
+        {"kind":"when","text":"We add some values to the first association.","code":["size.times { index ->","    var key = indexToRandomKey(index%(size/2))","    var value = indexToRandomValue(index)","    associations = associations.put(key, value)","    map[key] = value","}"]},
+
+        {"kind":"and","text":"We add some values to the second association.","code":["size.times { index ->","    var key = indexToRandomKey(-index%(size/2))","    var value = indexToRandomValue(index)","    otherMap[key] = value","    map[key] = value","}"]},
+
+        {"kind":"and","text":"We merge the two associations.","code":["var mergedAssociations = associations.putAll(otherMap)"]},
+
+        {"kind":"then","text":"The merged association contains all the values from the two associations.","code":["mergedAssociations.size() == map.size()","mergedAssociations.keySet() as Set == map.keySet()","mergedAssociations.values().sort().toList() == map.values().sort()"]},
+
+        {"kind":"where","text":"","code":{"size":["10","100","1_000","10_000"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You can merge a large association and a map into a single association using the `putAll` method. [2]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create an association and a map and some random key and value generators.","code":["var associations = Association.between(String, Character)","var otherMap = [:]","var indexToRandomKey = { index -> Integer.toHexString(Math.abs((929 * (42 + index as int)) % size)) }","var indexToRandomValue = { index -> Math.abs(65+(index as int)) as char }"]},
+
+        {"kind":"and","text":"We create a regular mutable map to check the results are correct.","code":["var map = [:]"]},
+
+        {"kind":"when","text":"We add some values to the first association.","code":["size.times { index ->","    var key = indexToRandomKey(index%(size/2))","    var value = indexToRandomValue(index)","    associations = associations.put(key, value)","    map[key] = value","}"]},
+
+        {"kind":"and","text":"We add some values to the second association.","code":["size.times { index ->","    var key = indexToRandomKey(-index%(size/2))","    var value = indexToRandomValue(index)","    otherMap[key] = value","    map[key] = value","}"]},
+
+        {"kind":"and","text":"We merge the two associations.","code":["var mergedAssociations = associations.putAll(otherMap)"]},
+
+        {"kind":"then","text":"The merged association contains all the values from the two associations.","code":["mergedAssociations.size() == map.size()","mergedAssociations.keySet() as Set == map.keySet()","mergedAssociations.values().sort().toList() == map.values().sort()"]},
+
+        {"kind":"where","text":"","code":{"size":["10","100","1_000","10_000"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You can merge a large association and a map into a single association using the `putAll` method. [3]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create an association and a map and some random key and value generators.","code":["var associations = Association.between(String, Character)","var otherMap = [:]","var indexToRandomKey = { index -> Integer.toHexString(Math.abs((929 * (42 + index as int)) % size)) }","var indexToRandomValue = { index -> Math.abs(65+(index as int)) as char }"]},
+
+        {"kind":"and","text":"We create a regular mutable map to check the results are correct.","code":["var map = [:]"]},
+
+        {"kind":"when","text":"We add some values to the first association.","code":["size.times { index ->","    var key = indexToRandomKey(index%(size/2))","    var value = indexToRandomValue(index)","    associations = associations.put(key, value)","    map[key] = value","}"]},
+
+        {"kind":"and","text":"We add some values to the second association.","code":["size.times { index ->","    var key = indexToRandomKey(-index%(size/2))","    var value = indexToRandomValue(index)","    otherMap[key] = value","    map[key] = value","}"]},
+
+        {"kind":"and","text":"We merge the two associations.","code":["var mergedAssociations = associations.putAll(otherMap)"]},
+
+        {"kind":"then","text":"The merged association contains all the values from the two associations.","code":["mergedAssociations.size() == map.size()","mergedAssociations.keySet() as Set == map.keySet()","mergedAssociations.values().sort().toList() == map.values().sort()"]},
+
+        {"kind":"where","text":"","code":{"size":["10","100","1_000","10_000"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"An `Association` has an intuitive string representation.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var associations = Association.between(String, Integer)"]},
+
+        {"kind":"when","text":"We add some values to the association.","code":["associations = associations.put(\"a\", 1).put(\"b\", 2).put(\"c\", 3)"]},
+
+        {"kind":"then","text":"The string representation of the association is as expected.","code":["associations.toString() == 'Association[\"c\" ↦ 3, \"a\" ↦ 1, \"b\" ↦ 2]'"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A larger `Association` will have a trimmed string representation.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var associations = Association.between(Character, Byte)"]},
+
+        {"kind":"when","text":"We add some values to the association.","code":["30.times { index ->","    var key = Math.abs(65+(index)) as char","    var value = Math.abs(1997*index) as byte","    associations = associations.put(key, value)","}"]},
+
+        {"kind":"then","text":"The string representation of the association is as expected.","code":["associations.toString() == \"Association['H' ↦ (byte)-101, 'A' ↦ (byte)0, 'B' ↦ (byte)-51, 'C' ↦ (byte)-102, 'D' ↦ (byte)103, 'E' ↦ (byte)52, 'F' ↦ (byte)1, 'G' ↦ (byte)-50, ...22 more entries]\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `replace` method replaces the value of a key with a new value, if and only if the key is present.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var associations = Association.between(String, Integer)"]},
+
+        {"kind":"when","text":"We add some values to the association.","code":["associations = associations.put(\"a\", 1).put(\"b\", 2).put(\"c\", 3)"]},
+
+        {"kind":"and","text":"We replace the value of a key that is present.","code":["associations = associations.replace(\"b\", 4)"]},
+
+        {"kind":"then","text":"The value of the key is replaced.","code":["associations.get(\"b\").orElseThrow(MissingItemException::new) == 4"]},
+
+        {"kind":"and","text":"The size of the association remains the same.","code":["associations.size() == 3"]},
+
+        {"kind":"when","text":"We call the `replace` method with a key that is not present.","code":["associations = associations.replace(\"d\", 5)"]},
+
+        {"kind":"then","text":"The size of the association remains the same.","code":["associations.size() == 3"]},
+
+        {"kind":"and","text":"The value of the key is not replaced.","code":["!associations.get(\"d\").isPresent()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use `putAll(Pair...)` to populate an association at once from multiple pairs.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var associations = Association.between(String, Integer)"]},
+
+        {"kind":"when","text":"We add some values to the association.","code":["associations = associations.putAll(","    Pair.of(\"I\", 1),","    Pair.of(\"was\", 2),","    Pair.of(\"added\", 3),","    Pair.of(\"to\", 4),","    Pair.of(\"the\", 5),","    Pair.of(\"association\", 6)",")"]},
+
+        {"kind":"then","text":"The association contains the values.","code":["associations.size() == 6","associations.get(\"I\").orElseThrow(MissingItemException::new) == 1","associations.get(\"was\").orElseThrow(MissingItemException::new) == 2","associations.get(\"added\").orElseThrow(MissingItemException::new) == 3","associations.get(\"to\").orElseThrow(MissingItemException::new) == 4","associations.get(\"the\").orElseThrow(MissingItemException::new) == 5","associations.get(\"association\").orElseThrow(MissingItemException::new) == 6"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use `putAll(Tuple<Pair>)` to populate an association at once from multiple pairs.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var associations = Association.between(Integer, String)"]},
+
+        {"kind":"when","text":"We add some values to the association.","code":["associations = associations.putAll(","    Tuple.of(","        Pair.of(1, \"I\"),","        Pair.of(2, \"was\"),","        Pair.of(3, \"added\"),","        Pair.of(4, \"to\"),","        Pair.of(5, \"the\"),","        Pair.of(6, \"association\")","    )",")"]},
+
+        {"kind":"then","text":"The association contains the values.","code":["associations.size() == 6","associations.get(1).orElseThrow(MissingItemException::new) == \"I\"","associations.get(2).orElseThrow(MissingItemException::new) == \"was\"","associations.get(3).orElseThrow(MissingItemException::new) == \"added\"","associations.get(4).orElseThrow(MissingItemException::new) == \"to\"","associations.get(5).orElseThrow(MissingItemException::new) == \"the\"","associations.get(6).orElseThrow(MissingItemException::new) == \"association\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use `putAll(Collection<Pair>)` to populate an association at once from multiple pairs.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            This method ensures compatibility with the `Collection` interface, which\n            is especially useful when you have a list of pairs that you want to\n            populate the association with.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var associations = Association.between(Integer, String)"]},
+
+        {"kind":"when","text":"We add some values to the association.","code":["associations = associations.putAll([","    Pair.of(1, \"I\"),","    Pair.of(2, \"was\"),","    Pair.of(3, \"added\"),","    Pair.of(4, \"to\"),","    Pair.of(5, \"the\"),","    Pair.of(6, \"association\")","])"]},
+
+        {"kind":"then","text":"The association contains the values.","code":["associations.size() == 6","associations.get(1).orElseThrow(MissingItemException::new) == \"I\"","associations.get(2).orElseThrow(MissingItemException::new) == \"was\"","associations.get(3).orElseThrow(MissingItemException::new) == \"added\"","associations.get(4).orElseThrow(MissingItemException::new) == \"to\"","associations.get(5).orElseThrow(MissingItemException::new) == \"the\"","associations.get(6).orElseThrow(MissingItemException::new) == \"association\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use `putAll(Set<Pair>)` to populate an association at once from multiple pairs.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            This method ensures compatibility with the `Set` interface, which\n            is especially useful when you have a set of pairs that you want to\n            populate the association with.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var associations = Association.between(Character, String)"]},
+
+        {"kind":"when","text":"We add some values to the association.","code":["associations = associations.putAll([","    Pair.of('I' as char, \"I\"),","    Pair.of('w' as char, \"was\"),","    Pair.of('a' as char, \"added\"),","    Pair.of('t' as char, \"to\"),","    Pair.of('t' as char, \"the\"),","    Pair.of('a' as char, \"association\")","])"]},
+
+        {"kind":"then","text":"The association contains the values.","code":["associations.size() == 4","associations.get('I' as char).orElseThrow(MissingItemException::new) == \"I\"","associations.get('w' as char).orElseThrow(MissingItemException::new) == \"was\"","associations.get('a' as char).orElseThrow(MissingItemException::new) == \"added\"","associations.get('t' as char).orElseThrow(MissingItemException::new) == \"to\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `putIfAbsent(K, V)` method adds a key-value pair to the association if, and only if, the key is not present.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create an association between shorts and chars and add a bunch of entries to the association.","code":["var associations = Association.between(Short, Character).putAll([","    Pair.of(11 as short, 'a' as char),","    Pair.of(22 as short, 'b' as char),","    Pair.of(33 as short, 'c' as char),","    Pair.of(44 as short, 'x' as char),","    Pair.of(55 as short, 'y' as char),","    Pair.of(66 as short, 'z' as char)","])"]},
+
+        {"kind":"when","text":"We add a new entry to the association.","code":["associations = associations.putIfAbsent(77 as short, 'w' as char)"]},
+
+        {"kind":"then","text":"The new entry is added to the association.","code":["associations.size() == 7","associations.get(77 as short).orElseThrow(MissingItemException::new) == 'w' as char"]},
+
+        {"kind":"when","text":"We try to add an entry with a key that is already present.","code":["associations = associations.putIfAbsent(44 as short, 'v' as char)"]},
+
+        {"kind":"then","text":"The association remains the same.","code":["associations.size() == 7","associations.get(44 as short).orElseThrow(MissingItemException::new) == 'x' as char"]},
+
+        {"kind":"when","text":"We now ry this for every key in the association.","code":["associations.keySet().forEach { key ->","    associations = associations.putIfAbsent(key, '!' as char)","}"]},
+
+        {"kind":"then","text":"The association still remains the same.","code":["associations.size() == 7","associations.get(44 as short).orElseThrow(MissingItemException::new) == 'x' as char"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    }
+  
+  ],
+  "generator":"https://github.com/renatoathaydes/spock-reports"
+}

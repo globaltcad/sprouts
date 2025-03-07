@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Version.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sprouts</a> &gt; <a href="index.source.html" class="el_package">sprouts</a> &gt; <span class="el_source">Version.java</span></div><h1>Version.java</h1><pre class="source lang-java linenums">package sprouts;
+
+/**
+ *  This is a value object representing a unique ID consisting
+ *  of two numbers, a lineage and succession, allowing you to identify something
+ *  and also determine the order in which something was created
+ *  and updated. &lt;br&gt;
+ *  This is intended to be used to emulate identity in
+ *  your value objects, which is useful for tracking changes
+ *  and synchronizing state across different parts of your application.&lt;br&gt;
+ *  You may also use version changes to do reactive programming
+ *  for your value based view models, similar as you would do with
+ *  {@link Event}s in traditional place oriented view models.&lt;br&gt;
+ *  Consider the following example:&lt;br&gt;
+ *  &lt;b&gt;View Model:&lt;/b&gt;
+ *  &lt;pre&gt;{@code
+ *    public record SearchViewModel(
+ *        String searchKey,
+ *        Tuple&lt;String&gt; searchResult,
+ *        String selection,
+ *        Version closeSearch
+ *    ) {
+ *        public SearchViewModel doSearch(String searchKey) {
+ *          var newSearchResults = Database.search(searchKey);
+ *          return new SearchViewModel(searchKey, newSearchResults, selection, closeSearch);
+ *        }
+ *        public SearchViewModel withSelection(String selection) {
+ *          var currentCloseSearch = closeSearch;
+ *          if ( !selection.isBlank() &amp;&amp; this.searchResult.contains(selection) ) {
+ *              currentCloseSearch = currentCloseSearch.next();
+ *          }
+ *          return new SearchViewModel(searchKey, searchResult, selection, currentCloseSearch);
+ *        }
+ *    }
+ *  }&lt;/pre&gt;
+ *  &lt;b&gt;View:&lt;/b&gt;
+ *  &lt;pre&gt;{@code
+ *    public final class SearchView {
+ *        Var&lt;String&gt; searchKey;
+ *        Var&lt;String&gt; selection;
+ *        Viewable&lt;Tuple&lt;String&gt;&gt; searchResult;
+ *        Observable closeSearch;
+ *
+ *        public static void main(String[] args) {
+ *            var search = new SearchViewModel(&quot;&quot;, Tuple.of(String.class), &quot;&quot;, Version.create());
+ *            var applicationState = Var.of(search);
+ *            var view = new SearchView(applicationState);
+ *            // show view...
+ *        }
+ *
+ *        public SearchView(Var&lt;SearchViewModel&gt; vm) {
+ *            this.searchKey    = vm.zoomTo(SearchViewModel::searchKey, SearchViewModel::doSearch);
+ *            this.selection    = vm.zoomTo(SearchViewModel::selection, SearchViewModel::withSelection);
+ *            this.searchResult = vm.view(SearchViewModel::searchResult);
+ *            this.closeSearch  = vm.view(SearchViewModel::closeSearch);
+ *
+ *            // build GUI and bind to properties...
+ *
+ *            closeSearch.subscribe( () -&gt; {
+ *                // close search view...
+ *            })
+ *        }
+ *    }
+ *  }&lt;/pre&gt;
+ *  &lt;p&gt;
+ *  In this example, the {@link Version} object is used to send a signal
+ *  to the view when the selection is set to a valid value.
+ *  We are using the state changes of the {@link Version} object
+ *  to trigger an action in the view, just like you would with an {@link Event}.
+ *  The difference here is that the {@link Version} object is a value object
+ *  and so you are not forced to write place oriented code, but can instead
+ *  write value/data oriented code, which is substantially easier to test and
+ *  reason about.
+ */
+public final class Version
+{
+<span class="fc" id="L77">    private static long _instanceCount = 0;</span>
+
+    private final long _lineage;
+    private final long _succession;
+
+<span class="fc" id="L82">    private Version( long lineageId, long successionId ) {</span>
+<span class="fc" id="L83">        _lineage = lineageId;</span>
+<span class="fc" id="L84">        _succession = successionId;</span>
+<span class="fc" id="L85">    }</span>
+
+    /**
+     *  Creates a unique version object with a new lineage and a succession
+     *  number of zero. This is the first version of a new lineage.
+     *  You can create successor versions through the {@link #next()} method,
+     *  which will increment the succession number by one.
+     *
+     * @return A new {@link Version} object with a new lineage and a succession number of zero.
+     */
+    public static Version create() {
+<span class="fc" id="L96">        return new Version( ++_instanceCount, 0 );</span>
+    }
+
+    /**
+     *  Creates a new version object with the same lineage as this one,
+     *  but with a succession number incremented by one.
+     *  &lt;b&gt;
+     *      This means that the new version may not necessarily be
+     *      unique, as it is possible to create multiple {@link Version}
+     *      objects with the same lineage and succession number
+     *      by calling this method multiple times on the same instance.
+     *  &lt;/b&gt;
+     *  If you want to create a new unique version, then you should
+     *  call the {@link #create()} method instead.
+     *
+     * @return A new {@link Version} object with the same lineage and a succession number incremented by one.
+     */
+    public Version next() {
+<span class="fc" id="L114">        return new Version( _lineage, _succession + 1 );</span>
+    }
+
+    /**
+     *  Creates a new version object with the same lineage as this one,
+     *  but with a succession number decremented by one.
+     *  &lt;b&gt;
+     *      This means that the new version may not necessarily be
+     *      unique, as it is possible to create multiple {@link Version}
+     *      objects with the same lineage and succession number
+     *      by calling this method multiple times on the same instance.
+     *  &lt;/b&gt;
+     *  If you want to create a new unique version, then you should
+     *  call the {@link #create()} method instead.
+     *
+     * @return A new {@link Version} object with the same lineage and a succession number decremented by one.
+     */
+    public Version previous() {
+<span class="nc" id="L132">        return new Version( _lineage, _succession - 1 );</span>
+    }
+
+    /**
+     *  Exposes the lineage number of this version object,
+     *  which is a unique identifier that originates from the
+     *  {@link #create()} method.
+     *  Successions of this version object will have the same lineage number.
+     *
+     * @return The lineage of this version object.
+     */
+    public long lineage() {
+<span class="fc" id="L144">        return _lineage;</span>
+    }
+
+    /**
+     *  Exposes the succession number of this version object,
+     *  which is a non-unique that is incremented or decremented
+     *  by the {@link #next()} or {@link #previous()} methods.
+     *
+     * @return The succession of this version object.
+     */
+    public long succession() {
+<span class="fc" id="L155">        return _succession;</span>
+    }
+
+    /**
+     *  Determines if this version object is a direct successor of another version object.
+     *  This is the case if the lineage of this version object is the same as the
+     *  lineage of the other version object and the succession of this version object
+     *  is exactly one greater than the succession of the other version object.
+     *
+     * @param other The other version object to compare this version object to.
+     * @return True if this version object is a successor of the other version object, false otherwise.
+     */
+    public boolean isDirectSuccessorOf( Version other ) {
+<span class="fc" id="L168">        long otherLineage = other.lineage();</span>
+<span class="fc" id="L169">        long otherSuccession = other.succession();</span>
+<span class="pc bpc" id="L170" title="1 of 4 branches missed.">        return _lineage == otherLineage &amp;&amp; _succession == otherSuccession + 1;</span>
+    }
+
+    /**
+     *  Determines if this version object is a successor of another version object.
+     *  This is the case if the lineage of this version object is the same as the
+     *  lineage of the other version object and the succession of this version object
+     *  is greater than the succession of the other version object.
+     *
+     * @param other The other version object to compare this version object to.
+     * @return True if this version object is a successor of the other version object, false otherwise.
+     */
+    public boolean isSuccessorOf( Version other ) {
+<span class="fc" id="L183">        long otherLineage = other.lineage();</span>
+<span class="fc" id="L184">        long otherSuccession = other.succession();</span>
+<span class="pc bpc" id="L185" title="1 of 4 branches missed.">        return _lineage == otherLineage &amp;&amp; _succession &gt; otherSuccession;</span>
+    }
+
+    /**
+     *  Determines if this version object is a direct predecessor of another version object.
+     *  This is the case if the lineage of this version object is the same as the
+     *  lineage of the other version object and the succession of this version object
+     *  is exactly one less than the succession of the other version object.
+     *
+     * @param other The other version object to compare this version object to.
+     * @return True if this version object is a predecessor of the other version object, false otherwise.
+     */
+    public boolean isDirectPredecessorOf( Version other ) {
+<span class="fc" id="L198">        long otherLineage = other.lineage();</span>
+<span class="fc" id="L199">        long otherSuccession = other.succession();</span>
+<span class="pc bpc" id="L200" title="1 of 4 branches missed.">        return _lineage == otherLineage &amp;&amp; _succession == otherSuccession - 1;</span>
+    }
+
+    /**
+     *  Determines if this version object is a predecessor of another version object.
+     *  This is the case if the lineage of this version object is the same as the
+     *  lineage of the other version object and the succession of this version object
+     *  is less than the succession of the other version object.
+     *
+     * @param other The other version object to compare this version object to.
+     * @return True if this version object is a predecessor of the other version object, false otherwise.
+     */
+    public boolean isPredecessorOf( Version other ) {
+<span class="fc" id="L213">        long otherLineage = other.lineage();</span>
+<span class="fc" id="L214">        long otherSuccession = other.succession();</span>
+<span class="pc bpc" id="L215" title="1 of 4 branches missed.">        return _lineage == otherLineage &amp;&amp; _succession &lt; otherSuccession;</span>
+    }
+
+    @Override
+    public String toString() {
+<span class="nc" id="L220">        return this.getClass().getSimpleName()+&quot;[&quot; +</span>
+                    &quot;lineage=&quot;+ _lineage +&quot;, &quot; +
+                    &quot;succession=&quot;+ _succession +
+                &quot;]&quot;;
+    }
+
+    @Override
+    public boolean equals( Object obj ) {
+<span class="pc bpc" id="L228" title="1 of 2 branches missed.">        if ( this == obj ) {</span>
+<span class="nc" id="L229">            return true;</span>
+        }
+<span class="pc bpc" id="L231" title="2 of 4 branches missed.">        if ( obj == null || getClass() != obj.getClass() ) {</span>
+<span class="nc" id="L232">            return false;</span>
+        }
+<span class="fc" id="L234">        Version version = (Version) obj;</span>
+<span class="pc bpc" id="L235" title="1 of 4 branches missed.">        return _lineage == version._lineage &amp;&amp;</span>
+               _succession == version._succession;
+    }
+
+    @Override
+    public int hashCode() {
+<span class="fc" id="L241">        return Long.hashCode( _lineage * 31 + _succession);</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EventImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sprouts</a> &gt; <a href="index.source.html" class="el_package">sprouts.impl</a> &gt; <span class="el_source">EventImpl.java</span></div><h1>EventImpl.java</h1><pre class="source lang-java linenums">package sprouts.impl;
+
+import org.slf4j.Logger;
+import sprouts.*;
+
+import java.lang.ref.WeakReference;
+import java.util.concurrent.atomic.AtomicReference;
+
+final class EventImpl implements Observable, Event {
+
+<span class="fc" id="L11">    private static final Logger log = org.slf4j.LoggerFactory.getLogger(EventImpl.class);</span>
+
+    private final Executor executor;
+<span class="fc" id="L14">    private final AtomicReference&lt;Tuple&lt;WeakReference&lt;EventImpl&gt;&gt;&gt; vessels = new AtomicReference&lt;&gt;((Tuple) Tuple.of(WeakReference.class));</span>
+<span class="fc" id="L15">    private final AtomicReference&lt;Tuple&lt;Observer&gt;&gt; observers = new AtomicReference&lt;&gt;(Tuple.of(Observer.class));</span>
+
+
+<span class="fc" id="L18">    EventImpl(Executor executor) {</span>
+<span class="fc" id="L19">        this.executor = executor;</span>
+<span class="fc" id="L20">    }</span>
+
+    @SuppressWarnings(&quot;NullAway&quot;)
+    private Tuple&lt;WeakReference&lt;EventImpl&gt;&gt; _getVessels() {
+<span class="fc" id="L24">        return vessels.get();</span>
+    }
+
+    private void _setVessels(Tuple&lt;WeakReference&lt;EventImpl&gt;&gt; vessels) {
+<span class="fc" id="L28">        this.vessels.set(vessels);</span>
+<span class="fc" id="L29">    }</span>
+
+    @SuppressWarnings(&quot;NullAway&quot;)
+    private Tuple&lt;Observer&gt; _getObservers() {
+<span class="fc" id="L33">        return observers.get();</span>
+    }
+
+    private void _setObservers(Tuple&lt;Observer&gt; observers) {
+<span class="fc" id="L37">        this.observers.set(observers);</span>
+<span class="fc" id="L38">    }</span>
+
+    @Override
+    public void fire() {
+<span class="fc" id="L42">        executor.execute(() -&gt; {</span>
+<span class="fc bfc" id="L43" title="All 2 branches covered.">            for (Observer observer : _getObservers()) {</span>
+                try {
+<span class="fc" id="L45">                    observer.invoke();</span>
+<span class="nc" id="L46">                } catch (Exception e) {</span>
+<span class="nc" id="L47">                    log.error(&quot;Error invoking observer!&quot;, e);</span>
+<span class="fc" id="L48">                }</span>
+<span class="fc" id="L49">            }</span>
+<span class="fc bfc" id="L50" title="All 2 branches covered.">            for (WeakReference&lt;EventImpl&gt; vessel : _getVessels()) {</span>
+<span class="fc" id="L51">                EventImpl event = vessel.get();</span>
+<span class="fc bfc" id="L52" title="All 2 branches covered.">                if (event != null)</span>
+<span class="fc" id="L53">                    event.fire();</span>
+<span class="fc" id="L54">            }</span>
+<span class="fc bfc" id="L55" title="All 2 branches covered.">            _setVessels(_getVessels().removeIf(vessel -&gt; vessel.get() == null));</span>
+<span class="fc" id="L56">        });</span>
+<span class="fc" id="L57">    }</span>
+
+    @Override
+    public Observable observable() {
+<span class="fc" id="L61">        EventImpl vessel = new EventImpl(executor);</span>
+<span class="fc" id="L62">        _setVessels(_getVessels().add(new WeakReference&lt;&gt;(vessel)));</span>
+<span class="fc" id="L63">        return vessel;</span>
+    }
+
+    @Override
+    public Observable subscribe(Observer observer) {
+<span class="fc bfc" id="L68" title="All 2 branches covered.">        if (observer instanceof WeakObserver) {</span>
+<span class="fc" id="L69">            WeakObserver&lt;?&gt; weakObserver = (WeakObserver&lt;?&gt;) observer;</span>
+<span class="fc" id="L70">            weakObserver.owner().ifPresent(owner -&gt; {</span>
+<span class="fc" id="L71">                _setObservers(_getObservers().add(observer));</span>
+<span class="fc" id="L72">                WeakReference&lt;EventImpl&gt; weakThis = new WeakReference&lt;&gt;(this);</span>
+<span class="fc" id="L73">                AutomaticUnSubscriber cleaner = new AutomaticUnSubscriber(weakThis, weakObserver);</span>
+<span class="fc" id="L74">                ChangeListenerCleaner.getInstance().register(owner, cleaner);</span>
+<span class="fc" id="L75">            });</span>
+<span class="fc" id="L76">        } else</span>
+<span class="fc" id="L77">            _setObservers(_getObservers().add(observer));</span>
+<span class="fc" id="L78">        return this;</span>
+    }
+
+    @Override
+    public Observable unsubscribe(Subscriber subscriber) {
+<span class="pc bpc" id="L83" title="1 of 2 branches missed.">        if (subscriber instanceof Observer)</span>
+<span class="fc" id="L84">            _setObservers(_getObservers().remove((Observer) subscriber));</span>
+<span class="fc" id="L85">        return this;</span>
+    }
+
+    @Override
+    public void unsubscribeAll() {
+<span class="fc" id="L90">        _setObservers(_getObservers().clear());</span>
+<span class="fc" id="L91">    }</span>
+
+
+    private static final class AutomaticUnSubscriber implements Runnable {
+        private final WeakReference&lt;EventImpl&gt; weakThis;
+        private final WeakObserver&lt;?&gt; observer;
+
+<span class="fc" id="L98">        private AutomaticUnSubscriber(WeakReference&lt;EventImpl&gt; weakThis, WeakObserver&lt;?&gt; observer) {</span>
+<span class="fc" id="L99">            this.weakThis = weakThis;</span>
+<span class="fc" id="L100">            this.observer = observer;</span>
+<span class="fc" id="L101">        }</span>
+
+        @Override
+        public void run() {
+<span class="fc" id="L105">            EventImpl strongThis = weakThis.get();</span>
+<span class="pc bpc" id="L106" title="1 of 2 branches missed.">            if (strongThis == null)</span>
+<span class="nc" id="L107">                return;</span>
+
+            try {
+<span class="fc" id="L110">                observer.clear();</span>
+<span class="nc" id="L111">            } catch (Exception e) {</span>
+<span class="nc" id="L112">                log.error(</span>
+                    &quot;An error occurred while clearing the weak observer '{}' during the process of &quot; +
+                    &quot;removing it from the list of change actions.&quot;, observer, e
+                );
+<span class="fc" id="L116">            }</span>
+<span class="fc" id="L117">            strongThis._setObservers(strongThis._getObservers().remove(observer));</span>
+<span class="fc" id="L118">        }</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

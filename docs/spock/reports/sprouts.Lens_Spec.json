@@ -1,0 +1,68 @@
+{
+  "className":"sprouts.Lens_Spec",
+  "title":"Functional Lenses",
+  "narrative":"The `Lens` interface defines an access and update operation on an individual\n    part of a nested and immutable data structure.\n    A lens can also be composed with other lenses to focus\n    on more deeply nested parts.\n    This design concept is part of the functional\n    programming paradigm, and it emulates\n    mutable properties (getter and setter) in an immutable world\n    using a *getter* and more importantly a *wither* methods\n    (a function that returns a new structure with target field being updated).\n\n    In this specification we demonstrate how to implement and use\n    your own lenses through the `Lens` interface and then\n    we show how these lenses can be composed to focus on deeply nested parts.\n\n    We use the following data structures to demonstrate the concept:\n    ```\n    enum Genre { FICTION, NON_FICTION, SCIENCE, FANTASY, BIOGRAPHY, HISTORY }\n\n    enum MembershipLevel { BASIC, SILVER, GOLD, PLATINUM }\n\n    static record Author(String firstName, String lastName, LocalDate birthDate, List<String> books) {\n        public Author withFirstName(String firstName) {\n            return new Author(firstName, this.lastName, this.birthDate, this.books);\n        }\n\n        public Author withLastName(String lastName) {\n            return new Author(this.firstName, lastName, this.birthDate, this.books);\n        }\n\n        public Author withBirthDate(LocalDate birthDate) {\n            return new Author(this.firstName, this.lastName, birthDate, this.books);\n        }\n\n        public Author withBooks(List<String> books) {\n            return new Author(this.firstName, this.lastName, this.birthDate, books);\n        }\n    }\n\n    public static record Book(String title, Author author, Genre genre, LocalDate publicationDate, int pageCount) {\n        public Book withTitle(String title) {\n            return new Book(title, this.author, this.genre, this.publicationDate, this.pageCount);\n        }\n\n        public Book withAuthor(Author author) {\n            return new Book(this.title, author, this.genre, this.publicationDate, this.pageCount);\n        }\n\n        public Book withGenre(Genre genre) {\n            return new Book(this.title, this.author, genre, this.publicationDate, this.pageCount);\n        }\n\n        public Book withPublicationDate(LocalDate publicationDate) {\n            return new Book(this.title, this.author, this.genre, publicationDate, this.pageCount);\n        }\n\n        public Book withPageCount(int pageCount) {\n            return new Book(this.title, this.author, this.genre, this.publicationDate, pageCount);\n        }\n    }\n\n    public static record Member(String memberId, String firstName, String lastName, MembershipLevel membershipLevel, LocalDate joinDate, String email) {\n        public Member withMemberId(String memberId) {\n            return new Member(memberId, this.firstName, this.lastName, this.membershipLevel, this.joinDate, this.email);\n        }\n\n        public Member withFirstName(String firstName) {\n            return new Member(this.memberId, firstName, this.lastName, this.membershipLevel, this.joinDate, this.email);\n        }\n\n        public Member withLastName(String lastName) {\n            return new Member(this.memberId, this.firstName, lastName, this.membershipLevel, this.joinDate, this.email);\n        }\n\n        public Member withMembershipLevel(MembershipLevel membershipLevel) {\n            return new Member(this.memberId, this.firstName, this.lastName, membershipLevel, this.joinDate, this.email);\n        }\n\n        public Member withJoinDate(LocalDate joinDate) {\n            return new Member(this.memberId, this.firstName, this.lastName, this.membershipLevel, joinDate, this.email);\n        }\n\n        public Member withEmail(String email) {\n            return new Member(this.memberId, this.firstName, this.lastName, this.membershipLevel, this.joinDate, email);\n        }\n    }\n\n    public static record Loan(String loanId, Book book, Member member, LocalDate loanDate, LocalDate returnDate, boolean returned) {\n        public Loan withLoanId(String loanId) {\n            return new Loan(loanId, this.book, this.member, this.loanDate, this.returnDate, this.returned);\n        }\n\n        public Loan withBook(Book book) {\n            return new Loan(this.loanId, book, this.member, this.loanDate, this.returnDate, this.returned);\n        }\n\n        public Loan withMember(Member member) {\n            return new Loan(this.loanId, this.book, member, this.loanDate, this.returnDate, this.returned);\n        }\n\n        public Loan withLoanDate(LocalDate loanDate) {\n            return new Loan(this.loanId, this.book, this.member, loanDate, this.returnDate, this.returned);\n        }\n\n        public Loan withReturnDate(LocalDate returnDate) {\n            return new Loan(this.loanId, this.book, this.member, this.loanDate, returnDate, this.returned);\n        }\n\n        public Loan withReturned(boolean returned) {\n            return new Loan(this.loanId, this.book, this.member, this.loanDate, this.returnDate, returned);\n        }\n    }\n    ```",
+  "subjects":["sprouts.Lens"],
+  "statistics":{
+    "runs":"2",
+    "successRate":"100.0%",
+    "failures":"0",
+    "errors":"0",
+    "skipped":"0",
+    "duration":"?"
+  },
+  "headers":[],"tags":{},"see":[],
+  "features":[ 
+    {
+      "id":"You can create lenses from other lenses to dive deeper into nested data structures.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"\n            We first create full data structure composed of many nested records.\n        ","code":["var author = new Author(\"Raffaela\", \"Raab\", LocalDate.of(1996, 3, 21), [\"Book1\", \"Book2\"])","var book   = new Book(\"The Book\", author, Genre.HISTORY, LocalDate.of(2019, 5, 12), 304)","var member = new Member(\"1234\", \"Marc\", \"Mayer\", MembershipLevel.GOLD, LocalDate.of(2015, 2, 3), null)","var loan   = new Loan(\"5678\", book, member, LocalDate.of(2021, 8, 12), LocalDate.of(2021, 9, 12), false)"]},
+
+        {"kind":"and","text":"\n            Create lenses for nested records and also trace lists for recording\n            state changes of the original records and all of its lenses.\n        ","code":["var bookLens = Lens.of(Loan::book, Loan::withBook)","var memberLens = Lens.of(Loan::member, Loan::withMember)","var authorLens = Lens.of(Book::author, Book::withAuthor)"]},
+
+        {"kind":"expect","text":"\n            The lenses can fetch the nested records from the original records.\n        ","code":["bookLens.getter(loan) == book","memberLens.getter(loan) == member","authorLens.getter(book) == author"]},
+
+        {"kind":"when","text":"\n            We create updated versions of the original records using the lenses.\n        ","code":["var newBook = authorLens.wither(book, author.withFirstName(\"Ed\").withLastName(\"Winters\"))","var newLoan = memberLens.wither(loan, member.withFirstName(\"Peter\").withLastName(\"Singer\"))"]},
+
+        {"kind":"then","text":"\n            The updated records are different from the original records.\n        ","code":["newBook != book","newLoan != loan"]},
+
+        {"kind":"and","text":"","code":["newBook.author.firstName == \"Ed\"","newBook.author.lastName == \"Winters\"","newLoan.member.firstName == \"Peter\"","newLoan.member.lastName == \"Singer\""]},
+
+        {"kind":"and","text":"","code":["newBook.author.firstName != author.firstName","newBook.author.lastName != author.lastName","newLoan.member.firstName != member.firstName","newLoan.member.lastName != member.lastName"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You can compose lenses to update a deeply nested part of a data structure.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"\n            We first create full data structure composed of many nested records.\n        ","code":["var author = new Author(\"Ed\", \"Winters\", LocalDate.of(1636, 5, 21), [\"Book1\", \"Book2\"])","var book   = new Book(\"The Book\", author, Genre.HISTORY, LocalDate.of(1849, 2, 6), 342)","var member = new Member(\"5432\", \"Marc\", \"Mayer\", MembershipLevel.PLATINUM, LocalDate.of(2015, 2, 3), \"test@mail.net\")","var loan   = new Loan(\"7247\", book, member, LocalDate.of(2002, 1, 4), LocalDate.of(1942, 5, 23), true)"]},
+
+        {"kind":"and","text":"We create lenses for deeply nested records.","code":["var bookLens = Lens.of(Loan::book, Loan::withBook)","var authorLens = Lens.of(Book::author, Book::withAuthor)","var nameLens = Lens.of(Author::firstName, Author::withFirstName)"]},
+
+        {"kind":"and","text":"We compose the lenses to focus on deeply nested parts.","code":["var bookToAuthorNameLens = bookLens.to(authorLens).to(nameLens)"]},
+
+        {"kind":"expect","text":"The lens can fetch the correct deeply nested part from the original record.","code":["bookToAuthorNameLens.getter(loan) == \"Ed\""]},
+
+        {"kind":"when","text":"We create an updated version of the original record using the composed lens.","code":["var newLoan = bookToAuthorNameLens.wither(loan, \"Raffaela\")"]},
+
+        {"kind":"then","text":"The updated record is different from the original record.","code":["newLoan != loan"]},
+
+        {"kind":"and","text":"The updated record has the correct deeply nested part updated.","code":["newLoan.book.author.firstName == \"Raffaela\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    }
+  
+  ],
+  "generator":"https://github.com/renatoathaydes/spock-reports"
+}
