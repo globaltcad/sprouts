@@ -849,6 +849,75 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Maybe&lt;T&gt; {
     }
 
     /**
+     * Creates a live view of this property as a {@link Tuple} containing items of
+     * the specified type using the given mapping function which dynamically maps
+     * the current property item {@code T} to a {@code Tuple&lt;U&gt;}.&lt;br&gt;
+     * &lt;p&gt;
+     * The resulting view is automatically updated whenever the value of this property changes,
+     * meaning that the mapper {@code Function&lt;T, @Nullable Tuple&lt;U&gt;&gt;} is called with the new property item
+     * and the state of the view is updated with the result of said mapping function.
+     * &lt;p&gt;
+     * The {@code type} parameter is used to obtain a default tuple instance (via {@code Tuple.of(type)}) which serves
+     * both as the fallback null object and error object. This means that if the mapping function returns {@code null}
+     * or throws an exception, the view will retain a default {@code Tuple} instance instead of propagating
+     * storing {@code null}, which is not allowed for this view.
+     * &lt;p&gt;
+     * &lt;b&gt;Warning:&lt;/b&gt; If you register change listeners on the returned view and do not maintain a strong reference
+     * to it, the view along with its listeners may be garbage collected, and subsequent changes to this property
+     * will not trigger the listeners.
+     *
+     * @param type   The class representing the type of the tuple's element. This is used to create a default tuple instance.
+     * @param mapper A function that maps the value of this property to a {@link Tuple} of type {@code U}. The function
+     *               should handle {@code null} values appropriately.
+     * @param &lt;U&gt;    The type of the element within the tuple.
+     * @return A live view of this property as a {@link Tuple} of type {@code U}.
+     * @throws NullPointerException if either {@code type} or {@code mapper} is {@code null}.
+     */
+    default &lt;U&gt; Viewable&lt;Tuple&lt;U&gt;&gt; viewAsTuple( Class&lt;U&gt; type, Function&lt;T, @Nullable Tuple&lt;U&gt;&gt; mapper ) {
+<span class="fc" id="L877">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L878">        Objects.requireNonNull(mapper);</span>
+<span class="fc" id="L879">        return view(Tuple.of(type), Tuple.of(type), mapper);</span>
+    }
+
+    /**
+     * Creates a live view of this property as a {@link Association} containing key-value pairs of
+     * the specified key type {@code K} and value type {@code V} using the supplied mapping function which dynamically maps
+     * the current property item {@code T} to a {@code Association&lt;K, V&gt;}.&lt;br&gt;
+     * &lt;p&gt;
+     * The resulting view is automatically updated whenever the value of this property changes,
+     * meaning that the mapper {@code Function&lt;T, @Nullable Association&lt;K, V&gt;&gt;} is called with the new property item
+     * and the state of the view is updated with the result of said mapping function.
+     * &lt;p&gt;
+     * The {@code keyType} and {@code valueType} parameters are used to obtain a
+     * default association instance (via {@code Association.between(keyType, valueType)}) which serves
+     * both as the fallback null object and error object. This means that if the mapping function returns {@code null}
+     * or throws an exception, the view will retain an empty default {@code Association} instance instead of propagating
+     * storing {@code null}, which is not allowed for this view.
+     * &lt;p&gt;
+     * &lt;b&gt;Warning:&lt;/b&gt; If you register change listeners on the returned view and do not maintain a strong reference
+     * to it, the view along with its listeners may be garbage collected, and subsequent changes to this property
+     * will not trigger the listeners.
+     *
+     * @param keyType   The class representing the type of the association's key. This is used to create a default association instance.
+     *                  This parameter must not be {@code null}.
+     * @param valueType The class representing the type of the association's value. This is used to create a default association instance.
+     *                  This parameter must not be {@code null}.
+     * @param mapper    A function that maps the value of this property to an {@link Association} of type {@code K, V}.
+     *                  The function should handle {@code null} values appropriately.
+     * @param &lt;K&gt;       The type of the key within the association.
+     * @param &lt;V&gt;       The type of the value within the association.
+     * @return A live view of this property as an {@link Association} of type {@code K, V}.
+     * @throws NullPointerException if either {@code keyType}, {@code valueType}, or {@code mapper} is {@code null}.
+     */
+    default &lt;K, V&gt; Viewable&lt;Association&lt;K, V&gt;&gt; viewAsAssociation( Class&lt;K&gt; keyType, Class&lt;V&gt; valueType, Function&lt;T, @Nullable Association&lt;K, V&gt;&gt; mapper ) {
+<span class="nc" id="L913">        Objects.requireNonNull(keyType);</span>
+<span class="nc" id="L914">        Objects.requireNonNull(valueType);</span>
+<span class="nc" id="L915">        Objects.requireNonNull(mapper);</span>
+<span class="nc" id="L916">        Association&lt;K, V&gt; empty = Association.between(keyType, valueType);</span>
+<span class="nc" id="L917">        return view(empty, empty, mapper);</span>
+    }
+
+    /**
      *  Returns the name/id of the property which is useful for debugging as well as
      *  persisting their state by using them as keys for whatever storage data structure one chooses. &lt;br&gt;
      *  For example, when converting a property based model to a JSON object, the id of the properties
@@ -881,7 +950,7 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Maybe&lt;T&gt; {
      *                 the id is equal to the {@link Sprouts#defaultId()} constant.
      */
     default boolean hasNoID() {
-<span class="fc bfc" id="L884" title="All 2 branches covered.">        return !hasID();</span>
+<span class="fc bfc" id="L953" title="All 2 branches covered.">        return !hasID();</span>
     }
 
     /**
@@ -891,7 +960,7 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Maybe&lt;T&gt; {
      * @return The truth value determining if this property has been assigned an id,
      *               or if &lt;b&gt;id is not equal to the {@link Sprouts#defaultId()} constant&lt;/b&gt;.
      */
-<span class="fc bfc" id="L894" title="All 2 branches covered.">    default boolean hasID() { return !Sprouts.factory().defaultId().equals(id()); }</span>
+<span class="fc bfc" id="L963" title="All 2 branches covered.">    default boolean hasID() { return !Sprouts.factory().defaultId().equals(id()); }</span>
 
     /**
      *  Triggers all observer lambdas for the given {@link Channel}.
@@ -947,7 +1016,7 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Maybe&lt;T&gt; {
      * @return {@code true}, if this property can not be changed, {@code false} otherwise.
      */
     default boolean isImmutable() {
-<span class="pc bpc" id="L950" title="1 of 2 branches missed.">        return !this.isMutable();</span>
+<span class="pc bpc" id="L1019" title="1 of 2 branches missed.">        return !this.isMutable();</span>
     }
 
     /**
@@ -960,7 +1029,7 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Maybe&lt;T&gt; {
      *
      * @return {@code true}, if this property is a lens, {@code false} otherwise.
      */
-<span class="fc" id="L963">    default boolean isLens() { return false; }</span>
+<span class="fc" id="L1032">    default boolean isLens() { return false; }</span>
 
     /**
      *  This method is used to determine if the property is a view or not.
@@ -972,7 +1041,7 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Maybe&lt;T&gt; {
      *
      * @return {@code true}, if this property is a view, {@code false} otherwise.
      */
-<span class="fc" id="L975">    default boolean isView() { return false; }</span>
+<span class="fc" id="L1044">    default boolean isView() { return false; }</span>
 
     /**
      *  {@link Val} and {@link Var} implementations are expected to represent
@@ -990,16 +1059,16 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Maybe&lt;T&gt; {
      * @return The truth value determining if the objects are equal in terms of their state!
      */
     static boolean equals( @Nullable Object o1, @Nullable Object o2 ) {
-<span class="fc bfc" id="L993" title="All 2 branches covered.">        if ( o1 instanceof float[]   ) return Arrays.equals( (float[] )  o1, (float[] )  o2 );</span>
-<span class="fc bfc" id="L994" title="All 2 branches covered.">        if ( o1 instanceof int[]     ) return Arrays.equals( (int[]   )  o1, (int[]   )  o2 );</span>
-<span class="fc bfc" id="L995" title="All 2 branches covered.">        if ( o1 instanceof char[]    ) return Arrays.equals( (char[]  )  o1, (char[]  )  o2 );</span>
-<span class="fc bfc" id="L996" title="All 2 branches covered.">        if ( o1 instanceof double[]  ) return Arrays.equals( (double[])  o1, (double[])  o2 );</span>
-<span class="fc bfc" id="L997" title="All 2 branches covered.">        if ( o1 instanceof long[]    ) return Arrays.equals( (long[]  )  o1, (long[]  )  o2 );</span>
-<span class="pc bpc" id="L998" title="1 of 2 branches missed.">        if ( o1 instanceof byte[]    ) return Arrays.equals( (byte[]  )  o1, (byte[]  )  o2 );</span>
-<span class="pc bpc" id="L999" title="1 of 2 branches missed.">        if ( o1 instanceof short[]   ) return Arrays.equals( (short[] )  o1, (short[] )  o2 );</span>
-<span class="fc bfc" id="L1000" title="All 2 branches covered.">        if ( o1 instanceof boolean[] ) return Arrays.equals( (boolean[]) o1, (boolean[]) o2 );</span>
-<span class="fc bfc" id="L1001" title="All 2 branches covered.">        if ( o1 instanceof Object[]  ) return Arrays.equals( (Object[])  o1, (Object[])  o2 );</span>
-<span class="fc" id="L1002">        return Objects.equals( o1, o2 );</span>
+<span class="fc bfc" id="L1062" title="All 2 branches covered.">        if ( o1 instanceof float[]   ) return Arrays.equals( (float[] )  o1, (float[] )  o2 );</span>
+<span class="fc bfc" id="L1063" title="All 2 branches covered.">        if ( o1 instanceof int[]     ) return Arrays.equals( (int[]   )  o1, (int[]   )  o2 );</span>
+<span class="fc bfc" id="L1064" title="All 2 branches covered.">        if ( o1 instanceof char[]    ) return Arrays.equals( (char[]  )  o1, (char[]  )  o2 );</span>
+<span class="fc bfc" id="L1065" title="All 2 branches covered.">        if ( o1 instanceof double[]  ) return Arrays.equals( (double[])  o1, (double[])  o2 );</span>
+<span class="fc bfc" id="L1066" title="All 2 branches covered.">        if ( o1 instanceof long[]    ) return Arrays.equals( (long[]  )  o1, (long[]  )  o2 );</span>
+<span class="pc bpc" id="L1067" title="1 of 2 branches missed.">        if ( o1 instanceof byte[]    ) return Arrays.equals( (byte[]  )  o1, (byte[]  )  o2 );</span>
+<span class="pc bpc" id="L1068" title="1 of 2 branches missed.">        if ( o1 instanceof short[]   ) return Arrays.equals( (short[] )  o1, (short[] )  o2 );</span>
+<span class="fc bfc" id="L1069" title="All 2 branches covered.">        if ( o1 instanceof boolean[] ) return Arrays.equals( (boolean[]) o1, (boolean[]) o2 );</span>
+<span class="fc bfc" id="L1070" title="All 2 branches covered.">        if ( o1 instanceof Object[]  ) return Arrays.equals( (Object[])  o1, (Object[])  o2 );</span>
+<span class="fc" id="L1071">        return Objects.equals( o1, o2 );</span>
     }
 
     /**
@@ -1013,16 +1082,16 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Maybe&lt;T&gt; {
      * @return The hash code of the object.
      */
     static int hashCode( Object o ) {
-<span class="fc bfc" id="L1016" title="All 2 branches covered.">        if ( o instanceof float[]   ) return Arrays.hashCode( (float[] )  o );</span>
-<span class="fc bfc" id="L1017" title="All 2 branches covered.">        if ( o instanceof int[]     ) return Arrays.hashCode( (int[]   )  o );</span>
-<span class="fc bfc" id="L1018" title="All 2 branches covered.">        if ( o instanceof char[]    ) return Arrays.hashCode( (char[]  )  o );</span>
-<span class="fc bfc" id="L1019" title="All 2 branches covered.">        if ( o instanceof double[]  ) return Arrays.hashCode( (double[])  o );</span>
-<span class="fc bfc" id="L1020" title="All 2 branches covered.">        if ( o instanceof long[]    ) return Arrays.hashCode( (long[]  )  o );</span>
-<span class="pc bpc" id="L1021" title="1 of 2 branches missed.">        if ( o instanceof byte[]    ) return Arrays.hashCode( (byte[]  )  o );</span>
-<span class="pc bpc" id="L1022" title="1 of 2 branches missed.">        if ( o instanceof short[]   ) return Arrays.hashCode( (short[] )  o );</span>
-<span class="fc bfc" id="L1023" title="All 2 branches covered.">        if ( o instanceof boolean[] ) return Arrays.hashCode( (boolean[]) o );</span>
-<span class="fc bfc" id="L1024" title="All 2 branches covered.">        if ( o instanceof Object[]  ) return Arrays.hashCode( (Object[])  o );</span>
-<span class="fc" id="L1025">        return Objects.hashCode( o );</span>
+<span class="fc bfc" id="L1085" title="All 2 branches covered.">        if ( o instanceof float[]   ) return Arrays.hashCode( (float[] )  o );</span>
+<span class="fc bfc" id="L1086" title="All 2 branches covered.">        if ( o instanceof int[]     ) return Arrays.hashCode( (int[]   )  o );</span>
+<span class="fc bfc" id="L1087" title="All 2 branches covered.">        if ( o instanceof char[]    ) return Arrays.hashCode( (char[]  )  o );</span>
+<span class="fc bfc" id="L1088" title="All 2 branches covered.">        if ( o instanceof double[]  ) return Arrays.hashCode( (double[])  o );</span>
+<span class="fc bfc" id="L1089" title="All 2 branches covered.">        if ( o instanceof long[]    ) return Arrays.hashCode( (long[]  )  o );</span>
+<span class="pc bpc" id="L1090" title="1 of 2 branches missed.">        if ( o instanceof byte[]    ) return Arrays.hashCode( (byte[]  )  o );</span>
+<span class="pc bpc" id="L1091" title="1 of 2 branches missed.">        if ( o instanceof short[]   ) return Arrays.hashCode( (short[] )  o );</span>
+<span class="fc bfc" id="L1092" title="All 2 branches covered.">        if ( o instanceof boolean[] ) return Arrays.hashCode( (boolean[]) o );</span>
+<span class="fc bfc" id="L1093" title="All 2 branches covered.">        if ( o instanceof Object[]  ) return Arrays.hashCode( (Object[])  o );</span>
+<span class="fc" id="L1094">        return Objects.hashCode( o );</span>
     }
 
 }

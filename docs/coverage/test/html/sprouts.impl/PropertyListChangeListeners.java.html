@@ -29,26 +29,26 @@ import java.util.Arrays;
 <span class="nc" id="L29">        _actions.unsubscribeAll();</span>
 <span class="nc" id="L30">    }</span>
 
-    public void fireChange(SequenceChange type, Vars&lt;T&gt; source) {
+    public void fireChange(SequenceChange type, Vals&lt;T&gt; source) {
 <span class="fc" id="L33">        fireChange(type, -1, (Vals&lt;T&gt;) null, null, source);</span>
 <span class="fc" id="L34">    }</span>
 
     public void fireChange(
-            SequenceChange type, int index, @Nullable Var&lt;T&gt; newVal, @Nullable Var&lt;T&gt; oldVal, Vars&lt;T&gt; source
+            SequenceChange type, int index, @Nullable Var&lt;T&gt; newVal, @Nullable Var&lt;T&gt; oldVal, Vals&lt;T&gt; source
     ) {
 <span class="fc" id="L39">        ValsDelegate&lt;T&gt; listChangeDelegate = _createDelegate(index, type, newVal, oldVal, source);</span>
 <span class="fc" id="L40">        _actions.fireChange(listChangeDelegate);</span>
 <span class="fc" id="L41">    }</span>
 
     public void fireChange(
-            SequenceChange type, int index, @Nullable Vals&lt;T&gt; newVals, @Nullable Vals&lt;T&gt; oldVals, Vars&lt;T&gt; source
+            SequenceChange type, int index, @Nullable Vals&lt;T&gt; newVals, @Nullable Vals&lt;T&gt; oldVals, Vals&lt;T&gt; source
     ) {
 <span class="fc" id="L46">        ValsDelegate&lt;T&gt; listChangeDelegate = _createDelegate(index, type, newVals, oldVals, source);</span>
 <span class="fc" id="L47">        _actions.fireChange(listChangeDelegate);</span>
 <span class="fc" id="L48">    }</span>
 
     private ValsDelegate&lt;T&gt; _createDelegate(
-            int index, SequenceChange type, @Nullable Var&lt;T&gt; newVal, @Nullable Var&lt;T&gt; oldVal, Vars&lt;T&gt; source
+            int index, SequenceChange type, @Nullable Var&lt;T&gt; newVal, @Nullable Var&lt;T&gt; oldVal, Vals&lt;T&gt; source
     ) {
 <span class="fc" id="L53">        Class&lt;T&gt; _type = source.type();</span>
 <span class="fc" id="L54">        Var[] cloned = source.toValList().stream().map(Val::ofNullable).toArray(Var[]::new);</span>
@@ -64,7 +64,7 @@ import java.util.Arrays;
     }
 
     private ValsDelegate&lt;T&gt; _createDelegate(
-            int index, SequenceChange type, @Nullable Vals&lt;T&gt; newVals, @Nullable Vals&lt;T&gt; oldVals, Vars&lt;T&gt; source
+            int index, SequenceChange type, @Nullable Vals&lt;T&gt; newVals, @Nullable Vals&lt;T&gt; oldVals, Vals&lt;T&gt; source
     ) {
 <span class="fc" id="L69">        boolean _allowsNull = source.allowsNull();</span>
 <span class="fc" id="L70">        Class&lt;T&gt; _type = source.type();</span>

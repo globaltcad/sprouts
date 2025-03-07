@@ -14,6 +14,7 @@ import java.util.Optional;
  *  factory method to create a new weak observer which
  *  is backed by a tried and test
  *  default implementation of this interface.
+ * @param <O> The type of the owner of this observer.
  */
 public interface WeakObserver<O> extends Observer {
 

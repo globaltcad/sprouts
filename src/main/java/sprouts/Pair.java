@@ -34,7 +34,7 @@ public final class Pair<F extends @Nullable Object,S extends @Nullable Object> {
      * @throws NullPointerException If any of the supplied type parameters is null.
      */
     @SuppressWarnings("unchecked")
-    static <F, S> Class<Pair<F, S>> classTyped(Class<F> firstType, Class<S> secondType) {
+    public static <F, S> Class<Pair<F, S>> classTyped(Class<F> firstType, Class<S> secondType) {
         Objects.requireNonNull(firstType);
         Objects.requireNonNull(secondType);
         return (Class) Pair.class;

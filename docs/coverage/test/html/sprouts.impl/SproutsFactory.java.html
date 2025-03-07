@@ -4,10 +4,12 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import sprouts.*;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.*;
 import java.util.regex.Pattern;
+import java.util.stream.StreamSupport;
 
 /**
  *  Creates instances of the various property types in the Sprouts library.
@@ -20,7 +22,8 @@ public interface SproutsFactory
         Val&lt;T&gt; source,
         Channel channel,
         SingleChange change,
-        @Nullable T newValue
+        @Nullable T newValue,
+        @Nullable T oldValue
     );
 
     &lt;T&gt; ValsDelegate&lt;T&gt; delegateOf(
@@ -36,25 +39,25 @@ public interface SproutsFactory
     Event eventOf( Event.Executor executor );
 
     default &lt;T&gt; Maybe&lt;@Nullable T&gt; maybeOfNullable( Class&lt;T&gt; type, @Nullable T item ) {
-<span class="fc" id="L39">        return valOfNullable( type, item );</span>
+<span class="fc" id="L42">        return valOfNullable( type, item );</span>
     }
 
     default &lt;T&gt; Maybe&lt;@Nullable T&gt; maybeOfNull( Class&lt;T&gt; type ) {
-<span class="fc" id="L43">        return valOfNull( type );</span>
+<span class="fc" id="L46">        return valOfNull( type );</span>
     }
 
     default &lt;T&gt; Maybe&lt;T&gt; maybeOf( T item ) {
-<span class="fc" id="L47">        return valOf( item );</span>
+<span class="fc" id="L50">        return valOf( item );</span>
     }
 
     default &lt;T&gt; Maybe&lt;T&gt; maybeOf( Maybe&lt;T&gt; toBeCopied ) {
-<span class="nc" id="L51">        Objects.requireNonNull(toBeCopied);</span>
-<span class="nc" id="L52">        return valOf( toBeCopied.orElseThrowUnchecked() );</span>
+<span class="nc" id="L54">        Objects.requireNonNull(toBeCopied);</span>
+<span class="nc" id="L55">        return valOf( toBeCopied.orElseThrowUnchecked() );</span>
     }
 
     default &lt;T extends @Nullable Object&gt; Maybe&lt;@Nullable T&gt; maybeOfNullable( Maybe&lt;T&gt; toBeCopied ) {
-<span class="nc" id="L56">        Objects.requireNonNull(toBeCopied);</span>
-<span class="nc" id="L57">        return valOfNullable( toBeCopied.type(), toBeCopied.orElseNull() );</span>
+<span class="nc" id="L59">        Objects.requireNonNull(toBeCopied);</span>
+<span class="nc" id="L60">        return valOfNullable( toBeCopied.type(), toBeCopied.orElseNull() );</span>
     }
 
     &lt;T&gt; Val&lt;@Nullable T&gt; valOfNullable( Class&lt;T&gt; type, @Nullable T item );
@@ -87,11 +90,11 @@ public interface SproutsFactory
 
     &lt;T extends @Nullable Object, U extends @Nullable Object&gt; Viewable&lt;@Nullable U&gt; viewOfNullable( Class&lt;U&gt; type, Val&lt;T&gt; source, Function&lt;T, @Nullable U&gt; mapper );
 
-    &lt;T extends @Nullable Object, B extends @Nullable Object&gt; Var&lt;B&gt; lensOf( Var&lt;T&gt; source, Function&lt;T,B&gt; getter, BiFunction&lt;T,B,T&gt; wither );
+    &lt;T extends @Nullable Object, B extends @Nullable Object&gt; Var&lt;B&gt; lensOf( Var&lt;T&gt; source, Lens&lt;T, B&gt; lens );
 
-    &lt;T extends @Nullable Object, B extends @Nullable Object&gt; Var&lt;B&gt; lensOf( Var&lt;T&gt; source, B nullObject, Function&lt;T,B&gt; getter, BiFunction&lt;T,B,T&gt; wither );
+    &lt;T extends @Nullable Object, B extends @Nullable Object&gt; Var&lt;B&gt; lensOf( Var&lt;T&gt; source, B nullObject, Lens&lt;T, B&gt; lens);
 
-    &lt;T extends @Nullable Object, B extends @Nullable Object&gt; Var&lt;B&gt; lensOfNullable( Class&lt;B&gt; type, Var&lt;T&gt; source, Function&lt;T,B&gt; getter, BiFunction&lt;T,B,T&gt; wither );
+    &lt;T extends @Nullable Object, B extends @Nullable Object&gt; Var&lt;B&gt; lensOfNullable( Class&lt;B&gt; type, Var&lt;T&gt; source, Lens&lt;T, B&gt; lens );
 
     &lt;T&gt; Var&lt;@Nullable T&gt; varOfNullable( Class&lt;T&gt; type, @Nullable T item );
 
@@ -192,6 +195,7 @@ public interface SproutsFactory
 
     &lt;T&gt; Tuple&lt;@Nullable T&gt; tupleOfNullable( Class&lt;T&gt; type, Iterable&lt;@Nullable T&gt; iterable );
 
+    &lt;K, V&gt; Association&lt;K, V&gt; associationOf(Class&lt;K&gt; keyType, Class&lt;V&gt; valueType );
 
     &lt;V&gt; Result&lt;V&gt; resultOf( Class&lt;V&gt; type );
 

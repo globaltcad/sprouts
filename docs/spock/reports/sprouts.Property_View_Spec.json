@@ -4,9 +4,9 @@
   "narrative":"Properties are designed to be observable, which means that you can \"react\"\n    to their items being replaced by new items. This sort of \"reaction\"\n    to changes is typically done through the \"observer pattern\", where you\n    register change listeners on a property that are invoked whenever the\n    property item changes...\n\n    Contrary to what you might might expect, you cannot register change listeners\n    on properties directly!\n    This is to prevent you from creating memory leaks, which happen very often\n    due to change listeners not being unregistered when they are no longer needed.\n    To fix this, Sprouts provides the concept of a \"property view\" in\n    the form of instances of the `Viewable` type,\n    which is a weakly referenced live property onto which you can safely register\n    your change listeners.\n    And when you no longer use the view (by holding a reference to it),\n    it will be garbage collected along with all of the change listeners\n    that were registered on it.\n\n    But if you keep a reference to the view and a change occurs on the source property,\n    then the view will be updated and all of the change listeners will be notified\n    of the change.",
   "subjects":["sprouts.Viewable","sprouts.Var","sprouts.Val","sprouts.Vars","sprouts.Vals"],
   "statistics":{
-    "runs":"24",
-    "successRate":"100.0%",
-    "failures":"0",
+    "runs":"25",
+    "successRate":"92.0%",
+    "failures":"2",
     "errors":"0",
     "skipped":"0",
     "duration":"?"
@@ -59,7 +59,7 @@
   
     {
       "id":"Map null to custom values when viewing them as primitive types.",
-      "result":"PASS",
+      "result":"FAIL",
       "duration":"?",
       "iterations":{
       "tags":{},"see":[],"extraInfo":["\n            When viewing a nullable property as a primitive type, you can map the null values to\n            custom values of the given type.\n        "]
@@ -77,7 +77,7 @@
 
         {"kind":"then","text":"The views are updated.","code":["randomInt.get() == -1155484576","randomDouble.get() == 0.8314409887870612","randomShort.get() == 28862","randomString.get() == \"Random\""]}
       ],
-      "problems":{"dataValues":[], "errors":[]}
+      "problems":{"dataValues":["[]"], "errors":["[Condition not satisfied:\n\nrandomInt.get() == -1155484576\n|         |     |\n|         |     false\n|         -65105105\nView<Integer>[-65105105]\n]"]}
     },
   
     {
@@ -425,7 +425,7 @@
   
     {
       "id":"The channel of a property change event will propagate to its views.",
-      "result":"PASS",
+      "result":"FAIL",
       "duration":"?",
       "iterations":{
       "tags":{},"see":[],"extraInfo":["\n            Every mutation to a property can have a channel associated with it.\n            You can call the `Var.set(Channel,T)` method to mutate the property with a custom channel,\n            and then in your change listeners you can check the channel on the property delegate!\n\n            This exact same principle is also true for the views of a property\n            whose change event listeners will also receive the channel of the origin property.\n        "]
@@ -441,7 +441,7 @@
 
         {"kind":"then","text":"The listeners are notified of the new value of the views with the correct channels.","code":["trace1 == [From.ALL, From.VIEW, From.VIEW_MODEL]","trace2 == [From.ALL, From.VIEW]","trace3 == [From.ALL, From.VIEW_MODEL]"]}
       ],
-      "problems":{"dataValues":[], "errors":[]}
+      "problems":{"dataValues":["[]"], "errors":["[Condition not satisfied:\n\ntrace1 == [From.ALL, From.VIEW, From.VIEW_MODEL]\n|      |   |         |          |\n|      |   |         |          class sprouts.From\n|      |   |         class sprouts.From\n|      |   class sprouts.From\n|      false\n[ALL, ALL, ALL, ALL, VIEW, VIEW, VIEW, VIEW, VIEW_MODEL, VIEW_MODEL, VIEW_MODEL, VIEW_MODEL]\n]"]}
     },
   
     {
@@ -523,6 +523,27 @@
         {"kind":"when","text":"We update the view to have a custom id String.","code":["view = view.withId(\"patient_age\")"]},
 
         {"kind":"then","text":"The string representation of the view is as expected.","code":["view.toString() == \"View<Byte>[patient_age=5]\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use `viewAsTuple` to create a view of a property as a tuple.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `viewAsTuple` method can be used to create a view of a property as a tuple.\n            The tuple is a fixed size sequence of items that can be of different types.\n            The view will be updated automatically when the original property changes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A property based on a string.","code":["var movie = Var.of(\"dominion\")"]},
+
+        {"kind":"and","text":"A view of the property as a tuple of the individual characters of the string.","code":["Val<Tuple<Character>> view = movie.viewAsTuple(Character, str -> Tuple.of(Character, str.chars.collect {it as Character}))"]},
+
+        {"kind":"expect","text":"The has the expected initial state.","code":["view.get() == Tuple.of(String, \"dominion\".split(\"\")).mapTo(Character, {it[0] as Character})"]},
+
+        {"kind":"when","text":"We change the value of the property to another movie.","code":["movie.set(\"earthlings\")"]},
+
+        {"kind":"then","text":"The state of the view is updated again.","code":["view.get() == Tuple.of(String, \"earthlings\".split(\"\")).mapTo(Character, {it[0] as Character})"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },

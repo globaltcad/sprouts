@@ -5,8 +5,8 @@
   "subjects":["sprouts.Val","sprouts.Var","sprouts.Viewable"],
   "statistics":{
     "runs":"68",
-    "successRate":"100.0%",
-    "failures":"0",
+    "successRate":"98.53%",
+    "failures":"1",
     "errors":"0",
     "skipped":"0",
     "duration":"?"
@@ -15,7 +15,7 @@
   "features":[ 
     {
       "id":"The change listener of property view parents are garbage collected when the view is no longer referenced strongly.",
-      "result":"PASS",
+      "result":"FAIL",
       "duration":"?",
       "iterations":{
       "tags":{},"see":[],"extraInfo":["\n            A property view registers a weak action listener on the original parent property\n            it is actively viewing.\n            These weak listeners are automatically removed when the view is garbage collected.\n            So when the property view is no longer referenced strongly, it should be\n            garbage collected and the weak listener should be removed\n            from the original property.\n\n            We can verify this by checking the reported number of change listeners.\n        "]
@@ -35,7 +35,7 @@
 
         {"kind":"then","text":"The enum property still has 2 change listeners registered.","code":["timeUnitProperty.numberOfChangeListeners() == 4"]}
       ],
-      "problems":{"dataValues":[], "errors":[]}
+      "problems":{"dataValues":["[]"], "errors":["[Condition not satisfied:\n\ntimeUnitProperty.numberOfChangeListeners() == 4\n|                |                         |\n|                15                        false\nVar<TimeUnit>[SECONDS]\n]"]}
     },
   
     {

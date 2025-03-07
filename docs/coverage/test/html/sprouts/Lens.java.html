@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Lens.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sprouts</a> &gt; <a href="index.source.html" class="el_package">sprouts</a> &gt; <span class="el_source">Lens.java</span></div><h1>Lens.java</h1><pre class="source lang-java linenums">package sprouts;
+
+import org.jspecify.annotations.Nullable;
+
+import java.util.Objects;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+/**
+ * The {@code Lens} interface defines an access and update operation on an individual part of a nested and immutable
+ * data structure. A lens can also be composed with other lenses to focus on more deeply nested parts.
+ * This design concept is part of the functional programming paradigm, and it emulates
+ * mutable properties (getter and setter) in an immutable world using a &lt;i&gt;getter&lt;/i&gt; and more importantly
+ * a &lt;i&gt;wither&lt;/i&gt; methods (a function that returns a new structure with target field being updated).
+ *
+ * &lt;p&gt;So a Lenses encapsulate two essential operations:&lt;/p&gt;
+ * &lt;ul&gt;
+ *     &lt;li&gt;&lt;b&gt;getter&lt;/b&gt;: Extracts a specific field from a parent type.&lt;/li&gt;
+ *     &lt;li&gt;&lt;b&gt;wither&lt;/b&gt;: Produces a new instance of the parent with an updated field, preserving immutability.&lt;/li&gt;
+ * &lt;/ul&gt;
+ *
+ * &lt;h2&gt;Usage Example:&lt;/h2&gt;
+ * &lt;pre&gt;{@code
+ * record Person(String name, Address address) {}
+ * record Address(String street, String city) {}
+ *
+ * Lens&lt;Person, Address&gt; addressLens = Lens.of(
+ *     Person::address,
+ *     (person, newAddress) -&gt; new Person(person.name(), newAddress)
+ * );
+ *
+ * Lens&lt;Address, String&gt; streetLens = Lens.of(
+ *     Address::street,
+ *     (address, newStreet) -&gt; new Address(newStreet, address.city())
+ * );
+ *
+ * Lens&lt;Person, String&gt; personStreetLens = addressLens.to(streetLens);
+ *
+ * Person person = new Person(&quot;Alice&quot;, new Address(&quot;1st Ave&quot;, &quot;Wonderland&quot;));
+ * String street = personStreetLens.getter(person); // &quot;1st Ave&quot;
+ * Person updatedPerson = personStreetLens.wither(person, &quot;2nd Ave&quot;);
+ * }&lt;/pre&gt;
+ *
+ * &lt;h2&gt;Composability:&lt;/h2&gt;
+ * &lt;p&gt;You may compose lenses using the {@link #to(Lens)} method, which composes them into a new lens,
+ * enabling seamless traversal and modification of deeply nested structures.&lt;/p&gt;
+ *
+ * &lt;h2&gt;Factory Method:&lt;/h2&gt;
+ * The {@link #of(Function, BiFunction)} static method is provided to easily create lenses from lambda expressions.
+ *
+ * @param &lt;A&gt; The parent type with the field of type {@code B} to be focused on.
+ * @param &lt;B&gt; The type of the field to be focused on in the parent type {@code A}.
+ */
+public interface Lens&lt;A extends @Nullable Object, B extends @Nullable Object&gt; {
+
+    /**
+     * Creates a new lens from the given getter and wither functions,
+     * where the first function serves as an implementation of {@link #getter(Object)}
+     * and the second function serves as an implementation of {@link #wither(Object, Object)}.
+     *
+     * @param getter The function that extracts the field of type {@code B} from the parent type {@code A}.
+     * @param wither The function that produces a new instance of the parent type {@code A} with the field updated.
+     * @param &lt;A&gt; The parent type with the field of type {@code B} to be focused on.
+     * @param &lt;B&gt; The type of the field to be focused on in the parent type {@code A}.
+     * @return A new lens instance.
+     * @throws NullPointerException If either of the given functions is {@code null}.
+     */
+    static &lt;A, B&gt; Lens&lt;A, B&gt; of(
+        Function&lt;A, B&gt;      getter,
+        BiFunction&lt;A, B, A&gt; wither
+    ) {
+<span class="fc" id="L71">        Objects.requireNonNull(getter, &quot;getter lambda must not be null&quot;);</span>
+<span class="fc" id="L72">        Objects.requireNonNull(wither, &quot;wither lambda must not be null&quot;);</span>
+<span class="fc" id="L73">        return new Lens&lt;A, B&gt;() {</span>
+            @Override
+            public B getter(A parentValue) {
+<span class="fc" id="L76">                return getter.apply(parentValue);</span>
+            }
+            @Override
+            public A wither(A parentValue, B newValue) {
+<span class="fc" id="L80">                return wither.apply(parentValue, newValue);</span>
+            }
+        };
+    }
+
+    /**
+     * Extracts the field of type {@code B} from the parent type {@code A}
+     * and returns it or throws an exception if an error occurs while extracting the field.
+     *
+     * @param parentValue The parent object to extract the field from.
+     * @return The field of type {@code B} from the parent object.
+     * @throws Exception If an error occurs while extracting the field.
+     */
+    B getter( A parentValue ) throws Exception;
+
+    /**
+     * Produces a new instance of the parent type {@code A} with
+     * one of its fields of type {@code B} updated with a new value.
+     * &lt;b&gt;
+     *     The parent object is not modified,
+     *     and a new instance is returned.
+     * &lt;/b&gt;
+     *
+     * @param parentValue The parent object to update the field in.
+     * @param newValue The new value to update the field with.
+     * @return A new instance of the parent type {@code A} with the field updated.
+     * @throws Exception If an error occurs while updating the field.
+     */
+    A wither( A parentValue, B newValue ) throws Exception;
+
+    /**
+     * Composes this lens with another lens, creating a new lens that focuses on a more deeply nested field.
+     * This lens focuses on a field of type {@code B} in the parent type {@code A},
+     * and the other lens focuses on a field of type {@code C} in the parent type {@code B}.
+     * The composed lens will focus on a field of type {@code C} in the parent type {@code A},
+     * effectively traversing two levels of nesting and side-stepping the intermediate parent type {@code B}.
+     *
+     * @param other The other lens to compose with this lens.
+     * @param &lt;C&gt; The type of the field to be focused on in the parent type {@code B}.
+     * @return A new lens that focuses on a more deeply nested field.
+     * @throws NullPointerException If the given lens is {@code null}.
+     */
+    default &lt;C&gt; Lens&lt;A, C&gt; to( Lens&lt;B, C&gt; other ) {
+<span class="fc" id="L123">        Objects.requireNonNull(other, &quot;other lens must not be null&quot;);</span>
+<span class="fc" id="L124">        return new Lens&lt;A, C&gt;() {</span>
+            @Override
+            public C getter(A parentValue) throws Exception {
+<span class="fc" id="L127">                return other.getter(Lens.this.getter(parentValue));</span>
+            }
+            @Override
+            public A wither(A parentValue, C newValue) throws Exception {
+<span class="fc" id="L131">                return Lens.this.wither(parentValue, other.wither(Lens.this.getter(parentValue), newValue));</span>
+            }
+        };
+    }
+
+    /**
+     * Combines this lens with a pair of getter and wither functions,
+     * to create a new lens that focuses on a more deeply nested field.
+     * This lens focuses on a field of type {@code B} in the parent type {@code A},
+     * and the two supplied lambdas focus on a field of type {@code C} in the parent type {@code B}.
+     * The composed lens will focus on a field of type {@code C} in the parent type {@code A},
+     * effectively traversing two levels of nesting and side-stepping the intermediate parent type {@code B}.
+     *
+     * @param getter The function that extracts the field of type {@code C} from the parent type {@code B}.
+     * @param wither The function that produces a new instance of the parent type {@code B} with the field updated.
+     * @param &lt;C&gt; The type of the field to be focused on in the parent type {@code B}.
+     * @return A new lens that focuses on a more deeply nested field.
+     * @throws NullPointerException If either of the given functions is {@code null}.
+     */
+    default &lt;C&gt; Lens&lt;A, C&gt; to( Function&lt;B, C&gt; getter, BiFunction&lt;B, C, B&gt; wither ) {
+<span class="nc" id="L151">        Objects.requireNonNull(getter, &quot;getter lambda must not be null&quot;);</span>
+<span class="nc" id="L152">        Objects.requireNonNull(wither, &quot;wither lambda must not be null&quot;);</span>
+<span class="nc" id="L153">        return to(Lens.of(getter, wither));</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

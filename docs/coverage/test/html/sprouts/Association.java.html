@@ -1,0 +1,561 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Association.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sprouts</a> &gt; <a href="index.source.html" class="el_package">sprouts</a> &gt; <span class="el_source">Association.java</span></div><h1>Association.java</h1><pre class="source lang-java linenums">package sprouts;
+
+import sprouts.impl.Sprouts;
+
+import java.util.*;
+import java.util.stream.Stream;
+
+/**
+ *  Defines an association between keys and values
+ *  as an immutable value object where the values
+ *  are accessed by the keys in a map-like fashion.
+ *  An association cannot contain duplicate keys,
+ *  and each key can map to at most one value.&lt;br&gt;
+ *  &lt;br&gt;
+ *  You may think of this as a {@link java.util.Map}
+ *  but without the ability to modify the association
+ *  after it has been created. Instead, you may create
+ *  a new association with the desired changes using
+ *  methods like {@link #put(Object, Object)} or
+ *  {@link #remove(Object)}.&lt;br&gt;
+ *  &lt;p&gt;&lt;b&gt;
+ *      Note: Mutable objects should not be stored in an
+ *      association, especially keys, whose hash code
+ *      and equality has to stay constant for the lifetime
+ *      of the association because the association assumes
+ *      that their behavior does not change.
+ *      The behavior of this class is uncertain if a key
+ *      is changed in a manner that affects equals
+ *      or hashCode after it has been added to the association.
+ *  &lt;/b&gt;&lt;p&gt;
+ *
+ * @param &lt;K&gt; The type of the keys in this association, which must be immutable.
+ * @param &lt;V&gt; The type of the values in this association, which should be immutable.
+ */
+public interface Association&lt;K, V&gt; {
+
+    /**
+     *  An alternative to {@code Association.class} which also includes the parameter
+     *  types in the type signature of the returned association class.
+     *  This is useful when you want to use associations as items in collection
+     *  types or properties...
+     *
+     * @param keyType The key type {@code K} in the returned {@code Class&lt;Association&lt;K,V&gt;&gt;}.
+     * @param valueType The value type {@code V} in the returned {@code Class&lt;Association&lt;K,V&gt;&gt;}.
+     * @return The {@code Association.class} but with both parameter types included as {@code Class&lt;Association&lt;K,V&gt;&gt;}.
+     * @param &lt;K&gt; The type of keys in the association class parameter signature.
+     * @param &lt;V&gt; The type of values in the association class parameter signature.
+     * @throws NullPointerException If any of the supplied type parameters is null.
+     */
+    @SuppressWarnings(&quot;unchecked&quot;)
+    static &lt;K,V&gt; Class&lt;Association&lt;K,V&gt;&gt; classTyped(Class&lt;K&gt; keyType, Class&lt;V&gt; valueType) {
+<span class="nc" id="L52">        Objects.requireNonNull(keyType);</span>
+<span class="nc" id="L53">        Objects.requireNonNull(valueType);</span>
+<span class="nc" id="L54">        return (Class) Association.class;</span>
+    }
+
+    /**
+     *  Creates a new association between keys and values
+     *  with the given key and value types. An association
+     *  knows the types of its keys and values, and so
+     *  you can only put keys and values of the defined types
+     *  into the association.
+     *
+     * @param keyType The type of the keys in the association.
+     * @param valueType The type of the values in the association.
+     * @param &lt;K&gt; The type of the keys in the association, which must be immutable.
+     * @param &lt;V&gt; The type of the values in the association, which should be immutable.
+     * @return A new association between keys and values.
+     */
+    static &lt;K, V&gt; Association&lt;K, V&gt; between( Class&lt;K&gt; keyType, Class&lt;V&gt; valueType ) {
+<span class="fc" id="L71">        return Sprouts.factory().associationOf(keyType, valueType);</span>
+    }
+
+    /**
+     *  Creates a new association from the given key-value pair.
+     *  The types of the key and value are inferred from the
+     *  types of the given key and value objects.
+     *
+     * @param key The key to associate with the given value.
+     * @param value The value to associate with the given key.
+     * @param &lt;K&gt; The type of the key in the association, this must be an immutable type.
+     * @param &lt;V&gt; The type of the value, which should be an immutable type.
+     * @return A new association with the given key-value pair
+     *         and a size of 1.
+     */
+    static &lt;K, V&gt; Association&lt;K, V&gt; of( K key, V value ) {
+<span class="nc" id="L87">        Objects.requireNonNull(key);</span>
+<span class="nc" id="L88">        Objects.requireNonNull(value);</span>
+<span class="nc" id="L89">        return between((Class&lt;K&gt;) key.getClass(), (Class&lt;V&gt;) value.getClass()).put(key, value);</span>
+    }
+
+    /**
+     *  Returns the number of key-value pairs in this association.
+     *
+     * @return The number of key-value pairs in this association.
+     */
+    int size();
+
+    /**
+     *  Checks if this association is empty and returns
+     *  {@code true} if it is, otherwise {@code false}.
+     *
+     * @return {@code true} if this association is empty, otherwise {@code false}.
+     */
+    default boolean isEmpty() {
+<span class="fc bfc" id="L106" title="All 2 branches covered.">        return size() == 0;</span>
+    }
+
+    /**
+     *  Returns the type of the keys in this association.
+     *
+     * @return The type of the keys in this association.
+     */
+    Class&lt;K&gt; keyType();
+
+    /**
+     *  Returns the type of the values in this association.
+     *
+     * @return The type of the values in this association.
+     */
+    Class&lt;V&gt; valueType();
+
+    /**
+     *   Returns a {@link Set} of all the keys in this association.
+     *  The returned set is immutable and cannot be modified.
+     *
+     * @return A set of all the keys in this association.
+     */
+    Set&lt;K&gt; keySet();
+
+    /**
+     *  Returns a tuple of all the values in this association.
+     * @return A tuple of all the values in this association.
+     */
+    Tuple&lt;V&gt; values();
+
+    /**
+     *  Returns a {@link Set} of all the key-value pairs in this association
+     *  as {@link Pair} instances, where the first value of the pair is the key
+     *  and the second value is the value associated with that key.
+     *  The returned set is immutable and cannot be modified.
+     *
+     * @return A set of all the key-value pairs in this association
+     *        as simple {@link Pair}s.
+     */
+    Set&lt;Pair&lt;K,V&gt;&gt; entrySet();
+
+    /**
+     *  Checks if the given key is present in this association
+     *  and returns {@code true} if it is, otherwise {@code false}.
+     * @param key The key to check for in this association.
+     * @return {@code true} if the key is present, otherwise {@code false}.
+     */
+    boolean containsKey(K key);
+
+    /**
+     *  Returns the value associated wrapped by an {@link Optional}
+     *  with the given key if it is present in this association,
+     *  or an empty {@link Optional} if the key is not present.
+     *
+     * @param key The key to look up in this association.
+     * @return An {@link Optional} containing the value associated with the key,
+     *        or {@link Optional#empty()} if the key is not present.
+     */
+    Optional&lt;V&gt; get(K key);
+
+    /**
+     *  Returns a new association that is the same as this one
+     *  but with the given key associated with the given value.
+     *  If the key is already associated with the given value,
+     *  then this association is returned.
+     *
+     * @param key The key to associate with the given value.
+     * @param value The value to associate with the given key.
+     * @return A new association with the given key-value pair.
+     * @see #put(Pair) to add a key-value pair as a {@link Pair} instance.
+     */
+    Association&lt;K, V&gt; put(K key, V value);
+
+    /**
+     *  Returns a new association that is the same as this one
+     *  but with the given key-value pair added to it through
+     *  a {@link Pair} instance, where the first value of the
+     *  pair is the key and the second value is the value.
+     *  If the key is already present in this association, then the
+     *  value is replaced with the given value.
+     *
+     * @param entry The key-value pair to add to this association.
+     * @return A new association with the given key-value pair.
+     * @see #put(Object, Object) to add a key-value pair as separate objects.
+     * @throws NullPointerException if the provided pair is {@code null}.
+     */
+    default Association&lt;K, V&gt; put(Pair&lt;? extends K, ? extends V&gt; entry) {
+<span class="nc" id="L194">        Objects.requireNonNull(entry, &quot;The provided pair cannot be null.&quot;);</span>
+<span class="nc" id="L195">        return put(entry.first(), entry.second());</span>
+    }
+
+    /**
+     * If the specified key is not already associated with a value
+     * associates it with the given value and returns
+     * {@code null}, else returns the current value.
+     *
+     * @implSpec
+     * The default implementation is equivalent to, for this {@code
+     * associated}:
+     *
+     * &lt;pre&gt; {@code
+     * V v = association.get(key).orElse(null);
+     * if (v == null)
+     *     v = association.put(key, value);
+     *
+     * return v;
+     * }&lt;/pre&gt;
+     *
+     * @param key key with which the specified value is to be associated
+     * @param value value to be associated with the specified key
+     * @return The updated value associated with the specified key, or
+     *         this (unchanged) association if the key was already
+     *         associated with a value.
+     */
+    Association&lt;K, V&gt; putIfAbsent(K key, V value);
+
+    /**
+     *  Returns a new association that is the same as this one
+     *  but with all the key-value pairs from the given association
+     *  added to it. If the given association is empty, then this
+     *  association is returned.
+     *
+     * @param other The association to add to this one.
+     * @return A new association with the key-value pairs from the given association.
+     * @throws NullPointerException if the provided association is {@code null}.
+     */
+    default Association&lt;K, V&gt; putAll( final Association&lt;? extends K, ? extends V&gt; other ) {
+<span class="fc" id="L234">        Objects.requireNonNull(other, &quot;The provided association cannot be null.&quot;);</span>
+<span class="pc bpc" id="L235" title="1 of 2 branches missed.">        if ( other.isEmpty() )</span>
+<span class="nc" id="L236">            return this;</span>
+<span class="fc" id="L237">        return putAll( (Stream)other.entrySet().stream() );</span>
+    }
+
+    /**
+     *  Returns a new association with all the key-value pairs from the
+     *  supplied {@link Map} added to it.
+     *  If the provided map is empty, then this
+     *  association is returned unchanged.
+     *
+     * @param map The {@link Map} to add to this association.
+     * @return A new association with the key-value pairs from the provided map.
+     * @throws NullPointerException if the provided map is {@code null}.
+     */
+    default Association&lt;K, V&gt; putAll( final Map&lt;? extends K, ? extends V&gt; map ) {
+<span class="fc" id="L251">        Objects.requireNonNull(map, &quot;The provided map cannot be null.&quot;);</span>
+<span class="pc bpc" id="L252" title="1 of 2 branches missed.">        if ( map.isEmpty() )</span>
+<span class="nc" id="L253">            return this;</span>
+<span class="fc" id="L254">        return putAll(map.entrySet().stream().map(Pair::of));</span>
+    }
+
+    /**
+     *  Returns a new association with all the key-value pairs from the
+     *  supplied {@link Set} of {@link Pair} instances added to it.
+     *  If the provided set is empty, then this association is
+     *  returned unchanged.
+     *
+     * @param entries The set of key-value pairs to add to this association.
+     * @return A new association with the key-value pairs from the provided set.
+     * @throws NullPointerException if the provided set is {@code null}.
+     */
+    default Association&lt;K, V&gt; putAll( final Set&lt;Pair&lt;? extends K, ? extends V&gt;&gt; entries ) {
+<span class="nc" id="L268">        Objects.requireNonNull(entries, &quot;The provided set cannot be null.&quot;);</span>
+<span class="nc bnc" id="L269" title="All 2 branches missed.">        if ( entries.isEmpty() )</span>
+<span class="nc" id="L270">            return this;</span>
+<span class="nc" id="L271">        return putAll(entries.stream());</span>
+    }
+
+    /**
+     *  Returns a new association with all the key-value pairs from the
+     *  supplied array of {@link Pair}s added to it, where the {@link Pair#first()}
+     *  is the key and the {@link Pair#second()} is the value.
+     *  If the provided array is empty, then this
+     *  association is returned unchanged.
+     *
+     * @param entries The array of key-value pairs to add to this association.
+     * @return A new association with the key-value pairs from the provided array.
+     * @throws NullPointerException if the provided array is {@code null}.
+     */
+    default Association&lt;K, V&gt; putAll( final Pair&lt;? extends K, ? extends V&gt;... entries ) {
+<span class="fc" id="L286">        Objects.requireNonNull(entries, &quot;The provided array cannot be null.&quot;);</span>
+<span class="pc bpc" id="L287" title="1 of 2 branches missed.">        if ( entries.length == 0 )</span>
+<span class="nc" id="L288">            return this;</span>
+<span class="fc" id="L289">        return putAll(Arrays.stream(entries));</span>
+    }
+
+    /**
+     *  Returns a new association with all the key-value pairs of the
+     *  supplied {@link Tuple} of {@link Pair} instances added to it,
+     *  where the {@link Pair#first()} object of each pair is the key
+     *  and the {@link Pair#second()} object is the value.
+     *  If the provided tuple is empty, then this association is returned unchanged.
+     *
+     * @param entries The tuple of key-value pairs to add to this association.
+     * @return A new association with the key-value pairs from the provided tuple.
+     * @throws NullPointerException if the provided tuple is {@code null}.
+     */
+    default Association&lt;K, V&gt; putAll( final Tuple&lt;Pair&lt;? extends K, ? extends V&gt;&gt; entries ) {
+<span class="fc" id="L304">        Objects.requireNonNull(entries, &quot;The provided tuple cannot be null.&quot;);</span>
+<span class="pc bpc" id="L305" title="1 of 2 branches missed.">        if ( entries.isEmpty() )</span>
+<span class="nc" id="L306">            return this;</span>
+<span class="fc" id="L307">        return putAll(entries.stream());</span>
+    }
+
+    /**
+     *  Returns a new association with all the key-value pairs from the
+     *  supplied {@link Collection} of {@link Pair} instances added to it.
+     *  If the provided collection is empty, then this
+     *  association is returned unchanged.
+     *
+     * @param entries The collection of key-value pairs to add to this association.
+     * @return A new association with the key-value pairs from the provided collection.
+     * @throws NullPointerException if the provided collection is {@code null}.
+     */
+    default Association&lt;K, V&gt; putAll( final Collection&lt;Pair&lt;? extends K, ? extends V&gt;&gt; entries ) {
+<span class="fc" id="L321">        Objects.requireNonNull(entries, &quot;The provided collection cannot be null.&quot;);</span>
+<span class="pc bpc" id="L322" title="1 of 2 branches missed.">        if ( entries.isEmpty() )</span>
+<span class="nc" id="L323">            return this;</span>
+<span class="fc" id="L324">        return putAll(entries.stream());</span>
+    }
+
+    /**
+     *  Returns a new association with all the key-value pairs from the
+     *  supplied {@link Stream} of {@link Pair} instances added to it.
+     *  If the provided stream is empty, then this
+     *  association is returned unchanged.
+     *
+     * @param entries The stream of key-value pairs to add to this association.
+     * @return A new association with the key-value pairs from the provided stream.
+     * @throws NullPointerException if the provided stream is {@code null}.
+     */
+    Association&lt;K, V&gt; putAll( final Stream&lt;Pair&lt;? extends K, ? extends V&gt;&gt; entries );
+
+    /**
+     *  Returns a new association where an existing key-value pair
+     *  is replaced with the given key-value pair if the key is
+     *  present in this association.
+     *  So this will not affect the key set of this association, but may change
+     *  the values associated with the keys.
+     *  &lt;b&gt;So this means that the returned association will always be of the same type as this one.&lt;/b&gt;
+     *  If the key is not present in
+     *  this association, then this association is returned unchanged.
+     *
+     * @param key The key to associate with the given value if it is
+     *            already present in this association.
+     * @param value The value to associate with the supplied key.
+     * @return A new association where the key-value pair matching the
+     *         supplied key is replaced with the given key-value pair.
+     * @see #replace(Pair) to replace a key-value pair as a {@link Pair} instance.
+     */
+    Association&lt;K, V&gt; replace(K key, V value);
+
+    /**
+     *  Returns a new association where an existing key-value pair
+     *  is replaced with the given key-value pair if the key is
+     *  present in this association.
+     *  So this will not affect the key set of this association, but may change
+     *  the values associated with the keys.
+     *  &lt;b&gt;So this means that the returned association will always be of the same type as this one.&lt;/b&gt;
+     *  If the key is not present in
+     *  this association, then this association is returned unchanged.
+     *
+     * @param entry The key-value pair to replace the existing key-value pair with.
+     * @return A new association where the key-value pair matching the
+     *         supplied key is replaced with the given key-value pair.
+     * @see #replace(Object, Object) to replace a key-value pair as separate objects.
+     */
+    default Association&lt;K, V&gt; replace(Pair&lt;? extends K, ? extends V&gt; entry) {
+<span class="nc" id="L374">        return replace(entry.first(), entry.second());</span>
+    }
+
+    /**
+     *  Returns a new association where all existing key-value pairs
+     *  from this association are replaced by those in the supplied association.
+     *  This will &lt;b&gt;not&lt;/b&gt; affect the key set of this association, but may change
+     *  the values associated with the keys, &lt;b&gt;which means that the returned association
+     *  will always be of the same size as this one.&lt;/b&gt;
+     *  If the supplied association is empty, then this association is returned unchanged.
+     *
+     * @param other The association whose entries should replace the entries in this association.
+     * @return A new association with where the existing key-value pairs
+     *          of this association are replaced by those in the supplied association.
+     * @throws NullPointerException if the supplied association is {@code null}.
+     */
+    default Association&lt;K, V&gt; replaceAll(Association&lt;? extends K, ? extends V&gt; other) {
+<span class="nc" id="L391">        Objects.requireNonNull(other, &quot;The provided association cannot be null.&quot;);</span>
+<span class="nc bnc" id="L392" title="All 2 branches missed.">        if (other.isEmpty())</span>
+<span class="nc" id="L393">            return this;</span>
+<span class="nc" id="L394">        return replaceAll((Stream)other.entrySet().stream());</span>
+    }
+
+    /**
+     *  Returns a new association where all existing key-value pairs
+     *  from this association are replaced by those in the supplied {@link Map}.
+     *  This will &lt;b&gt;not&lt;/b&gt; affect the key set of this association, but may change
+     *  the values associated with the keys, &lt;b&gt;which means that the returned
+     *  association will always be of the same size as this one.&lt;/b&gt;
+     *  If the supplied map is empty, then this association is returned unchanged.
+     *
+     * @param map The map whose entries should replace the entries in this association.
+     * @return A new association with where the existing key-value pairs
+     *          of this association are replaced by those in the supplied map.
+     * @throws NullPointerException if the supplied map is {@code null}.
+     */
+    default Association&lt;K, V&gt; replaceAll(Map&lt;? extends K, ? extends V&gt; map) {
+<span class="nc" id="L411">        Objects.requireNonNull(map, &quot;The provided map cannot be null.&quot;);</span>
+<span class="nc bnc" id="L412" title="All 2 branches missed.">        if (map.isEmpty())</span>
+<span class="nc" id="L413">            return this;</span>
+<span class="nc" id="L414">        return replaceAll(map.entrySet().stream().map(Pair::of));</span>
+    }
+
+    /**
+     *  Returns a new association where all existing key-value pairs
+     *  from this association are replaced by those in the supplied {@link Set}
+     *  of {@link Pair} instances. This will &lt;b&gt;not&lt;/b&gt; affect the key set of this
+     *  association, but may change the values associated with the keys, &lt;b&gt;which
+     *  means that the returned association will always be of the same size as this one.&lt;/b&gt;
+     *  If the supplied set is empty, then this association is returned unchanged.
+     *
+     * @param entries The {@link Set} of key-value pairs whose entries should replace the entries in this association.
+     * @return A new association with where the existing key-value pairs
+     *         of this association are replaced by those in the supplied set.
+     * @throws NullPointerException if the supplied set is {@code null}.
+     */
+    default Association&lt;K, V&gt; replaceAll(Set&lt;Pair&lt;? extends K, ? extends V&gt;&gt; entries) {
+<span class="nc" id="L431">        Objects.requireNonNull(entries, &quot;The provided set cannot be null.&quot;);</span>
+<span class="nc bnc" id="L432" title="All 2 branches missed.">        if (entries.isEmpty())</span>
+<span class="nc" id="L433">            return this;</span>
+<span class="nc" id="L434">        return replaceAll(entries.stream());</span>
+    }
+
+    /**
+     *  Returns a new association where all existing key-value pairs
+     *  from this association are replaced by those in the supplied array
+     *  of {@link Pair} instances. This will &lt;b&gt;not&lt;/b&gt; affect the key set of this
+     *  association, but may change the values associated with the keys, &lt;b&gt;which
+     *  means that the returned association will always be of the same size as this one.&lt;/b&gt;
+     *  If the supplied array is empty, then this association is returned unchanged.
+     *
+     * @param entries The array of key-value {@link Pair}s whose entries should replace the entries in this association.
+     * @return A new association with where the existing key-value pairs
+     *         of this association are replaced by those in the supplied array.
+     * @throws NullPointerException if the supplied array is {@code null}.
+     */
+    default Association&lt;K, V&gt; replaceAll(Pair&lt;? extends K, ? extends V&gt;... entries) {
+<span class="nc" id="L451">        Objects.requireNonNull(entries, &quot;The provided array cannot be null.&quot;);</span>
+<span class="nc bnc" id="L452" title="All 2 branches missed.">        if (entries.length == 0)</span>
+<span class="nc" id="L453">            return this;</span>
+<span class="nc" id="L454">        return replaceAll(Arrays.stream(entries));</span>
+    }
+
+    /**
+     *  Returns a new association where all existing key-value pairs
+     *  from this association are replaced by those in the supplied {@link Tuple}
+     *  of {@link Pair} instances. This will &lt;b&gt;not&lt;/b&gt; affect the key set of this
+     *  association, but may change the values associated with the keys, &lt;b&gt;which
+     *  means that the returned association will always be of the same size as this one.&lt;/b&gt;
+     *  If the supplied tuple is empty, then this association is returned unchanged.
+     *
+     * @param entries The tuple of key-value {@link Pair}s whose entries should replace the entries in this association.
+     * @return A new association with where the existing key-value pairs
+     *         of this association are replaced by those in the supplied tuple.
+     * @throws NullPointerException if the supplied tuple is {@code null}.
+     */
+    default Association&lt;K, V&gt; replaceAll(Tuple&lt;Pair&lt;? extends K, ? extends V&gt;&gt; entries) {
+<span class="nc" id="L471">        Objects.requireNonNull(entries, &quot;The provided tuple cannot be null.&quot;);</span>
+<span class="nc bnc" id="L472" title="All 2 branches missed.">        if (entries.isEmpty())</span>
+<span class="nc" id="L473">            return this;</span>
+<span class="nc" id="L474">        return replaceAll(entries.stream());</span>
+    }
+
+    /**
+     *  Returns a new association where all existing key-value pairs
+     *  from this association are replaced by those in the supplied {@link Collection}
+     *  of {@link Pair} instances. This will &lt;b&gt;not&lt;/b&gt; affect the key set of this
+     *  association, but may change the values associated with the keys, &lt;b&gt;which
+     *  means that the returned association will always be of the same size as this one.&lt;/b&gt;
+     *  If the supplied collection is empty, then this association is returned unchanged.
+     *
+     * @param entries The collection of key-value {@link Pair}s whose entries should replace the entries in this association.
+     * @return A new association with where the existing key-value pairs
+     *         of this association are replaced by those in the supplied collection.
+     * @throws NullPointerException if the supplied collection is {@code null}.
+     */
+    default Association&lt;K, V&gt; replaceAll(Collection&lt;Pair&lt;? extends K, ? extends V&gt;&gt; entries) {
+<span class="nc" id="L491">        Objects.requireNonNull(entries, &quot;The provided collection cannot be null.&quot;);</span>
+<span class="nc bnc" id="L492" title="All 2 branches missed.">        if (entries.isEmpty())</span>
+<span class="nc" id="L493">            return this;</span>
+<span class="nc" id="L494">        return replaceAll(entries.stream());</span>
+    }
+
+    /**
+     *  Returns a new association where all existing key-value pairs
+     *  from this association are replaced by those in the supplied {@link Stream}
+     *  of {@link Pair} instances. This will &lt;b&gt;not&lt;/b&gt; affect the key set of this
+     *  association, but may change the values associated with the keys, &lt;b&gt;which
+     *  means that the returned association will always be of the same size as this one.&lt;/b&gt;
+     *  If the supplied stream is empty, then this association is returned unchanged.
+     *
+     * @param entries The stream of key-value {@link Pair}s whose entries should replace the entries in this association.
+     * @return A new association with where the existing key-value pairs
+     *         of this association are replaced by those in the supplied stream.
+     * @throws NullPointerException if the supplied stream is {@code null}.
+     */
+    Association&lt;K, V&gt; replaceAll(Stream&lt;Pair&lt;? extends K, ? extends V&gt;&gt; entries);
+
+    /**
+     *  Returns a new association that is the same as this one
+     *  but without the given key. If the key is not present
+     *  in this association, then this association is returned.
+     *
+     * @param key The key to remove from this association.
+     * @return A new association without the given key.
+     */
+    Association&lt;K, V&gt; remove(K key);
+
+    /**
+     *  Returns a new association that is the same as this one
+     *  but without any of the keys in the supplied set. If the
+     *  supplied set is empty, then this association is returned
+     *  unchanged.
+     *
+     * @param keys The keys to remove from this association.
+     * @return A new association without the keys in the given set.
+     */
+    Association&lt;K, V&gt; removeAll(Set&lt;? extends K&gt; keys);
+
+    /**
+     *  Returns a new association where only those key-value pairs
+     *  are kept that have a key present in the supplied set. If the
+     *  supplied set is empty, then this association is returned
+     *  unchanged.
+     *
+     * @param keys The keys to retain in this association.
+     * @return A new association with only the keys in the given set.
+     */
+    Association&lt;K, V&gt; retainAll(Set&lt;? extends K&gt; keys);
+
+    /**
+     *  Returns a completely empty association but
+     *  with the same key and value types as this one.
+     *
+     * @return A new association without any key-value pairs,
+     *         or this association if it is already empty.
+     */
+    Association&lt;K, V&gt; clear();
+
+    /**
+     *  Converts this association to a java.util.Map.
+     *  Note that the returned map is also immutable.
+     *
+     * @return A java.util.Map representation of this association.
+     */
+    Map&lt;K, V&gt; toMap();
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>
