@@ -27,7 +27,7 @@ import java.util.stream.Stream;
  *      The behavior of this class is uncertain if a key
  *      is changed in a manner that affects equals
  *      or hashCode after it has been added to the association.
- *  </b><p>
+ *  </b>
  *
  * @param <K> The type of the keys in this association, which must be immutable.
  * @param <V> The type of the values in this association, which should be immutable.
@@ -173,7 +173,7 @@ public interface Association<K, V> {
      * @param key The key to associate with the given value.
      * @param value The value to associate with the given key.
      * @return A new association with the given key-value pair.
-     * @see #put(Pair) to add a key-value pair as a {@link Pair} instance.
+     * @see #put(Pair) to add a key-value pair as a {@code Pair} instance.
      */
     Association<K, V> put(K key, V value);
 
@@ -199,17 +199,14 @@ public interface Association<K, V> {
      * If the specified key is not already associated with a value
      * associates it with the given value and returns
      * {@code null}, else returns the current value.
-     *
-     * @implSpec
-     * The default implementation is equivalent to, for this {@code
-     * associated}:
+     * <p>
+     * This is equivalent to the following code, but is
+     * implemented as a single operation that is atomic:
      *
      * <pre> {@code
-     * V v = association.get(key).orElse(null);
-     * if (v == null)
-     *     v = association.put(key, value);
-     *
-     * return v;
+     * V existing = association.get(key).orElse(null);
+     * if (existing == null)
+     *     association = association.put(key, aValue);
      * }</pre>
      *
      * @param key key with which the specified value is to be associated

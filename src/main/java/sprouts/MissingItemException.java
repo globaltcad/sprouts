@@ -18,6 +18,12 @@ public final class MissingItemException extends Exception
         this.problems =  problems;
     }
 
+    /**
+     *  Returns a {@link Tuple} of all problems that caused this exception.
+     *
+     * @return The problems that caused this exception
+     *         as an immutable {@link Tuple}.
+     */
     public Tuple<Problem> problems() {
         return problems;
     }
