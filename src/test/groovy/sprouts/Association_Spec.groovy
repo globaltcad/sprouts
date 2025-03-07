@@ -8,7 +8,7 @@ import spock.lang.Title
 @Title("Associations")
 @Narrative('''
 
-    Sprouts is a property library with a heavy focus on origin the
+    Sprouts is a property library with a heavy focus on bridging the
     gap between classical place oriented programming and modern
     data oriented programming. 
     This is why sprouts has both the `Tuple` and `Association` classes.
