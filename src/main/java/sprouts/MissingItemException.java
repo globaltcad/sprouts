@@ -12,7 +12,13 @@ public final class MissingItemException extends Exception
 {
     private final Tuple<Problem> problems;
 
-
+    /**
+     *  Creates a new {@link MissingItemException} with the given message
+     *  anf tuple of problems describing the cause of the exception.
+     *
+     * @param message The message of the exception.
+     * @param problems The problems that caused this exception.
+     */
     public MissingItemException(String message, Tuple<Problem> problems) {
         super(message, problems.stream().findFirst().flatMap(Problem::exception).orElse(null));
         this.problems =  problems;

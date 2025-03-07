@@ -348,7 +348,7 @@ public interface Association<K, V> {
      * @param value The value to associate with the supplied key.
      * @return A new association where the key-value pair matching the
      *         supplied key is replaced with the given key-value pair.
-     * @see #replace(Pair) to replace a key-value pair as a {@link Pair} instance.
+     * @see #replace(Pair) to replace a key-value pair as a {@code Pair} instance.
      */
     Association<K, V> replace(K key, V value);
 
