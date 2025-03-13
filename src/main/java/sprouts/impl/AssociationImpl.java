@@ -263,18 +263,21 @@ final class AssociationImpl<K, V> implements Association<K, V> {
 
     @Override
     public boolean containsKey(K key) {
+        if ( !_keyType.isInstance(key) ) {
+            throw new IllegalArgumentException("The given key '" + key + "' is not of the expected type '" + _keyType + "'.");
+        }
         return _get(key, key.hashCode()) != null;
     }
 
     @Override
     public Optional<V> get( final K key ) {
+        if ( !_keyType.isInstance(key) ) {
+            throw new IllegalArgumentException("The given key '" + key + "' is not of the expected type '" + _keyType + "'.");
+        }
         return Optional.ofNullable(_get(key, key.hashCode()));
     }
 
     private @Nullable V _get( final K key, final int keyHash ) {
-        if ( !_keyType.isInstance(key) ) {
-            throw new IllegalArgumentException("The given key '" + key + "' is not of the expected type '" + _keyType + "'.");
-        }
         int index = _findValidIndexFor(key, keyHash);
         if ( index < 0 || index >= _length(_keysArray) ) {
             if ( _branches.length > 0 ) {
