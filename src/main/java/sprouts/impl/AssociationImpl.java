@@ -18,8 +18,8 @@ final class AssociationImpl<K, V> implements Association<K, V> {
     private static final long PRIME_1 = 12055296811267L;
     private static final long PRIME_2 = 53982894593057L;
 
-    private static final int MIN_BRANCHING_PER_NODE = 2;
-    private static final int MAX_ENTRIES_PER_NODE = 8;
+    private static final int BASE_BRANCHING_PER_NODE = 32;
+    private static final int BASE_ENTRIES_PER_NODE = 1;
 
 
     private final int _depth;
@@ -130,7 +130,11 @@ final class AssociationImpl<K, V> implements Association<K, V> {
     }
 
     private int _maxEntriesForThisNode() {
-        return MAX_ENTRIES_PER_NODE + _depth;
+        return BASE_ENTRIES_PER_NODE + _depth;
+    }
+
+    private int _minBranchingPerNode() {
+        return BASE_BRANCHING_PER_NODE + _depth;
     }
 
     private AssociationImpl<K, V> _withBranchAt(
@@ -342,7 +346,7 @@ final class AssociationImpl<K, V> implements Association<K, V> {
                     }
                 } else {
                     // We create two new branches for this node, this is where the tree grows
-                    int newBranchSize = MIN_BRANCHING_PER_NODE + _depth;
+                    int newBranchSize = _minBranchingPerNode();
                     AssociationImpl<K, V>[] newBranches = new AssociationImpl[newBranchSize];
                     Object newKeysArray = _createArray(_keyType, ALLOWS_NULL, 1);
                     _setAt(0, key, newKeysArray);
