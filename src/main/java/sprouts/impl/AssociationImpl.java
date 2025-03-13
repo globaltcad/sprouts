@@ -5,6 +5,7 @@ import sprouts.Association;
 import sprouts.Pair;
 import sprouts.Tuple;
 
+import java.lang.reflect.Array;
 import java.util.*;
 import java.util.stream.Stream;
 
@@ -152,7 +153,7 @@ final class AssociationImpl<K, V> implements Association<K, V> {
             return -1;
         }
         int tries = 0;
-        while (!Objects.equals(_getAt(index, _keysArray, _keyType), key) && tries < length) {
+        while (!Objects.equals(Array.get(_keysArray, index), key) && tries < length) {
             index = _mod(index + 1, length);
             tries++;
         }
