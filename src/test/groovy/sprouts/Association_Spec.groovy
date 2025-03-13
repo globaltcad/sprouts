@@ -555,4 +555,21 @@ class Association_Spec extends Specification
             associations.size() == 7
             associations.get(44 as short).orElseThrow(MissingItemException::new) == 'x' as char
     }
+
+    def 'Use `Association.between(Number.class, Number.class)` to create an association between all kinds of numbers.'() {
+        given :
+            var associations = Association.between(Number.class, Number.class)
+        expect :
+            associations.isEmpty()
+            associations.keyType() == Number.class
+            associations.valueType() == Number.class
+        when : 'We add some values to the association.'
+            associations = associations.put(1, 1).put(2L, 2L).put(3.0f, 3.0f).put(4.0, 4.0)
+        then : 'The association contains the values.'
+            associations.size() == 4
+            associations.get(1).orElseThrow(MissingItemException::new) == 1
+            associations.get(2L).orElseThrow(MissingItemException::new) == 2L
+            associations.get(3.0f).orElseThrow(MissingItemException::new) == 3.0f
+            associations.get(4.0).orElseThrow(MissingItemException::new) == 4.0
+    }
 }
