@@ -501,22 +501,43 @@ final class AssociationImpl<K, V> implements Association<K, V> {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("Association[");
-        int size = _length(_keysArray);
-        for (int i = 0; i < size; i++) {
-            K key = _getAt(i, _keysArray, _keyType);
-            V value = _getAt(i, _valuesArray, _valueType);
-            sb.append(_toString(key, _keyType)).append(" ↦ ").append(_toString(value, _valueType));
-            if ( i < size - 1 ) {
-                sb.append(", ");
-            }
-        }
-        int numberOfEntriesLeft = _size - size;
+        sb.append("Association<");
+        sb.append(_keyType.getSimpleName()).append(",");
+        sb.append(_valueType.getSimpleName()).append(">[");
+        final int howMany = 8;
+        sb = _appendRecursivelyUpTo(sb, howMany);
+        int numberOfEntriesLeft = _size - howMany;
         if ( numberOfEntriesLeft > 0 ) {
             sb.append(", ...").append(numberOfEntriesLeft).append(" more entries");
         }
         sb.append("]");
         return sb.toString();
+    }
+
+    private StringBuilder _appendRecursivelyUpTo(StringBuilder sb, int size) {
+        int howMany = Math.min(size, _length(_keysArray));
+        for (int i = 0; i < howMany; i++) {
+            K key = _getAt(i, _keysArray, _keyType);
+            V value = _getAt(i, _valuesArray, _valueType);
+            sb.append(_toString(key, _keyType)).append(" ↦ ").append(_toString(value, _valueType));
+            if ( i < howMany - 1 ) {
+                sb.append(", ");
+            }
+        }
+        int deltaLeft = size - howMany;
+        if ( deltaLeft > 0 ) {
+            for (AssociationImpl<K, V> branch : _branches) {
+                if ( branch != null ) {
+                    sb.append(", ");
+                    sb = branch._appendRecursivelyUpTo(sb, deltaLeft);
+                    deltaLeft -= branch.size();
+                    if ( deltaLeft <= 0 ) {
+                        break;
+                    }
+                }
+            }
+        }
+        return sb;
     }
 
     private static String _toString(@Nullable Object singleItem, Class<?> type) {
@@ -527,18 +548,6 @@ final class AssociationImpl<K, V> implements Association<K, V> {
         } else if ( type == Character.class ) {
             return "'" + singleItem + "'";
         } else if ( type == Boolean.class ) {
-            return singleItem.toString();
-        } else if ( type == Long.class ) {
-            return singleItem + "L";
-        } else if ( type == Float.class ) {
-            return singleItem + "f";
-        } else if ( type == Double.class ) {
-            return singleItem + "d";
-        } else if ( type == Byte.class ) {
-            return "(byte)" + singleItem;
-        } else if ( type == Short.class ) {
-            return "(short)" + singleItem;
-        } else if ( type == Integer.class ) {
             return singleItem.toString();
         } else {
             return singleItem.toString();
