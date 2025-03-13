@@ -184,7 +184,7 @@ final class AssociationImpl<K, V> implements Association<K, V> {
         return index;
     }
 
-    private int _findLeftOrRightBranchIndex(int hash, int size) {
+    private int _computeBranchIndex(int hash, int size) {
         int localHash = Long.hashCode(PRIME_1 * (hash - PRIME_2 * (hash+_depth)));
         return _mod(localHash, size);
     }
@@ -286,7 +286,7 @@ final class AssociationImpl<K, V> implements Association<K, V> {
         int index = _findValidIndexFor(key, keyHash);
         if ( index < 0 || index >= _length(_keysArray) ) {
             if ( _branches.length > 0 ) {
-                int branchIndex = _findLeftOrRightBranchIndex(keyHash, _branches.length);
+                int branchIndex = _computeBranchIndex(keyHash, _branches.length);
                 @Nullable AssociationImpl<K, V> branch = _branches[branchIndex];
                 if ( branch != null ) {
                     return branch._get(key, keyHash);
@@ -328,7 +328,7 @@ final class AssociationImpl<K, V> implements Association<K, V> {
                 );
             } else {
                 if ( _branches.length > 0 ) {
-                    int branchIndex = _findLeftOrRightBranchIndex(keyHash, _branches.length);
+                    int branchIndex = _computeBranchIndex(keyHash, _branches.length);
                     @Nullable AssociationImpl<K, V> branch = _branches[branchIndex];
                     if (branch == null) {
                         Object newKeysArray = _createArray(_keyType, ALLOWS_NULL, 1);
@@ -352,7 +352,7 @@ final class AssociationImpl<K, V> implements Association<K, V> {
                     _setAt(0, key, newKeysArray);
                     Object newValuesArray = _createArray(_valueType, ALLOWS_NULL, 1);
                     _setAt(0, value, newValuesArray);
-                    newBranches[_findLeftOrRightBranchIndex(keyHash, newBranchSize)] = new AssociationImpl<>(
+                    newBranches[_computeBranchIndex(keyHash, newBranchSize)] = new AssociationImpl<>(
                             _depth + 1, _keyType, newKeysArray, _valueType, newValuesArray, EMPTY_BRANCHES, true
                     );
                     return new AssociationImpl<>(_depth, _keyType, _keysArray, _valueType, _valuesArray,  newBranches, false);
@@ -381,7 +381,7 @@ final class AssociationImpl<K, V> implements Association<K, V> {
             if ( _branches.length == 0 ) {
                 return this;
             } else {
-                int branchIndex = _findLeftOrRightBranchIndex(keyHash, _branches.length);
+                int branchIndex = _computeBranchIndex(keyHash, _branches.length);
                 @Nullable AssociationImpl<K, V> branch = _branches[branchIndex];
                 if ( branch == null ) {
                     return this;
