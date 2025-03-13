@@ -109,7 +109,7 @@ final class AssociationImpl<K, V> implements Association<K, V> {
             V value = _getAt(i, newValuesArray, valueType);
             Objects.requireNonNull(key);
             Objects.requireNonNull(value);
-            int index = _findValidIndexFor(key, key.hashCode(), keysArray, keyType);
+            int index = _findValidIndexFor(key, key.hashCode(), keysArray);
             _setAt(index, key, keysArray);
             _setAt(index, value, valuesArray);
         }
@@ -153,7 +153,7 @@ final class AssociationImpl<K, V> implements Association<K, V> {
     private int _findValidIndexFor(final K key, final int hash) {
         int length = _length(_keysArray);
         int index = _mod(hash, length);
-        if ( index < 0 || index >= length ) {
+        if ( index < 0 ) {
             return -1;
         }
         int tries = 0;
@@ -167,14 +167,14 @@ final class AssociationImpl<K, V> implements Association<K, V> {
         return index;
     }
 
-    private static <K> int _findValidIndexFor(final K key, final int hash, final Object keys, Class<?> type) {
+    private static <K> int _findValidIndexFor(final K key, final int hash, final Object keys) {
         int length = _length(keys);
         int index = _mod(hash, length);
-        if ( index < 0 || index >= length ) {
+        if ( index < 0 ) {
             return -1;
         }
         int tries = 0;
-        while (_getAt(index, keys, type) != null && !Objects.equals(_getAt(index, keys, type), key) && tries < length) {
+        while (Array.get(keys, index) != null && !Objects.equals(Array.get(keys, index), key) && tries < length) {
             index = _mod(index + 1, length);
             tries++;
         }
@@ -284,7 +284,7 @@ final class AssociationImpl<K, V> implements Association<K, V> {
 
     private @Nullable V _get( final K key, final int keyHash ) {
         int index = _findValidIndexFor(key, keyHash);
-        if ( index < 0 || index >= _length(_keysArray) ) {
+        if ( index < 0 ) {
             if ( _branches.length > 0 ) {
                 int branchIndex = _computeBranchIndex(keyHash, _branches.length);
                 @Nullable AssociationImpl<K, V> branch = _branches[branchIndex];
@@ -386,7 +386,7 @@ final class AssociationImpl<K, V> implements Association<K, V> {
 
     private AssociationImpl<K, V> _without(final K key, final int keyHash) {
         int index = _findValidIndexFor(key, keyHash);
-        if ( index < 0 || index >= _length(_keysArray) ) {
+        if ( index < 0 ) {
             if ( _branches.length == 0 ) {
                 return this;
             } else {
