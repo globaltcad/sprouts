@@ -302,18 +302,27 @@ final class AssociationImpl<K, V> implements Association<K, V> {
 
     @Override
     public Association<K, V> put(final K key, final V value) {
+        if ( !_keyType.isInstance(key) ) {
+            throw new IllegalArgumentException("The given key '" + key + "' is not of the expected type '" + _keyType + "'.");
+        }
+        if ( !_valueType.isInstance(value) ) {
+            throw new IllegalArgumentException("The given value '" + value + "' is not of the expected type '" + _valueType + "'.");
+        }
         return _with(key, key.hashCode(), value, false);
     }
 
     @Override
     public Association<K, V> putIfAbsent(K key, V value) {
+        if ( !_keyType.isInstance(key) ) {
+            throw new IllegalArgumentException("The given key '" + key + "' is not of the expected type '" + _keyType + "'.");
+        }
+        if ( !_valueType.isInstance(value) ) {
+            throw new IllegalArgumentException("The given value '" + value + "' is not of the expected type '" + _valueType + "'.");
+        }
         return _with(key, key.hashCode(), value, true);
     }
 
     public AssociationImpl<K, V> _with(final K key, final int keyHash, final V value, boolean putIfAbsent) {
-        if ( !_keyType.isInstance(key) ) {
-            throw new IllegalArgumentException("The given key '" + key + "' is not of the expected type '" + _keyType + "'.");
-        }
         int index = _findValidIndexFor(key, keyHash);
         if ( index < 0 || index >= _length(_keysArray) ) {
             if ( _length(_keysArray) < _maxEntriesForThisNode() ) {
