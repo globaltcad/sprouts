@@ -161,19 +161,15 @@ final class AssociationImpl<K, V> implements Association<K, V> {
         return new AssociationImpl<>(_depth, _keyType, _keysArray, _valueType, _valuesArray, _keyHashes, newBranches, false);
     }
 
-    private static int _mod(int index, int size) {
-        return size > 0 ? Math.abs(index) % size : -1;
-    }
-
     private int _findValidIndexFor(final K key, final int hash) {
         int length = _keyHashes.length;
-        int index = _mod(hash, length);
-        if ( index < 0 ) {
+        if ( length < 1 ) {
             return -1;
         }
+        int index = Math.abs(hash) % length;
         int tries = 0;
         while (!_isEqual(_keysArray, index, key, hash) && tries < length) {
-            index = _mod(index + 1, length);
+            index = Math.abs(index+1) % length;
             tries++;
         }
         if ( tries >= length ) {
@@ -191,18 +187,21 @@ final class AssociationImpl<K, V> implements Association<K, V> {
 
     private static <K> int _findValidIndexFor(final K key, final int hash, final Object keys) {
         int length = _length(keys);
-        int index = _mod(hash, length);
+        if ( length < 1 ) {
+            return -1;
+        }
+        int index = Math.abs(hash) % length;
         int tries = 0;
         while (Array.get(keys, index) != null && !Objects.equals(Array.get(keys, index), key) && tries < length) {
-            index = _mod(index + 1, length);
+            index = Math.abs(index+1) % length;
             tries++;
         }
         return index;
     }
 
-    private int _computeBranchIndex(int hash, int size) {
+    private int _computeBranchIndex(int hash, int numberOfBranches) {
         int localHash = Long.hashCode(PRIME_1 * (hash - PRIME_2 * (hash+_depth)));
-        return _mod(localHash, size);
+        return Math.abs(localHash) % numberOfBranches;
     }
 
     @Override
