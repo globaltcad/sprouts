@@ -3,7 +3,7 @@
  *  designed to provide all necessary tools to implement common architectural
  *  design patterns like MVVM, MVI, MVL, etc. <br>
  *  It is specifically designed in conjunction with the
- *  <a href="https://github.com/globaltcad/swing-tree">the SwingTree GUI Framework</a>
+ *  <a href="https://github.com/globaltcad/swing-tree">SwingTree GUI Framework</a>
  *  which has native support for binding to the Sprouts properties. <br>
  *  <p>
  *  It is recommended to use the Sprouts
