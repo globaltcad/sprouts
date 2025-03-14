@@ -28,6 +28,7 @@ final class AssociationImpl<K, V> implements Association<K, V> {
     private final Object _keysArray;
     private final Class<V> _valueType;
     private final Object _valuesArray;
+    private final int[] _keyHashes;
     private final AssociationImpl<K, V>[] _branches;
 
 
@@ -40,6 +41,7 @@ final class AssociationImpl<K, V> implements Association<K, V> {
             _createArray(keyType, ALLOWS_NULL, 0),
             valueType,
             _createArray(valueType, ALLOWS_NULL, 0),
+            new int[0],
             EMPTY_BRANCHES, true
         );
     }
@@ -66,6 +68,10 @@ final class AssociationImpl<K, V> implements Association<K, V> {
         _depth = 0;
         _keyType = Objects.requireNonNull(keyType);
         _valueType = Objects.requireNonNull(valueType);
+        _keyHashes = new int[size];
+        for (int i = 0; i < size; i++) {
+            _keyHashes[i] = Objects.requireNonNull(Array.get(_keysArray, i)).hashCode();
+        }
         _branches = EMPTY_BRANCHES;
         _size = size + _sumBranchSizes(_branches);
     }
@@ -76,6 +82,7 @@ final class AssociationImpl<K, V> implements Association<K, V> {
         final Object newKeysArray,
         final Class<V> valueType,
         final Object newValuesArray,
+        final int[] keyHashes,
         final AssociationImpl<K, V>[] branches,
         final boolean rebuild
     ) {
@@ -93,6 +100,14 @@ final class AssociationImpl<K, V> implements Association<K, V> {
         _valueType = Objects.requireNonNull(valueType);
         _branches = branches;
         _size = size + _sumBranchSizes(_branches);
+        if ( keyHashes.length != size || rebuild ) {
+            _keyHashes = new int[size];
+            for (int i = 0; i < size; i++) {
+                _keyHashes[i] = Objects.requireNonNull(Array.get(_keysArray, i)).hashCode();
+            }
+        } else {
+            _keyHashes = keyHashes;
+        }
     }
 
     private static <K,V> Pair<Object,Object> _fillNodeArrays(
@@ -143,7 +158,7 @@ final class AssociationImpl<K, V> implements Association<K, V> {
     ) {
         AssociationImpl<K, V>[] newBranches = _branches.clone();
         newBranches[index] = branch;
-        return new AssociationImpl<>(_depth, _keyType, _keysArray, _valueType, _valuesArray,  newBranches, false);
+        return new AssociationImpl<>(_depth, _keyType, _keysArray, _valueType, _valuesArray, _keyHashes, newBranches, false);
     }
 
     private static int _mod(int index, int size) {
@@ -151,13 +166,13 @@ final class AssociationImpl<K, V> implements Association<K, V> {
     }
 
     private int _findValidIndexFor(final K key, final int hash) {
-        int length = _length(_keysArray);
+        int length = _keyHashes.length;
         int index = _mod(hash, length);
         if ( index < 0 ) {
             return -1;
         }
         int tries = 0;
-        while (!Objects.equals(Array.get(_keysArray, index), key) && tries < length) {
+        while (!_isEqual(_keysArray, index, key, hash) && tries < length) {
             index = _mod(index + 1, length);
             tries++;
         }
@@ -165,6 +180,13 @@ final class AssociationImpl<K, V> implements Association<K, V> {
             return -1;
         }
         return index;
+    }
+
+    private boolean _isEqual(Object items, int index, Object key, int keyHash) {
+        if ( _keyHashes[index] != keyHash ) {
+            return false;
+        }
+        return key.equals(Array.get(items, index));
     }
 
     private static <K> int _findValidIndexFor(final K key, final int hash, final Object keys) {
@@ -332,6 +354,7 @@ final class AssociationImpl<K, V> implements Association<K, V> {
                         _withAddAt(_length(_keysArray), key, _keysArray, _keyType, ALLOWS_NULL),
                         _valueType,
                         _withAddAt(_length(_valuesArray), value, _valuesArray, _valueType, ALLOWS_NULL),
+                        _keyHashes,
                         _branches,
                         true
                 );
@@ -344,7 +367,7 @@ final class AssociationImpl<K, V> implements Association<K, V> {
                         _setAt(0, key, newKeysArray);
                         Object newValuesArray = _createArray(_valueType, ALLOWS_NULL, 1);
                         _setAt(0, value, newValuesArray);
-                        return _withBranchAt(branchIndex, new AssociationImpl<>(_depth + 1, _keyType, newKeysArray, _valueType, newValuesArray, EMPTY_BRANCHES, true));
+                        return _withBranchAt(branchIndex, new AssociationImpl<>(_depth + 1, _keyType, newKeysArray, _valueType, newValuesArray, _keyHashes, EMPTY_BRANCHES, true));
                     } else {
                         AssociationImpl<K, V> newBranch = branch._with(key, keyHash, value, putIfAbsent);
                         if ( newBranch == branch ) {
@@ -362,16 +385,16 @@ final class AssociationImpl<K, V> implements Association<K, V> {
                     Object newValuesArray = _createArray(_valueType, ALLOWS_NULL, 1);
                     _setAt(0, value, newValuesArray);
                     newBranches[_computeBranchIndex(keyHash, newBranchSize)] = new AssociationImpl<>(
-                            _depth + 1, _keyType, newKeysArray, _valueType, newValuesArray, EMPTY_BRANCHES, true
+                            _depth + 1, _keyType, newKeysArray, _valueType, newValuesArray, _keyHashes, EMPTY_BRANCHES, true
                     );
-                    return new AssociationImpl<>(_depth, _keyType, _keysArray, _valueType, _valuesArray,  newBranches, false);
+                    return new AssociationImpl<>(_depth, _keyType, _keysArray, _valueType, _valuesArray, _keyHashes, newBranches, false);
                 }
             }
         } else if ( Objects.equals(_getAt(index, _valuesArray, _valueType), value) ) {
             return this;
         } else if ( !putIfAbsent ) {
             Object newValuesArray = _withSetAt(index, value, _valuesArray, _valueType, ALLOWS_NULL);
-            return new AssociationImpl<>(_depth, _keyType, _keysArray, _valueType, newValuesArray, _branches, false);
+            return new AssociationImpl<>(_depth, _keyType, _keysArray, _valueType, newValuesArray, _keyHashes, _branches, false);
         }
         return this;
     }
@@ -407,7 +430,7 @@ final class AssociationImpl<K, V> implements Association<K, V> {
                             }
                         }
                         if ( numberOfNonNullBranches == 0 ) {
-                            return new AssociationImpl<>(_depth, _keyType, _keysArray, _valueType, _valuesArray,  EMPTY_BRANCHES, false);
+                            return new AssociationImpl<>(_depth, _keyType, _keysArray, _valueType, _valuesArray, _keyHashes, EMPTY_BRANCHES, false);
                         }
                         newBranch = null;
                     }
@@ -417,7 +440,7 @@ final class AssociationImpl<K, V> implements Association<K, V> {
         } else {
             Object newKeysArray = _withRemoveRange(index, index+1, _keysArray, _keyType, ALLOWS_NULL);
             Object newValuesArray = _withRemoveRange(index, index+1, _valuesArray, _valueType, ALLOWS_NULL);
-            return new AssociationImpl<>(_depth, _keyType, newKeysArray, _valueType, newValuesArray, _branches, true);
+            return new AssociationImpl<>(_depth, _keyType, newKeysArray, _valueType, newValuesArray, _keyHashes, _branches, true);
         }
     }
 
