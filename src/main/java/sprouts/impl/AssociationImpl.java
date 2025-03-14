@@ -192,16 +192,10 @@ final class AssociationImpl<K, V> implements Association<K, V> {
     private static <K> int _findValidIndexFor(final K key, final int hash, final Object keys) {
         int length = _length(keys);
         int index = _mod(hash, length);
-        if ( index < 0 ) {
-            return -1;
-        }
         int tries = 0;
         while (Array.get(keys, index) != null && !Objects.equals(Array.get(keys, index), key) && tries < length) {
             index = _mod(index + 1, length);
             tries++;
-        }
-        if ( tries >= length ) {
-            return -1;
         }
         return index;
     }
