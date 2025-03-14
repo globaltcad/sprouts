@@ -572,4 +572,126 @@ class Association_Spec extends Specification
             associations.get(3.0f).orElseThrow(MissingItemException::new) == 3.0f
             associations.get(4.0).orElseThrow(MissingItemException::new) == 4.0
     }
+
+    def 'The classTyped method returns the correct class and handles null parameters'() {
+        when:
+            var associationClass = Association.classTyped(String, Integer)
+        then:
+            associationClass == Association.class
+
+        when:
+            Association.classTyped(null, Integer)
+        then:
+            thrown(NullPointerException)
+
+        when:
+            Association.classTyped(String, null)
+        then:
+            thrown(NullPointerException)
+    }
+
+    def 'The of factory method throws NPE for null parameters'() {
+        when:
+            Association.of(null, "value")
+        then:
+            thrown(NullPointerException)
+
+        when:
+            Association.of("key", null)
+        then:
+            thrown(NullPointerException)
+    }
+
+    def 'The entrySet is immutable and contains correct pairs'() {
+        given:
+            var assoc = Association.of("a", 1).put("b", 2)
+        when:
+            var entrySet = assoc.entrySet()
+        then:
+            entrySet.size() == 2
+            entrySet.contains(Pair.of("a", 1))
+            entrySet.contains(Pair.of("b", 2))
+
+        when:
+            entrySet.add(Pair.of("c", 3))
+        then:
+            thrown(UnsupportedOperationException)
+    }
+
+    def 'replaceAll with Map only updates existing keys'() {
+        given:
+            var original = Association.of("a", 1).put("b", 2).put("c", 3)
+            var replacementMap = [a:10, d:40, c:30] as Map
+        when:
+            var updated = original.replaceAll(replacementMap)
+        then:
+            updated.size() == 3
+            updated.get("a").get() == 10
+            updated.get("b").get() == 2  // Should remain unchanged
+            updated.get("c").get() == 30
+            !updated.containsKey("d")
+    }
+
+    def 'The `retainAll` method keeps only specified keys'() {
+        given:
+            var assoc = Association.of("a", 1).put("b", 2).put("c", 3)
+        when:
+            var retained = assoc.retainAll(["a", "c"] as Set)
+        then:
+            retained.size() == 2
+            retained.containsKey("a")
+            retained.containsKey("c")
+            !retained.containsKey("b")
+    }
+
+    def 'The `putIfAbsent` does not overwrite an existing value already stored in an association.'() {
+        given:
+            var assoc = Association.of("a", 1).putIfAbsent("a", 2)
+        expect:
+            assoc.get("a").get() == 1
+    }
+
+    def 'Associations with same entries in different order are equal'() {
+        given:
+            var assoc1 = Association.of("a", 1).put("b", 2).put("c", 3)
+            var assoc2 = Association.of("c", 3).put("b", 2).put("a", 1)
+        expect:
+            assoc1 == assoc2
+            assoc1.hashCode() == assoc2.hashCode()
+    }
+
+    def 'values() contains all values including duplicates'() {
+        given:
+            var assoc = Association.of("a", 10)
+                .put("b", 20)
+                .put("c", 10) // Duplicate value
+        when:
+            var values = assoc.values()
+        then:
+            values.size() == 3
+            values.sort().toList() == [10, 10, 20]
+    }
+
+    def 'replaceAll ignores non-existing keys in replacement stream'() {
+        given:
+            var original = Association.of("a", 1).put("b", 2)
+            var replacements = [Pair.of("k", -40), Pair.of("a", 10), Pair.of("v", 30)]
+        when:
+            var updated = original.replaceAll(replacements.stream())
+        then:
+            updated.size() == 2
+            updated.get("a").get() == 10
+            updated.get("b").get() == 2 // Unchanged
+            !updated.containsKey("k")
+            !updated.containsKey("v")
+    }
+
+    def 'clear on empty association returns an empty instance'() {
+        given:
+            var emptyAssoc = Association.between(String, Integer).clear()
+        expect:
+            emptyAssoc.isEmpty()
+            emptyAssoc.keyType() == String
+            emptyAssoc.valueType() == Integer
+    }
 }
