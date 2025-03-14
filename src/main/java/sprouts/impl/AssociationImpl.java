@@ -290,16 +290,22 @@ final class AssociationImpl<K, V> implements Association<K, V> {
 
     @Override
     public boolean containsKey(K key) {
-        if ( !_keyType.isInstance(key) ) {
-            throw new IllegalArgumentException("The given key '" + key + "' is not of the expected type '" + _keyType + "'.");
+        if ( !_keyType.isAssignableFrom(key.getClass()) ) {
+            throw new IllegalArgumentException(
+                    "The given key '" + key + "' is of type '" + key.getClass().getSimpleName() + "', " +
+                    "instead of the expected type '" + _keyType + "'."
+                );
         }
         return _get(key, key.hashCode()) != null;
     }
 
     @Override
     public Optional<V> get( final K key ) {
-        if ( !_keyType.isInstance(key) ) {
-            throw new IllegalArgumentException("The given key '" + key + "' is not of the expected type '" + _keyType + "'.");
+        if ( !_keyType.isAssignableFrom(key.getClass()) ) {
+            throw new IllegalArgumentException(
+                    "The given key '" + key + "' is of type '" + key.getClass().getSimpleName() + "', " +
+                    "instead of the expected type '" + _keyType + "'."
+                );
         }
         return Optional.ofNullable(_get(key, key.hashCode()));
     }
@@ -324,22 +330,34 @@ final class AssociationImpl<K, V> implements Association<K, V> {
 
     @Override
     public Association<K, V> put(final K key, final V value) {
-        if ( !_keyType.isInstance(key) ) {
-            throw new IllegalArgumentException("The given key '" + key + "' is not of the expected type '" + _keyType + "'.");
+        if ( !_keyType.isAssignableFrom(key.getClass()) ) {
+            throw new IllegalArgumentException(
+                    "The given key '" + key + "' is of type '" + key.getClass().getSimpleName() + "', " +
+                    "instead of the expected type '" + _keyType + "'."
+                );
         }
-        if ( !_valueType.isInstance(value) ) {
-            throw new IllegalArgumentException("The given value '" + value + "' is not of the expected type '" + _valueType + "'.");
+        if ( !_valueType.isAssignableFrom(value.getClass()) ) {
+            throw new IllegalArgumentException(
+                    "The given value '" + value + "' is of type '" + value.getClass().getSimpleName() + "', " +
+                    "instead of the expected type '" + _valueType + "'."
+                );
         }
         return _with(key, key.hashCode(), value, false);
     }
 
     @Override
     public Association<K, V> putIfAbsent(K key, V value) {
-        if ( !_keyType.isInstance(key) ) {
-            throw new IllegalArgumentException("The given key '" + key + "' is not of the expected type '" + _keyType + "'.");
+        if ( !_keyType.isAssignableFrom(key.getClass()) ) {
+            throw new IllegalArgumentException(
+                    "The given key '" + key + "' is of type '" + key.getClass().getSimpleName() + "', " +
+                    "instead of the expected type '" + _keyType + "'."
+                );
         }
-        if ( !_valueType.isInstance(value) ) {
-            throw new IllegalArgumentException("The given value '" + value + "' is not of the expected type '" + _valueType + "'.");
+        if ( !_valueType.isAssignableFrom(value.getClass()) ) {
+            throw new IllegalArgumentException(
+                    "The given value '" + value + "' is of type '" + value.getClass().getSimpleName() + "', " +
+                    "instead of the expected type '" + _valueType + "'."
+                );
         }
         return _with(key, key.hashCode(), value, true);
     }
@@ -401,8 +419,11 @@ final class AssociationImpl<K, V> implements Association<K, V> {
 
     @Override
     public Association<K, V> remove( K key ) {
-        if ( !_keyType.isInstance(key) ) {
-            throw new IllegalArgumentException("The given key '" + key + "' is not of the expected type '" + _keyType + "'.");
+        if ( !_keyType.isAssignableFrom(key.getClass()) ) {
+            throw new IllegalArgumentException(
+                    "The given key '" + key + "' is of type '" + key.getClass().getSimpleName() + "', " +
+                    "instead of the expected type '" + _keyType + "'."
+                );
         }
         return _without(key, key.hashCode());
     }
