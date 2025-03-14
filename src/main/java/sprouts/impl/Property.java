@@ -61,7 +61,8 @@ final class Property<T extends @Nullable Object> implements Var<T>, Viewable<T> 
             // We check if the type is correct
             if ( !_type.isAssignableFrom(_value.getClass()) )
                 throw new IllegalArgumentException(
-                        "The provided type of the initial value is not compatible with the actual type of the variable"
+                        "The type of the supplied value is '"+_value.getClass()+"' " +
+                        "which is not compatible with the type '"+_type+"' of this property."
                     );
         }
         if ( !Sprouts.factory().idPattern().matcher(_id).matches() )
