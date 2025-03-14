@@ -32,23 +32,29 @@ public class AssociationPerformanceTest {
         // Warmup to trigger JIT compilation
         warmup(operations);
 
-        // Garbage collect before measurements
-        System.gc();
+        long samples = 10;
+        long associationTime = 0;
+        long mapTime = 0;
 
-        // Measure Association performance
-        long associationTime = measureAssociationPerformance(operations);
+        for (int i = 0; i < samples; i++) {
+            // Garbage collect before measurements
+            System.gc();
+            // Measure Association performance
+            associationTime += measureAssociationPerformance(operations);
 
-        // Garbage collect before next measurement
-        System.gc();
-
-        // Measure Map performance
-        long mapTime = measureMapPerformance(operations);
-
+            // Garbage collect before next measurement
+            System.gc();
+            // Measure Map performance
+            mapTime += measureMapPerformance(operations);
+        }
+        associationTime /= samples;
+        mapTime /= samples;
         double associationTimeSeconds = associationTime / 1_000_000_000.0;
         double mapTimeSeconds = mapTime / 1_000_000_000.0;
 
         System.out.println("Association total time: " + associationTimeSeconds + " s");
         System.out.println("HashMap total time: " + mapTimeSeconds + " s");
+        System.out.println("Factor: " + associationTimeSeconds / mapTimeSeconds + "x");
     }
 
     private static List<OperationKeyPair> generateOperations() {
