@@ -260,25 +260,25 @@ final class AssociationImpl<K, V> implements Association<K, V> {
 
     @Override
     public Set<Pair<K, V>> entrySet() {
-        Set<Pair<K, V>> setOfEntries = new java.util.HashSet<>(_size);
-        populateEntrySetRecursively(setOfEntries);
-        return java.util.Collections.unmodifiableSet(setOfEntries);
-    }
-
-    public void populateEntrySetRecursively(Set<Pair<K, V>> setOfEntries) {
-        int size = _length(_keysArray);
-        for (int i = 0; i < size; i++) {
-            K key = _getAt(i, _keysArray, _keyType);
-            V value = _getAt(i, _valuesArray, _valueType);
-            Objects.requireNonNull(key);
-            Objects.requireNonNull(value);
-            setOfEntries.add(Pair.of(key, value));
-        }
-        for (AssociationImpl<K, V> branch : _branches) {
-            if (branch != null) {
-                branch.populateEntrySetRecursively(setOfEntries);
+        return new AbstractSet<Pair<K, V>>() {
+            @Override
+            public Iterator<Pair<K, V>> iterator() {
+                return AssociationImpl.this.iterator();
             }
-        }
+            @Override
+            public int size() {
+                return _size;
+            }
+            @Override
+            public boolean contains(Object o) {
+                if (o instanceof Pair) {
+                    Pair<?, ?> pair = (Pair<?, ?>) o;
+                    K key = _keyType.cast(pair.first());
+                    return AssociationImpl.this.containsKey(key);
+                }
+                return false;
+            }
+        };
     }
 
     @Override
@@ -650,4 +650,91 @@ final class AssociationImpl<K, V> implements Association<K, V> {
     private static long _combine(int first32Bits, int last32Bits) {
         return (long) first32Bits << 32 | (last32Bits & 0xFFFFFFFFL);
     }
+
+    @Override
+    public Iterator<Pair<K, V>> iterator() {
+        return new Iterator<Pair<K, V>>() {
+
+            // A helper class to keep track of our position in a node.
+            private class NodeState {
+                final AssociationImpl<K, V> node;
+                int arrayIndex;    // Next index in the keys/values arrays
+                int branchIndex;   // Next branch index to check
+                final int arrayLength;   // Total entries in the node's arrays
+                final int branchesLength; // Total branches in the node
+
+                NodeState(AssociationImpl<K, V> node) {
+                    this.node = node;
+                    this.arrayIndex = 0;
+                    this.branchIndex = 0;
+                    this.arrayLength = _length(node._keysArray);
+                    this.branchesLength = node._branches.length;
+                }
+            }
+
+            // Use a stack to perform depth-first traversal.
+            private final Deque<NodeState> stack = new ArrayDeque<>();
+
+            {
+                // Initialize with this node if there is at least one element.
+                if (_size > 0) {
+                    stack.push(new NodeState(AssociationImpl.this));
+                }
+            }
+
+            @Override
+            public boolean hasNext() {
+                // Loop until we find a node state with an unvisited entry or the stack is empty.
+                while (!stack.isEmpty()) {
+                    NodeState current = stack.peek();
+
+                    // If there is a key-value pair left in the current node, we're done.
+                    if (current.arrayIndex < current.arrayLength) {
+                        return true;
+                    }
+
+                    // Otherwise, check for non-null branches to traverse.
+                    if (current.branchIndex < current.branchesLength) {
+                        // Look for the next branch.
+                        while (current.branchIndex < current.branchesLength) {
+                            AssociationImpl<K, V> branch = current.node._branches[current.branchIndex];
+                            current.branchIndex++;
+                            if (branch != null && branch._size > 0) {
+                                // Found a non-empty branch: push its state on the stack.
+                                stack.push(new NodeState(branch));
+                                break;
+                            }
+                        }
+                        // Continue the while loop: now the top of the stack may have entries.
+                        continue;
+                    }
+
+                    // If no more entries or branches are left in the current node, pop it.
+                    stack.pop();
+                }
+                return false;
+            }
+
+            @Override
+            public Pair<K, V> next() {
+                if (!hasNext()) {
+                    throw new NoSuchElementException();
+                }
+                NodeState current = stack.peek();
+                // Retrieve the key and value at the current position.
+                K key = _getAt(current.arrayIndex, current.node._keysArray, current.node._keyType);
+                V value = _getAt(current.arrayIndex, current.node._valuesArray, current.node._valueType);
+                Objects.requireNonNull(key);
+                Objects.requireNonNull(value);
+                current.arrayIndex++;
+                return Pair.of(key, value);
+            }
+
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+        };
+    }
+
 }

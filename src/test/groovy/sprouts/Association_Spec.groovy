@@ -205,6 +205,9 @@ class Association_Spec extends Specification
         map.each { k, v ->
             assert assoc.get(k).orElse(null) == v
         }
+        assoc.each { pair ->
+            assert pair.second() == map[pair.first()]
+        }
     }
 
     def 'Two associations the the same operations applied to them are always equal.'(
@@ -675,7 +678,7 @@ class Association_Spec extends Specification
             thrown(NullPointerException)
     }
 
-    def 'The entrySet is immutable and contains correct pairs'() {
+    def 'The `entrySet` is immutable and contains correct pairs'() {
         given:
             var assoc = Association.of("a", 1).put("b", 2)
         when:
@@ -689,6 +692,31 @@ class Association_Spec extends Specification
             entrySet.add(Pair.of("c", 3))
         then:
             thrown(UnsupportedOperationException)
+    }
+
+    def 'You can iterate over the `entrySet` of all pairs in an `Association`.'() {
+        given:
+            var assoc = Association.between(Integer, String).putAll(
+                Pair.of(1, "I"),
+                Pair.of(2, "was"),
+                Pair.of(3, "added"),
+                Pair.of(4, "to"),
+                Pair.of(5, "the"),
+                Pair.of(6, "association")
+            )
+        when:
+            var entries = []
+            for (var entry : assoc.entrySet()) {
+                entries << entry
+            }
+        then:
+            entries.size() == 6
+            entries.contains(Pair.of(1, "I"))
+            entries.contains(Pair.of(2, "was"))
+            entries.contains(Pair.of(3, "added"))
+            entries.contains(Pair.of(4, "to"))
+            entries.contains(Pair.of(5, "the"))
+            entries.contains(Pair.of(6, "association"))
     }
 
     def 'replaceAll with Map only updates existing keys'() {
@@ -766,5 +794,20 @@ class Association_Spec extends Specification
             emptyAssoc.isEmpty()
             emptyAssoc.keyType() == String
             emptyAssoc.valueType() == Integer
+    }
+
+    def 'The `Association` class is an `Iterable` which allows you to iterate over its entries.'() {
+        given:
+            var associations = Association.of("x", 1).put("y", 2).put("z", 3)
+        when:
+            var entries = []
+            for (var entry : associations) {
+                entries << entry
+            }
+        then:
+            entries.size() == 3
+            entries.contains(Pair.of("x", 1))
+            entries.contains(Pair.of("y", 2))
+            entries.contains(Pair.of("z", 3))
     }
 }
