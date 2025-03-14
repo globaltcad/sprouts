@@ -656,7 +656,7 @@ final class AssociationImpl<K, V> implements Association<K, V> {
         return new Iterator<Pair<K, V>>() {
 
             // A helper class to keep track of our position in a node.
-            private class NodeState {
+            class NodeState {
                 final AssociationImpl<K, V> node;
                 int arrayIndex;    // Next index in the keys/values arrays
                 int branchIndex;   // Next branch index to check
