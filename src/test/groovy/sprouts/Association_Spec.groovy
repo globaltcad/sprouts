@@ -22,7 +22,10 @@ import spock.lang.Title
 class Association_Spec extends Specification
 {
     enum Operation {
-        ADD, REMOVE
+        ADD, REMOVE,
+        REPLACE,  // Replace existing key's value
+        PUT_IF_ABSENT, // Add only if absent
+        CLEAR     // Clear all entries
     }
 
     def 'An empty association is created by supplying the type of the key and value'() {
@@ -133,6 +136,76 @@ class Association_Spec extends Specification
             ]
     }
 
+    def 'Association maintains full invariance with Map across all operations.'(
+            List<Tuple2<Operation, String>> operations
+    ) {
+        given: 'Fresh association and reference map'
+            var assoc = Association.between(String, String)
+            var map = new HashMap<String,String>()
+            var valueGenerator = { key -> "[value-of:$key]".toString() }
+            var replacementValueGenerator = { key -> "[replaced-value-of:$key]".toString() }
+
+            var operationsApplier = { currentAssoc ->
+                operations.each { op, key ->
+                    switch (op) {
+                        case Operation.ADD:
+                            currentAssoc = currentAssoc.put(key, valueGenerator(key))
+                            map.put(key, valueGenerator(key))
+                            break
+                        case Operation.REMOVE:
+                            currentAssoc = currentAssoc.remove(key)
+                            map.remove(key)
+                            break
+                        case Operation.REPLACE:
+                            currentAssoc = currentAssoc.replace(key, replacementValueGenerator(key))
+                            if (map.containsKey(key)) {
+                                map.put(key, replacementValueGenerator(key))
+                            }
+                            break
+                        case Operation.PUT_IF_ABSENT:
+                            currentAssoc = currentAssoc.putIfAbsent(key, valueGenerator(key))
+                            map.putIfAbsent(key, valueGenerator(key))
+                            break
+                        case Operation.CLEAR:
+                            currentAssoc = currentAssoc.clear()
+                            map.clear()
+                            break
+                    }
+                }
+                return currentAssoc
+            }
+
+        when: 'Apply operations first time'
+            assoc = operationsApplier(assoc)
+        then: 'Immediate invariance'
+            assertInvariance(assoc, map)
+
+        when: 'Apply operations 10 more times'
+            10.times { assoc = operationsApplier(assoc) }
+        then: 'Stable invariance'
+            assertInvariance(assoc, map)
+
+        where:
+            operations << [
+                (0..2000).collect {
+                    var random = new Random(it*1997).nextInt()
+                    var randKey = "key-"+Integer.toHexString(random)
+                    var op = Operation.values()[Math.abs(random % 5)]
+                    return new Tuple2(op, randKey)
+                },
+            ]
+    }
+
+    // Helper method for invariance assertions
+    void assertInvariance(Association<String,String> assoc, Map<String,String> map) {
+        assert assoc.size() == map.size()
+        assert assoc.keySet() == map.keySet()
+        assert assoc.values().sort().toList() == map.values().sort()
+        assert assoc.toMap() == map
+        map.each { k, v ->
+            assert assoc.get(k).orElse(null) == v
+        }
+    }
 
     def 'Two associations the the same operations applied to them are always equal.'(
         List<Tuple2<Operation, String>> operations
