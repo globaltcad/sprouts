@@ -169,7 +169,7 @@ final class AssociationImpl<K, V> implements Association<K, V> {
         int index = Math.abs(hash) % length;
         int tries = 0;
         while (!_isEqual(_keysArray, index, key, hash) && tries < length) {
-            index = Math.abs(index+1) % length;
+            index = ( index + 1 ) % length;
             tries++;
         }
         if ( tries >= length ) {
@@ -193,7 +193,7 @@ final class AssociationImpl<K, V> implements Association<K, V> {
         int index = Math.abs(hash) % length;
         int tries = 0;
         while (Array.get(keys, index) != null && !Objects.equals(Array.get(keys, index), key) && tries < length) {
-            index = Math.abs(index+1) % length;
+            index = ( index + 1 ) % length;
             tries++;
         }
         return index;
