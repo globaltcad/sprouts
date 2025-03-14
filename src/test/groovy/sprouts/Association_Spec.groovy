@@ -22,7 +22,10 @@ import spock.lang.Title
 class Association_Spec extends Specification
 {
     enum Operation {
-        ADD, REMOVE
+        ADD, REMOVE,
+        REPLACE,  // Replace existing key's value
+        PUT_IF_ABSENT, // Add only if absent
+        CLEAR     // Clear all entries
     }
 
     def 'An empty association is created by supplying the type of the key and value'() {
@@ -133,6 +136,79 @@ class Association_Spec extends Specification
             ]
     }
 
+    def 'Association maintains full invariance with Map across all operations.'(
+            List<Tuple2<Operation, String>> operations
+    ) {
+        given: 'Fresh association and reference map'
+            var assoc = Association.between(String, String)
+            var map = new HashMap<String,String>()
+            var valueGenerator = { key -> "[value-of:$key]".toString() }
+            var replacementValueGenerator = { key -> "[replaced-value-of:$key]".toString() }
+
+            var operationsApplier = { currentAssoc ->
+                operations.each { op, key ->
+                    switch (op) {
+                        case Operation.ADD:
+                            currentAssoc = currentAssoc.put(key, valueGenerator(key))
+                            map.put(key, valueGenerator(key))
+                            break
+                        case Operation.REMOVE:
+                            currentAssoc = currentAssoc.remove(key)
+                            map.remove(key)
+                            break
+                        case Operation.REPLACE:
+                            currentAssoc = currentAssoc.replace(key, replacementValueGenerator(key))
+                            if (map.containsKey(key)) {
+                                map.put(key, replacementValueGenerator(key))
+                            }
+                            break
+                        case Operation.PUT_IF_ABSENT:
+                            currentAssoc = currentAssoc.putIfAbsent(key, valueGenerator(key))
+                            map.putIfAbsent(key, valueGenerator(key))
+                            break
+                        case Operation.CLEAR:
+                            currentAssoc = currentAssoc.clear()
+                            map.clear()
+                            break
+                    }
+                }
+                return currentAssoc
+            }
+
+        when: 'Apply operations first time'
+            assoc = operationsApplier(assoc)
+        then: 'Immediate invariance'
+            assertInvariance(assoc, map)
+
+        when: 'Apply operations 10 more times'
+            10.times { assoc = operationsApplier(assoc) }
+        then: 'Stable invariance'
+            assertInvariance(assoc, map)
+
+        where:
+            operations << [
+                (0..2000).collect {
+                    var random = new Random(it*1997).nextInt()
+                    var randKey = "key-"+Integer.toHexString(random)
+                    var op = Operation.values()[Math.abs(random % 5)]
+                    return new Tuple2(op, randKey)
+                },
+            ]
+    }
+
+    // Helper method for invariance assertions
+    void assertInvariance(Association<String,String> assoc, Map<String,String> map) {
+        assert assoc.size() == map.size()
+        assert assoc.keySet() == map.keySet()
+        assert assoc.values().sort().toList() == map.values().sort()
+        assert assoc.toMap() == map
+        map.each { k, v ->
+            assert assoc.get(k).orElse(null) == v
+        }
+        assoc.each { pair ->
+            assert pair.second() == map[pair.first()]
+        }
+    }
 
     def 'Two associations the the same operations applied to them are always equal.'(
         List<Tuple2<Operation, String>> operations
@@ -390,7 +466,7 @@ class Association_Spec extends Specification
         when : 'We add some values to the association.'
             associations = associations.put("a", 1).put("b", 2).put("c", 3)
         then : 'The string representation of the association is as expected.'
-            associations.toString() == 'Association["c" ↦ 3, "a" ↦ 1, "b" ↦ 2]'
+            associations.toString() == 'Association<String,Integer>["a" ↦ 1, "b" ↦ 2, "c" ↦ 3]'
     }
 
     def 'A larger `Association` will have a trimmed string representation.'() {
@@ -403,7 +479,7 @@ class Association_Spec extends Specification
                 associations = associations.put(key, value)
             }
         then : 'The string representation of the association is as expected.'
-            associations.toString() == "Association['H' ↦ (byte)-101, 'A' ↦ (byte)0, 'B' ↦ (byte)-51, 'C' ↦ (byte)-102, 'D' ↦ (byte)103, 'E' ↦ (byte)52, 'F' ↦ (byte)1, 'G' ↦ (byte)-50, ...22 more entries]"
+            associations.toString() == "Association<Character,Byte>['A' ↦ 0, 'P' ↦ 3, '\\' ↦ -97, 'F' ↦ 1, 'U' ↦ 4, 'W' ↦ -98, 'R' ↦ -99, 'Z' ↦ 5, ...22 more entries]"
     }
 
     def 'The `replace` method replaces the value of a key with a new value, if and only if the key is present.'() {
@@ -554,5 +630,184 @@ class Association_Spec extends Specification
         then : 'The association still remains the same.'
             associations.size() == 7
             associations.get(44 as short).orElseThrow(MissingItemException::new) == 'x' as char
+    }
+
+    def 'Use `Association.between(Number.class, Number.class)` to create an association between all kinds of numbers.'() {
+        given :
+            var associations = Association.between(Number.class, Number.class)
+        expect :
+            associations.isEmpty()
+            associations.keyType() == Number.class
+            associations.valueType() == Number.class
+        when : 'We add some values to the association.'
+            associations = associations.put(1, 1).put(2L, 2L).put(3.0f, 3.0f).put(4.0, 4.0)
+        then : 'The association contains the values.'
+            associations.size() == 4
+            associations.get(1).orElseThrow(MissingItemException::new) == 1
+            associations.get(2L).orElseThrow(MissingItemException::new) == 2L
+            associations.get(3.0f).orElseThrow(MissingItemException::new) == 3.0f
+            associations.get(4.0).orElseThrow(MissingItemException::new) == 4.0
+    }
+
+    def 'The classTyped method returns the correct class and handles null parameters'() {
+        when:
+            var associationClass = Association.classTyped(String, Integer)
+        then:
+            associationClass == Association.class
+
+        when:
+            Association.classTyped(null, Integer)
+        then:
+            thrown(NullPointerException)
+
+        when:
+            Association.classTyped(String, null)
+        then:
+            thrown(NullPointerException)
+    }
+
+    def 'The of factory method throws NPE for null parameters'() {
+        when:
+            Association.of(null, "value")
+        then:
+            thrown(NullPointerException)
+
+        when:
+            Association.of("key", null)
+        then:
+            thrown(NullPointerException)
+    }
+
+    def 'The `entrySet` is immutable and contains correct pairs'() {
+        given:
+            var assoc = Association.of("a", 1).put("b", 2)
+        when:
+            var entrySet = assoc.entrySet()
+        then:
+            entrySet.size() == 2
+            entrySet.contains(Pair.of("a", 1))
+            entrySet.contains(Pair.of("b", 2))
+
+        when:
+            entrySet.add(Pair.of("c", 3))
+        then:
+            thrown(UnsupportedOperationException)
+    }
+
+    def 'You can iterate over the `entrySet` of all pairs in an `Association`.'() {
+        given:
+            var assoc = Association.between(Integer, String).putAll(
+                Pair.of(1, "I"),
+                Pair.of(2, "was"),
+                Pair.of(3, "added"),
+                Pair.of(4, "to"),
+                Pair.of(5, "the"),
+                Pair.of(6, "association")
+            )
+        when:
+            var entries = []
+            for (var entry : assoc.entrySet()) {
+                entries << entry
+            }
+        then:
+            entries.size() == 6
+            entries.contains(Pair.of(1, "I"))
+            entries.contains(Pair.of(2, "was"))
+            entries.contains(Pair.of(3, "added"))
+            entries.contains(Pair.of(4, "to"))
+            entries.contains(Pair.of(5, "the"))
+            entries.contains(Pair.of(6, "association"))
+    }
+
+    def 'replaceAll with Map only updates existing keys'() {
+        given:
+            var original = Association.of("a", 1).put("b", 2).put("c", 3)
+            var replacementMap = [a:10, d:40, c:30] as Map
+        when:
+            var updated = original.replaceAll(replacementMap)
+        then:
+            updated.size() == 3
+            updated.get("a").get() == 10
+            updated.get("b").get() == 2  // Should remain unchanged
+            updated.get("c").get() == 30
+            !updated.containsKey("d")
+    }
+
+    def 'The `retainAll` method keeps only specified keys'() {
+        given:
+            var assoc = Association.of("a", 1).put("b", 2).put("c", 3)
+        when:
+            var retained = assoc.retainAll(["a", "c"] as Set)
+        then:
+            retained.size() == 2
+            retained.containsKey("a")
+            retained.containsKey("c")
+            !retained.containsKey("b")
+    }
+
+    def 'The `putIfAbsent` does not overwrite an existing value already stored in an association.'() {
+        given:
+            var assoc = Association.of("a", 1).putIfAbsent("a", 2)
+        expect:
+            assoc.get("a").get() == 1
+    }
+
+    def 'Associations with same entries in different order are equal'() {
+        given:
+            var assoc1 = Association.of("a", 1).put("b", 2).put("c", 3)
+            var assoc2 = Association.of("c", 3).put("b", 2).put("a", 1)
+        expect:
+            assoc1 == assoc2
+            assoc1.hashCode() == assoc2.hashCode()
+    }
+
+    def 'values() contains all values including duplicates'() {
+        given:
+            var assoc = Association.of("a", 10)
+                .put("b", 20)
+                .put("c", 10) // Duplicate value
+        when:
+            var values = assoc.values()
+        then:
+            values.size() == 3
+            values.sort().toList() == [10, 10, 20]
+    }
+
+    def 'replaceAll ignores non-existing keys in replacement stream'() {
+        given:
+            var original = Association.of("a", 1).put("b", 2)
+            var replacements = [Pair.of("k", -40), Pair.of("a", 10), Pair.of("v", 30)]
+        when:
+            var updated = original.replaceAll(replacements.stream())
+        then:
+            updated.size() == 2
+            updated.get("a").get() == 10
+            updated.get("b").get() == 2 // Unchanged
+            !updated.containsKey("k")
+            !updated.containsKey("v")
+    }
+
+    def 'clear on empty association returns an empty instance'() {
+        given:
+            var emptyAssoc = Association.between(String, Integer).clear()
+        expect:
+            emptyAssoc.isEmpty()
+            emptyAssoc.keyType() == String
+            emptyAssoc.valueType() == Integer
+    }
+
+    def 'The `Association` class is an `Iterable` which allows you to iterate over its entries.'() {
+        given:
+            var associations = Association.of("x", 1).put("y", 2).put("z", 3)
+        when:
+            var entries = []
+            for (var entry : associations) {
+                entries << entry
+            }
+        then:
+            entries.size() == 3
+            entries.contains(Pair.of("x", 1))
+            entries.contains(Pair.of("y", 2))
+            entries.contains(Pair.of("z", 3))
     }
 }

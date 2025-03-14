@@ -184,18 +184,20 @@ class ArrayUtil {
     }
 
     static int _length( Object array ) {
-        if ( array instanceof byte[] )
-            return ((byte[]) array).length;
-        if ( array instanceof short[] )
-            return ((short[]) array).length;
+        if ( array instanceof Object[] )
+            return java.lang.reflect.Array.getLength(array);
         if ( array instanceof int[] )
             return ((int[]) array).length;
-        if ( array instanceof long[] )
-            return ((long[]) array).length;
-        if ( array instanceof float[] )
-            return ((float[]) array).length;
         if ( array instanceof double[] )
             return ((double[]) array).length;
+        if ( array instanceof float[] )
+            return ((float[]) array).length;
+        if ( array instanceof byte[] )
+            return ((byte[]) array).length;
+        if ( array instanceof long[] )
+            return ((long[]) array).length;
+        if ( array instanceof short[] )
+            return ((short[]) array).length;
         if ( array instanceof char[] )
             return ((char[]) array).length;
         if ( array instanceof boolean[] )

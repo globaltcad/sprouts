@@ -534,10 +534,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @throws NullPointerException if {@code null} is not allowed and the {@code item} is {@code null}.
      */
     default Tuple<T> add( T item ) {
-        if (allowsNull())
-            return add(Maybe.ofNullable(type(), item));
-        Objects.requireNonNull(item);
-        return add(Maybe.of(item));
+        return addAt( size(), item );
     }
 
     /**

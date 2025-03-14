@@ -32,7 +32,7 @@ import java.util.stream.Stream;
  * @param <K> The type of the keys in this association, which must be immutable.
  * @param <V> The type of the values in this association, which should be immutable.
  */
-public interface Association<K, V> {
+public interface Association<K, V> extends Iterable<Pair<K, V>> {
 
     /**
      *  An alternative to {@code Association.class} which also includes the parameter

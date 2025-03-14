@@ -14,7 +14,7 @@ import java.util.function.Function;
  *  be observed for changes using {@link Action}s registered through the {@link Viewable#onChange(Channel, Action)} method,
  *  where the {@link Channel} is used to distinguish between changes from
  *  different sources (usually application layers like the view model or the view).<br>
- *  Use {@link #view()} to access a simple no-op life view of the item of this property
+ *  Use {@link #view()} to access a simple no-op live view of the item of this property
  *  and register change listeners on it to react to state changes.
  *  <p>
  *  The {@link Channel} constant passed to {@link Viewable#onChange(Channel, Action)} ensures that the

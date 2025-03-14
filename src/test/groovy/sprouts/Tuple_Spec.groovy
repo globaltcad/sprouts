@@ -749,4 +749,41 @@ class Tuple_Spec extends Specification
             indices2 == Tuple.of(Integer)
     }
 
+    def 'The `Tuple` class support all kinds of nullable types.'(
+        Class<?> itemType, List<Object> items
+    ) {
+        reportInfo """
+            The `Tuple` class supports null items when using
+            the `Tuple.ofNullable` factory method.
+        """
+        given : 'An empty tuple for the given type.'
+            var tuple = Tuple.ofNullable(itemType)
+        expect : 'The tuple is empty and reports the correct type and nullability.'
+            tuple.isEmpty()
+            tuple.allowsNull()
+            tuple.type() == itemType
+
+        when : 'We add some items to the tuple.'
+            for (var item : items) {
+                tuple = tuple.add(item)
+            }
+        then :
+            tuple.size() == items.size()
+            tuple.toList() == items
+
+        where : 'We use the following table to test different nullable types.'
+            itemType   | items
+            Integer    | [1, 2, 3, null, 5, 6, 7]
+            String     | ["hello", "world", null, "from", "Sprouts"]
+            Boolean    | [true, false, null, true, false, true]
+            Double     | [1d, 2d, 3d, null, 5d, 6d, 7d]
+            Float      | [1.0f, 2.0f, 3.0f, null, 5.0f, 6.0f, 7.0f]
+            Long       | [1L, 2L, 3L, null, 5L, 6L, 7L]
+            Short      | [1 as short, 2 as short, 3 as short, null, 5 as short, 6 as short, 7 as short]
+            Byte       | [1 as byte, 2 as byte, 3 as byte, null, 5 as byte, 6 as byte, 7 as byte]
+            Character  | ['a' as char, 'b' as char, 'c' as char, null, 'e' as char, 'f' as char, 'g' as char]
+            BigDecimal | [BigDecimal.ONE, BigDecimal.TEN, null, BigDecimal.ZERO, BigDecimal.ONE.negate()]
+            BigInteger | [BigInteger.ONE, BigInteger.TEN, null, BigInteger.ZERO, BigInteger.ONE.negate()]
+    }
+
 }
