@@ -5,6 +5,8 @@ import spock.lang.Specification
 import spock.lang.Subject
 import spock.lang.Title
 
+import java.util.stream.Stream
+
 @Title("Associations")
 @Narrative('''
 
@@ -809,5 +811,27 @@ class Association_Spec extends Specification
             entries.contains(Pair.of("x", 1))
             entries.contains(Pair.of("y", 2))
             entries.contains(Pair.of("z", 3))
+    }
+
+    def 'Use `Association.collectorOf(Class,Class)` to collect a stream of `Pair`s into a new `Association`.'() {
+        given:
+            var sentence = Stream.of(
+                Pair.of(0, "I"),
+                Pair.of(1, "watch"),
+                Pair.of(2, "dominion"),
+                Pair.of(3, "documentary"),
+                Pair.of(4, "on"),
+                Pair.of(5, "www.dominionmovement.com")
+            )
+        when:
+            var associations = sentence.collect(Association.collectorOf(Integer, String))
+        then:
+            associations.size() == 6
+            associations.get(0).get() == "I"
+            associations.get(1).get() == "watch"
+            associations.get(2).get() == "dominion"
+            associations.get(3).get() == "documentary"
+            associations.get(4).get() == "on"
+            associations.get(5).get() == "www.dominionmovement.com"
     }
 }

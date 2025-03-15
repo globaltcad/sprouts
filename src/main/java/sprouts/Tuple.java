@@ -67,8 +67,10 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @param type The common type of the items in the tuple to be created.
      * @return A collector that collects a stream of items into a new tuple of non-nullable items.
      * @param <T> The type of the items in the tuple.
+     * @throws NullPointerException If the supplied type is null.
      */
     static <T> Collector<T, ?, Tuple<T>> collectorOf( Class<T> type ) {
+        Objects.requireNonNull(type);
         return Collector.of(
                 (Supplier<List<T>>) ArrayList::new,
                 List::add,

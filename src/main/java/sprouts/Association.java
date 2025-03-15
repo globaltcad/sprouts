@@ -4,6 +4,8 @@ import sprouts.impl.Sprouts;
 
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
+import java.util.stream.Collector;
 import java.util.stream.Stream;
 
 /**
@@ -54,6 +56,34 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
         Objects.requireNonNull(keyType);
         Objects.requireNonNull(valueType);
         return (Class) Association.class;
+    }
+
+    /**
+     *  A collector that can be used to collect key-value pairs
+     *  from a Java {@link Stream} of {@link Pair} instances into
+     *  an association. The types of the keys and values in the
+     *  association have to be defined when using this collector.
+     *
+     * @param keyType The type of the keys in the association to collect.
+     * @param valueType The type of the values in the resulting association.
+     * @param <K> The type of the keys in the association,
+     *            which must be immutable and have value object semantics.
+     * @param <V> The type of the values in the association, which should be immutable.
+     * @return A collector that can be used to collect key-value pairs into an association.
+     * @throws NullPointerException If any of the supplied type parameters is null.
+     */
+    static <K, V> Collector<Pair<? extends K,? extends V>, ?, Association<K,V>> collectorOf(
+            Class<K> keyType,
+            Class<V> valueType
+    ) {
+        Objects.requireNonNull(keyType);
+        Objects.requireNonNull(valueType);
+        return Collector.of(
+                    (Supplier<List<Pair<? extends K,? extends V>>>) ArrayList::new,
+                    List::add,
+                    (left, right) -> { left.addAll(right); return left; },
+                    list -> Association.between(keyType, valueType).putAll(list)
+                );
     }
 
     /**
