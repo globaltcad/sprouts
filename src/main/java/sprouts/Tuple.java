@@ -24,7 +24,7 @@ import java.util.stream.StreamSupport;
  * <p>
  * The name of this class is short for "tuple". This name was deliberately chosen because
  * as a mathematical object, a tuple is not a place in memory where items are stored,
- * but a factual value object with a size and a sequence of items.<br>
+ * but a sequence of raw pieces of information with value object semantics.<br>
  * So two {@link Tuple} instances with the same items and the same order are considered equal,
  * even if they are not the same object in memory.<br>
  * <p>
