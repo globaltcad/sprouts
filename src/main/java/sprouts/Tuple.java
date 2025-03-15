@@ -63,6 +63,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      *  }</pre>
      *  This will create a new tuple of strings with the items "A", "B" and "C".
      *  If there are null values in the stream, an exception will be thrown.
+     *  Use {@link #collectorOfNullable(Class)} if you want to allow nulls.
      *
      * @param type The common type of the items in the tuple to be created.
      * @return A collector that collects a stream of items into a new tuple of non-nullable items.
