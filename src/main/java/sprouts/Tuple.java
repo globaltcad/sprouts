@@ -24,7 +24,7 @@ import java.util.stream.StreamSupport;
  * <p>
  * The name of this class is short for "tuple". This name was deliberately chosen because
  * as a mathematical object, a tuple is not a place in memory where items are stored,
- * but a factual value object with a size and a sequence of items.<br>
+ * but a sequence of raw pieces of information with value object semantics.<br>
  * So two {@link Tuple} instances with the same items and the same order are considered equal,
  * even if they are not the same object in memory.<br>
  * <p>
@@ -63,12 +63,15 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      *  }</pre>
      *  This will create a new tuple of strings with the items "A", "B" and "C".
      *  If there are null values in the stream, an exception will be thrown.
+     *  Use {@link #collectorOfNullable(Class)} if you want to allow nulls.
      *
      * @param type The common type of the items in the tuple to be created.
      * @return A collector that collects a stream of items into a new tuple of non-nullable items.
      * @param <T> The type of the items in the tuple.
+     * @throws NullPointerException If the supplied type is null.
      */
     static <T> Collector<T, ?, Tuple<T>> collectorOf( Class<T> type ) {
+        Objects.requireNonNull(type);
         return Collector.of(
                 (Supplier<List<T>>) ArrayList::new,
                 List::add,

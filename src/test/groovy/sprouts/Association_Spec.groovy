@@ -5,6 +5,8 @@ import spock.lang.Specification
 import spock.lang.Subject
 import spock.lang.Title
 
+import java.util.stream.Stream
+
 @Title("Associations")
 @Narrative('''
 
@@ -175,15 +177,30 @@ class Association_Spec extends Specification
                 return currentAssoc
             }
 
-        when: 'Apply operations first time'
-            assoc = operationsApplier(assoc)
+        when: 'Apply operations 3 times'
+            3.times { assoc = operationsApplier(assoc) }
         then: 'Immediate invariance'
-            assertInvariance(assoc, map)
+            assoc.size() == map.size()
+            assoc.keySet() == map.keySet()
+            assoc.values().sort().toList() == map.values().sort()
+            assoc.toMap() == map
+        and :
+            map.every { k, v ->
+                assoc.get(k).orElse(null) == v
+            }
+            assoc.every { pair ->
+                pair.second() == map[pair.first()]
+            }
 
-        when: 'Apply operations 10 more times'
-            10.times { assoc = operationsApplier(assoc) }
-        then: 'Stable invariance'
-            assertInvariance(assoc, map)
+        when : 'We verify the `Iterable` implementation of the association by iterating over it.'
+            var pairSet = new HashSet()
+            for ( pair in assoc ) {
+                pairSet.add(pair)
+            }
+        then : 'The pair set is equal to the map and all sizes match.'
+            pairSet.size() == assoc.size()
+            pairSet.size() == map.size()
+            pairSet == map.collect({ k, v -> Pair.of(k, v) }).toSet()
 
         where:
             operations << [
@@ -194,20 +211,6 @@ class Association_Spec extends Specification
                     return new Tuple2(op, randKey)
                 },
             ]
-    }
-
-    // Helper method for invariance assertions
-    void assertInvariance(Association<String,String> assoc, Map<String,String> map) {
-        assert assoc.size() == map.size()
-        assert assoc.keySet() == map.keySet()
-        assert assoc.values().sort().toList() == map.values().sort()
-        assert assoc.toMap() == map
-        map.each { k, v ->
-            assert assoc.get(k).orElse(null) == v
-        }
-        assoc.each { pair ->
-            assert pair.second() == map[pair.first()]
-        }
     }
 
     def 'Two associations the the same operations applied to them are always equal.'(
@@ -590,15 +593,15 @@ class Association_Spec extends Specification
                 Pair.of('w' as char, "was"),
                 Pair.of('a' as char, "added"),
                 Pair.of('t' as char, "to"),
-                Pair.of('t' as char, "the"),
-                Pair.of('a' as char, "association")
+                Pair.of('t' as char, "the"), // overwrites the previous value
+                Pair.of('a' as char, "association") // overwrites the previous value
             ])
         then : 'The association contains the values.'
             associations.size() == 4
             associations.get('I' as char).orElseThrow(MissingItemException::new) == "I"
             associations.get('w' as char).orElseThrow(MissingItemException::new) == "was"
-            associations.get('a' as char).orElseThrow(MissingItemException::new) == "added"
-            associations.get('t' as char).orElseThrow(MissingItemException::new) == "to"
+            associations.get('a' as char).orElseThrow(MissingItemException::new) == "association"
+            associations.get('t' as char).orElseThrow(MissingItemException::new) == "the"
     }
 
     def 'The `putIfAbsent(K, V)` method adds a key-value pair to the association if, and only if, the key is not present.'() {
@@ -809,5 +812,27 @@ class Association_Spec extends Specification
             entries.contains(Pair.of("x", 1))
             entries.contains(Pair.of("y", 2))
             entries.contains(Pair.of("z", 3))
+    }
+
+    def 'Use `Association.collectorOf(Class,Class)` to collect a stream of `Pair`s into a new `Association`.'() {
+        given:
+            var sentence = Stream.of(
+                Pair.of(0, "I"),
+                Pair.of(1, "watch"),
+                Pair.of(2, "dominion"),
+                Pair.of(3, "documentary"),
+                Pair.of(4, "on"),
+                Pair.of(5, "www.dominionmovement.com")
+            )
+        when:
+            var associations = sentence.collect(Association.collectorOf(Integer, String))
+        then:
+            associations.size() == 6
+            associations.get(0).get() == "I"
+            associations.get(1).get() == "watch"
+            associations.get(2).get() == "dominion"
+            associations.get(3).get() == "documentary"
+            associations.get(4).get() == "on"
+            associations.get(5).get() == "www.dominionmovement.com"
     }
 }

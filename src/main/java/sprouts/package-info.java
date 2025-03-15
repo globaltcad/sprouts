@@ -1,17 +1,25 @@
 /**
- *  This is the main package for the Sprouts property framework
+ *  This is the main package for the Sprouts property collections library
  *  designed to provide all necessary tools to implement common architectural
- *  design patterns like MVVM, MVI, MVL, etc. <br>
- *  It is specifically designed in conjunction with the
- *  <a href="https://github.com/globaltcad/swing-tree">the SwingTree GUI Framework</a>
+ *  design patterns like MVVM, MVI, MVL, based on data oriented programming
+ *  principles (immutability, value objects, lenses, circular data flow, etc.). <br>
+ *  <br>
+ *  It was designed in conjunction with the
+ *  <a href="https://github.com/globaltcad/swing-tree">SwingTree GUI Framework</a>,
  *  which has native support for binding to the Sprouts properties. <br>
  *  <p>
- *  It is recommended to use the Sprouts
- *  properties as a tool for interoperability between GUI code
- *  and immutable view models resembling the MVI/MVL pattern.
+ *  We recommended using Sprouts as a tool for bridging the gap between
+ *  place oriented programming and data oriented programming,
+ *  which is especially useful in GUI programming, where data oriented / functional
+ *  programming principles are hard to apply due to the inherently place oriented
+ *  nature of GUI components. <br>
+ *  Sprouts allows you to create lens based properties that make value object based
+ *  view models interoperate with your GUI components or other kinds of views. <br>
+ *  This is best achieved using the MVI (Model-View-Intent) and MVL (Model-View-Lens) patterns. <br>
  *  <p>
  *  Here an example demonstrating how to create
- *  a set of bindable properties from a basic modelling scenario: <br>
+ *  a set of bindable properties from a basic record based
+ *  modelling scenario: <br>
  *  <b>View Models:</b>
  *  <pre>{@code
  *    public record Address(

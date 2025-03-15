@@ -3,6 +3,9 @@ package sprouts;
 import sprouts.impl.Sprouts;
 
 import java.util.*;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
+import java.util.stream.Collector;
 import java.util.stream.Stream;
 
 /**
@@ -17,13 +20,14 @@ import java.util.stream.Stream;
  *  after it has been created. Instead, you may create
  *  a new association with the desired changes using
  *  methods like {@link #put(Object, Object)} or
- *  {@link #remove(Object)}.<br>
+ *  {@link #remove(Object)}, which will return a new
+ *  association with the changes applied.<br>
  *  <p><b>
  *      Note: Mutable objects should not be stored in an
- *      association, especially keys, whose hash code
+ *      association, especially keys, whose hash codes
  *      and equality has to stay constant for the lifetime
- *      of the association because the association assumes
- *      that their behavior does not change.
+ *      of the association, which assumes that their behavior
+ *      does not change (key code hash caching for example).
  *      The behavior of this class is uncertain if a key
  *      is changed in a manner that affects equals
  *      or hashCode after it has been added to the association.
@@ -52,6 +56,45 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
         Objects.requireNonNull(keyType);
         Objects.requireNonNull(valueType);
         return (Class) Association.class;
+    }
+
+    /**
+     *  A collector that can be used to collect key-value pairs
+     *  from a Java {@link Stream} of {@link Pair} instances into
+     *  an association. The types of the keys and values in the
+     *  association have to be defined when using this collector.<br>
+     *  Here is an example demonstrating how this method may be used:<br>
+     *  <pre>{@code
+     *    var assoc = Stream.of("a", "b", "c")
+     *                .map( it -> Pair.of(it.hashCode(), it.toUpperCase()) )
+     *                .collect(Association.collectorOf(Integer.class, String.class));
+     *  }</pre>
+     *  This will create a new association between integers and strings
+     *  where the integers are the hash codes of the strings and the
+     *  values are the upper case versions of the strings.<br>
+     *  If there are null values in the stream, an exception will be thrown,
+     *  because an association cannot contain null keys or values.
+     *
+     * @param keyType The type of the keys in the association to collect.
+     * @param valueType The type of the values in the resulting association.
+     * @param <K> The type of the keys in the association,
+     *            which must be immutable and have value object semantics.
+     * @param <V> The type of the values in the association, which should be immutable.
+     * @return A collector that can be used to collect key-value pairs into an association.
+     * @throws NullPointerException If any of the supplied type parameters is null.
+     */
+    static <K, V> Collector<Pair<? extends K,? extends V>, ?, Association<K,V>> collectorOf(
+            Class<K> keyType,
+            Class<V> valueType
+    ) {
+        Objects.requireNonNull(keyType);
+        Objects.requireNonNull(valueType);
+        return Collector.of(
+                    (Supplier<List<Pair<? extends K,? extends V>>>) ArrayList::new,
+                    List::add,
+                    (left, right) -> { left.addAll(right); return left; },
+                    list -> Association.between(keyType, valueType).putAll(list)
+                );
     }
 
     /**
@@ -104,6 +147,16 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
      */
     default boolean isEmpty() {
         return size() == 0;
+    }
+
+    /**
+     *  Checks if this association is not empty and returns
+     *  {@code true} if it is not, otherwise {@code false}.
+     *
+     * @return {@code true} if this association is not empty, otherwise {@code false}.
+     */
+    default boolean isNotEmpty() {
+        return !isEmpty();
     }
 
     /**
@@ -554,4 +607,41 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
      * @return A java.util.Map representation of this association.
      */
     Map<K, V> toMap();
+
+    /**
+     *  Checks if any of the key/value pairs in this association match the given predicate
+     *  and returns {@code true} if any of them do, otherwise {@code false}.
+     *  @param predicate The predicate to check.
+     *  @return True if any of the key/value pairs in this association match the given predicate.
+     *  @throws NullPointerException if the predicate is {@code null}.
+     */
+    default boolean any( Predicate<Pair<K,V>> predicate ) {
+        Objects.requireNonNull(predicate);
+        return this.entrySet().stream().anyMatch( predicate );
+    }
+
+    /**
+     *  Checks if all the key/value pairs in this association match the given predicate
+     *  and returns {@code true} if all of them do, otherwise {@code false}.
+     *  @param predicate The predicate to check.
+     *  @return True if all the key/value pairs in this association match the given predicate.
+     *  @throws NullPointerException if the predicate is {@code null}.
+     */
+    default boolean all( Predicate<Pair<K,V>> predicate ) {
+        Objects.requireNonNull(predicate);
+        return this.entrySet().stream().allMatch( predicate );
+    }
+
+    /**
+     *  Checks if none of the key/value pairs in this association match the given predicate
+     *  and returns {@code true} if none of them do, otherwise {@code false}.
+     *  @param predicate The predicate to run over all key/value pairs.
+     *  @return True if none of the key/value pairs in this association match the given predicate.
+     *  @throws NullPointerException if the predicate is {@code null}.
+     */
+    default boolean none( Predicate<Pair<K,V>> predicate ) {
+        Objects.requireNonNull(predicate);
+        return this.entrySet().stream().noneMatch( predicate );
+    }
+
 }

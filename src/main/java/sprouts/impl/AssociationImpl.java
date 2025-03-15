@@ -459,11 +459,9 @@ final class AssociationImpl<K, V> implements Association<K, V> {
     }
 
     @Override
-    public Association<K, V> putAll(Stream<Pair<? extends K, ? extends V>> entries) {
+    public Association<K, V> putAll( Stream<Pair<? extends K, ? extends V>> entries ) {
         Objects.requireNonNull(entries);
-        if ( this.isEmpty() )
-            return new AssociationImpl<>(_keyType, _valueType, entries);
-
+        // TODO: implement branching based bulk insert
         AssociationImpl<K, V> result = this;
         // reduce the stream to a single association
         return entries.reduce(
@@ -474,7 +472,7 @@ final class AssociationImpl<K, V> implements Association<K, V> {
     }
 
     @Override
-    public Association<K, V> removeAll(Set<? extends K> keys) {
+    public Association<K, V> removeAll( Set<? extends K> keys ) {
         if ( this.isEmpty() || keys.isEmpty() )
             return this;
         Association<K, V> result = this;
@@ -485,7 +483,7 @@ final class AssociationImpl<K, V> implements Association<K, V> {
     }
 
     @Override
-    public Association<K, V> retainAll(Set<? extends K> keys) {
+    public Association<K, V> retainAll( Set<? extends K> keys ) {
         if ( this.isEmpty() || keys.isEmpty() )
             return this;
         Association<K, V> result = this;
@@ -498,7 +496,7 @@ final class AssociationImpl<K, V> implements Association<K, V> {
     }
 
     @Override
-    public Association<K, V> replace(K key, V value) {
+    public Association<K, V> replace( K key, V value ) {
         if ( this.containsKey(key) ) {
             return this.put(key, value);
         } else {
@@ -507,7 +505,7 @@ final class AssociationImpl<K, V> implements Association<K, V> {
     }
 
     @Override
-    public Association<K, V> replaceAll(Stream<Pair<? extends K, ? extends V>> stream) {
+    public Association<K, V> replaceAll( Stream<Pair<? extends K, ? extends V>> stream ) {
         Objects.requireNonNull(stream);
         Association<K, V> result = this;
         // reduce the stream to a single association
@@ -530,7 +528,7 @@ final class AssociationImpl<K, V> implements Association<K, V> {
         return Collections.unmodifiableMap(map);
     }
 
-    private void _toMapRecursively(Map<K, V> map) {
+    private void _toMapRecursively( Map<K, V> map ) {
         int size = _length(_keysArray);
         for (int i = 0; i < size; i++) {
             K key = _getAt(i, _keysArray, _keyType);
@@ -560,7 +558,7 @@ final class AssociationImpl<K, V> implements Association<K, V> {
         return sb.toString();
     }
 
-    private StringBuilder _appendRecursivelyUpTo(StringBuilder sb, int size) {
+    private StringBuilder _appendRecursivelyUpTo( StringBuilder sb, int size ) {
         int howMany = Math.min(size, _length(_keysArray));
         for (int i = 0; i < howMany; i++) {
             K key = _getAt(i, _keysArray, _keyType);
@@ -586,7 +584,7 @@ final class AssociationImpl<K, V> implements Association<K, V> {
         return sb;
     }
 
-    private static String _toString(@Nullable Object singleItem, Class<?> type) {
+    private static String _toString( @Nullable Object singleItem, Class<?> type ) {
         if ( singleItem == null ) {
             return "null";
         } else if ( type == String.class ) {
@@ -631,8 +629,8 @@ final class AssociationImpl<K, V> implements Association<K, V> {
         long baseHash = 0; // -> full 64 bit improve hash distribution
         int size = _length(_keysArray);
         for (int i = 0; i < size; i++) {
-            K key = _getAt(i, _keysArray, _keyType);
-            V value = _getAt(i, _valuesArray, _valueType);
+            Object key   = Array.get(_keysArray, i);
+            Object value = Array.get(_valuesArray, i);
             baseHash += _fullKeyPairHash(key, value);
         }
         for (AssociationImpl<K, V> branch : _branches) {
@@ -643,11 +641,11 @@ final class AssociationImpl<K, V> implements Association<K, V> {
         return baseHash;
     }
 
-    private static long _fullKeyPairHash(@Nullable Object key, @Nullable Object value) {
-        return _combine(key == null ? 0 : key.hashCode(), value == null ? 0 : value.hashCode());
+    private static long _fullKeyPairHash( Object key, Object value ) {
+        return _combine(key.hashCode(), value.hashCode());
     }
 
-    private static long _combine(int first32Bits, int last32Bits) {
+    private static long _combine( int first32Bits, int last32Bits ) {
         return (long) first32Bits << 32 | (last32Bits & 0xFFFFFFFFL);
     }
 
