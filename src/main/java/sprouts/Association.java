@@ -3,6 +3,7 @@ package sprouts;
 import sprouts.impl.Sprouts;
 
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 /**
@@ -17,13 +18,14 @@ import java.util.stream.Stream;
  *  after it has been created. Instead, you may create
  *  a new association with the desired changes using
  *  methods like {@link #put(Object, Object)} or
- *  {@link #remove(Object)}.<br>
+ *  {@link #remove(Object)}, which will return a new
+ *  association with the changes applied.<br>
  *  <p><b>
  *      Note: Mutable objects should not be stored in an
- *      association, especially keys, whose hash code
+ *      association, especially keys, whose hash codes
  *      and equality has to stay constant for the lifetime
- *      of the association because the association assumes
- *      that their behavior does not change.
+ *      of the association, which assumes that their behavior
+ *      does not change (key code hash caching for example).
  *      The behavior of this class is uncertain if a key
  *      is changed in a manner that affects equals
  *      or hashCode after it has been added to the association.
@@ -104,6 +106,16 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
      */
     default boolean isEmpty() {
         return size() == 0;
+    }
+
+    /**
+     *  Checks if this association is not empty and returns
+     *  {@code true} if it is not, otherwise {@code false}.
+     *
+     * @return {@code true} if this association is not empty, otherwise {@code false}.
+     */
+    default boolean isNotEmpty() {
+        return !isEmpty();
     }
 
     /**
@@ -554,4 +566,41 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
      * @return A java.util.Map representation of this association.
      */
     Map<K, V> toMap();
+
+    /**
+     *  Checks if any of the key/value pairs in this association match the given predicate
+     *  and returns {@code true} if any of them do, otherwise {@code false}.
+     *  @param predicate The predicate to check.
+     *  @return True if any of the key/value pairs in this association match the given predicate.
+     *  @throws NullPointerException if the predicate is {@code null}.
+     */
+    default boolean any( Predicate<Pair<K,V>> predicate ) {
+        Objects.requireNonNull(predicate);
+        return this.entrySet().stream().anyMatch( predicate );
+    }
+
+    /**
+     *  Checks if all the key/value pairs in this association match the given predicate
+     *  and returns {@code true} if all of them do, otherwise {@code false}.
+     *  @param predicate The predicate to check.
+     *  @return True if all the key/value pairs in this association match the given predicate.
+     *  @throws NullPointerException if the predicate is {@code null}.
+     */
+    default boolean all( Predicate<Pair<K,V>> predicate ) {
+        Objects.requireNonNull(predicate);
+        return this.entrySet().stream().allMatch( predicate );
+    }
+
+    /**
+     *  Checks if none of the key/value pairs in this association match the given predicate
+     *  and returns {@code true} if none of them do, otherwise {@code false}.
+     *  @param predicate The predicate to run over all key/value pairs.
+     *  @return True if none of the key/value pairs in this association match the given predicate.
+     *  @throws NullPointerException if the predicate is {@code null}.
+     */
+    default boolean none( Predicate<Pair<K,V>> predicate ) {
+        Objects.requireNonNull(predicate);
+        return this.entrySet().stream().noneMatch( predicate );
+    }
+
 }
