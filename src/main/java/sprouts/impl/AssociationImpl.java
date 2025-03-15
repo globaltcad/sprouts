@@ -629,8 +629,8 @@ final class AssociationImpl<K, V> implements Association<K, V> {
         long baseHash = 0; // -> full 64 bit improve hash distribution
         int size = _length(_keysArray);
         for (int i = 0; i < size; i++) {
-            K key = _getAt(i, _keysArray, _keyType);
-            V value = _getAt(i, _valuesArray, _valueType);
+            Object key   = Array.get(_keysArray, i);
+            Object value = Array.get(_valuesArray, i);
             baseHash += _fullKeyPairHash(key, value);
         }
         for (AssociationImpl<K, V> branch : _branches) {
@@ -641,8 +641,8 @@ final class AssociationImpl<K, V> implements Association<K, V> {
         return baseHash;
     }
 
-    private static long _fullKeyPairHash( @Nullable Object key, @Nullable Object value ) {
-        return _combine(key == null ? 0 : key.hashCode(), value == null ? 0 : value.hashCode());
+    private static long _fullKeyPairHash( Object key, Object value ) {
+        return _combine(key.hashCode(), value.hashCode());
     }
 
     private static long _combine( int first32Bits, int last32Bits ) {
