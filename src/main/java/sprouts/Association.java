@@ -62,7 +62,18 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
      *  A collector that can be used to collect key-value pairs
      *  from a Java {@link Stream} of {@link Pair} instances into
      *  an association. The types of the keys and values in the
-     *  association have to be defined when using this collector.
+     *  association have to be defined when using this collector.<br>
+     *  Here is an example demonstrating how this method may be used:<br>
+     *  <pre>{@code
+     *    var assoc = Stream.of("a", "b", "c")
+     *                .map( it -> Pair.of(it.hashCode(), it.toUpperCase()) )
+     *                .collect(Association.collectorOf(Integer.class, String.class));
+     *  }</pre>
+     *  This will create a new association between integers and strings
+     *  where the integers are the hash codes of the strings and the
+     *  values are the upper case versions of the strings.<br>
+     *  If there are null values in the stream, an exception will be thrown,
+     *  because an association cannot contain null keys or values.
      *
      * @param keyType The type of the keys in the association to collect.
      * @param valueType The type of the values in the resulting association.
