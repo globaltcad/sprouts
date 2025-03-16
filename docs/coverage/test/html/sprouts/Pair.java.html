@@ -34,7 +34,7 @@ public final class Pair&lt;F extends @Nullable Object,S extends @Nullable Object
      * @throws NullPointerException If any of the supplied type parameters is null.
      */
     @SuppressWarnings(&quot;unchecked&quot;)
-    static &lt;F, S&gt; Class&lt;Pair&lt;F, S&gt;&gt; classTyped(Class&lt;F&gt; firstType, Class&lt;S&gt; secondType) {
+    public static &lt;F, S&gt; Class&lt;Pair&lt;F, S&gt;&gt; classTyped(Class&lt;F&gt; firstType, Class&lt;S&gt; secondType) {
 <span class="nc" id="L38">        Objects.requireNonNull(firstType);</span>
 <span class="nc" id="L39">        Objects.requireNonNull(secondType);</span>
 <span class="nc" id="L40">        return (Class) Pair.class;</span>
@@ -110,7 +110,7 @@ public final class Pair&lt;F extends @Nullable Object,S extends @Nullable Object
 <span class="pc bpc" id="L110" title="2 of 4 branches missed.">        if ( obj == null || getClass() != obj.getClass() )</span>
 <span class="nc" id="L111">            return false;</span>
 <span class="fc" id="L112">        Pair&lt;?, ?&gt; pair = (Pair&lt;?, ?&gt;) obj;</span>
-<span class="pc bpc" id="L113" title="3 of 4 branches missed.">        return Objects.equals(_first, pair._first) &amp;&amp; Objects.equals(_second, pair._second);</span>
+<span class="pc bpc" id="L113" title="1 of 4 branches missed.">        return Objects.equals(_first, pair._first) &amp;&amp; Objects.equals(_second, pair._second);</span>
     }
 
     @Override

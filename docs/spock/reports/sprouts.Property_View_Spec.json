@@ -5,8 +5,8 @@
   "subjects":["sprouts.Viewable","sprouts.Var","sprouts.Val","sprouts.Vars","sprouts.Vals"],
   "statistics":{
     "runs":"25",
-    "successRate":"92.0%",
-    "failures":"2",
+    "successRate":"100.0%",
+    "failures":"0",
     "errors":"0",
     "skipped":"0",
     "duration":"?"
@@ -59,7 +59,7 @@
   
     {
       "id":"Map null to custom values when viewing them as primitive types.",
-      "result":"FAIL",
+      "result":"PASS",
       "duration":"?",
       "iterations":{
       "tags":{},"see":[],"extraInfo":["\n            When viewing a nullable property as a primitive type, you can map the null values to\n            custom values of the given type.\n        "]
@@ -77,7 +77,7 @@
 
         {"kind":"then","text":"The views are updated.","code":["randomInt.get() == -1155484576","randomDouble.get() == 0.8314409887870612","randomShort.get() == 28862","randomString.get() == \"Random\""]}
       ],
-      "problems":{"dataValues":["[]"], "errors":["[Condition not satisfied:\n\nrandomInt.get() == -1155484576\n|         |     |\n|         |     false\n|         -65105105\nView<Integer>[-65105105]\n]"]}
+      "problems":{"dataValues":[], "errors":[]}
     },
   
     {
@@ -425,7 +425,7 @@
   
     {
       "id":"The channel of a property change event will propagate to its views.",
-      "result":"FAIL",
+      "result":"PASS",
       "duration":"?",
       "iterations":{
       "tags":{},"see":[],"extraInfo":["\n            Every mutation to a property can have a channel associated with it.\n            You can call the `Var.set(Channel,T)` method to mutate the property with a custom channel,\n            and then in your change listeners you can check the channel on the property delegate!\n\n            This exact same principle is also true for the views of a property\n            whose change event listeners will also receive the channel of the origin property.\n        "]
@@ -441,7 +441,7 @@
 
         {"kind":"then","text":"The listeners are notified of the new value of the views with the correct channels.","code":["trace1 == [From.ALL, From.VIEW, From.VIEW_MODEL]","trace2 == [From.ALL, From.VIEW]","trace3 == [From.ALL, From.VIEW_MODEL]"]}
       ],
-      "problems":{"dataValues":["[]"], "errors":["[Condition not satisfied:\n\ntrace1 == [From.ALL, From.VIEW, From.VIEW_MODEL]\n|      |   |         |          |\n|      |   |         |          class sprouts.From\n|      |   |         class sprouts.From\n|      |   class sprouts.From\n|      false\n[ALL, ALL, ALL, ALL, VIEW, VIEW, VIEW, VIEW, VIEW_MODEL, VIEW_MODEL, VIEW_MODEL, VIEW_MODEL]\n]"]}
+      "problems":{"dataValues":[], "errors":[]}
     },
   
     {

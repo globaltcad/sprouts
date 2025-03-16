@@ -137,8 +137,8 @@ public final class TupleImpl&lt;T extends @Nullable Object&gt; implements Tuple&
 
     @Override
     public Tuple&lt;T&gt; addAt( int index, T item ) {
-<span class="pc bpc" id="L140" title="2 of 4 branches missed.">        if ( !this.allowsNull() &amp;&amp; item == null )</span>
-<span class="nc" id="L141">            throw new NullPointerException();</span>
+<span class="fc bfc" id="L140" title="All 4 branches covered.">        if ( !this.allowsNull() &amp;&amp; item == null )</span>
+<span class="fc" id="L141">            throw new NullPointerException();</span>
 <span class="pc bpc" id="L142" title="2 of 4 branches missed.">        if ( index &lt; 0 || index &gt; _length(_data) )</span>
 <span class="nc" id="L143">            throw new IndexOutOfBoundsException();</span>
 <span class="fc" id="L144">        Object newItems = _withAddAt(index, item, _data, _type, _allowsNull);</span>

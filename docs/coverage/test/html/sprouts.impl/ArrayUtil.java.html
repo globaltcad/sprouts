@@ -184,64 +184,66 @@ class ArrayUtil {
     }
 
     static int _length( Object array ) {
-<span class="fc bfc" id="L187" title="All 2 branches covered.">        if ( array instanceof byte[] )</span>
-<span class="fc" id="L188">            return ((byte[]) array).length;</span>
-<span class="fc bfc" id="L189" title="All 2 branches covered.">        if ( array instanceof short[] )</span>
-<span class="fc" id="L190">            return ((short[]) array).length;</span>
-<span class="fc bfc" id="L191" title="All 2 branches covered.">        if ( array instanceof int[] )</span>
-<span class="fc" id="L192">            return ((int[]) array).length;</span>
-<span class="fc bfc" id="L193" title="All 2 branches covered.">        if ( array instanceof long[] )</span>
-<span class="fc" id="L194">            return ((long[]) array).length;</span>
-<span class="fc bfc" id="L195" title="All 2 branches covered.">        if ( array instanceof float[] )</span>
-<span class="fc" id="L196">            return ((float[]) array).length;</span>
-<span class="fc bfc" id="L197" title="All 2 branches covered.">        if ( array instanceof double[] )</span>
-<span class="fc" id="L198">            return ((double[]) array).length;</span>
-<span class="fc bfc" id="L199" title="All 2 branches covered.">        if ( array instanceof char[] )</span>
-<span class="fc" id="L200">            return ((char[]) array).length;</span>
-<span class="fc bfc" id="L201" title="All 2 branches covered.">        if ( array instanceof boolean[] )</span>
-<span class="fc" id="L202">            return ((boolean[]) array).length;</span>
-<span class="fc" id="L203">        return java.lang.reflect.Array.getLength(array);</span>
+<span class="fc bfc" id="L187" title="All 2 branches covered.">        if ( array instanceof Object[] )</span>
+<span class="fc" id="L188">            return java.lang.reflect.Array.getLength(array);</span>
+<span class="fc bfc" id="L189" title="All 2 branches covered.">        if ( array instanceof int[] )</span>
+<span class="fc" id="L190">            return ((int[]) array).length;</span>
+<span class="fc bfc" id="L191" title="All 2 branches covered.">        if ( array instanceof double[] )</span>
+<span class="fc" id="L192">            return ((double[]) array).length;</span>
+<span class="fc bfc" id="L193" title="All 2 branches covered.">        if ( array instanceof float[] )</span>
+<span class="fc" id="L194">            return ((float[]) array).length;</span>
+<span class="fc bfc" id="L195" title="All 2 branches covered.">        if ( array instanceof byte[] )</span>
+<span class="fc" id="L196">            return ((byte[]) array).length;</span>
+<span class="fc bfc" id="L197" title="All 2 branches covered.">        if ( array instanceof long[] )</span>
+<span class="fc" id="L198">            return ((long[]) array).length;</span>
+<span class="fc bfc" id="L199" title="All 2 branches covered.">        if ( array instanceof short[] )</span>
+<span class="fc" id="L200">            return ((short[]) array).length;</span>
+<span class="fc bfc" id="L201" title="All 2 branches covered.">        if ( array instanceof char[] )</span>
+<span class="fc" id="L202">            return ((char[]) array).length;</span>
+<span class="pc bpc" id="L203" title="1 of 2 branches missed.">        if ( array instanceof boolean[] )</span>
+<span class="fc" id="L204">            return ((boolean[]) array).length;</span>
+<span class="nc" id="L205">        return java.lang.reflect.Array.getLength(array);</span>
     }
 
     static Object _clone( Object array, Class&lt;?&gt; type, boolean nullable ) {
-<span class="fc" id="L207">        int length = _length(array);</span>
-<span class="fc" id="L208">        Object clone = _createArray(type, nullable, length);</span>
-<span class="fc" id="L209">        System.arraycopy(array, 0, clone, 0, length);</span>
-<span class="fc" id="L210">        return clone;</span>
+<span class="fc" id="L209">        int length = _length(array);</span>
+<span class="fc" id="L210">        Object clone = _createArray(type, nullable, length);</span>
+<span class="fc" id="L211">        System.arraycopy(array, 0, clone, 0, length);</span>
+<span class="fc" id="L212">        return clone;</span>
     }
 
     static void _sort( Object array, Comparator&lt;?&gt; comparator ) {
-<span class="fc bfc" id="L214" title="All 2 branches covered.">        if ( array instanceof byte[] )</span>
-<span class="fc" id="L215">            java.util.Arrays.sort((byte[]) array);</span>
-<span class="fc bfc" id="L216" title="All 2 branches covered.">        else if ( array instanceof short[] )</span>
-<span class="fc" id="L217">            java.util.Arrays.sort((short[]) array);</span>
-<span class="fc bfc" id="L218" title="All 2 branches covered.">        else if ( array instanceof int[] )</span>
-<span class="fc" id="L219">            java.util.Arrays.sort((int[]) array);</span>
-<span class="fc bfc" id="L220" title="All 2 branches covered.">        else if ( array instanceof long[] )</span>
-<span class="fc" id="L221">            java.util.Arrays.sort((long[]) array);</span>
-<span class="fc bfc" id="L222" title="All 2 branches covered.">        else if ( array instanceof float[] )</span>
-<span class="fc" id="L223">            java.util.Arrays.sort((float[]) array);</span>
-<span class="fc bfc" id="L224" title="All 2 branches covered.">        else if ( array instanceof double[] )</span>
-<span class="fc" id="L225">            java.util.Arrays.sort((double[]) array);</span>
-<span class="fc bfc" id="L226" title="All 2 branches covered.">        else if ( array instanceof char[] )</span>
-<span class="fc" id="L227">            java.util.Arrays.sort((char[]) array);</span>
-<span class="fc bfc" id="L228" title="All 2 branches covered.">        else if ( array instanceof boolean[] ) {</span>
-<span class="fc" id="L229">            int numberOfFalse = 0;</span>
-<span class="fc bfc" id="L230" title="All 2 branches covered.">            for ( boolean b : (boolean[]) array ) {</span>
-<span class="fc bfc" id="L231" title="All 2 branches covered.">                if ( !b )</span>
-<span class="fc" id="L232">                    numberOfFalse++;</span>
+<span class="fc bfc" id="L216" title="All 2 branches covered.">        if ( array instanceof byte[] )</span>
+<span class="fc" id="L217">            java.util.Arrays.sort((byte[]) array);</span>
+<span class="fc bfc" id="L218" title="All 2 branches covered.">        else if ( array instanceof short[] )</span>
+<span class="fc" id="L219">            java.util.Arrays.sort((short[]) array);</span>
+<span class="fc bfc" id="L220" title="All 2 branches covered.">        else if ( array instanceof int[] )</span>
+<span class="fc" id="L221">            java.util.Arrays.sort((int[]) array);</span>
+<span class="fc bfc" id="L222" title="All 2 branches covered.">        else if ( array instanceof long[] )</span>
+<span class="fc" id="L223">            java.util.Arrays.sort((long[]) array);</span>
+<span class="fc bfc" id="L224" title="All 2 branches covered.">        else if ( array instanceof float[] )</span>
+<span class="fc" id="L225">            java.util.Arrays.sort((float[]) array);</span>
+<span class="fc bfc" id="L226" title="All 2 branches covered.">        else if ( array instanceof double[] )</span>
+<span class="fc" id="L227">            java.util.Arrays.sort((double[]) array);</span>
+<span class="fc bfc" id="L228" title="All 2 branches covered.">        else if ( array instanceof char[] )</span>
+<span class="fc" id="L229">            java.util.Arrays.sort((char[]) array);</span>
+<span class="fc bfc" id="L230" title="All 2 branches covered.">        else if ( array instanceof boolean[] ) {</span>
+<span class="fc" id="L231">            int numberOfFalse = 0;</span>
+<span class="fc bfc" id="L232" title="All 2 branches covered.">            for ( boolean b : (boolean[]) array ) {</span>
+<span class="fc bfc" id="L233" title="All 2 branches covered.">                if ( !b )</span>
+<span class="fc" id="L234">                    numberOfFalse++;</span>
             }
-<span class="fc" id="L234">            java.util.Arrays.fill((boolean[]) array, 0, numberOfFalse, false);</span>
-<span class="fc" id="L235">            java.util.Arrays.fill((boolean[]) array, numberOfFalse, ((boolean[])array).length, true);</span>
-<span class="fc" id="L236">        } else</span>
-<span class="fc" id="L237">            java.util.Arrays.sort((Object[]) array, (Comparator) comparator);</span>
-<span class="fc" id="L238">    }</span>
+<span class="fc" id="L236">            java.util.Arrays.fill((boolean[]) array, 0, numberOfFalse, false);</span>
+<span class="fc" id="L237">            java.util.Arrays.fill((boolean[]) array, numberOfFalse, ((boolean[])array).length, true);</span>
+<span class="fc" id="L238">        } else</span>
+<span class="fc" id="L239">            java.util.Arrays.sort((Object[]) array, (Comparator) comparator);</span>
+<span class="fc" id="L240">    }</span>
 
     static &lt;T&gt; void _each( Object array, Class&lt;T&gt; type, java.util.function.Consumer&lt;T&gt; consumer ) {
-<span class="fc bfc" id="L241" title="All 2 branches covered.">        for ( int i = 0; i &lt; _length(array); i++ ) {</span>
-<span class="fc" id="L242">            consumer.accept(_getAt(i, array, type));</span>
+<span class="fc bfc" id="L243" title="All 2 branches covered.">        for ( int i = 0; i &lt; _length(array); i++ ) {</span>
+<span class="fc" id="L244">            consumer.accept(_getAt(i, array, type));</span>
         }
-<span class="fc" id="L244">    }</span>
+<span class="fc" id="L246">    }</span>
 
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>
