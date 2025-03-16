@@ -128,16 +128,94 @@
                                         <div id="DynamicContent" class="ContentBox row g-2">
 <div class="MarkdownMe">
 
-# Properties #
+Welcome to the living documentation of the Sprouts library. <br>
 
-The Sprouts API was designed alongside the [Swing-Tree library](https://github.com/globaltcad/swing-tree)
-which is a declarative UI library with built-in MVVM support.
-The properties inside this library are also designed to
-be null safe and functional.
+The Sprouts property collections library is a utility library for bridging the gap
+between modern data oriented programming and classical place oriented
+programming principles through observable lens properties.
+
+It provides all necessary tools to implement common architectural
+design patterns like MVVM, MVI, MVL, specifically for data oriented
+programming (immutable value objects, lenses, circular data flow, etc.). <br>
+
+<br>
+Sprouts was built in conjunction with the
+<a href="https://github.com/globaltcad/swing-tree">SwingTree GUI Framework</a>,
+which has native support for binding to Sprouts properties. <br>
+
+Although you can use Sprouts properties to build classical (mutable)
+property based domain models, we recommended using it as a
+tool for binding frontends to value based domain models in your backend.
+This is especially useful in GUI programming, where data oriented / functional
+programming principles are hard to apply due to the inherently place oriented
+nature of GUI components. <br>
+Sprouts allows you to create lens based properties that make value object based
+view models interoperable with your GUI components or other kinds of views. <br>
+This is best achieved using the MVI (Model-View-Intent) and MVL (Model-View-Lens) patterns. <br>
+
+Here an example demonstrating how to create
+a set of bindable properties from a basic record based
+modelling scenario: <br>
 
 </div>
-                                        </div>
+<b>View Models:</b>
+<code class="hljs language-java"><pre>
+
+  public record Address(
+      String street, String city, int postalCode
+  ) {
+      public Address withStreet(String street) {
+          return new Address(street, city, postalCode);
+      }
+      public Address withCity(String city) {
+          return new Address(street, city, postalCode);
+      }
+      public Address withPostalCode(int postalCode) {
+          return new Address(street, city, postalCode);
+      }
+  }
+
+
+  public record Person(
+      String forename, String surname, Address address
+  ) {
+      public Person withForename(String forename) {
+          return new Person(forename, surname, address);
+      }
+      public Person withSurname(String surname) {
+          return new Person(forename, surname, address);
+      }
+      public Person withAddress(Address address) {
+          return new Person(forename, surname, address);
+      }
+  }
+
+
+</pre></code>
+<b>View:</b>
+<code class="hljs language-java"><pre>
+
+  public final class PersonView {
+      public static void main(String[] args) {
+          Person person = new Person("John", "Doe", new Address("Main Street", "Springfield", 12345));
+          Var&lt;Person&gt; applicationState = Var.of(person);
+          var view = new PersonView(applicationState);
+          // show view
+      }
+      public PersonView(Var&lt;Person> vm) {
+          Var&lt;String&gt; forename = vm.zoomTo(Person::forename, Person::withForename);
+          Var&lt;String&gt; surname = vm.zoomTo(Person::surname, Person::withSurname);
+          Val&lt;String&gt; fullName = vm.viewAsString( person -> person.forename() + " " + person.surname() );
+          Var&lt;Address&gt; address = vm.zoomTo(Person::address, Person::withAddress);
+          Var&lt;String&gt; street = address.zoomTo(Address::street, Address::withStreet);
+          Var&lt;String&gt; city = address.zoomTo(Address::city, Address::withCity);
+          Var&lt;Integer&gt; postalCode = address.zoomTo(Address::postalCode, Address::withPostalCode);
+          // Use mutable properties in the views GUI...
+      }
+  }
+  </pre></code>
                                         <!--------------------------------------------------------------------->
+                                        </div>
                                     </div>
                                 </div>
                             </div>

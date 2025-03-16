@@ -7,6 +7,12 @@ import sprouts.*;
 
 import java.util.*;
 
+/**
+ *  This class is technically an internal class and should not be used directly.
+ *  If you use this class directly, most likely, you are at risk of your code breaking
+ *  in future releases of Sprouts.
+ * @param <T> The type of the property that this listener listens to.
+ */
 public final class PropertyChangeListeners<T>
 {
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(PropertyChangeListeners.class);
@@ -64,6 +70,12 @@ public final class PropertyChangeListeners<T>
         }
     }
 
+    /**
+     *  Returns the number of change listeners that are currently registered.
+     *  This is useful for debugging purposes.
+     *
+     * @return The number of change listeners that are currently registered.
+     */
     public long numberOfChangeListeners() {
         return _actions.values()
                             .stream()

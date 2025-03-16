@@ -5,8 +5,8 @@
   "subjects":[],
   "statistics":{
     "runs":"9",
-    "successRate":"88.89%",
-    "failures":"1",
+    "successRate":"100.0%",
+    "failures":"0",
     "errors":"0",
     "skipped":"0",
     "duration":"?"
@@ -233,7 +233,7 @@
   
     {
       "id":"The change listeners of the parents of composite properties are garbage collected when the composite is no longer referenced strongly.",
-      "result":"FAIL",
+      "result":"PASS",
       "duration":"?",
       "iterations":{
       "tags":{},"see":[],"extraInfo":["\n            A composite property registers weak action listeners on its parent parent properties\n            it is actively viewing.\n            These weak listeners are automatically removed when the composite is garbage collected.\n            So when the property composite is no longer referenced strongly, it should be\n            garbage collected and the weak listeners should be removed\n            from the original properties as well.\n\n            We can verify this by checking the reported number of change listeners.\n        "]
@@ -253,7 +253,7 @@
 
         {"kind":"then","text":"The two parent properties still have 4 change listeners registered.","code":["longProperty.numberOfChangeListeners() == 4","unitProperty.numberOfChangeListeners() == 4"]}
       ],
-      "problems":{"dataValues":["[]"], "errors":["[Condition not satisfied:\n\nlongProperty.numberOfChangeListeners() == 4\n|            |                         |\nVar<Long>[0] 15                        false\n]"]}
+      "problems":{"dataValues":[], "errors":[]}
     }
   
   ],

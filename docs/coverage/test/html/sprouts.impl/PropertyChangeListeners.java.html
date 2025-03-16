@@ -7,91 +7,103 @@ import sprouts.*;
 
 import java.util.*;
 
+/**
+ *  This class is technically an internal class and should not be used directly.
+ *  If you use this class directly, most likely, you are at risk of your code breaking
+ *  in future releases of Sprouts.
+ * @param &lt;T&gt; The type of the property that this listener listens to.
+ */
 public final class PropertyChangeListeners&lt;T&gt;
 {
-<span class="fc" id="L12">    private static final Logger log = org.slf4j.LoggerFactory.getLogger(PropertyChangeListeners.class);</span>
+<span class="fc" id="L18">    private static final Logger log = org.slf4j.LoggerFactory.getLogger(PropertyChangeListeners.class);</span>
 
-<span class="fc" id="L14">    private final Map&lt;Channel, ChangeListeners&lt;ValDelegate&lt;T&gt;&gt;&gt; _actions = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc" id="L20">    private final Map&lt;Channel, ChangeListeners&lt;ValDelegate&lt;T&gt;&gt;&gt; _actions = new LinkedHashMap&lt;&gt;();</span>
 
 
-<span class="fc" id="L17">    public PropertyChangeListeners() {}</span>
+<span class="fc" id="L23">    public PropertyChangeListeners() {}</span>
 
-<span class="fc" id="L19">    public PropertyChangeListeners( PropertyChangeListeners&lt;T&gt; other ) {</span>
-<span class="fc" id="L20">        _copyFrom(other);</span>
-<span class="fc" id="L21">    }</span>
+<span class="fc" id="L25">    public PropertyChangeListeners( PropertyChangeListeners&lt;T&gt; other ) {</span>
+<span class="fc" id="L26">        _copyFrom(other);</span>
+<span class="fc" id="L27">    }</span>
 
 
     public void onChange( Channel channel, Action&lt;ValDelegate&lt;T&gt;&gt; action ) {
-<span class="fc" id="L25">        Objects.requireNonNull(channel);</span>
-<span class="fc" id="L26">        Objects.requireNonNull(action);</span>
-<span class="fc" id="L27">        _getActionsFor(channel).add(action);</span>
-<span class="fc" id="L28">    }</span>
+<span class="fc" id="L31">        Objects.requireNonNull(channel);</span>
+<span class="fc" id="L32">        Objects.requireNonNull(action);</span>
+<span class="fc" id="L33">        _getActionsFor(channel).add(action);</span>
+<span class="fc" id="L34">    }</span>
 
     public void onChange( Observer observer ) {
-<span class="fc bfc" id="L31" title="All 2 branches covered.">        if ( observer instanceof WeakObserverImpl)</span>
-<span class="fc" id="L32">            this.onChange(Sprouts.factory().defaultObservableChannel(), new WeakObserverAsActionImpl&lt;&gt;( (WeakObserverImpl&lt;?&gt;) observer ) );</span>
+<span class="fc bfc" id="L37" title="All 2 branches covered.">        if ( observer instanceof WeakObserverImpl)</span>
+<span class="fc" id="L38">            this.onChange(Sprouts.factory().defaultObservableChannel(), new WeakObserverAsActionImpl&lt;&gt;( (WeakObserverImpl&lt;?&gt;) observer ) );</span>
         else
-<span class="fc" id="L34">            this.onChange(Sprouts.factory().defaultObservableChannel(), new ObserverAsActionImpl&lt;&gt;(observer) );</span>
-<span class="fc" id="L35">    }</span>
+<span class="fc" id="L40">            this.onChange(Sprouts.factory().defaultObservableChannel(), new ObserverAsActionImpl&lt;&gt;(observer) );</span>
+<span class="fc" id="L41">    }</span>
 
     public void unsubscribe( Subscriber subscriber ) {
-<span class="fc bfc" id="L38" title="All 2 branches covered.">        for ( ChangeListeners&lt;ValDelegate&lt;T&gt;&gt; actions : _actions.values() )</span>
-<span class="fc" id="L39">            actions.unsubscribe(subscriber);</span>
-<span class="fc" id="L40">    }</span>
+<span class="fc bfc" id="L44" title="All 2 branches covered.">        for ( ChangeListeners&lt;ValDelegate&lt;T&gt;&gt; actions : _actions.values() )</span>
+<span class="fc" id="L45">            actions.unsubscribe(subscriber);</span>
+<span class="fc" id="L46">    }</span>
 
     public void unsubscribeAll() {
-<span class="nc bnc" id="L43" title="All 2 branches missed.">        for ( ChangeListeners&lt;ValDelegate&lt;T&gt;&gt; actions : _actions.values() )</span>
-<span class="nc" id="L44">            actions.unsubscribeAll();</span>
-<span class="nc" id="L45">    }</span>
+<span class="nc bnc" id="L49" title="All 2 branches missed.">        for ( ChangeListeners&lt;ValDelegate&lt;T&gt;&gt; actions : _actions.values() )</span>
+<span class="nc" id="L50">            actions.unsubscribeAll();</span>
+<span class="nc" id="L51">    }</span>
 
     public void fireChange( Val&lt;T&gt; owner, Channel channel, @Nullable T newValue, @Nullable T oldValue ) {
-<span class="nc" id="L48">        fireChange(owner, channel, new ItemPair&lt;&gt;(owner.type(), newValue, oldValue));</span>
-<span class="nc" id="L49">    }</span>
+<span class="nc" id="L54">        fireChange(owner, channel, new ItemPair&lt;&gt;(owner.type(), newValue, oldValue));</span>
+<span class="nc" id="L55">    }</span>
 
     void fireChange(
         Val&lt;T&gt; owner,
         Channel channel,
         ItemPair&lt;T&gt; pair
     ) {
-<span class="fc" id="L56">        ValDelegate&lt;T&gt; delegate = Sprouts.factory().delegateOf(owner, channel, pair.change(), pair.newValue(), pair.oldValue());</span>
+<span class="fc" id="L62">        ValDelegate&lt;T&gt; delegate = Sprouts.factory().delegateOf(owner, channel, pair.change(), pair.newValue(), pair.oldValue());</span>
         // We clone this property to avoid concurrent modification
-<span class="fc bfc" id="L58" title="All 2 branches covered.">        if ( channel == From.ALL)</span>
-<span class="fc bfc" id="L59" title="All 2 branches covered.">            for ( Channel key : _actions.keySet() )</span>
-<span class="fc" id="L60">                _getActionsFor(key).fireChange( delegate );</span>
+<span class="fc bfc" id="L64" title="All 2 branches covered.">        if ( channel == From.ALL)</span>
+<span class="fc bfc" id="L65" title="All 2 branches covered.">            for ( Channel key : _actions.keySet() )</span>
+<span class="fc" id="L66">                _getActionsFor(key).fireChange( delegate );</span>
         else {
-<span class="fc" id="L62">            _getActionsFor(channel).fireChange( delegate );</span>
-<span class="fc" id="L63">            _getActionsFor(From.ALL).fireChange( delegate );</span>
+<span class="fc" id="L68">            _getActionsFor(channel).fireChange( delegate );</span>
+<span class="fc" id="L69">            _getActionsFor(From.ALL).fireChange( delegate );</span>
         }
-<span class="fc" id="L65">    }</span>
+<span class="fc" id="L71">    }</span>
 
+    /**
+     *  Returns the number of change listeners that are currently registered.
+     *  This is useful for debugging purposes.
+     *
+     * @return The number of change listeners that are currently registered.
+     */
     public long numberOfChangeListeners() {
-<span class="fc" id="L68">        return _actions.values()</span>
-<span class="fc" id="L69">                            .stream()</span>
-<span class="fc" id="L70">                            .mapToLong(ChangeListeners::numberOfChangeListeners)</span>
-<span class="fc" id="L71">                            .sum();</span>
+<span class="fc" id="L80">        return _actions.values()</span>
+<span class="fc" id="L81">                            .stream()</span>
+<span class="fc" id="L82">                            .mapToLong(ChangeListeners::numberOfChangeListeners)</span>
+<span class="fc" id="L83">                            .sum();</span>
     }
 
     private void _copyFrom(PropertyChangeListeners&lt;T&gt; other) {
-<span class="fc" id="L75">        other._actions.forEach( (k, v) -&gt; _actions.put(k, new ChangeListeners&lt;&gt;(v)) );</span>
-<span class="fc" id="L76">    }</span>
+<span class="fc" id="L87">        other._actions.forEach( (k, v) -&gt; _actions.put(k, new ChangeListeners&lt;&gt;(v)) );</span>
+<span class="fc" id="L88">    }</span>
 
     private ChangeListeners&lt;ValDelegate&lt;T&gt;&gt; _getActionsFor( Channel channel ) {
-<span class="fc" id="L79">        return _actions.computeIfAbsent(channel, k-&gt;new ChangeListeners&lt;&gt;());</span>
+<span class="fc" id="L91">        return _actions.computeIfAbsent(channel, k-&gt;new ChangeListeners&lt;&gt;());</span>
     }
 
     @Override
     public final String toString() {
-<span class="nc" id="L84">        StringBuilder sb = new StringBuilder();</span>
-<span class="nc" id="L85">        sb.append(this.getClass().getSimpleName()).append(&quot;[&quot;);</span>
-<span class="nc bnc" id="L86" title="All 2 branches missed.">        for ( Channel key : _actions.keySet() ) {</span>
+<span class="nc" id="L96">        StringBuilder sb = new StringBuilder();</span>
+<span class="nc" id="L97">        sb.append(this.getClass().getSimpleName()).append(&quot;[&quot;);</span>
+<span class="nc bnc" id="L98" title="All 2 branches missed.">        for ( Channel key : _actions.keySet() ) {</span>
             try {
-<span class="nc" id="L88">                sb.append(key).append(&quot;-&gt;&quot;).append(_actions.get(key)).append(&quot;, &quot;);</span>
-<span class="nc" id="L89">            } catch ( Exception e ) {</span>
-<span class="nc" id="L90">                log.error(&quot;An error occurred while trying to get the number of change listeners for channel '{}'&quot;, key, e);</span>
-<span class="nc" id="L91">            }</span>
-<span class="nc" id="L92">        }</span>
-<span class="nc" id="L93">        sb.append(&quot;]&quot;);</span>
-<span class="nc" id="L94">        return sb.toString();</span>
+<span class="nc" id="L100">                sb.append(key).append(&quot;-&gt;&quot;).append(_actions.get(key)).append(&quot;, &quot;);</span>
+<span class="nc" id="L101">            } catch ( Exception e ) {</span>
+<span class="nc" id="L102">                log.error(&quot;An error occurred while trying to get the number of change listeners for channel '{}'&quot;, key, e);</span>
+<span class="nc" id="L103">            }</span>
+<span class="nc" id="L104">        }</span>
+<span class="nc" id="L105">        sb.append(&quot;]&quot;);</span>
+<span class="nc" id="L106">        return sb.toString();</span>
     }
 
 

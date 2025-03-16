@@ -19,7 +19,7 @@ final class AssociationImpl<K, V> implements Association<K, V> {
     private static final long PRIME_2 = 53982894593057L;
 
     private static final int BASE_BRANCHING_PER_NODE = 32;
-    private static final int BASE_ENTRIES_PER_NODE = 1;
+    private static final int BASE_ENTRIES_PER_NODE = 0;
 
 
     private final int _depth;
@@ -145,7 +145,7 @@ final class AssociationImpl<K, V> implements Association<K, V> {
     }
 
     private int _maxEntriesForThisNode() {
-        return BASE_ENTRIES_PER_NODE + _depth;
+        return BASE_ENTRIES_PER_NODE + (_depth * _depth);
     }
 
     private int _minBranchingPerNode() {
@@ -572,7 +572,8 @@ final class AssociationImpl<K, V> implements Association<K, V> {
         if ( deltaLeft > 0 ) {
             for (AssociationImpl<K, V> branch : _branches) {
                 if ( branch != null ) {
-                    sb.append(", ");
+                    if ( deltaLeft < size - howMany || howMany > 0 )
+                        sb.append(", ");
                     sb = branch._appendRecursivelyUpTo(sb, deltaLeft);
                     deltaLeft -= branch.size();
                     if ( deltaLeft <= 0 ) {

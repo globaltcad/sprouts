@@ -25,10 +25,10 @@ final class WeakActionImpl&lt;O extends @Nullable Object, D&gt; implements WeakA
 
 <span class="fc" id="L26">        O owner = _owner.get();</span>
 
-<span class="pc bpc" id="L28" title="1 of 2 branches missed.">        if ( owner != null )</span>
+<span class="fc bfc" id="L28" title="All 2 branches covered.">        if ( owner != null )</span>
 <span class="fc" id="L29">            _action.accept(owner, delegate);</span>
         else
-<span class="nc" id="L31">            _action = null;</span>
+<span class="fc" id="L31">            _action = null;</span>
 <span class="fc" id="L32">    }</span>
 
     @Override

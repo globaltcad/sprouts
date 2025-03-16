@@ -4,7 +4,7 @@
   "narrative":"Functional programming is a core concept in Sprouts,\n    which is why we provide the `Tuple` type representing\n    an immutable array of elements which can be transformed\n    and filtered in a functional way.",
   "subjects":["sprouts.Tuple"],
   "statistics":{
-    "runs":"207",
+    "runs":"218",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -4160,6 +4160,237 @@
         {"kind":"when","text":"We get the indices of the property `6`.","code":["var indices2 = ints.indicesOf(6)"]},
 
         {"kind":"then","text":"An empty list is returned.","code":["indices2 == Tuple.of(Integer)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `Tuple` class support all kinds of nullable types. [0]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `Tuple` class supports null items when using\n            the `Tuple.ofNullable` factory method.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"An empty tuple for the given type.","code":["var tuple = Tuple.ofNullable(itemType)"]},
+
+        {"kind":"expect","text":"The tuple is empty and reports the correct type and nullability.","code":["tuple.isEmpty()","tuple.allowsNull()","tuple.type() == itemType"]},
+
+        {"kind":"when","text":"We add some items to the tuple.","code":["for (var item : items) {","    tuple = tuple.add(item)","}"]},
+
+        {"kind":"then","text":"","code":["tuple.size() == items.size()","tuple.toList() == items"]},
+
+        {"kind":"where","text":"We use the following table to test different nullable types.","code":{"itemType":["Integer","String","Boolean","Double","Float","Long","Short","Byte","Character","BigDecimal","BigInteger"],"items":["[1, 2, 3, null, 5, 6, 7]","[\"hello\", \"world\", null, \"from\", \"Sprouts\"]","[true, false, null, true, false, true]","[1d, 2d, 3d, null, 5d, 6d, 7d]","[1.0f, 2.0f, 3.0f, null, 5.0f, 6.0f, 7.0f]","[1L, 2L, 3L, null, 5L, 6L, 7L]","[1 as short, 2 as short, 3 as short, null, 5 as short, 6 as short, 7 as short]","[1 as byte, 2 as byte, 3 as byte, null, 5 as byte, 6 as byte, 7 as byte]","['a' as char, 'b' as char, 'c' as char, null, 'e' as char, 'f' as char, 'g' as char]","[BigDecimal.ONE, BigDecimal.TEN, null, BigDecimal.ZERO, BigDecimal.ONE.negate()]","[BigInteger.ONE, BigInteger.TEN, null, BigInteger.ZERO, BigInteger.ONE.negate()]"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `Tuple` class support all kinds of nullable types. [1]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `Tuple` class supports null items when using\n            the `Tuple.ofNullable` factory method.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"An empty tuple for the given type.","code":["var tuple = Tuple.ofNullable(itemType)"]},
+
+        {"kind":"expect","text":"The tuple is empty and reports the correct type and nullability.","code":["tuple.isEmpty()","tuple.allowsNull()","tuple.type() == itemType"]},
+
+        {"kind":"when","text":"We add some items to the tuple.","code":["for (var item : items) {","    tuple = tuple.add(item)","}"]},
+
+        {"kind":"then","text":"","code":["tuple.size() == items.size()","tuple.toList() == items"]},
+
+        {"kind":"where","text":"We use the following table to test different nullable types.","code":{"itemType":["Integer","String","Boolean","Double","Float","Long","Short","Byte","Character","BigDecimal","BigInteger"],"items":["[1, 2, 3, null, 5, 6, 7]","[\"hello\", \"world\", null, \"from\", \"Sprouts\"]","[true, false, null, true, false, true]","[1d, 2d, 3d, null, 5d, 6d, 7d]","[1.0f, 2.0f, 3.0f, null, 5.0f, 6.0f, 7.0f]","[1L, 2L, 3L, null, 5L, 6L, 7L]","[1 as short, 2 as short, 3 as short, null, 5 as short, 6 as short, 7 as short]","[1 as byte, 2 as byte, 3 as byte, null, 5 as byte, 6 as byte, 7 as byte]","['a' as char, 'b' as char, 'c' as char, null, 'e' as char, 'f' as char, 'g' as char]","[BigDecimal.ONE, BigDecimal.TEN, null, BigDecimal.ZERO, BigDecimal.ONE.negate()]","[BigInteger.ONE, BigInteger.TEN, null, BigInteger.ZERO, BigInteger.ONE.negate()]"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `Tuple` class support all kinds of nullable types. [2]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `Tuple` class supports null items when using\n            the `Tuple.ofNullable` factory method.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"An empty tuple for the given type.","code":["var tuple = Tuple.ofNullable(itemType)"]},
+
+        {"kind":"expect","text":"The tuple is empty and reports the correct type and nullability.","code":["tuple.isEmpty()","tuple.allowsNull()","tuple.type() == itemType"]},
+
+        {"kind":"when","text":"We add some items to the tuple.","code":["for (var item : items) {","    tuple = tuple.add(item)","}"]},
+
+        {"kind":"then","text":"","code":["tuple.size() == items.size()","tuple.toList() == items"]},
+
+        {"kind":"where","text":"We use the following table to test different nullable types.","code":{"itemType":["Integer","String","Boolean","Double","Float","Long","Short","Byte","Character","BigDecimal","BigInteger"],"items":["[1, 2, 3, null, 5, 6, 7]","[\"hello\", \"world\", null, \"from\", \"Sprouts\"]","[true, false, null, true, false, true]","[1d, 2d, 3d, null, 5d, 6d, 7d]","[1.0f, 2.0f, 3.0f, null, 5.0f, 6.0f, 7.0f]","[1L, 2L, 3L, null, 5L, 6L, 7L]","[1 as short, 2 as short, 3 as short, null, 5 as short, 6 as short, 7 as short]","[1 as byte, 2 as byte, 3 as byte, null, 5 as byte, 6 as byte, 7 as byte]","['a' as char, 'b' as char, 'c' as char, null, 'e' as char, 'f' as char, 'g' as char]","[BigDecimal.ONE, BigDecimal.TEN, null, BigDecimal.ZERO, BigDecimal.ONE.negate()]","[BigInteger.ONE, BigInteger.TEN, null, BigInteger.ZERO, BigInteger.ONE.negate()]"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `Tuple` class support all kinds of nullable types. [3]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `Tuple` class supports null items when using\n            the `Tuple.ofNullable` factory method.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"An empty tuple for the given type.","code":["var tuple = Tuple.ofNullable(itemType)"]},
+
+        {"kind":"expect","text":"The tuple is empty and reports the correct type and nullability.","code":["tuple.isEmpty()","tuple.allowsNull()","tuple.type() == itemType"]},
+
+        {"kind":"when","text":"We add some items to the tuple.","code":["for (var item : items) {","    tuple = tuple.add(item)","}"]},
+
+        {"kind":"then","text":"","code":["tuple.size() == items.size()","tuple.toList() == items"]},
+
+        {"kind":"where","text":"We use the following table to test different nullable types.","code":{"itemType":["Integer","String","Boolean","Double","Float","Long","Short","Byte","Character","BigDecimal","BigInteger"],"items":["[1, 2, 3, null, 5, 6, 7]","[\"hello\", \"world\", null, \"from\", \"Sprouts\"]","[true, false, null, true, false, true]","[1d, 2d, 3d, null, 5d, 6d, 7d]","[1.0f, 2.0f, 3.0f, null, 5.0f, 6.0f, 7.0f]","[1L, 2L, 3L, null, 5L, 6L, 7L]","[1 as short, 2 as short, 3 as short, null, 5 as short, 6 as short, 7 as short]","[1 as byte, 2 as byte, 3 as byte, null, 5 as byte, 6 as byte, 7 as byte]","['a' as char, 'b' as char, 'c' as char, null, 'e' as char, 'f' as char, 'g' as char]","[BigDecimal.ONE, BigDecimal.TEN, null, BigDecimal.ZERO, BigDecimal.ONE.negate()]","[BigInteger.ONE, BigInteger.TEN, null, BigInteger.ZERO, BigInteger.ONE.negate()]"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `Tuple` class support all kinds of nullable types. [4]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `Tuple` class supports null items when using\n            the `Tuple.ofNullable` factory method.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"An empty tuple for the given type.","code":["var tuple = Tuple.ofNullable(itemType)"]},
+
+        {"kind":"expect","text":"The tuple is empty and reports the correct type and nullability.","code":["tuple.isEmpty()","tuple.allowsNull()","tuple.type() == itemType"]},
+
+        {"kind":"when","text":"We add some items to the tuple.","code":["for (var item : items) {","    tuple = tuple.add(item)","}"]},
+
+        {"kind":"then","text":"","code":["tuple.size() == items.size()","tuple.toList() == items"]},
+
+        {"kind":"where","text":"We use the following table to test different nullable types.","code":{"itemType":["Integer","String","Boolean","Double","Float","Long","Short","Byte","Character","BigDecimal","BigInteger"],"items":["[1, 2, 3, null, 5, 6, 7]","[\"hello\", \"world\", null, \"from\", \"Sprouts\"]","[true, false, null, true, false, true]","[1d, 2d, 3d, null, 5d, 6d, 7d]","[1.0f, 2.0f, 3.0f, null, 5.0f, 6.0f, 7.0f]","[1L, 2L, 3L, null, 5L, 6L, 7L]","[1 as short, 2 as short, 3 as short, null, 5 as short, 6 as short, 7 as short]","[1 as byte, 2 as byte, 3 as byte, null, 5 as byte, 6 as byte, 7 as byte]","['a' as char, 'b' as char, 'c' as char, null, 'e' as char, 'f' as char, 'g' as char]","[BigDecimal.ONE, BigDecimal.TEN, null, BigDecimal.ZERO, BigDecimal.ONE.negate()]","[BigInteger.ONE, BigInteger.TEN, null, BigInteger.ZERO, BigInteger.ONE.negate()]"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `Tuple` class support all kinds of nullable types. [5]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `Tuple` class supports null items when using\n            the `Tuple.ofNullable` factory method.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"An empty tuple for the given type.","code":["var tuple = Tuple.ofNullable(itemType)"]},
+
+        {"kind":"expect","text":"The tuple is empty and reports the correct type and nullability.","code":["tuple.isEmpty()","tuple.allowsNull()","tuple.type() == itemType"]},
+
+        {"kind":"when","text":"We add some items to the tuple.","code":["for (var item : items) {","    tuple = tuple.add(item)","}"]},
+
+        {"kind":"then","text":"","code":["tuple.size() == items.size()","tuple.toList() == items"]},
+
+        {"kind":"where","text":"We use the following table to test different nullable types.","code":{"itemType":["Integer","String","Boolean","Double","Float","Long","Short","Byte","Character","BigDecimal","BigInteger"],"items":["[1, 2, 3, null, 5, 6, 7]","[\"hello\", \"world\", null, \"from\", \"Sprouts\"]","[true, false, null, true, false, true]","[1d, 2d, 3d, null, 5d, 6d, 7d]","[1.0f, 2.0f, 3.0f, null, 5.0f, 6.0f, 7.0f]","[1L, 2L, 3L, null, 5L, 6L, 7L]","[1 as short, 2 as short, 3 as short, null, 5 as short, 6 as short, 7 as short]","[1 as byte, 2 as byte, 3 as byte, null, 5 as byte, 6 as byte, 7 as byte]","['a' as char, 'b' as char, 'c' as char, null, 'e' as char, 'f' as char, 'g' as char]","[BigDecimal.ONE, BigDecimal.TEN, null, BigDecimal.ZERO, BigDecimal.ONE.negate()]","[BigInteger.ONE, BigInteger.TEN, null, BigInteger.ZERO, BigInteger.ONE.negate()]"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `Tuple` class support all kinds of nullable types. [6]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `Tuple` class supports null items when using\n            the `Tuple.ofNullable` factory method.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"An empty tuple for the given type.","code":["var tuple = Tuple.ofNullable(itemType)"]},
+
+        {"kind":"expect","text":"The tuple is empty and reports the correct type and nullability.","code":["tuple.isEmpty()","tuple.allowsNull()","tuple.type() == itemType"]},
+
+        {"kind":"when","text":"We add some items to the tuple.","code":["for (var item : items) {","    tuple = tuple.add(item)","}"]},
+
+        {"kind":"then","text":"","code":["tuple.size() == items.size()","tuple.toList() == items"]},
+
+        {"kind":"where","text":"We use the following table to test different nullable types.","code":{"itemType":["Integer","String","Boolean","Double","Float","Long","Short","Byte","Character","BigDecimal","BigInteger"],"items":["[1, 2, 3, null, 5, 6, 7]","[\"hello\", \"world\", null, \"from\", \"Sprouts\"]","[true, false, null, true, false, true]","[1d, 2d, 3d, null, 5d, 6d, 7d]","[1.0f, 2.0f, 3.0f, null, 5.0f, 6.0f, 7.0f]","[1L, 2L, 3L, null, 5L, 6L, 7L]","[1 as short, 2 as short, 3 as short, null, 5 as short, 6 as short, 7 as short]","[1 as byte, 2 as byte, 3 as byte, null, 5 as byte, 6 as byte, 7 as byte]","['a' as char, 'b' as char, 'c' as char, null, 'e' as char, 'f' as char, 'g' as char]","[BigDecimal.ONE, BigDecimal.TEN, null, BigDecimal.ZERO, BigDecimal.ONE.negate()]","[BigInteger.ONE, BigInteger.TEN, null, BigInteger.ZERO, BigInteger.ONE.negate()]"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `Tuple` class support all kinds of nullable types. [7]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `Tuple` class supports null items when using\n            the `Tuple.ofNullable` factory method.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"An empty tuple for the given type.","code":["var tuple = Tuple.ofNullable(itemType)"]},
+
+        {"kind":"expect","text":"The tuple is empty and reports the correct type and nullability.","code":["tuple.isEmpty()","tuple.allowsNull()","tuple.type() == itemType"]},
+
+        {"kind":"when","text":"We add some items to the tuple.","code":["for (var item : items) {","    tuple = tuple.add(item)","}"]},
+
+        {"kind":"then","text":"","code":["tuple.size() == items.size()","tuple.toList() == items"]},
+
+        {"kind":"where","text":"We use the following table to test different nullable types.","code":{"itemType":["Integer","String","Boolean","Double","Float","Long","Short","Byte","Character","BigDecimal","BigInteger"],"items":["[1, 2, 3, null, 5, 6, 7]","[\"hello\", \"world\", null, \"from\", \"Sprouts\"]","[true, false, null, true, false, true]","[1d, 2d, 3d, null, 5d, 6d, 7d]","[1.0f, 2.0f, 3.0f, null, 5.0f, 6.0f, 7.0f]","[1L, 2L, 3L, null, 5L, 6L, 7L]","[1 as short, 2 as short, 3 as short, null, 5 as short, 6 as short, 7 as short]","[1 as byte, 2 as byte, 3 as byte, null, 5 as byte, 6 as byte, 7 as byte]","['a' as char, 'b' as char, 'c' as char, null, 'e' as char, 'f' as char, 'g' as char]","[BigDecimal.ONE, BigDecimal.TEN, null, BigDecimal.ZERO, BigDecimal.ONE.negate()]","[BigInteger.ONE, BigInteger.TEN, null, BigInteger.ZERO, BigInteger.ONE.negate()]"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `Tuple` class support all kinds of nullable types. [8]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `Tuple` class supports null items when using\n            the `Tuple.ofNullable` factory method.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"An empty tuple for the given type.","code":["var tuple = Tuple.ofNullable(itemType)"]},
+
+        {"kind":"expect","text":"The tuple is empty and reports the correct type and nullability.","code":["tuple.isEmpty()","tuple.allowsNull()","tuple.type() == itemType"]},
+
+        {"kind":"when","text":"We add some items to the tuple.","code":["for (var item : items) {","    tuple = tuple.add(item)","}"]},
+
+        {"kind":"then","text":"","code":["tuple.size() == items.size()","tuple.toList() == items"]},
+
+        {"kind":"where","text":"We use the following table to test different nullable types.","code":{"itemType":["Integer","String","Boolean","Double","Float","Long","Short","Byte","Character","BigDecimal","BigInteger"],"items":["[1, 2, 3, null, 5, 6, 7]","[\"hello\", \"world\", null, \"from\", \"Sprouts\"]","[true, false, null, true, false, true]","[1d, 2d, 3d, null, 5d, 6d, 7d]","[1.0f, 2.0f, 3.0f, null, 5.0f, 6.0f, 7.0f]","[1L, 2L, 3L, null, 5L, 6L, 7L]","[1 as short, 2 as short, 3 as short, null, 5 as short, 6 as short, 7 as short]","[1 as byte, 2 as byte, 3 as byte, null, 5 as byte, 6 as byte, 7 as byte]","['a' as char, 'b' as char, 'c' as char, null, 'e' as char, 'f' as char, 'g' as char]","[BigDecimal.ONE, BigDecimal.TEN, null, BigDecimal.ZERO, BigDecimal.ONE.negate()]","[BigInteger.ONE, BigInteger.TEN, null, BigInteger.ZERO, BigInteger.ONE.negate()]"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `Tuple` class support all kinds of nullable types. [9]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `Tuple` class supports null items when using\n            the `Tuple.ofNullable` factory method.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"An empty tuple for the given type.","code":["var tuple = Tuple.ofNullable(itemType)"]},
+
+        {"kind":"expect","text":"The tuple is empty and reports the correct type and nullability.","code":["tuple.isEmpty()","tuple.allowsNull()","tuple.type() == itemType"]},
+
+        {"kind":"when","text":"We add some items to the tuple.","code":["for (var item : items) {","    tuple = tuple.add(item)","}"]},
+
+        {"kind":"then","text":"","code":["tuple.size() == items.size()","tuple.toList() == items"]},
+
+        {"kind":"where","text":"We use the following table to test different nullable types.","code":{"itemType":["Integer","String","Boolean","Double","Float","Long","Short","Byte","Character","BigDecimal","BigInteger"],"items":["[1, 2, 3, null, 5, 6, 7]","[\"hello\", \"world\", null, \"from\", \"Sprouts\"]","[true, false, null, true, false, true]","[1d, 2d, 3d, null, 5d, 6d, 7d]","[1.0f, 2.0f, 3.0f, null, 5.0f, 6.0f, 7.0f]","[1L, 2L, 3L, null, 5L, 6L, 7L]","[1 as short, 2 as short, 3 as short, null, 5 as short, 6 as short, 7 as short]","[1 as byte, 2 as byte, 3 as byte, null, 5 as byte, 6 as byte, 7 as byte]","['a' as char, 'b' as char, 'c' as char, null, 'e' as char, 'f' as char, 'g' as char]","[BigDecimal.ONE, BigDecimal.TEN, null, BigDecimal.ZERO, BigDecimal.ONE.negate()]","[BigInteger.ONE, BigInteger.TEN, null, BigInteger.ZERO, BigInteger.ONE.negate()]"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `Tuple` class support all kinds of nullable types. [10]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `Tuple` class supports null items when using\n            the `Tuple.ofNullable` factory method.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"An empty tuple for the given type.","code":["var tuple = Tuple.ofNullable(itemType)"]},
+
+        {"kind":"expect","text":"The tuple is empty and reports the correct type and nullability.","code":["tuple.isEmpty()","tuple.allowsNull()","tuple.type() == itemType"]},
+
+        {"kind":"when","text":"We add some items to the tuple.","code":["for (var item : items) {","    tuple = tuple.add(item)","}"]},
+
+        {"kind":"then","text":"","code":["tuple.size() == items.size()","tuple.toList() == items"]},
+
+        {"kind":"where","text":"We use the following table to test different nullable types.","code":{"itemType":["Integer","String","Boolean","Double","Float","Long","Short","Byte","Character","BigDecimal","BigInteger"],"items":["[1, 2, 3, null, 5, 6, 7]","[\"hello\", \"world\", null, \"from\", \"Sprouts\"]","[true, false, null, true, false, true]","[1d, 2d, 3d, null, 5d, 6d, 7d]","[1.0f, 2.0f, 3.0f, null, 5.0f, 6.0f, 7.0f]","[1L, 2L, 3L, null, 5L, 6L, 7L]","[1 as short, 2 as short, 3 as short, null, 5 as short, 6 as short, 7 as short]","[1 as byte, 2 as byte, 3 as byte, null, 5 as byte, 6 as byte, 7 as byte]","['a' as char, 'b' as char, 'c' as char, null, 'e' as char, 'f' as char, 'g' as char]","[BigDecimal.ONE, BigDecimal.TEN, null, BigDecimal.ZERO, BigDecimal.ONE.negate()]","[BigInteger.ONE, BigInteger.TEN, null, BigInteger.ZERO, BigInteger.ONE.negate()]"]}}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }

@@ -5,8 +5,8 @@
   "subjects":["sprouts.impl.PropertyLens","sprouts.Var"],
   "statistics":{
     "runs":"28",
-    "successRate":"96.43%",
-    "failures":"1",
+    "successRate":"100.0%",
+    "failures":"0",
     "errors":"0",
     "skipped":"0",
     "duration":"?"
@@ -348,7 +348,7 @@
   
     {
       "id":"The lenses of a property are garbage collected when no longer referenced strongly.",
-      "result":"FAIL",
+      "result":"PASS",
       "duration":"?",
       "iterations":{
       "tags":{},"see":[],"extraInfo":["\n            A property lens registers a weak action listener on the original property.\n            These weak listeners are stored in a weak hash map where the property lens\n            itself is the weakly referenced key.\n            So when the property lens is no longer referenced strongly, it should be\n            garbage collected and the weak listener should be removed\n            from the original property.\n\n            We can verify this by checking the reported number of change listeners.\n        "]
@@ -368,7 +368,7 @@
 
         {"kind":"then","text":"The author property should still have 2 change listeners registered.","code":["authorProperty.numberOfChangeListeners() == 2"]}
       ],
-      "problems":{"dataValues":["[]"], "errors":["[Condition not satisfied:\n\nauthorProperty.numberOfChangeListeners() == 2\n|              |                         |\n|              3                         false\nVar<Author>[Property_Lenses_Spec$Author[firstName=John, lastName=Doe, birthDate=1829-08-12, books=[Book1, Book2]]]\n]"]}
+      "problems":{"dataValues":[], "errors":[]}
     },
   
     {

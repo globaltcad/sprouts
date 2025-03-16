@@ -5,8 +5,8 @@
   "subjects":["sprouts.Val","sprouts.Var"],
   "statistics":{
     "runs":"7",
-    "successRate":"85.71%",
-    "failures":"1",
+    "successRate":"100.0%",
+    "failures":"0",
     "errors":"0",
     "skipped":"0",
     "duration":"?"
@@ -67,7 +67,7 @@
   
     {
       "id":"The `withID(..)` method produces a new property with all bindings inherited.",
-      "result":"FAIL",
+      "result":"PASS",
       "duration":"?",
       "iterations":{
       "tags":{},"see":[],"extraInfo":["\n            The wither methods on properties are used to create new property instances\n            with the same value and bindings (observer) as the original property\n            but without any side effects of the original property (the bindings).\n            So if you add bindings to a withered property they will not affect the original property.\n        "]
@@ -89,7 +89,7 @@
 
         {"kind":"then","text":"Both subscribers are receive the effect.","code":["list1 == [\"Tofu\", \"Tempeh\"]","list2 == [\"Tempeh\"]"]}
       ],
-      "problems":{"dataValues":["[]"], "errors":["[Condition not satisfied:\n\nlist1 == [\"Tofu\", \"Tempeh\"]\n|     |\n|     false\n[Tofu, Tempeh, Tempeh]\n]"]}
+      "problems":{"dataValues":[], "errors":[]}
     },
   
     {

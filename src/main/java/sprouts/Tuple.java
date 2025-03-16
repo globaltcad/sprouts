@@ -1359,6 +1359,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      *  supplied mapper {@link Function} to the corresponding item in this tuple.
      *  The returned tuple has the same nullability as this tuple (see {@link #allowsNull()}).
      *
+     * @param mapper The function to map the items to new items. This mapper function must not be {@code null}.
      * @return A new tuple where each item is the result of applying the
      *         supplied mapper function to the corresponding item in this tuple.
      * @throws NullPointerException if the mapper is {@code null}.
@@ -1379,6 +1380,9 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      *  of the specified type using the supplied mapper function.
      *  The returned tuple has the same nullability as this tuple (see {@link #allowsNull()}).
      *
+     * @param <U> The type of the new items.
+     * @param type The type of the new items to create.
+     * @param mapper The function to map the items to the new type.
      * @return A new tuple where each item is the result of applying the
      *        supplied mapper function to the corresponding item in this tuple.
      * @throws NullPointerException if the type or the mapper is {@code null}.
@@ -1434,7 +1438,8 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
     /**
      * Use this for sorting the tuple of items.
      *
-     * @param comparator The comparator to use for sorting.
+     * @param comparator The comparator to use for sorting (see {@link Comparator}).
+     * @return A new tuple of items with the items sorted according to the provided comparator.
      */
     Tuple<T> sort( Comparator<T> comparator );
 
@@ -1442,6 +1447,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * Sorts the tuple of items using the natural ordering of the items.
      * Note that this method expected the wrapped values to be {@link Comparable}.
      *
+     * @return A new tuple of items with the items sorted according to their natural ordering (see {@link Comparable}).
      * @throws UnsupportedOperationException if the values are not {@link Comparable}.
      */
     default Tuple<T> sort() {

@@ -1272,6 +1272,8 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
 
     /**
      * Removes all duplicate properties from {@code this} list of properties.
+     *
+     * @return {@code this} list of properties, to allow for method chaining.
      */
     Vars<T> makeDistinct();
 
