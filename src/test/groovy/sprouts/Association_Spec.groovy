@@ -469,7 +469,7 @@ class Association_Spec extends Specification
         when : 'We add some values to the association.'
             associations = associations.put("a", 1).put("b", 2).put("c", 3)
         then : 'The string representation of the association is as expected.'
-            associations.toString() == 'Association<String,Integer>["a" ↦ 1, "b" ↦ 2, "c" ↦ 3]'
+            associations.toString() == 'Association<String,Integer>["b" ↦ 2, "c" ↦ 3, "a" ↦ 1]'
     }
 
     def 'A larger `Association` will have a trimmed string representation.'() {
@@ -482,7 +482,7 @@ class Association_Spec extends Specification
                 associations = associations.put(key, value)
             }
         then : 'The string representation of the association is as expected.'
-            associations.toString() == "Association<Character,Byte>['A' ↦ 0, 'P' ↦ 3, '\\' ↦ -97, 'F' ↦ 1, 'U' ↦ 4, 'W' ↦ -98, 'R' ↦ -99, 'Z' ↦ 5, ...22 more entries]"
+            associations.toString() == "Association<Character,Byte>['P' ↦ 3, '\\' ↦ -97, 'F' ↦ 1, 'W' ↦ -98, 'U' ↦ 4, 'A' ↦ 0, 'R' ↦ -99, 'Z' ↦ 5, ...22 more entries]"
     }
 
     def 'The `replace` method replaces the value of a key with a new value, if and only if the key is present.'() {
