@@ -6,6 +6,7 @@ import spock.lang.Subject
 import spock.lang.Title
 
 import java.util.function.Consumer
+import java.util.stream.Stream
 
 @Title("Lists of Properties")
 @Narrative('''
@@ -2310,5 +2311,32 @@ class Property_List_Spec extends Specification
             properties.remove(Var.of(1))
         then : 'The list remains unchanged.'
             properties.toList() == [1, 7, 4, 6, 8, 3, 3, 9, 6, 1, 5, 5]
+    }
+
+    def 'You can add a `Stream` of items all at once to a property list.'()
+    {
+        reportInfo """
+            The `addAll(Stream)` method is designed to add all items from a stream to the property list
+            in one go. You don't have to iterate over the stream and add each item individually.
+        """
+        given : 'A property list with some properties.'
+            var properties = Vars.of(1, 2, 3, 4, 5)
+        when : 'We add a stream of items to the list.'
+            properties.addAll(Stream.of(6, 7, 8, 9, 10))
+        then : 'All items from the stream are added to the list.'
+            properties.toList() == [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    }
+
+    def 'You can add a `Stream` of items all at once at a particular index in a property list.'() {
+        reportInfo """
+            The `addAllAt(int, Stream)` method is designed to add all items from a stream to the property list
+            at a particular index in one go. You don't have to iterate over the stream and add each item individually.
+        """
+        given : 'A property list with some properties.'
+            var properties = Vars.of(1, 2, 3, 7, 8, 9)
+        when : 'We add a stream of items to the list at a particular index.'
+            properties.addAllAt(3, Stream.of(4, 5, 6))
+        then : 'All items from the stream are added to the list at the particular index.'
+            properties.toList() == [1, 2, 3, 4, 5, 6, 7, 8, 9]
     }
 }
