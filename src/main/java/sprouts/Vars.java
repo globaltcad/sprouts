@@ -995,9 +995,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
      */
     @SuppressWarnings("unchecked")
     default Vars<T> addAllAt( int index, T... items ) {
-        Vars<T> vars = allowsNull() ? Vars.ofNullable(type()) : Vars.of(type());
-        for ( T v : items )
-            vars.add(v);
+        Vars<T> vars = allowsNull() ? Vars.ofNullable(type(), items) : Vars.of(type(), items);
         return addAllAt(index, vars);
     }
 
@@ -1083,9 +1081,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
      */
     @SuppressWarnings("unchecked")
     default Vars<T> setAllAt( int index, T... items ) {
-        Vars<T> vars = allowsNull() ? Vars.ofNullable(type()) : Vars.of(type());
-        for ( T v : items )
-            vars.add(v);
+        Vars<T> vars = allowsNull() ? Vars.ofNullable(type(), items) : Vars.of(type(), items);
         return setAllAt(index, vars);
     }
 
