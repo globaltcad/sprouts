@@ -24,14 +24,22 @@ import java.util.function.Predicate;
  * Use {@link Viewables#subscribe(Observer)} if you want to be notified of changes to the list
  * without any further information about the kind of change itself. Note that a {@link Viewables}
  * will be garbage collected alongside all of its change listeners when no longer referenced.
- * So make sure to keep a reference to it around where your are actively listening for changes.
+ * So make sure to keep a reference to it around where you are actively listening for changes.
  * <p>
  * The name of this class is short for "variables". This name was deliberately chosen because
  * it is short, and yet clearly conveys the same meaning as other names used to model this
- * kind of pattern, like "properties", "observable objects", "observable values", "observable properties", etc.
+ * kind of pattern, like "properties", "observable objects", "observable values", "observable properties", etc.<br>
+ * <br>
+ * <b>
+ *     Notice! Instead of this class, we recommend using the {@link Tuple} type inside a single
+ *     {@link Var} property declared as {@code Var<Tuple<T>>},
+ *     as it more compatible with functional and data-oriented programming.
+ *     This is because the {@link Tuple} type is immutable and can be used as part
+ *     of record based view models, which are more predictable and easier to reason about.
+ * </b>
  * <p>
  * <b>You may also want to take a look at the <a href="https://globaltcad.github.io/sprouts/">living sprouts documentation</a>
- * where you can browse a large collection of examples demonstrating how to use the API of this class.</b>
+ * where you can browse a large collection of examples demonstrating how to use the API of this or other classes.</b>
  *
  * @param <T> The type of the properties.
  */
