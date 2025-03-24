@@ -36,15 +36,13 @@ public final class PropertyListChangeListeners<T extends @Nullable Object>
     public void fireChange(
             SequenceChange type, int index, @Nullable Var<T> newVal, @Nullable Var<T> oldVal, Vals<T> source
     ) {
-        ValsDelegate<T> listChangeDelegate = _createDelegate(index, type, newVal, oldVal, source);
-        _actions.fireChange(listChangeDelegate);
+        _actions.fireChange(()->_createDelegate(index, type, newVal, oldVal, source));
     }
 
     public void fireChange(
             SequenceChange type, int index, @Nullable Vals<T> newVals, @Nullable Vals<T> oldVals, Vals<T> source
     ) {
-        ValsDelegate<T> listChangeDelegate = _createDelegate(index, type, newVals, oldVals, source);
-        _actions.fireChange(listChangeDelegate);
+        _actions.fireChange(()->_createDelegate(index, type, newVals, oldVals, source));
     }
 
     private ValsDelegate<T> _createDelegate(

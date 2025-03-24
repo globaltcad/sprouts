@@ -11,6 +11,7 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 final class ChangeListeners<D> {
 
@@ -69,7 +70,8 @@ final class ChangeListeners<D> {
 
     long getActions(Consumer<Tuple<Action<D>>> receiver) {
         Tuple<Action<D>> actions = _getState();
-        receiver.accept(actions);
+        if ( !actions.isEmpty() )
+            receiver.accept(actions);
         return actions.size();
     }
 
@@ -83,8 +85,9 @@ final class ChangeListeners<D> {
         return getActions(actions -> {});
     }
 
-    void fireChange(D delegate) {
+    void fireChange( Supplier<D> delegateSupplier ) {
         getActions(actions -> {
+            D delegate = delegateSupplier.get();
             for (Action<D> action : actions) // We copy the list to avoid concurrent modification
                 try {
                     action.accept(delegate);

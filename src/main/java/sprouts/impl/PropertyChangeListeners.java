@@ -2,10 +2,12 @@ package sprouts.impl;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
-import sprouts.Observer;
 import sprouts.*;
 
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Supplier;
 
 /**
  *  This class is technically an internal class and should not be used directly.
@@ -59,14 +61,24 @@ public final class PropertyChangeListeners<T>
         Channel channel,
         ItemPair<T> pair
     ) {
-        ValDelegate<T> delegate = Sprouts.factory().delegateOf(owner, channel, pair.change(), pair.newValue(), pair.oldValue());
+        if ( _actions.isEmpty() )
+            return;
+        Supplier<ValDelegate<T>> lazilyCreatedDelegate = new Supplier<ValDelegate<T>>() {
+            private @Nullable ValDelegate<T> delegate = null;
+            @Override
+            public ValDelegate<T> get() {
+                if ( delegate == null )
+                    delegate = Sprouts.factory().delegateOf(owner, channel, pair.change(), pair.newValue(), pair.oldValue());
+                return delegate;
+            }
+        };
         // We clone this property to avoid concurrent modification
         if ( channel == From.ALL)
             for ( Channel key : _actions.keySet() )
-                _getActionsFor(key).fireChange( delegate );
+                _getActionsFor(key).fireChange( lazilyCreatedDelegate );
         else {
-            _getActionsFor(channel).fireChange( delegate );
-            _getActionsFor(From.ALL).fireChange( delegate );
+            _getActionsFor(channel).fireChange( lazilyCreatedDelegate );
+            _getActionsFor(From.ALL).fireChange( lazilyCreatedDelegate );
         }
     }
 
