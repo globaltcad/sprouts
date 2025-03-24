@@ -10,6 +10,8 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
  * A mutable list of mutable properties designed for MVVM, that can be observed for changes
@@ -24,14 +26,22 @@ import java.util.function.Predicate;
  * Use {@link Viewables#subscribe(Observer)} if you want to be notified of changes to the list
  * without any further information about the kind of change itself. Note that a {@link Viewables}
  * will be garbage collected alongside all of its change listeners when no longer referenced.
- * So make sure to keep a reference to it around where your are actively listening for changes.
+ * So make sure to keep a reference to it around where you are actively listening for changes.
  * <p>
  * The name of this class is short for "variables". This name was deliberately chosen because
  * it is short, and yet clearly conveys the same meaning as other names used to model this
- * kind of pattern, like "properties", "observable objects", "observable values", "observable properties", etc.
+ * kind of pattern, like "properties", "observable objects", "observable values", "observable properties", etc.<br>
+ * <br>
+ * <b>
+ *     Notice! Instead of this class, we recommend using the {@link Tuple} type inside a single
+ *     {@link Var} property declared as {@code Var<Tuple<T>>},
+ *     as it more compatible with functional and data-oriented programming.
+ *     This is because the {@link Tuple} type is immutable and can be used as part
+ *     of record based view models, which are more predictable and easier to reason about.
+ * </b>
  * <p>
  * <b>You may also want to take a look at the <a href="https://globaltcad.github.io/sprouts/">living sprouts documentation</a>
- * where you can browse a large collection of examples demonstrating how to use the API of this class.</b>
+ * where you can browse a large collection of examples demonstrating how to use the API of this or other classes.</b>
  *
  * @param <T> The type of the properties.
  */
@@ -781,19 +791,6 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
     }
 
     /**
-     * Places the provided property at the specified index, effectively replacing the property
-     * at that index.
-     *
-     * @param index The index at which to set the property.
-     * @param var   The property to set.
-     * @return {@code this} list of properties.
-     * @throws IndexOutOfBoundsException if {@code index} is negative, or {@code index} is greater than or equal to the
-     *                                   size of this {@code Vars} object.
-     * @throws IllegalArgumentException  if the list allows {@code null} and the property does not allow {@code null}.
-     */
-    Vars<T> setAt( int index, Var<T> var );
-
-    /**
      * Wraps the item of the provided {@link Val} in a new {@link Var} property
      * and sets it at the specified index effectively replacing the property at that index.
      * This method is useful when you want to set the item of a property
@@ -818,6 +815,19 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
                         "property list that does not allow null values."
                     );
     }
+
+    /**
+     * Places the provided property at the specified index, effectively replacing the property
+     * at that index.
+     *
+     * @param index The index at which to set the property.
+     * @param var   The property to set.
+     * @return {@code this} list of properties.
+     * @throws IndexOutOfBoundsException if {@code index} is negative, or {@code index} is greater than or equal to the
+     *                                   size of this {@code Vars} object.
+     * @throws IllegalArgumentException  if the list allows {@code null} and the property does not allow {@code null}.
+     */
+    Vars<T> setAt( int index, Var<T> var );
 
     /**
      * Places the provided property in the specified sequence, effectively replacing the properties at the specified
@@ -905,6 +915,31 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
     }
 
     /**
+     * Iterates over the supplied values, and appends
+     * them to {@code this} list as properties.
+     *
+     * @param items The values to add as property items.
+     * @return {@code this} list of properties.
+     * @throws NullPointerException if {@code null} is not allowed and one of the {@code items} is {@code null}.
+     */
+    default Vars<T> addAll( Iterable<T> items ) {
+        return addAll(StreamSupport.stream(items.spliterator(), false));
+    }
+
+    /**
+     * Iterates over the supplied stream of values, and appends
+     * them to {@code this} list as properties.
+     *
+     * @param items The stream of values to add as property items.
+     * @return {@code this} list of properties.
+     * @throws NullPointerException if {@code null} is not allowed and one of the {@code items} is {@code null}.
+     */
+    default Vars<T> addAll( Stream<T> items ) {
+        T[] array = (T[]) items.toArray();
+        return addAll(array);
+    }
+
+    /**
      * Wraps each provided item in a property and appends it to this
      * list of properties.
      *
@@ -914,24 +949,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
      */
     @SuppressWarnings("unchecked")
     default Vars<T> addAll( T... items ) {
-        Vars<T> vars = allowsNull() ? Vars.ofNullable(type()) : Vars.of(type());
-        for ( T v : items ) vars.add(v);
-        return addAll(vars);
-    }
-
-    /**
-     * Iterates over the supplied values, and appends
-     * them to {@code this} list as properties.
-     *
-     * @param items The values to add as property items.
-     * @return {@code this} list of properties.
-     * @throws NullPointerException if {@code null} is not allowed and one of the {@code items} is {@code null}.
-     */
-    default Vars<T> addAll( Iterable<T> items ) {
-        Vars<T> vars = (Vars<T>) (allowsNull() ? Vars.ofNullable(type()) : Vars.of(type()));
-        for ( T v : items )
-            vars.add(v);
-        return addAll(vars);
+        return addAll(allowsNull() ? Vars.ofNullable(type(), items) : Vars.of(type(), items));
     }
 
     /**
@@ -985,6 +1003,33 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
     }
 
     /**
+     * Iterates over the supplied values, and adds
+     * them to {@code this} list as properties at the specified index.
+     *
+     * @param index The index at which to add the properties.
+     * @param items The values to add as property items.
+     * @return {@code this} list of properties.
+     * @throws NullPointerException if {@code null} is not allowed and one of the {@code items} is {@code null}.
+     */
+    default Vars<T> addAllAt( int index, Iterable<T> items ) {
+        return addAllAt(index, StreamSupport.stream(items.spliterator(), false));
+    }
+
+    /**
+     * Iterates over the supplied stream of values, and adds
+     * them to {@code this} list as properties at the specified index.
+     *
+     * @param index The index at which to add the properties.
+     * @param items The stream of values to add as property items.
+     * @return {@code this} list of properties.
+     * @throws NullPointerException if {@code null} is not allowed and one of the {@code items} is {@code null}.
+     */
+    default Vars<T> addAllAt( int index, Stream<T> items ) {
+        T[] array = (T[]) items.toArray();
+        return addAllAt(index, array);
+    }
+
+    /**
      * Wraps each provided item in a property and adds them
      * to this list of properties at the specified index.
      *
@@ -995,26 +1040,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
      */
     @SuppressWarnings("unchecked")
     default Vars<T> addAllAt( int index, T... items ) {
-        Vars<T> vars = allowsNull() ? Vars.ofNullable(type()) : Vars.of(type());
-        for ( T v : items )
-            vars.add(v);
-        return addAllAt(index, vars);
-    }
-
-    /**
-     * Iterates over the supplied values, and adds
-     * them to {@code this} list as properties at the specified index.
-     *
-     * @param index The index at which to add the properties.
-     * @param items The values to add as property items.
-     * @return {@code this} list of properties.
-     * @throws NullPointerException if {@code null} is not allowed and one of the {@code items} is {@code null}.
-     */
-    default Vars<T> addAllAt( int index, Iterable<T> items ) {
-        Vars<T> vars = (Vars<T>) (allowsNull() ? Vars.ofNullable(type()) : Vars.of(type()));
-        for ( T v : items )
-            vars.add(v);
-        return addAllAt(index, vars);
+        return addAllAt(index, allowsNull() ? Vars.ofNullable(type(), items) : Vars.of(type(), items));
     }
 
     /**
@@ -1069,6 +1095,39 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
     Vars<T> addAllAt( int index, Vars<T> vars );
 
     /**
+     * Iterates over the supplied values, and sets
+     * them in this list as properties starting at the specified index.
+     * This method will replace the properties in the specified range.
+     *
+     * @param index The index at which to set the properties.
+     * @param items The values to set as property items.
+     * @return {@code this} list of properties.
+     * @throws NullPointerException if {@code null} is not allowed and one of the {@code items} is {@code null}.
+     * @throws IndexOutOfBoundsException if {@code index} is negative, or {@code index} is greater than or equal to the
+     *                                  size of this {@code Vars} object.
+     */
+    default Vars<T> setAllAt( int index, Iterable<T> items ) {
+        return setAllAt(index, StreamSupport.stream(items.spliterator(), false));
+    }
+
+    /**
+     * Iterates over the supplied stream of values, and sets
+     * them in this list as properties starting at the specified index.
+     * This method will replace the properties in the specified range.
+     *
+     * @param index The index at which to set the properties.
+     * @param items The stream of values to set as property items.
+     * @return {@code this} list of properties.
+     * @throws NullPointerException if {@code null} is not allowed and one of the {@code items} is {@code null}.
+     * @throws IndexOutOfBoundsException if {@code index} is negative, or {@code index} is greater than or equal to the
+     *                                  size of this {@code Vars} object.
+     */
+    default Vars<T> setAllAt( int index, Stream<T> items ) {
+        T[] array = (T[]) items.toArray();
+        return setAllAt(index, array);
+    }
+
+    /**
      * Wraps each provided item in a property and
      * overwrites the existing properties in this
      * property list, starting at the specified index.
@@ -1083,29 +1142,7 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
      */
     @SuppressWarnings("unchecked")
     default Vars<T> setAllAt( int index, T... items ) {
-        Vars<T> vars = allowsNull() ? Vars.ofNullable(type()) : Vars.of(type());
-        for ( T v : items )
-            vars.add(v);
-        return setAllAt(index, vars);
-    }
-
-    /**
-     * Iterates over the supplied values, and sets
-     * them in this list as properties starting at the specified index.
-     * This method will replace the properties in the specified range.
-     *
-     * @param index The index at which to set the properties.
-     * @param items The values to set as property items.
-     * @return {@code this} list of properties.
-     * @throws NullPointerException if {@code null} is not allowed and one of the {@code items} is {@code null}.
-     * @throws IndexOutOfBoundsException if {@code index} is negative, or {@code index} is greater than or equal to the
-     *                                  size of this {@code Vars} object.
-     */
-    default Vars<T> setAllAt( int index, Iterable<T> items ) {
-        Vars<T> vars = (Vars<T>) (allowsNull() ? Vars.ofNullable(type()) : Vars.of(type()));
-        for ( T v : items )
-            vars.add(v);
-        return setAllAt(index, vars);
+        return setAllAt(index, allowsNull() ? Vars.ofNullable(type(), items) : Vars.of(type(), items));
     }
 
     /**
@@ -1160,14 +1197,6 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
     Vars<T> setAllAt( int index, Vars<T> vars );
 
     /**
-     * Removes all properties from {@code this} list that are not contained in the provided list of properties.
-     *
-     * @param vars The list of properties to retain. All other properties will be removed.
-     * @return {@code this} list of properties.
-     */
-    Vars<T> retainAll( Vals<T> vars );
-
-    /**
      * Removes all properties from {@code this} list whose items are not contained in the provided array of items.
      *
      * @param items The array of items, whose properties to retain. All other properties will be removed.
@@ -1177,6 +1206,14 @@ public interface Vars<T extends @Nullable Object> extends Vals<T> {
         Vals<T> toBeRetained = allowsNull() ? Vals.ofNullable(type(), items) : Vals.of(type(), items);
         return retainAll(toBeRetained);
     }
+
+    /**
+     * Removes all properties from {@code this} list that are not contained in the provided list of properties.
+     *
+     * @param vars The list of properties to retain. All other properties will be removed.
+     * @return {@code this} list of properties.
+     */
+    Vars<T> retainAll( Vals<T> vars );
 
     /**
      * Removes all properties from {@code this} list which do not satisfy the provided predicate.
