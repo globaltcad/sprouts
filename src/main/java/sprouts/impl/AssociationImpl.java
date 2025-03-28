@@ -628,11 +628,8 @@ final class AssociationImpl<K, V> implements Association<K, V> {
 
     private long _recursiveHashCode() {
         long baseHash = 0; // -> full 64 bit improve hash distribution
-        int size = _length(_keysArray);
-        for (int i = 0; i < size; i++) {
-            Object key   = Array.get(_keysArray, i);
-            Object value = Array.get(_valuesArray, i);
-            baseHash += _fullKeyPairHash(key, value);
+        for (int i = 0; i < _keyHashes.length; i++) {
+            baseHash += _fullKeyPairHash(_keyHashes[i], Array.get(_valuesArray, i));
         }
         for (AssociationImpl<K, V> branch : _branches) {
             if ( branch != null ) {
@@ -642,8 +639,8 @@ final class AssociationImpl<K, V> implements Association<K, V> {
         return baseHash;
     }
 
-    private static long _fullKeyPairHash( Object key, Object value ) {
-        return _combine(key.hashCode(), value.hashCode());
+    private static long _fullKeyPairHash( int keyHash, Object value ) {
+        return _combine(keyHash, value.hashCode());
     }
 
     private static long _combine( int first32Bits, int last32Bits ) {
