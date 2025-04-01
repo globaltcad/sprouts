@@ -429,69 +429,6 @@ final class AssociationImpl<K, V> implements Association<K, V> {
     }
 
     @Override
-    public Association<K, V> putAll( Stream<Pair<? extends K, ? extends V>> entries ) {
-        Objects.requireNonNull(entries);
-        // TODO: implement branching based bulk insert
-        AssociationImpl<K, V> result = this;
-        // reduce the stream to a single association
-        return entries.reduce(
-                result,
-                (acc,
-                 entry) -> (AssociationImpl<K, V>) acc.put(entry.first(), entry.second()),
-                (a, b) -> a);
-    }
-
-    @Override
-    public Association<K, V> removeAll( Set<? extends K> keys ) {
-        if ( this.isEmpty() || keys.isEmpty() )
-            return this;
-        Association<K, V> result = this;
-        for ( K key : keys ) {
-            result = result.remove(key);
-        }
-        return result;
-    }
-
-    @Override
-    public Association<K, V> retainAll( Set<? extends K> keys ) {
-        if ( this.isEmpty() || keys.isEmpty() )
-            return this;
-        Association<K, V> result = this;
-        for ( K key : this.keySet() ) {
-            if ( !keys.contains(key) ) {
-                result = result.remove(key);
-            }
-        }
-        return result;
-    }
-
-    @Override
-    public Association<K, V> replace( K key, V value ) {
-        if ( this.containsKey(key) ) {
-            return this.put(key, value);
-        } else {
-            return this;
-        }
-    }
-
-    @Override
-    public Association<K, V> replaceAll( Stream<Pair<? extends K, ? extends V>> stream ) {
-        Objects.requireNonNull(stream);
-        Association<K, V> result = this;
-        // reduce the stream to a single association
-        return stream.reduce(
-                result,
-                (acc,
-                 entry) -> acc.replace(entry.first(), entry.second()),
-                (a, b) -> a);
-    }
-
-    @Override
-    public Association<K, V> clear() {
-        return new AssociationImpl<>(_keyType, _valueType);
-    }
-
-    @Override
     public Map<K, V> toMap() {
         Map<K, V> map = new java.util.HashMap<>();
         _toMapRecursively(map);

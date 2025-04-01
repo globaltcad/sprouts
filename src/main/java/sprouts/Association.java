@@ -384,7 +384,17 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
      * @return A new association with the key-value pairs from the provided stream.
      * @throws NullPointerException if the provided stream is {@code null}.
      */
-    Association<K, V> putAll( final Stream<Pair<? extends K, ? extends V>> entries );
+    default Association<K, V> putAll( final Stream<Pair<? extends K, ? extends V>> entries ) {
+        Objects.requireNonNull(entries);
+        // TODO: implement branching based bulk insert
+        Association<K, V> result = this;
+        // reduce the stream to a single association
+        return entries.reduce(
+                result,
+                (acc,
+                 entry) -> acc.put(entry.first(), entry.second()),
+                (a, b) -> a);
+    }
 
     /**
      *  Returns a new association where an existing key-value pair
@@ -403,7 +413,13 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
      *         supplied key is replaced with the given key-value pair.
      * @see #replace(Pair) to replace a key-value pair as a {@code Pair} instance.
      */
-    Association<K, V> replace(K key, V value);
+    default Association<K, V> replace(K key, V value) {
+        if ( this.containsKey(key) ) {
+            return this.put(key, value);
+        } else {
+            return this;
+        }
+    }
 
     /**
      *  Returns a new association where an existing key-value pair
@@ -517,7 +533,7 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
      *         of this association are replaced by those in the supplied tuple.
      * @throws NullPointerException if the supplied tuple is {@code null}.
      */
-    default Association<K, V> replaceAll(Tuple<Pair<? extends K, ? extends V>> entries) {
+    default Association<K, V> replaceAll( Tuple<Pair<? extends K, ? extends V>> entries ) {
         Objects.requireNonNull(entries, "The provided tuple cannot be null.");
         if (entries.isEmpty())
             return this;
@@ -557,7 +573,16 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
      *         of this association are replaced by those in the supplied stream.
      * @throws NullPointerException if the supplied stream is {@code null}.
      */
-    Association<K, V> replaceAll(Stream<Pair<? extends K, ? extends V>> entries);
+    default Association<K, V> replaceAll( Stream<Pair<? extends K, ? extends V>> entries ) {
+        Objects.requireNonNull(entries);
+        Association<K, V> result = this;
+        // reduce the stream to a single association
+        return entries.reduce(
+                result,
+                (acc,
+                 entry) -> acc.replace(entry.first(), entry.second()),
+                (a, b) -> a);
+    }
 
     /**
      *  Returns a new association that is the same as this one
@@ -578,7 +603,15 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
      * @param keys The keys to remove from this association.
      * @return A new association without the keys in the given set.
      */
-    Association<K, V> removeAll(Set<? extends K> keys);
+    default Association<K, V> removeAll(Set<? extends K> keys) {
+        if ( this.isEmpty() || keys.isEmpty() )
+            return this;
+        Association<K, V> result = this;
+        for ( K key : keys ) {
+            result = result.remove(key);
+        }
+        return result;
+    }
 
     /**
      *  Returns a new association where only those key-value pairs
@@ -589,7 +622,17 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
      * @param keys The keys to retain in this association.
      * @return A new association with only the keys in the given set.
      */
-    Association<K, V> retainAll(Set<? extends K> keys);
+    default Association<K, V> retainAll(Set<? extends K> keys) {
+        if ( this.isEmpty() || keys.isEmpty() )
+            return this;
+        Association<K, V> result = this;
+        for ( K key : this.keySet() ) {
+            if ( !keys.contains(key) ) {
+                result = result.remove(key);
+            }
+        }
+        return result;
+    }
 
     /**
      *  Returns a completely empty association but
@@ -598,7 +641,9 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
      * @return A new association without any key-value pairs,
      *         or this association if it is already empty.
      */
-    Association<K, V> clear();
+    default Association<K, V> clear() {
+        return Sprouts.factory().associationOf(this.keyType(), this.valueType());
+    }
 
     /**
      *  Converts this association to a java.util.Map.
