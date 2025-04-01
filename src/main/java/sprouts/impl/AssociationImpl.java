@@ -46,36 +46,6 @@ final class AssociationImpl<K, V> implements Association<K, V> {
         );
     }
 
-    public AssociationImpl(
-        final Class<K> keyType,
-        final Class<V> valueType,
-        final Stream<Pair<? extends K, ? extends V>> entries
-    ) {
-        Map<K, V> uniqueEntries = new java.util.HashMap<>();
-        entries.forEach(entry -> {
-            if ( entry.first() == null || entry.second() == null ) {
-                throw new IllegalArgumentException("The given association may not contain null keys or values.");
-            }
-            // If the map already contains the key, we do not overwrite it
-            uniqueEntries.putIfAbsent(entry.first(), entry.second());
-        });
-        final Object[] keys = uniqueEntries.keySet().toArray();
-        final Object[] values = uniqueEntries.values().toArray();
-        final int size = keys.length;
-        Pair<Object,Object> localData = _fillNodeArrays(size, keyType, valueType, keys, values);
-        _keysArray = localData.first();
-        _valuesArray = localData.second();
-        _depth = 0;
-        _keyType = Objects.requireNonNull(keyType);
-        _valueType = Objects.requireNonNull(valueType);
-        _keyHashes = new int[size];
-        for (int i = 0; i < size; i++) {
-            _keyHashes[i] = Objects.requireNonNull(Array.get(_keysArray, i)).hashCode();
-        }
-        _branches = EMPTY_BRANCHES;
-        _size = size + _sumBranchSizes(_branches);
-    }
-
     private AssociationImpl(
         final int depth,
         final Class<K> keyType,
