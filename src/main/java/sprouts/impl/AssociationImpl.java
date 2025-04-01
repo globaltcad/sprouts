@@ -46,36 +46,6 @@ final class AssociationImpl<K, V> implements Association<K, V> {
         );
     }
 
-    public AssociationImpl(
-        final Class<K> keyType,
-        final Class<V> valueType,
-        final Stream<Pair<? extends K, ? extends V>> entries
-    ) {
-        Map<K, V> uniqueEntries = new java.util.HashMap<>();
-        entries.forEach(entry -> {
-            if ( entry.first() == null || entry.second() == null ) {
-                throw new IllegalArgumentException("The given association may not contain null keys or values.");
-            }
-            // If the map already contains the key, we do not overwrite it
-            uniqueEntries.putIfAbsent(entry.first(), entry.second());
-        });
-        final Object[] keys = uniqueEntries.keySet().toArray();
-        final Object[] values = uniqueEntries.values().toArray();
-        final int size = keys.length;
-        Pair<Object,Object> localData = _fillNodeArrays(size, keyType, valueType, keys, values);
-        _keysArray = localData.first();
-        _valuesArray = localData.second();
-        _depth = 0;
-        _keyType = Objects.requireNonNull(keyType);
-        _valueType = Objects.requireNonNull(valueType);
-        _keyHashes = new int[size];
-        for (int i = 0; i < size; i++) {
-            _keyHashes[i] = Objects.requireNonNull(Array.get(_keysArray, i)).hashCode();
-        }
-        _branches = EMPTY_BRANCHES;
-        _size = size + _sumBranchSizes(_branches);
-    }
-
     private AssociationImpl(
         final int depth,
         final Class<K> keyType,
@@ -259,29 +229,6 @@ final class AssociationImpl<K, V> implements Association<K, V> {
     }
 
     @Override
-    public Set<Pair<K, V>> entrySet() {
-        return new AbstractSet<Pair<K, V>>() {
-            @Override
-            public Iterator<Pair<K, V>> iterator() {
-                return AssociationImpl.this.iterator();
-            }
-            @Override
-            public int size() {
-                return _size;
-            }
-            @Override
-            public boolean contains(Object o) {
-                if (o instanceof Pair) {
-                    Pair<?, ?> pair = (Pair<?, ?>) o;
-                    K key = _keyType.cast(pair.first());
-                    return AssociationImpl.this.containsKey(key);
-                }
-                return false;
-            }
-        };
-    }
-
-    @Override
     public boolean containsKey(K key) {
         if ( !_keyType.isAssignableFrom(key.getClass()) ) {
             throw new IllegalArgumentException(
@@ -459,69 +406,6 @@ final class AssociationImpl<K, V> implements Association<K, V> {
     }
 
     @Override
-    public Association<K, V> putAll( Stream<Pair<? extends K, ? extends V>> entries ) {
-        Objects.requireNonNull(entries);
-        // TODO: implement branching based bulk insert
-        AssociationImpl<K, V> result = this;
-        // reduce the stream to a single association
-        return entries.reduce(
-                result,
-                (acc,
-                 entry) -> (AssociationImpl<K, V>) acc.put(entry.first(), entry.second()),
-                (a, b) -> a);
-    }
-
-    @Override
-    public Association<K, V> removeAll( Set<? extends K> keys ) {
-        if ( this.isEmpty() || keys.isEmpty() )
-            return this;
-        Association<K, V> result = this;
-        for ( K key : keys ) {
-            result = result.remove(key);
-        }
-        return result;
-    }
-
-    @Override
-    public Association<K, V> retainAll( Set<? extends K> keys ) {
-        if ( this.isEmpty() || keys.isEmpty() )
-            return this;
-        Association<K, V> result = this;
-        for ( K key : this.keySet() ) {
-            if ( !keys.contains(key) ) {
-                result = result.remove(key);
-            }
-        }
-        return result;
-    }
-
-    @Override
-    public Association<K, V> replace( K key, V value ) {
-        if ( this.containsKey(key) ) {
-            return this.put(key, value);
-        } else {
-            return this;
-        }
-    }
-
-    @Override
-    public Association<K, V> replaceAll( Stream<Pair<? extends K, ? extends V>> stream ) {
-        Objects.requireNonNull(stream);
-        Association<K, V> result = this;
-        // reduce the stream to a single association
-        return stream.reduce(
-                result,
-                (acc,
-                 entry) -> acc.replace(entry.first(), entry.second()),
-                (a, b) -> a);
-    }
-
-    @Override
-    public Association<K, V> clear() {
-        return new AssociationImpl<>(_keyType, _valueType);
-    }
-
-    @Override
     public Map<K, V> toMap() {
         Map<K, V> map = new java.util.HashMap<>();
         _toMapRecursively(map);
@@ -628,11 +512,8 @@ final class AssociationImpl<K, V> implements Association<K, V> {
 
     private long _recursiveHashCode() {
         long baseHash = 0; // -> full 64 bit improve hash distribution
-        int size = _length(_keysArray);
-        for (int i = 0; i < size; i++) {
-            Object key   = Array.get(_keysArray, i);
-            Object value = Array.get(_valuesArray, i);
-            baseHash += _fullKeyPairHash(key, value);
+        for (int i = 0; i < _keyHashes.length; i++) {
+            baseHash += _fullKeyPairHash(_keyHashes[i], Array.get(_valuesArray, i));
         }
         for (AssociationImpl<K, V> branch : _branches) {
             if ( branch != null ) {
@@ -642,8 +523,8 @@ final class AssociationImpl<K, V> implements Association<K, V> {
         return baseHash;
     }
 
-    private static long _fullKeyPairHash( Object key, Object value ) {
-        return _combine(key.hashCode(), value.hashCode());
+    private static long _fullKeyPairHash( int keyHash, Object value ) {
+        return _combine(keyHash, value.hashCode());
     }
 
     private static long _combine( int first32Bits, int last32Bits ) {
