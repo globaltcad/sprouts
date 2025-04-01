@@ -196,7 +196,27 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
      * @return A set of all the key-value pairs in this association
      *        as simple {@link Pair}s.
      */
-    Set<Pair<K,V>> entrySet();
+    default Set<Pair<K,V>> entrySet() {
+        return new AbstractSet<Pair<K, V>>() {
+            @Override
+            public Iterator<Pair<K, V>> iterator() {
+                return Association.this.iterator();
+            }
+            @Override
+            public int size() {
+                return Association.this.size();
+            }
+            @Override
+            public boolean contains(Object o) {
+                if (o instanceof Pair) {
+                    Pair<?, ?> pair = (Pair<?, ?>) o;
+                    K key = Association.this.keyType().cast(pair.first());
+                    return Association.this.containsKey(key);
+                }
+                return false;
+            }
+        };
+    }
 
     /**
      *  Checks if the given key is present in this association

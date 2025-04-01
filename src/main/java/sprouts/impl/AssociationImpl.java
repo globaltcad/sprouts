@@ -229,29 +229,6 @@ final class AssociationImpl<K, V> implements Association<K, V> {
     }
 
     @Override
-    public Set<Pair<K, V>> entrySet() {
-        return new AbstractSet<Pair<K, V>>() {
-            @Override
-            public Iterator<Pair<K, V>> iterator() {
-                return AssociationImpl.this.iterator();
-            }
-            @Override
-            public int size() {
-                return _size;
-            }
-            @Override
-            public boolean contains(Object o) {
-                if (o instanceof Pair) {
-                    Pair<?, ?> pair = (Pair<?, ?>) o;
-                    K key = _keyType.cast(pair.first());
-                    return AssociationImpl.this.containsKey(key);
-                }
-                return false;
-            }
-        };
-    }
-
-    @Override
     public boolean containsKey(K key) {
         if ( !_keyType.isAssignableFrom(key.getClass()) ) {
             throw new IllegalArgumentException(
