@@ -7,7 +7,6 @@ import sprouts.Tuple;
 
 import java.lang.reflect.Array;
 import java.util.*;
-import java.util.stream.Stream;
 
 import static sprouts.impl.ArrayUtil.*;
 
@@ -187,25 +186,6 @@ final class AssociationImpl<K, V> implements Association<K, V> {
     @Override
     public Class<V> valueType() {
         return _valueType;
-    }
-
-    @Override
-    public Set<K> keySet() {
-        Set<K> setOfKeys = new java.util.HashSet<>(_size);
-        populateKeySetRecursively(setOfKeys);
-        return java.util.Collections.unmodifiableSet(setOfKeys);
-    }
-
-    public void populateKeySetRecursively(Set<K> setOfKeys) {
-        for (int i = 0; i < _length(_keysArray); i++) {
-            K key = _getAt(i, _keysArray, _keyType);
-            setOfKeys.add(key);
-        }
-        for (AssociationImpl<K, V> branch : _branches) {
-            if (branch != null) {
-                branch.populateKeySetRecursively(setOfKeys);
-            }
-        }
     }
 
     @Override

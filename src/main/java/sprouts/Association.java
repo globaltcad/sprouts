@@ -6,6 +6,7 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -174,12 +175,14 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
     Class<V> valueType();
 
     /**
-     *   Returns a {@link Set} of all the keys in this association.
+     *  Returns a {@link Set} of all the keys in this association.
      *  The returned set is immutable and cannot be modified.
      *
      * @return A set of all the keys in this association.
      */
-    Set<K> keySet();
+    default ValueSet<K> keySet() {
+        return ValueSet.of(this.keyType()).addAll(this.entrySet().stream().map(Pair::first));
+    }
 
     /**
      *  Returns a tuple of all the values in this association.
@@ -196,24 +199,45 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
      * @return A set of all the key-value pairs in this association
      *        as simple {@link Pair}s.
      */
-    default Set<Pair<K,V>> entrySet() {
-        return new AbstractSet<Pair<K, V>>() {
-            @Override
-            public Iterator<Pair<K, V>> iterator() {
-                return Association.this.iterator();
-            }
+    default ValueSet<Pair<K,V>> entrySet() {
+        return new ValueSet<Pair<K, V>>() {
             @Override
             public int size() {
                 return Association.this.size();
             }
             @Override
-            public boolean contains(Object o) {
-                if (o instanceof Pair) {
-                    Pair<?, ?> pair = (Pair<?, ?>) o;
-                    K key = Association.this.keyType().cast(pair.first());
-                    return Association.this.containsKey(key);
-                }
-                return false;
+            public Class<Pair<K, V>> type() {
+                return Pair.classTyped(Association.this.keyType(), Association.this.valueType());
+            }
+            @Override
+            public boolean contains(Pair<K, V> element) {
+                return Association.this.containsKey(element.first());
+            }
+            @Override
+            public ValueSet<Pair<K, V>> add(Pair<K, V> element) {
+                return Association.this.put(element).entrySet();
+            }
+            @Override
+            public ValueSet<Pair<K, V>> addAll(Stream<? extends Pair<K, V>> elements) {
+                return Association.this.putAll((Stream) elements).entrySet();
+            }
+            @Override
+            public ValueSet<Pair<K, V>> remove(Pair<K, V> element) {
+                return Association.this.remove(element.first()).entrySet();
+            }
+            @Override
+            public ValueSet<Pair<K, V>> removeAll(Stream<? extends Pair<K, V>> elements) {
+                return Association.this.removeAll(elements.map(Pair::first).collect(Collectors.toSet()))
+                        .entrySet();
+            }
+            @Override
+            public ValueSet<Pair<K, V>> retainAll(Set<? extends Pair<K, V>> elements) {
+                return Association.this.retainAll(elements.stream().map(Pair::first).collect(Collectors.toSet()))
+                        .entrySet();
+            }
+            @Override
+            public Iterator<Pair<K, V>> iterator() {
+                return Association.this.iterator();
             }
         };
     }
@@ -456,7 +480,7 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
      *         supplied key is replaced with the given key-value pair.
      * @see #replace(Object, Object) to replace a key-value pair as separate objects.
      */
-    default Association<K, V> replace(Pair<? extends K, ? extends V> entry) {
+    default Association<K, V> replace( Pair<? extends K, ? extends V> entry ) {
         return replace(entry.first(), entry.second());
     }
 
@@ -473,9 +497,9 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
      *          of this association are replaced by those in the supplied association.
      * @throws NullPointerException if the supplied association is {@code null}.
      */
-    default Association<K, V> replaceAll(Association<? extends K, ? extends V> other) {
+    default Association<K, V> replaceAll( Association<? extends K, ? extends V> other ) {
         Objects.requireNonNull(other, "The provided association cannot be null.");
-        if (other.isEmpty())
+        if ( other.isEmpty() )
             return this;
         return replaceAll((Stream)other.entrySet().stream());
     }
@@ -493,7 +517,7 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
      *          of this association are replaced by those in the supplied map.
      * @throws NullPointerException if the supplied map is {@code null}.
      */
-    default Association<K, V> replaceAll(Map<? extends K, ? extends V> map) {
+    default Association<K, V> replaceAll( Map<? extends K, ? extends V> map ) {
         Objects.requireNonNull(map, "The provided map cannot be null.");
         if (map.isEmpty())
             return this;
@@ -513,7 +537,7 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
      *         of this association are replaced by those in the supplied set.
      * @throws NullPointerException if the supplied set is {@code null}.
      */
-    default Association<K, V> replaceAll(Set<Pair<? extends K, ? extends V>> entries) {
+    default Association<K, V> replaceAll( Set<Pair<? extends K, ? extends V>> entries ) {
         Objects.requireNonNull(entries, "The provided set cannot be null.");
         if (entries.isEmpty())
             return this;
@@ -533,7 +557,7 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
      *         of this association are replaced by those in the supplied array.
      * @throws NullPointerException if the supplied array is {@code null}.
      */
-    default Association<K, V> replaceAll(Pair<? extends K, ? extends V>... entries) {
+    default Association<K, V> replaceAll( Pair<? extends K, ? extends V>... entries ) {
         Objects.requireNonNull(entries, "The provided array cannot be null.");
         if (entries.length == 0)
             return this;
@@ -573,7 +597,7 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
      *         of this association are replaced by those in the supplied collection.
      * @throws NullPointerException if the supplied collection is {@code null}.
      */
-    default Association<K, V> replaceAll(Collection<Pair<? extends K, ? extends V>> entries) {
+    default Association<K, V> replaceAll( Collection<Pair<? extends K, ? extends V>> entries ) {
         Objects.requireNonNull(entries, "The provided collection cannot be null.");
         if (entries.isEmpty())
             return this;
@@ -612,7 +636,7 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
      * @param key The key to remove from this association.
      * @return A new association without the given key.
      */
-    Association<K, V> remove(K key);
+    Association<K, V> remove( K key );
 
     /**
      *  Returns a new association that is the same as this one
@@ -623,12 +647,52 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
      * @param keys The keys to remove from this association.
      * @return A new association without the keys in the given set.
      */
-    default Association<K, V> removeAll(Set<? extends K> keys) {
+    default Association<K, V> removeAll( ValueSet<? extends K> keys ) {
         if ( this.isEmpty() || keys.isEmpty() )
             return this;
         Association<K, V> result = this;
         for ( K key : keys ) {
             result = result.remove(key);
+        }
+        return result;
+    }
+
+    /**
+     *  Returns a new association that is the same as this one
+     *  but without any of the keys in the supplied set. If the
+     *  supplied set is empty, then this association is returned
+     *  unchanged.
+     *
+     * @param keys The keys to remove from this association.
+     * @return A new association without the keys in the given set.
+     */
+    default Association<K, V> removeAll( Set<? extends K> keys ) {
+        if ( this.isEmpty() || keys.isEmpty() )
+            return this;
+        Association<K, V> result = this;
+        for ( K key : keys ) {
+            result = result.remove(key);
+        }
+        return result;
+    }
+
+    /**
+     *  Returns a new association where only those key-value pairs
+     *  are kept that have a key present in the supplied value set.
+     *  If the supplied set is empty, then this association is
+     *  returned unchanged.
+     *
+     * @param keys The keys to retain in this association.
+     * @return A new association with only the keys in the given set.
+     */
+    default Association<K, V> retainAll( ValueSet<? extends K> keys ) {
+        if ( this.isEmpty() || keys.isEmpty() )
+            return this;
+        Association<K, V> result = this;
+        for ( K key : this.keySet() ) {
+            if ( !((ValueSet<K>)keys).contains(key) ) {
+                result = result.remove(key);
+            }
         }
         return result;
     }

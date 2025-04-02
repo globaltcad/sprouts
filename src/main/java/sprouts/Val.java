@@ -919,6 +919,13 @@ public interface Val<T extends @Nullable Object> extends Maybe<T> {
         return view(empty, empty, mapper);
     }
 
+    default <E> Viewable<ValueSet<E>> viewAsValueSet( Class<E> type, Function<T, @Nullable ValueSet<E>> mapper ) {
+        Objects.requireNonNull(type);
+        Objects.requireNonNull(mapper);
+        ValueSet<E> empty = ValueSet.of(type);
+        return view(empty, empty, mapper);
+    }
+
     /**
      *  Returns the name/id of the property which is useful for debugging as well as
      *  persisting their state by using them as keys for whatever storage data structure one chooses. <br>
