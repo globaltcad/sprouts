@@ -395,6 +395,11 @@ public final class Sprouts implements SproutsFactory
         return new AssociationImpl<>(keyType, valueType);
     }
 
+    @Override
+    public <E> ValueSet<E> valueSetOf(Class<E> type) {
+        return new ValueSetImpl<>(type);
+    }
+
     @SuppressWarnings("unchecked")
     @Override public <T> Vars<T> varsOf( Class<T> type, Var<T>... vars ) { return PropertyList.of( false, type, vars ); }
 

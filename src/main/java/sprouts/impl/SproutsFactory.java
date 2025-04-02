@@ -195,7 +195,9 @@ public interface SproutsFactory
 
     <T> Tuple<@Nullable T> tupleOfNullable( Class<T> type, Iterable<@Nullable T> iterable );
 
-    <K, V> Association<K, V> associationOf(Class<K> keyType, Class<V> valueType );
+    <K, V> Association<K, V> associationOf( Class<K> keyType, Class<V> valueType );
+
+    <E> ValueSet<E> valueSetOf( Class<E> type );
 
     <V> Result<V> resultOf( Class<V> type );
 
