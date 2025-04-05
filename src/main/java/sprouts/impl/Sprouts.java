@@ -106,7 +106,7 @@ public final class Sprouts implements SproutsFactory
 
     @Override public <T> Val<T> valOf( Val<T> toBeCopied ) {
         Objects.requireNonNull(toBeCopied);
-        return Val.of( toBeCopied.get() ).withId( toBeCopied.id() );
+        return Val.of( toBeCopied.orElseThrowUnchecked() ).withId( toBeCopied.id() );
     }
 
     @Override public <T> Val<@Nullable T> valOfNullable( Val<@Nullable T> toBeCopied ) {
