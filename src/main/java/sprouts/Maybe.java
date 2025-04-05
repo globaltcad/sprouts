@@ -4,7 +4,6 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import sprouts.impl.Sprouts;
 
-import java.util.Collections;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
@@ -13,12 +12,13 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
- *  The {@link Maybe} interface represents a {@code null} safe view on a thing
- *  which may or may not exist, and it serves as a general blue-print for nomadic types
- *  like the {@link Result} type. <br>
+ *  The {@link Maybe} interface represents a thing of a specific {@link #type()}
+ *  which may or may not exist, and it serves as a {@code null} safe
+ *  blue-print for nomadic types like the {@link Result} type. <br>
+ *  <p>
  *  Its API is very similar to the {@link Optional} type, with the difference
  *  that a {@link Maybe} implementation is always aware of the {@link #type()}
- *  of the thing that is a wrapper for. <br>
+ *  of the thing that it is a wrapper for. <br>
  *  Note that contrary to the popular known {@link Optional} type, a {@link Maybe}
  *  does not have a {@code .get()} method.<br>
  *  Instead, it has a {@link #orElseThrowUnchecked()} method
@@ -49,16 +49,16 @@ public interface Maybe<T>
      * @return A new {@link Maybe} instance.
      * @throws NullPointerException If the type is null.
      */
-    static <T> Maybe<@Nullable T> ofNullable( Class<T> type, @Nullable T item ) {
+    static <T> Maybe<@Nullable T> ofNullable( @NonNull Class<T> type, @Nullable T item ) {
         Objects.requireNonNull(type);
         return Sprouts.factory().maybeOfNullable( type, item );
     }
 
     /**
      *  A more concise version of {@link #ofNullable(Class, Object)}
-     *  which is equivalent to {@code Var.ofNullable(type, null)}. <br>
-     *  The {@link Maybe} instances returned by this factory method will be empty,
-     *  but still know which type it represents.<br>
+     *  which is equivalent to {@code Maybe.ofNullable(type, null)}. <br>
+     *  The {@link Maybe} instance returned by this factory method will always
+     *  be empty, but still know which type it represents.<br>
      *  So it is required to supply a {@link Class} to ensure that the wrapper
      *  can return a valid type when {@link Maybe#type()} is called.
      *
@@ -73,9 +73,8 @@ public interface Maybe<T>
     }
 
     /**
-     *     This factory method returns a {@code Maybe} describing the given non-{@code null}
-     *     item similar to {@link Optional#of(Object)}, but specifically
-     *     designed for use with Swing-Tree.
+     *  This factory method creates and returns a {@code Maybe} representing the
+     *  supplied non-{@code null} item similar to {@link Optional#of(Object)}.
      *
      * @param item The initial item of the wrapper which must not be null.
      * @param <T> The type of the item held by the {@link Maybe}!
@@ -83,7 +82,7 @@ public interface Maybe<T>
      * @throws NullPointerException If the supplied item is null.
      *                              Use {@link #ofNullable(Class, Object)} if the item may be null.
      */
-    static <T> Maybe<T> of( T item ) {
+    static <T> Maybe<T> of( @NonNull T item ) {
         Objects.requireNonNull(item);
         return Sprouts.factory().maybeOf( item );
     }
@@ -133,7 +132,9 @@ public interface Maybe<T>
      *  interact with the item wrapped by this {@link Maybe} in a more functional way.
      * @return An {@link Optional} wrapping the item wrapped by this {@link Maybe}.
      */
-    default Optional<T> toOptional() { return Optional.ofNullable(this.orElseNull()); }
+    default Optional<T> toOptional() {
+        return Optional.ofNullable(this.orElseNull());
+    }
 
     /**
      * If an item is present, returns the item, otherwise returns
@@ -149,11 +150,14 @@ public interface Maybe<T>
 
     /**
      * If an item is present, returns the item, otherwise returns
-     * {@code other}.
+     * {@code other}, <b>but neve {@code null}</b>. <br>
+     * If the supplied alternative is {@code null},
+     * then this method will throw a {@code NullPointerException}.
      *
      * @param other the item to be returned, if no item is present.
-     *        May not be {@code null}.
+     *        May never be {@code null}.
      * @return the item, if present, otherwise {@code other}
+     * @throws NullPointerException if the supplied alternative is {@code null}.
      */
     default @NonNull T orElse( @NonNull T other ) {
         Objects.requireNonNull(other);
@@ -170,7 +174,8 @@ public interface Maybe<T>
      * @throws NullPointerException if no item is present and the supplying
      *         function is {@code null}
      */
-    default T orElseGet( Supplier<? extends T> supplier ) {
+    default T orElseGet( @NonNull Supplier<? extends T> supplier ) {
+        Objects.requireNonNull(supplier);
         return this.isPresent() ? orElseThrowUnchecked() : supplier.get();
     }
 
@@ -249,10 +254,23 @@ public interface Maybe<T>
      *
      * @return A simple {@link String} representation of the type of the item wrapped by an implementation of this interface.
      */
-    default String typeAsString() { return this.type().getName(); }
+    default String typeAsString() {
+        return this.type().getName();
+    }
 
     /**
-     *  This method check if the provided item is equal to the item wrapped by this {@link Var} instance.
+     *  This method checks if the provided item is equal to the item wrapped by this {@link Maybe}.
+     *  This is functionally equivalent to calling {@code Val.equals(otherItem, orElseNull())}.
+     *  Note that this differs from {@link Objects#equals(Object, Object)} in that
+     *  it also treats the equality of arrays, like {@code int[]}, {@code String[]}, etc.,
+     *  in terms of their contents, not their references. <br>
+     *  So the following code will return true:
+     *  <pre>{@code
+     *    int[] arr1 = {1, 2, 3};
+     *    int[] arr2 = {1, 2, 3};
+     *    boolean equal = Maybe.of(arr1).is(arr2);
+     *    System.out.println( equal ); // == true
+     *  }</pre>
      *
      * @param otherItem The other item of the same type as is wrapped by this.
      * @return The truth value determining if the provided item is equal to the wrapped item.
@@ -268,7 +286,9 @@ public interface Maybe<T>
      * @param otherItem The other item of the same type as is wrapped by this.
      * @return The truth value determining if the provided item is not equal to the wrapped item.
      */
-    default boolean isNot( @Nullable T otherItem ) { return !is(otherItem); }
+    default boolean isNot( @Nullable T otherItem ) {
+        return !is(otherItem);
+    }
 
     /**
      *  This method check if the item by the provided wrapper
@@ -277,7 +297,7 @@ public interface Maybe<T>
      * @param other The other wrapper of the same type as is wrapped by this.
      * @return The truth value determining if the item of the supplied wrapper is equal to the wrapped item.
      */
-    default boolean is( Maybe<@Nullable T> other ) {
+    default boolean is( @NonNull Maybe<@Nullable T> other ) {
         Objects.requireNonNull(other);
         return is( other.orElseNull() );
     }
@@ -289,8 +309,12 @@ public interface Maybe<T>
      *
      * @param other The other wrapper of the same type as is wrapped by this.
      * @return The truth value determining if the item of the supplied wrapper is not equal to the wrapped item.
+     * @throws NullPointerException if the supplied {@link Maybe} is {@code null}.
      */
-    default boolean isNot( Maybe<@Nullable T> other ) { return !is(other); }
+    default boolean isNot( @NonNull Maybe<@Nullable T> other ) {
+        Objects.requireNonNull(other);
+        return !is(other);
+    }
 
     /**
      *  This method checks if at least one of the provided items is equal to
@@ -319,12 +343,19 @@ public interface Maybe<T>
      * @param second The second wrapper of the same type as is wrapped by this.
      * @param otherValues The other properties of the same type as is wrapped by this.
      * @return The truth value determining if the item of the supplied wrapper is equal to the wrapped item.
+     * @throws NullPointerException if any of the supplied arguments is {@code null}.
      */
     @SuppressWarnings("unchecked")
-    default boolean isOneOf( Maybe<@Nullable T> first, Maybe<@Nullable T> second, Maybe<@Nullable T>... otherValues ) {
+    default boolean isOneOf(
+        @NonNull Maybe<@Nullable T> first,
+        @NonNull Maybe<@Nullable T> second,
+        @NonNull Maybe<@Nullable T>... otherValues
+    ) {
+        Objects.requireNonNull(first);
+        Objects.requireNonNull(second);
+        Objects.requireNonNull(otherValues);
         if ( this.is(first) ) return true;
         if ( this.is(second) ) return true;
-        Objects.requireNonNull(otherValues);
         for ( Maybe<T> otherValue : otherValues )
             if ( is(otherValue) ) return true;
         return false;
@@ -335,7 +366,9 @@ public interface Maybe<T>
      *
      * @return {@code true} if an item is present, otherwise {@code false}
      */
-    default boolean isPresent() { return orElseNull() != null; }
+    default boolean isPresent() {
+        return orElseNull() != null;
+    }
 
     /**
      * If an item is  not present, returns {@code true}, otherwise
@@ -352,10 +385,10 @@ public interface Maybe<T>
      * otherwise does nothing.
      *
      * @param action the action to be performed, if an item is present
-     * @throws NullPointerException if item is present and the given action is
-     *         {@code null}
+     * @throws NullPointerException if item is present and the given {@link Consumer} action is {@code null}
      */
-    default void ifPresent( Consumer<T> action ) {
+    default void ifPresent( @NonNull Consumer<T> action ) {
+        Objects.requireNonNull(action);
         if ( this.isPresent() )
             action.accept( orElseThrowUnchecked() );
     }
@@ -371,7 +404,9 @@ public interface Maybe<T>
      *         is {@code null}, or no item is present and the given empty-based
      *         action is {@code null}.
      */
-    default void ifPresentOrElse( Consumer<? super T> action, Runnable emptyAction ) {
+    default void ifPresentOrElse( @NonNull Consumer<? super T> action, @NonNull Runnable emptyAction ) {
+        Objects.requireNonNull(action);
+        Objects.requireNonNull(emptyAction);
         if ( isPresent() )
             action.accept( orElseThrowUnchecked() );
         else
@@ -390,7 +425,7 @@ public interface Maybe<T>
      * @throws NullPointerException if the supplying function is {@code null} or
      *         produces a {@code null} result
      */
-    default Maybe<T> or( Supplier<? extends Maybe<? extends T>> supplier ) {
+    default Maybe<T> or( @NonNull Supplier<? extends Maybe<? extends T>> supplier ) {
         Objects.requireNonNull(supplier);
         if ( isPresent() )
             return this;
@@ -418,7 +453,7 @@ public interface Maybe<T>
      * @return A new {@link Maybe} either empty (containing null) or containing the result of applying
      *             the mapping function to the item wrapped by this {@link Maybe}.
      */
-    Maybe<T> map( Function<T, T> mapper );
+    Maybe<T> map( @NonNull Function<T, T> mapper );
 
     /**
      *  If the item is present, applies the provided mapping function to it,
@@ -436,6 +471,6 @@ public interface Maybe<T>
      *             the mapping function to the item of this maybe.
      * @param <U> The type of the item returned from the mapping function
      */
-    <U> Maybe<U> mapTo( Class<U> type, java.util.function.Function<T, U> mapper );
+    <U> Maybe<U> mapTo( @NonNull Class<U> type, java.util.function.@NonNull Function<T, U> mapper );
 
 }

@@ -210,7 +210,7 @@ public interface Problem
                 logger.accept(titleAndDescription, new Throwable());
         } catch (Exception e) {
             Logger log = LoggerFactory.getLogger(getClass().getName());
-            log.error("Failed to log problem: "+titleAndDescription, e);
+            log.error("Failed to log problem: '{}'", titleAndDescription, e);
             // Oh boy, how bad can a user's logging be if it throws an exception? Well, we got you covered!
         }
     }
