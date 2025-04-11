@@ -249,19 +249,14 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Se
 
     @Override
     public Tuple<T> makeDistinct() {
-        int newSize = 0;
-        Object newItems = _createArray(_type, _allowsNull, _length(_data));
-        for ( int i = 0; i < _length(_data); i++ ) {
-            T item = _getAt(i, _data, _type);
-            if ( firstIndexOf(item) == newSize ) {
-                _setAt(newSize, item, newItems);
-                newSize++;
-            }
-        }
-        if ( newSize == _length(_data) )
-            return this;
+        LinkedHashSet<T> set = new LinkedHashSet<>();
+        _each(_data, _type, set::add);
+        int newSize = set.size();
         Object distinctItems = _createArray(_type, _allowsNull, newSize);
-        System.arraycopy(newItems, 0, distinctItems, 0, newSize);
+        int i = 0;
+        for ( T item : set ) {
+            _setAt(i++, item, distinctItems);
+        }
         SequenceDiff diff = SequenceDiff.of(this, SequenceChange.DISTINCT, -1, _length(_data) - newSize);
         return new TupleImpl<>(_allowsNull, _type, distinctItems, diff);
     }
