@@ -6,6 +6,7 @@ import spock.lang.Subject
 import spock.lang.Title
 import sprouts.impl.SequenceDiffOwner
 
+import java.time.DayOfWeek
 import java.util.function.Consumer
 import java.util.function.Predicate
 import java.util.stream.Stream
@@ -79,6 +80,7 @@ class Tuple_Spec extends Specification
             Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.removeIf { it > 2 && it < 5 } } || Tuple.of(1, 2, 5)
             Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.removeIf { it < 2 || it > 4 } } || Tuple.of(2, 3, 4)
             Tuple.of(1, 2, 3, 1, 2) | { tuple -> tuple.makeDistinct() }                || Tuple.of(1, 2, 3)
+            Tuple.of("","","!","")  | { tuple -> tuple.makeDistinct() }                || Tuple.of("", "!")
             Tuple.of(1, 2)          | { tuple -> tuple.addIfNonNull(null) }            || Tuple.of(1, 2)
             Tuple.of(1, 2)          | { tuple -> tuple.addIfNonNull(3) }               || Tuple.of(1, 2, 3)
             Tuple.of(1, 2)          | { tuple -> tuple.addIfNonNullAt(1,null) }        || Tuple.of(1, 2)
@@ -109,6 +111,28 @@ class Tuple_Spec extends Specification
             Tuple.of(1, 2, 3)                     | { tuple -> tuple.none { it > 1 } }    || false
             Tuple.of(1, 2, 3)                     | { tuple -> tuple.anyNull() }          || false
             Tuple.ofNullable(Integer, 1, null, 3) | { tuple -> tuple.anyNull() }          || true
+    }
+
+    def 'The `makeDistinct()` method is like turning a tuple into a linked hash set.'(
+        Tuple<Object> input
+    ){
+        when : 'We call the `makeDistinct()` method on the input.'
+            var result = input.makeDistinct()
+        and : 'We also fill a linked hash set with the input.'
+            var set = new LinkedHashSet<>(input.toList())
+        then : 'The result has the expected contents.'
+            result == Tuple.of(result.type(), set)
+        where :
+            input << [
+                Tuple.of(1, 2, 3, 1, 2, 2, 3, 6, 6, 3, 2, 1, 1),
+                Tuple.of("a", "b", "c", "a", "b", "x", "y", "z", "a", "b", "c"),
+                Tuple.of(DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY,
+                        DayOfWeek.THURSDAY, DayOfWeek.FRIDAY, DayOfWeek.SATURDAY,
+                        DayOfWeek.SUNDAY, DayOfWeek.MONDAY, DayOfWeek.TUESDAY,
+                        DayOfWeek.WEDNESDAY, DayOfWeek.THURSDAY, DayOfWeek.FRIDAY,
+                        DayOfWeek.SATURDAY, DayOfWeek.SUNDAY),
+                Tuple.of(Integer,(0..100).collect(it->{ (31*it) % 10 }))
+            ]
     }
 
     def 'Tuple implementations know about their last operation.'(
