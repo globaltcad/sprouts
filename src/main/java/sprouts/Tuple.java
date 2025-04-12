@@ -1425,6 +1425,17 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
     }
 
     /**
+     *  Converts this tuple of items to Sprouts {@link ValueSet} of unique (non-duplicate) items
+     *  and then returns the resulting set.
+     *  Note that there is no specific order for the items in the resulting set.
+     *
+     * @return An immutable {@link ValueSet} of items in this {@link Tuple} instance.
+     */
+    default ValueSet<T> toValueSet() {
+        return ValueSet.of(this.type(), this);
+    }
+
+    /**
      *  Turns this tuple of items into a stream of items
      *  which can be used for further functional processing.
      *  Note that the returned stream is not parallel.

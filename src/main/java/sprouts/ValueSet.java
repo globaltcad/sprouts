@@ -142,6 +142,23 @@ public interface ValueSet<E> extends Iterable<E> {
     }
 
     /**
+     *  Creates a new value set from the given {@link Iterable} of elements.
+     *  The types of the elements are inferred from the elements themselves
+     *  through the {@link Object#getClass()} method.
+     *
+     * @param type The type of the elements in the value set.
+     * @param elements The iterable of elements to store in the value set.
+     * @param <E> The type of the elements in the value set, this must be an immutable type.
+     * @return A new value set with the given elements.
+     * @throws NullPointerException If any of the provided elements are null or if the provided iterable is null.
+     */
+    static <E> ValueSet<E> of( @NonNull Class<E> type, @NonNull Iterable<E> elements ) {
+        Objects.requireNonNull(type);
+        Objects.requireNonNull(elements);
+        return of(type).addAll(elements);
+    }
+
+    /**
      *  Returns the total number of all elements in this value set.
      *
      * @return The number of elements in this value set.
@@ -387,6 +404,21 @@ public interface ValueSet<E> extends Iterable<E> {
         if ( elements.isEmpty() )
             return this;
         return addAll(elements.stream());
+    }
+
+    /**
+     *  Returns a new value set with all the elements from the
+     *  supplied {@link Iterable} added to it.
+     *  If the provided iterable is empty, then this
+     *  value set is returned unchanged.
+     *
+     * @param elements The iterable of elements to add to this value set.
+     * @return A new value set with the elements from the provided iterable.
+     * @throws NullPointerException if the provided iterable is {@code null}.
+     */
+    default ValueSet<E> addAll( final Iterable<? extends E> elements ) {
+        Objects.requireNonNull(elements, "The provided iterable cannot be null.");
+        return addAll(StreamSupport.stream(elements.spliterator(), false));
     }
 
     /**
