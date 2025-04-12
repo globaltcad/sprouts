@@ -271,24 +271,6 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Se
     }
 
     @Override
-    @SuppressWarnings("NullAway")
-    public Iterator<T> iterator() {
-        return new Iterator<T>() {
-            private int _index = 0;
-
-            @Override
-            public boolean hasNext() {
-                return _index < _length(_data);
-            }
-
-            @Override
-            public T next() {
-                return _getAt(_index++, _data, _type);
-            }
-        };
-    }
-
-    @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("Tuple<");
