@@ -26,15 +26,28 @@ class ValueSet_Spec extends Specification {
     }
 
     def 'An empty ValueSet is created by specifying the element type'() {
+        reportInfo """
+            A `ValueSet` needs to be created with a type to allow for better
+            type safety during runtime as well as improved performance
+            due to primitive specialization.
+            A `ValueSet` based on the `Integer` class for example, will
+            internally use a primitive `int[]` array to store the values.
+        """
         given:
             var emptySet = ValueSet.of(String)
 
         expect:
             emptySet.isEmpty()
             emptySet.type() == String
+
+        when :
+            var emptySet2 = ValueSet.of(Integer)
+        then:
+            emptySet2.isEmpty()
+            emptySet2.type() == Integer
     }
 
-    def 'ValueSet maintains invariance with Java Set across operations'(
+    def 'The `ValueSet` maintains invariance with Java Set across operations'(
         List<Tuple2<Operation, String>> operations
     ) {
         given:

@@ -65,14 +65,14 @@ class Association_Spec extends Specification
             associations = operationsApplier(associations)
         then: 'The associations and the map are equal in terms of size, keys, and values.'
             associations.size() == map.size()
-            associations.keySet() == map.keySet()
+            associations.keySet().toSet() == map.keySet()
             associations.values().sort().toList() == map.values().sort()
 
         when : 'We apply the operations to the associations and the map a few more times.'
             10.times { associations = operationsApplier(associations) }
         then: 'The associations and the map are still equal in terms of size, keys, and values.'
             associations.size() == map.size()
-            associations.keySet() == map.keySet()
+            associations.keySet().toSet() == map.keySet()
             associations.values().sort().toList() == map.values().sort()
         and : 'We can lookup any value from its corresponding key.'
             map.values() as Set == map.keySet().collect { key -> associations.get(key).orElseThrow(MissingItemException::new) } as Set
@@ -181,7 +181,7 @@ class Association_Spec extends Specification
             3.times { assoc = operationsApplier(assoc) }
         then: 'Immediate invariance'
             assoc.size() == map.size()
-            assoc.keySet() == map.keySet()
+            assoc.keySet().toSet() == map.keySet()
             assoc.values().sort().toList() == map.values().sort()
             assoc.toMap() == map
         and :
@@ -325,7 +325,22 @@ class Association_Spec extends Specification
             mergedAssociations.get("f").orElseThrow(MissingItemException::new) == 6
     }
 
-    def 'You remove the entries of one association from another, using the `removeAll` method.'() {
+    def 'You remove the entries of one association from another, using the `removeAll(ValueSet)` method.'() {
+        given : 'Two empty associations between strings and integers.'
+            var associations1 = Association.between(String, Integer)
+            var associations2 = Association.between(String, Integer)
+        when : 'We add some values to the first association.'
+            associations1 = associations1.put("x", 1).put("y", 2).put("z", 3)
+        and : 'We add some values to the second association.'
+            associations2 = associations2.put("y", 2).put("z", 3).put("o", 4)
+        and : 'We remove the entries of the second association from the first.'
+            var result = associations1.removeAll(associations2.keySet())
+        then : 'The result contains only the entries that were not in the second association.'
+            result.size() == 1
+            result.get("x").orElseThrow(MissingItemException::new) == 1
+    }
+
+    def 'You remove the entries of one association from another, using the `removeAll(Set)` method.'() {
         given : 'Two empty associations between strings and integers.'
             var associations1 = Association.between(String, Integer)
             var associations2 = Association.between(String, Integer)
@@ -334,7 +349,7 @@ class Association_Spec extends Specification
         and : 'We add some values to the second association.'
             associations2 = associations2.put("b", 2).put("c", 3).put("d", 4)
         and : 'We remove the entries of the second association from the first.'
-            var result = associations1.removeAll(associations2.keySet())
+            var result = associations1.removeAll(associations2.keySet().toSet())
         then : 'The result contains only the entries that were not in the second association.'
             result.size() == 1
             result.get("a").orElseThrow(MissingItemException::new) == 1
@@ -685,11 +700,16 @@ class Association_Spec extends Specification
         given:
             var assoc = Association.of("a", 1).put("b", 2)
         when:
-            var entrySet = assoc.entrySet()
+            var entryValueSet = assoc.entrySet()
+            var entrySet = entryValueSet.toSet()
         then:
             entrySet.size() == 2
             entrySet.contains(Pair.of("a", 1))
             entrySet.contains(Pair.of("b", 2))
+        and :
+            entryValueSet.size() == 2
+            entryValueSet.contains(Pair.of("a", 1))
+            entryValueSet.contains(Pair.of("b", 2))
 
         when:
             entrySet.add(Pair.of("c", 3))
@@ -709,7 +729,7 @@ class Association_Spec extends Specification
             )
         when:
             var entries = []
-            for (var entry : assoc.entrySet()) {
+            for (var entry : assoc.entrySet().toSet()) {
                 entries << entry
             }
         then:
