@@ -1477,4 +1477,22 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      */
     Tuple<T> reversed();
 
+    @Override
+    default Iterator<T> iterator() {
+        return new Iterator<T>() {
+            private final int _size = size();
+            private int _index = 0;
+
+            @Override
+            public boolean hasNext() {
+                return _index < _size;
+            }
+
+            @Override
+            public T next() {
+                return get(_index++);
+            }
+        };
+    }
+
 }

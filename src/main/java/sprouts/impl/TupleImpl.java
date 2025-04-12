@@ -249,7 +249,7 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Se
 
     @Override
     public Tuple<T> makeDistinct() {
-        LinkedHashSet<T> set = new LinkedHashSet<>();
+        LinkedHashSet<T> set = new LinkedHashSet<>(this.size());
         _each(_data, _type, set::add);
         int newSize = set.size();
         Object distinctItems = _createArray(_type, _allowsNull, newSize);
@@ -268,24 +268,6 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Se
         Object newItems = _withReversed(_data, _type, _allowsNull);
         SequenceDiff diff = SequenceDiff.of(this, SequenceChange.REVERSE, -1, _length(_data));
         return new TupleImpl<>(_allowsNull, _type, newItems, diff);
-    }
-
-    @Override
-    @SuppressWarnings("NullAway")
-    public Iterator<T> iterator() {
-        return new Iterator<T>() {
-            private int _index = 0;
-
-            @Override
-            public boolean hasNext() {
-                return _index < _length(_data);
-            }
-
-            @Override
-            public T next() {
-                return _getAt(_index++, _data, _type);
-            }
-        };
     }
 
     @Override
