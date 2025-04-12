@@ -143,8 +143,8 @@ public interface ValueSet<E> extends Iterable<E> {
 
     /**
      *  Creates a new value set from the given {@link Iterable} of elements.
-     *  The types of the elements are inferred from the elements themselves
-     *  through the {@link Object#getClass()} method.
+     *  The type of the elements must be provided explicitly in case
+     *  of the iterable being empty.
      *
      * @param type The type of the elements in the value set.
      * @param elements The iterable of elements to store in the value set.
