@@ -249,7 +249,7 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Se
 
     @Override
     public Tuple<T> makeDistinct() {
-        LinkedHashSet<T> set = new LinkedHashSet<>();
+        LinkedHashSet<T> set = new LinkedHashSet<>(this.size());
         _each(_data, _type, set::add);
         int newSize = set.size();
         Object distinctItems = _createArray(_type, _allowsNull, newSize);
