@@ -291,7 +291,7 @@ public interface ValueSet<E> extends Iterable<E> {
      * @throws NullPointerException if the provided iterable is {@code null}.
      */
     default boolean containsAll( Iterable<? extends E> elements ) {
-        Objects.requireNonNull(elements, "The provided stream cannot be null.");
+        Objects.requireNonNull(elements, "The provided iterable cannot be null.");
         return StreamSupport.stream(elements.spliterator(), false).allMatch(this::contains);
     }
 
@@ -545,7 +545,7 @@ public interface ValueSet<E> extends Iterable<E> {
      * @return A new value set without the elements found in the supplied iterable, a.k.a. <i>asymmetric set difference</i>.
      */
     default ValueSet<E> removeAll( final Iterable<? extends E> elements ) {
-        Objects.requireNonNull(elements, "The provided stream cannot be null.");
+        Objects.requireNonNull(elements, "The provided iterable cannot be null.");
         return removeAll(StreamSupport.stream(elements.spliterator(), false));
     }
 
@@ -675,7 +675,7 @@ public interface ValueSet<E> extends Iterable<E> {
      * @throws NullPointerException If the iterable of elements is null or one of the elements is null.
      */
     default ValueSet<E> retainAll( Iterable<? extends E> elements ) {
-        Objects.requireNonNull(elements, "The provided stream cannot be null.");
+        Objects.requireNonNull(elements, "The provided iterable cannot be null.");
         return retainAll(StreamSupport.stream(elements.spliterator(), false));
     }
 
