@@ -810,4 +810,33 @@ class Tuple_Spec extends Specification
             BigInteger | [BigInteger.ONE, BigInteger.TEN, null, BigInteger.ZERO, BigInteger.ONE.negate()]
     }
 
+    def 'The `setAllAt( int index, T... items )` method will set the items at the given index.'()
+    {
+        given : 'A tuple with some elements.'
+            var words = Tuple.of("Dominion", "is", "a", "very" ,"interesting", "documentary")
+        when : 'We set the items at index 2.'
+            words = words.setAllAt(3, "must", "watch")
+        then : 'The items were set at the given index.'
+            words == Tuple.of("Dominion", "is", "a", "must", "watch", "documentary")
+    }
+
+    def 'The `setAllAt( int index, Iterable<T> items )` method will set the items at the given index.'()
+    {
+        given : 'A tuple with some elements.'
+            var words = Tuple.of("Earthlings", "is", "a", "very" ,"interesting", "documentary")
+        when : 'We set the items at index 2.'
+            words = words.setAllAt(3, ["must", "watch"])
+        then : 'The items were set at the given index.'
+            words == Tuple.of("Earthlings", "is", "a", "must", "watch", "documentary")
+    }
+
+    def 'Use `setAt( int index, int size, T item )` to spread a single item across a range.'()
+    {
+        given : 'A tuple with some elements.'
+            var words = Tuple.of("Education", "is", "so", "unbelievably", "important")
+        when : 'We set the items at index 2.'
+            words = words.setAt(2, 2, "very")
+        then : 'The items were set at the given index.'
+            words == Tuple.of("Education", "is", "very", "very", "important")
+    }
 }

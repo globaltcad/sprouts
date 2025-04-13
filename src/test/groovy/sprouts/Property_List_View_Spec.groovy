@@ -351,4 +351,20 @@ class Property_List_View_Spec extends Specification
             lengths.toList() == [10.0, 10.0, 4.4, 8.0]
     }
 
+    def 'A property list view has a `toString()` method that returns a insightful string representation of the view.'()
+    {
+        reportInfo """
+            The `toString()` method of a property list view
+            will return a string representation of the view which
+            shows the contents of the view.
+            This is useful for debugging and logging purposes.
+        """
+        given : 'A property list of 3 days of the week.'
+            Vars<DayOfWeek> days = Vars.of(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY, DayOfWeek.FRIDAY)
+        and : 'A view on the names of the days of the week.'
+            Viewables<String> names = days.view("null", "error", DayOfWeek::name)
+        expect : 'The view has a string representation.'
+            names.toString() == "Views<String>[MONDAY, WEDNESDAY, FRIDAY]"
+    }
+
 }

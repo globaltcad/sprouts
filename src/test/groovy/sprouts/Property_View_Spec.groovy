@@ -6,6 +6,7 @@ import spock.lang.Subject
 import spock.lang.Title
 
 import java.lang.ref.WeakReference
+import java.time.DayOfWeek
 import java.time.Month
 import java.util.concurrent.TimeUnit
 
@@ -765,6 +766,43 @@ class Property_View_Spec extends Specification
             property.set(44)
         then : 'The side effect is not executed anymore.'
             trace == ["!"]
+    }
+
+    def 'This is how not to use views.'()
+    {
+        when :
+            var property = Var.of("www.dominionmovement.com/watch")
+            var view = property.view( s -> null )
+        then :
+            thrown(IllegalArgumentException)
+
+        when :
+            var property3 = Var.of("www.landofhopeandglory.org").view().withId("Not a valid id")
+        then :
+            thrown(IllegalArgumentException)
+
+        when :
+            var property2 = Var.of("www.nationearth.com")
+            var view2 = property2.viewAs(DayOfWeek, s -> "WRONG TYPE" )
+        then :
+            thrown(IllegalArgumentException)
+    }
+
+    def 'A composite view has an id that is the concatenation of the ids of its source properties.'()
+    {
+        reportInfo """
+            A composite view takes two properties and creates a new view
+            that combines the two properties in some way. When it comes
+            to the id of the composite view, it is the concatenation of
+            the ids of the two source properties.
+        """
+        given : 'Two simple properties with unique ids...'
+            var property1 = Var.of(42).withId("property1")
+            var property2 = Var.of(11).withId("property2")
+        when : 'We create a composite view of the two properties...'
+            var view = Val.viewOf(property1, property2, (a, b) -> a + b)
+        then : 'The view has the expected id.'
+            view.id() == "property1_and_property2"
     }
 
     /**
