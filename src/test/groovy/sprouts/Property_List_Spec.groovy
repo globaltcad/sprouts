@@ -2339,4 +2339,44 @@ class Property_List_Spec extends Specification
         then : 'All items from the stream are added to the list at the particular index.'
             properties.toList() == [1, 2, 3, 4, 5, 6, 7, 8, 9]
     }
+
+    def 'How not to use a property list.'()
+    {
+        reportInfo """
+            This test demonstrates how certain usage patterns lead to exceptions.
+            Make sure to avoid these patterns in your code.
+        """
+        given : 'A property list with some properties.'
+            var properties = Vars.of(1, 2, 3, 4, 5, 6, 7)
+
+        when :
+            properties.popRange(-2, 2)
+        then :
+            thrown(IndexOutOfBoundsException)
+
+        when :
+            properties.popRange(2, 8)
+        then :
+            thrown(IndexOutOfBoundsException)
+
+        when :
+            properties.setAt(-1, 4)
+        then :
+            thrown(IndexOutOfBoundsException)
+
+        when :
+            properties.setAt(7, 4)
+        then :
+            thrown(IndexOutOfBoundsException)
+
+        when :
+            properties.addAt(-1, 4)
+        then :
+            thrown(IndexOutOfBoundsException)
+
+        when :
+            properties.addAt(8, 4)
+        then :
+            thrown(IndexOutOfBoundsException)
+    }
 }
