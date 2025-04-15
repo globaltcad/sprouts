@@ -12,13 +12,12 @@ import java.util.function.Supplier
 @Narrative('''
     The `Result` interface is used to represent the optional result of an operation
     as well as a list of problems that occurred during the operation.
+    The problems of a `Result` are represented by the `Problem` interface,
+    which may be created from an exception or a simple message.
     
-    It is a sub type of the `Val` property and as such can be used to represent a value
-    that is immutable and can be observed for changes.
-    
-    The default result implementation indirectly exposed by its factory methods
-    is immutable and thread safe, effectively making it a monadic value
-    similar to the `Optional` type in Java 8.
+    A `Result` is a fully thread safe immutable value type with useful mapping
+    functions that allow you to transform the value of the result into another
+    effectively making it a monadic value similar to the `Optional` type in Java 8.
 ''')
 @Subject([Result, Val, Problem])
 class Result_Spec extends Specification
@@ -86,7 +85,7 @@ class Result_Spec extends Specification
             optional.get() == 42
     }
 
-    def 'Just like a `Val` property, a `Result` has a type.'()
+    def 'Just like many other Sprouts types, a `Result` has a type.'()
     {
         given : 'A result.'
             def result = Result.of(42)
