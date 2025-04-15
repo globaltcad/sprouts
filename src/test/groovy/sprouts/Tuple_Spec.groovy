@@ -810,6 +810,27 @@ class Tuple_Spec extends Specification
             BigInteger | [BigInteger.ONE, BigInteger.TEN, null, BigInteger.ZERO, BigInteger.ONE.negate()]
     }
 
+    def 'A `Tuple` can be converted to a `ValueSet`.'(
+        Tuple<Object> input, ValueSet<Object> expected
+    ) {
+        reportInfo """
+            The `Tuple` class can be converted to a `ValueSet`, which is an immutable collection
+            of unique values without any particular order.
+        """
+        when : 'We convert the tuple to a `ValueSet`.'
+            var valueSet = input.toValueSet()
+        then : 'The `ValueSet` has the expected contents.'
+            valueSet == expected
+        where :
+            input                                           | expected
+            Tuple.of(1, 2, 3)                               | ValueSet.of(1, 2, 3)
+            Tuple.of(1, 2, 3, 1, 2, 3)                      | ValueSet.of(1, 2, 3)
+            Tuple.of("hello", "world")                      | ValueSet.of("hello", "world")
+            Tuple.of("a", "b", "a")                         | ValueSet.of("a", "b")
+            Tuple.of(.5, .1, .3, .6, .1, .1, .2, .3, .4)    | ValueSet.of(.1, .2, .3, .4, .5, .6)
+
+    }
+
     def 'The `setAllAt( int index, T... items )` method will set the items at the given index.'()
     {
         given : 'A tuple with some elements.'

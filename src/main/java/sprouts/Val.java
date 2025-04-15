@@ -400,10 +400,9 @@ public interface Val<T extends @Nullable Object> extends Maybe<T> {
      *  be used for registering change listeners (see {@link Viewable#onChange(Channel, Action)}).<br>
      *  <b>
      *      Warning: <br>
-     *      If you have change listeners registered the {@link Viewable} returned by this method,
-     *      and you do not keep a reference to it,
-     *      then it will be garbage collected alongside all of its change listeners.<br>
-     *      So if there are changes in this property afterwords, the change listeners will not be called!
+     *      If you do not keep a strong reference to the {@link Viewable} returned by this method,
+     *      then it will eventually be garbage collected alongside all of its change listeners.<br>
+     *      So if there are changes in this property afterward, the change listeners will not be called!
      *  </b>
      * @return A weakly referenced {@link Viewable} to be used for registering
      *         change listeners.
@@ -417,10 +416,9 @@ public interface Val<T extends @Nullable Object> extends Maybe<T> {
      *  flag of this property.<br>
      *  <b>
      *      Warning: <br>
-     *      If you have change listeners registered the {@link Viewable} returned by this method,
-     *      and you do not keep a reference to it,
-     *      then it will be garbage collected alongside all of its change listeners.<br>
-     *      So if there are changes in this property afterwords, the change listeners will not be called!
+     *      If you do not keep a strong reference to the {@link Viewable} returned by this method,
+     *      then it will eventually be garbage collected alongside all of its change listeners.<br>
+     *      So if there are changes in this property afterward, the change listeners will not be called!
      *  </b>
      *
      * @return A live view of the presence of an item in this property in the form
@@ -437,10 +435,9 @@ public interface Val<T extends @Nullable Object> extends Maybe<T> {
      *  flag of this property.<br>
      *  <b>
      *      Warning: <br>
-     *      If you have change listeners registered the {@link Viewable} returned by this method,
-     *      and you do not keep a reference to it,
-     *      then it will be garbage collected alongside all of its change listeners.<br>
-     *      So if there are changes in this property afterwords, the change listeners will not be called!
+     *      If you do not keep a strong reference to the {@link Viewable} returned by this method,
+     *      then it will eventually be garbage collected alongside all of its change listeners.<br>
+     *      So if there are changes in this property afterward, the change listeners will not be called!
      *  </b>
      *
      * @return A live view of the absence of an item in this property in the form
@@ -465,10 +462,9 @@ public interface Val<T extends @Nullable Object> extends Maybe<T> {
      * application, where {@code null} can lead to exceptions and ultimately a confusing user experience.<br>
      *  <b>
      *      Warning: <br>
-     *      If you have change listeners registered the {@link Viewable} returned by this method,
-     *      and you do not keep a reference to it,
-     *      then it will be garbage collected alongside all of its change listeners.<br>
-     *      So if there are changes in this property afterwords, the change listeners will not be called!
+     *      If you do not keep a strong reference to the {@link Viewable} returned by this method,
+     *      then it will eventually be garbage collected alongside all of its change listeners.<br>
+     *      So if there are changes in this property afterward, the change listeners will not be called!
      *  </b>
      *
      * @param type   The type of the item returned from the mapping function
@@ -494,10 +490,9 @@ public interface Val<T extends @Nullable Object> extends Maybe<T> {
      * application, where {@code null} can lead to exceptions and ultimately a confusing user experience.<br>
      *  <b>
      *      Warning: <br>
-     *      If you have change listeners registered the {@link Viewable} returned by this method,
-     *      and you do not keep a reference to it,
-     *      then it will be garbage collected alongside all of its change listeners.<br>
-     *      So if there are changes in this property afterwords, the change listeners will not be called!
+     *      If you do not keep a strong reference to the {@link Viewable} returned by this method,
+     *      then it will eventually be garbage collected alongside all of its change listeners.<br>
+     *      So if there are changes in this property afterward, the change listeners will not be called!
      *  </b>
      *
      * @param nullObject The null object to use if no item is present.
@@ -523,10 +518,9 @@ public interface Val<T extends @Nullable Object> extends Maybe<T> {
      * application, where {@code null} can lead to exceptions and ultimately a confusing user experience.<br>
      *  <b>
      *      Warning: <br>
-     *      If you have change listeners registered the {@link Viewable} returned by this method,
-     *      and you do not keep a reference to it,
-     *      then it will be garbage collected alongside all of its change listeners.<br>
-     *      So if there are changes in this property afterwords, the change listeners will not be called!
+     *      If you do not keep a strong reference to the {@link Viewable} returned by this method,
+     *      then it will eventually be garbage collected alongside all of its change listeners.<br>
+     *      So if there are changes in this property afterward, the change listeners will not be called!
      *  </b>
      *
      * @param nullObject  The null object to use if no item is present.
@@ -547,10 +541,9 @@ public interface Val<T extends @Nullable Object> extends Maybe<T> {
      * mapping function.<br>
      *  <b>
      *      Warning: <br>
-     *      If you have change listeners registered the {@link Viewable} returned by this method,
-     *      and you do not keep a reference to it,
-     *      then it will be garbage collected alongside all of its change listeners.<br>
-     *      So if there are changes in this property afterwords, the change listeners will not be called!
+     *      If you do not keep a strong reference to the {@link Viewable} returned by this method,
+     *      then it will eventually be garbage collected alongside all of its change listeners.<br>
+     *      So if there are changes in this property afterward, the change listeners will not be called!
      *  </b>
      *
      * @param type   The type of the value returned from the mapping function
@@ -584,10 +577,9 @@ public interface Val<T extends @Nullable Object> extends Maybe<T> {
      *  Otherwise, it will throw an exception when trying to map a null reference.<br>
      *  <b>
      *      Warning: <br>
-     *      If you have change listeners registered the {@link Viewable} returned by this method,
-     *      and you do not keep a reference to it,
-     *      then it will be garbage collected alongside all of its change listeners.<br>
-     *      So if there are changes in this property afterwords, the change listeners will not be called!
+     *      If you do not keep a strong reference to the {@link Viewable} returned by this method,
+     *      then it will eventually be garbage collected alongside all of its change listeners.<br>
+     *      So if there are changes in this property afterward, the change listeners will not be called!
      *  </b>
      *
      * @param mapper the mapping function to apply to an item, if present
@@ -612,10 +604,9 @@ public interface Val<T extends @Nullable Object> extends Maybe<T> {
      * application, where {@code null} can lead to exceptions and ultimately a confusing user experience.<br>
      *  <b>
      *      Warning: <br>
-     *      If you have change listeners registered the {@link Viewable} returned by this method,
-     *      and you do not keep a reference to it,
-     *      then it will be garbage collected alongside all of its change listeners.<br>
-     *      So if there are changes in this property afterwords, the change listeners will not be called!
+     *      If you do not keep a strong reference to the {@link Viewable} returned by this method,
+     *      then it will eventually be garbage collected alongside all of its change listeners.<br>
+     *      So if there are changes in this property afterward, the change listeners will not be called!
      *  </b>
      *
      * @param nullObject The null object to use if the mapping function returns {@code null}.
@@ -642,10 +633,9 @@ public interface Val<T extends @Nullable Object> extends Maybe<T> {
      * application, where {@code null} can lead to exceptions and ultimately a confusing user experience.<br>
      *  <b>
      *      Warning: <br>
-     *      If you have change listeners registered the {@link Viewable} returned by this method,
-     *      and you do not keep a reference to it,
-     *      then it will be garbage collected alongside all of its change listeners.<br>
-     *      So if there are changes in this property afterwords, the change listeners will not be called!
+     *      If you do not keep a strong reference to the {@link Viewable} returned by this method,
+     *      then it will eventually be garbage collected alongside all of its change listeners.<br>
+     *      So if there are changes in this property afterward, the change listeners will not be called!
      *  </b>
      *
      * @param mapper The mapping function to map the item of this property to a {@link String}.
@@ -669,10 +659,9 @@ public interface Val<T extends @Nullable Object> extends Maybe<T> {
      * application, where {@code null} can lead to exceptions and ultimately a confusing user experience.<br>
      *  <b>
      *      Warning: <br>
-     *      If you have change listeners registered the {@link Viewable} returned by this method,
-     *      and you do not keep a reference to it,
-     *      then it will be garbage collected alongside all of its change listeners.<br>
-     *      So if there are changes in this property afterwords, the change listeners will not be called!
+     *      If you do not keep a strong reference to the {@link Viewable} returned by this method,
+     *      then it will eventually be garbage collected alongside all of its change listeners.<br>
+     *      So if there are changes in this property afterward, the change listeners will not be called!
      *  </b>
      *
      * @return A property that is a live view of this property based on the provided mapping function.
@@ -695,10 +684,9 @@ public interface Val<T extends @Nullable Object> extends Maybe<T> {
      * application, where {@code null} can lead to exceptions and ultimately a confusing user experience.<br>
      *  <b>
      *      Warning: <br>
-     *      If you have change listeners registered the {@link Viewable} returned by this method,
-     *      and you do not keep a reference to it,
-     *      then it will be garbage collected alongside all of its change listeners.<br>
-     *      So if there are changes in this property afterwords, the change listeners will not be called!
+     *      If you do not keep a strong reference to the {@link Viewable} returned by this method,
+     *      then it will eventually be garbage collected alongside all of its change listeners.<br>
+     *      So if there are changes in this property afterward, the change listeners will not be called!
      *  </b>
      *
      * @param nullObject The null object to use if the mapping function returns {@code null}.
@@ -725,10 +713,9 @@ public interface Val<T extends @Nullable Object> extends Maybe<T> {
      * application, where {@code null} can lead to exceptions and ultimately a confusing user experience.<br>
      *  <b>
      *      Warning: <br>
-     *      If you have change listeners registered the {@link Viewable} returned by this method,
-     *      and you do not keep a reference to it,
-     *      then it will be garbage collected alongside all of its change listeners.<br>
-     *      So if there are changes in this property afterwords, the change listeners will not be called!
+     *      If you do not keep a strong reference to the {@link Viewable} returned by this method,
+     *      then it will eventually be garbage collected alongside all of its change listeners.<br>
+     *      So if there are changes in this property afterward, the change listeners will not be called!
      *  </b>
      *
      * @param mapper The mapping function to map the item of this property to a {@link Double}.
@@ -753,10 +740,9 @@ public interface Val<T extends @Nullable Object> extends Maybe<T> {
      * application, where {@code null} can lead to exceptions and ultimately a confusing user experience.<br>
      *  <b>
      *      Warning: <br>
-     *      If you have change listeners registered the {@link Viewable} returned by this method,
-     *      and you do not keep a reference to it,
-     *      then it will be garbage collected alongside all of its change listeners.<br>
-     *      So if there are changes in this property afterwords, the change listeners will not be called!
+     *      If you do not keep a strong reference to the {@link Viewable} returned by this method,
+     *      then it will eventually be garbage collected alongside all of its change listeners.<br>
+     *      So if there are changes in this property afterward, the change listeners will not be called!
      *  </b>
      *
      * @return A {@link Double} property that is a live view of this property.
@@ -780,10 +766,9 @@ public interface Val<T extends @Nullable Object> extends Maybe<T> {
      * application, where {@code null} can lead to exceptions and ultimately a confusing user experience.<br>
      *  <b>
      *      Warning: <br>
-     *      If you have change listeners registered the {@link Viewable} returned by this method,
-     *      and you do not keep a reference to it,
-     *      then it will be garbage collected alongside all of its change listeners.<br>
-     *      So if there are changes in this property afterwords, the change listeners will not be called!
+     *      If you do not keep a strong reference to the {@link Viewable} returned by this method,
+     *      then it will eventually be garbage collected alongside all of its change listeners.<br>
+     *      So if there are changes in this property afterward, the change listeners will not be called!
      *  </b>
      *
      * @param nullObject The null object to use if the mapping function returns {@code null}.
@@ -810,10 +795,9 @@ public interface Val<T extends @Nullable Object> extends Maybe<T> {
      * application, where {@code null} can lead to exceptions and ultimately a confusing user experience.<br>
      *  <b>
      *      Warning: <br>
-     *      If you have change listeners registered the {@link Viewable} returned by this method,
-     *      and you do not keep a reference to it,
-     *      then it will be garbage collected alongside all of its change listeners.<br>
-     *      So if there are changes in this property afterwords, the change listeners will not be called!
+     *      If you do not keep a strong reference to the {@link Viewable} returned by this method,
+     *      then it will eventually be garbage collected alongside all of its change listeners.<br>
+     *      So if there are changes in this property afterward, the change listeners will not be called!
      *  </b>
      *
      * @param mapper The mapping function to map the item of this property to a {@link Integer}.
@@ -838,10 +822,9 @@ public interface Val<T extends @Nullable Object> extends Maybe<T> {
      * application, where {@code null} can lead to exceptions and ultimately a confusing user experience.<br>
      *  <b>
      *      Warning: <br>
-     *      If you have change listeners registered the {@link Viewable} returned by this method,
-     *      and you do not keep a reference to it,
-     *      then it will be garbage collected alongside all of its change listeners.<br>
-     *      So if there are changes in this property afterwords, the change listeners will not be called!
+     *      If you do not keep a strong reference to the {@link Viewable} returned by this method,
+     *      then it will eventually be garbage collected alongside all of its change listeners.<br>
+     *      So if there are changes in this property afterward, the change listeners will not be called!
      *  </b>
      *
      * @return A {@link Integer} property that is a live view of this property.
@@ -865,8 +848,8 @@ public interface Val<T extends @Nullable Object> extends Maybe<T> {
      * storing {@code null}, which is not allowed for this view.
      * <p>
      * <b>Warning:</b> If you register change listeners on the returned view and do not maintain a strong reference
-     * to it, the view along with its listeners may be garbage collected, and subsequent changes to this property
-     * will not trigger the listeners.
+     * to it, the view along with its listeners will eventually be garbage collected, and subsequent changes to
+     * this property will not trigger the listeners.
      *
      * @param type   The class representing the type of the tuple's element. This is used to create a default tuple instance.
      * @param mapper A function that maps the value of this property to a {@link Tuple} of type {@code U}. The function
@@ -897,8 +880,8 @@ public interface Val<T extends @Nullable Object> extends Maybe<T> {
      * storing {@code null}, which is not allowed for this view.
      * <p>
      * <b>Warning:</b> If you register change listeners on the returned view and do not maintain a strong reference
-     * to it, the view along with its listeners may be garbage collected, and subsequent changes to this property
-     * will not trigger the listeners.
+     * to it, the view along with its listeners will eventually be garbage collected, and subsequent changes to
+     * this property will not trigger the listeners.
      *
      * @param keyType   The class representing the type of the association's key. This is used to create a default association instance.
      *                  This parameter must not be {@code null}.
@@ -916,6 +899,38 @@ public interface Val<T extends @Nullable Object> extends Maybe<T> {
         Objects.requireNonNull(valueType);
         Objects.requireNonNull(mapper);
         Association<K, V> empty = Association.between(keyType, valueType);
+        return view(empty, empty, mapper);
+    }
+
+    /**
+     * Creates a live view of this property as a {@link ValueSet} containing items of
+     * the specified type {@code E} using the given mapping function which dynamically maps
+     * the current property item {@code T} to a {@code ValueSet<E>}.<br>
+     * <p>
+     * The resulting {@code Viewable<ValueSet<E>>} is automatically updated whenever the value of this property changes,
+     * meaning that the mapper {@code Function<T, @Nullable ValueSet<E>>} is called with the new property item
+     * and the state of the view is updated with the result of said mapping function.
+     * <p>
+     * The {@code type} parameter is used to obtain a default value set instance (via {@code ValueSet.of(type)}) which serves
+     * both as the fallback null object and error object. This means that if the mapping function returns {@code null}
+     * or throws an exception, the view will retain a default {@code ValueSet} instance instead of propagating
+     * storing {@code null}, which is not allowed for this view.
+     * <p>
+     * <b>Warning:</b> If you register change listeners on the returned view and do not maintain a strong reference
+     * to it, the view along with its listeners will eventually be garbage collected, and subsequent changes to
+     * this property will not trigger the listeners.
+     *
+     * @param type   The class representing the type of the value set's elements. This is used to create a default value set instance.
+     * @param mapper A function that maps the value of this property to a {@link ValueSet} with type parameter {@code E}.
+     *               The function is expected handle {@code null} values appropriately.
+     * @param <E>    The type of the element within the value set.
+     * @return A live view of this property as a {@link ValueSet} of type {@code E}.
+     * @throws NullPointerException if either {@code type} or {@code mapper} is {@code null}.
+     */
+    default <E> Viewable<ValueSet<E>> viewAsValueSet( Class<E> type, Function<T, @Nullable ValueSet<E>> mapper ) {
+        Objects.requireNonNull(type);
+        Objects.requireNonNull(mapper);
+        ValueSet<E> empty = ValueSet.of(type);
         return view(empty, empty, mapper);
     }
 
