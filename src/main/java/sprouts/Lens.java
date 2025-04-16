@@ -83,6 +83,85 @@ public interface Lens<A extends @Nullable Object, B extends @Nullable Object> {
     }
 
     /**
+     * Creates a lens that operates across all elements of a {@link Tuple}, allowing bulk transformations
+     * of homogeneous data structures. This is particularly useful for scenarios like multi-selection
+     * where you want to apply the same lens operation to multiple values simultaneously.
+     *
+     * <p>The returned lens will:</p>
+     * <ul>
+     *     <li>
+     *         Use the provided {@code getter} to extract a property of type {@code B} from
+     *         each element of type {@code A} in the tuple.
+     *     </li>
+     *     <li>
+     *         Use the provided {@code wither} to update that property {@code B} across all
+     *         elements {@code A} in the tuple.
+     *     </li>
+     * </ul>
+     *
+     * <h2>Example Usage:</h2>
+     * <pre>{@code
+     * record Person(String name, int age) {
+     *     public Person withAge(int newAge) {
+     *         return new Person(name, newAge);
+     *     }
+     * }
+     *
+     * // Create tuple lens version
+     * Lens<Tuple<Person>, Tuple<Integer>> bulkAgeLens = Lens.across(
+     *     Integer.class,Person::age, Person::withAge
+     * );
+     *
+     * Tuple<Person> people = Tuple.of(
+     *     new Person("Alice", 30),
+     *     new Person("Bob", 25),
+     *     new Person("Charlie", 35)
+     * );
+     *
+     * // Get all ages
+     * Tuple<Integer> ages = bulkAgeLens.getter(people); // (30, 25, 35)
+     *
+     * // Set all ages to 40
+     * Tuple<Person> updatedPeople = bulkAgeLens.wither(people,
+     *     Tuple.of(40, 40, 40));
+     * }</pre>
+     *
+     * @param type The class object for type {@code B}, used for tuple type safety
+     * @param getter Function to extract property {@code B} from a single {@code A}
+     * @param wither Function to update property {@code B} in a single {@code A}
+     * @param <A> The element type contained in the source tuple
+     * @param <B> The type of property being focused on in each element
+     * @return A lens that operates on tuples of {@code A} to get/set tuples of {@code B}
+     * @throws NullPointerException if either getter or wither is null
+     * @throws IllegalArgumentException during wither operation if input tuples have different sizes
+     */
+    static <A, B> Lens<Tuple<A>, Tuple<B>> across(
+        Class<B> type,
+        Function<A, B>      getter,
+        BiFunction<A, B, A> wither
+    ) {
+        Objects.requireNonNull(getter, "getter lambda must not be null");
+        Objects.requireNonNull(wither, "wither lambda must not be null");
+        return new Lens<Tuple<A>, Tuple<B>>() {
+            @Override
+            public Tuple<B> getter(Tuple<A> parentValue) {
+                return parentValue.mapTo(type, getter);
+            }
+            @Override
+            public Tuple<A> wither(Tuple<A> parentValue, Tuple<B> newValue) {
+                if (parentValue.size() != newValue.size()) {
+                    throw new IllegalArgumentException("Tuple sizes do not match");
+                }
+                A[] parentAsArray = parentValue.toArray();
+                for (int i = 0; i < parentAsArray.length; i++) {
+                    parentAsArray[i] = wither.apply(parentAsArray[i], newValue.get(i));
+                }
+                return Tuple.of(parentValue.type(), parentAsArray);
+            }
+        };
+    }
+
+    /**
      * Extracts the field of type {@code B} from the parent type {@code A}
      * and returns it or throws an exception if an error occurs while extracting the field.
      *
