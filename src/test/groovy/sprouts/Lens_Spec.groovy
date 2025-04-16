@@ -294,4 +294,97 @@ class Lens_Spec extends Specification
         and : 'The updated record has the correct deeply nested part updated.'
             newLoan.book.author.firstName == "Raffaela"
     }
+
+    def 'Lens.across allows bulk transformation of tuples of homogeneous data'() {
+        given: 'a tuple of authors with various first names'
+            var alice = new Author("Alice", "Archer", LocalDate.of(1990, 1, 1), ["The Void"])
+            var bob = new Author("Bob", "Builder", LocalDate.of(1985, 2, 2), ["Construction 101"])
+            var authors = Tuple.of(alice, bob)
+
+        and: 'a lens focusing on first names across the entire tuple'
+            var firstNameLens = Lens.across(
+                String.class,
+                Author::firstName,
+                Author::withFirstName
+            )
+
+        when: 'extracting first names using the lens'
+            var extractedNames = firstNameLens.getter(authors)
+
+        then: 'the names are captured in a type-correct tuple'
+            extractedNames == Tuple.of("Alice", "Bob")
+            extractedNames.type() == String.class
+
+        when: 'performing a bulk update with matching tuple size'
+            var updatedAuthors = firstNameLens.wither(authors, Tuple.of("Ada", "Blake"))
+
+        then: 'new tuple contains authors with updated names'
+            updatedAuthors.get(0).firstName == "Ada"
+            updatedAuthors.get(1).firstName == "Blake"
+
+        and: 'original tuple remains unchanged'
+            authors.get(0).firstName == "Alice"
+            authors.get(1).firstName == "Bob"
+
+        when: 'attempting update with mismatched tuple size'
+            firstNameLens.wither(authors, Tuple.of("Xavier"))
+
+        then: 'operation fails with descriptive exception'
+            thrown(IllegalArgumentException)
+    }
+
+    def 'Lens.across handles edge cases with empty and single-element tuples'() {
+        given: 'an empty author tuple'
+            var emptyAuthors = Tuple.of(Author.class)
+
+        and: 'single-element author tuple'
+            var soloAuthor = Tuple.of(new Author("Solo", "Artist", LocalDate.now(), []))
+
+        and: 'lens configured for first name operations'
+            var nameLens = Lens.across(
+                String.class,
+                Author::firstName,
+                Author::withFirstName
+            )
+
+        when: 'operating on empty tuple'
+            var emptyNames = nameLens.getter(emptyAuthors)
+            var updatedEmpty = nameLens.wither(emptyAuthors, Tuple.of(String.class))
+
+        then: 'getter returns empty typed tuple'
+            emptyNames.isEmpty()
+            emptyNames.type() == String.class
+
+        and: 'wither preserves empty structure'
+            updatedEmpty.isEmpty()
+            updatedEmpty.type() == Author.class
+
+        when: 'operating on single-element tuple'
+            var singleName = nameLens.getter(soloAuthor)
+            var updatedSolo = nameLens.wither(soloAuthor, Tuple.of("Updated"))
+
+        then: 'bulk operations work atomically'
+            singleName == Tuple.of("Solo")
+            updatedSolo.get(0).firstName == "Updated"
+    }
+
+    def 'Lens.across maintains element order during bulk operations'() {
+        given: 'tuple with ordered elements'
+            var authors = Tuple.of(
+                new Author("First", "1", LocalDate.now(), []),
+                new Author("Second", "2", LocalDate.now(), []),
+                new Author("Third", "3", LocalDate.now(), [])
+            )
+
+        and: 'positionally aware lens'
+            var lens = Lens.across(String.class, Author::lastName, Author::withLastName)
+
+        when: 'performing staggered updates'
+            var updated = lens.wither(authors, Tuple.of("A", "B", "C"))
+
+        then: 'new values appear in original positions'
+            updated.get(0).lastName == "A"
+            updated.get(1).lastName == "B"
+            updated.get(2).lastName == "C"
+    }
 }

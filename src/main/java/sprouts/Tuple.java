@@ -1436,6 +1436,15 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
     }
 
     /**
+     *  Converts this tuple of items to a plain array of items
+     *
+     * @return An array of items in this {@link Tuple} instance.
+     */
+    default T[] toArray() {
+        return stream().toArray(size -> (T[]) Array.newInstance(type(), size));
+    }
+
+    /**
      *  Turns this tuple of items into a stream of items
      *  which can be used for further functional processing.
      *  Note that the returned stream is not parallel.
