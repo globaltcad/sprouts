@@ -1069,10 +1069,9 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
         if ( from == to )
             return this;
 
-        Tuple<T> toBeSet = (Tuple<T>) (allowsNull() ? Tuple.ofNullable(type()) : Tuple.of(type()));
+        T[] toBeSet = (T[]) Array.newInstance(type(), to - from);
         for ( int i = from; i < to; i++ ) {
-            Maybe<T> newProperty = allowsNull() ? Maybe.ofNullable(type(), value) : Maybe.of(value);
-            toBeSet = toBeSet.add(newProperty);
+            toBeSet[i - from] = value;
         }
 
         return setAllAt( from, toBeSet );
