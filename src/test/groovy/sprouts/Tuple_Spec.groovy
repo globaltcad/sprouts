@@ -23,6 +23,105 @@ import java.util.stream.Stream
 @Subject([Tuple])
 class Tuple_Spec extends Specification
 {
+    enum Operation {
+        ADD, REMOVE, SET
+    }
+
+    def 'The `Tuple` maintains invariance with Java ArrayList across operations'(
+        List<Tuple2<Operation, String>> operations
+    ) {
+        given:
+            var random = new Random(1997)
+            var tuple = Tuple.of(String)
+            var referenceList = new ArrayList<>()
+            var operationsApplier = { currentTuple ->
+                operations.each { op, element ->
+                    int randomIndex = random.nextInt(currentTuple.size() + 1)
+                    int spread = random.nextInt(5)
+                    switch (op) {
+                        case Operation.ADD:
+                            if ( spread < 2 ) {
+                                currentTuple = currentTuple.addAt(randomIndex, element)
+                                referenceList.add(randomIndex, element)
+                            } else {
+                                var toAdd = (0..(spread*2)).collect { element }
+                                currentTuple = currentTuple.addAllAt(randomIndex, toAdd)
+                                referenceList.addAll(randomIndex, toAdd)
+                            }
+                            break
+                        case Operation.REMOVE:
+                            if ( !referenceList.isEmpty() ) {
+                                int removeIndex = Math.max(0, Math.min(randomIndex, currentTuple.size() - 1))
+                                if (spread < 2 || (spread + removeIndex) >= currentTuple.size()) {
+                                    currentTuple = currentTuple.removeAt(removeIndex)
+                                    referenceList.remove(removeIndex)
+                                } else {
+                                    currentTuple = currentTuple.removeRange(removeIndex, removeIndex + spread)
+                                    for (int i = 0; i < spread; i++) {
+                                        referenceList.remove(removeIndex)
+                                    }
+                                }
+                            }
+                            break
+                        case Operation.SET:
+                            if ( !referenceList.isEmpty() ) {
+                                int setIndex = Math.max(0, Math.min(randomIndex, currentTuple.size() - 1))
+                                if (spread < 2 || (spread + setIndex) >= currentTuple.size()) {
+                                    currentTuple = currentTuple.setAt(setIndex, element)
+                                    referenceList.set(setIndex, element)
+                                } else {
+                                    currentTuple = currentTuple.setAllAt(setIndex, (0..<spread).collect { element })
+                                    for (int i = 0; i < spread; i++) {
+                                        referenceList.set(setIndex + i, element)
+                                    }
+                                }
+                            }
+                            break
+                    }
+                }
+                return currentTuple
+            }
+
+        when: 'Apply operations first time'
+            tuple = operationsApplier(tuple)
+        then: 'Immediate invariance'
+            tuple.size() == referenceList.size()
+            tuple.toList() == referenceList
+
+        when: 'Apply operations multiple times'
+            5.times { tuple = operationsApplier(tuple) }
+        then: 'It is still invariant!'
+            tuple.size() == referenceList.size()
+            tuple.toList() == referenceList
+
+        where:
+            operations << [
+                [
+                    new Tuple2(Operation.ADD, "apple"),
+                    new Tuple2(Operation.ADD, "banana"),
+                    new Tuple2(Operation.ADD, "cherry"),
+                    new Tuple2(Operation.REMOVE, "apple"),
+                    new Tuple2(Operation.REMOVE, "banana"),
+                    new Tuple2(Operation.SET, "kiwi"),
+                    new Tuple2(Operation.SET, "pear"),
+                    new Tuple2(Operation.ADD, "grape"),
+                    new Tuple2(Operation.ADD, "orange"),
+                ],
+                (-100..100).collect {
+                    new Tuple2(
+                        Operation.values()[Math.abs(new Random(it).nextInt() % 3)],
+                        "element-"+Math.abs(new Random(it).nextInt() % 500)
+                    )
+                },
+                (0..1000).collect {
+                    new Tuple2(
+                            Operation.values()[Math.abs(new Random(it).nextInt() % 3)],
+                            "element-"+Math.abs(new Random(it).nextInt() % 500)
+                    )
+                }
+        ]
+    }
+
     def 'A tuple has various operations for functional transformation.'(
             Tuple<Object>          input,
             Closure<Tuple<Object>> operation,
@@ -46,45 +145,64 @@ class Tuple_Spec extends Specification
             input.toList() == initialState
 
         where :
-            input                   | operation                                        || expected
-            Tuple.of(Byte)          | Tuple::reversed                                  || Tuple.of(Byte)
-            Tuple.of(1, 2, 3)       | Tuple::reversed                                  || Tuple.of(3, 2, 1)
-            Tuple.of(3, 2, 1, 0)    | Tuple::removeFirst                               || Tuple.of(2, 1, 0)
-            Tuple.of(3, 2, 1, 0)    | Tuple::removeLast                                || Tuple.of(3, 2, 1)
-            Tuple.of(1, 2, 3)       | { tuple -> tuple.map { it } }                    || Tuple.of(1, 2, 3)
-            Tuple.of(1, 2, 3)       | { tuple -> tuple.map { it * 2 } }                || Tuple.of(2, 4, 6)
-            Tuple.of(3, 6)          | { tuple -> tuple.mapTo(String,{it+" cents"}) }   || Tuple.of("3 cents", "6 cents")
-            Tuple.of(1, 2, 3)       | { tuple -> tuple.retainIf { it > 1 } }           || Tuple.of(2, 3)
-            Tuple.of(1, 2, 3)       | { tuple -> tuple.retainIf { it < 2 } }           || Tuple.of(1)
-            Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.retainIf { it > 2 && it < 5 } } || Tuple.of(3, 4)
-            Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.retainIf { it < 2 || it > 4 } } || Tuple.of(1, 5)
-            Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.slice(1, 3) }                   || Tuple.of(2, 3)
-            Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.sliceFirst(3) }                 || Tuple.of(1, 2, 3)
-            Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.sliceLast(3) }                  || Tuple.of(3, 4, 5)
-            Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.sliceAt(1, 3) }                 || Tuple.of(2, 3, 4)
-            Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.removeRange(1, 3) }             || Tuple.of(1, 4, 5)
-            Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.setAt(1, 10) }                  || Tuple.of(1, 10, 3, 4, 5)
-            Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.addAt(1, 10) }                  || Tuple.of(1, 10, 2, 3, 4, 5)
-            Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.removeAt(1) }                   || Tuple.of(1, 3, 4, 5)
-            Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.removeAt(1, 2) }                || Tuple.of(1, 4, 5)
-            Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.add(10) }                       || Tuple.of(1, 2, 3, 4, 5, 10)
-            Tuple.of(1, 2, 3)       | { tuple -> tuple.addAll(10, 20) }                || Tuple.of(1, 2, 3, 10, 20)
-            Tuple.of(1, 2, 3)       | { tuple -> tuple.addAll(Tuple.of(10, 20)) }      || Tuple.of(1, 2, 3, 10, 20)
-            Tuple.of(1, 2, 3)       | { tuple -> tuple.addAll([10, 20]) }              || Tuple.of(1, 2, 3, 10, 20)
-            Tuple.of(1, 2, 3)       | { tuple -> tuple.clear() }                       || Tuple.of(Integer)
-            Tuple.of(1, 2, 3)       | { tuple -> tuple.addAllAt(1, 10, 20) }           || Tuple.of(1, 10, 20, 2, 3)
-            Tuple.of(1, 2, 3)       | { tuple -> tuple.addAllAt(1, Tuple.of(10, 20)) } || Tuple.of(1, 10, 20, 2, 3)
-            Tuple.of(1, 2, 3)       | { tuple -> tuple.addAllAt(1, [10, 20]) }         || Tuple.of(1, 10, 20, 2, 3)
-            Tuple.of(1, 2, 3)       | { tuple -> tuple.removeIf { it > 1 } }           || Tuple.of(1)
-            Tuple.of(1, 2, 3)       | { tuple -> tuple.removeIf { it < 2 } }           || Tuple.of(2, 3)
-            Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.removeIf { it > 2 && it < 5 } } || Tuple.of(1, 2, 5)
-            Tuple.of(1, 2, 3, 4, 5) | { tuple -> tuple.removeIf { it < 2 || it > 4 } } || Tuple.of(2, 3, 4)
-            Tuple.of(1, 2, 3, 1, 2) | { tuple -> tuple.makeDistinct() }                || Tuple.of(1, 2, 3)
-            Tuple.of("","","!","")  | { tuple -> tuple.makeDistinct() }                || Tuple.of("", "!")
-            Tuple.of(1, 2)          | { tuple -> tuple.addIfNonNull(null) }            || Tuple.of(1, 2)
-            Tuple.of(1, 2)          | { tuple -> tuple.addIfNonNull(3) }               || Tuple.of(1, 2, 3)
-            Tuple.of(1, 2)          | { tuple -> tuple.addIfNonNullAt(1,null) }        || Tuple.of(1, 2)
-            Tuple.of(1, 2)          | { tuple -> tuple.addIfNonNullAt(1,3) }           || Tuple.of(1, 3, 2)
+            input                       | operation                                          || expected
+            Tuple.of(Byte)              | Tuple::reversed                                    || Tuple.of(Byte)
+            Tuple.of(1, 2, 3)           | Tuple::reversed                                    || Tuple.of(3, 2, 1)
+            Tuple.of(Integer,-800..800) | Tuple::reversed                                    || Tuple.of(Integer, (-800..800).reverse())
+            Tuple.of(3, 2, 1, 0)        | Tuple::removeFirst                                 || Tuple.of(2, 1, 0)
+            Tuple.of(3, 2, 1, 0)        | Tuple::removeLast                                  || Tuple.of(3, 2, 1)
+            Tuple.of(Integer, 0..900)   | Tuple::removeFirst                                 || Tuple.of(Integer, 1..900)
+            Tuple.of(Integer, 0..900)   | Tuple::removeLast                                  || Tuple.of(Integer, 0..899)
+            Tuple.of(1, 2, 3)           | { tuple -> tuple.map { it } }                      || Tuple.of(1, 2, 3)
+            Tuple.of(1, 2, 3)           | { tuple -> tuple.map { it * 2 } }                  || Tuple.of(2, 4, 6)
+            Tuple.of(Integer, 0..900)   | { tuple -> tuple.map { it * 2 } }                  || Tuple.of(Integer, (0..900).collect(it->{ it*2 }))
+            Tuple.of(3, 6)              | { tuple -> tuple.mapTo(String,{it+" cents"}) }     || Tuple.of("3 cents", "6 cents")
+            Tuple.of(Integer, 0..900)   | { tuple -> tuple.mapTo(String,{it+" cents"}) }     || Tuple.of(String, (0..900).collect(it->{ it+" cents" }))
+            Tuple.of(1, 2, 3)           | { tuple -> tuple.retainIf { it > 1 } }             || Tuple.of(2, 3)
+            Tuple.of(1, 2, 3)           | { tuple -> tuple.retainIf { it < 2 } }             || Tuple.of(1)
+            Tuple.of(1, 2, 3, 4, 5)     | { tuple -> tuple.retainIf { it > 2 && it < 5 } }   || Tuple.of(3, 4)
+            Tuple.of(1, 2, 3, 4, 5)     | { tuple -> tuple.retainIf { it < 2 || it > 4 } }   || Tuple.of(1, 5)
+            Tuple.of(Integer, 0..900)   | { tuple -> tuple.retainIf {it in 2..300||it==500 }}|| Tuple.of(Integer, (0..900).findAll(it->{ it in 2..300||it==500 }))
+            Tuple.of(1, 2, 3, 4, 5)     | { tuple -> tuple.slice(1, 3) }                     || Tuple.of(2, 3)
+            Tuple.of(Integer, 0..900)   | { tuple -> tuple.slice(60, 301) }                  || Tuple.of(Integer, (60..300))
+            Tuple.of(1, 2, 3, 4, 5)     | { tuple -> tuple.sliceFirst(3) }                   || Tuple.of(1, 2, 3)
+            Tuple.of(Integer, 0..900)   | { tuple -> tuple.sliceFirst(301) }                 || Tuple.of(Integer, (0..300))
+            Tuple.of(1, 2, 3, 4, 5)     | { tuple -> tuple.sliceLast(3) }                    || Tuple.of(3, 4, 5)
+            Tuple.of(Integer, 0..900)   | { tuple -> tuple.sliceLast(301) }                  || Tuple.of(Integer, (600..900))
+            Tuple.of(1, 2, 3, 4, 5)     | { tuple -> tuple.sliceAt(1, 3) }                   || Tuple.of(2, 3, 4)
+            Tuple.of(Integer, 0..900)   | { tuple -> tuple.sliceAt(60, 301) }                || Tuple.of(Integer, (60..360))
+            Tuple.of(1, 2, 3, 4, 5)     | { tuple -> tuple.removeRange(1, 3) }               || Tuple.of(1, 4, 5)
+            Tuple.of(Integer, 0..900)   | { tuple -> tuple.removeRange(60, 301) }            || Tuple.of(Integer, (0..59).plus((301..900)))
+            Tuple.of(1, 2, 3, 4, 5)     | { tuple -> tuple.setAt(1, 10) }                    || Tuple.of(1, 10, 3, 4, 5)
+            Tuple.of(Integer, 0..900)   | { tuple -> tuple.setAt(60, 10) }                   || Tuple.of(Integer, (0..59).plus(10).plus((61..900)))
+            Tuple.of(1, 2, 3, 4, 5)     | { tuple -> tuple.addAt(1, 10) }                    || Tuple.of(1, 10, 2, 3, 4, 5)
+            Tuple.of(Integer, 0..900)   | { tuple -> tuple.addAt(60, 10) }                   || Tuple.of(Integer, (0..59).plus(10).plus((60..900)))
+            Tuple.of(1, 2, 3, 4, 5)     | { tuple -> tuple.removeAt(1) }                     || Tuple.of(1, 3, 4, 5)
+            Tuple.of(Integer, 0..900)   | { tuple -> tuple.removeAt(60) }                    || Tuple.of(Integer, (0..59).plus((61..900)))
+            Tuple.of(1, 2, 3, 4, 5)     | { tuple -> tuple.removeAt(1, 2) }                  || Tuple.of(1, 4, 5)
+            Tuple.of(Integer, 0..900)   | { tuple -> tuple.removeAt(100, 600) }              || Tuple.of(Integer, (0..99).plus((700..900)))
+            Tuple.of(1, 2, 3, 4, 5)     | { tuple -> tuple.add(10) }                         || Tuple.of(1, 2, 3, 4, 5, 10)
+            Tuple.of(Integer, 0..900)   | { tuple -> tuple.add(10) }                         || Tuple.of(Integer, (0..900).plus(10))
+            Tuple.of(1, 2, 3)           | { tuple -> tuple.addAll(10, 20) }                  || Tuple.of(1, 2, 3, 10, 20)
+            Tuple.of(1, 2, 3)           | { tuple -> tuple.addAll(Tuple.of(10, 20)) }        || Tuple.of(1, 2, 3, 10, 20)
+            Tuple.of(1, 2, 3)           | { tuple -> tuple.addAll([10, 20]) }                || Tuple.of(1, 2, 3, 10, 20)
+            Tuple.of(Integer, 0..900)   | { tuple -> tuple.addAll(-100..100) }               || Tuple.of(Integer, (0..900).plus((-100..100)))
+            Tuple.of(1, 2, 3)           | { tuple -> tuple.clear() }                         || Tuple.of(Integer)
+            Tuple.of(1, 2, 3)           | { tuple -> tuple.addAllAt(1, 10, 20) }             || Tuple.of(1, 10, 20, 2, 3)
+            Tuple.of(1, 2, 3)           | { tuple -> tuple.addAllAt(1, Tuple.of(10, 20)) }   || Tuple.of(1, 10, 20, 2, 3)
+            Tuple.of(1, 2, 3)           | { tuple -> tuple.addAllAt(1, [10, 20]) }           || Tuple.of(1, 10, 20, 2, 3)
+            Tuple.of(Integer, 0..900)   | { tuple -> tuple.addAllAt(100, -100..99) }         || Tuple.of(Integer, (0..99).plus((-100..100)).plus((101..900)))
+            Tuple.of(1, 2, 3)           | { tuple -> tuple.removeIf { it > 1 } }             || Tuple.of(1)
+            Tuple.of(1, 2, 3)           | { tuple -> tuple.removeIf { it < 2 } }             || Tuple.of(2, 3)
+            Tuple.of(1, 2, 3, 4, 5)     | { tuple -> tuple.removeIf { it > 2 && it < 5 } }   || Tuple.of(1, 2, 5)
+            Tuple.of(1, 2, 3, 4, 5)     | { tuple -> tuple.removeIf { it < 2 || it > 4 } }   || Tuple.of(2, 3, 4)
+            Tuple.of(Integer, 0..900)   | { tuple -> tuple.removeIf {it in 2..300||it==500 }}|| Tuple.of(Integer, (0..900).findAll(it->{ !(it in 2..300||it==500) }))
+            Tuple.of(1, 2, 3, 1, 2)     | { tuple -> tuple.makeDistinct() }                  || Tuple.of(1, 2, 3)
+            Tuple.of("","","!","")      | { tuple -> tuple.makeDistinct() }                  || Tuple.of("", "!")
+            Tuple.of(1, 2)              | { tuple -> tuple.addIfNonNull(null) }              || Tuple.of(1, 2)
+            Tuple.of(1, 2)              | { tuple -> tuple.addIfNonNull(3) }                 || Tuple.of(1, 2, 3)
+            Tuple.of(1, 2)              | { tuple -> tuple.addIfNonNullAt(1,null) }          || Tuple.of(1, 2)
+            Tuple.of(1, 2)              | { tuple -> tuple.addIfNonNullAt(1,3) }             || Tuple.of(1, 3, 2)
     }
 
     def 'The tuple predicates behave as expected.'(

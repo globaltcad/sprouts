@@ -1409,7 +1409,26 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @return An immutable {@link List} of items in this {@link Tuple} instance.
      */
     default List<T> toList() {
-        return Collections.unmodifiableList(stream().collect(Collectors.toList()));
+        return new AbstractList<T>() {
+            @Override
+            public T get( int index ) {
+                return Tuple.this.get(index);
+            }
+            @Override
+            public int size() {
+                return Tuple.this.size();
+            }
+            @Override
+            public Iterator<T> iterator() {
+                return Tuple.this.iterator();
+            }
+            @Override
+            public boolean contains( @Nullable Object o ) {
+                if ( o != null && !type().isAssignableFrom(o.getClass()) )
+                    return false;
+                return Tuple.this.contains(type().cast(o));
+            }
+        };
     }
 
     /**
