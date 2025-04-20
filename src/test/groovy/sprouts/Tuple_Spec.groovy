@@ -23,6 +23,103 @@ import java.util.stream.Stream
 @Subject([Tuple])
 class Tuple_Spec extends Specification
 {
+    enum Operation {
+        ADD, REMOVE, SET
+    }
+
+    def 'The `Tuple` maintains invariance with Java ArrayList across operations'(
+        List<Tuple2<Operation, String>> operations
+    ) {
+        given:
+            var random = new Random(1997)
+            var tuple = Tuple.of(String)
+            var referenceList = new ArrayList<>()
+            var operationsApplier = { currentTuple ->
+                operations.each { op, element ->
+                    int randomIndex = random.nextInt(currentTuple.size() + 1)
+                    int spread = random.nextInt(5)
+                    switch (op) {
+                        case Operation.ADD:
+                            if ( spread < 2 ) {
+                                currentTuple = currentTuple.addAt(randomIndex, element)
+                                referenceList.add(randomIndex, element)
+                            } else {
+                                var toAdd = (0..(spread*2)).collect { element }
+                                currentTuple = currentTuple.addAllAt(randomIndex, toAdd)
+                                referenceList.addAll(randomIndex, toAdd)
+                            }
+                            break
+                        case Operation.REMOVE:
+                            if ( !referenceList.isEmpty() ) {
+                                int removeIndex = Math.max(0, Math.min(randomIndex, currentTuple.size() - 1))
+                                if (spread < 2 || (spread + removeIndex) >= currentTuple.size()) {
+                                    currentTuple = currentTuple.removeAt(removeIndex)
+                                    referenceList.remove(removeIndex)
+                                } else {
+                                    currentTuple = currentTuple.removeRange(removeIndex, removeIndex + spread)
+                                    for (int i = 0; i < spread; i++) {
+                                        referenceList.remove(removeIndex)
+                                    }
+                                }
+                            }
+                            break
+                        case Operation.SET:
+                            int setIndex = Math.max(0, Math.min(randomIndex, currentTuple.size() - 1))
+                            if ( spread < 2 || (spread + setIndex) >= currentTuple.size() ) {
+                                currentTuple = currentTuple.setAt(setIndex, element)
+                                referenceList.set(setIndex, element)
+                            } else {
+                                currentTuple = currentTuple.setAllAt(setIndex, (0..<spread).collect { element })
+                                for (int i = 0; i < spread; i++) {
+                                    referenceList.set(setIndex + i, element)
+                                }
+                            }
+                            break
+                    }
+                }
+                return currentTuple
+            }
+
+        when: 'Apply operations first time'
+            tuple = operationsApplier(tuple)
+        then: 'Immediate invariance'
+            tuple.size() == referenceList.size()
+            tuple.toList() == referenceList
+
+        when: 'Apply operations multiple times'
+            5.times { tuple = operationsApplier(tuple) }
+        then: 'It is still invariant!'
+            tuple.size() == referenceList.size()
+            tuple.toList() == referenceList
+
+        where:
+            operations << [
+                [
+                    new Tuple2(Operation.ADD, "apple"),
+                    new Tuple2(Operation.ADD, "banana"),
+                    new Tuple2(Operation.ADD, "cherry"),
+                    new Tuple2(Operation.REMOVE, "apple"),
+                    new Tuple2(Operation.REMOVE, "banana"),
+                    new Tuple2(Operation.SET, "kiwi"),
+                    new Tuple2(Operation.SET, "pear"),
+                    new Tuple2(Operation.ADD, "grape"),
+                    new Tuple2(Operation.ADD, "orange"),
+                ],
+                (-100..100).collect {
+                    new Tuple2(
+                        Operation.values()[Math.abs(new Random(it).nextInt() % 3)],
+                        "element-"+Math.abs(new Random(it).nextInt() % 500)
+                    )
+                },
+                (0..1000).collect {
+                    new Tuple2(
+                            Operation.values()[Math.abs(new Random(it).nextInt() % 3)],
+                            "element-"+Math.abs(new Random(it).nextInt() % 500)
+                    )
+                }
+        ]
+    }
+
     def 'A tuple has various operations for functional transformation.'(
             Tuple<Object>          input,
             Closure<Tuple<Object>> operation,

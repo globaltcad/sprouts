@@ -91,7 +91,7 @@ public final class TupleImpl<T extends @Nullable Object> implements Tuple<T>, Se
     @Override
     public Tuple<T> removeRange( int from, int to ) {
         if ( from < 0 || to > _length(_data) )
-            throw new IndexOutOfBoundsException();
+            throw new IndexOutOfBoundsException("from: " + from + ", to: " + to + ", size: " + this.size());
         if ( from > to )
             throw new IllegalArgumentException();
         int numberOfItemsToRemove = to - from;
