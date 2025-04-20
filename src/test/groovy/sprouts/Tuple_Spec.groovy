@@ -64,14 +64,16 @@ class Tuple_Spec extends Specification
                             }
                             break
                         case Operation.SET:
-                            int setIndex = Math.max(0, Math.min(randomIndex, currentTuple.size() - 1))
-                            if ( spread < 2 || (spread + setIndex) >= currentTuple.size() ) {
-                                currentTuple = currentTuple.setAt(setIndex, element)
-                                referenceList.set(setIndex, element)
-                            } else {
-                                currentTuple = currentTuple.setAllAt(setIndex, (0..<spread).collect { element })
-                                for (int i = 0; i < spread; i++) {
-                                    referenceList.set(setIndex + i, element)
+                            if ( !referenceList.isEmpty() ) {
+                                int setIndex = Math.max(0, Math.min(randomIndex, currentTuple.size() - 1))
+                                if (spread < 2 || (spread + setIndex) >= currentTuple.size()) {
+                                    currentTuple = currentTuple.setAt(setIndex, element)
+                                    referenceList.set(setIndex, element)
+                                } else {
+                                    currentTuple = currentTuple.setAllAt(setIndex, (0..<spread).collect { element })
+                                    for (int i = 0; i < spread; i++) {
+                                        referenceList.set(setIndex + i, element)
+                                    }
                                 }
                             }
                             break
