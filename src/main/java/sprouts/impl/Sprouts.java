@@ -507,7 +507,7 @@ public final class Sprouts implements SproutsFactory
     }
 
     @Override
-    public <V> Result<V> resultOfTry( Class<V> type, Supplier<V> supplier ) {
+    public <V> Result<V> resultOfTry( Class<V> type, ResultItemSupplier<V> supplier ) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(supplier);
         try {

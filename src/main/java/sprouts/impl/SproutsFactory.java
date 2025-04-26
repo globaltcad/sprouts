@@ -221,7 +221,7 @@ public interface SproutsFactory
 
     <V> Result<List<V>> resultOfList( Class<V> type, List<V> list, Iterable<Problem> problems );
 
-    <V> Result<V> resultOfTry( Class<V> type, Supplier<V> supplier );
+    <V> Result<V> resultOfTry( Class<V> type, ResultItemSupplier<V> supplier );
 
     <O,D> WeakAction<O,D> actionOfWeak(O owner, BiConsumer<O, D> action );
 
