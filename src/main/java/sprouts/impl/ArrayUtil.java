@@ -3,6 +3,7 @@ package sprouts.impl;
 import org.jspecify.annotations.Nullable;
 import sprouts.Tuple;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -109,7 +110,10 @@ class ArrayUtil {
     static Object _createArrayFromList( Class<?> type, boolean nullable, List<?> list ) {
         Object array = _createArray(type, nullable, list.size());
         for ( int i = 0; i < list.size(); i++ ) {
-            _setAt(i, list.get(i), array);
+            Object item = list.get(i);
+            if ( item == null && !nullable )
+                throw new NullPointerException("Non-nullable tuple encountered null item!");
+            _setAt(i, item, array);
         }
         return array;
     }
@@ -243,6 +247,23 @@ class ArrayUtil {
         for ( int i = 0; i < _length(array); i++ ) {
             consumer.accept(_getAt(i, array, type));
         }
+    }
+
+    static <T> List<T> _toList( Object array, Class<T> type ) {
+        int size = _length(array);
+        List<T> list = new ArrayList<>(size);
+        for ( int i = 0; i < size; i++ ) {
+            list.add(_getAt(i, array, type));
+        }
+        return list;
+    }
+
+    static boolean _isAllNull( Object[] array ) {
+        for ( Object item : array ) {
+            if ( item != null )
+                return false;
+        }
+        return true;
     }
 
 }

@@ -166,7 +166,7 @@ final class ValueSetImpl<E> implements ValueSet<E> {
     @Override
     public Tuple<E> toTuple() {
         if ( _branches.length == 0 ) {
-            return new TupleImpl<>(false, _type, _elementsArray, null);
+            return new TupleWithDiff<>(TupleHamt.ofRaw(false, _type, _elementsArray), null);
         } else {
             List<E> values = new ArrayList<>(_length(_elementsArray));
             _each(_elementsArray, _type, value -> {

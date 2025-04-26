@@ -316,12 +316,12 @@ public final class Sprouts implements SproutsFactory
         for (int i = 0; i < maybes.length; i++) {
             items[i] = maybes[i].orElseNull();
         }
-        return new TupleImpl<>(false, type, items, null);
+        return TupleWithDiff.of(false, type, items);
     }
 
     @Override
     public <T> Tuple<T> tupleOf(Class<T> type ) {
-        return new TupleImpl<>(false, type, null, null);
+        return TupleWithDiff.of(false, type, Collections.emptyList());
     }
 
     @Override
@@ -331,7 +331,7 @@ public final class Sprouts implements SproutsFactory
         for (int i = 0; i < rest.length; i++) {
             items[i + 1] = rest[i].orElseNull();
         }
-        return new TupleImpl<>(false, Util.expectedClassFromItem(first.orElseThrowUnchecked()), items, null);
+        return TupleWithDiff.of(false, Util.expectedClassFromItem(first.orElseThrowUnchecked()), items);
     }
 
     @Override
@@ -339,19 +339,19 @@ public final class Sprouts implements SproutsFactory
         T[] items = (T[]) new Object[rest.length + 1];
         items[0] = first;
         System.arraycopy(rest, 0, items, 1, rest.length);
-        return new TupleImpl<>(false, Util.expectedClassFromItem(first), items, null);
+        return TupleWithDiff.of(false, Util.expectedClassFromItem(first), items);
     }
 
     @Override
-    public <T> Tuple<T> tupleOf(Class<T> type, T... items ) {
-        return new TupleImpl<>(false, type, items, null);
+    public <T> Tuple<T> tupleOf( Class<T> type, T... items ) {
+        return TupleWithDiff.of(false, type, items);
     }
 
     @Override
     public <T> Tuple<T> tupleOf(Class<T> type, Iterable<T> iterable ) {
         List<T> items = new ArrayList<>();
         iterable.forEach(items::add);
-        return new TupleImpl<>(false, type, items);
+        return TupleWithDiff.of(false, type, items);
     }
 
     @Override
@@ -360,17 +360,17 @@ public final class Sprouts implements SproutsFactory
         for (int i = 0; i < maybes.length; i++) {
             items[i] = maybes[i].orElseNull();
         }
-        return new TupleImpl<>(true, type, items, null);
+        return TupleWithDiff.of(true, type, items);
     }
 
     @Override
     public <T> Tuple<@Nullable T> tupleOfNullable(Class<T> type ) {
-        return new TupleImpl<>(true, type, null, null);
+        return TupleWithDiff.of(true, type, Collections.emptyList());
     }
 
     @Override
     public <T> Tuple<@Nullable T> tupleOfNullable(Class<T> type, @Nullable T... values ) {
-        return new TupleImpl<>(true, type, values, null);
+        return TupleWithDiff.of(true, type, values);
     }
 
     @Override
@@ -380,14 +380,14 @@ public final class Sprouts implements SproutsFactory
         for (int i = 0; i < rest.length; i++) {
             items[i + 1] = rest[i].orElseNull();
         }
-        return new TupleImpl<>(true, first.type(), items, null);
+        return TupleWithDiff.of(true, first.type(), items);
     }
 
     @Override
     public <T> Tuple<@Nullable T> tupleOfNullable(Class<T> type, Iterable<@Nullable T> iterable) {
         List<T> items = new ArrayList<>();
         iterable.forEach(items::add);
-        return new TupleImpl<>(true, type, items);
+        return TupleWithDiff.of(true, type, items);
     }
 
     @Override

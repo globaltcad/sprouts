@@ -191,7 +191,7 @@ final class AssociationImpl<K, V> implements Association<K, V> {
     @Override
     public Tuple<V> values() {
         if ( _branches.length == 0 ) {
-            return new TupleImpl<>(false, _valueType, _valuesArray, null);
+            return new TupleWithDiff<>(TupleHamt.ofRaw(false, _valueType, _valuesArray), null);
         } else {
             List<V> values = new java.util.ArrayList<>(_length(_valuesArray));
             _each(_valuesArray, _valueType, value -> {
