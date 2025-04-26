@@ -1,11 +1,16 @@
 package benchmark;
 import sprouts.Association;
 import sprouts.Pair;
+import sprouts.Tuple;
 import sprouts.ValueSet;
 
 import java.util.*;
+import java.util.function.BiPredicate;
 import java.util.function.Function;
+import java.util.function.IntFunction;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class ValueCollectionsPerformanceTest {
 
@@ -28,8 +33,13 @@ public class ValueCollectionsPerformanceTest {
     }
 
     public static void main(String[] args) {
-        //testAssociationAgainstHashMap();
+        testAssociationAgainstHashMap();
         testValueSetAgainstHashSet();
+        testTupleAgainstArrayList(60_000);
+        testTupleAgainstArrayList(30_000);
+        testTupleAgainstArrayList(10_000);
+        testTupleAgainstArrayList(5_000);
+        testTupleAgainstArrayList(100);
     }
 
     private static void testAssociationAgainstHashMap() {
@@ -68,7 +78,8 @@ public class ValueCollectionsPerformanceTest {
                         }
                     }
                     return map;
-                }
+                },
+                (a, b)-> a.toMap().equals(b)
         );
     }
 
@@ -108,13 +119,68 @@ public class ValueCollectionsPerformanceTest {
                         }
                     }
                     return map;
-                }
+                },
+                (a, b)->a.toSet().equals(b)
+        );
+    }
+
+    private static void testTupleAgainstArrayList(int initialSize) {
+        List<OperationKeyPair> operations = generateOperationsForListAndTuple();
+        IntFunction<Integer> randomIndexSource = size-> {
+            return size == 0 ? 0 : new Random(size).nextInt(size);
+        };
+        List<String> initialList = IntStream.range(0, initialSize).mapToObj(i->String.valueOf(i)).collect(Collectors.toList());
+        test(
+                "Tuple - init "+initialSize, ()-> Tuple.of(String.class, initialList), tuple-> {
+                    Tuple<String> result = tuple;
+                    for (OperationKeyPair pair : operations) {
+                        switch (pair.operation) {
+                            case ADD:
+                                result = result.addAt(randomIndexSource.apply(result.size()), pair.key);
+                                break;
+                            case REMOVE:
+                                if ( result.size() > 0 ) {
+                                    result = result.removeAt(randomIndexSource.apply(result.size()));
+                                }
+                                break;
+                            case GET:
+                                if ( result.size() > 0 ) {
+                                    String value = result.get(randomIndexSource.apply(result.size()));
+                                }
+                                break;
+                        }
+                    }
+                    return result;
+                },
+                "ArrayList - init "+initialSize, ()->new ArrayList<String>(initialList),
+                list->{
+                    for (OperationKeyPair pair : operations) {
+                        switch (pair.operation) {
+                            case ADD:
+                                list.add(randomIndexSource.apply(list.size()), pair.key);
+                                break;
+                            case REMOVE:
+                                if ( list.size() > 0 ) {
+                                    list.remove(randomIndexSource.apply(list.size()).intValue());
+                                }
+                                break;
+                            case GET:
+                                if ( list.size() > 0 ) {
+                                    String value = list.get(randomIndexSource.apply(list.size()));
+                                }
+                                break;
+                        }
+                    }
+                    return list;
+                },
+                (a, b) -> a.toList().equals(b)
         );
     }
 
     public static <A,B> void test(
         String titleA, Supplier<A> initA, Function<A,A> runA,
-        String titleB, Supplier<B> initB, Function<B,B> runB
+        String titleB, Supplier<B> initB, Function<B,B> runB,
+        BiPredicate<A,B> invarianceChecker
     ) {
 
         // Warmup to trigger JIT compilation
@@ -128,12 +194,18 @@ public class ValueCollectionsPerformanceTest {
             // Garbage collect before measurements
             System.gc();
             // Measure Association performance
-            associationTime += run(11, initA, runA);
+            Pair<A, Long> currentAAndTime = run(11, initA, runA);
+            associationTime += currentAAndTime.second();
 
             // Garbage collect before next measurement
             System.gc();
             // Measure Map performance
-            mapTime += run(11, initB, runB);
+            Pair<B, Long> currentBAndTime = run(11, initB, runB);
+            mapTime += currentBAndTime.second();
+
+            if ( !invarianceChecker.test(currentAAndTime.first(), currentBAndTime.first())) {
+                throw new IllegalStateException("Invariance check failed");
+            }
         }
         associationTime /= samples;
         mapTime /= samples;
@@ -156,14 +228,24 @@ public class ValueCollectionsPerformanceTest {
         return operations;
     }
 
-    private static <T> long run(int count, Supplier<T> init, Function<T,T> ops) {
+    private static List<OperationKeyPair> generateOperationsForListAndTuple() {
+        List<OperationKeyPair> operations = new ArrayList<>();
+        for (int i = 0; i <= 70_000; i++) {
+            int localHash = Math.abs(Long.hashCode(PRIME_1 * (i - PRIME_2 * (i))));
+            Operation op = Operation.values()[localHash % 3];
+            operations.add(new OperationKeyPair(op, String.valueOf(localHash)));
+        }
+        return operations;
+    }
+
+    private static <T> Pair<T,Long> run(int count, Supplier<T> init, Function<T,T> ops) {
         T current = init.get();
 
         long startTime = System.nanoTime();
         for (int i = 0; i < count; i++) {
             current = ops.apply(current);
         }
-        return System.nanoTime() - startTime;
+        return Pair.of(current, System.nanoTime() - startTime);
     }
 
 
