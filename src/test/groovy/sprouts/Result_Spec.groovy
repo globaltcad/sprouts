@@ -221,7 +221,7 @@ class Result_Spec extends Specification
             }
 
         when : 'We create a result from the supplier with the `doFail` flag set to false.'
-            def result = Result.ofTry(String.class, supplier)
+            def result = Result.ofTry(String.class, supplier::get)
         then : 'No exception is thrown, which means the result has the value.'
             result.orElseThrowUnchecked() == "bar"
         and : 'The result has no problems.'
@@ -229,7 +229,7 @@ class Result_Spec extends Specification
 
         when : 'We create a result from the supplier with the `doFail` flag set to true.'
             doFail = true
-            def result2 = Result.ofTry(String.class, supplier)
+            def result2 = Result.ofTry(String.class, supplier::get)
         then : 'An exception is thrown, which means the result has a problem.'
             result2.problems().size() == 1
         and : 'The problem is an exception problem.'

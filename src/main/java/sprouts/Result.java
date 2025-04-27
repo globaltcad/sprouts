@@ -12,18 +12,27 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
- *  A result is very similar to an {@link Optional} in that it can either contain a value or not,
+ *  A {@link Result} is very similar to an {@link Optional} in that it can either contain an item or not,
  *  with the difference being that a result can also contain a list of {@link Problem}s
- *  which describe what went wrong in the process of obtaining the value wrapped by the result.
- *  So usually, if the result is not present, there will most likely be a list of {@link Problem}s
- *  explaining why the value is not present and what went wrong.
+ *  which describe what went wrong in the process of getting the item wrapped by the result.
+ *  So usually, if the result is not present, there will most likely be one or more {@link Problem}s
+ *  explaining why the value is not present and what went wrong. But the result may also be
+ *  just empty, exactly like an {@link Optional}.
  *  <br>
- *  The {@link Result} relies on this {@link Problem} type instead of
- *  raw {@link Exception} types, due to the fact that not every runtime issue is
+ *  The {@link Result} relies on the custom {@link Problem} type instead of
+ *  raw {@link Exception} types, because not every runtime issue is
  *  or should necessarily be produced by an exception.
  *  If you do not want to disturb the control flow of your application
- *  by throwing an exception, you can simply create a {@link Problem} as part of a {@link Result}
- *  and continue processing as usual.
+ *  by throwing an exception, you can create a {@link Problem} as part of a {@link Result}
+ *  and continue processing as usual.<br>
+ *  Another very common use case is to use a {@link Result} instead of checked exceptions
+ *  as part of an API that values both compile time enforced error handling and developer experience.
+ *  A result may catch and wrap an internal system exception to avoid disturbing the control flow
+ *  of the API consumers while at the same time confronting the API user with the fact that a problem may exist.
+ *  There, a {@link Result} exposes a versatile API for handling all possible (non-fatal) scenarios.
+ *  This is especially important in cases where the consumer has no control over these errors and cannot handle them in
+ *  any meaningful way, but instead just wants to opt-into an alternative value through methods like
+ *  {@link Result#orElse(Object)}, or {@link Result#orElseGet(Supplier)}.
  *
  * @param <V> The type of the item wrapped by this result.
  */
@@ -196,17 +205,24 @@ public interface Result<V> extends Maybe<V>
     }
 
     /**
-     *  A factory method for creating a result from a {@link Supplier} which may throw an exception.
+     *  A factory method for creating a {@link Result} from a {@link ResultItemSupplier}
+     *  lambda which may throw a checked or unchecked {@link Exception}, but won't break
+     *  the control flow of your application.<br>
      *  If the supplier throws an exception, the exception is caught and a new result is returned
-     *  with the exception as a problem.
+     *  with the exception as a problem.<br>
+     *  <b>Note that this does not catch {@link Error} subtypes, like {@link OutOfMemoryError} or
+     *  {@link StackOverflowError} because they represent severe platform errors, which are
+     *  considered unrecoverable problems that applications should not typically attempt to handle.</b><br>
+     *  Only application errors ({@link Exception}s) are caught and wrapped safely as {@link Result}.
      *
      * @param type The type of the value returned from the supplier.
-     * @param supplier The supplier to obtain the value from.
+     * @param supplier The supplier to get the value from,
+     *                 which may throw a {@link RuntimeException} or checked {@link Exception}.
      * @return A new result with the value obtained from the supplier and a list of problems describing related issues.
      * @param <V> The type of the value returned from the supplier.
      * @throws NullPointerException if the type or supplier is null.
      */
-    static <V> Result<V> ofTry( Class<V> type, Supplier<V> supplier ) {
+    static <V> Result<V> ofTry( Class<V> type, ResultItemSupplier<V> supplier ) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(supplier);
         return Sprouts.factory().resultOfTry(type, supplier);
@@ -218,7 +234,7 @@ public interface Result<V> extends Maybe<V>
      *  the value wrapped by this result.
      *  <p>
      *  Note that a result may be present but still have problems,
-     *  in which case the problems list is not empty.
+     *  in which case the problem list is not empty.
      *
      *  @return The list of {@link Problem}s associated with this result item.
      */
@@ -230,7 +246,7 @@ public interface Result<V> extends Maybe<V>
      *  the value wrapped by this result.
      *  <p>
      *  Note that a result may be present but still have problems,
-     *  in which case the problems list is not empty.
+     *  in which case the problem list is not empty.
      *
      *  @return {@code true} if this result is present, {@code false} otherwise.
      */
@@ -240,7 +256,7 @@ public interface Result<V> extends Maybe<V>
      *  Allows you to peek at the list of problems associated with this result
      *  through a {@link Consumer} which receives the list of all problems.
      *  If an exception is thrown during the process of peeking at the problems,
-     *  the exception is caught, logged and a new result is returned
+     *  then the exception is caught, logged, and a new result is returned
      *  with the exception as a problem.
      *  <p>
      *  This method is useful for debugging and logging purposes.
@@ -252,8 +268,8 @@ public interface Result<V> extends Maybe<V>
     Result<V> peekAtProblems( Consumer<Tuple<Problem>> consumer );
 
     /**
-     *  Allows you to peek at each individual problem associated with this result
-     *  through a {@link Consumer} which receives a single problem at a time.
+     *  Allows you to peek at each problem inside this result
+     *  through a {@link Consumer} which receives one problem at a time.
      *  Any exceptions thrown during the process of peeking at the problems are caught
      *  logged and then returned as new problems inside a new result.
      *  <p>
