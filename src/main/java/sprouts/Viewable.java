@@ -193,8 +193,8 @@ public interface Viewable<T> extends Val<T>, Observable {
      * Note: The property view does <b>allow</b> storing {@code null} references!
      * If the combiner function throws an exception, the view will be set to {@code null}.
      * <p>
-     * If you need a composite view that not allows {@code null}, use the {@link #of(Class, Val, Val, BiFunction)}
-     * method instead.
+     * If you need a composite view that does not allow {@code null} items,
+     * use the {@link #of(Class, Val, Val, BiFunction)} method instead of this one.
      *
      * @param type     The type of the item returned from the mapping function.
      * @param first    The first property to be combined.
