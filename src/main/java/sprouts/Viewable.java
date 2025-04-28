@@ -98,7 +98,7 @@ public interface Viewable<T> extends Val<T>, Observable {
      *                 the second argument is the item of the second property.
      * @param <T>      The item type of the first property and the returned property.
      * @param <U>      The type of the second property.
-     * @return A new {@link Val} instance which is a live view of the two given properties.
+     * @return A new {@link Viewable} instance which is a live view of the two given properties.
      * @throws NullPointerException If the combiner function returns a {@code null} reference
      *                              <b>when it is first called</b>.
      */
