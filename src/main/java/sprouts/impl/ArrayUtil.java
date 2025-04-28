@@ -112,7 +112,10 @@ class ArrayUtil {
         for ( int i = 0; i < list.size(); i++ ) {
             Object item = list.get(i);
             if ( item == null && !nullable )
-                throw new NullPointerException("Non-nullable tuple encountered null item!");
+                throw new NullPointerException(
+                    "Failed to initiate non-nullable tuple data array for item type '"+type.getName()+"',\n" +
+                    "due to null item encounter at index '" + i + "' in the supplied list.\n"
+                );
             _setAt(i, item, array);
         }
         return array;
