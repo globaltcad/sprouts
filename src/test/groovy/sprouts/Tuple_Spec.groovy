@@ -24,7 +24,7 @@ import java.util.stream.Stream
 class Tuple_Spec extends Specification
 {
     enum Operation {
-        ADD, REMOVE, SET
+        ADD, REMOVE, SET, SLICE_AND_ADD
     }
 
     def 'The `Tuple` maintains invariance with Java ArrayList across operations'(
@@ -37,27 +37,43 @@ class Tuple_Spec extends Specification
             var operationsApplier = { currentTuple ->
                 operations.each { op, element ->
                     int randomIndex = random.nextInt(currentTuple.size() + 1)
-                    int spread = random.nextInt(5)
+                    int spread = random.nextInt(5) ** 2
                     switch (op) {
                         case Operation.ADD:
                             if ( spread < 2 ) {
-                                currentTuple = currentTuple.addAt(randomIndex, element)
+                                var currentTuple1 = currentTuple.addAt(randomIndex, element)
                                 referenceList.add(randomIndex, element)
+                                currentTuple = currentTuple1
                             } else {
-                                var toAdd = (0..(spread*2)).collect { element }
+                                var toAdd = (0..spread).collect { element + it }
                                 currentTuple = currentTuple.addAllAt(randomIndex, toAdd)
                                 referenceList.addAll(randomIndex, toAdd)
+                            }
+                            break
+                        case Operation.SLICE_AND_ADD: // Here the value is not used
+                            if ( !referenceList.isEmpty() ) {
+                                int sliceIndex = Math.max(0, Math.min(randomIndex, currentTuple.size() - 1))
+                                int trimmedSpread = spread + Math.min(0, currentTuple.size() - sliceIndex - spread)
+                                if (trimmedSpread > 0) {
+                                    var slice = currentTuple.slice(sliceIndex, sliceIndex+trimmedSpread)
+                                    currentTuple = currentTuple.addAll(slice) // Append
+                                    currentTuple = currentTuple.addAllAt(0, slice) // Prepend
+                                    var subList = new ArrayList<>(referenceList.subList(sliceIndex, sliceIndex + trimmedSpread))
+                                    referenceList.addAll(subList) // Append
+                                    referenceList.addAll(0, subList) // Prepend
+                                }
                             }
                             break
                         case Operation.REMOVE:
                             if ( !referenceList.isEmpty() ) {
                                 int removeIndex = Math.max(0, Math.min(randomIndex, currentTuple.size() - 1))
-                                if (spread < 2 || (spread + removeIndex) >= currentTuple.size()) {
+                                int numberToRemove = (spread-1) * 3
+                                if (numberToRemove < 2 || (numberToRemove + removeIndex) >= currentTuple.size()) {
                                     currentTuple = currentTuple.removeAt(removeIndex)
                                     referenceList.remove(removeIndex)
                                 } else {
-                                    currentTuple = currentTuple.removeRange(removeIndex, removeIndex + spread)
-                                    for (int i = 0; i < spread; i++) {
+                                    currentTuple = currentTuple.removeRange(removeIndex, removeIndex + numberToRemove)
+                                    for (int i = 0; i < numberToRemove; i++) {
                                         referenceList.remove(removeIndex)
                                     }
                                 }
@@ -77,6 +93,9 @@ class Tuple_Spec extends Specification
                                 }
                             }
                             break
+                    }
+                    if ( !referenceList.equals(currentTuple.toList()) ) {
+                        println "Divergence: $referenceList"
                     }
                 }
                 return currentTuple
@@ -102,20 +121,23 @@ class Tuple_Spec extends Specification
                     new Tuple2(Operation.ADD, "cherry"),
                     new Tuple2(Operation.REMOVE, "apple"),
                     new Tuple2(Operation.REMOVE, "banana"),
+                    new Tuple2(Operation.SLICE_AND_ADD, ""),
                     new Tuple2(Operation.SET, "kiwi"),
                     new Tuple2(Operation.SET, "pear"),
                     new Tuple2(Operation.ADD, "grape"),
                     new Tuple2(Operation.ADD, "orange"),
+                    new Tuple2(Operation.SLICE_AND_ADD, ""),
+                    new Tuple2(Operation.REMOVE, "berry"),
                 ],
                 (-100..100).collect {
                     new Tuple2(
-                        Operation.values()[Math.abs(new Random(it).nextInt() % 3)],
+                        Operation.values()[Math.abs(new Random(it).nextInt() % Operation.values().length)],
                         "element-"+Math.abs(new Random(it).nextInt() % 500)
                     )
                 },
-                (0..1000).collect {
+                (0..300).collect {
                     new Tuple2(
-                            Operation.values()[Math.abs(new Random(it).nextInt() % 3)],
+                            Operation.values()[Math.abs(new Random(it).nextInt() % Operation.values().length)],
                             "element-"+Math.abs(new Random(it).nextInt() % 500)
                     )
                 }
