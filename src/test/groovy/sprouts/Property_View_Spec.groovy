@@ -800,7 +800,7 @@ class Property_View_Spec extends Specification
             var property1 = Var.of(42).withId("property1")
             var property2 = Var.of(11).withId("property2")
         when : 'We create a composite view of the two properties...'
-            var view = Val.viewOf(property1, property2, (a, b) -> a + b)
+            var view = Viewable.of(property1, property2, (a, b) -> a + b)
         then : 'The view has the expected id.'
             view.id() == "property1_and_property2"
     }

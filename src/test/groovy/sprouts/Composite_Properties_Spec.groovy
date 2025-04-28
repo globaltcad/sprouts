@@ -34,7 +34,7 @@ class Composite_Properties_Spec extends Specification
             Var<String> forename = Var.of("John")
             Var<String> surname = Var.of("Doe")
         and : 'Now we create a view of the 2 properties that represents the full name.'
-            Val<String> fullName = Val.viewOf(forename, surname, (f, s) -> f + " " + s)
+            Val<String> fullName = Viewable.of(forename, surname, (f, s) -> f + " " + s)
         expect : 'Initially, the view has the expected value.'
             fullName.get() == "John Doe"
         when : 'We change the value of the properties.'
@@ -44,10 +44,10 @@ class Composite_Properties_Spec extends Specification
             fullName.get() == "Jane Smith"
     }
 
-    def 'A composite property view created using the `Val.viewOf(..)` does not update when receiving `null` items'()
+    def 'A composite property view created using the `Viewable.of(..)` does not update when receiving `null` items'()
     {
         reportInfo """
-            A composite property view created using the `Val.viewOf(..)` does not allow `null` items.
+            A composite property view created using the `Viewable.of(..)` does not allow `null` items.
             This does not mean that the properties it is composed of cannot be nullable, it just means
             that the items produced by the combiner function cannot be `null`.
         """
@@ -55,7 +55,7 @@ class Composite_Properties_Spec extends Specification
             Var<String> street = Var.of("Kingsway")
             Var<Integer> number = Var.of(123)
         and : 'Now we create a view of the 2 properties that represents the full address.'
-            Val<String> fullAddress = Val.viewOf(street, number, (s, n) -> s.isEmpty() ? null : s + " " + n)
+            Val<String> fullAddress = Viewable.of(street, number, (s, n) -> s.isEmpty() ? null : s + " " + n)
         expect : 'The view does not allow null items.'
             !fullAddress.allowsNull()
         when : 'We turn the street into an empty string to cause the view to produce a `null` item.'
@@ -67,7 +67,7 @@ class Composite_Properties_Spec extends Specification
     def 'A non nullable composite property view may be created from two nullable properties.'()
     {
         reportInfo """
-            Although a composite property view created using the `Val.viewOf(..)` does permit `null` items
+            Although a composite property view created using the `Viewable.of(..)` does permit `null` items
             itself, it may be created from two nullable properties, as long as the combiner function
             does not produce `null` items.
         """
@@ -78,7 +78,7 @@ class Composite_Properties_Spec extends Specification
             Var<Double> weight = Var.ofNullable(Double, 80d)
             Var<Double> height = Var.ofNullable(Double, 1.8d)
         and : 'A view of the 2 properties that represents the BMI.'
-            Val<Double> bmi = Val.viewOf(weight, height, (w, h) -> w / (h * h))
+            Val<Double> bmi = Viewable.of(weight, height, (w, h) -> w / (h * h))
         expect : 'The view does not allow `null` items.'
             !bmi.allowsNull()
         and : 'The view has the expected value.'
@@ -88,7 +88,7 @@ class Composite_Properties_Spec extends Specification
         then: 'The view will retain the old value.'
             bmi.get() == 24.691358024691358d
         when : 'We create a new view with the 2 properties and the same combiner.'
-            Val.viewOf(weight, height, (w, h) -> w / (h * h))
+            Viewable.of(weight, height, (w, h) -> w / (h * h))
         then : """
             Note that one of these properties is empty, which means that the combiner function will throw an exception
             when invoked with their items.
@@ -97,17 +97,17 @@ class Composite_Properties_Spec extends Specification
             thrown(NullPointerException)
     }
 
-    def 'A composite property view created using the `Val.viewOfNullable(..)` allows `null`.'()
+    def 'A composite property view created using the `Viewable.ofNullable(..)` allows `null`.'()
     {
         reportInfo """
-            A composite property view created using the `Val.viewOfNullable(..)` allows `null` items.
+            A composite property view created using the `Viewable.ofNullable(..)` allows `null` items.
             This means that the items produced by the combiner function can be `null`.
         """
         given : 'We have 2 properties modelling the address of a person.'
             Var<String> street = Var.of("Kingsway")
             Var<Integer> number = Var.of(123)
         and : 'Now we create a view of the 2 properties that represents the full address.'
-            Val<String> fullAddress = Val.viewOfNullable(street, number.viewAsString(), (s, n) -> s.isEmpty() ? null : s + " " + n)
+            Val<String> fullAddress = Viewable.ofNullable(street, number.viewAsString(), (s, n) -> s.isEmpty() ? null : s + " " + n)
         expect : 'The view allows `null` items.'
             fullAddress.allowsNull()
         when : 'We turn the street into an empty string to cause the view to produce a `null` item.'
@@ -118,7 +118,7 @@ class Composite_Properties_Spec extends Specification
             fullAddress.orElseNull() == null
     }
 
-    def 'Some non-nullable composite properties created using the `Val.viewOf(..)` method cannot deal with `null`.'()
+    def 'Some non-nullable composite properties created using the `Viewable.of(..)` method cannot deal with `null`.'()
     {
         reportInfo """
             Some non-nullable composite properties created using the `Lal.viewOf(..)` method cannot deal with potential
@@ -129,7 +129,7 @@ class Composite_Properties_Spec extends Specification
             Var<Date> date1 = Var.ofNullable(Date.class, new Date())
             Var<Date> date2 = Var.ofNullable(Date.class, new Date())
         and : 'A view of the 2 properties that represents the earliest date, or `null` if any of the dates is `null`.'
-            Val<Date> earliestDate = Val.viewOf(date1, date2, (d1, d2) -> (d1==null||d2==null) ? null : d1.before(d2) ? d1 : d2)
+            Val<Date> earliestDate = Viewable.of(date1, date2, (d1, d2) -> (d1==null||d2==null) ? null : d1.before(d2) ? d1 : d2)
         expect : 'The view tells us that it does not allow `null` items.'
             !earliestDate.allowsNull()
         and : 'It contains an initial value.'
@@ -154,12 +154,12 @@ class Composite_Properties_Spec extends Specification
         """
             date1 = Var.ofNull(Date)
             date2 = Var.of(new Date())
-            earliestDate = Val.viewOf(date1, date2, (d1, d2) -> (d1==null) ? null : d1.before(d2) ? d1 : d2)
+            earliestDate = Viewable.of(date1, date2, (d1, d2) -> (d1==null) ? null : d1.before(d2) ? d1 : d2)
         then : 'An exception is thrown.'
             thrown(NullPointerException)
     }
 
-    def 'The second property of a composite view created using the `Val.viewOf(..)` and `Val.viewOfNullable(..)` methods can be of any type.'()
+    def 'The second property of a composite view created using the `Viewable.of(..)` and `Viewable.ofNullable(..)` methods can be of any type.'()
     {
         reportInfo """
             The type of the returned property view is determined by the first property, the second property can be
@@ -169,8 +169,8 @@ class Composite_Properties_Spec extends Specification
             Var<String> stringVar = Var.ofNull(String.class)
             Var<Integer> integerVar = Var.ofNull(Integer.class)
         and : 'A nullable and a non-nullable composite view of the two properties.'
-            Val<String> view = Val.viewOf(stringVar, integerVar, (s, i) -> s + ":" + i)
-            Val<String> nullableView = Val.viewOfNullable(stringVar, integerVar, (s, i) -> s == null || i == null ? null : s + ":" + i)
+            Val<String> view = Viewable.of(stringVar, integerVar, (s, i) -> s + ":" + i)
+            Val<String> nullableView = Viewable.ofNullable(stringVar, integerVar, (s, i) -> s == null || i == null ? null : s + ":" + i)
         expect : 'The views hold the expected value.'
             view.get() == "null:null"
             nullableView.isEmpty()
@@ -203,7 +203,7 @@ class Composite_Properties_Spec extends Specification
             Var<Integer> integerVar = Var.ofNullable(Integer.class, 4)
             Var<Double> doubleVar = Var.ofNullable(Double.class, 0.5d)
         and : 'A composite view of the two properties.'
-            Val<String> view = Val.viewOf(String.class, integerVar, doubleVar, (i, d) -> i == null ? null : String.format("%d * %.1f = %.1f", i, d, i * d))
+            Val<String> view = Viewable.of(String.class, integerVar, doubleVar, (i, d) -> i == null ? null : String.format("%d * %.1f = %.1f", i, d, i * d))
         expect : 'The view holds the expected value.'
             view.get() == "4 * 0.5 = 2.0"
         when : 'We update the first property.'
@@ -235,7 +235,7 @@ class Composite_Properties_Spec extends Specification
             Var<Integer> integerVar = Var.ofNullable(Integer.class, 4)
             Var<Double> doubleVar = Var.ofNullable(Double.class, 0.5d)
         and : 'A composite view of the two properties.'
-            Val<String> view = Val.viewOfNullable(String.class, integerVar, doubleVar, (i, d) -> i == null ? null : String.format("%d * %.1f = %.1f", i, d, i * d))
+            Val<String> view = Viewable.ofNullable(String.class, integerVar, doubleVar, (i, d) -> i == null ? null : String.format("%d * %.1f = %.1f", i, d, i * d))
         expect : 'The view holds the expected value.'
             view.get() == "4 * 0.5 = 2.0"
         when : 'We update the first property.'
@@ -278,19 +278,19 @@ class Composite_Properties_Spec extends Specification
             longProperty.numberOfChangeListeners() == 0
 
         when : 'We create four (nullable and not-nullable) composite properties that are referenced strongly.'
-            var composite1 = Val.viewOfNullable(longProperty, unitProperty, (l, u) -> l + u.toMillis(1))
-            var composite2 = Val.viewOf(longProperty, unitProperty, (l, u) -> l + u.toMillis(1))
-            var composite3 = Val.viewOfNullable(String.class, longProperty, unitProperty, (l, u) -> l + " " + u)
-            var composite4 = Val.viewOf(String.class, longProperty, unitProperty, (l, u) -> l + " " + u)
+            var composite1 = Viewable.ofNullable(longProperty, unitProperty, (l, u) -> l + u.toMillis(1))
+            var composite2 = Viewable.of(longProperty, unitProperty, (l, u) -> l + u.toMillis(1))
+            var composite3 = Viewable.ofNullable(String.class, longProperty, unitProperty, (l, u) -> l + " " + u)
+            var composite4 = Viewable.of(String.class, longProperty, unitProperty, (l, u) -> l + " " + u)
         then : 'The two parent properties have 4 change listeners registered.'
             longProperty.numberOfChangeListeners() == 4
             unitProperty.numberOfChangeListeners() == 4
 
         when : 'We create four more views which we do not reference strongly.'
-            Val.viewOfNullable(longProperty, unitProperty, (l, u) -> l + u.toMillis(1))
-            Val.viewOf(longProperty, unitProperty, (l, u) -> l + u.toMillis(1))
-            Val.viewOfNullable(String.class, longProperty, unitProperty, (l, u) -> l + " " + u)
-            Val.viewOf(String.class, longProperty, unitProperty, (l, u) -> l + " " + u)
+            Viewable.ofNullable(longProperty, unitProperty, (l, u) -> l + u.toMillis(1))
+            Viewable.of(longProperty, unitProperty, (l, u) -> l + u.toMillis(1))
+            Viewable.ofNullable(String.class, longProperty, unitProperty, (l, u) -> l + " " + u)
+            Viewable.of(String.class, longProperty, unitProperty, (l, u) -> l + " " + u)
         and : 'We wait for the garbage collector to run.'
             waitForGarbageCollection()
             Thread.sleep(500)

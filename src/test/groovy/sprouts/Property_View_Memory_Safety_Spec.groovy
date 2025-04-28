@@ -218,7 +218,7 @@ class Property_View_Memory_Safety_Spec extends Specification
             Var<DayOfWeek> day = Var.of(DayOfWeek.MONDAY)
             Var<String> name = Var.of("John")
         and : 'A composite property that observes the two properties.'
-            Viewable<String> composite = Val.viewOf(name, day, (n,d) -> n + " " + d.name().toLowerCase())
+            Viewable<String> composite = Viewable.of(name, day, (n,d) -> n + " " + d.name().toLowerCase())
         expect : 'The composite property is "John monday" initially.'
             composite.get() == "John monday"
         when : 'We wrap the two properties in `WeakReference` objects.'
@@ -247,7 +247,7 @@ class Property_View_Memory_Safety_Spec extends Specification
             Var<Month> month = Var.of(Month.JANUARY)
             Var<String> name = Var.of("Linda")
         and : 'A nullable composite property that observes the two properties.'
-            Viewable<String> composite = Val.viewOfNullable(name, month, (n,m) -> n + " " + m.name().toLowerCase())
+            Viewable<String> composite = Viewable.ofNullable(name, month, (n,m) -> n + " " + m.name().toLowerCase())
         expect : 'The composite property is "Linda january" initially.'
             composite.get() == "Linda january"
         when : 'We wrap the two properties in `WeakReference` objects.'
@@ -276,7 +276,7 @@ class Property_View_Memory_Safety_Spec extends Specification
         given :
             Var<String> a = Var.of("A")
             Var<String> b = Var.of("B")
-            Val<String> c = Val.viewOf(a, b, (x, y) -> x + y)
+            Val<String> c = Viewable.of(a, b, (x, y) -> x + y)
             var weakA = new WeakReference(a)
         expect :
             c.get() == "AB"
@@ -307,7 +307,7 @@ class Property_View_Memory_Safety_Spec extends Specification
         given :
             Var<String> a = Var.of("A")
             Var<String> b = Var.of("B")
-            Viewable<String> c = Val.viewOf(a, b, (x, y) -> x + y)
+            Viewable<String> c = Viewable.of(a, b, (x, y) -> x + y)
             var weakB = new WeakReference(b)
         expect :
             c.get() == "AB"
