@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SproutsFactory.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sprouts</a> &gt; <a href="index.source.html" class="el_package">sprouts.impl</a> &gt; <span class="el_source">SproutsFactory.java</span></div><h1>SproutsFactory.java</h1><pre class="source lang-java linenums">package sprouts.impl;
+
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+import sprouts.*;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.*;
+import java.util.regex.Pattern;
+import java.util.stream.StreamSupport;
+
+/**
+ *  Creates instances of the various property types in the Sprouts library.
+ *  This interface allows you to plug in your own implementations of the Sprouts properties
+ *  through the {@link Sprouts#setFactory(SproutsFactory)} method.
+ */
+public interface SproutsFactory
+{
+    &lt;T&gt; ValDelegate&lt;T&gt; delegateOf(
+        Val&lt;T&gt; source,
+        Channel channel,
+        SingleChange change,
+        @Nullable T newValue,
+        @Nullable T oldValue
+    );
+
+    &lt;T&gt; ValsDelegate&lt;T&gt; delegateOf(
+        Vals&lt;T&gt; source,
+        SequenceChange changeType,
+        int     index,
+        Vals&lt;T&gt; newValues,
+        Vals&lt;T&gt; oldValues
+    );
+
+    Event event();
+
+    Event eventOf( Event.Executor executor );
+
+    default &lt;T&gt; Maybe&lt;@Nullable T&gt; maybeOfNullable( Class&lt;T&gt; type, @Nullable T item ) {
+<span class="fc" id="L42">        return valOfNullable( type, item );</span>
+    }
+
+    default &lt;T&gt; Maybe&lt;@Nullable T&gt; maybeOfNull( Class&lt;T&gt; type ) {
+<span class="fc" id="L46">        return valOfNull( type );</span>
+    }
+
+    default &lt;T&gt; Maybe&lt;T&gt; maybeOf( T item ) {
+<span class="fc" id="L50">        return valOf( item );</span>
+    }
+
+    default &lt;T&gt; Maybe&lt;T&gt; maybeOf( Maybe&lt;T&gt; toBeCopied ) {
+<span class="nc" id="L54">        Objects.requireNonNull(toBeCopied);</span>
+<span class="nc" id="L55">        return valOf( toBeCopied.orElseThrowUnchecked() );</span>
+    }
+
+    default &lt;T extends @Nullable Object&gt; Maybe&lt;@Nullable T&gt; maybeOfNullable( Maybe&lt;T&gt; toBeCopied ) {
+<span class="nc" id="L59">        Objects.requireNonNull(toBeCopied);</span>
+<span class="nc" id="L60">        return valOfNullable( toBeCopied.type(), toBeCopied.orElseNull() );</span>
+    }
+
+    &lt;T&gt; Val&lt;@Nullable T&gt; valOfNullable( Class&lt;T&gt; type, @Nullable T item );
+
+    &lt;T&gt; Val&lt;@Nullable T&gt; valOfNull( Class&lt;T&gt; type );
+
+    &lt;T&gt; Val&lt;T&gt; valOf( T item );
+
+    &lt;T&gt; Val&lt;T&gt; valOf( Val&lt;T&gt; toBeCopied );
+
+    &lt;T extends @Nullable Object&gt; Val&lt;@Nullable T&gt; valOfNullable( Val&lt;T&gt; toBeCopied );
+
+    &lt;T extends @Nullable Object&gt; Viewable&lt;T&gt; viewOf( Val&lt;T&gt; source );
+
+    &lt;T extends @Nullable Object, U extends @Nullable Object&gt; Viewable&lt;@NonNull T&gt; viewOf(Val&lt;T&gt; first, Val&lt;U&gt; second, BiFunction&lt;T, U, @NonNull T&gt; combiner );
+
+    &lt;T extends @Nullable Object, U extends @Nullable Object&gt; Viewable&lt;@Nullable T&gt; viewOfNullable( Val&lt;T&gt; first, Val&lt;U&gt; second, BiFunction&lt;T, U, @Nullable T&gt; combiner );
+
+    &lt;T extends @Nullable Object, U extends @Nullable Object, R&gt; Viewable&lt;R&gt; viewOf(Class&lt;R&gt; type, Val&lt;T&gt; first, Val&lt;U&gt; second, BiFunction&lt;T,U,R&gt; combiner);
+
+    &lt;T extends @Nullable Object, U extends @Nullable Object, R&gt; Viewable&lt;@Nullable R&gt; viewOfNullable(Class&lt;R&gt; type, Val&lt;T&gt; first, Val&lt;U&gt; second, BiFunction&lt;T, U, @Nullable R&gt; combiner);
+
+    &lt;T extends @Nullable Object&gt; Viewables&lt;T&gt; viewOf( Vals&lt;T&gt; source );
+
+    &lt;T extends @Nullable Object, U&gt; Viewables&lt;U&gt; viewOf( U nullObject, U errorObject, Vals&lt;T&gt; source, Function&lt;T, @Nullable U&gt; mapper );
+
+    &lt;T extends @Nullable Object, U extends @Nullable Object&gt; Viewable&lt;T&gt; viewOf( Class&lt;T&gt; type, Val&lt;U&gt; source, Function&lt;U, T&gt; mapper );
+
+    &lt;T extends @Nullable Object, U extends @Nullable Object&gt; Viewable&lt;U&gt; viewOf( U nullObject, U errorObject, Val&lt;T&gt; source, Function&lt;T, @Nullable U&gt; mapper );
+
+    &lt;T extends @Nullable Object, U extends @Nullable Object&gt; Viewable&lt;@Nullable U&gt; viewOfNullable( Class&lt;U&gt; type, Val&lt;T&gt; source, Function&lt;T, @Nullable U&gt; mapper );
+
+    &lt;T extends @Nullable Object, B extends @Nullable Object&gt; Var&lt;B&gt; lensOf( Var&lt;T&gt; source, Lens&lt;T, B&gt; lens );
+
+    &lt;T extends @Nullable Object, B extends @Nullable Object&gt; Var&lt;B&gt; lensOf( Var&lt;T&gt; source, B nullObject, Lens&lt;T, B&gt; lens);
+
+    &lt;T extends @Nullable Object, B extends @Nullable Object&gt; Var&lt;B&gt; lensOfNullable( Class&lt;B&gt; type, Var&lt;T&gt; source, Lens&lt;T, B&gt; lens );
+
+    &lt;T&gt; Var&lt;@Nullable T&gt; varOfNullable( Class&lt;T&gt; type, @Nullable T item );
+
+    &lt;T&gt; Var&lt;@Nullable T&gt; varOfNull( Class&lt;T&gt; type );
+
+    &lt;T&gt; Var&lt;T&gt; varOf( T item );
+
+    &lt;T, V extends T&gt; Var&lt;T&gt; varOf( Class&lt;T&gt; type, V item );
+
+    &lt;T&gt; Vals&lt;T&gt; valsOf( Class&lt;T&gt; type );
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    &lt;T&gt; Vals&lt;T&gt; valsOf( Class&lt;T&gt; type, Val&lt;T&gt;... vars );
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    &lt;T&gt; Vals&lt;T&gt; valsOf( Val&lt;T&gt; first, Val&lt;T&gt;... rest );
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    &lt;T&gt; Vals&lt;T&gt; valsOf( T first, T... rest );
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    &lt;T&gt; Vals&lt;T&gt; valsOf( Class&lt;T&gt; type, T... items );
+
+    &lt;T&gt; Vals&lt;T&gt; valsOf( Class&lt;T&gt; type, Iterable&lt;Val&lt;T&gt;&gt; properties );
+
+    &lt;T&gt; Vals&lt;T&gt; valsOf( Class&lt;T&gt; type, Vals&lt;T&gt; vals );
+
+    &lt;T&gt; Vals&lt;@Nullable T&gt; valsOfNullable( Class&lt;T&gt; type );
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    &lt;T&gt; Vals&lt;@Nullable T&gt; valsOfNullable( Class&lt;T&gt; type, Val&lt;@Nullable T&gt;... vals );
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    &lt;T&gt; Vals&lt;@Nullable T&gt; valsOfNullable( Class&lt;T&gt; type, @Nullable T... items );
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    &lt;T&gt; Vals&lt;@Nullable T&gt; valsOfNullable( Val&lt;@Nullable T&gt; first, Val&lt;@Nullable T&gt;... rest );
+
+    &lt;T&gt; Vals&lt;@Nullable T&gt; valsOfNullable(Class&lt;T&gt; type, Vals&lt;@Nullable T&gt; vals);
+
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    &lt;T&gt; Vars&lt;T&gt; varsOf( Class&lt;T&gt; type, Var&lt;T&gt;... vars );
+
+    &lt;T&gt; Vars&lt;T&gt; varsOf( Class&lt;T&gt; type );
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    &lt;T&gt; Vars&lt;T&gt; varsOf( Var&lt;T&gt; first, Var&lt;T&gt;... rest );
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    &lt;T&gt; Vars&lt;T&gt; varsOf( T first, T... rest );
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    &lt;T&gt; Vars&lt;T&gt; varsOf( Class&lt;T&gt; type, T... items );
+
+    &lt;T&gt; Vars&lt;T&gt; varsOf( Class&lt;T&gt; type, Iterable&lt;Var&lt;T&gt;&gt; vars );
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    &lt;T&gt; Vars&lt;@Nullable T&gt; varsOfNullable( Class&lt;T&gt; type, Var&lt;@Nullable T&gt;... vars );
+
+    &lt;T&gt; Vars&lt;@Nullable T&gt; varsOfNullable( Class&lt;T&gt; type );
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    &lt;T&gt; Vars&lt;@Nullable T&gt; varsOfNullable( Class&lt;T&gt; type, @Nullable T... values );
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    &lt;T&gt; Vars&lt;@Nullable T&gt; varsOfNullable( Var&lt;@Nullable T&gt; first, Var&lt;@Nullable T&gt;... rest );
+
+    &lt;T&gt; Vars&lt;@Nullable T&gt; varsOfNullable(Class&lt;T&gt; type, Iterable&lt;Var&lt;@Nullable T&gt;&gt; vars);
+
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    &lt;T&gt; Tuple&lt;T&gt; tupleOf( Class&lt;T&gt; type, Maybe&lt;T&gt;... vars );
+
+    &lt;T&gt; Tuple&lt;T&gt; tupleOf( Class&lt;T&gt; type );
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    &lt;T&gt; Tuple&lt;T&gt; tupleOf( Maybe&lt;T&gt; first, Maybe&lt;T&gt;... rest );
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    &lt;T&gt; Tuple&lt;T&gt; tupleOf( T first, T... rest );
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    &lt;T&gt; Tuple&lt;T&gt; tupleOf( Class&lt;T&gt; type, T... items );
+
+    &lt;T&gt; Tuple&lt;T&gt; tupleOf( Class&lt;T&gt; type, Iterable&lt;T&gt; vars );
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    &lt;T&gt; Tuple&lt;@Nullable T&gt; tupleOfNullable( Class&lt;T&gt; type, Maybe&lt;@Nullable T&gt;... vars );
+
+    &lt;T&gt; Tuple&lt;@Nullable T&gt; tupleOfNullable( Class&lt;T&gt; type );
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    &lt;T&gt; Tuple&lt;@Nullable T&gt; tupleOfNullable( Class&lt;T&gt; type, @Nullable T... values );
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    &lt;T&gt; Tuple&lt;@Nullable T&gt; tupleOfNullable( Maybe&lt;@Nullable T&gt; first, Maybe&lt;@Nullable T&gt;... rest );
+
+    &lt;T&gt; Tuple&lt;@Nullable T&gt; tupleOfNullable( Class&lt;T&gt; type, Iterable&lt;@Nullable T&gt; iterable );
+
+    &lt;K, V&gt; Association&lt;K, V&gt; associationOf( Class&lt;K&gt; keyType, Class&lt;V&gt; valueType );
+
+    &lt;E&gt; ValueSet&lt;E&gt; valueSetOf( Class&lt;E&gt; type );
+
+    &lt;V&gt; Result&lt;V&gt; resultOf( Class&lt;V&gt; type );
+
+    &lt;V&gt; Result&lt;V&gt; resultOf( V value );
+
+    &lt;V&gt; Result&lt;V&gt; resultOf( Class&lt;V&gt; type, @Nullable V value );
+
+    &lt;V&gt; Result&lt;V&gt; resultOf( V value, Iterable&lt;Problem&gt; problems );
+
+    &lt;V&gt; Result&lt;V&gt; resultOf( Class&lt;V&gt; type, Iterable&lt;Problem&gt; problems );
+
+    &lt;V&gt; Result&lt;V&gt; resultOf( Class&lt;V&gt; type, @Nullable V value, Iterable&lt;Problem&gt; problems );
+
+    &lt;V&gt; Result&lt;V&gt; resultOf( Class&lt;V&gt; type, @Nullable V value, Problem problem );
+
+    &lt;V&gt; Result&lt;V&gt; resultOf( Class&lt;V&gt; type, Problem problem );
+
+    &lt;V&gt; Result&lt;List&lt;V&gt;&gt; resultOfList( Class&lt;V&gt; type, Problem problem );
+
+    &lt;V&gt; Result&lt;List&lt;V&gt;&gt; resultOfList( Class&lt;V&gt; type, List&lt;V&gt; list );
+
+    &lt;V&gt; Result&lt;List&lt;V&gt;&gt; resultOfList( Class&lt;V&gt; type, List&lt;V&gt; list, Iterable&lt;Problem&gt; problems );
+
+    &lt;V&gt; Result&lt;V&gt; resultOfTry( Class&lt;V&gt; type, ResultItemSupplier&lt;V&gt; supplier );
+
+    &lt;O,D&gt; WeakAction&lt;O,D&gt; actionOfWeak(O owner, BiConsumer&lt;O, D&gt; action );
+
+    &lt;O&gt; WeakObserver&lt;O&gt; observerOfWeak( O owner, Consumer&lt;O&gt; action );
+
+    /**
+     *   The default id for properties which do not have an id explicitly specified.
+     *   The id of a property is used to identify it in the system or as part of a view model
+     *   and convert it into other data formats like key/value based data stores.
+     *
+     *  @return The default id for properties which do not have an id explicitly specified.
+     *          This must never return {@code null} and it is recommended to be a constant
+     *          or cached object due to this method being called frequently.
+     */
+    String defaultId();
+
+    /**
+     *  The regex {@link Pattern} used to validate property ids.
+     *  All ids must match this pattern.
+     *
+     *  @return The regex {@link Pattern} used to validate property ids.
+     *          This must never return {@code null} and it is recommended to be a constant
+     *          or cached object due to this method being called frequently.
+     */
+    Pattern idPattern();
+
+    /**
+     *  The default channel used for change events.
+     *  This channel is used to give events a chanel when no channel is explicitly specified.
+     *
+     * @return The default channel used for change events.
+     *            This must never return {@code null} and it is recommended to be a constant
+     *            or cached object due to this method being called frequently.
+     */
+    Channel defaultChannel();
+
+    /**
+     *  The default channel used for {@link Observable} events,
+     *  registered through the {@link Observable#subscribe(Observer)} method.
+     *
+     * @return The default channel used for change events.
+     *            This must never return {@code null} and it is recommended to be a constant
+     *            or cached object due to this method being called frequently.
+     */
+    Channel defaultObservableChannel();
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

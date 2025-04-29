@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Pair.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sprouts</a> &gt; <a href="index.source.html" class="el_package">sprouts</a> &gt; <span class="el_source">Pair.java</span></div><h1>Pair.java</h1><pre class="source lang-java linenums">package sprouts;
+
+import org.jspecify.annotations.Nullable;
+
+import java.util.Map;
+import java.util.Objects;
+
+/**
+ *  An immutable value object representing a pair
+ *  of two generic values. Two pairs are considered
+ *  equal if their first and second values are equal.
+ *  &lt;br&gt;
+ *  Use the {@link #of(Object, Object)} factory method
+ *  to create a new pair with the given values, and
+ *  then use the {@link #first()} and {@link #second()}
+ *  methods to access the values.
+ *
+ * @param &lt;F&gt; The type of the first value.
+ * @param &lt;S&gt; The type of the second value.
+ */
+public final class Pair&lt;F extends @Nullable Object,S extends @Nullable Object&gt; {
+
+    /**
+     *  An alternative to {@code Pair.class} which also includes the parameter
+     *  types in the type signature of the returned pair class.
+     *  This is useful when you want to use pair as items in collection
+     *  types or properties...
+     *
+     * @param firstType The first item type {@code F} in the returned {@code Class&lt;Pair&lt;F, S&gt;&gt;}.
+     * @param secondType The second item type {@code S} in the returned {@code Class&lt;Pair&lt;F, S&gt;&gt;}.
+     * @return The {@code Pair.class} but with both parameter types included as {@code Class&lt;Pair&lt;F, S&gt;&gt;}.
+     * @param &lt;F&gt; The type of first item in the pair class parameter signature.
+     * @param &lt;S&gt; The type of second item in the pair class parameter signature.
+     * @throws NullPointerException If any of the supplied type parameters is null.
+     */
+    @SuppressWarnings(&quot;unchecked&quot;)
+    public static &lt;F, S&gt; Class&lt;Pair&lt;F, S&gt;&gt; classTyped(Class&lt;F&gt; firstType, Class&lt;S&gt; secondType) {
+<span class="fc" id="L38">        Objects.requireNonNull(firstType);</span>
+<span class="fc" id="L39">        Objects.requireNonNull(secondType);</span>
+<span class="fc" id="L40">        return (Class) Pair.class;</span>
+    }
+
+    /**
+     *  A factory method for creating a new pair with the given values.
+     *
+     * @param first The first value of the pair.
+     * @param second The second value of the pair.
+     * @param &lt;F&gt; The type of the first value.
+     * @param &lt;S&gt; The type of the second value.
+     * @return A new pair with the given values.
+     */
+    public static &lt;F extends @Nullable Object,S extends @Nullable Object&gt; Pair&lt;F,S&gt; of( F first, S second ) {
+<span class="fc" id="L53">        return new Pair&lt;&gt;(first, second);</span>
+    }
+
+    /**
+     *  A factory method for creating a new pair from a {@link Map.Entry}.
+     *  This is especially useful when you want to convert between {@link Map#entrySet()}
+     *  and the {@link Association} type, which also is a collection of pairs.
+     *
+     * @param entry The map entry to create a pair from.
+     * @param &lt;F&gt; The type of the first value.
+     * @param &lt;S&gt; The type of the second value.
+     * @return A new pair with the key and value of the given map entry.
+     */
+    public static &lt;F extends @Nullable Object,S extends @Nullable Object&gt; Pair&lt;F,S&gt; of( Map.Entry&lt;F,S&gt; entry ) {
+<span class="fc" id="L67">        return new Pair&lt;&gt;(entry.getKey(), entry.getValue());</span>
+    }
+
+    private final F _first;
+    private final S _second;
+
+
+<span class="fc" id="L74">    private Pair( F first, S second ) {</span>
+<span class="fc" id="L75">        _first = first;</span>
+<span class="fc" id="L76">        _second = second;</span>
+<span class="fc" id="L77">    }</span>
+
+    /**
+     *  Returns the first value of this pair, which corresponds
+     *  to the first parameter of the {@link #of(Object, Object)}
+     *  factory method that created this pair.
+     *
+     * @return The first value of this pair.
+     */
+    public F first() {
+<span class="fc" id="L87">        return _first;</span>
+    }
+
+    /**
+     *  Returns the second value of this pair, which corresponds
+     *  to the second parameter of the {@link #of(Object, Object)}
+     *  factory method that created this pair.
+     *
+     * @return The second value of this pair.
+     */
+    public S second() {
+<span class="fc" id="L98">        return _second;</span>
+    }
+
+    @Override
+    public String toString() {
+<span class="nc" id="L103">        return &quot;Pair[first=&quot; + _first + &quot;, second=&quot; + _second + &quot;]&quot;;</span>
+    }
+
+    @Override
+    public boolean equals( Object obj ) {
+<span class="pc bpc" id="L108" title="1 of 2 branches missed.">        if ( this == obj )</span>
+<span class="nc" id="L109">            return true;</span>
+<span class="pc bpc" id="L110" title="2 of 4 branches missed.">        if ( obj == null || getClass() != obj.getClass() )</span>
+<span class="nc" id="L111">            return false;</span>
+<span class="fc" id="L112">        Pair&lt;?, ?&gt; pair = (Pair&lt;?, ?&gt;) obj;</span>
+<span class="pc bpc" id="L113" title="1 of 4 branches missed.">        return Objects.equals(_first, pair._first) &amp;&amp; Objects.equals(_second, pair._second);</span>
+    }
+
+    @Override
+    public int hashCode() {
+<span class="fc" id="L118">        return Objects.hash(_first, _second);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

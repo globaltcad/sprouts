@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ChangeListeners.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sprouts</a> &gt; <a href="index.source.html" class="el_package">sprouts.impl</a> &gt; <span class="el_source">ChangeListeners.java</span></div><h1>ChangeListeners.java</h1><pre class="source lang-java linenums">package sprouts.impl;
+
+import org.slf4j.Logger;
+import sprouts.Action;
+import sprouts.Subscriber;
+import sprouts.Tuple;
+import sprouts.WeakAction;
+
+import java.lang.ref.WeakReference;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
+
+final class ChangeListeners&lt;D&gt; {
+
+<span class="fc" id="L18">    private static final Logger log = org.slf4j.LoggerFactory.getLogger(ChangeListeners.class);</span>
+
+<span class="fc" id="L20">    private final AtomicReference&lt;Tuple&lt;Action&lt;D&gt;&gt;&gt; _actions = new AtomicReference(Tuple.of(Action.class));</span>
+
+
+<span class="fc" id="L23">    ChangeListeners() {}</span>
+
+<span class="fc" id="L25">    ChangeListeners(ChangeListeners&lt;D&gt; other) {</span>
+<span class="fc" id="L26">        _setState(other._getState());</span>
+<span class="fc" id="L27">    }</span>
+
+    private void _setState(Tuple&lt;Action&lt;D&gt;&gt; actions) {
+<span class="fc" id="L30">        _actions.set(actions);</span>
+<span class="fc" id="L31">    }</span>
+
+    @SuppressWarnings(&quot;NullAway&quot;)
+    private Tuple&lt;Action&lt;D&gt;&gt; _getState() {
+<span class="fc" id="L35">        return _actions.get();</span>
+    }
+
+    void add(Action&lt;D&gt; action) {
+<span class="fc" id="L39">        updateActions(actions -&gt; {</span>
+<span class="fc bfc" id="L40" title="All 2 branches covered.">            if (action instanceof WeakAction) {</span>
+<span class="fc" id="L41">                WeakAction&lt;?, ?&gt; wa = (WeakAction&lt;?, ?&gt;) action;</span>
+<span class="fc" id="L42">                return wa.owner().map(owner -&gt; {</span>
+<span class="fc" id="L43">                            WeakReference&lt;ChangeListeners&lt;?&gt;&gt; weakThis = new WeakReference&lt;&gt;(this);</span>
+<span class="fc" id="L44">                            AutomaticUnSubscriber cleaner = new AutomaticUnSubscriber(weakThis, wa);</span>
+<span class="fc" id="L45">                            ChangeListenerCleaner.getInstance().register(owner, cleaner);</span>
+<span class="fc" id="L46">                            return actions.add(action);</span>
+                        })
+<span class="fc" id="L48">                        .orElse(actions);</span>
+            } else
+<span class="fc" id="L50">                return actions.add(action);</span>
+        });
+<span class="fc" id="L52">    }</span>
+
+    void unsubscribe(Subscriber subscriber) {
+<span class="fc" id="L55">        updateActions(actions -&gt; actions.removeIf( a -&gt; {</span>
+<span class="fc bfc" id="L56" title="All 2 branches covered.">            if ( a instanceof ObserverAsActionImpl) {</span>
+<span class="fc" id="L57">                ObserverAsActionImpl&lt;?&gt; pcl = (ObserverAsActionImpl&lt;?&gt;) a;</span>
+<span class="pc bpc" id="L58" title="1 of 2 branches missed.">                return pcl.listener() == subscriber;</span>
+<span class="pc bpc" id="L59" title="1 of 2 branches missed.">            } else if ( a instanceof WeakObserverAsActionImpl ) {</span>
+<span class="nc" id="L60">                WeakObserverAsActionImpl&lt;?, ?&gt; pcl = (WeakObserverAsActionImpl&lt;?, ?&gt;) a;</span>
+<span class="nc bnc" id="L61" title="All 2 branches missed.">                return pcl.listener() == subscriber;</span>
+            } else
+<span class="fc" id="L63">                return Objects.equals(a, subscriber);</span>
+        }));
+<span class="fc" id="L65">    }</span>
+
+    void unsubscribeAll() {
+<span class="nc" id="L68">        _setState((Tuple) Tuple.of(Action.class));</span>
+<span class="nc" id="L69">    }</span>
+
+    long getActions(Consumer&lt;Tuple&lt;Action&lt;D&gt;&gt;&gt; receiver) {
+<span class="fc" id="L72">        Tuple&lt;Action&lt;D&gt;&gt; actions = _getState();</span>
+<span class="fc bfc" id="L73" title="All 2 branches covered.">        if ( !actions.isEmpty() )</span>
+<span class="fc" id="L74">            receiver.accept(actions);</span>
+<span class="fc" id="L75">        return actions.size();</span>
+    }
+
+    void updateActions(Function&lt;Tuple&lt;Action&lt;D&gt;&gt;, Tuple&lt;Action&lt;D&gt;&gt;&gt; receiver) {
+<span class="fc" id="L79">        Tuple&lt;Action&lt;D&gt;&gt; actions = _getState();</span>
+<span class="fc" id="L80">        actions = receiver.apply(actions);</span>
+<span class="fc" id="L81">        _setState(actions);</span>
+<span class="fc" id="L82">    }</span>
+
+    long numberOfChangeListeners() {
+<span class="fc" id="L85">        return getActions(actions -&gt; {});</span>
+    }
+
+    void fireChange( Supplier&lt;D&gt; delegateSupplier ) {
+<span class="fc" id="L89">        getActions(actions -&gt; {</span>
+<span class="fc" id="L90">            D delegate = delegateSupplier.get();</span>
+<span class="fc bfc" id="L91" title="All 2 branches covered.">            for (Action&lt;D&gt; action : actions) // We copy the list to avoid concurrent modification</span>
+                try {
+<span class="fc" id="L93">                    action.accept(delegate);</span>
+<span class="nc" id="L94">                } catch (Exception e) {</span>
+<span class="nc" id="L95">                    log.error(</span>
+                        &quot;An error occurred while executing &quot; +
+                        &quot;action '&quot; + action + &quot;' for delegate '&quot; + delegate + &quot;'&quot;,
+                        e
+                    );
+<span class="fc" id="L100">                }</span>
+<span class="fc" id="L101">        });</span>
+<span class="fc" id="L102">    }</span>
+
+    @Override
+    public final String toString() {
+<span class="nc" id="L106">        StringBuilder sb = new StringBuilder();</span>
+<span class="nc" id="L107">        sb.append(this.getClass().getSimpleName()).append(&quot;[&quot;);</span>
+<span class="nc bnc" id="L108" title="All 2 branches missed.">        for (Action&lt;D&gt; action : _getState()) {</span>
+            try {
+<span class="nc" id="L110">                sb.append(action).append(&quot;, &quot;);</span>
+<span class="nc" id="L111">            } catch (Exception e) {</span>
+<span class="nc" id="L112">                log.error(&quot;An error occurred while trying to get the string representation of the action '{}'&quot;, action, e);</span>
+<span class="nc" id="L113">            }</span>
+<span class="nc" id="L114">        }</span>
+<span class="nc" id="L115">        sb.append(&quot;]&quot;);</span>
+<span class="nc" id="L116">        return sb.toString();</span>
+    }
+
+    private static final class AutomaticUnSubscriber implements Runnable {
+        private final WeakReference&lt;ChangeListeners&lt;?&gt;&gt; weakThis;
+        private final WeakAction&lt;?, ?&gt; wa;
+
+<span class="fc" id="L123">        private AutomaticUnSubscriber(WeakReference&lt;ChangeListeners&lt;?&gt;&gt; weakThis, WeakAction&lt;?, ?&gt; wa) {</span>
+<span class="fc" id="L124">            this.weakThis = weakThis;</span>
+<span class="fc" id="L125">            this.wa = wa;</span>
+<span class="fc" id="L126">        }</span>
+
+        @Override
+        public void run() {
+<span class="fc" id="L130">            ChangeListeners&lt;?&gt; strongThis = weakThis.get();</span>
+<span class="fc bfc" id="L131" title="All 2 branches covered.">            if (strongThis == null)</span>
+<span class="fc" id="L132">                return;</span>
+
+<span class="fc" id="L134">            strongThis.updateActions(innerActions -&gt; {</span>
+                try {
+<span class="fc" id="L136">                    wa.clear();</span>
+<span class="nc" id="L137">                } catch (Exception e) {</span>
+<span class="nc" id="L138">                    log.error(</span>
+                        &quot;An error occurred while clearing the weak action '{}' during the process of &quot; +
+                        &quot;removing it from the list of change actions.&quot;, wa, e
+                    );
+<span class="fc" id="L142">                }</span>
+<span class="fc" id="L143">                return innerActions.remove((Action) wa);</span>
+            });
+<span class="fc" id="L145">        }</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>
