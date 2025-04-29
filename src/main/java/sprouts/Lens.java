@@ -99,7 +99,7 @@ public interface Lens<A extends @Nullable Object, B extends @Nullable Object> {
      *     </li>
      * </ul>
      *
-     * <h2>Example Usage:</h2>
+     * <b>Example Usage:</b>
      * <pre>{@code
      * record Person(String name, int age) {
      *     public Person withAge(int newAge) {
