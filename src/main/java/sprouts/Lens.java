@@ -99,7 +99,7 @@ public interface Lens<A extends @Nullable Object, B extends @Nullable Object> {
      *     </li>
      * </ul>
      *
-     * <h2>Example Usage:</h2>
+     * <b>Example Usage:</b>
      * <pre>{@code
      * record Person(String name, int age) {
      *     public Person withAge(int newAge) {
@@ -124,6 +124,18 @@ public interface Lens<A extends @Nullable Object, B extends @Nullable Object> {
      * // Set all ages to 40
      * Tuple<Person> updatedPeople = bulkAgeLens.wither(people,
      *     Tuple.of(40, 40, 40));
+     * }</pre>
+     * You may then use such a lens to zoom into a tuple-based property
+     * to get a tuple-based lens property:
+     * <pre>{@code
+     * Var<Tuple<Person>> people = getPeople();
+     * Var<Tuple<Integer> ages =
+     *                    people.zoomTo(
+     *                        Lens.across(
+     *                           Integer.class,
+     *                           Person::age,
+     *                           Person::withAge
+     *                        ));
      * }</pre>
      *
      * @param type The class object for type {@code B}, used for tuple type safety

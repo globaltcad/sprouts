@@ -4,7 +4,7 @@
   "narrative":"The `Lens` interface defines an access and update operation on an individual\n    part of a nested and immutable data structure.\n    A lens can also be composed with other lenses to focus\n    on more deeply nested parts.\n    This design concept is part of the functional\n    programming paradigm, and it emulates\n    mutable properties (getter and setter) in an immutable world\n    using a *getter* and more importantly a *wither* methods\n    (a function that returns a new structure with target field being updated).\n\n    In this specification we demonstrate how to implement and use\n    your own lenses through the `Lens` interface and then\n    we show how these lenses can be composed to focus on deeply nested parts.\n\n    We use the following data structures to demonstrate the concept:\n    ```\n    enum Genre { FICTION, NON_FICTION, SCIENCE, FANTASY, BIOGRAPHY, HISTORY }\n\n    enum MembershipLevel { BASIC, SILVER, GOLD, PLATINUM }\n\n    static record Author(String firstName, String lastName, LocalDate birthDate, List<String> books) {\n        public Author withFirstName(String firstName) {\n            return new Author(firstName, this.lastName, this.birthDate, this.books);\n        }\n\n        public Author withLastName(String lastName) {\n            return new Author(this.firstName, lastName, this.birthDate, this.books);\n        }\n\n        public Author withBirthDate(LocalDate birthDate) {\n            return new Author(this.firstName, this.lastName, birthDate, this.books);\n        }\n\n        public Author withBooks(List<String> books) {\n            return new Author(this.firstName, this.lastName, this.birthDate, books);\n        }\n    }\n\n    public static record Book(String title, Author author, Genre genre, LocalDate publicationDate, int pageCount) {\n        public Book withTitle(String title) {\n            return new Book(title, this.author, this.genre, this.publicationDate, this.pageCount);\n        }\n\n        public Book withAuthor(Author author) {\n            return new Book(this.title, author, this.genre, this.publicationDate, this.pageCount);\n        }\n\n        public Book withGenre(Genre genre) {\n            return new Book(this.title, this.author, genre, this.publicationDate, this.pageCount);\n        }\n\n        public Book withPublicationDate(LocalDate publicationDate) {\n            return new Book(this.title, this.author, this.genre, publicationDate, this.pageCount);\n        }\n\n        public Book withPageCount(int pageCount) {\n            return new Book(this.title, this.author, this.genre, this.publicationDate, pageCount);\n        }\n    }\n\n    public static record Member(String memberId, String firstName, String lastName, MembershipLevel membershipLevel, LocalDate joinDate, String email) {\n        public Member withMemberId(String memberId) {\n            return new Member(memberId, this.firstName, this.lastName, this.membershipLevel, this.joinDate, this.email);\n        }\n\n        public Member withFirstName(String firstName) {\n            return new Member(this.memberId, firstName, this.lastName, this.membershipLevel, this.joinDate, this.email);\n        }\n\n        public Member withLastName(String lastName) {\n            return new Member(this.memberId, this.firstName, lastName, this.membershipLevel, this.joinDate, this.email);\n        }\n\n        public Member withMembershipLevel(MembershipLevel membershipLevel) {\n            return new Member(this.memberId, this.firstName, this.lastName, membershipLevel, this.joinDate, this.email);\n        }\n\n        public Member withJoinDate(LocalDate joinDate) {\n            return new Member(this.memberId, this.firstName, this.lastName, this.membershipLevel, joinDate, this.email);\n        }\n\n        public Member withEmail(String email) {\n            return new Member(this.memberId, this.firstName, this.lastName, this.membershipLevel, this.joinDate, email);\n        }\n    }\n\n    public static record Loan(String loanId, Book book, Member member, LocalDate loanDate, LocalDate returnDate, boolean returned) {\n        public Loan withLoanId(String loanId) {\n            return new Loan(loanId, this.book, this.member, this.loanDate, this.returnDate, this.returned);\n        }\n\n        public Loan withBook(Book book) {\n            return new Loan(this.loanId, book, this.member, this.loanDate, this.returnDate, this.returned);\n        }\n\n        public Loan withMember(Member member) {\n            return new Loan(this.loanId, this.book, member, this.loanDate, this.returnDate, this.returned);\n        }\n\n        public Loan withLoanDate(LocalDate loanDate) {\n            return new Loan(this.loanId, this.book, this.member, loanDate, this.returnDate, this.returned);\n        }\n\n        public Loan withReturnDate(LocalDate returnDate) {\n            return new Loan(this.loanId, this.book, this.member, this.loanDate, returnDate, this.returned);\n        }\n\n        public Loan withReturned(boolean returned) {\n            return new Loan(this.loanId, this.book, this.member, this.loanDate, this.returnDate, returned);\n        }\n    }\n    ```",
   "subjects":["sprouts.Lens"],
   "statistics":{
-    "runs":"2",
+    "runs":"5",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -59,6 +59,81 @@
         {"kind":"then","text":"The updated record is different from the original record.","code":["newLoan != loan"]},
 
         {"kind":"and","text":"The updated record has the correct deeply nested part updated.","code":["newLoan.book.author.firstName == \"Raffaela\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Lens.across allows bulk transformation of tuples of homogeneous data",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"a tuple of authors with various first names","code":["var alice = new Author(\"Alice\", \"Archer\", LocalDate.of(1990, 1, 1), [\"The Void\"])","var bob = new Author(\"Bob\", \"Builder\", LocalDate.of(1985, 2, 2), [\"Construction 101\"])","var authors = Tuple.of(alice, bob)"]},
+
+        {"kind":"and","text":"a lens focusing on first names across the entire tuple","code":["var firstNameLens = Lens.across(","    String.class,","    Author::firstName,","    Author::withFirstName",")"]},
+
+        {"kind":"when","text":"extracting first names using the lens","code":["var extractedNames = firstNameLens.getter(authors)"]},
+
+        {"kind":"then","text":"the names are captured in a type-correct tuple","code":["extractedNames == Tuple.of(\"Alice\", \"Bob\")","extractedNames.type() == String.class"]},
+
+        {"kind":"when","text":"performing a bulk update with matching tuple size","code":["var updatedAuthors = firstNameLens.wither(authors, Tuple.of(\"Ada\", \"Blake\"))"]},
+
+        {"kind":"then","text":"new tuple contains authors with updated names","code":["updatedAuthors.get(0).firstName == \"Ada\"","updatedAuthors.get(1).firstName == \"Blake\""]},
+
+        {"kind":"and","text":"original tuple remains unchanged","code":["authors.get(0).firstName == \"Alice\"","authors.get(1).firstName == \"Bob\""]},
+
+        {"kind":"when","text":"attempting update with mismatched tuple size","code":["firstNameLens.wither(authors, Tuple.of(\"Xavier\"))"]},
+
+        {"kind":"then","text":"operation fails with descriptive exception","code":["thrown(IllegalArgumentException)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Lens.across handles edge cases with empty and single-element tuples",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"an empty author tuple","code":["var emptyAuthors = Tuple.of(Author.class)"]},
+
+        {"kind":"and","text":"single-element author tuple","code":["var soloAuthor = Tuple.of(new Author(\"Solo\", \"Artist\", LocalDate.now(), []))"]},
+
+        {"kind":"and","text":"lens configured for first name operations","code":["var nameLens = Lens.across(","    String.class,","    Author::firstName,","    Author::withFirstName",")"]},
+
+        {"kind":"when","text":"operating on empty tuple","code":["var emptyNames = nameLens.getter(emptyAuthors)","var updatedEmpty = nameLens.wither(emptyAuthors, Tuple.of(String.class))"]},
+
+        {"kind":"then","text":"getter returns empty typed tuple","code":["emptyNames.isEmpty()","emptyNames.type() == String.class"]},
+
+        {"kind":"and","text":"wither preserves empty structure","code":["updatedEmpty.isEmpty()","updatedEmpty.type() == Author.class"]},
+
+        {"kind":"when","text":"operating on single-element tuple","code":["var singleName = nameLens.getter(soloAuthor)","var updatedSolo = nameLens.wither(soloAuthor, Tuple.of(\"Updated\"))"]},
+
+        {"kind":"then","text":"bulk operations work atomically","code":["singleName == Tuple.of(\"Solo\")","updatedSolo.get(0).firstName == \"Updated\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Lens.across maintains element order during bulk operations",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"tuple with ordered elements","code":["var authors = Tuple.of(","    new Author(\"First\", \"1\", LocalDate.now(), []),","    new Author(\"Second\", \"2\", LocalDate.now(), []),","    new Author(\"Third\", \"3\", LocalDate.now(), [])",")"]},
+
+        {"kind":"and","text":"positionally aware lens","code":["var lens = Lens.across(String.class, Author::lastName, Author::withLastName)"]},
+
+        {"kind":"when","text":"performing staggered updates","code":["var updated = lens.wither(authors, Tuple.of(\"A\", \"B\", \"C\"))"]},
+
+        {"kind":"then","text":"new values appear in original positions","code":["updated.get(0).lastName == \"A\"","updated.get(1).lastName == \"B\"","updated.get(2).lastName == \"C\""]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }

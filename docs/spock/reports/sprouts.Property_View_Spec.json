@@ -4,7 +4,7 @@
   "narrative":"Properties are designed to be observable, which means that you can \"react\"\n    to their items being replaced by new items. This sort of \"reaction\"\n    to changes is typically done through the \"observer pattern\", where you\n    register change listeners on a property that are invoked whenever the\n    property item changes...\n\n    Contrary to what you might might expect, you cannot register change listeners\n    on properties directly!\n    This is to prevent you from creating memory leaks, which happen very often\n    due to change listeners not being unregistered when they are no longer needed.\n    To fix this, Sprouts provides the concept of a \"property view\" in\n    the form of instances of the `Viewable` type,\n    which is a weakly referenced live property onto which you can safely register\n    your change listeners.\n    And when you no longer use the view (by holding a reference to it),\n    it will be garbage collected along with all of the change listeners\n    that were registered on it.\n\n    But if you keep a reference to the view and a change occurs on the source property,\n    then the view will be updated and all of the change listeners will be notified\n    of the change.",
   "subjects":["sprouts.Viewable","sprouts.Var","sprouts.Val","sprouts.Vars","sprouts.Vals"],
   "statistics":{
-    "runs":"25",
+    "runs":"27",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -598,6 +598,46 @@
         {"kind":"and","text":"We change the source property again.","code":["property.set(44)"]},
 
         {"kind":"then","text":"The side effect is not executed anymore.","code":["trace == [\"!\"]"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"This is how not to use views.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"when","text":"","code":["var property = Var.of(\"www.dominionmovement.com/watch\")","var view = property.view( s -> null )"]},
+
+        {"kind":"then","text":"","code":["thrown(IllegalArgumentException)"]},
+
+        {"kind":"when","text":"","code":["var property3 = Var.of(\"www.landofhopeandglory.org\").view().withId(\"Not a valid id\")"]},
+
+        {"kind":"then","text":"","code":["thrown(IllegalArgumentException)"]},
+
+        {"kind":"when","text":"","code":["var property2 = Var.of(\"www.nationearth.com\")","var view2 = property2.viewAs(DayOfWeek, s -> \"WRONG TYPE\" )"]},
+
+        {"kind":"then","text":"","code":["thrown(IllegalArgumentException)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A composite view has an id that is the concatenation of the ids of its source properties.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A composite view takes two properties and creates a new view\n            that combines the two properties in some way. When it comes\n            to the id of the composite view, it is the concatenation of\n            the ids of the two source properties.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two simple properties with unique ids...","code":["var property1 = Var.of(42).withId(\"property1\")","var property2 = Var.of(11).withId(\"property2\")"]},
+
+        {"kind":"when","text":"We create a composite view of the two properties...","code":["var view = Viewable.of(property1, property2, (a, b) -> a + b)"]},
+
+        {"kind":"then","text":"The view has the expected id.","code":["view.id() == \"property1_and_property2\""]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }

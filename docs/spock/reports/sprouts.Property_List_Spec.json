@@ -4,7 +4,7 @@
   "narrative":"Just like properties you can create lists of properties\n    and then bind them to UI components.\n    They are a powerful tool to model the state\n    as well as business logic of your UI without actually depending on it.\n    This is especially useful for testing your UIs logic.\n    This specification shows how to use the various\n    methods exposed by the property lists classes,\n    namely \"Vals\" (immutable) and \"Vars\" (mutable).",
   "subjects":["sprouts.Vals","sprouts.Vars"],
   "statistics":{
-    "runs":"105",
+    "runs":"108",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -2670,6 +2670,77 @@
         {"kind":"when","text":"We try to remove a property which is not in the list but has an item that is in the list...","code":["properties.remove(Var.of(1))"]},
 
         {"kind":"then","text":"The list remains unchanged.","code":["properties.toList() == [1, 7, 4, 6, 8, 3, 3, 9, 6, 1, 5, 5]"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You can add a `Stream` of items all at once to a property list.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `addAll(Stream)` method is designed to add all items from a stream to the property list\n            in one go. You don't have to iterate over the stream and add each item individually.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A property list with some properties.","code":["var properties = Vars.of(1, 2, 3, 4, 5)"]},
+
+        {"kind":"when","text":"We add a stream of items to the list.","code":["properties.addAll(Stream.of(6, 7, 8, 9, 10))"]},
+
+        {"kind":"then","text":"All items from the stream are added to the list.","code":["properties.toList() == [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You can add a `Stream` of items all at once at a particular index in a property list.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `addAllAt(int, Stream)` method is designed to add all items from a stream to the property list\n            at a particular index in one go. You don't have to iterate over the stream and add each item individually.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A property list with some properties.","code":["var properties = Vars.of(1, 2, 3, 7, 8, 9)"]},
+
+        {"kind":"when","text":"We add a stream of items to the list at a particular index.","code":["properties.addAllAt(3, Stream.of(4, 5, 6))"]},
+
+        {"kind":"then","text":"All items from the stream are added to the list at the particular index.","code":["properties.toList() == [1, 2, 3, 4, 5, 6, 7, 8, 9]"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"How not to use a property list.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            This test demonstrates how certain usage patterns lead to exceptions.\n            Make sure to avoid these patterns in your code.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A property list with some properties.","code":["var properties = Vars.of(1, 2, 3, 4, 5, 6, 7)"]},
+
+        {"kind":"when","text":"","code":["properties.popRange(-2, 2)"]},
+
+        {"kind":"then","text":"","code":["thrown(IndexOutOfBoundsException)"]},
+
+        {"kind":"when","text":"","code":["properties.popRange(2, 8)"]},
+
+        {"kind":"then","text":"","code":["thrown(IndexOutOfBoundsException)"]},
+
+        {"kind":"when","text":"","code":["properties.setAt(-1, 4)"]},
+
+        {"kind":"then","text":"","code":["thrown(IndexOutOfBoundsException)"]},
+
+        {"kind":"when","text":"","code":["properties.setAt(7, 4)"]},
+
+        {"kind":"then","text":"","code":["thrown(IndexOutOfBoundsException)"]},
+
+        {"kind":"when","text":"","code":["properties.addAt(-1, 4)"]},
+
+        {"kind":"then","text":"","code":["thrown(IndexOutOfBoundsException)"]},
+
+        {"kind":"when","text":"","code":["properties.addAt(8, 4)"]},
+
+        {"kind":"then","text":"","code":["thrown(IndexOutOfBoundsException)"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }

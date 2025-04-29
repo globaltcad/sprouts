@@ -4,7 +4,7 @@
   "narrative":"A property list is more than just a wrapper around values.\n    This interface has a rich API that exposes a plethora of methods,\n    many of which are designed to inform you about\n    their contents without actually exposing them to you.\n\n    For these facts about any property list, we can create views.\n    These views are observable live properties that are updated\n    whenever the source property list changes.",
   "subjects":["sprouts.Viewables","sprouts.Vars","sprouts.Vals"],
   "statistics":{
-    "runs":"8",
+    "runs":"9",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -271,6 +271,23 @@
         {"kind":"when","text":"We revert the source property list.","code":["documentaries.reversed()"]},
 
         {"kind":"then","text":"The view is also reverted.","code":["lengths.toList() == [10.0, 10.0, 4.4, 8.0]"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A property list view has a `toString()` method that returns a insightful string representation of the view.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `toString()` method of a property list view\n            will return a string representation of the view which\n            shows the contents of the view.\n            This is useful for debugging and logging purposes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A property list of 3 days of the week.","code":["Vars<DayOfWeek> days = Vars.of(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY, DayOfWeek.FRIDAY)"]},
+
+        {"kind":"and","text":"A view on the names of the days of the week.","code":["Viewables<String> names = days.view(\"null\", \"error\", DayOfWeek::name)"]},
+
+        {"kind":"expect","text":"The view has a string representation.","code":["names.toString() == \"Views<String>[MONDAY, WEDNESDAY, FRIDAY]\""]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }

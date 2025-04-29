@@ -19,7 +19,7 @@ import java.util.stream.StreamSupport;
  *  value object semantics and is immutable. <br>
  *  This means that you cannot modify the contents of a value set after it
  *  has been created, but you can create a new value set with the desired
- *  changes using methods like {@link #add(E)} or {@link #remove(E)},
+ *  changes using methods like {@code ValueSet::add(E)} or {@code ValueSet::remove(E)},
  *  which will return a new value set with the changes applied.
  *  <br><br>
  *  <p><b>

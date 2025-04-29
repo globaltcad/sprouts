@@ -320,8 +320,8 @@ final class PropertyView&lt;T extends @Nullable Object&gt; implements Var&lt;T&g
 
 	private static String _compositeIdFrom(Val&lt;?&gt; first, Val&lt;?&gt; second) {
 <span class="fc" id="L322">		String id = &quot;&quot;;</span>
-<span class="pc bpc" id="L323" title="3 of 4 branches missed.">		if ( !first.id().isEmpty() &amp;&amp; !second.id().isEmpty() )</span>
-<span class="nc" id="L324">			id = first.id() + &quot;_and_&quot; + second.id();</span>
+<span class="pc bpc" id="L323" title="1 of 4 branches missed.">		if ( !first.id().isEmpty() &amp;&amp; !second.id().isEmpty() )</span>
+<span class="fc" id="L324">			id = first.id() + &quot;_and_&quot; + second.id();</span>
 <span class="pc bpc" id="L325" title="1 of 2 branches missed.">		else if ( !first.id().isEmpty() )</span>
 <span class="nc" id="L326">			id = first.id();</span>
 <span class="pc bpc" id="L327" title="1 of 2 branches missed.">		else if ( !second.id().isEmpty() )</span>
@@ -361,19 +361,19 @@ final class PropertyView&lt;T extends @Nullable Object&gt; implements Var&lt;T&g
 
 <span class="fc bfc" id="L362" title="All 2 branches covered.">		if ( _currentItem != null ) {</span>
 			// We check if the type is correct
-<span class="pc bpc" id="L364" title="1 of 2 branches missed.">			if ( !_type.isAssignableFrom(_currentItem.getClass()) )</span>
-<span class="nc" id="L365">				throw new IllegalArgumentException(</span>
+<span class="fc bfc" id="L364" title="All 2 branches covered.">			if ( !_type.isAssignableFrom(_currentItem.getClass()) )</span>
+<span class="fc" id="L365">				throw new IllegalArgumentException(</span>
 						&quot;The provided type of the initial item is not compatible &quot; +
 								&quot;with the actual type of the variable&quot;
 				);
 		}
-<span class="pc bpc" id="L370" title="1 of 2 branches missed.">		if ( !Sprouts.factory().idPattern().matcher(_id).matches() )</span>
-<span class="nc" id="L371">			throw new IllegalArgumentException(</span>
+<span class="fc bfc" id="L370" title="All 2 branches covered.">		if ( !Sprouts.factory().idPattern().matcher(_id).matches() )</span>
+<span class="fc" id="L371">			throw new IllegalArgumentException(</span>
 					&quot;The provided id '&quot;+_id+&quot;' is not valid! It must match &quot; +
-<span class="nc" id="L373">							&quot;the pattern '&quot;+Sprouts.factory().idPattern().pattern()+&quot;'.&quot;</span>
+<span class="fc" id="L373">							&quot;the pattern '&quot;+Sprouts.factory().idPattern().pattern()+&quot;'.&quot;</span>
 			);
-<span class="pc bpc" id="L375" title="1 of 4 branches missed.">		if ( !allowsNull &amp;&amp; iniValue == null )</span>
-<span class="nc" id="L376">			throw new IllegalArgumentException(</span>
+<span class="fc bfc" id="L375" title="All 4 branches covered.">		if ( !allowsNull &amp;&amp; iniValue == null )</span>
+<span class="fc" id="L376">			throw new IllegalArgumentException(</span>
 					&quot;The provided initial item is null, &quot; +
 							&quot;but this property view does not allow null items!&quot;
 			);

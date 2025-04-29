@@ -163,8 +163,8 @@ final class PropertyList&lt;T extends @Nullable Object&gt; implements Vars&lt;T&
     @Override
     public Vars&lt;T&gt; popRange( int from, int to ) {
 <span class="pc bpc" id="L165" title="1 of 2 branches missed.">        if ( _isImmutable ) throw new UnsupportedOperationException(&quot;This is an immutable list.&quot;);</span>
-<span class="pc bpc" id="L166" title="3 of 6 branches missed.">        if ( from &lt; 0 || to &gt; _variables.size() || from &gt; to )</span>
-<span class="nc" id="L167">            throw new IndexOutOfBoundsException(&quot;From: &quot; + from + &quot;, To: &quot; + to + &quot;, Size: &quot; + _variables.size());</span>
+<span class="pc bpc" id="L166" title="1 of 6 branches missed.">        if ( from &lt; 0 || to &gt; _variables.size() || from &gt; to )</span>
+<span class="fc" id="L167">            throw new IndexOutOfBoundsException(&quot;From: &quot; + from + &quot;, To: &quot; + to + &quot;, Size: &quot; + _variables.size());</span>
 
 <span class="pc bpc" id="L169" title="1 of 2 branches missed.">        Vars&lt;T&gt; vars = (Vars&lt;T&gt;) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));</span>
 
@@ -205,8 +205,8 @@ final class PropertyList&lt;T extends @Nullable Object&gt; implements Vars&lt;T&
     @Override
     public Vars&lt;T&gt; setAt( int index, Var&lt;T&gt; value ) {
 <span class="pc bpc" id="L207" title="1 of 2 branches missed.">        if ( _isImmutable ) throw new UnsupportedOperationException(&quot;This is an immutable list.&quot;);</span>
-<span class="pc bpc" id="L208" title="2 of 4 branches missed.">        if ( index &lt; 0 || index &gt;= _variables.size() )</span>
-<span class="nc" id="L209">            throw new IndexOutOfBoundsException(&quot;Index: &quot; + index + &quot;, Size: &quot; + _variables.size());</span>
+<span class="fc bfc" id="L208" title="All 4 branches covered.">        if ( index &lt; 0 || index &gt;= _variables.size() )</span>
+<span class="fc" id="L209">            throw new IndexOutOfBoundsException(&quot;Index: &quot; + index + &quot;, Size: &quot; + _variables.size());</span>
 
 <span class="fc" id="L211">        _checkNullSafetyOf(value);</span>
 

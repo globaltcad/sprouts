@@ -195,7 +195,9 @@ public interface SproutsFactory
 
     &lt;T&gt; Tuple&lt;@Nullable T&gt; tupleOfNullable( Class&lt;T&gt; type, Iterable&lt;@Nullable T&gt; iterable );
 
-    &lt;K, V&gt; Association&lt;K, V&gt; associationOf(Class&lt;K&gt; keyType, Class&lt;V&gt; valueType );
+    &lt;K, V&gt; Association&lt;K, V&gt; associationOf( Class&lt;K&gt; keyType, Class&lt;V&gt; valueType );
+
+    &lt;E&gt; ValueSet&lt;E&gt; valueSetOf( Class&lt;E&gt; type );
 
     &lt;V&gt; Result&lt;V&gt; resultOf( Class&lt;V&gt; type );
 
@@ -219,7 +221,7 @@ public interface SproutsFactory
 
     &lt;V&gt; Result&lt;List&lt;V&gt;&gt; resultOfList( Class&lt;V&gt; type, List&lt;V&gt; list, Iterable&lt;Problem&gt; problems );
 
-    &lt;V&gt; Result&lt;V&gt; resultOfTry( Class&lt;V&gt; type, Supplier&lt;V&gt; supplier );
+    &lt;V&gt; Result&lt;V&gt; resultOfTry( Class&lt;V&gt; type, ResultItemSupplier&lt;V&gt; supplier );
 
     &lt;O,D&gt; WeakAction&lt;O,D&gt; actionOfWeak(O owner, BiConsumer&lt;O, D&gt; action );
 

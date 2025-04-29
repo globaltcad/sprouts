@@ -6,6 +6,7 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -53,9 +54,9 @@ public interface Association&lt;K, V&gt; extends Iterable&lt;Pair&lt;K, V&gt;&gt
      */
     @SuppressWarnings(&quot;unchecked&quot;)
     static &lt;K,V&gt; Class&lt;Association&lt;K,V&gt;&gt; classTyped(Class&lt;K&gt; keyType, Class&lt;V&gt; valueType) {
-<span class="fc" id="L56">        Objects.requireNonNull(keyType);</span>
-<span class="fc" id="L57">        Objects.requireNonNull(valueType);</span>
-<span class="fc" id="L58">        return (Class) Association.class;</span>
+<span class="fc" id="L57">        Objects.requireNonNull(keyType);</span>
+<span class="fc" id="L58">        Objects.requireNonNull(valueType);</span>
+<span class="fc" id="L59">        return (Class) Association.class;</span>
     }
 
     /**
@@ -87,13 +88,13 @@ public interface Association&lt;K, V&gt; extends Iterable&lt;Pair&lt;K, V&gt;&gt
             Class&lt;K&gt; keyType,
             Class&lt;V&gt; valueType
     ) {
-<span class="fc" id="L90">        Objects.requireNonNull(keyType);</span>
-<span class="fc" id="L91">        Objects.requireNonNull(valueType);</span>
-<span class="fc" id="L92">        return Collector.of(</span>
+<span class="fc" id="L91">        Objects.requireNonNull(keyType);</span>
+<span class="fc" id="L92">        Objects.requireNonNull(valueType);</span>
+<span class="fc" id="L93">        return Collector.of(</span>
                     (Supplier&lt;List&lt;Pair&lt;? extends K,? extends V&gt;&gt;&gt;) ArrayList::new,
                     List::add,
-<span class="nc" id="L95">                    (left, right) -&gt; { left.addAll(right); return left; },</span>
-<span class="fc" id="L96">                    list -&gt; Association.between(keyType, valueType).putAll(list)</span>
+<span class="nc" id="L96">                    (left, right) -&gt; { left.addAll(right); return left; },</span>
+<span class="fc" id="L97">                    list -&gt; Association.between(keyType, valueType).putAll(list)</span>
                 );
     }
 
@@ -111,7 +112,7 @@ public interface Association&lt;K, V&gt; extends Iterable&lt;Pair&lt;K, V&gt;&gt
      * @return A new association between keys and values.
      */
     static &lt;K, V&gt; Association&lt;K, V&gt; between( Class&lt;K&gt; keyType, Class&lt;V&gt; valueType ) {
-<span class="fc" id="L114">        return Sprouts.factory().associationOf(keyType, valueType);</span>
+<span class="fc" id="L115">        return Sprouts.factory().associationOf(keyType, valueType);</span>
     }
 
     /**
@@ -127,9 +128,9 @@ public interface Association&lt;K, V&gt; extends Iterable&lt;Pair&lt;K, V&gt;&gt
      *         and a size of 1.
      */
     static &lt;K, V&gt; Association&lt;K, V&gt; of( K key, V value ) {
-<span class="fc" id="L130">        Objects.requireNonNull(key);</span>
-<span class="fc" id="L131">        Objects.requireNonNull(value);</span>
-<span class="fc" id="L132">        return between((Class&lt;K&gt;) key.getClass(), (Class&lt;V&gt;) value.getClass()).put(key, value);</span>
+<span class="fc" id="L131">        Objects.requireNonNull(key);</span>
+<span class="fc" id="L132">        Objects.requireNonNull(value);</span>
+<span class="fc" id="L133">        return between((Class&lt;K&gt;) key.getClass(), (Class&lt;V&gt;) value.getClass()).put(key, value);</span>
     }
 
     /**
@@ -146,7 +147,7 @@ public interface Association&lt;K, V&gt; extends Iterable&lt;Pair&lt;K, V&gt;&gt
      * @return {@code true} if this association is empty, otherwise {@code false}.
      */
     default boolean isEmpty() {
-<span class="fc bfc" id="L149" title="All 2 branches covered.">        return size() == 0;</span>
+<span class="fc bfc" id="L150" title="All 2 branches covered.">        return size() == 0;</span>
     }
 
     /**
@@ -156,7 +157,7 @@ public interface Association&lt;K, V&gt; extends Iterable&lt;Pair&lt;K, V&gt;&gt
      * @return {@code true} if this association is not empty, otherwise {@code false}.
      */
     default boolean isNotEmpty() {
-<span class="nc bnc" id="L159" title="All 2 branches missed.">        return !isEmpty();</span>
+<span class="nc bnc" id="L160" title="All 2 branches missed.">        return !isEmpty();</span>
     }
 
     /**
@@ -174,12 +175,14 @@ public interface Association&lt;K, V&gt; extends Iterable&lt;Pair&lt;K, V&gt;&gt
     Class&lt;V&gt; valueType();
 
     /**
-     *   Returns a {@link Set} of all the keys in this association.
+     *  Returns a {@link Set} of all the keys in this association.
      *  The returned set is immutable and cannot be modified.
      *
      * @return A set of all the keys in this association.
      */
-    Set&lt;K&gt; keySet();
+    default ValueSet&lt;K&gt; keySet() {
+<span class="fc" id="L184">        return ValueSet.of(this.keyType()).addAll(this.entrySet().stream().map(Pair::first));</span>
+    }
 
     /**
      *  Returns a tuple of all the values in this association.
@@ -196,7 +199,48 @@ public interface Association&lt;K, V&gt; extends Iterable&lt;Pair&lt;K, V&gt;&gt
      * @return A set of all the key-value pairs in this association
      *        as simple {@link Pair}s.
      */
-    Set&lt;Pair&lt;K,V&gt;&gt; entrySet();
+    default ValueSet&lt;Pair&lt;K,V&gt;&gt; entrySet() {
+<span class="fc" id="L203">        return new ValueSet&lt;Pair&lt;K, V&gt;&gt;() {</span>
+            @Override
+            public int size() {
+<span class="fc" id="L206">                return Association.this.size();</span>
+            }
+            @Override
+            public Class&lt;Pair&lt;K, V&gt;&gt; type() {
+<span class="fc" id="L210">                return Pair.classTyped(Association.this.keyType(), Association.this.valueType());</span>
+            }
+            @Override
+            public boolean contains(Pair&lt;K, V&gt; element) {
+<span class="fc" id="L214">                return Association.this.containsKey(element.first());</span>
+            }
+            @Override
+            public ValueSet&lt;Pair&lt;K, V&gt;&gt; add(Pair&lt;K, V&gt; element) {
+<span class="nc" id="L218">                return Association.this.put(element).entrySet();</span>
+            }
+            @Override
+            public ValueSet&lt;Pair&lt;K, V&gt;&gt; addAll(Stream&lt;? extends Pair&lt;K, V&gt;&gt; elements) {
+<span class="nc" id="L222">                return Association.this.putAll((Stream) elements).entrySet();</span>
+            }
+            @Override
+            public ValueSet&lt;Pair&lt;K, V&gt;&gt; remove(Pair&lt;K, V&gt; element) {
+<span class="nc" id="L226">                return Association.this.remove(element.first()).entrySet();</span>
+            }
+            @Override
+            public ValueSet&lt;Pair&lt;K, V&gt;&gt; removeAll(Stream&lt;? extends Pair&lt;K, V&gt;&gt; elements) {
+<span class="nc" id="L230">                return Association.this.removeAll(elements.map(Pair::first).collect(Collectors.toSet()))</span>
+<span class="nc" id="L231">                        .entrySet();</span>
+            }
+            @Override
+            public ValueSet&lt;Pair&lt;K, V&gt;&gt; retainAll(Set&lt;? extends Pair&lt;K, V&gt;&gt; elements) {
+<span class="nc" id="L235">                return Association.this.retainAll(elements.stream().map(Pair::first).collect(Collectors.toSet()))</span>
+<span class="nc" id="L236">                        .entrySet();</span>
+            }
+            @Override
+            public Iterator&lt;Pair&lt;K, V&gt;&gt; iterator() {
+<span class="fc" id="L240">                return Association.this.iterator();</span>
+            }
+        };
+    }
 
     /**
      *  Checks if the given key is present in this association
@@ -244,8 +288,8 @@ public interface Association&lt;K, V&gt; extends Iterable&lt;Pair&lt;K, V&gt;&gt
      * @throws NullPointerException if the provided pair is {@code null}.
      */
     default Association&lt;K, V&gt; put(Pair&lt;? extends K, ? extends V&gt; entry) {
-<span class="nc" id="L247">        Objects.requireNonNull(entry, &quot;The provided pair cannot be null.&quot;);</span>
-<span class="nc" id="L248">        return put(entry.first(), entry.second());</span>
+<span class="nc" id="L291">        Objects.requireNonNull(entry, &quot;The provided pair cannot be null.&quot;);</span>
+<span class="nc" id="L292">        return put(entry.first(), entry.second());</span>
     }
 
     /**
@@ -281,10 +325,10 @@ public interface Association&lt;K, V&gt; extends Iterable&lt;Pair&lt;K, V&gt;&gt
      * @throws NullPointerException if the provided association is {@code null}.
      */
     default Association&lt;K, V&gt; putAll( final Association&lt;? extends K, ? extends V&gt; other ) {
-<span class="fc" id="L284">        Objects.requireNonNull(other, &quot;The provided association cannot be null.&quot;);</span>
-<span class="pc bpc" id="L285" title="1 of 2 branches missed.">        if ( other.isEmpty() )</span>
-<span class="nc" id="L286">            return this;</span>
-<span class="fc" id="L287">        return putAll( (Stream)other.entrySet().stream() );</span>
+<span class="fc" id="L328">        Objects.requireNonNull(other, &quot;The provided association cannot be null.&quot;);</span>
+<span class="pc bpc" id="L329" title="1 of 2 branches missed.">        if ( other.isEmpty() )</span>
+<span class="nc" id="L330">            return this;</span>
+<span class="fc" id="L331">        return putAll( (Stream)other.entrySet().stream() );</span>
     }
 
     /**
@@ -298,10 +342,10 @@ public interface Association&lt;K, V&gt; extends Iterable&lt;Pair&lt;K, V&gt;&gt
      * @throws NullPointerException if the provided map is {@code null}.
      */
     default Association&lt;K, V&gt; putAll( final Map&lt;? extends K, ? extends V&gt; map ) {
-<span class="fc" id="L301">        Objects.requireNonNull(map, &quot;The provided map cannot be null.&quot;);</span>
-<span class="pc bpc" id="L302" title="1 of 2 branches missed.">        if ( map.isEmpty() )</span>
-<span class="nc" id="L303">            return this;</span>
-<span class="fc" id="L304">        return putAll(map.entrySet().stream().map(Pair::of));</span>
+<span class="fc" id="L345">        Objects.requireNonNull(map, &quot;The provided map cannot be null.&quot;);</span>
+<span class="pc bpc" id="L346" title="1 of 2 branches missed.">        if ( map.isEmpty() )</span>
+<span class="nc" id="L347">            return this;</span>
+<span class="fc" id="L348">        return putAll(map.entrySet().stream().map(Pair::of));</span>
     }
 
     /**
@@ -315,10 +359,10 @@ public interface Association&lt;K, V&gt; extends Iterable&lt;Pair&lt;K, V&gt;&gt
      * @throws NullPointerException if the provided set is {@code null}.
      */
     default Association&lt;K, V&gt; putAll( final Set&lt;Pair&lt;? extends K, ? extends V&gt;&gt; entries ) {
-<span class="nc" id="L318">        Objects.requireNonNull(entries, &quot;The provided set cannot be null.&quot;);</span>
-<span class="nc bnc" id="L319" title="All 2 branches missed.">        if ( entries.isEmpty() )</span>
-<span class="nc" id="L320">            return this;</span>
-<span class="nc" id="L321">        return putAll(entries.stream());</span>
+<span class="nc" id="L362">        Objects.requireNonNull(entries, &quot;The provided set cannot be null.&quot;);</span>
+<span class="nc bnc" id="L363" title="All 2 branches missed.">        if ( entries.isEmpty() )</span>
+<span class="nc" id="L364">            return this;</span>
+<span class="nc" id="L365">        return putAll(entries.stream());</span>
     }
 
     /**
@@ -333,10 +377,10 @@ public interface Association&lt;K, V&gt; extends Iterable&lt;Pair&lt;K, V&gt;&gt
      * @throws NullPointerException if the provided array is {@code null}.
      */
     default Association&lt;K, V&gt; putAll( final Pair&lt;? extends K, ? extends V&gt;... entries ) {
-<span class="fc" id="L336">        Objects.requireNonNull(entries, &quot;The provided array cannot be null.&quot;);</span>
-<span class="pc bpc" id="L337" title="1 of 2 branches missed.">        if ( entries.length == 0 )</span>
-<span class="nc" id="L338">            return this;</span>
-<span class="fc" id="L339">        return putAll(Arrays.stream(entries));</span>
+<span class="fc" id="L380">        Objects.requireNonNull(entries, &quot;The provided array cannot be null.&quot;);</span>
+<span class="pc bpc" id="L381" title="1 of 2 branches missed.">        if ( entries.length == 0 )</span>
+<span class="nc" id="L382">            return this;</span>
+<span class="fc" id="L383">        return putAll(Arrays.stream(entries));</span>
     }
 
     /**
@@ -351,10 +395,10 @@ public interface Association&lt;K, V&gt; extends Iterable&lt;Pair&lt;K, V&gt;&gt
      * @throws NullPointerException if the provided tuple is {@code null}.
      */
     default Association&lt;K, V&gt; putAll( final Tuple&lt;Pair&lt;? extends K, ? extends V&gt;&gt; entries ) {
-<span class="fc" id="L354">        Objects.requireNonNull(entries, &quot;The provided tuple cannot be null.&quot;);</span>
-<span class="pc bpc" id="L355" title="1 of 2 branches missed.">        if ( entries.isEmpty() )</span>
-<span class="nc" id="L356">            return this;</span>
-<span class="fc" id="L357">        return putAll(entries.stream());</span>
+<span class="fc" id="L398">        Objects.requireNonNull(entries, &quot;The provided tuple cannot be null.&quot;);</span>
+<span class="pc bpc" id="L399" title="1 of 2 branches missed.">        if ( entries.isEmpty() )</span>
+<span class="nc" id="L400">            return this;</span>
+<span class="fc" id="L401">        return putAll(entries.stream());</span>
     }
 
     /**
@@ -368,10 +412,10 @@ public interface Association&lt;K, V&gt; extends Iterable&lt;Pair&lt;K, V&gt;&gt
      * @throws NullPointerException if the provided collection is {@code null}.
      */
     default Association&lt;K, V&gt; putAll( final Collection&lt;Pair&lt;? extends K, ? extends V&gt;&gt; entries ) {
-<span class="fc" id="L371">        Objects.requireNonNull(entries, &quot;The provided collection cannot be null.&quot;);</span>
-<span class="pc bpc" id="L372" title="1 of 2 branches missed.">        if ( entries.isEmpty() )</span>
-<span class="nc" id="L373">            return this;</span>
-<span class="fc" id="L374">        return putAll(entries.stream());</span>
+<span class="fc" id="L415">        Objects.requireNonNull(entries, &quot;The provided collection cannot be null.&quot;);</span>
+<span class="pc bpc" id="L416" title="1 of 2 branches missed.">        if ( entries.isEmpty() )</span>
+<span class="nc" id="L417">            return this;</span>
+<span class="fc" id="L418">        return putAll(entries.stream());</span>
     }
 
     /**
@@ -384,7 +428,17 @@ public interface Association&lt;K, V&gt; extends Iterable&lt;Pair&lt;K, V&gt;&gt
      * @return A new association with the key-value pairs from the provided stream.
      * @throws NullPointerException if the provided stream is {@code null}.
      */
-    Association&lt;K, V&gt; putAll( final Stream&lt;Pair&lt;? extends K, ? extends V&gt;&gt; entries );
+    default Association&lt;K, V&gt; putAll( final Stream&lt;Pair&lt;? extends K, ? extends V&gt;&gt; entries ) {
+<span class="fc" id="L432">        Objects.requireNonNull(entries);</span>
+        // TODO: implement branching based bulk insert
+<span class="fc" id="L434">        Association&lt;K, V&gt; result = this;</span>
+        // reduce the stream to a single association
+<span class="fc" id="L436">        return entries.reduce(</span>
+                result,
+                (acc,
+<span class="fc" id="L439">                 entry) -&gt; acc.put(entry.first(), entry.second()),</span>
+<span class="nc" id="L440">                (a, b) -&gt; a);</span>
+    }
 
     /**
      *  Returns a new association where an existing key-value pair
@@ -403,7 +457,13 @@ public interface Association&lt;K, V&gt; extends Iterable&lt;Pair&lt;K, V&gt;&gt
      *         supplied key is replaced with the given key-value pair.
      * @see #replace(Pair) to replace a key-value pair as a {@code Pair} instance.
      */
-    Association&lt;K, V&gt; replace(K key, V value);
+    default Association&lt;K, V&gt; replace(K key, V value) {
+<span class="fc bfc" id="L461" title="All 2 branches covered.">        if ( this.containsKey(key) ) {</span>
+<span class="fc" id="L462">            return this.put(key, value);</span>
+        } else {
+<span class="fc" id="L464">            return this;</span>
+        }
+    }
 
     /**
      *  Returns a new association where an existing key-value pair
@@ -420,8 +480,8 @@ public interface Association&lt;K, V&gt; extends Iterable&lt;Pair&lt;K, V&gt;&gt
      *         supplied key is replaced with the given key-value pair.
      * @see #replace(Object, Object) to replace a key-value pair as separate objects.
      */
-    default Association&lt;K, V&gt; replace(Pair&lt;? extends K, ? extends V&gt; entry) {
-<span class="nc" id="L424">        return replace(entry.first(), entry.second());</span>
+    default Association&lt;K, V&gt; replace( Pair&lt;? extends K, ? extends V&gt; entry ) {
+<span class="nc" id="L484">        return replace(entry.first(), entry.second());</span>
     }
 
     /**
@@ -437,11 +497,11 @@ public interface Association&lt;K, V&gt; extends Iterable&lt;Pair&lt;K, V&gt;&gt
      *          of this association are replaced by those in the supplied association.
      * @throws NullPointerException if the supplied association is {@code null}.
      */
-    default Association&lt;K, V&gt; replaceAll(Association&lt;? extends K, ? extends V&gt; other) {
-<span class="nc" id="L441">        Objects.requireNonNull(other, &quot;The provided association cannot be null.&quot;);</span>
-<span class="nc bnc" id="L442" title="All 2 branches missed.">        if (other.isEmpty())</span>
-<span class="nc" id="L443">            return this;</span>
-<span class="nc" id="L444">        return replaceAll((Stream)other.entrySet().stream());</span>
+    default Association&lt;K, V&gt; replaceAll( Association&lt;? extends K, ? extends V&gt; other ) {
+<span class="nc" id="L501">        Objects.requireNonNull(other, &quot;The provided association cannot be null.&quot;);</span>
+<span class="nc bnc" id="L502" title="All 2 branches missed.">        if ( other.isEmpty() )</span>
+<span class="nc" id="L503">            return this;</span>
+<span class="nc" id="L504">        return replaceAll((Stream)other.entrySet().stream());</span>
     }
 
     /**
@@ -457,11 +517,11 @@ public interface Association&lt;K, V&gt; extends Iterable&lt;Pair&lt;K, V&gt;&gt
      *          of this association are replaced by those in the supplied map.
      * @throws NullPointerException if the supplied map is {@code null}.
      */
-    default Association&lt;K, V&gt; replaceAll(Map&lt;? extends K, ? extends V&gt; map) {
-<span class="fc" id="L461">        Objects.requireNonNull(map, &quot;The provided map cannot be null.&quot;);</span>
-<span class="pc bpc" id="L462" title="1 of 2 branches missed.">        if (map.isEmpty())</span>
-<span class="nc" id="L463">            return this;</span>
-<span class="fc" id="L464">        return replaceAll(map.entrySet().stream().map(Pair::of));</span>
+    default Association&lt;K, V&gt; replaceAll( Map&lt;? extends K, ? extends V&gt; map ) {
+<span class="fc" id="L521">        Objects.requireNonNull(map, &quot;The provided map cannot be null.&quot;);</span>
+<span class="pc bpc" id="L522" title="1 of 2 branches missed.">        if (map.isEmpty())</span>
+<span class="nc" id="L523">            return this;</span>
+<span class="fc" id="L524">        return replaceAll(map.entrySet().stream().map(Pair::of));</span>
     }
 
     /**
@@ -477,11 +537,11 @@ public interface Association&lt;K, V&gt; extends Iterable&lt;Pair&lt;K, V&gt;&gt
      *         of this association are replaced by those in the supplied set.
      * @throws NullPointerException if the supplied set is {@code null}.
      */
-    default Association&lt;K, V&gt; replaceAll(Set&lt;Pair&lt;? extends K, ? extends V&gt;&gt; entries) {
-<span class="nc" id="L481">        Objects.requireNonNull(entries, &quot;The provided set cannot be null.&quot;);</span>
-<span class="nc bnc" id="L482" title="All 2 branches missed.">        if (entries.isEmpty())</span>
-<span class="nc" id="L483">            return this;</span>
-<span class="nc" id="L484">        return replaceAll(entries.stream());</span>
+    default Association&lt;K, V&gt; replaceAll( Set&lt;Pair&lt;? extends K, ? extends V&gt;&gt; entries ) {
+<span class="nc" id="L541">        Objects.requireNonNull(entries, &quot;The provided set cannot be null.&quot;);</span>
+<span class="nc bnc" id="L542" title="All 2 branches missed.">        if (entries.isEmpty())</span>
+<span class="nc" id="L543">            return this;</span>
+<span class="nc" id="L544">        return replaceAll(entries.stream());</span>
     }
 
     /**
@@ -497,11 +557,11 @@ public interface Association&lt;K, V&gt; extends Iterable&lt;Pair&lt;K, V&gt;&gt
      *         of this association are replaced by those in the supplied array.
      * @throws NullPointerException if the supplied array is {@code null}.
      */
-    default Association&lt;K, V&gt; replaceAll(Pair&lt;? extends K, ? extends V&gt;... entries) {
-<span class="nc" id="L501">        Objects.requireNonNull(entries, &quot;The provided array cannot be null.&quot;);</span>
-<span class="nc bnc" id="L502" title="All 2 branches missed.">        if (entries.length == 0)</span>
-<span class="nc" id="L503">            return this;</span>
-<span class="nc" id="L504">        return replaceAll(Arrays.stream(entries));</span>
+    default Association&lt;K, V&gt; replaceAll( Pair&lt;? extends K, ? extends V&gt;... entries ) {
+<span class="nc" id="L561">        Objects.requireNonNull(entries, &quot;The provided array cannot be null.&quot;);</span>
+<span class="nc bnc" id="L562" title="All 2 branches missed.">        if (entries.length == 0)</span>
+<span class="nc" id="L563">            return this;</span>
+<span class="nc" id="L564">        return replaceAll(Arrays.stream(entries));</span>
     }
 
     /**
@@ -517,11 +577,11 @@ public interface Association&lt;K, V&gt; extends Iterable&lt;Pair&lt;K, V&gt;&gt
      *         of this association are replaced by those in the supplied tuple.
      * @throws NullPointerException if the supplied tuple is {@code null}.
      */
-    default Association&lt;K, V&gt; replaceAll(Tuple&lt;Pair&lt;? extends K, ? extends V&gt;&gt; entries) {
-<span class="nc" id="L521">        Objects.requireNonNull(entries, &quot;The provided tuple cannot be null.&quot;);</span>
-<span class="nc bnc" id="L522" title="All 2 branches missed.">        if (entries.isEmpty())</span>
-<span class="nc" id="L523">            return this;</span>
-<span class="nc" id="L524">        return replaceAll(entries.stream());</span>
+    default Association&lt;K, V&gt; replaceAll( Tuple&lt;Pair&lt;? extends K, ? extends V&gt;&gt; entries ) {
+<span class="nc" id="L581">        Objects.requireNonNull(entries, &quot;The provided tuple cannot be null.&quot;);</span>
+<span class="nc bnc" id="L582" title="All 2 branches missed.">        if (entries.isEmpty())</span>
+<span class="nc" id="L583">            return this;</span>
+<span class="nc" id="L584">        return replaceAll(entries.stream());</span>
     }
 
     /**
@@ -537,11 +597,11 @@ public interface Association&lt;K, V&gt; extends Iterable&lt;Pair&lt;K, V&gt;&gt
      *         of this association are replaced by those in the supplied collection.
      * @throws NullPointerException if the supplied collection is {@code null}.
      */
-    default Association&lt;K, V&gt; replaceAll(Collection&lt;Pair&lt;? extends K, ? extends V&gt;&gt; entries) {
-<span class="nc" id="L541">        Objects.requireNonNull(entries, &quot;The provided collection cannot be null.&quot;);</span>
-<span class="nc bnc" id="L542" title="All 2 branches missed.">        if (entries.isEmpty())</span>
-<span class="nc" id="L543">            return this;</span>
-<span class="nc" id="L544">        return replaceAll(entries.stream());</span>
+    default Association&lt;K, V&gt; replaceAll( Collection&lt;Pair&lt;? extends K, ? extends V&gt;&gt; entries ) {
+<span class="nc" id="L601">        Objects.requireNonNull(entries, &quot;The provided collection cannot be null.&quot;);</span>
+<span class="nc bnc" id="L602" title="All 2 branches missed.">        if (entries.isEmpty())</span>
+<span class="nc" id="L603">            return this;</span>
+<span class="nc" id="L604">        return replaceAll(entries.stream());</span>
     }
 
     /**
@@ -557,7 +617,16 @@ public interface Association&lt;K, V&gt; extends Iterable&lt;Pair&lt;K, V&gt;&gt
      *         of this association are replaced by those in the supplied stream.
      * @throws NullPointerException if the supplied stream is {@code null}.
      */
-    Association&lt;K, V&gt; replaceAll(Stream&lt;Pair&lt;? extends K, ? extends V&gt;&gt; entries);
+    default Association&lt;K, V&gt; replaceAll( Stream&lt;Pair&lt;? extends K, ? extends V&gt;&gt; entries ) {
+<span class="fc" id="L621">        Objects.requireNonNull(entries);</span>
+<span class="fc" id="L622">        Association&lt;K, V&gt; result = this;</span>
+        // reduce the stream to a single association
+<span class="fc" id="L624">        return entries.reduce(</span>
+                result,
+                (acc,
+<span class="fc" id="L627">                 entry) -&gt; acc.replace(entry.first(), entry.second()),</span>
+<span class="nc" id="L628">                (a, b) -&gt; a);</span>
+    }
 
     /**
      *  Returns a new association that is the same as this one
@@ -567,7 +636,7 @@ public interface Association&lt;K, V&gt; extends Iterable&lt;Pair&lt;K, V&gt;&gt
      * @param key The key to remove from this association.
      * @return A new association without the given key.
      */
-    Association&lt;K, V&gt; remove(K key);
+    Association&lt;K, V&gt; remove( K key );
 
     /**
      *  Returns a new association that is the same as this one
@@ -578,7 +647,55 @@ public interface Association&lt;K, V&gt; extends Iterable&lt;Pair&lt;K, V&gt;&gt
      * @param keys The keys to remove from this association.
      * @return A new association without the keys in the given set.
      */
-    Association&lt;K, V&gt; removeAll(Set&lt;? extends K&gt; keys);
+    default Association&lt;K, V&gt; removeAll( ValueSet&lt;? extends K&gt; keys ) {
+<span class="pc bpc" id="L651" title="2 of 4 branches missed.">        if ( this.isEmpty() || keys.isEmpty() )</span>
+<span class="nc" id="L652">            return this;</span>
+<span class="fc" id="L653">        Association&lt;K, V&gt; result = this;</span>
+<span class="fc bfc" id="L654" title="All 2 branches covered.">        for ( K key : keys ) {</span>
+<span class="fc" id="L655">            result = result.remove(key);</span>
+<span class="fc" id="L656">        }</span>
+<span class="fc" id="L657">        return result;</span>
+    }
+
+    /**
+     *  Returns a new association that is the same as this one
+     *  but without any of the keys in the supplied set. If the
+     *  supplied set is empty, then this association is returned
+     *  unchanged.
+     *
+     * @param keys The keys to remove from this association.
+     * @return A new association without the keys in the given set.
+     */
+    default Association&lt;K, V&gt; removeAll( Set&lt;? extends K&gt; keys ) {
+<span class="pc bpc" id="L670" title="2 of 4 branches missed.">        if ( this.isEmpty() || keys.isEmpty() )</span>
+<span class="nc" id="L671">            return this;</span>
+<span class="fc" id="L672">        Association&lt;K, V&gt; result = this;</span>
+<span class="fc bfc" id="L673" title="All 2 branches covered.">        for ( K key : keys ) {</span>
+<span class="fc" id="L674">            result = result.remove(key);</span>
+<span class="fc" id="L675">        }</span>
+<span class="fc" id="L676">        return result;</span>
+    }
+
+    /**
+     *  Returns a new association where only those key-value pairs
+     *  are kept that have a key present in the supplied value set.
+     *  If the supplied set is empty, then this association is
+     *  returned unchanged.
+     *
+     * @param keys The keys to retain in this association.
+     * @return A new association with only the keys in the given set.
+     */
+    default Association&lt;K, V&gt; retainAll( ValueSet&lt;? extends K&gt; keys ) {
+<span class="nc bnc" id="L689" title="All 4 branches missed.">        if ( this.isEmpty() || keys.isEmpty() )</span>
+<span class="nc" id="L690">            return this;</span>
+<span class="nc" id="L691">        Association&lt;K, V&gt; result = this;</span>
+<span class="nc bnc" id="L692" title="All 2 branches missed.">        for ( K key : this.keySet() ) {</span>
+<span class="nc bnc" id="L693" title="All 2 branches missed.">            if ( !((ValueSet&lt;K&gt;)keys).contains(key) ) {</span>
+<span class="nc" id="L694">                result = result.remove(key);</span>
+            }
+<span class="nc" id="L696">        }</span>
+<span class="nc" id="L697">        return result;</span>
+    }
 
     /**
      *  Returns a new association where only those key-value pairs
@@ -589,7 +706,17 @@ public interface Association&lt;K, V&gt; extends Iterable&lt;Pair&lt;K, V&gt;&gt
      * @param keys The keys to retain in this association.
      * @return A new association with only the keys in the given set.
      */
-    Association&lt;K, V&gt; retainAll(Set&lt;? extends K&gt; keys);
+    default Association&lt;K, V&gt; retainAll(Set&lt;? extends K&gt; keys) {
+<span class="pc bpc" id="L710" title="2 of 4 branches missed.">        if ( this.isEmpty() || keys.isEmpty() )</span>
+<span class="nc" id="L711">            return this;</span>
+<span class="fc" id="L712">        Association&lt;K, V&gt; result = this;</span>
+<span class="fc bfc" id="L713" title="All 2 branches covered.">        for ( K key : this.keySet() ) {</span>
+<span class="fc bfc" id="L714" title="All 2 branches covered.">            if ( !keys.contains(key) ) {</span>
+<span class="fc" id="L715">                result = result.remove(key);</span>
+            }
+<span class="fc" id="L717">        }</span>
+<span class="fc" id="L718">        return result;</span>
+    }
 
     /**
      *  Returns a completely empty association but
@@ -598,7 +725,9 @@ public interface Association&lt;K, V&gt; extends Iterable&lt;Pair&lt;K, V&gt;&gt
      * @return A new association without any key-value pairs,
      *         or this association if it is already empty.
      */
-    Association&lt;K, V&gt; clear();
+    default Association&lt;K, V&gt; clear() {
+<span class="fc" id="L729">        return Sprouts.factory().associationOf(this.keyType(), this.valueType());</span>
+    }
 
     /**
      *  Converts this association to a java.util.Map.
@@ -616,8 +745,8 @@ public interface Association&lt;K, V&gt; extends Iterable&lt;Pair&lt;K, V&gt;&gt
      *  @throws NullPointerException if the predicate is {@code null}.
      */
     default boolean any( Predicate&lt;Pair&lt;K,V&gt;&gt; predicate ) {
-<span class="nc" id="L619">        Objects.requireNonNull(predicate);</span>
-<span class="nc" id="L620">        return this.entrySet().stream().anyMatch( predicate );</span>
+<span class="nc" id="L748">        Objects.requireNonNull(predicate);</span>
+<span class="nc" id="L749">        return this.entrySet().stream().anyMatch( predicate );</span>
     }
 
     /**
@@ -628,8 +757,8 @@ public interface Association&lt;K, V&gt; extends Iterable&lt;Pair&lt;K, V&gt;&gt
      *  @throws NullPointerException if the predicate is {@code null}.
      */
     default boolean all( Predicate&lt;Pair&lt;K,V&gt;&gt; predicate ) {
-<span class="nc" id="L631">        Objects.requireNonNull(predicate);</span>
-<span class="nc" id="L632">        return this.entrySet().stream().allMatch( predicate );</span>
+<span class="nc" id="L760">        Objects.requireNonNull(predicate);</span>
+<span class="nc" id="L761">        return this.entrySet().stream().allMatch( predicate );</span>
     }
 
     /**
@@ -640,8 +769,8 @@ public interface Association&lt;K, V&gt; extends Iterable&lt;Pair&lt;K, V&gt;&gt
      *  @throws NullPointerException if the predicate is {@code null}.
      */
     default boolean none( Predicate&lt;Pair&lt;K,V&gt;&gt; predicate ) {
-<span class="nc" id="L643">        Objects.requireNonNull(predicate);</span>
-<span class="nc" id="L644">        return this.entrySet().stream().noneMatch( predicate );</span>
+<span class="nc" id="L772">        Objects.requireNonNull(predicate);</span>
+<span class="nc" id="L773">        return this.entrySet().stream().noneMatch( predicate );</span>
     }
 
 }

@@ -583,16 +583,16 @@ class Tuple_Spec extends Specification
             thrown(NoSuchElementException)
     }
 
-    def 'The `removeFirstFoundOrThrow(Maybe<T>)` method will throw an exception if the element is not present.'()
+    def 'The `maybeRemoveFirstFoundOrThrow(Maybe<T>)` method will throw an exception if the element is not present.'()
     {
         given : 'A tuple with some elements.'
             var words = Tuple.of("hello", "world", "from", "Sprouts")
         when : 'We try to remove an element that is not present.'
-            words = words.removeFirstFoundOrThrow(Maybe.of("world"))
+            words = words.maybeRemoveFirstFoundOrThrow(Maybe.of("world"))
         then : 'The removal was successful.'
             words == Tuple.of("hello", "from", "Sprouts")
         when : 'We try to remove an element that is not present.'
-            words = words.removeFirstFoundOrThrow(Maybe.of("mercy"))
+            words = words.maybeRemoveFirstFoundOrThrow(Maybe.of("mercy"))
         then : 'An exception is thrown.'
             thrown(NoSuchElementException)
     }
@@ -609,12 +609,12 @@ class Tuple_Spec extends Specification
             numbers.toList() == [4, 7, 3, 4, 7]
     }
 
-    def 'The `remove(Maybe<T>)` method removes every occurrence of the element from the tuple.'()
+    def 'The `maybeRemove(Maybe<T>)` method removes every occurrence of the element from the tuple.'()
     {
         given : 'A tuple with some numeric elements in it.'
             var numbers = Tuple.of(4, 2, 2, 7, 2, 3, 4, 7)
         when : 'We remove the number 2 from the tuple.'
-            numbers = numbers.remove(Maybe.of(2))
+            numbers = numbers.maybeRemove(Maybe.of(2))
         then : 'The number 2 was removed from the tuple.'
             numbers == Tuple.of(4, 7, 3, 4, 7)
         and : 'The equality check also works for the list representation.'
@@ -631,13 +631,32 @@ class Tuple_Spec extends Specification
 
         where :
             input             | operation
-            Tuple.of(1, 2, 3) | { tuple -> tuple.add(Maybe.ofNull(Integer)) }
-            Tuple.of(1, 2, 3) | { tuple -> tuple.addAll(Maybe.ofNull(Integer), Maybe.ofNull(Integer)) }
-            Tuple.of(1, 2, 3) | { tuple -> tuple.addAllAt(1, Maybe.ofNull(Integer)) }
-            Tuple.of(1, 2, 3) | { tuple -> tuple.setAt(1, Maybe.ofNull(Integer)) }
-            Tuple.of(1, 2, 3) | { tuple -> tuple.setAllAt(1, Maybe.ofNull(Integer)) }
-            Tuple.of(1, 2, 3) | { tuple -> tuple.setAt(1, 2, Maybe.ofNull(Integer)) }
-            Tuple.of(1, 2, 3) | { tuple -> tuple.setRange(0, 3, Maybe.ofNull(Integer)) }
+            Tuple.of(1, 2, 3) | { tuple -> tuple.maybeAdd(Maybe.ofNull(Integer)) }
+            Tuple.of(1, 2, 3) | { tuple -> tuple.maybeAddAll(Maybe.ofNull(Integer), Maybe.ofNull(Integer)) }
+            Tuple.of(1, 2, 3) | { tuple -> tuple.maybeAddAllAt(1, Maybe.ofNull(Integer)) }
+            Tuple.of(1, 2, 3) | { tuple -> tuple.maybeSetAt(1, Maybe.ofNull(Integer)) }
+            Tuple.of(1, 2, 3) | { tuple -> tuple.maybeSetAllAt(1, Maybe.ofNull(Integer)) }
+            Tuple.of(1, 2, 3) | { tuple -> tuple.maybeSetAt(1, 2, Maybe.ofNull(Integer)) }
+            Tuple.of(1, 2, 3) | { tuple -> tuple.maybeSetRange(0, 3, Maybe.ofNull(Integer)) }
+    }
+
+    def 'You can updating a non-nullable tuple with a non-empty `Maybe`.'(
+        Tuple<Object> input, Closure<Tuple<Object>> operation, Tuple<Object> expected
+    ) {
+        when : 'We update the tuple with an empty `Maybe`.'
+            var result = operation(input)
+        then : 'The result is the same as the input.'
+            result == expected
+
+        where :
+            input             | operation                                                       || expected
+            Tuple.of(1, 2, 3) | { tuple -> tuple.maybeAdd(Maybe.of(42)) }                       || Tuple.of(1, 2, 3, 42)
+            Tuple.of(1, 2, 3) | { tuple -> tuple.maybeAddAll(Maybe.of(1997), Maybe.of(73)) }    || Tuple.of(1, 2, 3, 1997, 73)
+            Tuple.of(1, 2, 3) | { tuple -> tuple.maybeAddAllAt(1, Maybe.of(42)) }               || Tuple.of(1, 42, 2, 3)
+            Tuple.of(1, 2, 3) | { tuple -> tuple.maybeSetAt(1, Maybe.of(42)) }                  || Tuple.of(1, 42, 3)
+            Tuple.of(1, 2, 3) | { tuple -> tuple.maybeSetAllAt(1, Maybe.of(42), Maybe.of(73)) } || Tuple.of(1, 42, 73)
+            Tuple.of(1, 2, 3) | { tuple -> tuple.maybeSetAt(1, 2, Maybe.of(42)) }               || Tuple.of(1, 42, 42)
+            Tuple.of(1, 2, 3) | { tuple -> tuple.maybeSetRange(0, 3, Maybe.of(42)) }            || Tuple.of(42, 42, 42)
     }
 
     def 'It is possible to create and use a tuple of nullable ints.'()

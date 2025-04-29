@@ -210,7 +210,7 @@ public interface Problem
 <span class="nc" id="L210">                logger.accept(titleAndDescription, new Throwable());</span>
 <span class="nc" id="L211">        } catch (Exception e) {</span>
 <span class="nc" id="L212">            Logger log = LoggerFactory.getLogger(getClass().getName());</span>
-<span class="nc" id="L213">            log.error(&quot;Failed to log problem: &quot;+titleAndDescription, e);</span>
+<span class="nc" id="L213">            log.error(&quot;Failed to log problem: '{}'&quot;, titleAndDescription, e);</span>
             // Oh boy, how bad can a user's logging be if it throws an exception? Well, we got you covered!
 <span class="nc" id="L215">        }</span>
 <span class="nc" id="L216">    }</span>

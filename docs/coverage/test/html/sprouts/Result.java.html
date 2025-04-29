@@ -12,18 +12,27 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
- *  A result is very similar to an {@link Optional} in that it can either contain a value or not,
+ *  A {@link Result} is very similar to an {@link Optional} in that it can either contain an item or not,
  *  with the difference being that a result can also contain a list of {@link Problem}s
- *  which describe what went wrong in the process of obtaining the value wrapped by the result.
- *  So usually, if the result is not present, there will most likely be a list of {@link Problem}s
- *  explaining why the value is not present and what went wrong.
+ *  which describe what went wrong in the process of getting the item wrapped by the result.
+ *  So usually, if the result is not present, there will most likely be one or more {@link Problem}s
+ *  explaining why the value is not present and what went wrong. But the result may also be
+ *  just empty, exactly like an {@link Optional}.
  *  &lt;br&gt;
- *  The {@link Result} relies on this {@link Problem} type instead of
- *  raw {@link Exception} types, due to the fact that not every runtime issue is
+ *  The {@link Result} relies on the custom {@link Problem} type instead of
+ *  raw {@link Exception} types, because not every runtime issue is
  *  or should necessarily be produced by an exception.
  *  If you do not want to disturb the control flow of your application
- *  by throwing an exception, you can simply create a {@link Problem} as part of a {@link Result}
- *  and continue processing as usual.
+ *  by throwing an exception, you can create a {@link Problem} as part of a {@link Result}
+ *  and continue processing as usual.&lt;br&gt;
+ *  Another very common use case is to use a {@link Result} instead of checked exceptions
+ *  as part of an API that values both compile time enforced error handling and developer experience.
+ *  A result may catch and wrap an internal system exception to avoid disturbing the control flow
+ *  of the API consumers while at the same time confronting the API user with the fact that a problem may exist.
+ *  There, a {@link Result} exposes a versatile API for handling all possible (non-fatal) scenarios.
+ *  This is especially important in cases where the consumer has no control over these errors and cannot handle them in
+ *  any meaningful way, but instead just wants to opt-into an alternative value through methods like
+ *  {@link Result#orElse(Object)}, or {@link Result#orElseGet(Supplier)}.
  *
  * @param &lt;V&gt; The type of the item wrapped by this result.
  */
@@ -39,8 +48,8 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
      * @throws NullPointerException if the type is null.
      */
     static &lt;V&gt; Result&lt;V&gt; of( Class&lt;V&gt; type ) {
-<span class="fc" id="L42">        Objects.requireNonNull(type);</span>
-<span class="fc" id="L43">        return Sprouts.factory().resultOf(type);</span>
+<span class="fc" id="L51">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L52">        return Sprouts.factory().resultOf(type);</span>
     }
 
     /**
@@ -51,8 +60,8 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
      * @throws NullPointerException if the value is null.
      */
     static &lt;V&gt; Result&lt;V&gt; of( V value ) {
-<span class="fc" id="L54">        Objects.requireNonNull(value);</span>
-<span class="fc" id="L55">        return Sprouts.factory().resultOf(value);</span>
+<span class="fc" id="L63">        Objects.requireNonNull(value);</span>
+<span class="fc" id="L64">        return Sprouts.factory().resultOf(value);</span>
     }
 
     /**
@@ -67,8 +76,8 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
      * @throws NullPointerException if the type is null.
      */
     static &lt;V&gt; Result&lt;V&gt; of( Class&lt;V&gt; type, @Nullable V value ) {
-<span class="fc" id="L70">        Objects.requireNonNull(type);</span>
-<span class="fc" id="L71">        return Sprouts.factory().resultOf(type, value);</span>
+<span class="fc" id="L79">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L80">        return Sprouts.factory().resultOf(type, value);</span>
     }
 
     /**
@@ -80,8 +89,8 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
      * @throws NullPointerException if the value or problems are null.
      */
     static &lt;V&gt; Result&lt;V&gt; of( V value, Iterable&lt;Problem&gt; problems ) {
-<span class="fc" id="L83">        Objects.requireNonNull(value);</span>
-<span class="fc" id="L84">        return Sprouts.factory().resultOf(value, problems);</span>
+<span class="fc" id="L92">        Objects.requireNonNull(value);</span>
+<span class="fc" id="L93">        return Sprouts.factory().resultOf(value, problems);</span>
     }
 
     /**
@@ -93,8 +102,8 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
      * @throws NullPointerException if the type or problems are null.
      */
     static &lt;V&gt; Result&lt;V&gt; of( Class&lt;V&gt; type, Iterable&lt;Problem&gt; problems ) {
-<span class="fc" id="L96">        Objects.requireNonNull(type);</span>
-<span class="fc" id="L97">        return Sprouts.factory().resultOf(type, problems);</span>
+<span class="fc" id="L105">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L106">        return Sprouts.factory().resultOf(type, problems);</span>
     }
 
     /**
@@ -107,8 +116,8 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
      * @throws NullPointerException if the type or problems are null.
      */
     static &lt;V&gt; Result&lt;V&gt; of( Class&lt;V&gt; type, @Nullable V value, Iterable&lt;Problem&gt; problems ) {
-<span class="fc" id="L110">        Objects.requireNonNull(type);</span>
-<span class="fc" id="L111">        return Sprouts.factory().resultOf(type, value, problems);</span>
+<span class="fc" id="L119">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L120">        return Sprouts.factory().resultOf(type, value, problems);</span>
     }
 
     /**
@@ -121,9 +130,9 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
      * @throws NullPointerException if any of the parameters are null.
      */
     static &lt;V&gt; Result&lt;V&gt; of( Class&lt;V&gt; type, @Nullable V value, Problem problem ) {
-<span class="nc" id="L124">        Objects.requireNonNull(type);</span>
-<span class="nc" id="L125">        Objects.requireNonNull(problem);</span>
-<span class="nc" id="L126">        return Sprouts.factory().resultOf(type, value, problem);</span>
+<span class="nc" id="L133">        Objects.requireNonNull(type);</span>
+<span class="nc" id="L134">        Objects.requireNonNull(problem);</span>
+<span class="nc" id="L135">        return Sprouts.factory().resultOf(type, value, problem);</span>
     }
 
     /**
@@ -135,9 +144,9 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
      * @throws NullPointerException if any of the parameters are null.
      */
     static &lt;V&gt; Result&lt;V&gt; of( Class&lt;V&gt; type, Problem problem ) {
-<span class="nc" id="L138">        Objects.requireNonNull(type);</span>
-<span class="nc" id="L139">        Objects.requireNonNull(problem);</span>
-<span class="nc" id="L140">        return Sprouts.factory().resultOf(type, problem);</span>
+<span class="nc" id="L147">        Objects.requireNonNull(type);</span>
+<span class="nc" id="L148">        Objects.requireNonNull(problem);</span>
+<span class="nc" id="L149">        return Sprouts.factory().resultOf(type, problem);</span>
     }
 
     /**
@@ -149,9 +158,9 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
      * @throws NullPointerException if any of the parameters are null.
      */
     static &lt;V&gt; Result&lt;List&lt;V&gt;&gt; ofList( Class&lt;V&gt; type, Problem problem ) {
-<span class="nc" id="L152">        Objects.requireNonNull(type);</span>
-<span class="nc" id="L153">        Objects.requireNonNull(problem);</span>
-<span class="nc" id="L154">        return Sprouts.factory().resultOfList(type, problem);</span>
+<span class="nc" id="L161">        Objects.requireNonNull(type);</span>
+<span class="nc" id="L162">        Objects.requireNonNull(problem);</span>
+<span class="nc" id="L163">        return Sprouts.factory().resultOfList(type, problem);</span>
     }
 
     /**
@@ -165,13 +174,13 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
      * @throws NullPointerException if any of the parameters are null.
      */
     static &lt;V&gt; Result&lt;List&lt;V&gt;&gt; ofList( Class&lt;V&gt; type, List&lt;V&gt; list ) {
-<span class="fc" id="L168">        Objects.requireNonNull(type);</span>
-<span class="fc" id="L169">        Objects.requireNonNull(list);</span>
+<span class="fc" id="L177">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L178">        Objects.requireNonNull(list);</span>
         // We check the types of the list elements are of the correct type.
-<span class="fc" id="L171">        boolean matches = list.stream().filter(Objects::nonNull).allMatch(e -&gt; type.isAssignableFrom(e.getClass()));</span>
-<span class="pc bpc" id="L172" title="1 of 2 branches missed.">        if ( !matches )</span>
-<span class="nc" id="L173">            throw new IllegalArgumentException(&quot;List elements must be of type &quot; + type.getName());</span>
-<span class="fc" id="L174">        return Sprouts.factory().resultOfList(type, list);</span>
+<span class="fc" id="L180">        boolean matches = list.stream().filter(Objects::nonNull).allMatch(e -&gt; type.isAssignableFrom(e.getClass()));</span>
+<span class="pc bpc" id="L181" title="1 of 2 branches missed.">        if ( !matches )</span>
+<span class="nc" id="L182">            throw new IllegalArgumentException(&quot;List elements must be of type &quot; + type.getName());</span>
+<span class="fc" id="L183">        return Sprouts.factory().resultOfList(type, list);</span>
     }
 
     /**
@@ -186,30 +195,37 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
      * @throws NullPointerException if any of the parameters are null.
      */
     static &lt;V&gt; Result&lt;List&lt;V&gt;&gt; ofList( Class&lt;V&gt; type, List&lt;V&gt; list, Iterable&lt;Problem&gt; problems ) {
-<span class="fc" id="L189">        Objects.requireNonNull(type);</span>
-<span class="fc" id="L190">        Objects.requireNonNull(list);</span>
-<span class="fc" id="L191">        boolean matches = list.stream().filter(Objects::nonNull).allMatch(e -&gt; type.isAssignableFrom(e.getClass()));</span>
-<span class="pc bpc" id="L192" title="1 of 2 branches missed.">        if ( !matches )</span>
-<span class="nc" id="L193">            throw new IllegalArgumentException(&quot;List elements must be of type &quot; + type.getName());</span>
+<span class="fc" id="L198">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L199">        Objects.requireNonNull(list);</span>
+<span class="fc" id="L200">        boolean matches = list.stream().filter(Objects::nonNull).allMatch(e -&gt; type.isAssignableFrom(e.getClass()));</span>
+<span class="pc bpc" id="L201" title="1 of 2 branches missed.">        if ( !matches )</span>
+<span class="nc" id="L202">            throw new IllegalArgumentException(&quot;List elements must be of type &quot; + type.getName());</span>
 
-<span class="fc" id="L195">        return Sprouts.factory().resultOfList(type, list, problems);</span>
+<span class="fc" id="L204">        return Sprouts.factory().resultOfList(type, list, problems);</span>
     }
 
     /**
-     *  A factory method for creating a result from a {@link Supplier} which may throw an exception.
+     *  A factory method for creating a {@link Result} from a {@link ResultItemSupplier}
+     *  lambda which may throw a checked or unchecked {@link Exception}, but won't break
+     *  the control flow of your application.&lt;br&gt;
      *  If the supplier throws an exception, the exception is caught and a new result is returned
-     *  with the exception as a problem.
+     *  with the exception as a problem.&lt;br&gt;
+     *  &lt;b&gt;Note that this does not catch {@link Error} subtypes, like {@link OutOfMemoryError} or
+     *  {@link StackOverflowError} because they represent severe platform errors, which are
+     *  considered unrecoverable problems that applications should not typically attempt to handle.&lt;/b&gt;&lt;br&gt;
+     *  Only application errors ({@link Exception}s) are caught and wrapped safely as {@link Result}.
      *
      * @param type The type of the value returned from the supplier.
-     * @param supplier The supplier to obtain the value from.
+     * @param supplier The supplier to get the value from,
+     *                 which may throw a {@link RuntimeException} or checked {@link Exception}.
      * @return A new result with the value obtained from the supplier and a list of problems describing related issues.
      * @param &lt;V&gt; The type of the value returned from the supplier.
      * @throws NullPointerException if the type or supplier is null.
      */
-    static &lt;V&gt; Result&lt;V&gt; ofTry( Class&lt;V&gt; type, Supplier&lt;V&gt; supplier ) {
-<span class="fc" id="L210">        Objects.requireNonNull(type);</span>
-<span class="fc" id="L211">        Objects.requireNonNull(supplier);</span>
-<span class="fc" id="L212">        return Sprouts.factory().resultOfTry(type, supplier);</span>
+    static &lt;V&gt; Result&lt;V&gt; ofTry( Class&lt;V&gt; type, ResultItemSupplier&lt;V&gt; supplier ) {
+<span class="fc" id="L226">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L227">        Objects.requireNonNull(supplier);</span>
+<span class="fc" id="L228">        return Sprouts.factory().resultOfTry(type, supplier);</span>
     }
 
     /**
@@ -218,7 +234,7 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
      *  the value wrapped by this result.
      *  &lt;p&gt;
      *  Note that a result may be present but still have problems,
-     *  in which case the problems list is not empty.
+     *  in which case the problem list is not empty.
      *
      *  @return The list of {@link Problem}s associated with this result item.
      */
@@ -230,17 +246,17 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
      *  the value wrapped by this result.
      *  &lt;p&gt;
      *  Note that a result may be present but still have problems,
-     *  in which case the problems list is not empty.
+     *  in which case the problem list is not empty.
      *
      *  @return {@code true} if this result is present, {@code false} otherwise.
      */
-<span class="nc bnc" id="L237" title="All 2 branches missed.">    default boolean hasProblems() { return !problems().isEmpty(); }</span>
+<span class="nc bnc" id="L253" title="All 2 branches missed.">    default boolean hasProblems() { return !problems().isEmpty(); }</span>
 
     /**
      *  Allows you to peek at the list of problems associated with this result
      *  through a {@link Consumer} which receives the list of all problems.
      *  If an exception is thrown during the process of peeking at the problems,
-     *  the exception is caught, logged and a new result is returned
+     *  then the exception is caught, logged, and a new result is returned
      *  with the exception as a problem.
      *  &lt;p&gt;
      *  This method is useful for debugging and logging purposes.
@@ -252,8 +268,8 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
     Result&lt;V&gt; peekAtProblems( Consumer&lt;Tuple&lt;Problem&gt;&gt; consumer );
 
     /**
-     *  Allows you to peek at each individual problem associated with this result
-     *  through a {@link Consumer} which receives a single problem at a time.
+     *  Allows you to peek at each problem inside this result
+     *  through a {@link Consumer} which receives one problem at a time.
      *  Any exceptions thrown during the process of peeking at the problems are caught
      *  logged and then returned as new problems inside a new result.
      *  &lt;p&gt;

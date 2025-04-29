@@ -145,163 +145,23 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Maybe&lt;T&gt; {
     }
 
     /**
-     * Creates a read-only {@link Val} property that represents a live view of the two given properties using a
-     * combiner function.
-     * &lt;p&gt;
-     * The combiner function takes the items of the two properties and returns an updated item based on them.
-     * The combiner is called to compute a new item for the view property whenever at least one of the items
-     * in the two properties changes, or whenever a manual change event is fired (see {@link Var#fireChange(Channel)})
-     * on either of the two properties.
-     * &lt;p&gt;
-     * Note: The property view does &lt;b&gt;not&lt;/b&gt; allow storing {@code null} references!
-     * So if the combiner function returns a {@code null} reference or throws an exception on the first call,
-     * a {@link NullPointerException} will be thrown.
-     * If a {@code null} reference is returned on subsequent calls, the view will log a warning and simply retain the
-     * last non-null value!
-     * &lt;p&gt;
-     * If you need a composite view that allows {@code null}, use the {@link #viewOfNullable(Val, Val, BiFunction)}
-     * method instead.
-     *
-     * @param first    The first property to be combined.
-     * @param second   The second property to be combined.
-     * @param combiner The function used to combine the items of the two properties,
-     *                 where the first argument is the item of the first property and
-     *                 the second argument is the item of the second property.
-     * @param &lt;T&gt;      The type of the item of the first property and the returned property.
-     * @param &lt;U&gt;      The type of the second property.
-     * @return A new {@link Val} instance which is a live view of the two given properties.
-     * @throws NullPointerException If the combiner function returns a {@code null} reference
-     *                              &lt;b&gt;when it is first called&lt;/b&gt;.
-     */
-    static &lt;T extends @Nullable Object, U extends @Nullable Object&gt; Viewable&lt;@NonNull T&gt; viewOf( Val&lt;T&gt; first, Val&lt;U&gt; second, BiFunction&lt;T, U, @NonNull T&gt; combiner ) {
-<span class="fc" id="L177">        Objects.requireNonNull(first);</span>
-<span class="fc" id="L178">        Objects.requireNonNull(second);</span>
-<span class="fc" id="L179">        Objects.requireNonNull(combiner);</span>
-<span class="fc" id="L180">        return Sprouts.factory().viewOf( first, second, combiner );</span>
-    }
-
-    /**
-     * Creates a read-only nullable {@link Val} property that represents a live view of the two given properties using a
-     * combiner function.
-     * &lt;p&gt;
-     * The combiner function takes the items of the two properties and returns an updated item based on them.
-     * The combiner is called to compute a new item for the view property whenever at least one of the items
-     * in the two properties changes, or whenever a manual change event is fired (see {@link Var#fireChange(Channel)})
-     * on either of the two properties.
-     * &lt;p&gt;
-     * Note: The property view does &lt;b&gt;allow&lt;/b&gt; storing {@code null} references!
-     * If the combiner function throws an exception, the view will be set to {@code null}.
-     * &lt;p&gt;
-     * If you need a composite view that does not allow {@code null}, use the {@link #viewOf(Val, Val, BiFunction)}
-     * method instead.
-     *
-     * @param first    The first property to be combined.
-     * @param second   The second property to be combined.
-     * @param combiner The function used to combine the items of the two properties,
-     *                 where the first argument is the item of the first property and
-     *                 the second argument is the item of the second property.
-     * @param &lt;T&gt;      The type of the item of the first property and the returned property.
-     * @param &lt;U&gt;      The type of the second property.
-     * @return A new nullable {@link Viewable} instance which is a live view of the two given properties.
-     */
-    static &lt;T extends @Nullable Object, U extends @Nullable Object&gt; Viewable&lt;@Nullable T&gt; viewOfNullable(
-            Val&lt;T&gt; first, Val&lt;U&gt; second, BiFunction&lt;T, U, @Nullable T&gt; combiner
-    ) {
-<span class="fc" id="L210">        Objects.requireNonNull(first);</span>
-<span class="fc" id="L211">        Objects.requireNonNull(second);</span>
-<span class="fc" id="L212">        Objects.requireNonNull(combiner);</span>
-<span class="fc" id="L213">        return Sprouts.factory().viewOfNullable( first, second, combiner );</span>
-    }
-
-    /**
-     * Creates a read-only {@link Val} property that represents a live view of the two given properties using a
-     * combiner function.
-     * &lt;p&gt;
-     * The combiner function takes the items of the two properties and returns an updated item based on them.
-     * The combiner is called to compute a new item for the view property whenever at least one of the items
-     * in the two properties changes, or whenever a manual change event is fired (see {@link Var#fireChange(Channel)})
-     * on either of the two properties.
-     * &lt;p&gt;
-     * Note: The property view does &lt;b&gt;not&lt;/b&gt; allow storing {@code null} references!
-     * So if the combiner function returns a {@code null} reference on the first call, a {@link NullPointerException}
-     * will be thrown.
-     * If a {@code null} reference is returned on subsequent calls, the view will log a warning and simply retain the
-     * last non-null value!
-     * &lt;p&gt;
-     * If you need a composite view that allows {@code null}, use the {@link #viewOfNullable(Class, Val, Val, BiFunction)}
-     * method instead.
-     *
-     * @param type     The type of the item returned from the mapping function.
-     * @param first    The first property to be combined.
-     * @param second   The second property to be combined.
-     * @param combiner The function used to combine the items of the two properties,
-     *                 where the first argument is the item of the first property and
-     *                 the second argument is the item of the second property.
-     * @param &lt;T&gt;      The type of the first property.
-     * @param &lt;U&gt;      The type of the second property.
-     * @param &lt;R&gt;      The type of the returned property.
-     * @return A new {@link Viewable} instance which is a live view of the two given properties.
-     * @throws NullPointerException If the combiner function returns a {@code null} reference
-     *                              &lt;b&gt;when it is first called&lt;/b&gt;.
-     */
-    static &lt;T extends @Nullable Object, U extends @Nullable Object, R&gt; Viewable&lt;R&gt; viewOf(Class&lt;R&gt; type, Val&lt;T&gt; first, Val&lt;U&gt; second, BiFunction&lt;T, U, R&gt; combiner ) {
-<span class="fc" id="L248">        Objects.requireNonNull(type);</span>
-<span class="fc" id="L249">        Objects.requireNonNull(first);</span>
-<span class="fc" id="L250">        Objects.requireNonNull(second);</span>
-<span class="fc" id="L251">        Objects.requireNonNull(combiner);</span>
-<span class="fc" id="L252">        return Sprouts.factory().viewOf( type, first, second, combiner );</span>
-    }
-
-    /**
-     * Creates a read-only nullable {@link Val} property that represents a live view of the two given properties using a
-     * combiner function.
-     * &lt;p&gt;
-     * The combiner function takes the items of the two properties and returns an updated item based on them.
-     * The combiner is called to compute a new item for the view property whenever at least one of the items
-     * in the two properties changes, or whenever a manual change event is fired (see {@link Var#fireChange(Channel)})
-     * on either of the two properties.
-     * &lt;p&gt;
-     * Note: The property view does &lt;b&gt;allow&lt;/b&gt; storing {@code null} references!
-     * If the combiner function throws an exception, the view will be set to {@code null}.
-     * &lt;p&gt;
-     * If you need a composite view that not allows {@code null}, use the {@link #viewOf(Class, Val, Val, BiFunction)}
-     * method instead.
-     *
-     * @param type     The type of the item returned from the mapping function.
-     * @param first    The first property to be combined.
-     * @param second   The second property to be combined.
-     * @param combiner The function used to combine the items of the two properties,
-     *                 where the first argument is the item of the first property and
-     *                 the second argument is the item of the second property.
-     * @param &lt;T&gt;      The type of the first property.
-     * @param &lt;U&gt;      The type of the second property.
-     * @param &lt;R&gt;      The type of the returned property.
-     * @return A new {@link Viewable} instance which is a live view of the two given properties.
-     */
-    static &lt;T extends @Nullable Object, U extends @Nullable Object, R&gt; Viewable&lt;@Nullable R&gt; viewOfNullable(Class&lt;R&gt; type, Val&lt;T&gt; first, Val&lt;U&gt; second, BiFunction&lt;T, U, @Nullable R&gt; combiner ) {
-<span class="fc" id="L282">        Objects.requireNonNull(type);</span>
-<span class="fc" id="L283">        Objects.requireNonNull(first);</span>
-<span class="fc" id="L284">        Objects.requireNonNull(second);</span>
-<span class="fc" id="L285">        Objects.requireNonNull(combiner);</span>
-<span class="fc" id="L286">        return Sprouts.factory().viewOfNullable( type, first, second, combiner );</span>
-    }
-
-    /**
      * This method is intended to be used for when you want to wrap non-nullable types.
      * So if an item is present (not null), it returns the item, otherwise however
      * {@code NoSuchElementException} will be thrown.
      * If you simply want to get the item of this {@link Val} irrespective of
      * it being null or not, use {@link #orElseNull()} to avoid an exception.
-     * However, if this result wraps a nullable type, which is not intended to be null,
+     * However, if this result wraps a potentially nullable type, which is not intended to be null,
      * please use {@link #orElseThrow()} or {@link #orElseThrowUnchecked()} to
-     * make this intention clear to the reader of your code.
-     * The {@link #orElseThrowUnchecked()} method is functionally identical to this method.
+     * make this intention clear to the reader of your code!&lt;br&gt;
+     * The {@link #orElseThrowUnchecked()} method is functionally identical to this method,
+     * but should be preferred in most cases.
      *
      * @return The non-{@code null} item described by this {@code Val}.
      * @throws NoSuchElementException if no item is present.
+     * @see #orElseThrowUnchecked() 
      */
     default @NonNull T get() {
-<span class="fc" id="L304">        return orElseThrowUnchecked();</span>
+<span class="fc" id="L164">        return orElseThrowUnchecked();</span>
     }
 
     /**
@@ -318,17 +178,17 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Maybe&lt;T&gt; {
      */
     @Override
     default Val&lt;T&gt; or( Supplier&lt;? extends Maybe&lt;? extends T&gt;&gt; supplier ) {
-<span class="fc" id="L321">        Objects.requireNonNull(supplier);</span>
-<span class="fc bfc" id="L322" title="All 2 branches covered.">        if ( isPresent() )</span>
-<span class="fc" id="L323">            return this;</span>
+<span class="fc" id="L181">        Objects.requireNonNull(supplier);</span>
+<span class="fc bfc" id="L182" title="All 2 branches covered.">        if ( isPresent() )</span>
+<span class="fc" id="L183">            return this;</span>
 
         @SuppressWarnings(&quot;unchecked&quot;)
-<span class="fc" id="L326">        Maybe&lt;T&gt; r = (Maybe&lt;T&gt;) supplier.get();</span>
-<span class="fc" id="L327">        Objects.requireNonNull(r);</span>
-<span class="pc bpc" id="L328" title="1 of 2 branches missed.">        if ( r instanceof Val )</span>
-<span class="fc" id="L329">            return (Val&lt;T&gt;) r;</span>
+<span class="fc" id="L186">        Maybe&lt;T&gt; r = (Maybe&lt;T&gt;) supplier.get();</span>
+<span class="fc" id="L187">        Objects.requireNonNull(r);</span>
+<span class="pc bpc" id="L188" title="1 of 2 branches missed.">        if ( r instanceof Val )</span>
+<span class="fc" id="L189">            return (Val&lt;T&gt;) r;</span>
         else
-<span class="nc" id="L331">            return Val.ofNullable(r.type(), r.orElseNull());</span>
+<span class="nc" id="L191">            return Val.ofNullable(r.type(), r.orElseNull());</span>
     }
 
     /**
@@ -353,11 +213,11 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Maybe&lt;T&gt; {
      */
     @Override
     default Val&lt;T&gt; map( Function&lt;T, T&gt; mapper ) {
-<span class="nc bnc" id="L356" title="All 2 branches missed.">        if ( !isPresent() )</span>
-<span class="nc" id="L357">            return Val.ofNull( type() );</span>
+<span class="nc bnc" id="L216" title="All 2 branches missed.">        if ( !isPresent() )</span>
+<span class="nc" id="L217">            return Val.ofNull( type() );</span>
 
-<span class="nc" id="L359">        T newValue = mapper.apply( get() );</span>
-<span class="nc bnc" id="L360" title="All 2 branches missed.">        return allowsNull() ? Val.ofNullable( type(), newValue ) : Val.of( newValue );</span>
+<span class="nc" id="L219">        T newValue = mapper.apply( get() );</span>
+<span class="nc bnc" id="L220" title="All 2 branches missed.">        return allowsNull() ? Val.ofNullable( type(), newValue ) : Val.of( newValue );</span>
     }
 
     /**
@@ -382,15 +242,15 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Maybe&lt;T&gt; {
      */
     @Override
     default &lt;U&gt; Val&lt;U&gt; mapTo( Class&lt;U&gt; type, java.util.function.Function&lt;T, U&gt; mapper ) {
-<span class="fc bfc" id="L385" title="All 2 branches covered.">        if ( !isPresent() )</span>
-<span class="fc bfc" id="L386" title="All 2 branches covered.">            return !isMutable() ? Val.ofNull( type ) : Var.ofNull( type );</span>
+<span class="fc bfc" id="L245" title="All 2 branches covered.">        if ( !isPresent() )</span>
+<span class="fc bfc" id="L246" title="All 2 branches covered.">            return !isMutable() ? Val.ofNull( type ) : Var.ofNull( type );</span>
 
-<span class="fc" id="L388">        U newValue = mapper.apply( get() );</span>
+<span class="fc" id="L248">        U newValue = mapper.apply( get() );</span>
 
-<span class="fc bfc" id="L390" title="All 2 branches covered.">        if ( !isMutable() )</span>
-<span class="fc" id="L391">            return Val.ofNullable( type, newValue );</span>
+<span class="fc bfc" id="L250" title="All 2 branches covered.">        if ( !isMutable() )</span>
+<span class="fc" id="L251">            return Val.ofNullable( type, newValue );</span>
         else
-<span class="fc" id="L393">            return Var.ofNullable( type, newValue );</span>
+<span class="fc" id="L253">            return Var.ofNullable( type, newValue );</span>
     }
 
     /**
@@ -398,16 +258,15 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Maybe&lt;T&gt; {
      *  be used for registering change listeners (see {@link Viewable#onChange(Channel, Action)}).&lt;br&gt;
      *  &lt;b&gt;
      *      Warning: &lt;br&gt;
-     *      If you have change listeners registered the {@link Viewable} returned by this method,
-     *      and you do not keep a reference to it,
-     *      then it will be garbage collected alongside all of its change listeners.&lt;br&gt;
-     *      So if there are changes in this property afterwords, the change listeners will not be called!
+     *      If you do not keep a strong reference to the {@link Viewable} returned by this method,
+     *      then it will eventually be garbage collected alongside all of its change listeners.&lt;br&gt;
+     *      So if there are changes in this property afterward, the change listeners will not be called!
      *  &lt;/b&gt;
      * @return A weakly referenced {@link Viewable} to be used for registering
      *         change listeners.
      */
     default Viewable&lt;T&gt; view() {
-<span class="fc" id="L410">        return Sprouts.factory().viewOf(this);</span>
+<span class="fc" id="L269">        return Sprouts.factory().viewOf(this);</span>
     }
 
     /**
@@ -415,10 +274,9 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Maybe&lt;T&gt; {
      *  flag of this property.&lt;br&gt;
      *  &lt;b&gt;
      *      Warning: &lt;br&gt;
-     *      If you have change listeners registered the {@link Viewable} returned by this method,
-     *      and you do not keep a reference to it,
-     *      then it will be garbage collected alongside all of its change listeners.&lt;br&gt;
-     *      So if there are changes in this property afterwords, the change listeners will not be called!
+     *      If you do not keep a strong reference to the {@link Viewable} returned by this method,
+     *      then it will eventually be garbage collected alongside all of its change listeners.&lt;br&gt;
+     *      So if there are changes in this property afterward, the change listeners will not be called!
      *  &lt;/b&gt;
      *
      * @return A live view of the presence of an item in this property in the form
@@ -427,7 +285,7 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Maybe&lt;T&gt; {
      *         the item of the returned property will be updated to reflect the change.
      */
     default Viewable&lt;Boolean&gt; viewIsPresent() {
-<span class="fc" id="L430">        return viewAs(Boolean.class, Objects::nonNull);</span>
+<span class="fc" id="L288">        return viewAs(Boolean.class, Objects::nonNull);</span>
     }
 
     /**
@@ -435,10 +293,9 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Maybe&lt;T&gt; {
      *  flag of this property.&lt;br&gt;
      *  &lt;b&gt;
      *      Warning: &lt;br&gt;
-     *      If you have change listeners registered the {@link Viewable} returned by this method,
-     *      and you do not keep a reference to it,
-     *      then it will be garbage collected alongside all of its change listeners.&lt;br&gt;
-     *      So if there are changes in this property afterwords, the change listeners will not be called!
+     *      If you do not keep a strong reference to the {@link Viewable} returned by this method,
+     *      then it will eventually be garbage collected alongside all of its change listeners.&lt;br&gt;
+     *      So if there are changes in this property afterward, the change listeners will not be called!
      *  &lt;/b&gt;
      *
      * @return A live view of the absence of an item in this property in the form
@@ -447,7 +304,7 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Maybe&lt;T&gt; {
      *         the item of the returned property will be updated to reflect the change.
      */
     default Viewable&lt;Boolean&gt; viewIsEmpty() {
-<span class="fc" id="L450">        return viewAs(Boolean.class, Objects::isNull);</span>
+<span class="fc" id="L307">        return viewAs(Boolean.class, Objects::isNull);</span>
     }
 
     /**
@@ -463,10 +320,9 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Maybe&lt;T&gt; {
      * application, where {@code null} can lead to exceptions and ultimately a confusing user experience.&lt;br&gt;
      *  &lt;b&gt;
      *      Warning: &lt;br&gt;
-     *      If you have change listeners registered the {@link Viewable} returned by this method,
-     *      and you do not keep a reference to it,
-     *      then it will be garbage collected alongside all of its change listeners.&lt;br&gt;
-     *      So if there are changes in this property afterwords, the change listeners will not be called!
+     *      If you do not keep a strong reference to the {@link Viewable} returned by this method,
+     *      then it will eventually be garbage collected alongside all of its change listeners.&lt;br&gt;
+     *      So if there are changes in this property afterward, the change listeners will not be called!
      *  &lt;/b&gt;
      *
      * @param type   The type of the item returned from the mapping function
@@ -475,7 +331,7 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Maybe&lt;T&gt; {
      * @return A property that is a live view of this property based on the provided mapping function.
      */
     default &lt;U&gt; Viewable&lt;U&gt; viewAs( Class&lt;U&gt; type, Function&lt;T, U&gt; mapper ) {
-<span class="fc" id="L478">        return Sprouts.factory().viewOf( type, this, mapper );</span>
+<span class="fc" id="L334">        return Sprouts.factory().viewOf( type, this, mapper );</span>
     }
 
     /**
@@ -492,10 +348,9 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Maybe&lt;T&gt; {
      * application, where {@code null} can lead to exceptions and ultimately a confusing user experience.&lt;br&gt;
      *  &lt;b&gt;
      *      Warning: &lt;br&gt;
-     *      If you have change listeners registered the {@link Viewable} returned by this method,
-     *      and you do not keep a reference to it,
-     *      then it will be garbage collected alongside all of its change listeners.&lt;br&gt;
-     *      So if there are changes in this property afterwords, the change listeners will not be called!
+     *      If you do not keep a strong reference to the {@link Viewable} returned by this method,
+     *      then it will eventually be garbage collected alongside all of its change listeners.&lt;br&gt;
+     *      So if there are changes in this property afterward, the change listeners will not be called!
      *  &lt;/b&gt;
      *
      * @param nullObject The null object to use if no item is present.
@@ -504,7 +359,7 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Maybe&lt;T&gt; {
      * @return A property that is a live view of this property based on the provided mapping function and null object.
      */
     default &lt;U&gt; Viewable&lt;U&gt; view( U nullObject, Function&lt;T, @Nullable U&gt; mapper ) {
-<span class="fc" id="L507">        return view(nullObject, nullObject, mapper);</span>
+<span class="fc" id="L362">        return view(nullObject, nullObject, mapper);</span>
     }
 
     /**
@@ -521,10 +376,9 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Maybe&lt;T&gt; {
      * application, where {@code null} can lead to exceptions and ultimately a confusing user experience.&lt;br&gt;
      *  &lt;b&gt;
      *      Warning: &lt;br&gt;
-     *      If you have change listeners registered the {@link Viewable} returned by this method,
-     *      and you do not keep a reference to it,
-     *      then it will be garbage collected alongside all of its change listeners.&lt;br&gt;
-     *      So if there are changes in this property afterwords, the change listeners will not be called!
+     *      If you do not keep a strong reference to the {@link Viewable} returned by this method,
+     *      then it will eventually be garbage collected alongside all of its change listeners.&lt;br&gt;
+     *      So if there are changes in this property afterward, the change listeners will not be called!
      *  &lt;/b&gt;
      *
      * @param nullObject  The null object to use if no item is present.
@@ -534,7 +388,7 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Maybe&lt;T&gt; {
      * @return A property that is a live view of this property based on the provided mapping function and null object.
      */
     default &lt;U&gt; Viewable&lt;U&gt; view( U nullObject, U errorObject, Function&lt;T, @Nullable U&gt; mapper ) {
-<span class="fc" id="L537">        return Sprouts.factory().viewOf(nullObject, errorObject, this, mapper);</span>
+<span class="fc" id="L391">        return Sprouts.factory().viewOf(nullObject, errorObject, this, mapper);</span>
     }
 
 
@@ -545,10 +399,9 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Maybe&lt;T&gt; {
      * mapping function.&lt;br&gt;
      *  &lt;b&gt;
      *      Warning: &lt;br&gt;
-     *      If you have change listeners registered the {@link Viewable} returned by this method,
-     *      and you do not keep a reference to it,
-     *      then it will be garbage collected alongside all of its change listeners.&lt;br&gt;
-     *      So if there are changes in this property afterwords, the change listeners will not be called!
+     *      If you do not keep a strong reference to the {@link Viewable} returned by this method,
+     *      then it will eventually be garbage collected alongside all of its change listeners.&lt;br&gt;
+     *      So if there are changes in this property afterward, the change listeners will not be called!
      *  &lt;/b&gt;
      *
      * @param type   The type of the value returned from the mapping function
@@ -557,7 +410,7 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Maybe&lt;T&gt; {
      * @return A nullable property that is a live view of this property based on the provided mapping function.
      */
     default &lt;U&gt; Viewable&lt;@Nullable U&gt; viewAsNullable( Class&lt;U&gt; type, Function&lt;T, @Nullable U&gt; mapper ) {
-<span class="fc" id="L560">        return Sprouts.factory().viewOfNullable( type, this, mapper );</span>
+<span class="fc" id="L413">        return Sprouts.factory().viewOfNullable( type, this, mapper );</span>
     }
 
     /**
@@ -582,17 +435,16 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Maybe&lt;T&gt; {
      *  Otherwise, it will throw an exception when trying to map a null reference.&lt;br&gt;
      *  &lt;b&gt;
      *      Warning: &lt;br&gt;
-     *      If you have change listeners registered the {@link Viewable} returned by this method,
-     *      and you do not keep a reference to it,
-     *      then it will be garbage collected alongside all of its change listeners.&lt;br&gt;
-     *      So if there are changes in this property afterwords, the change listeners will not be called!
+     *      If you do not keep a strong reference to the {@link Viewable} returned by this method,
+     *      then it will eventually be garbage collected alongside all of its change listeners.&lt;br&gt;
+     *      So if there are changes in this property afterward, the change listeners will not be called!
      *  &lt;/b&gt;
      *
      * @param mapper the mapping function to apply to an item, if present
      * @return A property that is a live view of this property based on the provided mapping function.
      */
     default Viewable&lt;T&gt; view( Function&lt;T, T&gt; mapper ) {
-<span class="fc" id="L595">        return viewAs( type(), mapper );</span>
+<span class="fc" id="L447">        return viewAs( type(), mapper );</span>
     }
 
     /**
@@ -610,10 +462,9 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Maybe&lt;T&gt; {
      * application, where {@code null} can lead to exceptions and ultimately a confusing user experience.&lt;br&gt;
      *  &lt;b&gt;
      *      Warning: &lt;br&gt;
-     *      If you have change listeners registered the {@link Viewable} returned by this method,
-     *      and you do not keep a reference to it,
-     *      then it will be garbage collected alongside all of its change listeners.&lt;br&gt;
-     *      So if there are changes in this property afterwords, the change listeners will not be called!
+     *      If you do not keep a strong reference to the {@link Viewable} returned by this method,
+     *      then it will eventually be garbage collected alongside all of its change listeners.&lt;br&gt;
+     *      So if there are changes in this property afterward, the change listeners will not be called!
      *  &lt;/b&gt;
      *
      * @param nullObject The null object to use if the mapping function returns {@code null}.
@@ -621,8 +472,8 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Maybe&lt;T&gt; {
      * @return A property that is a live view of this property based on the provided mapping function.
      */
     default Viewable&lt;String&gt; viewAsString( String nullObject, Function&lt;T, @Nullable String&gt; mapper ) {
-<span class="fc" id="L624">        Objects.requireNonNull(nullObject);</span>
-<span class="fc" id="L625">        return view(nullObject, nullObject, mapper);</span>
+<span class="fc" id="L475">        Objects.requireNonNull(nullObject);</span>
+<span class="fc" id="L476">        return view(nullObject, nullObject, mapper);</span>
     }
 
     /**
@@ -640,17 +491,16 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Maybe&lt;T&gt; {
      * application, where {@code null} can lead to exceptions and ultimately a confusing user experience.&lt;br&gt;
      *  &lt;b&gt;
      *      Warning: &lt;br&gt;
-     *      If you have change listeners registered the {@link Viewable} returned by this method,
-     *      and you do not keep a reference to it,
-     *      then it will be garbage collected alongside all of its change listeners.&lt;br&gt;
-     *      So if there are changes in this property afterwords, the change listeners will not be called!
+     *      If you do not keep a strong reference to the {@link Viewable} returned by this method,
+     *      then it will eventually be garbage collected alongside all of its change listeners.&lt;br&gt;
+     *      So if there are changes in this property afterward, the change listeners will not be called!
      *  &lt;/b&gt;
      *
      * @param mapper The mapping function to map the item of this property to a {@link String}.
      * @return A property that is a live view of this property based on the provided mapping function.
      */
     default Viewable&lt;String&gt; viewAsString( Function&lt;T, @Nullable String&gt; mapper ) {
-<span class="fc" id="L653">        return view(&quot;&quot;, &quot;&quot;, mapper);</span>
+<span class="fc" id="L503">        return view(&quot;&quot;, &quot;&quot;, mapper);</span>
     }
 
     /**
@@ -667,16 +517,15 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Maybe&lt;T&gt; {
      * application, where {@code null} can lead to exceptions and ultimately a confusing user experience.&lt;br&gt;
      *  &lt;b&gt;
      *      Warning: &lt;br&gt;
-     *      If you have change listeners registered the {@link Viewable} returned by this method,
-     *      and you do not keep a reference to it,
-     *      then it will be garbage collected alongside all of its change listeners.&lt;br&gt;
-     *      So if there are changes in this property afterwords, the change listeners will not be called!
+     *      If you do not keep a strong reference to the {@link Viewable} returned by this method,
+     *      then it will eventually be garbage collected alongside all of its change listeners.&lt;br&gt;
+     *      So if there are changes in this property afterward, the change listeners will not be called!
      *  &lt;/b&gt;
      *
      * @return A property that is a live view of this property based on the provided mapping function.
      */
     default Viewable&lt;String&gt; viewAsString() {
-<span class="fc bfc" id="L679" title="All 2 branches covered.">        return view(&quot;&quot;, &quot;&quot;, v -&gt; v == null ? null  : v.toString());}</span>
+<span class="fc bfc" id="L528" title="All 2 branches covered.">        return view(&quot;&quot;, &quot;&quot;, v -&gt; v == null ? null  : v.toString());}</span>
 
     /**
      * Use this to create a {@link Double} based live view of this property through a new property based on the
@@ -693,10 +542,9 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Maybe&lt;T&gt; {
      * application, where {@code null} can lead to exceptions and ultimately a confusing user experience.&lt;br&gt;
      *  &lt;b&gt;
      *      Warning: &lt;br&gt;
-     *      If you have change listeners registered the {@link Viewable} returned by this method,
-     *      and you do not keep a reference to it,
-     *      then it will be garbage collected alongside all of its change listeners.&lt;br&gt;
-     *      So if there are changes in this property afterwords, the change listeners will not be called!
+     *      If you do not keep a strong reference to the {@link Viewable} returned by this method,
+     *      then it will eventually be garbage collected alongside all of its change listeners.&lt;br&gt;
+     *      So if there are changes in this property afterward, the change listeners will not be called!
      *  &lt;/b&gt;
      *
      * @param nullObject The null object to use if the mapping function returns {@code null}.
@@ -704,7 +552,7 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Maybe&lt;T&gt; {
      * @return A property that is a live view of this property based on the provided mapping function.
      */
     default Viewable&lt;Double&gt; viewAsDouble( double nullObject, Function&lt;T, @Nullable Double&gt; mapper ) {
-<span class="fc" id="L707">        return view(nullObject, Double.NaN, mapper);</span>
+<span class="fc" id="L555">        return view(nullObject, Double.NaN, mapper);</span>
     }
 
     /**
@@ -723,17 +571,16 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Maybe&lt;T&gt; {
      * application, where {@code null} can lead to exceptions and ultimately a confusing user experience.&lt;br&gt;
      *  &lt;b&gt;
      *      Warning: &lt;br&gt;
-     *      If you have change listeners registered the {@link Viewable} returned by this method,
-     *      and you do not keep a reference to it,
-     *      then it will be garbage collected alongside all of its change listeners.&lt;br&gt;
-     *      So if there are changes in this property afterwords, the change listeners will not be called!
+     *      If you do not keep a strong reference to the {@link Viewable} returned by this method,
+     *      then it will eventually be garbage collected alongside all of its change listeners.&lt;br&gt;
+     *      So if there are changes in this property afterward, the change listeners will not be called!
      *  &lt;/b&gt;
      *
      * @param mapper The mapping function to map the item of this property to a {@link Double}.
      * @return A property that is a live view of this property based on the provided mapping function.
      */
     default Viewable&lt;Double&gt; viewAsDouble( Function&lt;T, @Nullable Double&gt; mapper ) {
-<span class="fc" id="L736">        return view(0.0, Double.NaN, mapper);</span>
+<span class="fc" id="L583">        return view(0.0, Double.NaN, mapper);</span>
     }
 
     /**
@@ -751,16 +598,15 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Maybe&lt;T&gt; {
      * application, where {@code null} can lead to exceptions and ultimately a confusing user experience.&lt;br&gt;
      *  &lt;b&gt;
      *      Warning: &lt;br&gt;
-     *      If you have change listeners registered the {@link Viewable} returned by this method,
-     *      and you do not keep a reference to it,
-     *      then it will be garbage collected alongside all of its change listeners.&lt;br&gt;
-     *      So if there are changes in this property afterwords, the change listeners will not be called!
+     *      If you do not keep a strong reference to the {@link Viewable} returned by this method,
+     *      then it will eventually be garbage collected alongside all of its change listeners.&lt;br&gt;
+     *      So if there are changes in this property afterward, the change listeners will not be called!
      *  &lt;/b&gt;
      *
      * @return A {@link Double} property that is a live view of this property.
      */
     default Viewable&lt;Double&gt; viewAsDouble() {
-<span class="fc bfc" id="L763" title="All 2 branches covered.">        return view( 0.0, Double.NaN, v -&gt; v == null ? null : Double.parseDouble( v.toString() ));</span>
+<span class="fc bfc" id="L609" title="All 2 branches covered.">        return view( 0.0, Double.NaN, v -&gt; v == null ? null : Double.parseDouble( v.toString() ));</span>
     }
 
     /**
@@ -778,10 +624,9 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Maybe&lt;T&gt; {
      * application, where {@code null} can lead to exceptions and ultimately a confusing user experience.&lt;br&gt;
      *  &lt;b&gt;
      *      Warning: &lt;br&gt;
-     *      If you have change listeners registered the {@link Viewable} returned by this method,
-     *      and you do not keep a reference to it,
-     *      then it will be garbage collected alongside all of its change listeners.&lt;br&gt;
-     *      So if there are changes in this property afterwords, the change listeners will not be called!
+     *      If you do not keep a strong reference to the {@link Viewable} returned by this method,
+     *      then it will eventually be garbage collected alongside all of its change listeners.&lt;br&gt;
+     *      So if there are changes in this property afterward, the change listeners will not be called!
      *  &lt;/b&gt;
      *
      * @param nullObject The null object to use if the mapping function returns {@code null}.
@@ -789,7 +634,7 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Maybe&lt;T&gt; {
      * @return A property that is a live view of this property based on the provided mapping function.
      */
     default Viewable&lt;Integer&gt; viewAsInt( int nullObject, Function&lt;T, @Nullable Integer&gt; mapper ) {
-<span class="fc" id="L792">        return view(nullObject, nullObject, mapper);</span>
+<span class="fc" id="L637">        return view(nullObject, nullObject, mapper);</span>
     }
 
     /**
@@ -808,17 +653,16 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Maybe&lt;T&gt; {
      * application, where {@code null} can lead to exceptions and ultimately a confusing user experience.&lt;br&gt;
      *  &lt;b&gt;
      *      Warning: &lt;br&gt;
-     *      If you have change listeners registered the {@link Viewable} returned by this method,
-     *      and you do not keep a reference to it,
-     *      then it will be garbage collected alongside all of its change listeners.&lt;br&gt;
-     *      So if there are changes in this property afterwords, the change listeners will not be called!
+     *      If you do not keep a strong reference to the {@link Viewable} returned by this method,
+     *      then it will eventually be garbage collected alongside all of its change listeners.&lt;br&gt;
+     *      So if there are changes in this property afterward, the change listeners will not be called!
      *  &lt;/b&gt;
      *
      * @param mapper The mapping function to map the item of this property to a {@link Integer}.
      * @return A property that is a live view of this property based on the provided mapping function.
      */
     default Viewable&lt;Integer&gt; viewAsInt( Function&lt;T, @Nullable Integer&gt; mapper ) {
-<span class="fc" id="L821">        return view(0, 0, mapper);</span>
+<span class="fc" id="L665">        return view(0, 0, mapper);</span>
     }
 
     /**
@@ -836,16 +680,15 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Maybe&lt;T&gt; {
      * application, where {@code null} can lead to exceptions and ultimately a confusing user experience.&lt;br&gt;
      *  &lt;b&gt;
      *      Warning: &lt;br&gt;
-     *      If you have change listeners registered the {@link Viewable} returned by this method,
-     *      and you do not keep a reference to it,
-     *      then it will be garbage collected alongside all of its change listeners.&lt;br&gt;
-     *      So if there are changes in this property afterwords, the change listeners will not be called!
+     *      If you do not keep a strong reference to the {@link Viewable} returned by this method,
+     *      then it will eventually be garbage collected alongside all of its change listeners.&lt;br&gt;
+     *      So if there are changes in this property afterward, the change listeners will not be called!
      *  &lt;/b&gt;
      *
      * @return A {@link Integer} property that is a live view of this property.
      */
     default Viewable&lt;Integer&gt; viewAsInt() {
-<span class="fc bfc" id="L848" title="All 2 branches covered.">        return view(0, 0, v -&gt; v == null ? null : Integer.parseInt(v.toString()));</span>
+<span class="fc bfc" id="L691" title="All 2 branches covered.">        return view(0, 0, v -&gt; v == null ? null : Integer.parseInt(v.toString()));</span>
     }
 
     /**
@@ -863,8 +706,8 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Maybe&lt;T&gt; {
      * storing {@code null}, which is not allowed for this view.
      * &lt;p&gt;
      * &lt;b&gt;Warning:&lt;/b&gt; If you register change listeners on the returned view and do not maintain a strong reference
-     * to it, the view along with its listeners may be garbage collected, and subsequent changes to this property
-     * will not trigger the listeners.
+     * to it, the view along with its listeners will eventually be garbage collected, and subsequent changes to
+     * this property will not trigger the listeners.
      *
      * @param type   The class representing the type of the tuple's element. This is used to create a default tuple instance.
      * @param mapper A function that maps the value of this property to a {@link Tuple} of type {@code U}. The function
@@ -874,9 +717,9 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Maybe&lt;T&gt; {
      * @throws NullPointerException if either {@code type} or {@code mapper} is {@code null}.
      */
     default &lt;U&gt; Viewable&lt;Tuple&lt;U&gt;&gt; viewAsTuple( Class&lt;U&gt; type, Function&lt;T, @Nullable Tuple&lt;U&gt;&gt; mapper ) {
-<span class="fc" id="L877">        Objects.requireNonNull(type);</span>
-<span class="fc" id="L878">        Objects.requireNonNull(mapper);</span>
-<span class="fc" id="L879">        return view(Tuple.of(type), Tuple.of(type), mapper);</span>
+<span class="fc" id="L720">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L721">        Objects.requireNonNull(mapper);</span>
+<span class="fc" id="L722">        return view(Tuple.of(type), Tuple.of(type), mapper);</span>
     }
 
     /**
@@ -895,8 +738,8 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Maybe&lt;T&gt; {
      * storing {@code null}, which is not allowed for this view.
      * &lt;p&gt;
      * &lt;b&gt;Warning:&lt;/b&gt; If you register change listeners on the returned view and do not maintain a strong reference
-     * to it, the view along with its listeners may be garbage collected, and subsequent changes to this property
-     * will not trigger the listeners.
+     * to it, the view along with its listeners will eventually be garbage collected, and subsequent changes to
+     * this property will not trigger the listeners.
      *
      * @param keyType   The class representing the type of the association's key. This is used to create a default association instance.
      *                  This parameter must not be {@code null}.
@@ -910,11 +753,43 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Maybe&lt;T&gt; {
      * @throws NullPointerException if either {@code keyType}, {@code valueType}, or {@code mapper} is {@code null}.
      */
     default &lt;K, V&gt; Viewable&lt;Association&lt;K, V&gt;&gt; viewAsAssociation( Class&lt;K&gt; keyType, Class&lt;V&gt; valueType, Function&lt;T, @Nullable Association&lt;K, V&gt;&gt; mapper ) {
-<span class="nc" id="L913">        Objects.requireNonNull(keyType);</span>
-<span class="nc" id="L914">        Objects.requireNonNull(valueType);</span>
-<span class="nc" id="L915">        Objects.requireNonNull(mapper);</span>
-<span class="nc" id="L916">        Association&lt;K, V&gt; empty = Association.between(keyType, valueType);</span>
-<span class="nc" id="L917">        return view(empty, empty, mapper);</span>
+<span class="nc" id="L756">        Objects.requireNonNull(keyType);</span>
+<span class="nc" id="L757">        Objects.requireNonNull(valueType);</span>
+<span class="nc" id="L758">        Objects.requireNonNull(mapper);</span>
+<span class="nc" id="L759">        Association&lt;K, V&gt; empty = Association.between(keyType, valueType);</span>
+<span class="nc" id="L760">        return view(empty, empty, mapper);</span>
+    }
+
+    /**
+     * Creates a live view of this property as a {@link ValueSet} containing items of
+     * the specified type {@code E} using the given mapping function which dynamically maps
+     * the current property item {@code T} to a {@code ValueSet&lt;E&gt;}.&lt;br&gt;
+     * &lt;p&gt;
+     * The resulting {@code Viewable&lt;ValueSet&lt;E&gt;&gt;} is automatically updated whenever the value of this property changes,
+     * meaning that the mapper {@code Function&lt;T, @Nullable ValueSet&lt;E&gt;&gt;} is called with the new property item
+     * and the state of the view is updated with the result of said mapping function.
+     * &lt;p&gt;
+     * The {@code type} parameter is used to obtain a default value set instance (via {@code ValueSet.of(type)}) which serves
+     * both as the fallback null object and error object. This means that if the mapping function returns {@code null}
+     * or throws an exception, the view will retain a default {@code ValueSet} instance instead of propagating
+     * storing {@code null}, which is not allowed for this view.
+     * &lt;p&gt;
+     * &lt;b&gt;Warning:&lt;/b&gt; If you register change listeners on the returned view and do not maintain a strong reference
+     * to it, the view along with its listeners will eventually be garbage collected, and subsequent changes to
+     * this property will not trigger the listeners.
+     *
+     * @param type   The class representing the type of the value set's elements. This is used to create a default value set instance.
+     * @param mapper A function that maps the value of this property to a {@link ValueSet} with type parameter {@code E}.
+     *               The function is expected handle {@code null} values appropriately.
+     * @param &lt;E&gt;    The type of the element within the value set.
+     * @return A live view of this property as a {@link ValueSet} of type {@code E}.
+     * @throws NullPointerException if either {@code type} or {@code mapper} is {@code null}.
+     */
+    default &lt;E&gt; Viewable&lt;ValueSet&lt;E&gt;&gt; viewAsValueSet( Class&lt;E&gt; type, Function&lt;T, @Nullable ValueSet&lt;E&gt;&gt; mapper ) {
+<span class="nc" id="L789">        Objects.requireNonNull(type);</span>
+<span class="nc" id="L790">        Objects.requireNonNull(mapper);</span>
+<span class="nc" id="L791">        ValueSet&lt;E&gt; empty = ValueSet.of(type);</span>
+<span class="nc" id="L792">        return view(empty, empty, mapper);</span>
     }
 
     /**
@@ -950,7 +825,7 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Maybe&lt;T&gt; {
      *                 the id is equal to the {@link Sprouts#defaultId()} constant.
      */
     default boolean hasNoID() {
-<span class="fc bfc" id="L953" title="All 2 branches covered.">        return !hasID();</span>
+<span class="fc bfc" id="L828" title="All 2 branches covered.">        return !hasID();</span>
     }
 
     /**
@@ -960,7 +835,7 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Maybe&lt;T&gt; {
      * @return The truth value determining if this property has been assigned an id,
      *               or if &lt;b&gt;id is not equal to the {@link Sprouts#defaultId()} constant&lt;/b&gt;.
      */
-<span class="fc bfc" id="L963" title="All 2 branches covered.">    default boolean hasID() { return !Sprouts.factory().defaultId().equals(id()); }</span>
+<span class="fc bfc" id="L838" title="All 2 branches covered.">    default boolean hasID() { return !Sprouts.factory().defaultId().equals(id()); }</span>
 
     /**
      *  Triggers all observer lambdas for the given {@link Channel}.
@@ -1016,7 +891,7 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Maybe&lt;T&gt; {
      * @return {@code true}, if this property can not be changed, {@code false} otherwise.
      */
     default boolean isImmutable() {
-<span class="pc bpc" id="L1019" title="1 of 2 branches missed.">        return !this.isMutable();</span>
+<span class="pc bpc" id="L894" title="1 of 2 branches missed.">        return !this.isMutable();</span>
     }
 
     /**
@@ -1029,7 +904,7 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Maybe&lt;T&gt; {
      *
      * @return {@code true}, if this property is a lens, {@code false} otherwise.
      */
-<span class="fc" id="L1032">    default boolean isLens() { return false; }</span>
+<span class="fc" id="L907">    default boolean isLens() { return false; }</span>
 
     /**
      *  This method is used to determine if the property is a view or not.
@@ -1041,7 +916,7 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Maybe&lt;T&gt; {
      *
      * @return {@code true}, if this property is a view, {@code false} otherwise.
      */
-<span class="fc" id="L1044">    default boolean isView() { return false; }</span>
+<span class="fc" id="L919">    default boolean isView() { return false; }</span>
 
     /**
      *  {@link Val} and {@link Var} implementations are expected to represent
@@ -1059,16 +934,16 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Maybe&lt;T&gt; {
      * @return The truth value determining if the objects are equal in terms of their state!
      */
     static boolean equals( @Nullable Object o1, @Nullable Object o2 ) {
-<span class="fc bfc" id="L1062" title="All 2 branches covered.">        if ( o1 instanceof float[]   ) return Arrays.equals( (float[] )  o1, (float[] )  o2 );</span>
-<span class="fc bfc" id="L1063" title="All 2 branches covered.">        if ( o1 instanceof int[]     ) return Arrays.equals( (int[]   )  o1, (int[]   )  o2 );</span>
-<span class="fc bfc" id="L1064" title="All 2 branches covered.">        if ( o1 instanceof char[]    ) return Arrays.equals( (char[]  )  o1, (char[]  )  o2 );</span>
-<span class="fc bfc" id="L1065" title="All 2 branches covered.">        if ( o1 instanceof double[]  ) return Arrays.equals( (double[])  o1, (double[])  o2 );</span>
-<span class="fc bfc" id="L1066" title="All 2 branches covered.">        if ( o1 instanceof long[]    ) return Arrays.equals( (long[]  )  o1, (long[]  )  o2 );</span>
-<span class="pc bpc" id="L1067" title="1 of 2 branches missed.">        if ( o1 instanceof byte[]    ) return Arrays.equals( (byte[]  )  o1, (byte[]  )  o2 );</span>
-<span class="pc bpc" id="L1068" title="1 of 2 branches missed.">        if ( o1 instanceof short[]   ) return Arrays.equals( (short[] )  o1, (short[] )  o2 );</span>
-<span class="fc bfc" id="L1069" title="All 2 branches covered.">        if ( o1 instanceof boolean[] ) return Arrays.equals( (boolean[]) o1, (boolean[]) o2 );</span>
-<span class="fc bfc" id="L1070" title="All 2 branches covered.">        if ( o1 instanceof Object[]  ) return Arrays.equals( (Object[])  o1, (Object[])  o2 );</span>
-<span class="fc" id="L1071">        return Objects.equals( o1, o2 );</span>
+<span class="fc bfc" id="L937" title="All 2 branches covered.">        if ( o1 instanceof float[]   ) return Arrays.equals( (float[] )  o1, (float[] )  o2 );</span>
+<span class="fc bfc" id="L938" title="All 2 branches covered.">        if ( o1 instanceof int[]     ) return Arrays.equals( (int[]   )  o1, (int[]   )  o2 );</span>
+<span class="fc bfc" id="L939" title="All 2 branches covered.">        if ( o1 instanceof char[]    ) return Arrays.equals( (char[]  )  o1, (char[]  )  o2 );</span>
+<span class="fc bfc" id="L940" title="All 2 branches covered.">        if ( o1 instanceof double[]  ) return Arrays.equals( (double[])  o1, (double[])  o2 );</span>
+<span class="fc bfc" id="L941" title="All 2 branches covered.">        if ( o1 instanceof long[]    ) return Arrays.equals( (long[]  )  o1, (long[]  )  o2 );</span>
+<span class="pc bpc" id="L942" title="1 of 2 branches missed.">        if ( o1 instanceof byte[]    ) return Arrays.equals( (byte[]  )  o1, (byte[]  )  o2 );</span>
+<span class="pc bpc" id="L943" title="1 of 2 branches missed.">        if ( o1 instanceof short[]   ) return Arrays.equals( (short[] )  o1, (short[] )  o2 );</span>
+<span class="fc bfc" id="L944" title="All 2 branches covered.">        if ( o1 instanceof boolean[] ) return Arrays.equals( (boolean[]) o1, (boolean[]) o2 );</span>
+<span class="fc bfc" id="L945" title="All 2 branches covered.">        if ( o1 instanceof Object[]  ) return Arrays.equals( (Object[])  o1, (Object[])  o2 );</span>
+<span class="fc" id="L946">        return Objects.equals( o1, o2 );</span>
     }
 
     /**
@@ -1082,16 +957,16 @@ public interface Val&lt;T extends @Nullable Object&gt; extends Maybe&lt;T&gt; {
      * @return The hash code of the object.
      */
     static int hashCode( Object o ) {
-<span class="fc bfc" id="L1085" title="All 2 branches covered.">        if ( o instanceof float[]   ) return Arrays.hashCode( (float[] )  o );</span>
-<span class="fc bfc" id="L1086" title="All 2 branches covered.">        if ( o instanceof int[]     ) return Arrays.hashCode( (int[]   )  o );</span>
-<span class="fc bfc" id="L1087" title="All 2 branches covered.">        if ( o instanceof char[]    ) return Arrays.hashCode( (char[]  )  o );</span>
-<span class="fc bfc" id="L1088" title="All 2 branches covered.">        if ( o instanceof double[]  ) return Arrays.hashCode( (double[])  o );</span>
-<span class="fc bfc" id="L1089" title="All 2 branches covered.">        if ( o instanceof long[]    ) return Arrays.hashCode( (long[]  )  o );</span>
-<span class="pc bpc" id="L1090" title="1 of 2 branches missed.">        if ( o instanceof byte[]    ) return Arrays.hashCode( (byte[]  )  o );</span>
-<span class="pc bpc" id="L1091" title="1 of 2 branches missed.">        if ( o instanceof short[]   ) return Arrays.hashCode( (short[] )  o );</span>
-<span class="fc bfc" id="L1092" title="All 2 branches covered.">        if ( o instanceof boolean[] ) return Arrays.hashCode( (boolean[]) o );</span>
-<span class="fc bfc" id="L1093" title="All 2 branches covered.">        if ( o instanceof Object[]  ) return Arrays.hashCode( (Object[])  o );</span>
-<span class="fc" id="L1094">        return Objects.hashCode( o );</span>
+<span class="fc bfc" id="L960" title="All 2 branches covered.">        if ( o instanceof float[]   ) return Arrays.hashCode( (float[] )  o );</span>
+<span class="fc bfc" id="L961" title="All 2 branches covered.">        if ( o instanceof int[]     ) return Arrays.hashCode( (int[]   )  o );</span>
+<span class="fc bfc" id="L962" title="All 2 branches covered.">        if ( o instanceof char[]    ) return Arrays.hashCode( (char[]  )  o );</span>
+<span class="fc bfc" id="L963" title="All 2 branches covered.">        if ( o instanceof double[]  ) return Arrays.hashCode( (double[])  o );</span>
+<span class="fc bfc" id="L964" title="All 2 branches covered.">        if ( o instanceof long[]    ) return Arrays.hashCode( (long[]  )  o );</span>
+<span class="pc bpc" id="L965" title="1 of 2 branches missed.">        if ( o instanceof byte[]    ) return Arrays.hashCode( (byte[]  )  o );</span>
+<span class="pc bpc" id="L966" title="1 of 2 branches missed.">        if ( o instanceof short[]   ) return Arrays.hashCode( (short[] )  o );</span>
+<span class="fc bfc" id="L967" title="All 2 branches covered.">        if ( o instanceof boolean[] ) return Arrays.hashCode( (boolean[]) o );</span>
+<span class="fc bfc" id="L968" title="All 2 branches covered.">        if ( o instanceof Object[]  ) return Arrays.hashCode( (Object[])  o );</span>
+<span class="fc" id="L969">        return Objects.hashCode( o );</span>
     }
 
 }

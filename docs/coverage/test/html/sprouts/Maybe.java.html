@@ -4,7 +4,6 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import sprouts.impl.Sprouts;
 
-import java.util.Collections;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
@@ -13,12 +12,13 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
- *  The {@link Maybe} interface represents a {@code null} safe view on a thing
- *  which may or may not exist, and it serves as a general blue-print for nomadic types
- *  like the {@link Result} type. &lt;br&gt;
+ *  The {@link Maybe} interface represents a thing of a specific {@link #type()}
+ *  which may or may not exist, and it serves as a {@code null} safe
+ *  blue-print for nomadic types like the {@link Result} type. &lt;br&gt;
+ *  &lt;p&gt;
  *  Its API is very similar to the {@link Optional} type, with the difference
  *  that a {@link Maybe} implementation is always aware of the {@link #type()}
- *  of the thing that is a wrapper for. &lt;br&gt;
+ *  of the thing that it is a wrapper for. &lt;br&gt;
  *  Note that contrary to the popular known {@link Optional} type, a {@link Maybe}
  *  does not have a {@code .get()} method.&lt;br&gt;
  *  Instead, it has a {@link #orElseThrowUnchecked()} method
@@ -49,16 +49,16 @@ public interface Maybe&lt;T&gt;
      * @return A new {@link Maybe} instance.
      * @throws NullPointerException If the type is null.
      */
-    static &lt;T&gt; Maybe&lt;@Nullable T&gt; ofNullable( Class&lt;T&gt; type, @Nullable T item ) {
+    static &lt;T&gt; Maybe&lt;@Nullable T&gt; ofNullable( @NonNull Class&lt;T&gt; type, @Nullable T item ) {
 <span class="fc" id="L53">        Objects.requireNonNull(type);</span>
 <span class="fc" id="L54">        return Sprouts.factory().maybeOfNullable( type, item );</span>
     }
 
     /**
      *  A more concise version of {@link #ofNullable(Class, Object)}
-     *  which is equivalent to {@code Var.ofNullable(type, null)}. &lt;br&gt;
-     *  The {@link Maybe} instances returned by this factory method will be empty,
-     *  but still know which type it represents.&lt;br&gt;
+     *  which is equivalent to {@code Maybe.ofNullable(type, null)}. &lt;br&gt;
+     *  The {@link Maybe} instance returned by this factory method will always
+     *  be empty, but still know which type it represents.&lt;br&gt;
      *  So it is required to supply a {@link Class} to ensure that the wrapper
      *  can return a valid type when {@link Maybe#type()} is called.
      *
@@ -73,9 +73,8 @@ public interface Maybe&lt;T&gt;
     }
 
     /**
-     *     This factory method returns a {@code Maybe} describing the given non-{@code null}
-     *     item similar to {@link Optional#of(Object)}, but specifically
-     *     designed for use with Swing-Tree.
+     *  This factory method creates and returns a {@code Maybe} representing the
+     *  supplied non-{@code null} item similar to {@link Optional#of(Object)}.
      *
      * @param item The initial item of the wrapper which must not be null.
      * @param &lt;T&gt; The type of the item held by the {@link Maybe}!
@@ -83,9 +82,9 @@ public interface Maybe&lt;T&gt;
      * @throws NullPointerException If the supplied item is null.
      *                              Use {@link #ofNullable(Class, Object)} if the item may be null.
      */
-    static &lt;T&gt; Maybe&lt;T&gt; of( T item ) {
-<span class="fc" id="L87">        Objects.requireNonNull(item);</span>
-<span class="fc" id="L88">        return Sprouts.factory().maybeOf( item );</span>
+    static &lt;T&gt; Maybe&lt;T&gt; of( @NonNull T item ) {
+<span class="fc" id="L86">        Objects.requireNonNull(item);</span>
+<span class="fc" id="L87">        return Sprouts.factory().maybeOf( item );</span>
     }
 
     /**
@@ -100,8 +99,8 @@ public interface Maybe&lt;T&gt;
      * @throws NoSuchElementException If the item of the supplied {@link Maybe} is null.
      */
     static &lt;T&gt; Maybe&lt;T&gt; of( Maybe&lt;T&gt; toBeCopied ) {
-<span class="nc" id="L103">        Objects.requireNonNull(toBeCopied);</span>
-<span class="nc" id="L104">        return Sprouts.factory().maybeOf( toBeCopied );</span>
+<span class="nc" id="L102">        Objects.requireNonNull(toBeCopied);</span>
+<span class="nc" id="L103">        return Sprouts.factory().maybeOf( toBeCopied );</span>
     }
 
     /**
@@ -116,8 +115,8 @@ public interface Maybe&lt;T&gt;
      *                              Does not throw however, if the item of the supplied {@link Maybe} is null.
      */
     static &lt;T extends @Nullable Object&gt; Maybe&lt;@Nullable T&gt; ofNullable( Maybe&lt;T&gt; toBeCopied ) {
-<span class="nc" id="L119">        Objects.requireNonNull(toBeCopied);</span>
-<span class="nc" id="L120">        return Sprouts.factory().maybeOfNullable( toBeCopied );</span>
+<span class="nc" id="L118">        Objects.requireNonNull(toBeCopied);</span>
+<span class="nc" id="L119">        return Sprouts.factory().maybeOfNullable( toBeCopied );</span>
     }
 
     /**
@@ -133,7 +132,9 @@ public interface Maybe&lt;T&gt;
      *  interact with the item wrapped by this {@link Maybe} in a more functional way.
      * @return An {@link Optional} wrapping the item wrapped by this {@link Maybe}.
      */
-<span class="fc" id="L136">    default Optional&lt;T&gt; toOptional() { return Optional.ofNullable(this.orElseNull()); }</span>
+    default Optional&lt;T&gt; toOptional() {
+<span class="fc" id="L136">        return Optional.ofNullable(this.orElseNull());</span>
+    }
 
     /**
      * If an item is present, returns the item, otherwise returns
@@ -144,20 +145,23 @@ public interface Maybe&lt;T&gt;
      * @return the item, if present, otherwise {@code other}
      */
     default @Nullable T orElseNullable( @Nullable T other ) {
-<span class="fc bfc" id="L147" title="All 2 branches covered.">        return orElseNull() != null ? Objects.requireNonNull(orElseNull()) : other;</span>
+<span class="fc bfc" id="L148" title="All 2 branches covered.">        return orElseNull() != null ? Objects.requireNonNull(orElseNull()) : other;</span>
     }
 
     /**
      * If an item is present, returns the item, otherwise returns
-     * {@code other}.
+     * {@code other}, &lt;b&gt;but neve {@code null}&lt;/b&gt;. &lt;br&gt;
+     * If the supplied alternative is {@code null},
+     * then this method will throw a {@code NullPointerException}.
      *
      * @param other the item to be returned, if no item is present.
-     *        May not be {@code null}.
+     *        May never be {@code null}.
      * @return the item, if present, otherwise {@code other}
+     * @throws NullPointerException if the supplied alternative is {@code null}.
      */
     default @NonNull T orElse( @NonNull T other ) {
-<span class="fc" id="L159">        Objects.requireNonNull(other);</span>
-<span class="fc bfc" id="L160" title="All 2 branches covered.">        return isPresent() ? orElseThrowUnchecked() : other;</span>
+<span class="fc" id="L163">        Objects.requireNonNull(other);</span>
+<span class="fc bfc" id="L164" title="All 2 branches covered.">        return isPresent() ? orElseThrowUnchecked() : other;</span>
     }
 
     /**
@@ -170,8 +174,9 @@ public interface Maybe&lt;T&gt;
      * @throws NullPointerException if no item is present and the supplying
      *         function is {@code null}
      */
-    default T orElseGet( Supplier&lt;? extends T&gt; supplier ) {
-<span class="fc bfc" id="L174" title="All 2 branches covered.">        return this.isPresent() ? orElseThrowUnchecked() : supplier.get();</span>
+    default T orElseGet( @NonNull Supplier&lt;? extends T&gt; supplier ) {
+<span class="fc" id="L178">        Objects.requireNonNull(supplier);</span>
+<span class="fc bfc" id="L179" title="All 2 branches covered.">        return this.isPresent() ? orElseThrowUnchecked() : supplier.get();</span>
     }
 
     /**
@@ -199,10 +204,10 @@ public interface Maybe&lt;T&gt;
      */
     default @NonNull T orElseThrowUnchecked() {
         // This class is similar to optional, so if the value is null, we throw an exception!
-<span class="fc" id="L202">        T value = orElseNull();</span>
-<span class="fc bfc" id="L203" title="All 2 branches covered.">        if ( Objects.isNull(value) )</span>
-<span class="fc" id="L204">            throw new NoSuchElementException(&quot;No value present&quot;);</span>
-<span class="fc" id="L205">        return value;</span>
+<span class="fc" id="L207">        T value = orElseNull();</span>
+<span class="fc bfc" id="L208" title="All 2 branches covered.">        if ( Objects.isNull(value) )</span>
+<span class="fc" id="L209">            throw new NoSuchElementException(&quot;No value present&quot;);</span>
+<span class="fc" id="L210">        return value;</span>
     }
 
     /**
@@ -224,10 +229,10 @@ public interface Maybe&lt;T&gt;
      */
     default @NonNull T orElseThrow() throws MissingItemException {
         // This class is similar to optional, so if the value is null, we throw an exception!
-<span class="fc" id="L227">        T value = orElseNull();</span>
-<span class="fc bfc" id="L228" title="All 2 branches covered.">        if ( Objects.isNull(value) )</span>
-<span class="fc" id="L229">            throw new MissingItemException(&quot;No value present&quot;, Tuple.of(Problem.class));</span>
-<span class="fc" id="L230">        return value;</span>
+<span class="fc" id="L232">        T value = orElseNull();</span>
+<span class="fc bfc" id="L233" title="All 2 branches covered.">        if ( Objects.isNull(value) )</span>
+<span class="fc" id="L234">            throw new MissingItemException(&quot;No value present&quot;, Tuple.of(Problem.class));</span>
+<span class="fc" id="L235">        return value;</span>
     }
 
     /**
@@ -240,7 +245,7 @@ public interface Maybe&lt;T&gt;
      * @return The {@link String} representation of the item wrapped by an implementation of this interface.
      */
     default String itemAsString() {
-<span class="fc" id="L243">        return this.mapTo(String.class, String::valueOf).orElse(&quot;null&quot;);</span>
+<span class="fc" id="L248">        return this.mapTo(String.class, String::valueOf).orElse(&quot;null&quot;);</span>
     }
 
     /**
@@ -249,16 +254,29 @@ public interface Maybe&lt;T&gt;
      *
      * @return A simple {@link String} representation of the type of the item wrapped by an implementation of this interface.
      */
-<span class="fc" id="L252">    default String typeAsString() { return this.type().getName(); }</span>
+    default String typeAsString() {
+<span class="fc" id="L258">        return this.type().getName();</span>
+    }
 
     /**
-     *  This method check if the provided item is equal to the item wrapped by this {@link Var} instance.
+     *  This method checks if the provided item is equal to the item wrapped by this {@link Maybe}.
+     *  This is functionally equivalent to calling {@code Val.equals(otherItem, orElseNull())}.
+     *  Note that this differs from {@link Objects#equals(Object, Object)} in that
+     *  it also treats the equality of arrays, like {@code int[]}, {@code String[]}, etc.,
+     *  in terms of their contents, not their references. &lt;br&gt;
+     *  So the following code will return true:
+     *  &lt;pre&gt;{@code
+     *    int[] arr1 = {1, 2, 3};
+     *    int[] arr2 = {1, 2, 3};
+     *    boolean equal = Maybe.of(arr1).is(arr2);
+     *    System.out.println( equal ); // == true
+     *  }&lt;/pre&gt;
      *
      * @param otherItem The other item of the same type as is wrapped by this.
      * @return The truth value determining if the provided item is equal to the wrapped item.
      */
     default boolean is( @Nullable T otherItem ) {
-<span class="fc" id="L261">        return Val.equals(otherItem, orElseNull());</span>
+<span class="fc" id="L279">        return Val.equals(otherItem, orElseNull());</span>
     }
 
     /**
@@ -268,7 +286,9 @@ public interface Maybe&lt;T&gt;
      * @param otherItem The other item of the same type as is wrapped by this.
      * @return The truth value determining if the provided item is not equal to the wrapped item.
      */
-<span class="fc bfc" id="L271" title="All 2 branches covered.">    default boolean isNot( @Nullable T otherItem ) { return !is(otherItem); }</span>
+    default boolean isNot( @Nullable T otherItem ) {
+<span class="fc bfc" id="L290" title="All 2 branches covered.">        return !is(otherItem);</span>
+    }
 
     /**
      *  This method check if the item by the provided wrapper
@@ -277,9 +297,9 @@ public interface Maybe&lt;T&gt;
      * @param other The other wrapper of the same type as is wrapped by this.
      * @return The truth value determining if the item of the supplied wrapper is equal to the wrapped item.
      */
-    default boolean is( Maybe&lt;@Nullable T&gt; other ) {
-<span class="fc" id="L281">        Objects.requireNonNull(other);</span>
-<span class="fc" id="L282">        return is( other.orElseNull() );</span>
+    default boolean is( @NonNull Maybe&lt;@Nullable T&gt; other ) {
+<span class="fc" id="L301">        Objects.requireNonNull(other);</span>
+<span class="fc" id="L302">        return is( other.orElseNull() );</span>
     }
 
     /**
@@ -289,8 +309,12 @@ public interface Maybe&lt;T&gt;
      *
      * @param other The other wrapper of the same type as is wrapped by this.
      * @return The truth value determining if the item of the supplied wrapper is not equal to the wrapped item.
+     * @throws NullPointerException if the supplied {@link Maybe} is {@code null}.
      */
-<span class="fc bfc" id="L293" title="All 2 branches covered.">    default boolean isNot( Maybe&lt;@Nullable T&gt; other ) { return !is(other); }</span>
+    default boolean isNot( @NonNull Maybe&lt;@Nullable T&gt; other ) {
+<span class="fc" id="L315">        Objects.requireNonNull(other);</span>
+<span class="fc bfc" id="L316" title="All 2 branches covered.">        return !is(other);</span>
+    }
 
     /**
      *  This method checks if at least one of the provided items is equal to
@@ -303,12 +327,12 @@ public interface Maybe&lt;T&gt;
      */
     @SuppressWarnings(&quot;unchecked&quot;)
     default boolean isOneOf( @Nullable T first, @Nullable T second, @Nullable T... otherValues ) {
-<span class="fc bfc" id="L306" title="All 2 branches covered.">        if ( this.is(first) ) return true;</span>
-<span class="fc bfc" id="L307" title="All 2 branches covered.">        if ( this.is(second) ) return true;</span>
-<span class="fc" id="L308">        Objects.requireNonNull(otherValues);</span>
-<span class="fc bfc" id="L309" title="All 2 branches covered.">        for ( T otherValue : otherValues )</span>
-<span class="pc bpc" id="L310" title="1 of 2 branches missed.">            if ( is(otherValue) ) return true;</span>
-<span class="fc" id="L311">        return false;</span>
+<span class="fc bfc" id="L330" title="All 2 branches covered.">        if ( this.is(first) ) return true;</span>
+<span class="fc bfc" id="L331" title="All 2 branches covered.">        if ( this.is(second) ) return true;</span>
+<span class="fc" id="L332">        Objects.requireNonNull(otherValues);</span>
+<span class="fc bfc" id="L333" title="All 2 branches covered.">        for ( T otherValue : otherValues )</span>
+<span class="pc bpc" id="L334" title="1 of 2 branches missed.">            if ( is(otherValue) ) return true;</span>
+<span class="fc" id="L335">        return false;</span>
     }
 
     /**
@@ -319,15 +343,22 @@ public interface Maybe&lt;T&gt;
      * @param second The second wrapper of the same type as is wrapped by this.
      * @param otherValues The other properties of the same type as is wrapped by this.
      * @return The truth value determining if the item of the supplied wrapper is equal to the wrapped item.
+     * @throws NullPointerException if any of the supplied arguments is {@code null}.
      */
     @SuppressWarnings(&quot;unchecked&quot;)
-    default boolean isOneOf( Maybe&lt;@Nullable T&gt; first, Maybe&lt;@Nullable T&gt; second, Maybe&lt;@Nullable T&gt;... otherValues ) {
-<span class="pc bpc" id="L325" title="1 of 2 branches missed.">        if ( this.is(first) ) return true;</span>
-<span class="fc bfc" id="L326" title="All 2 branches covered.">        if ( this.is(second) ) return true;</span>
-<span class="fc" id="L327">        Objects.requireNonNull(otherValues);</span>
-<span class="fc bfc" id="L328" title="All 2 branches covered.">        for ( Maybe&lt;T&gt; otherValue : otherValues )</span>
-<span class="pc bpc" id="L329" title="1 of 2 branches missed.">            if ( is(otherValue) ) return true;</span>
-<span class="fc" id="L330">        return false;</span>
+    default boolean isOneOf(
+        @NonNull Maybe&lt;@Nullable T&gt; first,
+        @NonNull Maybe&lt;@Nullable T&gt; second,
+        @NonNull Maybe&lt;@Nullable T&gt;... otherValues
+    ) {
+<span class="fc" id="L354">        Objects.requireNonNull(first);</span>
+<span class="fc" id="L355">        Objects.requireNonNull(second);</span>
+<span class="fc" id="L356">        Objects.requireNonNull(otherValues);</span>
+<span class="pc bpc" id="L357" title="1 of 2 branches missed.">        if ( this.is(first) ) return true;</span>
+<span class="fc bfc" id="L358" title="All 2 branches covered.">        if ( this.is(second) ) return true;</span>
+<span class="fc bfc" id="L359" title="All 2 branches covered.">        for ( Maybe&lt;T&gt; otherValue : otherValues )</span>
+<span class="pc bpc" id="L360" title="1 of 2 branches missed.">            if ( is(otherValue) ) return true;</span>
+<span class="fc" id="L361">        return false;</span>
     }
 
     /**
@@ -335,7 +366,9 @@ public interface Maybe&lt;T&gt;
      *
      * @return {@code true} if an item is present, otherwise {@code false}
      */
-<span class="fc bfc" id="L338" title="All 2 branches covered.">    default boolean isPresent() { return orElseNull() != null; }</span>
+    default boolean isPresent() {
+<span class="fc bfc" id="L370" title="All 2 branches covered.">        return orElseNull() != null;</span>
+    }
 
     /**
      * If an item is  not present, returns {@code true}, otherwise
@@ -344,7 +377,7 @@ public interface Maybe&lt;T&gt;
      * @return  {@code true} if an item is not present, otherwise {@code false}
      */
     default boolean isEmpty() {
-<span class="fc bfc" id="L347" title="All 2 branches covered.">        return !isPresent();</span>
+<span class="fc bfc" id="L380" title="All 2 branches covered.">        return !isPresent();</span>
     }
 
     /**
@@ -352,13 +385,13 @@ public interface Maybe&lt;T&gt;
      * otherwise does nothing.
      *
      * @param action the action to be performed, if an item is present
-     * @throws NullPointerException if item is present and the given action is
-     *         {@code null}
+     * @throws NullPointerException if item is present and the given {@link Consumer} action is {@code null}
      */
-    default void ifPresent( Consumer&lt;T&gt; action ) {
-<span class="pc bpc" id="L359" title="1 of 2 branches missed.">        if ( this.isPresent() )</span>
-<span class="fc" id="L360">            action.accept( orElseThrowUnchecked() );</span>
-<span class="fc" id="L361">    }</span>
+    default void ifPresent( @NonNull Consumer&lt;T&gt; action ) {
+<span class="fc" id="L391">        Objects.requireNonNull(action);</span>
+<span class="pc bpc" id="L392" title="1 of 2 branches missed.">        if ( this.isPresent() )</span>
+<span class="fc" id="L393">            action.accept( orElseThrowUnchecked() );</span>
+<span class="fc" id="L394">    }</span>
 
     /**
      * If an item is present, performs the given action with the item,
@@ -371,12 +404,14 @@ public interface Maybe&lt;T&gt;
      *         is {@code null}, or no item is present and the given empty-based
      *         action is {@code null}.
      */
-    default void ifPresentOrElse( Consumer&lt;? super T&gt; action, Runnable emptyAction ) {
-<span class="fc bfc" id="L375" title="All 2 branches covered.">        if ( isPresent() )</span>
-<span class="fc" id="L376">            action.accept( orElseThrowUnchecked() );</span>
+    default void ifPresentOrElse( @NonNull Consumer&lt;? super T&gt; action, @NonNull Runnable emptyAction ) {
+<span class="fc" id="L408">        Objects.requireNonNull(action);</span>
+<span class="fc" id="L409">        Objects.requireNonNull(emptyAction);</span>
+<span class="fc bfc" id="L410" title="All 2 branches covered.">        if ( isPresent() )</span>
+<span class="fc" id="L411">            action.accept( orElseThrowUnchecked() );</span>
         else
-<span class="fc" id="L378">            emptyAction.run();</span>
-<span class="fc" id="L379">    }</span>
+<span class="fc" id="L413">            emptyAction.run();</span>
+<span class="fc" id="L414">    }</span>
 
     /**
      * If an item is present, returns a {@code Maybe} describing the item,
@@ -390,15 +425,15 @@ public interface Maybe&lt;T&gt;
      * @throws NullPointerException if the supplying function is {@code null} or
      *         produces a {@code null} result
      */
-    default Maybe&lt;T&gt; or( Supplier&lt;? extends Maybe&lt;? extends T&gt;&gt; supplier ) {
-<span class="nc" id="L394">        Objects.requireNonNull(supplier);</span>
-<span class="nc bnc" id="L395" title="All 2 branches missed.">        if ( isPresent() )</span>
-<span class="nc" id="L396">            return this;</span>
+    default Maybe&lt;T&gt; or( @NonNull Supplier&lt;? extends Maybe&lt;? extends T&gt;&gt; supplier ) {
+<span class="nc" id="L429">        Objects.requireNonNull(supplier);</span>
+<span class="nc bnc" id="L430" title="All 2 branches missed.">        if ( isPresent() )</span>
+<span class="nc" id="L431">            return this;</span>
 
         @SuppressWarnings(&quot;unchecked&quot;)
-<span class="nc" id="L399">        Maybe&lt;T&gt; r = (Maybe&lt;T&gt;) supplier.get();</span>
-<span class="nc" id="L400">        Objects.requireNonNull(r);</span>
-<span class="nc" id="L401">        return r;</span>
+<span class="nc" id="L434">        Maybe&lt;T&gt; r = (Maybe&lt;T&gt;) supplier.get();</span>
+<span class="nc" id="L435">        Objects.requireNonNull(r);</span>
+<span class="nc" id="L436">        return r;</span>
     }
 
     /**
@@ -418,7 +453,7 @@ public interface Maybe&lt;T&gt;
      * @return A new {@link Maybe} either empty (containing null) or containing the result of applying
      *             the mapping function to the item wrapped by this {@link Maybe}.
      */
-    Maybe&lt;T&gt; map( Function&lt;T, T&gt; mapper );
+    Maybe&lt;T&gt; map( @NonNull Function&lt;T, T&gt; mapper );
 
     /**
      *  If the item is present, applies the provided mapping function to it,
@@ -436,7 +471,7 @@ public interface Maybe&lt;T&gt;
      *             the mapping function to the item of this maybe.
      * @param &lt;U&gt; The type of the item returned from the mapping function
      */
-    &lt;U&gt; Maybe&lt;U&gt; mapTo( Class&lt;U&gt; type, java.util.function.Function&lt;T, U&gt; mapper );
+    &lt;U&gt; Maybe&lt;U&gt; mapTo( @NonNull Class&lt;U&gt; type, java.util.function.@NonNull Function&lt;T, U&gt; mapper );
 
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

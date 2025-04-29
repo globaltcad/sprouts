@@ -83,6 +83,97 @@ public interface Lens&lt;A extends @Nullable Object, B extends @Nullable Object&
     }
 
     /**
+     * Creates a lens that operates across all elements of a {@link Tuple}, allowing bulk transformations
+     * of homogeneous data structures. This is particularly useful for scenarios like multi-selection
+     * where you want to apply the same lens operation to multiple values simultaneously.
+     *
+     * &lt;p&gt;The returned lens will:&lt;/p&gt;
+     * &lt;ul&gt;
+     *     &lt;li&gt;
+     *         Use the provided {@code getter} to extract a property of type {@code B} from
+     *         each element of type {@code A} in the tuple.
+     *     &lt;/li&gt;
+     *     &lt;li&gt;
+     *         Use the provided {@code wither} to update that property {@code B} across all
+     *         elements {@code A} in the tuple.
+     *     &lt;/li&gt;
+     * &lt;/ul&gt;
+     *
+     * &lt;b&gt;Example Usage:&lt;/b&gt;
+     * &lt;pre&gt;{@code
+     * record Person(String name, int age) {
+     *     public Person withAge(int newAge) {
+     *         return new Person(name, newAge);
+     *     }
+     * }
+     *
+     * // Create tuple lens version
+     * Lens&lt;Tuple&lt;Person&gt;, Tuple&lt;Integer&gt;&gt; bulkAgeLens = Lens.across(
+     *     Integer.class,Person::age, Person::withAge
+     * );
+     *
+     * Tuple&lt;Person&gt; people = Tuple.of(
+     *     new Person(&quot;Alice&quot;, 30),
+     *     new Person(&quot;Bob&quot;, 25),
+     *     new Person(&quot;Charlie&quot;, 35)
+     * );
+     *
+     * // Get all ages
+     * Tuple&lt;Integer&gt; ages = bulkAgeLens.getter(people); // (30, 25, 35)
+     *
+     * // Set all ages to 40
+     * Tuple&lt;Person&gt; updatedPeople = bulkAgeLens.wither(people,
+     *     Tuple.of(40, 40, 40));
+     * }&lt;/pre&gt;
+     * You may then use such a lens to zoom into a tuple-based property
+     * to get a tuple-based lens property:
+     * &lt;pre&gt;{@code
+     * Var&lt;Tuple&lt;Person&gt;&gt; people = getPeople();
+     * Var&lt;Tuple&lt;Integer&gt; ages =
+     *                    people.zoomTo(
+     *                        Lens.across(
+     *                           Integer.class,
+     *                           Person::age,
+     *                           Person::withAge
+     *                        ));
+     * }&lt;/pre&gt;
+     *
+     * @param type The class object for type {@code B}, used for tuple type safety
+     * @param getter Function to extract property {@code B} from a single {@code A}
+     * @param wither Function to update property {@code B} in a single {@code A}
+     * @param &lt;A&gt; The element type contained in the source tuple
+     * @param &lt;B&gt; The type of property being focused on in each element
+     * @return A lens that operates on tuples of {@code A} to get/set tuples of {@code B}
+     * @throws NullPointerException if either getter or wither is null
+     * @throws IllegalArgumentException during wither operation if input tuples have different sizes
+     */
+    static &lt;A, B&gt; Lens&lt;Tuple&lt;A&gt;, Tuple&lt;B&gt;&gt; across(
+        Class&lt;B&gt; type,
+        Function&lt;A, B&gt;      getter,
+        BiFunction&lt;A, B, A&gt; wither
+    ) {
+<span class="fc" id="L155">        Objects.requireNonNull(getter, &quot;getter lambda must not be null&quot;);</span>
+<span class="fc" id="L156">        Objects.requireNonNull(wither, &quot;wither lambda must not be null&quot;);</span>
+<span class="fc" id="L157">        return new Lens&lt;Tuple&lt;A&gt;, Tuple&lt;B&gt;&gt;() {</span>
+            @Override
+            public Tuple&lt;B&gt; getter(Tuple&lt;A&gt; parentValue) {
+<span class="fc" id="L160">                return parentValue.mapTo(type, getter);</span>
+            }
+            @Override
+            public Tuple&lt;A&gt; wither(Tuple&lt;A&gt; parentValue, Tuple&lt;B&gt; newValue) {
+<span class="fc bfc" id="L164" title="All 2 branches covered.">                if (parentValue.size() != newValue.size()) {</span>
+<span class="fc" id="L165">                    throw new IllegalArgumentException(&quot;Tuple sizes do not match&quot;);</span>
+                }
+<span class="fc" id="L167">                A[] parentAsArray = parentValue.toArray();</span>
+<span class="fc bfc" id="L168" title="All 2 branches covered.">                for (int i = 0; i &lt; parentAsArray.length; i++) {</span>
+<span class="fc" id="L169">                    parentAsArray[i] = wither.apply(parentAsArray[i], newValue.get(i));</span>
+                }
+<span class="fc" id="L171">                return Tuple.of(parentValue.type(), parentAsArray);</span>
+            }
+        };
+    }
+
+    /**
      * Extracts the field of type {@code B} from the parent type {@code A}
      * and returns it or throws an exception if an error occurs while extracting the field.
      *
@@ -120,15 +211,15 @@ public interface Lens&lt;A extends @Nullable Object, B extends @Nullable Object&
      * @throws NullPointerException If the given lens is {@code null}.
      */
     default &lt;C&gt; Lens&lt;A, C&gt; to( Lens&lt;B, C&gt; other ) {
-<span class="fc" id="L123">        Objects.requireNonNull(other, &quot;other lens must not be null&quot;);</span>
-<span class="fc" id="L124">        return new Lens&lt;A, C&gt;() {</span>
+<span class="fc" id="L214">        Objects.requireNonNull(other, &quot;other lens must not be null&quot;);</span>
+<span class="fc" id="L215">        return new Lens&lt;A, C&gt;() {</span>
             @Override
             public C getter(A parentValue) throws Exception {
-<span class="fc" id="L127">                return other.getter(Lens.this.getter(parentValue));</span>
+<span class="fc" id="L218">                return other.getter(Lens.this.getter(parentValue));</span>
             }
             @Override
             public A wither(A parentValue, C newValue) throws Exception {
-<span class="fc" id="L131">                return Lens.this.wither(parentValue, other.wither(Lens.this.getter(parentValue), newValue));</span>
+<span class="fc" id="L222">                return Lens.this.wither(parentValue, other.wither(Lens.this.getter(parentValue), newValue));</span>
             }
         };
     }
@@ -148,9 +239,9 @@ public interface Lens&lt;A extends @Nullable Object, B extends @Nullable Object&
      * @throws NullPointerException If either of the given functions is {@code null}.
      */
     default &lt;C&gt; Lens&lt;A, C&gt; to( Function&lt;B, C&gt; getter, BiFunction&lt;B, C, B&gt; wither ) {
-<span class="nc" id="L151">        Objects.requireNonNull(getter, &quot;getter lambda must not be null&quot;);</span>
-<span class="nc" id="L152">        Objects.requireNonNull(wither, &quot;wither lambda must not be null&quot;);</span>
-<span class="nc" id="L153">        return to(Lens.of(getter, wither));</span>
+<span class="nc" id="L242">        Objects.requireNonNull(getter, &quot;getter lambda must not be null&quot;);</span>
+<span class="nc" id="L243">        Objects.requireNonNull(wither, &quot;wither lambda must not be null&quot;);</span>
+<span class="nc" id="L244">        return to(Lens.of(getter, wither));</span>
     }
 
 }

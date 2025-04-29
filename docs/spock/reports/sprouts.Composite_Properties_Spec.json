@@ -23,7 +23,7 @@
       "blocks":[
         {"kind":"given","text":"We have 2properties modelling a forename and a surname of a person.","code":["Var<String> forename = Var.of(\"John\")","Var<String> surname = Var.of(\"Doe\")"]},
 
-        {"kind":"and","text":"Now we create a view of the 2 properties that represents the full name.","code":["Val<String> fullName = Val.viewOf(forename, surname, (f, s) -> f + \" \" + s)"]},
+        {"kind":"and","text":"Now we create a view of the 2 properties that represents the full name.","code":["Val<String> fullName = Viewable.of(forename, surname, (f, s) -> f + \" \" + s)"]},
 
         {"kind":"expect","text":"Initially, the view has the expected value.","code":["fullName.get() == \"John Doe\""]},
 
@@ -35,16 +35,16 @@
     },
   
     {
-      "id":"A composite property view created using the `Val.viewOf(..)` does not update when receiving `null` items",
+      "id":"A composite property view created using the `Viewable.of(..)` does not update when receiving `null` items",
       "result":"PASS",
       "duration":"?",
       "iterations":{
-      "tags":{},"see":[],"extraInfo":["\n            A composite property view created using the `Val.viewOf(..)` does not allow `null` items.\n            This does not mean that the properties it is composed of cannot be nullable, it just means\n            that the items produced by the combiner function cannot be `null`.\n        "]
+      "tags":{},"see":[],"extraInfo":["\n            A composite property view created using the `Viewable.of(..)` does not allow `null` items.\n            This does not mean that the properties it is composed of cannot be nullable, it just means\n            that the items produced by the combiner function cannot be `null`.\n        "]
       },
       "blocks":[
         {"kind":"given","text":"We have 2 properties modelling the address of a person.","code":["Var<String> street = Var.of(\"Kingsway\")","Var<Integer> number = Var.of(123)"]},
 
-        {"kind":"and","text":"Now we create a view of the 2 properties that represents the full address.","code":["Val<String> fullAddress = Val.viewOf(street, number, (s, n) -> s.isEmpty() ? null : s + \" \" + n)"]},
+        {"kind":"and","text":"Now we create a view of the 2 properties that represents the full address.","code":["Val<String> fullAddress = Viewable.of(street, number, (s, n) -> s.isEmpty() ? null : s + \" \" + n)"]},
 
         {"kind":"expect","text":"The view does not allow null items.","code":["!fullAddress.allowsNull()"]},
 
@@ -60,12 +60,12 @@
       "result":"PASS",
       "duration":"?",
       "iterations":{
-      "tags":{},"see":[],"extraInfo":["\n            Although a composite property view created using the `Val.viewOf(..)` does permit `null` items\n            itself, it may be created from two nullable properties, as long as the combiner function\n            does not produce `null` items.\n        "]
+      "tags":{},"see":[],"extraInfo":["\n            Although a composite property view created using the `Viewable.of(..)` does permit `null` items\n            itself, it may be created from two nullable properties, as long as the combiner function\n            does not produce `null` items.\n        "]
       },
       "blocks":[
         {"kind":"given","text":"\n            We have 2 properties modelling the weight and height of a person.\n            These properties are nullable for this example.\n        ","code":["Var<Double> weight = Var.ofNullable(Double, 80d)","Var<Double> height = Var.ofNullable(Double, 1.8d)"]},
 
-        {"kind":"and","text":"A view of the 2 properties that represents the BMI.","code":["Val<Double> bmi = Val.viewOf(weight, height, (w, h) -> w / (h * h))"]},
+        {"kind":"and","text":"A view of the 2 properties that represents the BMI.","code":["Val<Double> bmi = Viewable.of(weight, height, (w, h) -> w / (h * h))"]},
 
         {"kind":"expect","text":"The view does not allow `null` items.","code":["!bmi.allowsNull()"]},
 
@@ -75,7 +75,7 @@
 
         {"kind":"then","text":"The view will retain the old value.","code":["bmi.get() == 24.691358024691358d"]},
 
-        {"kind":"when","text":"We create a new view with the 2 properties and the same combiner.","code":["Val.viewOf(weight, height, (w, h) -> w / (h * h))"]},
+        {"kind":"when","text":"We create a new view with the 2 properties and the same combiner.","code":["Viewable.of(weight, height, (w, h) -> w / (h * h))"]},
 
         {"kind":"then","text":"\n            Note that one of these properties is empty, which means that the combiner function will throw an exception\n            when invoked with their items.\n            An exception in the combiner function on the first call will throw a `NullPointerException`.\n        ","code":["thrown(NullPointerException)"]}
       ],
@@ -83,16 +83,16 @@
     },
   
     {
-      "id":"A composite property view created using the `Val.viewOfNullable(..)` allows `null`.",
+      "id":"A composite property view created using the `Viewable.ofNullable(..)` allows `null`.",
       "result":"PASS",
       "duration":"?",
       "iterations":{
-      "tags":{},"see":[],"extraInfo":["\n            A composite property view created using the `Val.viewOfNullable(..)` allows `null` items.\n            This means that the items produced by the combiner function can be `null`.\n        "]
+      "tags":{},"see":[],"extraInfo":["\n            A composite property view created using the `Viewable.ofNullable(..)` allows `null` items.\n            This means that the items produced by the combiner function can be `null`.\n        "]
       },
       "blocks":[
         {"kind":"given","text":"We have 2 properties modelling the address of a person.","code":["Var<String> street = Var.of(\"Kingsway\")","Var<Integer> number = Var.of(123)"]},
 
-        {"kind":"and","text":"Now we create a view of the 2 properties that represents the full address.","code":["Val<String> fullAddress = Val.viewOfNullable(street, number.viewAsString(), (s, n) -> s.isEmpty() ? null : s + \" \" + n)"]},
+        {"kind":"and","text":"Now we create a view of the 2 properties that represents the full address.","code":["Val<String> fullAddress = Viewable.ofNullable(street, number.viewAsString(), (s, n) -> s.isEmpty() ? null : s + \" \" + n)"]},
 
         {"kind":"expect","text":"The view allows `null` items.","code":["fullAddress.allowsNull()"]},
 
@@ -106,7 +106,7 @@
     },
   
     {
-      "id":"Some non-nullable composite properties created using the `Val.viewOf(..)` method cannot deal with `null`.",
+      "id":"Some non-nullable composite properties created using the `Viewable.of(..)` method cannot deal with `null`.",
       "result":"PASS",
       "duration":"?",
       "iterations":{
@@ -115,7 +115,7 @@
       "blocks":[
         {"kind":"given","text":"We are using `Date` based properties.","code":["Var<Date> date1 = Var.ofNullable(Date.class, new Date())","Var<Date> date2 = Var.ofNullable(Date.class, new Date())"]},
 
-        {"kind":"and","text":"A view of the 2 properties that represents the earliest date, or `null` if any of the dates is `null`.","code":["Val<Date> earliestDate = Val.viewOf(date1, date2, (d1, d2) -> (d1==null||d2==null) ? null : d1.before(d2) ? d1 : d2)"]},
+        {"kind":"and","text":"A view of the 2 properties that represents the earliest date, or `null` if any of the dates is `null`.","code":["Val<Date> earliestDate = Viewable.of(date1, date2, (d1, d2) -> (d1==null||d2==null) ? null : d1.before(d2) ? d1 : d2)"]},
 
         {"kind":"expect","text":"The view tells us that it does not allow `null` items.","code":["!earliestDate.allowsNull()"]},
 
@@ -127,7 +127,7 @@
 
         {"kind":"and","text":"The view still contains the initial value.","code":["earliestDate.get() != null"]},
 
-        {"kind":"when","text":"\n            We take a look at a more unfortunate scenario where at least one of the dates is `null` initially,\n            then this whole situation is not going to work out without an exception being thrown\n            at you.\n        ","code":["date1 = Var.ofNull(Date)","date2 = Var.of(new Date())","earliestDate = Val.viewOf(date1, date2, (d1, d2) -> (d1==null) ? null : d1.before(d2) ? d1 : d2)"]},
+        {"kind":"when","text":"\n            We take a look at a more unfortunate scenario where at least one of the dates is `null` initially,\n            then this whole situation is not going to work out without an exception being thrown\n            at you.\n        ","code":["date1 = Var.ofNull(Date)","date2 = Var.of(new Date())","earliestDate = Viewable.of(date1, date2, (d1, d2) -> (d1==null) ? null : d1.before(d2) ? d1 : d2)"]},
 
         {"kind":"then","text":"An exception is thrown.","code":["thrown(NullPointerException)"]}
       ],
@@ -135,7 +135,7 @@
     },
   
     {
-      "id":"The second property of a composite view created using the `Val.viewOf(..)` and `Val.viewOfNullable(..)` methods can be of any type.",
+      "id":"The second property of a composite view created using the `Viewable.of(..)` and `Viewable.ofNullable(..)` methods can be of any type.",
       "result":"PASS",
       "duration":"?",
       "iterations":{
@@ -144,7 +144,7 @@
       "blocks":[
         {"kind":"given","text":"We create a property of type `String` and another property of type `Integer`.","code":["Var<String> stringVar = Var.ofNull(String.class)","Var<Integer> integerVar = Var.ofNull(Integer.class)"]},
 
-        {"kind":"and","text":"A nullable and a non-nullable composite view of the two properties.","code":["Val<String> view = Val.viewOf(stringVar, integerVar, (s, i) -> s + \":\" + i)","Val<String> nullableView = Val.viewOfNullable(stringVar, integerVar, (s, i) -> s == null || i == null ? null : s + \":\" + i)"]},
+        {"kind":"and","text":"A nullable and a non-nullable composite view of the two properties.","code":["Val<String> view = Viewable.of(stringVar, integerVar, (s, i) -> s + \":\" + i)","Val<String> nullableView = Viewable.ofNullable(stringVar, integerVar, (s, i) -> s == null || i == null ? null : s + \":\" + i)"]},
 
         {"kind":"expect","text":"The views hold the expected value.","code":["view.get() == \"null:null\"","nullableView.isEmpty()"]},
 
@@ -175,7 +175,7 @@
       "blocks":[
         {"kind":"given","text":"We create a property of type `Integer` and another property of type `Double`.","code":["Var<Integer> integerVar = Var.ofNullable(Integer.class, 4)","Var<Double> doubleVar = Var.ofNullable(Double.class, 0.5d)"]},
 
-        {"kind":"and","text":"A composite view of the two properties.","code":["Val<String> view = Val.viewOf(String.class, integerVar, doubleVar, (i, d) -> i == null ? null : String.format(\"%d * %.1f = %.1f\", i, d, i * d))"]},
+        {"kind":"and","text":"A composite view of the two properties.","code":["Val<String> view = Viewable.of(String.class, integerVar, doubleVar, (i, d) -> i == null ? null : String.format(\"%d * %.1f = %.1f\", i, d, i * d))"]},
 
         {"kind":"expect","text":"The view holds the expected value.","code":["view.get() == \"4 * 0.5 = 2.0\""]},
 
@@ -208,7 +208,7 @@
       "blocks":[
         {"kind":"given","text":"We create a property of type `Integer` and another property of type `Double`.","code":["Var<Integer> integerVar = Var.ofNullable(Integer.class, 4)","Var<Double> doubleVar = Var.ofNullable(Double.class, 0.5d)"]},
 
-        {"kind":"and","text":"A composite view of the two properties.","code":["Val<String> view = Val.viewOfNullable(String.class, integerVar, doubleVar, (i, d) -> i == null ? null : String.format(\"%d * %.1f = %.1f\", i, d, i * d))"]},
+        {"kind":"and","text":"A composite view of the two properties.","code":["Val<String> view = Viewable.ofNullable(String.class, integerVar, doubleVar, (i, d) -> i == null ? null : String.format(\"%d * %.1f = %.1f\", i, d, i * d))"]},
 
         {"kind":"expect","text":"The view holds the expected value.","code":["view.get() == \"4 * 0.5 = 2.0\""]},
 
@@ -243,11 +243,11 @@
 
         {"kind":"expect","text":"Initially there are no change listeners registered on the properties.","code":["unitProperty.numberOfChangeListeners() == 0","longProperty.numberOfChangeListeners() == 0"]},
 
-        {"kind":"when","text":"We create four (nullable and not-nullable) composite properties that are referenced strongly.","code":["var composite1 = Val.viewOfNullable(longProperty, unitProperty, (l, u) -> l + u.toMillis(1))","var composite2 = Val.viewOf(longProperty, unitProperty, (l, u) -> l + u.toMillis(1))","var composite3 = Val.viewOfNullable(String.class, longProperty, unitProperty, (l, u) -> l + \" \" + u)","var composite4 = Val.viewOf(String.class, longProperty, unitProperty, (l, u) -> l + \" \" + u)"]},
+        {"kind":"when","text":"We create four (nullable and not-nullable) composite properties that are referenced strongly.","code":["var composite1 = Viewable.ofNullable(longProperty, unitProperty, (l, u) -> l + u.toMillis(1))","var composite2 = Viewable.of(longProperty, unitProperty, (l, u) -> l + u.toMillis(1))","var composite3 = Viewable.ofNullable(String.class, longProperty, unitProperty, (l, u) -> l + \" \" + u)","var composite4 = Viewable.of(String.class, longProperty, unitProperty, (l, u) -> l + \" \" + u)"]},
 
         {"kind":"then","text":"The two parent properties have 4 change listeners registered.","code":["longProperty.numberOfChangeListeners() == 4","unitProperty.numberOfChangeListeners() == 4"]},
 
-        {"kind":"when","text":"We create four more views which we do not reference strongly.","code":["Val.viewOfNullable(longProperty, unitProperty, (l, u) -> l + u.toMillis(1))","Val.viewOf(longProperty, unitProperty, (l, u) -> l + u.toMillis(1))","Val.viewOfNullable(String.class, longProperty, unitProperty, (l, u) -> l + \" \" + u)","Val.viewOf(String.class, longProperty, unitProperty, (l, u) -> l + \" \" + u)"]},
+        {"kind":"when","text":"We create four more views which we do not reference strongly.","code":["Viewable.ofNullable(longProperty, unitProperty, (l, u) -> l + u.toMillis(1))","Viewable.of(longProperty, unitProperty, (l, u) -> l + u.toMillis(1))","Viewable.ofNullable(String.class, longProperty, unitProperty, (l, u) -> l + \" \" + u)","Viewable.of(String.class, longProperty, unitProperty, (l, u) -> l + \" \" + u)"]},
 
         {"kind":"and","text":"We wait for the garbage collector to run.","code":["waitForGarbageCollection()","Thread.sleep(500)"]},
 

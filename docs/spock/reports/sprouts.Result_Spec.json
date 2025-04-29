@@ -1,7 +1,7 @@
 {
   "className":"sprouts.Result_Spec",
   "title":"Results",
-  "narrative":"The `Result` interface is used to represent the optional result of an operation\n    as well as a list of problems that occurred during the operation.\n\n    It is a sub type of the `Val` property and as such can be used to represent a value\n    that is immutable and can be observed for changes.\n\n    The default result implementation indirectly exposed by its factory methods\n    is immutable and thread safe, effectively making it a monadic value\n    similar to the `Optional` type in Java 8.",
+  "narrative":"The `Result` interface is used to represent the optional result of an operation\n    as well as a list of problems that occurred during the operation.\n    The problems of a `Result` are represented by the `Problem` interface,\n    which may be created from an exception or a simple message.\n\n    A `Result` is a fully thread safe immutable value type with useful mapping\n    functions that allow you to transform the value of the result into another\n    effectively making it a monadic value similar to the `Optional` type in Java 8.",
   "subjects":["sprouts.Result","sprouts.Val","sprouts.Problem"],
   "statistics":{
     "runs":"19",
@@ -88,7 +88,7 @@
     },
   
     {
-      "id":"Just like a `Val` property, a `Result` has a type.",
+      "id":"Just like many other Sprouts types, a `Result` has a type.",
       "result":"PASS",
       "duration":"?",
       "iterations":{
@@ -209,13 +209,13 @@
 
         {"kind":"and","text":"A supplier that may or may not throw an exception.","code":["Supplier<String> supplier = ()->{","    if ( doFail )","        throw new IllegalArgumentException(\"foo\")","    else","        return \"bar\"","}"]},
 
-        {"kind":"when","text":"We create a result from the supplier with the `doFail` flag set to false.","code":["def result = Result.ofTry(String.class, supplier)"]},
+        {"kind":"when","text":"We create a result from the supplier with the `doFail` flag set to false.","code":["def result = Result.ofTry(String.class, supplier::get)"]},
 
         {"kind":"then","text":"No exception is thrown, which means the result has the value.","code":["result.orElseThrowUnchecked() == \"bar\""]},
 
         {"kind":"and","text":"The result has no problems.","code":["result.problems().isEmpty()"]},
 
-        {"kind":"when","text":"We create a result from the supplier with the `doFail` flag set to true.","code":["doFail = true","def result2 = Result.ofTry(String.class, supplier)"]},
+        {"kind":"when","text":"We create a result from the supplier with the `doFail` flag set to true.","code":["doFail = true","def result2 = Result.ofTry(String.class, supplier::get)"]},
 
         {"kind":"then","text":"An exception is thrown, which means the result has a problem.","code":["result2.problems().size() == 1"]},
 

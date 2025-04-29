@@ -4,7 +4,7 @@
   "narrative":"Sprouts is a property library with a heavy focus on bridging the\n    gap between classical place oriented programming and modern\n    data oriented programming.\n    This is why sprouts has both the `Tuple` and `Association` classes.\n    The `Association` class is a value object that represents a set of\n    key-value pairs. You can think of it as an immutable map, but with\n    an API that is designed around transforming the data in the map\n    rather than mutating it.",
   "subjects":["sprouts.Association"],
   "statistics":{
-    "runs":"57",
+    "runs":"58",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -40,11 +40,11 @@
 
         {"kind":"when","text":"We apply the operations to the associations and the map for the first time.","code":["associations = operationsApplier(associations)"]},
 
-        {"kind":"then","text":"The associations and the map are equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
+        {"kind":"then","text":"The associations and the map are equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet().toSet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
 
         {"kind":"when","text":"We apply the operations to the associations and the map a few more times.","code":["10.times { associations = operationsApplier(associations) }"]},
 
-        {"kind":"then","text":"The associations and the map are still equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
+        {"kind":"then","text":"The associations and the map are still equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet().toSet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
 
         {"kind":"and","text":"We can lookup any value from its corresponding key.","code":["map.values() as Set == map.keySet().collect { key -> associations.get(key).orElseThrow(MissingItemException::new) } as Set"]},
 
@@ -69,11 +69,11 @@
 
         {"kind":"when","text":"We apply the operations to the associations and the map for the first time.","code":["associations = operationsApplier(associations)"]},
 
-        {"kind":"then","text":"The associations and the map are equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
+        {"kind":"then","text":"The associations and the map are equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet().toSet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
 
         {"kind":"when","text":"We apply the operations to the associations and the map a few more times.","code":["10.times { associations = operationsApplier(associations) }"]},
 
-        {"kind":"then","text":"The associations and the map are still equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
+        {"kind":"then","text":"The associations and the map are still equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet().toSet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
 
         {"kind":"and","text":"We can lookup any value from its corresponding key.","code":["map.values() as Set == map.keySet().collect { key -> associations.get(key).orElseThrow(MissingItemException::new) } as Set"]},
 
@@ -98,11 +98,11 @@
 
         {"kind":"when","text":"We apply the operations to the associations and the map for the first time.","code":["associations = operationsApplier(associations)"]},
 
-        {"kind":"then","text":"The associations and the map are equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
+        {"kind":"then","text":"The associations and the map are equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet().toSet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
 
         {"kind":"when","text":"We apply the operations to the associations and the map a few more times.","code":["10.times { associations = operationsApplier(associations) }"]},
 
-        {"kind":"then","text":"The associations and the map are still equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
+        {"kind":"then","text":"The associations and the map are still equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet().toSet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
 
         {"kind":"and","text":"We can lookup any value from its corresponding key.","code":["map.values() as Set == map.keySet().collect { key -> associations.get(key).orElseThrow(MissingItemException::new) } as Set"]},
 
@@ -127,11 +127,11 @@
 
         {"kind":"when","text":"We apply the operations to the associations and the map for the first time.","code":["associations = operationsApplier(associations)"]},
 
-        {"kind":"then","text":"The associations and the map are equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
+        {"kind":"then","text":"The associations and the map are equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet().toSet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
 
         {"kind":"when","text":"We apply the operations to the associations and the map a few more times.","code":["10.times { associations = operationsApplier(associations) }"]},
 
-        {"kind":"then","text":"The associations and the map are still equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
+        {"kind":"then","text":"The associations and the map are still equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet().toSet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
 
         {"kind":"and","text":"We can lookup any value from its corresponding key.","code":["map.values() as Set == map.keySet().collect { key -> associations.get(key).orElseThrow(MissingItemException::new) } as Set"]},
 
@@ -156,11 +156,11 @@
 
         {"kind":"when","text":"We apply the operations to the associations and the map for the first time.","code":["associations = operationsApplier(associations)"]},
 
-        {"kind":"then","text":"The associations and the map are equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
+        {"kind":"then","text":"The associations and the map are equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet().toSet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
 
         {"kind":"when","text":"We apply the operations to the associations and the map a few more times.","code":["10.times { associations = operationsApplier(associations) }"]},
 
-        {"kind":"then","text":"The associations and the map are still equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
+        {"kind":"then","text":"The associations and the map are still equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet().toSet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
 
         {"kind":"and","text":"We can lookup any value from its corresponding key.","code":["map.values() as Set == map.keySet().collect { key -> associations.get(key).orElseThrow(MissingItemException::new) } as Set"]},
 
@@ -185,11 +185,11 @@
 
         {"kind":"when","text":"We apply the operations to the associations and the map for the first time.","code":["associations = operationsApplier(associations)"]},
 
-        {"kind":"then","text":"The associations and the map are equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
+        {"kind":"then","text":"The associations and the map are equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet().toSet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
 
         {"kind":"when","text":"We apply the operations to the associations and the map a few more times.","code":["10.times { associations = operationsApplier(associations) }"]},
 
-        {"kind":"then","text":"The associations and the map are still equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
+        {"kind":"then","text":"The associations and the map are still equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet().toSet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
 
         {"kind":"and","text":"We can lookup any value from its corresponding key.","code":["map.values() as Set == map.keySet().collect { key -> associations.get(key).orElseThrow(MissingItemException::new) } as Set"]},
 
@@ -214,11 +214,11 @@
 
         {"kind":"when","text":"We apply the operations to the associations and the map for the first time.","code":["associations = operationsApplier(associations)"]},
 
-        {"kind":"then","text":"The associations and the map are equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
+        {"kind":"then","text":"The associations and the map are equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet().toSet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
 
         {"kind":"when","text":"We apply the operations to the associations and the map a few more times.","code":["10.times { associations = operationsApplier(associations) }"]},
 
-        {"kind":"then","text":"The associations and the map are still equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
+        {"kind":"then","text":"The associations and the map are still equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet().toSet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
 
         {"kind":"and","text":"We can lookup any value from its corresponding key.","code":["map.values() as Set == map.keySet().collect { key -> associations.get(key).orElseThrow(MissingItemException::new) } as Set"]},
 
@@ -243,11 +243,11 @@
 
         {"kind":"when","text":"We apply the operations to the associations and the map for the first time.","code":["associations = operationsApplier(associations)"]},
 
-        {"kind":"then","text":"The associations and the map are equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
+        {"kind":"then","text":"The associations and the map are equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet().toSet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
 
         {"kind":"when","text":"We apply the operations to the associations and the map a few more times.","code":["10.times { associations = operationsApplier(associations) }"]},
 
-        {"kind":"then","text":"The associations and the map are still equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
+        {"kind":"then","text":"The associations and the map are still equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet().toSet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
 
         {"kind":"and","text":"We can lookup any value from its corresponding key.","code":["map.values() as Set == map.keySet().collect { key -> associations.get(key).orElseThrow(MissingItemException::new) } as Set"]},
 
@@ -272,11 +272,11 @@
 
         {"kind":"when","text":"We apply the operations to the associations and the map for the first time.","code":["associations = operationsApplier(associations)"]},
 
-        {"kind":"then","text":"The associations and the map are equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
+        {"kind":"then","text":"The associations and the map are equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet().toSet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
 
         {"kind":"when","text":"We apply the operations to the associations and the map a few more times.","code":["10.times { associations = operationsApplier(associations) }"]},
 
-        {"kind":"then","text":"The associations and the map are still equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
+        {"kind":"then","text":"The associations and the map are still equal in terms of size, keys, and values.","code":["associations.size() == map.size()","associations.keySet().toSet() == map.keySet()","associations.values().sort().toList() == map.values().sort()"]},
 
         {"kind":"and","text":"We can lookup any value from its corresponding key.","code":["map.values() as Set == map.keySet().collect { key -> associations.get(key).orElseThrow(MissingItemException::new) } as Set"]},
 
@@ -301,7 +301,7 @@
 
         {"kind":"when","text":"Apply operations 3 times","code":["3.times { assoc = operationsApplier(assoc) }"]},
 
-        {"kind":"then","text":"Immediate invariance","code":["assoc.size() == map.size()","assoc.keySet() == map.keySet()","assoc.values().sort().toList() == map.values().sort()","assoc.toMap() == map"]},
+        {"kind":"then","text":"Immediate invariance","code":["assoc.size() == map.size()","assoc.keySet().toSet() == map.keySet()","assoc.values().sort().toList() == map.values().sort()","assoc.toMap() == map"]},
 
         {"kind":"and","text":"","code":["map.every { k, v ->","    assoc.get(k).orElse(null) == v","}","assoc.every { pair ->","    pair.second() == map[pair.first()]","}"]},
 
@@ -597,7 +597,28 @@
     },
   
     {
-      "id":"You remove the entries of one association from another, using the `removeAll` method.",
+      "id":"You remove the entries of one association from another, using the `removeAll(ValueSet)` method.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two empty associations between strings and integers.","code":["var associations1 = Association.between(String, Integer)","var associations2 = Association.between(String, Integer)"]},
+
+        {"kind":"when","text":"We add some values to the first association.","code":["associations1 = associations1.put(\"x\", 1).put(\"y\", 2).put(\"z\", 3)"]},
+
+        {"kind":"and","text":"We add some values to the second association.","code":["associations2 = associations2.put(\"y\", 2).put(\"z\", 3).put(\"o\", 4)"]},
+
+        {"kind":"and","text":"We remove the entries of the second association from the first.","code":["var result = associations1.removeAll(associations2.keySet())"]},
+
+        {"kind":"then","text":"The result contains only the entries that were not in the second association.","code":["result.size() == 1","result.get(\"x\").orElseThrow(MissingItemException::new) == 1"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You remove the entries of one association from another, using the `removeAll(Set)` method.",
       "result":"PASS",
       "duration":"?",
       "iterations":{
@@ -610,7 +631,7 @@
 
         {"kind":"and","text":"We add some values to the second association.","code":["associations2 = associations2.put(\"b\", 2).put(\"c\", 3).put(\"d\", 4)"]},
 
-        {"kind":"and","text":"We remove the entries of the second association from the first.","code":["var result = associations1.removeAll(associations2.keySet())"]},
+        {"kind":"and","text":"We remove the entries of the second association from the first.","code":["var result = associations1.removeAll(associations2.keySet().toSet())"]},
 
         {"kind":"then","text":"The result contains only the entries that were not in the second association.","code":["result.size() == 1","result.get(\"a\").orElseThrow(MissingItemException::new) == 1"]}
       ],
@@ -1187,9 +1208,11 @@
       "blocks":[
         {"kind":"given","text":"","code":["var assoc = Association.of(\"a\", 1).put(\"b\", 2)"]},
 
-        {"kind":"when","text":"","code":["var entrySet = assoc.entrySet()"]},
+        {"kind":"when","text":"","code":["var entryValueSet = assoc.entrySet()","var entrySet = entryValueSet.toSet()"]},
 
         {"kind":"then","text":"","code":["entrySet.size() == 2","entrySet.contains(Pair.of(\"a\", 1))","entrySet.contains(Pair.of(\"b\", 2))"]},
+
+        {"kind":"and","text":"","code":["entryValueSet.size() == 2","entryValueSet.contains(Pair.of(\"a\", 1))","entryValueSet.contains(Pair.of(\"b\", 2))"]},
 
         {"kind":"when","text":"","code":["entrySet.add(Pair.of(\"c\", 3))"]},
 
@@ -1208,7 +1231,7 @@
       "blocks":[
         {"kind":"given","text":"","code":["var assoc = Association.between(Integer, String).putAll(","    Pair.of(1, \"I\"),","    Pair.of(2, \"was\"),","    Pair.of(3, \"added\"),","    Pair.of(4, \"to\"),","    Pair.of(5, \"the\"),","    Pair.of(6, \"association\")",")"]},
 
-        {"kind":"when","text":"","code":["var entries = []","for (var entry : assoc.entrySet()) {","    entries << entry","}"]},
+        {"kind":"when","text":"","code":["var entries = []","for (var entry : assoc.entrySet().toSet()) {","    entries << entry","}"]},
 
         {"kind":"then","text":"","code":["entries.size() == 6","entries.contains(Pair.of(1, \"I\"))","entries.contains(Pair.of(2, \"was\"))","entries.contains(Pair.of(3, \"added\"))","entries.contains(Pair.of(4, \"to\"))","entries.contains(Pair.of(5, \"the\"))","entries.contains(Pair.of(6, \"association\"))"]}
       ],

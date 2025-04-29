@@ -149,7 +149,7 @@
       "blocks":[
         {"kind":"given","text":"Two properties we will dereference later.","code":["Var<DayOfWeek> day = Var.of(DayOfWeek.MONDAY)","Var<String> name = Var.of(\"John\")"]},
 
-        {"kind":"and","text":"A composite property that observes the two properties.","code":["Viewable<String> composite = Val.viewOf(name, day, (n,d) -> n + \" \" + d.name().toLowerCase())"]},
+        {"kind":"and","text":"A composite property that observes the two properties.","code":["Viewable<String> composite = Viewable.of(name, day, (n,d) -> n + \" \" + d.name().toLowerCase())"]},
 
         {"kind":"expect","text":"The composite property is \"John monday\" initially.","code":["composite.get() == \"John monday\""]},
 
@@ -176,7 +176,7 @@
       "blocks":[
         {"kind":"given","text":"Two properties we will dereference later.","code":["Var<Month> month = Var.of(Month.JANUARY)","Var<String> name = Var.of(\"Linda\")"]},
 
-        {"kind":"and","text":"A nullable composite property that observes the two properties.","code":["Viewable<String> composite = Val.viewOfNullable(name, month, (n,m) -> n + \" \" + m.name().toLowerCase())"]},
+        {"kind":"and","text":"A nullable composite property that observes the two properties.","code":["Viewable<String> composite = Viewable.ofNullable(name, month, (n,m) -> n + \" \" + m.name().toLowerCase())"]},
 
         {"kind":"expect","text":"The composite property is \"Linda january\" initially.","code":["composite.get() == \"Linda january\""]},
 
@@ -201,7 +201,7 @@
       "tags":{},"see":[],"extraInfo":["\n            If you create a composite property of two other properties\n            and one of these source properties is garbage collected,\n            then the composite property will still be updated\n            based on the last known value of the collected property.\n        "]
       },
       "blocks":[
-        {"kind":"given","text":"","code":["Var<String> a = Var.of(\"A\")","Var<String> b = Var.of(\"B\")","Val<String> c = Val.viewOf(a, b, (x, y) -> x + y)","var weakA = new WeakReference(a)"]},
+        {"kind":"given","text":"","code":["Var<String> a = Var.of(\"A\")","Var<String> b = Var.of(\"B\")","Val<String> c = Viewable.of(a, b, (x, y) -> x + y)","var weakA = new WeakReference(a)"]},
 
         {"kind":"expect","text":"","code":["c.get() == \"AB\""]},
 
@@ -226,7 +226,7 @@
       "tags":{},"see":[],"extraInfo":["\n            If you create a composite property of two other properties\n            and the second property is garbage collected,\n            then the composite property will still be updated\n            from the state of the first property and the last\n            known state of the second property.\n        "]
       },
       "blocks":[
-        {"kind":"given","text":"","code":["Var<String> a = Var.of(\"A\")","Var<String> b = Var.of(\"B\")","Viewable<String> c = Val.viewOf(a, b, (x, y) -> x + y)","var weakB = new WeakReference(b)"]},
+        {"kind":"given","text":"","code":["Var<String> a = Var.of(\"A\")","Var<String> b = Var.of(\"B\")","Viewable<String> c = Viewable.of(a, b, (x, y) -> x + y)","var weakB = new WeakReference(b)"]},
 
         {"kind":"expect","text":"","code":["c.get() == \"AB\""]},
 
