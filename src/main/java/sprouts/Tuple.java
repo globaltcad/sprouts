@@ -435,7 +435,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @param value The value {@link Maybe} to search for.
      * @return True if the given {@link Maybe} is in this tuple.
      */
-    default boolean contains( Maybe<T> value ) {
+    default boolean maybeContains( Maybe<T> value ) {
         return contains(value.orElseNull());
     }
 
@@ -559,11 +559,11 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @throws IllegalArgumentException if the tuple allows {@code null} and the {@link Maybe} does not allow {@code null}.
      * @throws NullPointerException     if the {@code var} is {@code null}.
      */
-    default Tuple<T> add( Maybe<T> item ) {
+    default Tuple<T> maybeAdd( Maybe<T> item ) {
         Objects.requireNonNull(item);
         if ( !allowsNull() && item.isEmpty() )
             return this;
-        return addAt( size(), item );
+        return maybeAddAt( size(), item );
     }
 
     /**
@@ -655,7 +655,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @param item The item to remove from the entire tuple.
      * @return A new tuple of items with the desired change.
      */
-    default Tuple<T> remove( Maybe<T> item ) {
+    default Tuple<T> maybeRemove( Maybe<T> item ) {
         if ( !this.allowsNull() && item.isEmpty() )
             return this;
         Tuple<T> result = this;
@@ -702,7 +702,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @return A new tuple of items with the desired change.
      * @throws NullPointerException if the {@code maybeItem} is {@code null}.
      */
-    default Tuple<T> removeFirstFound( Maybe<T> maybeItem ) {
+    default Tuple<T> maybeRemoveFirstFound( Maybe<T> maybeItem ) {
         Objects.requireNonNull(maybeItem);
         if ( !allowsNull() && maybeItem.isEmpty() )
             return this;
@@ -734,7 +734,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @throws NoSuchElementException if the item is not found.
      * @throws NullPointerException  if the {@code item} is {@code null}.
      */
-    default Tuple<T> removeFirstFoundOrThrow( Maybe<T> item ) {
+    default Tuple<T> maybeRemoveFirstFoundOrThrow( Maybe<T> item ) {
         Objects.requireNonNull(item);
         int index = firstIndexOf(item);
         if ( index < 0 )
@@ -959,7 +959,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @return A new tuple of items with the desired change.
      * @throws IllegalArgumentException if the tuple allows {@code null} and the property does not allow {@code null}.
      */
-    default Tuple<T> addAt( int index, Maybe<T> maybeItem ) {
+    default Tuple<T> maybeAddAt( int index, Maybe<T> maybeItem ) {
         Objects.requireNonNull(maybeItem);
         if ( !allowsNull() && maybeItem.isEmpty() )
             return this;
@@ -1014,7 +1014,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      *                                   size of this {@code Vec} object.
      * @throws IllegalArgumentException  if the tuple allows {@code null} and the property does not allow {@code null}.
      */
-    default Tuple<T> setAt( int index, Maybe<T> maybeItem ) {
+    default Tuple<T> maybeSetAt( int index, Maybe<T> maybeItem ) {
         Objects.requireNonNull(maybeItem);
         if ( !allowsNull() && maybeItem.isEmpty() )
             return this;
@@ -1039,8 +1039,8 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      *                                   this {@code Vec} object.
      * @throws IllegalArgumentException  if the tuple allows {@code null} and the property does not allow {@code null}.
      */
-    default Tuple<T> setAt( int index, int size, Maybe<T> value ) {
-        return setRange(index, index + size, value);
+    default Tuple<T> maybeSetAt( int index, int size, Maybe<T> value ) {
+        return maybeSetRange(index, index + size, value);
     }
 
     /**
@@ -1088,7 +1088,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      *                                   {@code Tuple} object, or {@code from} is greater than {@code to}.
      * @throws IllegalArgumentException  if the tuple allows {@code null} and the property does not allow {@code null}.
      */
-    default Tuple<T> setRange( int from, int to, Maybe<T> maybeItem )  {
+    default Tuple<T> maybeSetRange( int from, int to, Maybe<T> maybeItem )  {
         if ( from < 0 || to > size() || from > to )
             throw new IndexOutOfBoundsException("From: " + from + ", To: " + to + ", Size: " + size());
 
@@ -1129,7 +1129,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @return A new tuple of items with the desired change.
      * @throws NullPointerException if the {@code items} is {@code null}.
      */
-    default Tuple<T> addAll( Maybe<T>... items ) {
+    default Tuple<T> maybeAddAll( Maybe<T>... items ) {
         Objects.requireNonNull(items);
         if ( !allowsNull() ) {
             List<Maybe<T>> onlyPresent = new ArrayList<>();
@@ -1198,7 +1198,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @return A new tuple of items with the desired change.
      * @throws NullPointerException if the {@code items} is {@code null}.
      */
-    default Tuple<T> addAllAt( int index, Maybe<T>... items ) {
+    default Tuple<T> maybeAddAllAt( int index, Maybe<T>... items ) {
         Objects.requireNonNull(items);
         if ( !allowsNull() ) {
             List<Maybe<T>> onlyPresent = new ArrayList<>();
@@ -1267,7 +1267,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @return A new tuple of items with the desired change.
      * @throws NullPointerException if the {@code items} is {@code null}.
      */
-    default Tuple<T> setAllAt( int index, Maybe<T>... items ) {
+    default Tuple<T> maybeSetAllAt( int index, Maybe<T>... items ) {
         Objects.requireNonNull(items);
         if ( !allowsNull() ) {
             List<Maybe<T>> onlyPresent = new ArrayList<>();
