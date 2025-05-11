@@ -6,27 +6,27 @@ import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
- *  A checked exception thrown when an item is missing from a
+ *  A non-checked runtime exception thrown when an item is missing from a
  *  {@link Maybe} object.
  */
-public final class MissingItemException extends Exception
+public final class MissingItemRuntimeException extends RuntimeException
 {
     private final Tuple<Problem> _problems;
 
     /**
-     *  Creates a new {@link MissingItemException} with the given message
+     *  Creates a new {@link MissingItemRuntimeException} with the given message
      *  anf tuple of problems describing the cause of the exception.
      *
      * @param message The message of the exception.
      * @param problems The problems that caused this exception.
      */
-    public MissingItemException(String message, Tuple<Problem> problems) {
-        super(message, _causeFromAllProblems(problems));
+    public MissingItemRuntimeException(String message, Tuple<Problem> problems) {
+        super(message, causeFromAllProblems(problems));
         _problems = problems;
-        _addSuppressed(problems, this::addSuppressed);
+        addSuppressed(problems, this::addSuppressed);
     }
 
-    private static @Nullable Throwable _causeFromAllProblems(Tuple<Problem> problems) {
+    private static @Nullable Throwable causeFromAllProblems(Tuple<Problem> problems) {
         if ( problems.isEmpty() )
             return null;
         Throwable mainCause = _problemAsThrowable(Objects.requireNonNull(problems.first()));
@@ -38,7 +38,7 @@ public final class MissingItemException extends Exception
         return mainCause;
     }
 
-    private static void _addSuppressed(Tuple<Problem> problems, Consumer<Throwable> addSuppressed) {
+    private static void addSuppressed(Tuple<Problem> problems, Consumer<Throwable> addSuppressed) {
         if ( problems.size() < 2 )
             return;
         for ( int i = 1; i < problems.size(); i++ ) {
