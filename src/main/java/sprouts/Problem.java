@@ -13,17 +13,17 @@ import java.util.function.BiConsumer;
  *  A problem is a wrapper for information describing an issue
  *  that can be reported and attached to a {@link Result}.
  *  It is used to describe what went wrong in a process.
- *  Like for example the process of obtaining a value,
+ *  Like, for example, the process of obtaining a value,
  *  which is why it is also part of a {@link Result} that does not contain a value (null). <br>
  *  The {@link Problem} exposes various properties that describe what went wrong,
  *  such as a title, a description, an optional reporter object and an
  *  optional {@link Exception} that was thrown while obtaining the value. <br>
  *  <br>
  *  This type has been designed to complement Java exceptions.
- *  Exceptions are great for us developers, because they halt
+ *  Exceptions are great for us developers because they halt
  *  the current execution and give us a stack trace we can debug,
  *  but they do not always fail as gracefully as a user might expect.
- *  In a complex system where lots of things can go wrong
+ *  In a complex system where lots of things can go wrong,
  *  you want to catch exceptions and then collect
  *  them in a list of problems like so:
  *  <pre>{@code
@@ -34,10 +34,10 @@ import java.util.function.BiConsumer;
  *  they can then either be logged or presented to the user
  *  in a more graceful way.
  *  <br>
- *  The {@link Result} relies on this {@link Problem} type instead of
- *  exceptions due to the fact that not every runtime issue is necessarily produced
+ *  The {@link Result} relies on this {@link Problem} type, instead of
+ *  exceptions, because not every runtime issue is necessarily produced
  *  by an exception. If you do not want to disturb the control flow of your application
- *  by throwing an exception, you can simply create a {@link Problem} as part of a {@link Result}
+ *  by throwing an exception, you can create a {@link Problem} as part of a {@link Result}
  *  and continue processing.
  */
 public interface Problem
@@ -249,5 +249,4 @@ public interface Problem
     default void logAsTrace() {
         logTo(LoggerFactory.getLogger(getClass().getName())::trace);
     }
-    
 }
