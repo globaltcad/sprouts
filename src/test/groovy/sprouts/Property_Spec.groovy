@@ -140,7 +140,7 @@ class Property_Spec extends Specification
         when : 'We try to access the value of the property.'
             property.get()
         then : 'The property will throw an exception.'
-            thrown(NoSuchElementException)
+            thrown(MissingItemRuntimeException)
     }
 
     def 'The equality and hash code of a mutable property is based on its identity!'()

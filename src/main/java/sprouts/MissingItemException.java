@@ -15,6 +15,17 @@ public final class MissingItemException extends Exception
 
     /**
      *  Creates a new {@link MissingItemException} with the given message
+     *  and no {@link Problem} information about the cause of the exception.
+     *
+     * @param message The message of the exception.
+     */
+    public MissingItemException(String message) {
+        super(message);
+        _problems = Tuple.of(Problem.class);
+    }
+
+    /**
+     *  Creates a new {@link MissingItemException} with the given message
      *  anf tuple of problems describing the cause of the exception.
      *
      * @param message The message of the exception.

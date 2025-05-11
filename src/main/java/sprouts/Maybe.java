@@ -4,7 +4,6 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import sprouts.impl.Sprouts;
 
-import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -96,7 +95,7 @@ public interface Maybe<T>
      * @return A new {@link Maybe} instance.
      * @param <T> The type of the item held by the {@link Maybe}!
      * @throws NullPointerException If the supplied {@link Maybe} is null.
-     * @throws NoSuchElementException If the item of the supplied {@link Maybe} is null.
+     * @throws MissingItemRuntimeException If the item of the supplied {@link Maybe} is null.
      */
     static <T> Maybe<T> of( Maybe<T> toBeCopied ) {
         Objects.requireNonNull(toBeCopied);
@@ -189,7 +188,7 @@ public interface Maybe<T>
 
     /**
      * If an item is present, returns the item, otherwise throws
-     * an unchecked {@code NoSuchElementException}. You may use this if
+     * an unchecked {@code MissingItemRuntimeException}. You may use this if
      * you are fine with the control flow of your application being
      * interacted with by an unchecked exception. <br>
      * It is recommended to use {@link #orElseThrow()} instead, which
@@ -200,13 +199,13 @@ public interface Maybe<T>
      * {@link #orElseGet(Supplier)} instead of the throw methods.
      *
      * @return the non-{@code null} item described by this {@code Maybe}
-     * @throws NoSuchElementException if no item is present
+     * @throws MissingItemRuntimeException if no item is present
      */
     default @NonNull T orElseThrowUnchecked() {
         // This class is similar to optional, so if the value is null, we throw an exception!
         T value = orElseNull();
         if ( Objects.isNull(value) )
-            throw new NoSuchElementException("No value present");
+            throw new MissingItemRuntimeException("No item present");
         return value;
     }
 
@@ -215,7 +214,7 @@ public interface Maybe<T>
      * a checked {@code MissingItemException}, requiring you to handle it
      * explicitly in your code. If you want to access the item without
      * handling an exception, use {@link #orElseThrowUnchecked()},
-     * which throws the unchecked {@code NoSuchElementException},
+     * which throws the unchecked {@code MissingItemRuntimeException},
      * a subclass of {@code RuntimeException}. <br>
      * The preferred way to unpack the item of this {@link Maybe} is to use
      * this method, as it makes your intention clear and forces you to handle
@@ -231,7 +230,7 @@ public interface Maybe<T>
         // This class is similar to optional, so if the value is null, we throw an exception!
         T value = orElseNull();
         if ( Objects.isNull(value) )
-            throw new MissingItemException("No value present", Tuple.of(Problem.class));
+            throw new MissingItemException("No item present");
         return value;
     }
 
@@ -397,9 +396,9 @@ public interface Maybe<T>
      * If an item is present, performs the given action with the item,
      * otherwise performs the given empty-based action.
      *
-     * @param action the action to be performed, if an item is present
+     * @param action the action to be performed if an item is present
      * @param emptyAction the empty-based action to be performed, if no item is
-     *        present
+     *        present in this {@code Maybe}
      * @throws NullPointerException if an item is present and the given action
      *         is {@code null}, or no item is present and the given empty-based
      *         action is {@code null}.

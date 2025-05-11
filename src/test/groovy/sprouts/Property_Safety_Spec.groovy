@@ -102,7 +102,7 @@ class Property_Safety_Spec extends Specification
         when : 'We try to access the value of the property.'
             property.orElseThrowUnchecked()
         then : 'The property will throw an exception.'
-            thrown(NoSuchElementException)
+            thrown(MissingItemRuntimeException)
     }
 
     def 'An empty property can throw a cached exception if you try to access its value.'()
@@ -152,7 +152,7 @@ class Property_Safety_Spec extends Specification
         when : 'We try to access the value of the property through "orElseThrowUnchecked".'
             property.orElseThrowUnchecked()
         then : 'The property will throw an exception.'
-            thrown(NoSuchElementException)
+            thrown(MissingItemRuntimeException)
     }
 
     def '"Vals", a list of properties, is immutable.'( Consumer<Vals<Integer>> code )
