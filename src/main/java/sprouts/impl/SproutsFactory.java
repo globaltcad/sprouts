@@ -4,12 +4,10 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import sprouts.*;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.*;
 import java.util.regex.Pattern;
-import java.util.stream.StreamSupport;
 
 /**
  *  Creates instances of the various property types in the Sprouts library.

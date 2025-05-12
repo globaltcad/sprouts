@@ -1,8 +1,6 @@
 package sprouts.impl;
 
 import org.jspecify.annotations.Nullable;
-import sprouts.WeakAction;
-import sprouts.WeakObserver;
 
 import java.util.Objects;
 import java.util.Optional;

@@ -1,4 +1,7 @@
-package sprouts;
+package sprouts.impl;
+
+import sprouts.Observable;
+import sprouts.Observer;
 
 import java.util.Optional;
 

@@ -1,6 +1,7 @@
 package sprouts;
 
 import sprouts.impl.Sprouts;
+import sprouts.impl.WeakAction;
 
 import java.util.function.BiConsumer;
 

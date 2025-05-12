@@ -2,7 +2,6 @@ package sprouts.impl;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
-import sprouts.WeakAction;
 
 import java.lang.ref.WeakReference;
 import java.util.Optional;

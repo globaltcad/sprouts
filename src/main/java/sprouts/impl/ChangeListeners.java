@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import sprouts.Action;
 import sprouts.Subscriber;
 import sprouts.Tuple;
-import sprouts.WeakAction;
 
 import java.lang.ref.WeakReference;
 import java.util.Objects;
