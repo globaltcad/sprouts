@@ -4,6 +4,7 @@ import spock.lang.Narrative
 import spock.lang.Specification
 import spock.lang.Subject
 import spock.lang.Title
+import sprouts.impl.WeakObserver
 
 import java.lang.ref.WeakReference
 import java.time.DayOfWeek
@@ -752,7 +753,7 @@ class Property_View_Spec extends Specification
         and : 'A trace list to record the side effects.'
             var trace = []
         and : 'Finally we register a weak observer on the property.'
-            viewable.subscribe(Observer.ofWeak(owner,{trace << "!"}))
+            viewable.subscribe(new WeakObserver(owner,{trace << "!"}))
 
         when : 'We change the source property.'
             property.set(43)

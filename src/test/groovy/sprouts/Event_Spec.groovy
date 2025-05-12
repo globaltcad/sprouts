@@ -4,6 +4,7 @@ import spock.lang.Narrative
 import spock.lang.Specification
 import spock.lang.Subject
 import spock.lang.Title
+import sprouts.impl.WeakObserver
 
 import java.lang.ref.WeakReference
 
@@ -176,7 +177,7 @@ class Event_Spec extends Specification
             var trace = []
             var controlTrace = []
         and : 'We register a weak observer on the event as well as a regular observer.'
-            Observable.cast(event).subscribe(Observer.ofWeak(owner, { trace << "!" }))
+            Observable.cast(event).subscribe(new WeakObserver(owner, { trace << "!" }))
             Observable.cast(event).subscribe({ controlTrace << "!" })
 
         when : 'We trigger the event.'
