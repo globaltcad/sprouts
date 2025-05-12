@@ -370,7 +370,7 @@ final class PropertyList<T extends @Nullable Object> implements Vars<T>, Viewabl
 
     /** {@inheritDoc} */
     @Override
-    public Vals<T> onChange( Action<ValsDelegate<T>> action ) {
+    public Viewables<T> onChange( Action<ValsDelegate<T>> action ) {
         _changeListeners.onChange(action);
         return this;
     }
