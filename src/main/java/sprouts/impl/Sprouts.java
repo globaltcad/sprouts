@@ -518,11 +518,6 @@ public final class Sprouts implements SproutsFactory
     }
 
     @Override
-    public <O, D> WeakAction<O, D> actionOfWeak( O owner, BiConsumer<O, D> action ) {
-        return new WeakActionImpl<>(owner, action);
-    }
-
-    @Override
     public String defaultId() {
         return "";
     }

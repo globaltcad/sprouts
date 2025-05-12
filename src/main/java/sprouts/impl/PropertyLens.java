@@ -153,7 +153,7 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
         _changeListeners = changeListeners == null ? new PropertyChangeListeners<>() : new PropertyChangeListeners<>(changeListeners);
 
         _lastItem = initialItem;
-        Viewable.cast(parent).onChange(From.ALL, Action.ofWeak(this, (thisLens, v) -> {
+        Viewable.cast(parent).onChange(From.ALL, WeakActionImpl.of(this, (thisLens, v) -> {
             T newValue = thisLens._fetchItemFromParent();
             ItemPair<T> pair = new ItemPair<>(thisLens._type, newValue, thisLens._lastItem);
             if ( pair.change() != SingleChange.NONE ) {
