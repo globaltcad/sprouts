@@ -15,7 +15,7 @@ package sprouts;
  *  callback using the {@link #unsubscribe(Subscriber)} method ({@link Action} is also a {@link Subscriber}).
  *  <p>
  *  Instances of this are intended to be created from {@link Vals} property lists.
- *  {@link sprouts.Viewables} created from such a property list is weakly referenced b it.
+ *  {@link sprouts.Viewables} created from such a property list is weakly referenced by it.
  *  You can register change listeners on it, and when you no longer want changes
  *  to be propagated to the {@link sprouts.Viewables},
  *  then you can drop its reference, and it will be garbage collected
