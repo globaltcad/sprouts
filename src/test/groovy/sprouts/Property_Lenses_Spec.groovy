@@ -6,6 +6,7 @@ import spock.lang.Specification
 import spock.lang.Subject
 import spock.lang.Title
 import sprouts.impl.PropertyLens
+import sprouts.impl.WeakObserver
 
 import java.lang.ref.WeakReference
 import java.time.LocalDate
@@ -1490,7 +1491,7 @@ class Property_Lenses_Spec extends Specification
         and : 'A trace list to record the side effect.'
             var trace = []
         and : 'Finally we register a weak observer on the property.'
-            Viewable.cast(monthLens).subscribe(Observer.ofWeak(owner,{trace<<"!"}))
+            Viewable.cast(monthLens).subscribe(new WeakObserver(owner,{trace<<"!"}))
 
         when : 'We change the lens...'
             monthLens.set(Month.JANUARY)

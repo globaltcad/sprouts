@@ -523,11 +523,6 @@ public final class Sprouts implements SproutsFactory
     }
 
     @Override
-    public <O> WeakObserver<O> observerOfWeak( O owner, Consumer<O> action ) {
-        return new WeakObserverImpl<>(owner, action);
-    }
-
-    @Override
     public String defaultId() {
         return "";
     }

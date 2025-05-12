@@ -1,9 +1,12 @@
 package sprouts.impl;
 
+import org.jspecify.annotations.Nullable;
 import sprouts.Observable;
 import sprouts.Observer;
 
+import java.lang.ref.WeakReference;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 /**
  *  A weak observer is an extension of the {@link Observer} interface
@@ -12,14 +15,18 @@ import java.util.Optional;
  *  The owner is weakly referenced and determines the
  *  lifetime of the observer. A library internal cleaner
  *  is responsible for removing it from the {@link Observable} when the owner
- *  is garbage collected. It is advised to use the
- *  {@link Observer#ofWeak(Object, java.util.function.Consumer)}
- *  factory method to create a new weak observer which
- *  is backed by a tried and test
- *  default implementation of this interface.
+ *  is garbage collected.
  * @param <O> The type of the owner of this observer.
  */
-public interface WeakObserver<O> extends Observer {
+final class WeakObserver<O> implements Observer {
+
+    private final WeakReference<O> _owner;
+    private @Nullable Consumer<O> _action;
+
+    public WeakObserver( O owner, Consumer<O> action ) {
+        _owner = new WeakReference<>(owner);
+        _action = action;
+    }
 
     /**
      *  Returns an {@link Optional} containing the owner of this observer.
@@ -28,7 +35,9 @@ public interface WeakObserver<O> extends Observer {
      *
      * @return An {@link Optional} containing the owner of this observer.
      */
-    Optional<O> owner();
+    public Optional<O> owner() {
+        return Optional.ofNullable(_owner.get());
+    }
 
     /**
      *  Clears the observer, making it no longer executable.
@@ -39,6 +48,22 @@ public interface WeakObserver<O> extends Observer {
      *      as it may lead to unexpected behavior.
      *  </b>
      */
-    void clear();
+    public void clear() {
+        _action = null;
+        _owner.clear();
+    }
+
+    @Override
+    public void invoke() throws Exception {
+        if ( _action == null )
+            return;
+
+        O owner = _owner.get();
+
+        if ( owner != null )
+            _action.accept(owner);
+        else
+            _action = null;
+    }
 
 }
