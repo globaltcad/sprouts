@@ -7,6 +7,7 @@ import sprouts.impl.Sprouts;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -282,6 +283,167 @@ public interface Result<V> extends Maybe<V>
     Result<V> peekAtEachProblem( Consumer<Problem> consumer );
 
     /**
+     *  If this {@link Result} wraps a non-null item of type {@code V}, then this method will do nothing.
+     *  If, however, the item is missing, then an invocation will generate a rich context message and stack
+     *  trace from all problems associated with this result and then log them as errors
+     *  to the {@link org.slf4j.Logger#error(String, Throwable)} method.<br>
+     *  It returns the result itself, so you can chain it with other methods.
+     *  This is intended to be used in a fluent API style which typically looks like this:
+     *  <pre>{@code
+     *  return 
+     *    Result.ofTry(String.class,this::parse)
+     *          .ifMissingLogAsError()
+     *          .orElseGet(()->this.defaultValue);
+     *  }</pre>
+     *  The logged information will contain the title and description of an existing {@link Problem}
+     *  as well as the local stack trace either based on an exception in a problem 
+     *  or a newly created {@link Throwable} to ensure that the issue can be traced back
+     *  to the source of the problem.
+     *  
+     * @return This result, unchanged.
+     */
+    default Result<V> ifMissingLogAsError() {
+        if ( this.isEmpty() )
+            return peekAtEachProblem(Problem::logAsError);
+        else
+            return this;
+    }
+    
+    /**
+     *  If this {@link Result} wraps a non-null item of type {@code V}, then this method will do nothing.
+     *  If, however, the item is missing, then an invocation will generate a rich context message and stack
+     *  trace from all problems associated with this result and then log them as warnings
+     *  to the {@link org.slf4j.Logger#warn(String, Throwable)} method.<br>
+     *  It returns the result itself, so you can chain it with other methods.
+     *  This is intended to be used in a fluent API style which typically looks like this:
+     *  <pre>{@code
+     *  return 
+     *    Result.ofTry(String.class,this::parse)
+     *          .ifMissingLogAsWarning()
+     *          .orElseGet(()->this.defaultValue);
+     *  }</pre>
+     *  The logged information will contain the title and description of an existing {@link Problem}
+     *  as well as the local stack trace either based on an exception in a problem 
+     *  or a newly created {@link Throwable} to ensure that the issue can be traced back
+     *  to the source of the problem.
+     *
+     * @return This result, unchanged.
+     */
+    default Result<V> ifMissingLogAsWarning() {
+        if ( this.isEmpty() )
+            return peekAtEachProblem(Problem::logAsWarning);
+        else
+            return this;
+    }
+    
+    /**
+     *  If this {@link Result} wraps a non-null item of type {@code V}, then this method will do nothing.
+     *  If, however, the item is missing, then an invocation will generate a rich context message and stack
+     *  trace from all problems associated with this result and then log them as info
+     *  to the {@link org.slf4j.Logger#info(String, Throwable)} method.<br>
+     *  It returns the result itself, so you can chain it with other methods.
+     *  This is intended to be used in a fluent API style which typically looks like this:
+     *  <pre>{@code
+     *  return 
+     *    Result.ofTry(String.class,this::parse)
+     *          .ifMissingLogAsInfo()
+     *          .orElseGet(()->this.defaultValue);
+     *  }</pre>
+     *  The logged information will contain the title and description of an existing {@link Problem}
+     *  as well as the local stack trace either based on an exception in a problem 
+     *  or a newly created {@link Throwable} to ensure that the issue can be traced back
+     *  to the source of the problem.
+     *
+     * @return This result, unchanged.
+     */
+    default Result<V> ifMissingLogAsInfo() {
+        if ( this.isEmpty() )
+            return peekAtEachProblem(Problem::logAsInfo);
+        else
+            return this;
+    }
+    
+    /**
+     *  If this {@link Result} wraps a non-null item of type {@code V}, then this method will do nothing.
+     *  If, however, the item is missing, then an invocation will generate a rich context message and stack
+     *  trace from all problems associated with this result and then log them as debug
+     *  to the {@link org.slf4j.Logger#debug(String, Throwable)} method.<br>
+     *  It returns the result itself, so you can chain it with other methods.
+     *  This is intended to be used in a fluent API style which typically looks like this:
+     *  <pre>{@code
+     *  return 
+     *    Result.ofTry(String.class,this::parse)
+     *          .ifMissingLogAsDebug()
+     *          .orElseGet(()->this.defaultValue);
+     *  }</pre>
+     *  The logged information will contain the title and description of an existing {@link Problem}
+     *  as well as the local stack trace either based on an exception in a problem 
+     *  or a newly created {@link Throwable} to ensure that the issue can be traced back
+     *  to the source of the problem.
+     *
+     * @return This result, unchanged.
+     */
+    default Result<V> ifMissingLogAsDebug() {
+        if ( this.isEmpty() )
+            return peekAtEachProblem(Problem::logAsDebug);
+        else
+            return this;
+    }
+    
+    /**
+     *  If this {@link Result} wraps a non-null item of type {@code V}, then this method will do nothing.
+     *  If, however, the item is missing, then an invocation will generate a rich context message and stack
+     *  trace from all problems associated with this result and then log them as trace
+     *  to the {@link org.slf4j.Logger#trace(String, Throwable)} method.<br>
+     *  It returns the result itself, so you can chain it with other methods.
+     *  This is intended to be used in a fluent API style which typically looks like this:
+     *  <pre>{@code
+     *  return 
+     *    Result.ofTry(String.class,this::parse)
+     *          .ifMissingLogAsTrace()
+     *          .orElseGet(()->this.defaultValue);
+     *  }</pre>
+     *  The logged information will contain the title and description of an existing {@link Problem}
+     *  as well as the local stack trace either based on an exception in a problem 
+     *  or a newly created {@link Throwable} to ensure that the issue can be traced back
+     *  to the source of the problem.
+     *
+     * @return This result, unchanged.
+     */
+    default Result<V> ifMissingLogAsTrace() {
+        if ( this.isEmpty() )
+            return peekAtEachProblem(Problem::logAsTrace);
+        else
+            return this;
+    }
+
+    /**
+     *  If this {@link Result} wraps a non-null item of type {@code V}, then this method will do nothing.
+     *  If, however, the item is missing, then an invocation will generate a rich context message and stack
+     *  trace from all problems associated with this result and then expose this logging information
+     *  to the Supplied {@link BiConsumer} which is expected to log the information the way it sees fit.
+     *  This method returns this result itself, so you can chain it with other methods.
+     *  It is intended to be used in a fluent API style which typically looks like this:
+     *  <pre>{@code
+     *  return
+     *    Result.ofTry(String.class,this::parse)
+     *          .ifMissingLogTo(logger::error)
+     *          .orElseGet(()->this.defaultValue);
+     *  }</pre>
+     *
+     * @param logger The logger to log the problems to, it is a {@link BiConsumer} which
+     *               takes as first argument the {@link String} message to log and as
+     *               second argument the {@link Throwable} associated with the problem.
+     * @return This result, unchanged.
+     */
+    default Result<V> ifMissingLogTo( BiConsumer<String, Throwable> logger ) {
+        if ( this.isEmpty() )
+            return peekAtEachProblem(problem -> problem.logTo(logger));
+        else
+            return this;
+    }
+    
+    /**
      *  Safely maps the value of this result to a new value of a different type
      *  even if an exception is thrown during the mapping process,
      *  in which case the exception is caught and a new result is returned
@@ -306,4 +468,5 @@ public interface Result<V> extends Maybe<V>
      */
     @Override
     Result<V> map( Function<V, V> mapper );
+    
 }

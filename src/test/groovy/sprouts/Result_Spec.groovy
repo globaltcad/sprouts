@@ -416,4 +416,63 @@ class Result_Spec extends Specification
         and : 'Because ´Result´s are immutable, the original result still has the same problems.'
             result.problems().size() == 3
     }
+
+    def 'The "orElseThrowUnchecked" method will throw an exception which is a composite of all problems.'()
+    {
+        reportInfo """
+            The `orElseThrowUnchecked` throws a "MissingItemRuntimeException" which is a composite of all problems
+            that occurred during the operation that produced the result.
+        """
+        given : 'A result with some problems.'
+            var result = Result.of(Integer, [
+                Problem.of("too large", "Who can count that far?"),
+                Problem.of("too even", "The customer doesn't like even numbers."),
+                Problem.of("not a prime", "Prime numbers sell better.")
+            ])
+        when : 'We call the `orElseThrowUnchecked` method.'
+            int neverReached = result.orElseThrowUnchecked()
+        then : 'An exception is thrown.'
+            var exception = thrown(MissingItemRuntimeException)
+        and : 'The exception has the correct message and cause:'
+            exception.message == "Expected item to be present in result!"
+        and : 'The cause of the exception is the first problem in the list.'
+            exception.cause.toString().contains("too large")
+            exception.cause.toString().contains("Who can count that far?")
+        and : 'The last problem in the list is also present in the exception.'
+            exception.suppressed.length == 2
+            exception.suppressed[0].toString().contains("too even")
+            exception.suppressed[0].toString().contains("The customer doesn't like even numbers.")
+            exception.suppressed[1].toString().contains("not a prime")
+            exception.suppressed[1].toString().contains("Prime numbers sell better.")
+    }
+
+    def 'The "orElseThrow" method will throw a checked exception which is a composite of all problems.'()
+    {
+        reportInfo """
+            The `orElseThrow` throws a "MissingItemException" which is a composite of all problems
+            that occurred during the operation that produced the result.
+        """
+        given : 'A result with some problems.'
+            var result = Result.of(Integer, [
+                Problem.of("too large", "Who can count that far?"),
+                Problem.of("too even", "The customer doesn't like even numbers."),
+                Problem.of("not a prime", "Prime numbers sell better.")
+            ])
+        when : 'We call the `orElseThrow` method.'
+            int neverReached = result.orElseThrow()
+        then : 'An exception is thrown.'
+            var exception = thrown(MissingItemException)
+        and : 'The exception has the correct message and cause:'
+            exception.message == "Expected item to be present in result!"
+        and : 'The cause of the exception is the first problem in the list.'
+            exception.cause.toString().contains("too large")
+            exception.cause.toString().contains("Who can count that far?")
+        and : 'The last problem in the list is also present in the exception.'
+            exception.suppressed.length == 2
+            exception.suppressed[0].toString().contains("too even")
+            exception.suppressed[0].toString().contains("The customer doesn't like even numbers.")
+            exception.suppressed[1].toString().contains("not a prime")
+            exception.suppressed[1].toString().contains("Prime numbers sell better.")
+    }
+
 }

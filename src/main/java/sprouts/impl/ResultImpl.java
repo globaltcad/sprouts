@@ -29,10 +29,18 @@ final class ResultImpl<V> implements Result<V>
 
 	/** {@inheritDoc} */
 	public @NonNull V orElseThrow() throws MissingItemException {
-		// This class is similar to optional, so if the value is null, we throw an exception!
+		// If the value is null, this throws a checked exception!
 		V value = orElseNull();
 		if ( Objects.isNull(value) )
 			throw new MissingItemException("Expected item to be present in result!", this._problems);
+		return value;
+	}
+
+	public @NonNull V orElseThrowUnchecked() {
+		// This is similar to optionals "get()", so if the value is null, we throw a unchecked exception!
+		V value = orElseNull();
+		if ( Objects.isNull(value) )
+			throw new MissingItemRuntimeException("Expected item to be present in result!", this._problems);
 		return value;
 	}
 

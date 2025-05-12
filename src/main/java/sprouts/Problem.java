@@ -1,5 +1,6 @@
 package sprouts;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,17 +14,17 @@ import java.util.function.BiConsumer;
  *  A problem is a wrapper for information describing an issue
  *  that can be reported and attached to a {@link Result}.
  *  It is used to describe what went wrong in a process.
- *  Like for example the process of obtaining a value,
+ *  Like, for example, the process of getting a value,
  *  which is why it is also part of a {@link Result} that does not contain a value (null). <br>
  *  The {@link Problem} exposes various properties that describe what went wrong,
  *  such as a title, a description, an optional reporter object and an
- *  optional {@link Exception} that was thrown while obtaining the value. <br>
+ *  optional {@link Exception} that was thrown while getting the value. <br>
  *  <br>
  *  This type has been designed to complement Java exceptions.
- *  Exceptions are great for us developers, because they halt
+ *  Exceptions are great for us developers because they halt
  *  the current execution and give us a stack trace we can debug,
  *  but they do not always fail as gracefully as a user might expect.
- *  In a complex system where lots of things can go wrong
+ *  In a complex system where lots of things can go wrong,
  *  you want to catch exceptions and then collect
  *  them in a list of problems like so:
  *  <pre>{@code
@@ -34,13 +35,13 @@ import java.util.function.BiConsumer;
  *  they can then either be logged or presented to the user
  *  in a more graceful way.
  *  <br>
- *  The {@link Result} relies on this {@link Problem} type instead of
- *  exceptions due to the fact that not every runtime issue is necessarily produced
+ *  The {@link Result} relies on this {@link Problem} type, instead of
+ *  exceptions, because not every runtime issue is necessarily produced
  *  by an exception. If you do not want to disturb the control flow of your application
- *  by throwing an exception, you can simply create a {@link Problem} as part of a {@link Result}
+ *  by throwing an exception, you can create a {@link Problem} as part of a {@link Result}
  *  and continue processing.
  */
-public interface Problem
+public final class Problem
 {
     /**
      *  A factory method for creating a problem from an {@link Exception}.
@@ -51,19 +52,15 @@ public interface Problem
      * @param e The exception to create a problem from.
      * @return A problem that describes the given exception.
      */
-    static Problem of( Exception e ) {
+    public static Problem of( Exception e ) {
         Objects.requireNonNull(e);
         String message = e.getMessage();
         if ( message == null || message.isEmpty() ) message = String.valueOf(e.getCause());
         if ( message == null || message.isEmpty() ) message = e.toString();
         Objects.requireNonNull(message);
         String finalMessage = message;
-        return new Problem() {
-            @Override public Optional<Exception> exception() { return Optional.of(e); }
-            @Override public String title() { return e.getClass().getSimpleName(); }
-            @Override public String description() { return finalMessage; }
-            @Override public String toString() { return String.format("%s:\n%s", title(), description()); }
-        };
+        String title = e.getClass().getSimpleName();
+        return new Problem(title, finalMessage, e, null);
     }
 
     /**
@@ -72,7 +69,7 @@ public interface Problem
      * @param title The title of the problem, which may not be null.
      * @return A problem with the given title and description.
      */
-    static Problem of( String title ) { return of(title, ""); }
+    public static Problem of( String title ) { return of(title, ""); }
 
     /**
      *  A factory method for creating a problem with a title and a description.
@@ -81,14 +78,10 @@ public interface Problem
      * @param description The description of the problem, which may not be null.
      * @return A problem with the given title and description.
      */
-    static Problem of( String title, String description ) {
+    public static Problem of( String title, String description ) {
         Objects.requireNonNull(title);
         Objects.requireNonNull(description);
-        return new Problem() {
-            @Override public String title() { return title; }
-            @Override public String description() { return description; }
-            @Override public String toString() { return String.format("%s:\n%s", title, description); }
-        };
+        return new Problem(title, description , null , null );
     }
 
     /**
@@ -99,17 +92,33 @@ public interface Problem
      * @param description The description of the problem, which may not be null.
      * @return A problem with the given title and description.
      */
-    static Problem of( Object reporter, String title, String description ) {
+    public static Problem of( Object reporter, String title, String description ) {
         Objects.requireNonNull(reporter);
         Objects.requireNonNull(title);
         Objects.requireNonNull(description);
-        return new Problem() {
-            @Override public Optional<Object> reporter() { return Optional.of(reporter); }
-            @Override public String title() { return title; }
-            @Override public String description() { return description; }
-            @Override public String toString() { return String.format("%s:\n%s", title, description); }
-        };
+        return new Problem(title, description, null, reporter);
     }
+
+
+    private static final Logger log = LoggerFactory.getLogger(Problem.class);
+
+    private final String              _title;
+    private final String              _description;
+    private final @Nullable Exception _exception;
+    private final @Nullable Object    _reporter;
+
+    private Problem(
+        String              title,
+        String              description,
+        @Nullable Exception exception,
+        @Nullable Object    reporter
+    ) {
+        _title       = title;
+        _description = description;
+        _exception   = exception;
+        _reporter    = reporter;
+    }
+
 
     /**
      *  Every problem has a title, which serves as a short, descriptive identifier.
@@ -117,7 +126,9 @@ public interface Problem
      *
      * @return The title of the problem, which may not be null (but may be empty).
      */
-    String title();
+    public String title() {
+        return _title;
+    }
 
     /**
      *  A problem may have a description, which provides more detailed information about what went wrong.
@@ -126,15 +137,19 @@ public interface Problem
      *
      * @return The description of the problem, which may not be null (but may be empty).
      */
-    String description();
+    public String description() {
+        return _description;
+    }
 
     /**
      *  A problem object may or may not have an exception attached to it.
      *  It is assumed that this exception is the cause of the problem.
      *
-     * @return The exception that was thrown while obtaining the value, if any.
+     * @return The exception that was thrown while getting the value, if any.
      */
-    default Optional<Exception> exception() { return Optional.empty(); }
+    public Optional<Exception> exception() {
+        return Optional.ofNullable(_exception);
+    }
 
     /**
      *  A problem object may or may not have a reporter attached to it.
@@ -142,7 +157,9 @@ public interface Problem
      *
      * @return The object that reported the problem, if any.
      */
-    default Optional<Object> reporter() { return Optional.empty(); }
+    public Optional<Object> reporter() {
+        return Optional.ofNullable(_reporter);
+    }
 
     /**
      *  Prints the title and description and optionally the exception to the given writer.
@@ -151,7 +168,7 @@ public interface Problem
      *
      * @param out The writer to print to, which may not be null.
      */
-    default void printTo( Writer out ) {
+    public void printTo( Writer out ) {
         Objects.requireNonNull(out);
         printTo(new PrintWriter(out));
     }
@@ -163,7 +180,7 @@ public interface Problem
      *
      * @param writer The writer to print to, which may not be null.
      */
-    default void printTo( PrintWriter writer ) {
+    public void printTo( PrintWriter writer ) {
         Objects.requireNonNull(writer);
         writer.println(title()+" : "+description());
         exception().ifPresent(e -> {
@@ -177,7 +194,7 @@ public interface Problem
      *  Prints the title and description and optionally the exception to the standard output stream.
      *  If an exception is present, it will be printed with its stack trace.
      */
-    default void printToSystemOut() { 
+    public void printToSystemOut() { 
         printTo(new PrintWriter(System.out)); 
     }
 
@@ -200,7 +217,7 @@ public interface Problem
      * @param logger The logger to log to, which may not be null.
      * @throws NullPointerException If the logger is null.   
      */
-    default void logTo( BiConsumer<String, Throwable> logger ) {
+    public void logTo( BiConsumer<String, Throwable> logger ) {
         Objects.requireNonNull(logger);
         String titleAndDescription = title() + " : " + description();
         try {
@@ -209,7 +226,6 @@ public interface Problem
             else
                 logger.accept(titleAndDescription, new Throwable());
         } catch (Exception e) {
-            Logger log = LoggerFactory.getLogger(getClass().getName());
             log.error("Failed to log problem: '{}'", titleAndDescription, e);
             // Oh boy, how bad can a user's logging be if it throws an exception? Well, we got you covered!
         }
@@ -218,36 +234,53 @@ public interface Problem
     /**
      *  Logs the problem as a {@link Logger#error} message to the default logger of the implementing class.
      */
-    default void logAsError() {
-        logTo(LoggerFactory.getLogger(getClass().getName())::error);
+    public void logAsError() {
+        logTo(log::error);
     }
     
     /**
      *  Logs the problem as a {@link Logger#warn} message to the default logger of the implementing class.
      */
-    default void logAsWarning() {
-        logTo(LoggerFactory.getLogger(getClass().getName())::warn);
+    public void logAsWarning() {
+        logTo(log::warn);
     }
     
     /**
      *  Logs the problem as a {@link Logger#info} message to the default logger of the implementing class.
      */
-    default void logAsInfo() {
-        logTo(LoggerFactory.getLogger(getClass().getName())::info);
+    public void logAsInfo() {
+        logTo(log::info);
     }
     
     /**
      *  Logs the problem as a {@link Logger#debug} message to the default logger of the implementing class.
      */
-    default void logAsDebug() {
-        logTo(LoggerFactory.getLogger(getClass().getName())::debug);
+    public void logAsDebug() {
+        logTo(log::debug);
     }
     
     /**
      *  Logs the problem as a {@link Logger#trace} message to the default logger of the implementing class.
      */
-    default void logAsTrace() {
-        logTo(LoggerFactory.getLogger(getClass().getName())::trace);
+    public void logAsTrace() {
+        logTo(log::trace);
     }
-    
+
+    @Override public String toString() { 
+        return String.format("%s:\n%s", title(), description()); 
+    }
+
+    @Override public boolean equals( Object obj ) {
+        if ( this == obj ) return true;
+        if ( !(obj instanceof Problem) ) return false;
+        Problem other = (Problem) obj;
+        return _title.equals(other._title) &&
+               _description.equals(other._description) &&
+               Objects.equals(_exception, other._exception) &&
+               Objects.equals(_reporter, other._reporter);
+    }
+
+    @Override public int hashCode() {
+        return Objects.hash(_title, _description, _exception, _reporter);
+    }
 }
