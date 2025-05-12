@@ -1,4 +1,6 @@
-package sprouts;
+package sprouts.impl;
+
+import sprouts.Action;
 
 import java.util.Optional;
 

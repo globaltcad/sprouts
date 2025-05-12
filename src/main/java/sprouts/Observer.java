@@ -1,6 +1,7 @@
 package sprouts;
 
 import sprouts.impl.Sprouts;
+import sprouts.impl.WeakObserver;
 
 import java.util.Objects;
 import java.util.function.Consumer;
