@@ -301,7 +301,7 @@ final class PropertyListView<T extends @Nullable Object> implements Viewables<T>
 
     /** {@inheritDoc} */
     @Override
-    public Vals<T> onChange( Action<ValsDelegate<T>> action ) {
+    public Viewables<T> onChange( Action<ValsDelegate<T>> action ) {
         _changeListeners.onChange(action);
         return this;
     }

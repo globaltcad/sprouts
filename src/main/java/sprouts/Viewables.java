@@ -15,11 +15,10 @@ package sprouts;
  *  callback using the {@link #unsubscribe(Subscriber)} method ({@link Action} is also a {@link Subscriber}).
  *  <p>
  *  Instances of this are intended to be created from {@link Vals} property lists.
- *  {@link sprouts.Viewables} created from a property list is weakly referenced
- *  by said property list.
- *  You can register change listeners on it, and
- *  when you no longer want changes to be propagated to the {@link sprouts.Viewables},
- *  then you can simply drop its reference, and it will be garbage collected
+ *  {@link sprouts.Viewables} created from such a property list is weakly referenced by it.
+ *  You can register change listeners on it, and when you no longer want changes
+ *  to be propagated to the {@link sprouts.Viewables},
+ *  then you can drop its reference, and it will be garbage collected
  *  alongside all of its change listeners.
  *
  * @see Vals A super type of this class with a read-only API.
@@ -36,7 +35,7 @@ public interface Viewables<T> extends Vals<T>, Observable
      *  Although {@link Vals} and {@link Vars} do not extend {@link Viewables} directly,
      *  you may cast them to a {@link Viewables} to get access to the {@link Viewables} API.<br>
      *  <p>
-     *  This method is a convenience method which allows you to cast
+     *  This method is a convenience method that allows you to cast
      *  the given {@link Vals} instance to a {@link Viewables}.<br>
      *  The main intention of this method is to allow you to register change listeners
      *  on the given {@link Vals} instance, which will be called whenever the items
@@ -68,8 +67,8 @@ public interface Viewables<T> extends Vals<T>, Observable
      *  Similar to {@link Viewable#onChange(Channel, Action)} but for a list of properties.
      *
      * @param action The action to perform when the list of properties is shown (which is called when its state changes).
-     * @return This list of properties.
+     * @return This {@link Viewables} list of {@link Viewable} properties.
      */
-    Vals<T> onChange( Action<ValsDelegate<T>> action );
+    Viewables<T> onChange( Action<ValsDelegate<T>> action );
 
 }
