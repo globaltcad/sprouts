@@ -4,7 +4,6 @@ import spock.lang.Narrative
 import spock.lang.Specification
 import spock.lang.Subject
 import spock.lang.Title
-import sprouts.impl.WeakObserver
 
 import java.lang.ref.WeakReference
 import java.time.DayOfWeek
@@ -701,25 +700,20 @@ class Property_View_Spec extends Specification
             view.get() == Tuple.of(String, "earthlings".split("")).mapTo(Character, {it[0] as Character})
     }
 
-    def 'A `WeakAction` is removed and garbage collected together with its owner.'()
+    def 'A weak observer is removed and garbage collected when no longer referenced.'()
     {
         reportInfo """
             You can register an action directly onto a view, which is itself already 
-            memory leak safe. But i you want to create a memory leak safe action,
-            you may want to consider using a `WeakAction` to avoid memory leaks.
-            
-            A weak action is a special kind of action that has a weakly referenced "owner".
-            This owner determines if the action is still alive or not and should be removed
-            after the owner.
+            memory leak safe.
         """
         given : 'A property, its viewable and an owner:'
             var property = Var.of("I am a some text in a property.")
             var viewable = property.view()
-            var owner = new Object()
+            Viewable<String> owner = viewable.view()
         and : 'A trace list to record the side effect.'
             var trace = []
         and : 'Finally we register a weak action on the property.'
-            viewable.onChange(From.ALL, new sprouts.impl.WeakActionImpl(owner, (o, it) -> trace << it.currentValue().orElseThrow()))
+            owner.onChange(From.ALL, (it) -> trace << it.currentValue().orElseThrow() )
 
         when : 'We change the source property.'
             property.set("I am a new text.")
@@ -735,25 +729,21 @@ class Property_View_Spec extends Specification
             trace == ["I am a new text."]
     }
 
-    def 'A `WeakObserver` is removed and garbage collected together with its owner.'()
+    def 'A weak observer is removed and garbage collected when no longer referenced.'()
     {
         reportInfo """
             You can register an action directly onto a view, which is itself already 
-            memory leak safe. But i you want to create a memory leak safe observer,
-            you may want to consider using a `WeakObserver` to avoid memory leaks.
-            
-            A weak observer is a special kind of observer that has a weakly referenced "owner".
-            This owner determines if the action is still alive or not and should be removed
-            after the owner.
+            memory leak safe. But you can repeat this pattern and create a view of a view
+            and then treat this view as an `Observable`.
         """
         given : 'A property, its viewable and an owner:'
             var property = Var.of(42)
             var viewable = property.view()
-            var owner = new Object()
+            Observable owner = viewable.view()
         and : 'A trace list to record the side effects.'
             var trace = []
         and : 'Finally we register a weak observer on the property.'
-            viewable.subscribe(new WeakObserver(owner,{trace << "!"}))
+            owner.subscribe({trace << "!"})
 
         when : 'We change the source property.'
             property.set(43)

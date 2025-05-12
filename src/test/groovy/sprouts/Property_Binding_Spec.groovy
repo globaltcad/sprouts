@@ -4,7 +4,6 @@ import spock.lang.Narrative
 import spock.lang.Specification
 import spock.lang.Subject
 import spock.lang.Title
-import sprouts.impl.WeakObserver
 
 import java.lang.ref.WeakReference
 
@@ -203,28 +202,19 @@ class Property_Binding_Spec extends Specification
             modelListener == [":(", ":|"]
     }
 
-    def 'A `WeakAction` is removed and garbage collected together with its owner.'()
+    def 'Create a weakly referenced property view which whose change listeners are automatically garbage collected.'()
     {
         reportInfo """
             You are not supposed to register an action directly onto a property.
             Instead you should use the `.view()` of the property to register an action.
-            But if you really need to register an action directly onto a property
-            you may want to consider using a `WeakAction` to avoid memory leaks.
-            
-            A weak action is a special kind of action that has a weakly referenced "owner".
-            This owner determines if the action is still alive or not and should be removed
-            after the owner.
-            
-            Warning! Never reference the owner in the action itself, not even indirectly!
-            This will effectively turn your owner and action into memory leaks.
         """
         given : 'A property and an owner:'
             var property = Var.of("I am a some text in a property.")
-            var owner = new Object()
+            Viewable<String> owner = property.view()
         and : 'A trace list to record the side effect.'
             var trace = []
         and : 'Finally we register a weak action on the property.'
-            Viewable.cast(property).onChange(From.ALL, new sprouts.impl.WeakActionImpl(owner, (o, it) -> trace << it.currentValue().orElseThrow()))
+            owner.onChange(From.ALL, (it) -> trace << it.currentValue().orElseThrow() )
 
         when : 'We change the property.'
             property.set("I am a new text.")
@@ -240,28 +230,21 @@ class Property_Binding_Spec extends Specification
             trace == ["I am a new text."]
     }
 
-    def 'A `WeakObserver` is removed and garbage collected together with its owner.'()
+    def 'Create a weakly referenced property observer which whose change listeners are automatically garbage collected.'()
     {
         reportInfo """
             You are not supposed to register an observer directly onto a property.
             Instead you should use the `.view()` of the property to register an observer.
-            But if you really need to register an observer directly onto a property
-            you may want to consider using a `WeakObserver` to avoid memory leaks.
-            
-            A weak observer is a special kind of observer that has a weakly referenced "owner".
-            This owner determines if the observer is still alive or not and should be removed
-            after the owner.
-            
-            Warning! Never reference the owner in the observer itself, not even indirectly!
-            This will effectively turn your owner and observer into memory leaks.
+            This test demonstrates how to use the 'view()' method to create a weak observer
+            whose change listeners are removed when the observer/view is garbage collected.
         """
         given : 'A property and an owner:'
             var property = Var.of(42)
-            var owner = new Object()
+            Observable owner = property.view()
         and : 'A trace list to record the side effects.'
             var trace = []
         and : 'Finally we register a weak observer on the property.'
-            Viewable.cast(property).subscribe(new WeakObserver(owner,{trace << "!"}))
+            owner.subscribe({trace << "!"})
 
         when : 'We change the property.'
             property.set(43)
