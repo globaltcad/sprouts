@@ -46,7 +46,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 			return Viewable.cast(initialItem == null ? Val.ofNull(type) : Val.of(initialItem));
 		}
 		final PropertyView<@Nullable U> viewProperty = PropertyView._ofNullable(type, initialItem, source);
-		Viewable.cast(source).onChange(Util.VIEW_CHANNEL, Action.ofWeak( viewProperty, (innerViewProperty, v) -> {
+		Viewable.cast(source).onChange(Util.VIEW_CHANNEL, WeakActionImpl.of( viewProperty, (innerViewProperty, v) -> {
 			ItemPair<U> pair = innerViewProperty._setInternal(mapper.apply(v.currentValue().orElseNull()));
 			innerViewProperty.fireChange(v.channel(), pair);
 		}));
@@ -66,7 +66,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 		}
 
 		final PropertyView<U> viewProperty = PropertyView._of( targetType, initial, source );
-		Viewable.cast(source).onChange(Util.VIEW_CHANNEL, Action.ofWeak( viewProperty, (innerViewProperty, v) -> {
+		Viewable.cast(source).onChange(Util.VIEW_CHANNEL, WeakActionImpl.of( viewProperty, (innerViewProperty, v) -> {
 			@Nullable Val<T> innerSource = innerViewProperty._getSource(0);
 			if ( innerSource == null )
 				return;
@@ -91,7 +91,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 			viewProperty = PropertyView._ofNullable( source.type(), initial, source );
 		else
 			viewProperty = PropertyView._of( source.type(), Objects.requireNonNull(initial), source );
-		Viewable.cast(source).onChange(Util.VIEW_CHANNEL, Action.ofWeak( viewProperty, (innerViewProperty, v) -> {
+		Viewable.cast(source).onChange(Util.VIEW_CHANNEL, WeakActionImpl.of( viewProperty, (innerViewProperty, v) -> {
 			@Nullable Val<T> innerSource = innerViewProperty._getSource(0);
 			if ( innerSource == null )
 				return;
@@ -107,7 +107,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 		if ( parent.isMutable() && parent instanceof Var ) {
 			Var<U> source = (Var<U>) parent;
 			PropertyView<T> view = PropertyView._of( type, initialItem, parent );
-			Viewable.cast(source).onChange(From.ALL, Action.ofWeak(view, (innerViewProperty, v) -> {
+			Viewable.cast(source).onChange(From.ALL, WeakActionImpl.of(view, (innerViewProperty, v) -> {
 				T newItem = mapper.apply(v.currentValue().orElseNull());
 				ItemPair<T> pair = innerViewProperty._setInternal(newItem);
 				innerViewProperty.fireChange(v.channel(), pair);
@@ -190,9 +190,9 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 
 		PropertyView<T> result = PropertyView._of( first.type(), initial, first, second ).withId(id);
 		if ( !firstIsImmutable )
-			Viewable.cast(first).onChange(From.ALL, Action.ofWeak( result, firstListener ));
+			Viewable.cast(first).onChange(From.ALL, WeakActionImpl.of( result, firstListener ));
 		if ( !secondIsImmutable )
-			Viewable.cast(second).onChange(From.ALL, Action.ofWeak( result, secondListener ));
+			Viewable.cast(second).onChange(From.ALL, WeakActionImpl.of( result, secondListener ));
 		return result;
 	}
 
@@ -218,13 +218,13 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 
 		PropertyView<@Nullable T> result = PropertyView._ofNullable( first.type(), initial, first, second ).withId(id);
 		if ( !firstIsImmutable )
-			Viewable.cast(first).onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
+			Viewable.cast(first).onChange(From.ALL, WeakActionImpl.of(result, (innerResult,v) -> {
 				Val<U> innerSecond = innerResult._getSource(1);
 				ItemPair<T> pair = innerResult._setInternal(fullCombiner.apply(v.currentValue(), innerSecond));
 				innerResult.fireChange(v.channel(), pair);
 			}));
 		if ( !secondIsImmutable )
-			Viewable.cast(second).onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
+			Viewable.cast(second).onChange(From.ALL, WeakActionImpl.of(result, (innerResult,v) -> {
 				Val<T> innerFirst = innerResult._getSource(0);
 				ItemPair<T> pair = innerResult._setInternal(fullCombiner.apply(innerFirst, v.currentValue()));
 				innerResult.fireChange(v.channel(), pair);
@@ -255,7 +255,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 
 		PropertyView<R> result = PropertyView._of(type, initial, first, second ).withId(id);
 
-		Viewable.cast(first).onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
+		Viewable.cast(first).onChange(From.ALL, WeakActionImpl.of(result, (innerResult,v) -> {
 			Val<U> innerSecond = innerResult._getSource(1);
 			@Nullable R newItem = fullCombiner.apply(v.currentValue(), innerSecond);
 			if (newItem == null)
@@ -270,7 +270,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 				innerResult.fireChange(v.channel(), pair);
 			}
 		}));
-		Viewable.cast(second).onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
+		Viewable.cast(second).onChange(From.ALL, WeakActionImpl.of(result, (innerResult,v) -> {
 			Val<T> innerFirst = innerResult._getSource(0);
 			@Nullable R newItem = fullCombiner.apply(innerFirst, v.currentValue());
 			if (newItem == null)
@@ -305,12 +305,12 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 		};
 
 		PropertyView<@Nullable R> result =  PropertyView._ofNullable( type, fullCombiner.apply(first, second), first, second ).withId(id);
-		Viewable.cast(first).onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
+		Viewable.cast(first).onChange(From.ALL, WeakActionImpl.of(result, (innerResult,v) -> {
 			Val<U> innerSecond = innerResult._getSource(1);
 			ItemPair<R> pair = innerResult._setInternal(fullCombiner.apply(v.currentValue(), innerSecond));
 			innerResult.fireChange(v.channel(), pair);
 		}));
-		Viewable.cast(second).onChange(From.ALL, Action.ofWeak(result, (innerResult,v) -> {
+		Viewable.cast(second).onChange(From.ALL, WeakActionImpl.of(result, (innerResult,v) -> {
 			Val<T> innerFirst = innerResult._getSource(0);
 			ItemPair<R> pair = innerResult._setInternal(fullCombiner.apply(innerFirst, v.currentValue()));
 			innerResult.fireChange(v.channel(), pair);
