@@ -190,6 +190,10 @@ class ArrayUtil {
         return type.cast(java.lang.reflect.Array.get(array, index));
     }
 
+    static <T> T _getNonNullAt( int index, Object array, Class<T> type ) {
+        return type.cast(java.lang.reflect.Array.get(array, index));
+    }
+
     static int _length( Object array ) {
         if ( array instanceof Object[] )
             return java.lang.reflect.Array.getLength(array);

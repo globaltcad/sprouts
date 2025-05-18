@@ -348,6 +348,11 @@ final class AssociationImpl<K, V> implements Association<K, V> {
         return _without(key, key.hashCode());
     }
 
+    @Override
+    public Association<K, V> clear() {
+        return Sprouts.factory().associationOf(this.keyType(), this.valueType());
+    }
+
     private AssociationImpl<K, V> _without(final K key, final int keyHash) {
         int index = _findValidIndexFor(key, keyHash);
         if ( index < 0 ) {

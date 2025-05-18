@@ -4,10 +4,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import sprouts.*;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.*;
 import java.util.regex.Pattern;
 import java.util.stream.StreamSupport;
@@ -393,6 +390,16 @@ public final class Sprouts implements SproutsFactory
     @Override
     public <K, V> Association<K, V> associationOf(Class<K> keyType, Class<V> valueType) {
         return new AssociationImpl<>(keyType, valueType);
+    }
+
+    @Override
+    public <K, V> Association<K, V> associationOfOrdered(Class<K> keyType, Class<V> valueType, Comparator<K> comparator) {
+        return new OrderedAssociationImpl<>(keyType, valueType, comparator);
+    }
+
+    @Override
+    public <K extends Comparable<K>, V> Association<K, V> associationOfOrdered(Class<K> keyType, Class<V> valueType) {
+        return new OrderedAssociationImpl<>(keyType, valueType, Comparator.naturalOrder());
     }
 
     @Override
