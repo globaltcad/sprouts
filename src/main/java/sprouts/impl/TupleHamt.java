@@ -600,6 +600,64 @@ public final class TupleHamt<T extends @Nullable Object> implements Tuple<T> {
         return new TupleHamt<>(reversedList.size(), _allowsNull, _type, _createRootFromList(_type, _allowsNull, reversedList));
     }
 
+    private static final class IteratorFrame {
+        final Node node;
+        int childIdx = 0;
+        int leafIndex = 0;
+        @Nullable IteratorFrame parent;
+        IteratorFrame(Node n, @Nullable IteratorFrame parent) {
+            this.node = n;
+            this.parent = parent;
+        }
+    }
+
+    @Override
+    public Iterator<T> iterator() {
+        return new Iterator<T>() {
+            private @Nullable IteratorFrame currentFrame = null;
+            {
+                if (_size > 0)
+                    currentFrame = new IteratorFrame(_root, null);
+            }
+            @Override
+            public boolean hasNext() {
+                while ( currentFrame != null ) {
+                    IteratorFrame frame = currentFrame;
+                    if (frame.node instanceof LeafNode) {
+                        if (frame.leafIndex < frame.node.size()) return true;
+                        currentFrame = currentFrame.parent;
+                    } else {
+                        BranchNode bn = (BranchNode) frame.node;
+                        Node[] children = bn._children;
+                        if (frame.childIdx < children.length) {
+                            Node child = children[frame.childIdx++];
+                            if (child != null)
+                                currentFrame = new IteratorFrame(child, currentFrame);
+                        } else {
+                            currentFrame = currentFrame.parent;
+                        }
+                    }
+                }
+                return false;
+            }
+
+            @Override
+            @SuppressWarnings("unchecked")
+            public T next() {
+                if (!hasNext() || currentFrame == null)
+                    throw new NoSuchElementException();
+                IteratorFrame iteratorFrame = currentFrame;
+                if (iteratorFrame.node instanceof LeafNode) {
+                    T item = iteratorFrame.node.getAt(iteratorFrame.leafIndex, _type);
+                    iteratorFrame.leafIndex++;
+                    return item;
+                } else {
+                    return next();
+                }
+            }
+        };
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
