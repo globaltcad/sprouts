@@ -659,6 +659,11 @@ public final class TupleHamt<T extends @Nullable Object> implements Tuple<T> {
     }
 
     @Override
+    public Spliterator<T> spliterator() {
+        return new TupleSpliterator<>(_size, _type, _allowsNull, _root);
+    }
+
+    @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("Tuple<");
@@ -705,4 +710,108 @@ public final class TupleHamt<T extends @Nullable Object> implements Tuple<T> {
         return hash ^ (_allowsNull ? 1 : 0);
     }
 
+    private static final class TupleSpliterator<T> implements Spliterator<T> {
+        private final int size;
+        private final Class<T> type;
+        private final boolean allowsNull;
+
+        // Stack for tracking traversal state
+        private @Nullable IteratorFrame currentFrame = null;
+
+        private TupleSpliterator(int size, Class<T> type, boolean allowsNull, Node root) {
+            this.size = size;
+            this.type = type;
+            this.allowsNull = allowsNull;
+            if (size > 0) {
+                currentFrame = new IteratorFrame(root, null);
+            }
+        }
+
+        @Override
+        public boolean tryAdvance(Consumer<? super T> action) {
+            while (currentFrame != null) {
+                IteratorFrame localFrame = currentFrame;
+
+                if (localFrame.node instanceof TupleHamt.LeafNode) {
+                    if (localFrame.leafIndex < localFrame.node.size()) {
+                        T item = localFrame.node.getAt(localFrame.leafIndex, type);
+                        localFrame.leafIndex++;
+                        action.accept(item);
+                        return true;
+                    } else {
+                        currentFrame = currentFrame.parent;
+                    }
+                } else {
+                    BranchNode bn = (BranchNode) localFrame.node;
+                    Node[] children = bn._children;
+                    if (localFrame.childIdx < children.length) {
+                        Node child = children[localFrame.childIdx++];
+                        if (child != null) {
+                            currentFrame = new IteratorFrame(child, localFrame);
+                        }
+                    } else {
+                        currentFrame = currentFrame.parent;
+                    }
+                }
+            }
+            return false;
+        }
+
+        @Override
+        public @Nullable Spliterator<T> trySplit() {
+            if (currentFrame == null) {
+                return null;
+            }
+
+            IteratorFrame localFrame = currentFrame;
+
+            // Attempt to split at the LeafNode level
+            if (localFrame.node instanceof LeafNode) {
+                LeafNode leaf = (LeafNode) localFrame.node;
+                int remaining = leaf.size() - localFrame.leafIndex;
+                if (remaining >= 2) {
+                    int split = remaining / 2;
+                    int newLeafIndex = localFrame.leafIndex + split;
+                    Node slicedNode = leaf.slice(localFrame.leafIndex, newLeafIndex, type, allowsNull);
+                    if (slicedNode != null) {
+                        TupleSpliterator<T> newSplit = new TupleSpliterator<>(split, type, allowsNull, slicedNode);
+                        localFrame.leafIndex = newLeafIndex;
+                        return newSplit;
+                    }
+                }
+            }
+            // Attempt to split at the BranchNode level by taking the next non-null child
+            else if (localFrame.node instanceof BranchNode) {
+                BranchNode branch = (BranchNode) localFrame.node;
+                Node[] children = branch._children;
+                int currentChildIdx = localFrame.childIdx;
+
+                for (int i = currentChildIdx; i < children.length; i++) {
+                    Node child = children[i];
+                    if (child != null) {
+                        int childSize = child.size();
+                        if (childSize == 0) {
+                            continue;
+                        }
+                        TupleSpliterator<T> newSplit = new TupleSpliterator<>(childSize, type, allowsNull, child);
+                        localFrame.childIdx = i + 1; // Skip this child in the current spliterator
+                        return newSplit;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        @Override
+        public long estimateSize() {
+            return size;
+        }
+
+        @Override
+        public int characteristics() {
+            return Spliterator.ORDERED | Spliterator.IMMUTABLE |
+                    Spliterator.SIZED | Spliterator.SUBSIZED;
+        }
+    }
 }
