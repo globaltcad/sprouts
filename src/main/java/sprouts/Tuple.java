@@ -1470,6 +1470,16 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
     }
 
     /**
+     *  Turns this tuple of items into a parallel stream of items
+     *  which can be used for further functional processing.
+     *
+     * @return A parallel stream of the items in this tuple of items.
+     */
+    default Stream<T> parallelStream() {
+        return StreamSupport.stream(spliterator(), true);
+    }
+
+    /**
      * Use this for sorting the tuple of items.
      *
      * @param comparator The comparator to use for sorting (see {@link Comparator}).
