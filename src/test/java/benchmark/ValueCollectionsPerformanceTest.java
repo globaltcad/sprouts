@@ -19,7 +19,7 @@ public class ValueCollectionsPerformanceTest {
 
 
     enum Operation {
-        ADD, REMOVE, GET
+        ADD, REMOVE, GET, ITERATE, STREAM
     }
 
     static class OperationKeyPair {
@@ -58,6 +58,14 @@ public class ValueCollectionsPerformanceTest {
                             case GET:
                                 result.get(pair.key);
                                 break;
+                            case ITERATE:
+                                int sum = 0;
+                                for (Pair<String, String> entry : result) {
+                                    sum += entry.first().hashCode() + entry.second().hashCode();
+                                }
+                            case STREAM:
+                                int prod = result.entrySet().stream().mapToInt(entry -> entry.first().hashCode() * entry.second().hashCode()).filter(it -> it > 0).reduce(1, (a, b) -> a * b);
+                                break;
                         }
                     }
                     return result;
@@ -74,6 +82,15 @@ public class ValueCollectionsPerformanceTest {
                                 break;
                             case GET:
                                 map.get(pair.key);
+                                break;
+                            case ITERATE:
+                                int sum = 0;
+                                for (Map.Entry<String, String> entry : map.entrySet()) {
+                                    sum += entry.getKey().hashCode() + entry.getValue().hashCode();
+                                }
+                                break;
+                            case STREAM:
+                                int prod = map.entrySet().stream().mapToInt(entry -> entry.getKey().hashCode() * entry.getValue().hashCode()).filter(it -> it > 0).reduce(1, (a, b) -> a * b);
                                 break;
                         }
                     }
@@ -99,6 +116,15 @@ public class ValueCollectionsPerformanceTest {
                             case GET:
                                 boolean contains = result.contains(pair.key);
                                 break;
+                            case ITERATE:
+                                int sum = 0;
+                                for (String value : result) {
+                                    sum += value.hashCode();
+                                }
+                                break;
+                            case STREAM:
+                                int prod = result.stream().map(String::hashCode).filter(it->it>0).reduce(1, (a, b)->a*b );
+                                break;
                         }
                     }
                     return result;
@@ -115,6 +141,15 @@ public class ValueCollectionsPerformanceTest {
                                 break;
                             case GET:
                                 boolean contains = map.contains(pair.key);
+                                break;
+                            case ITERATE:
+                                int sum = 0;
+                                for (String value : map) {
+                                    sum += value.hashCode();
+                                }
+                                break;
+                            case STREAM:
+                                int prod = map.stream().map(String::hashCode).filter(it->it>0).reduce(1, (a, b)->a*b );
                                 break;
                         }
                     }
@@ -148,6 +183,15 @@ public class ValueCollectionsPerformanceTest {
                                     String value = result.get(randomIndexSource.apply(result.size()));
                                 }
                                 break;
+                            case ITERATE:
+                                int sum = 0;
+                                for (String value : result) {
+                                    sum += value.hashCode();
+                                }
+                                break;
+                            case STREAM:
+                                int prod = result.parallelStream().map(String::hashCode).filter(it->it>0).reduce(1, (a, b)->a*b );
+                                break;
                         }
                     }
                     return result;
@@ -168,6 +212,15 @@ public class ValueCollectionsPerformanceTest {
                                 if ( list.size() > 0 ) {
                                     String value = list.get(randomIndexSource.apply(list.size()));
                                 }
+                                break;
+                            case ITERATE:
+                                int sum = 0;
+                                for (String value : list) {
+                                    sum += value.hashCode();
+                                }
+                                break;
+                            case STREAM:
+                                int prod = list.parallelStream().map(String::hashCode).filter(it->it>0).reduce(1, (a, b)->a*b );
                                 break;
                         }
                     }
@@ -222,7 +275,13 @@ public class ValueCollectionsPerformanceTest {
         List<OperationKeyPair> operations = new ArrayList<>();
         for (int i = 0; i <= 500_000; i++) {
             int localHash = Math.abs(Long.hashCode(PRIME_1 * (i - PRIME_2 * (i))));
-            Operation op = Operation.values()[localHash % 3];
+            Operation op = Operation.values()[localHash % Operation.values().length];
+            if ( op == Operation.ITERATE || op == Operation.STREAM ) {
+                // Reduce the likelihood of these operations being chosen
+                if ( i % 64 != 0 ) {
+                    continue;
+                }
+            }
             operations.add(new OperationKeyPair(op, String.valueOf(localHash)));
         }
         return operations;
@@ -232,7 +291,13 @@ public class ValueCollectionsPerformanceTest {
         List<OperationKeyPair> operations = new ArrayList<>();
         for (int i = 0; i <= 70_000; i++) {
             int localHash = Math.abs(Long.hashCode(PRIME_1 * (i - PRIME_2 * (i))));
-            Operation op = Operation.values()[localHash % 3];
+            Operation op = Operation.values()[localHash % Operation.values().length];
+            if ( op == Operation.ITERATE || op == Operation.STREAM ) {
+                // Reduce the likelihood of these operations being chosen
+                if ( i % 64 != 0 ) {
+                    continue;
+                }
+            }
             operations.add(new OperationKeyPair(op, String.valueOf(localHash)));
         }
         return operations;
