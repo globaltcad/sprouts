@@ -63,6 +63,7 @@ public class ValueCollectionsPerformanceTest {
                                 for (Pair<String, String> entry : result) {
                                     sum += entry.first().hashCode() + entry.second().hashCode();
                                 }
+                                break;
                             case STREAM:
                                 int prod = result.entrySet().stream().mapToInt(entry -> entry.first().hashCode() * entry.second().hashCode()).filter(it -> it > 0).reduce(1, (a, b) -> a * b);
                                 break;
