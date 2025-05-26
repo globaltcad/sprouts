@@ -120,7 +120,7 @@ class Tuple_Spec extends Specification
         then : 'The mapped tuple and list are equal.'
             mappedTuple.toList() == mappedList
 
-        when : 'We use use parallel stream API to map both the tuple and the reference list.'
+        when : 'We use the parallel stream API to map both the tuple and the reference list.'
             var mappedTupleParallel = tuple.parallelStream().map({ it.toUpperCase() + "!" }).filter({ it.hashCode() % 2 == 0 }).collect(Tuple.collectorOf(String.class))
             var mappedListParallel = referenceList.parallelStream().map({ it.toUpperCase() + "!" }).filter({ it.hashCode() % 2 == 0 }).collect(Collectors.toList())
         then : 'The mapped tuple and list are equal.'
