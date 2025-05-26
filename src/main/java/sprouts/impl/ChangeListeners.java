@@ -55,10 +55,8 @@ final class ChangeListeners<D> {
             if ( a instanceof ObserverAsActionImpl) {
                 ObserverAsActionImpl<?> pcl = (ObserverAsActionImpl<?>) a;
                 return pcl.listener() == subscriber;
-            } else if ( a instanceof WeakObserverAsActionImpl ) {
-                WeakObserverAsActionImpl<?, ?> pcl = (WeakObserverAsActionImpl<?, ?>) a;
-                return pcl.listener() == subscriber;
-            } else
+            }
+            else
                 return Objects.equals(a, subscriber);
         }));
     }

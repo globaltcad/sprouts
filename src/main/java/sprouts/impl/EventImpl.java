@@ -65,16 +65,7 @@ final class EventImpl implements Observable, Event {
 
     @Override
     public Observable subscribe(Observer observer) {
-        if (observer instanceof WeakObserver) {
-            WeakObserver<?> weakObserver = (WeakObserver<?>) observer;
-            weakObserver.owner().ifPresent(owner -> {
-                _setObservers(_getObservers().add(observer));
-                WeakReference<EventImpl> weakThis = new WeakReference<>(this);
-                AutomaticUnSubscriber cleaner = new AutomaticUnSubscriber(weakThis, weakObserver);
-                ChangeListenerCleaner.getInstance().register(owner, cleaner);
-            });
-        } else
-            _setObservers(_getObservers().add(observer));
+        _setObservers(_getObservers().add(observer));
         return this;
     }
 
@@ -90,31 +81,4 @@ final class EventImpl implements Observable, Event {
         _setObservers(_getObservers().clear());
     }
 
-
-    private static final class AutomaticUnSubscriber implements Runnable {
-        private final WeakReference<EventImpl> weakThis;
-        private final WeakObserver<?> observer;
-
-        private AutomaticUnSubscriber(WeakReference<EventImpl> weakThis, WeakObserver<?> observer) {
-            this.weakThis = weakThis;
-            this.observer = observer;
-        }
-
-        @Override
-        public void run() {
-            EventImpl strongThis = weakThis.get();
-            if (strongThis == null)
-                return;
-
-            try {
-                observer.clear();
-            } catch (Exception e) {
-                log.error(
-                    "An error occurred while clearing the weak observer '{}' during the process of " +
-                    "removing it from the list of change actions.", observer, e
-                );
-            }
-            strongThis._setObservers(strongThis._getObservers().remove(observer));
-        }
-    }
 }

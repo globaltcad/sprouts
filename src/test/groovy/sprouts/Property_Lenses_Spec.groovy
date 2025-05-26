@@ -6,7 +6,6 @@ import spock.lang.Specification
 import spock.lang.Subject
 import spock.lang.Title
 import sprouts.impl.PropertyLens
-import sprouts.impl.WeakObserver
 
 import java.lang.ref.WeakReference
 import java.time.LocalDate
@@ -1467,31 +1466,27 @@ class Property_Lenses_Spec extends Specification
             trace == ["William"]
     }
 
-    def 'A `WeakObserver` is removed and garbage collected together with its owner.'()
+    def 'A weak observable is removed and garbage collected together with its event listeners.'()
     {
         reportInfo """
             You are not supposed to register an observer directly onto a lens property.
             Instead you should get a `.view()` (Viewable) to register an observer.
-            But if you really need to register an observer directly onto a property
-            you may want to consider using a `WeakObserver` to avoid memory leaks.
+            Here we show you how to use this method to create a weak observer.
             
-            A weak observer is a special kind of observer that has a weakly referenced "owner".
-            This owner determines if the observer is still alive or not and should be removed
-            after the owner.
-            
-            Warning! Never reference the owner in the observer itself, not even indirectly!
-            This will effectively turn your owner and observer into memory leaks.
+            A weak observer is a special kind of observer that has a weakly referenced.
+            This determines if the observer is still alive or not and if its listeners should be removed
+            after it is no longer reachable (i.e. garbage collected).
         """
         given : 'We first create a base property for the lens:'
             var date = LocalDate.of(2021, 8, 12)
             var dateProperty = Var.of(date)
         and : 'A lens and an owner:'
             var monthLens = dateProperty.zoomTo(LocalDate::getMonth, (d, m) -> d.withMonth(m.getValue()))
-            var owner = new Object()
+            var weakObservable = monthLens.view()
         and : 'A trace list to record the side effect.'
             var trace = []
         and : 'Finally we register a weak observer on the property.'
-            Viewable.cast(monthLens).subscribe(new WeakObserver(owner,{trace<<"!"}))
+            weakObservable.subscribe({trace<<"!"})
 
         when : 'We change the lens...'
             monthLens.set(Month.JANUARY)
@@ -1499,7 +1494,7 @@ class Property_Lenses_Spec extends Specification
             trace == ["!"]
 
         when : 'We remove the owner and then wait for the garbage collector to remove the weak observer.'
-            owner = null
+            weakObservable = null
             waitForGarbageCollection()
         and : 'We change the lens again...'
             monthLens.set(Month.FEBRUARY)
