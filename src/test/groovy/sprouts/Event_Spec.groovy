@@ -154,7 +154,7 @@ class Event_Spec extends Specification
             0 * observer.invoke()
     }
 
-    def 'A weak obersvable is removed and garbage collected together with its owner.'()
+    def 'A weak observable is removed and garbage collected together with its owner.'()
     {
         reportInfo """
             You are not supposed to register an observer directly onto an event!
