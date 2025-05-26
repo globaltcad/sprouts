@@ -209,6 +209,16 @@ public final class TupleWithDiff<T extends @Nullable Object> implements Tuple<T>
     }
 
     @Override
+    public Iterator<T> iterator() {
+        return _data.iterator();
+    }
+
+    @Override
+    public Spliterator<T> spliterator() {
+        return _data.spliterator();
+    }
+
+    @Override
     public String toString() {
         return _data.toString();
     }

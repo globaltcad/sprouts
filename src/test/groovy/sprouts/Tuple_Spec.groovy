@@ -9,6 +9,7 @@ import sprouts.impl.SequenceDiffOwner
 import java.time.DayOfWeek
 import java.util.function.Consumer
 import java.util.function.Predicate
+import java.util.stream.Collectors
 import java.util.stream.Stream
 
 @Title("Tuples for Functional Programming")
@@ -112,6 +113,18 @@ class Tuple_Spec extends Specification
         then: 'It is still invariant!'
             tuple.size() == referenceList.size()
             tuple.toList() == referenceList
+
+        when : 'We use the stream API to map both the tuple and the reference list.'
+            var mappedTuple = tuple.stream().map({ it.toUpperCase() + "!" }).filter({ it.hashCode() % 2 == 0 }).collect(Tuple.collectorOf(String.class))
+            var mappedList = referenceList.stream().map({ it.toUpperCase() + "!" }).filter({ it.hashCode() % 2 == 0 }).collect(Collectors.toList())
+        then : 'The mapped tuple and list are equal.'
+            mappedTuple.toList() == mappedList
+
+        when : 'We use the parallel stream API to map both the tuple and the reference list.'
+            var mappedTupleParallel = tuple.parallelStream().map({ it.toUpperCase() + "!" }).filter({ it.hashCode() % 2 == 0 }).collect(Tuple.collectorOf(String.class))
+            var mappedListParallel = referenceList.parallelStream().map({ it.toUpperCase() + "!" }).filter({ it.hashCode() % 2 == 0 }).collect(Collectors.toList())
+        then : 'The mapped tuple and list are equal.'
+            mappedTupleParallel.toList() == mappedListParallel
 
         where:
             operations << [

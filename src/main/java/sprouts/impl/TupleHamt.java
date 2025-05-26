@@ -600,6 +600,74 @@ public final class TupleHamt<T extends @Nullable Object> implements Tuple<T> {
         return new TupleHamt<>(reversedList.size(), _allowsNull, _type, _createRootFromList(_type, _allowsNull, reversedList));
     }
 
+    private static final class IteratorFrame {
+        final Node node;
+        final int end;
+        int index = 0;
+        @Nullable IteratorFrame parent;
+
+        IteratorFrame(Node n, @Nullable IteratorFrame parent) {
+            this.node = n;
+            this.parent = parent;
+            if ( n instanceof LeafNode ) {
+                end = n.size();
+            } else if ( n instanceof BranchNode ) {
+                end = ((BranchNode) n)._children.length;
+            }
+            else throw new IllegalArgumentException();
+        }
+    }
+
+    @Override
+    public Iterator<T> iterator() {
+        return new Iterator<T>() {
+            private @Nullable IteratorFrame currentFrame = null;
+            {
+                if (_size > 0)
+                    currentFrame = new IteratorFrame(_root, null);
+            }
+            @Override
+            public boolean hasNext() {
+                while ( currentFrame != null ) {
+                    if ( currentFrame.index >= currentFrame.end ) {
+                        currentFrame = currentFrame.parent;
+                    } else {
+                        if (currentFrame.node instanceof LeafNode) {
+                            return true;
+                        } else {
+                            BranchNode bn = (BranchNode) currentFrame.node;
+                            Node[] children = bn._children;
+                            Node child = children[currentFrame.index++];
+                            if (child != null)
+                                currentFrame = new IteratorFrame(child, currentFrame);
+                        }
+                    }
+                }
+                return false;
+            }
+
+            @Override
+            @SuppressWarnings("unchecked")
+            public T next() {
+                if ( !hasNext() || currentFrame == null )
+                    throw new NoSuchElementException();
+
+                if ( currentFrame.node instanceof LeafNode ) {
+                    T item = currentFrame.node.getAt(currentFrame.index, _type);
+                    currentFrame.index++;
+                    return item;
+                } else {
+                    return next();
+                }
+            }
+        };
+    }
+
+    @Override
+    public Spliterator<T> spliterator() {
+        return new TupleSpliterator<>(0, _size, _type, _allowsNull, _root);
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -647,4 +715,70 @@ public final class TupleHamt<T extends @Nullable Object> implements Tuple<T> {
         return hash ^ (_allowsNull ? 1 : 0);
     }
 
+    private static final class TupleSpliterator<T> implements Spliterator<T> {
+        private final TupleHamt.Node root;
+        private final Class<T> type;
+        private final boolean allowsNull;
+        private final int fence;
+        private int index; // position in the current node
+
+        TupleSpliterator(int start, int end, Class<T> type, boolean allowsNull, TupleHamt.Node root) {
+            this.index = start;
+            this.fence = end;
+            this.type = type;
+            this.allowsNull = allowsNull;
+            this.root = root;
+        }
+
+        @Override
+        public @Nullable Spliterator<T> trySplit() {
+            int lo = index;
+            int mid = (lo + fence) >>> 1;
+            if (mid <= lo)
+                return null;
+            // left half will handle [lo, mid), this spliterator becomes [mid, fence)
+            TupleSpliterator<T> prefix = new TupleSpliterator<>(lo, mid, type, allowsNull, root);
+            this.index = mid;
+            return prefix;
+        }
+
+        @Override
+        public boolean tryAdvance(Consumer<? super T> action) {
+            if (index < fence) {
+                T item = root.getAt(index, type);
+                index++;
+                action.accept(item);
+                return true;
+            }
+            return false;
+        }
+
+        @Override
+        public void forEachRemaining(Consumer<? super T> action) {
+            while (index < fence) {
+                T item = root.getAt(index, type);
+                index++;
+                action.accept(item);
+            }
+        }
+
+        @Override
+        public long estimateSize() {
+            return fence - index;
+        }
+
+        @Override
+        public int characteristics() {
+            int c = Spliterator.ORDERED | Spliterator.SIZED | Spliterator.SUBSIZED | Spliterator.IMMUTABLE;
+            if (!allowsNull) c |= Spliterator.NONNULL;
+            return c;
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public Comparator<? super T> getComparator() {
+            // we don't have a comparator; streams will only call this if SORTED characteristic is set
+            throw new IllegalStateException("TupleHamt spliterator is not SORTED");
+        }
+    }
 }
