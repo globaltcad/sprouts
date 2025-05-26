@@ -202,7 +202,7 @@ class Property_Binding_Spec extends Specification
             modelListener == [":(", ":|"]
     }
 
-    def 'Create a weakly referenced property view which whose change listeners are automatically garbage collected.'()
+    def 'Create a weakly referenced property view whose change listeners are automatically garbage collected.'()
     {
         reportInfo """
             You are not supposed to register an action directly onto a property.
