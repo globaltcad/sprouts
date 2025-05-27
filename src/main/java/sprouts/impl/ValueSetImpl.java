@@ -448,7 +448,7 @@ final class ValueSetImpl<E> implements ValueSet<E> {
     }
 
     // A helper class to keep track of our position in a node.
-    static class IteratorFrame<E> {
+    static final class IteratorFrame<E> {
         final @Nullable IteratorFrame<E> parent;
         final ValueSetImpl<E> node;
         final int arrayLength;   // Total entries in the node's arrays
