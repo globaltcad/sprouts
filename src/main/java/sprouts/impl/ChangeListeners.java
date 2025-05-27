@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import sprouts.Action;
 import sprouts.Subscriber;
 import sprouts.Tuple;
-import sprouts.WeakAction;
 
 import java.lang.ref.WeakReference;
 import java.util.Objects;
@@ -56,10 +55,8 @@ final class ChangeListeners<D> {
             if ( a instanceof ObserverAsActionImpl) {
                 ObserverAsActionImpl<?> pcl = (ObserverAsActionImpl<?>) a;
                 return pcl.listener() == subscriber;
-            } else if ( a instanceof WeakObserverAsActionImpl ) {
-                WeakObserverAsActionImpl<?, ?> pcl = (WeakObserverAsActionImpl<?, ?>) a;
-                return pcl.listener() == subscriber;
-            } else
+            }
+            else
                 return Objects.equals(a, subscriber);
         }));
     }

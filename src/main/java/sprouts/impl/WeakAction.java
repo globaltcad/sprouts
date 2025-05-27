@@ -1,4 +1,6 @@
-package sprouts;
+package sprouts.impl;
+
+import sprouts.Action;
 
 import java.util.Optional;
 
@@ -9,16 +11,12 @@ import java.util.Optional;
  *  The owner is weakly referenced and determines the
  *  lifetime of the action. A library internal cleaner
  *  is responsible for removing the action when the owner
- *  is garbage collected. It is advised to use the
- *  {@link Action#ofWeak(Object, java.util.function.BiConsumer)}
- *  factory method to create a new weak action which
- *  is backed by a tried and test
- *  default implementation of this interface.
+ *  is garbage collected.
  *
  * @param <O> The type of the owner of this action.
  * @param <D> The type of the delegate that will be passed to this event handler.
  */
-public interface WeakAction<O, D> extends Action<D>
+interface WeakAction<O, D> extends Action<D>
 {
     /**
      *  Returns an {@link Optional} containing the owner of this action.

@@ -154,29 +154,25 @@ class Event_Spec extends Specification
             0 * observer.invoke()
     }
 
-    def 'A `WeakObserver` is removed and garbage collected together with its owner.'()
+    def 'A weak observable is removed and garbage collected together with its owner.'()
     {
         reportInfo """
             You are not supposed to register an observer directly onto an event!
             Instead you should create an `.observable()` of the event to register your listener.
-            If, however, you really need to register an observer directly onto an event
-            you may want to consider using a `WeakObserver` to avoid memory leaks.
+            Here we show you how to use this method to create a weak observer.
             
-            A weak observer is a special kind of observer that has a weakly referenced "owner".
-            This owner determines if the observer is still alive or not and should be removed
-            after the owner is no longer reachable (i.e. garbage collected).
-            
-            Warning! Never reference the owner in the observer itself, not even indirectly!
-            This will effectively turn your owner and observer into memory leaks.
+            A weak observer is a special kind of observer that has a weakly referenced.
+            This determines if the observer is still alive or not and its listeners should be removed
+            after it is no longer reachable (i.e. garbage collected).
         """
         given : 'An event and an owner:'
             var event = Event.create()
-            var owner = new Object()
+            var weakObserver = event.observable()
         and : 'A trace list to record the side effect.'
             var trace = []
             var controlTrace = []
         and : 'We register a weak observer on the event as well as a regular observer.'
-            Observable.cast(event).subscribe(Observer.ofWeak(owner, { trace << "!" }))
+            weakObserver.subscribe({ trace << "!" })
             Observable.cast(event).subscribe({ controlTrace << "!" })
 
         when : 'We trigger the event.'
@@ -186,7 +182,7 @@ class Event_Spec extends Specification
             controlTrace == ["!"]
 
         when : 'We remove the owner and then wait for the garbage collector to remove the weak observer.'
-            owner = null
+            weakObserver = null
             waitForGarbageCollection()
         and : 'We trigger the event again.'
             event.fire()

@@ -2,7 +2,6 @@ package sprouts.impl;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
-import sprouts.WeakAction;
 
 import java.lang.ref.WeakReference;
 import java.util.Optional;
@@ -10,6 +9,11 @@ import java.util.function.BiConsumer;
 
 final class WeakActionImpl<O extends @Nullable Object, D> implements WeakAction<O, D>
 {
+
+    static <O, D> WeakAction<O, D> of( O owner, BiConsumer<O, D> action ) {
+        return new WeakActionImpl<>(owner, action);
+    }
+
     private @Nullable BiConsumer<O, D> _action;
     private final WeakReference<O> _owner;
 

@@ -4,12 +4,11 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import sprouts.*;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.*;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.regex.Pattern;
-import java.util.stream.StreamSupport;
 
 /**
  *  Creates instances of the various property types in the Sprouts library.
@@ -222,10 +221,6 @@ public interface SproutsFactory
     <V> Result<List<V>> resultOfList( Class<V> type, List<V> list, Iterable<Problem> problems );
 
     <V> Result<V> resultOfTry( Class<V> type, ResultItemSupplier<V> supplier );
-
-    <O,D> WeakAction<O,D> actionOfWeak(O owner, BiConsumer<O, D> action );
-
-    <O> WeakObserver<O> observerOfWeak( O owner, Consumer<O> action );
 
     /**
      *   The default id for properties which do not have an id explicitly specified.

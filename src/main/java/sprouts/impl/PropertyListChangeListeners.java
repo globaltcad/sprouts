@@ -15,10 +15,7 @@ public final class PropertyListChangeListeners<T extends @Nullable Object>
     }
 
     public void onChange( Observer observer ) {
-        if ( observer instanceof WeakObserverImpl)
-            this.onChange( new WeakObserverAsActionImpl<>( (WeakObserverImpl<?>) observer ) );
-        else
-            this.onChange( new ObserverAsActionImpl<>(observer) );
+        this.onChange( new ObserverAsActionImpl<>(observer) );
     }
 
     public void unsubscribe( Subscriber subscriber ) {
