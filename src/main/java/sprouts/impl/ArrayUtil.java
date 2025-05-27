@@ -190,6 +190,10 @@ final class ArrayUtil {
         return type.cast(java.lang.reflect.Array.get(array, index));
     }
 
+    static @Nullable Object _getAt( int index, Object array) {
+        return java.lang.reflect.Array.get(array, index);
+    }
+
     static int _length( Object array ) {
         if ( array instanceof Object[] )
             return java.lang.reflect.Array.getLength(array);

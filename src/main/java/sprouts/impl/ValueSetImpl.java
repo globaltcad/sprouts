@@ -447,57 +447,60 @@ final class ValueSetImpl<E> implements ValueSet<E> {
         return baseHash;
     }
 
+    // A helper class to keep track of our position in a node.
+    static final class IteratorFrame<E> {
+        final @Nullable IteratorFrame<E> parent;
+        final ValueSetImpl<E> node;
+        final int arrayLength;   // Total entries in the node's arrays
+        final int branchesLength; // Total branches in the node
+        int arrayIndex;    // Next index in the elements/values arrays
+        int branchIndex;   // Next branch index to check
+
+        IteratorFrame(@Nullable IteratorFrame<E> parent, ValueSetImpl<E> node) {
+            this.parent = parent;
+            this.node = node;
+            this.arrayLength = _length(node._elementsArray);
+            this.branchesLength = node._branches.length;
+            this.arrayIndex = 0;
+            this.branchIndex = 0;
+        }
+    }
+
+    @Override
+    public Spliterator<E> spliterator() {
+        return Spliterators.spliterator(iterator(), _size, Spliterator.DISTINCT | Spliterator.SIZED | Spliterator.SUBSIZED | Spliterator.IMMUTABLE);
+    }
+
     @Override
     public Iterator<E> iterator() {
         return new Iterator<E>() {
-
-            // A helper class to keep track of our position in a node.
-            class NodeState {
-                final ValueSetImpl<E> node;
-                int arrayIndex;    // Next index in the elements/values arrays
-                int branchIndex;   // Next branch index to check
-                final int arrayLength;   // Total entries in the node's arrays
-                final int branchesLength; // Total branches in the node
-
-                NodeState(ValueSetImpl<E> node) {
-                    this.node = node;
-                    this.arrayIndex = 0;
-                    this.branchIndex = 0;
-                    this.arrayLength = _length(node._elementsArray);
-                    this.branchesLength = node._branches.length;
-                }
-            }
-
             // Use a stack to perform depth-first traversal.
-            private final Deque<NodeState> stack = new ArrayDeque<>();
-
+            private @Nullable IteratorFrame<E> currentFrame = null;
             {
                 // Initialize with this node if there is at least one element.
                 if (_size > 0) {
-                    stack.push(new NodeState(ValueSetImpl.this));
+                    currentFrame = new IteratorFrame<>(null, ValueSetImpl.this);
                 }
             }
 
             @Override
             public boolean hasNext() {
                 // Loop until we find a node state with an unvisited entry or the stack is empty.
-                while (!stack.isEmpty()) {
-                    NodeState current = stack.peek();
-
+                while ( currentFrame != null ) {
                     // If there is a key-value pair left in the current node, we're done.
-                    if (current.arrayIndex < current.arrayLength) {
+                    if (currentFrame.arrayIndex < currentFrame.arrayLength) {
                         return true;
                     }
 
                     // Otherwise, check for non-null branches to traverse.
-                    if (current.branchIndex < current.branchesLength) {
+                    if (currentFrame.branchIndex < currentFrame.branchesLength) {
                         // Look for the next branch.
-                        while (current.branchIndex < current.branchesLength) {
-                            ValueSetImpl<E> branch = current.node._branches[current.branchIndex];
-                            current.branchIndex++;
+                        while (currentFrame.branchIndex < currentFrame.branchesLength) {
+                            ValueSetImpl<E> branch = currentFrame.node._branches[currentFrame.branchIndex];
+                            currentFrame.branchIndex++;
                             if (branch != null && branch._size > 0) {
                                 // Found a non-empty branch: push its state on the stack.
-                                stack.push(new NodeState(branch));
+                                currentFrame = new IteratorFrame(currentFrame, branch);
                                 break;
                             }
                         }
@@ -506,22 +509,21 @@ final class ValueSetImpl<E> implements ValueSet<E> {
                     }
 
                     // If no more entries or branches are left in the current node, pop it.
-                    stack.pop();
+                    currentFrame = currentFrame.parent;
                 }
                 return false;
             }
 
             @Override
             public E next() {
-                if (!hasNext()) {
+                if (!hasNext() || currentFrame == null) {
                     throw new NoSuchElementException();
                 }
-                NodeState current = stack.peek();
                 // Retrieve the key and value at the current position.
-                E key = _getAt(current.arrayIndex, current.node._elementsArray, current.node._type);
-                Objects.requireNonNull(key);
-                current.arrayIndex++;
-                return key;
+                @SuppressWarnings("unchecked")
+                E key = (E) _getAt(currentFrame.arrayIndex, currentFrame.node._elementsArray);
+                currentFrame.arrayIndex++;
+                return Objects.requireNonNull(key);
             }
 
             @Override
