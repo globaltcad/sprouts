@@ -531,6 +531,11 @@ final class AssociationImpl<K, V> implements Association<K, V> {
     }
 
     @Override
+    public Spliterator<Pair<K, V>> spliterator() {
+        return Spliterators.spliterator(iterator(), _size, Spliterator.DISTINCT | Spliterator.SIZED | Spliterator.SUBSIZED | Spliterator.IMMUTABLE);
+    }
+
+    @Override
     public Iterator<Pair<K, V>> iterator() {
         return new Iterator<Pair<K, V>>() {
 

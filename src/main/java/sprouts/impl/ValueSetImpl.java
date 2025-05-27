@@ -467,6 +467,11 @@ final class ValueSetImpl<E> implements ValueSet<E> {
     }
 
     @Override
+    public Spliterator<E> spliterator() {
+        return Spliterators.spliterator(iterator(), _size, Spliterator.DISTINCT | Spliterator.SIZED | Spliterator.SUBSIZED | Spliterator.IMMUTABLE);
+    }
+
+    @Override
     public Iterator<E> iterator() {
         return new Iterator<E>() {
             // Use a stack to perform depth-first traversal.
