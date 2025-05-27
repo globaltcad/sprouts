@@ -91,7 +91,7 @@ class ValueSet_Spec extends Specification {
         when : 'We use the stream API to map both the value set and the JDK based reference set.'
             var mappedValueSet = valueSet.stream().map({ it.toUpperCase() + "!" }).filter({ it.hashCode() % 2 == 0 }).collect(ValueSet.collectorOf(String.class))
             var mappedSet = referenceSet.stream().map({ it.toUpperCase() + "!" }).filter({ it.hashCode() % 2 == 0 }).collect(Collectors.toSet())
-        then : 'The mapped tuple and list are equal.'
+        then : 'The mapped value set and mapped set are equal.'
             mappedValueSet.toSet() == mappedSet
 
         when : 'We use the parallel stream API to map both the value set and the reference set.'
