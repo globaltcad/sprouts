@@ -230,7 +230,7 @@ class Property_Binding_Spec extends Specification
             trace == ["I am a new text."]
     }
 
-    def 'Create a weakly referenced property observer which whose change listeners are automatically garbage collected.'()
+    def 'Create a weakly referenced property observer whose change listeners are automatically garbage collected.'()
     {
         reportInfo """
             You are not supposed to register an observer directly onto a property.
