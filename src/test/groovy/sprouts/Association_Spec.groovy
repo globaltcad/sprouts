@@ -5,6 +5,7 @@ import spock.lang.Specification
 import spock.lang.Subject
 import spock.lang.Title
 
+import java.util.stream.Collectors
 import java.util.stream.Stream
 
 @Title("Associations")
@@ -81,6 +82,18 @@ class Association_Spec extends Specification
             var convertedMap = associations.toMap()
         then: 'The converted map is equal to the reference map.'
             convertedMap == map
+
+        when : 'We use the stream API to map both the association and the reference map.'
+            var mappedAssociation = associations.entrySet().stream().map({ it.withFirst(it.first().toUpperCase() + "!") }).filter({ it.hashCode() % 2 == 0 }).collect(Association.collectorOf(String, String))
+            var mappedMap = map.entrySet().stream().map({ Pair.of(it.key.toUpperCase() + "!", it.value) }).filter({ it.hashCode() % 2 == 0 }).collect(Collectors.toMap({it.first()}, {it.second()}))
+        then : 'The mapped association and map are equal.'
+            mappedAssociation.toMap() == mappedMap
+
+        when : 'We use the parallel stream API to map both the association and the reference map.'
+            var mappedAssociationParallel = associations.entrySet().parallelStream().map({ it.withFirst(it.first().toUpperCase() + "!") }).filter({ it.hashCode() % 2 == 0 }).collect(Association.collectorOf(String, String))
+            var mappedMapParallel = map.entrySet().parallelStream().map({ Pair.of(it.key.toUpperCase() + "!", it.value) }).filter({ it.hashCode() % 2 == 0 }).collect(Collectors.toMap({it.first()}, {it.second()}))
+        then : 'The mapped association and map are equal in terms of their contents.'
+            mappedAssociationParallel.toMap() == mappedMapParallel
 
         where :
             operations << [[

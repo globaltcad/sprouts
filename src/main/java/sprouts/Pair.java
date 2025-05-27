@@ -98,6 +98,32 @@ public final class Pair<F extends @Nullable Object,S extends @Nullable Object> {
         return _second;
     }
 
+    /**
+     *  A wither method allowing you to create an updated
+     *  pair, where the {@link Pair#first()} item is changed to the
+     *  supplied value.
+     *
+     * @param first The value which should replace the {@link #first()} of this pair,
+     *              inside the new {@link Pair} returned by the method.
+     * @return A new {@link Pair} where the {{@link #first()}} is set to the supplied value.
+     */
+    public Pair<F, S> withFirst( F first ) {
+        return new Pair<>(first, _second);
+    }
+
+    /**
+     *  A wither method allowing you to create an updated
+     *  pair, where the {@link Pair#second()} item is changed to the
+     *  supplied value.
+     *
+     * @param second The value which should replace the {@link #second()} of this pair,
+     *              inside the new {@link Pair} returned by the method.
+     * @return A new {@link Pair} where the {{@link #second()}} is set to the supplied value.
+     */
+    public Pair<F, S> withSecond( S second ) {
+        return new Pair<>(_first, second);
+    }
+
     @Override
     public String toString() {
         return "Pair[first=" + _first + ", second=" + _second + "]";
