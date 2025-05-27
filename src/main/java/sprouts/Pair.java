@@ -105,7 +105,7 @@ public final class Pair<F extends @Nullable Object,S extends @Nullable Object> {
      *
      * @param first The value which should replace the {@link #first()} of this pair,
      *              inside the new {@link Pair} returned by the method.
-     * @return A new {@link Pair} where the {{@link #first()}} is set to the supplied value.
+     * @return A new {@link Pair} where the {@link #first()} is set to the supplied value.
      */
     public Pair<F, S> withFirst( F first ) {
         return new Pair<>(first, _second);
