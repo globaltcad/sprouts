@@ -515,18 +515,18 @@ final class AssociationImpl<K, V> implements Association<K, V> {
     static final class IteratorFrame<K, V> {
         final @Nullable IteratorFrame<K, V> parent;
         final AssociationImpl<K, V> node;
-        int arrayIndex;    // Next index in the keys/values arrays
-        int branchIndex;   // Next branch index to check
         final int arrayLength;   // Total entries in the node's arrays
         final int branchesLength; // Total branches in the node
+        int arrayIndex;    // Next index in the keys/values arrays
+        int branchIndex;   // Next branch index to check
 
         IteratorFrame(@Nullable IteratorFrame<K, V> parent, AssociationImpl<K, V> node) {
             this.parent = parent;
             this.node = node;
-            this.arrayIndex = 0;
-            this.branchIndex = 0;
             this.arrayLength = _length(node._keysArray);
             this.branchesLength = node._branches.length;
+            this.arrayIndex = 0;
+            this.branchIndex = 0;
         }
     }
 
