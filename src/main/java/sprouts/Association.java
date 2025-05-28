@@ -98,6 +98,21 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
                 );
     }
 
+    static <K, V> Collector<Pair<? extends K,? extends V>, ?, Association<K,V>> collectorOfOrdered(
+        Class<K> keyType,
+        Class<V> valueType,
+        Comparator<K> comparator
+    ) {
+        Objects.requireNonNull(keyType);
+        Objects.requireNonNull(valueType);
+        return Collector.of(
+                (Supplier<List<Pair<? extends K,? extends V>>>) ArrayList::new,
+                List::add,
+                (left, right) -> { left.addAll(right); return left; },
+                list -> Association.betweenOrdered(keyType, valueType, comparator).putAll(list)
+        );
+    }
+
     /**
      *  Creates a new association between keys and values
      *  with the given key and value types. An association
@@ -113,6 +128,14 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
      */
     static <K, V> Association<K, V> between( Class<K> keyType, Class<V> valueType ) {
         return Sprouts.factory().associationOf(keyType, valueType);
+    }
+
+    static <K, V> Association<K, V> betweenOrdered( Class<K> keyType, Class<V> valueType, Comparator<K> comparator ) {
+        return Sprouts.factory().associationOfOrdered(keyType, valueType, comparator);
+    }
+
+    static <K extends Comparable<K>, V> Association<K, V> betweenOrdered( Class<K> keyType, Class<V> valueType ) {
+        return Sprouts.factory().associationOfOrdered(keyType, valueType);
     }
 
     /**
@@ -131,6 +154,12 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
         Objects.requireNonNull(key);
         Objects.requireNonNull(value);
         return between((Class<K>) key.getClass(), (Class<V>) value.getClass()).put(key, value);
+    }
+
+    static <K, V> Association<K, V> of( K key, V value, Comparator<K> comparator ) {
+        Objects.requireNonNull(key);
+        Objects.requireNonNull(value);
+        return betweenOrdered((Class<K>) key.getClass(), (Class<V>) value.getClass(), comparator).put(key, value);
     }
 
     /**
@@ -725,9 +754,7 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
      * @return A new association without any key-value pairs,
      *         or this association if it is already empty.
      */
-    default Association<K, V> clear() {
-        return Sprouts.factory().associationOf(this.keyType(), this.valueType());
-    }
+    Association<K, V> clear();
 
     /**
      *  Converts this association to a java.util.Map.

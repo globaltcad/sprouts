@@ -190,6 +190,14 @@ final class ArrayUtil {
         return type.cast(java.lang.reflect.Array.get(array, index));
     }
 
+    static <T> T _getNonNullAt( int index, Object array, Class<T> type ) {
+        return type.cast(java.lang.reflect.Array.get(array, index));
+    }
+
+    static <T> T _getNonNullAt( int index, Object array ) {
+        return (T) java.lang.reflect.Array.get(array, index);
+    }
+
     static @Nullable Object _getAt( int index, Object array) {
         return java.lang.reflect.Array.get(array, index);
     }

@@ -34,6 +34,7 @@ public class ValueCollectionsPerformanceTest {
 
     public static void main(String[] args) {
         testAssociationAgainstHashMap();
+        testOrderedAssociationAgainstTreeMap();
         testValueSetAgainstHashSet();
         testTupleAgainstArrayList(60_000);
         testTupleAgainstArrayList(30_000);
@@ -92,6 +93,47 @@ public class ValueCollectionsPerformanceTest {
                                 break;
                             case STREAM:
                                 int prod = map.entrySet().stream().mapToInt(entry -> entry.getKey().hashCode() * entry.getValue().hashCode()).filter(it -> it > 0).reduce(1, (a, b) -> a * b);
+                                break;
+                        }
+                    }
+                    return map;
+                },
+                (a, b)-> a.toMap().equals(b)
+        );
+    }
+
+    private static void testOrderedAssociationAgainstTreeMap() {
+        List<OperationKeyPair> operations = generateOperations();
+        test(
+                "OrderedAssociation", ()->Association.betweenOrdered(String.class, String.class), assoc-> {
+                    Association<String, String> result = assoc;
+                    for (OperationKeyPair pair : operations) {
+                        switch (pair.operation) {
+                            case ADD:
+                                result = result.put(pair.key, "value of " + pair.key);
+                                break;
+                            case REMOVE:
+                                result = result.remove(pair.key);
+                                break;
+                            case GET:
+                                result.get(pair.key);
+                                break;
+                        }
+                    }
+                    return result;
+                },
+                "HashMap", ()->new TreeMap<String,String>(String::compareTo),
+                map->{
+                    for (OperationKeyPair pair : operations) {
+                        switch (pair.operation) {
+                            case ADD:
+                                map.put(pair.key, "value of " + pair.key);
+                                break;
+                            case REMOVE:
+                                map.remove(pair.key);
+                                break;
+                            case GET:
+                                map.get(pair.key);
                                 break;
                         }
                     }
