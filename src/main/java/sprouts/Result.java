@@ -251,10 +251,11 @@ public interface Result<V> extends Maybe<V>
     default <E extends Exception> V orElseThrowProblems(Function<Tuple<Problem>,E> exceptionSupplier) throws E {
         Objects.requireNonNull(exceptionSupplier);
         V result = orElseNull();
-        if ( result != null )
+        if ( result != null ) {
             return result;
-        else
+        } else {
             throw exceptionSupplier.apply(this.problems());
+        }
     }
 
     /**
