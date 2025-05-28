@@ -84,12 +84,25 @@ public final class TupleHamt<T extends @Nullable Object> implements Tuple<T> {
         @Override
         public @Nullable <T> Node addAllAt(int index, Tuple<T> tuple, Class<T> type, boolean allowsNull) {
             int currentSize = _length(_data);
-            if ( currentSize + tuple.size() > MAX_LEAF_NODE_SIZE ) {
-                List<T> asList = _toList(_data, type);
-                for (int i = 0; i < tuple.size(); i++) {
-                    asList.add(index + i, tuple.get(i));
-                }
-                return _createRootFromList(type, allowsNull, asList);
+            int newSize = (currentSize + tuple.size());
+            if ( newSize > MAX_LEAF_NODE_SIZE ) {
+                return _createRootFromList(type, allowsNull, new AbstractList<T>() {
+                    @Override
+                    public int size() {
+                        return newSize;
+                    }
+                    @Override
+                    @SuppressWarnings("unchecked")
+                    public @Nullable T get(int fetchIndex) {
+                        if ( fetchIndex < index ) {
+                            return (T) _getAt(fetchIndex, _data);
+                        }
+                        if ( fetchIndex < (index + tuple.size()) ) {
+                            return tuple.get(fetchIndex - index);
+                        }
+                        return (T) _getAt(fetchIndex - tuple.size(), _data);
+                    }
+                });
             }
             Object newItems = _withAddAllAt(index, tuple, _data, type, allowsNull);
             return new LeafNode(newItems);
