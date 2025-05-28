@@ -279,10 +279,11 @@ public interface Result<V> extends Maybe<V>
     default V orElseThrowProblemsUnchecked(Function<Tuple<Problem>,RuntimeException> exceptionSupplier) {
         Objects.requireNonNull(exceptionSupplier);
         V result = orElseNull();
-        if ( result != null )
+        if ( result != null ) {
             return result;
-        else
+        } else {
             throw exceptionSupplier.apply(this.problems());
+        }
     }
 
     /**
