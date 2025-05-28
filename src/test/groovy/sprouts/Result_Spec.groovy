@@ -475,4 +475,36 @@ class Result_Spec extends Specification
             exception.suppressed[1].toString().contains("Prime numbers sell better.")
     }
 
+    def 'If you want to throw custom checked exceptions, use "orElseThrowProblems(..)".'()
+    {
+        given : 'Two results, one successful, the other not.'
+            var result1 = Result.ofTry(Double, ()-> 42d / 0.1d )
+            var result2 = Result.ofTry(Integer, ()-> 42 / 0 )
+        expect :
+            result1.orElseThrowProblems( problems -> new Exception() ) == 420d
+
+        when :
+            result2.orElseThrowProblems( problems -> new Exception(problems.first().description()) )
+        then :
+            var exception = thrown(Exception)
+        and :
+            exception.message == "Division by zero"
+    }
+
+    def 'If you want to throw custom runtime exceptions, use "orElseThrowProblemsUnchecked(..)".'()
+    {
+        given : 'Two results, one successful, the other not.'
+            var result1 = Result.ofTry(Double, ()-> 42d / 0.1d )
+            var result2 = Result.ofTry(Integer, ()-> 42 / 0 )
+        expect :
+            result1.orElseThrowProblemsUnchecked( problems -> new RuntimeException() ) == 420d
+
+        when :
+            result2.orElseThrowProblemsUnchecked( problems -> new RuntimeException(problems.first().description()) )
+        then :
+            var exception = thrown(RuntimeException)
+        and :
+            exception.message == "Division by zero"
+    }
+
 }
