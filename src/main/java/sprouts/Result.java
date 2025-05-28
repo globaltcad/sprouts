@@ -230,6 +230,63 @@ public interface Result<V> extends Maybe<V>
     }
 
     /**
+     * Returns the contained non-null value if present, otherwise throws an exception
+     * created by the provided supplier function. The exception supplier receives the
+     * {@link Tuple} of {@link Problem}s associated with this result, allowing rich
+     * exception construction based on available error context.
+     *
+     * <p>This method is designed for scenarios where the absence of a value should
+     * interrupt normal control flow with a specific (potentially checked) exception.</p>
+     *
+     * <p><b>Example:</b><br>
+     * {@code result.orElseThrowProblems(problems -> new CustomException("Failed: " + problems));}
+     * </p>
+     *
+     * @param <E> Type of exception to be thrown
+     * @param exceptionSupplier Function that creates an exception from the problem tuple
+     * @return Present non-null value
+     * @throws E when no value is present
+     * @throws NullPointerException if {@code exceptionSupplier} is null
+     */
+    default <E extends Exception> V orElseThrowProblems(Function<Tuple<Problem>,E> exceptionSupplier) throws E {
+        Objects.requireNonNull(exceptionSupplier);
+        V result = orElseNull();
+        if ( result != null ) {
+            return result;
+        } else {
+            throw exceptionSupplier.apply(this.problems());
+        }
+    }
+
+    /**
+     * Returns the contained non-null value if present, otherwise throws a runtime exception
+     * created by the provided supplier function. The exception supplier receives the
+     * {@link Tuple} of {@link Problem}s associated with this result, enabling detailed
+     * exception messages with contextual error information.
+     *
+     * <p>This method provides an unchecked alternative to {@link #orElseThrowProblems},
+     * suitable for contexts where checked exceptions are undesirable.</p>
+     *
+     * <p><b>Example:</b><br>
+     * {@code result.orElseThrowProblemsUnchecked(problems -> new IllegalStateException(problems.toString()));}
+     * </p>
+     *
+     * @param exceptionSupplier Function that creates a runtime exception from the problem tuple
+     * @return Present non-null value
+     * @throws RuntimeException when no value is present
+     * @throws NullPointerException if {@code exceptionSupplier} is null
+     */
+    default V orElseThrowProblemsUnchecked(Function<Tuple<Problem>,RuntimeException> exceptionSupplier) {
+        Objects.requireNonNull(exceptionSupplier);
+        V result = orElseNull();
+        if ( result != null ) {
+            return result;
+        } else {
+            throw exceptionSupplier.apply(this.problems());
+        }
+    }
+
+    /**
      *  Exposes a list of {@link Problem}s associated with this result item.
      *  A problem is a description of what went wrong in the process of obtaining
      *  the value wrapped by this result.
