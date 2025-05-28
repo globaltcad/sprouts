@@ -468,7 +468,13 @@ final class ValueSetImpl<E> implements ValueSet<E> {
 
     @Override
     public Spliterator<E> spliterator() {
-        return Spliterators.spliterator(iterator(), _size, Spliterator.DISTINCT | Spliterator.SIZED | Spliterator.SUBSIZED | Spliterator.IMMUTABLE);
+        return Spliterators.spliterator(iterator(), _size,
+                Spliterator.DISTINCT |
+                Spliterator.SIZED    |
+                Spliterator.SUBSIZED |
+                Spliterator.NONNULL  |
+                Spliterator.IMMUTABLE
+        );
     }
 
     @Override
