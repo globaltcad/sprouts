@@ -858,9 +858,7 @@ public interface ValueSet<E> extends Iterable<E> {
      * @return A new value set without any elements,
      *         or this value set if it is already empty.
      */
-    default ValueSet<E> clear() {
-        return Sprouts.factory().valueSetOf(this.type());
-    }
+    ValueSet<E> clear();
 
     /**
      *  Converts this value set to a java.util.Map.

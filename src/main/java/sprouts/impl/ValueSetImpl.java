@@ -354,6 +354,11 @@ final class ValueSetImpl<E> implements ValueSet<E> {
     }
 
     @Override
+    public ValueSet<E> clear() {
+        return Sprouts.factory().valueSetOf(this.type());
+    }
+
+    @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("ValueSet<").append(_type.getSimpleName()).append(">[");

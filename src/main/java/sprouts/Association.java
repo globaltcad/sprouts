@@ -342,6 +342,11 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
                         .entrySet();
             }
             @Override
+            public ValueSet<Pair<K, V>> clear() {
+                return Sprouts.factory().valueSetOf(this.type());
+            }
+
+            @Override
             public Iterator<Pair<K, V>> iterator() {
                 return Association.this.iterator();
             }
