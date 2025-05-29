@@ -233,7 +233,7 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
      * @return A new sorted association with the given key-value pair
      *         and a size of 1.
      */
-    static <K, V> Association<K, V> of( K key, V value, Comparator<K> comparator ) {
+    static <K, V> Association<K, V> ofSorted( K key, V value, Comparator<K> comparator ) {
         Objects.requireNonNull(key);
         Objects.requireNonNull(value);
         return betweenSorted((Class<K>) key.getClass(), (Class<V>) value.getClass(), comparator).put(key, value);

@@ -31,7 +31,7 @@ class Sorted_ValueSet_Spec extends Specification {
         ADD, REMOVE, CLEAR
     }
 
-    def 'An empty ValueSet is created by specifying the element type'() {
+    def 'An empty sorted `ValueSet` is created by specifying the element type'() {
         reportInfo """
             A `ValueSet` needs to be created with a type to allow for better
             type safety during runtime as well as improved performance
@@ -53,7 +53,7 @@ class Sorted_ValueSet_Spec extends Specification {
             emptySet2.type() == Integer
     }
 
-    def 'The `ValueSet` maintains invariance with Java Set across operations'(
+    def 'The sorted `ValueSet` maintains invariance with Java Set across operations'(
         List<Tuple2<Operation, String>> operations
     ) {
         given:
@@ -123,7 +123,7 @@ class Sorted_ValueSet_Spec extends Specification {
         ]
     }
 
-    def 'Set operations maintain mathematical set properties'() {
+    def 'Sorted set operations maintain mathematical set properties'() {
         given:
             var initial = ValueSet.ofSorted(Integer).add(1).add(2).add(3)
 
@@ -344,7 +344,7 @@ class Sorted_ValueSet_Spec extends Specification {
             cleared.isEmpty()
     }
 
-    def 'bulk operations ignore duplicate elements in input'() {
+    def 'Bulk operations ignore duplicate elements in input'() {
         given:
             var initial = ValueSet.ofSorted("a")
 
@@ -353,7 +353,7 @@ class Sorted_ValueSet_Spec extends Specification {
             initial.removeAll(["a", "a"] as List).isEmpty()
     }
 
-    def 'interoperates with Tuple collections'() {
+    def 'A sorted value set interoperates with a `Tuple`'() {
         given:
             var tuple = Tuple.of("x", "y", "z")
             var valueSet = ValueSet.ofSorted(String).addAll(tuple)
@@ -363,7 +363,7 @@ class Sorted_ValueSet_Spec extends Specification {
             valueSet.removeAll(tuple).isEmpty()
     }
 
-    def 'collector works with different stream sources'() {
+    def 'A sorted `ValueSet` collector works with different stream sources.'() {
         when: "Collecting from various stream sources"
             var fromList = ["a", "b"].stream().collect(ValueSet.collectorOf(String))
             var fromSet = (["c", "d"] as Set).stream().collect(ValueSet.collectorOf(String))
@@ -401,4 +401,38 @@ class Sorted_ValueSet_Spec extends Specification {
         expect:
             typed == ValueSet.class
     }
+
+    def 'A sorted set of strings can have a custom comparator.'() {
+        given:
+            var set = ValueSet.ofSorted(String, Comparator.reverseOrder())
+            set = set.add("cat").add("bunny").add("piglet")
+
+        expect:
+            set.toList() == ["piglet", "cat", "bunny"] // Sorted in reverse order
+            set.contains("cat")
+            !set.contains("date")
+    }
+
+    def 'A sorted set of integers can have a custom comparator.'() {
+        given:
+            var set = ValueSet.ofSorted(Integer, Comparator.reverseOrder())
+            set = set.add(3).add(1).add(2)
+
+        expect:
+            set.toList() == [3, 2, 1] // Sorted in reverse order
+            set.contains(2)
+            !set.contains(4)
+    }
+
+    def 'A sorted set can directly be created from tuples.'() {
+        given:
+            var fromTuple1 = ValueSet.ofSorted(Tuple.of("dog", "sheep", "cat"))
+            var fromTuple2 = ValueSet.ofSorted(Tuple.of(42, 1, 23, 17), Comparator.reverseOrder())
+        expect:
+            fromTuple1.toList() == ["cat", "dog", "sheep"]
+            fromTuple2.toList() == [42, 23, 17, 1] // Sorted in natural order
+            fromTuple1.type() == String
+            fromTuple2.type() == Integer
+    }
+
 }

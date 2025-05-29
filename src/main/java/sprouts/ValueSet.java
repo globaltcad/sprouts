@@ -175,6 +175,21 @@ public interface ValueSet<E> extends Iterable<E> {
     }
 
     /**
+     *  Creates a new value set from the given {@link Tuple} of elements.
+     *  The type of the elements is captured from the tuple itself
+     *  through the {@link Tuple#type()} method.
+     *
+     * @param tuple The tuple of elements to store in the value set.
+     * @param <E> The type of the elements in the value set, this must be an immutable type.
+     * @return A new value set with the given elements.
+     * @throws NullPointerException If the provided tuple is null.
+     */
+    static <E> ValueSet<E> of( Tuple<E> tuple ) {
+        Objects.requireNonNull(tuple, "The provided tuple cannot be null.");
+        return Sprouts.factory().valueSetOf(tuple.type()).addAll(tuple);
+    }
+
+    /**
      *  Creates a new value set from the given {@link Iterable} of elements.
      *  The type of the elements must be provided explicitly in case
      *  of the iterable being empty.
@@ -232,6 +247,42 @@ public interface ValueSet<E> extends Iterable<E> {
     static <E extends Comparable<? super E>> ValueSet<E> ofSorted( Class<E> type ) {
         Objects.requireNonNull(type);
         return Sprouts.factory().valueSetOfSorted(type);
+    }
+
+    /**
+     *  Creates a new sorted value set from the given {@link Tuple} of
+     *  {@link Comparable} elements.<br>
+     *  The type of the elements is captured from the tuple itself
+     *  through the {@link Tuple#type()} method.
+     *  The elements are sorted based on their natural ordering,
+     *  which is defined by their {@link Comparable} implementation.
+     *
+     * @param tuple The tuple of elements to store in the value set.
+     * @param <E> The type of the elements in the value set, which must be an immutable type and implement {@link Comparable}.
+     * @return A new sorted value set with the given elements.
+     * @throws NullPointerException If the supplied tuple is null.
+     */
+    static <E extends Comparable<? super E>> ValueSet<E> ofSorted( Tuple<E> tuple ) {
+        Objects.requireNonNull(tuple, "The provided tuple cannot be null.");
+        return Sprouts.factory().valueSetOfSorted(tuple.type()).addAll(tuple);
+    }
+
+    /**
+     *  Creates a new sorted value set from the given {@link Tuple} of elements,
+     *  with an explicit order defined by the supplied {@link Comparator}.
+     *  The type of the elements is captured from the tuple itself
+     *  through the {@link Tuple#type()} method.
+     *
+     * @param tuple The tuple of elements to store in the value set.
+     * @param comparator The comparator to use for sorting the elements in the value set.
+     * @param <E> The type of the elements in the value set, which must be an immutable type.
+     * @return A new sorted value set with the given elements.
+     * @throws NullPointerException If any of the provided parameters are null.
+     */
+    static <E> ValueSet<E> ofSorted( Tuple<E> tuple, Comparator<E> comparator ) {
+        Objects.requireNonNull(tuple, "The provided tuple cannot be null.");
+        Objects.requireNonNull(comparator, "The provided comparator cannot be null.");
+        return Sprouts.factory().valueSetOfSorted(tuple.type(), comparator).addAll(tuple);
     }
 
     /**

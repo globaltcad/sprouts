@@ -868,4 +868,5 @@ class Association_Spec extends Specification
             associations.get(4).get() == "on"
             associations.get(5).get() == "www.dominionmovement.com"
     }
+
 }

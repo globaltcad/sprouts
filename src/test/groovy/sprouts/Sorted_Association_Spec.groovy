@@ -729,19 +729,19 @@ class Sorted_Association_Spec extends Specification
 
     def 'The of factory method throws NPE for null parameters'() {
         when:
-            Association.of(null, "value", (k1, k2) -> k1 <=> k2)
+            Association.ofSorted(null, "value", (k1, k2) -> k1 <=> k2)
         then:
             thrown(NullPointerException)
 
         when:
-            Association.of("key", null, (k1, k2) -> k1 <=> k2)
+            Association.ofSorted("key", null, (k1, k2) -> k1 <=> k2)
         then:
             thrown(NullPointerException)
     }
 
     def 'The `entrySet` is immutable and contains correct pairs'() {
         given:
-            var assoc = Association.of("a", 1, (k1, k2) -> k1 <=> k2).put("b", 2)
+            var assoc = Association.ofSorted("a", 1, (k1, k2) -> k1 <=> k2).put("b", 2)
         when:
             var entryValueSet = assoc.entrySet()
             var entrySet = entryValueSet.toSet()
@@ -787,7 +787,7 @@ class Sorted_Association_Spec extends Specification
 
     def 'replaceAll with Map only updates existing keys'() {
         given:
-            var original = Association.of("a", 1, (k1, k2) -> k1 <=> k2).put("b", 2).put("c", 3)
+            var original = Association.ofSorted("a", 1, (k1, k2) -> k1 <=> k2).put("b", 2).put("c", 3)
             var replacementMap = [a:10, d:40, c:30] as Map
         when:
             var updated = original.replaceAll(replacementMap)
@@ -801,7 +801,7 @@ class Sorted_Association_Spec extends Specification
 
     def 'The `retainAll` method keeps only specified keys'() {
         given:
-            var assoc = Association.of("a", 1, (k1, k2) -> k1 <=> k2).put("b", 2).put("c", 3)
+            var assoc = Association.ofSorted("a", 1, (k1, k2) -> k1 <=> k2).put("b", 2).put("c", 3)
         when:
             var retained = assoc.retainAll(["a", "c"] as Set)
         then:
@@ -813,7 +813,7 @@ class Sorted_Association_Spec extends Specification
 
     def 'The `putIfAbsent` does not overwrite an existing value already stored in an association.'() {
         given:
-            var assoc = Association.of("a", 1, (k1, k2) -> k1 <=> k2).putIfAbsent("a", 2)
+            var assoc = Association.ofSorted("a", 1, (k1, k2) -> k1 <=> k2).putIfAbsent("a", 2)
         expect:
             assoc.get("a").get() == 1
     }
@@ -821,8 +821,8 @@ class Sorted_Association_Spec extends Specification
     def 'Associations with same entries in different order are equal'() {
         given:
             var comparator = { k1, k2 -> k1 <=> k2 }
-            var assoc1 = Association.of("a", 1, comparator).put("b", 2).put("c", 3)
-            var assoc2 = Association.of("c", 3, comparator).put("b", 2).put("a", 1)
+            var assoc1 = Association.ofSorted("a", 1, comparator).put("b", 2).put("c", 3)
+            var assoc2 = Association.ofSorted("c", 3, comparator).put("b", 2).put("a", 1)
         expect:
             assoc1 == assoc2
             assoc1.hashCode() == assoc2.hashCode()
@@ -837,7 +837,7 @@ class Sorted_Association_Spec extends Specification
 
     def 'values() contains all values including duplicates'() {
         given:
-            var assoc = Association.of("c", 10, (k1, k2) -> k1 <=> k2)
+            var assoc = Association.ofSorted("c", 10, (k1, k2) -> k1 <=> k2)
                 .put("b", 20)
                 .put("a", 10) // Duplicate value
         when:
@@ -855,7 +855,7 @@ class Sorted_Association_Spec extends Specification
 
     def 'replaceAll ignores non-existing keys in replacement stream'() {
         given:
-            var original = Association.of("a", 1, (k1, k2) -> k1 <=> k2).put("b", 2)
+            var original = Association.ofSorted("a", 1, (k1, k2) -> k1 <=> k2).put("b", 2)
             var replacements = [Pair.of("k", -40), Pair.of("a", 10), Pair.of("v", 30)]
         when:
             var updated = original.replaceAll(replacements.stream())
@@ -883,7 +883,7 @@ class Sorted_Association_Spec extends Specification
 
     def 'The `Association` class is an `Iterable` which allows you to iterate over its entries.'() {
         given:
-            var associations = Association.of("x", 1, (k1, k2) -> k1 <=> k2).put("y", 2).put("z", 3)
+            var associations = Association.ofSorted("x", 1, (k1, k2) -> k1 <=> k2).put("y", 2).put("z", 3)
         when:
             var entries = []
             for (var entry : associations) {

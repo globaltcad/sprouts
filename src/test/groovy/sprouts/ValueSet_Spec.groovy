@@ -395,4 +395,16 @@ class ValueSet_Spec extends Specification {
         expect:
             typed == ValueSet.class
     }
+
+    def 'A value set can directly be created from a tuple.'() {
+        given:
+            var tuple = Tuple.of("c", "a", "b", "a", "c", "b", "c", "d", "e", "b")
+        when:
+            var valueSet = ValueSet.of(tuple)
+        then:
+            valueSet.size() == 5
+            valueSet.toSet() == ["a", "b", "c", "d", "e"] as Set
+            valueSet.containsAll(tuple)
+            valueSet.type() == String
+    }
 }
