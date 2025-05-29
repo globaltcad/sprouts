@@ -105,7 +105,7 @@ public class ValueCollectionsPerformanceTest {
     private static void testOrderedAssociationAgainstTreeMap() {
         List<OperationKeyPair> operations = generateOperations();
         test(
-                "OrderedAssociation", ()->Association.betweenOrdered(String.class, String.class), assoc-> {
+                "OrderedAssociation", ()->Association.betweenSorted(String.class, String.class), assoc-> {
                     Association<String, String> result = assoc;
                     for (OperationKeyPair pair : operations) {
                         switch (pair.operation) {

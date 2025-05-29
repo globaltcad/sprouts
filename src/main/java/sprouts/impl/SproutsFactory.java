@@ -4,7 +4,6 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import sprouts.*;
 
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -198,13 +197,17 @@ public interface SproutsFactory
 
     <K, V> Association<K, V> associationOf( Class<K> keyType, Class<V> valueType );
 
-    <K, V> Association<K, V> associationOfOrdered( Class<K> keyType, Class<V> valueType, Comparator<K> comparator );
+    <K, V> Association<K, V> associationOfSorted(Class<K> keyType, Class<V> valueType, Comparator<K> comparator );
 
-    <K extends Comparable<K>, V> Association<K, V> associationOfOrdered( Class<K> keyType, Class<V> valueType );
+    <K extends Comparable<K>, V> Association<K, V> associationOfSorted( Class<K> keyType, Class<V> valueType );
 
     <E> ValueSet<E> valueSetOf( Class<E> type );
 
     <V> Result<V> resultOf( Class<V> type );
+
+    <E> ValueSet<E> valueSetOfSorted( Class<E> type, Comparator<E> comparator );
+
+    <E extends Comparable<? super E>> ValueSet<E> valueSetOfSorted( Class<E> type );
 
     <V> Result<V> resultOf( V value );
 

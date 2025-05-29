@@ -98,18 +98,45 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
                 );
     }
 
-    static <K, V> Collector<Pair<? extends K,? extends V>, ?, Association<K,V>> collectorOfOrdered(
+    /**
+     *  A collector that can be used to collect key-value pairs
+     *  from a Java {@link Stream} of {@link Pair} instances into
+     *  an association with the given key and value types, where
+     *  the keys are sorted using the provided comparator.
+     *  The types of the keys and values in the association have to be defined when using this collector.<br>
+     *  Here is an example demonstrating how this method may be used:<br>
+     *  <pre>{@code
+     *    var assoc = Stream.of("a", "b", "c")
+     *                .map( it -> Pair.of(it.hashCode(), it.toUpperCase()) )
+     *                .collect(Association.collectorOfSorted(Integer.class, String.class, Comparator.naturalOrder()));
+     *  }</pre>
+     *  This will create a new-ordered association between integers and strings
+     *  where the integers are the hash codes of the strings and the
+     *  values are the upper case versions of the strings.<br>
+     *  If there are null values in the stream, an exception will be thrown
+     *  because an association cannot contain null keys or values.
+     *
+     * @param keyType The type of the keys in the association to collect.
+     * @param valueType The type of the values in the resulting association.
+     * @param comparator The comparator to use for sorting the keys in the association.
+     * @param <K> The type of the keys in the association,
+     *            which must be immutable and have value object semantics.
+     * @param <V> The type of the values in the association, which should be immutable.
+     * @return A collector that can be used to collect key-value pairs into an ordered association.
+     */
+    static <K, V> Collector<Pair<? extends K,? extends V>, ?, Association<K,V>> collectorOfSorted(
         Class<K> keyType,
         Class<V> valueType,
         Comparator<K> comparator
     ) {
         Objects.requireNonNull(keyType);
         Objects.requireNonNull(valueType);
+        Objects.requireNonNull(comparator);
         return Collector.of(
                 (Supplier<List<Pair<? extends K,? extends V>>>) ArrayList::new,
                 List::add,
                 (left, right) -> { left.addAll(right); return left; },
-                list -> Association.betweenOrdered(keyType, valueType, comparator).putAll(list)
+                list -> Association.betweenSorted(keyType, valueType, comparator).putAll(list)
         );
     }
 
@@ -127,15 +154,51 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
      * @return A new association between keys and values.
      */
     static <K, V> Association<K, V> between( Class<K> keyType, Class<V> valueType ) {
+        Objects.requireNonNull(keyType);
+        Objects.requireNonNull(valueType);
         return Sprouts.factory().associationOf(keyType, valueType);
     }
 
-    static <K, V> Association<K, V> betweenOrdered( Class<K> keyType, Class<V> valueType, Comparator<K> comparator ) {
-        return Sprouts.factory().associationOfOrdered(keyType, valueType, comparator);
+    /**
+     *  Creates a new association between keys and values
+     *  with the given key and value types, where the keys
+     *  are sorted using the supplied comparator.
+     *  An association knows the types of its keys and values,
+     *  and so you can only put keys and values of the defined types
+     *  into the association.
+     *
+     * @param keyType The type of the keys in the association.
+     * @param valueType The type of the values in the association.
+     * @param comparator The comparator to use for sorting the keys in the association.
+     * @param <K> The type of the keys in the association, which must be immutable.
+     * @param <V> The type of the values in the association, which should be immutable.
+     * @return A new sorted association between keys and values.
+     */
+    static <K, V> Association<K, V> betweenSorted( Class<K> keyType, Class<V> valueType, Comparator<K> comparator ) {
+        Objects.requireNonNull(keyType);
+        Objects.requireNonNull(valueType);
+        Objects.requireNonNull(comparator);
+        return Sprouts.factory().associationOfSorted(keyType, valueType, comparator);
     }
 
-    static <K extends Comparable<K>, V> Association<K, V> betweenOrdered( Class<K> keyType, Class<V> valueType ) {
-        return Sprouts.factory().associationOfOrdered(keyType, valueType);
+    /**
+     *  Creates a new association between keys and values
+     *  with the given key and value types, where the keys
+     *  are sorted in natural order.
+     *  An association knows the types of its keys and values,
+     *  and so you can only put keys and values of the defined types
+     *  into the association.
+     *
+     * @param keyType The type of the keys in the association.
+     * @param valueType The type of the values in the association.
+     * @param <K> The type of the keys in the association, which must be immutable.
+     * @param <V> The type of the values in the association, which should be immutable.
+     * @return A new sorted association between keys and values.
+     */
+    static <K extends Comparable<K>, V> Association<K, V> betweenSorted( Class<K> keyType, Class<V> valueType ) {
+        Objects.requireNonNull(keyType);
+        Objects.requireNonNull(valueType);
+        return Sprouts.factory().associationOfSorted(keyType, valueType);
     }
 
     /**
@@ -156,10 +219,24 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
         return between((Class<K>) key.getClass(), (Class<V>) value.getClass()).put(key, value);
     }
 
+    /**
+     *  Creates a new association from the given key-value pair
+     *  with the given comparator for sorting the keys.
+     *  The types of the key and value are inferred from the
+     *  types of the given key and value objects.
+     *
+     * @param key The key to associate with the given value.
+     * @param value The value to associate with the given key.
+     * @param comparator The comparator to use for sorting the keys in the association.
+     * @param <K> The type of the key in the association, this must be an immutable type.
+     * @param <V> The type of the value, which should be an immutable type.
+     * @return A new sorted association with the given key-value pair
+     *         and a size of 1.
+     */
     static <K, V> Association<K, V> of( K key, V value, Comparator<K> comparator ) {
         Objects.requireNonNull(key);
         Objects.requireNonNull(value);
-        return betweenOrdered((Class<K>) key.getClass(), (Class<V>) value.getClass(), comparator).put(key, value);
+        return betweenSorted((Class<K>) key.getClass(), (Class<V>) value.getClass(), comparator).put(key, value);
     }
 
     /**

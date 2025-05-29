@@ -324,6 +324,9 @@ final class OrderedAssociationImpl<K, V> implements Association<K, V> {
             Node left = node.left();
             if ( left != null ) {
                 Node newLeft = _updateValueOfKey(left, keyType, valueType, keyComparator, key, value, putIfAbsent, depth+1);
+                if ( newLeft == left ) {
+                    return node; // No change
+                }
                 return node.withNewLeft(newLeft);
             } else { // Left is null, we create a new node
                 Object newKeysArray = _createArray(keyType, ALLOWS_NULL, 1);
@@ -337,6 +340,10 @@ final class OrderedAssociationImpl<K, V> implements Association<K, V> {
             Node right = node.right();
             if ( right != null ) {
                 Node newRight = _updateValueOfKey(right, keyType, valueType, keyComparator, key, value, putIfAbsent, depth+1);
+                if ( newRight == right ) {
+                    // No change in the right node, we can return the current node
+                    return node;
+                }
                 return node.withNewRight(newRight);
             } else { // Right is null, we create a new node
                 Object newKeysArray = _createArray(keyType, ALLOWS_NULL, 1);
@@ -578,7 +585,7 @@ final class OrderedAssociationImpl<K, V> implements Association<K, V> {
 
     @Override
     public Association<K, V> clear() {
-        return Sprouts.factory().associationOfOrdered(this.keyType(), this.valueType(), _keyComparator);
+        return Sprouts.factory().associationOfSorted(this.keyType(), this.valueType(), _keyComparator);
     }
 
 
@@ -595,6 +602,9 @@ final class OrderedAssociationImpl<K, V> implements Association<K, V> {
             Node left = node.left();
             if ( left != null ) {
                 Node newLeft = _removeKey(left, keyType, valueType, keyComparator, key);
+                if ( newLeft == left ) {
+                    return node; // No change in the left node, we can return the current node
+                }
                 return node.withNewLeft(newLeft);
             }
             return node; // Key not found
@@ -603,6 +613,10 @@ final class OrderedAssociationImpl<K, V> implements Association<K, V> {
             Node right = node.right();
             if ( right != null ) {
                 Node newRight = _removeKey(right, keyType, valueType, keyComparator, key);
+                if ( newRight == right ) {
+                    // No change in the right node, we can return the current node
+                    return node;
+                }
                 return node.withNewRight(newRight);
             }
             return node; // Key not found
@@ -848,7 +862,7 @@ final class OrderedAssociationImpl<K, V> implements Association<K, V> {
     public String toString() {
         final int MAX_ITEMS = 8;
         StringBuilder sb = new StringBuilder();
-        sb.append("OrderedAssociation");
+        sb.append("SortedAssociation");
         sb.append("<");
         sb.append(_keyType.getSimpleName());
         sb.append(",");

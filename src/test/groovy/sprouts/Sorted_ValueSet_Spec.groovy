@@ -9,18 +9,23 @@ import java.util.stream.Collectors
 import java.util.stream.Stream
 
 
-@Title("Value Sets")
+@Title("Sorted Value Sets")
 @Narrative('''
 
-    ValueSet is a fundamental building block in sprouts' data-oriented programming model.
-    It represents an immutable collection of unique elements, providing an API focused on
+    A sorted ValueSet is a fundamental building block in sprouts' data-oriented programming model.
+    It represents an immutable collection of unique ans sorted elements, providing an API focused on
     deriving new sets from existing ones rather than mutating state. Unlike traditional
     Java sets, all operations return new `ValueSet` instances, making it ideal for
     functional-style programming and safe concurrent usage.
     
+    This specification tests the behavior of `ValueSet` when created using the
+    "sorted" factory methods, which produce sets that maintain their elements in a sorted order.
+    This is similar to the JDK's `TreeSet`, but with the added benefits of immutability 
+    and functional programming paradigms.
+    
 ''')
 @Subject([ValueSet])
-class ValueSet_Spec extends Specification {
+class Sorted_ValueSet_Spec extends Specification {
 
     enum Operation {
         ADD, REMOVE, CLEAR
@@ -35,14 +40,14 @@ class ValueSet_Spec extends Specification {
             internally use a primitive `int[]` array to store the values.
         """
         given:
-            var emptySet = ValueSet.of(String)
+            var emptySet = ValueSet.ofSorted(String)
 
         expect:
             emptySet.isEmpty()
             emptySet.type() == String
 
         when :
-            var emptySet2 = ValueSet.of(Integer)
+            var emptySet2 = ValueSet.ofSorted(Integer)
         then:
             emptySet2.isEmpty()
             emptySet2.type() == Integer
@@ -52,7 +57,7 @@ class ValueSet_Spec extends Specification {
         List<Tuple2<Operation, String>> operations
     ) {
         given:
-            var valueSet = ValueSet.of(String)
+            var valueSet = ValueSet.ofSorted(String)
             var referenceSet = new HashSet<>()
             var operationsApplier = { currentSet ->
                 operations.each { op, element ->
@@ -120,10 +125,10 @@ class ValueSet_Spec extends Specification {
 
     def 'Set operations maintain mathematical set properties'() {
         given:
-            var initial = ValueSet.of(Integer).add(1).add(2).add(3)
+            var initial = ValueSet.ofSorted(Integer).add(1).add(2).add(3)
 
         when: 'Union with another set'
-            var union = initial.addAll(ValueSet.of(3,4,5))
+            var union = initial.addAll(ValueSet.ofSorted(3,4,5))
         then:
             union.toSet() == [1,2,3,4,5] as Set
 
@@ -140,8 +145,8 @@ class ValueSet_Spec extends Specification {
 
     def 'Equality and hash code follow set semantics'() {
         given:
-            var set1 = ValueSet.of("a", "b", "c")
-            var set2 = ValueSet.of("c", "b", "a")
+            var set1 = ValueSet.ofSorted("a", "b", "c")
+            var set2 = ValueSet.ofSorted("c", "b", "a")
             var set3 = set1.add("d")
 
         expect:
@@ -154,7 +159,7 @@ class ValueSet_Spec extends Specification {
         given:
             var size = 10_000
             var elements = (1..size).collect { "item-"+it }
-            var valueSet = ValueSet.of(String).addAll(elements)
+            var valueSet = ValueSet.ofSorted(String).addAll(elements)
 
         expect:
             valueSet.size() == size
@@ -168,7 +173,7 @@ class ValueSet_Spec extends Specification {
 
     def 'Immutable characteristics are preserved'() {
         given:
-            var original = ValueSet.of("a", "b")
+            var original = ValueSet.ofSorted("a", "b")
             var modified = original.add("c")
 
         expect:
@@ -179,7 +184,7 @@ class ValueSet_Spec extends Specification {
 
     def 'The `clear` operation works on a non-empty value set'() {
         given:
-            var set = ValueSet.of(1,2,3)
+            var set = ValueSet.ofSorted(1,2,3)
         expect: 'Contains checks'
             set.isNotEmpty() && set.size() == 3
             set.contains(2) && !set.contains(4)
@@ -193,22 +198,23 @@ class ValueSet_Spec extends Specification {
 
     def 'String representation reflects contents'() {
         given:
-            var smallSet = ValueSet.of("a", "b", "c")
-            var largeSet = ValueSet.of(Integer).addAll(1..35)
+            var smallSet = ValueSet.ofSorted("c", "a", "b")
+            var largeSet = ValueSet.ofSorted(Integer).addAll(1..35)
 
         expect:
-            smallSet.toString() == 'ValueSet<String>["b", "c", "a"]'
+            smallSet.toString() == 'SortedValueSet<String>["a", "b", "c"]'
             largeSet.toString().contains("... 27 items left]")
+            largeSet.toString().startsWith('SortedValueSet<Integer>[1, 2, 3, 4, 5, 6')
     }
 
     def 'Edge cases are handled gracefully'() {
         when: 'Adding null element'
-            ValueSet.of(String).add(null)
+            ValueSet.ofSorted(String).add(null)
         then:
             thrown(NullPointerException)
 
         when: 'Null element type'
-            ValueSet.of(null)
+            ValueSet.ofSorted(null)
         then:
             thrown(NullPointerException)
     }
@@ -226,7 +232,7 @@ class ValueSet_Spec extends Specification {
 
     def 'Set operations with Java collections'() {
         given:
-            var valueSet = ValueSet.of("a", "b", "c")
+            var valueSet = ValueSet.ofSorted("a", "b", "c")
             var javaSet = ["b", "c", "d"] as Set
 
         when: 'Union with Java set'
@@ -242,7 +248,7 @@ class ValueSet_Spec extends Specification {
 
     def 'Iterator behavior conforms to set semantics'() {
         given:
-            var set = ValueSet.of(1,2,3)
+            var set = ValueSet.ofSorted(1,2,3)
             var iterated = []
 
         when:
@@ -256,7 +262,7 @@ class ValueSet_Spec extends Specification {
 
     def 'Empty set special cases'() {
         given:
-            var empty = ValueSet.of(String).clear()
+            var empty = ValueSet.ofSorted(String).clear()
 
         expect:
             empty.isEmpty()
@@ -266,14 +272,14 @@ class ValueSet_Spec extends Specification {
 
     def 'Duplicate additions have no effect'() {
         given:
-            var set = ValueSet.of("a").add("a").add("a")
+            var set = ValueSet.ofSorted("a").add("a").add("a")
         expect:
             set.size() == 1
     }
 
     def 'addAll supports various collection types'() {
         given:
-            var initial = ValueSet.of("a")
+            var initial = ValueSet.ofSorted("a")
 
         expect: "Elements from different collection types are added correctly"
             initial.addAll(["b", "c"] as List).toSet() == ["a", "b", "c"] as Set
@@ -285,7 +291,7 @@ class ValueSet_Spec extends Specification {
 
     def 'removeAll handles different input collection types'() {
         given:
-            var initial = ValueSet.of("a", "b", "c", "d")
+            var initial = ValueSet.ofSorted("a", "b", "c", "d")
 
         expect: "Elements are removed regardless of input collection type"
             initial.removeAll(["a", "b"] as List).toSet() == ["c", "d"] as Set
@@ -297,7 +303,7 @@ class ValueSet_Spec extends Specification {
 
     def 'retainAll works with diverse collection sources'() {
         given:
-            var initial = ValueSet.of("a", "b", "c", "d")
+            var initial = ValueSet.ofSorted("a", "b", "c", "d")
 
         expect: "Only elements present in both collections are retained"
             initial.retainAll(["b", "c"] as List).toSet() == ["b", "c"] as Set
@@ -309,7 +315,7 @@ class ValueSet_Spec extends Specification {
 
     def 'containsAll accurately checks membership across collection types'() {
         given:
-            var valueSet = ValueSet.of("a", "b", "c")
+            var valueSet = ValueSet.ofSorted("a", "b", "c")
 
         expect: "Membership checks work with all compatible collection types"
             valueSet.containsAll(["a", "b"] as List)
@@ -318,14 +324,14 @@ class ValueSet_Spec extends Specification {
             valueSet.containsAll(["a", "b", "c"] as String[])
             !valueSet.containsAll(["a", "d"] as List)
             valueSet.containsAll([] as Set) // Empty collection always returns true
-            valueSet.containsAll(ValueSet.of("a", "c"))
-            !valueSet.containsAll(ValueSet.of("b", "c", "d"))
+            valueSet.containsAll(ValueSet.ofSorted("a", "c"))
+            !valueSet.containsAll(ValueSet.ofSorted("b", "c", "d"))
             valueSet.containsAll(Stream.of("b", "c"))
     }
 
     def 'operations with empty collections have no effect or clear as expected'() {
         given:
-            var initial = ValueSet.of("a", "b")
+            var initial = ValueSet.ofSorted("a", "b")
 
         expect: "Empty inputs leave set unchanged or clear appropriately"
             initial.addAll([] as Set) == initial
@@ -340,7 +346,7 @@ class ValueSet_Spec extends Specification {
 
     def 'bulk operations ignore duplicate elements in input'() {
         given:
-            var initial = ValueSet.of("a")
+            var initial = ValueSet.ofSorted("a")
 
         expect: "Duplicates in input collections have no effect"
             initial.addAll(["a", "a", "b"] as List).toSet() == ["a", "b"] as Set
@@ -350,7 +356,7 @@ class ValueSet_Spec extends Specification {
     def 'interoperates with Tuple collections'() {
         given:
             var tuple = Tuple.of("x", "y", "z")
-            var valueSet = ValueSet.of(String).addAll(tuple)
+            var valueSet = ValueSet.ofSorted(String).addAll(tuple)
 
         expect: "Full interoperability with Tuple collections"
             valueSet.containsAll(tuple)
@@ -371,13 +377,13 @@ class ValueSet_Spec extends Specification {
             fromTuple.toSet() == ["g", "h"] as Set
     }
 
-    def 'no-op operations return the same instance'() {
+    def 'A no-op operations returns the same instance!'() {
         given:
-            var initial = ValueSet.of("a", "b", "c", "d")
-            var sameElements = ["a", "b", "c", "d"] as Set<String>
+            var initial = ValueSet.ofSorted("a", "b", "c", "d")
+            var sameElements = ["a", "b", "c", "d"] as Set
             var empty = Collections.emptySet() as Set<String>
 
-        expect: 'Using no-op operations on the initial set does not return a new instance.'
+        expect: "The identity is preserved when operations don't modify a set."
             initial.addAll(empty).is(initial)
             initial.addAll(sameElements).is(initial)
             initial.removeAll(empty).is(initial)

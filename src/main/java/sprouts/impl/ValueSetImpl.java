@@ -361,7 +361,7 @@ final class ValueSetImpl<E> implements ValueSet<E> {
         sb = _appendRecursivelyUpTo(sb, howMany);
         int numberOfElementsLeft = _size - howMany;
         if ( numberOfElementsLeft > 0 ) {
-            sb.append(", ...").append(numberOfElementsLeft).append(" more elements");
+            sb.append(", ... ").append(numberOfElementsLeft).append(" items left");
         }
         sb.append("]");
         return sb.toString();
