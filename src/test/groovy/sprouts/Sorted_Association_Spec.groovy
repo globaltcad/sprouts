@@ -969,4 +969,30 @@ class Sorted_Association_Spec extends Specification
         then : 'The result is still the same instance as the original association.'
             result.is(associations)
     }
+
+    def 'Use the `toMap()` method to convert a sorted `Association` to an unmodifiable `Map`.'() {
+        given:
+            var associations = Association.betweenSorted(Byte, String)
+                .put((byte) 1, "one")
+                .put((byte) 2, "two")
+                .put((byte) 3, "three")
+        when:
+            var map = associations.toMap()
+        then:
+            map instanceof Map
+            map.size() == 3
+            map.get((byte) 1) == "one"
+            map.get((byte) 2) == "two"
+            map.get((byte) 3) == "three"
+
+        when : 'We try to modify the map.'
+            map.put((byte) 4, "four")
+        then : 'An UnsupportedOperationException is thrown.'
+            thrown(UnsupportedOperationException)
+
+        when : 'We try to remove an entry from the map.'
+            map.remove((byte) 1)
+        then : 'An UnsupportedOperationException is thrown.'
+            thrown(UnsupportedOperationException)
+    }
 }

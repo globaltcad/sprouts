@@ -213,8 +213,23 @@ class Sorted_ValueSet_Spec extends Specification {
         then:
             thrown(NullPointerException)
 
-        when: 'Null element type'
+        when: 'We create from a Null element type'
             ValueSet.ofSorted(null)
+        then:
+            thrown(NullPointerException)
+
+        when : 'Creating a sorted set with a null comparator'
+            ValueSet.ofSorted(String, null)
+        then:
+            thrown(NullPointerException)
+
+        when: 'We try to remove a null element'
+            ValueSet.ofSorted(String).remove(null)
+        then:
+            thrown(NullPointerException)
+
+        when: 'We try to add null elements to a sorted set'
+            ValueSet.ofSorted(String).addAll(["1", null, "3"] as Set)
         then:
             thrown(NullPointerException)
     }
@@ -435,4 +450,22 @@ class Sorted_ValueSet_Spec extends Specification {
             fromTuple2.type() == Integer
     }
 
+
+    def 'Use the `toSet()` method to convert a sorted `ValueSet` to an unmodifiable JDK `Set`.'() {
+        given:
+            var sortedSet = ValueSet.ofSorted("oat milk", "almond milk", "soy milk")
+        when:
+            var jdkSet = sortedSet.toSet()
+        then:
+            jdkSet instanceof Set
+            jdkSet.size() == 3
+            jdkSet.contains("oat milk")
+            jdkSet.contains("almond milk")
+            jdkSet.contains("soy milk")
+            !jdkSet.contains("coconut milk")
+        when:
+            jdkSet.add("coconut milk") // This should throw an exception since the set is unmodifiable.
+        then:
+            thrown(UnsupportedOperationException)
+    }
 }
