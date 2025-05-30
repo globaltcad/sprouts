@@ -106,18 +106,52 @@ public interface ValueSet<E> extends Iterable<E> {
      *
      * @param type The type of the elements in the value set to collect.
      * @param comparator The comparator to use for sorting the elements in the value set.
-     * @param <K> The type of the elements in the value set,
+     * @param <E> The type of the elements in the value set,
      *            which must be immutable and have value object semantics.
      * @return A collector that can be used to collect elements into an ordered value set.
      */
-    static <K> Collector<K, ?, ValueSet<K>> collectorOfSorted( Class<K> type, Comparator<K> comparator ) {
+    static <E> Collector<E, ?, ValueSet<E>> collectorOfSorted( Class<E> type, Comparator<E> comparator ) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(comparator);
         return Collector.of(
-                (Supplier<List<K>>) ArrayList::new,
+                (Supplier<List<E>>) ArrayList::new,
                 List::add,
                 (left, right) -> { left.addAll(right); return left; },
                 list -> ValueSet.ofSorted(type, comparator).addAll(list)
+        );
+    }
+
+    /**
+     *  A collector that can be used to collect elements
+     *  from a Java {@link Stream} into a value set with the order being based
+     *  on the {@link Comparable} implementation of the elements and the
+     *  natural ordering of the elements.<br>
+     *  The types of the elements and values in the
+     *  value set have to be defined when using this collector.<br>
+     *  Here is an example demonstrating how this method may be used:<br>
+     *  <pre>{@code
+     *    var assoc = Stream.of("a", "b", "c")
+     *                .map( it -> it.toUpperCase() )
+     *                .collect(ValueSet.collectorOfSorted(String.class));
+     *  }</pre>
+     *  This will create a new-ordered value set of string elements
+     *  where the strings are all uppercased and ordered by their natural order.
+     *
+     * @param type The type of the elements in the value set to collect.
+     * @param <E> The type of the elements in the value set,
+     *            which must be immutable and have value object semantics.
+     * @return A collector that can be used to collect elements into an ordered value set.
+     */
+    static <E extends Comparable<? super E>> Collector<E, ?, ValueSet<E>> collectorOfSorted( Class<E> type ) {
+        Objects.requireNonNull(type);
+        if ( !Comparable.class.isAssignableFrom(type) ) {
+            throw new IllegalArgumentException("The provided type must implement Comparable.");
+        }
+        return Collector.of(
+                (Supplier<List<E>>) ArrayList::new,
+                List::add,
+                (left, right) -> { left.addAll(right); return left; },
+                list -> ValueSet.ofSorted(type).addAll(list)
         );
     }
 

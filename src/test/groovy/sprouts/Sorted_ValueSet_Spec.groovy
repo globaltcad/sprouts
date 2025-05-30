@@ -13,15 +13,15 @@ import java.util.stream.Stream
 @Narrative('''
 
     A sorted ValueSet is a fundamental building block in sprouts' data-oriented programming model.
-    It represents an immutable collection of unique ans sorted elements, providing an API focused on
+    It represents an immutable collection of unique and sorted elements, providing an API focused on
     deriving new sets from existing ones rather than mutating state. Unlike traditional
     Java sets, all operations return new `ValueSet` instances, making it ideal for
     functional-style programming and safe concurrent usage.
     
-    This specification tests the behavior of `ValueSet` when created using the
+    This specification tests the behavior of the `ValueSet` when created using the
     "sorted" factory methods, which produce sets that maintain their elements in a sorted order.
-    This is similar to the JDK's `TreeSet`, but with the added benefits of immutability 
-    and functional programming paradigms.
+    This is similar to the JDK's `TreeSet`, but with the added benefits of immutability,
+    structural sharing and enabling of functional programming designs.
     
 ''')
 @Subject([ValueSet])
@@ -31,7 +31,7 @@ class Sorted_ValueSet_Spec extends Specification {
         ADD, REMOVE, CLEAR
     }
 
-    def 'An empty sorted `ValueSet` is created by specifying the element type'() {
+    def 'An empty sorted `ValueSet` can be created by specifying the element type'() {
         reportInfo """
             A `ValueSet` needs to be created with a type to allow for better
             type safety during runtime as well as improved performance
@@ -53,12 +53,12 @@ class Sorted_ValueSet_Spec extends Specification {
             emptySet2.type() == Integer
     }
 
-    def 'The sorted `ValueSet` maintains invariance with Java Set across operations'(
+    def 'The sorted `ValueSet` maintains invariance with a Java Set across operations'(
         List<Tuple2<Operation, String>> operations
     ) {
         given:
             var valueSet = ValueSet.ofSorted(String)
-            var referenceSet = new HashSet<>()
+            var referenceSet = new TreeSet<String>()
             var operationsApplier = { currentSet ->
                 operations.each { op, element ->
                     switch (op) {
@@ -92,6 +92,8 @@ class Sorted_ValueSet_Spec extends Specification {
             valueSet.size() == referenceSet.size()
             valueSet.containsAll(referenceSet)
             valueSet.toSet() == referenceSet
+        and : 'Their entry sets converted to lists are equal.'
+            valueSet.toList() == referenceSet.toList()
 
         when : 'We use the stream API to map both the value set and the JDK based reference set.'
             var mappedValueSet = valueSet.stream().map({ it.toUpperCase() + "!" }).filter({ it.hashCode() % 2 == 0 }).collect(ValueSet.collectorOf(String.class))
@@ -125,19 +127,19 @@ class Sorted_ValueSet_Spec extends Specification {
 
     def 'Sorted set operations maintain mathematical set properties'() {
         given:
-            var initial = ValueSet.ofSorted(Integer).add(1).add(2).add(3)
+            var initial = ValueSet.ofSorted(Integer).add(3).add(2).add(1)
 
-        when: 'Union with another set'
-            var union = initial.addAll(ValueSet.ofSorted(3,4,5))
+        when: 'We perform a union with another set...'
+            var union = initial.addAll(ValueSet.ofSorted(4,3,5))
         then:
             union.toSet() == [1,2,3,4,5] as Set
 
-        when: 'Intersection'
+        when: 'We do an intersection...'
             var intersection = initial.retainAll([2,3,4] as Set)
         then:
             intersection.toSet() == [2,3] as Set
 
-        when: 'Difference'
+        when: 'we do the difference...'
             var difference = initial.removeAll([3] as Set)
         then:
             difference.toSet() == [1,2] as Set
@@ -236,13 +238,19 @@ class Sorted_ValueSet_Spec extends Specification {
 
     def 'Stream integration works properly'() {
         given:
-            var elements = ["apple", "banana", "cherry"]
-            var stream = elements.stream()
-
+            var foods = ["aburaage", "tempeh", "tofu", "Daikon", "Natto", "Miso"]
+            var asTreeSet = new TreeSet<String>(foods)
+            var asReverseTreeSet = new TreeSet<String>(Comparator.reverseOrder())
+            asReverseTreeSet.addAll(foods)
         when:
-            var collectedSet = stream.collect(ValueSet.collectorOf(String))
+            var collectedSet = foods.stream().collect(ValueSet.collectorOfSorted(String))
         then:
-            collectedSet.toSet() == elements as Set
+            collectedSet.toSet() == asTreeSet
+
+        when :
+            collectedSet = foods.stream().collect(ValueSet.collectorOfSorted(String, Comparator.reverseOrder()))
+        then:
+            collectedSet.toSet() == asReverseTreeSet
     }
 
     def 'Set operations with Java collections'() {
@@ -263,7 +271,7 @@ class Sorted_ValueSet_Spec extends Specification {
 
     def 'Iterator behavior conforms to set semantics'() {
         given:
-            var set = ValueSet.ofSorted(1,2,3)
+            var set = ValueSet.ofSorted(2, 4, 1, 3, 3, 2, 2, 1)
             var iterated = []
 
         when:
@@ -271,8 +279,8 @@ class Sorted_ValueSet_Spec extends Specification {
                 iterated << element
             }
         then:
-            iterated.size() == 3
-            iterated as Set == [1,2,3] as Set
+            iterated.size() == 4
+            iterated as Set == [1,2,3,4] as Set
     }
 
     def 'Empty set special cases'() {
@@ -283,6 +291,11 @@ class Sorted_ValueSet_Spec extends Specification {
             empty.isEmpty()
             empty.type() == String
             empty.add("test").size() == 1
+        and :
+            empty == ValueSet.ofSorted(String)
+            empty == ValueSet.ofSorted(String, Comparator.naturalOrder())
+            empty != ValueSet.ofSorted(Integer)
+            empty != ValueSet.ofSorted(String, Comparator.reverseOrder())
     }
 
     def 'Duplicate additions have no effect'() {
@@ -292,7 +305,7 @@ class Sorted_ValueSet_Spec extends Specification {
             set.size() == 1
     }
 
-    def 'addAll supports various collection types'() {
+    def 'The `addAll` methods supports various collection types.'() {
         given:
             var initial = ValueSet.ofSorted("a")
 
