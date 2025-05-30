@@ -18,7 +18,7 @@ import java.util.stream.Stream
     Data Oriented programming is a core concept in Sprouts,
     which is why we provide the `Tuple` type representing
     an immutable array of elements with proper value semantics.
-    It can can also be transformed and filtered in a functional way.
+    It can also be transformed and filtered in a functional way.
     
     When modelling value objects, like for example, by declaring
     records, then we recommend to use the `Tuple` type
