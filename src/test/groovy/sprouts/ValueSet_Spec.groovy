@@ -407,4 +407,22 @@ class ValueSet_Spec extends Specification {
             valueSet.containsAll(tuple)
             valueSet.type() == String
     }
+
+    def 'Use the `sort()` method to create a sorted value set.'() {
+        given:
+            var valueSet = ValueSet.of("c", "a", "b", "a", "c", "b", "c", "d", "e", "b")
+        when:
+            var sorted = valueSet.sort(Comparator.naturalOrder())
+        then:
+            sorted.size() == 5
+            sorted.type() == String
+            sorted.toList() == ["a", "b", "c", "d", "e"]
+
+        when : 'We sort the value set in reverse order.'
+            var sortedReverse = valueSet.sort(Comparator.reverseOrder())
+        then:
+            sortedReverse.size() == 5
+            sortedReverse.type() == String
+            sortedReverse.toList() == ["e", "d", "c", "b", "a"]
+    }
 }

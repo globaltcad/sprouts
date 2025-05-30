@@ -984,6 +984,21 @@ public interface ValueSet<E> extends Iterable<E> {
     }
 
     /**
+     *  Returns a new sorted value set with the elements in this value set,
+     *  sorted according to the provided comparator.
+     *  The type of the elements in the returned value set will be the same
+     *  as the type of this value set.
+     *
+     * @param comparator The comparator to use for sorting the elements.
+     * @return A new sorted value set with the elements in this value set.
+     * @throws NullPointerException if the provided comparator is {@code null}.
+     */
+    default ValueSet<E> sort( Comparator<E> comparator ) {
+        Objects.requireNonNull(comparator, "The provided comparator cannot be null.");
+        return Sprouts.factory().valueSetOfSorted(type(), comparator).addAll(this);
+    }
+
+    /**
      *  Converts this value set to a {@link Tuple} of all the elements in it,
      *  where the {@link Tuple#type()} is the same as the {@link #type()} of this value set.
      *  Note that the order of the elements in the tuple will not
