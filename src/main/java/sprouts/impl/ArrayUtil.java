@@ -190,10 +190,27 @@ final class ArrayUtil {
         return type.cast(java.lang.reflect.Array.get(array, index));
     }
 
+    /**
+     *  Returns the item at the specified index in the array, casting it to the specified type.
+     *  The returned item is assumed to be non-null (for performance reasons we do not check for null).
+     * @param index The index of the item to retrieve in the array (which may be a primitive array).
+     * @param array The array from which to retrieve the item. This can be an array of primitives or an array of objects.
+     * @param type The type to which the item should be cast. This is used to ensure type safety.
+     * @return The item at the specified index in the array, cast to the specified type.
+     * @param <T> The type to which the item should be cast. This is used to ensure type safety.
+     */
     static <T> T _getNonNullAt( int index, Object array, Class<T> type ) {
         return type.cast(java.lang.reflect.Array.get(array, index));
     }
 
+    /**
+     *  Returns the item at the specified index in the array cast to an inferred type.
+     *  The returned item is assumed to be non-null (for performance reasons we do not check for null).
+     * @param index The index of the item to retrieve in the array (which may be a primitive array).
+     * @param array The array from which to retrieve the item. This can be an array of primitives or an array of objects.
+     * @return The item at the specified index in the array, cast to the specified type.
+     * @param <T> The type to which the item should be cast. This is used to ensure type safety.
+     */
     static <T> T _getNonNullAt( int index, Object array ) {
         return (T) java.lang.reflect.Array.get(array, index);
     }
