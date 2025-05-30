@@ -9,7 +9,7 @@ import java.util.stream.Collectors
 import java.util.stream.Stream
 
 
-@Title("Sorted Value Sets")
+@Title("Sorted ValueSet - a Data Oriented Set")
 @Narrative('''
 
     A sorted ValueSet is a fundamental building block in sprouts' data-oriented programming model.

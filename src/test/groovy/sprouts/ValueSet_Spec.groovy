@@ -9,7 +9,7 @@ import java.util.stream.Collectors
 import java.util.stream.Stream
 
 
-@Title("Value Sets")
+@Title("ValueSet - a Data Oriented Set")
 @Narrative('''
 
     ValueSet is a fundamental building block in sprouts' data-oriented programming model.

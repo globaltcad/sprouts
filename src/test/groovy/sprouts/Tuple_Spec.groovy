@@ -12,13 +12,19 @@ import java.util.function.Predicate
 import java.util.stream.Collectors
 import java.util.stream.Stream
 
-@Title("Tuples for Functional Programming")
+@Title("Tuple - a Data Oriented Array")
 @Narrative('''
 
-    Functional programming is a core concept in Sprouts,
+    Data Oriented programming is a core concept in Sprouts,
     which is why we provide the `Tuple` type representing
-    an immutable array of elements which can be transformed
-    and filtered in a functional way.
+    an immutable array of elements with proper value semantics.
+    It can can also be transformed and filtered in a functional way.
+    
+    When modelling value objects, like for example, by declaring
+    records, then we recommend to use the `Tuple` type
+    over of a Java array or a JDK List, because our tuple
+    has better value semantics, immutability guarantees,
+    and it is way more efficient than a Java List.
 
 ''')
 @Subject([Tuple])

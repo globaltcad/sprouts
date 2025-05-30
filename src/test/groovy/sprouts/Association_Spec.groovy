@@ -8,7 +8,7 @@ import spock.lang.Title
 import java.util.stream.Collectors
 import java.util.stream.Stream
 
-@Title("Associations")
+@Title("Association - a Data Oriented Map")
 @Narrative('''
 
     Sprouts is a property library with a heavy focus on bridging the
