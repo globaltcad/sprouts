@@ -267,6 +267,21 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
     }
 
     /**
+     *  Checks if this association is sorted and returns
+     *  {@code true} if it is, otherwise {@code false}.
+     *  An association is sorted if the keys are sorted in
+     *  natural order or according to a supplied comparator
+     *  when the association was created.<br>
+     *  You can create a sorted association using factory methods
+     *  like {@link #betweenSorted(Class, Class, Comparator)}, or
+     *  by converting an existing association to a sorted one
+     *  using the {@link #sort(Comparator)} method.
+     *
+     * @return {@code true} if this association is sorted, otherwise {@code false}.
+     */
+    boolean isSorted();
+
+    /**
      *  Returns the type of the keys in this association.
      *
      * @return The type of the keys in this association.
@@ -308,6 +323,10 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
             @Override
             public int size() {
                 return Association.this.size();
+            }
+            @Override
+            public boolean isSorted() {
+                return Association.this.isSorted();
             }
             @Override
             public Class<Pair<K, V>> type() {

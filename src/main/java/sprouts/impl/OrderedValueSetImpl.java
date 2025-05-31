@@ -1,7 +1,6 @@
 package sprouts.impl;
 
 import org.jspecify.annotations.Nullable;
-import sprouts.Pair;
 import sprouts.Val;
 import sprouts.ValueSet;
 
@@ -125,6 +124,11 @@ final class OrderedValueSetImpl<E> implements ValueSet<E> {
     @Override
     public int size() {
         return _root.size();
+    }
+
+    @Override
+    public boolean isSorted() {
+        return true;
     }
 
     @Override

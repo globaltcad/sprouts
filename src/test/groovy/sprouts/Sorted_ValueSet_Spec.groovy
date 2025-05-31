@@ -45,12 +45,14 @@ class Sorted_ValueSet_Spec extends Specification {
         expect:
             emptySet.isEmpty()
             emptySet.type() == String
+            emptySet.isSorted()
 
         when :
             var emptySet2 = ValueSet.ofSorted(Integer)
         then:
             emptySet2.isEmpty()
             emptySet2.type() == Integer
+            emptySet.isSorted()
     }
 
     def 'The sorted `ValueSet` maintains invariance with a Java Set across operations'(

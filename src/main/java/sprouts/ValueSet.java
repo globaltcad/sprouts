@@ -367,6 +367,21 @@ public interface ValueSet<E> extends Iterable<E> {
     }
 
     /**
+     *  Checks if this value set is sorted and returns
+     *  {@code true} if it is, otherwise {@code false}.
+     *  A value set is sorted if the entries are sorted in
+     *  natural order or according to a supplied comparator
+     *  when the set was created.<br>
+     *  You can create a sorted set using factory methods
+     *  like {@link #ofSorted(Class, Comparator)}, or
+     *  by converting an existing set to a sorted one
+     *  using the {@link #sort(Comparator)} method.
+     *
+     * @return {@code true} if this set is sorted, otherwise {@code false}.
+     */
+    boolean isSorted();
+
+    /**
      *  Returns the {@link Class} of the
      *  type of the elements in this value set.
      *  Note that this may also be a superclass of the actual

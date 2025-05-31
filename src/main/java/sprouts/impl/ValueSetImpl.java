@@ -159,6 +159,11 @@ final class ValueSetImpl<E> implements ValueSet<E> {
     }
 
     @Override
+    public boolean isSorted() {
+        return false;
+    }
+
+    @Override
     public Class<E> type() {
         return _type;
     }

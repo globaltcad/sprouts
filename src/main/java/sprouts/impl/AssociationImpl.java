@@ -180,6 +180,11 @@ final class AssociationImpl<K, V> implements Association<K, V> {
     }
 
     @Override
+    public boolean isSorted() {
+        return false;
+    }
+
+    @Override
     public Class<K> keyType() {
         return _keyType;
     }

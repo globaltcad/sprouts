@@ -149,6 +149,11 @@ final class OrderedAssociationImpl<K, V> implements Association<K, V> {
     }
 
     @Override
+    public boolean isSorted() {
+        return true;
+    }
+
+    @Override
     public Class<K> keyType() {
         return _keyType;
     }

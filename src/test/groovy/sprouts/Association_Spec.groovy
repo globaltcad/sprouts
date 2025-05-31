@@ -36,6 +36,7 @@ class Association_Spec extends Specification
             var associations = Association.between(String, Integer)
 
         expect:
+            !associations.isSorted()
             associations.isEmpty()
             associations.keyType() == String
             associations.valueType() == Integer
@@ -94,6 +95,8 @@ class Association_Spec extends Specification
             var mappedMapParallel = map.entrySet().parallelStream().map({ Pair.of(it.key.toUpperCase() + "!", it.value) }).filter({ it.hashCode() % 2 == 0 }).collect(Collectors.toMap({it.first()}, {it.second()}))
         then : 'The mapped association and map are equal in terms of their contents.'
             mappedAssociationParallel.toMap() == mappedMapParallel
+        and : 'Finally, we also check the `isSorted()` flag:'
+            !associations.isSorted()
 
         where :
             operations << [[
@@ -204,6 +207,8 @@ class Association_Spec extends Specification
             assoc.every { pair ->
                 pair.second() == map[pair.first()]
             }
+        and :
+            !assoc.isSorted()
 
         when : 'We verify the `Iterable` implementation of the association by iterating over it.'
             var pairSet = new HashSet()
@@ -884,9 +889,12 @@ class Association_Spec extends Specification
                 Pair.of("Earthlings", "95min"),
                 Pair.of("Cowspiracy", "91min"),
             )
+        expect :
+            !documentaryTimes.isSorted()
         when:
             var sortedDocumentaries = documentaryTimes.sort( (Comparator<String>) { a, b -> a.compareTo(b) } )
         then:
+            sortedDocumentaries.isSorted()
             sortedDocumentaries.size() == 5
             sortedDocumentaries.keySet().toList() == [
                 "Cowspiracy",
@@ -899,6 +907,7 @@ class Association_Spec extends Specification
         when:
             var inverseDocumentaries = documentaryTimes.sort( (Comparator<String>) { a, b -> b.compareTo(a) } )
         then:
+            inverseDocumentaries.isSorted()
             inverseDocumentaries.size() == 5
             inverseDocumentaries.keySet().toList() == [
                 "Land of Hope and Glory",

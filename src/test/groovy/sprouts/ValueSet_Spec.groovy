@@ -40,12 +40,14 @@ class ValueSet_Spec extends Specification {
         expect:
             emptySet.isEmpty()
             emptySet.type() == String
+            !emptySet.isSorted()
 
         when :
             var emptySet2 = ValueSet.of(Integer)
         then:
             emptySet2.isEmpty()
             emptySet2.type() == Integer
+            !emptySet2.isSorted()
     }
 
     def 'The `ValueSet` maintains invariance with Java Set across operations'(

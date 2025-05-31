@@ -43,6 +43,7 @@ class Sorted_Association_Spec extends Specification
             var associations = Association.betweenSorted(String, Integer, (k1, k2) -> k1 <=> k2 )
 
         expect:
+            associations.isSorted()
             associations.isEmpty()
             associations.keyType() == String
             associations.valueType() == Integer
@@ -117,6 +118,8 @@ class Sorted_Association_Spec extends Specification
             var mappedMapParallel = map.entrySet().parallelStream().map({ Pair.of(it.key.toUpperCase() + "!", it.value) }).filter({ it.hashCode() % 2 == 0 }).collect(Collectors.toMap({it.first()}, {it.second()}))
         then : 'The mapped association and map are equal in terms of their contents.'
             mappedAssociationParallel.toMap() == mappedMapParallel
+        and : 'Finally, we also check the `isSorted()` flag:'
+            associations.isSorted()
 
         where :
             operations << [[
