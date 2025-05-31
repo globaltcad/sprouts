@@ -8,7 +8,7 @@ import spock.lang.Title
 import java.util.stream.Collectors
 import java.util.stream.Stream
 
-@Title("Association - a Data Oriented Map")
+@Title("Sorted Association - a Data Oriented Mapping")
 @Narrative('''
 
     Sprouts is a property library with a heavy focus on bridging the
@@ -19,10 +19,17 @@ import java.util.stream.Stream
     key-value pairs. You can think of it as an immutable map, but with
     an API that is designed around transforming the data in the map
     rather than mutating it.
+    
+    A regular `Association` is unordered, meaning that the order of the
+    key-value pairs is not guaranteed. But if you use special
+    factory methods, you can create a `SortedAssociation` that
+    guarantees the order of the key-value pairs.
+    Under the hood, this key-value store is based on a binary tree
+    with a node size growing with the depth of the tree.
 
 ''')
 @Subject([Association])
-class Association_Spec extends Specification
+class Sorted_Association_Spec extends Specification
 {
     enum Operation {
         ADD, REMOVE,
@@ -33,10 +40,10 @@ class Association_Spec extends Specification
 
     def 'An empty association is created by supplying the type of the key and value'() {
         given:
-            var associations = Association.between(String, Integer)
+            var associations = Association.betweenSorted(String, Integer, (k1, k2) -> k1 <=> k2 )
 
         expect:
-            !associations.isSorted()
+            associations.isSorted()
             associations.isEmpty()
             associations.keyType() == String
             associations.valueType() == Integer
@@ -46,19 +53,31 @@ class Association_Spec extends Specification
         List<Tuple2<Operation, String>> operations
     ) {
         given:
-            var associations = Association.between(String, String)
-            var map = [:]
+            var associations = Association.betweenSorted(String, String, (k1, k2) -> k1 <=> k2 )
+            var map = [:] as TreeMap
             var operationsApplier = { currentAssociations ->
                 operations.each { operation, key ->
                     switch (operation) {
                         case Operation.ADD:
                             currentAssociations = currentAssociations.put(key, "value of " + key)
                             map[key] = "value of " + key
+                            if ( !currentAssociations.containsKey(key) ) {
+                                throw new IllegalStateException(
+                                    "Entry with key '$key' not found in the association " +
+                                    "right after it was added with operation.."
+                                )
+                            }
                             break
                         case Operation.REMOVE:
                             currentAssociations = currentAssociations.remove(key)
                             map.remove(key)
                             break
+                    }
+                    if ( map.size() != currentAssociations.size() ) {
+                        throw new IllegalStateException(
+                            "The size of the map and the association are not equal after key '$key' was introduced "+
+                            "with operation '$operation'. Map size: ${map.size()}, Association size: ${currentAssociations.size()}"
+                        )
                     }
                 }
                 return currentAssociations
@@ -69,6 +88,8 @@ class Association_Spec extends Specification
             associations.size() == map.size()
             associations.keySet().toSet() == map.keySet()
             associations.values().sort().toList() == map.values().sort()
+            associations.collect({it.first()}) == map.collect({it.key})
+            associations.collect({it.second()}) == map.collect({it.value})
 
         when : 'We apply the operations to the associations and the map a few more times.'
             10.times { associations = operationsApplier(associations) }
@@ -76,6 +97,8 @@ class Association_Spec extends Specification
             associations.size() == map.size()
             associations.keySet().toSet() == map.keySet()
             associations.values().sort().toList() == map.values().sort()
+            associations.collect({it.first()}) == map.collect({it.key})
+            associations.collect({it.second()}) == map.collect({it.value})
         and : 'We can lookup any value from its corresponding key.'
             map.values() as Set == map.keySet().collect { key -> associations.get(key).orElseThrow(MissingItemException::new) } as Set
 
@@ -96,7 +119,7 @@ class Association_Spec extends Specification
         then : 'The mapped association and map are equal in terms of their contents.'
             mappedAssociationParallel.toMap() == mappedMapParallel
         and : 'Finally, we also check the `isSorted()` flag:'
-            !associations.isSorted()
+            associations.isSorted()
 
         where :
             operations << [[
@@ -150,6 +173,11 @@ class Association_Spec extends Specification
                         var hash = Math.abs(it % 2_000)
                         var operation = it > 2_000 ? Operation.REMOVE : Operation.ADD
                         return new Tuple2(operation, hash.toString())
+                    }), (0..10_000).collect({
+                        var hash1 = Math.abs((1997 * 139 * (500 + it.hashCode())) % 7_000)
+                        var operation = hash1 > 3_000 ? Operation.ADD : Operation.REMOVE
+                        var hash2 = Math.abs((1997 * 139 * hash1) % 9_000)
+                        return new Tuple2(operation, hash2.toString())
                     })
             ]
     }
@@ -158,8 +186,8 @@ class Association_Spec extends Specification
             List<Tuple2<Operation, String>> operations
     ) {
         given: 'Fresh association and reference map'
-            var assoc = Association.between(String, String)
-            var map = new HashMap<String,String>()
+            var assoc = Association.betweenSorted(String, String, (k1, k2) -> k1 <=> k2 )
+            var map = new TreeMap<String,String>((k1, k2) -> k1 <=> k2)
             var valueGenerator = { key -> "[value-of:$key]".toString() }
             var replacementValueGenerator = { key -> "[replaced-value-of:$key]".toString() }
 
@@ -200,6 +228,8 @@ class Association_Spec extends Specification
             assoc.keySet().toSet() == map.keySet()
             assoc.values().sort().toList() == map.values().sort()
             assoc.toMap() == map
+            assoc.collect({it.first()}) == map.collect({it.key})
+            assoc.collect({it.second()}) == map.collect({it.value})
         and :
             map.every { k, v ->
                 assoc.get(k).orElse(null) == v
@@ -207,8 +237,6 @@ class Association_Spec extends Specification
             assoc.every { pair ->
                 pair.second() == map[pair.first()]
             }
-        and :
-            !assoc.isSorted()
 
         when : 'We verify the `Iterable` implementation of the association by iterating over it.'
             var pairSet = new HashSet()
@@ -235,7 +263,7 @@ class Association_Spec extends Specification
         List<Tuple2<Operation, String>> operations
     ) {
         given: 'We create an association and a map as well as a closure to apply the operations to them.'
-            var associations = Association.between(String, String)
+            var associations = Association.betweenSorted(String, String, (k1, k2) -> k1 <=> k2 )
             var operationsApplier = { currentAssociations ->
                 operations.each { operation, key ->
                     switch (operation) {
@@ -269,44 +297,44 @@ class Association_Spec extends Specification
 
         where :
             operations << [[
-                        new Tuple2(Operation.ADD, 'a'),
-                        new Tuple2(Operation.ADD, 'b'),
-                        new Tuple2(Operation.ADD, 'c')
+                                   new Tuple2(Operation.ADD, 'a'),
+                                   new Tuple2(Operation.ADD, 'b'),
+                                   new Tuple2(Operation.ADD, 'c')
                     ], [
-                        new Tuple2(Operation.REMOVE, 'a'),
-                        new Tuple2(Operation.REMOVE, 'b'),
-                        new Tuple2(Operation.REMOVE, 'c')
+                                   new Tuple2(Operation.REMOVE, 'a'),
+                                   new Tuple2(Operation.REMOVE, 'b'),
+                                   new Tuple2(Operation.REMOVE, 'c')
                     ], [
-                        new Tuple2(Operation.ADD, 'a'),
-                        new Tuple2(Operation.ADD, 'b'),
-                        new Tuple2(Operation.ADD, 'c'),
-                        new Tuple2(Operation.REMOVE, 'a'),
-                        new Tuple2(Operation.REMOVE, 'b'),
-                        new Tuple2(Operation.REMOVE, 'c')
+                                   new Tuple2(Operation.ADD, 'a'),
+                                   new Tuple2(Operation.ADD, 'b'),
+                                   new Tuple2(Operation.ADD, 'c'),
+                                   new Tuple2(Operation.REMOVE, 'a'),
+                                   new Tuple2(Operation.REMOVE, 'b'),
+                                   new Tuple2(Operation.REMOVE, 'c')
                     ], [
-                        new Tuple2(Operation.ADD, 'a'),
-                        new Tuple2(Operation.ADD, 'b'),
-                        new Tuple2(Operation.REMOVE, 'a'),
-                        new Tuple2(Operation.ADD, 'c'),
-                        new Tuple2(Operation.REMOVE, 'b'),
-                        new Tuple2(Operation.REMOVE, 'c')
+                                   new Tuple2(Operation.ADD, 'a'),
+                                   new Tuple2(Operation.ADD, 'b'),
+                                   new Tuple2(Operation.REMOVE, 'a'),
+                                   new Tuple2(Operation.ADD, 'c'),
+                                   new Tuple2(Operation.REMOVE, 'b'),
+                                   new Tuple2(Operation.REMOVE, 'c')
                     ], [
-                        new Tuple2(Operation.ADD, 'a'),
-                        new Tuple2(Operation.REMOVE, 'a'),
-                        new Tuple2(Operation.ADD, 'b'),
-                        new Tuple2(Operation.REMOVE, 'b'),
-                        new Tuple2(Operation.ADD, 'c'),
-                        new Tuple2(Operation.REMOVE, 'c')
+                                   new Tuple2(Operation.ADD, 'a'),
+                                   new Tuple2(Operation.REMOVE, 'a'),
+                                   new Tuple2(Operation.ADD, 'b'),
+                                   new Tuple2(Operation.REMOVE, 'b'),
+                                   new Tuple2(Operation.ADD, 'c'),
+                                   new Tuple2(Operation.REMOVE, 'c')
                     ], [
-                        new Tuple2(Operation.ADD, 'a'),
-                        new Tuple2(Operation.ADD, 'a'),
-                        new Tuple2(Operation.REMOVE, 'a'),
-                        new Tuple2(Operation.ADD, 'b'),
-                        new Tuple2(Operation.ADD, 'b'),
-                        new Tuple2(Operation.REMOVE, 'b'),
-                        new Tuple2(Operation.ADD, 'c'),
-                        new Tuple2(Operation.ADD, 'c'),
-                        new Tuple2(Operation.REMOVE, 'c')
+                                   new Tuple2(Operation.ADD, 'a'),
+                                   new Tuple2(Operation.ADD, 'a'),
+                                   new Tuple2(Operation.REMOVE, 'a'),
+                                   new Tuple2(Operation.ADD, 'b'),
+                                   new Tuple2(Operation.ADD, 'b'),
+                                   new Tuple2(Operation.REMOVE, 'b'),
+                                   new Tuple2(Operation.ADD, 'c'),
+                                   new Tuple2(Operation.ADD, 'c'),
+                                   new Tuple2(Operation.REMOVE, 'c')
                     ], (0..100).collect({
                         var hash = Math.abs((139 * (90 + it.hashCode())) % 100)
                         var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD
@@ -325,8 +353,8 @@ class Association_Spec extends Specification
 
     def 'You can merge two associations into one using the `putAll` method.'() {
         given :
-            var associations1 = Association.between(String, Integer)
-            var associations2 = Association.between(String, Integer)
+            var associations1 = Association.betweenSorted(String, Integer, (k1, k2) -> k1 <=> k2 )
+            var associations2 = Association.betweenSorted(String, Integer, (k1, k2) -> k1 <=> k2 )
         when : 'We add some values to the first association.'
             associations1 = associations1.put("a", 1).put("b", 2).put("c", 3)
         and : 'We add some values to the second association.'
@@ -345,8 +373,8 @@ class Association_Spec extends Specification
 
     def 'You remove the entries of one association from another, using the `removeAll(ValueSet)` method.'() {
         given : 'Two empty associations between strings and integers.'
-            var associations1 = Association.between(String, Integer)
-            var associations2 = Association.between(String, Integer)
+            var associations1 = Association.betweenSorted(String, Integer, (k1, k2) -> k1 <=> k2 )
+            var associations2 = Association.betweenSorted(String, Integer, (k1, k2) -> k1 <=> k2 )
         when : 'We add some values to the first association.'
             associations1 = associations1.put("x", 1).put("y", 2).put("z", 3)
         and : 'We add some values to the second association.'
@@ -360,8 +388,8 @@ class Association_Spec extends Specification
 
     def 'You remove the entries of one association from another, using the `removeAll(Set)` method.'() {
         given : 'Two empty associations between strings and integers.'
-            var associations1 = Association.between(String, Integer)
-            var associations2 = Association.between(String, Integer)
+            var associations1 = Association.betweenSorted(String, Integer, (k1, k2) -> k1 <=> k2 )
+            var associations2 = Association.betweenSorted(String, Integer, (k1, k2) -> k1 <=> k2 )
         when : 'We add some values to the first association.'
             associations1 = associations1.put("a", 1).put("b", 2).put("c", 3)
         and : 'We add some values to the second association.'
@@ -375,7 +403,7 @@ class Association_Spec extends Specification
 
     def 'The `clear` method creates an empty association with the same key and value types.'() {
         given :
-            var associations = Association.between(String, Integer)
+            var associations = Association.betweenSorted(String, Integer, (k1, k2) -> k1 <=> k2 )
             associations = associations.put("a", 1).put("b", 2).put("c", 3)
         expect : 'The association is not empty.'
             !associations.isEmpty()
@@ -391,8 +419,8 @@ class Association_Spec extends Specification
 
     def 'You can merge two large associations into one using the `putAll` method.'(int size) {
         given : 'We create two associations and some random key and value generators.'
-            var associations1 = Association.between(String, Character)
-            var associations2 = Association.between(String, Character)
+            var associations1 = Association.betweenSorted(String, Character, (k1, k2) -> k1 <=> k2 )
+            var associations2 = Association.betweenSorted(String, Character, (k1, k2) -> k1 <=> k2 )
             var indexToRandomKey = { index -> Integer.toHexString(Math.abs((929 * (42 + index as int)) % size)) }
             var indexToRandomValue = { index -> Math.abs(65+(index as int)) as char }
         and : 'We create a regular mutable map to check the results are correct.'
@@ -430,8 +458,8 @@ class Association_Spec extends Specification
 
     def 'You can remove the entries of a large association from another, using the `removeAll` method.'(int size) {
         given : 'Two empty associations between strings and integers.'
-            var associations1 = Association.between(String, Integer)
-            var associations2 = Association.between(String, Integer)
+            var associations1 = Association.betweenSorted(String, Integer, (k1, k2) -> k1 <=> k2 )
+            var associations2 = Association.betweenSorted(String, Integer, (k1, k2) -> k1 <=> k2 )
             var indexToRandomKey = { index -> Integer.toHexString(Math.abs((929 * (42 + index as int)) % size)) }
             var indexToRandomValue = { index -> Math.abs(65+(index as int)) }
         and : 'We create two regular mutable maps to check the results are correct based on their `remove` method.'
@@ -466,7 +494,7 @@ class Association_Spec extends Specification
 
     def 'You can merge a large association and a map into a single association using the `putAll` method.'(int size) {
         given : 'We create an association and a map and some random key and value generators.'
-            var associations = Association.between(String, Character)
+            var associations = Association.betweenSorted(String, Character, (k1, k2) -> k1 <=> k2 )
             var otherMap = [:]
             var indexToRandomKey = { index -> Integer.toHexString(Math.abs((929 * (42 + index as int)) % size)) }
             var indexToRandomValue = { index -> Math.abs(65+(index as int)) as char }
@@ -498,16 +526,16 @@ class Association_Spec extends Specification
 
     def 'An `Association` has an intuitive string representation.'() {
         given :
-            var associations = Association.between(String, Integer)
+            var associations = Association.betweenSorted(String, Integer, (k1, k2) -> k1 <=> k2 )
         when : 'We add some values to the association.'
             associations = associations.put("a", 1).put("b", 2).put("c", 3)
         then : 'The string representation of the association is as expected.'
-            associations.toString() == 'Association<String,Integer>["b" ↦ 2, "c" ↦ 3, "a" ↦ 1]'
+            associations.toString() == 'SortedAssociation<String,Integer>["a" ↦ 1, "b" ↦ 2, "c" ↦ 3]'
     }
 
     def 'A larger `Association` will have a trimmed string representation.'() {
         given :
-            var associations = Association.between(Character, Byte)
+            var associations = Association.betweenSorted(Character, Byte, (k1, k2) -> k1 <=> k2 )
         when : 'We add some values to the association.'
             30.times { index ->
                 var key = Math.abs(65+(index)) as char
@@ -515,12 +543,12 @@ class Association_Spec extends Specification
                 associations = associations.put(key, value)
             }
         then : 'The string representation of the association is as expected.'
-            associations.toString() == "Association<Character,Byte>['P' ↦ 3, '\\' ↦ -97, 'F' ↦ 1, 'W' ↦ -98, 'U' ↦ 4, 'A' ↦ 0, 'R' ↦ -99, 'Z' ↦ 5, ...22 more entries]"
+            associations.toString() == "SortedAssociation<Character,Byte>['A' ↦ 0, 'B' ↦ -51, 'C' ↦ -102, 'D' ↦ 103, 'E' ↦ 52, 'F' ↦ 1, 'G' ↦ -50, 'H' ↦ -101, ... 22 items left]"
     }
 
     def 'The `replace` method replaces the value of a key with a new value, if and only if the key is present.'() {
         given :
-            var associations = Association.between(String, Integer)
+            var associations = Association.betweenSorted(String, Integer, (k1, k2) -> k1 <=> k2 )
 
         when : 'We add some values to the association.'
             associations = associations.put("a", 1).put("b", 2).put("c", 3)
@@ -541,7 +569,7 @@ class Association_Spec extends Specification
 
     def 'Use `putAll(Pair...)` to populate an association at once from multiple pairs.'() {
         given :
-            var associations = Association.between(String, Integer)
+            var associations = Association.betweenSorted(String, Integer, (k1, k2) -> k1 <=> k2 )
         when : 'We add some values to the association.'
             associations = associations.putAll(
                 Pair.of("I", 1),
@@ -563,7 +591,7 @@ class Association_Spec extends Specification
 
     def 'Use `putAll(Tuple<Pair>)` to populate an association at once from multiple pairs.'() {
         given :
-            var associations = Association.between(Integer, String)
+            var associations = Association.betweenSorted(Integer, String, (k1, k2) -> k1 <=> k2 )
         when : 'We add some values to the association.'
             associations = associations.putAll(
                 Tuple.of(
@@ -592,7 +620,7 @@ class Association_Spec extends Specification
             populate the association with.
         """
         given :
-            var associations = Association.between(Integer, String)
+            var associations = Association.betweenSorted(Integer, String, (k1, k2) -> k1 <=> k2 )
         when : 'We add some values to the association.'
             associations = associations.putAll([
                 Pair.of(1, "I"),
@@ -619,7 +647,7 @@ class Association_Spec extends Specification
             populate the association with.
         """
         given :
-            var associations = Association.between(Character, String)
+            var associations = Association.betweenSorted(Character, String, (k1, k2) -> k1 <=> k2 )
         when : 'We add some values to the association.'
             associations = associations.putAll([
                 Pair.of('I' as char, "I"),
@@ -639,7 +667,7 @@ class Association_Spec extends Specification
 
     def 'The `putIfAbsent(K, V)` method adds a key-value pair to the association if, and only if, the key is not present.'() {
         given : 'We create an association between shorts and chars and add a bunch of entries to the association.'
-            var associations = Association.between(Short, Character).putAll([
+            var associations = Association.betweenSorted(Short, Character, (k1, k2) -> k1 <=> k2 ).putAll([
                 Pair.of(11 as short, 'a' as char),
                 Pair.of(22 as short, 'b' as char),
                 Pair.of(33 as short, 'c' as char),
@@ -668,9 +696,9 @@ class Association_Spec extends Specification
             associations.get(44 as short).orElseThrow(MissingItemException::new) == 'x' as char
     }
 
-    def 'Use `Association.between(Number.class, Number.class)` to create an association between all kinds of numbers.'() {
+    def 'Use `Association.betweenSorted(Number.class, Number.class)` to create an association between all kinds of numbers.'() {
         given :
-            var associations = Association.between(Number.class, Number.class)
+            var associations = Association.betweenSorted(Number.class, Number.class, (k1, k2) -> k1 <=> k2 )
         expect :
             associations.isEmpty()
             associations.keyType() == Number.class
@@ -704,19 +732,19 @@ class Association_Spec extends Specification
 
     def 'The of factory method throws NPE for null parameters'() {
         when:
-            Association.of(null, "value")
+            Association.ofSorted(null, "value", (k1, k2) -> k1 <=> k2)
         then:
             thrown(NullPointerException)
 
         when:
-            Association.of("key", null)
+            Association.ofSorted("key", null, (k1, k2) -> k1 <=> k2)
         then:
             thrown(NullPointerException)
     }
 
     def 'The `entrySet` is immutable and contains correct pairs'() {
         given:
-            var assoc = Association.of("a", 1).put("b", 2)
+            var assoc = Association.ofSorted("a", 1, (k1, k2) -> k1 <=> k2).put("b", 2)
         when:
             var entryValueSet = assoc.entrySet()
             var entrySet = entryValueSet.toSet()
@@ -737,7 +765,7 @@ class Association_Spec extends Specification
 
     def 'You can iterate over the `entrySet` of all pairs in an `Association`.'() {
         given:
-            var assoc = Association.between(Integer, String).putAll(
+            var assoc = Association.betweenSorted(Integer, String, (k1, k2)-> k1 <=> k2 ).putAll(
                 Pair.of(1, "I"),
                 Pair.of(2, "was"),
                 Pair.of(3, "added"),
@@ -762,7 +790,7 @@ class Association_Spec extends Specification
 
     def 'replaceAll with Map only updates existing keys'() {
         given:
-            var original = Association.of("a", 1).put("b", 2).put("c", 3)
+            var original = Association.ofSorted("a", 1, (k1, k2) -> k1 <=> k2).put("b", 2).put("c", 3)
             var replacementMap = [a:10, d:40, c:30] as Map
         when:
             var updated = original.replaceAll(replacementMap)
@@ -776,7 +804,7 @@ class Association_Spec extends Specification
 
     def 'The `retainAll` method keeps only specified keys'() {
         given:
-            var assoc = Association.of("a", 1).put("b", 2).put("c", 3)
+            var assoc = Association.ofSorted("a", 1, (k1, k2) -> k1 <=> k2).put("b", 2).put("c", 3)
         when:
             var retained = assoc.retainAll(["a", "c"] as Set)
         then:
@@ -788,35 +816,49 @@ class Association_Spec extends Specification
 
     def 'The `putIfAbsent` does not overwrite an existing value already stored in an association.'() {
         given:
-            var assoc = Association.of("a", 1).putIfAbsent("a", 2)
+            var assoc = Association.ofSorted("a", 1, (k1, k2) -> k1 <=> k2).putIfAbsent("a", 2)
         expect:
             assoc.get("a").get() == 1
     }
 
     def 'Associations with same entries in different order are equal'() {
         given:
-            var assoc1 = Association.of("a", 1).put("b", 2).put("c", 3)
-            var assoc2 = Association.of("c", 3).put("b", 2).put("a", 1)
+            var comparator = { k1, k2 -> k1 <=> k2 }
+            var assoc1 = Association.ofSorted("a", 1, comparator).put("b", 2).put("c", 3)
+            var assoc2 = Association.ofSorted("c", 3, comparator).put("b", 2).put("a", 1)
         expect:
             assoc1 == assoc2
             assoc1.hashCode() == assoc2.hashCode()
+        and :
+            assoc1.toList() == assoc2.toList()
+            assoc1.toList() == [
+                Pair.of("a", 1),
+                Pair.of("b", 2),
+                Pair.of("c", 3)
+            ]
     }
 
     def 'values() contains all values including duplicates'() {
         given:
-            var assoc = Association.of("a", 10)
+            var assoc = Association.ofSorted("c", 10, (k1, k2) -> k1 <=> k2)
                 .put("b", 20)
-                .put("c", 10) // Duplicate value
+                .put("a", 10) // Duplicate value
         when:
             var values = assoc.values()
         then:
             values.size() == 3
             values.sort().toList() == [10, 10, 20]
+        and : 'The values are in the expected order.'
+            assoc.toList() == [
+                Pair.of("a", 10),
+                Pair.of("b", 20),
+                Pair.of("c", 10)
+            ]
     }
 
     def 'replaceAll ignores non-existing keys in replacement stream'() {
         given:
-            var original = Association.of("a", 1).put("b", 2)
+            var original = Association.ofSorted("a", 1, (k1, k2) -> k1 <=> k2).put("b", 2)
             var replacements = [Pair.of("k", -40), Pair.of("a", 10), Pair.of("v", 30)]
         when:
             var updated = original.replaceAll(replacements.stream())
@@ -826,11 +868,16 @@ class Association_Spec extends Specification
             updated.get("b").get() == 2 // Unchanged
             !updated.containsKey("k")
             !updated.containsKey("v")
+        and : 'The updated association has the expected order.'
+            updated.toList() == [
+                Pair.of("a", 10),
+                Pair.of("b", 2)
+            ]
     }
 
     def 'clear on empty association returns an empty instance'() {
         given:
-            var emptyAssoc = Association.between(String, Integer).clear()
+            var emptyAssoc = Association.betweenSorted(String, Integer, (k1, k2) -> k1 <=> k2 ).clear()
         expect:
             emptyAssoc.isEmpty()
             emptyAssoc.keyType() == String
@@ -839,17 +886,14 @@ class Association_Spec extends Specification
 
     def 'The `Association` class is an `Iterable` which allows you to iterate over its entries.'() {
         given:
-            var associations = Association.of("x", 1).put("y", 2).put("z", 3)
+            var associations = Association.ofSorted("x", 1, (k1, k2) -> k1 <=> k2).put("y", 2).put("z", 3)
         when:
             var entries = []
             for (var entry : associations) {
                 entries << entry
             }
         then:
-            entries.size() == 3
-            entries.contains(Pair.of("x", 1))
-            entries.contains(Pair.of("y", 2))
-            entries.contains(Pair.of("z", 3))
+            entries == [Pair.of("x", 1), Pair.of("y", 2), Pair.of("z", 3)]
     }
 
     def 'Use `Association.collectorOf(Class,Class)` to collect a stream of `Pair`s into a new `Association`.'() {
@@ -863,7 +907,7 @@ class Association_Spec extends Specification
                 Pair.of(5, "www.dominionmovement.com")
             )
         when:
-            var associations = sentence.collect(Association.collectorOf(Integer, String))
+            var associations = sentence.collect(Association.collectorOfSorted(Integer, String, (k1, k2) -> k1 <=> k2))
         then:
             associations.size() == 6
             associations.get(0).get() == "I"
@@ -872,50 +916,86 @@ class Association_Spec extends Specification
             associations.get(3).get() == "documentary"
             associations.get(4).get() == "on"
             associations.get(5).get() == "www.dominionmovement.com"
+        and : 'The entry has the correct order.'
+            associations.toList() == [
+                Pair.of(0, "I"),
+                Pair.of(1, "watch"),
+                Pair.of(2, "dominion"),
+                Pair.of(3, "documentary"),
+                Pair.of(4, "on"),
+                Pair.of(5, "www.dominionmovement.com")
+            ]
     }
 
-    def 'Use the `sort(Comparator)` method to create a sorted association.'() {
+    def 'A no-op operations returns the same instance!'() {
         reportInfo """
-            The `sort` takes a `Comparator` that defines the order of the entries in the association
-            and then returns a new `Association` with the entries sorted according to that comparator.
-            This new association is based on a binary tree structure, so it is still efficient
-            for lookups. (Although not as efficient as the original `Association`)
+            This test ensures that no-op operations like `putAll`, `retainAll`, `removeAll`... 
+            do not create a new instance of the `Association` class, but rather return the same instance
+            when passed an empty collection or set.
         """
         given:
-            var documentaryTimes = Association.between(String, String).putAll(
-                Pair.of("Dominion", "125min"),
-                Pair.of("Forks over Knives", "96min"),
-                Pair.of("Land of Hope and Glory", "48min"),
-                Pair.of("Earthlings", "95min"),
-                Pair.of("Cowspiracy", "91min"),
-            )
-        expect :
-            !documentaryTimes.isSorted()
-        when:
-            var sortedDocumentaries = documentaryTimes.sort( (Comparator<String>) { a, b -> a.compareTo(b) } )
-        then:
-            sortedDocumentaries.isSorted()
-            sortedDocumentaries.size() == 5
-            sortedDocumentaries.keySet().toList() == [
-                "Cowspiracy",
-                "Dominion",
-                "Earthlings",
-                "Forks over Knives",
-                "Land of Hope and Glory"
-            ]
+            var associations = Association.betweenSorted(String, Integer, (k1, k2) -> k1 <=> k2 )
+        and : 'We add some initial values to the association.'
+            associations = associations.put("a", 1).put("b", 2).put("c", 3)
 
-        when:
-            var inverseDocumentaries = documentaryTimes.sort( (Comparator<String>) { a, b -> b.compareTo(a) } )
-        then:
-            inverseDocumentaries.isSorted()
-            inverseDocumentaries.size() == 5
-            inverseDocumentaries.keySet().toList() == [
-                "Land of Hope and Glory",
-                "Forks over Knives",
-                "Earthlings",
-                "Dominion",
-                "Cowspiracy"
-            ]
+        when: 'We call the `putAll` method with an empty collection.'
+            var result = associations.putAll([])
+        then: 'The result is the same instance as the original association.'
+            result.is(associations)
+
+        when: 'We call the `retainAll` method with an empty set.'
+            result = associations.retainAll([] as Set)
+        then: 'The result is the same instance as the original association.'
+            result.is(associations)
+
+        when: 'We call the `removeAll` method with an empty set.'
+            result = associations.removeAll([] as Set)
+        then: 'The result is the same instance as the original association.'
+            result.is(associations)
+
+        when : 'We now do the same thing with cases where the entries already exist in the association.'
+            result = associations.putAll([
+                Pair.of("a", 1),
+                Pair.of("b", 2),
+                Pair.of("c", 3)
+            ])
+        then : 'The result is still the same instance as the original association.'
+            result.is(associations)
+
+        when : 'We call the `retainAll` method with a set that contains all keys of the association.'
+            result = associations.retainAll(associations.keySet())
+        then : 'The result is still the same instance as the original association.'
+            result.is(associations)
+
+        when : 'We call the `removeAll` method with a set that contains irrelevant keys.'
+            result = associations.removeAll(["x", "y", "z"] as Set)
+        then : 'The result is still the same instance as the original association.'
+            result.is(associations)
     }
 
+    def 'Use the `toMap()` method to convert a sorted `Association` to an unmodifiable `Map`.'() {
+        given:
+            var associations = Association.betweenSorted(Byte, String)
+                .put((byte) 1, "one")
+                .put((byte) 2, "two")
+                .put((byte) 3, "three")
+        when:
+            var map = associations.toMap()
+        then:
+            map instanceof Map
+            map.size() == 3
+            map.get((byte) 1) == "one"
+            map.get((byte) 2) == "two"
+            map.get((byte) 3) == "three"
+
+        when : 'We try to modify the map.'
+            map.put((byte) 4, "four")
+        then : 'An UnsupportedOperationException is thrown.'
+            thrown(UnsupportedOperationException)
+
+        when : 'We try to remove an entry from the map.'
+            map.remove((byte) 1)
+        then : 'An UnsupportedOperationException is thrown.'
+            thrown(UnsupportedOperationException)
+    }
 }

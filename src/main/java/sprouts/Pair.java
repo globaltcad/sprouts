@@ -63,7 +63,7 @@ public final class Pair<F extends @Nullable Object,S extends @Nullable Object> {
      * @param <S> The type of the second value.
      * @return A new pair with the key and value of the given map entry.
      */
-    public static <F extends @Nullable Object,S extends @Nullable Object> Pair<F,S> of( Map.Entry<F,S> entry ) {
+    public static <F extends @Nullable Object,S extends @Nullable Object> Pair<F,S> of( Map.Entry<? extends F, ? extends S> entry ) {
         return new Pair<>(entry.getKey(), entry.getValue());
     }
 
