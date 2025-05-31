@@ -1,10 +1,7 @@
 package sprouts.impl;
 
 import org.jspecify.annotations.Nullable;
-import sprouts.Association;
-import sprouts.Pair;
-import sprouts.Tuple;
-import sprouts.Val;
+import sprouts.*;
 
 import java.util.*;
 
@@ -159,6 +156,11 @@ final class OrderedAssociationImpl<K, V> implements Association<K, V> {
     @Override
     public Class<V> valueType() {
         return _valueType;
+    }
+
+    @Override
+    public ValueSet<K> keySet() {
+        return ValueSet.ofSorted(this.keyType(), _keyComparator).addAll(this.entrySet().stream().map(Pair::first));
     }
 
     @Override

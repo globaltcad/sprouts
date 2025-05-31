@@ -4,6 +4,7 @@ import org.jspecify.annotations.Nullable;
 import sprouts.Association;
 import sprouts.Pair;
 import sprouts.Tuple;
+import sprouts.ValueSet;
 
 import java.lang.reflect.Array;
 import java.util.*;
@@ -186,6 +187,11 @@ final class AssociationImpl<K, V> implements Association<K, V> {
     @Override
     public Class<V> valueType() {
         return _valueType;
+    }
+
+    @Override
+    public ValueSet<K> keySet() {
+        return ValueSet.of(this.keyType()).addAll(this.entrySet().stream().map(Pair::first));
     }
 
     @Override

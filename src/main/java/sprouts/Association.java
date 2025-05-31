@@ -286,9 +286,7 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
      *
      * @return A set of all the keys in this association.
      */
-    default ValueSet<K> keySet() {
-        return ValueSet.of(this.keyType()).addAll(this.entrySet().stream().map(Pair::first));
-    }
+    ValueSet<K> keySet();
 
     /**
      *  Returns a tuple of all the values in this association.
@@ -837,6 +835,19 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
      *         or this association if it is already empty.
      */
     Association<K, V> clear();
+
+    /**
+     *  Returns a new association that is the same as this one
+     *  but with the keys sorted based on the provided {@link Comparator}.
+     *
+     * @return A new association with the keys sorted
+     *        based on the provided comparator.
+     */
+    default Association<K,V> sort( Comparator<K> comparator ) {
+        Objects.requireNonNull(comparator, "The provided comparator cannot be null.");
+        return Sprouts.factory().associationOfSorted(this.keyType(), this.valueType(), comparator)
+                .putAll((Stream) this.entrySet().stream());
+    }
 
     /**
      *  Converts this association to a java.util.Map.

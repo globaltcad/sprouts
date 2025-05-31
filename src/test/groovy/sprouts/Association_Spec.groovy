@@ -869,4 +869,44 @@ class Association_Spec extends Specification
             associations.get(5).get() == "www.dominionmovement.com"
     }
 
+    def 'Use the `sort(Comparator)` method to create a sorted association.'() {
+        reportInfo """
+            The `sort` takes a `Comparator` that defines the order of the entries in the association
+            and then returns a new `Association` with the entries sorted according to that comparator.
+            This new association is based on a binary tree structure, so it is still efficient
+            for lookups. (Although not as efficient as the original `Association`)
+        """
+        given:
+            var documentaryTimes = Association.between(String, String).putAll(
+                Pair.of("Dominion", "125min"),
+                Pair.of("Forks over Knives", "96min"),
+                Pair.of("Land of Hope and Glory", "48min"),
+                Pair.of("Earthlings", "95min"),
+                Pair.of("Cowspiracy", "91min"),
+            )
+        when:
+            var sortedDocumentaries = documentaryTimes.sort( (Comparator<String>) { a, b -> a.compareTo(b) } )
+        then:
+            sortedDocumentaries.size() == 5
+            sortedDocumentaries.keySet().toList() == [
+                "Cowspiracy",
+                "Dominion",
+                "Earthlings",
+                "Forks over Knives",
+                "Land of Hope and Glory"
+            ]
+
+        when:
+            var inverseDocumentaries = documentaryTimes.sort( (Comparator<String>) { a, b -> b.compareTo(a) } )
+        then:
+            inverseDocumentaries.size() == 5
+            inverseDocumentaries.keySet().toList() == [
+                "Land of Hope and Glory",
+                "Forks over Knives",
+                "Earthlings",
+                "Dominion",
+                "Cowspiracy"
+            ]
+    }
+
 }

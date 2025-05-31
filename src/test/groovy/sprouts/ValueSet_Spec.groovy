@@ -408,7 +408,7 @@ class ValueSet_Spec extends Specification {
             valueSet.type() == String
     }
 
-    def 'Use the `sort()` method to create a sorted value set.'() {
+    def 'Use the `sort(Comparator)` method to create a sorted value set.'() {
         given:
             var valueSet = ValueSet.of("c", "a", "b", "a", "c", "b", "c", "d", "e", "b")
         when:
