@@ -394,12 +394,12 @@ public final class Sprouts implements SproutsFactory
 
     @Override
     public <K, V> Association<K, V> associationOfSorted( Class<K> keyType, Class<V> valueType, Comparator<K> comparator) {
-        return new OrderedAssociationImpl<>(keyType, valueType, comparator);
+        return new SortedAssociationImpl<>(keyType, valueType, comparator);
     }
 
     @Override
     public <K extends Comparable<K>, V> Association<K, V> associationOfSorted( Class<K> keyType, Class<V> valueType) {
-        return new OrderedAssociationImpl<>(keyType, valueType, Comparator.naturalOrder());
+        return new SortedAssociationImpl<>(keyType, valueType, Comparator.naturalOrder());
     }
 
     @Override
@@ -411,13 +411,13 @@ public final class Sprouts implements SproutsFactory
     public <E> ValueSet<E> valueSetOfSorted( Class<E> type, Comparator<E> comparator ) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(comparator);
-        return new OrderedValueSetImpl<>(type, comparator);
+        return new SortedValueSetImpl<>(type, comparator);
     }
 
     @Override
     public <E extends Comparable<? super E>> ValueSet<E> valueSetOfSorted( Class<E> type ) {
         Objects.requireNonNull(type);
-        return new OrderedValueSetImpl<>(type, Comparator.naturalOrder());
+        return new SortedValueSetImpl<>(type, Comparator.naturalOrder());
     }
 
     @SuppressWarnings("unchecked")

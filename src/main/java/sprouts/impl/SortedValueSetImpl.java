@@ -9,7 +9,7 @@ import java.util.stream.Stream;
 
 import static sprouts.impl.ArrayUtil.*;
 
-final class OrderedValueSetImpl<E> implements ValueSet<E> {
+final class SortedValueSetImpl<E> implements ValueSet<E> {
 
     private static final boolean ALLOWS_NULL = false;
     private static final Node NULL_NODE = new Node(
@@ -104,14 +104,14 @@ final class OrderedValueSetImpl<E> implements ValueSet<E> {
     private final Comparator<E> _comparator;
     private final Node _root;
 
-    OrderedValueSetImpl(
+    SortedValueSetImpl(
             final Class<E> type,
             final Comparator<E> comparator
     ) {
         this(type, comparator, NULL_NODE);
     }
 
-    private OrderedValueSetImpl(
+    private SortedValueSetImpl(
             final Class<E> type,
             final Comparator<E> comparator,
             final Node root
@@ -253,19 +253,19 @@ final class OrderedValueSetImpl<E> implements ValueSet<E> {
         if (newRoot == _root) {
             return this;
         }
-        return new OrderedValueSetImpl<>(_type, _comparator, newRoot);
+        return new SortedValueSetImpl<>(_type, _comparator, newRoot);
     }
 
     @Override
     public ValueSet<E> addAll(Stream<? extends E> elements) {
         Objects.requireNonNull(elements);
         // TODO: implement branching based bulk insert
-        OrderedValueSetImpl<E> result = this;
+        SortedValueSetImpl<E> result = this;
         // reduce the stream to a single association
         return elements.reduce(
                 result,
                 (acc,
-                 entry) -> (OrderedValueSetImpl<E>) acc.add(entry),
+                 entry) -> (SortedValueSetImpl<E>) acc.add(entry),
                 (a, b) -> a);
     }
 
@@ -439,7 +439,7 @@ final class OrderedValueSetImpl<E> implements ValueSet<E> {
         if (newRoot == _root) {
             return this;
         }
-        return new OrderedValueSetImpl<>(_type, _comparator, newRoot);
+        return new SortedValueSetImpl<>(_type, _comparator, newRoot);
     }
 
     @Override
@@ -658,7 +658,7 @@ final class OrderedValueSetImpl<E> implements ValueSet<E> {
     public boolean equals(@Nullable Object obj) {
         if (this == obj) return true;
         if (obj == null || getClass() != obj.getClass()) return false;
-        OrderedValueSetImpl<?> other = (OrderedValueSetImpl<?>) obj;
+        SortedValueSetImpl<?> other = (SortedValueSetImpl<?>) obj;
         boolean headersEqual = Objects.equals(_type, other._type) && Objects.equals(_comparator, other._comparator);
         if (!headersEqual)
             return false;

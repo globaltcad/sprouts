@@ -7,7 +7,7 @@ import java.util.*;
 
 import static sprouts.impl.ArrayUtil.*;
 
-final class OrderedAssociationImpl<K, V> implements Association<K, V> {
+final class SortedAssociationImpl<K, V> implements Association<K, V> {
 
     private static final boolean ALLOWS_NULL = false;
     private static final Node NULL_NODE = new Node(
@@ -117,7 +117,7 @@ final class OrderedAssociationImpl<K, V> implements Association<K, V> {
         }
     }
 
-    OrderedAssociationImpl(
+    SortedAssociationImpl(
         final Class<K> keyType,
         final Class<V> valueType,
         final Comparator<K> keyComparator
@@ -130,7 +130,7 @@ final class OrderedAssociationImpl<K, V> implements Association<K, V> {
         );
     }
 
-    private OrderedAssociationImpl(
+    private SortedAssociationImpl(
         final Class<K> keyType,
         final Class<V> valueType,
         final Comparator<K> keyComparator,
@@ -535,7 +535,7 @@ final class OrderedAssociationImpl<K, V> implements Association<K, V> {
         if (newRoot == _root) {
             return this;
         }
-        return new OrderedAssociationImpl<>(
+        return new SortedAssociationImpl<>(
                 _keyType,
                 _valueType,
                 _keyComparator,
@@ -561,7 +561,7 @@ final class OrderedAssociationImpl<K, V> implements Association<K, V> {
         if (newRoot == _root) {
             return this;
         }
-        return new OrderedAssociationImpl<>(
+        return new SortedAssociationImpl<>(
                 _keyType,
                 _valueType,
                 _keyComparator,
@@ -582,7 +582,7 @@ final class OrderedAssociationImpl<K, V> implements Association<K, V> {
         if (newRoot == _root) {
             return this;
         }
-        return new OrderedAssociationImpl<>(
+        return new SortedAssociationImpl<>(
                 _keyType,
                 _valueType,
                 _keyComparator,
@@ -715,7 +715,7 @@ final class OrderedAssociationImpl<K, V> implements Association<K, V> {
                 if (!keyType().isAssignableFrom(key.getClass())) {
                     throw new ClassCastException("Key type mismatch");
                 }
-                return OrderedAssociationImpl.this.get((K) key).orElseThrow(
+                return SortedAssociationImpl.this.get((K) key).orElseThrow(
                                 () -> new NoSuchElementException("Key not found")
                             );
             }
@@ -727,7 +727,7 @@ final class OrderedAssociationImpl<K, V> implements Association<K, V> {
                 if (!keyType().isAssignableFrom(key.getClass())) {
                     throw new ClassCastException("Key type mismatch");
                 }
-                return OrderedAssociationImpl.this.containsKey((K) key);
+                return SortedAssociationImpl.this.containsKey((K) key);
             }
             @Override
             public Set<Entry<K, V>> entrySet() {
@@ -735,7 +735,7 @@ final class OrderedAssociationImpl<K, V> implements Association<K, V> {
                     @Override
                     public Iterator<Entry<K, V>> iterator() {
                         return new Iterator<Entry<K, V>>() {
-                            private final Iterator<Pair<K, V>> _iterator = OrderedAssociationImpl.this.iterator();
+                            private final Iterator<Pair<K, V>> _iterator = SortedAssociationImpl.this.iterator();
 
                             @Override
                             public boolean hasNext() {
@@ -752,7 +752,7 @@ final class OrderedAssociationImpl<K, V> implements Association<K, V> {
 
                     @Override
                     public int size() {
-                        return OrderedAssociationImpl.this.size();
+                        return SortedAssociationImpl.this.size();
                     }
                 };
             }
@@ -843,7 +843,7 @@ final class OrderedAssociationImpl<K, V> implements Association<K, V> {
         if (obj == null || getClass() != obj.getClass()) {
             return false;
         }
-        OrderedAssociationImpl<K, V> other = (OrderedAssociationImpl) obj;
+        SortedAssociationImpl<K, V> other = (SortedAssociationImpl) obj;
         boolean headersEqual =
                 Objects.equals(_keyType, other._keyType) &&
                 Objects.equals(_valueType, other._valueType) &&
