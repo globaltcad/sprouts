@@ -1038,4 +1038,13 @@ class Tuple_Spec extends Specification
         then : 'The items were set at the given index.'
             words == Tuple.of("Education", "is", "very", "very", "important")
     }
+
+    def 'The string representation of a tuple with more than 10 items is truncated.'() {
+        given : 'A tuple with more than 10 items.'
+            var tuple = Tuple.of(Byte, (-8..8).collect { it as byte })
+        when : 'We convert the tuple to a string.'
+            var asString = tuple.toString()
+        then : 'The string representation is truncated to 10 items.'
+            asString == "Tuple<Byte>[-8, -7, -6, -5, -4, -3, -2, -1, 0, 1, ... 7 items left]"
+    }
 }

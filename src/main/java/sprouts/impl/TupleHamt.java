@@ -689,10 +689,15 @@ public final class TupleHamt<T extends @Nullable Object> implements Tuple<T> {
         if (allowsNull())
             sb.append("?");
         sb.append(">[");
-        for (int i = 0; i < _size; i++) {
+        final int howMany = Math.min(_size, 10);
+        int numberOfElementsLeft = _size - howMany;
+        for (int i = 0; i < howMany; i++) {
             sb.append(get(i));
             if (i < _size - 1)
                 sb.append(", ");
+        }
+        if (numberOfElementsLeft > 0) {
+            sb.append("... ").append(numberOfElementsLeft).append(" items left");
         }
         sb.append("]");
         return sb.toString();
