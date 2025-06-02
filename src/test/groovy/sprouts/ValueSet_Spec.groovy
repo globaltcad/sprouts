@@ -309,20 +309,27 @@ class ValueSet_Spec extends Specification {
             initial.retainAll(Stream.of("a", "b")).toSet() == ["a", "b"] as Set
     }
 
-    def 'containsAll accurately checks membership across collection types'() {
+    def 'The various `containsAll(..)` methods accurately check membership across collection types.'() {
         given:
             var valueSet = ValueSet.of("a", "b", "c")
 
         expect: "Membership checks work with all compatible collection types"
             valueSet.containsAll(["a", "b"] as List)
             valueSet.containsAll(["b", "c"] as Set)
-            valueSet.containsAll(Tuple.of("a", "c"))
+            valueSet.containsAll(["b", "c"] as Iterable<String>)
             valueSet.containsAll(["a", "b", "c"] as String[])
+            valueSet.containsAll(["a", "b", "c"].stream())
+            valueSet.containsAll(Stream.of("b", "c"))
+            valueSet.containsAll(Tuple.of("a", "c"))
             !valueSet.containsAll(["a", "d"] as List)
+            !valueSet.containsAll(["a", "d"] as Set)
+            !valueSet.containsAll(["a", "d"] as Iterable<String>)
+            !valueSet.containsAll(["a", "d"] as String[])
+            !valueSet.containsAll(["a", "d"].stream())
+            !valueSet.containsAll(Tuple.of("a", "d"))
             valueSet.containsAll([] as Set) // Empty collection always returns true
             valueSet.containsAll(ValueSet.of("a", "c"))
             !valueSet.containsAll(ValueSet.of("b", "c", "d"))
-            valueSet.containsAll(Stream.of("b", "c"))
     }
 
     def 'operations with empty collections have no effect or clear as expected'() {
