@@ -159,6 +159,11 @@ final class ValueSetImpl<E> implements ValueSet<E> {
     }
 
     @Override
+    public boolean isSorted() {
+        return false;
+    }
+
+    @Override
     public Class<E> type() {
         return _type;
     }
@@ -354,6 +359,11 @@ final class ValueSetImpl<E> implements ValueSet<E> {
     }
 
     @Override
+    public ValueSet<E> clear() {
+        return Sprouts.factory().valueSetOf(this.type());
+    }
+
+    @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("ValueSet<").append(_type.getSimpleName()).append(">[");
@@ -361,7 +371,7 @@ final class ValueSetImpl<E> implements ValueSet<E> {
         sb = _appendRecursivelyUpTo(sb, howMany);
         int numberOfElementsLeft = _size - howMany;
         if ( numberOfElementsLeft > 0 ) {
-            sb.append(", ...").append(numberOfElementsLeft).append(" more elements");
+            sb.append(", ... ").append(numberOfElementsLeft).append(" items left");
         }
         sb.append("]");
         return sb.toString();
@@ -468,7 +478,13 @@ final class ValueSetImpl<E> implements ValueSet<E> {
 
     @Override
     public Spliterator<E> spliterator() {
-        return Spliterators.spliterator(iterator(), _size, Spliterator.DISTINCT | Spliterator.SIZED | Spliterator.SUBSIZED | Spliterator.IMMUTABLE);
+        return Spliterators.spliterator(iterator(), _size,
+                Spliterator.DISTINCT |
+                Spliterator.SIZED    |
+                Spliterator.SUBSIZED |
+                Spliterator.NONNULL  |
+                Spliterator.IMMUTABLE
+        );
     }
 
     @Override

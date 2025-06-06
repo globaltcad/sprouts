@@ -19,7 +19,21 @@ public class ValueCollectionsPerformanceTest {
 
 
     enum Operation {
-        ADD, REMOVE, GET, ITERATE, STREAM
+        ADD, REMOVE, GET, ITERATE, STREAM;
+
+        static Operation of(double numberBetweenZeroAndOne) {
+            if (numberBetweenZeroAndOne < 0.3) {
+                return ADD; // 30% chance to add an item
+            } else if (numberBetweenZeroAndOne < 0.6) {
+                return REMOVE; // 30% chance to remove an item
+            } else if (numberBetweenZeroAndOne < 0.99) {
+                return GET; // 39% chance to get an item
+            } else if (numberBetweenZeroAndOne < 0.999) {
+                return ITERATE; // 0.9% chance to iterate over items
+            } else {
+                return STREAM; // 0.1% chance to stream over items
+            }
+        }
     }
 
     static class OperationKeyPair {
@@ -33,17 +47,19 @@ public class ValueCollectionsPerformanceTest {
     }
 
     public static void main(String[] args) {
-        testAssociationAgainstHashMap();
-        testValueSetAgainstHashSet();
-        testTupleAgainstArrayList(60_000);
-        testTupleAgainstArrayList(30_000);
-        testTupleAgainstArrayList(10_000);
-        testTupleAgainstArrayList(5_000);
-        testTupleAgainstArrayList(100);
+        testAssociationAgainstHashMap(70_000);
+        testSortedAssociationAgainstTreeMap(70_000);
+        testValueSetAgainstHashSet(70_000);
+        testSortedValueSetAgainstTreeSet(70_000);
+        testTupleAgainstArrayList(60_000, 70_000);
+        testTupleAgainstArrayList(30_000, 70_000);
+        testTupleAgainstArrayList(10_000, 70_000);
+        testTupleAgainstArrayList(5_000, 70_000);
+        testTupleAgainstArrayList(100, 70_000);
     }
 
-    private static void testAssociationAgainstHashMap() {
-        List<OperationKeyPair> operations = generateOperations();
+    private static void testAssociationAgainstHashMap(int numberOfOperations) {
+        List<OperationKeyPair> operations = generateOperations(numberOfOperations);
         test(
                 "Association", ()->Association.between(String.class, String.class), assoc-> {
                     Association<String, String> result = assoc;
@@ -65,7 +81,7 @@ public class ValueCollectionsPerformanceTest {
                                 }
                                 break;
                             case STREAM:
-                                int prod = result.entrySet().stream().mapToInt(entry -> entry.first().hashCode() * entry.second().hashCode()).filter(it -> it > 0).reduce(1, (a, b) -> a * b);
+                                int sum2 = result.entrySet().stream().mapToInt(entry -> entry.first().hashCode() * entry.second().hashCode()).filter(it -> it > 0).sum();
                                 break;
                         }
                     }
@@ -91,7 +107,7 @@ public class ValueCollectionsPerformanceTest {
                                 }
                                 break;
                             case STREAM:
-                                int prod = map.entrySet().stream().mapToInt(entry -> entry.getKey().hashCode() * entry.getValue().hashCode()).filter(it -> it > 0).reduce(1, (a, b) -> a * b);
+                                int sum2 = map.entrySet().stream().mapToInt(entry -> entry.getKey().hashCode() * entry.getValue().hashCode()).filter(it -> it > 0).sum();
                                 break;
                         }
                     }
@@ -101,8 +117,67 @@ public class ValueCollectionsPerformanceTest {
         );
     }
 
-    private static void testValueSetAgainstHashSet() {
-        List<OperationKeyPair> operations = generateOperations();
+    private static void testSortedAssociationAgainstTreeMap(int numberOfOperations) {
+        List<OperationKeyPair> operations = generateOperations(numberOfOperations);
+        test(
+                "SortedAssociation", ()->Association.betweenSorted(String.class, String.class), assoc-> {
+                    Association<String, String> result = assoc;
+                    for (OperationKeyPair pair : operations) {
+                        switch (pair.operation) {
+                            case ADD:
+                                result = result.put(pair.key, "value of " + pair.key);
+                                break;
+                            case REMOVE:
+                                result = result.remove(pair.key);
+                                break;
+                            case GET:
+                                result.get(pair.key);
+                                break;
+                            case ITERATE:
+                                int sum = 0;
+                                for (Pair<String, String> entry : result) {
+                                    sum += entry.first().hashCode() + entry.second().hashCode();
+                                }
+                                break;
+                            case STREAM:
+                                int sum2 = result.entrySet().stream().mapToInt(entry -> entry.first().hashCode() * entry.second().hashCode()).filter(it -> it > 0).sum();
+                                break;
+                        }
+                    }
+                    return result;
+                },
+                "TreeMap", ()->new TreeMap<String,String>(String::compareTo),
+                map->{
+                    for (OperationKeyPair pair : operations) {
+                        switch (pair.operation) {
+                            case ADD:
+                                map.put(pair.key, "value of " + pair.key);
+                                break;
+                            case REMOVE:
+                                map.remove(pair.key);
+                                break;
+                            case GET:
+                                map.get(pair.key);
+                                break;
+                            case ITERATE:
+                                int sum = 0;
+                                for (Map.Entry<String, String> entry : map.entrySet()) {
+                                    sum += entry.getKey().hashCode() + entry.getValue().hashCode();
+                                }
+                                break;
+                            case STREAM:
+                                int sum2 = map.entrySet().stream().mapToInt(entry -> entry.getKey().hashCode() * entry.getValue().hashCode()).filter(it -> it > 0).sum();
+                                break;
+                        }
+                    }
+                    return map;
+                },
+                (a, b)-> a.toMap().equals(b)
+        );
+    }
+
+    private static void testValueSetAgainstHashSet(int numberOfOperations) {
+        List<OperationKeyPair> operations = generateOperations(numberOfOperations);
         test(
                 "ValueSet", ()-> ValueSet.of(String.class), assoc-> {
                     ValueSet<String> result = assoc;
@@ -124,7 +199,7 @@ public class ValueCollectionsPerformanceTest {
                                 }
                                 break;
                             case STREAM:
-                                int prod = result.stream().map(String::hashCode).filter(it->it>0).reduce(1, (a, b)->a*b );
+                                int prod = result.stream().map(String::hashCode).filter(it->it>0).mapToInt(i->i).sum();
                                 break;
                         }
                     }
@@ -150,7 +225,7 @@ public class ValueCollectionsPerformanceTest {
                                 }
                                 break;
                             case STREAM:
-                                int prod = map.stream().map(String::hashCode).filter(it->it>0).reduce(1, (a, b)->a*b );
+                                int sum2 = map.stream().map(String::hashCode).filter(it->it>0).mapToInt(i->i).sum();
                                 break;
                         }
                     }
@@ -160,8 +235,67 @@ public class ValueCollectionsPerformanceTest {
         );
     }
 
-    private static void testTupleAgainstArrayList(int initialSize) {
-        List<OperationKeyPair> operations = generateOperationsForListAndTuple();
+    private static void testSortedValueSetAgainstTreeSet(int numberOfOperations) {
+        List<OperationKeyPair> operations = generateOperations(numberOfOperations);
+        test(
+                "OrderedValueSet", ()-> ValueSet.ofSorted(String.class), assoc-> {
+                    ValueSet<String> result = assoc;
+                    for (OperationKeyPair pair : operations) {
+                        switch (pair.operation) {
+                            case ADD:
+                                result = result.add(pair.key);
+                                break;
+                            case REMOVE:
+                                result = result.remove(pair.key);
+                                break;
+                            case GET:
+                                boolean contains = result.contains(pair.key);
+                                break;
+                            case ITERATE:
+                                int sum = 0;
+                                for (String value : result) {
+                                    sum += value.hashCode();
+                                }
+                                break;
+                            case STREAM:
+                                int prod = result.stream().map(String::hashCode).filter(it->it>0).mapToInt(i->i).sum();
+                                break;
+                        }
+                    }
+                    return result;
+                },
+                "TreeSet", ()->new TreeSet<String>(String::compareTo),
+                map->{
+                    for (OperationKeyPair pair : operations) {
+                        switch (pair.operation) {
+                            case ADD:
+                                map.add(pair.key);
+                                break;
+                            case REMOVE:
+                                map.remove(pair.key);
+                                break;
+                            case GET:
+                                boolean contains = map.contains(pair.key);
+                                break;
+                            case ITERATE:
+                                int sum = 0;
+                                for (String value : map) {
+                                    sum += value.hashCode();
+                                }
+                                break;
+                            case STREAM:
+                                int sum2 = map.stream().map(String::hashCode).filter(it->it>0).mapToInt(i->i).sum();
+                                break;
+                        }
+                    }
+                    return map;
+                },
+                (a, b)->a.toSet().equals(b)
+        );
+    }
+
+    private static void testTupleAgainstArrayList(int initialSize, int numberOfOperations) {
+        List<OperationKeyPair> operations = generateOperations(numberOfOperations);
         IntFunction<Integer> randomIndexSource = size-> {
             return size == 0 ? 0 : new Random(size).nextInt(size);
         };
@@ -191,7 +325,7 @@ public class ValueCollectionsPerformanceTest {
                                 }
                                 break;
                             case STREAM:
-                                int prod = result.parallelStream().map(String::hashCode).filter(it->it>0).reduce(1, (a, b)->a*b );
+                                int prod = result.parallelStream().map(String::hashCode).filter(it->it>0).mapToInt(i->i).sum();
                                 break;
                         }
                     }
@@ -221,7 +355,7 @@ public class ValueCollectionsPerformanceTest {
                                 }
                                 break;
                             case STREAM:
-                                int prod = list.parallelStream().map(String::hashCode).filter(it->it>0).reduce(1, (a, b)->a*b );
+                                int prod = list.parallelStream().map(String::hashCode).filter(it->it>0).mapToInt(i->i).sum();
                                 break;
                         }
                     }
@@ -272,33 +406,12 @@ public class ValueCollectionsPerformanceTest {
     }
 
 
-    private static List<OperationKeyPair> generateOperations() {
+    private static List<OperationKeyPair> generateOperations(int numberOfOperations) {
         List<OperationKeyPair> operations = new ArrayList<>();
-        for (int i = 0; i <= 500_000; i++) {
+        Random random = new Random(PRIME_1);
+        for (int i = 0; i < numberOfOperations; i++) {
             int localHash = Math.abs(Long.hashCode(PRIME_1 * (i - PRIME_2 * (i))));
-            Operation op = Operation.values()[localHash % Operation.values().length];
-            if ( op == Operation.ITERATE || op == Operation.STREAM ) {
-                // Reduce the likelihood of these operations being chosen
-                if ( i % 64 != 0 ) {
-                    continue;
-                }
-            }
-            operations.add(new OperationKeyPair(op, String.valueOf(localHash)));
-        }
-        return operations;
-    }
-
-    private static List<OperationKeyPair> generateOperationsForListAndTuple() {
-        List<OperationKeyPair> operations = new ArrayList<>();
-        for (int i = 0; i <= 70_000; i++) {
-            int localHash = Math.abs(Long.hashCode(PRIME_1 * (i - PRIME_2 * (i))));
-            Operation op = Operation.values()[localHash % Operation.values().length];
-            if ( op == Operation.ITERATE || op == Operation.STREAM ) {
-                // Reduce the likelihood of these operations being chosen
-                if ( i % 64 != 0 ) {
-                    continue;
-                }
-            }
+            Operation op = Operation.of(random.nextDouble());
             operations.add(new OperationKeyPair(op, String.valueOf(localHash)));
         }
         return operations;

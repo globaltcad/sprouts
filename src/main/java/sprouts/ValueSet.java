@@ -90,6 +90,72 @@ public interface ValueSet<E> extends Iterable<E> {
     }
 
     /**
+     *  A collector that can be used to collect elements
+     *  from a Java {@link Stream} into
+     *  a value set with an explicit order defined by the supplied comparator.
+     *  The types of the elements and values in the
+     *  value set have to be defined when using this collector.<br>
+     *  Here is an example demonstrating how this method may be used:<br>
+     *  <pre>{@code
+     *    var assoc = Stream.of("a", "b", "c")
+     *                .map( it -> it.toUpperCase() )
+     *                .collect(ValueSet.collectorOfSorted(String.class, Comparator.naturalOrder()));
+     *  }</pre>
+     *  This will create a new-ordered value set of string elements
+     *  where the strings are all uppercased and ordered by their natural order.
+     *
+     * @param type The type of the elements in the value set to collect.
+     * @param comparator The comparator to use for sorting the elements in the value set.
+     * @param <E> The type of the elements in the value set,
+     *            which must be immutable and have value object semantics.
+     * @return A collector that can be used to collect elements into an ordered value set.
+     */
+    static <E> Collector<E, ?, ValueSet<E>> collectorOfSorted( Class<E> type, Comparator<E> comparator ) {
+        Objects.requireNonNull(type);
+        Objects.requireNonNull(comparator);
+        return Collector.of(
+                (Supplier<List<E>>) ArrayList::new,
+                List::add,
+                (left, right) -> { left.addAll(right); return left; },
+                list -> ValueSet.ofSorted(type, comparator).addAll(list)
+        );
+    }
+
+    /**
+     *  A collector that can be used to collect elements
+     *  from a Java {@link Stream} into a value set with the order being based
+     *  on the {@link Comparable} implementation of the elements and the
+     *  natural ordering of the elements.<br>
+     *  The types of the elements and values in the
+     *  value set have to be defined when using this collector.<br>
+     *  Here is an example demonstrating how this method may be used:<br>
+     *  <pre>{@code
+     *    var assoc = Stream.of("a", "b", "c")
+     *                .map( it -> it.toUpperCase() )
+     *                .collect(ValueSet.collectorOfSorted(String.class));
+     *  }</pre>
+     *  This will create a new-ordered value set of string elements
+     *  where the strings are all uppercased and ordered by their natural order.
+     *
+     * @param type The type of the elements in the value set to collect.
+     * @param <E> The type of the elements in the value set,
+     *            which must be immutable and have value object semantics.
+     * @return A collector that can be used to collect elements into an ordered value set.
+     */
+    static <E extends Comparable<? super E>> Collector<E, ?, ValueSet<E>> collectorOfSorted( Class<E> type ) {
+        Objects.requireNonNull(type);
+        if ( !Comparable.class.isAssignableFrom(type) ) {
+            throw new IllegalArgumentException("The provided type must implement Comparable.");
+        }
+        return Collector.of(
+                (Supplier<List<E>>) ArrayList::new,
+                List::add,
+                (left, right) -> { left.addAll(right); return left; },
+                list -> ValueSet.ofSorted(type).addAll(list)
+        );
+    }
+
+    /**
      *  Creates a new value set specifically for holding elements of the supplied type.
      *  A value set knows the types of its elements and values, and so
      *  you can only add elements which are of the same type or a subtype of the
@@ -100,6 +166,7 @@ public interface ValueSet<E> extends Iterable<E> {
      * @return A new value set specific to the given element type.
      */
     static <E> ValueSet<E> of( Class<E> type ) {
+        Objects.requireNonNull(type);
         return Sprouts.factory().valueSetOf(type);
     }
 
@@ -142,6 +209,21 @@ public interface ValueSet<E> extends Iterable<E> {
     }
 
     /**
+     *  Creates a new value set from the given {@link Tuple} of elements.
+     *  The type of the elements is captured from the tuple itself
+     *  through the {@link Tuple#type()} method.
+     *
+     * @param tuple The tuple of elements to store in the value set.
+     * @param <E> The type of the elements in the value set, this must be an immutable type.
+     * @return A new value set with the given elements.
+     * @throws NullPointerException If the provided tuple is null.
+     */
+    static <E> ValueSet<E> of( Tuple<E> tuple ) {
+        Objects.requireNonNull(tuple, "The provided tuple cannot be null.");
+        return Sprouts.factory().valueSetOf(tuple.type()).addAll(tuple);
+    }
+
+    /**
      *  Creates a new value set from the given {@link Iterable} of elements.
      *  The type of the elements must be provided explicitly in case
      *  of the iterable being empty.
@@ -156,6 +238,105 @@ public interface ValueSet<E> extends Iterable<E> {
         Objects.requireNonNull(type);
         Objects.requireNonNull(elements);
         return of(type).addAll(elements);
+    }
+
+    /**
+     *  Creates a new value set specifically for holding elements of the supplied type,
+     *  but with an explicit order defined by the supplied comparator.
+     *  A value set knows the types of its elements and values, and so
+     *  you can only add elements which are of the same type or a subtype of the
+     *  type of the value set.<br>
+     *  Here is an example demonstrating how this method may be used
+     *  to create a set with string elements sorted by their length:<br>
+     *  <pre>{@code
+     *    ValueSet.ofSorted(
+     *       String.class,
+     *       Comparator.comparing(String::length)
+     *    );
+     *  }</pre>
+     *
+     * @param type The type of the elements in the value set.
+     * @param comparator The comparator to use for sorting the elements in the value set.
+     * @param <E> The type of the elements in the value set, which must be an immutable value type.
+     * @return A new sorted value set specific to the given element type.
+     */
+    static <E> ValueSet<E> ofSorted( Class<E> type, Comparator<E> comparator ) {
+        Objects.requireNonNull(type);
+        Objects.requireNonNull(comparator);
+        return Sprouts.factory().valueSetOfSorted(type, comparator);
+    }
+
+    /**
+     *  Creates a new value set specifically for holding elements of the supplied type,
+     *  elements are sorted based on the natural ordering of the elements
+     *  (which are expected to implement {@link Comparable}).
+     *  A value set knows the types of its elements and values, and so
+     *  you can only add elements which are of the same type or a subtype of the
+     *  specified element type of the value set.
+     *
+     * @param type The type of the elements in the value set.
+     * @param <E> The type of the elements in the value set, which must be an immutable value type.
+     * @return A new sorted value set specific to the given element type.
+     */
+    static <E extends Comparable<? super E>> ValueSet<E> ofSorted( Class<E> type ) {
+        Objects.requireNonNull(type);
+        return Sprouts.factory().valueSetOfSorted(type);
+    }
+
+    /**
+     *  Creates a new sorted value set from the given {@link Tuple} of
+     *  {@link Comparable} elements.<br>
+     *  The type of the elements is captured from the tuple itself
+     *  through the {@link Tuple#type()} method.
+     *  The elements are sorted based on their natural ordering,
+     *  which is defined by their {@link Comparable} implementation.
+     *
+     * @param tuple The tuple of elements to store in the value set.
+     * @param <E> The type of the elements in the value set, which must be an immutable type and implement {@link Comparable}.
+     * @return A new sorted value set with the given elements.
+     * @throws NullPointerException If the supplied tuple is null.
+     */
+    static <E extends Comparable<? super E>> ValueSet<E> ofSorted( Tuple<E> tuple ) {
+        Objects.requireNonNull(tuple, "The provided tuple cannot be null.");
+        return Sprouts.factory().valueSetOfSorted(tuple.type()).addAll(tuple);
+    }
+
+    /**
+     *  Creates a new sorted value set from the given {@link Tuple} of elements,
+     *  with an explicit order defined by the supplied {@link Comparator}.
+     *  The type of the elements is captured from the tuple itself
+     *  through the {@link Tuple#type()} method.
+     *
+     * @param tuple The tuple of elements to store in the value set.
+     * @param comparator The comparator to use for sorting the elements in the value set.
+     * @param <E> The type of the elements in the value set, which must be an immutable type.
+     * @return A new sorted value set with the given elements.
+     * @throws NullPointerException If any of the provided parameters are null.
+     */
+    static <E> ValueSet<E> ofSorted( Tuple<E> tuple, Comparator<E> comparator ) {
+        Objects.requireNonNull(tuple, "The provided tuple cannot be null.");
+        Objects.requireNonNull(comparator, "The provided comparator cannot be null.");
+        return Sprouts.factory().valueSetOfSorted(tuple.type(), comparator).addAll(tuple);
+    }
+
+    /**
+     *  Creates a new sorted value set of one or more {@link Comparable} elements.
+     *  The elements are sorted based on their natural ordering.
+     *  The type of the elements is captured from the first element through
+     *  the {@link Object#getClass()} method.
+     *
+     * @param first The first element to store in the value set.
+     * @param rest The rest of the elements to store in the value set.
+     * @param <E> The type of the elements in the value set, which must be an immutable type and implement {@link Comparable}.
+     * @return A new sorted value set with the given elements.
+     * @throws NullPointerException If any of the provided elements are null.
+     */
+    @SafeVarargs
+    static <E extends Comparable<E>> ValueSet<E> ofSorted( E first, E... rest ) {
+        Objects.requireNonNull(first);
+        Objects.requireNonNull(rest);
+        Class<E> type = (Class<E>) first.getClass();
+        return ofSorted(type).add(first).addAll(rest);
     }
 
     /**
@@ -184,6 +365,21 @@ public interface ValueSet<E> extends Iterable<E> {
     default boolean isNotEmpty() {
         return !isEmpty();
     }
+
+    /**
+     *  Checks if this value set is sorted and returns
+     *  {@code true} if it is, otherwise {@code false}.
+     *  A value set is sorted if the entries are sorted in
+     *  natural order or according to a supplied comparator
+     *  when the set was created.<br>
+     *  You can create a sorted set using factory methods
+     *  like {@link #ofSorted(Class, Comparator)}, or
+     *  by converting an existing set to a sorted one
+     *  using the {@link #sort(Comparator)} method.
+     *
+     * @return {@code true} if this set is sorted, otherwise {@code false}.
+     */
+    boolean isSorted();
 
     /**
      *  Returns the {@link Class} of the
@@ -711,9 +907,7 @@ public interface ValueSet<E> extends Iterable<E> {
      * @return A new value set without any elements,
      *         or this value set if it is already empty.
      */
-    default ValueSet<E> clear() {
-        return Sprouts.factory().valueSetOf(this.type());
-    }
+    ValueSet<E> clear();
 
     /**
      *  Converts this value set to a java.util.Map.
@@ -802,6 +996,21 @@ public interface ValueSet<E> extends Iterable<E> {
      */
     default Stream<E> parallelStream() {
         return StreamSupport.stream(spliterator(), true);
+    }
+
+    /**
+     *  Returns a new sorted value set with the elements in this value set,
+     *  sorted according to the provided comparator.
+     *  The type of the elements in the returned value set will be the same
+     *  as the type of this value set.
+     *
+     * @param comparator The comparator to use for sorting the elements.
+     * @return A new sorted value set with the elements in this value set.
+     * @throws NullPointerException if the provided comparator is {@code null}.
+     */
+    default ValueSet<E> sort( Comparator<E> comparator ) {
+        Objects.requireNonNull(comparator, "The provided comparator cannot be null.");
+        return Sprouts.factory().valueSetOfSorted(type(), comparator).addAll(this);
     }
 
     /**

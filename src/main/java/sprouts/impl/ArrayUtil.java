@@ -7,6 +7,10 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+/**
+ *  A utility class for creating and operating on any kind of array, which
+ *  includes both primitive and object arrays.
+ */
 final class ArrayUtil {
     private ArrayUtil() {}
 
@@ -23,16 +27,6 @@ final class ArrayUtil {
         for (int i = 0; i < tuple.size(); i++ )
             _setAt(index + i, tuple.get(i), newItems);
         System.arraycopy(dataArray, index, newItems, index + tuple.size(), _length(dataArray) - index);
-        return newItems;
-    }
-
-    static <T> Object _withReversed(Object dataArray, Class<T> type, boolean allowsNull) {
-        Object newItems = _clone(dataArray, type, allowsNull);
-        for ( int i = 0; i < _length(newItems) / 2; i++ ) {
-            T temp = _getAt(i, newItems, type);
-            _setAt(i, _getAt(_length(newItems) - i - 1, newItems, type), newItems);
-            _setAt(_length(newItems) - i - 1, temp, newItems);
-        }
         return newItems;
     }
 
@@ -190,6 +184,31 @@ final class ArrayUtil {
         return type.cast(java.lang.reflect.Array.get(array, index));
     }
 
+    /**
+     *  Returns the item at the specified index in the array, casting it to the specified type.
+     *  The returned item is assumed to be non-null (for performance reasons we do not check for null).
+     * @param index The index of the item to retrieve in the array (which may be a primitive array).
+     * @param array The array from which to retrieve the item. This can be an array of primitives or an array of objects.
+     * @param type The type to which the item should be cast. This is used to ensure type safety.
+     * @return The item at the specified index in the array, cast to the specified type.
+     * @param <T> The type to which the item should be cast. This is used to ensure type safety.
+     */
+    static <T> T _getNonNullAt( int index, Object array, Class<T> type ) {
+        return type.cast(java.lang.reflect.Array.get(array, index));
+    }
+
+    /**
+     *  Returns the item at the specified index in the array cast to an inferred type.
+     *  The returned item is assumed to be non-null (for performance reasons we do not check for null).
+     * @param index The index of the item to retrieve in the array (which may be a primitive array).
+     * @param array The array from which to retrieve the item. This can be an array of primitives or an array of objects.
+     * @return The item at the specified index in the array, cast to the specified type.
+     * @param <T> The type to which the item should be cast. This is used to ensure type safety.
+     */
+    static <T> T _getNonNullAt( int index, Object array ) {
+        return (T) java.lang.reflect.Array.get(array, index);
+    }
+
     static @Nullable Object _getAt( int index, Object array) {
         return java.lang.reflect.Array.get(array, index);
     }
@@ -223,46 +242,10 @@ final class ArrayUtil {
         return clone;
     }
 
-    static void _sort( Object array, Comparator<?> comparator ) {
-        if ( array instanceof byte[] )
-            java.util.Arrays.sort((byte[]) array);
-        else if ( array instanceof short[] )
-            java.util.Arrays.sort((short[]) array);
-        else if ( array instanceof int[] )
-            java.util.Arrays.sort((int[]) array);
-        else if ( array instanceof long[] )
-            java.util.Arrays.sort((long[]) array);
-        else if ( array instanceof float[] )
-            java.util.Arrays.sort((float[]) array);
-        else if ( array instanceof double[] )
-            java.util.Arrays.sort((double[]) array);
-        else if ( array instanceof char[] )
-            java.util.Arrays.sort((char[]) array);
-        else if ( array instanceof boolean[] ) {
-            int numberOfFalse = 0;
-            for ( boolean b : (boolean[]) array ) {
-                if ( !b )
-                    numberOfFalse++;
-            }
-            java.util.Arrays.fill((boolean[]) array, 0, numberOfFalse, false);
-            java.util.Arrays.fill((boolean[]) array, numberOfFalse, ((boolean[])array).length, true);
-        } else
-            java.util.Arrays.sort((Object[]) array, (Comparator) comparator);
-    }
-
     static <T> void _each( Object array, Class<T> type, java.util.function.Consumer<T> consumer ) {
         for ( int i = 0; i < _length(array); i++ ) {
             consumer.accept(_getAt(i, array, type));
         }
-    }
-
-    static <T> List<T> _toList( Object array, Class<T> type ) {
-        int size = _length(array);
-        List<T> list = new ArrayList<>(size);
-        for ( int i = 0; i < size; i++ ) {
-            list.add(_getAt(i, array, type));
-        }
-        return list;
     }
 
     static boolean _isAllNull( Object[] array ) {
@@ -271,6 +254,56 @@ final class ArrayUtil {
                 return false;
         }
         return true;
+    }
+
+    /**
+     *  Performs a binary search of the index of an item in the supplied
+     *  array of items of the given type. If the item is not found, the
+     *  returned index is the index at which the item would be inserted
+     *  if it were to be inserted in the array.
+     *  If the item is "smaller" than all the items in the array,
+     *  the returned index is -1. And if the item is "greater" than all
+     *  the items in the array, the returned index is the length of the array.
+     */
+    static <K> int _binarySearch(
+            Object keysArray,
+            Class<K> keyType,
+            Comparator<K> keyComparator,
+            K key
+    ) {
+        final int size = _length(keysArray);
+        if (size == 0) {
+            return -1; // Empty array, key is smaller than all keys
+        }
+        int min = 0;
+        int max = size;
+        while (min < max ) {
+            int mid = (min + max) / 2;
+            int comparison = _compareAt(mid, keysArray, keyType, keyComparator, key);
+            if (comparison < 0) {
+                max = mid; // Key is smaller than the middle key
+            } else if (comparison > 0) {
+                min = mid + 1; // Key is greater than the middle key
+            } else {
+                return mid; // Key found at index mid
+            }
+        }
+        // Key not found, return the index where it would be inserted
+        if (min == 0) {
+            return -1; // Key is smaller than all keys in the array
+        }
+        return min; // Key would be inserted at index min
+    }
+
+    static <E> int _compareAt(
+            int index,
+            Object elementsArray,
+            Class<E> type,
+            Comparator<E> comparator,
+            E element
+    ) {
+        E existingValue = _getAt(index, elementsArray, type);
+        return comparator.compare(element, existingValue);
     }
 
 }
