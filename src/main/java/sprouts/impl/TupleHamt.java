@@ -342,7 +342,7 @@ public final class TupleHamt<T extends @Nullable Object> implements Tuple<T> {
                 items.size(),
                 allowsNull,
                 type,
-                _createRootFromList(type, allowsNull, items)
+                _createInitialRootFromList(type, allowsNull, items)
             );
     }
 
@@ -351,7 +351,12 @@ public final class TupleHamt<T extends @Nullable Object> implements Tuple<T> {
         Class<T> type,
         @Nullable T... items
     ) {
-        return of(allowsNull, type, Arrays.asList(items));
+        return new TupleHamt(
+                (items == null ? 1 : items.length),
+                allowsNull,
+                type,
+                _createInitialRootFromArray(type, allowsNull, items)
+        );
     }
 
     public static <T> TupleHamt<T> ofRaw(
@@ -380,6 +385,20 @@ public final class TupleHamt<T extends @Nullable Object> implements Tuple<T> {
         _allowsNull = allowsNull;
         _type = type;
         _root = root == null ? new LeafNode(_createArray(type, allowsNull, size)) : root;
+    }
+
+    private static Node _createInitialRootFromList(Class<?> type, boolean allowsNull, List<?> items) {
+        return new LeafNode(_createArrayFromList(type, allowsNull, items));
+    }
+
+    private static Node _createInitialRootFromArray(Class<?> type, boolean allowsNull, @Nullable Object arrayFromOutside) {
+        if ( arrayFromOutside == null ) {
+            if ( allowsNull )
+                return new LeafNode(_createArray(type, true, 1));
+            else
+                throw new NullPointerException("Cannot create a TupleHamt with null items when allowsNull is false");
+        }
+        return new LeafNode(_createArrayFromArray(type, allowsNull, arrayFromOutside));
     }
 
     private static Node _createRootFromList(Class<?> type, boolean allowsNull, List<?> items) {
