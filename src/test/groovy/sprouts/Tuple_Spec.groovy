@@ -1047,4 +1047,31 @@ class Tuple_Spec extends Specification
         then : 'The string representation is truncated to 10 items.'
             asString == "Tuple<Byte>[-8, -7, -6, -5, -4, -3, -2, -1, 0, 1, ... 7 items left]"
     }
+
+    def 'The Tuple type supports holding `null` values when using `Tuple.ofNullable`.'() {
+        given : 'A `Character` variable explicitly set to null:'
+            Character iAmNull = null
+        and : 'We create a tuple from that single `null` item.'
+            var tuple = Tuple.ofNullable(Character, (Character)iAmNull)
+        expect : 'The tuple has a single `null` item and allows nulls.'
+            tuple.size() == 1
+            tuple.get(0) == null
+            tuple.allowsNull()
+            tuple.type() == Character
+
+        when : 'We add a non-null item to the tuple.'
+            tuple = tuple.add('A' as char)
+        then : 'The tuple now has two items, one of which is `null`.'
+            tuple.size() == 2
+            tuple.get(0) == null
+            tuple.get(1) == 'A' as char
+
+        when : 'We add another `null` item to the tuple.'
+            tuple = tuple.add(null)
+        then : 'The tuple now has three items, two of which are `null`.'
+            tuple.size() == 3
+            tuple.get(0) == null
+            tuple.get(1) == 'A' as char
+            tuple.get(2) == null
+    }
 }

@@ -289,6 +289,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      */
     static <T> Tuple<@Nullable T> ofNullable( Class<T> type, Iterable<@Nullable T> iterable ) {
         Objects.requireNonNull(type);
+        Objects.requireNonNull(iterable);
         return Sprouts.factory().tupleOfNullable( type, iterable );
     }
 
