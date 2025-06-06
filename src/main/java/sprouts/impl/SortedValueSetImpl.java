@@ -178,69 +178,6 @@ final class SortedValueSetImpl<E> implements ValueSet<E> {
         return null;
     }
 
-    /**
-     *  Performs a binary search of the index of an item in the supplied
-     *  array of items of the given type. If the item is not found, the
-     *  returned index is the index at which the item would be inserted
-     *  if it were to be inserted in the array.
-     *  If the item is "smaller" than all the items in the array,
-     *  the returned index is -1. And if the item is "greater" than all
-     *  the items in the array, the returned index is the length of the array.
-     */
-    private static <K> int _binarySearch(
-            Object keysArray,
-            Class<K> keyType,
-            Comparator<K> keyComparator,
-            K key
-    ) {
-        final int MAX = _length(keysArray) - 1;
-        if ( MAX < 0 ) {
-            return -1; // empty array
-        }
-        if ( MAX == 0 ) {
-            // Only a single item in the array
-            return -_compareAt(0, keysArray, keyType, keyComparator, key);
-        }
-        int low = 0;
-        int high = MAX;
-        while (low <= high) {
-            int mid = (low + high) >>> 1;
-            int cmp = _compareAt(mid, keysArray, keyType, keyComparator, key);
-            if (cmp < 0) {
-                low = mid + 1;
-            } else if (cmp > 0) {
-                high = mid - 1;
-            } else {
-                return mid; // key found
-            }
-        }
-        if ( low == 0 ) {
-            // Check if the key is equal to the first element
-            int cmp = -_compareAt(0, keysArray, keyType, keyComparator, key);
-            if ( cmp < 0 ) {
-                return -1; // key found
-            }
-        } else if ( low == MAX - 1 ) {
-            // Check if the key is equal to the last element
-            int cmp = -_compareAt(MAX - 1, keysArray, keyType, keyComparator, key);
-            if ( cmp > 0 ) {
-                return MAX; // key found
-            }
-        }
-        return low; // key not found, return insertion point
-    }
-
-    private static <E> int _compareAt(
-            int index,
-            Object elementsArray,
-            Class<E> type,
-            Comparator<E> comparator,
-            E element
-    ) {
-        E value = _getAt(index, elementsArray, type);
-        return comparator.compare(value, element);
-    }
-
     @Override
     public ValueSet<E> add(E element) {
         if (element == null) {

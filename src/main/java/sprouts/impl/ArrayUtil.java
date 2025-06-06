@@ -256,4 +256,54 @@ final class ArrayUtil {
         return true;
     }
 
+    /**
+     *  Performs a binary search of the index of an item in the supplied
+     *  array of items of the given type. If the item is not found, the
+     *  returned index is the index at which the item would be inserted
+     *  if it were to be inserted in the array.
+     *  If the item is "smaller" than all the items in the array,
+     *  the returned index is -1. And if the item is "greater" than all
+     *  the items in the array, the returned index is the length of the array.
+     */
+    static <K> int _binarySearch(
+            Object keysArray,
+            Class<K> keyType,
+            Comparator<K> keyComparator,
+            K key
+    ) {
+        final int size = _length(keysArray);
+        if (size == 0) {
+            return -1; // Empty array, key is smaller than all keys
+        }
+        int min = 0;
+        int max = size;
+        while (min < max ) {
+            int mid = (min + max) / 2;
+            int comparison = _compareAt(mid, keysArray, keyType, keyComparator, key);
+            if (comparison < 0) {
+                max = mid; // Key is smaller than the middle key
+            } else if (comparison > 0) {
+                min = mid + 1; // Key is greater than the middle key
+            } else {
+                return mid; // Key found at index mid
+            }
+        }
+        // Key not found, return the index where it would be inserted
+        if (min == 0) {
+            return -1; // Key is smaller than all keys in the array
+        }
+        return min; // Key would be inserted at index min
+    }
+
+    static <E> int _compareAt(
+            int index,
+            Object elementsArray,
+            Class<E> type,
+            Comparator<E> comparator,
+            E element
+    ) {
+        E existingValue = _getAt(index, elementsArray, type);
+        return comparator.compare(element, existingValue);
+    }
+
 }
