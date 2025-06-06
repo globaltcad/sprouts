@@ -81,7 +81,7 @@ public class ValueCollectionsPerformanceTest {
                                 }
                                 break;
                             case STREAM:
-                                int prod = result.entrySet().stream().mapToInt(entry -> entry.first().hashCode() * entry.second().hashCode()).filter(it -> it > 0).reduce(1, (a, b) -> a * b);
+                                int sum2 = result.entrySet().stream().mapToInt(entry -> entry.first().hashCode() * entry.second().hashCode()).filter(it -> it > 0).sum();
                                 break;
                         }
                     }
@@ -107,7 +107,7 @@ public class ValueCollectionsPerformanceTest {
                                 }
                                 break;
                             case STREAM:
-                                int sum2 = map.entrySet().stream().mapToInt(entry -> entry.getKey().hashCode() * entry.getValue().hashCode()).filter(it -> it > 0).reduce(1, (a, b) -> a * b);
+                                int sum2 = map.entrySet().stream().mapToInt(entry -> entry.getKey().hashCode() * entry.getValue().hashCode()).filter(it -> it > 0).sum();
                                 break;
                         }
                     }
@@ -140,7 +140,7 @@ public class ValueCollectionsPerformanceTest {
                                 }
                                 break;
                             case STREAM:
-                                int prod = result.entrySet().stream().mapToInt(entry -> entry.first().hashCode() * entry.second().hashCode()).filter(it -> it > 0).reduce(1, (a, b) -> a * b);
+                                int sum2 = result.entrySet().stream().mapToInt(entry -> entry.first().hashCode() * entry.second().hashCode()).filter(it -> it > 0).sum();
                                 break;
                         }
                     }
@@ -166,7 +166,7 @@ public class ValueCollectionsPerformanceTest {
                                 }
                                 break;
                             case STREAM:
-                                int sum2 = map.entrySet().stream().mapToInt(entry -> entry.getKey().hashCode() * entry.getValue().hashCode()).filter(it -> it > 0).reduce(1, (a, b) -> a * b);
+                                int sum2 = map.entrySet().stream().mapToInt(entry -> entry.getKey().hashCode() * entry.getValue().hashCode()).filter(it -> it > 0).sum();
                                 break;
                         }
                     }
