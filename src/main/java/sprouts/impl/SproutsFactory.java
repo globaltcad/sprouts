@@ -172,7 +172,14 @@ public interface SproutsFactory
     <T> Tuple<T> tupleOf( Class<T> type );
 
     @SuppressWarnings("unchecked")
-    <T> Tuple<T> tupleOf( Maybe<T> first, Maybe<T>... rest );
+    default <T> Tuple<T> tupleOf( Maybe<T> first, Maybe<T>... rest )  {
+        T[] items = (T[]) new Object[rest.length + 1];
+        items[0] = first.orElseNull();
+        for (int i = 0; i < rest.length; i++) {
+            items[i + 1] = rest[i].orElseNull();
+        }
+        return tupleOf(Util.expectedClassFromItem(first.orElseThrowUnchecked()), items);
+    }
 
     @SuppressWarnings("unchecked")
     <T> Tuple<T> tupleOf( T first, T... rest );
@@ -183,7 +190,13 @@ public interface SproutsFactory
     <T> Tuple<T> tupleOf( Class<T> type, Iterable<T> vars );
 
     @SuppressWarnings("unchecked")
-    <T> Tuple<@Nullable T> tupleOfNullable( Class<T> type, Maybe<@Nullable T>... vars );
+    default <T> Tuple<@Nullable T> tupleOfNullable( Class<T> type, Maybe<@Nullable T>... maybes ) {
+        T[] items = (T[]) new Object[maybes.length];
+        for (int i = 0; i < maybes.length; i++) {
+            items[i] = maybes[i].orElseNull();
+        }
+        return tupleOfNullable(type, items);
+    }
 
     <T> Tuple<@Nullable T> tupleOfNullable( Class<T> type );
 
@@ -191,7 +204,14 @@ public interface SproutsFactory
     <T> Tuple<@Nullable T> tupleOfNullable( Class<T> type, @Nullable T... values );
 
     @SuppressWarnings("unchecked")
-    <T> Tuple<@Nullable T> tupleOfNullable( Maybe<@Nullable T> first, Maybe<@Nullable T>... rest );
+    default <T> Tuple<@Nullable T> tupleOfNullable( Maybe<@Nullable T> first, Maybe<@Nullable T>... rest ) {
+        T[] items = (T[]) new Object[rest.length + 1];
+        items[0] = first.orElseNull();
+        for (int i = 0; i < rest.length; i++) {
+            items[i + 1] = rest[i].orElseNull();
+        }
+        return tupleOfNullable(first.type(), items);
+    }
 
     <T> Tuple<@Nullable T> tupleOfNullable( Class<T> type, Iterable<@Nullable T> iterable );
 

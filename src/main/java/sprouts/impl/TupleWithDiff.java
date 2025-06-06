@@ -26,7 +26,7 @@ public final class TupleWithDiff<T extends @Nullable Object> implements Tuple<T>
             Class<T> type,
             @Nullable T... items
     ) {
-        return new TupleWithDiff<>(TupleHamt.of(allowsNull, type, Arrays.asList(items)), null);
+        return new TupleWithDiff<>(TupleHamt.of(allowsNull, type, items), null);
     }
 
     @SuppressWarnings("NullAway")
