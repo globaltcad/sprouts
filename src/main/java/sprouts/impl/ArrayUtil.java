@@ -115,6 +115,21 @@ final class ArrayUtil {
         return array;
     }
 
+    static Object _createArrayFromArray( Class<?> type, boolean nullable, Object arrayFromOutside ) {
+        int size = _length(arrayFromOutside);
+        Object array = _createArray(type, nullable, size);
+        for ( int i = 0; i < size; i++ ) {
+            Object item = _getAt(i, arrayFromOutside);
+            if ( item == null && !nullable )
+                throw new NullPointerException(
+                    "Failed to initiate non-nullable tuple data array for item type '"+type.getName()+"',\n" +
+                    "due to null item encounter at index '" + i + "' in the supplied array.\n"
+                );
+            _setAt(i, item, array);
+        }
+        return array;
+    }
+
     static Object _tryFlatten( Object array, Class<?> type, boolean nullable ) {
         type = _toActualPrimitive(type, nullable);
         if ( type == byte.class && array instanceof Object[] ) {

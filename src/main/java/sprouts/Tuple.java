@@ -110,7 +110,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @param type the type of the items in the tuple.
      * @param vec the items to add to the new {@code Tuple} instance.
      * @param <T>  the type of the items in the tuple.
-     * @return a new {@code Vec} instance.
+     * @return a new {@code Tuple} instance.
      * @throws NullPointerException     if {@code type} is {@code null}, or {@code vec} is {@code null}.
      * @throws IllegalArgumentException if any {@link Maybe} allows {@code null}.
      */
@@ -129,7 +129,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @param type the type of the items in the tuple.
      *             This is used to check if the item is of the correct type.
      * @param <T>  the type of the items in the tuple.
-     * @return a new {@code Vec} instance.
+     * @return a new {@code Tuple} instance.
      * @throws NullPointerException if {@code type} is {@code null}.
      */
     static <T> Tuple<T> of( Class<T> type ) {
@@ -144,7 +144,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @param first the first {@link Maybe} to add to the new {@code Tuple} instance.
      * @param rest  the remaining items to add to the new {@code Tuple} instance.
      * @param <T>   the type of the items in the tuple.
-     * @return a new {@code Vec} instance.
+     * @return a new {@code Tuple} instance.
      * @throws NullPointerException     if {@code first} is {@code null}, or {@code rest} is {@code null}.
      * @throws IllegalArgumentException if any {@link Maybe} allows {@code null}.
      */
@@ -162,7 +162,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @param first the first value to add to the new {@code Tuple} instance.
      * @param rest  the remaining values to add to the new {@code Tuple} instance.
      * @param <T>   the type of the values.
-     * @return a new {@code Vec} instance.
+     * @return a new {@code Tuple} instance.
      * @throws NullPointerException     if {@code first} is {@code null}, or {@code rest} is {@code null}.
      * @throws IllegalArgumentException if any value in {@code rest} is {@code null}.
      */
@@ -182,7 +182,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @param items the values to be wrapped by items and then added to the new {@code Tuple} instance.
      *              The values may not be null.
      * @param <T>   the type of the values.
-     * @return a new {@code Vec} instance.
+     * @return a new {@code Tuple} instance.
      * @throws NullPointerException if {@code type} is {@code null}, or {@code items} is {@code null}.
      */
     @SuppressWarnings("unchecked")
@@ -193,6 +193,83 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
     }
 
     /**
+     * Creates an immutable, non-nullable {@code Tuple<Float>} from a
+     * primitive array of floats. The returned tuple will contain
+     * the floats as a single dense array of primitives.<br>
+     * Note that in order to guarantee immutability,
+     * the array of floats is copied.
+     *
+     * @param floats The floats to use as a basis for the new tuple.
+     * @return a new {@code Tuple} instance backed by a single primitive array of floats.
+     * @throws NullPointerException if {@code floats} is {@code null}.
+     */
+    static Tuple<Float> of( float... floats ) {
+        Objects.requireNonNull(floats);
+        return Sprouts.factory().tupleOf( floats );
+    }
+
+    /**
+     * Creates an immutable, non-nullable {@code Tuple<Double>} from a
+     * primitive array of doubles. The returned tuple will contain
+     * the doubles as a single dense array of primitives.<br>
+     * Note that in order to guarantee immutability,
+     * the array of doubles is copied.
+     *
+     * @param doubles The doubles to use as a basis for the new tuple.
+     * @return a new {@code Tuple} instance backed by a single primitive array of doubles.
+     * @throws NullPointerException if {@code doubles} is {@code null}.
+     */
+    static Tuple<Double> of( double... doubles ) {
+        Objects.requireNonNull(doubles);
+        return Sprouts.factory().tupleOf( doubles );
+    }
+
+    /**
+     * Creates an immutable tuple of non-nullable items from a primitive array of integers.
+     * The returned tuple will contain the integers as a single dense array of primitives.<br>
+     * Note that in order to guarantee immutability,
+     * the array of integers is copied.
+     *
+     * @param ints The integers to use as a basis for the new tuple.
+     * @return a new {@code Tuple} instance backed by a single primitive array of integers.
+     * @throws NullPointerException if {@code ints} is {@code null}.
+     */
+    static Tuple<Integer> of( int... ints ) {
+        Objects.requireNonNull(ints);
+        return Sprouts.factory().tupleOf( ints );
+    }
+
+    /**
+     * Creates an immutable tuple of non-nullable items from a primitive array of longs.
+     * The returned tuple will contain the longs as a single dense array of primitives.<br>
+     * Note that in order to guarantee immutability,
+     * the array of longs is copied.
+     *
+     * @param longs The longs to use as a basis for the new tuple.
+     * @return a new {@code Tuple} instance backed by a single primitive array of longs.
+     * @throws NullPointerException if {@code longs} is {@code null}.
+     */
+    static Tuple<Long> of( long... longs ) {
+        Objects.requireNonNull(longs);
+        return Sprouts.factory().tupleOf( longs );
+    }
+
+    /**
+     * Creates an immutable tuple of non-nullable items from a primitive array of bytes.
+     * The returned tuple will contain the bytes as a single dense array of primitives.<br>
+     * Note that in order to guarantee immutability,
+     * the array of bytes is copied.
+     *
+     * @param bytes The bytes to use as a basis for the new tuple.
+     * @return a new {@code Tuple} instance backed by a single primitive array of bytes.
+     * @throws NullPointerException if {@code bytes} is {@code null}.
+     */
+    static Tuple<Byte> of( byte... bytes ) {
+        Objects.requireNonNull(bytes);
+        return Sprouts.factory().tupleOf( bytes );
+    }
+
+    /**
      * Creates an immutable tuple of non-nullable items from the supplied type and iterable of values.
      * This factory method requires the type to be specified, because the
      * compiler cannot infer the type from a potentially empty iterable.
@@ -200,7 +277,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @param type the type of the items in the tuple.
      * @param iterable the iterable of values.
      * @param <T>  the type of the items in the tuple.
-     * @return a new {@code Vec} instance.
+     * @return a new {@code Tuple} instance.
      * @throws NullPointerException     if {@code type} is {@code null}, or {@code vec} is {@code null}.
      * @throws IllegalArgumentException if any {@link Maybe} in {@code vec} allows {@code null}.
      */
@@ -219,7 +296,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @param maybeItems the items to add to the new {@code Tuple} instance.
      *             The items may be nullable items, but they may not be null themselves.
      * @param <T>  the type of the items in the tuple.
-     * @return a new {@code Vec} instance.
+     * @return a new {@code Tuple} instance.
      * @throws NullPointerException if {@code type} is {@code null}, or {@code vec} is {@code null}.
      */
     @SuppressWarnings("unchecked")
@@ -237,7 +314,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @param type the type of the items in the tuple.
      *             This is used to check if the item is of the correct type.
      * @param <T>  the type of the items in the tuple.
-     * @return a new {@code Vec} instance.
+     * @return a new {@code Tuple} instance.
      * @throws NullPointerException if {@code type} is {@code null}.
      */
     static <T> Tuple<@Nullable T> ofNullable( Class<T> type ) {
@@ -254,7 +331,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @param items The items to be stored by the new {@code Tuple} instance.
      *               The values may be null.
      * @param <T>    the type of the values.
-     * @return a new {@code Vec} instance.
+     * @return a new {@code Tuple} instance.
      */
     @SuppressWarnings("unchecked")
     static <T> Tuple<@Nullable T> ofNullable( Class<T> type, @Nullable T... items ) {
@@ -268,7 +345,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @param first the first {@link Maybe} to add to the new {@code Tuple} instance.
      * @param rest  the remaining items to add to the new {@code Tuple} instance.
      * @param <T>   the type of the items in the tuple.
-     * @return a new {@code Vec} instance.
+     * @return a new {@code Tuple} instance.
      */
     @SuppressWarnings("unchecked")
     static <T> Tuple<@Nullable T> ofNullable( Maybe<@Nullable T> first, Maybe<@Nullable T>... rest ) {
@@ -285,10 +362,11 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @param type the type of the items in the tuple.
      * @param iterable the iterable of values.
      * @param <T>  the type of the items in the tuple.
-     * @return a new {@code Vec} instance.
+     * @return a new {@code Tuple} instance.
      */
     static <T> Tuple<@Nullable T> ofNullable( Class<T> type, Iterable<@Nullable T> iterable ) {
         Objects.requireNonNull(type);
+        Objects.requireNonNull(iterable);
         return Sprouts.factory().tupleOfNullable( type, iterable );
     }
 

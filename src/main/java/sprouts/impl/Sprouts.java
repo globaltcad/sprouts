@@ -322,21 +322,36 @@ public final class Sprouts implements SproutsFactory
     }
 
     @Override
-    public <T> Tuple<T> tupleOf(Maybe<T> first, Maybe<T>... rest ) {
-        T[] items = (T[]) new Object[rest.length + 1];
-        items[0] = first.orElseNull();
-        for (int i = 0; i < rest.length; i++) {
-            items[i + 1] = rest[i].orElseNull();
-        }
-        return TupleWithDiff.of(false, Util.expectedClassFromItem(first.orElseThrowUnchecked()), items);
-    }
-
-    @Override
-    public <T> Tuple<T> tupleOf(T first, T... rest ) {
+    public <T> Tuple<T> tupleOf( T first, T... rest ) {
         T[] items = (T[]) new Object[rest.length + 1];
         items[0] = first;
         System.arraycopy(rest, 0, items, 1, rest.length);
         return TupleWithDiff.of(false, Util.expectedClassFromItem(first), items);
+    }
+
+    @Override
+    public Tuple<Float> tupleOf( float... floats ) {
+        return TupleWithDiff.ofAnyArray(false, Float.class, floats);
+    }
+
+    @Override
+    public Tuple<Double> tupleOf( double... doubles ) {
+        return TupleWithDiff.ofAnyArray(false, Double.class, doubles);
+    }
+
+    @Override
+    public Tuple<Integer> tupleOf( int... ints ) {
+        return TupleWithDiff.ofAnyArray(false, Integer.class, ints);
+    }
+
+    @Override
+    public Tuple<Byte> tupleOf( byte... bytes ) {
+        return TupleWithDiff.ofAnyArray(false, Byte.class, bytes);
+    }
+
+    @Override
+    public Tuple<Long> tupleOf( long... longs ) {
+        return TupleWithDiff.ofAnyArray(false, Long.class, longs);
     }
 
     @Override
@@ -345,39 +360,20 @@ public final class Sprouts implements SproutsFactory
     }
 
     @Override
-    public <T> Tuple<T> tupleOf(Class<T> type, Iterable<T> iterable ) {
+    public <T> Tuple<T> tupleOf( Class<T> type, Iterable<T> iterable ) {
         List<T> items = new ArrayList<>();
         iterable.forEach(items::add);
         return TupleWithDiff.of(false, type, items);
     }
 
     @Override
-    public <T> Tuple<@Nullable T> tupleOfNullable(Class<T> type, Maybe<@Nullable T>... maybes ) {
-        T[] items = (T[]) new Object[maybes.length];
-        for (int i = 0; i < maybes.length; i++) {
-            items[i] = maybes[i].orElseNull();
-        }
-        return TupleWithDiff.of(true, type, items);
-    }
-
-    @Override
-    public <T> Tuple<@Nullable T> tupleOfNullable(Class<T> type ) {
+    public <T> Tuple<@Nullable T> tupleOfNullable( Class<T> type ) {
         return TupleWithDiff.of(true, type, Collections.emptyList());
     }
 
     @Override
-    public <T> Tuple<@Nullable T> tupleOfNullable(Class<T> type, @Nullable T... values ) {
+    public <T> Tuple<@Nullable T> tupleOfNullable( Class<T> type, @Nullable T... values ) {
         return TupleWithDiff.of(true, type, values);
-    }
-
-    @Override
-    public <T> Tuple<@Nullable T> tupleOfNullable(Maybe<@Nullable T> first, Maybe<@Nullable T>... rest) {
-        T[] items = (T[]) new Object[rest.length + 1];
-        items[0] = first.orElseNull();
-        for (int i = 0; i < rest.length; i++) {
-            items[i + 1] = rest[i].orElseNull();
-        }
-        return TupleWithDiff.of(true, first.type(), items);
     }
 
     @Override

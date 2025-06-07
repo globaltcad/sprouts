@@ -77,8 +77,25 @@ public final class TupleHamt<T extends @Nullable Object> implements Tuple<T> {
                 return this;
             if ( numberOfItemsToRemove == this.size() )
                 return null;
-            else
+            else {
+                int newSize = _length(_data) - numberOfItemsToRemove;
+                if ( newSize > MAX_LEAF_NODE_SIZE ) {
+                    return _createRootFromList(type, allowsNull, new AbstractList() {
+                        @Override
+                        public int size() {
+                            return newSize;
+                        }
+                        @Override
+                        public @Nullable Object get(int fetchIndex) {
+                            if ( fetchIndex >= from ) {
+                                fetchIndex = fetchIndex + numberOfItemsToRemove;
+                            }
+                            return _getAt(fetchIndex, _data);
+                        }
+                    });
+                }
                 return new LeafNode(_withRemoveRange(from, to, _data, type, allowsNull));
+            }
         }
 
         @Override
@@ -342,7 +359,7 @@ public final class TupleHamt<T extends @Nullable Object> implements Tuple<T> {
                 items.size(),
                 allowsNull,
                 type,
-                _createRootFromList(type, allowsNull, items)
+                _createInitialRootFromList(type, allowsNull, items)
             );
     }
 
@@ -351,10 +368,19 @@ public final class TupleHamt<T extends @Nullable Object> implements Tuple<T> {
         Class<T> type,
         @Nullable T... items
     ) {
-        return of(allowsNull, type, Arrays.asList(items));
+        return ofAnyArray(allowsNull, type, items);
     }
 
-    public static <T> TupleHamt<T> ofRaw(
+    static <T> TupleHamt<T> ofAnyArray(
+            boolean allowsNull,
+            Class<T> type,
+            @Nullable Object array
+    ) {
+        Node node = _createInitialRootFromArray(type, allowsNull, array);
+        return new TupleHamt(node.size(), allowsNull, type, node);
+    }
+
+    static <T> TupleHamt<T> ofRaw(
             boolean allowsNull,
             Class<T> type,
             Object data
@@ -380,6 +406,20 @@ public final class TupleHamt<T extends @Nullable Object> implements Tuple<T> {
         _allowsNull = allowsNull;
         _type = type;
         _root = root == null ? new LeafNode(_createArray(type, allowsNull, size)) : root;
+    }
+
+    private static Node _createInitialRootFromList(Class<?> type, boolean allowsNull, List<?> items) {
+        return new LeafNode(_createArrayFromList(type, allowsNull, items));
+    }
+
+    private static Node _createInitialRootFromArray(Class<?> type, boolean allowsNull, @Nullable Object arrayFromOutside) {
+        if ( arrayFromOutside == null ) {
+            if ( allowsNull )
+                return new LeafNode(_createArray(type, true, 1));
+            else
+                throw new NullPointerException("Cannot create a TupleHamt with null items when allowsNull is false");
+        }
+        return new LeafNode(_createArrayFromArray(type, allowsNull, arrayFromOutside));
     }
 
     private static Node _createRootFromList(Class<?> type, boolean allowsNull, List<?> items) {
