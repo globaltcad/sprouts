@@ -1075,7 +1075,7 @@ class Tuple_Spec extends Specification
             tuple.get(2) == null
     }
 
-    def 'We ca create a tuple from an array of primitive floats, and then update it.'() {
+    def 'We can create a tuple from an array of primitive floats, and then update it.'() {
         reportInfo """
             In order to be as fast and memory efficient as possible, the `Tuple` type is 
             also designed to function as a thin wrapper around arrays of primitive types.<br>
@@ -1110,7 +1110,7 @@ class Tuple_Spec extends Specification
             tuple.toList() == (floats[0..49] + [1000f, 1001f, 1002f] + floats[150..-1]) as List<Float>
     }
 
-    def 'We ca create s tuple from an array of primitive doubles, and then update it.'() {
+    def 'We can create a tuple from an array of primitive doubles, and then update it.'() {
         reportInfo """
             In order to be as fast and memory efficient as possible, the `Tuple` type is 
             also designed to function as a thin wrapper around arrays of primitive types.<br>
@@ -1139,13 +1139,13 @@ class Tuple_Spec extends Specification
             tuple.toList() == doubles[0..49] + doubles[150..-1] as List<Double>
 
         when : 'We update the tuple by adding a range of items.'
-            tuple = tuple.addAllAt(50, 1000f, 1001f, 1002f)
+            tuple = tuple.addAllAt(50, 1000d, 1001d, 1002d)
         then : 'The tuple has the expected size and contents after the addition.'
             tuple.size() == 904
             tuple.toList() == (doubles[0..49] + [1000d, 1001d, 1002d] + doubles[150..-1]) as List<Double>
     }
 
-    def 'We ca create s tuple from an array of primitive ints, and then update it.'() {
+    def 'We can create a tuple from an array of primitive ints, and then update it.'() {
         reportInfo """
             In order to be as fast and memory efficient as possible, the `Tuple` type is 
             also designed to function as a thin wrapper around arrays of primitive types.<br>
@@ -1180,7 +1180,7 @@ class Tuple_Spec extends Specification
             tuple.toList() == (ints[0..49] + [1000, 1001, 1002] + ints[150..-1]) as List<Integer>
     }
 
-    def 'We ca create s tuple from an array of primitive bytes, and then update it.'() {
+    def 'We can create a tuple from an array of primitive bytes, and then update it.'() {
         reportInfo """
             In order to be as fast and memory efficient as possible, the `Tuple` type is 
             also designed to function as a thin wrapper around arrays of primitive types.<br>
@@ -1209,7 +1209,7 @@ class Tuple_Spec extends Specification
             tuple.toList() == (bytes[0..49] + [1000 as byte, 1001 as byte, 1002 as byte] + bytes[150..-1]) as List<Byte>
     }
 
-    def 'We ca create s tuple from an array of primitive longs, and then update it.'() {
+    def 'We can create a tuple from an array of primitive longs, and then update it.'() {
         reportInfo """
             In order to be as fast and memory efficient as possible, the `Tuple` type is 
             also designed to function as a thin wrapper around arrays of primitive types.<br>
