@@ -77,8 +77,25 @@ public final class TupleHamt<T extends @Nullable Object> implements Tuple<T> {
                 return this;
             if ( numberOfItemsToRemove == this.size() )
                 return null;
-            else
+            else {
+                int newSize = _length(_data) - numberOfItemsToRemove;
+                if ( newSize > MAX_LEAF_NODE_SIZE ) {
+                    return _createRootFromList(type, allowsNull, new AbstractList() {
+                        @Override
+                        public int size() {
+                            return newSize;
+                        }
+                        @Override
+                        public @Nullable Object get(int fetchIndex) {
+                            if ( fetchIndex >= from ) {
+                                fetchIndex = fetchIndex + numberOfItemsToRemove;
+                            }
+                            return _getAt(fetchIndex, _data);
+                        }
+                    });
+                }
                 return new LeafNode(_withRemoveRange(from, to, _data, type, allowsNull));
+            }
         }
 
         @Override
