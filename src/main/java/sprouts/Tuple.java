@@ -110,7 +110,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @param type the type of the items in the tuple.
      * @param vec the items to add to the new {@code Tuple} instance.
      * @param <T>  the type of the items in the tuple.
-     * @return a new {@code Vec} instance.
+     * @return a new {@code Tuple} instance.
      * @throws NullPointerException     if {@code type} is {@code null}, or {@code vec} is {@code null}.
      * @throws IllegalArgumentException if any {@link Maybe} allows {@code null}.
      */
@@ -129,7 +129,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @param type the type of the items in the tuple.
      *             This is used to check if the item is of the correct type.
      * @param <T>  the type of the items in the tuple.
-     * @return a new {@code Vec} instance.
+     * @return a new {@code Tuple} instance.
      * @throws NullPointerException if {@code type} is {@code null}.
      */
     static <T> Tuple<T> of( Class<T> type ) {
@@ -144,7 +144,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @param first the first {@link Maybe} to add to the new {@code Tuple} instance.
      * @param rest  the remaining items to add to the new {@code Tuple} instance.
      * @param <T>   the type of the items in the tuple.
-     * @return a new {@code Vec} instance.
+     * @return a new {@code Tuple} instance.
      * @throws NullPointerException     if {@code first} is {@code null}, or {@code rest} is {@code null}.
      * @throws IllegalArgumentException if any {@link Maybe} allows {@code null}.
      */
@@ -162,7 +162,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @param first the first value to add to the new {@code Tuple} instance.
      * @param rest  the remaining values to add to the new {@code Tuple} instance.
      * @param <T>   the type of the values.
-     * @return a new {@code Vec} instance.
+     * @return a new {@code Tuple} instance.
      * @throws NullPointerException     if {@code first} is {@code null}, or {@code rest} is {@code null}.
      * @throws IllegalArgumentException if any value in {@code rest} is {@code null}.
      */
@@ -182,7 +182,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @param items the values to be wrapped by items and then added to the new {@code Tuple} instance.
      *              The values may not be null.
      * @param <T>   the type of the values.
-     * @return a new {@code Vec} instance.
+     * @return a new {@code Tuple} instance.
      * @throws NullPointerException if {@code type} is {@code null}, or {@code items} is {@code null}.
      */
     @SuppressWarnings("unchecked")
@@ -200,7 +200,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @param type the type of the items in the tuple.
      * @param iterable the iterable of values.
      * @param <T>  the type of the items in the tuple.
-     * @return a new {@code Vec} instance.
+     * @return a new {@code Tuple} instance.
      * @throws NullPointerException     if {@code type} is {@code null}, or {@code vec} is {@code null}.
      * @throws IllegalArgumentException if any {@link Maybe} in {@code vec} allows {@code null}.
      */
@@ -219,7 +219,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @param maybeItems the items to add to the new {@code Tuple} instance.
      *             The items may be nullable items, but they may not be null themselves.
      * @param <T>  the type of the items in the tuple.
-     * @return a new {@code Vec} instance.
+     * @return a new {@code Tuple} instance.
      * @throws NullPointerException if {@code type} is {@code null}, or {@code vec} is {@code null}.
      */
     @SuppressWarnings("unchecked")
@@ -237,7 +237,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @param type the type of the items in the tuple.
      *             This is used to check if the item is of the correct type.
      * @param <T>  the type of the items in the tuple.
-     * @return a new {@code Vec} instance.
+     * @return a new {@code Tuple} instance.
      * @throws NullPointerException if {@code type} is {@code null}.
      */
     static <T> Tuple<@Nullable T> ofNullable( Class<T> type ) {
@@ -254,7 +254,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @param items The items to be stored by the new {@code Tuple} instance.
      *               The values may be null.
      * @param <T>    the type of the values.
-     * @return a new {@code Vec} instance.
+     * @return a new {@code Tuple} instance.
      */
     @SuppressWarnings("unchecked")
     static <T> Tuple<@Nullable T> ofNullable( Class<T> type, @Nullable T... items ) {
@@ -268,7 +268,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @param first the first {@link Maybe} to add to the new {@code Tuple} instance.
      * @param rest  the remaining items to add to the new {@code Tuple} instance.
      * @param <T>   the type of the items in the tuple.
-     * @return a new {@code Vec} instance.
+     * @return a new {@code Tuple} instance.
      */
     @SuppressWarnings("unchecked")
     static <T> Tuple<@Nullable T> ofNullable( Maybe<@Nullable T> first, Maybe<@Nullable T>... rest ) {
@@ -285,7 +285,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @param type the type of the items in the tuple.
      * @param iterable the iterable of values.
      * @param <T>  the type of the items in the tuple.
-     * @return a new {@code Vec} instance.
+     * @return a new {@code Tuple} instance.
      */
     static <T> Tuple<@Nullable T> ofNullable( Class<T> type, Iterable<@Nullable T> iterable ) {
         Objects.requireNonNull(type);
