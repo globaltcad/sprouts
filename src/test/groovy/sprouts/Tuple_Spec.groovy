@@ -1074,4 +1074,167 @@ class Tuple_Spec extends Specification
             tuple.get(1) == 'A' as char
             tuple.get(2) == null
     }
+
+    def 'We ca create a tuple from an array of primitive floats, and then update it.'() {
+        reportInfo """
+            In order to be as fast and memory efficient as possible, the `Tuple` type is 
+            also designed to function as a thin wrapper around arrays of primitive types.<br>
+            This means that when you construct a tuple using `Tuple.of(float[])`,
+            then the returned tuple will be backed by a single array of primitive floats,
+            which is a simple clone of the original array.
+        """
+        given : 'An array of primitive floats and a clone of it.'
+            float[] original = (-500f..500f).collect({it/25f}) as float[]
+            float[] floats = original.clone()
+        and : 'We create a tuple from the array.'
+            var tuple = Tuple.of(original)
+        expect : 'The tuple has the expected size and contents.'
+            tuple.size() == original.length
+            tuple.toList() == original.toList()
+
+        when : 'We try to violate the immutability of the tuple by modifying the original array.'
+            floats.length.times {  original[it] = Float.NaN }
+        then : 'The tuple is not affected by the change to the original array.'
+            tuple.none { it == Float.NaN }
+
+        when : 'We update the tuple by removing a range of items.'
+            tuple = tuple.removeRange(50, 150)
+        then : 'The tuple has the expected size and contents after the removal.'
+            tuple.size() == 901
+            tuple.toList() == floats[0..49] + floats[150..-1] as List<Float>
+
+        when : 'We update the tuple by adding a range of items.'
+            tuple = tuple.addAllAt(50, 1000f, 1001f, 1002f)
+        then : 'The tuple has the expected size and contents after the addition.'
+            tuple.size() == 904
+            tuple.toList() == (floats[0..49] + [1000f, 1001f, 1002f] + floats[150..-1]) as List<Float>
+    }
+
+    def 'We ca create s tuple from an array of primitive doubles, and then update it.'() {
+        reportInfo """
+            In order to be as fast and memory efficient as possible, the `Tuple` type is 
+            also designed to function as a thin wrapper around arrays of primitive types.<br>
+            This means that when you construct a tuple using `Tuple.of(double[])`,
+            then the returned tuple will be backed by a single array of primitive doubles,
+            which is a simple clone of the original array.
+        """
+        given : 'An array of primitive doubles and a clone of the array.'
+            double[] original = (-500d..500d).collect({it/25d}) as double[]
+            double[] doubles = original.clone()
+        and : 'We create a tuple from the array.'
+            var tuple = Tuple.of(original)
+        expect : 'The tuple has the expected size and contents.'
+            tuple.size() == doubles.length
+            tuple.toList() == doubles.toList()
+
+        when : 'We try to violate the immutability of the tuple by modifying the original array.'
+            doubles.length.times {  original[it] = Double.NaN }
+        then : 'The tuple is not affected by the change to the original array.'
+            tuple.none { it == Double.NaN }
+
+        when : 'We update the tuple by removing a range of items.'
+            tuple = tuple.removeRange(50, 150)
+        then : 'The tuple has the expected size and contents after the removal.'
+            tuple.size() == 901
+            tuple.toList() == doubles[0..49] + doubles[150..-1] as List<Double>
+
+        when : 'We update the tuple by adding a range of items.'
+            tuple = tuple.addAllAt(50, 1000f, 1001f, 1002f)
+        then : 'The tuple has the expected size and contents after the addition.'
+            tuple.size() == 904
+            tuple.toList() == (doubles[0..49] + [1000d, 1001d, 1002d] + doubles[150..-1]) as List<Double>
+    }
+
+    def 'We ca create s tuple from an array of primitive ints, and then update it.'() {
+        reportInfo """
+            In order to be as fast and memory efficient as possible, the `Tuple` type is 
+            also designed to function as a thin wrapper around arrays of primitive types.<br>
+            This means that when you construct a tuple using `Tuple.of(int[])`,
+            then the returned tuple will be backed by a single array of primitive ints,
+            which is a simple clone of the original array.
+        """
+        given : 'An array of primitive ints and its clone.'
+            int[] original = (-500..500) as int[]
+            int[] ints = original.clone()
+        and : 'We create a tuple from the array.'
+            var tuple = Tuple.of(ints)
+        expect : 'The tuple has the expected size and contents.'
+            tuple.size() == ints.length
+            tuple.toList() == ints.toList()
+
+        when : 'We try to violate the immutability of the tuple by modifying the original array.'
+            ints.length.times { original[it] = Integer.MIN_VALUE }
+        then : 'The tuple is not affected by the change to the original array.'
+            tuple.none { it == Integer.MIN_VALUE }
+
+        when : 'We update the tuple by removing a range of items.'
+            tuple = tuple.removeRange(50, 150)
+        then : 'The tuple has the expected size and contents after the removal.'
+            tuple.size() == 901
+            tuple.toList() == ints[0..49] + ints[150..-1] as List<Integer>
+
+        when : 'We update the tuple by adding a range of items.'
+            tuple = tuple.addAllAt(50, 1000, 1001, 1002)
+        then : 'The tuple has the expected size and contents after the addition.'
+            tuple.size() == 904
+            tuple.toList() == (ints[0..49] + [1000, 1001, 1002] + ints[150..-1]) as List<Integer>
+    }
+
+    def 'We ca create s tuple from an array of primitive bytes, and then update it.'() {
+        reportInfo """
+            In order to be as fast and memory efficient as possible, the `Tuple` type is 
+            also designed to function as a thin wrapper around arrays of primitive types.<br>
+            This means that when you construct a tuple using `Tuple.of(byte[])`,
+            then the returned tuple will be backed by a single array of primitive bytes,
+            which is a simple clone of the original array.
+        """
+        given : 'An array of primitive bytes.'
+            byte[] bytes = (-500..500).collect { it as byte } as byte[]
+        and : 'We create a tuple from the array.'
+            var tuple = Tuple.of(bytes)
+        expect : 'The tuple has the expected size and contents.'
+            tuple.size() == bytes.length
+            tuple.toList() == bytes.toList()
+
+        when : 'We update the tuple by removing a range of items.'
+            tuple = tuple.removeRange(50, 150)
+        then : 'The tuple has the expected size and contents after the removal.'
+            tuple.size() == 901
+            tuple.toList() == bytes[0..49] + bytes[150..-1] as List<Byte>
+
+        when : 'We update the tuple by adding a range of items.'
+            tuple = tuple.addAllAt(50, 1000 as byte, 1001 as byte, 1002 as byte)
+        then : 'The tuple has the expected size and contents after the addition.'
+            tuple.size() == 904
+            tuple.toList() == (bytes[0..49] + [1000 as byte, 1001 as byte, 1002 as byte] + bytes[150..-1]) as List<Byte>
+    }
+
+    def 'We ca create s tuple from an array of primitive longs, and then update it.'() {
+        reportInfo """
+            In order to be as fast and memory efficient as possible, the `Tuple` type is 
+            also designed to function as a thin wrapper around arrays of primitive types.<br>
+            This means that when you construct a tuple using `Tuple.of(long[])`,
+            then the returned tuple will be backed by a single array of primitive longs,
+            which is a simple clone of the original array.
+        """
+        given : 'An array of primitive longs.'
+            long[] longs = (-500L..500L) as long[]
+        and : 'We create a tuple from the array.'
+            var tuple = Tuple.of(longs)
+        expect : 'The tuple has the expected size and contents.'
+            tuple.size() == longs.length
+            tuple.toList() == longs.toList()
+
+        when : 'We update the tuple by removing a range of items.'
+            tuple = tuple.removeRange(50, 150)
+        then : 'The tuple has the expected size and contents after the removal.'
+            tuple.size() == 901
+            tuple.toList() == longs[0..49] + longs[150..-1] as List<Long>
+
+        when : 'We update the tuple by adding a range of items.'
+            tuple = tuple.addAllAt(50, 1000L, 1001L, 1002L)
+        then : 'The tuple has the expected size and contents after the addition.'
+            tuple.size() == 904
+            tuple.toList() == (longs[0..49] + [1000L, 1001L, 1002L] + longs[150..-1]) as List<Long>
+    }
 }

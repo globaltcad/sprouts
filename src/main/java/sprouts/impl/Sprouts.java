@@ -330,6 +330,31 @@ public final class Sprouts implements SproutsFactory
     }
 
     @Override
+    public Tuple<Float> tupleOf( float... floats ) {
+        return TupleWithDiff.ofAnyArray(false, Float.class, floats);
+    }
+
+    @Override
+    public Tuple<Double> tupleOf( double... doubles ) {
+        return TupleWithDiff.ofAnyArray(false, Double.class, doubles);
+    }
+
+    @Override
+    public Tuple<Integer> tupleOf( int... ints ) {
+        return TupleWithDiff.ofAnyArray(false, Integer.class, ints);
+    }
+
+    @Override
+    public Tuple<Byte> tupleOf( byte... bytes ) {
+        return TupleWithDiff.ofAnyArray(false, Byte.class, bytes);
+    }
+
+    @Override
+    public Tuple<Long> tupleOf( long... longs ) {
+        return TupleWithDiff.ofAnyArray(false, Long.class, longs);
+    }
+
+    @Override
     public <T> Tuple<T> tupleOf( Class<T> type, T... items ) {
         return TupleWithDiff.of(false, type, items);
     }

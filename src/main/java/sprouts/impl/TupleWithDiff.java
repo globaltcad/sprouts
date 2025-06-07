@@ -21,12 +21,20 @@ public final class TupleWithDiff<T extends @Nullable Object> implements Tuple<T>
         return new TupleWithDiff<>(TupleHamt.of(allowsNull, type, items), null);
     }
 
-    public static <T> Tuple<T> of(
+    static <T> Tuple<T> of(
             boolean allowsNull,
             Class<T> type,
             @Nullable T... items
     ) {
         return new TupleWithDiff<>(TupleHamt.of(allowsNull, type, items), null);
+    }
+
+    static <T> Tuple<T> ofAnyArray(
+            boolean allowsNull,
+            Class<T> type,
+            Object array
+    ) {
+        return new TupleWithDiff<>(TupleHamt.ofAnyArray(allowsNull, type, array), null);
     }
 
     @SuppressWarnings("NullAway")

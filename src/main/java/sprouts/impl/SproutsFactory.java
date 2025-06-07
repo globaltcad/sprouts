@@ -184,6 +184,16 @@ public interface SproutsFactory
     @SuppressWarnings("unchecked")
     <T> Tuple<T> tupleOf( T first, T... rest );
 
+    Tuple<Float> tupleOf( float... floats );
+
+    Tuple<Double> tupleOf( double... doubles );
+
+    Tuple<Integer> tupleOf( int... ints );
+
+    Tuple<Byte> tupleOf( byte... bytes );
+
+    Tuple<Long> tupleOf( long... longs );
+
     @SuppressWarnings("unchecked")
     <T> Tuple<T> tupleOf( Class<T> type, T... items );
 

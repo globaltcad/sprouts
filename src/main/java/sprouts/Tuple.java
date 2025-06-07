@@ -193,6 +193,83 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
     }
 
     /**
+     * Creates an immutable, non-nullable {@code Tuple<Float>} from a
+     * primitive array of floats. The returned tuple will contain
+     * the floats as a single dense array of primitives.<br>
+     * Note that in order to guarantee immutability,
+     * the array of floats is copied.
+     *
+     * @param floats The floats to use as a basis for the new tuple.
+     * @return a new {@code Tuple} instance backed by a single primitive array of floats.
+     * @throws NullPointerException if {@code floats} is {@code null}.
+     */
+    static Tuple<Float> of( float... floats ) {
+        Objects.requireNonNull(floats);
+        return Sprouts.factory().tupleOf( floats );
+    }
+
+    /**
+     * Creates an immutable, non-nullable {@code Tuple<Double>} from a
+     * primitive array of doubles. The returned tuple will contain
+     * the doubles as a single dense array of primitives.<br>
+     * Note that in order to guarantee immutability,
+     * the array of doubles is copied.
+     *
+     * @param doubles The doubles to use as a basis for the new tuple.
+     * @return a new {@code Tuple} instance backed by a single primitive array of doubles.
+     * @throws NullPointerException if {@code doubles} is {@code null}.
+     */
+    static Tuple<Double> of( double... doubles ) {
+        Objects.requireNonNull(doubles);
+        return Sprouts.factory().tupleOf( doubles );
+    }
+
+    /**
+     * Creates an immutable tuple of non-nullable items from a primitive array of integers.
+     * The returned tuple will contain the integers as a single dense array of primitives.<br>
+     * Note that in order to guarantee immutability,
+     * the array of integers is copied.
+     *
+     * @param ints The integers to use as a basis for the new tuple.
+     * @return a new {@code Tuple} instance backed by a single primitive array of integers.
+     * @throws NullPointerException if {@code ints} is {@code null}.
+     */
+    static Tuple<Integer> of( int... ints ) {
+        Objects.requireNonNull(ints);
+        return Sprouts.factory().tupleOf( ints );
+    }
+
+    /**
+     * Creates an immutable tuple of non-nullable items from a primitive array of longs.
+     * The returned tuple will contain the longs as a single dense array of primitives.<br>
+     * Note that in order to guarantee immutability,
+     * the array of longs is copied.
+     *
+     * @param longs The longs to use as a basis for the new tuple.
+     * @return a new {@code Tuple} instance backed by a single primitive array of longs.
+     * @throws NullPointerException if {@code longs} is {@code null}.
+     */
+    static Tuple<Long> of( long... longs ) {
+        Objects.requireNonNull(longs);
+        return Sprouts.factory().tupleOf( longs );
+    }
+
+    /**
+     * Creates an immutable tuple of non-nullable items from a primitive array of bytes.
+     * The returned tuple will contain the bytes as a single dense array of primitives.<br>
+     * Note that in order to guarantee immutability,
+     * the array of bytes is copied.
+     *
+     * @param bytes The bytes to use as a basis for the new tuple.
+     * @return a new {@code Tuple} instance backed by a single primitive array of bytes.
+     * @throws NullPointerException if {@code bytes} is {@code null}.
+     */
+    static Tuple<Byte> of( byte... bytes ) {
+        Objects.requireNonNull(bytes);
+        return Sprouts.factory().tupleOf( bytes );
+    }
+
+    /**
      * Creates an immutable tuple of non-nullable items from the supplied type and iterable of values.
      * This factory method requires the type to be specified, because the
      * compiler cannot infer the type from a potentially empty iterable.

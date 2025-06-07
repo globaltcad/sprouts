@@ -368,15 +368,19 @@ public final class TupleHamt<T extends @Nullable Object> implements Tuple<T> {
         Class<T> type,
         @Nullable T... items
     ) {
-        return new TupleHamt(
-                (items == null ? 1 : items.length),
-                allowsNull,
-                type,
-                _createInitialRootFromArray(type, allowsNull, items)
-        );
+        return ofAnyArray(allowsNull, type, items);
     }
 
-    public static <T> TupleHamt<T> ofRaw(
+    static <T> TupleHamt<T> ofAnyArray(
+            boolean allowsNull,
+            Class<T> type,
+            @Nullable Object array
+    ) {
+        Node node = _createInitialRootFromArray(type, allowsNull, array);
+        return new TupleHamt(node.size(), allowsNull, type, node);
+    }
+
+    static <T> TupleHamt<T> ofRaw(
             boolean allowsNull,
             Class<T> type,
             Object data
