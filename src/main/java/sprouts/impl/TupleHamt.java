@@ -3,6 +3,7 @@ package sprouts.impl;
 import org.jspecify.annotations.Nullable;
 import sprouts.SequenceChange;
 import sprouts.Tuple;
+import sprouts.Val;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -756,6 +757,20 @@ public final class TupleHamt<T extends @Nullable Object> implements Tuple<T> {
             return false;
         if (!other.type().equals(_type))
             return false;
+        if ( this._root instanceof LeafNode ) {
+            TupleHamt<?> otherHamt = null;
+             if ( other instanceof TupleHamt ) {
+                 otherHamt = (TupleHamt<?>) other;
+             } else if ( other instanceof TupleWithDiff<?>) {
+                 TupleWithDiff<?> otherDiff = (TupleWithDiff<?>) other;
+                 otherHamt = otherDiff.getData();
+             }
+            if ( otherHamt != null && otherHamt._root instanceof LeafNode ) {
+                LeafNode thisLeaf = (LeafNode) this._root;
+                LeafNode otherLeaf = (LeafNode) otherHamt._root;
+                return Val.equals(thisLeaf._data, otherLeaf._data);
+            }
+        }
         for (int i = 0; i < this.size(); i++) {
             if (!Objects.equals(this.get(i), other.get(i)))
                 return false;

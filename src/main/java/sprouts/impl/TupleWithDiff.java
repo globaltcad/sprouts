@@ -45,6 +45,9 @@ public final class TupleWithDiff<T extends @Nullable Object> implements Tuple<T>
         _diffToPrevious = ( diffToPrevious == null ? SequenceDiff.initial() : diffToPrevious );
     }
 
+    TupleHamt<T> getData() {
+        return _data;
+    }
 
     @Override
     public Class<T> type() {

@@ -1237,4 +1237,30 @@ class Tuple_Spec extends Specification
             tuple.size() == 904
             tuple.toList() == (longs[0..49] + [1000L, 1001L, 1002L] + longs[150..-1]) as List<Long>
     }
+
+    def 'Two tuple instances are equal even if they were created and transformed separately.'() {
+        reportInfo """
+            The `Tuple` class is designed to have robust
+            value equality semantics.
+        """
+        given : 'Two tuples with the same contents.'
+            var tuple1 = Tuple.of(Integer, 1, 2, 3, 4, 5)
+            var tuple2 = Tuple.of(1, 2, 3, 4, 5)
+
+        expect : 'The two tuples are equal.'
+            tuple1 == tuple2
+            tuple1.hashCode() == tuple2.hashCode()
+
+        when : 'We transform the first tuple by adding an item.'
+            tuple1 = tuple1.add(6)
+        then : 'The two tuples are no longer equal.'
+            tuple1 != tuple2
+            tuple1.hashCode() != tuple2.hashCode()
+
+        when : 'We transform the second tuple by adding the same item.'
+            tuple2 = tuple2.add(6)
+        then : 'The two tuples are now equal again.'
+            tuple1 == tuple2
+            tuple1.hashCode() == tuple2.hashCode()
+    }
 }
