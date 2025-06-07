@@ -203,7 +203,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @return a new {@code Tuple} instance backed by a single primitive array of floats.
      * @throws NullPointerException if {@code floats} is {@code null}.
      */
-    static Tuple<Float> of( float... floats ) {
+    static Tuple<Float> of( float[] floats ) {
         Objects.requireNonNull(floats);
         return Sprouts.factory().tupleOf( floats );
     }
@@ -219,7 +219,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @return a new {@code Tuple} instance backed by a single primitive array of doubles.
      * @throws NullPointerException if {@code doubles} is {@code null}.
      */
-    static Tuple<Double> of( double... doubles ) {
+    static Tuple<Double> of( double[] doubles ) {
         Objects.requireNonNull(doubles);
         return Sprouts.factory().tupleOf( doubles );
     }
@@ -234,7 +234,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @return a new {@code Tuple} instance backed by a single primitive array of integers.
      * @throws NullPointerException if {@code ints} is {@code null}.
      */
-    static Tuple<Integer> of( int... ints ) {
+    static Tuple<Integer> of( int[] ints ) {
         Objects.requireNonNull(ints);
         return Sprouts.factory().tupleOf( ints );
     }
@@ -249,7 +249,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @return a new {@code Tuple} instance backed by a single primitive array of longs.
      * @throws NullPointerException if {@code longs} is {@code null}.
      */
-    static Tuple<Long> of( long... longs ) {
+    static Tuple<Long> of( long[] longs ) {
         Objects.requireNonNull(longs);
         return Sprouts.factory().tupleOf( longs );
     }
@@ -264,7 +264,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @return a new {@code Tuple} instance backed by a single primitive array of bytes.
      * @throws NullPointerException if {@code bytes} is {@code null}.
      */
-    static Tuple<Byte> of( byte... bytes ) {
+    static Tuple<Byte> of( byte[] bytes ) {
         Objects.requireNonNull(bytes);
         return Sprouts.factory().tupleOf( bytes );
     }
