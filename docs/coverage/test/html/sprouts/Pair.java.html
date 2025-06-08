@@ -63,7 +63,7 @@ public final class Pair&lt;F extends @Nullable Object,S extends @Nullable Object
      * @param &lt;S&gt; The type of the second value.
      * @return A new pair with the key and value of the given map entry.
      */
-    public static &lt;F extends @Nullable Object,S extends @Nullable Object&gt; Pair&lt;F,S&gt; of( Map.Entry&lt;F,S&gt; entry ) {
+    public static &lt;F extends @Nullable Object,S extends @Nullable Object&gt; Pair&lt;F,S&gt; of( Map.Entry&lt;? extends F, ? extends S&gt; entry ) {
 <span class="fc" id="L67">        return new Pair&lt;&gt;(entry.getKey(), entry.getValue());</span>
     }
 
@@ -98,24 +98,50 @@ public final class Pair&lt;F extends @Nullable Object,S extends @Nullable Object
 <span class="fc" id="L98">        return _second;</span>
     }
 
+    /**
+     *  A wither method allowing you to create an updated
+     *  pair, where the {@link Pair#first()} item is changed to the
+     *  supplied value.
+     *
+     * @param first The value which should replace the {@link #first()} of this pair,
+     *              inside the new {@link Pair} returned by the method.
+     * @return A new {@link Pair} where the {@link #first()} is set to the supplied value.
+     */
+    public Pair&lt;F, S&gt; withFirst( F first ) {
+<span class="fc" id="L111">        return new Pair&lt;&gt;(first, _second);</span>
+    }
+
+    /**
+     *  A wither method allowing you to create an updated
+     *  pair, where the {@link Pair#second()} item is changed to the
+     *  supplied value.
+     *
+     * @param second The value which should replace the {@link #second()} of this pair,
+     *              inside the new {@link Pair} returned by the method.
+     * @return A new {@link Pair} where the {@link #second()} is set to the supplied value.
+     */
+    public Pair&lt;F, S&gt; withSecond( S second ) {
+<span class="nc" id="L124">        return new Pair&lt;&gt;(_first, second);</span>
+    }
+
     @Override
     public String toString() {
-<span class="nc" id="L103">        return &quot;Pair[first=&quot; + _first + &quot;, second=&quot; + _second + &quot;]&quot;;</span>
+<span class="nc" id="L129">        return &quot;Pair[first=&quot; + _first + &quot;, second=&quot; + _second + &quot;]&quot;;</span>
     }
 
     @Override
     public boolean equals( Object obj ) {
-<span class="pc bpc" id="L108" title="1 of 2 branches missed.">        if ( this == obj )</span>
-<span class="nc" id="L109">            return true;</span>
-<span class="pc bpc" id="L110" title="2 of 4 branches missed.">        if ( obj == null || getClass() != obj.getClass() )</span>
-<span class="nc" id="L111">            return false;</span>
-<span class="fc" id="L112">        Pair&lt;?, ?&gt; pair = (Pair&lt;?, ?&gt;) obj;</span>
-<span class="pc bpc" id="L113" title="1 of 4 branches missed.">        return Objects.equals(_first, pair._first) &amp;&amp; Objects.equals(_second, pair._second);</span>
+<span class="pc bpc" id="L134" title="1 of 2 branches missed.">        if ( this == obj )</span>
+<span class="nc" id="L135">            return true;</span>
+<span class="pc bpc" id="L136" title="2 of 4 branches missed.">        if ( obj == null || getClass() != obj.getClass() )</span>
+<span class="nc" id="L137">            return false;</span>
+<span class="fc" id="L138">        Pair&lt;?, ?&gt; pair = (Pair&lt;?, ?&gt;) obj;</span>
+<span class="pc bpc" id="L139" title="1 of 4 branches missed.">        return Objects.equals(_first, pair._first) &amp;&amp; Objects.equals(_second, pair._second);</span>
     }
 
     @Override
     public int hashCode() {
-<span class="fc" id="L118">        return Objects.hash(_first, _second);</span>
+<span class="fc" id="L144">        return Objects.hash(_first, _second);</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

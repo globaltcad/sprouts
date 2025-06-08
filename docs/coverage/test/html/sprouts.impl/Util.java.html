@@ -12,13 +12,19 @@ final class Util {
 
     private Util() {}
 
+    @SuppressWarnings(&quot;ReferenceEquality&quot;)
+    static boolean refEquals(@Nullable Object a, @Nullable Object b) {
+        // We use == here to compare references, not .equals()!
+<span class="fc bfc" id="L18" title="All 2 branches covered.">        return a == b;</span>
+    }
+
     static &lt;T extends @Nullable Object, R&gt; Function&lt;T, R&gt; nonNullMapper(R nullObject, R errorObject, Function&lt;T, @Nullable R&gt; mapper) {
-<span class="fc" id="L16">        return t -&gt; {</span>
+<span class="fc" id="L22">        return t -&gt; {</span>
             try {
-<span class="fc" id="L18">                @Nullable R r = mapper.apply(t);</span>
-<span class="fc bfc" id="L19" title="All 2 branches covered.">                return r == null ? nullObject : r;</span>
-<span class="fc" id="L20">            } catch (Exception e) {</span>
-<span class="fc" id="L21">                return errorObject;</span>
+<span class="fc" id="L24">                @Nullable R r = mapper.apply(t);</span>
+<span class="fc bfc" id="L25" title="All 2 branches covered.">                return r == null ? nullObject : r;</span>
+<span class="fc" id="L26">            } catch (Exception e) {</span>
+<span class="fc" id="L27">                return errorObject;</span>
             }
         };
     }
@@ -33,9 +39,9 @@ final class Util {
      * @param &lt;T&gt; The type of the item.
      */
     static &lt;T&gt; Class&lt;T&gt; expectedClassFromItem( @NonNull T item ) {
-<span class="fc" id="L36">        Class&lt;?&gt; itemType = item.getClass();</span>
+<span class="fc" id="L42">        Class&lt;?&gt; itemType = item.getClass();</span>
         // We check if it is an enum:
-<span class="fc bfc" id="L38" title="All 2 branches covered.">        if ( Enum.class.isAssignableFrom(itemType) ) {</span>
+<span class="fc bfc" id="L44" title="All 2 branches covered.">        if ( Enum.class.isAssignableFrom(itemType) ) {</span>
             /*
                 When it comes to enums, there is a pitfall we might
                 fall into if just return the Class instance right away!
@@ -63,13 +69,13 @@ final class Util {
                 Food.class != Food.TOFU.getClass()
             */
             // Let's check for that:
-<span class="fc" id="L66">            Class&lt;?&gt; superClass = itemType.getSuperclass();</span>
-<span class="pc bpc" id="L67" title="1 of 4 branches missed.">            if ( superClass != null &amp;&amp; !superClass.equals(Enum.class) ) {</span>
+<span class="fc" id="L72">            Class&lt;?&gt; superClass = itemType.getSuperclass();</span>
+<span class="pc bpc" id="L73" title="1 of 4 branches missed.">            if ( superClass != null &amp;&amp; !superClass.equals(Enum.class) ) {</span>
                 // We are good to go, it is an enum!
-<span class="fc" id="L69">                return (Class&lt;T&gt;) superClass;</span>
+<span class="fc" id="L75">                return (Class&lt;T&gt;) superClass;</span>
             }
         }
-<span class="fc" id="L72">        return (Class&lt;T&gt;) itemType;</span>
+<span class="fc" id="L78">        return (Class&lt;T&gt;) itemType;</span>
     }
 
     /**
@@ -85,7 +91,7 @@ final class Util {
      */
     @SuppressWarnings(&quot;NullAway&quot;)
     static &lt;T&gt; T fakeNonNull( @Nullable T var ) {
-<span class="fc" id="L88">        return var;</span>
+<span class="fc" id="L94">        return var;</span>
     }
 
 }

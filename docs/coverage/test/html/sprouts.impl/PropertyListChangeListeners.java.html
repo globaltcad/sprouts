@@ -15,72 +15,69 @@ import java.util.Arrays;
 <span class="fc" id="L15">    }</span>
 
     public void onChange( Observer observer ) {
-<span class="pc bpc" id="L18" title="1 of 2 branches missed.">        if ( observer instanceof WeakObserverImpl)</span>
-<span class="nc" id="L19">            this.onChange( new WeakObserverAsActionImpl&lt;&gt;( (WeakObserverImpl&lt;?&gt;) observer ) );</span>
-        else
-<span class="fc" id="L21">            this.onChange( new ObserverAsActionImpl&lt;&gt;(observer) );</span>
-<span class="fc" id="L22">    }</span>
+<span class="fc" id="L18">        this.onChange( new ObserverAsActionImpl&lt;&gt;(observer) );</span>
+<span class="fc" id="L19">    }</span>
 
     public void unsubscribe( Subscriber subscriber ) {
-<span class="fc" id="L25">        _actions.unsubscribe(subscriber);</span>
-<span class="fc" id="L26">    }</span>
+<span class="fc" id="L22">        _actions.unsubscribe(subscriber);</span>
+<span class="fc" id="L23">    }</span>
 
     public void unsubscribeAll() {
-<span class="nc" id="L29">        _actions.unsubscribeAll();</span>
-<span class="nc" id="L30">    }</span>
+<span class="nc" id="L26">        _actions.unsubscribeAll();</span>
+<span class="nc" id="L27">    }</span>
 
     public void fireChange(SequenceChange type, Vals&lt;T&gt; source) {
-<span class="fc" id="L33">        fireChange(type, -1, (Vals&lt;T&gt;) null, null, source);</span>
-<span class="fc" id="L34">    }</span>
+<span class="fc" id="L30">        fireChange(type, -1, (Vals&lt;T&gt;) null, null, source);</span>
+<span class="fc" id="L31">    }</span>
 
     public void fireChange(
             SequenceChange type, int index, @Nullable Var&lt;T&gt; newVal, @Nullable Var&lt;T&gt; oldVal, Vals&lt;T&gt; source
     ) {
-<span class="fc" id="L39">        _actions.fireChange(()-&gt;_createDelegate(index, type, newVal, oldVal, source));</span>
-<span class="fc" id="L40">    }</span>
+<span class="fc" id="L36">        _actions.fireChange(()-&gt;_createDelegate(index, type, newVal, oldVal, source));</span>
+<span class="fc" id="L37">    }</span>
 
     public void fireChange(
             SequenceChange type, int index, @Nullable Vals&lt;T&gt; newVals, @Nullable Vals&lt;T&gt; oldVals, Vals&lt;T&gt; source
     ) {
-<span class="fc" id="L45">        _actions.fireChange(()-&gt;_createDelegate(index, type, newVals, oldVals, source));</span>
-<span class="fc" id="L46">    }</span>
+<span class="fc" id="L42">        _actions.fireChange(()-&gt;_createDelegate(index, type, newVals, oldVals, source));</span>
+<span class="fc" id="L43">    }</span>
 
     private ValsDelegate&lt;T&gt; _createDelegate(
             int index, SequenceChange type, @Nullable Var&lt;T&gt; newVal, @Nullable Var&lt;T&gt; oldVal, Vals&lt;T&gt; source
     ) {
-<span class="fc" id="L51">        Class&lt;T&gt; _type = source.type();</span>
-<span class="fc" id="L52">        Var[] cloned = source.toValList().stream().map(Val::ofNullable).toArray(Var[]::new);</span>
-<span class="fc" id="L53">        Vals&lt;T&gt; clone = Vals.ofNullable(_type, cloned);</span>
+<span class="fc" id="L48">        Class&lt;T&gt; _type = source.type();</span>
+<span class="fc" id="L49">        Var[] cloned = source.toValList().stream().map(Val::ofNullable).toArray(Var[]::new);</span>
+<span class="fc" id="L50">        Vals&lt;T&gt; clone = Vals.ofNullable(_type, cloned);</span>
         /*
             Note that we just created a deep copy of the property list, so we can safely
             pass the clone to the delegate. This is important because the delegate
             is passed to the action which might be executed on a different thread.
         */
-<span class="pc bpc" id="L59" title="1 of 2 branches missed.">        Vals&lt;T&gt; newValues = newVal == null ? Vals.ofNullable(_type) : Vals.ofNullable(_type, Val.ofNullable(newVal));</span>
-<span class="fc bfc" id="L60" title="All 2 branches covered.">        Vals&lt;T&gt; oldValues = oldVal == null ? Vals.ofNullable(_type) : Vals.ofNullable(_type, Val.ofNullable(oldVal));</span>
-<span class="fc" id="L61">        return Sprouts.factory().delegateOf(clone, type, index, newValues, oldValues);</span>
+<span class="pc bpc" id="L56" title="1 of 2 branches missed.">        Vals&lt;T&gt; newValues = newVal == null ? Vals.ofNullable(_type) : Vals.ofNullable(_type, Val.ofNullable(newVal));</span>
+<span class="fc bfc" id="L57" title="All 2 branches covered.">        Vals&lt;T&gt; oldValues = oldVal == null ? Vals.ofNullable(_type) : Vals.ofNullable(_type, Val.ofNullable(oldVal));</span>
+<span class="fc" id="L58">        return Sprouts.factory().delegateOf(clone, type, index, newValues, oldValues);</span>
     }
 
     private ValsDelegate&lt;T&gt; _createDelegate(
             int index, SequenceChange type, @Nullable Vals&lt;T&gt; newVals, @Nullable Vals&lt;T&gt; oldVals, Vals&lt;T&gt; source
     ) {
-<span class="fc" id="L67">        boolean _allowsNull = source.allowsNull();</span>
-<span class="fc" id="L68">        Class&lt;T&gt; _type = source.type();</span>
+<span class="fc" id="L64">        boolean _allowsNull = source.allowsNull();</span>
+<span class="fc" id="L65">        Class&lt;T&gt; _type = source.type();</span>
         @SuppressWarnings(&quot;unchecked&quot;)
-<span class="fc bfc" id="L70" title="All 2 branches covered.">        Val&lt;T&gt;[] cloned = source.toValList().stream().map(var -&gt; _allowsNull ? Val.ofNullable(var) : Val.of(var)).toArray(Val[]::new);</span>
+<span class="fc bfc" id="L67" title="All 2 branches covered.">        Val&lt;T&gt;[] cloned = source.toValList().stream().map(var -&gt; _allowsNull ? Val.ofNullable(var) : Val.of(var)).toArray(Val[]::new);</span>
         @SuppressWarnings(&quot;unchecked&quot;)
-<span class="fc bfc" id="L72" title="All 4 branches covered.">        Val&lt;T&gt;[] newCloned = newVals == null ? new Val[0] : newVals.stream().map(v -&gt; _allowsNull ? Val.ofNullable(_type, v) : Val.of(v)).toArray(Val[]::new);</span>
+<span class="fc bfc" id="L69" title="All 4 branches covered.">        Val&lt;T&gt;[] newCloned = newVals == null ? new Val[0] : newVals.stream().map(v -&gt; _allowsNull ? Val.ofNullable(_type, v) : Val.of(v)).toArray(Val[]::new);</span>
         @SuppressWarnings(&quot;unchecked&quot;)
-<span class="fc bfc" id="L74" title="All 4 branches covered.">        Val&lt;T&gt;[] oldCloned = oldVals == null ? new Val[0] : oldVals.stream().map(v -&gt; _allowsNull ? Val.ofNullable(_type, v) : Val.of(v)).toArray(Val[]::new);</span>
-<span class="fc bfc" id="L75" title="All 2 branches covered.">        Vals&lt;T&gt; clone = (Vals&lt;T&gt;) (_allowsNull ? Vals.ofNullable(_type, cloned) : Vals.of(_type, Arrays.asList(cloned)));</span>
-<span class="fc bfc" id="L76" title="All 2 branches covered.">        Vals&lt;T&gt; newClone = (Vals&lt;T&gt;) (_allowsNull ? Vals.ofNullable(_type, newCloned) : Vals.of(_type, Arrays.asList(newCloned)));</span>
-<span class="fc bfc" id="L77" title="All 2 branches covered.">        Vals&lt;T&gt; oldClone = (Vals&lt;T&gt;) (_allowsNull ? Vals.ofNullable(_type, oldCloned) : Vals.of(_type, Arrays.asList(oldCloned)));</span>
+<span class="fc bfc" id="L71" title="All 4 branches covered.">        Val&lt;T&gt;[] oldCloned = oldVals == null ? new Val[0] : oldVals.stream().map(v -&gt; _allowsNull ? Val.ofNullable(_type, v) : Val.of(v)).toArray(Val[]::new);</span>
+<span class="fc bfc" id="L72" title="All 2 branches covered.">        Vals&lt;T&gt; clone = (Vals&lt;T&gt;) (_allowsNull ? Vals.ofNullable(_type, cloned) : Vals.of(_type, Arrays.asList(cloned)));</span>
+<span class="fc bfc" id="L73" title="All 2 branches covered.">        Vals&lt;T&gt; newClone = (Vals&lt;T&gt;) (_allowsNull ? Vals.ofNullable(_type, newCloned) : Vals.of(_type, Arrays.asList(newCloned)));</span>
+<span class="fc bfc" id="L74" title="All 2 branches covered.">        Vals&lt;T&gt; oldClone = (Vals&lt;T&gt;) (_allowsNull ? Vals.ofNullable(_type, oldCloned) : Vals.of(_type, Arrays.asList(oldCloned)));</span>
         /*
             Note that we just created a deep copy of the property list, so we can safely
             pass the clone to the delegate. This is important because the delegate
             is passed to the action which might be executed on a different thread.
         */
-<span class="fc" id="L83">        return Sprouts.factory().delegateOf(clone, type, index, newClone, oldClone);</span>
+<span class="fc" id="L80">        return Sprouts.factory().delegateOf(clone, type, index, newClone, oldClone);</span>
     }
 
 }

@@ -159,374 +159,392 @@ final class ValueSetImpl&lt;E&gt; implements ValueSet&lt;E&gt; {
     }
 
     @Override
+    public boolean isSorted() {
+<span class="fc" id="L163">        return false;</span>
+    }
+
+    @Override
     public Class&lt;E&gt; type() {
-<span class="fc" id="L163">        return _type;</span>
+<span class="fc" id="L168">        return _type;</span>
     }
 
     @Override
     public Tuple&lt;E&gt; toTuple() {
-<span class="fc bfc" id="L168" title="All 2 branches covered.">        if ( _branches.length == 0 ) {</span>
-<span class="fc" id="L169">            return new TupleWithDiff&lt;&gt;(TupleHamt.ofRaw(false, _type, _elementsArray), null);</span>
+<span class="fc bfc" id="L173" title="All 2 branches covered.">        if ( _branches.length == 0 ) {</span>
+<span class="fc" id="L174">            return new TupleWithDiff&lt;&gt;(TupleHamt.ofRaw(false, _type, _elementsArray), null);</span>
         } else {
-<span class="fc" id="L171">            List&lt;E&gt; values = new ArrayList&lt;&gt;(_length(_elementsArray));</span>
-<span class="fc" id="L172">            _each(_elementsArray, _type, value -&gt; {</span>
-<span class="nc bnc" id="L173" title="All 2 branches missed.">                if ( value != null ) {</span>
-<span class="nc" id="L174">                    values.add(value);</span>
+<span class="fc" id="L176">            List&lt;E&gt; values = new ArrayList&lt;&gt;(_length(_elementsArray));</span>
+<span class="fc" id="L177">            _each(_elementsArray, _type, value -&gt; {</span>
+<span class="nc bnc" id="L178" title="All 2 branches missed.">                if ( value != null ) {</span>
+<span class="nc" id="L179">                    values.add(value);</span>
                 }
-<span class="nc" id="L176">            });</span>
-<span class="fc bfc" id="L177" title="All 2 branches covered.">            for (@Nullable ValueSetImpl&lt;E&gt; branch : _branches) {</span>
-<span class="fc bfc" id="L178" title="All 2 branches covered.">                if ( branch != null ) {</span>
-<span class="fc" id="L179">                    values.addAll(branch.toTuple().toList());</span>
+<span class="nc" id="L181">            });</span>
+<span class="fc bfc" id="L182" title="All 2 branches covered.">            for (@Nullable ValueSetImpl&lt;E&gt; branch : _branches) {</span>
+<span class="fc bfc" id="L183" title="All 2 branches covered.">                if ( branch != null ) {</span>
+<span class="fc" id="L184">                    values.addAll(branch.toTuple().toList());</span>
                 }
             }
-<span class="fc" id="L182">            return Tuple.of(_type, values);</span>
+<span class="fc" id="L187">            return Tuple.of(_type, values);</span>
         }
     }
 
     @Override
     public boolean contains( final E element ) {
-<span class="pc bpc" id="L188" title="1 of 2 branches missed.">        if ( !_type.isAssignableFrom(element.getClass()) ) {</span>
-<span class="nc" id="L189">            throw new IllegalArgumentException(</span>
-<span class="nc" id="L190">                    &quot;The provided element '&quot; + element + &quot;' is of type '&quot; + element.getClass().getSimpleName() + &quot;', &quot; +</span>
+<span class="pc bpc" id="L193" title="1 of 2 branches missed.">        if ( !_type.isAssignableFrom(element.getClass()) ) {</span>
+<span class="nc" id="L194">            throw new IllegalArgumentException(</span>
+<span class="nc" id="L195">                    &quot;The provided element '&quot; + element + &quot;' is of type '&quot; + element.getClass().getSimpleName() + &quot;', &quot; +</span>
                     &quot;instead of the expected type '&quot; + _type + &quot;'.&quot;
                 );
         }
-<span class="fc" id="L194">        return _contains(element, element.hashCode());</span>
+<span class="fc" id="L199">        return _contains(element, element.hashCode());</span>
     }
 
     private boolean _contains( final E element, final int elementHash ) {
-<span class="fc" id="L198">        int index = _findValidIndexFor(element, elementHash);</span>
-<span class="fc bfc" id="L199" title="All 2 branches covered.">        if ( index &lt; 0 ) {</span>
-<span class="pc bpc" id="L200" title="1 of 2 branches missed.">            if ( _branches.length &gt; 0 ) {</span>
-<span class="fc" id="L201">                int branchIndex = _computeBranchIndex(elementHash, _branches.length);</span>
-<span class="fc" id="L202">                @Nullable ValueSetImpl&lt;E&gt; branch = _branches[branchIndex];</span>
-<span class="fc bfc" id="L203" title="All 2 branches covered.">                if ( branch != null ) {</span>
-<span class="fc" id="L204">                    return branch._contains(element, elementHash);</span>
+<span class="fc" id="L203">        int index = _findValidIndexFor(element, elementHash);</span>
+<span class="fc bfc" id="L204" title="All 2 branches covered.">        if ( index &lt; 0 ) {</span>
+<span class="pc bpc" id="L205" title="1 of 2 branches missed.">            if ( _branches.length &gt; 0 ) {</span>
+<span class="fc" id="L206">                int branchIndex = _computeBranchIndex(elementHash, _branches.length);</span>
+<span class="fc" id="L207">                @Nullable ValueSetImpl&lt;E&gt; branch = _branches[branchIndex];</span>
+<span class="fc bfc" id="L208" title="All 2 branches covered.">                if ( branch != null ) {</span>
+<span class="fc" id="L209">                    return branch._contains(element, elementHash);</span>
                 } else {
-<span class="fc" id="L206">                    return false;</span>
+<span class="fc" id="L211">                    return false;</span>
                 }
             } else {
-<span class="nc" id="L209">                return false;</span>
+<span class="nc" id="L214">                return false;</span>
             }
         }
-<span class="fc" id="L212">        return true;</span>
+<span class="fc" id="L217">        return true;</span>
     }
 
     @Override
     public ValueSet&lt;E&gt; add( final E element ) {
-<span class="pc bpc" id="L217" title="1 of 2 branches missed.">        if ( !_type.isAssignableFrom(element.getClass()) ) {</span>
-<span class="nc" id="L218">            throw new IllegalArgumentException(</span>
-<span class="nc" id="L219">                    &quot;The supplied element '&quot; + element + &quot;' is of type '&quot; + element.getClass().getSimpleName() + &quot;', &quot; +</span>
+<span class="pc bpc" id="L222" title="1 of 2 branches missed.">        if ( !_type.isAssignableFrom(element.getClass()) ) {</span>
+<span class="nc" id="L223">            throw new IllegalArgumentException(</span>
+<span class="nc" id="L224">                    &quot;The supplied element '&quot; + element + &quot;' is of type '&quot; + element.getClass().getSimpleName() + &quot;', &quot; +</span>
                     &quot;instead of the expected type '&quot; + _type + &quot;'.&quot;
                 );
         }
-<span class="fc" id="L223">        return _with(element, element.hashCode());</span>
+<span class="fc" id="L228">        return _with(element, element.hashCode());</span>
     }
 
     public ValueSetImpl&lt;E&gt; _with( final E key, final int keyHash ) {
-<span class="fc" id="L227">        int index = _findValidIndexFor(key, keyHash);</span>
-<span class="pc bpc" id="L228" title="1 of 4 branches missed.">        if ( index &lt; 0 || index &gt;= _length(_elementsArray) ) {</span>
-<span class="fc bfc" id="L229" title="All 2 branches covered.">            if ( _length(_elementsArray) &lt; _maxEntriesForThisNode() ) {</span>
-<span class="fc" id="L230">                return new ValueSetImpl&lt;&gt;(</span>
+<span class="fc" id="L232">        int index = _findValidIndexFor(key, keyHash);</span>
+<span class="pc bpc" id="L233" title="1 of 4 branches missed.">        if ( index &lt; 0 || index &gt;= _length(_elementsArray) ) {</span>
+<span class="fc bfc" id="L234" title="All 2 branches covered.">            if ( _length(_elementsArray) &lt; _maxEntriesForThisNode() ) {</span>
+<span class="fc" id="L235">                return new ValueSetImpl&lt;&gt;(</span>
                         _depth,
                         _type,
-<span class="fc" id="L233">                        _withAddAt(_length(_elementsArray), key, _elementsArray, _type, ALLOWS_NULL),</span>
+<span class="fc" id="L238">                        _withAddAt(_length(_elementsArray), key, _elementsArray, _type, ALLOWS_NULL),</span>
                         _elementsHashes,
                         _branches,
                         true
                 );
             } else {
-<span class="fc bfc" id="L239" title="All 2 branches covered.">                if ( _branches.length &gt; 0 ) {</span>
-<span class="fc" id="L240">                    int branchIndex = _computeBranchIndex(keyHash, _branches.length);</span>
-<span class="fc" id="L241">                    @Nullable ValueSetImpl&lt;E&gt; branch = _branches[branchIndex];</span>
-<span class="fc bfc" id="L242" title="All 2 branches covered.">                    if (branch == null) {</span>
-<span class="fc" id="L243">                        Object newElementsArray = _createArray(_type, ALLOWS_NULL, 1);</span>
-<span class="fc" id="L244">                        _setAt(0, key, newElementsArray);</span>
-<span class="fc" id="L245">                        return _withBranchAt(branchIndex, new ValueSetImpl&lt;&gt;(_depth + 1, _type, newElementsArray, _elementsHashes, EMPTY_BRANCHES, true));</span>
+<span class="fc bfc" id="L244" title="All 2 branches covered.">                if ( _branches.length &gt; 0 ) {</span>
+<span class="fc" id="L245">                    int branchIndex = _computeBranchIndex(keyHash, _branches.length);</span>
+<span class="fc" id="L246">                    @Nullable ValueSetImpl&lt;E&gt; branch = _branches[branchIndex];</span>
+<span class="fc bfc" id="L247" title="All 2 branches covered.">                    if (branch == null) {</span>
+<span class="fc" id="L248">                        Object newElementsArray = _createArray(_type, ALLOWS_NULL, 1);</span>
+<span class="fc" id="L249">                        _setAt(0, key, newElementsArray);</span>
+<span class="fc" id="L250">                        return _withBranchAt(branchIndex, new ValueSetImpl&lt;&gt;(_depth + 1, _type, newElementsArray, _elementsHashes, EMPTY_BRANCHES, true));</span>
                     } else {
-<span class="fc" id="L247">                        ValueSetImpl&lt;E&gt; newBranch = branch._with(key, keyHash);</span>
-<span class="fc bfc" id="L248" title="All 2 branches covered.">                        if ( newBranch == branch ) {</span>
-<span class="fc" id="L249">                            return this;</span>
+<span class="fc" id="L252">                        ValueSetImpl&lt;E&gt; newBranch = branch._with(key, keyHash);</span>
+<span class="fc bfc" id="L253" title="All 2 branches covered.">                        if ( Util.refEquals(newBranch, branch) ) {</span>
+<span class="fc" id="L254">                            return this;</span>
                         } else {
-<span class="fc" id="L251">                            return _withBranchAt(branchIndex, newBranch);</span>
+<span class="fc" id="L256">                            return _withBranchAt(branchIndex, newBranch);</span>
                         }
                     }
                 } else {
                     // We create two new branches for this node, this is where the tree grows
-<span class="fc" id="L256">                    int newBranchSize = _minBranchingPerNode();</span>
-<span class="fc" id="L257">                    ValueSetImpl&lt;E&gt;[] newBranches = new ValueSetImpl[newBranchSize];</span>
-<span class="fc" id="L258">                    Object newElementsArray = _createArray(_type, ALLOWS_NULL, 1);</span>
-<span class="fc" id="L259">                    _setAt(0, key, newElementsArray);</span>
-<span class="fc" id="L260">                    newBranches[_computeBranchIndex(keyHash, newBranchSize)] = new ValueSetImpl&lt;&gt;(</span>
+<span class="fc" id="L261">                    int newBranchSize = _minBranchingPerNode();</span>
+<span class="fc" id="L262">                    ValueSetImpl&lt;E&gt;[] newBranches = new ValueSetImpl[newBranchSize];</span>
+<span class="fc" id="L263">                    Object newElementsArray = _createArray(_type, ALLOWS_NULL, 1);</span>
+<span class="fc" id="L264">                    _setAt(0, key, newElementsArray);</span>
+<span class="fc" id="L265">                    newBranches[_computeBranchIndex(keyHash, newBranchSize)] = new ValueSetImpl&lt;&gt;(</span>
                             _depth + 1, _type, newElementsArray, _elementsHashes, EMPTY_BRANCHES, true
                     );
-<span class="fc" id="L263">                    return new ValueSetImpl&lt;&gt;(_depth, _type, _elementsArray, _elementsHashes, newBranches, false);</span>
+<span class="fc" id="L268">                    return new ValueSetImpl&lt;&gt;(_depth, _type, _elementsArray, _elementsHashes, newBranches, false);</span>
                 }
             }
         }
-<span class="fc" id="L267">        return this;</span>
+<span class="fc" id="L272">        return this;</span>
     }
 
     @Override
     public ValueSet&lt;E&gt; remove( final E element ) {
-<span class="pc bpc" id="L272" title="1 of 2 branches missed.">        if ( !_type.isAssignableFrom(element.getClass()) ) {</span>
-<span class="nc" id="L273">            throw new IllegalArgumentException(</span>
-<span class="nc" id="L274">                    &quot;The supplied element '&quot; + element + &quot;' is of type '&quot; + element.getClass().getSimpleName() + &quot;', &quot; +</span>
+<span class="pc bpc" id="L277" title="1 of 2 branches missed.">        if ( !_type.isAssignableFrom(element.getClass()) ) {</span>
+<span class="nc" id="L278">            throw new IllegalArgumentException(</span>
+<span class="nc" id="L279">                    &quot;The supplied element '&quot; + element + &quot;' is of type '&quot; + element.getClass().getSimpleName() + &quot;', &quot; +</span>
                     &quot;instead of the expected type '&quot; + _type + &quot;'.&quot;
                 );
         }
-<span class="fc" id="L278">        return _without(element, element.hashCode());</span>
+<span class="fc" id="L283">        return _without(element, element.hashCode());</span>
     }
 
     private ValueSetImpl&lt;E&gt; _without(final E key, final int keyHash) {
-<span class="fc" id="L282">        int index = _findValidIndexFor(key, keyHash);</span>
-<span class="fc bfc" id="L283" title="All 2 branches covered.">        if ( index &lt; 0 ) {</span>
-<span class="fc bfc" id="L284" title="All 2 branches covered.">            if ( _branches.length == 0 ) {</span>
-<span class="fc" id="L285">                return this;</span>
+<span class="fc" id="L287">        int index = _findValidIndexFor(key, keyHash);</span>
+<span class="fc bfc" id="L288" title="All 2 branches covered.">        if ( index &lt; 0 ) {</span>
+<span class="fc bfc" id="L289" title="All 2 branches covered.">            if ( _branches.length == 0 ) {</span>
+<span class="fc" id="L290">                return this;</span>
             } else {
-<span class="fc" id="L287">                int branchIndex = _computeBranchIndex(keyHash, _branches.length);</span>
-<span class="fc" id="L288">                @Nullable ValueSetImpl&lt;E&gt; branch = _branches[branchIndex];</span>
-<span class="fc bfc" id="L289" title="All 2 branches covered.">                if ( branch == null ) {</span>
-<span class="fc" id="L290">                    return this;</span>
+<span class="fc" id="L292">                int branchIndex = _computeBranchIndex(keyHash, _branches.length);</span>
+<span class="fc" id="L293">                @Nullable ValueSetImpl&lt;E&gt; branch = _branches[branchIndex];</span>
+<span class="fc bfc" id="L294" title="All 2 branches covered.">                if ( branch == null ) {</span>
+<span class="fc" id="L295">                    return this;</span>
                 } else {
-<span class="fc" id="L292">                    ValueSetImpl&lt;E&gt; newBranch = branch._without(key, keyHash);</span>
-<span class="fc bfc" id="L293" title="All 2 branches covered.">                    if ( newBranch == branch ) {</span>
-<span class="fc" id="L294">                        return this;</span>
-<span class="fc bfc" id="L295" title="All 2 branches covered.">                    } else if ( newBranch._size == 0 ) {</span>
+<span class="fc" id="L297">                    ValueSetImpl&lt;E&gt; newBranch = branch._without(key, keyHash);</span>
+<span class="fc bfc" id="L298" title="All 2 branches covered.">                    if ( Util.refEquals(newBranch, branch) ) {</span>
+<span class="fc" id="L299">                        return this;</span>
+<span class="fc bfc" id="L300" title="All 2 branches covered.">                    } else if ( newBranch._size == 0 ) {</span>
                         // Maybe we can remove all branches now
-<span class="fc" id="L297">                        int numberOfNonNullBranches = 0;</span>
-<span class="fc bfc" id="L298" title="All 2 branches covered.">                        for (int i = 0; i &lt; _branches.length; i++) {</span>
-<span class="fc bfc" id="L299" title="All 4 branches covered.">                            if (_branches[i] != null &amp;&amp; i != branchIndex) {</span>
-<span class="fc" id="L300">                                numberOfNonNullBranches++;</span>
+<span class="fc" id="L302">                        int numberOfNonNullBranches = 0;</span>
+<span class="fc bfc" id="L303" title="All 2 branches covered.">                        for (int i = 0; i &lt; _branches.length; i++) {</span>
+<span class="fc bfc" id="L304" title="All 4 branches covered.">                            if (_branches[i] != null &amp;&amp; i != branchIndex) {</span>
+<span class="fc" id="L305">                                numberOfNonNullBranches++;</span>
                             }
                         }
-<span class="fc bfc" id="L303" title="All 2 branches covered.">                        if ( numberOfNonNullBranches == 0 ) {</span>
-<span class="fc" id="L304">                            return new ValueSetImpl&lt;&gt;(_depth, _type, _elementsArray, _elementsHashes, EMPTY_BRANCHES, false);</span>
+<span class="fc bfc" id="L308" title="All 2 branches covered.">                        if ( numberOfNonNullBranches == 0 ) {</span>
+<span class="fc" id="L309">                            return new ValueSetImpl&lt;&gt;(_depth, _type, _elementsArray, _elementsHashes, EMPTY_BRANCHES, false);</span>
                         }
-<span class="fc" id="L306">                        newBranch = null;</span>
+<span class="fc" id="L311">                        newBranch = null;</span>
                     }
-<span class="fc" id="L308">                    return _withBranchAt(branchIndex, newBranch);</span>
+<span class="fc" id="L313">                    return _withBranchAt(branchIndex, newBranch);</span>
                 }
             }
         } else {
-<span class="fc" id="L312">            Object newElementsArray = _withRemoveRange(index, index+1, _elementsArray, _type, ALLOWS_NULL);</span>
-<span class="fc" id="L313">            return new ValueSetImpl&lt;&gt;(_depth, _type, newElementsArray, _elementsHashes, _branches, true);</span>
+<span class="fc" id="L317">            Object newElementsArray = _withRemoveRange(index, index+1, _elementsArray, _type, ALLOWS_NULL);</span>
+<span class="fc" id="L318">            return new ValueSetImpl&lt;&gt;(_depth, _type, newElementsArray, _elementsHashes, _branches, true);</span>
         }
     }
 
     @Override
     public ValueSet&lt;E&gt; addAll( Stream&lt;? extends E&gt; entries ) {
-<span class="fc" id="L319">        Objects.requireNonNull(entries);</span>
+<span class="fc" id="L324">        Objects.requireNonNull(entries);</span>
         // TODO: implement branching based bulk insert
-<span class="fc" id="L321">        ValueSetImpl&lt;E&gt; result = this;</span>
+<span class="fc" id="L326">        ValueSetImpl&lt;E&gt; result = this;</span>
         // reduce the stream to a single association
-<span class="fc" id="L323">        return entries.reduce(</span>
+<span class="fc" id="L328">        return entries.reduce(</span>
                 result,
                 (acc,
-<span class="fc" id="L326">                 entry) -&gt; (ValueSetImpl&lt;E&gt;) acc.add(entry),</span>
-<span class="nc" id="L327">                (a, b) -&gt; a);</span>
+<span class="fc" id="L331">                 entry) -&gt; (ValueSetImpl&lt;E&gt;) acc.add(entry),</span>
+<span class="nc" id="L332">                (a, b) -&gt; a);</span>
     }
 
     @Override
     public ValueSet&lt;E&gt; removeAll( Stream&lt;? extends E&gt; elements ) {
-<span class="pc bpc" id="L332" title="1 of 2 branches missed.">        if ( this.isEmpty() )</span>
-<span class="nc" id="L333">            return this;</span>
-<span class="fc" id="L334">         ValueSet&lt;E&gt; result = this;</span>
-<span class="fc" id="L335">         result = elements.reduce(result,</span>
-<span class="fc" id="L336">                                    (acc, entry) -&gt; (ValueSet&lt;E&gt;) acc.remove(entry),</span>
-<span class="nc" id="L337">                                    (a, b) -&gt; a);</span>
-<span class="fc" id="L338">        return result;</span>
+<span class="pc bpc" id="L337" title="1 of 2 branches missed.">        if ( this.isEmpty() )</span>
+<span class="nc" id="L338">            return this;</span>
+<span class="fc" id="L339">         ValueSet&lt;E&gt; result = this;</span>
+<span class="fc" id="L340">         result = elements.reduce(result,</span>
+<span class="fc" id="L341">                                    (acc, entry) -&gt; (ValueSet&lt;E&gt;) acc.remove(entry),</span>
+<span class="nc" id="L342">                                    (a, b) -&gt; a);</span>
+<span class="fc" id="L343">        return result;</span>
     }
 
     @Override
     public ValueSet&lt;E&gt; retainAll( Set&lt;? extends E&gt; elements ) {
-<span class="pc bpc" id="L343" title="1 of 2 branches missed.">        if ( this.isEmpty() )</span>
-<span class="nc" id="L344">            return this;</span>
-<span class="fc" id="L345">        ValueSet&lt;E&gt; result = this;</span>
-<span class="fc bfc" id="L346" title="All 2 branches covered.">        if ( elements.isEmpty() )</span>
-<span class="fc" id="L347">            return clear();</span>
-<span class="fc bfc" id="L348" title="All 2 branches covered.">        for ( E currentElement : this ) {</span>
-<span class="fc bfc" id="L349" title="All 2 branches covered.">            if ( !elements.contains(currentElement) ) {</span>
-<span class="fc" id="L350">                result = result.remove(currentElement);</span>
+<span class="pc bpc" id="L348" title="1 of 2 branches missed.">        if ( this.isEmpty() )</span>
+<span class="nc" id="L349">            return this;</span>
+<span class="fc" id="L350">        ValueSet&lt;E&gt; result = this;</span>
+<span class="fc bfc" id="L351" title="All 2 branches covered.">        if ( elements.isEmpty() )</span>
+<span class="fc" id="L352">            return clear();</span>
+<span class="fc bfc" id="L353" title="All 2 branches covered.">        for ( E currentElement : this ) {</span>
+<span class="fc bfc" id="L354" title="All 2 branches covered.">            if ( !elements.contains(currentElement) ) {</span>
+<span class="fc" id="L355">                result = result.remove(currentElement);</span>
             }
-<span class="fc" id="L352">        }</span>
-<span class="fc" id="L353">        return result;</span>
+<span class="fc" id="L357">        }</span>
+<span class="fc" id="L358">        return result;</span>
+    }
+
+    @Override
+    public ValueSet&lt;E&gt; clear() {
+<span class="fc" id="L363">        return Sprouts.factory().valueSetOf(this.type());</span>
     }
 
     @Override
     public String toString() {
-<span class="fc" id="L358">        StringBuilder sb = new StringBuilder();</span>
-<span class="fc" id="L359">        sb.append(&quot;ValueSet&lt;&quot;).append(_type.getSimpleName()).append(&quot;&gt;[&quot;);</span>
-<span class="fc" id="L360">        final int howMany = 8;</span>
-<span class="fc" id="L361">        sb = _appendRecursivelyUpTo(sb, howMany);</span>
-<span class="fc" id="L362">        int numberOfElementsLeft = _size - howMany;</span>
-<span class="fc bfc" id="L363" title="All 2 branches covered.">        if ( numberOfElementsLeft &gt; 0 ) {</span>
-<span class="fc" id="L364">            sb.append(&quot;, ...&quot;).append(numberOfElementsLeft).append(&quot; more elements&quot;);</span>
+<span class="fc" id="L368">        StringBuilder sb = new StringBuilder();</span>
+<span class="fc" id="L369">        sb.append(&quot;ValueSet&lt;&quot;).append(_type.getSimpleName()).append(&quot;&gt;[&quot;);</span>
+<span class="fc" id="L370">        final int howMany = 8;</span>
+<span class="fc" id="L371">        sb = _appendRecursivelyUpTo(sb, howMany);</span>
+<span class="fc" id="L372">        int numberOfElementsLeft = _size - howMany;</span>
+<span class="fc bfc" id="L373" title="All 2 branches covered.">        if ( numberOfElementsLeft &gt; 0 ) {</span>
+<span class="fc" id="L374">            sb.append(&quot;, ... &quot;).append(numberOfElementsLeft).append(&quot; items left&quot;);</span>
         }
-<span class="fc" id="L366">        sb.append(&quot;]&quot;);</span>
-<span class="fc" id="L367">        return sb.toString();</span>
+<span class="fc" id="L376">        sb.append(&quot;]&quot;);</span>
+<span class="fc" id="L377">        return sb.toString();</span>
     }
 
     private StringBuilder _appendRecursivelyUpTo( StringBuilder sb, int size ) {
-<span class="fc" id="L371">        int howMany = Math.min(size, _length(_elementsArray));</span>
-<span class="fc bfc" id="L372" title="All 2 branches covered.">        for (int i = 0; i &lt; howMany; i++) {</span>
-<span class="fc" id="L373">            E key = _getAt(i, _elementsArray, _type);</span>
-<span class="fc" id="L374">            sb.append(_toString(key, _type));</span>
-<span class="pc bpc" id="L375" title="1 of 2 branches missed.">            if ( i &lt; howMany - 1 ) {</span>
-<span class="nc" id="L376">                sb.append(&quot;, &quot;);</span>
+<span class="fc" id="L381">        int howMany = Math.min(size, _length(_elementsArray));</span>
+<span class="fc bfc" id="L382" title="All 2 branches covered.">        for (int i = 0; i &lt; howMany; i++) {</span>
+<span class="fc" id="L383">            E key = _getAt(i, _elementsArray, _type);</span>
+<span class="fc" id="L384">            sb.append(_toString(key, _type));</span>
+<span class="pc bpc" id="L385" title="1 of 2 branches missed.">            if ( i &lt; howMany - 1 ) {</span>
+<span class="nc" id="L386">                sb.append(&quot;, &quot;);</span>
             }
         }
-<span class="fc" id="L379">        int deltaLeft = size - howMany;</span>
-<span class="fc bfc" id="L380" title="All 2 branches covered.">        if ( deltaLeft &gt; 0 ) {</span>
-<span class="fc bfc" id="L381" title="All 2 branches covered.">            for (ValueSetImpl&lt;E&gt; branch : _branches) {</span>
-<span class="fc bfc" id="L382" title="All 2 branches covered.">                if ( branch != null ) {</span>
-<span class="fc bfc" id="L383" title="All 4 branches covered.">                    if ( deltaLeft &lt; size - howMany || howMany &gt; 0 )</span>
-<span class="fc" id="L384">                        sb.append(&quot;, &quot;);</span>
-<span class="fc" id="L385">                    sb = branch._appendRecursivelyUpTo(sb, deltaLeft);</span>
-<span class="fc" id="L386">                    deltaLeft -= branch.size();</span>
-<span class="fc bfc" id="L387" title="All 2 branches covered.">                    if ( deltaLeft &lt;= 0 ) {</span>
-<span class="fc" id="L388">                        break;</span>
+<span class="fc" id="L389">        int deltaLeft = size - howMany;</span>
+<span class="fc bfc" id="L390" title="All 2 branches covered.">        if ( deltaLeft &gt; 0 ) {</span>
+<span class="fc bfc" id="L391" title="All 2 branches covered.">            for (ValueSetImpl&lt;E&gt; branch : _branches) {</span>
+<span class="fc bfc" id="L392" title="All 2 branches covered.">                if ( branch != null ) {</span>
+<span class="fc bfc" id="L393" title="All 4 branches covered.">                    if ( deltaLeft &lt; size - howMany || howMany &gt; 0 )</span>
+<span class="fc" id="L394">                        sb.append(&quot;, &quot;);</span>
+<span class="fc" id="L395">                    sb = branch._appendRecursivelyUpTo(sb, deltaLeft);</span>
+<span class="fc" id="L396">                    deltaLeft -= branch.size();</span>
+<span class="fc bfc" id="L397" title="All 2 branches covered.">                    if ( deltaLeft &lt;= 0 ) {</span>
+<span class="fc" id="L398">                        break;</span>
                     }
                 }
             }
         }
-<span class="fc" id="L393">        return sb;</span>
+<span class="fc" id="L403">        return sb;</span>
     }
 
     private static String _toString( @Nullable Object singleItem, Class&lt;?&gt; type ) {
-<span class="pc bpc" id="L397" title="1 of 2 branches missed.">        if ( singleItem == null ) {</span>
-<span class="nc" id="L398">            return &quot;null&quot;;</span>
-<span class="fc bfc" id="L399" title="All 2 branches covered.">        } else if ( type == String.class ) {</span>
-<span class="fc" id="L400">            return &quot;\&quot;&quot; + singleItem + &quot;\&quot;&quot;;</span>
-<span class="pc bpc" id="L401" title="1 of 2 branches missed.">        } else if ( type == Character.class ) {</span>
-<span class="nc" id="L402">            return &quot;'&quot; + singleItem + &quot;'&quot;;</span>
-<span class="pc bpc" id="L403" title="1 of 2 branches missed.">        } else if ( type == Boolean.class ) {</span>
-<span class="nc" id="L404">            return singleItem.toString();</span>
+<span class="pc bpc" id="L407" title="1 of 2 branches missed.">        if ( singleItem == null ) {</span>
+<span class="nc" id="L408">            return &quot;null&quot;;</span>
+<span class="fc bfc" id="L409" title="All 2 branches covered.">        } else if ( type == String.class ) {</span>
+<span class="fc" id="L410">            return &quot;\&quot;&quot; + singleItem + &quot;\&quot;&quot;;</span>
+<span class="pc bpc" id="L411" title="1 of 2 branches missed.">        } else if ( type == Character.class ) {</span>
+<span class="nc" id="L412">            return &quot;'&quot; + singleItem + &quot;'&quot;;</span>
+<span class="pc bpc" id="L413" title="1 of 2 branches missed.">        } else if ( type == Boolean.class ) {</span>
+<span class="nc" id="L414">            return singleItem.toString();</span>
         } else {
-<span class="fc" id="L406">            return singleItem.toString();</span>
+<span class="fc" id="L416">            return singleItem.toString();</span>
         }
     }
 
     @Override
     public boolean equals(Object obj) {
-<span class="pc bpc" id="L412" title="1 of 2 branches missed.">        if ( obj == this ) {</span>
-<span class="nc" id="L413">            return true;</span>
+<span class="pc bpc" id="L422" title="1 of 2 branches missed.">        if ( obj == this ) {</span>
+<span class="nc" id="L423">            return true;</span>
         }
-<span class="pc bpc" id="L415" title="1 of 2 branches missed.">        if ( obj instanceof ValueSetImpl) {</span>
-<span class="fc" id="L416">             ValueSetImpl&lt;E&gt; other = (ValueSetImpl) obj;</span>
-<span class="fc bfc" id="L417" title="All 2 branches covered.">            if ( other.size() != this.size() ) {</span>
-<span class="fc" id="L418">                return false;</span>
+<span class="pc bpc" id="L425" title="1 of 2 branches missed.">        if ( obj instanceof ValueSetImpl) {</span>
+<span class="fc" id="L426">             ValueSetImpl&lt;E&gt; other = (ValueSetImpl) obj;</span>
+<span class="fc bfc" id="L427" title="All 2 branches covered.">            if ( other.size() != this.size() ) {</span>
+<span class="fc" id="L428">                return false;</span>
             }
-<span class="fc bfc" id="L420" title="All 2 branches covered.">            for ( E key : this ) {</span>
-<span class="fc" id="L421">                int keyHash = key.hashCode();</span>
-<span class="fc" id="L422">                Object value = this._contains(key, keyHash);</span>
-<span class="pc bpc" id="L423" title="1 of 2 branches missed.">                if ( !Objects.equals(value, other._contains(key, keyHash)) ) {</span>
-<span class="nc" id="L424">                    return false;</span>
+<span class="fc bfc" id="L430" title="All 2 branches covered.">            for ( E key : this ) {</span>
+<span class="fc" id="L431">                int keyHash = key.hashCode();</span>
+<span class="fc" id="L432">                Object value = this._contains(key, keyHash);</span>
+<span class="pc bpc" id="L433" title="1 of 2 branches missed.">                if ( !Objects.equals(value, other._contains(key, keyHash)) ) {</span>
+<span class="nc" id="L434">                    return false;</span>
                 }
-<span class="fc" id="L426">            }</span>
-<span class="fc" id="L427">            return true;</span>
+<span class="fc" id="L436">            }</span>
+<span class="fc" id="L437">            return true;</span>
         }
-<span class="nc" id="L429">        return false;</span>
+<span class="nc" id="L439">        return false;</span>
     }
 
     @Override
     public int hashCode() {
-<span class="fc" id="L434">        return Long.hashCode(_recursiveHashCode());</span>
+<span class="fc" id="L444">        return Long.hashCode(_recursiveHashCode());</span>
     }
 
     private long _recursiveHashCode() {
-<span class="fc" id="L438">        long baseHash = 0; // -&gt; full 64 bit improve hash distribution</span>
-<span class="fc bfc" id="L439" title="All 2 branches covered.">        for ( int elementsHash : _elementsHashes ) {</span>
-<span class="fc" id="L440">            baseHash += elementsHash * PRIME_1; // -&gt; we try to expand to all 64 bits in the long</span>
+<span class="fc" id="L448">        long baseHash = 0; // -&gt; full 64 bit improve hash distribution</span>
+<span class="fc bfc" id="L449" title="All 2 branches covered.">        for ( int elementsHash : _elementsHashes ) {</span>
+<span class="fc" id="L450">            baseHash += elementsHash * PRIME_1; // -&gt; we try to expand to all 64 bits in the long</span>
         }
-<span class="fc bfc" id="L442" title="All 2 branches covered.">        for (ValueSetImpl&lt;E&gt; branch : _branches) {</span>
-<span class="fc bfc" id="L443" title="All 2 branches covered.">            if ( branch != null ) {</span>
-<span class="fc" id="L444">                baseHash += branch._recursiveHashCode();</span>
+<span class="fc bfc" id="L452" title="All 2 branches covered.">        for (ValueSetImpl&lt;E&gt; branch : _branches) {</span>
+<span class="fc bfc" id="L453" title="All 2 branches covered.">            if ( branch != null ) {</span>
+<span class="fc" id="L454">                baseHash += branch._recursiveHashCode();</span>
             }
         }
-<span class="fc" id="L447">        return baseHash;</span>
+<span class="fc" id="L457">        return baseHash;</span>
+    }
+
+    // A helper class to keep track of our position in a node.
+    static final class IteratorFrame&lt;E&gt; {
+        final @Nullable IteratorFrame&lt;E&gt; parent;
+        final ValueSetImpl&lt;E&gt; node;
+        final int arrayLength;   // Total entries in the node's arrays
+        final int branchesLength; // Total branches in the node
+        int arrayIndex;    // Next index in the elements/values arrays
+        int branchIndex;   // Next branch index to check
+
+<span class="fc" id="L469">        IteratorFrame(@Nullable IteratorFrame&lt;E&gt; parent, ValueSetImpl&lt;E&gt; node) {</span>
+<span class="fc" id="L470">            this.parent = parent;</span>
+<span class="fc" id="L471">            this.node = node;</span>
+<span class="fc" id="L472">            this.arrayLength = _length(node._elementsArray);</span>
+<span class="fc" id="L473">            this.branchesLength = node._branches.length;</span>
+<span class="fc" id="L474">            this.arrayIndex = 0;</span>
+<span class="fc" id="L475">            this.branchIndex = 0;</span>
+<span class="fc" id="L476">        }</span>
+    }
+
+    @Override
+    public Spliterator&lt;E&gt; spliterator() {
+<span class="fc" id="L481">        return Spliterators.spliterator(iterator(), _size,</span>
+                Spliterator.DISTINCT |
+                Spliterator.SIZED    |
+                Spliterator.SUBSIZED |
+                Spliterator.NONNULL  |
+                Spliterator.IMMUTABLE
+        );
     }
 
     @Override
     public Iterator&lt;E&gt; iterator() {
-<span class="fc" id="L452">        return new Iterator&lt;E&gt;() {</span>
-
-            // A helper class to keep track of our position in a node.
-            class NodeState {
-                final ValueSetImpl&lt;E&gt; node;
-                int arrayIndex;    // Next index in the elements/values arrays
-                int branchIndex;   // Next branch index to check
-                final int arrayLength;   // Total entries in the node's arrays
-                final int branchesLength; // Total branches in the node
-
-<span class="fc" id="L462">                NodeState(ValueSetImpl&lt;E&gt; node) {</span>
-<span class="fc" id="L463">                    this.node = node;</span>
-<span class="fc" id="L464">                    this.arrayIndex = 0;</span>
-<span class="fc" id="L465">                    this.branchIndex = 0;</span>
-<span class="fc" id="L466">                    this.arrayLength = _length(node._elementsArray);</span>
-<span class="fc" id="L467">                    this.branchesLength = node._branches.length;</span>
-<span class="fc" id="L468">                }</span>
-            }
-
+<span class="fc" id="L492">        return new Iterator&lt;E&gt;() {</span>
             // Use a stack to perform depth-first traversal.
-<span class="fc" id="L472">            private final Deque&lt;NodeState&gt; stack = new ArrayDeque&lt;&gt;();</span>
-
+<span class="fc" id="L494">            private @Nullable IteratorFrame&lt;E&gt; currentFrame = null;</span>
             {
                 // Initialize with this node if there is at least one element.
-<span class="fc bfc" id="L476" title="All 2 branches covered.">                if (_size &gt; 0) {</span>
-<span class="fc" id="L477">                    stack.push(new NodeState(ValueSetImpl.this));</span>
+<span class="fc bfc" id="L497" title="All 2 branches covered.">                if (_size &gt; 0) {</span>
+<span class="fc" id="L498">                    currentFrame = new IteratorFrame&lt;&gt;(null, ValueSetImpl.this);</span>
                 }
-<span class="fc" id="L479">            }</span>
+<span class="fc" id="L500">            }</span>
 
             @Override
             public boolean hasNext() {
                 // Loop until we find a node state with an unvisited entry or the stack is empty.
-<span class="fc bfc" id="L484" title="All 2 branches covered.">                while (!stack.isEmpty()) {</span>
-<span class="fc" id="L485">                    NodeState current = stack.peek();</span>
-
+<span class="fc bfc" id="L505" title="All 2 branches covered.">                while ( currentFrame != null ) {</span>
                     // If there is a key-value pair left in the current node, we're done.
-<span class="fc bfc" id="L488" title="All 2 branches covered.">                    if (current.arrayIndex &lt; current.arrayLength) {</span>
-<span class="fc" id="L489">                        return true;</span>
+<span class="fc bfc" id="L507" title="All 2 branches covered.">                    if (currentFrame.arrayIndex &lt; currentFrame.arrayLength) {</span>
+<span class="fc" id="L508">                        return true;</span>
                     }
 
                     // Otherwise, check for non-null branches to traverse.
-<span class="fc bfc" id="L493" title="All 2 branches covered.">                    if (current.branchIndex &lt; current.branchesLength) {</span>
+<span class="fc bfc" id="L512" title="All 2 branches covered.">                    if (currentFrame.branchIndex &lt; currentFrame.branchesLength) {</span>
                         // Look for the next branch.
-<span class="fc bfc" id="L495" title="All 2 branches covered.">                        while (current.branchIndex &lt; current.branchesLength) {</span>
-<span class="fc" id="L496">                            ValueSetImpl&lt;E&gt; branch = current.node._branches[current.branchIndex];</span>
-<span class="fc" id="L497">                            current.branchIndex++;</span>
-<span class="pc bpc" id="L498" title="1 of 4 branches missed.">                            if (branch != null &amp;&amp; branch._size &gt; 0) {</span>
+<span class="fc bfc" id="L514" title="All 2 branches covered.">                        while (currentFrame.branchIndex &lt; currentFrame.branchesLength) {</span>
+<span class="fc" id="L515">                            ValueSetImpl&lt;E&gt; branch = currentFrame.node._branches[currentFrame.branchIndex];</span>
+<span class="fc" id="L516">                            currentFrame.branchIndex++;</span>
+<span class="pc bpc" id="L517" title="1 of 4 branches missed.">                            if (branch != null &amp;&amp; branch._size &gt; 0) {</span>
                                 // Found a non-empty branch: push its state on the stack.
-<span class="fc" id="L500">                                stack.push(new NodeState(branch));</span>
-<span class="fc" id="L501">                                break;</span>
+<span class="fc" id="L519">                                currentFrame = new IteratorFrame(currentFrame, branch);</span>
+<span class="fc" id="L520">                                break;</span>
                             }
-<span class="fc" id="L503">                        }</span>
+<span class="fc" id="L522">                        }</span>
                         // Continue the while loop: now the top of the stack may have entries.
                         continue;
                     }
 
                     // If no more entries or branches are left in the current node, pop it.
-<span class="fc" id="L509">                    stack.pop();</span>
-<span class="fc" id="L510">                }</span>
-<span class="fc" id="L511">                return false;</span>
+<span class="fc" id="L528">                    currentFrame = currentFrame.parent;</span>
+                }
+<span class="fc" id="L530">                return false;</span>
             }
 
             @Override
             public E next() {
-<span class="pc bpc" id="L516" title="1 of 2 branches missed.">                if (!hasNext()) {</span>
-<span class="nc" id="L517">                    throw new NoSuchElementException();</span>
+<span class="pc bpc" id="L535" title="2 of 4 branches missed.">                if (!hasNext() || currentFrame == null) {</span>
+<span class="nc" id="L536">                    throw new NoSuchElementException();</span>
                 }
-<span class="fc" id="L519">                NodeState current = stack.peek();</span>
                 // Retrieve the key and value at the current position.
-<span class="fc" id="L521">                E key = _getAt(current.arrayIndex, current.node._elementsArray, current.node._type);</span>
-<span class="fc" id="L522">                Objects.requireNonNull(key);</span>
-<span class="fc" id="L523">                current.arrayIndex++;</span>
-<span class="fc" id="L524">                return key;</span>
+                @SuppressWarnings(&quot;unchecked&quot;)
+<span class="fc" id="L540">                E key = (E) _getAt(currentFrame.arrayIndex, currentFrame.node._elementsArray);</span>
+<span class="fc" id="L541">                currentFrame.arrayIndex++;</span>
+<span class="fc" id="L542">                return Objects.requireNonNull(key);</span>
             }
 
             @Override
             public void remove() {
-<span class="nc" id="L529">                throw new UnsupportedOperationException();</span>
+<span class="nc" id="L547">                throw new UnsupportedOperationException();</span>
             }
         };
     }
