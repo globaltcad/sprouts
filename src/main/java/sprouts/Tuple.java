@@ -508,7 +508,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
 
     /**
      *  Check if the value of the supplied {@link Maybe} is wrapped by any of the items in this tuple.
-     *  This is functionally equivalent to {@code indexOf({@link Maybe}) != -1}.
+     *  This is functionally equivalent to {@code indexOf(Maybe) != -1}.
      *
      * @param value The value {@link Maybe} to search for.
      * @return True if the given {@link Maybe} is in this tuple.

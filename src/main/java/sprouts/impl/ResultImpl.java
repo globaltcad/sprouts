@@ -28,6 +28,7 @@ final class ResultImpl<V> implements Result<V>
 	}
 
 	/** {@inheritDoc} */
+	@Override
 	public @NonNull V orElseThrow() throws MissingItemException {
 		// If the value is null, this throws a checked exception!
 		V value = orElseNull();
@@ -36,6 +37,7 @@ final class ResultImpl<V> implements Result<V>
 		return value;
 	}
 
+	@Override
 	public @NonNull V orElseThrowUnchecked() {
 		// This is similar to optionals "get()", so if the value is null, we throw a unchecked exception!
 		V value = orElseNull();
