@@ -41,18 +41,25 @@ import java.util.function.BiFunction;
 public interface Viewable<T> extends Val<T>, Observable {
 
     /**
+     *  Casts the given {@link Val} instance to a {@link Viewable} instance usually with the
+     *  purpose of registering change listeners on it.<br>
+     *  <b>WARNING: Only call this method in a class constructor with
+     *  a property which is also a member variable of that class.
+     *  Otherwise, you are risking memory leaks.</b><br>
+     *  <p>
      *  Regular properties, created from the various factory methods in {@link Val} and {@link Var},
      *  (may) also implement the {@link Viewable} interface internally. <br>
      *  Although {@link Val} and {@link Var} do not extend {@link Viewable} directly,
-     *  you may cast them to a {@link Viewable} to get access to the {@link Viewable} API.<br>
+     *  you may cast them to a {@link Viewable} to get access to the {@link Viewable} API,
+     *  and then register change listeners onto it.<br>
+     *  These will be called whenever the item in the {@link Val} or {@link Var} changes,
+     *  through the {@code Var::set(Channel, T)} method.<br>
      *  <p>
-     *  This method is a convenience method which allows you to cast
-     *  the given {@link Val} instance to a {@link Viewable}.<br>
-     *  The main intention of this method is to allow you to register change listeners
-     *  on the given {@link Val} instance, which will be called whenever the item
-     *  viewed by this {@link Viewable} changes through the {@code Var::set(Channel, T)} method.<br>
+     *  Casting, however, is a bit of a hack, and it is not recommended to use this method
+     *  anywhere else than in a class constructor, because otherwise it is hard to reason about
+     *  how many change listeners are registered on a property and what they capture.
      *  <p><b>
-     *      WARNING:
+     *      This is problematic because:<br>
      *      The change listeners registered on the cast property will not
      *      be garbage collected automatically. You must remove them manually
      *      when no longer needed. <br>
