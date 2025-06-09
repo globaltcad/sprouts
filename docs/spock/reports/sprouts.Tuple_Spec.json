@@ -1,10 +1,10 @@
 {
   "className":"sprouts.Tuple_Spec",
-  "title":"Tuples for Functional Programming",
-  "narrative":"Functional programming is a core concept in Sprouts,\n    which is why we provide the `Tuple` type representing\n    an immutable array of elements which can be transformed\n    and filtered in a functional way.",
+  "title":"Tuple - a Data Oriented Array",
+  "narrative":"Data Oriented programming is a core concept in Sprouts,\n    which is why we provide the `Tuple` type representing\n    an immutable array of elements with proper value semantics.\n    It can also be transformed and filtered in a functional way.\n\n    When modelling value objects, like for example, by declaring\n    records, then we recommend to use the `Tuple` type\n    over of a Java array or a JDK List, because our tuple\n    has better value semantics, immutability guarantees,\n    and it is way more efficient than a Java List.",
   "subjects":["sprouts.Tuple"],
   "statistics":{
-    "runs":"260",
+    "runs":"268",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -31,6 +31,14 @@
 
         {"kind":"then","text":"It is still invariant!","code":["tuple.size() == referenceList.size()","tuple.toList() == referenceList"]},
 
+        {"kind":"when","text":"We use the stream API to map both the tuple and the reference list.","code":["var mappedTuple = tuple.stream().map({ it.toUpperCase() + \"!\" }).filter({ it.hashCode() % 2 == 0 }).collect(Tuple.collectorOf(String.class))","var mappedList = referenceList.stream().map({ it.toUpperCase() + \"!\" }).filter({ it.hashCode() % 2 == 0 }).collect(Collectors.toList())"]},
+
+        {"kind":"then","text":"The mapped tuple and list are equal.","code":["mappedTuple.toList() == mappedList"]},
+
+        {"kind":"when","text":"We use the parallel stream API to map both the tuple and the reference list.","code":["var mappedTupleParallel = tuple.parallelStream().map({ it.toUpperCase() + \"!\" }).filter({ it.hashCode() % 2 == 0 }).collect(Tuple.collectorOf(String.class))","var mappedListParallel = referenceList.parallelStream().map({ it.toUpperCase() + \"!\" }).filter({ it.hashCode() % 2 == 0 }).collect(Collectors.toList())"]},
+
+        {"kind":"then","text":"The mapped tuple and list are equal.","code":["mappedTupleParallel.toList() == mappedListParallel"]},
+
         {"kind":"where","text":"","code":{"operations":["new Tuple2(Operation.ADD, \"apple\"),\n            new Tuple2(Operation.ADD, \"banana\"),\n            new Tuple2(Operation.ADD, \"cherry\"),\n            new Tuple2(Operation.REMOVE, \"apple\"),\n            new Tuple2(Operation.REMOVE, \"banana\"),\n            new Tuple2(Operation.SLICE_AND_ADD, \"\"),\n            new Tuple2(Operation.SET, \"kiwi\"),\n            new Tuple2(Operation.SET, \"pear\"),\n            new Tuple2(Operation.ADD, \"grape\"),\n            new Tuple2(Operation.ADD, \"orange\"),\n            new Tuple2(Operation.SLICE_AND_ADD, \"\"),\n            new Tuple2(Operation.REMOVE, \"berry\"),\n        ]","(-100..100).collect {\n            new Tuple2(\n                Operation.values()Math.abs(new Random(it).nextInt() % Operation.values().length)],\n                \"element-\"+Math.abs(new Random(it).nextInt() % 500)\n            )\n        }","(0..300).collect {\n            new Tuple2(\n                    Operation.values()Math.abs(new Random(it).nextInt() % Operation.values().length)],\n                    \"element-\"+Math.abs(new Random(it).nextInt() % 500)\n            )\n        }"]}}
       ],
       "problems":{"dataValues":[], "errors":[]}
@@ -54,6 +62,14 @@
 
         {"kind":"then","text":"It is still invariant!","code":["tuple.size() == referenceList.size()","tuple.toList() == referenceList"]},
 
+        {"kind":"when","text":"We use the stream API to map both the tuple and the reference list.","code":["var mappedTuple = tuple.stream().map({ it.toUpperCase() + \"!\" }).filter({ it.hashCode() % 2 == 0 }).collect(Tuple.collectorOf(String.class))","var mappedList = referenceList.stream().map({ it.toUpperCase() + \"!\" }).filter({ it.hashCode() % 2 == 0 }).collect(Collectors.toList())"]},
+
+        {"kind":"then","text":"The mapped tuple and list are equal.","code":["mappedTuple.toList() == mappedList"]},
+
+        {"kind":"when","text":"We use the parallel stream API to map both the tuple and the reference list.","code":["var mappedTupleParallel = tuple.parallelStream().map({ it.toUpperCase() + \"!\" }).filter({ it.hashCode() % 2 == 0 }).collect(Tuple.collectorOf(String.class))","var mappedListParallel = referenceList.parallelStream().map({ it.toUpperCase() + \"!\" }).filter({ it.hashCode() % 2 == 0 }).collect(Collectors.toList())"]},
+
+        {"kind":"then","text":"The mapped tuple and list are equal.","code":["mappedTupleParallel.toList() == mappedListParallel"]},
+
         {"kind":"where","text":"","code":{"operations":["new Tuple2(Operation.ADD, \"apple\"),\n            new Tuple2(Operation.ADD, \"banana\"),\n            new Tuple2(Operation.ADD, \"cherry\"),\n            new Tuple2(Operation.REMOVE, \"apple\"),\n            new Tuple2(Operation.REMOVE, \"banana\"),\n            new Tuple2(Operation.SLICE_AND_ADD, \"\"),\n            new Tuple2(Operation.SET, \"kiwi\"),\n            new Tuple2(Operation.SET, \"pear\"),\n            new Tuple2(Operation.ADD, \"grape\"),\n            new Tuple2(Operation.ADD, \"orange\"),\n            new Tuple2(Operation.SLICE_AND_ADD, \"\"),\n            new Tuple2(Operation.REMOVE, \"berry\"),\n        ]","(-100..100).collect {\n            new Tuple2(\n                Operation.values()Math.abs(new Random(it).nextInt() % Operation.values().length)],\n                \"element-\"+Math.abs(new Random(it).nextInt() % 500)\n            )\n        }","(0..300).collect {\n            new Tuple2(\n                    Operation.values()Math.abs(new Random(it).nextInt() % Operation.values().length)],\n                    \"element-\"+Math.abs(new Random(it).nextInt() % 500)\n            )\n        }"]}}
       ],
       "problems":{"dataValues":[], "errors":[]}
@@ -76,6 +92,14 @@
         {"kind":"when","text":"Apply operations multiple times","code":["5.times { tuple = operationsApplier(tuple) }"]},
 
         {"kind":"then","text":"It is still invariant!","code":["tuple.size() == referenceList.size()","tuple.toList() == referenceList"]},
+
+        {"kind":"when","text":"We use the stream API to map both the tuple and the reference list.","code":["var mappedTuple = tuple.stream().map({ it.toUpperCase() + \"!\" }).filter({ it.hashCode() % 2 == 0 }).collect(Tuple.collectorOf(String.class))","var mappedList = referenceList.stream().map({ it.toUpperCase() + \"!\" }).filter({ it.hashCode() % 2 == 0 }).collect(Collectors.toList())"]},
+
+        {"kind":"then","text":"The mapped tuple and list are equal.","code":["mappedTuple.toList() == mappedList"]},
+
+        {"kind":"when","text":"We use the parallel stream API to map both the tuple and the reference list.","code":["var mappedTupleParallel = tuple.parallelStream().map({ it.toUpperCase() + \"!\" }).filter({ it.hashCode() % 2 == 0 }).collect(Tuple.collectorOf(String.class))","var mappedListParallel = referenceList.parallelStream().map({ it.toUpperCase() + \"!\" }).filter({ it.hashCode() % 2 == 0 }).collect(Collectors.toList())"]},
+
+        {"kind":"then","text":"The mapped tuple and list are equal.","code":["mappedTupleParallel.toList() == mappedListParallel"]},
 
         {"kind":"where","text":"","code":{"operations":["new Tuple2(Operation.ADD, \"apple\"),\n            new Tuple2(Operation.ADD, \"banana\"),\n            new Tuple2(Operation.ADD, \"cherry\"),\n            new Tuple2(Operation.REMOVE, \"apple\"),\n            new Tuple2(Operation.REMOVE, \"banana\"),\n            new Tuple2(Operation.SLICE_AND_ADD, \"\"),\n            new Tuple2(Operation.SET, \"kiwi\"),\n            new Tuple2(Operation.SET, \"pear\"),\n            new Tuple2(Operation.ADD, \"grape\"),\n            new Tuple2(Operation.ADD, \"orange\"),\n            new Tuple2(Operation.SLICE_AND_ADD, \"\"),\n            new Tuple2(Operation.REMOVE, \"berry\"),\n        ]","(-100..100).collect {\n            new Tuple2(\n                Operation.values()Math.abs(new Random(it).nextInt() % Operation.values().length)],\n                \"element-\"+Math.abs(new Random(it).nextInt() % 500)\n            )\n        }","(0..300).collect {\n            new Tuple2(\n                    Operation.values()Math.abs(new Random(it).nextInt() % Operation.values().length)],\n                    \"element-\"+Math.abs(new Random(it).nextInt() % 500)\n            )\n        }"]}}
       ],
@@ -5211,6 +5235,208 @@
         {"kind":"when","text":"We set the items at index 2.","code":["words = words.setAt(2, 2, \"very\")"]},
 
         {"kind":"then","text":"The items were set at the given index.","code":["words == Tuple.of(\"Education\", \"is\", \"very\", \"very\", \"important\")"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The string representation of a tuple with more than 10 items is truncated.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"A tuple with more than 10 items.","code":["var tuple = Tuple.of(Byte, (-8..8).collect { it as byte })"]},
+
+        {"kind":"when","text":"We convert the tuple to a string.","code":["var asString = tuple.toString()"]},
+
+        {"kind":"then","text":"The string representation is truncated to 10 items.","code":["asString == \"Tuple<Byte>[-8, -7, -6, -5, -4, -3, -2, -1, 0, 1, ... 7 items left]\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The Tuple type supports holding `null` values when using `Tuple.ofNullable`.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"A `Character` variable explicitly set to null:","code":["Character iAmNull = null"]},
+
+        {"kind":"and","text":"We create a tuple from that single `null` item.","code":["var tuple = Tuple.ofNullable(Character, (Character)iAmNull)"]},
+
+        {"kind":"expect","text":"The tuple has a single `null` item and allows nulls.","code":["tuple.size() == 1","tuple.get(0) == null","tuple.allowsNull()","tuple.type() == Character"]},
+
+        {"kind":"when","text":"We add a non-null item to the tuple.","code":["tuple = tuple.add('A' as char)"]},
+
+        {"kind":"then","text":"The tuple now has two items, one of which is `null`.","code":["tuple.size() == 2","tuple.get(0) == null","tuple.get(1) == 'A' as char"]},
+
+        {"kind":"when","text":"We add another `null` item to the tuple.","code":["tuple = tuple.add(null)"]},
+
+        {"kind":"then","text":"The tuple now has three items, two of which are `null`.","code":["tuple.size() == 3","tuple.get(0) == null","tuple.get(1) == 'A' as char","tuple.get(2) == null"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"We can create a tuple from an array of primitive floats, and then update it.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            In order to be as fast and memory efficient as possible, the `Tuple` type is \n            also designed to function as a thin wrapper around arrays of primitive types.<br>\n            This means that when you construct a tuple using `Tuple.of(float[])`,\n            then the returned tuple will be backed by a single array of primitive floats,\n            which is a simple clone of the original array.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"An array of primitive floats and a clone of it.","code":["float[] original = (-500f..500f).collect({it/25f}) as float[]","float[] floats = original.clone()"]},
+
+        {"kind":"and","text":"We create a tuple from the array.","code":["var tuple = Tuple.of(original)"]},
+
+        {"kind":"expect","text":"The tuple has the expected size and contents.","code":["tuple.size() == original.length","tuple.toList() == original.toList()"]},
+
+        {"kind":"when","text":"We try to violate the immutability of the tuple by modifying the original array.","code":["floats.length.times {  original[it] = Float.NaN }"]},
+
+        {"kind":"then","text":"The tuple is not affected by the change to the original array.","code":["tuple.none { it == Float.NaN }"]},
+
+        {"kind":"when","text":"We update the tuple by removing a range of items.","code":["tuple = tuple.removeRange(50, 150)"]},
+
+        {"kind":"then","text":"The tuple has the expected size and contents after the removal.","code":["tuple.size() == 901","tuple.toList() == floats[0..49] + floats[150..-1] as List<Float>"]},
+
+        {"kind":"when","text":"We update the tuple by adding a range of items.","code":["tuple = tuple.addAllAt(50, 1000f, 1001f, 1002f)"]},
+
+        {"kind":"then","text":"The tuple has the expected size and contents after the addition.","code":["tuple.size() == 904","tuple.toList() == (floats[0..49] + [1000f, 1001f, 1002f] + floats[150..-1]) as List<Float>"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"We can create a tuple from an array of primitive doubles, and then update it.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            In order to be as fast and memory efficient as possible, the `Tuple` type is \n            also designed to function as a thin wrapper around arrays of primitive types.<br>\n            This means that when you construct a tuple using `Tuple.of(double[])`,\n            then the returned tuple will be backed by a single array of primitive doubles,\n            which is a simple clone of the original array.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"An array of primitive doubles and a clone of the array.","code":["double[] original = (-500d..500d).collect({it/25d}) as double[]","double[] doubles = original.clone()"]},
+
+        {"kind":"and","text":"We create a tuple from the array.","code":["var tuple = Tuple.of(original)"]},
+
+        {"kind":"expect","text":"The tuple has the expected size and contents.","code":["tuple.size() == doubles.length","tuple.toList() == doubles.toList()"]},
+
+        {"kind":"when","text":"We try to violate the immutability of the tuple by modifying the original array.","code":["doubles.length.times {  original[it] = Double.NaN }"]},
+
+        {"kind":"then","text":"The tuple is not affected by the change to the original array.","code":["tuple.none { it == Double.NaN }"]},
+
+        {"kind":"when","text":"We update the tuple by removing a range of items.","code":["tuple = tuple.removeRange(50, 150)"]},
+
+        {"kind":"then","text":"The tuple has the expected size and contents after the removal.","code":["tuple.size() == 901","tuple.toList() == doubles[0..49] + doubles[150..-1] as List<Double>"]},
+
+        {"kind":"when","text":"We update the tuple by adding a range of items.","code":["tuple = tuple.addAllAt(50, 1000d, 1001d, 1002d)"]},
+
+        {"kind":"then","text":"The tuple has the expected size and contents after the addition.","code":["tuple.size() == 904","tuple.toList() == (doubles[0..49] + [1000d, 1001d, 1002d] + doubles[150..-1]) as List<Double>"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"We can create a tuple from an array of primitive ints, and then update it.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            In order to be as fast and memory efficient as possible, the `Tuple` type is \n            also designed to function as a thin wrapper around arrays of primitive types.<br>\n            This means that when you construct a tuple using `Tuple.of(int[])`,\n            then the returned tuple will be backed by a single array of primitive ints,\n            which is a simple clone of the original array.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"An array of primitive ints and its clone.","code":["int[] original = (-500..500) as int[]","int[] ints = original.clone()"]},
+
+        {"kind":"and","text":"We create a tuple from the array.","code":["var tuple = Tuple.of(ints)"]},
+
+        {"kind":"expect","text":"The tuple has the expected size and contents.","code":["tuple.size() == ints.length","tuple.toList() == ints.toList()"]},
+
+        {"kind":"when","text":"We try to violate the immutability of the tuple by modifying the original array.","code":["ints.length.times { original[it] = Integer.MIN_VALUE }"]},
+
+        {"kind":"then","text":"The tuple is not affected by the change to the original array.","code":["tuple.none { it == Integer.MIN_VALUE }"]},
+
+        {"kind":"when","text":"We update the tuple by removing a range of items.","code":["tuple = tuple.removeRange(50, 150)"]},
+
+        {"kind":"then","text":"The tuple has the expected size and contents after the removal.","code":["tuple.size() == 901","tuple.toList() == ints[0..49] + ints[150..-1] as List<Integer>"]},
+
+        {"kind":"when","text":"We update the tuple by adding a range of items.","code":["tuple = tuple.addAllAt(50, 1000, 1001, 1002)"]},
+
+        {"kind":"then","text":"The tuple has the expected size and contents after the addition.","code":["tuple.size() == 904","tuple.toList() == (ints[0..49] + [1000, 1001, 1002] + ints[150..-1]) as List<Integer>"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"We can create a tuple from an array of primitive bytes, and then update it.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            In order to be as fast and memory efficient as possible, the `Tuple` type is \n            also designed to function as a thin wrapper around arrays of primitive types.<br>\n            This means that when you construct a tuple using `Tuple.of(byte[])`,\n            then the returned tuple will be backed by a single array of primitive bytes,\n            which is a simple clone of the original array.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"An array of primitive bytes.","code":["byte[] bytes = (-500..500).collect { it as byte } as byte[]"]},
+
+        {"kind":"and","text":"We create a tuple from the array.","code":["var tuple = Tuple.of(bytes)"]},
+
+        {"kind":"expect","text":"The tuple has the expected size and contents.","code":["tuple.size() == bytes.length","tuple.toList() == bytes.toList()"]},
+
+        {"kind":"when","text":"We update the tuple by removing a range of items.","code":["tuple = tuple.removeRange(50, 150)"]},
+
+        {"kind":"then","text":"The tuple has the expected size and contents after the removal.","code":["tuple.size() == 901","tuple.toList() == bytes[0..49] + bytes[150..-1] as List<Byte>"]},
+
+        {"kind":"when","text":"We update the tuple by adding a range of items.","code":["tuple = tuple.addAllAt(50, 1000 as byte, 1001 as byte, 1002 as byte)"]},
+
+        {"kind":"then","text":"The tuple has the expected size and contents after the addition.","code":["tuple.size() == 904","tuple.toList() == (bytes[0..49] + [1000 as byte, 1001 as byte, 1002 as byte] + bytes[150..-1]) as List<Byte>"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"We can create a tuple from an array of primitive longs, and then update it.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            In order to be as fast and memory efficient as possible, the `Tuple` type is \n            also designed to function as a thin wrapper around arrays of primitive types.<br>\n            This means that when you construct a tuple using `Tuple.of(long[])`,\n            then the returned tuple will be backed by a single array of primitive longs,\n            which is a simple clone of the original array.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"An array of primitive longs.","code":["long[] longs = (-500L..500L) as long[]"]},
+
+        {"kind":"and","text":"We create a tuple from the array.","code":["var tuple = Tuple.of(longs)"]},
+
+        {"kind":"expect","text":"The tuple has the expected size and contents.","code":["tuple.size() == longs.length","tuple.toList() == longs.toList()"]},
+
+        {"kind":"when","text":"We update the tuple by removing a range of items.","code":["tuple = tuple.removeRange(50, 150)"]},
+
+        {"kind":"then","text":"The tuple has the expected size and contents after the removal.","code":["tuple.size() == 901","tuple.toList() == longs[0..49] + longs[150..-1] as List<Long>"]},
+
+        {"kind":"when","text":"We update the tuple by adding a range of items.","code":["tuple = tuple.addAllAt(50, 1000L, 1001L, 1002L)"]},
+
+        {"kind":"then","text":"The tuple has the expected size and contents after the addition.","code":["tuple.size() == 904","tuple.toList() == (longs[0..49] + [1000L, 1001L, 1002L] + longs[150..-1]) as List<Long>"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Two tuple instances are equal even if they were created and transformed separately.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `Tuple` class is designed to have robust\n            value equality semantics.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two tuples with the same contents.","code":["var tuple1 = Tuple.of(Integer, 1, 2, 3, 4, 5)","var tuple2 = Tuple.of(1, 2, 3, 4, 5)"]},
+
+        {"kind":"expect","text":"The two tuples are equal.","code":["tuple1 == tuple2","tuple1.hashCode() == tuple2.hashCode()"]},
+
+        {"kind":"when","text":"We transform the first tuple by adding an item.","code":["tuple1 = tuple1.add(6)"]},
+
+        {"kind":"then","text":"The two tuples are no longer equal.","code":["tuple1 != tuple2","tuple1.hashCode() != tuple2.hashCode()"]},
+
+        {"kind":"when","text":"We transform the second tuple by adding the same item.","code":["tuple2 = tuple2.add(6)"]},
+
+        {"kind":"then","text":"The two tuples are now equal again.","code":["tuple1 == tuple2","tuple1.hashCode() == tuple2.hashCode()"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }

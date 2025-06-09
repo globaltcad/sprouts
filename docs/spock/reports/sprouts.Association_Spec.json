@@ -1,10 +1,10 @@
 {
   "className":"sprouts.Association_Spec",
-  "title":"Associations",
+  "title":"Association - a Data Oriented Map",
   "narrative":"Sprouts is a property library with a heavy focus on bridging the\n    gap between classical place oriented programming and modern\n    data oriented programming.\n    This is why sprouts has both the `Tuple` and `Association` classes.\n    The `Association` class is a value object that represents a set of\n    key-value pairs. You can think of it as an immutable map, but with\n    an API that is designed around transforming the data in the map\n    rather than mutating it.",
   "subjects":["sprouts.Association"],
   "statistics":{
-    "runs":"58",
+    "runs":"59",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -23,7 +23,7 @@
       "blocks":[
         {"kind":"given","text":"","code":["var associations = Association.between(String, Integer)"]},
 
-        {"kind":"expect","text":"","code":["associations.isEmpty()","associations.keyType() == String","associations.valueType() == Integer"]}
+        {"kind":"expect","text":"","code":["!associations.isSorted()","associations.isEmpty()","associations.keyType() == String","associations.valueType() == Integer"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -51,6 +51,16 @@
         {"kind":"when","text":"We use the `toMap()` method to convert the association to a map.","code":["var convertedMap = associations.toMap()"]},
 
         {"kind":"then","text":"The converted map is equal to the reference map.","code":["convertedMap == map"]},
+
+        {"kind":"when","text":"We use the stream API to map both the association and the reference map.","code":["var mappedAssociation = associations.entrySet().stream().map({ it.withFirst(it.first().toUpperCase() + \"!\") }).filter({ it.hashCode() % 2 == 0 }).collect(Association.collectorOf(String, String))","var mappedMap = map.entrySet().stream().map({ Pair.of(it.key.toUpperCase() + \"!\", it.value) }).filter({ it.hashCode() % 2 == 0 }).collect(Collectors.toMap({it.first()}, {it.second()}))"]},
+
+        {"kind":"then","text":"The mapped association and map are equal.","code":["mappedAssociation.toMap() == mappedMap"]},
+
+        {"kind":"when","text":"We use the parallel stream API to map both the association and the reference map.","code":["var mappedAssociationParallel = associations.entrySet().parallelStream().map({ it.withFirst(it.first().toUpperCase() + \"!\") }).filter({ it.hashCode() % 2 == 0 }).collect(Association.collectorOf(String, String))","var mappedMapParallel = map.entrySet().parallelStream().map({ Pair.of(it.key.toUpperCase() + \"!\", it.value) }).filter({ it.hashCode() % 2 == 0 }).collect(Collectors.toMap({it.first()}, {it.second()}))"]},
+
+        {"kind":"then","text":"The mapped association and map are equal in terms of their contents.","code":["mappedAssociationParallel.toMap() == mappedMapParallel"]},
+
+        {"kind":"and","text":"Finally, we also check the `isSorted()` flag:","code":["!associations.isSorted()"]},
 
         {"kind":"where","text":"","code":{"operations":["new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c')\n        ]","new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","(0..100).collect({\n            var hash = Math.abs((139 * (90 + it.hashCode())) % 100)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..1_000).collect({\n            var hash = Math.abs((31 * 139 * (500 + it.hashCode())) % 1_000)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..5_000).collect({\n            var hash = Math.abs(it % 2_000)\n            var operation = it > 2_000 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })"]}}
       ],
@@ -81,6 +91,16 @@
 
         {"kind":"then","text":"The converted map is equal to the reference map.","code":["convertedMap == map"]},
 
+        {"kind":"when","text":"We use the stream API to map both the association and the reference map.","code":["var mappedAssociation = associations.entrySet().stream().map({ it.withFirst(it.first().toUpperCase() + \"!\") }).filter({ it.hashCode() % 2 == 0 }).collect(Association.collectorOf(String, String))","var mappedMap = map.entrySet().stream().map({ Pair.of(it.key.toUpperCase() + \"!\", it.value) }).filter({ it.hashCode() % 2 == 0 }).collect(Collectors.toMap({it.first()}, {it.second()}))"]},
+
+        {"kind":"then","text":"The mapped association and map are equal.","code":["mappedAssociation.toMap() == mappedMap"]},
+
+        {"kind":"when","text":"We use the parallel stream API to map both the association and the reference map.","code":["var mappedAssociationParallel = associations.entrySet().parallelStream().map({ it.withFirst(it.first().toUpperCase() + \"!\") }).filter({ it.hashCode() % 2 == 0 }).collect(Association.collectorOf(String, String))","var mappedMapParallel = map.entrySet().parallelStream().map({ Pair.of(it.key.toUpperCase() + \"!\", it.value) }).filter({ it.hashCode() % 2 == 0 }).collect(Collectors.toMap({it.first()}, {it.second()}))"]},
+
+        {"kind":"then","text":"The mapped association and map are equal in terms of their contents.","code":["mappedAssociationParallel.toMap() == mappedMapParallel"]},
+
+        {"kind":"and","text":"Finally, we also check the `isSorted()` flag:","code":["!associations.isSorted()"]},
+
         {"kind":"where","text":"","code":{"operations":["new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c')\n        ]","new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","(0..100).collect({\n            var hash = Math.abs((139 * (90 + it.hashCode())) % 100)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..1_000).collect({\n            var hash = Math.abs((31 * 139 * (500 + it.hashCode())) % 1_000)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..5_000).collect({\n            var hash = Math.abs(it % 2_000)\n            var operation = it > 2_000 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })"]}}
       ],
       "problems":{"dataValues":[], "errors":[]}
@@ -109,6 +129,16 @@
         {"kind":"when","text":"We use the `toMap()` method to convert the association to a map.","code":["var convertedMap = associations.toMap()"]},
 
         {"kind":"then","text":"The converted map is equal to the reference map.","code":["convertedMap == map"]},
+
+        {"kind":"when","text":"We use the stream API to map both the association and the reference map.","code":["var mappedAssociation = associations.entrySet().stream().map({ it.withFirst(it.first().toUpperCase() + \"!\") }).filter({ it.hashCode() % 2 == 0 }).collect(Association.collectorOf(String, String))","var mappedMap = map.entrySet().stream().map({ Pair.of(it.key.toUpperCase() + \"!\", it.value) }).filter({ it.hashCode() % 2 == 0 }).collect(Collectors.toMap({it.first()}, {it.second()}))"]},
+
+        {"kind":"then","text":"The mapped association and map are equal.","code":["mappedAssociation.toMap() == mappedMap"]},
+
+        {"kind":"when","text":"We use the parallel stream API to map both the association and the reference map.","code":["var mappedAssociationParallel = associations.entrySet().parallelStream().map({ it.withFirst(it.first().toUpperCase() + \"!\") }).filter({ it.hashCode() % 2 == 0 }).collect(Association.collectorOf(String, String))","var mappedMapParallel = map.entrySet().parallelStream().map({ Pair.of(it.key.toUpperCase() + \"!\", it.value) }).filter({ it.hashCode() % 2 == 0 }).collect(Collectors.toMap({it.first()}, {it.second()}))"]},
+
+        {"kind":"then","text":"The mapped association and map are equal in terms of their contents.","code":["mappedAssociationParallel.toMap() == mappedMapParallel"]},
+
+        {"kind":"and","text":"Finally, we also check the `isSorted()` flag:","code":["!associations.isSorted()"]},
 
         {"kind":"where","text":"","code":{"operations":["new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c')\n        ]","new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","(0..100).collect({\n            var hash = Math.abs((139 * (90 + it.hashCode())) % 100)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..1_000).collect({\n            var hash = Math.abs((31 * 139 * (500 + it.hashCode())) % 1_000)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..5_000).collect({\n            var hash = Math.abs(it % 2_000)\n            var operation = it > 2_000 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })"]}}
       ],
@@ -139,6 +169,16 @@
 
         {"kind":"then","text":"The converted map is equal to the reference map.","code":["convertedMap == map"]},
 
+        {"kind":"when","text":"We use the stream API to map both the association and the reference map.","code":["var mappedAssociation = associations.entrySet().stream().map({ it.withFirst(it.first().toUpperCase() + \"!\") }).filter({ it.hashCode() % 2 == 0 }).collect(Association.collectorOf(String, String))","var mappedMap = map.entrySet().stream().map({ Pair.of(it.key.toUpperCase() + \"!\", it.value) }).filter({ it.hashCode() % 2 == 0 }).collect(Collectors.toMap({it.first()}, {it.second()}))"]},
+
+        {"kind":"then","text":"The mapped association and map are equal.","code":["mappedAssociation.toMap() == mappedMap"]},
+
+        {"kind":"when","text":"We use the parallel stream API to map both the association and the reference map.","code":["var mappedAssociationParallel = associations.entrySet().parallelStream().map({ it.withFirst(it.first().toUpperCase() + \"!\") }).filter({ it.hashCode() % 2 == 0 }).collect(Association.collectorOf(String, String))","var mappedMapParallel = map.entrySet().parallelStream().map({ Pair.of(it.key.toUpperCase() + \"!\", it.value) }).filter({ it.hashCode() % 2 == 0 }).collect(Collectors.toMap({it.first()}, {it.second()}))"]},
+
+        {"kind":"then","text":"The mapped association and map are equal in terms of their contents.","code":["mappedAssociationParallel.toMap() == mappedMapParallel"]},
+
+        {"kind":"and","text":"Finally, we also check the `isSorted()` flag:","code":["!associations.isSorted()"]},
+
         {"kind":"where","text":"","code":{"operations":["new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c')\n        ]","new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","(0..100).collect({\n            var hash = Math.abs((139 * (90 + it.hashCode())) % 100)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..1_000).collect({\n            var hash = Math.abs((31 * 139 * (500 + it.hashCode())) % 1_000)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..5_000).collect({\n            var hash = Math.abs(it % 2_000)\n            var operation = it > 2_000 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })"]}}
       ],
       "problems":{"dataValues":[], "errors":[]}
@@ -167,6 +207,16 @@
         {"kind":"when","text":"We use the `toMap()` method to convert the association to a map.","code":["var convertedMap = associations.toMap()"]},
 
         {"kind":"then","text":"The converted map is equal to the reference map.","code":["convertedMap == map"]},
+
+        {"kind":"when","text":"We use the stream API to map both the association and the reference map.","code":["var mappedAssociation = associations.entrySet().stream().map({ it.withFirst(it.first().toUpperCase() + \"!\") }).filter({ it.hashCode() % 2 == 0 }).collect(Association.collectorOf(String, String))","var mappedMap = map.entrySet().stream().map({ Pair.of(it.key.toUpperCase() + \"!\", it.value) }).filter({ it.hashCode() % 2 == 0 }).collect(Collectors.toMap({it.first()}, {it.second()}))"]},
+
+        {"kind":"then","text":"The mapped association and map are equal.","code":["mappedAssociation.toMap() == mappedMap"]},
+
+        {"kind":"when","text":"We use the parallel stream API to map both the association and the reference map.","code":["var mappedAssociationParallel = associations.entrySet().parallelStream().map({ it.withFirst(it.first().toUpperCase() + \"!\") }).filter({ it.hashCode() % 2 == 0 }).collect(Association.collectorOf(String, String))","var mappedMapParallel = map.entrySet().parallelStream().map({ Pair.of(it.key.toUpperCase() + \"!\", it.value) }).filter({ it.hashCode() % 2 == 0 }).collect(Collectors.toMap({it.first()}, {it.second()}))"]},
+
+        {"kind":"then","text":"The mapped association and map are equal in terms of their contents.","code":["mappedAssociationParallel.toMap() == mappedMapParallel"]},
+
+        {"kind":"and","text":"Finally, we also check the `isSorted()` flag:","code":["!associations.isSorted()"]},
 
         {"kind":"where","text":"","code":{"operations":["new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c')\n        ]","new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","(0..100).collect({\n            var hash = Math.abs((139 * (90 + it.hashCode())) % 100)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..1_000).collect({\n            var hash = Math.abs((31 * 139 * (500 + it.hashCode())) % 1_000)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..5_000).collect({\n            var hash = Math.abs(it % 2_000)\n            var operation = it > 2_000 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })"]}}
       ],
@@ -197,6 +247,16 @@
 
         {"kind":"then","text":"The converted map is equal to the reference map.","code":["convertedMap == map"]},
 
+        {"kind":"when","text":"We use the stream API to map both the association and the reference map.","code":["var mappedAssociation = associations.entrySet().stream().map({ it.withFirst(it.first().toUpperCase() + \"!\") }).filter({ it.hashCode() % 2 == 0 }).collect(Association.collectorOf(String, String))","var mappedMap = map.entrySet().stream().map({ Pair.of(it.key.toUpperCase() + \"!\", it.value) }).filter({ it.hashCode() % 2 == 0 }).collect(Collectors.toMap({it.first()}, {it.second()}))"]},
+
+        {"kind":"then","text":"The mapped association and map are equal.","code":["mappedAssociation.toMap() == mappedMap"]},
+
+        {"kind":"when","text":"We use the parallel stream API to map both the association and the reference map.","code":["var mappedAssociationParallel = associations.entrySet().parallelStream().map({ it.withFirst(it.first().toUpperCase() + \"!\") }).filter({ it.hashCode() % 2 == 0 }).collect(Association.collectorOf(String, String))","var mappedMapParallel = map.entrySet().parallelStream().map({ Pair.of(it.key.toUpperCase() + \"!\", it.value) }).filter({ it.hashCode() % 2 == 0 }).collect(Collectors.toMap({it.first()}, {it.second()}))"]},
+
+        {"kind":"then","text":"The mapped association and map are equal in terms of their contents.","code":["mappedAssociationParallel.toMap() == mappedMapParallel"]},
+
+        {"kind":"and","text":"Finally, we also check the `isSorted()` flag:","code":["!associations.isSorted()"]},
+
         {"kind":"where","text":"","code":{"operations":["new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c')\n        ]","new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","(0..100).collect({\n            var hash = Math.abs((139 * (90 + it.hashCode())) % 100)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..1_000).collect({\n            var hash = Math.abs((31 * 139 * (500 + it.hashCode())) % 1_000)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..5_000).collect({\n            var hash = Math.abs(it % 2_000)\n            var operation = it > 2_000 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })"]}}
       ],
       "problems":{"dataValues":[], "errors":[]}
@@ -225,6 +285,16 @@
         {"kind":"when","text":"We use the `toMap()` method to convert the association to a map.","code":["var convertedMap = associations.toMap()"]},
 
         {"kind":"then","text":"The converted map is equal to the reference map.","code":["convertedMap == map"]},
+
+        {"kind":"when","text":"We use the stream API to map both the association and the reference map.","code":["var mappedAssociation = associations.entrySet().stream().map({ it.withFirst(it.first().toUpperCase() + \"!\") }).filter({ it.hashCode() % 2 == 0 }).collect(Association.collectorOf(String, String))","var mappedMap = map.entrySet().stream().map({ Pair.of(it.key.toUpperCase() + \"!\", it.value) }).filter({ it.hashCode() % 2 == 0 }).collect(Collectors.toMap({it.first()}, {it.second()}))"]},
+
+        {"kind":"then","text":"The mapped association and map are equal.","code":["mappedAssociation.toMap() == mappedMap"]},
+
+        {"kind":"when","text":"We use the parallel stream API to map both the association and the reference map.","code":["var mappedAssociationParallel = associations.entrySet().parallelStream().map({ it.withFirst(it.first().toUpperCase() + \"!\") }).filter({ it.hashCode() % 2 == 0 }).collect(Association.collectorOf(String, String))","var mappedMapParallel = map.entrySet().parallelStream().map({ Pair.of(it.key.toUpperCase() + \"!\", it.value) }).filter({ it.hashCode() % 2 == 0 }).collect(Collectors.toMap({it.first()}, {it.second()}))"]},
+
+        {"kind":"then","text":"The mapped association and map are equal in terms of their contents.","code":["mappedAssociationParallel.toMap() == mappedMapParallel"]},
+
+        {"kind":"and","text":"Finally, we also check the `isSorted()` flag:","code":["!associations.isSorted()"]},
 
         {"kind":"where","text":"","code":{"operations":["new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c')\n        ]","new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","(0..100).collect({\n            var hash = Math.abs((139 * (90 + it.hashCode())) % 100)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..1_000).collect({\n            var hash = Math.abs((31 * 139 * (500 + it.hashCode())) % 1_000)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..5_000).collect({\n            var hash = Math.abs(it % 2_000)\n            var operation = it > 2_000 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })"]}}
       ],
@@ -255,6 +325,16 @@
 
         {"kind":"then","text":"The converted map is equal to the reference map.","code":["convertedMap == map"]},
 
+        {"kind":"when","text":"We use the stream API to map both the association and the reference map.","code":["var mappedAssociation = associations.entrySet().stream().map({ it.withFirst(it.first().toUpperCase() + \"!\") }).filter({ it.hashCode() % 2 == 0 }).collect(Association.collectorOf(String, String))","var mappedMap = map.entrySet().stream().map({ Pair.of(it.key.toUpperCase() + \"!\", it.value) }).filter({ it.hashCode() % 2 == 0 }).collect(Collectors.toMap({it.first()}, {it.second()}))"]},
+
+        {"kind":"then","text":"The mapped association and map are equal.","code":["mappedAssociation.toMap() == mappedMap"]},
+
+        {"kind":"when","text":"We use the parallel stream API to map both the association and the reference map.","code":["var mappedAssociationParallel = associations.entrySet().parallelStream().map({ it.withFirst(it.first().toUpperCase() + \"!\") }).filter({ it.hashCode() % 2 == 0 }).collect(Association.collectorOf(String, String))","var mappedMapParallel = map.entrySet().parallelStream().map({ Pair.of(it.key.toUpperCase() + \"!\", it.value) }).filter({ it.hashCode() % 2 == 0 }).collect(Collectors.toMap({it.first()}, {it.second()}))"]},
+
+        {"kind":"then","text":"The mapped association and map are equal in terms of their contents.","code":["mappedAssociationParallel.toMap() == mappedMapParallel"]},
+
+        {"kind":"and","text":"Finally, we also check the `isSorted()` flag:","code":["!associations.isSorted()"]},
+
         {"kind":"where","text":"","code":{"operations":["new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c')\n        ]","new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","(0..100).collect({\n            var hash = Math.abs((139 * (90 + it.hashCode())) % 100)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..1_000).collect({\n            var hash = Math.abs((31 * 139 * (500 + it.hashCode())) % 1_000)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..5_000).collect({\n            var hash = Math.abs(it % 2_000)\n            var operation = it > 2_000 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })"]}}
       ],
       "problems":{"dataValues":[], "errors":[]}
@@ -284,6 +364,16 @@
 
         {"kind":"then","text":"The converted map is equal to the reference map.","code":["convertedMap == map"]},
 
+        {"kind":"when","text":"We use the stream API to map both the association and the reference map.","code":["var mappedAssociation = associations.entrySet().stream().map({ it.withFirst(it.first().toUpperCase() + \"!\") }).filter({ it.hashCode() % 2 == 0 }).collect(Association.collectorOf(String, String))","var mappedMap = map.entrySet().stream().map({ Pair.of(it.key.toUpperCase() + \"!\", it.value) }).filter({ it.hashCode() % 2 == 0 }).collect(Collectors.toMap({it.first()}, {it.second()}))"]},
+
+        {"kind":"then","text":"The mapped association and map are equal.","code":["mappedAssociation.toMap() == mappedMap"]},
+
+        {"kind":"when","text":"We use the parallel stream API to map both the association and the reference map.","code":["var mappedAssociationParallel = associations.entrySet().parallelStream().map({ it.withFirst(it.first().toUpperCase() + \"!\") }).filter({ it.hashCode() % 2 == 0 }).collect(Association.collectorOf(String, String))","var mappedMapParallel = map.entrySet().parallelStream().map({ Pair.of(it.key.toUpperCase() + \"!\", it.value) }).filter({ it.hashCode() % 2 == 0 }).collect(Collectors.toMap({it.first()}, {it.second()}))"]},
+
+        {"kind":"then","text":"The mapped association and map are equal in terms of their contents.","code":["mappedAssociationParallel.toMap() == mappedMapParallel"]},
+
+        {"kind":"and","text":"Finally, we also check the `isSorted()` flag:","code":["!associations.isSorted()"]},
+
         {"kind":"where","text":"","code":{"operations":["new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c')\n        ]","new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.ADD, 'a'),\n            new Tuple2(Operation.REMOVE, 'a'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.ADD, 'b'),\n            new Tuple2(Operation.REMOVE, 'b'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.ADD, 'c'),\n            new Tuple2(Operation.REMOVE, 'c')\n        ]","(0..100).collect({\n            var hash = Math.abs((139 * (90 + it.hashCode())) % 100)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..1_000).collect({\n            var hash = Math.abs((31 * 139 * (500 + it.hashCode())) % 1_000)\n            var operation = hash % 3 == 0 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })","(0..5_000).collect({\n            var hash = Math.abs(it % 2_000)\n            var operation = it > 2_000 ? Operation.REMOVE : Operation.ADD\n            return new Tuple2(operation, hash.toString())\n        })"]}}
       ],
       "problems":{"dataValues":[], "errors":[]}
@@ -304,6 +394,8 @@
         {"kind":"then","text":"Immediate invariance","code":["assoc.size() == map.size()","assoc.keySet().toSet() == map.keySet()","assoc.values().sort().toList() == map.values().sort()","assoc.toMap() == map"]},
 
         {"kind":"and","text":"","code":["map.every { k, v ->","    assoc.get(k).orElse(null) == v","}","assoc.every { pair ->","    pair.second() == map[pair.first()]","}"]},
+
+        {"kind":"and","text":"","code":["!assoc.isSorted()"]},
 
         {"kind":"when","text":"We verify the `Iterable` implementation of the association by iterating over it.","code":["var pairSet = new HashSet()","for ( pair in assoc ) {","    pairSet.add(pair)","}"]},
 
@@ -1381,6 +1473,29 @@
         {"kind":"when","text":"","code":["var associations = sentence.collect(Association.collectorOf(Integer, String))"]},
 
         {"kind":"then","text":"","code":["associations.size() == 6","associations.get(0).get() == \"I\"","associations.get(1).get() == \"watch\"","associations.get(2).get() == \"dominion\"","associations.get(3).get() == \"documentary\"","associations.get(4).get() == \"on\"","associations.get(5).get() == \"www.dominionmovement.com\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use the `sort(Comparator)` method to create a sorted association.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `sort` takes a `Comparator` that defines the order of the entries in the association\n            and then returns a new `Association` with the entries sorted according to that comparator.\n            This new association is based on a binary tree structure, so it is still efficient\n            for lookups. (Although not as efficient as the original `Association`)\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var documentaryTimes = Association.between(String, String).putAll(","    Pair.of(\"Dominion\", \"125min\"),","    Pair.of(\"Forks over Knives\", \"96min\"),","    Pair.of(\"Land of Hope and Glory\", \"48min\"),","    Pair.of(\"Earthlings\", \"95min\"),","    Pair.of(\"Cowspiracy\", \"91min\"),",")"]},
+
+        {"kind":"expect","text":"","code":["!documentaryTimes.isSorted()"]},
+
+        {"kind":"when","text":"","code":["var sortedDocumentaries = documentaryTimes.sort( (Comparator<String>) { a, b -> a.compareTo(b) } )"]},
+
+        {"kind":"then","text":"","code":["sortedDocumentaries.isSorted()","sortedDocumentaries.size() == 5","sortedDocumentaries.keySet().toList() == [","    \"Cowspiracy\",","    \"Dominion\",","    \"Earthlings\",","    \"Forks over Knives\",","    \"Land of Hope and Glory\"","]"]},
+
+        {"kind":"when","text":"","code":["var inverseDocumentaries = documentaryTimes.sort( (Comparator<String>) { a, b -> b.compareTo(a) } )"]},
+
+        {"kind":"then","text":"","code":["inverseDocumentaries.isSorted()","inverseDocumentaries.size() == 5","inverseDocumentaries.keySet().toList() == [","    \"Land of Hope and Glory\",","    \"Forks over Knives\",","    \"Earthlings\",","    \"Dominion\",","    \"Cowspiracy\"","]"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }

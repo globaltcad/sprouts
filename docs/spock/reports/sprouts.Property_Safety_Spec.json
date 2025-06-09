@@ -90,7 +90,7 @@
     },
   
     {
-      "id":"An empty property can throw an un-exception if you try to access its value.",
+      "id":"An empty property can throw an unchecked exception if you try to access its value.",
       "result":"PASS",
       "duration":"?",
       "iterations":{
@@ -99,15 +99,15 @@
       "blocks":[
         {"kind":"given","text":"We create a property...","code":["Val<Long> property = Val.ofNullable(Long, null)"]},
 
-        {"kind":"when","text":"We try to access the value of the property.","code":["property.orElseThrowUnchecked()"]},
+        {"kind":"when","text":"We try to access the item inside the property.","code":["property.orElseThrowUnchecked()"]},
 
-        {"kind":"then","text":"The property will throw an exception.","code":["thrown(NoSuchElementException)"]}
+        {"kind":"then","text":"The property will throw an exception.","code":["thrown(MissingItemRuntimeException)"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
   
     {
-      "id":"An empty property can throw a cached exception if you try to access its value.",
+      "id":"An empty property can throw a checked exception if you try to access its value.",
       "result":"PASS",
       "duration":"?",
       "iterations":{
@@ -156,7 +156,7 @@
 
         {"kind":"when","text":"We try to access the value of the property through \"orElseThrowUnchecked\".","code":["property.orElseThrowUnchecked()"]},
 
-        {"kind":"then","text":"The property will throw an exception.","code":["thrown(NoSuchElementException)"]}
+        {"kind":"then","text":"The property will throw an exception.","code":["thrown(MissingItemRuntimeException)"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },

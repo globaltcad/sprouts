@@ -160,24 +160,24 @@
     },
   
     {
-      "id":"A `WeakObserver` is removed and garbage collected together with its owner.",
+      "id":"A weak observable is removed and garbage collected together with its owner.",
       "result":"PASS",
       "duration":"?",
       "iterations":{
-      "tags":{},"see":[],"extraInfo":["\n            You are not supposed to register an observer directly onto an event!\n            Instead you should create an `.observable()` of the event to register your listener.\n            If, however, you really need to register an observer directly onto an event\n            you may want to consider using a `WeakObserver` to avoid memory leaks.\n\n            A weak observer is a special kind of observer that has a weakly referenced \"owner\".\n            This owner determines if the observer is still alive or not and should be removed\n            after the owner is no longer reachable (i.e. garbage collected).\n\n            Warning! Never reference the owner in the observer itself, not even indirectly!\n            This will effectively turn your owner and observer into memory leaks.\n        "]
+      "tags":{},"see":[],"extraInfo":["\n            You are not supposed to register an observer directly onto an event!\n            Instead you should create an `.observable()` of the event to register your listener.\n            Here we show you how to use this method to create a weak observer.\n\n            A weak observer is a special kind of observer that has a weakly referenced.\n            This determines if the observer is still alive or not and its listeners should be removed\n            after it is no longer reachable (i.e. garbage collected).\n        "]
       },
       "blocks":[
-        {"kind":"given","text":"An event and an owner:","code":["var event = Event.create()","var owner = new Object()"]},
+        {"kind":"given","text":"An event and an owner:","code":["var event = Event.create()","var weakObserver = event.observable()"]},
 
         {"kind":"and","text":"A trace list to record the side effect.","code":["var trace = []","var controlTrace = []"]},
 
-        {"kind":"and","text":"We register a weak observer on the event as well as a regular observer.","code":["Observable.cast(event).subscribe(Observer.ofWeak(owner, { trace << \"!\" }))","Observable.cast(event).subscribe({ controlTrace << \"!\" })"]},
+        {"kind":"and","text":"We register a weak observer on the event as well as a regular observer.","code":["weakObserver.subscribe({ trace << \"!\" })","Observable.cast(event).subscribe({ controlTrace << \"!\" })"]},
 
         {"kind":"when","text":"We trigger the event.","code":["event.fire()"]},
 
         {"kind":"then","text":"The side effect is executed and both observers are triggered.","code":["trace == [\"!\"]","controlTrace == [\"!\"]"]},
 
-        {"kind":"when","text":"We remove the owner and then wait for the garbage collector to remove the weak observer.","code":["owner = null","waitForGarbageCollection()"]},
+        {"kind":"when","text":"We remove the owner and then wait for the garbage collector to remove the weak observer.","code":["weakObserver = null","waitForGarbageCollection()"]},
 
         {"kind":"and","text":"We trigger the event again.","code":["event.fire()"]},
 

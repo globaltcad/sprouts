@@ -549,18 +549,18 @@
     },
   
     {
-      "id":"A `WeakAction` is removed and garbage collected together with its owner.",
+      "id":"A weak observer is removed and garbage collected when no longer referenced.",
       "result":"PASS",
       "duration":"?",
       "iterations":{
-      "tags":{},"see":[],"extraInfo":["\n            You can register an action directly onto a view, which is itself already \n            memory leak safe. But i you want to create a memory leak safe action,\n            you may want to consider using a `WeakAction` to avoid memory leaks.\n\n            A weak action is a special kind of action that has a weakly referenced \"owner\".\n            This owner determines if the action is still alive or not and should be removed\n            after the owner.\n        "]
+      "tags":{},"see":[],"extraInfo":["\n            You can register an action directly onto a view, which is itself already \n            memory leak safe.\n        ","\n            You can register an action directly onto a view, which is itself already \n            memory leak safe. But you can repeat this pattern and create a view of a view\n            and then treat this view as an `Observable`.\n        "]
       },
       "blocks":[
-        {"kind":"given","text":"A property, its viewable and an owner:","code":["var property = Var.of(\"I am a some text in a property.\")","var viewable = property.view()","var owner = new Object()"]},
+        {"kind":"given","text":"A property, its viewable and an owner:","code":["var property = Var.of(\"I am a some text in a property.\")","var viewable = property.view()","Viewable<String> owner = viewable.view()"]},
 
         {"kind":"and","text":"A trace list to record the side effect.","code":["var trace = []"]},
 
-        {"kind":"and","text":"Finally we register a weak action on the property.","code":["viewable.onChange(From.ALL, Action.ofWeak(owner, (o, it) -> trace << it.currentValue().orElseThrow()))"]},
+        {"kind":"and","text":"Finally we register a weak action on the property.","code":["owner.onChange(From.ALL, (it) -> trace << it.currentValue().orElseThrow() )"]},
 
         {"kind":"when","text":"We change the source property.","code":["property.set(\"I am a new text.\")"]},
 
@@ -570,24 +570,56 @@
 
         {"kind":"and","text":"We change the source property again...","code":["property.set(\"I am yet another text.\")"]},
 
-        {"kind":"then","text":"The side effect is not executed anymore.","code":["trace == [\"I am a new text.\"]"]}
+        {"kind":"then","text":"The side effect is not executed anymore.","code":["trace == [\"I am a new text.\"]","reportInfo \"\"\"","    You can register an action directly onto a view, which is itself already","    memory leak safe. But you can repeat this pattern and create a view of a view","    and then treat this view as an `Observable`.","\"\"\""]},
+
+        {"kind":"given","text":"A property, its viewable and an owner:","code":["var property = Var.of(42)","var viewable = property.view()","Observable owner = viewable.view()"]},
+
+        {"kind":"and","text":"A trace list to record the side effects.","code":["var trace = []"]},
+
+        {"kind":"and","text":"Finally we register a weak observer on the property.","code":["owner.subscribe({trace << \"!\"})"]},
+
+        {"kind":"when","text":"We change the source property.","code":["property.set(43)"]},
+
+        {"kind":"then","text":"The side effect is executed.","code":["trace == [\"!\"]"]},
+
+        {"kind":"when","text":"We remove the owner and then wait for the garbage collector to remove the weak observer.","code":["owner = null","waitForGarbageCollection()"]},
+
+        {"kind":"and","text":"We change the source property again.","code":["property.set(44)"]},
+
+        {"kind":"then","text":"The side effect is not executed anymore.","code":["trace == [\"!\"]"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
   
     {
-      "id":"A `WeakObserver` is removed and garbage collected together with its owner.",
+      "id":"A weak observer is removed and garbage collected when no longer referenced.",
       "result":"PASS",
       "duration":"?",
       "iterations":{
-      "tags":{},"see":[],"extraInfo":["\n            You can register an action directly onto a view, which is itself already \n            memory leak safe. But i you want to create a memory leak safe observer,\n            you may want to consider using a `WeakObserver` to avoid memory leaks.\n\n            A weak observer is a special kind of observer that has a weakly referenced \"owner\".\n            This owner determines if the action is still alive or not and should be removed\n            after the owner.\n        "]
+      "tags":{},"see":[],"extraInfo":[]
       },
       "blocks":[
-        {"kind":"given","text":"A property, its viewable and an owner:","code":["var property = Var.of(42)","var viewable = property.view()","var owner = new Object()"]},
+        {"kind":"given","text":"A property, its viewable and an owner:","code":["var property = Var.of(\"I am a some text in a property.\")","var viewable = property.view()","Viewable<String> owner = viewable.view()"]},
+
+        {"kind":"and","text":"A trace list to record the side effect.","code":["var trace = []"]},
+
+        {"kind":"and","text":"Finally we register a weak action on the property.","code":["owner.onChange(From.ALL, (it) -> trace << it.currentValue().orElseThrow() )"]},
+
+        {"kind":"when","text":"We change the source property.","code":["property.set(\"I am a new text.\")"]},
+
+        {"kind":"then","text":"The side effect is executed.","code":["trace == [\"I am a new text.\"]"]},
+
+        {"kind":"when","text":"We remove the owner and then wait for the garbage collector to remove the weak action.","code":["owner = null","waitForGarbageCollection()"]},
+
+        {"kind":"and","text":"We change the source property again...","code":["property.set(\"I am yet another text.\")"]},
+
+        {"kind":"then","text":"The side effect is not executed anymore.","code":["trace == [\"I am a new text.\"]","reportInfo \"\"\"","    You can register an action directly onto a view, which is itself already","    memory leak safe. But you can repeat this pattern and create a view of a view","    and then treat this view as an `Observable`.","\"\"\""]},
+
+        {"kind":"given","text":"A property, its viewable and an owner:","code":["var property = Var.of(42)","var viewable = property.view()","Observable owner = viewable.view()"]},
 
         {"kind":"and","text":"A trace list to record the side effects.","code":["var trace = []"]},
 
-        {"kind":"and","text":"Finally we register a weak observer on the property.","code":["viewable.subscribe(Observer.ofWeak(owner,{trace << \"!\"}))"]},
+        {"kind":"and","text":"Finally we register a weak observer on the property.","code":["owner.subscribe({trace << \"!\"})"]},
 
         {"kind":"when","text":"We change the source property.","code":["property.set(43)"]},
 

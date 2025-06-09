@@ -139,18 +139,18 @@
     },
   
     {
-      "id":"A `WeakAction` is removed and garbage collected together with its owner.",
+      "id":"Create a weakly referenced property view whose change listeners are automatically garbage collected.",
       "result":"PASS",
       "duration":"?",
       "iterations":{
-      "tags":{},"see":[],"extraInfo":["\n            You are not supposed to register an action directly onto a property.\n            Instead you should use the `.view()` of the property to register an action.\n            But if you really need to register an action directly onto a property\n            you may want to consider using a `WeakAction` to avoid memory leaks.\n\n            A weak action is a special kind of action that has a weakly referenced \"owner\".\n            This owner determines if the action is still alive or not and should be removed\n            after the owner.\n\n            Warning! Never reference the owner in the action itself, not even indirectly!\n            This will effectively turn your owner and action into memory leaks.\n        "]
+      "tags":{},"see":[],"extraInfo":["\n            You are not supposed to register an action directly onto a property.\n            Instead you should use the `.view()` of the property to register an action.\n        "]
       },
       "blocks":[
-        {"kind":"given","text":"A property and an owner:","code":["var property = Var.of(\"I am a some text in a property.\")","var owner = new Object()"]},
+        {"kind":"given","text":"A property and an owner:","code":["var property = Var.of(\"I am a some text in a property.\")","Viewable<String> owner = property.view()"]},
 
         {"kind":"and","text":"A trace list to record the side effect.","code":["var trace = []"]},
 
-        {"kind":"and","text":"Finally we register a weak action on the property.","code":["Viewable.cast(property).onChange(From.ALL, Action.ofWeak(owner, (o, it) -> trace << it.currentValue().orElseThrow()))"]},
+        {"kind":"and","text":"Finally we register a weak action on the property.","code":["owner.onChange(From.ALL, (it) -> trace << it.currentValue().orElseThrow() )"]},
 
         {"kind":"when","text":"We change the property.","code":["property.set(\"I am a new text.\")"]},
 
@@ -166,18 +166,18 @@
     },
   
     {
-      "id":"A `WeakObserver` is removed and garbage collected together with its owner.",
+      "id":"Create a weakly referenced property observer whose change listeners are automatically garbage collected.",
       "result":"PASS",
       "duration":"?",
       "iterations":{
-      "tags":{},"see":[],"extraInfo":["\n            You are not supposed to register an observer directly onto a property.\n            Instead you should use the `.view()` of the property to register an observer.\n            But if you really need to register an observer directly onto a property\n            you may want to consider using a `WeakObserver` to avoid memory leaks.\n\n            A weak observer is a special kind of observer that has a weakly referenced \"owner\".\n            This owner determines if the observer is still alive or not and should be removed\n            after the owner.\n\n            Warning! Never reference the owner in the observer itself, not even indirectly!\n            This will effectively turn your owner and observer into memory leaks.\n        "]
+      "tags":{},"see":[],"extraInfo":["\n            You are not supposed to register an observer directly onto a property.\n            Instead you should use the `.view()` of the property to register an observer.\n            This test demonstrates how to use the 'view()' method to create a weak observer\n            whose change listeners are removed when the observer/view is garbage collected.\n        "]
       },
       "blocks":[
-        {"kind":"given","text":"A property and an owner:","code":["var property = Var.of(42)","var owner = new Object()"]},
+        {"kind":"given","text":"A property and an owner:","code":["var property = Var.of(42)","Observable owner = property.view()"]},
 
         {"kind":"and","text":"A trace list to record the side effects.","code":["var trace = []"]},
 
-        {"kind":"and","text":"Finally we register a weak observer on the property.","code":["Viewable.cast(property).subscribe(Observer.ofWeak(owner,{trace << \"!\"}))"]},
+        {"kind":"and","text":"Finally we register a weak observer on the property.","code":["owner.subscribe({trace << \"!\"})"]},
 
         {"kind":"when","text":"We change the property.","code":["property.set(43)"]},
 
