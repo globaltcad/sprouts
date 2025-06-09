@@ -18,7 +18,7 @@ GUI framework.
 <dependency>
   <groupId>io.github.globaltcad</groupId>
   <artifactId>sprouts</artifactId>
-  <version>2.0.0-M18</version>
+  <version>2.0.0-M19</version>
 </dependency>
 ```
 
