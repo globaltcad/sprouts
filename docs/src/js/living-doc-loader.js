@@ -264,9 +264,9 @@ function createLoaderDropDownFor(specName, expandableFeature) {
 
 function buildFeatureListFor(expandableFeature, data, content) {
     let nothingHappened = true;
-    data['features'].forEach((feature)=>{
-        if ( feature['id'].toString() == expandableFeature.toString() ) {
-            content.append(createUIForFeature(feature, -1));
+    data['features'].forEach((featureData)=>{
+        if ( featureData['id'].toString() == expandableFeature.toString() ) {
+            content.append(createUIForFeature(featureData, -1));
             nothingHappened = false;
         }
     });
@@ -276,8 +276,8 @@ function buildFeatureListFor(expandableFeature, data, content) {
                             .filter( f => f['id'].startsWith(expandableFeature) )
                             .sort( (a,b) => b.length - a.length ) // We sort them by size
         // Now we unroll the iterations (we call them examples here) so that the user can see them all!
-        choices.forEach( (iteration, i) => {
-            content.append(createUIForFeature(iteration, i));
+        choices.forEach( (featureData, i) => {
+            content.append(createUIForFeature(featureData, i));
         })
     }
     setTimeout(() => {
@@ -322,6 +322,14 @@ function buildFeatureListFor(expandableFeature, data, content) {
 */
 function createUIForFeature(featureData, exampleIndex) {
     let wrapper = $('<div></div>');
+    if ( featureData['iterations']['extraInfo'].length > 0 ) {
+        if ( exampleIndex < 0 || exampleIndex === 0 ) {
+            // We attach the extra info to the wrapper:
+            let info = removeIndentationAndTurnIntoMarkdown(featureData['iterations']['extraInfo'][0]);
+            wrapper.append("<p>" + info + "</p>");
+            //(only the first one because we don't care about all the iterations)
+        }
+    }
     if ( exampleIndex >= 0 ) {
         wrapper.append('<p style="font-weight: bold;">Example ' + (exampleIndex+1) + ':</p>')
         featureData['blocks'].forEach((block)=>{
@@ -332,12 +340,6 @@ function createUIForFeature(featureData, exampleIndex) {
                 wrapper.append(table);
             }
         });
-    }
-    if ( featureData['iterations']['extraInfo'].length > 0 ) {
-        // We attach the extra info to the wrapper:
-        let info = removeIndentationAndTurnIntoMarkdown(featureData['iterations']['extraInfo'][0]);
-        wrapper.append("<p>" + info + "</p>");
-        //(only the first one because we don't care about all the iterations)
     }
     let blocks = $('<div></div>');
     // We iterate over the blocks:
