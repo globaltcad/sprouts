@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MissingItemException.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sprouts</a> &gt; <a href="index.source.html" class="el_package">sprouts</a> &gt; <span class="el_source">MissingItemException.java</span></div><h1>MissingItemException.java</h1><pre class="source lang-java linenums">package sprouts;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import org.jspecify.annotations.Nullable;
+
+import java.util.Objects;
+import java.util.function.Consumer;
 
 /**
  *  A checked exception thrown when an item is missing from a
@@ -10,7 +11,18 @@ import java.util.List;
  */
 public final class MissingItemException extends Exception
 {
-    private final Tuple&lt;Problem&gt; problems;
+    private final Tuple&lt;Problem&gt; _problems;
+
+    /**
+     *  Creates a new {@link MissingItemException} with the given message
+     *  and no {@link Problem} information about the cause of the exception.
+     *
+     * @param message The message of the exception.
+     */
+    public MissingItemException(String message) {
+<span class="fc" id="L23">        super(message);</span>
+<span class="fc" id="L24">        _problems = Tuple.of(Problem.class);</span>
+<span class="fc" id="L25">    }</span>
 
     /**
      *  Creates a new {@link MissingItemException} with the given message
@@ -20,9 +32,37 @@ public final class MissingItemException extends Exception
      * @param problems The problems that caused this exception.
      */
     public MissingItemException(String message, Tuple&lt;Problem&gt; problems) {
-<span class="fc" id="L23">        super(message, problems.stream().findFirst().flatMap(Problem::exception).orElse(null));</span>
-<span class="fc" id="L24">        this.problems =  problems;</span>
-<span class="fc" id="L25">    }</span>
+<span class="fc" id="L35">        super(message, _causeFromAllProblems(problems));</span>
+<span class="fc" id="L36">        _problems = problems;</span>
+<span class="fc" id="L37">        _addSuppressed(problems, this::addSuppressed);</span>
+<span class="fc" id="L38">    }</span>
+
+    private static @Nullable Throwable _causeFromAllProblems(Tuple&lt;Problem&gt; problems) {
+<span class="pc bpc" id="L41" title="1 of 2 branches missed.">        if ( problems.isEmpty() )</span>
+<span class="nc" id="L42">            return null;</span>
+<span class="fc" id="L43">        Throwable mainCause = _problemAsThrowable(Objects.requireNonNull(problems.first()));</span>
+<span class="fc bfc" id="L44" title="All 2 branches covered.">        for ( Problem problem : problems ) {</span>
+<span class="fc" id="L45">            Throwable cause = _problemAsThrowable(problem);</span>
+<span class="pc bpc" id="L46" title="1 of 2 branches missed.">            if ( cause != mainCause )</span>
+<span class="fc" id="L47">                mainCause.addSuppressed(cause);</span>
+<span class="fc" id="L48">        }</span>
+<span class="fc" id="L49">        return mainCause;</span>
+    }
+
+    private static void _addSuppressed(Tuple&lt;Problem&gt; problems, Consumer&lt;Throwable&gt; addSuppressed) {
+<span class="pc bpc" id="L53" title="1 of 2 branches missed.">        if ( problems.size() &lt; 2 )</span>
+<span class="nc" id="L54">            return;</span>
+<span class="fc bfc" id="L55" title="All 2 branches covered.">        for ( int i = 1; i &lt; problems.size(); i++ ) {</span>
+<span class="fc" id="L56">            addSuppressed.accept(_problemAsThrowable(Objects.requireNonNull(problems.get(i))));</span>
+        }
+<span class="fc" id="L58">    }</span>
+
+    private static Throwable _problemAsThrowable(Problem problem) {
+<span class="fc" id="L61">        return problem</span>
+<span class="fc" id="L62">                .exception()</span>
+<span class="pc" id="L63">                .map(e-&gt; (Throwable) e)</span>
+<span class="fc" id="L64">                .orElseGet(()-&gt;new Throwable(&quot;Problem: &quot; + problem.title() + &quot; : &quot; + problem.description()));</span>
+    }
 
     /**
      *  Returns a {@link Tuple} of all problems that caused this exception.
@@ -31,17 +71,17 @@ public final class MissingItemException extends Exception
      *         as an immutable {@link Tuple}.
      */
     public Tuple&lt;Problem&gt; problems() {
-<span class="nc" id="L34">        return problems;</span>
+<span class="nc" id="L74">        return _problems;</span>
     }
 
     @Override
     public void printStackTrace() {
-<span class="nc" id="L39">        super.printStackTrace();</span>
-<span class="nc bnc" id="L40" title="All 2 branches missed.">        for ( Problem problem : problems ) {</span>
-<span class="nc bnc" id="L41" title="All 2 branches missed.">            if ( problem.exception().isPresent() )</span>
-<span class="nc" id="L42">                problem.exception().get().printStackTrace();</span>
-<span class="nc" id="L43">        }</span>
-<span class="nc" id="L44">    }</span>
+<span class="nc" id="L79">        super.printStackTrace();</span>
+<span class="nc bnc" id="L80" title="All 2 branches missed.">        for ( Problem problem : _problems) {</span>
+<span class="nc bnc" id="L81" title="All 2 branches missed.">            if ( problem.exception().isPresent() )</span>
+<span class="nc" id="L82">                problem.exception().get().printStackTrace();</span>
+<span class="nc" id="L83">        }</span>
+<span class="nc" id="L84">    }</span>
 
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

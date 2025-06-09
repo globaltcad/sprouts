@@ -15,11 +15,10 @@
  *  callback using the {@link #unsubscribe(Subscriber)} method ({@link Action} is also a {@link Subscriber}).
  *  &lt;p&gt;
  *  Instances of this are intended to be created from {@link Vals} property lists.
- *  {@link sprouts.Viewables} created from a property list is weakly referenced
- *  by said property list.
- *  You can register change listeners on it, and
- *  when you no longer want changes to be propagated to the {@link sprouts.Viewables},
- *  then you can simply drop its reference, and it will be garbage collected
+ *  {@link sprouts.Viewables} created from such a property list is weakly referenced by it.
+ *  You can register change listeners on it, and when you no longer want changes
+ *  to be propagated to the {@link sprouts.Viewables},
+ *  then you can drop its reference, and it will be garbage collected
  *  alongside all of its change listeners.
  *
  * @see Vals A super type of this class with a read-only API.
@@ -36,7 +35,7 @@ public interface Viewables&lt;T&gt; extends Vals&lt;T&gt;, Observable
      *  Although {@link Vals} and {@link Vars} do not extend {@link Viewables} directly,
      *  you may cast them to a {@link Viewables} to get access to the {@link Viewables} API.&lt;br&gt;
      *  &lt;p&gt;
-     *  This method is a convenience method which allows you to cast
+     *  This method is a convenience method that allows you to cast
      *  the given {@link Vals} instance to a {@link Viewables}.&lt;br&gt;
      *  The main intention of this method is to allow you to register change listeners
      *  on the given {@link Vals} instance, which will be called whenever the items
@@ -61,16 +60,16 @@ public interface Viewables&lt;T&gt; extends Vals&lt;T&gt;, Observable
      * @return The supplied {@link Vals} instance cast to a {@link Viewables} instance.
      */
     static &lt;T&gt; Viewables&lt;T&gt; cast( Vals&lt;T&gt; vals ) {
-<span class="fc" id="L64">        return Viewables.class.cast(vals);</span>
+<span class="fc" id="L63">        return Viewables.class.cast(vals);</span>
     }
 
     /**
      *  Similar to {@link Viewable#onChange(Channel, Action)} but for a list of properties.
      *
      * @param action The action to perform when the list of properties is shown (which is called when its state changes).
-     * @return This list of properties.
+     * @return This {@link Viewables} list of {@link Viewable} properties.
      */
-    Vals&lt;T&gt; onChange( Action&lt;ValsDelegate&lt;T&gt;&gt; action );
+    Viewables&lt;T&gt; onChange( Action&lt;ValsDelegate&lt;T&gt;&gt; action );
 
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

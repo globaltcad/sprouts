@@ -1,0 +1,588 @@
+{
+  "className":"sprouts.Sorted_ValueSet_Spec",
+  "title":"Sorted ValueSet - a Data Oriented Set",
+  "narrative":"A sorted ValueSet is a fundamental building block in sprouts' data-oriented programming model.\n    It represents an immutable collection of unique and sorted elements, providing an API focused on\n    deriving new sets from existing ones rather than mutating state. Unlike traditional\n    Java sets, all operations return new `ValueSet` instances, making it ideal for\n    functional-style programming and safe concurrent usage.\n\n    This specification tests the behavior of the `ValueSet` when created using the\n    \"sorted\" factory methods, which produce sets that maintain their elements in a sorted order.\n    This is similar to the JDK's `TreeSet`, but with the added benefits of immutability,\n    structural sharing and enabling of functional programming designs.",
+  "subjects":["sprouts.ValueSet"],
+  "statistics":{
+    "runs":"30",
+    "successRate":"100.0%",
+    "failures":"0",
+    "errors":"0",
+    "skipped":"0",
+    "duration":"?"
+  },
+  "headers":[],"tags":{},"see":[],
+  "features":[ 
+    {
+      "id":"An empty sorted `ValueSet` can be created by specifying the element type",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A `ValueSet` needs to be created with a type to allow for better\n            type safety during runtime as well as improved performance\n            due to primitive specialization.\n            A `ValueSet` based on the `Integer` class for example, will\n            internally use a primitive `int[]` array to store the values.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var emptySet = ValueSet.ofSorted(String)"]},
+
+        {"kind":"expect","text":"","code":["emptySet.isEmpty()","emptySet.type() == String","emptySet.isSorted()"]},
+
+        {"kind":"when","text":"","code":["var emptySet2 = ValueSet.ofSorted(Integer)"]},
+
+        {"kind":"then","text":"","code":["emptySet2.isEmpty()","emptySet2.type() == Integer","emptySet.isSorted()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The sorted `ValueSet` maintains invariance with a Java Set across operations [0]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var valueSet = ValueSet.ofSorted(String)","var referenceSet = new TreeSet<String>()","var operationsApplier = { currentSet ->","    operations.each { op, element ->","        switch (op) {","            case Operation.ADD:","                currentSet = currentSet.add(element)","                referenceSet.add(element)","                break","            case Operation.REMOVE:","                currentSet = currentSet.remove(element)","                referenceSet.remove(element)","                break","            case Operation.CLEAR:","                currentSet = currentSet.clear()","                referenceSet.clear()","                break","        }","    }","    return currentSet","}"]},
+
+        {"kind":"when","text":"Apply operations first time","code":["valueSet = operationsApplier(valueSet)"]},
+
+        {"kind":"then","text":"Immediate invariance","code":["valueSet.size() == referenceSet.size()","valueSet.containsAll(referenceSet)","valueSet.toSet() == referenceSet"]},
+
+        {"kind":"when","text":"Apply operations multiple times","code":["5.times { valueSet = operationsApplier(valueSet) }"]},
+
+        {"kind":"then","text":"Consistent state","code":["valueSet.size() == referenceSet.size()","valueSet.containsAll(referenceSet)","valueSet.toSet() == referenceSet"]},
+
+        {"kind":"and","text":"Their entry sets converted to lists are equal.","code":["valueSet.toList() == referenceSet.toList()"]},
+
+        {"kind":"when","text":"We use the stream API to map both the value set and the JDK based reference set.","code":["var mappedValueSet = valueSet.stream().map({ it.toUpperCase() + \"!\" }).filter({ it.hashCode() % 2 == 0 }).collect(ValueSet.collectorOf(String.class))","var mappedSet = referenceSet.stream().map({ it.toUpperCase() + \"!\" }).filter({ it.hashCode() % 2 == 0 }).collect(Collectors.toSet())"]},
+
+        {"kind":"then","text":"The mapped value set and mapped set are equal.","code":["mappedValueSet.toSet() == mappedSet"]},
+
+        {"kind":"when","text":"We use the parallel stream API to map both the value set and the reference set.","code":["var mappedValueSetParallel = valueSet.parallelStream().map({ it.toUpperCase() + \"!\" }).filter({ it.hashCode() % 2 == 0 }).collect(ValueSet.collectorOf(String.class))","var mappedSetParallel = referenceSet.parallelStream().map({ it.toUpperCase() + \"!\" }).filter({ it.hashCode() % 2 == 0 }).collect(Collectors.toSet())"]},
+
+        {"kind":"then","text":"The mapped value set and JDK set are equal in terms of their contents.","code":["mappedValueSetParallel.toSet() == mappedSetParallel"]},
+
+        {"kind":"where","text":"","code":{"operations":["new Tuple2(Operation.ADD, \"apple\"),\n                new Tuple2(Operation.ADD, \"banana\"),\n                new Tuple2(Operation.REMOVE, \"apple\")\n        ]","(0..100).collect {\n            new Tuple2(it % 2 == 0 ? Operation.ADD : Operation.REMOVE,\n                    \"item-\"+(it % 50))\n        }","(0..1000).collect {\n            new Tuple2(new Random(it).nextBoolean() ? Operation.ADD : Operation.REMOVE,\n                    \"element-\"+Math.abs(new Random(it).nextInt() % 500))\n        }"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The sorted `ValueSet` maintains invariance with a Java Set across operations [1]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var valueSet = ValueSet.ofSorted(String)","var referenceSet = new TreeSet<String>()","var operationsApplier = { currentSet ->","    operations.each { op, element ->","        switch (op) {","            case Operation.ADD:","                currentSet = currentSet.add(element)","                referenceSet.add(element)","                break","            case Operation.REMOVE:","                currentSet = currentSet.remove(element)","                referenceSet.remove(element)","                break","            case Operation.CLEAR:","                currentSet = currentSet.clear()","                referenceSet.clear()","                break","        }","    }","    return currentSet","}"]},
+
+        {"kind":"when","text":"Apply operations first time","code":["valueSet = operationsApplier(valueSet)"]},
+
+        {"kind":"then","text":"Immediate invariance","code":["valueSet.size() == referenceSet.size()","valueSet.containsAll(referenceSet)","valueSet.toSet() == referenceSet"]},
+
+        {"kind":"when","text":"Apply operations multiple times","code":["5.times { valueSet = operationsApplier(valueSet) }"]},
+
+        {"kind":"then","text":"Consistent state","code":["valueSet.size() == referenceSet.size()","valueSet.containsAll(referenceSet)","valueSet.toSet() == referenceSet"]},
+
+        {"kind":"and","text":"Their entry sets converted to lists are equal.","code":["valueSet.toList() == referenceSet.toList()"]},
+
+        {"kind":"when","text":"We use the stream API to map both the value set and the JDK based reference set.","code":["var mappedValueSet = valueSet.stream().map({ it.toUpperCase() + \"!\" }).filter({ it.hashCode() % 2 == 0 }).collect(ValueSet.collectorOf(String.class))","var mappedSet = referenceSet.stream().map({ it.toUpperCase() + \"!\" }).filter({ it.hashCode() % 2 == 0 }).collect(Collectors.toSet())"]},
+
+        {"kind":"then","text":"The mapped value set and mapped set are equal.","code":["mappedValueSet.toSet() == mappedSet"]},
+
+        {"kind":"when","text":"We use the parallel stream API to map both the value set and the reference set.","code":["var mappedValueSetParallel = valueSet.parallelStream().map({ it.toUpperCase() + \"!\" }).filter({ it.hashCode() % 2 == 0 }).collect(ValueSet.collectorOf(String.class))","var mappedSetParallel = referenceSet.parallelStream().map({ it.toUpperCase() + \"!\" }).filter({ it.hashCode() % 2 == 0 }).collect(Collectors.toSet())"]},
+
+        {"kind":"then","text":"The mapped value set and JDK set are equal in terms of their contents.","code":["mappedValueSetParallel.toSet() == mappedSetParallel"]},
+
+        {"kind":"where","text":"","code":{"operations":["new Tuple2(Operation.ADD, \"apple\"),\n                new Tuple2(Operation.ADD, \"banana\"),\n                new Tuple2(Operation.REMOVE, \"apple\")\n        ]","(0..100).collect {\n            new Tuple2(it % 2 == 0 ? Operation.ADD : Operation.REMOVE,\n                    \"item-\"+(it % 50))\n        }","(0..1000).collect {\n            new Tuple2(new Random(it).nextBoolean() ? Operation.ADD : Operation.REMOVE,\n                    \"element-\"+Math.abs(new Random(it).nextInt() % 500))\n        }"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The sorted `ValueSet` maintains invariance with a Java Set across operations [2]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var valueSet = ValueSet.ofSorted(String)","var referenceSet = new TreeSet<String>()","var operationsApplier = { currentSet ->","    operations.each { op, element ->","        switch (op) {","            case Operation.ADD:","                currentSet = currentSet.add(element)","                referenceSet.add(element)","                break","            case Operation.REMOVE:","                currentSet = currentSet.remove(element)","                referenceSet.remove(element)","                break","            case Operation.CLEAR:","                currentSet = currentSet.clear()","                referenceSet.clear()","                break","        }","    }","    return currentSet","}"]},
+
+        {"kind":"when","text":"Apply operations first time","code":["valueSet = operationsApplier(valueSet)"]},
+
+        {"kind":"then","text":"Immediate invariance","code":["valueSet.size() == referenceSet.size()","valueSet.containsAll(referenceSet)","valueSet.toSet() == referenceSet"]},
+
+        {"kind":"when","text":"Apply operations multiple times","code":["5.times { valueSet = operationsApplier(valueSet) }"]},
+
+        {"kind":"then","text":"Consistent state","code":["valueSet.size() == referenceSet.size()","valueSet.containsAll(referenceSet)","valueSet.toSet() == referenceSet"]},
+
+        {"kind":"and","text":"Their entry sets converted to lists are equal.","code":["valueSet.toList() == referenceSet.toList()"]},
+
+        {"kind":"when","text":"We use the stream API to map both the value set and the JDK based reference set.","code":["var mappedValueSet = valueSet.stream().map({ it.toUpperCase() + \"!\" }).filter({ it.hashCode() % 2 == 0 }).collect(ValueSet.collectorOf(String.class))","var mappedSet = referenceSet.stream().map({ it.toUpperCase() + \"!\" }).filter({ it.hashCode() % 2 == 0 }).collect(Collectors.toSet())"]},
+
+        {"kind":"then","text":"The mapped value set and mapped set are equal.","code":["mappedValueSet.toSet() == mappedSet"]},
+
+        {"kind":"when","text":"We use the parallel stream API to map both the value set and the reference set.","code":["var mappedValueSetParallel = valueSet.parallelStream().map({ it.toUpperCase() + \"!\" }).filter({ it.hashCode() % 2 == 0 }).collect(ValueSet.collectorOf(String.class))","var mappedSetParallel = referenceSet.parallelStream().map({ it.toUpperCase() + \"!\" }).filter({ it.hashCode() % 2 == 0 }).collect(Collectors.toSet())"]},
+
+        {"kind":"then","text":"The mapped value set and JDK set are equal in terms of their contents.","code":["mappedValueSetParallel.toSet() == mappedSetParallel"]},
+
+        {"kind":"where","text":"","code":{"operations":["new Tuple2(Operation.ADD, \"apple\"),\n                new Tuple2(Operation.ADD, \"banana\"),\n                new Tuple2(Operation.REMOVE, \"apple\")\n        ]","(0..100).collect {\n            new Tuple2(it % 2 == 0 ? Operation.ADD : Operation.REMOVE,\n                    \"item-\"+(it % 50))\n        }","(0..1000).collect {\n            new Tuple2(new Random(it).nextBoolean() ? Operation.ADD : Operation.REMOVE,\n                    \"element-\"+Math.abs(new Random(it).nextInt() % 500))\n        }"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Sorted set operations maintain mathematical set properties",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var initial = ValueSet.ofSorted(Integer).add(3).add(2).add(1)"]},
+
+        {"kind":"when","text":"We perform a union with another set...","code":["var union = initial.addAll(ValueSet.ofSorted(4,3,5))"]},
+
+        {"kind":"then","text":"","code":["union.toSet() == [1,2,3,4,5] as Set"]},
+
+        {"kind":"when","text":"We do an intersection...","code":["var intersection = initial.retainAll([2,3,4] as Set)"]},
+
+        {"kind":"then","text":"","code":["intersection.toSet() == [2,3] as Set"]},
+
+        {"kind":"when","text":"we do the difference...","code":["var difference = initial.removeAll([3] as Set)"]},
+
+        {"kind":"then","text":"","code":["difference.toSet() == [1,2] as Set"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Equality and hash code follow set semantics",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var set1 = ValueSet.ofSorted(\"a\", \"b\", \"c\")","var set2 = ValueSet.ofSorted(\"c\", \"b\", \"a\")","var set3 = set1.add(\"d\")"]},
+
+        {"kind":"expect","text":"","code":["set1 == set2","set1.hashCode() == set2.hashCode()","set1 != set3"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Bulk operations handle large datasets efficiently",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var size = 10_000","var elements = (1..size).collect { \"item-\"+it }","var valueSet = ValueSet.ofSorted(String).addAll(elements)"]},
+
+        {"kind":"expect","text":"","code":["valueSet.size() == size","elements.every { valueSet.contains(it) }"]},
+
+        {"kind":"when","text":"","code":["var removed = valueSet.removeAll(elements[0..5000])"]},
+
+        {"kind":"then","text":"","code":["removed.size() == size - 5001"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Immutable characteristics are preserved",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var original = ValueSet.ofSorted(\"a\", \"b\")","var modified = original.add(\"c\")"]},
+
+        {"kind":"expect","text":"","code":["original.size() == 2","modified.size() == 3","!original.contains(\"c\")"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `clear` operation works on a non-empty value set",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var set = ValueSet.ofSorted(1,2,3)"]},
+
+        {"kind":"expect","text":"Contains checks","code":["set.isNotEmpty() && set.size() == 3","set.contains(2) && !set.contains(4)"]},
+
+        {"kind":"when","text":"We apply the clear operation.","code":["var cleared = set.clear()"]},
+
+        {"kind":"then","text":"","code":["cleared.isEmpty()","cleared.type() == Integer"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"String representation reflects contents",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var smallSet = ValueSet.ofSorted(\"c\", \"a\", \"b\")","var largeSet = ValueSet.ofSorted(Integer).addAll(1..35)"]},
+
+        {"kind":"expect","text":"","code":["smallSet.toString() == 'SortedValueSet<String>[\"a\", \"b\", \"c\"]'","largeSet.toString().contains(\"... 27 items left]\")","largeSet.toString().startsWith('SortedValueSet<Integer>[1, 2, 3, 4, 5, 6')"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Edge cases are handled gracefully",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"when","text":"Adding null element","code":["ValueSet.ofSorted(String).add(null)"]},
+
+        {"kind":"then","text":"","code":["thrown(NullPointerException)"]},
+
+        {"kind":"when","text":"We create from a Null element type","code":["ValueSet.ofSorted(null)"]},
+
+        {"kind":"then","text":"","code":["thrown(NullPointerException)"]},
+
+        {"kind":"when","text":"Creating a sorted set with a null comparator","code":["ValueSet.ofSorted(String, null)"]},
+
+        {"kind":"then","text":"","code":["thrown(NullPointerException)"]},
+
+        {"kind":"when","text":"We try to remove a null element","code":["ValueSet.ofSorted(String).remove(null)"]},
+
+        {"kind":"then","text":"","code":["thrown(NullPointerException)"]},
+
+        {"kind":"when","text":"We try to add null elements to a sorted set","code":["ValueSet.ofSorted(String).addAll([\"1\", null, \"3\"] as Set)"]},
+
+        {"kind":"then","text":"","code":["thrown(NullPointerException)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Stream integration works properly",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var foods = [\"aburaage\", \"tempeh\", \"tofu\", \"Daikon\", \"Natto\", \"Miso\"]","var asTreeSet = new TreeSet<String>(foods)","var asReverseTreeSet = new TreeSet<String>(Comparator.reverseOrder())","asReverseTreeSet.addAll(foods)"]},
+
+        {"kind":"when","text":"","code":["var collectedSet = foods.stream().collect(ValueSet.collectorOfSorted(String))"]},
+
+        {"kind":"then","text":"","code":["collectedSet.toSet() == asTreeSet"]},
+
+        {"kind":"when","text":"","code":["collectedSet = foods.stream().collect(ValueSet.collectorOfSorted(String, Comparator.reverseOrder()))"]},
+
+        {"kind":"then","text":"","code":["collectedSet.toSet() == asReverseTreeSet"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Set operations with Java collections",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var valueSet = ValueSet.ofSorted(\"a\", \"b\", \"c\")","var javaSet = [\"b\", \"c\", \"d\"] as Set"]},
+
+        {"kind":"when","text":"Union with Java set","code":["var union = valueSet.addAll(javaSet)"]},
+
+        {"kind":"then","text":"","code":["union.toSet() == [\"a\", \"b\", \"c\", \"d\"] as Set"]},
+
+        {"kind":"when","text":"Intersection with Java set","code":["var intersection = valueSet.retainAll(javaSet)"]},
+
+        {"kind":"then","text":"","code":["intersection.toSet() == [\"b\", \"c\"] as Set"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Iterator behavior conforms to set semantics",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var set = ValueSet.ofSorted(2, 4, 1, 3, 3, 2, 2, 1)","var iterated = []"]},
+
+        {"kind":"when","text":"","code":["for ( var element : set ) {","    iterated << element","}"]},
+
+        {"kind":"then","text":"","code":["iterated.size() == 4","iterated as Set == [1,2,3,4] as Set"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Empty set special cases",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var empty = ValueSet.ofSorted(String).clear()"]},
+
+        {"kind":"expect","text":"","code":["empty.isEmpty()","empty.type() == String","empty.add(\"test\").size() == 1"]},
+
+        {"kind":"and","text":"","code":["empty == ValueSet.ofSorted(String)","empty == ValueSet.ofSorted(String, Comparator.naturalOrder())","empty != ValueSet.ofSorted(Integer)","empty != ValueSet.ofSorted(String, Comparator.reverseOrder())"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Duplicate additions have no effect",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var set = ValueSet.ofSorted(\"a\").add(\"a\").add(\"a\")"]},
+
+        {"kind":"expect","text":"","code":["set.size() == 1"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `addAll` methods supports various collection types.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var initial = ValueSet.ofSorted(\"a\")"]},
+
+        {"kind":"expect","text":"Elements from different collection types are added correctly","code":["initial.addAll([\"b\", \"c\"] as List).toSet() == [\"a\", \"b\", \"c\"] as Set","initial.addAll([\"b\", \"c\"] as Set).toSet() == [\"a\", \"b\", \"c\"] as Set","initial.addAll(Tuple.of(\"b\", \"c\")).toSet() == [\"a\", \"b\", \"c\"] as Set","initial.addAll([\"b\", \"c\"] as String[]).toSet() == [\"a\", \"b\", \"c\"] as Set","initial.addAll(Stream.of(\"b\", \"c\")).toSet() == [\"a\", \"b\", \"c\"] as Set"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"removeAll handles different input collection types",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var initial = ValueSet.ofSorted(\"a\", \"b\", \"c\", \"d\")"]},
+
+        {"kind":"expect","text":"Elements are removed regardless of input collection type","code":["initial.removeAll([\"a\", \"b\"] as List).toSet() == [\"c\", \"d\"] as Set","initial.removeAll([\"c\"] as Set).toSet() == [\"a\", \"b\", \"d\"] as Set","initial.removeAll(Tuple.of(\"d\", \"e\")).toSet() == [\"a\", \"b\", \"c\"] as Set","initial.removeAll([\"b\", \"c\"] as String[]).toSet() == [\"a\", \"d\"] as Set","initial.removeAll(Stream.of(\"a\", \"d\")).toSet() == [\"b\", \"c\"] as Set"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"retainAll works with diverse collection sources",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var initial = ValueSet.ofSorted(\"a\", \"b\", \"c\", \"d\")"]},
+
+        {"kind":"expect","text":"Only elements present in both collections are retained","code":["initial.retainAll([\"b\", \"c\"] as List).toSet() == [\"b\", \"c\"] as Set","initial.retainAll([\"a\", \"d\"] as Set).toSet() == [\"a\", \"d\"] as Set","initial.retainAll(Tuple.of(\"c\", \"e\")).toSet() == [\"c\"] as Set","initial.retainAll([\"d\"] as String[]).toSet() == [\"d\"] as Set","initial.retainAll(Stream.of(\"a\", \"b\")).toSet() == [\"a\", \"b\"] as Set"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The various `containsAll(..)` methods accurately check membership across collection types.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var valueSet = ValueSet.ofSorted(\"a\", \"b\", \"c\")"]},
+
+        {"kind":"expect","text":"Membership checks work with all compatible collection types","code":["valueSet.containsAll([\"a\", \"b\"] as List)","valueSet.containsAll([\"b\", \"c\"] as Set)","valueSet.containsAll([\"b\", \"c\"] as Iterable<String>)","valueSet.containsAll([\"a\", \"b\", \"c\"] as String[])","valueSet.containsAll([\"a\", \"b\", \"c\"].stream())","valueSet.containsAll(Stream.of(\"b\", \"c\"))","valueSet.containsAll(Tuple.of(\"a\", \"c\"))","!valueSet.containsAll([\"a\", \"d\"] as List)","!valueSet.containsAll([\"a\", \"d\"] as Set)","!valueSet.containsAll([\"a\", \"d\"] as Iterable<String>)","!valueSet.containsAll([\"a\", \"d\"] as String[])","!valueSet.containsAll([\"a\", \"d\"].stream())","!valueSet.containsAll(Tuple.of(\"a\", \"d\"))","valueSet.containsAll([] as Set) // Empty collection always returns true","valueSet.containsAll(ValueSet.of(\"a\", \"c\"))","!valueSet.containsAll(ValueSet.of(\"b\", \"c\", \"d\"))"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"operations with empty collections have no effect or clear as expected",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var initial = ValueSet.ofSorted(\"a\", \"b\")"]},
+
+        {"kind":"expect","text":"Empty inputs leave set unchanged or clear appropriately","code":["initial.addAll([] as Set) == initial","initial.removeAll([] as Set) == initial","initial.retainAll([\"a\", \"b\"] as Set) == initial"]},
+
+        {"kind":"when","text":"Retaining nothing clears the set","code":["var cleared = initial.retainAll([] as Set)"]},
+
+        {"kind":"then","text":"","code":["cleared.isEmpty()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Bulk operations ignore duplicate elements in input",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var initial = ValueSet.ofSorted(\"a\")"]},
+
+        {"kind":"expect","text":"Duplicates in input collections have no effect","code":["initial.addAll([\"a\", \"a\", \"b\"] as List).toSet() == [\"a\", \"b\"] as Set","initial.removeAll([\"a\", \"a\"] as List).isEmpty()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A sorted value set interoperates with a `Tuple`",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var tuple = Tuple.of(\"x\", \"y\", \"z\")","var valueSet = ValueSet.ofSorted(String).addAll(tuple)"]},
+
+        {"kind":"expect","text":"Full interoperability with Tuple collections","code":["valueSet.containsAll(tuple)","valueSet.removeAll(tuple).isEmpty()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A sorted `ValueSet` collector works with different stream sources.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"when","text":"Collecting from various stream sources","code":["var fromList = [\"a\", \"b\"].stream().collect(ValueSet.collectorOf(String))","var fromSet = ([\"c\", \"d\"] as Set).stream().collect(ValueSet.collectorOf(String))","var fromArray = Arrays.stream([\"e\", \"f\"] as String[]).collect(ValueSet.collectorOf(String))","var fromTuple = Tuple.of(\"g\", \"h\").stream().collect(ValueSet.collectorOf(String))"]},
+
+        {"kind":"then","text":"All collected sets match source contents","code":["fromList.toSet() == [\"a\", \"b\"] as Set","fromSet.toSet() == [\"c\", \"d\"] as Set","fromArray.toSet() == [\"e\", \"f\"] as Set","fromTuple.toSet() == [\"g\", \"h\"] as Set"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A no-op operations returns the same instance!",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var initial = ValueSet.ofSorted(\"a\", \"b\", \"c\", \"d\")","var sameElements = [\"a\", \"b\", \"c\", \"d\"] as Set","var empty = Collections.emptySet() as Set<String>"]},
+
+        {"kind":"expect","text":"The identity is preserved when operations don't modify a set.","code":["initial.addAll(empty).is(initial)","initial.addAll(sameElements).is(initial)","initial.removeAll(empty).is(initial)","initial.retainAll(sameElements).is(initial)"]},
+
+        {"kind":"and","text":"Adding existing elements does not change the set.","code":["initial.add(\"a\").is(initial)","initial.add(\"b\").is(initial)","initial.add(\"c\").is(initial)","initial.add(\"d\").is(initial)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use `ValueSet.classTyped(Class)` to created a typed class pointer to `ValueSet`.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var typed = ValueSet.classTyped(String)"]},
+
+        {"kind":"expect","text":"","code":["typed == ValueSet.class"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A sorted set of strings can have a custom comparator.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var set = ValueSet.ofSorted(String, Comparator.reverseOrder())","set = set.add(\"cat\").add(\"bunny\").add(\"piglet\")"]},
+
+        {"kind":"expect","text":"","code":["set.toList() == [\"piglet\", \"cat\", \"bunny\"] // Sorted in reverse order","set.contains(\"cat\")","!set.contains(\"date\")"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A sorted set of integers can have a custom comparator.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var set = ValueSet.ofSorted(Integer, Comparator.reverseOrder())","set = set.add(3).add(1).add(2)"]},
+
+        {"kind":"expect","text":"","code":["set.toList() == [3, 2, 1] // Sorted in reverse order","set.contains(2)","!set.contains(4)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A sorted set can directly be created from tuples.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var fromTuple1 = ValueSet.ofSorted(Tuple.of(\"dog\", \"sheep\", \"cat\"))","var fromTuple2 = ValueSet.ofSorted(Tuple.of(42, 1, 23, 17), Comparator.reverseOrder())"]},
+
+        {"kind":"expect","text":"","code":["fromTuple1.toList() == [\"cat\", \"dog\", \"sheep\"]","fromTuple2.toList() == [42, 23, 17, 1] // Sorted in natural order","fromTuple1.type() == String","fromTuple2.type() == Integer"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use the `toSet()` method to convert a sorted `ValueSet` to an unmodifiable JDK `Set`.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var sortedSet = ValueSet.ofSorted(\"oat milk\", \"almond milk\", \"soy milk\")"]},
+
+        {"kind":"when","text":"","code":["var jdkSet = sortedSet.toSet()"]},
+
+        {"kind":"then","text":"","code":["jdkSet instanceof Set","jdkSet.size() == 3","jdkSet.contains(\"oat milk\")","jdkSet.contains(\"almond milk\")","jdkSet.contains(\"soy milk\")","!jdkSet.contains(\"coconut milk\")"]},
+
+        {"kind":"when","text":"","code":["jdkSet.add(\"coconut milk\") // This should throw an exception since the set is unmodifiable."]},
+
+        {"kind":"then","text":"","code":["thrown(UnsupportedOperationException)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    }
+  
+  ],
+  "generator":"https://github.com/renatoathaydes/spock-reports"
+}

@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
         }
 
 <span class="fc" id="L31">        WeakReference&lt;Vals&lt;T&gt;&gt; weakSource = new WeakReference&lt;&gt;(source);</span>
-<span class="fc" id="L32">        Viewables.cast(source).onChange(Action.ofWeak(view, (innerView, delegate) -&gt; {</span>
+<span class="fc" id="L32">        Viewables.cast(source).onChange(WeakActionImpl.of(view, (innerView, delegate) -&gt; {</span>
 <span class="fc" id="L33">            Vals&lt;T&gt; innerSource = weakSource.get();</span>
 <span class="pc bpc" id="L34" title="1 of 2 branches missed.">            if (innerSource == null) {</span>
 <span class="nc" id="L35">                return;</span>
@@ -301,7 +301,7 @@ import java.util.stream.Collectors;
 
     /** {@inheritDoc} */
     @Override
-    public Vals&lt;T&gt; onChange( Action&lt;ValsDelegate&lt;T&gt;&gt; action ) {
+    public Viewables&lt;T&gt; onChange( Action&lt;ValsDelegate&lt;T&gt;&gt; action ) {
 <span class="fc" id="L305">        _changeListeners.onChange(action);</span>
 <span class="fc" id="L306">        return this;</span>
     }

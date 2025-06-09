@@ -697,7 +697,7 @@
 
         {"kind":"and","text":"A trace list to record the side effect.","code":["var trace = []"]},
 
-        {"kind":"and","text":"Finally we register a weak action on the property.","code":["Viewable.cast(nameLens).onChange(From.ALL, Action.ofWeak(owner, (o, it) -> trace << it.currentValue().orElseThrow()))"]},
+        {"kind":"and","text":"Finally we register a weak action on the property.","code":["Viewable.cast(nameLens).onChange(From.ALL, new sprouts.impl.WeakActionImpl(owner, (o, it) -> trace << it.currentValue().orElseThrow()))"]},
 
         {"kind":"when","text":"We change the lens...","code":["nameLens.set(\"William\")"]},
 
@@ -713,26 +713,26 @@
     },
   
     {
-      "id":"A `WeakObserver` is removed and garbage collected together with its owner.",
+      "id":"A weak observable is removed and garbage collected together with its event listeners.",
       "result":"PASS",
       "duration":"?",
       "iterations":{
-      "tags":{},"see":[],"extraInfo":["\n            You are not supposed to register an observer directly onto a lens property.\n            Instead you should get a `.view()` (Viewable) to register an observer.\n            But if you really need to register an observer directly onto a property\n            you may want to consider using a `WeakObserver` to avoid memory leaks.\n\n            A weak observer is a special kind of observer that has a weakly referenced \"owner\".\n            This owner determines if the observer is still alive or not and should be removed\n            after the owner.\n\n            Warning! Never reference the owner in the observer itself, not even indirectly!\n            This will effectively turn your owner and observer into memory leaks.\n        "]
+      "tags":{},"see":[],"extraInfo":["\n            You are not supposed to register an observer directly onto a lens property.\n            Instead you should get a `.view()` (Viewable) to register an observer.\n            Here we show you how to use this method to create a weak observer.\n\n            A weak observer is a special kind of observer that has a weakly referenced.\n            This determines if the observer is still alive or not and if its listeners should be removed\n            after it is no longer reachable (i.e. garbage collected).\n        "]
       },
       "blocks":[
         {"kind":"given","text":"We first create a base property for the lens:","code":["var date = LocalDate.of(2021, 8, 12)","var dateProperty = Var.of(date)"]},
 
-        {"kind":"and","text":"A lens and an owner:","code":["var monthLens = dateProperty.zoomTo(LocalDate::getMonth, (d, m) -> d.withMonth(m.getValue()))","var owner = new Object()"]},
+        {"kind":"and","text":"A lens and an owner:","code":["var monthLens = dateProperty.zoomTo(LocalDate::getMonth, (d, m) -> d.withMonth(m.getValue()))","var weakObservable = monthLens.view()"]},
 
         {"kind":"and","text":"A trace list to record the side effect.","code":["var trace = []"]},
 
-        {"kind":"and","text":"Finally we register a weak observer on the property.","code":["Viewable.cast(monthLens).subscribe(Observer.ofWeak(owner,{trace<<\"!\"}))"]},
+        {"kind":"and","text":"Finally we register a weak observer on the property.","code":["weakObservable.subscribe({trace<<\"!\"})"]},
 
         {"kind":"when","text":"We change the lens...","code":["monthLens.set(Month.JANUARY)"]},
 
         {"kind":"then","text":"The side effect is executed.","code":["trace == [\"!\"]"]},
 
-        {"kind":"when","text":"We remove the owner and then wait for the garbage collector to remove the weak observer.","code":["owner = null","waitForGarbageCollection()"]},
+        {"kind":"when","text":"We remove the owner and then wait for the garbage collector to remove the weak observer.","code":["weakObservable = null","waitForGarbageCollection()"]},
 
         {"kind":"and","text":"We change the lens again...","code":["monthLens.set(Month.FEBRUARY)"]},
 

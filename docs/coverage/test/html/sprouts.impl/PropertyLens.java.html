@@ -153,7 +153,7 @@ final class PropertyLens&lt;A extends @Nullable Object, T extends @Nullable Obje
 <span class="fc bfc" id="L153" title="All 2 branches covered.">        _changeListeners = changeListeners == null ? new PropertyChangeListeners&lt;&gt;() : new PropertyChangeListeners&lt;&gt;(changeListeners);</span>
 
 <span class="fc" id="L155">        _lastItem = initialItem;</span>
-<span class="fc" id="L156">        Viewable.cast(parent).onChange(From.ALL, Action.ofWeak(this, (thisLens, v) -&gt; {</span>
+<span class="fc" id="L156">        Viewable.cast(parent).onChange(From.ALL, WeakActionImpl.of(this, (thisLens, v) -&gt; {</span>
 <span class="fc" id="L157">            T newValue = thisLens._fetchItemFromParent();</span>
 <span class="fc" id="L158">            ItemPair&lt;T&gt; pair = new ItemPair&lt;&gt;(thisLens._type, newValue, thisLens._lastItem);</span>
 <span class="fc bfc" id="L159" title="All 2 branches covered.">            if ( pair.change() != SingleChange.NONE ) {</span>

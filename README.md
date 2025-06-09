@@ -27,11 +27,11 @@ GUI framework.
 ## Getting started with Gradle ##
 Groovy DSL:
 ```
-implementation 'io.github.globaltcad:sprouts:2.0.0-M18'
+implementation 'io.github.globaltcad:sprouts:2.0.0-M19'
 ```
 Kotlin DSL:
 ```
-implementation("io.github.globaltcad:sprouts:2.0.0-M18")
+implementation("io.github.globaltcad:sprouts:2.0.0-M19")
 ```
 ---
 
@@ -50,7 +50,7 @@ allprojects {
 ...either by specifying the version tag:
 ```
 dependencies {
-	implementation 'com.github.globaltcad:sprouts:2.0.0-M18'
+	implementation 'com.github.globaltcad:sprouts:2.0.0-M19'
 }
 ```
 ...or by using a custom commit hash instead:

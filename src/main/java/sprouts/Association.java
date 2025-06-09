@@ -859,6 +859,7 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
      *  Returns a new association that is the same as this one
      *  but with the keys sorted based on the provided {@link Comparator}.
      *
+     * @param comparator The comparator to use for sorting the keys in the returned association.
      * @return A new association with the keys sorted
      *        based on the provided comparator.
      */

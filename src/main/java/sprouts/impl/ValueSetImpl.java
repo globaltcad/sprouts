@@ -250,7 +250,7 @@ final class ValueSetImpl<E> implements ValueSet<E> {
                         return _withBranchAt(branchIndex, new ValueSetImpl<>(_depth + 1, _type, newElementsArray, _elementsHashes, EMPTY_BRANCHES, true));
                     } else {
                         ValueSetImpl<E> newBranch = branch._with(key, keyHash);
-                        if ( newBranch == branch ) {
+                        if ( Util.refEquals(newBranch, branch) ) {
                             return this;
                         } else {
                             return _withBranchAt(branchIndex, newBranch);
@@ -295,7 +295,7 @@ final class ValueSetImpl<E> implements ValueSet<E> {
                     return this;
                 } else {
                     ValueSetImpl<E> newBranch = branch._without(key, keyHash);
-                    if ( newBranch == branch ) {
+                    if ( Util.refEquals(newBranch, branch) ) {
                         return this;
                     } else if ( newBranch._size == 0 ) {
                         // Maybe we can remove all branches now

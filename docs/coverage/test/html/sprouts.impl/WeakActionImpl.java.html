@@ -2,7 +2,6 @@
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
-import sprouts.WeakAction;
 
 import java.lang.ref.WeakReference;
 import java.util.Optional;
@@ -10,35 +9,40 @@ import java.util.function.BiConsumer;
 
 final class WeakActionImpl&lt;O extends @Nullable Object, D&gt; implements WeakAction&lt;O, D&gt;
 {
+
+    static &lt;O, D&gt; WeakAction&lt;O, D&gt; of( O owner, BiConsumer&lt;O, D&gt; action ) {
+<span class="fc" id="L14">        return new WeakActionImpl&lt;&gt;(owner, action);</span>
+    }
+
     private @Nullable BiConsumer&lt;O, D&gt; _action;
     private final WeakReference&lt;O&gt; _owner;
 
-<span class="fc" id="L16">    WeakActionImpl( @NonNull O owner, @NonNull BiConsumer&lt;O, D&gt; action ) {</span>
-<span class="fc" id="L17">        _owner  = new WeakReference&lt;&gt;(owner);</span>
-<span class="fc" id="L18">        _action = action;</span>
-<span class="fc" id="L19">    }</span>
+<span class="fc" id="L20">    WeakActionImpl( @NonNull O owner, @NonNull BiConsumer&lt;O, D&gt; action ) {</span>
+<span class="fc" id="L21">        _owner  = new WeakReference&lt;&gt;(owner);</span>
+<span class="fc" id="L22">        _action = action;</span>
+<span class="fc" id="L23">    }</span>
 
     @Override
     public void accept( D delegate ) {
-<span class="fc bfc" id="L23" title="All 2 branches covered.">        if ( _action == null )</span>
-<span class="fc" id="L24">            return;</span>
+<span class="pc bpc" id="L27" title="1 of 2 branches missed.">        if ( _action == null )</span>
+<span class="nc" id="L28">            return;</span>
 
-<span class="fc" id="L26">        O owner = _owner.get();</span>
+<span class="fc" id="L30">        O owner = _owner.get();</span>
 
-<span class="pc bpc" id="L28" title="1 of 2 branches missed.">        if ( owner != null )</span>
-<span class="fc" id="L29">            _action.accept(owner, delegate);</span>
+<span class="pc bpc" id="L32" title="1 of 2 branches missed.">        if ( owner != null )</span>
+<span class="fc" id="L33">            _action.accept(owner, delegate);</span>
         else
-<span class="nc" id="L31">            _action = null;</span>
-<span class="fc" id="L32">    }</span>
+<span class="nc" id="L35">            _action = null;</span>
+<span class="fc" id="L36">    }</span>
 
     @Override
     public Optional&lt;O&gt; owner() {
-<span class="fc" id="L36">        return Optional.ofNullable(_owner.get());</span>
+<span class="fc" id="L40">        return Optional.ofNullable(_owner.get());</span>
     }
 
     @Override
     public void clear() {
-<span class="fc" id="L41">        _action = null;</span>
-<span class="fc" id="L42">    }</span>
+<span class="fc" id="L45">        _action = null;</span>
+<span class="fc" id="L46">    }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

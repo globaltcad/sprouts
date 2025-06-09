@@ -12,6 +12,12 @@ final class Util {
 
     private Util() {}
 
+    @SuppressWarnings("ReferenceEquality")
+    static boolean refEquals(@Nullable Object a, @Nullable Object b) {
+        // We use == here to compare references, not .equals()!
+        return a == b;
+    }
+
     static <T extends @Nullable Object, R> Function<T, R> nonNullMapper(R nullObject, R errorObject, Function<T, @Nullable R> mapper) {
         return t -> {
             try {

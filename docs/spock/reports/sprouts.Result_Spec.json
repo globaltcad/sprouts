@@ -4,7 +4,7 @@
   "narrative":"The `Result` interface is used to represent the optional result of an operation\n    as well as a list of problems that occurred during the operation.\n    The problems of a `Result` are represented by the `Problem` interface,\n    which may be created from an exception or a simple message.\n\n    A `Result` is a fully thread safe immutable value type with useful mapping\n    functions that allow you to transform the value of the result into another\n    effectively making it a monadic value similar to the `Optional` type in Java 8.",
   "subjects":["sprouts.Result","sprouts.Val","sprouts.Problem"],
   "statistics":{
-    "runs":"19",
+    "runs":"23",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -364,6 +364,94 @@
         {"kind":"and","text":"The peeked result has three additional problems, one for each prior problem.","code":["peekedResult.problems().size() == 6"]},
 
         {"kind":"and","text":"Because ´Result´s are immutable, the original result still has the same problems.","code":["result.problems().size() == 3"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The \"orElseThrowUnchecked\" method will throw an exception which is a composite of all problems.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `orElseThrowUnchecked` throws a \"MissingItemRuntimeException\" which is a composite of all problems\n            that occurred during the operation that produced the result.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A result with some problems.","code":["var result = Result.of(Integer, [","    Problem.of(\"too large\", \"Who can count that far?\"),","    Problem.of(\"too even\", \"The customer doesn't like even numbers.\"),","    Problem.of(\"not a prime\", \"Prime numbers sell better.\")","])"]},
+
+        {"kind":"when","text":"We call the `orElseThrowUnchecked` method.","code":["int neverReached = result.orElseThrowUnchecked()"]},
+
+        {"kind":"then","text":"An exception is thrown.","code":["var exception = thrown(MissingItemRuntimeException)"]},
+
+        {"kind":"and","text":"The exception has the correct message and cause:","code":["exception.message == \"Expected item to be present in result!\""]},
+
+        {"kind":"and","text":"The cause of the exception is the first problem in the list.","code":["exception.cause.toString().contains(\"too large\")","exception.cause.toString().contains(\"Who can count that far?\")"]},
+
+        {"kind":"and","text":"The last problem in the list is also present in the exception.","code":["exception.suppressed.length == 2","exception.suppressed[0].toString().contains(\"too even\")","exception.suppressed[0].toString().contains(\"The customer doesn't like even numbers.\")","exception.suppressed[1].toString().contains(\"not a prime\")","exception.suppressed[1].toString().contains(\"Prime numbers sell better.\")"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The \"orElseThrow\" method will throw a checked exception which is a composite of all problems.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `orElseThrow` throws a \"MissingItemException\" which is a composite of all problems\n            that occurred during the operation that produced the result.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A result with some problems.","code":["var result = Result.of(Integer, [","    Problem.of(\"too large\", \"Who can count that far?\"),","    Problem.of(\"too even\", \"The customer doesn't like even numbers.\"),","    Problem.of(\"not a prime\", \"Prime numbers sell better.\")","])"]},
+
+        {"kind":"when","text":"We call the `orElseThrow` method.","code":["int neverReached = result.orElseThrow()"]},
+
+        {"kind":"then","text":"An exception is thrown.","code":["var exception = thrown(MissingItemException)"]},
+
+        {"kind":"and","text":"The exception has the correct message and cause:","code":["exception.message == \"Expected item to be present in result!\""]},
+
+        {"kind":"and","text":"The cause of the exception is the first problem in the list.","code":["exception.cause.toString().contains(\"too large\")","exception.cause.toString().contains(\"Who can count that far?\")"]},
+
+        {"kind":"and","text":"The last problem in the list is also present in the exception.","code":["exception.suppressed.length == 2","exception.suppressed[0].toString().contains(\"too even\")","exception.suppressed[0].toString().contains(\"The customer doesn't like even numbers.\")","exception.suppressed[1].toString().contains(\"not a prime\")","exception.suppressed[1].toString().contains(\"Prime numbers sell better.\")"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"If you want to throw custom checked exceptions, use \"orElseThrowProblems(..)\".",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two results, one successful, the other not.","code":["var result1 = Result.ofTry(Double, ()-> 42d / 0.1d )","var result2 = Result.ofTry(Integer, ()-> 42 / 0 )"]},
+
+        {"kind":"expect","text":"","code":["result1.orElseThrowProblems( problems -> new Exception() ) == 420d"]},
+
+        {"kind":"when","text":"","code":["result2.orElseThrowProblems( problems -> new Exception(problems.first().description()) )"]},
+
+        {"kind":"then","text":"","code":["var exception = thrown(Exception)"]},
+
+        {"kind":"and","text":"","code":["exception.message == \"Division by zero\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"If you want to throw custom runtime exceptions, use \"orElseThrowProblemsUnchecked(..)\".",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two results, one successful, the other not.","code":["var result1 = Result.ofTry(Double, ()-> 42d / 0.1d )","var result2 = Result.ofTry(Integer, ()-> 42 / 0 )"]},
+
+        {"kind":"expect","text":"","code":["result1.orElseThrowProblemsUnchecked( problems -> new RuntimeException() ) == 420d"]},
+
+        {"kind":"when","text":"","code":["result2.orElseThrowProblemsUnchecked( problems -> new RuntimeException(problems.first().description()) )"]},
+
+        {"kind":"then","text":"","code":["var exception = thrown(RuntimeException)"]},
+
+        {"kind":"and","text":"","code":["exception.message == \"Division by zero\""]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }

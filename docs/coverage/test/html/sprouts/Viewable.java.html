@@ -41,18 +41,25 @@ import java.util.function.BiFunction;
 public interface Viewable&lt;T&gt; extends Val&lt;T&gt;, Observable {
 
     /**
+     *  Casts the given {@link Val} instance to a {@link Viewable} instance usually with the
+     *  purpose of registering change listeners on it.&lt;br&gt;
+     *  &lt;b&gt;WARNING: Only call this method in a class constructor with
+     *  a property which is also a member variable of that class.
+     *  Otherwise, you are risking memory leaks.&lt;/b&gt;&lt;br&gt;
+     *  &lt;p&gt;
      *  Regular properties, created from the various factory methods in {@link Val} and {@link Var},
      *  (may) also implement the {@link Viewable} interface internally. &lt;br&gt;
      *  Although {@link Val} and {@link Var} do not extend {@link Viewable} directly,
-     *  you may cast them to a {@link Viewable} to get access to the {@link Viewable} API.&lt;br&gt;
+     *  you may cast them to a {@link Viewable} to get access to the {@link Viewable} API,
+     *  and then register change listeners onto it.&lt;br&gt;
+     *  These will be called whenever the item in the {@link Val} or {@link Var} changes,
+     *  through the {@code Var::set(Channel, T)} method.&lt;br&gt;
      *  &lt;p&gt;
-     *  This method is a convenience method which allows you to cast
-     *  the given {@link Val} instance to a {@link Viewable}.&lt;br&gt;
-     *  The main intention of this method is to allow you to register change listeners
-     *  on the given {@link Val} instance, which will be called whenever the item
-     *  viewed by this {@link Viewable} changes through the {@code Var::set(Channel, T)} method.&lt;br&gt;
+     *  Casting, however, is a bit of a hack, and it is not recommended to use this method
+     *  anywhere else than in a class constructor, because otherwise it is hard to reason about
+     *  how many change listeners are registered on a property and what they capture.
      *  &lt;p&gt;&lt;b&gt;
-     *      WARNING:
+     *      This is problematic because:&lt;br&gt;
      *      The change listeners registered on the cast property will not
      *      be garbage collected automatically. You must remove them manually
      *      when no longer needed. &lt;br&gt;
@@ -70,7 +77,7 @@ public interface Viewable&lt;T&gt; extends Val&lt;T&gt;, Observable {
      * @return The supplied {@link Val} instance cast to a {@link Viewable} instance.
      */
     static &lt;T&gt; Viewable&lt;T&gt; cast( Val&lt;T&gt; val ) {
-<span class="fc" id="L73">        return Viewable.class.cast(val);</span>
+<span class="fc" id="L80">        return Viewable.class.cast(val);</span>
     }
 
     /**
@@ -103,10 +110,10 @@ public interface Viewable&lt;T&gt; extends Val&lt;T&gt;, Observable {
      *                              &lt;b&gt;when it is first called&lt;/b&gt;.
      */
     static &lt;T extends @Nullable Object, U extends @Nullable Object&gt; Viewable&lt;@NonNull T&gt; of(Val&lt;T&gt; first, Val&lt;U&gt; second, BiFunction&lt;T, U, @NonNull T&gt; combiner ) {
-<span class="fc" id="L106">        Objects.requireNonNull(first);</span>
-<span class="fc" id="L107">        Objects.requireNonNull(second);</span>
-<span class="fc" id="L108">        Objects.requireNonNull(combiner);</span>
-<span class="fc" id="L109">        return Sprouts.factory().viewOf( first, second, combiner );</span>
+<span class="fc" id="L113">        Objects.requireNonNull(first);</span>
+<span class="fc" id="L114">        Objects.requireNonNull(second);</span>
+<span class="fc" id="L115">        Objects.requireNonNull(combiner);</span>
+<span class="fc" id="L116">        return Sprouts.factory().viewOf( first, second, combiner );</span>
     }
 
     /**
@@ -136,10 +143,10 @@ public interface Viewable&lt;T&gt; extends Val&lt;T&gt;, Observable {
     static &lt;T extends @Nullable Object, U extends @Nullable Object&gt; Viewable&lt;@Nullable T&gt; ofNullable(
             Val&lt;T&gt; first, Val&lt;U&gt; second, BiFunction&lt;T, U, @Nullable T&gt; combiner
     ) {
-<span class="fc" id="L139">        Objects.requireNonNull(first);</span>
-<span class="fc" id="L140">        Objects.requireNonNull(second);</span>
-<span class="fc" id="L141">        Objects.requireNonNull(combiner);</span>
-<span class="fc" id="L142">        return Sprouts.factory().viewOfNullable( first, second, combiner );</span>
+<span class="fc" id="L146">        Objects.requireNonNull(first);</span>
+<span class="fc" id="L147">        Objects.requireNonNull(second);</span>
+<span class="fc" id="L148">        Objects.requireNonNull(combiner);</span>
+<span class="fc" id="L149">        return Sprouts.factory().viewOfNullable( first, second, combiner );</span>
     }
 
     /**
@@ -174,11 +181,11 @@ public interface Viewable&lt;T&gt; extends Val&lt;T&gt;, Observable {
      *                              &lt;b&gt;when it is first called&lt;/b&gt;.
      */
     static &lt;T extends @Nullable Object, U extends @Nullable Object, R&gt; Viewable&lt;R&gt; of(Class&lt;R&gt; type, Val&lt;T&gt; first, Val&lt;U&gt; second, BiFunction&lt;T, U, R&gt; combiner ) {
-<span class="fc" id="L177">        Objects.requireNonNull(type);</span>
-<span class="fc" id="L178">        Objects.requireNonNull(first);</span>
-<span class="fc" id="L179">        Objects.requireNonNull(second);</span>
-<span class="fc" id="L180">        Objects.requireNonNull(combiner);</span>
-<span class="fc" id="L181">        return Sprouts.factory().viewOf( type, first, second, combiner );</span>
+<span class="fc" id="L184">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L185">        Objects.requireNonNull(first);</span>
+<span class="fc" id="L186">        Objects.requireNonNull(second);</span>
+<span class="fc" id="L187">        Objects.requireNonNull(combiner);</span>
+<span class="fc" id="L188">        return Sprouts.factory().viewOf( type, first, second, combiner );</span>
     }
 
     /**
@@ -208,11 +215,11 @@ public interface Viewable&lt;T&gt; extends Val&lt;T&gt;, Observable {
      * @return A new {@link Viewable} instance which is a live view of the two given properties.
      */
     static &lt;T extends @Nullable Object, U extends @Nullable Object, R&gt; Viewable&lt;@Nullable R&gt; ofNullable(Class&lt;R&gt; type, Val&lt;T&gt; first, Val&lt;U&gt; second, BiFunction&lt;T, U, @Nullable R&gt; combiner ) {
-<span class="fc" id="L211">        Objects.requireNonNull(type);</span>
-<span class="fc" id="L212">        Objects.requireNonNull(first);</span>
-<span class="fc" id="L213">        Objects.requireNonNull(second);</span>
-<span class="fc" id="L214">        Objects.requireNonNull(combiner);</span>
-<span class="fc" id="L215">        return Sprouts.factory().viewOfNullable( type, first, second, combiner );</span>
+<span class="fc" id="L218">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L219">        Objects.requireNonNull(first);</span>
+<span class="fc" id="L220">        Objects.requireNonNull(second);</span>
+<span class="fc" id="L221">        Objects.requireNonNull(combiner);</span>
+<span class="fc" id="L222">        return Sprouts.factory().viewOfNullable( type, first, second, combiner );</span>
     }
 
     /**

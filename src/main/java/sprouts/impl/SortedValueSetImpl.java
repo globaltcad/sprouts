@@ -59,15 +59,12 @@ final class SortedValueSetImpl<E> implements ValueSet<E> {
             return _size;
         }
         public Node withNewArrays(Object newElementsArray) {
-            int newSize = _computeSize(newElementsArray, _left, _right);
             return new Node(newElementsArray, _left, _right);
         }
         public Node withNewLeft(@Nullable Node left) {
-            int newSize = _computeSize(_elementsArray, left, _right);
             return new Node(_elementsArray, left, _right);
         }
         public Node withNewRight(@Nullable Node right) {
-            int newSize = _computeSize(_elementsArray, _left, right);
             return new Node(_elementsArray, _left, right);
         }
 
