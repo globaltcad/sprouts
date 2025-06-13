@@ -242,7 +242,8 @@ final class SortedAssociationImpl<K, V> implements Association<K, V> {
         int numberOfKeys = _length(node.keysArray());
         int index = _binarySearch(node.keysArray(), keyType, keyComparator, key);
         boolean foundInCurrentNode = index >= 0 && index < numberOfKeys;
-        if ( !foundInCurrentNode && numberOfKeys < BASE_ENTRIES_PER_NODE(depth) ) {
+        boolean leftAndRightAreNull = node.left() == null && node.right() == null;
+        if ( leftAndRightAreNull && !foundInCurrentNode && numberOfKeys < BASE_ENTRIES_PER_NODE(depth) ) {
             // We add to the left
             Object newKeysArray = _createArray(keyType, ALLOWS_NULL, numberOfKeys+1);
             Object newValuesArray = _createArray(valueType, ALLOWS_NULL, numberOfKeys+1);

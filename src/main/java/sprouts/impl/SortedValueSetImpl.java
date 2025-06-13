@@ -213,7 +213,8 @@ final class SortedValueSetImpl<E> implements ValueSet<E> {
         int numberOfKeys = _length(node.elementsArray());
         int index = _binarySearch(node.elementsArray(), keyType, keyComparator, key);
         boolean foundInCurrentNode = index >= 0 && index < numberOfKeys;
-        if ( !foundInCurrentNode && numberOfKeys < BASE_ENTRIES_PER_NODE(depth) ) {
+        boolean leftAndRightAreNull = node.left() == null && node.right() == null;
+        if ( leftAndRightAreNull && !foundInCurrentNode && numberOfKeys < BASE_ENTRIES_PER_NODE(depth) ) {
             // We add to the left
             Object newKeysArray = _createArray(keyType, ALLOWS_NULL, numberOfKeys+1);
             // arraycopy
