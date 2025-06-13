@@ -296,7 +296,7 @@ final class AssociationImpl<K, V> implements Association<K, V> {
     public AssociationImpl<K, V> _with(final K key, final int keyHash, final V value, boolean putIfAbsent) {
         int index = _findValidIndexFor(key, keyHash);
         if ( index < 0 || index >= _length(_keysArray) ) {
-            if ( _length(_keysArray) < _maxEntriesForThisNode() ) {
+            if ( _branches.length == 0 && _length(_keysArray) < _maxEntriesForThisNode() ) {
                 return new AssociationImpl<>(
                         _depth,
                         _keyType,

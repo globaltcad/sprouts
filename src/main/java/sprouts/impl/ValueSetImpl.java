@@ -231,7 +231,7 @@ final class ValueSetImpl<E> implements ValueSet<E> {
     public ValueSetImpl<E> _with( final E key, final int keyHash ) {
         int index = _findValidIndexFor(key, keyHash);
         if ( index < 0 || index >= _length(_elementsArray) ) {
-            if ( _length(_elementsArray) < _maxEntriesForThisNode() ) {
+            if ( _branches.length == 0 && _length(_elementsArray) < _maxEntriesForThisNode() ) {
                 return new ValueSetImpl<>(
                         _depth,
                         _type,
