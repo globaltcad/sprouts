@@ -77,6 +77,12 @@ class Sorted_ValueSet_Spec extends Specification {
                             referenceSet.clear()
                             break
                     }
+                    if ( referenceSet.size() != currentSet.size() ) {
+                        throw new IllegalStateException(
+                            "The size of the set and the value set are not equal after element '$element' was introduced "+
+                            "with operation '$operation'. Set size: ${referenceSet.size()}, Value set size: ${currentSet.size()}"
+                        )
+                    }
                 }
                 return currentSet
             }
