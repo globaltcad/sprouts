@@ -98,6 +98,9 @@ class Association_Spec extends Specification
         and : 'Finally, we also check the `isSorted()` flag:'
             !associations.isSorted()
 
+        and : 'We also check if the key set is distinct!'
+            associations.size() == new HashSet<>(associations.toMap().keySet()).size()
+
         where :
             operations << [[
                         new Tuple2(Operation.ADD, 'a'),
@@ -150,6 +153,24 @@ class Association_Spec extends Specification
                         var hash = Math.abs(it % 2_000)
                         var operation = it > 2_000 ? Operation.REMOVE : Operation.ADD
                         return new Tuple2(operation, hash.toString())
+                    }), (0..10_000).collect({
+                        /*
+                            Here the operations come in sequences of 50, which
+                            means 50 add operations, then 50 remove operations then 50 add... etc.
+                            There is a total of 160 possible values!
+                         */
+                        var hash = Math.abs((it*1997) % 160)
+                        var operation = ((int)(it/50)) % 2 == 0 ? Operation.REMOVE : Operation.ADD
+                        return new Tuple2(operation, (hash*1997).toString())
+                    }), (0..10_000).collect({
+                        /*
+                            Here the operations come in sequences of 100, which
+                            means 100 add operations, then 100 remove operations then 100 add... etc.
+                            There is a total of 190 possible values!
+                         */
+                        var hash = Math.abs((it*1997) % 190)
+                        var operation = ((int)(it/100)) % 2 == 0 ? Operation.REMOVE : Operation.ADD
+                        return new Tuple2(operation, (hash*1997).toString())
                     })
             ]
     }
