@@ -387,7 +387,7 @@ final class AssociationImpl<K, V> implements Association<K, V> {
                         return _withBranchAt(branchIndex, new AssociationImpl<>(_depth + 1, _keyType, newKeysArray, _valueType, newValuesArray, _keyHashes, EMPTY_BRANCHES, true));
                     } else {
                         AssociationImpl<K, V> newBranch = branch._with(key, keyHash, value, putIfAbsent);
-                        if ( newBranch == branch ) {
+                        if ( Util.refEquals(newBranch, branch) ) {
                             return this;
                         } else {
                             return _withBranchAt(branchIndex, newBranch);
@@ -444,7 +444,7 @@ final class AssociationImpl<K, V> implements Association<K, V> {
                     return this;
                 } else {
                     AssociationImpl<K, V> newBranch = branch._without(key, keyHash);
-                    if ( newBranch == branch ) {
+                    if ( Util.refEquals(newBranch, branch) ) {
                         return this;
                     } else if ( newBranch._size == 0 ) {
                         // Maybe we can remove all branches now

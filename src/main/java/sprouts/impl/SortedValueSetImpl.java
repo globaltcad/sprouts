@@ -77,23 +77,12 @@ final class SortedValueSetImpl<E> implements ValueSet<E> {
         @Override
         public boolean equals(@Nullable Object obj) {
             if (this == obj) return true;
-            if (obj == null || getClass() != obj.getClass()) return false;
+            if (!(obj instanceof Node)) return false;
             Node other = (Node) obj;
             return _size == other._size &&
                     Val.equals(_elementsArray, other._elementsArray) &&
                     Objects.equals(_left, other._left) &&
                     Objects.equals(_right, other._right);
-        }
-
-        private static int _computeSize(
-                Object elementsArray,
-                @Nullable Node left,
-                @Nullable Node right
-        ) {
-            int size = _length(elementsArray);
-            if (left != null) size += left.size();
-            if (right != null) size += right.size();
-            return size;
         }
     }
 
@@ -184,7 +173,7 @@ final class SortedValueSetImpl<E> implements ValueSet<E> {
             throw new ClassCastException("Element type mismatch");
         }
         Node newRoot = _balance(_updateElement(_root, _type, _comparator, element, 0));
-        if (newRoot == _root) {
+        if (Util.refEquals(newRoot, _root)) {
             return this;
         }
         return new SortedValueSetImpl<>(_type, _comparator, newRoot);
@@ -235,7 +224,7 @@ final class SortedValueSetImpl<E> implements ValueSet<E> {
             Node left = node.left();
             if ( left != null ) {
                 Node newLeft = _balance(_updateElement(left, keyType, keyComparator, key, depth+1));
-                if ( newLeft == left ) {
+                if ( Util.refEquals(newLeft, left) ) {
                     return node; // No change in the left node
                 }
                 return node.withNewLeft(newLeft);
@@ -249,7 +238,7 @@ final class SortedValueSetImpl<E> implements ValueSet<E> {
             Node right = node.right();
             if ( right != null ) {
                 Node newRight = _balance(_updateElement(right, keyType, keyComparator, key, depth+1));
-                if ( newRight == right ) {
+                if ( Util.refEquals(newRight, right) ) {
                     return node; // No change in the right node
                 }
                 return node.withNewRight(newRight);
@@ -418,7 +407,7 @@ final class SortedValueSetImpl<E> implements ValueSet<E> {
         }
         Node newRoot = _balanceNullable(_removeElement(_root, _type, _comparator, element));
         newRoot = newRoot == null ? NULL_NODE : newRoot;
-        if (newRoot == _root) {
+        if ( Util.refEquals(newRoot, _root) ) {
             return this;
         }
         return new SortedValueSetImpl<>(_type, _comparator, newRoot);
