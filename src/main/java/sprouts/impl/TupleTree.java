@@ -18,7 +18,7 @@ import static sprouts.impl.ArrayUtil.*;
  * <h2>Design Overview</h2>
  * <p>The tree consists of two node types:</p>
  * <ul>
- *   <li><strong>Leaf nodes</strong>: Store elements in contiguous arrays (up to {@value #MAX_LEAF_NODE_SIZE} elements)</li>
+ *   <li><strong>Leaf nodes</strong>: Store elements in contiguous arrays (up to {@value #IDEAL_LEAF_NODE_SIZE} elements)</li>
  *   <li><strong>Branch nodes</strong>: Hold references to subtrees with a branching factor of {@value #BRANCHING_FACTOR},
  *       using cumulative subtree sizes for index resolution</li>
  * </ul>
@@ -66,7 +66,7 @@ import static sprouts.impl.ArrayUtil.*;
 public final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
 
     private static final int BRANCHING_FACTOR = 32;
-    private static final int MAX_LEAF_NODE_SIZE = 512;
+    private static final int IDEAL_LEAF_NODE_SIZE = 512;
 
 
     interface Node {
@@ -129,7 +129,7 @@ public final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
                 return null;
             else {
                 int newSize = _length(_data) - numberOfItemsToRemove;
-                if ( newSize > MAX_LEAF_NODE_SIZE ) {
+                if ( newSize > IDEAL_LEAF_NODE_SIZE) {
                     return _createRootFromList(type, allowsNull, new AbstractList() {
                         @Override
                         public int size() {
@@ -152,7 +152,7 @@ public final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
         public @Nullable <T> Node addAllAt(int index, Tuple<T> tuple, Class<T> type, boolean allowsNull) {
             int currentSize = _length(_data);
             int newSize = (currentSize + tuple.size());
-            if ( newSize > MAX_LEAF_NODE_SIZE ) {
+            if ( newSize > IDEAL_LEAF_NODE_SIZE) {
                 return _createRootFromList(type, allowsNull, new AbstractList<T>() {
                     @Override
                     public int size() {
@@ -473,7 +473,7 @@ public final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
     }
 
     private static Node _createRootFromList(Class<?> type, boolean allowsNull, List<?> items) {
-        if ( items.isEmpty() || items.size() < MAX_LEAF_NODE_SIZE )
+        if ( items.isEmpty() || items.size() < IDEAL_LEAF_NODE_SIZE)
             return new LeafNode(_createArrayFromList(type, allowsNull, items));
         Node[] branches = new Node[BRANCHING_FACTOR];
         int stepSize = items.size() / branches.length;
