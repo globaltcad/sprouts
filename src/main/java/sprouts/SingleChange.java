@@ -54,7 +54,23 @@ public enum SingleChange
      */
     ID;
 
-    public static <T> SingleChange of(Class<T> type, @Nullable T newValue, @Nullable T oldValue ) {
+    /**
+     *  Determines the type of change between two supplied values of type {@code T}.
+     *  depending on the supplied values the following constants with their respective meanings may be returned:
+     *  <ul>
+     *      <li>{@link #NONE} - No change occurred, the values are equal.</li>
+     *      <li>{@link #TO_NULL_REFERENCE} - The item changed from a non-null reference to a null reference.</li>
+     *      <li>{@link #TO_NON_NULL_REFERENCE} - The item changed from a null reference to a non-null reference.</li>
+     *      <li>{@link #VALUE} - The item changed its value in terms of {@link Object#equals(Object)} returning false.</li>
+     *      <li>{@link #ID} - The item implements {@link HasId} and changed its {@link HasId#id()}.</li>
+     *  </ul>
+     * @param type The common type {@link Class} of the two supplied values.
+     * @param newValue The new value, which is interpreted as the successor to the {@code oldValue}.
+     * @param oldValue The old value, which is interpreted as the predecessor to the {@code oldValue}.
+     * @return A {@link SingleChange} describing how the old value changed to the new one.
+     * @param <T> The type of both values to compare.
+     */
+    public static <T> SingleChange of( Class<T> type, @Nullable T newValue, @Nullable T oldValue ) {
         if ( Objects.equals( oldValue, newValue ) )
             return NONE;
         if ( oldValue == null )

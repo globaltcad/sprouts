@@ -1037,6 +1037,7 @@ public interface ValueSet<E> extends Iterable<E> {
      * @param o object to be compared for equality with this set
      * @return {@code true} if the specified object is equal to this set
      */
+    @Override
     boolean equals( Object o );
 
     /**
@@ -1052,6 +1053,7 @@ public interface ValueSet<E> extends Iterable<E> {
      * @see Object#equals(Object)
      * @see Set#equals(Object)
      */
+    @Override
     int hashCode();
 
 }

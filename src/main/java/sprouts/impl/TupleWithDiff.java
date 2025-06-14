@@ -204,7 +204,7 @@ public final class TupleWithDiff<T extends @Nullable Object> implements Tuple<T>
     @Override
     public Tuple<T> makeDistinct() {
         TupleTree<T> distinctItems = _tupleTree.makeDistinct();
-        if (distinctItems == _tupleTree)
+        if (Util.refEquals(distinctItems, _tupleTree))
             return this;
         SequenceDiff diff = SequenceDiff.of(this, SequenceChange.DISTINCT, -1, this.size() - distinctItems.size());
         return new TupleWithDiff<>(distinctItems, diff);

@@ -54,23 +54,39 @@ import java.util.Objects;
      */
 <span class="fc" id="L55">    ID;</span>
 
-    public static &lt;T&gt; SingleChange of(Class&lt;T&gt; type, @Nullable T newValue, @Nullable T oldValue ) {
-<span class="fc bfc" id="L58" title="All 2 branches covered.">        if ( Objects.equals( oldValue, newValue ) )</span>
-<span class="fc" id="L59">            return NONE;</span>
-<span class="fc bfc" id="L60" title="All 2 branches covered.">        if ( oldValue == null )</span>
-<span class="fc" id="L61">            return TO_NON_NULL_REFERENCE;</span>
-<span class="fc bfc" id="L62" title="All 2 branches covered.">        if ( newValue == null )</span>
-<span class="fc" id="L63">            return TO_NULL_REFERENCE;</span>
-<span class="fc bfc" id="L64" title="All 2 branches covered.">        if ( !HasId.class.isAssignableFrom(type) )</span>
-<span class="fc" id="L65">            return VALUE;</span>
+    /**
+     *  Determines the type of change between two supplied values of type {@code T}.
+     *  depending on the supplied values the following constants with their respective meanings may be returned:
+     *  &lt;ul&gt;
+     *      &lt;li&gt;{@link #NONE} - No change occurred, the values are equal.&lt;/li&gt;
+     *      &lt;li&gt;{@link #TO_NULL_REFERENCE} - The item changed from a non-null reference to a null reference.&lt;/li&gt;
+     *      &lt;li&gt;{@link #TO_NON_NULL_REFERENCE} - The item changed from a null reference to a non-null reference.&lt;/li&gt;
+     *      &lt;li&gt;{@link #VALUE} - The item changed its value in terms of {@link Object#equals(Object)} returning false.&lt;/li&gt;
+     *      &lt;li&gt;{@link #ID} - The item implements {@link HasId} and changed its {@link HasId#id()}.&lt;/li&gt;
+     *  &lt;/ul&gt;
+     * @param type The common type {@link Class} of the two supplied values.
+     * @param newValue The new value, which is interpreted as the successor to the {@code oldValue}.
+     * @param oldValue The old value, which is interpreted as the predecessor to the {@code oldValue}.
+     * @return A {@link SingleChange} describing how the old value changed to the new one.
+     * @param &lt;T&gt; The type of both values to compare.
+     */
+    public static &lt;T&gt; SingleChange of( Class&lt;T&gt; type, @Nullable T newValue, @Nullable T oldValue ) {
+<span class="fc bfc" id="L74" title="All 2 branches covered.">        if ( Objects.equals( oldValue, newValue ) )</span>
+<span class="fc" id="L75">            return NONE;</span>
+<span class="fc bfc" id="L76" title="All 2 branches covered.">        if ( oldValue == null )</span>
+<span class="fc" id="L77">            return TO_NON_NULL_REFERENCE;</span>
+<span class="fc bfc" id="L78" title="All 2 branches covered.">        if ( newValue == null )</span>
+<span class="fc" id="L79">            return TO_NULL_REFERENCE;</span>
+<span class="fc bfc" id="L80" title="All 2 branches covered.">        if ( !HasId.class.isAssignableFrom(type) )</span>
+<span class="fc" id="L81">            return VALUE;</span>
 
-<span class="fc" id="L67">        Object formerIdentity  = ((HasId&lt;?&gt;) oldValue).id();</span>
-<span class="fc" id="L68">        Object currentIdentity = ((HasId&lt;?&gt;) newValue).id();</span>
-<span class="fc" id="L69">        boolean equalIdentity = Objects.equals(formerIdentity, currentIdentity);</span>
-<span class="fc bfc" id="L70" title="All 2 branches covered.">        if ( equalIdentity )</span>
-<span class="fc" id="L71">            return VALUE;</span>
+<span class="fc" id="L83">        Object formerIdentity  = ((HasId&lt;?&gt;) oldValue).id();</span>
+<span class="fc" id="L84">        Object currentIdentity = ((HasId&lt;?&gt;) newValue).id();</span>
+<span class="fc" id="L85">        boolean equalIdentity = Objects.equals(formerIdentity, currentIdentity);</span>
+<span class="fc bfc" id="L86" title="All 2 branches covered.">        if ( equalIdentity )</span>
+<span class="fc" id="L87">            return VALUE;</span>
         else
-<span class="fc" id="L73">            return ID;</span>
+<span class="fc" id="L89">            return ID;</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

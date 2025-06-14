@@ -137,6 +137,7 @@ final class PropertyListView<T extends @Nullable Object> implements Viewables<T>
     private final Class<T>     _type;
 
     private final PropertyListChangeListeners<T> _changeListeners = new PropertyListChangeListeners<>();
+    @SuppressWarnings("UnusedVariable") // We prevent the parent from being garbage collected!
     private final ParentListRef<Vals<?>> _parentRef;
 
 

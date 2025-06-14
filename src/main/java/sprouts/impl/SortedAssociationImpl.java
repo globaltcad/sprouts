@@ -90,7 +90,7 @@ final class SortedAssociationImpl<K, V> implements Association<K, V> {
             if (this == obj) {
                 return true;
             }
-            if (obj == null || getClass() != obj.getClass()) {
+            if (!(obj instanceof Node)) {
                 return false;
             }
             Node other = (Node) obj;
@@ -269,7 +269,7 @@ final class SortedAssociationImpl<K, V> implements Association<K, V> {
             Node left = node.left();
             if ( left != null ) {
                 Node newLeft = _balance(_updateValueOfKey(left, keyType, valueType, keyComparator, key, value, putIfAbsent, depth+1));
-                if ( newLeft == left ) {
+                if ( Util.refEquals(newLeft, left) ) {
                     return node; // No change
                 }
                 return node.withNewLeft(newLeft);
@@ -285,7 +285,7 @@ final class SortedAssociationImpl<K, V> implements Association<K, V> {
             Node right = node.right();
             if ( right != null ) {
                 Node newRight = _balance(_updateValueOfKey(right, keyType, valueType, keyComparator, key, value, putIfAbsent, depth+1));
-                if ( newRight == right ) {
+                if ( Util.refEquals(newRight, right) ) {
                     // No change in the right node, we can return the current node
                     return node;
                 }
@@ -516,7 +516,7 @@ final class SortedAssociationImpl<K, V> implements Association<K, V> {
             throw new ClassCastException("Value type mismatch");
         }
         Node newRoot = _balance(_updateValueOfKey(_root, _keyType, _valueType, _keyComparator, key, value, false, 0));
-        if (newRoot == _root) {
+        if (Util.refEquals(newRoot, _root)) {
             return this;
         }
         return new SortedAssociationImpl<>(
@@ -542,7 +542,7 @@ final class SortedAssociationImpl<K, V> implements Association<K, V> {
             throw new ClassCastException("Value type mismatch");
         }
         Node newRoot = _balance(_updateValueOfKey(_root, _keyType, _valueType, _keyComparator, key, value, true, 0));
-        if (newRoot == _root) {
+        if (Util.refEquals(newRoot, _root)) {
             return this;
         }
         return new SortedAssociationImpl<>(
@@ -563,7 +563,7 @@ final class SortedAssociationImpl<K, V> implements Association<K, V> {
         }
         Node newRoot = _balanceNullable(_removeKey(_root, _keyType, _valueType, _keyComparator, key));
         newRoot = newRoot == null ? NULL_NODE : newRoot;
-        if (newRoot == _root) {
+        if (Util.refEquals(newRoot, _root)) {
             return this;
         }
         return new SortedAssociationImpl<>(
@@ -593,7 +593,7 @@ final class SortedAssociationImpl<K, V> implements Association<K, V> {
             Node left = node.left();
             if ( left != null ) {
                 Node newLeft = _balanceNullable(_removeKey(left, keyType, valueType, keyComparator, key));
-                if ( newLeft == left ) {
+                if ( Util.refEquals(newLeft, left) ) {
                     return node; // No change in the left node, we can return the current node
                 }
                 return node.withNewLeft(newLeft);
@@ -604,7 +604,7 @@ final class SortedAssociationImpl<K, V> implements Association<K, V> {
             Node right = node.right();
             if ( right != null ) {
                 Node newRight = _balanceNullable(_removeKey(right, keyType, valueType, keyComparator, key));
-                if ( newRight == right ) {
+                if ( Util.refEquals(newRight, right) ) {
                     // No change in the right node, we can return the current node
                     return node;
                 }
