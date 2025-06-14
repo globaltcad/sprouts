@@ -268,7 +268,7 @@ final class SortedAssociationImpl<K, V> implements Association<K, V> {
         if ( index < 0 ) {
             Node left = node.left();
             if ( left != null ) {
-                Node newLeft = _updateValueOfKey(left, keyType, valueType, keyComparator, key, value, putIfAbsent, depth+1);
+                Node newLeft = _balance(_updateValueOfKey(left, keyType, valueType, keyComparator, key, value, putIfAbsent, depth+1));
                 if ( newLeft == left ) {
                     return node; // No change
                 }
@@ -284,7 +284,7 @@ final class SortedAssociationImpl<K, V> implements Association<K, V> {
         if ( index >= numberOfKeys ) {
             Node right = node.right();
             if ( right != null ) {
-                Node newRight = _updateValueOfKey(right, keyType, valueType, keyComparator, key, value, putIfAbsent, depth+1);
+                Node newRight = _balance(_updateValueOfKey(right, keyType, valueType, keyComparator, key, value, putIfAbsent, depth+1));
                 if ( newRight == right ) {
                     // No change in the right node, we can return the current node
                     return node;
@@ -332,7 +332,7 @@ final class SortedAssociationImpl<K, V> implements Association<K, V> {
                         Node newLeft;
                         if ( node.left() != null ) {
                             // Re-add the popped key and value to the left node
-                            newLeft = _updateValueOfKey(node.left(), keyType, valueType, keyComparator, key, value, putIfAbsent, depth+1);
+                            newLeft = _balance(_updateValueOfKey(node.left(), keyType, valueType, keyComparator, key, value, putIfAbsent, depth+1));
                         } else {
                             newLeft = _createSingleEntryNode(keyType, valueType, key, value);
                         }
@@ -343,7 +343,7 @@ final class SortedAssociationImpl<K, V> implements Association<K, V> {
                     Node newLeft;
                     if ( node.left() != null ) {
                         // Re-add the popped key and value to the left node
-                        newLeft = _updateValueOfKey(node.left(), keyType, valueType, keyComparator, poppedOffKey, poppedOffValue, putIfAbsent, depth+1);
+                        newLeft = _balance(_updateValueOfKey(node.left(), keyType, valueType, keyComparator, poppedOffKey, poppedOffValue, putIfAbsent, depth+1));
                     } else {
                         newLeft = _createSingleEntryNode(keyType, valueType, poppedOffKey, poppedOffValue);
                     }
@@ -370,7 +370,7 @@ final class SortedAssociationImpl<K, V> implements Association<K, V> {
                         Node newRight;
                         if ( node.right() != null ) {
                             // Re-add the popped key and value to the right node
-                            newRight = _updateValueOfKey(node.right(), keyType, valueType, keyComparator, key, value, putIfAbsent, depth+1);
+                            newRight = _balance(_updateValueOfKey(node.right(), keyType, valueType, keyComparator, key, value, putIfAbsent, depth+1));
                         } else {
                             newRight = _createSingleEntryNode(keyType, valueType, key, value);
                         }
@@ -381,7 +381,7 @@ final class SortedAssociationImpl<K, V> implements Association<K, V> {
                     Node newRight;
                     if ( node.right() != null ) {
                         // Re-add the popped key and value to the right node
-                        newRight = _updateValueOfKey(node.right(), keyType, valueType, keyComparator, poppedOffKey, poppedOffValue, putIfAbsent, depth+1);
+                        newRight = _balance(_updateValueOfKey(node.right(), keyType, valueType, keyComparator, poppedOffKey, poppedOffValue, putIfAbsent, depth+1));
                     } else {
                         newRight = _createSingleEntryNode(keyType, valueType, poppedOffKey, poppedOffValue);
                     }
@@ -420,6 +420,52 @@ final class SortedAssociationImpl<K, V> implements Association<K, V> {
         Object newValuesArray = _clone(node.valuesArray(), valueType, ALLOWS_NULL);
         _setAt(index, value, newValuesArray);
         return node.withNewArrays(node.keysArray(), newValuesArray);
+    }
+
+    private static @Nullable Node _balanceNullable(@Nullable Node node){
+        if (node == null)
+            return null;
+        return _balance(node);
+    }
+
+    private static Node _balance(Node node){
+        final Node right = node.right();
+        final Node left = node.left();
+        final int leftSize = left == null ? 0 : left.size();
+        final int rightSize = right == null ? 0 : right.size();
+        if ( leftSize == rightSize ) {
+            return node;
+        }
+        final int currentNodeArraySize = _length(node.keysArray());
+        if ( leftSize < rightSize && right != null ) {
+            final int imbalance = rightSize - leftSize;
+            final int rightArraySize = _length(right.keysArray());
+            final int rightLeftSize = right.left() == null ? 0 : right.left().size();
+            final int newRightSize = rightSize - rightLeftSize - rightArraySize;
+            final int newLeftSize = leftSize + rightLeftSize + currentNodeArraySize;
+            final int newImbalance = Math.abs(newRightSize - newLeftSize);
+            if ( newImbalance < imbalance ) { // We only re-balance if it is worth it!
+                Node newLeft = new Node(newLeftSize, node.keysArray(), node.valuesArray(), left, right.left());
+                return new Node(
+                        node.size(), right.keysArray(), right.valuesArray(), newLeft, right.right()
+                    );
+            }
+        }
+        if ( rightSize < leftSize && left != null ) {
+            final int imbalance = leftSize - rightSize;
+            final int leftArraySize = _length(left.keysArray());
+            final int leftRightSize = left.right() == null ? 0 : left.right().size();
+            final int newLeftSize = rightSize - leftRightSize - leftArraySize;
+            final int newRightSize = leftSize + leftRightSize + currentNodeArraySize;
+            final int newImbalance = Math.abs(newLeftSize - newRightSize);
+            if ( newImbalance < imbalance ) { // We only re-balance if it is worth it!
+                Node newRight = new Node(newRightSize, node.keysArray(), left.right(), right);
+                return new Node(
+                        node.size(), left.keysArray(), left.left(), newRight
+                    );
+            }
+        }
+        return node;
     }
 
     private static Node _createSingleEntryNode(
@@ -469,7 +515,7 @@ final class SortedAssociationImpl<K, V> implements Association<K, V> {
         if (!valueType().isAssignableFrom(value.getClass())) {
             throw new ClassCastException("Value type mismatch");
         }
-        Node newRoot = _updateValueOfKey(_root, _keyType, _valueType, _keyComparator, key, value, false, 0);
+        Node newRoot = _balance(_updateValueOfKey(_root, _keyType, _valueType, _keyComparator, key, value, false, 0));
         if (newRoot == _root) {
             return this;
         }
@@ -495,7 +541,7 @@ final class SortedAssociationImpl<K, V> implements Association<K, V> {
         if (!valueType().isAssignableFrom(value.getClass())) {
             throw new ClassCastException("Value type mismatch");
         }
-        Node newRoot = _updateValueOfKey(_root, _keyType, _valueType, _keyComparator, key, value, true, 0);
+        Node newRoot = _balance(_updateValueOfKey(_root, _keyType, _valueType, _keyComparator, key, value, true, 0));
         if (newRoot == _root) {
             return this;
         }
@@ -515,7 +561,7 @@ final class SortedAssociationImpl<K, V> implements Association<K, V> {
         if (!keyType().isAssignableFrom(key.getClass())) {
             throw new ClassCastException("Key type mismatch");
         }
-        Node newRoot = _removeKey(_root, _keyType, _valueType, _keyComparator, key);
+        Node newRoot = _balanceNullable(_removeKey(_root, _keyType, _valueType, _keyComparator, key));
         newRoot = newRoot == null ? NULL_NODE : newRoot;
         if (newRoot == _root) {
             return this;
@@ -546,7 +592,7 @@ final class SortedAssociationImpl<K, V> implements Association<K, V> {
         if ( index < 0 ) {
             Node left = node.left();
             if ( left != null ) {
-                Node newLeft = _removeKey(left, keyType, valueType, keyComparator, key);
+                Node newLeft = _balanceNullable(_removeKey(left, keyType, valueType, keyComparator, key));
                 if ( newLeft == left ) {
                     return node; // No change in the left node, we can return the current node
                 }
@@ -557,7 +603,7 @@ final class SortedAssociationImpl<K, V> implements Association<K, V> {
         if ( index >= numberOfKeys ) {
             Node right = node.right();
             if ( right != null ) {
-                Node newRight = _removeKey(right, keyType, valueType, keyComparator, key);
+                Node newRight = _balanceNullable(_removeKey(right, keyType, valueType, keyComparator, key));
                 if ( newRight == right ) {
                     // No change in the right node, we can return the current node
                     return node;
@@ -591,14 +637,14 @@ final class SortedAssociationImpl<K, V> implements Association<K, V> {
                     V rightMostValue = rightMostInLeft.second();
                     _setAt(0, rightMostKey, newKeysArray);
                     _setAt(0, rightMostValue, newValuesArray);
-                    left = _removeKey(left, keyType, valueType, keyComparator, rightMostKey);
+                    left = _balanceNullable(_removeKey(left, keyType, valueType, keyComparator, rightMostKey));
                 } else {
                     Pair<K,V> leftMostInRight = _findLeftMostElement(right, keyType, valueType);
                     K leftMostKey = leftMostInRight.first();
                     V leftMostValue = leftMostInRight.second();
                     _setAt(0, leftMostKey, newKeysArray);
                     _setAt(0, leftMostValue, newValuesArray);
-                    right = _removeKey(right, keyType, valueType, keyComparator, leftMostKey);
+                    right = _balanceNullable(_removeKey(right, keyType, valueType, keyComparator, leftMostKey));
                 }
                 return new Node(node._size - 1, newKeysArray, newValuesArray, left, right);
             }
