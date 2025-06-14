@@ -11,6 +11,74 @@ import java.util.*;
 
 import static sprouts.impl.ArrayUtil.*;
 
+/**
+ * A persistent, immutable key-value association implementation using a Hash Array Mapped Trie (HAMT)
+ * with dynamic branching and in-node storage optimization. This provides efficient O(log n) operations
+ * while maximizing structural sharing for memory efficiency.
+ *
+ * <h2>Design Overview</h2>
+ * <p>The implementation combines:</p>
+ * <ul>
+ *   <li><strong>Local Linear Storage</strong>: Small entries stored directly in node arrays</li>
+ *   <li><strong>Dynamic Branching</strong>: Branching factor increases with depth (base + depth)</li>
+ *   <li><strong>Hash-based Distribution</strong>: Uses prime-based double hashing for branch selection</li>
+ * </ul>
+ *
+ * <h2>Structural Characteristics</h2>
+ * <ul>
+ *   <li><strong>Each Node has</strong>:
+ *     <ul>
+ *       <li><em>Key Hash Cache Array</em>: The hash codes for each key.</li>
+ *       <li><em>Key Array</em>: An array of (potentially primitive) keys.</li>
+ *       <li><em>Value Array</em>: An array of (potentially primitive) values.</li>
+ *       <li><em>Branch Nodes</em>: Hold references to subtrees with dynamic branching factor</li>
+ *     </ul>
+ *   </li>
+ *   <li><strong>Growth Policy</strong>: Depending on the depth, nodes store entries according to {@value #BASE_ENTRIES_PER_NODE} + depth²</li>
+ *   <li><strong>Hash Handling</strong>: Uses 64-bit prime-based hashing ({@value #PRIME_1}, {@value #PRIME_2}) for collision resistance</li>
+ * </ul>
+ *
+ * <h2>Performance Characteristics</h2>
+ * <table border="1">
+ *   <caption>Operation Complexities</caption>
+ *   <tr><th>Operation</th><th>Time</th><th>Space</th></tr>
+ *   <tr><td>{@link #get(Object)}</td><td>O(log~32 n)</td><td>O(1)</td></tr>
+ *   <tr><td>{@link #put(Object, Object)}</td><td>O(log~32 n)</td><td>O(log~32 n)</td></tr>
+ *   <tr><td>{@link #remove(Object)}</td><td>O(log~32 n)</td><td>O(log~32 n)</td></tr>
+ *   <tr><td>{@link #iterator()}</td><td>O(1) per element</td><td>O(log~32 n)</td></tr>
+ * </table>
+ *
+ * <h2>Structural Sharing</h2>
+ * <p>All modification operations return new associations that share unchanged structure:</p>
+ * <pre>{@code
+ * Association<String, Integer> original = Association.of("A", 1).put("B", 2);
+ * Association<String, Integer> modified = original.put("A", 3);
+ * // Only nodes along the modification path are copied
+ * }</pre>
+ *
+ * <h2>Invariants</h2>
+ * <ul>
+ *   <li>Null keys/values are strictly prohibited</li>
+ *   <li>Key/value types are enforced at runtime</li>
+ *   <li>Hash collisions resolved via linear probing in local storage</li>
+ *   <li>Tree depth remains O(log~32 n) via dynamic branching</li>
+ * </ul>
+ *
+ * <h2>Use Cases</h2>
+ * <ul>
+ *   <li>High-frequency update scenarios with version history</li>
+ *   <li>Immutable configuration stores with frequent partial updates</li>
+ *   <li>As a building block for persistent collections</li>
+ * </ul>
+ *
+ * @param <K> the type of keys maintained by this association
+ * @param <V> the type of mapped values
+ *
+ * @see sprouts.Association
+ * @see sprouts.ValueSet
+ * @see sprouts.Tuple
+ * @see sprouts.Pair
+ */
 final class AssociationImpl<K, V> implements Association<K, V> {
 
     private static final AssociationImpl[] EMPTY_BRANCHES = new AssociationImpl<?, ?>[0];

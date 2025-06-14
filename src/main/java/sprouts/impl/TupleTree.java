@@ -62,6 +62,11 @@ import static sprouts.impl.ArrayUtil.*;
  * tree structure be created to accommodate for followup operations...
  *
  * @param <T> the type of elements in this tuple
+ *
+ * @see sprouts.Association
+ * @see sprouts.ValueSet
+ * @see sprouts.Tuple
+ * @see sprouts.Pair
  */
 public final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
 
