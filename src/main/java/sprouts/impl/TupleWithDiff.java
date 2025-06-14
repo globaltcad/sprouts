@@ -8,7 +8,7 @@ import java.util.*;
 
 public final class TupleWithDiff<T extends @Nullable Object> implements Tuple<T>, SequenceDiffOwner {
 
-    private final TupleHamt<T> _data;
+    private final TupleTree<T> _data;
     private final SequenceDiff _diffToPrevious;
 
 
@@ -18,7 +18,7 @@ public final class TupleWithDiff<T extends @Nullable Object> implements Tuple<T>
             Class<T> type,
             List<T> items
     ) {
-        return new TupleWithDiff<>(TupleHamt.of(allowsNull, type, items), null);
+        return new TupleWithDiff<>(TupleTree.of(allowsNull, type, items), null);
     }
 
     static <T> Tuple<T> of(
@@ -26,7 +26,7 @@ public final class TupleWithDiff<T extends @Nullable Object> implements Tuple<T>
             Class<T> type,
             @Nullable T... items
     ) {
-        return new TupleWithDiff<>(TupleHamt.of(allowsNull, type, items), null);
+        return new TupleWithDiff<>(TupleTree.of(allowsNull, type, items), null);
     }
 
     static <T> Tuple<T> ofAnyArray(
@@ -34,18 +34,18 @@ public final class TupleWithDiff<T extends @Nullable Object> implements Tuple<T>
             Class<T> type,
             Object array
     ) {
-        return new TupleWithDiff<>(TupleHamt.ofAnyArray(allowsNull, type, array), null);
+        return new TupleWithDiff<>(TupleTree.ofAnyArray(allowsNull, type, array), null);
     }
 
     @SuppressWarnings("NullAway")
     public TupleWithDiff(
-            TupleHamt<T> data, @Nullable SequenceDiff diffToPrevious
+            TupleTree<T> data, @Nullable SequenceDiff diffToPrevious
     ) {
         _data = data;
         _diffToPrevious = ( diffToPrevious == null ? SequenceDiff.initial() : diffToPrevious );
     }
 
-    TupleHamt<T> getData() {
+    TupleTree<T> getData() {
         return _data;
     }
 
@@ -83,7 +83,7 @@ public final class TupleWithDiff<T extends @Nullable Object> implements Tuple<T>
             SequenceDiff diff = SequenceDiff.of(this, SequenceChange.RETAIN, -1, 0);
             return new TupleWithDiff<>(_data.clear(), diff);
         }
-        TupleHamt<T> slice = _data.slice(from, to);
+        TupleTree<T> slice = _data.slice(from, to);
         if ( Util.refEquals(slice, _data) )
             return this;
         SequenceDiff diff = SequenceDiff.of(this, SequenceChange.RETAIN, from, slice.size());
@@ -109,7 +109,7 @@ public final class TupleWithDiff<T extends @Nullable Object> implements Tuple<T>
 
     @Override
     public Tuple<T> removeAll(Tuple<T> properties) {
-        TupleHamt<T> withoutItems = _data.removeAll(properties);
+        TupleTree<T> withoutItems = _data.removeAll(properties);
         if ( Util.refEquals(withoutItems, _data) )
             return this;
         SequenceDiff diff = SequenceDiff.of(this, SequenceChange.REMOVE, -1, this.size() - withoutItems.size());
@@ -118,7 +118,7 @@ public final class TupleWithDiff<T extends @Nullable Object> implements Tuple<T>
 
     @Override
     public Tuple<T> addAt(int index, T item) {
-        TupleHamt<T> withoutItems = _data.addAt(index, item);
+        TupleTree<T> withoutItems = _data.addAt(index, item);
         if ( Util.refEquals(withoutItems, _data) )
             return this;
         SequenceDiff diff = SequenceDiff.of(this, SequenceChange.ADD, index, 1);
@@ -127,7 +127,7 @@ public final class TupleWithDiff<T extends @Nullable Object> implements Tuple<T>
 
     @Override
     public Tuple<T> setAt(int index, T item) {
-        TupleHamt<T> newItems = _data.setAt(index, item);
+        TupleTree<T> newItems = _data.setAt(index, item);
         if ( Util.refEquals(newItems, _data) )
             return this;
         SequenceDiff diff = SequenceDiff.of(this, SequenceChange.SET, index, 1);
@@ -136,7 +136,7 @@ public final class TupleWithDiff<T extends @Nullable Object> implements Tuple<T>
 
     @Override
     public Tuple<T> addAllAt(int index, Tuple<T> tuple) {
-        TupleHamt<T> newItems = _data.addAllAt(index, tuple);
+        TupleTree<T> newItems = _data.addAllAt(index, tuple);
         if ( Util.refEquals(newItems, _data) )
             return this;
         SequenceDiff diff = SequenceDiff.of(this, SequenceChange.ADD, index, tuple.size());
@@ -145,7 +145,7 @@ public final class TupleWithDiff<T extends @Nullable Object> implements Tuple<T>
 
     @Override
     public Tuple<T> setAllAt(int index, Tuple<T> tuple) {
-        TupleHamt<T> newItems = _data.setAllAt(index, tuple);
+        TupleTree<T> newItems = _data.setAllAt(index, tuple);
         if ( Util.refEquals(newItems, _data) )
             return this;
         SequenceDiff diff = SequenceDiff.of(this, SequenceChange.SET, index, tuple.size());
@@ -179,7 +179,7 @@ public final class TupleWithDiff<T extends @Nullable Object> implements Tuple<T>
                 indicesOfThingsToKeep[newSize] = -1;
             }
         }
-        TupleHamt<T> newItems = _data._retainAll(singleSequenceIndex, newSize, indicesOfThingsToKeep);
+        TupleTree<T> newItems = _data._retainAll(singleSequenceIndex, newSize, indicesOfThingsToKeep);
         if ( Util.refEquals(newItems, _data) )
             return this;
         SequenceDiff diff = SequenceDiff.of(this, SequenceChange.RETAIN, singleSequenceIndex, newSize);
@@ -196,14 +196,14 @@ public final class TupleWithDiff<T extends @Nullable Object> implements Tuple<T>
 
     @Override
     public Tuple<T> sort(Comparator<T> comparator) {
-        TupleHamt<T> newItems = _data.sort(comparator);
+        TupleTree<T> newItems = _data.sort(comparator);
         SequenceDiff diff = SequenceDiff.of(this, SequenceChange.SORT, -1, size());
         return new TupleWithDiff<>(newItems, diff);
     }
 
     @Override
     public Tuple<T> makeDistinct() {
-        TupleHamt<T> distinctItems = _data.makeDistinct();
+        TupleTree<T> distinctItems = _data.makeDistinct();
         if (distinctItems == _data)
             return this;
         SequenceDiff diff = SequenceDiff.of(this, SequenceChange.DISTINCT, -1, this.size() - distinctItems.size());
@@ -212,7 +212,7 @@ public final class TupleWithDiff<T extends @Nullable Object> implements Tuple<T>
 
     @Override
     public Tuple<T> reversed() {
-        TupleHamt<T> newItems = _data.reversed();
+        TupleTree<T> newItems = _data.reversed();
         if ( Util.refEquals(newItems, _data) )
             return this;
         SequenceDiff diff = SequenceDiff.of(this, SequenceChange.REVERSE, -1, this.size());

@@ -934,7 +934,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
         T[] newItems = (T[]) Array.newInstance(type(), itemsToKeep.size());
         itemsToKeep.toArray(newItems);
         SequenceDiff diff = SequenceDiff.of(this, SequenceChange.REMOVE, singleSequenceIndex, size() - itemsToKeep.size());
-        return new TupleWithDiff<>(TupleHamt.of( allowsNull(), type(), newItems), diff);
+        return new TupleWithDiff<>(TupleTree.of( allowsNull(), type(), newItems), diff);
     }
 
     /**
@@ -967,7 +967,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
         if ( filteredItems.size() == this.size() )
             return this;
         SequenceDiff diff = SequenceDiff.of(this, SequenceChange.RETAIN, singleSequenceIndex, filteredItems.size());
-        return new TupleWithDiff<>(TupleHamt.of(allowsNull(), type(), filteredItems), diff);
+        return new TupleWithDiff<>(TupleTree.of(allowsNull(), type(), filteredItems), diff);
     }
 
     /**
@@ -1445,7 +1445,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
         for ( T v : this ) {
             mappedItems[i++] = mapper.apply( v );
         }
-        return new TupleWithDiff<>(TupleHamt.of( allowsNull(), type(), mappedItems), SequenceDiff.of(this, SequenceChange.SET, 0, size()) );
+        return new TupleWithDiff<>(TupleTree.of( allowsNull(), type(), mappedItems), SequenceDiff.of(this, SequenceChange.SET, 0, size()) );
     }
 
     /**
@@ -1472,7 +1472,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
             U m = mapper.apply( v );
             array[i++] = m;
         }
-        return new TupleWithDiff<>(TupleHamt.of( allowsNull(), type, array), SequenceDiff.of(this, SequenceChange.SET, 0, size()) );
+        return new TupleWithDiff<>(TupleTree.of( allowsNull(), type, array), SequenceDiff.of(this, SequenceChange.SET, 0, size()) );
     }
 
     /**

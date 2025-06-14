@@ -11,10 +11,59 @@ import java.util.function.Consumer;
 import static sprouts.impl.ArrayUtil.*;
 
 /**
- *  A tuple implementation based on a HAMT (Hash Array Mapped Trie) data structure.
- * @param <T> The type of the items in the tuple.
+ * An immutable, persistent tuple (ordered sequence) implementation based on a multi-branch tree structure.
+ * This provides efficient O(log32 n) positional access, slicing, and bulk operations while maximizing
+ * structural sharing for memory efficiency.
+ *
+ * <h2>Design Overview</h2>
+ * <p>The tree consists of two node types:</p>
+ * <ul>
+ *   <li><strong>Leaf nodes</strong>: Store elements in contiguous arrays (up to {@value #MAX_LEAF_NODE_SIZE} elements)</li>
+ *   <li><strong>Branch nodes</strong>: Hold references to subtrees with a branching factor of {@value #BRANCHING_FACTOR},
+ *       using cumulative subtree sizes for index resolution</li>
+ * </ul>
+ *
+ * <h2>Performance Characteristics</h2>
+ * <table border="1">
+ *   <caption>Operation Complexities</caption>
+ *   <tr><th>Operation</th><th>Time</th><th>Space</th></tr>
+ *   <tr><td>{@link #get(int)}</td><td>O(log32 n)</td><td>O(1)</td></tr>
+ *   <tr><td>{@link #slice(int, int)}</td><td>O(log32 n)</td><td>O(log32 n) shared</td></tr>
+ *   <tr><td>{@link #addAllAt(int, Tuple)}</td><td>O(log32 n + m)</td><td>O(log32 n + m)</td></tr>
+ *   <tr><td>{@link #setAt(int, Object)}</td><td>O(log32 n)</td><td>O(log32 n)</td></tr>
+ * </table>
+ *
+ * <h2>Structural Sharing</h2>
+ * <p>All modification operations return new tuples that maximally share structure with the original:
+ * <pre>{@code
+ * Tuple<String> original = Tuple.of("A", "B", "C");
+ * Tuple<String> modified = original.setAt(1, "X");
+ * // Only the path from root to modified leaf is copied
+ * }</pre>
+ *
+ * <h2>Use Cases</h2>
+ * <ul>
+ *   <li>Immutable sequences requiring frequent slicing/subsequence operations</li>
+ *   <li>Edit-heavy workflows where versions share most content (e.g., document history)</li>
+ *   <li>As a building block for persistent collections</li>
+ * </ul>
+ *
+ * <h2>Implementation Notes</h2>
+ * <ul>
+ *   <li>Null elements are permitted only when constructed with {@code allowsNull=true}</li>
+ *   <li>Iteration uses stack-based traversal for O(1) per-element overhead</li>
+ *   <li>Automatic leaf consolidation/splitting maintains size invariants</li>
+ * </ul>
+ * <br>
+ * Also note that when this tuple tree is constructed from
+ * another sequenced collection with a known size, like an array or list,
+ * then there will only be a single leaf node with one large array holding all elements.
+ * Only after adding or removing from this initial densely packed tuple, will a
+ * tree structure be created to accommodate for followup operations...
+ *
+ * @param <T> the type of elements in this tuple
  */
-public final class TupleHamt<T extends @Nullable Object> implements Tuple<T> {
+public final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
 
     private static final int BRANCHING_FACTOR = 32;
     private static final int MAX_LEAF_NODE_SIZE = 512;
@@ -351,12 +400,12 @@ public final class TupleHamt<T extends @Nullable Object> implements Tuple<T> {
     private final Node _root;
 
     @SuppressWarnings("NullAway")
-    public static <T> TupleHamt<T> of(
+    public static <T> TupleTree<T> of(
         boolean allowsNull,
         Class<T> type,
         List<T> items
     ) {
-        return new TupleHamt(
+        return new TupleTree(
                 items.size(),
                 allowsNull,
                 type,
@@ -364,7 +413,7 @@ public final class TupleHamt<T extends @Nullable Object> implements Tuple<T> {
             );
     }
 
-    public static <T> TupleHamt<T> of(
+    public static <T> TupleTree<T> of(
         boolean allowsNull,
         Class<T> type,
         @Nullable T... items
@@ -372,22 +421,22 @@ public final class TupleHamt<T extends @Nullable Object> implements Tuple<T> {
         return ofAnyArray(allowsNull, type, items);
     }
 
-    static <T> TupleHamt<T> ofAnyArray(
+    static <T> TupleTree<T> ofAnyArray(
             boolean allowsNull,
             Class<T> type,
             @Nullable Object array
     ) {
         Node node = _createInitialRootFromArray(type, allowsNull, array);
-        return new TupleHamt(node.size(), allowsNull, type, node);
+        return new TupleTree(node.size(), allowsNull, type, node);
     }
 
-    static <T> TupleHamt<T> ofRaw(
+    static <T> TupleTree<T> ofRaw(
             boolean allowsNull,
             Class<T> type,
             Object data
     ) {
         LeafNode leaf = new LeafNode(data);
-        return new TupleHamt(
+        return new TupleTree(
                 leaf.size(),
                 allowsNull,
                 type,
@@ -396,7 +445,7 @@ public final class TupleHamt<T extends @Nullable Object> implements Tuple<T> {
     }
 
     @SuppressWarnings("NullAway")
-    private TupleHamt(
+    private TupleTree(
             int size,
             boolean allowsNull,
             Class<T> type,
@@ -466,7 +515,7 @@ public final class TupleHamt<T extends @Nullable Object> implements Tuple<T> {
     }
 
     @Override
-    public TupleHamt<T> slice(int from, int to) {
+    public TupleTree<T> slice(int from, int to) {
         if (from < 0 || to > _size || from > to) {
             throw new IndexOutOfBoundsException("Index: " + from + ", Size: " + _size);
         }
@@ -480,16 +529,16 @@ public final class TupleHamt<T extends @Nullable Object> implements Tuple<T> {
         if ( newSize == 0 ) {
             SequenceDiff diff = SequenceDiff.of(this, SequenceChange.RETAIN, -1, 0);
             Node newRoot = _createRootFromList(_type, _allowsNull, Collections.emptyList());
-            return new TupleHamt<>(0, _allowsNull, _type, newRoot);
+            return new TupleTree<>(0, _allowsNull, _type, newRoot);
         }
         Node newRoot = _root.slice(from, to, _type, _allowsNull);
         if ( newRoot == _root )
             return this;
-        return new TupleHamt<>(newSize, _allowsNull, _type, newRoot);
+        return new TupleTree<>(newSize, _allowsNull, _type, newRoot);
     }
 
     @Override
-    public TupleHamt<T> removeRange(int from, int to) {
+    public TupleTree<T> removeRange(int from, int to) {
         if ( from < 0 || to > _size )
             throw new IndexOutOfBoundsException("Index: " + from + ", Size: " + _size);
         if ( from > to )
@@ -498,16 +547,16 @@ public final class TupleHamt<T extends @Nullable Object> implements Tuple<T> {
         if ( numberOfItemsToRemove == 0 )
             return this;
         if ( numberOfItemsToRemove == this.size() ) {
-            return new TupleHamt<>(0, _allowsNull, _type, null);
+            return new TupleTree<>(0, _allowsNull, _type, null);
         }
         Node newRoot = _root.removeRange(from, to, _type, _allowsNull);
         if ( newRoot == _root )
             return this;
-        return new TupleHamt<>(_size - numberOfItemsToRemove, _allowsNull, _type, newRoot);
+        return new TupleTree<>(_size - numberOfItemsToRemove, _allowsNull, _type, newRoot);
     }
 
     @Override
-    public TupleHamt<T> removeAll(Tuple<T> properties) {
+    public TupleTree<T> removeAll(Tuple<T> properties) {
         if (properties.size() == 0) {
             return this;
         }
@@ -522,11 +571,11 @@ public final class TupleHamt<T extends @Nullable Object> implements Tuple<T> {
         if (newItems.size() == _size) {
             return this;
         }
-        return new TupleHamt<>(newItems.size(), _allowsNull, _type, _createRootFromList(_type, _allowsNull, newItems));
+        return new TupleTree<>(newItems.size(), _allowsNull, _type, _createRootFromList(_type, _allowsNull, newItems));
     }
 
     @Override
-    public TupleHamt<T> addAt(int index, T item) {
+    public TupleTree<T> addAt(int index, T item) {
         if ( !this.allowsNull() && item == null )
             throw new NullPointerException();
         if ( index < 0 || index > _size )
@@ -536,11 +585,11 @@ public final class TupleHamt<T extends @Nullable Object> implements Tuple<T> {
         Node newRoot = _root.addAllAt(index, singleton, _type, _allowsNull);
         if ( newRoot == _root )
             return this;
-        return new TupleHamt<>(_size+1, _allowsNull, _type, newRoot);
+        return new TupleTree<>(_size+1, _allowsNull, _type, newRoot);
     }
 
     @Override
-    public TupleHamt<T> setAt(int index, T item) {
+    public TupleTree<T> setAt(int index, T item) {
         if ( index < 0 || index >= _size )
             throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + _size);
         if ( !this.allowsNull() && item == null )
@@ -549,7 +598,7 @@ public final class TupleHamt<T extends @Nullable Object> implements Tuple<T> {
     }
 
     @Override
-    public TupleHamt<T> addAllAt(int index, Tuple<T> tuple) {
+    public TupleTree<T> addAllAt(int index, Tuple<T> tuple) {
         Objects.requireNonNull(tuple);
         if ( tuple.isEmpty() )
             return this; // nothing to do
@@ -560,11 +609,11 @@ public final class TupleHamt<T extends @Nullable Object> implements Tuple<T> {
         Node newRoot = _root.addAllAt(index, tuple, _type, _allowsNull);
         if ( newRoot == _root )
             return this;
-        return new TupleHamt<>(_size+tuple.size(), _allowsNull, _type, newRoot);
+        return new TupleTree<>(_size+tuple.size(), _allowsNull, _type, newRoot);
     }
 
     @Override
-    public TupleHamt<T> setAllAt(int index, Tuple<T> tuple) {
+    public TupleTree<T> setAllAt(int index, Tuple<T> tuple) {
         Objects.requireNonNull(tuple);
         if ( !this.allowsNull() && tuple.allowsNull() )
             throw new NullPointerException();
@@ -573,7 +622,7 @@ public final class TupleHamt<T extends @Nullable Object> implements Tuple<T> {
         Node newRoot = _root.setAllAt(index, 0, tuple, _type, _allowsNull);
         if ( newRoot == _root )
             return this;
-        return new TupleHamt<>(_size, _allowsNull, _type, newRoot);
+        return new TupleTree<>(_size, _allowsNull, _type, newRoot);
     }
 
     @Override
@@ -581,7 +630,7 @@ public final class TupleHamt<T extends @Nullable Object> implements Tuple<T> {
         Objects.requireNonNull(tuple);
         if ( tuple.isEmpty() ) {
             Node newRoot = _createRootFromList(_type, _allowsNull, Collections.emptyList());
-            return new TupleHamt<>(0, _allowsNull, _type, newRoot);
+            return new TupleTree<>(0, _allowsNull, _type, newRoot);
         }
         int[] indicesOfThingsToKeep = new int[this.size()];
         int newSize = 0;
@@ -607,7 +656,7 @@ public final class TupleHamt<T extends @Nullable Object> implements Tuple<T> {
         return _retainAll(singleSequenceIndex, newSize, indicesOfThingsToKeep);
     }
 
-    TupleHamt<T> _retainAll(int singleSequenceIndex, int newSize, int[] indicesOfThingsToKeep) {
+    TupleTree<T> _retainAll(int singleSequenceIndex, int newSize, int[] indicesOfThingsToKeep) {
         if ( newSize == this.size() )
             return this;
         List<T> newItems = new ArrayList<>(newSize);
@@ -617,41 +666,41 @@ public final class TupleHamt<T extends @Nullable Object> implements Tuple<T> {
                 newItems.add(get(index));
         }
         Node newRoot = _createRootFromList(_type, _allowsNull, newItems);
-        return new TupleHamt<>(newItems.size(), _allowsNull, _type, newRoot);
+        return new TupleTree<>(newItems.size(), _allowsNull, _type, newRoot);
     }
 
     @Override
-    public TupleHamt<T> clear() {
-        return new TupleHamt<>(0, _allowsNull, _type, null);
+    public TupleTree<T> clear() {
+        return new TupleTree<>(0, _allowsNull, _type, null);
     }
 
     @Override
-    public TupleHamt<T> sort(Comparator<T> comparator) {
+    public TupleTree<T> sort(Comparator<T> comparator) {
         List<T> sortedList = new ArrayList<>(_size);
         for (int i = 0; i < _size; i++) {
             sortedList.add(get(i));
         }
         sortedList.sort(comparator);
-        return new TupleHamt<>(sortedList.size(), _allowsNull, _type, _createRootFromList(_type, _allowsNull, sortedList));
+        return new TupleTree<>(sortedList.size(), _allowsNull, _type, _createRootFromList(_type, _allowsNull, sortedList));
     }
 
     @Override
-    public TupleHamt<T> makeDistinct() {
+    public TupleTree<T> makeDistinct() {
         Set<T> distinctSet = new LinkedHashSet<>();
         for (int i = 0; i < _size; i++) {
             distinctSet.add(get(i));
         }
         List<T> distinctList = new ArrayList<>(distinctSet);
-        return new TupleHamt<>(distinctList.size(), _allowsNull, _type, _createRootFromList(_type, _allowsNull, distinctList));
+        return new TupleTree<>(distinctList.size(), _allowsNull, _type, _createRootFromList(_type, _allowsNull, distinctList));
     }
 
     @Override
-    public TupleHamt<T> reversed() {
+    public TupleTree<T> reversed() {
         List<T> reversedList = new ArrayList<>(_size);
         for (int i = _size - 1; i >= 0; i--) {
             reversedList.add(get(i));
         }
-        return new TupleHamt<>(reversedList.size(), _allowsNull, _type, _createRootFromList(_type, _allowsNull, reversedList));
+        return new TupleTree<>(reversedList.size(), _allowsNull, _type, _createRootFromList(_type, _allowsNull, reversedList));
     }
 
     private static final class IteratorFrame {
@@ -758,9 +807,9 @@ public final class TupleHamt<T extends @Nullable Object> implements Tuple<T> {
         if (!other.type().equals(_type))
             return false;
         if ( this._root instanceof LeafNode ) {
-            TupleHamt<?> otherHamt = null;
-             if ( other instanceof TupleHamt ) {
-                 otherHamt = (TupleHamt<?>) other;
+            TupleTree<?> otherHamt = null;
+             if ( other instanceof TupleTree) {
+                 otherHamt = (TupleTree<?>) other;
              } else if ( other instanceof TupleWithDiff<?>) {
                  TupleWithDiff<?> otherDiff = (TupleWithDiff<?>) other;
                  otherHamt = otherDiff.getData();
@@ -789,13 +838,13 @@ public final class TupleHamt<T extends @Nullable Object> implements Tuple<T> {
     }
 
     private static final class TupleSpliterator<T> implements Spliterator<T> {
-        private final TupleHamt.Node root;
+        private final TupleTree.Node root;
         private final Class<T> type;
         private final boolean allowsNull;
         private final int fence;
         private int index; // position in the current node
 
-        TupleSpliterator(int start, int end, Class<T> type, boolean allowsNull, TupleHamt.Node root) {
+        TupleSpliterator(int start, int end, Class<T> type, boolean allowsNull, TupleTree.Node root) {
             this.index = start;
             this.fence = end;
             this.type = type;
