@@ -10,6 +10,58 @@ import java.util.stream.Stream;
 
 import static sprouts.impl.ArrayUtil.*;
 
+/**
+ * Immutable, hash-based set implementation using Hash Array Mapped Trie (HAMT) structure.
+ * <p>
+ * This class provides an efficient, persistent set implementation with near-constant time complexity
+ * for core operations (add/remove/contains) under ideal conditions. The implementation features:
+ * <ul>
+ *   <li>Persistent structural sharing for memory efficiency</li>
+ *   <li>Progressive branching based on node depth</li>
+ *   <li>Linear hashing with collision resolution in leaf nodes</li>
+ *   <li>Depth-dependent branching factor optimization</li>
+ *   <li>Recursive tree traversal for set operations</li>
+ * </ul>
+ *
+ * <h2>Structure Overview</h2>
+ * <p>Each node contains:
+ * <ul>
+ *   <li><b>Elements Array:</b> Contiguous storage for elements (size ≤ depth²)</li>
+ *   <li><b>Branches Array:</b> Child nodes (size = 32 + depth)</li>
+ *   <li><b>Hash Codes:</b> Cached hashes for fast comparison</li>
+ * </ul>
+ *
+ * <h2>Key Implementation Details</h2>
+ * <ul>
+ *   <li><b>Branching:</b> Branch count per node grows with depth (min 32 branches)</li>
+ *   <li><b>Node Capacity:</b> Leaf nodes hold up to {@code depth²} elements before branching</li>
+ *   <li><b>Hash Distribution:</b> Uses twin prime multiplication for branch distribution</li>
+ *   <li><b>Collision Handling:</b> Linear probing within element arrays</li>
+ *   <li><b>Immutability:</b> All modifications return new instances with structural sharing</li>
+ * </ul>
+ *
+ * <h2>Performance Characteristics</h2>
+ * <table border="1">
+ *   <tr><th>Operation</th><th>Average</th><th>Worst Case</th></tr>
+ *   <tr><td>{@code add()}</td><td>O(1)</td><td>O(log~32 n)</td></tr>
+ *   <tr><td>{@code remove()}</td><td>O(1)</td><td>O(log~32 n)</td></tr>
+ *   <tr><td>{@code contains()}</td><td>O(1)</td><td>O(log~32 n)</td></tr>
+ *   <tr><td>{@code iterator()}</td><td>O(n)</td><td>O(n)</td></tr>
+ * </table>
+ *
+ * <h2>Technical Details</h2>
+ * <ul>
+ *   <li><b>Hash Computation:</b> Runs key cache code through prime-based transformation ({@code PRIME_1}, {@code PRIME_2}) to improve hash distribution</li>
+ *   <li><b>Structural Sharing:</b> Branches are reused when possible during modification, only the path to the modification is recreated</li>
+ *   <li><b>No Branch Handling:</b> Uses static empty branch reference ({@code EMPTY_BRANCHES}), instead of null for better code quality</li>
+ *   <li><b>Iteration:</b> Depth-first traversal with stack-based state management using a custom stack frame</li>
+ * </ul>
+ *
+ * @param <E> Type of elements maintained by this set
+ * @see AssociationImpl
+ * @see sprouts.ValueSet
+ * @see sprouts.Tuple
+ */
 final class ValueSetImpl<E> implements ValueSet<E> {
 
     private static final ValueSetImpl[] EMPTY_BRANCHES = new  ValueSetImpl<?>[0];
@@ -171,7 +223,7 @@ final class ValueSetImpl<E> implements ValueSet<E> {
     @Override
     public Tuple<E> toTuple() {
         if ( _branches.length == 0 ) {
-            return new TupleWithDiff<>(TupleHamt.ofRaw(false, _type, _elementsArray), null);
+            return new TupleWithDiff<>(TupleTree.ofRaw(false, _type, _elementsArray), null);
         } else {
             List<E> values = new ArrayList<>(_length(_elementsArray));
             _each(_elementsArray, _type, value -> {
