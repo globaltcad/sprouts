@@ -137,277 +137,278 @@ import java.util.stream.Collectors;
     private final Class&lt;T&gt;     _type;
 
 <span class="fc" id="L139">    private final PropertyListChangeListeners&lt;T&gt; _changeListeners = new PropertyListChangeListeners&lt;&gt;();</span>
+    @SuppressWarnings(&quot;UnusedVariable&quot;) // We prevent the parent from being garbage collected!
     private final ParentListRef&lt;Vals&lt;?&gt;&gt; _parentRef;
 
 
     @SafeVarargs
-<span class="fc" id="L144">    private PropertyListView(Class&lt;T&gt; type, boolean allowsNull, Vals&lt;?&gt; source, Var&lt;T&gt;... vals) {</span>
-<span class="fc" id="L145">        _type        = type;</span>
-<span class="fc" id="L146">        _allowsNull  = allowsNull;</span>
-<span class="fc" id="L147">        _parentRef   = ParentListRef.of(source);</span>
-<span class="fc" id="L148">        _variables.addAll(Arrays.asList(vals));</span>
-<span class="fc" id="L149">        _checkNullSafety();</span>
-<span class="fc" id="L150">    }</span>
+<span class="fc" id="L145">    private PropertyListView(Class&lt;T&gt; type, boolean allowsNull, Vals&lt;?&gt; source, Var&lt;T&gt;... vals) {</span>
+<span class="fc" id="L146">        _type        = type;</span>
+<span class="fc" id="L147">        _allowsNull  = allowsNull;</span>
+<span class="fc" id="L148">        _parentRef   = ParentListRef.of(source);</span>
+<span class="fc" id="L149">        _variables.addAll(Arrays.asList(vals));</span>
+<span class="fc" id="L150">        _checkNullSafety();</span>
+<span class="fc" id="L151">    }</span>
 
     /** {@inheritDoc} */
     @Override public final Var&lt;T&gt; at( int index ) {
-<span class="fc" id="L154">        return _variables.get(index);</span>
+<span class="fc" id="L155">        return _variables.get(index);</span>
     }
 
     /** {@inheritDoc} */
     @Override public final Class&lt;T&gt; type() {
-<span class="fc" id="L159">        return _type;</span>
+<span class="fc" id="L160">        return _type;</span>
     }
 
     /** {@inheritDoc} */
     @Override public final int size() {
-<span class="fc" id="L164">        return _variables.size();</span>
+<span class="fc" id="L165">        return _variables.size();</span>
     }
 
     private void removeAt( int index, int size ) {
-<span class="fc" id="L168">        removeRange(index, index + size);</span>
-<span class="fc" id="L169">    }</span>
+<span class="fc" id="L169">        removeRange(index, index + size);</span>
+<span class="fc" id="L170">    }</span>
 
     private void add( Var&lt;T&gt; var ) {
-<span class="nc" id="L172">        Objects.requireNonNull(var);</span>
-<span class="nc" id="L173">        addAt( size(), var );</span>
-<span class="nc" id="L174">    }</span>
+<span class="nc" id="L173">        Objects.requireNonNull(var);</span>
+<span class="nc" id="L174">        addAt( size(), var );</span>
+<span class="nc" id="L175">    }</span>
 
     private void addAt( int index, Var&lt;T&gt; value ) {
-<span class="nc bnc" id="L177" title="All 2 branches missed.">        if ( this.allowsNull() != value.allowsNull() )</span>
-<span class="nc" id="L178">            throw new IllegalArgumentException(&quot;The null safety of the given property does not match this list.&quot;);</span>
-<span class="nc" id="L179">        _checkNullSafetyOf(value);</span>
-<span class="nc" id="L180">        _variables.add(index, value);</span>
-<span class="nc" id="L181">        _triggerAction( SequenceChange.ADD, index, value, null );</span>
-<span class="nc" id="L182">    }</span>
+<span class="nc bnc" id="L178" title="All 2 branches missed.">        if ( this.allowsNull() != value.allowsNull() )</span>
+<span class="nc" id="L179">            throw new IllegalArgumentException(&quot;The null safety of the given property does not match this list.&quot;);</span>
+<span class="nc" id="L180">        _checkNullSafetyOf(value);</span>
+<span class="nc" id="L181">        _variables.add(index, value);</span>
+<span class="nc" id="L182">        _triggerAction( SequenceChange.ADD, index, value, null );</span>
+<span class="nc" id="L183">    }</span>
 
     private void removeRange(int from, int to) {
-<span class="pc bpc" id="L185" title="3 of 6 branches missed.">        if ( from &lt; 0 || to &gt; _variables.size() || from &gt; to )</span>
-<span class="nc" id="L186">            throw new IndexOutOfBoundsException(&quot;From: &quot; + from + &quot;, To: &quot; + to + &quot;, Size: &quot; + _variables.size());</span>
+<span class="pc bpc" id="L186" title="3 of 6 branches missed.">        if ( from &lt; 0 || to &gt; _variables.size() || from &gt; to )</span>
+<span class="nc" id="L187">            throw new IndexOutOfBoundsException(&quot;From: &quot; + from + &quot;, To: &quot; + to + &quot;, Size: &quot; + _variables.size());</span>
 
-<span class="pc bpc" id="L188" title="1 of 2 branches missed.">        if (from == to)</span>
-<span class="nc" id="L189">            return;</span>
+<span class="pc bpc" id="L189" title="1 of 2 branches missed.">        if (from == to)</span>
+<span class="nc" id="L190">            return;</span>
 
-<span class="pc bpc" id="L191" title="1 of 2 branches missed.">        Vars&lt;T&gt; removal = (Vars&lt;T&gt;) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));</span>
+<span class="pc bpc" id="L192" title="1 of 2 branches missed.">        Vars&lt;T&gt; removal = (Vars&lt;T&gt;) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));</span>
 
-<span class="fc" id="L193">        List&lt;Var&lt;T&gt;&gt; subList = _variables.subList( from, to );</span>
-<span class="fc bfc" id="L194" title="All 2 branches covered.">        for ( Var&lt;T&gt; var : subList ) removal.add(var);</span>
-<span class="fc" id="L195">        subList.clear();</span>
+<span class="fc" id="L194">        List&lt;Var&lt;T&gt;&gt; subList = _variables.subList( from, to );</span>
+<span class="fc bfc" id="L195" title="All 2 branches covered.">        for ( Var&lt;T&gt; var : subList ) removal.add(var);</span>
+<span class="fc" id="L196">        subList.clear();</span>
 
-<span class="fc" id="L197">        _triggerAction( SequenceChange.REMOVE, from, null, removal );</span>
-<span class="fc" id="L198">    }</span>
+<span class="fc" id="L198">        _triggerAction( SequenceChange.REMOVE, from, null, removal );</span>
+<span class="fc" id="L199">    }</span>
 
     private void addAllAt( int index, Vars&lt;T&gt; vars ) {
-<span class="pc bpc" id="L201" title="1 of 2 branches missed.">        if ( !_checkCanAdd(vars) )</span>
-<span class="nc" id="L202">            return;</span>
+<span class="pc bpc" id="L202" title="1 of 2 branches missed.">        if ( !_checkCanAdd(vars) )</span>
+<span class="nc" id="L203">            return;</span>
 
-<span class="pc bpc" id="L204" title="2 of 4 branches missed.">        if ( index &lt; 0 || index &gt; size() )</span>
-<span class="nc" id="L205">            throw new IndexOutOfBoundsException(&quot;Index: &quot; + index + &quot;, Size: &quot; + size());</span>
+<span class="pc bpc" id="L205" title="2 of 4 branches missed.">        if ( index &lt; 0 || index &gt; size() )</span>
+<span class="nc" id="L206">            throw new IndexOutOfBoundsException(&quot;Index: &quot; + index + &quot;, Size: &quot; + size());</span>
 
-<span class="fc bfc" id="L207" title="All 2 branches covered.">        for ( int i = 0; i &lt; vars.size(); i++ ) {</span>
-<span class="fc" id="L208">            Var&lt;T&gt; toBeAdded = vars.at(i);</span>
-<span class="fc" id="L209">            _checkNullSafetyOf(toBeAdded);</span>
-<span class="fc" id="L210">            _variables.add(index + i, toBeAdded);</span>
+<span class="fc bfc" id="L208" title="All 2 branches covered.">        for ( int i = 0; i &lt; vars.size(); i++ ) {</span>
+<span class="fc" id="L209">            Var&lt;T&gt; toBeAdded = vars.at(i);</span>
+<span class="fc" id="L210">            _checkNullSafetyOf(toBeAdded);</span>
+<span class="fc" id="L211">            _variables.add(index + i, toBeAdded);</span>
         }
 
-<span class="fc" id="L213">        _triggerAction( SequenceChange.ADD, index, vars, null );</span>
-<span class="fc" id="L214">    }</span>
+<span class="fc" id="L214">        _triggerAction( SequenceChange.ADD, index, vars, null );</span>
+<span class="fc" id="L215">    }</span>
 
     private void setAllAt(int index, Vars&lt;T&gt; vars) {
-<span class="pc bpc" id="L217" title="1 of 2 branches missed.">        if ( !_checkCanAdd(vars) )</span>
-<span class="nc" id="L218">            return;</span>
+<span class="pc bpc" id="L218" title="1 of 2 branches missed.">        if ( !_checkCanAdd(vars) )</span>
+<span class="nc" id="L219">            return;</span>
 
-<span class="pc bpc" id="L220" title="2 of 4 branches missed.">        if ( index &lt; 0 || index &gt; size() )</span>
-<span class="nc" id="L221">            throw new IndexOutOfBoundsException(&quot;Index: &quot; + index + &quot;, Size: &quot; + size());</span>
+<span class="pc bpc" id="L221" title="2 of 4 branches missed.">        if ( index &lt; 0 || index &gt; size() )</span>
+<span class="nc" id="L222">            throw new IndexOutOfBoundsException(&quot;Index: &quot; + index + &quot;, Size: &quot; + size());</span>
 
-<span class="fc" id="L223">        int end = index + vars.size();</span>
+<span class="fc" id="L224">        int end = index + vars.size();</span>
 
-<span class="pc bpc" id="L225" title="1 of 2 branches missed.">        if ( end &gt; size() )</span>
-<span class="nc" id="L226">            throw new IndexOutOfBoundsException(&quot;Index: &quot; + end + &quot;, Size: &quot; + size());</span>
+<span class="pc bpc" id="L226" title="1 of 2 branches missed.">        if ( end &gt; size() )</span>
+<span class="nc" id="L227">            throw new IndexOutOfBoundsException(&quot;Index: &quot; + end + &quot;, Size: &quot; + size());</span>
 
-<span class="pc bpc" id="L228" title="1 of 2 branches missed.">        Vars&lt;T&gt; oldVars = (Vars&lt;T&gt;) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));</span>
-<span class="pc bpc" id="L229" title="1 of 2 branches missed.">        Vars&lt;T&gt; newVars = (Vars&lt;T&gt;) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));</span>
+<span class="pc bpc" id="L229" title="1 of 2 branches missed.">        Vars&lt;T&gt; oldVars = (Vars&lt;T&gt;) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));</span>
+<span class="pc bpc" id="L230" title="1 of 2 branches missed.">        Vars&lt;T&gt; newVars = (Vars&lt;T&gt;) (_allowsNull ? Vars.ofNullable(_type) : Vars.of(_type));</span>
 
-<span class="fc bfc" id="L231" title="All 2 branches covered.">        for ( int i = 0; i &lt; vars.size(); i++ ) {</span>
-<span class="fc" id="L232">            Var&lt;T&gt; toBeAdded = vars.at(i);</span>
-<span class="fc" id="L233">            _checkNullSafetyOf(toBeAdded);</span>
-<span class="fc" id="L234">            Var&lt;T&gt; old = _variables.set(index + i, toBeAdded);</span>
-<span class="fc" id="L235">            newVars.add(toBeAdded);</span>
-<span class="fc" id="L236">            oldVars.add(old);</span>
+<span class="fc bfc" id="L232" title="All 2 branches covered.">        for ( int i = 0; i &lt; vars.size(); i++ ) {</span>
+<span class="fc" id="L233">            Var&lt;T&gt; toBeAdded = vars.at(i);</span>
+<span class="fc" id="L234">            _checkNullSafetyOf(toBeAdded);</span>
+<span class="fc" id="L235">            Var&lt;T&gt; old = _variables.set(index + i, toBeAdded);</span>
+<span class="fc" id="L236">            newVars.add(toBeAdded);</span>
+<span class="fc" id="L237">            oldVars.add(old);</span>
         }
 
-<span class="fc" id="L239">        _triggerAction( SequenceChange.SET, index, newVars, oldVars );</span>
-<span class="fc" id="L240">    }</span>
+<span class="fc" id="L240">        _triggerAction( SequenceChange.SET, index, newVars, oldVars );</span>
+<span class="fc" id="L241">    }</span>
 
     private boolean _checkCanAdd( Vals&lt;T&gt; properties ) {
-<span class="pc bpc" id="L243" title="1 of 2 branches missed.">        if ( properties.allowsNull() != this.allowsNull() )</span>
-<span class="nc" id="L244">            throw new IllegalArgumentException(</span>
+<span class="pc bpc" id="L244" title="1 of 2 branches missed.">        if ( properties.allowsNull() != this.allowsNull() )</span>
+<span class="nc" id="L245">            throw new IllegalArgumentException(</span>
                     &quot;The null safety of the given property list does not match this list.&quot;
                 );
 
-<span class="pc bpc" id="L248" title="1 of 2 branches missed.">        if ( properties.isEmpty() )</span>
-<span class="nc" id="L249">            return false;</span>
+<span class="pc bpc" id="L249" title="1 of 2 branches missed.">        if ( properties.isEmpty() )</span>
+<span class="nc" id="L250">            return false;</span>
 
-<span class="fc" id="L251">        return true;</span>
+<span class="fc" id="L252">        return true;</span>
     }
 
     private void clear() {
-<span class="pc bpc" id="L255" title="1 of 2 branches missed.">        Vars&lt;T&gt; vars = (Vars&lt;T&gt;) (_allowsNull ? Vars.ofNullable(_type, _variables) : Vars.of(_type, _variables));</span>
+<span class="pc bpc" id="L256" title="1 of 2 branches missed.">        Vars&lt;T&gt; vars = (Vars&lt;T&gt;) (_allowsNull ? Vars.ofNullable(_type, _variables) : Vars.of(_type, _variables));</span>
 
-<span class="fc" id="L257">        _variables.clear();</span>
-<span class="fc" id="L258">        _triggerAction( SequenceChange.CLEAR, 0, null, vars);</span>
-<span class="fc" id="L259">    }</span>
+<span class="fc" id="L258">        _variables.clear();</span>
+<span class="fc" id="L259">        _triggerAction( SequenceChange.CLEAR, 0, null, vars);</span>
+<span class="fc" id="L260">    }</span>
 
     public void sort( Comparator&lt;T&gt; comparator ) {
-<span class="nc" id="L262">        _variables.sort( ( a, b ) -&gt; comparator.compare( a.orElseNull(), b.orElseNull() ) );</span>
-<span class="nc" id="L263">        _triggerAction( SequenceChange.SORT );</span>
-<span class="nc" id="L264">    }</span>
+<span class="nc" id="L263">        _variables.sort( ( a, b ) -&gt; comparator.compare( a.orElseNull(), b.orElseNull() ) );</span>
+<span class="nc" id="L264">        _triggerAction( SequenceChange.SORT );</span>
+<span class="nc" id="L265">    }</span>
 
     private void sort() {
         // First we have to check if the type is comparable:
-<span class="nc bnc" id="L268" title="All 2 branches missed.">        if (Comparable.class.isAssignableFrom(type())) {</span>
+<span class="nc bnc" id="L269" title="All 2 branches missed.">        if (Comparable.class.isAssignableFrom(type())) {</span>
             @SuppressWarnings(&quot;unchecked&quot;)
-<span class="nc" id="L270">            Comparator&lt;T&gt; comparator = (Comparator&lt;T&gt;) Comparator.naturalOrder();</span>
-<span class="nc" id="L271">            sort(comparator);</span>
-<span class="nc" id="L272">        } else {</span>
-<span class="nc" id="L273">            throw new UnsupportedOperationException(&quot;Cannot sort a list of non-comparable types.&quot;);</span>
+<span class="nc" id="L271">            Comparator&lt;T&gt; comparator = (Comparator&lt;T&gt;) Comparator.naturalOrder();</span>
+<span class="nc" id="L272">            sort(comparator);</span>
+<span class="nc" id="L273">        } else {</span>
+<span class="nc" id="L274">            throw new UnsupportedOperationException(&quot;Cannot sort a list of non-comparable types.&quot;);</span>
         }
-<span class="nc" id="L275">    }</span>
+<span class="nc" id="L276">    }</span>
 
     public final void makeDistinct() {
-<span class="fc" id="L278">        Set&lt;T&gt; checked = new HashSet&lt;&gt;();</span>
-<span class="fc" id="L279">        List&lt;Var&lt;T&gt;&gt; retained = new ArrayList&lt;&gt;();</span>
-<span class="fc bfc" id="L280" title="All 2 branches covered.">        for ( Var&lt;T&gt; property : _variables ) {</span>
-<span class="fc" id="L281">            T item = property.orElseNull();</span>
-<span class="fc bfc" id="L282" title="All 2 branches covered.">            if ( !checked.contains(item) ) {</span>
-<span class="fc" id="L283">                checked.add(item);</span>
-<span class="fc" id="L284">                retained.add(property);</span>
+<span class="fc" id="L279">        Set&lt;T&gt; checked = new HashSet&lt;&gt;();</span>
+<span class="fc" id="L280">        List&lt;Var&lt;T&gt;&gt; retained = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L281" title="All 2 branches covered.">        for ( Var&lt;T&gt; property : _variables ) {</span>
+<span class="fc" id="L282">            T item = property.orElseNull();</span>
+<span class="fc bfc" id="L283" title="All 2 branches covered.">            if ( !checked.contains(item) ) {</span>
+<span class="fc" id="L284">                checked.add(item);</span>
+<span class="fc" id="L285">                retained.add(property);</span>
             }
-<span class="fc" id="L286">        }</span>
-<span class="fc" id="L287">        _variables.clear();</span>
-<span class="fc" id="L288">        _variables.addAll(retained);</span>
-<span class="fc" id="L289">        _triggerAction( SequenceChange.DISTINCT );</span>
-<span class="fc" id="L290">    }</span>
+<span class="fc" id="L287">        }</span>
+<span class="fc" id="L288">        _variables.clear();</span>
+<span class="fc" id="L289">        _variables.addAll(retained);</span>
+<span class="fc" id="L290">        _triggerAction( SequenceChange.DISTINCT );</span>
+<span class="fc" id="L291">    }</span>
 
     public void reversed() {
-<span class="fc" id="L293">        int size = size();</span>
-<span class="fc bfc" id="L294" title="All 2 branches covered.">        for ( int i = 0; i &lt; size / 2; i++ ) {</span>
-<span class="fc" id="L295">            Var&lt;T&gt; tmp = at(i);</span>
-<span class="fc" id="L296">            _variables.set( i, at(size - i - 1) );</span>
-<span class="fc" id="L297">            _variables.set( size - i - 1, tmp );</span>
+<span class="fc" id="L294">        int size = size();</span>
+<span class="fc bfc" id="L295" title="All 2 branches covered.">        for ( int i = 0; i &lt; size / 2; i++ ) {</span>
+<span class="fc" id="L296">            Var&lt;T&gt; tmp = at(i);</span>
+<span class="fc" id="L297">            _variables.set( i, at(size - i - 1) );</span>
+<span class="fc" id="L298">            _variables.set( size - i - 1, tmp );</span>
         }
-<span class="fc" id="L299">        _triggerAction( SequenceChange.REVERSE );</span>
-<span class="fc" id="L300">    }</span>
+<span class="fc" id="L300">        _triggerAction( SequenceChange.REVERSE );</span>
+<span class="fc" id="L301">    }</span>
 
     /** {@inheritDoc} */
     @Override
     public Viewables&lt;T&gt; onChange( Action&lt;ValsDelegate&lt;T&gt;&gt; action ) {
-<span class="fc" id="L305">        _changeListeners.onChange(action);</span>
-<span class="fc" id="L306">        return this;</span>
+<span class="fc" id="L306">        _changeListeners.onChange(action);</span>
+<span class="fc" id="L307">        return this;</span>
     }
 
     /** {@inheritDoc} */
     @Override
     public Vals&lt;T&gt; fireChange() {
-<span class="nc" id="L312">        _triggerAction( SequenceChange.NONE );</span>
-<span class="nc" id="L313">        return this;</span>
+<span class="nc" id="L313">        _triggerAction( SequenceChange.NONE );</span>
+<span class="nc" id="L314">        return this;</span>
     }
 
     @Override
     public boolean allowsNull() {
-<span class="fc" id="L318">        return _allowsNull;</span>
+<span class="fc" id="L319">        return _allowsNull;</span>
     }
 
     @Override
     public boolean isMutable() {
-<span class="nc" id="L323">        return true;</span>
+<span class="nc" id="L324">        return true;</span>
     }
 
     @Override
     public boolean isView() {
-<span class="fc" id="L328">        return true;</span>
+<span class="fc" id="L329">        return true;</span>
     }
 
     private void _triggerAction(
             SequenceChange type, int index, @Nullable Var&lt;T&gt; newVal, @Nullable Var&lt;T&gt; oldVal
     ) {
-<span class="nc" id="L334">        _changeListeners.fireChange(type, index, newVal, oldVal, this);</span>
-<span class="nc" id="L335">    }</span>
+<span class="nc" id="L335">        _changeListeners.fireChange(type, index, newVal, oldVal, this);</span>
+<span class="nc" id="L336">    }</span>
 
     private void _triggerAction(SequenceChange type) {
-<span class="fc" id="L338">        _changeListeners.fireChange(type, this);</span>
-<span class="fc" id="L339">    }</span>
+<span class="fc" id="L339">        _changeListeners.fireChange(type, this);</span>
+<span class="fc" id="L340">    }</span>
 
     private void _triggerAction(
             SequenceChange type, int index, @Nullable Vals&lt;T&gt; newVals, @Nullable Vals&lt;T&gt; oldVals
     ) {
-<span class="fc" id="L344">        _changeListeners.fireChange(type, index, newVals, oldVals, this);</span>
-<span class="fc" id="L345">    }</span>
+<span class="fc" id="L345">        _changeListeners.fireChange(type, index, newVals, oldVals, this);</span>
+<span class="fc" id="L346">    }</span>
 
     /** {@inheritDoc} */
     @Override
     public java.util.Iterator&lt;T&gt; iterator() {
-<span class="fc" id="L350">        return new java.util.Iterator&lt;T&gt;() {</span>
-<span class="fc" id="L351">            private int index = 0;</span>
-<span class="fc bfc" id="L352" title="All 2 branches covered.">            @Override public boolean hasNext() { return index &lt; size(); }</span>
-<span class="fc" id="L353">            @Override public @Nullable T next() { return at(index++).orElseNull(); }</span>
+<span class="fc" id="L351">        return new java.util.Iterator&lt;T&gt;() {</span>
+<span class="fc" id="L352">            private int index = 0;</span>
+<span class="fc bfc" id="L353" title="All 2 branches covered.">            @Override public boolean hasNext() { return index &lt; size(); }</span>
+<span class="fc" id="L354">            @Override public @Nullable T next() { return at(index++).orElseNull(); }</span>
         };
     }
 
     /** {@inheritDoc} */
     @Override
     public final String toString() {
-<span class="fc" id="L360">        String entries = _variables.stream()</span>
-<span class="pc bpc" id="L361" title="1 of 2 branches missed.">                                    .map( o -&gt; o.itemAsString() + ( o.hasID() ? &quot;(&quot; + o.id() + &quot;)&quot; : &quot;&quot; ) )</span>
-<span class="fc" id="L362">                                    .collect(Collectors.joining(&quot;, &quot;));</span>
+<span class="fc" id="L361">        String entries = _variables.stream()</span>
+<span class="pc bpc" id="L362" title="1 of 2 branches missed.">                                    .map( o -&gt; o.itemAsString() + ( o.hasID() ? &quot;(&quot; + o.id() + &quot;)&quot; : &quot;&quot; ) )</span>
+<span class="fc" id="L363">                                    .collect(Collectors.joining(&quot;, &quot;));</span>
 
-<span class="fc" id="L364">        return &quot;Views&lt;&quot; + _type.getSimpleName() + &quot;&gt;[&quot; + entries + &quot;]&quot;;</span>
+<span class="fc" id="L365">        return &quot;Views&lt;&quot; + _type.getSimpleName() + &quot;&gt;[&quot; + entries + &quot;]&quot;;</span>
     }
 
     /** {@inheritDoc} */
     @Override
     public final boolean equals( Object obj ) {
-<span class="nc bnc" id="L370" title="All 2 branches missed.">        return this == obj;</span>
+<span class="nc bnc" id="L371" title="All 2 branches missed.">        return this == obj;</span>
     }
 
     /** {@inheritDoc} */
     @Override
     public final int hashCode() {
-<span class="nc" id="L376">        return System.identityHashCode(this);</span>
+<span class="nc" id="L377">        return System.identityHashCode(this);</span>
     }
 
     private void _checkNullSafety() {
-<span class="pc bpc" id="L380" title="1 of 2 branches missed.">        if ( !_allowsNull )</span>
-<span class="pc bpc" id="L381" title="1 of 2 branches missed.">            for ( Var&lt;T&gt; val : _variables )</span>
-<span class="pc" id="L382">                _checkNullSafetyOf(val);</span>
+<span class="pc bpc" id="L381" title="1 of 2 branches missed.">        if ( !_allowsNull )</span>
+<span class="pc bpc" id="L382" title="1 of 2 branches missed.">            for ( Var&lt;T&gt; val : _variables )</span>
+<span class="pc" id="L383">                _checkNullSafetyOf(val);</span>
         else {
-<span class="nc bnc" id="L384" title="All 2 branches missed.">            for ( Var&lt;T&gt; val : _variables )</span>
-<span class="nc bnc" id="L385" title="All 2 branches missed.">                if ( !val.allowsNull() )</span>
-<span class="nc" id="L386">                    throw new IllegalArgumentException(&quot;The null safety of the given property does not match this list.&quot;);</span>
+<span class="nc bnc" id="L385" title="All 2 branches missed.">            for ( Var&lt;T&gt; val : _variables )</span>
+<span class="nc bnc" id="L386" title="All 2 branches missed.">                if ( !val.allowsNull() )</span>
+<span class="nc" id="L387">                    throw new IllegalArgumentException(&quot;The null safety of the given property does not match this list.&quot;);</span>
         }
-<span class="fc" id="L388">    }</span>
+<span class="fc" id="L389">    }</span>
 
     private void _checkNullSafetyOf( Val&lt;T&gt; value ) {
-<span class="fc" id="L391">        Objects.requireNonNull(value);</span>
-<span class="pc bpc" id="L392" title="2 of 4 branches missed.">        if ( !_allowsNull &amp;&amp; value.allowsNull() )</span>
-<span class="nc" id="L393">            throw new IllegalArgumentException(&quot;Null values are not allowed in this property list.&quot;);</span>
-<span class="fc" id="L394">    }</span>
+<span class="fc" id="L392">        Objects.requireNonNull(value);</span>
+<span class="pc bpc" id="L393" title="2 of 4 branches missed.">        if ( !_allowsNull &amp;&amp; value.allowsNull() )</span>
+<span class="nc" id="L394">            throw new IllegalArgumentException(&quot;Null values are not allowed in this property list.&quot;);</span>
+<span class="fc" id="L395">    }</span>
 
     @Override
     public Observable subscribe( Observer observer ) {
-<span class="nc" id="L398">        _changeListeners.onChange(observer);</span>
-<span class="nc" id="L399">        return this;</span>
+<span class="nc" id="L399">        _changeListeners.onChange(observer);</span>
+<span class="nc" id="L400">        return this;</span>
     }
 
     @Override
     public Observable unsubscribe( Subscriber subscriber ) {
-<span class="nc" id="L404">        _changeListeners.unsubscribe(subscriber);</span>
-<span class="nc" id="L405">        return this;</span>
+<span class="nc" id="L405">        _changeListeners.unsubscribe(subscriber);</span>
+<span class="nc" id="L406">        return this;</span>
     }
 
     @Override
     public void unsubscribeAll() {
-<span class="nc" id="L410">        _changeListeners.unsubscribeAll();</span>
-<span class="nc" id="L411">    }</span>
+<span class="nc" id="L411">        _changeListeners.unsubscribeAll();</span>
+<span class="nc" id="L412">    }</span>
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

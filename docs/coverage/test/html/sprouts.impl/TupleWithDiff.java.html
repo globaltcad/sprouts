@@ -8,7 +8,7 @@ import java.util.*;
 
 public final class TupleWithDiff&lt;T extends @Nullable Object&gt; implements Tuple&lt;T&gt;, SequenceDiffOwner {
 
-    private final TupleHamt&lt;T&gt; _data;
+    private final TupleTree&lt;T&gt; _tupleTree;
     private final SequenceDiff _diffToPrevious;
 
 
@@ -18,7 +18,7 @@ public final class TupleWithDiff&lt;T extends @Nullable Object&gt; implements Tu
             Class&lt;T&gt; type,
             List&lt;T&gt; items
     ) {
-<span class="fc" id="L21">        return new TupleWithDiff&lt;&gt;(TupleHamt.of(allowsNull, type, items), null);</span>
+<span class="fc" id="L21">        return new TupleWithDiff&lt;&gt;(TupleTree.of(allowsNull, type, items), null);</span>
     }
 
     static &lt;T&gt; Tuple&lt;T&gt; of(
@@ -26,7 +26,7 @@ public final class TupleWithDiff&lt;T extends @Nullable Object&gt; implements Tu
             Class&lt;T&gt; type,
             @Nullable T... items
     ) {
-<span class="fc" id="L29">        return new TupleWithDiff&lt;&gt;(TupleHamt.of(allowsNull, type, items), null);</span>
+<span class="fc" id="L29">        return new TupleWithDiff&lt;&gt;(TupleTree.of(allowsNull, type, items), null);</span>
     }
 
     static &lt;T&gt; Tuple&lt;T&gt; ofAnyArray(
@@ -34,40 +34,40 @@ public final class TupleWithDiff&lt;T extends @Nullable Object&gt; implements Tu
             Class&lt;T&gt; type,
             Object array
     ) {
-<span class="fc" id="L37">        return new TupleWithDiff&lt;&gt;(TupleHamt.ofAnyArray(allowsNull, type, array), null);</span>
+<span class="fc" id="L37">        return new TupleWithDiff&lt;&gt;(TupleTree.ofAnyArray(allowsNull, type, array), null);</span>
     }
 
     @SuppressWarnings(&quot;NullAway&quot;)
     public TupleWithDiff(
-            TupleHamt&lt;T&gt; data, @Nullable SequenceDiff diffToPrevious
+            TupleTree&lt;T&gt; data, @Nullable SequenceDiff diffToPrevious
 <span class="fc" id="L43">    ) {</span>
-<span class="fc" id="L44">        _data = data;</span>
+<span class="fc" id="L44">        _tupleTree = data;</span>
 <span class="fc bfc" id="L45" title="All 2 branches covered.">        _diffToPrevious = ( diffToPrevious == null ? SequenceDiff.initial() : diffToPrevious );</span>
 <span class="fc" id="L46">    }</span>
 
-    TupleHamt&lt;T&gt; getData() {
-<span class="fc" id="L49">        return _data;</span>
+    TupleTree&lt;T&gt; getData() {
+<span class="fc" id="L49">        return _tupleTree;</span>
     }
 
     @Override
     public Class&lt;T&gt; type() {
-<span class="fc" id="L54">        return _data.type();</span>
+<span class="fc" id="L54">        return _tupleTree.type();</span>
     }
 
     @Override
     public int size() {
-<span class="fc" id="L59">        return _data.size();</span>
+<span class="fc" id="L59">        return _tupleTree.size();</span>
     }
 
     @Override
     @SuppressWarnings(&quot;NullAway&quot;)
     public T get(int index) {
-<span class="fc" id="L65">        return _data.get(index);</span>
+<span class="fc" id="L65">        return _tupleTree.get(index);</span>
     }
 
     @Override
     public boolean allowsNull() {
-<span class="fc" id="L70">        return _data.allowsNull();</span>
+<span class="fc" id="L70">        return _tupleTree.allowsNull();</span>
     }
 
     @Override
@@ -81,10 +81,10 @@ public final class TupleWithDiff&lt;T extends @Nullable Object&gt; implements Tu
 <span class="fc" id="L81">            return this;</span>
 <span class="fc bfc" id="L82" title="All 2 branches covered.">        if ( newSize == 0 ) {</span>
 <span class="fc" id="L83">            SequenceDiff diff = SequenceDiff.of(this, SequenceChange.RETAIN, -1, 0);</span>
-<span class="fc" id="L84">            return new TupleWithDiff&lt;&gt;(_data.clear(), diff);</span>
+<span class="fc" id="L84">            return new TupleWithDiff&lt;&gt;(_tupleTree.clear(), diff);</span>
         }
-<span class="fc" id="L86">        TupleHamt&lt;T&gt; slice = _data.slice(from, to);</span>
-<span class="pc bpc" id="L87" title="1 of 2 branches missed.">        if ( Util.refEquals(slice, _data) )</span>
+<span class="fc" id="L86">        TupleTree&lt;T&gt; slice = _tupleTree.slice(from, to);</span>
+<span class="pc bpc" id="L87" title="1 of 2 branches missed.">        if ( Util.refEquals(slice, _tupleTree) )</span>
 <span class="nc" id="L88">            return this;</span>
 <span class="fc" id="L89">        SequenceDiff diff = SequenceDiff.of(this, SequenceChange.RETAIN, from, slice.size());</span>
 <span class="fc" id="L90">        return new TupleWithDiff&lt;&gt;(slice, diff);</span>
@@ -101,16 +101,16 @@ public final class TupleWithDiff&lt;T extends @Nullable Object&gt; implements Tu
 <span class="fc" id="L101">            return this;</span>
 <span class="fc bfc" id="L102" title="All 2 branches covered.">        if (numberOfItemsToRemove == this.size()) {</span>
 <span class="fc" id="L103">            SequenceDiff diff = SequenceDiff.of(this, SequenceChange.REMOVE, 0, this.size());</span>
-<span class="fc" id="L104">            return new TupleWithDiff&lt;&gt;(_data.clear(), diff);</span>
+<span class="fc" id="L104">            return new TupleWithDiff&lt;&gt;(_tupleTree.clear(), diff);</span>
         }
 <span class="fc" id="L106">        SequenceDiff diff = SequenceDiff.of(this, SequenceChange.REMOVE, from, numberOfItemsToRemove);</span>
-<span class="fc" id="L107">        return new TupleWithDiff&lt;&gt;(_data.removeRange(from, to), diff);</span>
+<span class="fc" id="L107">        return new TupleWithDiff&lt;&gt;(_tupleTree.removeRange(from, to), diff);</span>
     }
 
     @Override
     public Tuple&lt;T&gt; removeAll(Tuple&lt;T&gt; properties) {
-<span class="fc" id="L112">        TupleHamt&lt;T&gt; withoutItems = _data.removeAll(properties);</span>
-<span class="fc bfc" id="L113" title="All 2 branches covered.">        if ( Util.refEquals(withoutItems, _data) )</span>
+<span class="fc" id="L112">        TupleTree&lt;T&gt; withoutItems = _tupleTree.removeAll(properties);</span>
+<span class="fc bfc" id="L113" title="All 2 branches covered.">        if ( Util.refEquals(withoutItems, _tupleTree) )</span>
 <span class="fc" id="L114">            return this;</span>
 <span class="fc" id="L115">        SequenceDiff diff = SequenceDiff.of(this, SequenceChange.REMOVE, -1, this.size() - withoutItems.size());</span>
 <span class="fc" id="L116">        return new TupleWithDiff&lt;&gt;(withoutItems, diff);</span>
@@ -118,8 +118,8 @@ public final class TupleWithDiff&lt;T extends @Nullable Object&gt; implements Tu
 
     @Override
     public Tuple&lt;T&gt; addAt(int index, T item) {
-<span class="fc" id="L121">        TupleHamt&lt;T&gt; withoutItems = _data.addAt(index, item);</span>
-<span class="pc bpc" id="L122" title="1 of 2 branches missed.">        if ( Util.refEquals(withoutItems, _data) )</span>
+<span class="fc" id="L121">        TupleTree&lt;T&gt; withoutItems = _tupleTree.addAt(index, item);</span>
+<span class="pc bpc" id="L122" title="1 of 2 branches missed.">        if ( Util.refEquals(withoutItems, _tupleTree) )</span>
 <span class="nc" id="L123">            return this;</span>
 <span class="fc" id="L124">        SequenceDiff diff = SequenceDiff.of(this, SequenceChange.ADD, index, 1);</span>
 <span class="fc" id="L125">        return new TupleWithDiff&lt;&gt;(withoutItems, diff);</span>
@@ -127,8 +127,8 @@ public final class TupleWithDiff&lt;T extends @Nullable Object&gt; implements Tu
 
     @Override
     public Tuple&lt;T&gt; setAt(int index, T item) {
-<span class="fc" id="L130">        TupleHamt&lt;T&gt; newItems = _data.setAt(index, item);</span>
-<span class="fc bfc" id="L131" title="All 2 branches covered.">        if ( Util.refEquals(newItems, _data) )</span>
+<span class="fc" id="L130">        TupleTree&lt;T&gt; newItems = _tupleTree.setAt(index, item);</span>
+<span class="fc bfc" id="L131" title="All 2 branches covered.">        if ( Util.refEquals(newItems, _tupleTree) )</span>
 <span class="fc" id="L132">            return this;</span>
 <span class="fc" id="L133">        SequenceDiff diff = SequenceDiff.of(this, SequenceChange.SET, index, 1);</span>
 <span class="fc" id="L134">        return new TupleWithDiff&lt;&gt;(newItems, diff);</span>
@@ -136,8 +136,8 @@ public final class TupleWithDiff&lt;T extends @Nullable Object&gt; implements Tu
 
     @Override
     public Tuple&lt;T&gt; addAllAt(int index, Tuple&lt;T&gt; tuple) {
-<span class="fc" id="L139">        TupleHamt&lt;T&gt; newItems = _data.addAllAt(index, tuple);</span>
-<span class="fc bfc" id="L140" title="All 2 branches covered.">        if ( Util.refEquals(newItems, _data) )</span>
+<span class="fc" id="L139">        TupleTree&lt;T&gt; newItems = _tupleTree.addAllAt(index, tuple);</span>
+<span class="fc bfc" id="L140" title="All 2 branches covered.">        if ( Util.refEquals(newItems, _tupleTree) )</span>
 <span class="fc" id="L141">            return this;</span>
 <span class="fc" id="L142">        SequenceDiff diff = SequenceDiff.of(this, SequenceChange.ADD, index, tuple.size());</span>
 <span class="fc" id="L143">        return new TupleWithDiff&lt;&gt;(newItems, diff);</span>
@@ -145,8 +145,8 @@ public final class TupleWithDiff&lt;T extends @Nullable Object&gt; implements Tu
 
     @Override
     public Tuple&lt;T&gt; setAllAt(int index, Tuple&lt;T&gt; tuple) {
-<span class="fc" id="L148">        TupleHamt&lt;T&gt; newItems = _data.setAllAt(index, tuple);</span>
-<span class="fc bfc" id="L149" title="All 2 branches covered.">        if ( Util.refEquals(newItems, _data) )</span>
+<span class="fc" id="L148">        TupleTree&lt;T&gt; newItems = _tupleTree.setAllAt(index, tuple);</span>
+<span class="fc bfc" id="L149" title="All 2 branches covered.">        if ( Util.refEquals(newItems, _tupleTree) )</span>
 <span class="fc" id="L150">            return this;</span>
 <span class="fc" id="L151">        SequenceDiff diff = SequenceDiff.of(this, SequenceChange.SET, index, tuple.size());</span>
 <span class="fc" id="L152">        return new TupleWithDiff&lt;&gt;(newItems, diff);</span>
@@ -156,7 +156,7 @@ public final class TupleWithDiff&lt;T extends @Nullable Object&gt; implements Tu
     public Tuple&lt;T&gt; retainAll(Tuple&lt;T&gt; tuple) {
 <span class="fc bfc" id="L157" title="All 2 branches covered.">        if (tuple.isEmpty()) {</span>
 <span class="fc" id="L158">            SequenceDiff diff = SequenceDiff.of(this, SequenceChange.RETAIN, -1, 0);</span>
-<span class="fc" id="L159">            return new TupleWithDiff&lt;&gt;(_data.clear(), diff);</span>
+<span class="fc" id="L159">            return new TupleWithDiff&lt;&gt;(_tupleTree.clear(), diff);</span>
         }
 <span class="fc" id="L161">        int[] indicesOfThingsToKeep = new int[this.size()];</span>
 <span class="fc" id="L162">        int newSize = 0;</span>
@@ -179,8 +179,8 @@ public final class TupleWithDiff&lt;T extends @Nullable Object&gt; implements Tu
 <span class="fc" id="L179">                indicesOfThingsToKeep[newSize] = -1;</span>
             }
         }
-<span class="fc" id="L182">        TupleHamt&lt;T&gt; newItems = _data._retainAll(singleSequenceIndex, newSize, indicesOfThingsToKeep);</span>
-<span class="fc bfc" id="L183" title="All 2 branches covered.">        if ( Util.refEquals(newItems, _data) )</span>
+<span class="fc" id="L182">        TupleTree&lt;T&gt; newItems = _tupleTree._retainAll(singleSequenceIndex, newSize, indicesOfThingsToKeep);</span>
+<span class="fc bfc" id="L183" title="All 2 branches covered.">        if ( Util.refEquals(newItems, _tupleTree) )</span>
 <span class="fc" id="L184">            return this;</span>
 <span class="fc" id="L185">        SequenceDiff diff = SequenceDiff.of(this, SequenceChange.RETAIN, singleSequenceIndex, newSize);</span>
 <span class="fc" id="L186">        return new TupleWithDiff&lt;&gt;(newItems, diff);</span>
@@ -191,20 +191,20 @@ public final class TupleWithDiff&lt;T extends @Nullable Object&gt; implements Tu
 <span class="pc bpc" id="L191" title="1 of 2 branches missed.">        if (this.size() == 0)</span>
 <span class="nc" id="L192">            return this;</span>
 <span class="fc" id="L193">        SequenceDiff diff = SequenceDiff.of(this, SequenceChange.CLEAR, 0, size());</span>
-<span class="fc" id="L194">        return new TupleWithDiff&lt;&gt;(_data.clear(), diff);</span>
+<span class="fc" id="L194">        return new TupleWithDiff&lt;&gt;(_tupleTree.clear(), diff);</span>
     }
 
     @Override
     public Tuple&lt;T&gt; sort(Comparator&lt;T&gt; comparator) {
-<span class="fc" id="L199">        TupleHamt&lt;T&gt; newItems = _data.sort(comparator);</span>
+<span class="fc" id="L199">        TupleTree&lt;T&gt; newItems = _tupleTree.sort(comparator);</span>
 <span class="fc" id="L200">        SequenceDiff diff = SequenceDiff.of(this, SequenceChange.SORT, -1, size());</span>
 <span class="fc" id="L201">        return new TupleWithDiff&lt;&gt;(newItems, diff);</span>
     }
 
     @Override
     public Tuple&lt;T&gt; makeDistinct() {
-<span class="fc" id="L206">        TupleHamt&lt;T&gt; distinctItems = _data.makeDistinct();</span>
-<span class="pc bpc" id="L207" title="1 of 2 branches missed.">        if (distinctItems == _data)</span>
+<span class="fc" id="L206">        TupleTree&lt;T&gt; distinctItems = _tupleTree.makeDistinct();</span>
+<span class="pc bpc" id="L207" title="1 of 2 branches missed.">        if (Util.refEquals(distinctItems, _tupleTree))</span>
 <span class="nc" id="L208">            return this;</span>
 <span class="fc" id="L209">        SequenceDiff diff = SequenceDiff.of(this, SequenceChange.DISTINCT, -1, this.size() - distinctItems.size());</span>
 <span class="fc" id="L210">        return new TupleWithDiff&lt;&gt;(distinctItems, diff);</span>
@@ -212,8 +212,8 @@ public final class TupleWithDiff&lt;T extends @Nullable Object&gt; implements Tu
 
     @Override
     public Tuple&lt;T&gt; reversed() {
-<span class="fc" id="L215">        TupleHamt&lt;T&gt; newItems = _data.reversed();</span>
-<span class="pc bpc" id="L216" title="1 of 2 branches missed.">        if ( Util.refEquals(newItems, _data) )</span>
+<span class="fc" id="L215">        TupleTree&lt;T&gt; newItems = _tupleTree.reversed();</span>
+<span class="pc bpc" id="L216" title="1 of 2 branches missed.">        if ( Util.refEquals(newItems, _tupleTree) )</span>
 <span class="nc" id="L217">            return this;</span>
 <span class="fc" id="L218">        SequenceDiff diff = SequenceDiff.of(this, SequenceChange.REVERSE, -1, this.size());</span>
 <span class="fc" id="L219">        return new TupleWithDiff&lt;&gt;(newItems, diff);</span>
@@ -221,27 +221,27 @@ public final class TupleWithDiff&lt;T extends @Nullable Object&gt; implements Tu
 
     @Override
     public Iterator&lt;T&gt; iterator() {
-<span class="fc" id="L224">        return _data.iterator();</span>
+<span class="fc" id="L224">        return _tupleTree.iterator();</span>
     }
 
     @Override
     public Spliterator&lt;T&gt; spliterator() {
-<span class="fc" id="L229">        return _data.spliterator();</span>
+<span class="fc" id="L229">        return _tupleTree.spliterator();</span>
     }
 
     @Override
     public String toString() {
-<span class="fc" id="L234">        return _data.toString();</span>
+<span class="fc" id="L234">        return _tupleTree.toString();</span>
     }
 
     @Override
     public boolean equals(Object obj) {
-<span class="fc" id="L239">        return _data.equals(obj);</span>
+<span class="fc" id="L239">        return _tupleTree.equals(obj);</span>
     }
 
     @Override
     public int hashCode() {
-<span class="fc" id="L244">        return _data.hashCode();</span>
+<span class="fc" id="L244">        return _tupleTree.hashCode();</span>
     }
 
     @Override

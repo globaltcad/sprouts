@@ -532,7 +532,6 @@ public final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
             return this;
 
         if ( newSize == 0 ) {
-            SequenceDiff diff = SequenceDiff.of(this, SequenceChange.RETAIN, -1, 0);
             Node newRoot = _createRootFromList(_type, _allowsNull, Collections.emptyList());
             return new TupleTree<>(0, _allowsNull, _type, newRoot);
         }
@@ -891,7 +890,7 @@ public final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
 
         @Override
         public long estimateSize() {
-            return fence - index;
+            return (long) fence - index;
         }
 
         @Override

@@ -934,7 +934,7 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
 <span class="fc" id="L934">        T[] newItems = (T[]) Array.newInstance(type(), itemsToKeep.size());</span>
 <span class="fc" id="L935">        itemsToKeep.toArray(newItems);</span>
 <span class="fc" id="L936">        SequenceDiff diff = SequenceDiff.of(this, SequenceChange.REMOVE, singleSequenceIndex, size() - itemsToKeep.size());</span>
-<span class="fc" id="L937">        return new TupleWithDiff&lt;&gt;(TupleHamt.of( allowsNull(), type(), newItems), diff);</span>
+<span class="fc" id="L937">        return new TupleWithDiff&lt;&gt;(TupleTree.of( allowsNull(), type(), newItems), diff);</span>
     }
 
     /**
@@ -967,7 +967,7 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
 <span class="fc bfc" id="L967" title="All 2 branches covered.">        if ( filteredItems.size() == this.size() )</span>
 <span class="fc" id="L968">            return this;</span>
 <span class="fc" id="L969">        SequenceDiff diff = SequenceDiff.of(this, SequenceChange.RETAIN, singleSequenceIndex, filteredItems.size());</span>
-<span class="fc" id="L970">        return new TupleWithDiff&lt;&gt;(TupleHamt.of(allowsNull(), type(), filteredItems), diff);</span>
+<span class="fc" id="L970">        return new TupleWithDiff&lt;&gt;(TupleTree.of(allowsNull(), type(), filteredItems), diff);</span>
     }
 
     /**
@@ -1445,7 +1445,7 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
 <span class="fc bfc" id="L1445" title="All 2 branches covered.">        for ( T v : this ) {</span>
 <span class="fc" id="L1446">            mappedItems[i++] = mapper.apply( v );</span>
 <span class="fc" id="L1447">        }</span>
-<span class="fc" id="L1448">        return new TupleWithDiff&lt;&gt;(TupleHamt.of( allowsNull(), type(), mappedItems), SequenceDiff.of(this, SequenceChange.SET, 0, size()) );</span>
+<span class="fc" id="L1448">        return new TupleWithDiff&lt;&gt;(TupleTree.of( allowsNull(), type(), mappedItems), SequenceDiff.of(this, SequenceChange.SET, 0, size()) );</span>
     }
 
     /**
@@ -1472,7 +1472,7 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
 <span class="fc" id="L1472">            U m = mapper.apply( v );</span>
 <span class="fc" id="L1473">            array[i++] = m;</span>
 <span class="fc" id="L1474">        }</span>
-<span class="fc" id="L1475">        return new TupleWithDiff&lt;&gt;(TupleHamt.of( allowsNull(), type, array), SequenceDiff.of(this, SequenceChange.SET, 0, size()) );</span>
+<span class="fc" id="L1475">        return new TupleWithDiff&lt;&gt;(TupleTree.of( allowsNull(), type, array), SequenceDiff.of(this, SequenceChange.SET, 0, size()) );</span>
     }
 
     /**

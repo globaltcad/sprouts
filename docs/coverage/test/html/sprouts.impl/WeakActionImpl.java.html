@@ -24,8 +24,8 @@ final class WeakActionImpl&lt;O extends @Nullable Object, D&gt; implements WeakA
 
     @Override
     public void accept( D delegate ) {
-<span class="pc bpc" id="L27" title="1 of 2 branches missed.">        if ( _action == null )</span>
-<span class="nc" id="L28">            return;</span>
+<span class="fc bfc" id="L27" title="All 2 branches covered.">        if ( _action == null )</span>
+<span class="fc" id="L28">            return;</span>
 
 <span class="fc" id="L30">        O owner = _owner.get();</span>
 
