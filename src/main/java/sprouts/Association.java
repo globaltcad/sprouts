@@ -102,6 +102,46 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
      *  A collector that can be used to collect key-value pairs
      *  from a Java {@link Stream} of {@link Pair} instances into
      *  an association with the given key and value types, where
+     *  the key-value pairs are always ordered in the order they
+     *  are added to the association.<br>
+     *  The types of the keys and values in the association have to be defined when using this collector.<br>
+     *  Here is an example demonstrating how this method may be used:<br>
+     *  <pre>{@code
+     *    var assoc = Stream.of("a", "b", "c")
+     *                .map( it -> Pair.of(it.hashCode(), it.toUpperCase()) )
+     *                .collect(Association.collectorOfLinked(Integer.class, String.class));
+     *  }</pre>
+     *  This will create a new-ordered association between integers and strings
+     *  where the integers are the hash codes of the strings and the
+     *  values are the upper case versions of the strings.<br>
+     *  If there are null values in the stream, an exception will be thrown,
+     *  because an association cannot contain null keys or values.
+     *
+     * @param keyType The type of the keys in the association to collect.
+     * @param valueType The type of the values in the resulting association.
+     * @param <K> The type of the keys in the association,
+     *            which must be immutable and have value object semantics.
+     * @param <V> The type of the values in the association, which should be immutable.
+     * @return A collector that can be used to collect key-value pairs into an ordered association.
+     */
+    static <K, V> Collector<Pair<? extends K,? extends V>, ?, Association<K,V>> collectorOfLinked(
+            Class<K> keyType,
+            Class<V> valueType
+    ) {
+        Objects.requireNonNull(keyType);
+        Objects.requireNonNull(valueType);
+        return Collector.of(
+                (Supplier<List<Pair<? extends K,? extends V>>>) ArrayList::new,
+                List::add,
+                (left, right) -> { left.addAll(right); return left; },
+                list -> Association.betweenLinked(keyType, valueType).putAll(list)
+        );
+    }
+
+    /**
+     *  A collector that can be used to collect key-value pairs
+     *  from a Java {@link Stream} of {@link Pair} instances into
+     *  an association with the given key and value types, where
      *  the keys are sorted using the provided comparator.
      *  The types of the keys and values in the association have to be defined when using this collector.<br>
      *  Here is an example demonstrating how this method may be used:<br>
@@ -145,7 +185,8 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
      *  with the given key and value types. An association
      *  knows the types of its keys and values, and so
      *  you can only put keys and values of the defined types
-     *  into the association.
+     *  into the association. This creates an empty association
+     *  primed without any order of their key-value pairs.<br>
      *
      * @param keyType The type of the keys in the association.
      * @param valueType The type of the values in the association.
@@ -160,8 +201,30 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
     }
 
     /**
+     *  Creates a new linked association between keys and values
+     *  with the given key and value types, where the order of
+     *  key-value pairs in this type of association is based on
+     *  the order in which the pairs are added to the association.
+     *  An association always knows the types of its keys and values,
+     *  and so you can only put keys and values of the defined types
+     *  into the association.
+     *
+     * @param keyType The type of the keys in the association.
+     * @param valueType The type of the values in the association.
+     * @param <K> The type of the keys in the association, which must be immutable.
+     * @param <V> The type of the values in the association, which should be immutable.
+     * @return A new linked association between keys and values, where
+     *         the order of key-value pairs is preserved in the order they are added.
+     */
+    static <K, V> Association<K, V> betweenLinked( Class<K> keyType, Class<V> valueType ) {
+        Objects.requireNonNull(keyType);
+        Objects.requireNonNull(valueType);
+        return Sprouts.factory().associationOfLinked(keyType, valueType);
+    }
+
+    /**
      *  Creates a new association between keys and values
-     *  with the given key and value types, where the keys
+     *  with the given key and value types, where the key-value pairs
      *  are sorted using the supplied comparator.
      *  An association knows the types of its keys and values,
      *  and so you can only put keys and values of the defined types
@@ -220,6 +283,26 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
     }
 
     /**
+     *  Creates a new linked association from the given key-value pair
+     *  where the types of the key and value are inferred from the
+     *  two supplied objects.<br>
+     *  A linked association is an association where the order of the
+     *  key-value pairs is preserved in the order they are added to the association.
+     *
+     * @param key The key to associate with the given value.
+     * @param value The value to associate with the given key.
+     * @param <K> The type of the key in the association, this must be an immutable type.
+     * @param <V> The type of the value, which should be an immutable type.
+     * @return A new linked association with the given key-value pair
+     *         and a size of 1.
+     */
+    static <K, V> Association<K, V> ofLinked( K key, V value ) {
+        Objects.requireNonNull(key);
+        Objects.requireNonNull(value);
+        return betweenLinked((Class<K>) key.getClass(), (Class<V>) value.getClass()).put(key, value);
+    }
+
+    /**
      *  Creates a new association from the given key-value pair
      *  with the given comparator for sorting the keys.
      *  The types of the key and value are inferred from the
@@ -265,6 +348,18 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
     default boolean isNotEmpty() {
         return !isEmpty();
     }
+
+    /**
+     *  Checks if this association is linked and returns
+     *  {@code true} if it is, otherwise {@code false}.
+     *  An association is linked if the order of the key-value pairs
+     *  is preserved in the order they are added to the association.
+     *  You can create a linked association using factory methods
+     *  like {@link #betweenLinked(Class, Class)}.
+     *
+     * @return {@code true} if this association is linked, otherwise {@code false}.
+     */
+    boolean isLinked();
 
     /**
      *  Checks if this association is sorted and returns
@@ -878,10 +973,10 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
     Map<K, V> toMap();
 
     /**
-     *  Checks if any of the key/value pairs in this association match the given predicate
+     *  Checks if any of the key-value pairs in this association match the given predicate
      *  and returns {@code true} if any of them do, otherwise {@code false}.
      *  @param predicate The predicate to check.
-     *  @return True if any of the key/value pairs in this association match the given predicate.
+     *  @return True if any of the key-value pairs in this association match the given predicate.
      *  @throws NullPointerException if the predicate is {@code null}.
      */
     default boolean any( Predicate<Pair<K,V>> predicate ) {
@@ -890,10 +985,10 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
     }
 
     /**
-     *  Checks if all the key/value pairs in this association match the given predicate
+     *  Checks if all the key-value pairs in this association match the given predicate
      *  and returns {@code true} if all of them do, otherwise {@code false}.
      *  @param predicate The predicate to check.
-     *  @return True if all the key/value pairs in this association match the given predicate.
+     *  @return True if all the key-value pairs in this association match the given predicate.
      *  @throws NullPointerException if the predicate is {@code null}.
      */
     default boolean all( Predicate<Pair<K,V>> predicate ) {
@@ -902,10 +997,10 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
     }
 
     /**
-     *  Checks if none of the key/value pairs in this association match the given predicate
+     *  Checks if none of the key-value pairs in this association match the given predicate
      *  and returns {@code true} if none of them do, otherwise {@code false}.
-     *  @param predicate The predicate to run over all key/value pairs.
-     *  @return True if none of the key/value pairs in this association match the given predicate.
+     *  @param predicate The predicate to run over all key-value pairs.
+     *  @return True if none of the key-value pairs in this association match the given predicate.
      *  @throws NullPointerException if the predicate is {@code null}.
      */
     default boolean none( Predicate<Pair<K,V>> predicate ) {

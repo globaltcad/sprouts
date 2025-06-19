@@ -8,7 +8,7 @@ import spock.lang.Title
 import java.util.stream.Collectors
 import java.util.stream.Stream
 
-@Title("Association - a Data Oriented Map")
+@Title("Linked Association - a Data Oriented Map")
 @Narrative('''
 
     Sprouts is a property library with a heavy focus on bridging the
@@ -19,10 +19,14 @@ import java.util.stream.Stream
     key-value pairs. You can think of it as an immutable map, but with
     an API that is designed around transforming the data in the map
     rather than mutating it.
-
+    
+    One type of association is the "linked Association", which is
+    similar to a `LinkedHashMap` in Java, but with an API that is
+    designed around data transformation rather than mutation.
+    
 ''')
 @Subject([Association])
-class Association_Spec extends Specification
+class Linked_Association_Spec extends Specification
 {
     enum Operation {
         ADD, REMOVE,
@@ -33,22 +37,21 @@ class Association_Spec extends Specification
 
     def 'An empty association is created by supplying the type of the key and value'() {
         given:
-            var associations = Association.between(String, Integer)
+            var associations = Association.betweenLinked(String, Integer)
 
         expect:
             !associations.isSorted()
-            !associations.isLinked()
             associations.isEmpty()
             associations.keyType() == String
             associations.valueType() == Integer
     }
 
-    def 'An association is invariant to a map.'(
+    def 'A linked association is invariant to a linked hash map.'(
         List<Tuple2<Operation, String>> operations
     ) {
         given:
-            var associations = Association.between(String, String)
-            var map = [:]
+            var association = Association.betweenLinked(String, String)
+            var map = [:] as LinkedHashMap<String,String>
             var operationsApplier = { currentAssociations ->
                 operations.each { operation, key ->
                     switch (operation) {
@@ -61,53 +64,60 @@ class Association_Spec extends Specification
                             map.remove(key)
                             break
                     }
+                    if ( map.size() != currentAssociations.size() ) {
+                        throw new IllegalStateException(
+                            "The size of the linked map and the linked association are not equal after element '$key' was introduced "+
+                            "with operation '$operation'. Map size: ${map.size()}, Association size: ${currentAssociations.size()}"
+                        )
+                    }
                 }
                 return currentAssociations
             }
         when : 'We apply the operations to the associations and the map for the first time.'
-            associations = operationsApplier(associations)
+            association = operationsApplier(association) as Association<String, String>
         then: 'The associations and the map are equal in terms of size, keys, and values.'
-            associations.size() == map.size()
-            associations.keySet().toSet() == map.keySet()
-            associations.values().sort().toList() == map.values().sort()
+            association.size() == map.size()
+            association.keySet().toSet() == map.keySet()
+            association.values().sort().toList() == map.values().sort()
 
         when : 'We apply the operations to the associations and the map a few more times.'
-            10.times { associations = operationsApplier(associations) }
+            10.times {
+                association = operationsApplier(association) as Association<String, String>
+            }
         then: 'The associations and the map are still equal in terms of size, keys, and values.'
-            associations.size() == map.size()
-            associations.keySet().toSet() == map.keySet()
-            associations.values().sort().toList() == map.values().sort()
+            association.size() == map.size()
+            association.keySet().toSet() == map.keySet()
+            association.values().sort().toList() == map.values().sort()
         and : 'We can lookup any value from its corresponding key.'
-            map.values() as Set == map.keySet().collect { key -> associations.get(key).orElseThrow(MissingItemException::new) } as Set
+            map.values() as Set == map.keySet().collect { key -> association.get(key).orElseThrow(MissingItemException::new) } as Set
 
         when : 'We use the `toMap()` method to convert the association to a map.'
-            var convertedMap = associations.toMap()
+            var convertedMap = association.toMap()
         then: 'The converted map is equal to the reference map.'
             convertedMap == map
 
         when : 'We use the stream API to map both the association and the reference map.'
-            var mappedAssociation = associations.entrySet().stream().map({ it.withFirst(it.first().toUpperCase() + "!") }).filter({ it.hashCode() % 2 == 0 }).collect(Association.collectorOf(String, String))
+            var mappedAssociation = association.entrySet().stream().map({ it.withFirst(it.first().toUpperCase() + "!") }).filter({ it.hashCode() % 2 == 0 }).collect(Association.collectorOfLinked(String, String))
             var mappedMap = map.entrySet().stream().map({ Pair.of(it.key.toUpperCase() + "!", it.value) }).filter({ it.hashCode() % 2 == 0 }).collect(Collectors.toMap({it.first()}, {it.second()}))
         then : 'The mapped association and map are equal.'
             mappedAssociation.toMap() == mappedMap
 
         when : 'We use the parallel stream API to map both the association and the reference map.'
-            var mappedAssociationParallel = associations.entrySet().parallelStream().map({ it.withFirst(it.first().toUpperCase() + "!") }).filter({ it.hashCode() % 2 == 0 }).collect(Association.collectorOf(String, String))
+            var mappedAssociationParallel = association.entrySet().parallelStream().map({ it.withFirst(it.first().toUpperCase() + "!") }).filter({ it.hashCode() % 2 == 0 }).collect(Association.collectorOfLinked(String, String))
             var mappedMapParallel = map.entrySet().parallelStream().map({ Pair.of(it.key.toUpperCase() + "!", it.value) }).filter({ it.hashCode() % 2 == 0 }).collect(Collectors.toMap({it.first()}, {it.second()}))
         then : 'The mapped association and map are equal in terms of their contents.'
             mappedAssociationParallel.toMap() == mappedMapParallel
-        and : 'Finally, we also check the `isSorted()` and `isLinked()` flags:'
-            !associations.isSorted()
-            !associations.isLinked()
+        and : 'Finally, we also check the `isSorted()` flag:'
+            !association.isSorted()
 
         and : 'We also check if the key set is distinct!'
-            associations.size() == new HashSet<>(associations.toMap().keySet()).size()
+            association.size() == new HashSet<>(association.toMap().keySet()).size()
 
         where :
             operations << [[
-                        new Tuple2(Operation.ADD, 'a'),
-                        new Tuple2(Operation.ADD, 'b'),
-                        new Tuple2(Operation.ADD, 'c')
+                       new Tuple2(Operation.ADD, 'a'),
+                       new Tuple2(Operation.ADD, 'b'),
+                       new Tuple2(Operation.ADD, 'c')
                     ], [
                         new Tuple2(Operation.REMOVE, 'a'),
                         new Tuple2(Operation.REMOVE, 'b'),
@@ -181,8 +191,8 @@ class Association_Spec extends Specification
             List<Tuple2<Operation, String>> operations
     ) {
         given: 'Fresh association and reference map'
-            var assoc = Association.between(String, String)
-            var map = new HashMap<String,String>()
+            var assoc = Association.betweenLinked(String, String)
+            var map = new LinkedHashMap<String,String>()
             var valueGenerator = { key -> "[value-of:$key]".toString() }
             var replacementValueGenerator = { key -> "[replaced-value-of:$key]".toString() }
 
@@ -232,7 +242,6 @@ class Association_Spec extends Specification
             }
         and :
             !assoc.isSorted()
-            !assoc.isLinked()
 
         when : 'We verify the `Iterable` implementation of the association by iterating over it.'
             var pairSet = new HashSet()
@@ -255,11 +264,11 @@ class Association_Spec extends Specification
             ]
     }
 
-    def 'Two associations the the same operations applied to them are always equal.'(
+    def 'Two linked associations with the same operations applied to them are always equal.'(
         List<Tuple2<Operation, String>> operations
     ) {
         given: 'We create an association and a map as well as a closure to apply the operations to them.'
-            var associations = Association.between(String, String)
+            var association = Association.betweenLinked(String, String)
             var operationsApplier = { currentAssociations ->
                 operations.each { operation, key ->
                     switch (operation) {
@@ -274,22 +283,22 @@ class Association_Spec extends Specification
                 return currentAssociations
             }
         when : 'We apply the operations to two associations and the map for the first time.'
-            var associations1 = operationsApplier(associations)
-            var associations2 = operationsApplier(associations)
+            var association1 = operationsApplier(association) as Association<String, String>
+            var association2 = operationsApplier(association) as Association<String, String>
         and : 'We apply some more custom operations on top:'
-            associations1 = associations1.put("Temp1", "_").put("Temp2", "_")
-            associations1 = associations1.remove("Temp1").remove("Temp2")
+            association1 = association1.put("Temp1", "_").put("Temp2", "_")
+            association1 = association1.remove("Temp1").remove("Temp2")
         then: 'The two associations are equal.'
-            associations1 == associations2
+            association1 == association2
         and : 'Their hash codes are equal.'
-            associations1.hashCode() == associations2.hashCode()
+            association1.hashCode() == association2.hashCode()
 
         when : 'We update the second association to be a bit different.'
-            associations2 = associations2.put("A bit", "different")
+            association2 = association2.put("A bit", "different")
         then: 'The two associations are not equal.'
-            associations1 != associations2
+            association1 != association2
         and : 'Their hash codes are not equal.'
-            associations1.hashCode() != associations2.hashCode()
+            association1.hashCode() != association2.hashCode()
 
         where :
             operations << [[
@@ -349,14 +358,14 @@ class Association_Spec extends Specification
 
     def 'You can merge two associations into one using the `putAll` method.'() {
         given :
-            var associations1 = Association.between(String, Integer)
-            var associations2 = Association.between(String, Integer)
+            var association1 = Association.betweenLinked(String, Integer)
+            var association2 = Association.betweenLinked(String, Integer)
         when : 'We add some values to the first association.'
-            associations1 = associations1.put("a", 1).put("b", 2).put("c", 3)
+            association1 = association1.put("a", 1).put("b", 2).put("c", 3)
         and : 'We add some values to the second association.'
-            associations2 = associations2.put("d", 4).put("e", 5).put("f", 6)
+            association2 = association2.put("d", 4).put("e", 5).put("f", 6)
         and : 'We merge the two associations.'
-            var mergedAssociations = associations1.putAll(associations2)
+            var mergedAssociations = association1.putAll(association2)
         then : 'The merged association contains all the values from the two associations.'
             mergedAssociations.size() == 6
             mergedAssociations.get("a").orElseThrow(MissingItemException::new) == 1
@@ -367,31 +376,31 @@ class Association_Spec extends Specification
             mergedAssociations.get("f").orElseThrow(MissingItemException::new) == 6
     }
 
-    def 'You remove the entries of one association from another, using the `removeAll(ValueSet)` method.'() {
+    def 'You can remove the entries of one association from another, using the `removeAll(ValueSet)` method.'() {
         given : 'Two empty associations between strings and integers.'
-            var associations1 = Association.between(String, Integer)
-            var associations2 = Association.between(String, Integer)
+            var association1 = Association.betweenLinked(String, Integer)
+            var association2 = Association.betweenLinked(String, Integer)
         when : 'We add some values to the first association.'
-            associations1 = associations1.put("x", 1).put("y", 2).put("z", 3)
+            association1 = association1.put("x", 1).put("y", 2).put("z", 3)
         and : 'We add some values to the second association.'
-            associations2 = associations2.put("y", 2).put("z", 3).put("o", 4)
+            association2 = association2.put("y", 2).put("z", 3).put("o", 4)
         and : 'We remove the entries of the second association from the first.'
-            var result = associations1.removeAll(associations2.keySet())
+            var result = association1.removeAll(association2.keySet())
         then : 'The result contains only the entries that were not in the second association.'
             result.size() == 1
             result.get("x").orElseThrow(MissingItemException::new) == 1
     }
 
-    def 'You remove the entries of one association from another, using the `removeAll(Set)` method.'() {
+    def 'You can remove the entries of one linked association from another, using the `removeAll(Set)` method.'() {
         given : 'Two empty associations between strings and integers.'
-            var associations1 = Association.between(String, Integer)
-            var associations2 = Association.between(String, Integer)
+            var association1 = Association.betweenLinked(String, Integer)
+            var association2 = Association.betweenLinked(String, Integer)
         when : 'We add some values to the first association.'
-            associations1 = associations1.put("a", 1).put("b", 2).put("c", 3)
+            association1 = association1.put("a", 1).put("b", 2).put("c", 3)
         and : 'We add some values to the second association.'
-            associations2 = associations2.put("b", 2).put("c", 3).put("d", 4)
+            association2 = association2.put("b", 2).put("c", 3).put("d", 4)
         and : 'We remove the entries of the second association from the first.'
-            var result = associations1.removeAll(associations2.keySet().toSet())
+            var result = association1.removeAll(association2.keySet().toSet())
         then : 'The result contains only the entries that were not in the second association.'
             result.size() == 1
             result.get("a").orElseThrow(MissingItemException::new) == 1
@@ -399,54 +408,64 @@ class Association_Spec extends Specification
 
     def 'The `clear` method creates an empty association with the same key and value types.'() {
         given :
-            var associations = Association.between(String, Integer)
-            associations = associations.put("a", 1).put("b", 2).put("c", 3)
+            var association = Association.betweenLinked(String, Integer)
+            association = association.put("a", 1).put("b", 2).put("c", 3)
         expect : 'The association is not empty.'
-            !associations.isEmpty()
+            !association.isEmpty()
 
-        when : 'We clear the association.'
-            associations = associations.clear()
-        then : 'The association is empty.'
-            associations.isEmpty()
+        when : 'We clear the linked association.'
+            association = association.clear()
+        then : 'The association is empty, linked but not sorted.'
+            association.isEmpty()
+            association.isLinked()
+            !association.isSorted()
         and : 'The key and value types are the same.'
-            associations.keyType() == String
-            associations.valueType() == Integer
+            association.keyType() == String
+            association.valueType() == Integer
     }
 
-    def 'You can merge two large associations into one using the `putAll` method.'(int size) {
+    def 'You can merge two large linked associations into one using the `putAll` method.'(int size) {
         given : 'We create two associations and some random key and value generators.'
-            var associations1 = Association.between(String, Character)
-            var associations2 = Association.between(String, Character)
+            var association1 = Association.betweenLinked(String, Character)
+            var association2 = Association.betweenLinked(String, Character)
             var indexToRandomKey = { index -> Integer.toHexString(Math.abs((929 * (42 + index as int)) % size)) }
             var indexToRandomValue = { index -> Math.abs(65+(index as int)) as char }
         and : 'We create a regular mutable map to check the results are correct.'
-            var map = [:]
+            var map = [:] as LinkedHashMap<String, Character>
+            var map1 = [:] as LinkedHashMap<String, Character>
+            var map2 = [:] as LinkedHashMap<String, Character>
         when : 'We add some values to the first association.'
             size.times { index ->
                 var key = indexToRandomKey(index%(size/2))
                 var value = indexToRandomValue(index)
-                associations1 = associations1.put(key, value)
+                association1 = association1.put(key, value)
                 map[key] = value
+                map1[key] = value
             }
         and : 'We add some values to the second association.'
             size.times { index ->
                 var key = indexToRandomKey(-index%(size/2))
                 var value = indexToRandomValue(index)
-                associations2 = associations2.put(key, value)
+                association2 = association2.put(key, value)
                 map[key] = value
+                map2[key] = value
             }
-        and : 'We merge the two associations.'
-            var mergedAssociations = associations1.putAll(associations2)
+        then :
+            association1.size() == map1.size()
+            association2.size() == map2.size()
+            association1.toMap() == map1
+            association2.toMap() == map2
+        when : 'We merge the two associations.'
+            var mergedAssociations = association1.putAll(association2)
         then : 'The merged association contains all the values from the two associations.'
             mergedAssociations.size() == map.size()
             mergedAssociations.keySet() as Set == map.keySet()
             mergedAssociations.values().sort().toList() == map.values().sort()
 
-        when : 'We use the `toMap()` method to convert the association to a map.'
+        when : 'We use the `toMap()` method to convert the linked association to a linked map.'
             var convertedMap = mergedAssociations.toMap()
         then: 'The converted map is equal to the reference map.'
             convertedMap == map
-
 
         where :
             size << [10, 100, 1_000, 10_000]
@@ -454,13 +473,13 @@ class Association_Spec extends Specification
 
     def 'You can remove the entries of a large association from another, using the `removeAll` method.'(int size) {
         given : 'Two empty associations between strings and integers.'
-            var associations1 = Association.between(String, Integer)
-            var associations2 = Association.between(String, Integer)
+            var associations1 = Association.betweenLinked(String, Integer)
+            var associations2 = Association.betweenLinked(String, Integer)
             var indexToRandomKey = { index -> Integer.toHexString(Math.abs((929 * (42 + index as int)) % size)) }
             var indexToRandomValue = { index -> Math.abs(65+(index as int)) }
         and : 'We create two regular mutable maps to check the results are correct based on their `remove` method.'
-            var map1 = [:]
-            var map2 = [:]
+            var map1 = [:] as LinkedHashMap<String, Integer>
+            var map2 = [:] as LinkedHashMap<String, Integer>
         when : 'We add some values to the first association and map.'
             size.times { index ->
                 var key = indexToRandomKey(index%(size/2))
@@ -488,14 +507,14 @@ class Association_Spec extends Specification
             size << [10, 100, 1_000, 10_000]
     }
 
-    def 'You can merge a large association and a map into a single association using the `putAll` method.'(int size) {
+    def 'You can merge a large linked association and a map into a single association using the `putAll` method.'(int size) {
         given : 'We create an association and a map and some random key and value generators.'
-            var associations = Association.between(String, Character)
-            var otherMap = [:]
+            var associations = Association.betweenLinked(String, Character)
+            var otherMap = [:] as LinkedHashMap<String, Character>
             var indexToRandomKey = { index -> Integer.toHexString(Math.abs((929 * (42 + index as int)) % size)) }
             var indexToRandomValue = { index -> Math.abs(65+(index as int)) as char }
         and : 'We create a regular mutable map to check the results are correct.'
-            var map = [:]
+            var map = [:] as LinkedHashMap<String, Character>
         when : 'We add some values to the first association.'
             size.times { index ->
                 var key = indexToRandomKey(index%(size/2))
@@ -510,28 +529,41 @@ class Association_Spec extends Specification
                 otherMap[key] = value
                 map[key] = value
             }
-        and : 'We merge the two associations.'
+        and : 'We merge the two linked associations.'
             var mergedAssociations = associations.putAll(otherMap)
         then : 'The merged association contains all the values from the two associations.'
             mergedAssociations.size() == map.size()
             mergedAssociations.keySet() as Set == map.keySet()
             mergedAssociations.values().sort().toList() == map.values().sort()
+
+        when : 'We loop over both the merged association as well as the reference map and collect the pairs.'
+            var listFromAssociation = []
+            var listFromMap = []
+            for ( pair in mergedAssociations ) {
+                listFromAssociation.add(pair)
+            }
+            for ( entry in map ) {
+                listFromMap.add(Pair.of(entry.key, entry.value))
+            }
+        then : 'We verify, the two lists are completely equal.'
+            listFromAssociation == listFromMap
+
         where :
             size << [10, 100, 1_000, 10_000]
     }
 
-    def 'An `Association` has an intuitive string representation.'() {
+    def 'A linked `Association` has an intuitive string representation.'() {
         given :
-            var associations = Association.between(String, Integer)
+            var associations = Association.betweenLinked(String, Integer)
         when : 'We add some values to the association.'
             associations = associations.put("a", 1).put("b", 2).put("c", 3)
         then : 'The string representation of the association is as expected.'
-            associations.toString() == 'Association<String,Integer>["b" ↦ 2, "c" ↦ 3, "a" ↦ 1]'
+            associations.toString() == 'LinkedAssociation<String,Integer>["a" ↦ 1, "b" ↦ 2, "c" ↦ 3]'
     }
 
-    def 'A larger `Association` will have a trimmed string representation.'() {
+    def 'A larger linked `Association` will have a trimmed string representation.'() {
         given :
-            var associations = Association.between(Character, Byte)
+            var associations = Association.betweenLinked(Character, Byte)
         when : 'We add some values to the association.'
             30.times { index ->
                 var key = Math.abs(65+(index)) as char
@@ -539,12 +571,12 @@ class Association_Spec extends Specification
                 associations = associations.put(key, value)
             }
         then : 'The string representation of the association is as expected.'
-            associations.toString() == "Association<Character,Byte>['P' ↦ 3, '\\' ↦ -97, 'F' ↦ 1, 'W' ↦ -98, 'U' ↦ 4, 'A' ↦ 0, 'R' ↦ -99, 'Z' ↦ 5, ...22 more entries]"
+            associations.toString() == "LinkedAssociation<Character,Byte>['A' ↦ 0, 'B' ↦ -51, 'C' ↦ -102, 'D' ↦ 103, 'E' ↦ 52, 'F' ↦ 1, 'G' ↦ -50, 'H' ↦ -101, , ...22 more entries]"
     }
 
     def 'The `replace` method replaces the value of a key with a new value, if and only if the key is present.'() {
         given :
-            var associations = Association.between(String, Integer)
+            var associations = Association.betweenLinked(String, Integer)
 
         when : 'We add some values to the association.'
             associations = associations.put("a", 1).put("b", 2).put("c", 3)
@@ -565,7 +597,7 @@ class Association_Spec extends Specification
 
     def 'Use `putAll(Pair...)` to populate an association at once from multiple pairs.'() {
         given :
-            var associations = Association.between(String, Integer)
+            var associations = Association.betweenLinked(String, Integer)
         when : 'We add some values to the association.'
             associations = associations.putAll(
                 Pair.of("I", 1),
@@ -587,7 +619,7 @@ class Association_Spec extends Specification
 
     def 'Use `putAll(Tuple<Pair>)` to populate an association at once from multiple pairs.'() {
         given :
-            var associations = Association.between(Integer, String)
+            var associations = Association.betweenLinked(Integer, String)
         when : 'We add some values to the association.'
             associations = associations.putAll(
                 Tuple.of(
@@ -616,7 +648,7 @@ class Association_Spec extends Specification
             populate the association with.
         """
         given :
-            var associations = Association.between(Integer, String)
+            var associations = Association.betweenLinked(Integer, String)
         when : 'We add some values to the association.'
             associations = associations.putAll([
                 Pair.of(1, "I"),
@@ -643,7 +675,7 @@ class Association_Spec extends Specification
             populate the association with.
         """
         given :
-            var associations = Association.between(Character, String)
+            var associations = Association.betweenLinked(Character, String)
         when : 'We add some values to the association.'
             associations = associations.putAll([
                 Pair.of('I' as char, "I"),
@@ -663,7 +695,7 @@ class Association_Spec extends Specification
 
     def 'The `putIfAbsent(K, V)` method adds a key-value pair to the association if, and only if, the key is not present.'() {
         given : 'We create an association between shorts and chars and add a bunch of entries to the association.'
-            var associations = Association.between(Short, Character).putAll([
+            var associations = Association.betweenLinked(Short, Character).putAll([
                 Pair.of(11 as short, 'a' as char),
                 Pair.of(22 as short, 'b' as char),
                 Pair.of(33 as short, 'c' as char),
@@ -692,9 +724,9 @@ class Association_Spec extends Specification
             associations.get(44 as short).orElseThrow(MissingItemException::new) == 'x' as char
     }
 
-    def 'Use `Association.between(Number.class, Number.class)` to create an association between all kinds of numbers.'() {
+    def 'Use `Association.betweenLinked(Number.class, Number.class)` to create an association between all kinds of numbers.'() {
         given :
-            var associations = Association.between(Number.class, Number.class)
+            var associations = Association.betweenLinked(Number.class, Number.class)
         expect :
             associations.isEmpty()
             associations.keyType() == Number.class
@@ -709,38 +741,26 @@ class Association_Spec extends Specification
             associations.get(4.0).orElseThrow(MissingItemException::new) == 4.0
     }
 
-    def 'The classTyped method returns the correct class and handles null parameters'() {
-        when:
-            var associationClass = Association.classTyped(String, Integer)
-        then:
-            associationClass == Association.class
-
-        when:
-            Association.classTyped(null, Integer)
-        then:
-            thrown(NullPointerException)
-
-        when:
-            Association.classTyped(String, null)
-        then:
-            thrown(NullPointerException)
-    }
-
     def 'The of factory method throws NPE for null parameters'() {
         when:
-            Association.of(null, "value")
+            Association.ofLinked(null, "value")
         then:
             thrown(NullPointerException)
 
         when:
-            Association.of("key", null)
+            Association.ofLinked("key", null)
         then:
             thrown(NullPointerException)
+
+        when:
+            Association.ofLinked("key", "value")
+        then:
+            noExceptionThrown()
     }
 
     def 'The `entrySet` is immutable and contains correct pairs'() {
         given:
-            var assoc = Association.of("a", 1).put("b", 2)
+            var assoc = Association.ofLinked("a", 1).put("b", 2)
         when:
             var entryValueSet = assoc.entrySet()
             var entrySet = entryValueSet.toSet()
@@ -761,7 +781,7 @@ class Association_Spec extends Specification
 
     def 'You can iterate over the `entrySet` of all pairs in an `Association`.'() {
         given:
-            var assoc = Association.between(Integer, String).putAll(
+            var assoc = Association.betweenLinked(Integer, String).putAll(
                 Pair.of(1, "I"),
                 Pair.of(2, "was"),
                 Pair.of(3, "added"),
@@ -784,10 +804,10 @@ class Association_Spec extends Specification
             entries.contains(Pair.of(6, "association"))
     }
 
-    def 'replaceAll with Map only updates existing keys'() {
+    def 'Using `replaceAll(Map)` only updates existing keys in a linked `Association`.'() {
         given:
-            var original = Association.of("a", 1).put("b", 2).put("c", 3)
-            var replacementMap = [a:10, d:40, c:30] as Map
+            var original = Association.ofLinked("a", 1).put("b", 2).put("c", 3)
+            var replacementMap = [a:10, d:40, c:30] as LinkedHashMap
         when:
             var updated = original.replaceAll(replacementMap)
         then:
@@ -798,9 +818,9 @@ class Association_Spec extends Specification
             !updated.containsKey("d")
     }
 
-    def 'The `retainAll` method keeps only specified keys'() {
+    def 'The `retainAll(Set)` method keeps only specified keys.'() {
         given:
-            var assoc = Association.of("a", 1).put("b", 2).put("c", 3)
+            var assoc = Association.ofLinked("a", 1).put("b", 2).put("c", 3)
         when:
             var retained = assoc.retainAll(["a", "c"] as Set)
         then:
@@ -810,25 +830,25 @@ class Association_Spec extends Specification
             !retained.containsKey("b")
     }
 
-    def 'The `putIfAbsent` does not overwrite an existing value already stored in an association.'() {
+    def 'The `putIfAbsent` does not overwrite an existing value already stored in a linked association.'() {
         given:
-            var assoc = Association.of("a", 1).putIfAbsent("a", 2)
+            var assoc = Association.ofLinked("a", 1).putIfAbsent("a", 2)
         expect:
             assoc.get("a").get() == 1
     }
 
-    def 'Associations with same entries in different order are equal'() {
+    def 'Linked associations with same entries, but in different order are still equal.'() {
         given:
-            var assoc1 = Association.of("a", 1).put("b", 2).put("c", 3)
-            var assoc2 = Association.of("c", 3).put("b", 2).put("a", 1)
+            var assoc1 = Association.ofLinked("a", 1).put("b", 2).put("c", 3)
+            var assoc2 = Association.ofLinked("c", 3).put("b", 2).put("a", 1)
         expect:
             assoc1 == assoc2
             assoc1.hashCode() == assoc2.hashCode()
     }
 
-    def 'values() contains all values including duplicates'() {
+    def 'The `values()` returns a tuple containing all values, including duplicates.'() {
         given:
-            var assoc = Association.of("a", 10)
+            var assoc = Association.ofLinked("a", 10)
                 .put("b", 20)
                 .put("c", 10) // Duplicate value
         when:
@@ -838,9 +858,9 @@ class Association_Spec extends Specification
             values.sort().toList() == [10, 10, 20]
     }
 
-    def 'replaceAll ignores non-existing keys in replacement stream'() {
+    def 'The `replaceAll(Stream)` method ignores non-existing keys in replacement pairs.'() {
         given:
-            var original = Association.of("a", 1).put("b", 2)
+            var original = Association.ofLinked("a", 1).put("b", 2)
             var replacements = [Pair.of("k", -40), Pair.of("a", 10), Pair.of("v", 30)]
         when:
             var updated = original.replaceAll(replacements.stream())
@@ -854,16 +874,16 @@ class Association_Spec extends Specification
 
     def 'clear on empty association returns an empty instance'() {
         given:
-            var emptyAssoc = Association.between(String, Integer).clear()
+            var emptyAssoc = Association.betweenLinked(String, Integer).clear()
         expect:
             emptyAssoc.isEmpty()
             emptyAssoc.keyType() == String
             emptyAssoc.valueType() == Integer
     }
 
-    def 'The `Association` class is an `Iterable` which allows you to iterate over its entries.'() {
+    def 'The linked `Association` is an `Iterable` which allows you to iterate over its entries.'() {
         given:
-            var associations = Association.of("x", 1).put("y", 2).put("z", 3)
+            var associations = Association.ofLinked("x", 1).put("y", 2).put("z", 3)
         when:
             var entries = []
             for (var entry : associations) {
@@ -876,7 +896,7 @@ class Association_Spec extends Specification
             entries.contains(Pair.of("z", 3))
     }
 
-    def 'Use `Association.collectorOf(Class,Class)` to collect a stream of `Pair`s into a new `Association`.'() {
+    def 'Use `Association.collectorOfLinked(Class,Class)` to collect a stream of `Pair`s into a new linked `Association`.'() {
         given:
             var sentence = Stream.of(
                 Pair.of(0, "I"),
@@ -887,7 +907,7 @@ class Association_Spec extends Specification
                 Pair.of(5, "www.dominionmovement.com")
             )
         when:
-            var associations = sentence.collect(Association.collectorOf(Integer, String))
+            var associations = sentence.collect(Association.collectorOfLinked(Integer, String))
         then:
             associations.size() == 6
             associations.get(0).get() == "I"
@@ -898,7 +918,7 @@ class Association_Spec extends Specification
             associations.get(5).get() == "www.dominionmovement.com"
     }
 
-    def 'Use the `sort(Comparator)` method to create a sorted association.'() {
+    def 'Use the `sort(Comparator)` method to create a sorted association from a linked association.'() {
         reportInfo """
             The `sort` takes a `Comparator` that defines the order of the entries in the association
             and then returns a new `Association` with the entries sorted according to that comparator.
@@ -906,7 +926,7 @@ class Association_Spec extends Specification
             for lookups. (Although not as efficient as the original `Association`)
         """
         given:
-            var documentaryTimes = Association.between(String, String).putAll(
+            var documentaryTimes = Association.betweenLinked(String, String).putAll(
                 Pair.of("Dominion", "125min"),
                 Pair.of("Forks over Knives", "96min"),
                 Pair.of("Land of Hope and Glory", "48min"),
@@ -915,12 +935,10 @@ class Association_Spec extends Specification
             )
         expect :
             !documentaryTimes.isSorted()
-            !documentaryTimes.isLinked()
         when:
             var sortedDocumentaries = documentaryTimes.sort( (Comparator<String>) { a, b -> a.compareTo(b) } )
         then:
             sortedDocumentaries.isSorted()
-            !sortedDocumentaries.isLinked()
             sortedDocumentaries.size() == 5
             sortedDocumentaries.keySet().toList() == [
                 "Cowspiracy",
@@ -934,7 +952,6 @@ class Association_Spec extends Specification
             var inverseDocumentaries = documentaryTimes.sort( (Comparator<String>) { a, b -> b.compareTo(a) } )
         then:
             inverseDocumentaries.isSorted()
-            !inverseDocumentaries.isLinked()
             inverseDocumentaries.size() == 5
             inverseDocumentaries.keySet().toList() == [
                 "Land of Hope and Glory",

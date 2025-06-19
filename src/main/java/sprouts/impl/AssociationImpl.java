@@ -248,6 +248,11 @@ final class AssociationImpl<K, V> implements Association<K, V> {
     }
 
     @Override
+    public boolean isLinked() {
+        return false;
+    }
+
+    @Override
     public boolean isSorted() {
         return false;
     }

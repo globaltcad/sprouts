@@ -227,6 +227,8 @@ public interface SproutsFactory
 
     <K, V> Association<K, V> associationOf( Class<K> keyType, Class<V> valueType );
 
+    <K, V> Association<K, V> associationOfLinked( Class<K> keyType, Class<V> valueType );
+
     <K, V> Association<K, V> associationOfSorted(Class<K> keyType, Class<V> valueType, Comparator<K> comparator );
 
     <K extends Comparable<K>, V> Association<K, V> associationOfSorted( Class<K> keyType, Class<V> valueType );
