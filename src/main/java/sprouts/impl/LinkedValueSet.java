@@ -131,9 +131,9 @@ final class LinkedValueSet<E> implements ValueSet<E> {
             throw new NullPointerException("Elements stream cannot be null");
         }
         ValueSet<E> result = this;
-        for (Iterator it = ((Stream) elements).iterator(); it.hasNext(); ) {
-            Object element = it.next();
-            result = result.add((E)element);
+        for (Iterator<? extends E> it = elements.iterator(); it.hasNext(); ) {
+            E element = it.next();
+            result = result.add(element);
         }
         return result;
     }
@@ -189,9 +189,9 @@ final class LinkedValueSet<E> implements ValueSet<E> {
             throw new NullPointerException("Elements stream cannot be null");
         }
         ValueSet<E> result = this;
-        for (Iterator it = ((Stream) elements).iterator(); it.hasNext(); ) {
-            Object element = it.next();
-            result = result.remove((E)element); // Remove each element from the set
+        for (Iterator<? extends E> it = elements.iterator(); it.hasNext(); ) {
+            E element = it.next();
+            result = result.remove(element); // Remove each element from the set
         }
         return result;
     }
