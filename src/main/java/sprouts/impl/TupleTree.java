@@ -904,7 +904,7 @@ public final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
         @SuppressWarnings("unchecked")
         public Comparator<? super T> getComparator() {
             // we don't have a comparator; streams will only call this if SORTED characteristic is set
-            throw new IllegalStateException("TupleHamt spliterator is not SORTED");
+            throw new IllegalStateException(TupleTree.class.getName()+" spliterator is not SORTED");
         }
     }
 }

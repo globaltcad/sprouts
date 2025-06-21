@@ -211,6 +211,11 @@ final class ValueSetImpl<E> implements ValueSet<E> {
     }
 
     @Override
+    public boolean isLinked() {
+        return false;
+    }
+
+    @Override
     public boolean isSorted() {
         return false;
     }
@@ -433,7 +438,7 @@ final class ValueSetImpl<E> implements ValueSet<E> {
         int howMany = Math.min(size, _length(_elementsArray));
         for (int i = 0; i < howMany; i++) {
             E key = _getAt(i, _elementsArray, _type);
-            sb.append(_toString(key, _type));
+            sb.append(Util._toString(key, _type));
             if ( i < howMany - 1 ) {
                 sb.append(", ");
             }
@@ -453,20 +458,6 @@ final class ValueSetImpl<E> implements ValueSet<E> {
             }
         }
         return sb;
-    }
-
-    private static String _toString( @Nullable Object singleItem, Class<?> type ) {
-        if ( singleItem == null ) {
-            return "null";
-        } else if ( type == String.class ) {
-            return "\"" + singleItem + "\"";
-        } else if ( type == Character.class ) {
-            return "'" + singleItem + "'";
-        } else if ( type == Boolean.class ) {
-            return singleItem.toString();
-        } else {
-            return singleItem.toString();
-        }
     }
 
     @Override

@@ -389,6 +389,11 @@ public final class Sprouts implements SproutsFactory
     }
 
     @Override
+    public <K, V> Association<K, V> associationOfLinked(Class<K> keyType, Class<V> valueType) {
+        return new LinkedAssociation<>(keyType, valueType);
+    }
+
+    @Override
     public <K, V> Association<K, V> associationOfSorted( Class<K> keyType, Class<V> valueType, Comparator<K> comparator) {
         return new SortedAssociationImpl<>(keyType, valueType, comparator);
     }
@@ -401,6 +406,12 @@ public final class Sprouts implements SproutsFactory
     @Override
     public <E> ValueSet<E> valueSetOf( Class<E> type ) {
         return new ValueSetImpl<>(type);
+    }
+
+    @Override
+    public <E> ValueSet<E> valueSetOfLinked( Class<E> type ) {
+        Objects.requireNonNull(type);
+        return new LinkedValueSet<>(type);
     }
 
     @Override

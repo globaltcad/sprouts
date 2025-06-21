@@ -12,6 +12,20 @@ final class Util {
 
     private Util() {}
 
+    static String _toString( @Nullable Object singleItem, Class<?> type ) {
+        if ( singleItem == null ) {
+            return "null";
+        } else if ( type == String.class ) {
+            return "\"" + singleItem + "\"";
+        } else if ( type == Character.class ) {
+            return "'" + singleItem + "'";
+        } else if ( type == Boolean.class ) {
+            return singleItem.toString();
+        } else {
+            return singleItem.toString();
+        }
+    }
+
     @SuppressWarnings("ReferenceEquality")
     static boolean refEquals(@Nullable Object a, @Nullable Object b) {
         // We use == here to compare references, not .equals()!
