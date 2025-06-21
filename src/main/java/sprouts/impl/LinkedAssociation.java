@@ -267,7 +267,7 @@ final class LinkedAssociation<K,V> implements Association<K, V>
     public Map<K, V> toMap() {
         return new AbstractMap<K, V>() {
             @Override
-            public V get(Object key) {
+            public @Nullable V get(Object key) {
                 return LinkedAssociation.this.get((K) key).orElse(null);
             }
 
@@ -315,7 +315,7 @@ final class LinkedAssociation<K,V> implements Association<K, V>
 
             @Override
             public Pair<K, V> next() {
-                if (!hasNext()) {
+                if (!hasNext() || nextKey == null) {
                     throw new NoSuchElementException();
                 }
                 currentKey = nextKey;
