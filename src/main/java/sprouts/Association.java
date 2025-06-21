@@ -420,6 +420,10 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
                 return Association.this.size();
             }
             @Override
+            public boolean isLinked() {
+                return Association.this.isLinked();
+            }
+            @Override
             public boolean isSorted() {
                 return Association.this.isSorted();
             }

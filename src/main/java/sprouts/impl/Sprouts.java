@@ -409,6 +409,12 @@ public final class Sprouts implements SproutsFactory
     }
 
     @Override
+    public <E> ValueSet<E> valueSetOfLinked( Class<E> type ) {
+        Objects.requireNonNull(type);
+        return new LinkedValueSet<>(type);
+    }
+
+    @Override
     public <E> ValueSet<E> valueSetOfSorted( Class<E> type, Comparator<E> comparator ) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(comparator);

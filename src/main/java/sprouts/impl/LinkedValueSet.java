@@ -3,9 +3,7 @@ package sprouts.impl;
 import org.jspecify.annotations.Nullable;
 import sprouts.ValueSet;
 
-import java.util.Iterator;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Stream;
 
 final class LinkedValueSet<E> implements ValueSet<E> {
@@ -83,6 +81,11 @@ final class LinkedValueSet<E> implements ValueSet<E> {
     }
 
     @Override
+    public boolean isLinked() {
+        return true;
+    }
+
+    @Override
     public boolean isSorted() {
         return false;
     }
@@ -128,8 +131,9 @@ final class LinkedValueSet<E> implements ValueSet<E> {
             throw new NullPointerException("Elements stream cannot be null");
         }
         ValueSet<E> result = this;
-        for (E element : (Iterable<E>) elements.iterator()) {
-            result = result.add(element);
+        for (Iterator it = ((Stream) elements).iterator(); it.hasNext(); ) {
+            Object element = it.next();
+            result = result.add((E)element);
         }
         return result;
     }
@@ -185,8 +189,9 @@ final class LinkedValueSet<E> implements ValueSet<E> {
             throw new NullPointerException("Elements stream cannot be null");
         }
         ValueSet<E> result = this;
-        for (E element : (Iterable<E>) elements.iterator()) {
-            result = result.remove(element);
+        for (Iterator it = ((Stream) elements).iterator(); it.hasNext(); ) {
+            Object element = it.next();
+            result = result.remove((E)element); // Remove each element from the set
         }
         return result;
     }
@@ -196,10 +201,13 @@ final class LinkedValueSet<E> implements ValueSet<E> {
         if (elements == null) {
             throw new NullPointerException("Elements set cannot be null");
         }
+        if (elements.isEmpty()) {
+            return clear(); // If no elements to retain, clear the set
+        }
         ValueSet<E> result = this;
-        for (E element : elements) {
-            if (!result.contains(element)) {
-                result = result.remove(element);
+        for (E element : result) {
+            if (!elements.contains(element)) {
+                result = result.remove(element); // Remove elements not in the provided set
             }
         }
         return result;
@@ -211,6 +219,18 @@ final class LinkedValueSet<E> implements ValueSet<E> {
             return this; // Already empty, return unchanged set
         }
         return new LinkedValueSet<>((AssociationImpl) new AssociationImpl<>(type(), Entry.class), null, null);
+    }
+
+    @Override
+    public Spliterator<E> spliterator() {
+        return Spliterators.spliterator(iterator(), _entries.size(),
+                Spliterator.ORDERED |
+                        Spliterator.DISTINCT |
+                        Spliterator.SIZED |
+                        Spliterator.SUBSIZED |
+                        Spliterator.NONNULL |
+                        Spliterator.IMMUTABLE
+        );
     }
 
     @Override
@@ -287,20 +307,25 @@ final class LinkedValueSet<E> implements ValueSet<E> {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof LinkedValueSet)) return false;
+        if (this == o)
+            return true;
+        if (!(o instanceof LinkedValueSet))
+            return false;
         LinkedValueSet<?> that = (LinkedValueSet<?>) o;
-        return _entries.equals(that._entries) &&
-               _firstInsertedKey == that._firstInsertedKey &&
-               _lastInsertedKey == that._lastInsertedKey;
+        if ( !that.type().equals(type()) )
+            return false;
+        if (that.size() != size())
+            return false;
+
+        return this.toSet().equals(that.toSet());
     }
 
     @Override
     public int hashCode() {
-        int result = _entries.hashCode();
-        result = 31 * result + (_firstInsertedKey != null ? _firstInsertedKey.hashCode() : 0);
-        result = 31 * result + (_lastInsertedKey != null ? _lastInsertedKey.hashCode() : 0);
-        return result;
+        int hash = 7;
+        hash = 31 * hash + Objects.hashCode(_entries.keyType());
+        hash = 31 * hash + toSet().hashCode();
+        return hash;
     }
 
 

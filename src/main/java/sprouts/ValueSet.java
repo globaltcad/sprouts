@@ -91,6 +91,36 @@ public interface ValueSet<E> extends Iterable<E> {
 
     /**
      *  A collector that can be used to collect elements
+     *  from a Java {@link Stream} into a linked value set with
+     *  an order, which is defined by the insertion order of the elements.
+     *  The types of the elements and values in the
+     *  value set have to be specified when using this collector.<br>
+     *  Here is an example demonstrating how this method may be used:<br>
+     *  <pre>{@code
+     *    var assoc = Stream.of("a", "b", "c")
+     *                .map( it -> it.toUpperCase() )
+     *                .collect(ValueSet.collectorOfLinked(String.class));
+     *  }</pre>
+     *  This will create a new-ordered value set of string elements
+     *  where the strings are all uppercased and ordered by their insertion order.
+     *
+     * @param type The type of the elements in the value set to collect.
+     * @param <K> The type of the elements in the value set,
+     *            which must be immutable and have value object semantics.
+     * @return A collector that can be used to collect elements into an ordered value set.
+     */
+    static <K> Collector<K, ?, ValueSet<K>> collectorOfLinked( Class<K> type ) {
+        Objects.requireNonNull(type);
+        return Collector.of(
+                (Supplier<List<K>>) ArrayList::new,
+                List::add,
+                (left, right) -> { left.addAll(right); return left; },
+                list -> ValueSet.ofLinked(type).addAll(list)
+        );
+    }
+
+    /**
+     *  A collector that can be used to collect elements
      *  from a Java {@link Stream} into
      *  a value set with an explicit order defined by the supplied comparator.
      *  The types of the elements and values in the
@@ -157,7 +187,7 @@ public interface ValueSet<E> extends Iterable<E> {
 
     /**
      *  Creates a new value set specifically for holding elements of the supplied type.
-     *  A value set knows the types of its elements and values, and so
+     *  A value set knows the types of its elements, and so
      *  you can only add elements which are of the same type or a subtype of the
      *  type of the value set.
      *
@@ -238,6 +268,99 @@ public interface ValueSet<E> extends Iterable<E> {
         Objects.requireNonNull(type);
         Objects.requireNonNull(elements);
         return of(type).addAll(elements);
+    }
+
+    /**
+     *  Creates a new value set specifically for holding elements of the supplied type,
+     *  and where the order of the elements is defined by the insertion order.
+     *  Which means that during iteration over the value set,
+     *  the elements will be returned in the order they were added.
+     *  A value set knows the types of its elements, and so
+     *  you can only add elements which are of the same type or a subtype of the
+     *  type of the value set.
+     *
+     * @param type The type of the elements in the value set.
+     * @param <E> The type of the elements in the value set, which must be an immutable value type.
+     * @return A new linked value set specific to the given element type.
+     */
+    static <E> ValueSet<E> ofLinked( Class<E> type ) {
+        Objects.requireNonNull(type);
+        return Sprouts.factory().valueSetOfLinked(type);
+    }
+
+    /**
+     *  Creates a new linked value of the supplied type as well as
+     *  elements from the supplied {@link Iterable} to it,
+     *  where the order of the elements is defined by the insertion order.
+     *  This means that during iteration over the value set,
+     *  the elements will be returned in the order they were added.
+     *  A value set knows the types of its elements, and so
+     *  you can only add elements which are of the same type or a subtype of the
+     *  type of the value set.<br>
+     *  Here is an example demonstrating how this method may be used:<br>
+     *  <pre>{@code
+     *    ValueSet.ofLinked(
+     *       String.class,
+     *       List.of("a", "b", "c")
+     *    );
+     *  }</pre>
+     *
+     * @param type The type of the elements in the value set.
+     * @param elements The iterable of elements to store in the value set.
+     * @param <E> The type of the elements in the value set, which must be an immutable value type.
+     * @return A new linked value set specific to the given element type.
+     */
+    static <E> ValueSet<E> ofLinked( Class<E> type, Iterable<E> elements ) {
+        Objects.requireNonNull(type);
+        Objects.requireNonNull(elements);
+        return ofLinked(type).addAll(elements);
+    }
+
+    /**
+     *  Creates a new linked value set of one or more elements,
+     *  where the order of the elements is defined by the insertion order.
+     *  The order of the supplied items is preserved in the new value set,
+     *  which means that during iteration over the value set,
+     *  the elements will be returned in the order they were added.
+     *  The type of the elements is captured from the first element through
+     *  the {@link Object#getClass()} method.<br>
+     *  Here is an example demonstrating how this method may be used:<br>
+     *  <pre>{@code
+     *    ValueSet.ofLinked(1, 2, 3);
+     *  }</pre>
+     *
+     * @param first The first element to store in the value set.
+     * @param rest The rest of the elements to store in the value set.
+     * @param <E> The type of the elements in the value set, which must be an immutable value type.
+     * @return A new linked value set with the given elements.
+     * @throws NullPointerException If any of the provided elements are null.
+     */
+    @SafeVarargs
+    @SuppressWarnings("unchecked")
+    static <E> ValueSet<E> ofLinked( @NonNull E first, @NonNull E... rest ) {
+        Objects.requireNonNull(first);
+        Objects.requireNonNull(rest);
+        Class<E> type = (Class<E>) first.getClass();
+        return ofLinked(type).add(first).addAll(rest);
+    }
+
+    /**
+     *  Creates a new linked value set from the given {@link Tuple} of elements,
+     *  where the order of the elements is defined by the insertion order.
+     *  The order of the items in the tuple is preserved in the value set,
+     *  which means that during iteration over the value set,
+     *  the elements will be returned in the order they were added.
+     *  The type of the elements is captured from the tuple itself
+     *  through the {@link Tuple#type()} method.
+     *
+     * @param tuple The tuple of elements to store in the value set.
+     * @param <E> The type of the elements in the value set, which must be an immutable type.
+     * @return A new linked value set with the given elements.
+     * @throws NullPointerException If the supplied tuple is null.
+     */
+    static <E> ValueSet<E> ofLinked( Tuple<E> tuple ) {
+        Objects.requireNonNull(tuple, "The provided tuple cannot be null.");
+        return Sprouts.factory().valueSetOf(tuple.type()).addAll(tuple);
     }
 
     /**
@@ -365,6 +488,17 @@ public interface ValueSet<E> extends Iterable<E> {
     default boolean isNotEmpty() {
         return !isEmpty();
     }
+
+    /**
+     *  Checks if this value set is a linked value set and returns
+     *  {@code true} if it is, otherwise {@code false}.
+     *  A linked value set is a value set that preserves the insertion order
+     *  of the elements, meaning that during iteration over the value set,
+     *  the elements will be returned in the order they were added.
+     *
+     * @return {@code true} if this set is a linked value set, otherwise {@code false}.
+     */
+    boolean isLinked();
 
     /**
      *  Checks if this value set is sorted and returns

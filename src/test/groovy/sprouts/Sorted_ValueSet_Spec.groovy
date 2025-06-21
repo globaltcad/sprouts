@@ -12,7 +12,7 @@ import java.util.stream.Stream
 @Title("Sorted ValueSet - a Data Oriented Set")
 @Narrative('''
 
-    A sorted ValueSet is a fundamental building block in sprouts' data-oriented programming model.
+    A sorted `ValueSet` is a fundamental building block in sprouts' data-oriented programming model.
     It represents an immutable collection of unique and sorted elements, providing an API focused on
     deriving new sets from existing ones rather than mutating state. Unlike traditional
     Java sets, all operations return new `ValueSet` instances, making it ideal for
@@ -88,18 +88,24 @@ class Sorted_ValueSet_Spec extends Specification {
             }
 
         when: 'Apply operations first time'
-            valueSet = operationsApplier(valueSet)
+            valueSet = operationsApplier(valueSet) as ValueSet<String>
         then: 'Immediate invariance'
             valueSet.size() == referenceSet.size()
             valueSet.containsAll(referenceSet)
             valueSet.toSet() == referenceSet
+            !valueSet.isLinked()
+            valueSet.isSorted()
 
         when: 'Apply operations multiple times'
-            5.times { valueSet = operationsApplier(valueSet) }
+            5.times {
+                valueSet = operationsApplier(valueSet) as ValueSet<String>
+            }
         then: 'Consistent state'
             valueSet.size() == referenceSet.size()
             valueSet.containsAll(referenceSet)
             valueSet.toSet() == referenceSet
+            !valueSet.isLinked()
+            valueSet.isSorted()
         and : 'Their entry sets converted to lists are equal.'
             valueSet.toList() == referenceSet.toList()
 
@@ -222,6 +228,8 @@ class Sorted_ValueSet_Spec extends Specification {
         then:
             cleared.isEmpty()
             cleared.type() == Integer
+            cleared.isSorted()
+            !cleared.isLinked()
     }
 
     def 'String representation reflects contents'() {
@@ -306,7 +314,7 @@ class Sorted_ValueSet_Spec extends Specification {
             }
         then:
             iterated.size() == 4
-            iterated as Set == [1,2,3,4] as Set
+            iterated == [1,2,3,4]
     }
 
     def 'Empty set special cases'() {
@@ -514,4 +522,5 @@ class Sorted_ValueSet_Spec extends Specification {
         then:
             thrown(UnsupportedOperationException)
     }
+
 }

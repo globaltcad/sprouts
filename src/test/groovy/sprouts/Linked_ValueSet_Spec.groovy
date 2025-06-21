@@ -9,35 +9,41 @@ import java.util.stream.Collectors
 import java.util.stream.Stream
 
 
-@Title("ValueSet - a Data Oriented Set")
+@Title("Linked ValueSet - a Data Oriented Set")
 @Narrative('''
 
-    ValueSet is a fundamental building block in sprouts' data-oriented programming model.
-    It represents an immutable collection of unique elements, providing an API focused on
+    A linked `ValueSet` is a fundamental building block in sprouts' data-oriented programming model.
+    It represents an immutable collection of unique and ordered elements, providing an API focused on
     deriving new sets from existing ones rather than mutating state. Unlike traditional
     Java sets, all operations return new `ValueSet` instances, making it ideal for
-    functional-style programming and safe concurrent usage.
+    functional/data-oriented programming and safe concurrent usage.
+    
+    You can create a linked `ValueSet` through various factories, such as `ValueSet.ofLinked(Class<T>)`
+    or `ValueSet.ofLinked(T first, T... rest)`. All operations on a linked `ValueSet` return a new instance,
+    ensuring immutability and thread safety. The linked nature of the set ensures that the order of elements
+    is preserved, which is particularly relevant to make iteration and stream operations more
+    deterministic and easier to reason about.
     
 ''')
 @Subject([ValueSet])
-class ValueSet_Spec extends Specification {
+class Linked_ValueSet_Spec extends Specification {
 
     enum Operation {
         ADD, REMOVE, CLEAR
     }
 
-    def 'Use `ValueSet.of(Class, Iterable)` to create a value set from an iterable.'() {
+    def 'Use `ValueSet.ofLinked(Class, Iterable)` to create a linked value set from an iterable.'() {
         given:
             var iterable = ["a", "b", "c", "d", "e"] as Iterable<String>
         when:
-            var valueSet = ValueSet.of(String, iterable)
+            var valueSet = ValueSet.ofLinked(String, iterable)
         then:
             valueSet.size() == 5
             valueSet.type() == String
-            valueSet.toSet() == ["a", "b", "c", "d", "e"] as Set
+            valueSet.toList() == ["a", "b", "c", "d", "e"]
     }
 
-    def 'An empty ValueSet is created by specifying the element type'() {
+    def 'An empty linked `ValueSet` is created by specifying the element type.'() {
         reportInfo """
             A `ValueSet` needs to be created with a type to allow for better
             type safety during runtime as well as improved performance
@@ -46,26 +52,28 @@ class ValueSet_Spec extends Specification {
             internally use a primitive `int[]` array to store the values.
         """
         given:
-            var emptySet = ValueSet.of(String)
+            var emptySet = ValueSet.ofLinked(String)
 
         expect:
             emptySet.isEmpty()
             emptySet.type() == String
             !emptySet.isSorted()
+            emptySet.isLinked()
 
         when :
-            var emptySet2 = ValueSet.of(Integer)
+            var emptySet2 = ValueSet.ofLinked(Integer)
         then:
             emptySet2.isEmpty()
             emptySet2.type() == Integer
             !emptySet2.isSorted()
+            emptySet2.isLinked()
     }
 
-    def 'The `ValueSet` maintains invariance with Java Set across operations'(
+    def 'A linked `ValueSet` maintains invariance with Java Set across many operations.'(
         List<Tuple2<Operation, String>> operations
     ) {
         given:
-            var valueSet = ValueSet.of(String)
+            var valueSet = ValueSet.ofLinked(String)
             var referenceSet = new HashSet<>()
             var operationsApplier = { currentSet ->
                 operations.each { op, element ->
@@ -88,27 +96,33 @@ class ValueSet_Spec extends Specification {
             }
 
         when: 'Apply operations first time'
-            valueSet = operationsApplier(valueSet)
+            valueSet = operationsApplier(valueSet) as ValueSet<String>
         then: 'Immediate invariance'
             valueSet.size() == referenceSet.size()
             valueSet.containsAll(referenceSet)
             valueSet.toSet() == referenceSet
+            valueSet.isLinked()
+            !valueSet.isSorted()
 
         when: 'Apply operations multiple times'
-            5.times { valueSet = operationsApplier(valueSet) }
+            5.times {
+                valueSet = operationsApplier(valueSet) as ValueSet<String>
+            }
         then: 'Consistent state'
             valueSet.size() == referenceSet.size()
             valueSet.containsAll(referenceSet)
             valueSet.toSet() == referenceSet
+            valueSet.isLinked()
+            !valueSet.isSorted()
 
         when : 'We use the stream API to map both the value set and the JDK based reference set.'
-            var mappedValueSet = valueSet.stream().map({ it.toUpperCase() + "!" }).filter({ it.hashCode() % 2 == 0 }).collect(ValueSet.collectorOf(String.class))
+            var mappedValueSet = valueSet.stream().map({ it.toUpperCase() + "!" }).filter({ it.hashCode() % 2 == 0 }).collect(ValueSet.collectorOfLinked(String.class))
             var mappedSet = referenceSet.stream().map({ it.toUpperCase() + "!" }).filter({ it.hashCode() % 2 == 0 }).collect(Collectors.toSet())
         then : 'The mapped value set and mapped set are equal.'
             mappedValueSet.toSet() == mappedSet
 
         when : 'We use the parallel stream API to map both the value set and the reference set.'
-            var mappedValueSetParallel = valueSet.parallelStream().map({ it.toUpperCase() + "!" }).filter({ it.hashCode() % 2 == 0 }).collect(ValueSet.collectorOf(String.class))
+            var mappedValueSetParallel = valueSet.parallelStream().map({ it.toUpperCase() + "!" }).filter({ it.hashCode() % 2 == 0 }).collect(ValueSet.collectorOfLinked(String.class))
             var mappedSetParallel = referenceSet.parallelStream().map({ it.toUpperCase() + "!" }).filter({ it.hashCode() % 2 == 0 }).collect(Collectors.toSet())
         then : 'The mapped value set and JDK set are equal in terms of their contents.'
             mappedValueSetParallel.toSet() == mappedSetParallel
@@ -116,9 +130,9 @@ class ValueSet_Spec extends Specification {
         where:
             operations << [
                 [
-                        new Tuple2(Operation.ADD, "apple"),
-                        new Tuple2(Operation.ADD, "banana"),
-                        new Tuple2(Operation.REMOVE, "apple")
+                    new Tuple2(Operation.ADD, "apple"),
+                    new Tuple2(Operation.ADD, "banana"),
+                    new Tuple2(Operation.REMOVE, "apple")
                 ],
                 (0..100).collect {
                     new Tuple2(it % 2 == 0 ? Operation.ADD : Operation.REMOVE,
@@ -151,10 +165,10 @@ class ValueSet_Spec extends Specification {
 
     def 'Set operations maintain mathematical set properties'() {
         given:
-            var initial = ValueSet.of(Integer).add(1).add(2).add(3)
+            var initial = ValueSet.ofLinked(Integer).add(1).add(2).add(3)
 
         when: 'Union with another set'
-            var union = initial.addAll(ValueSet.of(3,4,5))
+            var union = initial.addAll(ValueSet.ofLinked(3,4,5))
         then:
             union.toSet() == [1,2,3,4,5] as Set
 
@@ -171,8 +185,8 @@ class ValueSet_Spec extends Specification {
 
     def 'Equality and hash code follow set semantics'() {
         given:
-            var set1 = ValueSet.of("a", "b", "c")
-            var set2 = ValueSet.of("c", "b", "a")
+            var set1 = ValueSet.ofLinked("a", "b", "c")
+            var set2 = ValueSet.ofLinked("c", "b", "a")
             var set3 = set1.add("d")
 
         expect:
@@ -185,7 +199,7 @@ class ValueSet_Spec extends Specification {
         given:
             var size = 10_000
             var elements = (1..size).collect { "item-"+it }
-            var valueSet = ValueSet.of(String).addAll(elements)
+            var valueSet = ValueSet.ofLinked(String).addAll(elements)
 
         expect:
             valueSet.size() == size
@@ -199,7 +213,7 @@ class ValueSet_Spec extends Specification {
 
     def 'Immutable characteristics are preserved'() {
         given:
-            var original = ValueSet.of("a", "b")
+            var original = ValueSet.ofLinked("a", "b")
             var modified = original.add("c")
 
         expect:
@@ -210,7 +224,7 @@ class ValueSet_Spec extends Specification {
 
     def 'The `clear` operation works on a non-empty value set'() {
         given:
-            var set = ValueSet.of(1,2,3)
+            var set = ValueSet.ofLinked(1,2,3)
         expect: 'Contains checks'
             set.isNotEmpty() && set.size() == 3
             set.contains(2) && !set.contains(4)
@@ -224,56 +238,56 @@ class ValueSet_Spec extends Specification {
 
     def 'String representation reflects contents'() {
         given:
-            var smallSet = ValueSet.of("a", "b", "c")
-            var largeSet = ValueSet.of(Integer).addAll(1..35)
+            var smallSet = ValueSet.ofLinked("b", "a", "c")
+            var largeSet = ValueSet.ofLinked(Integer).addAll(1..35)
 
         expect:
-            smallSet.toString() == 'ValueSet<String>["b", "c", "a"]'
+            smallSet.toString() == 'LinkedValueSet<String>["b", "a", "c"]'
             largeSet.toString().contains("... 27 items left]")
     }
 
-    def 'Edge cases are handled gracefully'() {
+    def 'Null based edge cases are handled gracefully.'() {
         when: 'Adding null element'
-            ValueSet.of(String).add(null)
+            ValueSet.ofLinked(String).add(null)
         then:
             thrown(NullPointerException)
 
         when: 'Null element type'
-            ValueSet.of(null)
+            ValueSet.ofLinked(null)
         then:
             thrown(NullPointerException)
     }
 
-    def 'Stream integration works properly'() {
+    def 'You can collect a `Stream` into a linked `ValueSet`.'() {
         given:
             var elements = ["apple", "banana", "cherry"]
             var stream = elements.stream()
 
         when:
-            var collectedSet = stream.collect(ValueSet.collectorOf(String))
+            var collectedSet = stream.collect(ValueSet.collectorOfLinked(String))
         then:
             collectedSet.toSet() == elements as Set
     }
 
-    def 'Set operations with Java collections'() {
-        given:
-            var valueSet = ValueSet.of("a", "b", "c")
+    def 'The linked `ValueSet` supports Set operations with Java collections'() {
+        given: 'We create a linked ValueSet and a Java Set, both containing some elements.'
+            var valueSet = ValueSet.ofLinked("a", "b", "c")
             var javaSet = ["b", "c", "d"] as Set
 
-        when: 'Union with Java set'
+        when: 'We perform a union with another Java set...'
             var union = valueSet.addAll(javaSet)
-        then:
+        then: 'The union contains all unique elements:'
             union.toSet() == ["a", "b", "c", "d"] as Set
 
-        when: 'Intersection with Java set'
+        when: 'Intersect with a Java set...'
             var intersection = valueSet.retainAll(javaSet)
-        then:
+        then: 'The intersection contains only common elements:'
             intersection.toSet() == ["b", "c"] as Set
     }
 
     def 'Iterator behavior conforms to set semantics'() {
         given:
-            var set = ValueSet.of(1,2,3)
+            var set = ValueSet.ofLinked(1,2,3)
             var iterated = []
 
         when:
@@ -282,29 +296,41 @@ class ValueSet_Spec extends Specification {
             }
         then:
             iterated.size() == 3
-            iterated as Set == [1,2,3] as Set
+            iterated == [1,2,3]
+
+        when : 'We add some more elements to the set.'
+            set = set.add(4).add(5)
+            iterated.clear()
+            for ( var element : set ) {
+                iterated << element
+            }
+        then:
+            iterated.size() == 5
+            iterated == [1,2,3,4,5]
     }
 
     def 'Empty set special cases'() {
         given:
-            var empty = ValueSet.of(String).clear()
+            var empty = ValueSet.ofLinked(String).clear()
 
         expect:
             empty.isEmpty()
             empty.type() == String
             empty.add("test").size() == 1
+            empty.isLinked()
+            !empty.isSorted()
     }
 
     def 'Duplicate additions have no effect'() {
         given:
-            var set = ValueSet.of("a").add("a").add("a")
+            var set = ValueSet.ofLinked("a").add("a").add("a")
         expect:
             set.size() == 1
     }
 
     def 'addAll supports various collection types'() {
         given:
-            var initial = ValueSet.of("a")
+            var initial = ValueSet.ofLinked("a")
 
         expect: "Elements from different collection types are added correctly"
             initial.addAll(["b", "c"] as List).toSet() == ["a", "b", "c"] as Set
@@ -314,9 +340,9 @@ class ValueSet_Spec extends Specification {
             initial.addAll(Stream.of("b", "c")).toSet() == ["a", "b", "c"] as Set
     }
 
-    def 'removeAll handles different input collection types'() {
+    def 'The `removeAll(..)` methods handle different input collection types.'() {
         given:
-            var initial = ValueSet.of("a", "b", "c", "d")
+            var initial = ValueSet.ofLinked("a", "b", "c", "d")
 
         expect: "Elements are removed regardless of input collection type"
             initial.removeAll(["a", "b"] as List).toSet() == ["c", "d"] as Set
@@ -326,9 +352,9 @@ class ValueSet_Spec extends Specification {
             initial.removeAll(Stream.of("a", "d")).toSet() == ["b", "c"] as Set
     }
 
-    def 'retainAll works with diverse collection sources'() {
+    def 'The `retainAll(..)` methods work with diverse collection sources.'() {
         given:
-            var initial = ValueSet.of("a", "b", "c", "d")
+            var initial = ValueSet.ofLinked("a", "b", "c", "d")
 
         expect: "Only elements present in both collections are retained"
             initial.retainAll(["b", "c"] as List).toSet() == ["b", "c"] as Set
@@ -340,7 +366,7 @@ class ValueSet_Spec extends Specification {
 
     def 'The various `containsAll(..)` methods accurately check membership across collection types.'() {
         given:
-            var valueSet = ValueSet.of("a", "b", "c")
+            var valueSet = ValueSet.ofLinked("a", "b", "c")
 
         expect: "Membership checks work with all compatible collection types"
             valueSet.containsAll(["a", "b"] as List)
@@ -357,13 +383,13 @@ class ValueSet_Spec extends Specification {
             !valueSet.containsAll(["a", "d"].stream())
             !valueSet.containsAll(Tuple.of("a", "d"))
             valueSet.containsAll([] as Set) // Empty collection always returns true
-            valueSet.containsAll(ValueSet.of("a", "c"))
-            !valueSet.containsAll(ValueSet.of("b", "c", "d"))
+            valueSet.containsAll(ValueSet.ofLinked("a", "c"))
+            !valueSet.containsAll(ValueSet.ofLinked("b", "c", "d"))
     }
 
     def 'operations with empty collections have no effect or clear as expected'() {
         given:
-            var initial = ValueSet.of("a", "b")
+            var initial = ValueSet.ofLinked("a", "b")
 
         expect: "Empty inputs leave set unchanged or clear appropriately"
             initial.addAll([] as Set) == initial
@@ -378,7 +404,7 @@ class ValueSet_Spec extends Specification {
 
     def 'bulk operations ignore duplicate elements in input'() {
         given:
-            var initial = ValueSet.of("a")
+            var initial = ValueSet.ofLinked("a")
 
         expect: "Duplicates in input collections have no effect"
             initial.addAll(["a", "a", "b"] as List).toSet() == ["a", "b"] as Set
@@ -388,7 +414,7 @@ class ValueSet_Spec extends Specification {
     def 'interoperates with Tuple collections'() {
         given:
             var tuple = Tuple.of("x", "y", "z")
-            var valueSet = ValueSet.of(String).addAll(tuple)
+            var valueSet = ValueSet.ofLinked(String).addAll(tuple)
 
         expect: "Full interoperability with Tuple collections"
             valueSet.containsAll(tuple)
@@ -397,10 +423,10 @@ class ValueSet_Spec extends Specification {
 
     def 'collector works with different stream sources'() {
         when: "Collecting from various stream sources"
-            var fromList = ["a", "b"].stream().collect(ValueSet.collectorOf(String))
-            var fromSet = (["c", "d"] as Set).stream().collect(ValueSet.collectorOf(String))
-            var fromArray = Arrays.stream(["e", "f"] as String[]).collect(ValueSet.collectorOf(String))
-            var fromTuple = Tuple.of("g", "h").stream().collect(ValueSet.collectorOf(String))
+            var fromList = ["a", "b"].stream().collect(ValueSet.collectorOfLinked(String))
+            var fromSet = (["c", "d"] as Set).stream().collect(ValueSet.collectorOfLinked(String))
+            var fromArray = Arrays.stream(["e", "f"] as String[]).collect(ValueSet.collectorOfLinked(String))
+            var fromTuple = Tuple.of("g", "h").stream().collect(ValueSet.collectorOfLinked(String))
 
         then: "All collected sets match source contents"
             fromList.toSet() == ["a", "b"] as Set
@@ -411,7 +437,7 @@ class ValueSet_Spec extends Specification {
 
     def 'no-op operations return the same instance'() {
         given:
-            var initial = ValueSet.of("a", "b", "c", "d")
+            var initial = ValueSet.ofLinked("a", "b", "c", "d")
             var sameElements = ["a", "b", "c", "d"] as Set<String>
             var empty = Collections.emptySet() as Set<String>
 
@@ -438,7 +464,7 @@ class ValueSet_Spec extends Specification {
         given:
             var tuple = Tuple.of("c", "a", "b", "a", "c", "b", "c", "d", "e", "b")
         when:
-            var valueSet = ValueSet.of(tuple)
+            var valueSet = ValueSet.ofLinked(tuple)
         then:
             valueSet.size() == 5
             valueSet.toSet() == ["a", "b", "c", "d", "e"] as Set
@@ -446,9 +472,9 @@ class ValueSet_Spec extends Specification {
             valueSet.type() == String
     }
 
-    def 'Use the `sort(Comparator)` method to create a sorted value set.'() {
+    def 'Use the `sort(Comparator)` method to create a sorted value set from a linked one.'() {
         given:
-            var valueSet = ValueSet.of("c", "a", "b", "a", "c", "b", "c", "d", "e", "b")
+            var valueSet = ValueSet.ofLinked("c", "a", "b", "a", "c", "b", "c", "d", "e", "b")
         when:
             var sorted = valueSet.sort(Comparator.naturalOrder())
         then:
