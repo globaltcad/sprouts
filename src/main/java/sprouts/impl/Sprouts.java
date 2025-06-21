@@ -5,7 +5,8 @@ import org.jspecify.annotations.Nullable;
 import sprouts.*;
 
 import java.util.*;
-import java.util.function.*;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.StreamSupport;
 
@@ -14,7 +15,7 @@ import java.util.stream.StreamSupport;
  *  which serves implementations of the various property types in the Sprouts library,
  *  like {@link Event}, {@link Val}, {@link Var}, {@link Vals} and {@link Vars}.
  *  The methods implemented here are used by the various factory methods of the sprouts API like
- *  {@link Var#of(Object)}, {@link Vals#of(Object, Object[])}, {@link Result#of(Object)}...<br>
+ *  {@link Var#of(Object)}, {@link Vals#of(Object, Object[])}...<br>
  *  <b>So technically speaking, this is a configurable singleton, so be careful when using it
  *  as it effectively maintains global + mutable state!</b>
  */
@@ -26,7 +27,7 @@ public final class Sprouts implements SproutsFactory
 
     /**
      *  A {@link SproutsFactory} is used by the various factory methods of this API like
-     *  {@link Var#of(Object)}, {@link Vals#of(Object, Object[])}, {@link Result#of(Object)}...
+     *  {@link Var#of(Object)}, {@link Vals#of(Object, Object[])}...
      *  to create instances of these properties. <br>
      *  You can plug in your own factory implementation through the {@link #setFactory(SproutsFactory)} method,
      *  where you can then serve your own implementations of the various property types in the Sprouts library.
@@ -37,7 +38,7 @@ public final class Sprouts implements SproutsFactory
 
     /**
      *  Sets the factory to be used by the various factory methods of this API like
-     *  {@link Var#of(Object)}, {@link Vals#of(Object, Object[])}, {@link Result#of(Object)}...
+     *  {@link Var#of(Object)}, {@link Vals#of(Object, Object[])}...
      *  to create instances of these properties. <br>
      *  You can use a custom {@link SproutsFactory} to instantiate and serve your own
      *  implementations of the various property types in the Sprouts library. <br>
@@ -458,90 +459,6 @@ public final class Sprouts implements SproutsFactory
     @SuppressWarnings("unchecked")
     @Override public <T> Vars<@Nullable T> varsOfNullable( Var<@Nullable T> first, Var<@Nullable T>... rest ) {
         return PropertyList.ofNullable( false, first, rest );
-    }
-
-    @Override public <V> Result<V> resultOf( Class<V> type ) {
-        Objects.requireNonNull(type);
-        return new ResultImpl<>(type, Collections.emptyList(), null);
-    }
-
-    @Override public <V> Result<V> resultOf( V value ) {
-        Objects.requireNonNull(value);
-        return resultOf(value, Collections.emptyList());
-    }
-
-    @Override public <V> Result<V> resultOf( Class<V> type, @Nullable V value ) {
-        Objects.requireNonNull(type);
-        return resultOf(type, value, Collections.emptyList());
-    }
-
-    @Override public <V> Result<V> resultOf( V value, Iterable<Problem> problems ) {
-        Objects.requireNonNull(value);
-        Objects.requireNonNull(problems);
-        Class<V> itemType = Util.expectedClassFromItem(value);
-        return new ResultImpl<>(itemType, problems, value);
-    }
-
-    @Override public <V> Result<V> resultOf( Class<V> type, Iterable<Problem> problems ) {
-        Objects.requireNonNull(type);
-        Objects.requireNonNull(problems);
-        return new ResultImpl<>(type, problems, null);
-    }
-
-    @Override public <V> Result<V> resultOf( Class<V> type, @Nullable V value, Iterable<Problem> problems ) {
-        Objects.requireNonNull(type);
-        Objects.requireNonNull(problems);
-        return new ResultImpl<>(type, problems, value);
-    }
-
-    @Override public <V> Result<V> resultOf( Class<V> type, @Nullable V value, Problem problem ) {
-        Objects.requireNonNull(type);
-        Objects.requireNonNull(problem);
-        return new ResultImpl<>(type, Collections.singletonList(problem), value);
-    }
-
-    @Override public <V> Result<V> resultOf( Class<V> type, Problem problem ) {
-        Objects.requireNonNull(type);
-        Objects.requireNonNull(problem);
-        return new ResultImpl<>(type, Collections.singletonList(problem), null);
-    }
-
-    @Override public <V> Result<List<V>> resultOfList( Class<V> type, Problem problem ) {
-        Objects.requireNonNull(type);
-        Objects.requireNonNull(problem);
-        return (Result<List<V>>) (Result) new ResultImpl<>(List.class, Collections.singletonList(problem), null);
-    }
-
-    @Override public <V> Result<List<V>> resultOfList( Class<V> type, List<V> list ) {
-        Objects.requireNonNull(type);
-        Objects.requireNonNull(list);
-        // We check the types of the list elements are of the correct type.
-        boolean matches = list.stream().filter(Objects::nonNull).allMatch(e -> type.isAssignableFrom(e.getClass()));
-        if ( !matches )
-            throw new IllegalArgumentException("List elements must be of type " + type.getName());
-        return (Result<List<V>>) (Result) new ResultImpl<>(List.class, Collections.emptyList(), list);
-    }
-
-    @Override public <V> Result<List<V>> resultOfList( Class<V> type, List<V> list, Iterable<Problem> problems ) {
-        Objects.requireNonNull(type);
-        Objects.requireNonNull(list);
-        Objects.requireNonNull(problems);
-        boolean matches = list.stream().filter(Objects::nonNull).allMatch(e -> type.isAssignableFrom(e.getClass()));
-        if ( !matches )
-            throw new IllegalArgumentException("List elements must be of type " + type.getName());
-        
-        return (Result<List<V>>) (Result) new ResultImpl<>(List.class, problems, list);
-    }
-
-    @Override
-    public <V> Result<V> resultOfTry( Class<V> type, ResultItemSupplier<V> supplier ) {
-        Objects.requireNonNull(type);
-        Objects.requireNonNull(supplier);
-        try {
-            return resultOf(type, supplier.get());
-        } catch (Exception e) {
-            return resultOf(type, Problem.of(e));
-        }
     }
 
     @Override

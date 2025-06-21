@@ -1,9 +1,12 @@
 package sprouts;
 
 
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
-import sprouts.impl.Sprouts;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -37,7 +40,7 @@ import java.util.function.Supplier;
  *
  * @param <V> The type of the item wrapped by this result.
  */
-public interface Result<V> extends Maybe<V>
+public final class Result<V> implements Maybe<V>
 {
     /**
      *  A factory method for creating an empty result
@@ -50,7 +53,7 @@ public interface Result<V> extends Maybe<V>
      */
     static <V> Result<V> of( Class<V> type ) {
         Objects.requireNonNull(type);
-        return Sprouts.factory().resultOf(type);
+        return new Result<>(type, Collections.emptyList(), null);
     }
 
     /**
@@ -62,7 +65,7 @@ public interface Result<V> extends Maybe<V>
      */
     static <V> Result<V> of( V value ) {
         Objects.requireNonNull(value);
-        return Sprouts.factory().resultOf(value);
+        return of(value, Collections.emptyList());
     }
 
     /**
@@ -78,7 +81,7 @@ public interface Result<V> extends Maybe<V>
      */
     static <V> Result<V> of( Class<V> type, @Nullable V value ) {
         Objects.requireNonNull(type);
-        return Sprouts.factory().resultOf(type, value);
+        return new Result(type, Collections.emptyList(), value);
     }
 
     /**
@@ -91,7 +94,8 @@ public interface Result<V> extends Maybe<V>
      */
     static <V> Result<V> of( V value, Iterable<Problem> problems ) {
         Objects.requireNonNull(value);
-        return Sprouts.factory().resultOf(value, problems);
+        Class<V> itemType = expectedClassFromItem(value);
+        return new Result<>(itemType, problems, value);
     }
 
     /**
@@ -104,7 +108,8 @@ public interface Result<V> extends Maybe<V>
      */
     static <V> Result<V> of( Class<V> type, Iterable<Problem> problems ) {
         Objects.requireNonNull(type);
-        return Sprouts.factory().resultOf(type, problems);
+        Objects.requireNonNull(problems);
+        return new Result<>(type, problems, null);
     }
 
     /**
@@ -118,7 +123,8 @@ public interface Result<V> extends Maybe<V>
      */
     static <V> Result<V> of( Class<V> type, @Nullable V value, Iterable<Problem> problems ) {
         Objects.requireNonNull(type);
-        return Sprouts.factory().resultOf(type, value, problems);
+        Objects.requireNonNull(problems);
+        return new Result<>(type, problems, value);
     }
 
     /**
@@ -133,7 +139,7 @@ public interface Result<V> extends Maybe<V>
     static <V> Result<V> of( Class<V> type, @Nullable V value, Problem problem ) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(problem);
-        return Sprouts.factory().resultOf(type, value, problem);
+        return new Result<>(type, Collections.singletonList(problem), value);
     }
 
     /**
@@ -147,7 +153,7 @@ public interface Result<V> extends Maybe<V>
     static <V> Result<V> of( Class<V> type, Problem problem ) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(problem);
-        return Sprouts.factory().resultOf(type, problem);
+        return new Result<>(type, Collections.singletonList(problem), null);
     }
 
     /**
@@ -161,7 +167,7 @@ public interface Result<V> extends Maybe<V>
     static <V> Result<List<V>> ofList( Class<V> type, Problem problem ) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(problem);
-        return Sprouts.factory().resultOfList(type, problem);
+        return (Result<List<V>>) (Result) new Result<>(List.class, Collections.singletonList(problem), null);
     }
 
     /**
@@ -181,7 +187,7 @@ public interface Result<V> extends Maybe<V>
         boolean matches = list.stream().filter(Objects::nonNull).allMatch(e -> type.isAssignableFrom(e.getClass()));
         if ( !matches )
             throw new IllegalArgumentException("List elements must be of type " + type.getName());
-        return Sprouts.factory().resultOfList(type, list);
+        return (Result<List<V>>) (Result) new Result<>(List.class, Collections.emptyList(), list);
     }
 
     /**
@@ -198,11 +204,12 @@ public interface Result<V> extends Maybe<V>
     static <V> Result<List<V>> ofList( Class<V> type, List<V> list, Iterable<Problem> problems ) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(list);
+        Objects.requireNonNull(problems);
         boolean matches = list.stream().filter(Objects::nonNull).allMatch(e -> type.isAssignableFrom(e.getClass()));
         if ( !matches )
             throw new IllegalArgumentException("List elements must be of type " + type.getName());
 
-        return Sprouts.factory().resultOfList(type, list, problems);
+        return (Result<List<V>>) (Result) new Result<>(List.class, problems, list);
     }
 
     /**
@@ -225,8 +232,52 @@ public interface Result<V> extends Maybe<V>
      */
     static <V> Result<V> ofTry( Class<V> type, ResultItemSupplier<V> supplier ) {
         Objects.requireNonNull(type);
-        Objects.requireNonNull(supplier);
-        return Sprouts.factory().resultOfTry(type, supplier);
+        Objects.requireNonNull(supplier);        
+        try {
+            return new Result<>(type, Collections.emptyList(), supplier.get());
+        } catch (Exception e) {
+            return new Result<>(type, Collections.singletonList(Problem.of(e)), null);
+        }
+    }
+
+    private static final Logger log = LoggerFactory.getLogger(Result.class);
+
+    private final Class<V>       _type;
+    private final Tuple<Problem> _problems;
+    @Nullable private final V    _value;
+
+
+    private Result( Class<V> type, Iterable<Problem> problems, @Nullable V value ) {
+        Objects.requireNonNull(type);
+        Objects.requireNonNull(problems);
+        _type     = type;
+        _problems = Tuple.of(Problem.class, problems);
+        _value    = value;
+    }
+
+    /** {@inheritDoc} */
+    @Override public Class<V> type() {
+        return _type; 
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public @NonNull V orElseThrow() throws MissingItemException {
+        // If the value is null, this throws a checked exception!
+        V value = orElseNull();
+        if ( Objects.isNull(value) )
+            throw new MissingItemException("Expected item to be present in result!", this._problems);
+        return value;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public @NonNull V orElseThrowUnchecked() {
+        // This is similar to optionals "get()", so if the value is null, we throw a unchecked exception!
+        V value = orElseNull();
+        if ( Objects.isNull(value) )
+            throw new MissingItemRuntimeException("Expected item to be present in result!", this._problems);
+        return value;
     }
 
     /**
@@ -248,7 +299,7 @@ public interface Result<V> extends Maybe<V>
      * @throws E when no value is present
      * @throws NullPointerException if {@code exceptionSupplier} is null
      */
-    default <E extends Exception> V orElseThrowProblems(Function<Tuple<Problem>,E> exceptionSupplier) throws E {
+    public <E extends Exception> V orElseThrowProblems(Function<Tuple<Problem>,E> exceptionSupplier) throws E {
         Objects.requireNonNull(exceptionSupplier);
         V result = orElseNull();
         if ( result != null ) {
@@ -276,7 +327,7 @@ public interface Result<V> extends Maybe<V>
      * @throws RuntimeException when no value is present
      * @throws NullPointerException if {@code exceptionSupplier} is null
      */
-    default V orElseThrowProblemsUnchecked(Function<Tuple<Problem>,RuntimeException> exceptionSupplier) {
+    public V orElseThrowProblemsUnchecked(Function<Tuple<Problem>,RuntimeException> exceptionSupplier) {
         Objects.requireNonNull(exceptionSupplier);
         V result = orElseNull();
         if ( result != null ) {
@@ -296,7 +347,9 @@ public interface Result<V> extends Maybe<V>
      *
      *  @return The list of {@link Problem}s associated with this result item.
      */
-    Tuple<Problem> problems();
+    public Tuple<Problem> problems() {
+        return _problems;
+    }
 
     /**
      *  Checks if this result has {@link Problem}s associated with it.
@@ -308,7 +361,9 @@ public interface Result<V> extends Maybe<V>
      *
      *  @return {@code true} if this result is present, {@code false} otherwise.
      */
-    default boolean hasProblems() { return !problems().isEmpty(); }
+    public boolean hasProblems() {
+        return !problems().isEmpty();
+    }
 
     /**
      *  Allows you to peek at the list of problems associated with this result
@@ -323,7 +378,25 @@ public interface Result<V> extends Maybe<V>
      * @return This result.
      * @throws NullPointerException if the consumer is null.
      */
-    Result<V> peekAtProblems( Consumer<Tuple<Problem>> consumer );
+    public Result<V> peekAtProblems( Consumer<Tuple<Problem>> consumer ) {
+        Objects.requireNonNull(consumer);
+        try {
+            consumer.accept(problems());
+        } catch ( Exception e ) {
+            Tuple<Problem> newProblems = problems().add( Problem.of(e) );
+			/*
+				An exception in this the user lambda is most likely completely unwanted,
+				but we also do not want to halt the application because of it.
+				So let's do two things here to make sure this does not go
+				unnoticed:
+					1. Log the exception
+					2. Add it as a problem.
+			*/
+            log.error("An exception occurred while peeking at the problems of a result.", e);
+            return Result.of( type(), this.orElseNull(), newProblems );
+        }
+        return this;
+    }
 
     /**
      *  Allows you to peek at each problem inside this result
@@ -337,7 +410,39 @@ public interface Result<V> extends Maybe<V>
      * @return This result.
      * @throws NullPointerException if the consumer is null.
      */
-    Result<V> peekAtEachProblem( Consumer<Problem> consumer );
+    public Result<V> peekAtEachProblem( Consumer<Problem> consumer )  {
+        Objects.requireNonNull(consumer);
+        Result<V> result = this;
+        for ( Problem problem : problems() ) {
+            try {
+                consumer.accept(problem);
+            } catch ( Exception e ) {
+                Tuple<Problem> newProblems = result.problems().add( Problem.of(e) );
+				/*
+					An exception in this the user lambda is most likely completely unwanted,
+					but we also do not want to halt the application because of it.
+					So let's do two things here to make sure this does not go
+					unnoticed:
+						1. Log the exception
+						2. Add it as a problem.
+				*/
+                log.error("An exception occurred while peeking at the problems of a result.", e);
+                result = Result.of( type(), result.orElseNull(), newProblems );
+            }
+        }
+        return result;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public @Nullable V orElseNullable( @Nullable V other ) {
+        return _value == null ? other : _value;
+    }
+
+    /** {@inheritDoc} */
+    @Override public @Nullable V orElseNull() {
+        return _value;
+    }
 
     /**
      *  If this {@link Result} wraps a non-null item of type {@code V}, then this method will do nothing.
@@ -359,7 +464,7 @@ public interface Result<V> extends Maybe<V>
      *  
      * @return This result, unchanged.
      */
-    default Result<V> ifMissingLogAsError() {
+    public Result<V> ifMissingLogAsError() {
         if ( this.isEmpty() )
             return peekAtEachProblem(Problem::logAsError);
         else
@@ -386,7 +491,7 @@ public interface Result<V> extends Maybe<V>
      *
      * @return This result, unchanged.
      */
-    default Result<V> ifMissingLogAsWarning() {
+    public Result<V> ifMissingLogAsWarning() {
         if ( this.isEmpty() )
             return peekAtEachProblem(Problem::logAsWarning);
         else
@@ -413,7 +518,7 @@ public interface Result<V> extends Maybe<V>
      *
      * @return This result, unchanged.
      */
-    default Result<V> ifMissingLogAsInfo() {
+    public Result<V> ifMissingLogAsInfo() {
         if ( this.isEmpty() )
             return peekAtEachProblem(Problem::logAsInfo);
         else
@@ -440,7 +545,7 @@ public interface Result<V> extends Maybe<V>
      *
      * @return This result, unchanged.
      */
-    default Result<V> ifMissingLogAsDebug() {
+    public Result<V> ifMissingLogAsDebug() {
         if ( this.isEmpty() )
             return peekAtEachProblem(Problem::logAsDebug);
         else
@@ -467,7 +572,7 @@ public interface Result<V> extends Maybe<V>
      *
      * @return This result, unchanged.
      */
-    default Result<V> ifMissingLogAsTrace() {
+    public Result<V> ifMissingLogAsTrace() {
         if ( this.isEmpty() )
             return peekAtEachProblem(Problem::logAsTrace);
         else
@@ -493,7 +598,7 @@ public interface Result<V> extends Maybe<V>
      *               second argument the {@link Throwable} associated with the problem.
      * @return This result, unchanged.
      */
-    default Result<V> ifMissingLogTo( BiConsumer<String, Throwable> logger ) {
+    public Result<V> ifMissingLogTo( BiConsumer<String, Throwable> logger ) {
         if ( this.isEmpty() )
             return peekAtEachProblem(problem -> problem.logTo(logger));
         else
@@ -512,7 +617,23 @@ public interface Result<V> extends Maybe<V>
      * @param <U> The type of the item returned from the mapping function.
      */
     @Override
-    <U> Result<U> mapTo( Class<U> type, Function<V, U> mapper );
+    public <U> Result<U> mapTo( Class<U> type, Function<V, U> mapper ) {
+        Objects.requireNonNull(type);
+        Objects.requireNonNull(mapper);
+        if ( !isPresent() )
+            return Result.of( type, problems() );
+
+        try {
+            U newValue = mapper.apply( Objects.requireNonNull(_value) );
+            if (newValue == null)
+                return Result.of( type );
+            else
+                return Result.of( newValue, problems() );
+        } catch ( Exception e ) {
+            Tuple<Problem> newProblems = problems().add( Problem.of(e) );
+            return Result.of( type, newProblems );
+        }
+    }
 
     /**
      *  Safely maps the value of this result to a new value of the same type
@@ -524,6 +645,102 @@ public interface Result<V> extends Maybe<V>
      * @return A new result with the mapped value and a list of problems describing related issues.
      */
     @Override
-    Result<V> map( Function<V, V> mapper );
-    
+    public Result<V> map( Function<V, V> mapper )  {
+        Objects.requireNonNull(mapper);
+        if ( !isPresent() )
+            return Result.of( type() );
+
+        try {
+            V newValue = mapper.apply(Objects.requireNonNull(_value));
+            if (newValue == null)
+                return Result.of(type(), problems());
+            else
+                return Result.of(newValue, problems());
+        } catch ( Exception e ) {
+            Tuple<Problem> newProblems = problems().add( Problem.of(e) );
+            return Result.of( type(), newProblems );
+        }
+    }
+
+
+    @Override
+    public String toString() {
+        String value = this.mapTo(String.class, Object::toString).orElse("null");
+        String type = ( type() == null ? "?" : type().getSimpleName() );
+        if ( type.equals("Object") )
+            type = "?";
+        if ( type.equals("String") && this.isPresent() )
+            value = "\"" + value + "\"";
+        return "Result<" + type + ">" + "[" + value + "]";
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(_type, _value, _problems);
+    }
+
+    @Override
+    public boolean equals( Object obj ) {
+        if ( obj == null ) return false;
+        if ( obj == this ) return true;
+        if ( obj instanceof Result ) {
+            Result<?> other = (Result<?>) obj;
+            if ( !Objects.equals(other.type(), _type)         ) return false;
+            if ( !Objects.equals(other.problems(), _problems) ) return false;
+            return
+                    Val.equals( other.orElseNull(), _value ); // Arrays are compared with Arrays.equals
+        }
+        return false;
+    }
+
+
+    /**
+     *  Returns the <b>expected</b> class of the property type of the given item.
+     *  This is in the vast majority of cases simply {@code item.getClass()}
+     *  but in case of an enum constant with an anonymous implementation
+     *  {@code getClass()} returns the anonymous class instead of the enum class.
+     * @param item The item to get the property type class from.
+     * @return The expected class of the property type of the given item.
+     * @param <T> The type of the item.
+     */
+    private static <T> Class<T> expectedClassFromItem( @NonNull T item ) {
+        Class<?> itemType = item.getClass();
+        // We check if it is an enum:
+        if ( Enum.class.isAssignableFrom(itemType) ) {
+            /*
+                When it comes to enums, there is a pitfall we might
+                fall into if just return the Class instance right away!
+                The pitfall is that an enum constant may actually be
+                an instance of an anonymous inner class instead an
+                instance of the actual enum type!
+
+                Check out this example enum:
+
+                public enum Food {
+                    TOFU { @Override public String toString() { return "Tofu"; } },
+                    TEMPEH { @Override public String toString() { return "Tempeh"; } },
+                    SEITAN { @Override public String toString() { return "Seitan"; } },
+                    NATTO { @Override public String toString() { return "Natto"; } }
+                }
+
+                The problem with the enum declared above is that two
+                different enum constant instances have different class instances,
+                which is to say the following is true:
+
+                Food.TOFU.getClass() != Food.SEITAN.getClass()
+
+                ...and also:
+
+                Food.class != Food.TOFU.getClass()
+            */
+            // Let's check for that:
+            Class<?> superClass = itemType.getSuperclass();
+            if ( superClass != null && !superClass.equals(Enum.class) ) {
+                // We are good to go, it is an enum!
+                return (Class<T>) superClass;
+            }
+        }
+        return (Class<T>) itemType;
+    }
+
 }

@@ -241,30 +241,6 @@ public interface SproutsFactory
 
     <E extends Comparable<? super E>> ValueSet<E> valueSetOfSorted( Class<E> type );
 
-    <V> Result<V> resultOf( Class<V> type );
-
-    <V> Result<V> resultOf( V value );
-
-    <V> Result<V> resultOf( Class<V> type, @Nullable V value );
-
-    <V> Result<V> resultOf( V value, Iterable<Problem> problems );
-
-    <V> Result<V> resultOf( Class<V> type, Iterable<Problem> problems );
-
-    <V> Result<V> resultOf( Class<V> type, @Nullable V value, Iterable<Problem> problems );
-
-    <V> Result<V> resultOf( Class<V> type, @Nullable V value, Problem problem );
-
-    <V> Result<V> resultOf( Class<V> type, Problem problem );
-
-    <V> Result<List<V>> resultOfList( Class<V> type, Problem problem );
-
-    <V> Result<List<V>> resultOfList( Class<V> type, List<V> list );
-
-    <V> Result<List<V>> resultOfList( Class<V> type, List<V> list, Iterable<Problem> problems );
-
-    <V> Result<V> resultOfTry( Class<V> type, ResultItemSupplier<V> supplier );
-
     /**
      *   The default id for properties which do not have an id explicitly specified.
      *   The id of a property is used to identify it in the system or as part of a view model
