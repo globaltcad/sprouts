@@ -607,27 +607,13 @@ final class SortedValueSetImpl<E> implements ValueSet<E> {
                 break;
             }
             E element = iterator.next();
-            sb.append(_toString(element, _type));
+            sb.append(Util._toString(element, _type));
             if (iterator.hasNext()) {
                 sb.append(", ");
             }
             count++;
         }
         return sb.append("]").toString();
-    }
-
-    private static String _toString(@Nullable Object singleItem, Class<?> type) {
-        if (singleItem == null) {
-            return "null";
-        } else if (type == String.class) {
-            return "\"" + singleItem + "\"";
-        } else if (type == Character.class) {
-            return "'" + singleItem + "'";
-        } else if (type == Boolean.class) {
-            return singleItem.toString();
-        } else {
-            return singleItem.toString();
-        }
     }
 
     @Override

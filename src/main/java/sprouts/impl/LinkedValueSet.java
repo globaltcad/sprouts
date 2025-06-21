@@ -282,27 +282,13 @@ final class LinkedValueSet<E> implements ValueSet<E> {
         int count = 0;
         while (it.hasNext() && count < howMany) {
             E element = it.next();
-            sb.append(_toString(element, type()));
+            sb.append(Util._toString(element, type()));
             if (it.hasNext()) {
                 sb.append(", ");
             }
             count++;
         }
         return sb;
-    }
-
-    private static String _toString( @Nullable Object singleItem, Class<?> type ) {
-        if ( singleItem == null ) {
-            return "null";
-        } else if ( type == String.class ) {
-            return "\"" + singleItem + "\"";
-        } else if ( type == Character.class ) {
-            return "'" + singleItem + "'";
-        } else if ( type == Boolean.class ) {
-            return singleItem.toString();
-        } else {
-            return singleItem.toString();
-        }
     }
 
     @Override

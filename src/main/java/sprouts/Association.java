@@ -53,7 +53,7 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
      * @throws NullPointerException If any of the supplied type parameters is null.
      */
     @SuppressWarnings("unchecked")
-    static <K,V> Class<Association<K,V>> classTyped(Class<K> keyType, Class<V> valueType) {
+    static <K,V> Class<Association<K,V>> classTyped( Class<K> keyType, Class<V> valueType ) {
         Objects.requireNonNull(keyType);
         Objects.requireNonNull(valueType);
         return (Class) Association.class;
@@ -91,10 +91,10 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
         Objects.requireNonNull(keyType);
         Objects.requireNonNull(valueType);
         return Collector.of(
-                    (Supplier<List<Pair<? extends K,? extends V>>>) ArrayList::new,
-                    List::add,
-                    (left, right) -> { left.addAll(right); return left; },
-                    list -> Association.between(keyType, valueType).putAll(list)
+                    (Supplier<Map<K,V>>) HashMap::new,
+                    (map, pair) -> map.put(pair.first(), pair.second()),
+                    (left, right) -> { left.putAll(right); return left; },
+                    map -> Association.between(keyType, valueType).putAll(map)
                 );
     }
 
@@ -131,10 +131,10 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
         Objects.requireNonNull(keyType);
         Objects.requireNonNull(valueType);
         return Collector.of(
-                (Supplier<List<Pair<? extends K,? extends V>>>) ArrayList::new,
-                List::add,
-                (left, right) -> { left.addAll(right); return left; },
-                list -> Association.betweenLinked(keyType, valueType).putAll(list)
+                (Supplier<Map<K,V>>) LinkedHashMap::new,
+                (map, pair) -> map.put(pair.first(), pair.second()),
+                (left, right) -> { left.putAll(right); return left; },
+                map -> Association.betweenLinked(keyType, valueType).putAll(map)
         );
     }
 

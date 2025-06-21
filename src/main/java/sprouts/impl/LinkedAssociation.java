@@ -351,8 +351,8 @@ final class LinkedAssociation<K,V> implements Association<K, V>
         int count = 0;
         while (it.hasNext() && count < howMany) {
             Pair<K, V> pair = it.next();
-            String keyString = _toString(pair.first(), keyType());
-            String valueString = _toString(pair.second(), valueType());
+            String keyString = Util._toString(pair.first(), keyType());
+            String valueString = Util._toString(pair.second(), valueType());
             sb.append(keyString).append(" ↦ ").append(valueString);
             if (it.hasNext()) {
                 sb.append(", ");
@@ -360,20 +360,6 @@ final class LinkedAssociation<K,V> implements Association<K, V>
             count++;
         }
         return sb;
-    }
-
-    private static String _toString( @Nullable Object singleItem, Class<?> type ) {
-        if ( singleItem == null ) {
-            return "null";
-        } else if ( type == String.class ) {
-            return "\"" + singleItem + "\"";
-        } else if ( type == Character.class ) {
-            return "'" + singleItem + "'";
-        } else if ( type == Boolean.class ) {
-            return singleItem.toString();
-        } else {
-            return singleItem.toString();
-        }
     }
 
     @Override

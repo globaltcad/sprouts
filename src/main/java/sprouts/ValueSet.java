@@ -48,11 +48,11 @@ public interface ValueSet<E> extends Iterable<E> {
      *
      * @param elementType The element type {@code K} in the returned {@code Class<ValueSet<K>>}.
      * @return The {@code ValueSet.class} but with the parameter type included as {@code K} in {@code Class<ValueSet<K>>}.
-     * @param <K> The type of elements in the value set class parameter signature.
+     * @param <E> The type of elements in the value set class parameter signature.
      * @throws NullPointerException If any of the supplied type parameters is null.
      */
     @SuppressWarnings("unchecked")
-    static <K> Class<ValueSet<K>> classTyped( Class<K> elementType ) {
+    static <E> Class<ValueSet<E>> classTyped( Class<E> elementType ) {
         Objects.requireNonNull(elementType);
         return (Class) ValueSet.class;
     }
@@ -74,18 +74,18 @@ public interface ValueSet<E> extends Iterable<E> {
      *  because a value set cannot contain null elements.
      *
      * @param type The type of the elements in the value set to collect.
-     * @param <K> The type of the elements in the value set,
+     * @param <E> The type of the elements in the value set,
      *            which must be immutable and have value object semantics.
      * @return A collector that can be used to collect elements into a value set.
      * @throws NullPointerException If any of the supplied type parameters is null.
      */
-    static <K> Collector<K, ?, ValueSet<K>> collectorOf( Class<K> type ) {
+    static <E> Collector<E, ?, ValueSet<E>> collectorOf( Class<E> type ) {
         Objects.requireNonNull(type);
         return Collector.of(
-                    (Supplier<List<K>>) ArrayList::new,
-                    List::add,
+                    (Supplier<Set<E>>) HashSet::new,
+                    Set::add,
                     (left, right) -> { left.addAll(right); return left; },
-                    list -> ValueSet.of(type).addAll(list)
+                    set -> ValueSet.of(type).addAll(set)
                 );
     }
 
@@ -105,17 +105,17 @@ public interface ValueSet<E> extends Iterable<E> {
      *  where the strings are all uppercased and ordered by their insertion order.
      *
      * @param type The type of the elements in the value set to collect.
-     * @param <K> The type of the elements in the value set,
+     * @param <E> The type of the elements in the value set,
      *            which must be immutable and have value object semantics.
      * @return A collector that can be used to collect elements into an ordered value set.
      */
-    static <K> Collector<K, ?, ValueSet<K>> collectorOfLinked( Class<K> type ) {
+    static <E> Collector<E, ?, ValueSet<E>> collectorOfLinked( Class<E> type ) {
         Objects.requireNonNull(type);
         return Collector.of(
-                (Supplier<List<K>>) ArrayList::new,
-                List::add,
+                (Supplier<Set<E>>) LinkedHashSet::new,
+                Set::add,
                 (left, right) -> { left.addAll(right); return left; },
-                list -> ValueSet.ofLinked(type).addAll(list)
+                set -> ValueSet.ofLinked(type).addAll(set)
         );
     }
 
@@ -729,7 +729,7 @@ public interface ValueSet<E> extends Iterable<E> {
      * @return A new value set with the elements from the provided collection.
      * @throws NullPointerException if the provided collection is {@code null}.
      */
-    default ValueSet<E> addAll( final Collection<E> elements ) {
+    default ValueSet<E> addAll( final Collection<? extends E> elements ) {
         Objects.requireNonNull(elements, "The provided collection cannot be null.");
         if ( elements.isEmpty() )
             return this;

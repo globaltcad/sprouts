@@ -874,30 +874,15 @@ final class SortedAssociationImpl<K, V> implements Association<K, V> {
                 break;
             }
             Pair<K, V> pair = iterator.next();
-            sb.append(_toString(pair.first(), _keyType));
+            sb.append(Util._toString(pair.first(), _keyType));
             sb.append(" ↦ ");
-            sb.append(_toString(pair.second(), _valueType));
+            sb.append(Util._toString(pair.second(), _valueType));
             if (iterator.hasNext()) {
                 sb.append(", ");
             }
             count++;
         }
         return sb.append("]").toString();
-    }
-
-
-    private static String _toString( @Nullable Object singleItem, Class<?> type ) {
-        if ( singleItem == null ) {
-            return "null";
-        } else if ( type == String.class ) {
-            return "\"" + singleItem + "\"";
-        } else if ( type == Character.class ) {
-            return "'" + singleItem + "'";
-        } else if ( type == Boolean.class ) {
-            return singleItem.toString();
-        } else {
-            return singleItem.toString();
-        }
     }
 
 }

@@ -516,7 +516,7 @@ final class AssociationImpl<K, V> implements Association<K, V> {
         for (int i = 0; i < howMany; i++) {
             K key = _getAt(i, _keysArray, _keyType);
             V value = _getAt(i, _valuesArray, _valueType);
-            sb.append(_toString(key, _keyType)).append(" ↦ ").append(_toString(value, _valueType));
+            sb.append(Util._toString(key, _keyType)).append(" ↦ ").append(Util._toString(value, _valueType));
             if ( i < howMany - 1 ) {
                 sb.append(", ");
             }
@@ -536,20 +536,6 @@ final class AssociationImpl<K, V> implements Association<K, V> {
             }
         }
         return sb;
-    }
-
-    private static String _toString( @Nullable Object singleItem, Class<?> type ) {
-        if ( singleItem == null ) {
-            return "null";
-        } else if ( type == String.class ) {
-            return "\"" + singleItem + "\"";
-        } else if ( type == Character.class ) {
-            return "'" + singleItem + "'";
-        } else if ( type == Boolean.class ) {
-            return singleItem.toString();
-        } else {
-            return singleItem.toString();
-        }
     }
 
     @Override
