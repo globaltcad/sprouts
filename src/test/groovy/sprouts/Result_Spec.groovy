@@ -988,4 +988,110 @@ class Result_Spec extends Specification
             System.out = originalOut
     }
 
+    def 'A `Result` ensures that errors are at least logged...'()
+    {
+        reportInfo """
+            If you don't handle the problems of a `Result`, then it will log them to `System.err`
+            for you as soon as you try to retrieve the item from the result.
+        """
+        given : 'We remember the original `System.err` and `System.out` stream.'
+            var originalErr = System.err
+            var originalOut = System.out
+            var createNewOutput = {
+                var outputStream = new ByteArrayOutputStream()
+                var printStream = new PrintStream(outputStream)
+                System.err = printStream
+                System.out = printStream
+                return outputStream
+            }
+
+        and : 'We create a result with an exception based problem.'
+            var result = Result.of(Integer, Problem.of(new IllegalAccessException("Access denied")))
+
+        when : 'We call the `logProblemsAsError` method.'
+            var resultLogged = result.logProblemsAsError()
+            var out = createNewOutput()
+        and : 'We call the "or" methods on the logged result.'
+            resultLogged.orElse(2)
+            resultLogged.orElseNull()
+            resultLogged.orElseGet {}
+        then : 'No more logging occurs, because the problems have already been logged.'
+            out.toString().trim() == ""
+
+        when : 'We call "orElse(42)" on the original result (which has not been logged yet).'
+            result.orElse(42)
+        then : 'The output stream contains the relevant information.'
+            out.toString().contains("[ERROR] IllegalAccessException : Access denied")
+            out.toString().contains("at sprouts.Result") // This indicates that the stack trace is printed
+
+        when : 'We reset and call "orElseNull()" on the original result (which has not been logged yet).'
+            out = createNewOutput() // We ignore the output of the previous call
+            result.orElseNull()
+        then : 'The output stream contains the relevant information.'
+            out.toString().contains("[ERROR] IllegalAccessException : Access denied")
+            out.toString().contains("at sprouts.Result") // This indicates that the stack trace is printed
+
+        when : 'We reset and call "orElseGet(()->7)" on the original result (which has not been logged yet).'
+            out = createNewOutput() // We ignore the output of the previous call
+            result.orElseGet(()->7)
+        then : 'The output stream contains the relevant information.'
+            out.toString().contains("[ERROR] IllegalAccessException : Access denied")
+            out.toString().contains("at sprouts.Result") // This indicates that the stack trace is printed
+
+        cleanup : 'We restore the original `System.out` and `System.err` streams.'
+            System.err = originalErr
+            System.out = originalOut
+    }
+
+    def 'A `Result` will not log anything as long as you do not retrieve the item.'()
+    {
+        reportInfo """
+            If you don't handle the problems of a `Result`, then it will log them to `System.err`
+            for you as soon as you try to retrieve the item from the result.
+        """
+        given : 'We remember the original `System.err` and `System.out` stream.'
+            var originalErr = System.err
+            var originalOut = System.out
+            var createNewOutput = {
+                var outputStream = new ByteArrayOutputStream()
+                var printStream = new PrintStream(outputStream)
+                System.err = printStream
+                System.out = printStream
+                return outputStream
+            }
+        and : 'We create two results with an exception based problem.'
+            var result1 = Result.of(Integer, Problem.of(new NullPointerException("Thing was missing!")))
+            var result2 = Result.of(42, [Problem.of(new IllegalStateException("Still some problem"))])
+        and : 'We create a new output stream to capture the output.'
+            var out = createNewOutput()
+
+        expect : 'We call various methods on the result without retrieving the item.'
+            !result1.isPresent() && result2.isPresent()
+            result1.isEmpty() && !result2.isEmpty()
+            result1.is(null) &&!result2.is(null)
+            !result1.is(result2) && !result2.is(result1)
+            result1.is(result1) && result2.is(result2)
+            !result1.isNot(null) && result2.isNot(null)
+            result1.isNot(result2) && result2.isNot(result1)
+        and : 'The output stream is still empty, because we did not retrieve the item.'
+            out.toString().trim() == ""
+
+        when : 'We call the `orElseNull()` method on the first result.'
+            result1.orElseNull()
+        then : 'The output stream contains the relevant information.'
+            out.toString().contains("[ERROR] NullPointerException : Thing was missing!")
+            out.toString().contains("at sprouts.Result") // This indicates that the stack trace is printed
+
+        when : 'We log the second result.'
+            out = createNewOutput() // We ignore the output of the previous call
+            result2.logProblemsAsInfo()
+        then : 'The output stream contains the relevant information.'
+            out.toString().contains("[INFO] IllegalStateException : Still some problem")
+            out.toString().contains("at sprouts.Result") // This indicates that the stack trace is printed
+
+        cleanup : 'We restore the original `System.out` and `System.err` streams.'
+            System.err = originalErr
+            System.out = originalOut
+    }
+
 }

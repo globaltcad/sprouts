@@ -54,7 +54,7 @@ public final class Result<V> implements Maybe<V>
      */
     static <V> Result<V> of( Class<V> type ) {
         Objects.requireNonNull(type);
-        return new Result<>(type, Collections.emptyList(), null);
+        return new Result<>(false, type, Collections.emptyList(), null);
     }
 
     /**
@@ -82,7 +82,7 @@ public final class Result<V> implements Maybe<V>
      */
     static <V> Result<V> of( Class<V> type, @Nullable V value ) {
         Objects.requireNonNull(type);
-        return new Result(type, Collections.emptyList(), value);
+        return new Result(false, type, Collections.emptyList(), value);
     }
 
     /**
@@ -96,7 +96,7 @@ public final class Result<V> implements Maybe<V>
     static <V> Result<V> of( V value, Iterable<Problem> problems ) {
         Objects.requireNonNull(value);
         Class<V> itemType = expectedClassFromItem(value);
-        return new Result<>(itemType, problems, value);
+        return new Result<>(false, itemType, problems, value);
     }
 
     /**
@@ -110,7 +110,7 @@ public final class Result<V> implements Maybe<V>
     static <V> Result<V> of( Class<V> type, Iterable<Problem> problems ) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(problems);
-        return new Result<>(type, problems, null);
+        return new Result<>(false, type, problems, null);
     }
 
     /**
@@ -125,7 +125,7 @@ public final class Result<V> implements Maybe<V>
     static <V> Result<V> of( Class<V> type, @Nullable V value, Iterable<Problem> problems ) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(problems);
-        return new Result<>(type, problems, value);
+        return new Result<>(false, type, problems, value);
     }
 
     /**
@@ -140,7 +140,7 @@ public final class Result<V> implements Maybe<V>
     static <V> Result<V> of( Class<V> type, @Nullable V value, Problem problem ) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(problem);
-        return new Result<>(type, Collections.singletonList(problem), value);
+        return new Result<>(false, type, Collections.singletonList(problem), value);
     }
 
     /**
@@ -154,7 +154,7 @@ public final class Result<V> implements Maybe<V>
     static <V> Result<V> of( Class<V> type, Problem problem ) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(problem);
-        return new Result<>(type, Collections.singletonList(problem), null);
+        return new Result<>(false, type, Collections.singletonList(problem), null);
     }
 
     /**
@@ -168,7 +168,7 @@ public final class Result<V> implements Maybe<V>
     static <V> Result<List<V>> ofList( Class<V> type, Problem problem ) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(problem);
-        return (Result<List<V>>) (Result) new Result<>(List.class, Collections.singletonList(problem), null);
+        return (Result<List<V>>) (Result) new Result<>(false, List.class, Collections.singletonList(problem), null);
     }
 
     /**
@@ -188,7 +188,7 @@ public final class Result<V> implements Maybe<V>
         boolean matches = list.stream().filter(Objects::nonNull).allMatch(e -> type.isAssignableFrom(e.getClass()));
         if ( !matches )
             throw new IllegalArgumentException("List elements must be of type " + type.getName());
-        return (Result<List<V>>) (Result) new Result<>(List.class, Collections.emptyList(), list);
+        return (Result<List<V>>) (Result) new Result<>(false, List.class, Collections.emptyList(), list);
     }
 
     /**
@@ -210,7 +210,7 @@ public final class Result<V> implements Maybe<V>
         if ( !matches )
             throw new IllegalArgumentException("List elements must be of type " + type.getName());
 
-        return (Result<List<V>>) (Result) new Result<>(List.class, problems, list);
+        return (Result<List<V>>) (Result) new Result<>(false, List.class, problems, list);
     }
 
     /**
@@ -235,26 +235,38 @@ public final class Result<V> implements Maybe<V>
         Objects.requireNonNull(type);
         Objects.requireNonNull(supplier);        
         try {
-            return new Result<>(type, Collections.emptyList(), supplier.get());
+            return new Result<>(false, type, Collections.emptyList(), supplier.get());
         } catch (Exception e) {
-            return new Result<>(type, Collections.singletonList(Problem.of(e)), null);
+            return new Result<>(false, type, Collections.singletonList(Problem.of(e)), null);
         }
     }
 
     private static final Logger log = LoggerFactory.getLogger(Result.class);
     private static final boolean HAS_SLF4J_IMPLEMENTATION = !(log instanceof NOPLogger);
 
+    private final boolean _wasLogged;
     private final Class<V>       _type;
     private final Tuple<Problem> _problems;
     @Nullable private final V    _value;
 
 
-    private Result( Class<V> type, Iterable<Problem> problems, @Nullable V value ) {
+    private Result(
+        boolean           wasLogged,
+        Class<V>          type,
+        Iterable<Problem> problems,
+        @Nullable         V value
+    ) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(problems);
-        _type     = type;
-        _problems = Tuple.of(Problem.class, problems);
-        _value    = value;
+        _wasLogged = wasLogged;
+        _type      = type;
+        _problems  = Tuple.of(Problem.class, problems);
+        _value     = value;
+    }
+
+    private Result<V> _markAsLoggedOrHandled() {
+        // This is a copy of the current result with the '_wasLogged' flag set to true.
+        return new Result<>(true, this._type, this._problems, this._value);
     }
 
     /** {@inheritDoc} */
@@ -263,10 +275,28 @@ public final class Result<V> implements Maybe<V>
     }
 
     /** {@inheritDoc} */
+    public boolean isPresent() {
+        return _value != null;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean is( @Nullable V otherItem ) {
+        return Val.equals(otherItem, _value);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean is( @NonNull Maybe<@Nullable V> other ) {
+        Objects.requireNonNull(other);
+        return other.is(_value);
+    }
+
+    /** {@inheritDoc} */
     @Override
     public @NonNull V orElseThrow() throws MissingItemException {
         // If the value is null, this throws a checked exception!
-        V value = orElseNull();
+        V value = _value;
         if ( Objects.isNull(value) )
             throw new MissingItemException("Expected item to be present in result!", this._problems);
         return value;
@@ -276,10 +306,50 @@ public final class Result<V> implements Maybe<V>
     @Override
     public @NonNull V orElseThrowUnchecked() {
         // This is similar to optionals "get()", so if the value is null, we throw a unchecked exception!
-        V value = orElseNull();
+        V value = _value;
         if ( Objects.isNull(value) )
             throw new MissingItemRuntimeException("Expected item to be present in result!", this._problems);
         return value;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public @NonNull V orElse( @NonNull V other ) {
+        if ( this.hasProblems() && !this._wasLogged) {
+            // If we have problems and the result was not logged yet, we log them as errors.
+            this.logProblemsAsError();
+        }
+        return Maybe.super.orElse(other);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public @Nullable V orElseNullable( @Nullable V other ) {
+        if ( this.hasProblems() && !this._wasLogged) {
+            // If we have problems and the result was not logged yet, we log them as errors.
+            this.logProblemsAsError();
+        }
+        return _value == null ? other : _value;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public V orElseGet( @NonNull Supplier<? extends V> supplier ) {
+        if ( this.hasProblems() && !this._wasLogged) {
+            // If we have problems and the result was not logged yet, we log them as errors.
+            this.logProblemsAsError();
+        }
+        return Maybe.super.orElseGet(supplier);
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public @Nullable V orElseNull() {
+        if ( this.hasProblems() && !this._wasLogged) {
+            // If we have problems and the result was not logged yet, we log them as errors.
+            this.logProblemsAsError();
+        }
+        return _value;
     }
 
     /**
@@ -303,9 +373,9 @@ public final class Result<V> implements Maybe<V>
      */
     public <E extends Exception> V orElseThrowProblems(Function<Tuple<Problem>,E> exceptionSupplier) throws E {
         Objects.requireNonNull(exceptionSupplier);
-        V result = orElseNull();
-        if ( result != null ) {
-            return result;
+        V value = _value;
+        if ( value != null ) {
+            return value;
         } else {
             throw exceptionSupplier.apply(this.problems());
         }
@@ -331,7 +401,7 @@ public final class Result<V> implements Maybe<V>
      */
     public V orElseThrowProblemsUnchecked(Function<Tuple<Problem>,RuntimeException> exceptionSupplier) {
         Objects.requireNonNull(exceptionSupplier);
-        V result = orElseNull();
+        V result = _value;
         if ( result != null ) {
             return result;
         } else {
@@ -401,7 +471,7 @@ public final class Result<V> implements Maybe<V>
                 System.err.println("An exception occurred while peeking at the problems of a result.");
                 e.printStackTrace();
             }
-            return Result.of( type(), this.orElseNull(), newProblems );
+            return Result.of( type(), this._value, newProblems );
         }
         return this;
     }
@@ -441,21 +511,10 @@ public final class Result<V> implements Maybe<V>
                     System.err.println("An exception occurred while peeking at the problems of a result.");
                     e.printStackTrace();
                 }
-                result = Result.of( type(), result.orElseNull(), newProblems );
+                result = Result.of( type(), result._value, newProblems );
             }
         }
         return result;
-    }
-
-    /** {@inheritDoc} */
-    @Override
-    public @Nullable V orElseNullable( @Nullable V other ) {
-        return _value == null ? other : _value;
-    }
-
-    /** {@inheritDoc} */
-    @Override public @Nullable V orElseNull() {
-        return _value;
     }
 
     /**
@@ -488,9 +547,11 @@ public final class Result<V> implements Maybe<V>
         if ( this.isPresent() )
             return this; // If the value is present, we do nothing.
         else if ( this.hasProblems() )
-            return peekAtEachProblem(Problem::logAsError);
-        else if ( this.isEmpty() )
+            return peekAtEachProblem(Problem::logAsError)._markAsLoggedOrHandled();
+        else if ( this.isEmpty() ) {
             Problem.of(new MissingItemRuntimeException("Expected item to be present in result!")).logAsError();
+            return this._markAsLoggedOrHandled();
+        }
         return this;
     }
 
@@ -517,7 +578,7 @@ public final class Result<V> implements Maybe<V>
      */
     public Result<V> logProblemsAsError() {
         if ( this.hasProblems() )
-            return peekAtEachProblem(Problem::logAsError);
+            return peekAtEachProblem(Problem::logAsError)._markAsLoggedOrHandled();
         else
             return this;
     }
@@ -552,9 +613,11 @@ public final class Result<V> implements Maybe<V>
         if ( this.isPresent() )
             return this; // If the value is present, we do nothing.
         else if ( this.hasProblems() )
-            return peekAtEachProblem(Problem::logAsWarning);
-        else if ( this.isEmpty() )
+            return peekAtEachProblem(Problem::logAsWarning)._markAsLoggedOrHandled();
+        else if ( this.isEmpty() ) {
             Problem.of(new MissingItemRuntimeException("Expected item to be present in result!")).logAsWarning();
+            return this._markAsLoggedOrHandled();
+        }
         return this;
     }
 
@@ -581,7 +644,7 @@ public final class Result<V> implements Maybe<V>
      */
     public Result<V> logProblemsAsWarning() {
         if ( this.hasProblems() )
-            return peekAtEachProblem(Problem::logAsWarning);
+            return peekAtEachProblem(Problem::logAsWarning)._markAsLoggedOrHandled();
         else
             return this;
     }
@@ -616,9 +679,11 @@ public final class Result<V> implements Maybe<V>
         if ( this.isPresent() )
             return this; // If the value is present, we do nothing.
         else if ( this.hasProblems() )
-            return peekAtEachProblem(Problem::logAsInfo);
-        else if ( this.isEmpty() )
+            return peekAtEachProblem(Problem::logAsInfo)._markAsLoggedOrHandled();
+        else if ( this.isEmpty() ) {
             Problem.of(new MissingItemRuntimeException("Expected item to be present in result!")).logAsInfo();
+            return this._markAsLoggedOrHandled();
+        }
         return this;
     }
 
@@ -645,7 +710,7 @@ public final class Result<V> implements Maybe<V>
      */
     public Result<V> logProblemsAsInfo() {
         if ( this.hasProblems() )
-            return peekAtEachProblem(Problem::logAsInfo);
+            return peekAtEachProblem(Problem::logAsInfo)._markAsLoggedOrHandled();
         else
             return this;
     }
@@ -680,9 +745,11 @@ public final class Result<V> implements Maybe<V>
         if ( this.isPresent() )
             return this; // If the value is present, we do nothing.
         else if ( this.hasProblems() )
-            return peekAtEachProblem(Problem::logAsDebug);
-        else if ( this.isEmpty() )
+            return peekAtEachProblem(Problem::logAsDebug)._markAsLoggedOrHandled();
+        else if ( this.isEmpty() ) {
             Problem.of(new MissingItemRuntimeException("Expected item to be present in result!")).logAsDebug();
+            return this._markAsLoggedOrHandled();
+        }
         return this;
     }
 
@@ -709,7 +776,7 @@ public final class Result<V> implements Maybe<V>
      */
     public Result<V> logProblemsAsDebug() {
         if ( this.hasProblems() )
-            return peekAtEachProblem(Problem::logAsDebug);
+            return peekAtEachProblem(Problem::logAsDebug)._markAsLoggedOrHandled();
         else
             return this;
     }
@@ -744,9 +811,11 @@ public final class Result<V> implements Maybe<V>
         if ( this.isPresent() )
             return this; // If the value is present, we do nothing.
         else if ( this.hasProblems() )
-            return peekAtEachProblem(Problem::logAsTrace);
-        else if ( this.isEmpty() )
+            return peekAtEachProblem(Problem::logAsTrace)._markAsLoggedOrHandled();
+        else if ( this.isEmpty() ) {
             Problem.of(new MissingItemRuntimeException("Expected item to be present in result!")).logAsTrace();
+            return this._markAsLoggedOrHandled();
+        }
         return this;
     }
 
@@ -773,7 +842,7 @@ public final class Result<V> implements Maybe<V>
      */
     public Result<V> logProblemsAsTrace() {
         if ( this.hasProblems() )
-            return peekAtEachProblem(Problem::logAsTrace);
+            return peekAtEachProblem(Problem::logAsTrace)._markAsLoggedOrHandled();
         else
             return this;
     }
@@ -804,10 +873,11 @@ public final class Result<V> implements Maybe<V>
      */
     public Result<V> ifMissingLogTo( BiConsumer<String, Throwable> logger ) {
         if ( this.hasProblems() )
-            return peekAtEachProblem(problem -> problem.logTo(logger));
+            return peekAtEachProblem(problem -> problem.logTo(logger))._markAsLoggedOrHandled();
         else if ( this.isEmpty() ) {
             Problem problem = Problem.of(new MissingItemRuntimeException("Expected item to be present in result!"));
             problem.logTo(logger);
+            return this._markAsLoggedOrHandled();
         }
         return this;
     }
@@ -833,7 +903,7 @@ public final class Result<V> implements Maybe<V>
      */
     public Result<V> logProblemsTo( BiConsumer<String, Throwable> logger ) {
         if ( this.hasProblems() )
-            return peekAtEachProblem(problem -> problem.logTo(logger));
+            return peekAtEachProblem(problem -> problem.logTo(logger))._markAsLoggedOrHandled();
         else
             return this;
     }
@@ -921,7 +991,7 @@ public final class Result<V> implements Maybe<V>
             if ( !Objects.equals(other.type(), _type)         ) return false;
             if ( !Objects.equals(other.problems(), _problems) ) return false;
             return
-                    Val.equals( other.orElseNull(), _value ); // Arrays are compared with Arrays.equals
+                    Val.equals( other._value, _value ); // Arrays are compared with Arrays.equals
         }
         return false;
     }
