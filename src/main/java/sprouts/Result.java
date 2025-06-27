@@ -5,6 +5,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.helpers.NOPLogger;
 
 import java.util.Collections;
 import java.util.List;
@@ -241,6 +242,7 @@ public final class Result<V> implements Maybe<V>
     }
 
     private static final Logger log = LoggerFactory.getLogger(Result.class);
+    private static final boolean HAS_SLF4J_IMPLEMENTATION = !(log instanceof NOPLogger);
 
     private final Class<V>       _type;
     private final Tuple<Problem> _problems;
@@ -392,7 +394,13 @@ public final class Result<V> implements Maybe<V>
 					1. Log the exception
 					2. Add it as a problem.
 			*/
-            log.error("An exception occurred while peeking at the problems of a result.", e);
+            if ( HAS_SLF4J_IMPLEMENTATION )
+                log.error("An exception occurred while peeking at the problems of a result.", e);
+            else {
+                // If we do not have a logger, we just print the stack trace to the console.
+                System.err.println("An exception occurred while peeking at the problems of a result.");
+                e.printStackTrace();
+            }
             return Result.of( type(), this.orElseNull(), newProblems );
         }
         return this;
@@ -426,7 +434,13 @@ public final class Result<V> implements Maybe<V>
 						1. Log the exception
 						2. Add it as a problem.
 				*/
-                log.error("An exception occurred while peeking at the problems of a result.", e);
+                if ( HAS_SLF4J_IMPLEMENTATION )
+                    log.error("An exception occurred while peeking at the problems of a result.", e);
+                else {
+                    // If we do not have a logger, we just print the stack trace to the console.
+                    System.err.println("An exception occurred while peeking at the problems of a result.");
+                    e.printStackTrace();
+                }
                 result = Result.of( type(), result.orElseNull(), newProblems );
             }
         }
@@ -448,7 +462,8 @@ public final class Result<V> implements Maybe<V>
      *  If this {@link Result} wraps a non-null item of type {@code V}, then this method will do nothing.
      *  If, however, the item is missing, then an invocation will generate a rich context message and stack
      *  trace from all problems associated with this result and then log them as errors
-     *  to the {@link org.slf4j.Logger#error(String, Throwable)} method.<br>
+     *  to the {@link org.slf4j.Logger#error(String, Throwable)} method, or {@code System.err},
+     *  if Slf4j does not have a logger backend.<br>
      *  It returns the result itself, so you can chain it with other methods.
      *  This is intended to be used in a fluent API style which typically looks like this:
      *  <pre>{@code
@@ -460,22 +475,59 @@ public final class Result<V> implements Maybe<V>
      *  The logged information will contain the title and description of an existing {@link Problem}
      *  as well as the local stack trace either based on an exception in a problem 
      *  or a newly created {@link Throwable} to ensure that the issue can be traced back
-     *  to the source of the problem.
+     *  to the source of the problem.<br>
+     *  <p>
+     *  <b>
+     *      Note: Please use {@link #logProblemsAsError()} instead of this method,
+     *      because it will log all problems, even if the result is not missing.
+     *  </b>
      *  
      * @return This result, unchanged.
      */
     public Result<V> ifMissingLogAsError() {
-        if ( this.isEmpty() )
+        if ( this.isPresent() )
+            return this; // If the value is present, we do nothing.
+        else if ( this.hasProblems() )
+            return peekAtEachProblem(Problem::logAsError);
+        else if ( this.isEmpty() )
+            Problem.of(new MissingItemRuntimeException("Expected item to be present in result!")).logAsError();
+        return this;
+    }
+
+    /**
+     *  Irrespective of this {@link Result} wrapping a non-null item of type {@code V} or not,
+     *  if the {@link Result} has at least one {@link Problem}, then an invocation to this method
+     *  will generate a rich context message and stack trace from its problems and then log them as errors
+     *  to the {@link org.slf4j.Logger#error(String, Throwable)} method, or {@code System.err},
+     *  if Slf4j does not have a logger backend.<br>
+     *  It returns the result itself, so you can chain it with other methods.
+     *  This is intended to be used in a fluent API style which typically looks like this:
+     *  <pre>{@code
+     *  return
+     *    Result.ofTry(String.class,this::parse)
+     *          .logProblemsAsError()
+     *          .orElseGet(()->this.defaultValue);
+     *  }</pre>
+     *  The logged information will contain the title and description of an existing {@link Problem}
+     *  as well as the local stack trace either based on an exception in a problem
+     *  or a newly created {@link Throwable} to ensure that the issue can be traced back
+     *  to the source of the problem.
+     *
+     * @return This result, unchanged.
+     */
+    public Result<V> logProblemsAsError() {
+        if ( this.hasProblems() )
             return peekAtEachProblem(Problem::logAsError);
         else
             return this;
     }
-    
+
     /**
      *  If this {@link Result} wraps a non-null item of type {@code V}, then this method will do nothing.
      *  If, however, the item is missing, then an invocation will generate a rich context message and stack
      *  trace from all problems associated with this result and then log them as warnings
-     *  to the {@link org.slf4j.Logger#warn(String, Throwable)} method.<br>
+     *  to the {@link org.slf4j.Logger#warn(String, Throwable)} method, or {@code System.err},
+     *  if Slf4j does not have a logger backend.<br>
      *  It returns the result itself, so you can chain it with other methods.
      *  This is intended to be used in a fluent API style which typically looks like this:
      *  <pre>{@code
@@ -487,22 +539,59 @@ public final class Result<V> implements Maybe<V>
      *  The logged information will contain the title and description of an existing {@link Problem}
      *  as well as the local stack trace either based on an exception in a problem 
      *  or a newly created {@link Throwable} to ensure that the issue can be traced back
-     *  to the source of the problem.
+     *  to the source of the problem.<br>
+     *  <p>
+     *  <b>
+     *      Note: Please use {@link #logProblemsAsWarning()} instead of this method,
+     *      because it will log all problems, even if the result is not missing.
+     *  </b>
      *
      * @return This result, unchanged.
      */
     public Result<V> ifMissingLogAsWarning() {
-        if ( this.isEmpty() )
+        if ( this.isPresent() )
+            return this; // If the value is present, we do nothing.
+        else if ( this.hasProblems() )
+            return peekAtEachProblem(Problem::logAsWarning);
+        else if ( this.isEmpty() )
+            Problem.of(new MissingItemRuntimeException("Expected item to be present in result!")).logAsWarning();
+        return this;
+    }
+
+    /**
+     *  Irrespective of this {@link Result} wrapping a non-null item of type {@code V} or not,
+     *  if the {@link Result} has at least one {@link Problem}, then an invocation to this method
+     *  will generate a rich context message and stack trace from its problems and then log them as warnings
+     *  to the {@link org.slf4j.Logger#warn(String, Throwable)} method, or {@code System.err},
+     *  if Slf4j does not have a logger backend.<br>
+     *  It returns the result itself, so you can chain it with other methods.
+     *  This is intended to be used in a fluent API style which typically looks like this:
+     *  <pre>{@code
+     *  return
+     *    Result.ofTry(String.class,this::parse)
+     *          .logProblemsAsWarning()
+     *          .orElseGet(()->this.defaultValue);
+     *  }</pre>
+     *  The logged information will contain the title and description of an existing {@link Problem}
+     *  as well as the local stack trace either based on an exception in a problem
+     *  or a newly created {@link Throwable} to ensure that the issue can be traced back
+     *  to the source of the problem.
+     *
+     * @return This result, unchanged.
+     */
+    public Result<V> logProblemsAsWarning() {
+        if ( this.hasProblems() )
             return peekAtEachProblem(Problem::logAsWarning);
         else
             return this;
     }
-    
+
     /**
      *  If this {@link Result} wraps a non-null item of type {@code V}, then this method will do nothing.
      *  If, however, the item is missing, then an invocation will generate a rich context message and stack
      *  trace from all problems associated with this result and then log them as info
-     *  to the {@link org.slf4j.Logger#info(String, Throwable)} method.<br>
+     *  to the {@link org.slf4j.Logger#info(String, Throwable)} method, or {@code System.err},
+     *  if Slf4j does not have a logger backend.<br>
      *  It returns the result itself, so you can chain it with other methods.
      *  This is intended to be used in a fluent API style which typically looks like this:
      *  <pre>{@code
@@ -514,22 +603,59 @@ public final class Result<V> implements Maybe<V>
      *  The logged information will contain the title and description of an existing {@link Problem}
      *  as well as the local stack trace either based on an exception in a problem 
      *  or a newly created {@link Throwable} to ensure that the issue can be traced back
-     *  to the source of the problem.
+     *  to the source of the problem.<br>
+     *  <p>
+     *  <b>
+     *      Note: Please use {@link #logProblemsAsInfo()} instead of this method,
+     *      because it will log all problems, even if the result is not missing.
+     *  </b>
      *
      * @return This result, unchanged.
      */
     public Result<V> ifMissingLogAsInfo() {
-        if ( this.isEmpty() )
+        if ( this.isPresent() )
+            return this; // If the value is present, we do nothing.
+        else if ( this.hasProblems() )
+            return peekAtEachProblem(Problem::logAsInfo);
+        else if ( this.isEmpty() )
+            Problem.of(new MissingItemRuntimeException("Expected item to be present in result!")).logAsInfo();
+        return this;
+    }
+
+    /**
+     *  Irrespective of this {@link Result} wrapping a non-null item of type {@code V} or not,
+     *  if the {@link Result} has at least one {@link Problem}, then an invocation to this method
+     *  will generate a rich context message and stack trace from its problems and then log them as info
+     *  to the {@link org.slf4j.Logger#info(String, Throwable)} method, or {@code System.out},
+     *  if Slf4j does not have a logger backend.<br>
+     *  It returns the result itself, so you can chain it with other methods.
+     *  This is intended to be used in a fluent API style which typically looks like this:
+     *  <pre>{@code
+     *  return
+     *    Result.ofTry(String.class,this::parse)
+     *          .logProblemsAsInfo()
+     *          .orElseGet(()->this.defaultValue);
+     *  }</pre>
+     *  The logged information will contain the title and description of an existing {@link Problem}
+     *  as well as the local stack trace either based on an exception in a problem
+     *  or a newly created {@link Throwable} to ensure that the issue can be traced back
+     *  to the source of the problem.
+     *
+     * @return This result, unchanged.
+     */
+    public Result<V> logProblemsAsInfo() {
+        if ( this.hasProblems() )
             return peekAtEachProblem(Problem::logAsInfo);
         else
             return this;
     }
-    
+
     /**
      *  If this {@link Result} wraps a non-null item of type {@code V}, then this method will do nothing.
      *  If, however, the item is missing, then an invocation will generate a rich context message and stack
      *  trace from all problems associated with this result and then log them as debug
-     *  to the {@link org.slf4j.Logger#debug(String, Throwable)} method.<br>
+     *  to the {@link org.slf4j.Logger#debug(String, Throwable)} method, or {@code System.err},
+     *  if Slf4j does not have a logger backend.<br>
      *  It returns the result itself, so you can chain it with other methods.
      *  This is intended to be used in a fluent API style which typically looks like this:
      *  <pre>{@code
@@ -541,22 +667,59 @@ public final class Result<V> implements Maybe<V>
      *  The logged information will contain the title and description of an existing {@link Problem}
      *  as well as the local stack trace either based on an exception in a problem 
      *  or a newly created {@link Throwable} to ensure that the issue can be traced back
-     *  to the source of the problem.
+     *  to the source of the problem.<br>
+     *  <p>
+     *  <b>
+     *      Note: Please use {@link #logProblemsAsDebug()} instead of this method,
+     *      because it will log all problems, even if the result is not missing.
+     *  </b>
      *
      * @return This result, unchanged.
      */
     public Result<V> ifMissingLogAsDebug() {
-        if ( this.isEmpty() )
+        if ( this.isPresent() )
+            return this; // If the value is present, we do nothing.
+        else if ( this.hasProblems() )
+            return peekAtEachProblem(Problem::logAsDebug);
+        else if ( this.isEmpty() )
+            Problem.of(new MissingItemRuntimeException("Expected item to be present in result!")).logAsDebug();
+        return this;
+    }
+
+    /**
+     *  Irrespective of this {@link Result} wrapping a non-null item of type {@code V} or not,
+     *  if the {@link Result} has at least one {@link Problem}, then an invocation to this method
+     *  will generate a rich context message and stack trace from its problems and then log them as debug
+     *  to the {@link org.slf4j.Logger#debug(String, Throwable)} method, or {@code System.out},
+     *  if Slf4j does not have a logger backend.<br>
+     *  It returns the result itself, so you can chain it with other methods.
+     *  This is intended to be used in a fluent API style which typically looks like this:
+     *  <pre>{@code
+     *  return
+     *    Result.ofTry(String.class,this::parse)
+     *          .logProblemsAsDebug()
+     *          .orElseGet(()->this.defaultValue);
+     *  }</pre>
+     *  The logged information will contain the title and description of an existing {@link Problem}
+     *  as well as the local stack trace either based on an exception in a problem
+     *  or a newly created {@link Throwable} to ensure that the issue can be traced back
+     *  to the source of the problem.
+     *
+     * @return This result, unchanged.
+     */
+    public Result<V> logProblemsAsDebug() {
+        if ( this.hasProblems() )
             return peekAtEachProblem(Problem::logAsDebug);
         else
             return this;
     }
-    
+
     /**
      *  If this {@link Result} wraps a non-null item of type {@code V}, then this method will do nothing.
      *  If, however, the item is missing, then an invocation will generate a rich context message and stack
      *  trace from all problems associated with this result and then log them as trace
-     *  to the {@link org.slf4j.Logger#trace(String, Throwable)} method.<br>
+     *  to the {@link org.slf4j.Logger#trace(String, Throwable)} method, or {@code System.err},
+     *  if Slf4j does not have a logger backend.<br>
      *  It returns the result itself, so you can chain it with other methods.
      *  This is intended to be used in a fluent API style which typically looks like this:
      *  <pre>{@code
@@ -568,12 +731,48 @@ public final class Result<V> implements Maybe<V>
      *  The logged information will contain the title and description of an existing {@link Problem}
      *  as well as the local stack trace either based on an exception in a problem 
      *  or a newly created {@link Throwable} to ensure that the issue can be traced back
-     *  to the source of the problem.
+     *  to the source of the problem.<br>
+     *  <p>
+     *  <b>
+     *      Note: Please use {@link #logProblemsAsTrace()} instead of this method,
+     *      because it will log all problems, even if the result is not missing.
+     *  </b>
      *
      * @return This result, unchanged.
      */
     public Result<V> ifMissingLogAsTrace() {
-        if ( this.isEmpty() )
+        if ( this.isPresent() )
+            return this; // If the value is present, we do nothing.
+        else if ( this.hasProblems() )
+            return peekAtEachProblem(Problem::logAsTrace);
+        else if ( this.isEmpty() )
+            Problem.of(new MissingItemRuntimeException("Expected item to be present in result!")).logAsTrace();
+        return this;
+    }
+
+    /**
+     *  Irrespective of this {@link Result} wrapping a non-null item of type {@code V} or not,
+     *  if the {@link Result} has at least one {@link Problem}, then an invocation to this method
+     *  will generate a rich context message and stack trace from its problems and then log them as trace
+     *  to the {@link org.slf4j.Logger#trace(String, Throwable)} method, or {@code System.out},
+     *  if Slf4j does not have a logger backend.<br>
+     *  It returns the result itself, so you can chain it with other methods.
+     *  This is intended to be used in a fluent API style which typically looks like this:
+     *  <pre>{@code
+     *  return
+     *    Result.ofTry(String.class,this::parse)
+     *          .logProblemsAsTrace()
+     *          .orElseGet(()->this.defaultValue);
+     *  }</pre>
+     *  The logged information will contain the title and description of an existing {@link Problem}
+     *  as well as the local stack trace either based on an exception in a problem
+     *  or a newly created {@link Throwable} to ensure that the issue can be traced back
+     *  to the source of the problem.
+     *
+     * @return This result, unchanged.
+     */
+    public Result<V> logProblemsAsTrace() {
+        if ( this.hasProblems() )
             return peekAtEachProblem(Problem::logAsTrace);
         else
             return this;
@@ -591,7 +790,12 @@ public final class Result<V> implements Maybe<V>
      *    Result.ofTry(String.class,this::parse)
      *          .ifMissingLogTo(logger::error)
      *          .orElseGet(()->this.defaultValue);
-     *  }</pre>
+     *  }</pre><br>
+     *  <p>
+     *  <b>
+     *      Note: Please use {@link #logProblemsTo(BiConsumer)} instead of this method,
+     *      because it will log all problems, even if the result is not missing.
+     *  </b>
      *
      * @param logger The logger to log the problems to, it is a {@link BiConsumer} which
      *               takes as first argument the {@link String} message to log and as
@@ -599,7 +803,36 @@ public final class Result<V> implements Maybe<V>
      * @return This result, unchanged.
      */
     public Result<V> ifMissingLogTo( BiConsumer<String, Throwable> logger ) {
-        if ( this.isEmpty() )
+        if ( this.hasProblems() )
+            return peekAtEachProblem(problem -> problem.logTo(logger));
+        else if ( this.isEmpty() ) {
+            Problem problem = Problem.of(new MissingItemRuntimeException("Expected item to be present in result!"));
+            problem.logTo(logger);
+        }
+        return this;
+    }
+
+    /**
+     *  If this {@link Result} wraps a non-null item of type {@code V}, then this method will do nothing.
+     *  If, however, the item is missing, then an invocation will generate a rich context message and stack
+     *  trace from all problems associated with this result and then expose this logging information
+     *  to the Supplied {@link BiConsumer} which is expected to log the information the way it sees fit.
+     *  This method returns this result itself, so you can chain it with other methods.
+     *  It is intended to be used in a fluent API style which typically looks like this:
+     *  <pre>{@code
+     *  return
+     *    Result.ofTry(String.class,this::parse)
+     *          .logProblemsTo(logger::error)
+     *          .orElseGet(()->this.defaultValue);
+     *  }</pre>
+     *
+     * @param logger The logger to log the problems to, it is a {@link BiConsumer} which
+     *               takes as first argument the {@link String} message to log and as
+     *               second argument the {@link Throwable} associated with the problem.
+     * @return This result, unchanged.
+     */
+    public Result<V> logProblemsTo( BiConsumer<String, Throwable> logger ) {
+        if ( this.hasProblems() )
             return peekAtEachProblem(problem -> problem.logTo(logger));
         else
             return this;

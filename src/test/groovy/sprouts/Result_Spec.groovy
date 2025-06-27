@@ -11,15 +11,21 @@ import java.util.function.Supplier
 @Title("Results")
 @Narrative('''
     The `Result` interface is used to represent the optional result of an operation
-    as well as a list of problems that occurred during the operation.
-    The problems of a `Result` are represented by the `Problem` interface,
+    as well as a list of problems that occurred during an operation that produced the result.
+    The problems of a `Result` are represented by the `Problem` class,
     which may be created from an exception or a simple message.
     
     A `Result` is a fully thread safe immutable value type with useful mapping
     functions that allow you to transform the value of the result into another
     effectively making it a monadic value similar to the `Optional` type in Java 8.
+    
+    Note that when using a `Result` as a return type of a method, then
+    this implies that the method has a safe control flow, meaning only returns
+    exceptions through the problems of the result, but never by throwing it.
+    This is the core appeal of the `Result` type, it allows you to write code 
+    without hidden breaks and early returns without it being tracked by the compiler.
 ''')
-@Subject([Result, Val, Problem])
+@Subject([Result, Problem])
 class Result_Spec extends Specification
 {
     public enum Food {
@@ -505,6 +511,481 @@ class Result_Spec extends Specification
             var exception = thrown(RuntimeException)
         and :
             exception.message == "Division by zero"
+    }
+
+    def 'Use `ifMissingLogAsError` to log an empty `Result` to `System.err` if there is no `Slf4j` logger available.'()
+    {
+        reportInfo """
+            If there is no `Slf4j` logger available, the `Result` will log to `System.err`.
+            But either way, you can use the `ifMissingLogAsError` method to log the problems of a `Result`
+            to `System.err` if the result is empty. In case of the `Result` being empty and
+            without any problems, it will log that as error as well.
+            
+            If an item is present however, the method will not log anything.
+        """
+        given : 'We remember the original `System.err` stream.'
+            var originalErr = System.err
+        and : 'We create a new `PrintStream` that will capture the output.'
+            var outputStream = new ByteArrayOutputStream()
+            var printStream = new PrintStream(outputStream)
+        and : 'We set the `System.err` to the new `PrintStream`.'
+            System.err = printStream
+
+        when : 'We create a result with two exception based problems.'
+            def result = Result.of(Integer, [
+                Problem.of(new IllegalAccessException("Access denied")),
+                Problem.of(new IllegalArgumentException("Invalid argument"))
+            ])
+        and : 'We call the `ifMissingLogAsError` method on the result.'
+            result.ifMissingLogAsError()
+
+        then : 'The output stream contains the relevant information.'
+            def output = outputStream.toString().trim()
+            output.contains("[ERROR] IllegalAccessException : Access denied")
+            output.contains("[ERROR] IllegalArgumentException : Invalid argument")
+            output.contains("at sprouts.Result") // This indicates that the stack trace is printed
+
+        cleanup : 'We restore the original `System.err` stream.'
+            System.err = originalErr
+    }
+
+    def 'Use `ifMissingLogAsWarning` to log an empty `Result` to `System.err` if there is no `Slf4j` logger available.'()
+    {
+        reportInfo """
+            If there is no `Slf4j` logger available, the `Result` will log to `System.err`.
+            But either way, you can use the `ifMissingLogAsWarning` method to log the problems of a `Result`
+            to `System.err` if the result is empty. In case of the `Result` being empty and
+            without any problems, it will log that as warning as well.
+            
+            If an item is present however, the method will not log anything.
+        """
+        given : 'We remember the original `System.err` stream.'
+            var originalErr = System.err
+        and : 'We create a new `PrintStream` that will capture the output.'
+            var outputStream = new ByteArrayOutputStream()
+            var printStream = new PrintStream(outputStream)
+        and : 'We set the `System.err` to the new `PrintStream`.'
+            System.err = printStream
+
+        when : 'We create a result with two exception based problems.'
+            def result = Result.of(Integer, [
+                Problem.of(new IllegalAccessException("Access denied")),
+                Problem.of(new IllegalArgumentException("Invalid argument"))
+            ])
+        and : 'We call the `ifMissingLogAsWarning` method on the result.'
+            result.ifMissingLogAsWarning()
+
+        then : 'The output stream contains the relevant information.'
+            def output = outputStream.toString().trim()
+            output.contains("[WARN] IllegalAccessException : Access denied")
+            output.contains("[WARN] IllegalArgumentException : Invalid argument")
+            output.contains("at sprouts.Result") // This indicates that the stack trace is printed
+
+        cleanup : 'We restore the original `System.err` stream.'
+            System.err = originalErr
+    }
+
+    def 'Use `ifMissingLogAsInfo` to log an empty `Result` to `System.out` if there is no `Slf4j` logger available.'()
+    {
+        reportInfo """
+            If there is no `Slf4j` logger available, the `Result` will log to `System.out`.
+            But either way, you can use the `ifMissingLogAsInfo` method to log the problems of a `Result`
+            to `System.out` if the result is empty. In case of the `Result` being empty and
+            without any problems, it will log that as info as well.
+            
+            If an item is present however, the method will not log anything.
+        """
+        given : 'We remember the original `System.out` stream.'
+            var originalOut = System.out
+        and : 'We create a new `PrintStream` that will capture the output.'
+            var outputStream = new ByteArrayOutputStream()
+            var printStream = new PrintStream(outputStream)
+        and : 'We set the `System.out` to the new `PrintStream`.'
+            System.out = printStream
+
+        when : 'We create a result with two exception based problems.'
+            def result = Result.of(Integer, [
+                Problem.of(new IllegalAccessException("Access denied")),
+                Problem.of(new IllegalArgumentException("Invalid argument"))
+            ])
+        and : 'We call the `ifMissingLogAsInfo` method on the result.'
+            result.ifMissingLogAsInfo()
+
+        then : 'The output stream contains the relevant information.'
+            def output = outputStream.toString().trim()
+            output.contains("[INFO] IllegalAccessException : Access denied")
+            output.contains("[INFO] IllegalArgumentException : Invalid argument")
+            output.contains("at sprouts.Result") // This indicates that the stack trace is printed
+
+        cleanup : 'We restore the original `System.out` stream.'
+            System.out = originalOut
+    }
+
+    def 'Use `ifMissingLogAsDebug` to log an empty `Result` to `System.out` if there is no `Slf4j` logger available.'()
+    {
+        reportInfo """
+            If there is no `Slf4j` logger available, the `Result` will log to `System.out`.
+            But either way, you can use the `ifMissingLogAsDebug` method to log the problems of a `Result`
+            to `System.out` if the result is empty. In case of the `Result` being empty and
+            without any problems, it will log that as debug as well.
+            
+            If an item is present however, the method will not log anything.
+        """
+        given : 'We remember the original `System.out` stream.'
+            var originalOut = System.out
+        and : 'We create a new `PrintStream` that will capture the output.'
+            var outputStream = new ByteArrayOutputStream()
+            var printStream = new PrintStream(outputStream)
+        and : 'We set the `System.out` to the new `PrintStream`.'
+            System.out = printStream
+
+        when : 'We create a result with two exception based problems.'
+            def result = Result.of(Integer, [
+                Problem.of(new IllegalAccessException("Access denied")),
+                Problem.of(new IllegalArgumentException("Invalid argument"))
+            ])
+        and : 'We call the `ifMissingLogAsDebug` method on the result.'
+            result.ifMissingLogAsDebug()
+
+        then : 'The output stream contains the relevant information.'
+            def output = outputStream.toString().trim()
+            output.contains("[DEBUG] IllegalAccessException : Access denied")
+            output.contains("[DEBUG] IllegalArgumentException : Invalid argument")
+            output.contains("at sprouts.Result") // This indicates that the stack trace is printed
+
+        cleanup : 'We restore the original `System.out` stream.'
+            System.out = originalOut
+    }
+
+    def 'Use `ifMissingLogAsTrace` to log an empty `Result` to `System.out` if there is no `Slf4j` logger available.'()
+    {
+        reportInfo """
+            If there is no `Slf4j` logger available, the `Result` will log to `System.out`.
+            But either way, you can use the `ifMissingLogAsTrace` method to log the problems of a `Result`
+            to `System.out` if the result is empty. In case of the `Result` being empty and
+            without any problems, it will log that as trace as well.
+            
+            If an item is present however, the method will not log anything.
+        """
+        given : 'We remember the original `System.out` stream.'
+            var originalOut = System.out
+        and : 'We create a new `PrintStream` that will capture the output.'
+            var outputStream = new ByteArrayOutputStream()
+            var printStream = new PrintStream(outputStream)
+        and : 'We set the `System.out` to the new `PrintStream`.'
+            System.out = printStream
+
+        when : 'We create a result with two exception based problems.'
+            def result = Result.of(Integer, [
+                Problem.of(new IllegalAccessException("Access denied")),
+                Problem.of(new IllegalArgumentException("Invalid argument"))
+            ])
+        and : 'We call the `ifMissingLogAsTrace` method on the result.'
+            result.ifMissingLogAsTrace()
+
+        then : 'The output stream contains the relevant information.'
+            def output = outputStream.toString().trim()
+            output.contains("[TRACE] IllegalAccessException : Access denied")
+            output.contains("[TRACE] IllegalArgumentException : Invalid argument")
+            output.contains("at sprouts.Result") // This indicates that the stack trace is printed
+
+        cleanup : 'We restore the original `System.out` stream.'
+            System.out = originalOut
+    }
+
+    def 'The `ifMissingLogAsError` method will not log anything, if an item is present.'()
+    {
+        reportInfo """
+            The `ifMissingLogAsError` method will not log anything if the result has an item.
+            This is because the method is designed to log only when the result is empty.
+            If the result has an item, it will not log anything.
+        """
+        given : 'We mock the `System.err` stream.'
+            var originalOut = System.err
+            var outputStream = new ByteArrayOutputStream()
+            var printStream = new PrintStream(outputStream)
+            System.err = printStream
+        and : 'A result with an item.'
+            var result = Result.of(42, [
+                Problem.of(new IllegalStateException("Still some problem")),
+            ])
+        when : 'We call the `ifMissingLogAsError` method on the result.'
+            result.ifMissingLogAsError()
+        then : 'The output stream is empty.'
+            outputStream.toString().trim() == ""
+
+        cleanup : 'We restore the original `System.out` stream.'
+            System.err = originalOut
+    }
+
+    def 'The `ifMissingLogAsWarning` method will not log anything, if an item is present.'()
+    {
+        reportInfo """
+            The `ifMissingLogAsWarning` method will not log anything if the result has an item.
+            This is because the method is designed to log only when the result is empty.
+            If the result has an item, it will not log anything.
+        """
+        given : 'We mock the `System.err` stream.'
+            var originalOut = System.err
+            var outputStream = new ByteArrayOutputStream()
+            var printStream = new PrintStream(outputStream)
+            System.err = printStream
+        and : 'A result with an item.'
+            var result = Result.of(42, [
+                Problem.of(new IllegalStateException("Still some problem")),
+            ])
+        when : 'We call the `ifMissingLogAsWarning` method on the result.'
+            result.ifMissingLogAsWarning()
+        then : 'The output stream is empty.'
+            outputStream.toString().trim() == ""
+
+        cleanup : 'We restore the original `System.out` stream.'
+            System.err = originalOut
+    }
+
+    def 'The `ifMissingLogAsInfo` method will not log anything, if an item is present.'()
+    {
+        reportInfo """
+            The `ifMissingLogAsInfo` method will not log anything if the result has an item.
+            This is because the method is designed to log only when the result is empty.
+            If the result has an item, it will not log anything.
+        """
+        given : 'We mock the `System.out` stream.'
+            var originalOut = System.out
+            var outputStream = new ByteArrayOutputStream()
+            var printStream = new PrintStream(outputStream)
+            System.out = printStream
+        and : 'A result with an item.'
+            var result = Result.of(42, [
+                Problem.of(new IllegalStateException("Still some problem")),
+            ])
+        when : 'We call the `ifMissingLogAsInfo` method on the result.'
+            result.ifMissingLogAsInfo()
+        then : 'The output stream is empty.'
+            outputStream.toString().trim() == ""
+
+        cleanup : 'We restore the original `System.out` stream.'
+            System.out = originalOut
+    }
+
+    def 'the `ifMissingLogAsDebug` method will not log anything, if an item is present.'()
+    {
+        reportInfo """
+            The `ifMissingLogAsDebug` method will not log anything if the result has an item.
+            This is because the method is designed to log only when the result is empty.
+            If the result has an item, it will not log anything.
+        """
+        given : 'We mock the `System.out` stream.'
+            var originalOut = System.out
+            var outputStream = new ByteArrayOutputStream()
+            var printStream = new PrintStream(outputStream)
+            System.out = printStream
+        and : 'A result with an item.'
+            var result = Result.of(42, [
+                Problem.of(new IllegalStateException("Still some problem")),
+            ])
+        when : 'We call the `ifMissingLogAsDebug` method on the result.'
+            result.ifMissingLogAsDebug()
+        then : 'The output stream is empty.'
+            outputStream.toString().trim() == ""
+
+        cleanup : 'We restore the original `System.out` stream.'
+            System.out = originalOut
+    }
+
+    def 'the `ifMissingLogAsTrace` method will not log anything, if an item is present.'()
+    {
+        reportInfo """
+            The `ifMissingLogAsTrace` method will not log anything if the result has an item.
+            This is because the method is designed to log only when the result is empty.
+            If the result has an item, it will not log anything.
+        """
+        given : 'We mock the `System.out` stream.'
+            var originalOut = System.out
+            var outputStream = new ByteArrayOutputStream()
+            var printStream = new PrintStream(outputStream)
+            System.out = printStream
+        and : 'A result with an item.'
+            var result = Result.of(42, [
+                Problem.of(new IllegalStateException("Still some problem")),
+            ])
+        when : 'We call the `ifMissingLogAsTrace` method on the result.'
+            result.ifMissingLogAsTrace()
+        then : 'The output stream is empty.'
+            outputStream.toString().trim() == ""
+
+        cleanup : 'We restore the original `System.out` stream.'
+            System.out = originalOut
+    }
+
+    def 'Use `logProblemsAsError` to log an erroneous `Result` to `System.err` if there is no `Slf4j` logger available.'()
+    {
+        reportInfo """
+            If there is no `Slf4j` logger available, the `Result` will log to `System.err`.
+            But either way, you can use the `logProblemsAsError` method to log the problems of a `Result`
+            to `System.err` if the result has problems. In case of the `Result` not having
+            any problems, it will not log anything.
+        """
+        given : 'We remember the original `System.err` stream.'
+            var originalErr = System.err
+        and : 'We create a new `PrintStream` that will capture the output.'
+            var outputStream = new ByteArrayOutputStream()
+            var printStream = new PrintStream(outputStream)
+        and : 'We set the `System.err` to the new `PrintStream`.'
+            System.err = printStream
+
+        when : 'We create a result with two exception based problems.'
+            def result = Result.of(Integer, [
+                Problem.of(new IllegalAccessException("Access denied")),
+                Problem.of(new IllegalArgumentException("Invalid argument"))
+            ])
+        and : 'We call the `logProblemsAsError` method on the result.'
+            result.logProblemsAsError()
+
+        then : 'The output stream contains the relevant information.'
+            def output = outputStream.toString().trim()
+            output.contains("[ERROR] IllegalAccessException : Access denied")
+            output.contains("[ERROR] IllegalArgumentException : Invalid argument")
+            output.contains("at sprouts.Result") // This indicates that the stack trace is printed
+
+        cleanup : 'We restore the original `System.err` stream.'
+            System.err = originalErr
+    }
+
+    def 'Use `logProblemsAsWarning` to log an erroneous `Result` to `System.err` if there is no `Slf4j` logger available.'()
+    {
+        reportInfo """
+            If there is no `Slf4j` logger available, the `Result` will log to `System.err`.
+            But either way, you can use the `logProblemsAsWarning` method to log the problems of a `Result`
+            to `System.err` if the result has problems. In case of the `Result` not having
+            any problems, it will not log anything.
+        """
+        given : 'We remember the original `System.err` stream.'
+            var originalErr = System.err
+        and : 'We create a new `PrintStream` that will capture the output.'
+            var outputStream = new ByteArrayOutputStream()
+            var printStream = new PrintStream(outputStream)
+        and : 'We set the `System.err` to the new `PrintStream`.'
+            System.err = printStream
+
+        when : 'We create a result with two exception based problems.'
+            def result = Result.of(Integer, [
+                Problem.of(new IllegalAccessException("Access denied")),
+                Problem.of(new IllegalArgumentException("Invalid argument"))
+            ])
+        and : 'We call the `logProblemsAsWarning` method on the result.'
+            result.logProblemsAsWarning()
+
+        then : 'The output stream contains the relevant information.'
+            def output = outputStream.toString().trim()
+            output.contains("[WARN] IllegalAccessException : Access denied")
+            output.contains("[WARN] IllegalArgumentException : Invalid argument")
+            output.contains("at sprouts.Result") // This indicates that the stack trace is printed
+
+        cleanup : 'We restore the original `System.err` stream.'
+            System.err = originalErr
+    }
+
+    def 'use `logProblemsAsInfo` to log an erroneous `Result` to `System.out` if there is no `Slf4j` logger available.'()
+    {
+        reportInfo """
+            If there is no `Slf4j` logger available, the `Result` will log to `System.out`.
+            But either way, you can use the `logProblemsAsInfo` method to log the problems of a `Result`
+            to `System.out` if the result has problems. In case of the `Result` not having
+            any problems, it will not log anything.
+        """
+        given : 'We remember the original `System.out` stream.'
+            var originalOut = System.out
+        and : 'We create a new `PrintStream` that will capture the output.'
+            var outputStream = new ByteArrayOutputStream()
+            def printStream = new PrintStream(outputStream)
+        and : 'We set the `System.out` to the new `PrintStream`.'
+            System.out = printStream
+
+        when : 'We create a result with two exception based problems.'
+            def result = Result.of(Integer, [
+                Problem.of(new IllegalAccessException("Access denied")),
+                Problem.of(new IllegalArgumentException("Invalid argument"))
+            ])
+        and : 'We call the `logProblemsAsInfo` method on the result.'
+            result.logProblemsAsInfo()
+
+        then : 'The output stream contains the relevant information.'
+            def output = outputStream.toString().trim()
+            output.contains("[INFO] IllegalAccessException : Access denied")
+            output.contains("[INFO] IllegalArgumentException : Invalid argument")
+            output.contains("at sprouts.Result") // This indicates that the stack trace is printed
+
+        cleanup : 'We restore the original `System.out` stream.'
+            System.out = originalOut
+    }
+
+    def 'use `logProblemsAsDebug` to log an erroneous `Result` to `System.out` if there is no `Slf4j` logger available.'()
+    {
+        reportInfo """
+            If there is no `Slf4j` logger available, the `Result` will log to `System.out`.
+            But either way, you can use the `logProblemsAsDebug` method to log the problems of a `Result`
+            to `System.out` if the result has problems. In case of the `Result` not having
+            any problems, it will not log anything.
+        """
+        given : 'We remember the original `System.out` stream.'
+            var originalOut = System.out
+        and : 'We create a new `PrintStream` that will capture the output.'
+            var outputStream = new ByteArrayOutputStream()
+            def printStream = new PrintStream(outputStream)
+        and : 'We set the `System.out` to the new `PrintStream`.'
+            System.out = printStream
+
+        when : 'We create a result with two exception based problems.'
+            def result = Result.of(Integer, [
+                Problem.of(new IllegalAccessException("Access denied")),
+                Problem.of(new IllegalArgumentException("Invalid argument"))
+            ])
+        and : 'We call the `logProblemsAsDebug` method on the result.'
+            result.logProblemsAsDebug()
+
+        then : 'The output stream contains the relevant information.'
+            def output = outputStream.toString().trim()
+            output.contains("[DEBUG] IllegalAccessException : Access denied")
+            output.contains("[DEBUG] IllegalArgumentException : Invalid argument")
+            output.contains("at sprouts.Result") // This indicates that the stack trace is printed
+
+        cleanup : 'We restore the original `System.out` stream.'
+            System.out = originalOut
+    }
+
+    def 'use `logProblemsAsTrace` to log an erroneous `Result` to `System.out` if there is no `Slf4j` logger available.'()
+    {
+        reportInfo """
+            If there is no `Slf4j` logger available, the `Result` will log to `System.out`.
+            But either way, you can use the `logProblemsAsTrace` method to log the problems of a `Result`
+            to `System.out` if the result has problems. In case of the `Result` not having
+            any problems, it will not log anything.
+        """
+        given : 'We remember the original `System.out` stream.'
+            var originalOut = System.out
+        and : 'We create a new `PrintStream` that will capture the output.'
+            var outputStream = new ByteArrayOutputStream()
+            def printStream = new PrintStream(outputStream)
+        and : 'We set the `System.out` to the new `PrintStream`.'
+            System.out = printStream
+
+        when : 'We create a result with two exception based problems.'
+            def result = Result.of(Integer, [
+                Problem.of(new IllegalAccessException("Access denied")),
+                Problem.of(new IllegalArgumentException("Invalid argument"))
+            ])
+        and : 'We call the `logProblemsAsTrace` method on the result.'
+            result.logProblemsAsTrace()
+
+        then : 'The output stream contains the relevant information.'
+            def output = outputStream.toString().trim()
+            output.contains("[TRACE] IllegalAccessException : Access denied")
+            output.contains("[TRACE] IllegalArgumentException : Invalid argument")
+            output.contains("at sprouts.Result") // This indicates that the stack trace is printed
+
+        cleanup : 'We restore the original `System.out` stream.'
+            System.out = originalOut
     }
 
 }

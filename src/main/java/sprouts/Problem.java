@@ -3,6 +3,7 @@ package sprouts;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.helpers.NOPLogger;
 
 import java.io.PrintWriter;
 import java.io.Writer;
@@ -101,6 +102,7 @@ public final class Problem
 
 
     private static final Logger log = LoggerFactory.getLogger(Problem.class);
+    private static final boolean HAS_SLF4J_IMPLEMENTATION = !(log instanceof NOPLogger);
 
     private final String              _title;
     private final String              _description;
@@ -233,37 +235,82 @@ public final class Problem
     
     /**
      *  Logs the problem as a {@link Logger#error} message to the default logger of the implementing class.
+     *  If a SLF4J backend is not available, it will log to the standard error stream {@code System.err}.
      */
     public void logAsError() {
-        logTo(log::error);
+        if ( HAS_SLF4J_IMPLEMENTATION )
+            logTo(log::error);
+        else
+            logTo((msg, t) -> {
+                System.err.println("[ERROR] " + msg );
+                if ( t != null ) {
+                    t.printStackTrace(System.err);
+                }
+            });
     }
     
     /**
      *  Logs the problem as a {@link Logger#warn} message to the default logger of the implementing class.
+     *  If a SLF4J backend is not available, it will log to the standard error stream {@code System.err}.
      */
     public void logAsWarning() {
-        logTo(log::warn);
+        if ( HAS_SLF4J_IMPLEMENTATION )
+            logTo(log::warn);
+        else
+            logTo((msg, t) -> {
+                System.err.println("[WARN] " + msg );
+                if ( t != null ) {
+                    t.printStackTrace(System.err);
+                }
+            });
     }
     
     /**
      *  Logs the problem as a {@link Logger#info} message to the default logger of the implementing class.
+     *  If a SLF4J backend is not available, it will log to the standard output stream {@code System.out}.
      */
     public void logAsInfo() {
-        logTo(log::info);
+        if ( HAS_SLF4J_IMPLEMENTATION )
+            logTo(log::info);
+        else
+            logTo((msg, t) -> {
+                System.out.println("[INFO] " + msg );
+                if ( t != null ) {
+                    t.printStackTrace(System.out);
+                }
+            });
     }
     
     /**
      *  Logs the problem as a {@link Logger#debug} message to the default logger of the implementing class.
+     *  If a SLF4J backend is not available, it will log to the standard output stream {@code System.out}.
      */
     public void logAsDebug() {
-        logTo(log::debug);
+        if ( HAS_SLF4J_IMPLEMENTATION )
+            logTo(log::debug);
+        else
+            logTo((msg, t) -> {
+                System.out.println("[DEBUG] " + msg );
+                if ( t != null ) {
+                    t.printStackTrace(System.out);
+                }
+            });
     }
     
     /**
      *  Logs the problem as a {@link Logger#trace} message to the default logger of the implementing class.
+     *  If a SLF4J backend is not available, it will log to the standard output stream {@code System.out}.
      */
     public void logAsTrace() {
-        logTo(log::trace);
+        if ( HAS_SLF4J_IMPLEMENTATION )
+            logTo(log::trace);
+        else
+            logTo((msg, t) -> {
+                System.out.println("[TRACE] " + msg );
+                if ( t != null ) {
+                    t.printStackTrace(System.out);
+                }
+            });
     }
 
     @Override public String toString() { 
