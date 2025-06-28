@@ -11,10 +11,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
+import java.util.function.*;
 
 /**
  *  A {@link Result} is very similar to an {@link Optional} in that it can either contain an item or not,
@@ -244,7 +241,7 @@ public final class Result<V> implements Maybe<V>
     private static final Logger log = LoggerFactory.getLogger(Result.class);
     private static final boolean HAS_SLF4J_IMPLEMENTATION = !(log instanceof NOPLogger);
 
-    private final boolean _wasLogged;
+    private final boolean        _wasLogged;
     private final Class<V>       _type;
     private final Tuple<Problem> _problems;
     @Nullable private final V    _value;
@@ -353,6 +350,47 @@ public final class Result<V> implements Maybe<V>
     }
 
     /**
+     * Returns the contained non-null value if present, otherwise applies the provided handler function
+     * to the {@link Tuple} of {@link Problem}s associated with this result.
+     * The handler function can be used to provide a fallback value or perform some action based on the problems.
+     *
+     * <p>This method is useful for scenarios where you want to handle the absence of a value
+     * with a custom logic that depends on the specific problems encountered.</p>
+     *
+     * <p><b>Example:</b>
+     * <pre>{@code
+     * result.orElseHandle(problems -> {
+     *     if ( problems.size() == 0 ) {
+     *         return "Default Value";
+     *     } else {
+     *         for (var problem : problems) {
+     *            // log or other processing
+     *         }
+     *     }
+     *     return "?"; // or some other value
+     * });
+     * }</pre>
+     * </p>
+     *
+     * @param handler Function that takes a tuple of problems and returns a value
+     * @return Present non-null value or the result of applying the handler function
+     * @throws NullPointerException if {@code handler} is null
+     */
+    public @NonNull V orElseHandle( @NonNull Function<Tuple<Problem>, V> handler ) {
+        Objects.requireNonNull(handler);
+        V value = _value;
+        if ( value != null ) {
+            if ( this.hasProblems() && !this._wasLogged) {
+                // If we have problems and the result was not logged yet, we log them as errors.
+                this.logProblemsAsError();
+            }
+            return value;
+        } else {
+            return handler.apply(this.problems());
+        }
+    }
+
+    /**
      * Returns the contained non-null value if present, otherwise throws an exception
      * created by the provided supplier function. The exception supplier receives the
      * {@link Tuple} of {@link Problem}s associated with this result, allowing rich
@@ -435,6 +473,103 @@ public final class Result<V> implements Maybe<V>
      */
     public boolean hasProblems() {
         return !problems().isEmpty();
+    }
+
+    /**
+     *  Allows you to handle a specific type of exception that is present in the problems
+     *  associated with this result. If the exception is found, the provided handler is invoked
+     *  with the exception as an argument, and the problem is removed from the list of problems.
+     *  If the handler throws an exception, it is caught and logged, but does not affect the result.<br>
+     *  <p><b>
+     *      If you want to handle all problems in this result, irrespective of what type of exception
+     *      is associated with them, consider using {@link #handleAny(Consumer)}.
+     *  </b>
+     *
+     * @param exceptionType The type of exception to handle.
+     * @param handler The handler to invoke with the exception.
+     * @return A new result with the problem removed if handled successfully, or unchanged if not.
+     * @throws NullPointerException if either parameter is null.
+     */
+    public <E extends Exception> Result<V> handle(
+        Class<E> exceptionType,
+        Consumer<E> handler
+    ) {
+        Objects.requireNonNull(exceptionType);
+        Objects.requireNonNull(handler);
+        if ( this.hasProblems() ) {
+            Tuple<Problem> problems = this.problems();
+            for ( Problem problem : problems ) {
+                if ( problem.exception().isPresent() && exceptionType.isAssignableFrom(problem.exception().get().getClass()) ) {
+                    try {
+                        handler.accept(exceptionType.cast(problem.exception().get()));
+                        problems = problems.remove(problem);
+                    } catch ( Exception e ) {
+                        // If the handler throws an exception, we catch it and log it.
+                        if ( HAS_SLF4J_IMPLEMENTATION )
+                            log.error("An exception occurred while handling a problem in a result.", e);
+                        else {
+                            // If we do not have a logger, we just print the stack trace to the console.
+                            System.err.println("An exception occurred while handling a problem in a result.");
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            }
+            return new Result<>(
+                this._wasLogged,
+                this._type,
+                problems,
+                this._value
+            );
+        }
+        return this;
+    }
+
+    /**
+     *  Allows you to handle every {@link Problem} in this result individually
+     *  through a {@link Consumer} which receives one problem at a time.
+     *  If the handler throws an exception, it is caught and logged,
+     *  but does not affect the result.<br>
+     *  After handling all problems, a new result is returned that
+     *  no longer contains any problems, since they are now considered
+     *  handled by the handler.<br>
+     *  <p><b>
+     *      If you want to handle specific exceptions instead of all problems,
+     *      consider using {@link #handle(Class, Consumer)}. Which allows you to
+     *      match and handle the {@link Problem#exception()}s associated with this result.
+     *  </b>
+     *
+     * @param handler The handler to invoke with each problem.
+     * @return A new result with the problems removed if handled successfully, or unchanged if not.
+     * @throws NullPointerException if the handler is null.
+     */
+    public Result<V> handleAny( Consumer<Problem> handler ) {
+        Objects.requireNonNull(handler);
+        if ( this.hasProblems() ) {
+            Tuple<Problem> problems = this.problems();
+            for ( Problem problem : problems ) {
+                try {
+                    handler.accept(problem);
+                    problems = problems.remove(problem);
+                } catch ( Exception e ) {
+                    // If the handler throws an exception, we catch it and log it.
+                    if ( HAS_SLF4J_IMPLEMENTATION )
+                        log.error("An exception occurred while handling a problem in a result.", e);
+                    else {
+                        // If we do not have a logger, we just print the stack trace to the console.
+                        System.err.println("An exception occurred while handling a problem in a result.");
+                        e.printStackTrace();
+                    }
+                }
+            }
+            return new Result<>(
+                this._wasLogged,
+                this._type,
+                problems,
+                this._value
+            );
+        }
+        return this;
     }
 
     /**

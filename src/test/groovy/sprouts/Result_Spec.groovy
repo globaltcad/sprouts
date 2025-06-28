@@ -1094,4 +1094,174 @@ class Result_Spec extends Specification
             System.out = originalOut
     }
 
+    def 'Use `handle(Class<E>,Consumer<E>)` to handle problems of a specific type.'()
+    {
+        reportInfo """
+            The `handle(Class<E>,Consumer<E>)` method finds all problems
+            holding exceptions of the given type and applies the consumer to them.
+            After that, the matched problems are removed from the result,
+            since they are considered handled.
+        """
+        given : 'A list for tracing the call to the consumer.'
+            var trace = []
+        and : 'A result with multiple problems of different types.'
+            var result1 = Result.of(Integer, [
+                Problem.of(new IllegalAccessException("Access denied")),
+                Problem.of(new IllegalArgumentException("Invalid argument")),
+                Problem.of(new NullPointerException("Thing was missing!"))
+            ])
+        expect : 'The result contains three problems.'
+            result1.problems().size() == 3
+            result1.problems().get(0).description().contains("Access denied")
+            result1.problems().get(1).description().contains("Invalid argument")
+            result1.problems().get(2).description().contains("Thing was missing!")
+
+        when : 'We handle the problems of type IllegalArgumentException.'
+            var result2 = result1.handle(IllegalArgumentException, e -> trace.add("Handled: " + e.getMessage()))
+        then : 'The original result stays unchanged.'
+            result1.problems().size() == 3
+            result1.problems().get(0).description().contains("Access denied")
+            result1.problems().get(1).description().contains("Invalid argument")
+            result1.problems().get(2).description().contains("Thing was missing!")
+        and : 'The new result contains only the problems that were not handled.'
+            result2.problems().size() == 2
+            result2.problems().get(0).description().contains("Access denied")
+            result2.problems().get(1).description().contains("Thing was missing!")
+        and : 'The trace contains the handled problem.'
+            trace.contains("Handled: Invalid argument")
+
+        when : 'We handle the problems of type NullPointerException.'
+            var result3 = result2.handle(NullPointerException, e -> trace.add("Handled: " + e.getMessage()))
+        then : 'The original result stays unchanged.'
+            result2.problems().size() == 2
+            result2.problems().get(0).description().contains("Access denied")
+            result2.problems().get(1).description().contains("Thing was missing!")
+        and : 'The new result contains only the problems that were not handled.'
+            result3.problems().size() == 1
+            result3.problems().get(0).description().contains("Access denied")
+        and : 'The trace contains the handled problem.'
+            trace.contains("Handled: Thing was missing!")
+
+        when : 'We handle the last problem of type IllegalAccessException.'
+            var result4 = result3.handle(IllegalAccessException, e -> trace.add("Handled: " + e.getMessage()))
+        then : 'The original result stays unchanged.'
+            result3.problems().size() == 1
+            result3.problems().get(0).description().contains("Access denied")
+        and : 'The new result has no problems left, since we handled the last one.'
+            result4.problems().isEmpty()
+        and : 'The trace contains the handled problem.'
+            trace.contains("Handled: Access denied")
+    }
+
+    def 'Use `handleAny(Consumer<Problem>)` to handle all problems of a `Result`.'()
+    {
+        reportInfo """
+            The `handle(Consumer<Problem>)` method applies the consumer to all problems
+            of the result. After that, problems are removed from the returned
+            result, since they are considered handled.
+        """
+        given : 'A list for tracing the call to the consumer.'
+            var trace = []
+        and : 'A result with multiple exception based problems of different types.'
+            var result1 = Result.of(Integer, [
+                Problem.of(new IllegalAccessException("Access denied")),
+                Problem.of(new IllegalArgumentException("Invalid argument")),
+                Problem.of(new NullPointerException("Thing was missing!"))
+            ])
+        expect : 'The result contains three problems.'
+            result1.problems().size() == 3
+            result1.problems().get(0).description().contains("Access denied")
+            result1.problems().get(1).description().contains("Invalid argument")
+            result1.problems().get(2).description().contains("Thing was missing!")
+
+        when : 'We handle all problems with a consumer that adds their description to the trace.'
+            var result2 = result1.handleAny(p -> trace.add("Handled: " + p.description()))
+        then : 'The original result stays unchanged.'
+            result1.problems().size() == 3
+            result1.problems().get(0).description().contains("Access denied")
+            result1.problems().get(1).description().contains("Invalid argument")
+            result1.problems().get(2).description().contains("Thing was missing!")
+        and : 'The new result contains no problems left, since we handled all of them.'
+            result2.problems().isEmpty()
+        and : 'The trace contains all handled problems.'
+            trace.contains("Handled: Access denied")
+            trace.contains("Handled: Invalid argument")
+            trace.contains("Handled: Thing was missing!")
+    }
+
+    def 'Use `orElseHandle(Function<Tuple<Problem>,V>)` to both handle problems and return a value.'()
+    {
+        reportInfo """
+            The `orElseHandle(Function<Tuple<Problem>,V>)` is an advanced
+            variant of methods like `orElse(V)` or `orElseGet(Supplier<V>)`.
+            It allows you to handle all problems of a `Result` and
+            then return a fallback value.
+            
+            Note that the supplied function will receive a tuple containing all problems
+            of the result, not just a single problem.
+        """
+        given : 'A list for tracing if the consumer was called or not.'
+            var trace = []
+        and : 'An empty result with two problems of different types.'
+            var emptyResult = Result.of(Integer, [
+                Problem.of(new IllegalThreadStateException("Thread is not alive")),
+                Problem.of(new IllegalArgumentException("Invalid argument"))
+            ])
+        and : 'A non-empty result with one problem.'
+            var nonEmptyResult = Result.of(42, [Problem.of(new IllegalStateException("Still some problem"))])
+
+        when : 'We call `orElseHandle` on the non-empty result with a function that adds the problems to the trace.'
+            var value1 = nonEmptyResult.orElseHandle(problems -> {
+                for (var problem : problems) {
+                    trace.add("Handled: " + problem.description())
+                }
+                return 123 // Return a default value
+            })
+        then : 'The function was not called, because the result has an item.'
+            value1 == 42
+            trace.isEmpty()
+
+        when : 'We call `orElseHandle` on the empty result with a function that adds the problems to the trace.'
+            var value2 = emptyResult.orElseHandle(problems -> {
+                for (var problem : problems) {
+                    trace.add("Handled: " + problem.description())
+                }
+                return 123 // Return a default value
+            })
+        then : 'The consumer was called, because the result is empty.'
+            value2 == 123 // The default value returned by the function
+            trace.size() == 2
+            trace.contains("Handled: Thread is not alive")
+            trace.contains("Handled: Invalid argument")
+    }
+
+    def 'You can use `logProblemsTo(BiConsumer<String, Throwable> logger)` to do custom logging.'()
+    {
+        reportInfo """
+            The `logProblemsTo( BiConsumer<String, Throwable> logger )` method allows you to
+            log the problems of a `Result` using a custom logger in the form of a `BiConsumer`,
+            which takes the problem's message and the exception that caused the problem.
+            This is useful if you want to use a different logging framework or
+            if you want to log the problems in a specific way.
+            
+            The logger will be called for each problem in the result.
+        """
+        given : 'A list for tracing the calls to the custom logger.'
+            var trace = []
+        and : 'A result with multiple problems.'
+            var result = Result.of(Integer, [
+                Problem.of(new IllegalAccessException("Access denied")),
+                Problem.of(new IllegalArgumentException("Invalid argument")),
+                Problem.of("Invalid input", "This is not a valid input")
+            ])
+
+        when : 'We log the problems using a custom logger that adds them to the trace.'
+            result.logProblemsTo((message, throwable) -> trace.add(message))
+
+        then : 'The trace contains the logged problems.'
+            trace.size() == 3
+            trace.contains("IllegalAccessException : Access denied")
+            trace.contains("IllegalArgumentException : Invalid argument")
+            trace.contains("Invalid input : This is not a valid input")
+    }
 }
