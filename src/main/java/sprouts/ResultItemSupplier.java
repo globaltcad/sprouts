@@ -9,7 +9,9 @@ import org.jspecify.annotations.Nullable;
  *  This is a functional interface only intended to be used
  *  for the result pattern.
  *
- * @param <T> The type of the item to be supplied.
+ *  @param <T> The type of the item to be supplied.
+ *  @see Result#ofTry(Class, ResultItemSupplier)
+ *  @see ResultRunAttempt If you want to run an operation that does not return a value,
  */
 @FunctionalInterface
 public interface ResultItemSupplier<T extends @Nullable Object> {

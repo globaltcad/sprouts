@@ -1264,4 +1264,38 @@ class Result_Spec extends Specification
             trace.contains("IllegalArgumentException : Invalid argument")
             trace.contains("Invalid input : This is not a valid input")
     }
+
+    def 'Use `ofTry( ResultRunAttempt runAttempt )` to create a `Void` based `Result`.'()
+    {
+        reportInfo """
+            The `ofTry( ResultRunAttempt runAttempt )` method allows you run
+            a procedure which does not have a return value, but may still fail.
+            The `ResultRunAttempt` is a functional interface that is similar to `Runnable`, 
+            but it can throw exceptions. When an invocation of the run attempt fails,
+            it will return a `Result<Void>` containing the problems that occurred 
+            during the run attempt.
+            
+            The method will return a `Result<Void>` that contains the problems
+            if the run attempt fails, or an empty result if it succeeds.
+        """
+        given : 'A run attempt that throws an exception.'
+            ResultRunAttempt failingAttempt = { throw new IllegalStateException("Something went wrong!") }
+        and : 'We create a `Result` from the failing attempt.'
+            var result = Result.ofTry(failingAttempt)
+        expect : 'The result contains the problem that occurred during the run attempt.'
+            result.isEmpty()
+            result.hasProblems()
+            result.problems().size() == 1
+            result.problems().get(0).description().contains("Something went wrong!")
+            result.problems().get(0).exception().isPresent()
+            result.problems().get(0).exception().get() instanceof IllegalStateException
+
+        when : 'We create a successful run attempt.'
+            ResultRunAttempt successfulAttempt = { /* Do nothing, just succeed */ }
+        and : 'We create a `Result` from the successful attempt.'
+            var successResult = Result.ofTry(successfulAttempt)
+        then : 'The result is empty, since the run attempt succeeded.'
+            successResult.isEmpty()
+            !successResult.hasProblems()
+    }
 }

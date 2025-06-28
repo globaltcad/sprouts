@@ -238,6 +238,35 @@ public final class Result<V> implements Maybe<V>
         }
     }
 
+    /**
+     *  A factory method for creating a {@link Result} from a {@link ResultRunAttempt}
+     *  lambda which may throw a checked or unchecked {@link Exception}, but won't break
+     *  the control flow of your application.<br>
+     *  If the run attempt throws an exception, the exception is caught and a new result is returned
+     *  with the exception as a problem. If the run attempt succeeds, the result will not contain
+     *  any problems. <b>But either way, the result will never contain a value.</b><br>
+     *  <p>
+     *  <b>Note that this does not catch {@link Error} subtypes, like {@link OutOfMemoryError} or
+     *  {@link StackOverflowError} because they represent severe platform errors, which are
+     *  considered unrecoverable problems that applications should not typically attempt to handle.</b><br>
+     *  Only application errors ({@link Exception}s) are caught and wrapped safely as {@link Result}.
+     *
+     * @param runAttempt The run attempt to execute safely.
+     *                   It may throw a {@link RuntimeException} or checked {@link Exception},
+     *                   in which case the exception is caught without breaking your control flow.
+     * @return A new result with no value and a list of problems describing related issues.
+     */
+    static Result<Void> ofTry( ResultRunAttempt runAttempt ) {
+        Objects.requireNonNull(runAttempt);
+        try {
+            runAttempt.run();
+            return new Result<>(false, Void.class, Collections.emptyList(), null);
+        } catch (Exception e) {
+            return new Result<>(false, Void.class, Collections.singletonList(Problem.of(e)), null);
+        }
+    }
+
+
     private static final Logger log = LoggerFactory.getLogger(Result.class);
     private static final boolean HAS_SLF4J_IMPLEMENTATION = !(log instanceof NOPLogger);
 
