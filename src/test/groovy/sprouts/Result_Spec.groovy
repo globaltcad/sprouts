@@ -337,6 +337,10 @@ class Result_Spec extends Specification
             A `Result` can be peeked into to look at all of its problems.
             This is especially useful for logging what went wrong while
             still being able to have a more declarative control flow.
+            
+            But note that peeking at the problems of a result does not
+            cause them to be considered neither logged nor handles.
+            Check out the "logAs.." or "handle.." methods for that.
         """
         given : 'A result with some problems.'
             var result = Result.of(42, [
@@ -534,7 +538,7 @@ class Result_Spec extends Specification
         when : 'We create a result with two exception based problems.'
             def result = Result.of(Integer, [
                 Problem.of(new IllegalAccessException("Access denied")),
-                Problem.of(new IllegalArgumentException("Invalid argument"))
+                Problem.of(new IllegalArgumentException("Supplements though"))
             ])
         and : 'We call the `ifMissingLogAsError` method on the result.'
             result.ifMissingLogAsError()
@@ -542,7 +546,7 @@ class Result_Spec extends Specification
         then : 'The output stream contains the relevant information.'
             def output = outputStream.toString().trim()
             output.contains("[ERROR] IllegalAccessException : Access denied")
-            output.contains("[ERROR] IllegalArgumentException : Invalid argument")
+            output.contains("[ERROR] IllegalArgumentException : Supplements though")
             output.contains("at sprouts.Result") // This indicates that the stack trace is printed
 
         cleanup : 'We restore the original `System.err` stream.'
@@ -570,7 +574,7 @@ class Result_Spec extends Specification
         when : 'We create a result with two exception based problems.'
             def result = Result.of(Integer, [
                 Problem.of(new IllegalAccessException("Access denied")),
-                Problem.of(new IllegalArgumentException("Invalid argument"))
+                Problem.of(new IllegalArgumentException("Inconvenience though"))
             ])
         and : 'We call the `ifMissingLogAsWarning` method on the result.'
             result.ifMissingLogAsWarning()
@@ -578,7 +582,7 @@ class Result_Spec extends Specification
         then : 'The output stream contains the relevant information.'
             def output = outputStream.toString().trim()
             output.contains("[WARN] IllegalAccessException : Access denied")
-            output.contains("[WARN] IllegalArgumentException : Invalid argument")
+            output.contains("[WARN] IllegalArgumentException : Inconvenience though")
             output.contains("at sprouts.Result") // This indicates that the stack trace is printed
 
         cleanup : 'We restore the original `System.err` stream.'
@@ -642,7 +646,7 @@ class Result_Spec extends Specification
         when : 'We create a result with two exception based problems.'
             def result = Result.of(Integer, [
                 Problem.of(new IllegalAccessException("Access denied")),
-                Problem.of(new IllegalArgumentException("Invalid argument"))
+                Problem.of(new IllegalArgumentException("Too militant"))
             ])
         and : 'We call the `ifMissingLogAsDebug` method on the result.'
             result.ifMissingLogAsDebug()
@@ -650,7 +654,7 @@ class Result_Spec extends Specification
         then : 'The output stream contains the relevant information.'
             def output = outputStream.toString().trim()
             output.contains("[DEBUG] IllegalAccessException : Access denied")
-            output.contains("[DEBUG] IllegalArgumentException : Invalid argument")
+            output.contains("[DEBUG] IllegalArgumentException : Too militant")
             output.contains("at sprouts.Result") // This indicates that the stack trace is printed
 
         cleanup : 'We restore the original `System.out` stream.'
@@ -768,7 +772,7 @@ class Result_Spec extends Specification
             System.out = originalOut
     }
 
-    def 'the `ifMissingLogAsDebug` method will not log anything, if an item is present.'()
+    def 'The `ifMissingLogAsDebug` method will not log anything, if an item is present.'()
     {
         reportInfo """
             The `ifMissingLogAsDebug` method will not log anything if the result has an item.
@@ -793,7 +797,7 @@ class Result_Spec extends Specification
             System.out = originalOut
     }
 
-    def 'the `ifMissingLogAsTrace` method will not log anything, if an item is present.'()
+    def 'The `ifMissingLogAsTrace` method will not log anything, if an item is present.'()
     {
         reportInfo """
             The `ifMissingLogAsTrace` method will not log anything if the result has an item.
@@ -837,7 +841,7 @@ class Result_Spec extends Specification
         when : 'We create a result with two exception based problems.'
             def result = Result.of(Integer, [
                 Problem.of(new IllegalAccessException("Access denied")),
-                Problem.of(new IllegalArgumentException("Invalid argument"))
+                Problem.of(new IllegalArgumentException("Appeal to nature"))
             ])
         and : 'We call the `logProblemsAsError` method on the result.'
             result.logProblemsAsError()
@@ -845,7 +849,7 @@ class Result_Spec extends Specification
         then : 'The output stream contains the relevant information.'
             def output = outputStream.toString().trim()
             output.contains("[ERROR] IllegalAccessException : Access denied")
-            output.contains("[ERROR] IllegalArgumentException : Invalid argument")
+            output.contains("[ERROR] IllegalArgumentException : Appeal to nature")
             output.contains("at sprouts.Result") // This indicates that the stack trace is printed
 
         cleanup : 'We restore the original `System.err` stream.'
@@ -871,7 +875,7 @@ class Result_Spec extends Specification
         when : 'We create a result with two exception based problems.'
             def result = Result.of(Integer, [
                 Problem.of(new IllegalAccessException("Access denied")),
-                Problem.of(new IllegalArgumentException("Invalid argument"))
+                Problem.of(new IllegalArgumentException("It's natural"))
             ])
         and : 'We call the `logProblemsAsWarning` method on the result.'
             result.logProblemsAsWarning()
@@ -879,7 +883,7 @@ class Result_Spec extends Specification
         then : 'The output stream contains the relevant information.'
             def output = outputStream.toString().trim()
             output.contains("[WARN] IllegalAccessException : Access denied")
-            output.contains("[WARN] IllegalArgumentException : Invalid argument")
+            output.contains("[WARN] IllegalArgumentException : It's natural")
             output.contains("at sprouts.Result") // This indicates that the stack trace is printed
 
         cleanup : 'We restore the original `System.err` stream.'
@@ -905,7 +909,7 @@ class Result_Spec extends Specification
         when : 'We create a result with two exception based problems.'
             def result = Result.of(Integer, [
                 Problem.of(new IllegalAccessException("Access denied")),
-                Problem.of(new IllegalArgumentException("Invalid argument"))
+                Problem.of(new IllegalArgumentException("Inconvenience though"))
             ])
         and : 'We call the `logProblemsAsInfo` method on the result.'
             result.logProblemsAsInfo()
@@ -913,7 +917,7 @@ class Result_Spec extends Specification
         then : 'The output stream contains the relevant information.'
             def output = outputStream.toString().trim()
             output.contains("[INFO] IllegalAccessException : Access denied")
-            output.contains("[INFO] IllegalArgumentException : Invalid argument")
+            output.contains("[INFO] IllegalArgumentException : Inconvenience though")
             output.contains("at sprouts.Result") // This indicates that the stack trace is printed
 
         cleanup : 'We restore the original `System.out` stream.'
@@ -939,7 +943,7 @@ class Result_Spec extends Specification
         when : 'We create a result with two exception based problems.'
             def result = Result.of(Integer, [
                 Problem.of(new IllegalAccessException("Access denied")),
-                Problem.of(new IllegalArgumentException("Invalid argument"))
+                Problem.of(new IllegalArgumentException("Avocado toast"))
             ])
         and : 'We call the `logProblemsAsDebug` method on the result.'
             result.logProblemsAsDebug()
@@ -947,7 +951,7 @@ class Result_Spec extends Specification
         then : 'The output stream contains the relevant information.'
             def output = outputStream.toString().trim()
             output.contains("[DEBUG] IllegalAccessException : Access denied")
-            output.contains("[DEBUG] IllegalArgumentException : Invalid argument")
+            output.contains("[DEBUG] IllegalArgumentException : Avocado toast")
             output.contains("at sprouts.Result") // This indicates that the stack trace is printed
 
         cleanup : 'We restore the original `System.out` stream.'
@@ -1107,13 +1111,13 @@ class Result_Spec extends Specification
         and : 'A result with multiple problems of different types.'
             var result1 = Result.of(Integer, [
                 Problem.of(new IllegalAccessException("Access denied")),
-                Problem.of(new IllegalArgumentException("Invalid argument")),
+                Problem.of(new IllegalArgumentException("Canine tooth")),
                 Problem.of(new NullPointerException("Thing was missing!"))
             ])
         expect : 'The result contains three problems.'
             result1.problems().size() == 3
             result1.problems().get(0).description().contains("Access denied")
-            result1.problems().get(1).description().contains("Invalid argument")
+            result1.problems().get(1).description().contains("Canine tooth")
             result1.problems().get(2).description().contains("Thing was missing!")
 
         when : 'We handle the problems of type IllegalArgumentException.'
@@ -1121,14 +1125,14 @@ class Result_Spec extends Specification
         then : 'The original result stays unchanged.'
             result1.problems().size() == 3
             result1.problems().get(0).description().contains("Access denied")
-            result1.problems().get(1).description().contains("Invalid argument")
+            result1.problems().get(1).description().contains("Canine tooth")
             result1.problems().get(2).description().contains("Thing was missing!")
         and : 'The new result contains only the problems that were not handled.'
             result2.problems().size() == 2
             result2.problems().get(0).description().contains("Access denied")
             result2.problems().get(1).description().contains("Thing was missing!")
         and : 'The trace contains the handled problem.'
-            trace.contains("Handled: Invalid argument")
+            trace.contains("Handled: Canine tooth")
 
         when : 'We handle the problems of type NullPointerException.'
             var result3 = result2.handle(NullPointerException, e -> trace.add("Handled: " + e.getMessage()))
@@ -1165,13 +1169,13 @@ class Result_Spec extends Specification
         and : 'A result with multiple exception based problems of different types.'
             var result1 = Result.of(Integer, [
                 Problem.of(new IllegalAccessException("Access denied")),
-                Problem.of(new IllegalArgumentException("Invalid argument")),
+                Problem.of(new IllegalArgumentException("Plants feel pain")),
                 Problem.of(new NullPointerException("Thing was missing!"))
             ])
         expect : 'The result contains three problems.'
             result1.problems().size() == 3
             result1.problems().get(0).description().contains("Access denied")
-            result1.problems().get(1).description().contains("Invalid argument")
+            result1.problems().get(1).description().contains("Plants feel pain")
             result1.problems().get(2).description().contains("Thing was missing!")
 
         when : 'We handle all problems with a consumer that adds their description to the trace.'
@@ -1179,13 +1183,13 @@ class Result_Spec extends Specification
         then : 'The original result stays unchanged.'
             result1.problems().size() == 3
             result1.problems().get(0).description().contains("Access denied")
-            result1.problems().get(1).description().contains("Invalid argument")
+            result1.problems().get(1).description().contains("Plants feel pain")
             result1.problems().get(2).description().contains("Thing was missing!")
         and : 'The new result contains no problems left, since we handled all of them.'
             result2.problems().isEmpty()
         and : 'The trace contains all handled problems.'
             trace.contains("Handled: Access denied")
-            trace.contains("Handled: Invalid argument")
+            trace.contains("Handled: Plants feel pain")
             trace.contains("Handled: Thing was missing!")
     }
 
@@ -1205,7 +1209,7 @@ class Result_Spec extends Specification
         and : 'An empty result with two problems of different types.'
             var emptyResult = Result.of(Integer, [
                 Problem.of(new IllegalThreadStateException("Thread is not alive")),
-                Problem.of(new IllegalArgumentException("Invalid argument"))
+                Problem.of(new IllegalArgumentException("Vitamin B12 though"))
             ])
         and : 'A non-empty result with one problem.'
             var nonEmptyResult = Result.of(42, [Problem.of(new IllegalStateException("Still some problem"))])
@@ -1232,7 +1236,7 @@ class Result_Spec extends Specification
             value2 == 123 // The default value returned by the function
             trace.size() == 2
             trace.contains("Handled: Thread is not alive")
-            trace.contains("Handled: Invalid argument")
+            trace.contains("Handled: Vitamin B12 though")
     }
 
     def 'You can use `logProblemsTo(BiConsumer<String, Throwable> logger)` to do custom logging.'()
@@ -1297,5 +1301,45 @@ class Result_Spec extends Specification
         then : 'The result is empty, since the run attempt succeeded.'
             successResult.isEmpty()
             !successResult.hasProblems()
+    }
+
+    def 'Use `ifMissingLogTo(BiConsumer<String,Throwable> logger)` to manually log problems.'()
+    {
+        reportInfo """
+            The `ifMissingLogTo(BiConsumer<String,Throwable> logger)` method allows you to
+            manually log the problems of a `Result` using a custom logger in the form of a `BiConsumer`,
+            which takes the problem's message and the exception that caused the problem.
+            This is useful if you want to use a different logging framework or
+            if you want to log the problems in a specific way.
+            
+            The logger will be called for each problem in the result, but only if the result is empty.
+        """
+        given : 'A list for tracing the calls to the custom logger.'
+            var trace = []
+        and : 'A result with multiple problems.'
+            var result = Result.of(42, [
+                Problem.of(new IllegalArgumentException("Appeal to nature")),
+                Problem.of(new IllegalArgumentException("Appeal to tradition")),
+                Problem.of(new IllegalArgumentException("Bacon though"))
+            ])
+
+        when : 'We log the problems using a custom logger that adds them to the trace.'
+            result.ifMissingLogTo((message, throwable) -> trace.add(message))
+
+        then : 'The trace is empty, because the result has an item, so no logging occurs.'
+            trace.isEmpty()
+
+        when : 'We create an empty result with problems.'
+            var emptyResult = Result.of(Integer, [
+                Problem.of(new NullPointerException("Brain not found")),
+                Problem.of(new IllegalArgumentException("Might makes right"))
+            ])
+        and : 'We log the problems using the custom logger.'
+            emptyResult.ifMissingLogTo((message, throwable) -> trace.add(message))
+
+        then : 'The trace contains the logged problems.'
+            trace.size() == 2
+            trace.contains("NullPointerException : Brain not found")
+            trace.contains("IllegalArgumentException : Might makes right")
     }
 }

@@ -296,11 +296,13 @@ public final class Result<V> implements Maybe<V>
     }
 
     /** {@inheritDoc} */
-    @Override public Class<V> type() {
+    @Override
+    public Class<V> type() {
         return _type; 
     }
 
     /** {@inheritDoc} */
+    @Override
     public boolean isPresent() {
         return _value != null;
     }
@@ -1036,7 +1038,9 @@ public final class Result<V> implements Maybe<V>
      * @return This result, unchanged.
      */
     public Result<V> ifMissingLogTo( BiConsumer<String, Throwable> logger ) {
-        if ( this.hasProblems() )
+        if ( this.isPresent() )
+            return this; // If the value is present, we do nothing.
+        else if ( this.hasProblems() )
             return peekAtEachProblem(problem -> problem.logTo(logger))._markAsLoggedOrHandled();
         else if ( this.isEmpty() ) {
             Problem problem = Problem.of(new MissingItemRuntimeException("Expected item to be present in result!"));
