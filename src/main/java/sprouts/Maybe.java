@@ -279,17 +279,6 @@ public interface Maybe<T>
     }
 
     /**
-     *  This method check if the provided item is not equal to the item wrapped by this {@link Maybe} instance.
-     *  This is the opposite of {@link #is(Object)} which returns true if the items are equal.
-     *
-     * @param otherItem The other item of the same type as is wrapped by this.
-     * @return The truth value determining if the provided item is not equal to the wrapped item.
-     */
-    default boolean isNot( @Nullable T otherItem ) {
-        return !is(otherItem);
-    }
-
-    /**
      *  This method check if the item by the provided wrapper
      *  is equal to the item wrapped by this {@link Maybe} instance.
      *
@@ -299,6 +288,17 @@ public interface Maybe<T>
     default boolean is( @NonNull Maybe<@Nullable T> other ) {
         Objects.requireNonNull(other);
         return is( other.orElseNull() );
+    }
+
+    /**
+     *  This method check if the provided item is not equal to the item wrapped by this {@link Maybe} instance.
+     *  This is the opposite of {@link #is(Object)} which returns true if the items are equal.
+     *
+     * @param otherItem The other item of the same type as is wrapped by this.
+     * @return The truth value determining if the provided item is not equal to the wrapped item.
+     */
+    default boolean isNot( @Nullable T otherItem ) {
+        return !is(otherItem);
     }
 
     /**
