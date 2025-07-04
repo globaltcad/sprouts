@@ -109,17 +109,16 @@ public final class PropertyChangeListeners<T>
             try {
                 sb.append(key).append("->").append(_actions.get(key)).append(", ");
             } catch ( Exception e ) {
-                if (log instanceof NOPLogger) {
-                    System.err.println("[ERROR] An error occurred while trying to get the string representation of change listeners for channel '" + key + "': " + e);
-                    e.printStackTrace();
-                }
-                else
-                    log.error("An error occurred while trying to get the number of change listeners for channel '{}'", key, e);
+                _logError("An error occurred while trying to get the number of change listeners for channel '{}'", key, e);
             }
         }
         sb.append("]");
         return sb.toString();
     }
 
+
+    private static void _logError(String message, @Nullable Object... args) {
+        Util._logError(log, message, args);
+    }
 
 }

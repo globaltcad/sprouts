@@ -58,7 +58,7 @@ final class ChangeListenerCleaner
                 try {
                     _action.run();
                 } catch (Exception e) {
-                    log.error("Failed to execute cleanup action '"+_action+"'.", e);
+                    _logError("Failed to execute cleanup action '{}'.", _action, e);
                 } finally {
                     _action = null;
                 }
@@ -68,11 +68,11 @@ final class ChangeListenerCleaner
 
     public void register( @Nullable Object o, Runnable action ) {
         if ( o == null ) {
-            log.warn("Attempt to register a null object for cleanup. This is not allowed!");
+            _logError("Attempt to register a null object for cleanup. This is not allowed!");
             try {
                 action.run();
             } catch (Exception e) {
-                log.error("Failed to execute cleanup action '"+action+"'.", e);
+                _logError("Failed to execute cleanup action '"+action+"'.", e);
             }
             return;
         }
@@ -105,7 +105,7 @@ final class ChangeListenerCleaner
                     _thread.wait();
                 }
             } catch (Exception e) {
-                log.error("Failed to make cleaner thread wait for cleaning notification!", e);
+                _logError("Failed to make cleaner thread wait for cleaning notification!", e);
             }
         }
     }
@@ -117,13 +117,13 @@ final class ChangeListenerCleaner
                 try {
                     ref.cleanup();
                 } catch ( Throwable e ) {
-                    log.error("Failed to perform cleanup!", e);
+                    _logError("Failed to perform cleanup!", e);
                 } finally {
                     _toBeCleaned.remove(ref);
                 }
             }
         } catch ( Throwable e ) {
-            log.error("Failed to call 'remove()' on cleaner internal queue.", e);
+            _logError("Failed to call 'remove()' on cleaner internal queue.", e);
         }
     }
 
@@ -132,6 +132,11 @@ final class ChangeListenerCleaner
         return this.getClass().getSimpleName()+"@"+Integer.toHexString(this.hashCode())+"[" +
                     "registered=" + _toBeCleaned.size() +
                 "]";
+    }
+
+
+    private static void _logError(String message, @Nullable Object... args) {
+        Util._logError(log, message, args);
     }
 
 }
