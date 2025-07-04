@@ -540,7 +540,7 @@ public final class Result<V> implements Maybe<V>
                             log.error("An exception occurred while handling a problem in a result.", e);
                         else {
                             // If we do not have a logger, we just print the stack trace to the console.
-                            System.err.println("An exception occurred while handling a problem in a result.");
+                            System.err.println("[ERROR] An exception occurred while handling a problem in a result.");
                             e.printStackTrace();
                         }
                     }
