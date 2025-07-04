@@ -796,6 +796,30 @@ class Property_View_Spec extends Specification
             view.id() == "property1_and_property2"
     }
 
+    def 'Throwing exceptions in view change listeners, will not interrupt the control flow at the source property.'()
+    {
+        reportInfo """
+            If the code in a view change listener throws an exception, then the exception will not be propagated
+            to the source property. Instead, the exception will be caught and logged.
+            This is important because it allows the source property to continue to function
+            even if a view change listener fails.
+        """
+        given : 'A property with a view derived from it.'
+            var property = Var.of("Hello")
+            var view = property.view()
+        and : 'We register a change listener that throws an exception.'
+            view.onChange(From.ALL, v -> {
+                throw new RuntimeException("This is a test exception.")
+            })
+
+        when : 'We change the value of the property.'
+            property.set("World")
+        then : 'The exception does not reach us, because it is caught and logged.'
+            noExceptionThrown()
+        and : 'The view is still updated and has the expected value.'
+            view.get() == "World"
+    }
+
     /**
      * This method guarantees that garbage collection is
      * done unlike <code>{@link System#gc()}</code>
