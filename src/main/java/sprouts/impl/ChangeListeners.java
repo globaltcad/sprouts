@@ -1,6 +1,7 @@
 package sprouts.impl;
 
 import org.slf4j.Logger;
+import org.slf4j.helpers.NOPLogger;
 import sprouts.Action;
 import sprouts.Subscriber;
 import sprouts.Tuple;
@@ -89,11 +90,18 @@ final class ChangeListeners<D> {
                 try {
                     action.accept(delegate);
                 } catch (Exception e) {
-                    log.error(
-                        "An error occurred while executing " +
-                        "action '" + action + "' for delegate '" + delegate + "'",
-                        e
-                    );
+                    if ( log instanceof NOPLogger ) {
+                        System.err.println(
+                            "[ERROR] An error occurred while executing " +
+                            "action '" + action + "' for delegate '" + delegate + "': " + e
+                        );
+                        e.printStackTrace();
+                    } else
+                        log.error(
+                            "An error occurred while executing " +
+                            "action '" + action + "' for delegate '" + delegate + "'",
+                            e
+                        );
                 }
         });
     }
@@ -106,7 +114,17 @@ final class ChangeListeners<D> {
             try {
                 sb.append(action).append(", ");
             } catch (Exception e) {
-                log.error("An error occurred while trying to get the string representation of the action '{}'", action, e);
+                if ( log instanceof NOPLogger ) {
+                    System.err.println(
+                        "[ERROR] An error occurred while trying to get the string " +
+                        "representation of the action '" + action + "': " + e
+                    );
+                    e.printStackTrace();
+                } else
+                    log.error(
+                            "An error occurred while trying to get the string " +
+                            "representation of the action '{}'", action, e
+                    );
             }
         }
         sb.append("]");
@@ -132,10 +150,18 @@ final class ChangeListeners<D> {
                 try {
                     wa.clear();
                 } catch (Exception e) {
-                    log.error(
-                        "An error occurred while clearing the weak action '{}' during the process of " +
-                        "removing it from the list of change actions.", wa, e
-                    );
+                    if ( log instanceof NOPLogger ) {
+                        System.err.println(
+                            "[ERROR] An error occurred while clearing the weak action '" + wa + "' during the process of " +
+                            "removing it from the list of change actions: " + e
+                        );
+                        e.printStackTrace();
+                    }
+                    else
+                        log.error(
+                            "An error occurred while clearing the weak action '{}' during the process of " +
+                            "removing it from the list of change actions.", wa, e
+                        );
                 }
                 return innerActions.remove((Action) wa);
             });
