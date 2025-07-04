@@ -602,4 +602,40 @@ class Property_Spec extends Specification
             lensNullableFood.type() == DayOfWeek.class
     }
 
+
+    def 'Throwing exceptions in property change listeners, will not interrupt the control flow at the source property.'()
+    {
+        reportInfo """
+            When a property changes, it will notify all of its change listeners.
+            If one of the listeners throws an exception, it should not interrupt the control flow
+            at the source property. This is because the change listeners are meant to be
+            independent of each other and should not affect each others operation or
+            that of the source property.
+            This is especially important when you have multiple change listeners that
+            depend on each other, as it ensures that everything gets an opportunity to run.
+        """
+        given : 'A mutable property with an initial value.'
+            var property = Var.of("Hello World")
+        and : 'We add a change listener that throws an exception.'
+            Viewable.cast(property).onChange(From.ALL, it -> { throw new RuntimeException("Boom!") } )
+
+        when : 'We change the value of the property...'
+            property.set("Goodbye World") // This should not throw an exception.
+        then : 'The exception does not reach us, the caller.'
+            noExceptionThrown()
+        and : 'The property has the new value.'
+            property.get() == "Goodbye World"
+
+        when : 'We add another change listener that will be called after the first one.'
+            var trace = []
+            Viewable.cast(property).onChange(From.ALL, it -> {
+                trace.add("Second change listener called.")
+            })
+        and : 'We change the value of the property again...'
+            property.set("Hello again!") // This should not throw an exception.
+
+        then : 'The second change listener is called and the exception from the first one does not affect it.'
+            noExceptionThrown()
+            trace == ["Second change listener called."]
+    }
 }
