@@ -505,21 +505,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 	}
 
 	private static void _logError(String message, @Nullable Object... args) {
-		if ( log instanceof NOPLogger ) {
-			Exception lastArgException = null;
-			if ( args != null && args.length > 0 && args[args.length - 1] instanceof Exception ) {
-				lastArgException = (Exception) args[args.length - 1];
-				args = java.util.Arrays.copyOf(args, args.length - 1);
-			}
-			System.err.println(
-				MessageFormatter.arrayFormat("[ERROR] " + message, args).getMessage()
-			);
-			if ( lastArgException != null ) {
-				lastArgException.printStackTrace();
-			}
-		} else {
-			log.error(message, args);
-		}
+		Util._logError(log, message, args);
 	}
 
 }

@@ -2,6 +2,8 @@ package sprouts.impl;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
+import org.slf4j.helpers.MessageFormatter;
+import org.slf4j.helpers.NOPLogger;
 import sprouts.*;
 
 import java.util.Objects;
@@ -177,12 +179,11 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
         try {
             fetchedValue = _lens.getter(Util.fakeNonNull(_parent.orElseNull()));
         } catch ( Exception e ) {
-            log.error(
-                    "Failed to fetch item of type '"+_type+"' for property lens "+ _idForError(_id) +
-                    "from parent property "+ _idForError(_parent.id())+"(with item type '"+_parent.type()+"') " +
-                    "using the current lens getter.",
-                    e
-            );
+            _logError(
+                    "Failed to fetch item of type '{}' for property lens '{}' from parent " +
+                    "property '{}' (with item type '{}') using the current lens getter.",
+                    _type, _idForError(_id), _idForError(_parent.id()), _parent.type(), e
+                );
         }
         return fetchedValue;
     }
@@ -193,12 +194,11 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
             _lastItem = newItem;
             _parent.set(channel, newParentItem);
         } catch ( Exception e ) {
-            log.error(
-                    "Property lens "+_idForError(_id)+"(for item type '"+_type+"') failed to update its " +
-                    "parent property '"+_idForError(_parent.id())+"' (with item type '"+_parent.type()+"') " +
-                    "using the current setter lambda!",
-                    e
-            );
+            _logError(
+                    "Property lens {} (for item type '{}') failed to update its parent " +
+                    "property '{}' (with item type '{}') using the current setter lambda!",
+                    _idForError(_id), _type, _idForError(_parent.id()), _parent.type(), e
+                );
         }
     }
 
@@ -244,7 +244,15 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
 
     @Override
     public final String toString() {
-        String value = this.mapTo(String.class, Object::toString).orElse("null");
+        String value = "?";
+        try {
+            value = this.mapTo(String.class, Object::toString).orElse("null");
+        } catch ( Exception e ) {
+            _logError(
+                "Failed to convert the item of type '{}' to a string for property lens with id '{}'.",
+                _type, _id, e
+            );
+        }
         String id = this.id() == null ? "?" : this.id();
         if ( id.equals(Sprouts.factory().defaultId()) ) id = "?";
         String type = ( type() == null ? "?" : type().getSimpleName() );
@@ -331,4 +339,10 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
     public final long numberOfChangeListeners() {
         return _changeListeners.numberOfChangeListeners();
     }
+
+
+    private static void _logError(String message, @Nullable Object... args) {
+        Util._logError(log, message, args);
+    }
+
 }
