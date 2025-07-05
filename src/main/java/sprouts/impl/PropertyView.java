@@ -3,6 +3,8 @@ package sprouts.impl;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
+import org.slf4j.helpers.MessageFormatter;
+import org.slf4j.helpers.NOPLogger;
 import sprouts.*;
 
 import java.util.Objects;
@@ -157,7 +159,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 				return;
 			T newItem = fullCombiner.apply(v.currentValue(), innerSecond);
 			if (newItem == null)
-				log.error(
+				_logError(
 					"Invalid combiner result! The combination of the first item '{}' (changed) and the second " +
 					"item '{}' was null and null is not allowed! The old item '{}' is retained!",
 					v.currentValue().orElseNull(), innerSecond.orElseNull(), innerResult.orElseNull()
@@ -171,7 +173,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 			Val<T> innerFirst = innerResult._getSource(0);
 			T newItem = fullCombiner.apply(innerFirst, v.currentValue());
 			if (newItem == null)
-				log.error(
+				_logError(
 					"Invalid combiner result! The combination of the first item '{}' and the second " +
 					"item '{}' (changed) was null and null is not allowed! The old item '{}' is retained!",
 					innerFirst.orElseNull(), v.currentValue().orElseNull(), innerResult.orElseNull()
@@ -259,7 +261,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 			Val<U> innerSecond = innerResult._getSource(1);
 			@Nullable R newItem = fullCombiner.apply(v.currentValue(), innerSecond);
 			if (newItem == null)
-				log.error(
+				_logError(
 					"Invalid combiner result! The combination of the first item '{}' (changed) " +
 					"and the second item '{}' was null and null is not allowed! " +
 					"The old item '{}' is retained!",
@@ -274,7 +276,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 			Val<T> innerFirst = innerResult._getSource(0);
 			@Nullable R newItem = fullCombiner.apply(innerFirst, v.currentValue());
 			if (newItem == null)
-				log.error(
+				_logError(
 					"Invalid combiner result! The combination of the first item '{}' and the second " +
 					"item '{}' (changed) was null and null is not allowed! " +
 					"The old item '{}' is retained!",
@@ -485,7 +487,12 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 
 	@Override
 	public final String toString() {
-		String item = this.mapTo(String.class, Object::toString).orElse("null");
+		String item = "?";
+		try {
+			item = this.mapTo(String.class, Object::toString).orElse("null");
+		} catch ( Exception e ) {
+			_logError("Failed to convert item to string: {}", e.getMessage(), e);
+		}
 		String id = this.id() == null ? "?" : this.id();
 		if ( id.equals(Sprouts.factory().defaultId()) ) id = "?";
 		String type = ( type() == null ? "?" : type().getSimpleName() );
@@ -495,6 +502,24 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 		String name = "View";
 		String content = ( id.equals("?") ? item : id + "=" + item );
 		return name + "<" + type + ">" + "[" + content + "]";
+	}
+
+	private static void _logError(String message, @Nullable Object... args) {
+		if ( log instanceof NOPLogger ) {
+			Exception lastArgException = null;
+			if ( args != null && args.length > 0 && args[args.length - 1] instanceof Exception ) {
+				lastArgException = (Exception) args[args.length - 1];
+				args = java.util.Arrays.copyOf(args, args.length - 1);
+			}
+			System.err.println(
+				MessageFormatter.arrayFormat("[ERROR] " + message, args).getMessage()
+			);
+			if ( lastArgException != null ) {
+				lastArgException.printStackTrace();
+			}
+		} else {
+			log.error(message, args);
+		}
 	}
 
 }
