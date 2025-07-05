@@ -811,13 +811,71 @@ class Property_View_Spec extends Specification
             view.onChange(From.ALL, v -> {
                 throw new RuntimeException("This is a test exception.")
             })
+        and : 'We create a new `PrintStream` that will capture the `System.err`.'
+            var originalErr = System.err
+            var outputStream = new ByteArrayOutputStream()
+            var printStream = new PrintStream(outputStream)
+            System.err = printStream
 
         when : 'We change the value of the property.'
             property.set("World")
         then : 'The exception does not reach us, because it is caught and logged.'
             noExceptionThrown()
+        and : 'The output stream on the other hand, will contain the exception message.'
+            outputStream.toString().contains("RuntimeException")
+            outputStream.toString().contains("This is a test exception.")
+            outputStream.toString().contains("at ") // This is the stack trace of the exception.
+
         and : 'The view is still updated and has the expected value.'
             view.get() == "World"
+
+        cleanup : 'We restore the original `System.err` stream.'
+            System.err = originalErr
+    }
+
+    def 'Exceptions in the `toString()` of an item, will not cripple the `toString()` of a property view.'()
+    {
+        reportInfo """
+            When you call the `toString()` method on a property view, it will
+            indirectly call the `toString()` method on the item of the view.
+            Now, if the item throws an exception in its `toString()` method,
+            let's say, because of a bug in the code, then it should not affect
+            the reliability of the `toString()` method of the view itself!
+            This is because the `toString()` method of a view is meant to
+            provide a human-readable representation, ans so if the control
+            flow is interrupted by an exception, then the property would not
+            be able to provide any information at all.
+            
+            If an error occurs in the `toString()` method of an item,
+            then an error message will be logged to the console, and
+            the string representation will tell you about the error.
+        """
+        given : 'We first create a new `PrintStream` that will capture the `System.err`.'
+            var originalErr = System.err
+            var outputStream = new ByteArrayOutputStream()
+            var printStream = new PrintStream(outputStream)
+            System.err = printStream
+        and : 'A property with an item that throws an exception in its `toString()` method.'
+            var property = Var.of(new Object() {
+                @Override String toString() { throw new RuntimeException("This is a test exception.") }
+            })
+        and : 'A view of the property.'
+            var view = property.view()
+
+        when : 'We call the `toString()` method on the property view.'
+            var result = view.toString()
+
+        then : 'The `toString()` method of the view does not throw an exception.'
+            noExceptionThrown()
+        and :'The result is a string representation of the view, and it contains the exception message.'
+            result == "View<>[java.lang.RuntimeException: This is a test exception.]"
+        and : 'The output stream on the other hand, will contain the exception message.'
+            outputStream.toString().contains("RuntimeException")
+            outputStream.toString().contains("This is a test exception.")
+            outputStream.toString().contains("at ") // This is the stack trace of the exception.
+
+        cleanup : 'We restore the original `System.err` stream.'
+            System.err = originalErr
     }
 
     /**

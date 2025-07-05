@@ -1,6 +1,7 @@
 package sprouts.impl;
 
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
 import sprouts.*;
 
 import java.util.Objects;
@@ -28,7 +29,7 @@ final class Property<T extends @Nullable Object> implements Var<T>, Viewable<T> 
         return new Property<T>( immutable, itemType, iniValue, Sprouts.factory().defaultId(), new PropertyChangeListeners<>(), false );
     }
 
-
+    private static final Logger log = org.slf4j.LoggerFactory.getLogger(Property.class);
     private final PropertyChangeListeners<T> _changeListeners;
     private final String   _id;
     private final Class<T> _type;
@@ -169,7 +170,17 @@ final class Property<T extends @Nullable Object> implements Var<T>, Viewable<T> 
 
     @Override
     public final String toString() {
-        String value = this.mapTo(String.class, Object::toString).orElse("null");
+        String value = "?";
+        try {
+            value = this.mapTo(String.class, Object::toString).orElse("null");
+        } catch (Exception e) {
+            value = e.toString();
+            _logError(
+                "An error occurred while converting the item of type '{}' " +
+                "with id '{}' to String",
+                this.type(), this.id(), e
+            );
+        }
         String id = this.id() == null ? "?" : this.id();
         if ( id.equals(Sprouts.factory().defaultId()) ) id = "?";
         String type = ( type() == null ? "?" : type().getSimpleName() );
@@ -208,4 +219,9 @@ final class Property<T extends @Nullable Object> implements Var<T>, Viewable<T> 
         hash = 31 * hash + ( _id    == null ? 0 : _id.hashCode()       );
         return hash;
     }
+
+    private static void _logError(String message, @Nullable Object... args) {
+        Util._logError(log, message, args);
+    }
+
 }

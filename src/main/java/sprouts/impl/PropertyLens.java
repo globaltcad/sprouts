@@ -248,6 +248,7 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
         try {
             value = this.mapTo(String.class, Object::toString).orElse("null");
         } catch ( Exception e ) {
+            value = e.toString();
             _logError(
                 "Failed to convert the item of type '{}' to a string for property lens with id '{}'.",
                 _type, _id, e
