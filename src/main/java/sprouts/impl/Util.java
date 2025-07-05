@@ -2,6 +2,9 @@ package sprouts.impl;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.helpers.MessageFormatter;
+import org.slf4j.helpers.NOPLogger;
 import sprouts.From;
 
 import java.util.function.Function;
@@ -11,6 +14,24 @@ final class Util {
     public static From VIEW_CHANNEL = From.ALL;
 
     private Util() {}
+
+    static void _logError(Logger log, String message, @Nullable Object... args) {
+        if ( log instanceof NOPLogger) {
+            Exception lastArgException = null;
+            if ( args != null && args.length > 0 && args[args.length - 1] instanceof Exception ) {
+                lastArgException = (Exception) args[args.length - 1];
+                args = java.util.Arrays.copyOf(args, args.length - 1);
+            }
+            System.err.println(
+                    MessageFormatter.arrayFormat("[ERROR] " + message, args).getMessage()
+            );
+            if ( lastArgException != null ) {
+                lastArgException.printStackTrace();
+            }
+        } else {
+            log.error(message, args);
+        }
+    }
 
     static String _toString( @Nullable Object singleItem, Class<?> type ) {
         if ( singleItem == null ) {
