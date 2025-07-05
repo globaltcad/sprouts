@@ -5,6 +5,7 @@ import spock.lang.Specification
 import spock.lang.Title
 
 import java.lang.ref.WeakReference
+import java.time.Month
 import java.util.concurrent.TimeUnit
 
 @Title('Composite Property Views')
@@ -298,6 +299,188 @@ class Composite_Properties_Spec extends Specification
         then : 'The two parent properties still have 4 change listeners registered.'
             longProperty.numberOfChangeListeners() == 4
             unitProperty.numberOfChangeListeners() == 4
+    }
+
+    def 'An exception thrown in the combiner function of a non-nullable composite property view is logged instead of crashing the control flow.'()
+    {
+        reportInfo """
+            An exception thrown in the combiner function of a composite property view is
+            caught and logged, but does not interrupt the applications control flow.
+            This is important because a caller of a composite property view
+            does not expect the control flow to be interrupted.
+        """
+        given : 'We first create a new `PrintStream` that will capture the `System.err`.'
+            var originalErr = System.err
+            var outputStream = new ByteArrayOutputStream()
+            var printStream = new PrintStream(outputStream)
+            System.err = printStream
+        and: 'We have two properties modelling a forename and a surname of a person.'
+            Var<String> forename = Var.of("John")
+            Var<String> surname = Var.of("Doe")
+        and : 'Now we create a view of the 2 properties that represents the full name.'
+            Val<String> fullName = Viewable.of(forename, surname, (f, s) -> {
+                if (f == "" || s == "") {
+                    throw new IllegalArgumentException("Forename or surname cannot be empty");
+                }
+                return f + " " + s;
+            })
+        expect : 'Initially, the log does not contain any exceptions.'
+            outputStream.toString().isEmpty()
+
+        when : 'We change the value of the properties to cause an exception.'
+            forename.set("")
+        then : 'We do not notice any exception being thrown!'
+            noExceptionThrown()
+        and : 'The full name view still has the old item, due to the exception thrown in the combiner function.'
+            fullName.get() == "John Doe"
+        and : 'Looking at the log, we see that the exception was logged.'
+            outputStream.toString().contains("Forename or surname cannot be empty")
+            outputStream.toString().contains("IllegalArgumentException")
+            outputStream.toString().contains("at ") // Stack trace is present
+        cleanup : 'We restore the original `System.err` stream.'
+            System.err = originalErr
+    }
+
+    def 'An exception thrown in the combiner function of a nullable composite property view is logged instead of crashing the control flow.'()
+    {
+        reportInfo """
+            An exception thrown in the combiner function of a composite property view is
+            caught and logged, but does not interrupt the applications control flow.
+            This is important because a caller of a composite property view
+            does not expect the control flow to be interrupted.
+        """
+        given : 'We first create a new `PrintStream` that will capture the `System.err`.'
+            var originalErr = System.err
+            var outputStream = new ByteArrayOutputStream()
+            var printStream = new PrintStream(outputStream)
+            System.err = printStream
+        and: 'We have two properties modelling a adjective and a noun in a sentence.'
+            Var<String> adjective = Var.of("tasty")
+            Var<String> noun = Var.of("Ramen")
+        and : 'Now we create a view of the 2 properties that represents the full sentence.'
+            Val<String> sentence = Viewable.ofNullable(adjective, noun, (a, n) -> {
+                if ( a == "" && n == "" ) {
+                    return null; // Allowing null items in the view
+                } else if (a == "" || n == "") {
+                    throw new IllegalArgumentException("Adjective and noun must not be empty");
+                }
+                return "I like " + a + " " + n + " very much.";
+            })
+        expect : 'Initially, the log does not contain any exceptions and the full sentence view is not empty.'
+            outputStream.toString().isEmpty()
+            sentence.get() == "I like tasty Ramen very much."
+
+        when : 'We change the item of the adjective properties to cause an exception.'
+            adjective.set("")
+        then : 'We do not notice any exception being thrown!'
+            noExceptionThrown()
+        and : 'The full sentence view is empty due to the exception thrown in the combiner function.'
+            sentence.isEmpty()
+        and : 'Looking at the log, we see that the exception was logged.'
+            outputStream.toString().contains("Adjective and noun must not be empty")
+            outputStream.toString().contains("IllegalArgumentException")
+            outputStream.toString().contains("at ") // Stack trace is present
+        cleanup : 'We restore the original `System.err` stream.'
+            System.err = originalErr
+    }
+
+    def 'An exception thrown in the combiner function of a non-nullable composite property view mapping to a different type, is logged instead of crashing the control flow.'()
+    {
+        reportInfo """
+            You can crete a composite property view that maps to a different type,
+            than the types of the properties it is composed of.
+            So for example, you may want to combine a `byte` and a `Month` property
+            into a `String` that represents the month and the day of the month.
+            
+            If an exception is thrown in the combiner function of such a composite property view,
+            then instead of crashing the control flow, it is caught and logged.
+            This is important because a caller of a composite property view
+            does not expect the control flow to be interrupted when they set the 
+            items of the properties...
+        """
+        given : 'We first create a new `PrintStream` that will capture the `System.err`.'
+            var originalErr = System.err
+            var outputStream = new ByteArrayOutputStream()
+            var printStream = new PrintStream(outputStream)
+            System.err = printStream
+        and: 'We have a property modelling a day of the month as a byte and a property modelling the month as an enum.'
+            Var<Byte> dayOfMonth = Var.of((byte) 15)
+            Var<Month> month = Var.of(Month.JUNE)
+        and : 'Now we create a view of the 2 properties that represents the full date.'
+            Val<String> fullDate = Viewable.of(String.class, dayOfMonth, month, (d, m) -> {
+                if (d < 1 || d > 31) {
+                    throw new IllegalArgumentException("Day of month must be between 1 and 31");
+                }
+                return String.format("%02d %s", d, m.name());
+            })
+        expect : 'Initially, the log does not contain any exceptions and the full date view has the expected value.'
+            outputStream.toString().isEmpty()
+            fullDate.get() == "15 JUNE"
+
+        when : 'We change the value of the properties to cause an exception.'
+            dayOfMonth.set((byte) 40)
+        then : 'We do not notice any exception being thrown!'
+            noExceptionThrown()
+        and : 'The full date view still has the old item, due to the exception thrown in the combiner function.'
+            fullDate.get() == "15 JUNE"
+        and : 'Looking at the log, we see that the exception was logged.'
+            outputStream.toString().contains("Day of month must be between 1 and 31")
+            outputStream.toString().contains("IllegalArgumentException")
+            outputStream.toString().contains("at ") // Stack trace is present
+
+        cleanup : 'We restore the original `System.err` stream.'
+            System.err = originalErr
+    }
+
+    def 'An exception thrown in the combiner function of a nullable composite property view mapping to a different type, is logged instead of crashing the control flow.'()
+    {
+        reportInfo """
+            You can crete a composite property view that maps to a different type,
+            than the types of the properties it is composed of.
+            So for example, you may want to combine a `byte` and a `Month` property
+            into a `String` that represents the month and the day of the month.
+            
+            If an exception is thrown in the combiner function of such a composite property view,
+            then instead of crashing the control flow, it is caught and logged.
+            This is important because a caller of a composite property view
+            does not expect the control flow to be interrupted when they set the 
+            items of the properties...
+        """
+        given : 'We first create a new `PrintStream` that will capture the `System.err`.'
+            var originalErr = System.err
+            var outputStream = new ByteArrayOutputStream()
+            var printStream = new PrintStream(outputStream)
+            System.err = printStream
+        and: 'We have a property modelling a day of the month as a byte and a property modelling the month as an enum.'
+            Var<Byte> dayOfMonth = Var.of((byte) 3)
+            Var<Month> month = Var.of(Month.SEPTEMBER)
+        and : 'Now we create a view of the 2 properties that represents the full date.'
+            Val<String> fullDate = Viewable.ofNullable(String.class, dayOfMonth, month, (d, m) -> {
+                if (d == null || m == null) {
+                    return null; // Allowing null items in the view
+                }
+                if (d < 1 || d > 31) {
+                    throw new IllegalArgumentException("Day of month must be between 1 and 31");
+                }
+                return String.format("%02d %s", d, m.name());
+            })
+        expect : 'Initially, the log does not contain any exceptions and the full date view has the expected value.'
+            outputStream.toString().isEmpty()
+            fullDate.get() == "03 SEPTEMBER"
+
+        when : 'We change the value of the properties to cause an exception.'
+            dayOfMonth.set((byte) 42)
+        then : 'We do not notice any exception being thrown!'
+            noExceptionThrown()
+        and : 'The full date view is empty now, due to the exception thrown in the combiner function.'
+            fullDate.isEmpty()
+        and : 'Looking at the log, we see that the exception was logged.'
+            outputStream.toString().contains("Day of month must be between 1 and 31")
+            outputStream.toString().contains("IllegalArgumentException")
+            outputStream.toString().contains("at ") // Stack trace is present
+
+        cleanup : 'We restore the original `System.err` stream.'
+            System.err = originalErr
     }
 
     /**

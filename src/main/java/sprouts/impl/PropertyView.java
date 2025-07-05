@@ -3,8 +3,6 @@ package sprouts.impl;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
-import org.slf4j.helpers.MessageFormatter;
-import org.slf4j.helpers.NOPLogger;
 import sprouts.*;
 
 import java.util.Objects;
@@ -147,6 +145,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 			try {
 				return combiner.apply(p1.orElseNull(), p2.orElseNull());
 			} catch ( Exception e ) {
+				_logError("An error occurred while applying the combiner function of a composite property.",e);
 				return null;
 			}
 		};
@@ -206,6 +205,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 			try {
 				return combiner.apply(p1.orElseNull(), p2.orElseNull());
 			} catch ( Exception e ) {
+				_logError("An error occurred while applying the combiner function of a composite property.", e);
 				return null;
 			}
 		};
@@ -246,6 +246,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 			try {
 				return combiner.apply(p1.orElseNull(), p2.orElseNull());
 			} catch ( Exception e ) {
+				_logError("An error occurred while applying the combiner function of a composite property.", e);
 				return null;
 			}
 		};
@@ -302,6 +303,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 			try {
 				return combiner.apply(p1.orElseNull(), p2.orElseNull());
 			} catch ( Exception e ) {
+				_logError("An error occurred while applying the combiner function of a composite property.", e);
 				return null;
 			}
 		};
@@ -365,8 +367,9 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 			// We check if the type is correct
 			if ( !_type.isAssignableFrom(_currentItem.getClass()) )
 				throw new IllegalArgumentException(
-						"The provided type of the initial item is not compatible " +
-								"with the actual type of the variable"
+						"The provided type of the initial item is '" + _currentItem.getClass() + "'\n" +
+						"which is not compatible with the expected type '" + _type + "'\n" +
+						"defined by this property view!"
 				);
 		}
 		if ( !Sprouts.factory().idPattern().matcher(_id).matches() )
