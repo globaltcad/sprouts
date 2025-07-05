@@ -5,9 +5,8 @@ import org.slf4j.Logger;
 import org.slf4j.helpers.NOPLogger;
 import sprouts.*;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -16,11 +15,11 @@ import java.util.function.Supplier;
  *  in future releases of Sprouts.
  * @param <T> The type of the property that this listener listens to.
  */
-public final class PropertyChangeListeners<T>
+public final class PropertyChangeListeners<T> implements ChangeListeners.OwnerCallableForCleanup<ValDelegate<T>>
 {
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(PropertyChangeListeners.class);
 
-    private final Map<Channel, ChangeListeners<ValDelegate<T>>> _actions = new LinkedHashMap<>();
+    private Association<Channel, ChangeListeners<ValDelegate<T>>> _actions = (Association)Association.betweenLinked(Channel.class, ChangeListeners.class);
 
 
     public PropertyChangeListeners() {}
@@ -33,7 +32,13 @@ public final class PropertyChangeListeners<T>
     public void onChange( Channel channel, Action<ValDelegate<T>> action ) {
         Objects.requireNonNull(channel);
         Objects.requireNonNull(action);
-        _getActionsFor(channel).add(action);
+        _updateActionsFor(channel, it->it.add(action, channel, this));
+    }
+
+    @Override
+    public void updateState(@Nullable Channel channel, Function<ChangeListeners<ValDelegate<T>>, ChangeListeners<ValDelegate<T>>> updater) {
+        if ( channel != null )
+            _updateActionsFor(channel, it -> updater.apply(_getActionsFor(channel)));
     }
 
     public void onChange( Observer observer ) {
@@ -41,13 +46,21 @@ public final class PropertyChangeListeners<T>
     }
 
     public void unsubscribe( Subscriber subscriber ) {
-        for ( ChangeListeners<ValDelegate<T>> actions : _actions.values() )
-            actions.unsubscribe(subscriber);
+        updateActions( it -> it.unsubscribe(subscriber ) );
     }
 
     public void unsubscribeAll() {
-        for ( ChangeListeners<ValDelegate<T>> actions : _actions.values() )
-            actions.unsubscribeAll();
+        updateActions(ChangeListeners::unsubscribeAll);
+    }
+
+    private void updateActions(Function<ChangeListeners<ValDelegate<T>>, ChangeListeners<ValDelegate<T>>> updater) {
+        _actions = (Association)
+                _actions.entrySet()
+                .stream()
+                .map( entry -> {
+                    return entry.withSecond(updater.apply(entry.second()));
+                })
+                .collect(Association.collectorOfLinked(Channel.class, ChangeListeners.class));
     }
 
     public void fireChange( Val<T> owner, Channel channel, @Nullable T newValue, @Nullable T oldValue ) {
@@ -94,11 +107,22 @@ public final class PropertyChangeListeners<T>
     }
 
     private void _copyFrom(PropertyChangeListeners<T> other) {
-        other._actions.forEach( (k, v) -> _actions.put(k, new ChangeListeners<>(v)) );
+        for ( Pair<Channel, ChangeListeners<ValDelegate<T>>> entry : other._actions ) {
+            _actions = _actions.put(entry.first(), new ChangeListeners<>(entry.second()));
+        }
     }
 
     private ChangeListeners<ValDelegate<T>> _getActionsFor( Channel channel ) {
-        return _actions.computeIfAbsent(channel, k->new ChangeListeners<>());
+        if ( !_actions.containsKey(channel) ) {
+            _actions = _actions.put(channel, new ChangeListeners<>());
+        }
+        return _actions.get(channel).get();
+    }
+
+    private void _updateActionsFor(Channel channel, Function<ChangeListeners<ValDelegate<T>>, ChangeListeners<ValDelegate<T>>> updater) {
+        ChangeListeners<ValDelegate<T>> listeners = _getActionsFor(channel);
+        listeners = updater.apply(listeners);
+        _actions = _actions.put(channel, listeners);
     }
 
     @Override
@@ -107,7 +131,7 @@ public final class PropertyChangeListeners<T>
         sb.append(this.getClass().getSimpleName()).append("[");
         for ( Channel key : _actions.keySet() ) {
             try {
-                sb.append(key).append("->").append(_actions.get(key)).append(", ");
+                sb.append(key).append("->").append(_actions.get(key).get()).append(", ");
             } catch ( Exception e ) {
                 _logError("An error occurred while trying to get the number of change listeners for channel '{}'", key, e);
             }

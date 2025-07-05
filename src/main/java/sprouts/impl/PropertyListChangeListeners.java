@@ -4,14 +4,20 @@ import org.jspecify.annotations.Nullable;
 import sprouts.*;
 
 import java.util.Arrays;
+import java.util.function.Function;
 
-public final class PropertyListChangeListeners<T extends @Nullable Object>
+public final class PropertyListChangeListeners<T extends @Nullable Object> implements ChangeListeners.OwnerCallableForCleanup<ValsDelegate<T>>
 {
-    private final ChangeListeners<ValsDelegate<T>> _actions = new ChangeListeners<>();
+    private ChangeListeners<ValsDelegate<T>> _actions = new ChangeListeners<>();
 
 
     public void onChange( Action<ValsDelegate<T>> action ) {
-        _actions.add(action);
+        _actions = _actions.add(action, null, this);
+    }
+
+    @Override
+    public void updateState(@Nullable Channel channel, Function<ChangeListeners<ValsDelegate<T>>, ChangeListeners<ValsDelegate<T>>> updater) {
+        _actions = updater.apply(_actions);
     }
 
     public void onChange( Observer observer ) {
@@ -19,11 +25,11 @@ public final class PropertyListChangeListeners<T extends @Nullable Object>
     }
 
     public void unsubscribe( Subscriber subscriber ) {
-        _actions.unsubscribe(subscriber);
+        _actions = _actions.unsubscribe(subscriber);
     }
 
     public void unsubscribeAll() {
-        _actions.unsubscribeAll();
+        _actions = _actions.unsubscribeAll();
     }
 
     public int numberOfChangeListeners() {
