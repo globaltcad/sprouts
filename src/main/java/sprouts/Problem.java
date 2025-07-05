@@ -228,7 +228,7 @@ public final class Problem
             else
                 logger.accept(titleAndDescription, new Throwable());
         } catch (Exception e) {
-            log.error("Failed to log problem: '{}'", titleAndDescription, e);
+            _logError("Failed to log problem: '{}'", titleAndDescription, e);
             // Oh boy, how bad can a user's logging be if it throws an exception? Well, we got you covered!
         }
     }
@@ -330,4 +330,9 @@ public final class Problem
     @Override public int hashCode() {
         return Objects.hash(_title, _description, _exception, _reporter);
     }
+
+    private static void _logError(String message, @Nullable Object... args) {
+        Util._logError(log, message, args);
+    }
+
 }
