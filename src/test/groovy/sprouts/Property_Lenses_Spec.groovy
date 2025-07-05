@@ -1502,6 +1502,57 @@ class Property_Lenses_Spec extends Specification
             trace == ["!"]
     }
 
+    def 'Exceptions in the `toString()` of an item, will not cripple the `toString()` of a lens property.'()
+    {
+        reportInfo """
+            When you call the `toString()` method on a lens property, it will
+            indirectly call the `toString()` method on the item of the lens property.
+            Now, if the item throws an exception in its `toString()` method,
+            let's say, because of a bug in the code, then it should not affect
+            the reliability of the `toString()` method of the lens property itself!
+            This is because the `toString()` method of a property is meant to
+            provide a human-readable representation, ans so if the control
+            flow is interrupted by an exception, then the property would not
+            be able to provide any information at all.
+            
+            If an error occurs in the `toString()` method of an item,
+            then an error message will be logged to the console, and
+            the string representation will tell you about the error.
+        """
+        given : 'We first create a new `PrintStream` that will capture the `System.err`.'
+            var originalErr = System.err
+            var outputStream = new ByteArrayOutputStream()
+            var printStream = new PrintStream(outputStream)
+            System.err = printStream
+        and : 'A data structure that allows us to zoom into the item.'
+            var data = [
+                    go: "Go",
+                    watch: "Watch",
+                    dominion: "Dominion",
+                    now: new Object() {
+                        @Override public String toString() {
+                            throw new RuntimeException("Heart explodes!")
+                        }
+                    }
+            ]
+        and : 'We create a property that wraps the data structure as well as a lens that focuses on the "now" field.'
+            var property = Var.of(data)
+            var lens = property.zoomTo( it -> it.now, (it, now) -> { it.now = now; return it } )
+
+        when : 'We call the `toString()` method on the lens.'
+            var result = lens.toString()
+        then : 'The `toString()` method of the lens property does not throw an exception.'
+            noExceptionThrown()
+        and : 'The string representation of the lens property contains the exception message.'
+            result == "Lens<>[java.lang.RuntimeException: Heart explodes!]"
+        and : 'The output stream contains the exception message.'
+            outputStream.toString().contains("java.lang.RuntimeException: Heart explodes!")
+            outputStream.toString().contains("at ") // This is the stack trace of the exception.
+
+        cleanup : 'We restore the original `System.err` stream.'
+            System.err = originalErr
+    }
+
     /**
      * This method guarantees that garbage collection is
      * done unlike <code>{@link System#gc()}</code>
