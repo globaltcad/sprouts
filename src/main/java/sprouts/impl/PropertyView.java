@@ -57,7 +57,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 		Objects.requireNonNull(nullObject);
 		Objects.requireNonNull(errorObject);
 
-		Function<T, U> nonNullMapper = Util.nonNullMapper(nullObject, errorObject, mapper);
+		Function<T, U> nonNullMapper = Util.nonNullMapper(log, nullObject, errorObject, mapper);
 
 		final U initial = nonNullMapper.apply(source.orElseNull());
 		final Class<U> targetType = Util.expectedClassFromItem(initial);

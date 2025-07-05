@@ -53,12 +53,13 @@ final class Util {
         return a == b;
     }
 
-    static <T extends @Nullable Object, R> Function<T, R> nonNullMapper(R nullObject, R errorObject, Function<T, @Nullable R> mapper) {
+    static <T extends @Nullable Object, R> Function<T, R> nonNullMapper(Logger log, R nullObject, R errorObject, Function<T, @Nullable R> mapper) {
         return t -> {
             try {
                 @Nullable R r = mapper.apply(t);
                 return r == null ? nullObject : r;
             } catch (Exception e) {
+                _logError(log, "An error occurred while mapping item '{}'.", t, e);
                 return errorObject;
             }
         };
