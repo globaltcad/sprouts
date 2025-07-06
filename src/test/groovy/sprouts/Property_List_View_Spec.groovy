@@ -367,4 +367,41 @@ class Property_List_View_Spec extends Specification
             names.toString() == "Views<String>[MONDAY, WEDNESDAY, FRIDAY]"
     }
 
+
+    def 'You can remove all change listeners from a property list view using `Viewables::unsubscribeAll()`!'()
+    {
+        reportInfo """
+            The `unsubscribeAll()` method on a property list view
+            will remove all change listeners from the view.
+            This is useful for cleaning up resources and preventing memory leaks
+            in a particular context.
+        """
+        given : 'A property list of 3 days of the week.'
+            Vars<DayOfWeek> days = Vars.of(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY, DayOfWeek.FRIDAY)
+        and : 'A view on the names of the days of the week.'
+            Viewables<String> names = days.view("null", "error", DayOfWeek::name)
+        and : 'A listener that records the changes and notes the new values.'
+            var removalTrace = []
+            var additionTrace = []
+            names.onChange({ removalTrace << it.oldValues().toList() })
+            names.onChange({ additionTrace << it.newValues().toList() })
+
+        when : 'We add a month to the source property list.'
+            days.add(DayOfWeek.SATURDAY)
+        then : 'The view receives the change event.'
+            removalTrace == [[]]
+            additionTrace == [["SATURDAY"]]
+
+        when : 'We remove all change listeners from the view.'
+            names.unsubscribeAll()
+        then : 'The view has no change listeners anymore.'
+            names.numberOfChangeListeners() == 0
+
+        when : 'We add another day to the source property list.'
+            days.add(DayOfWeek.SUNDAY)
+        then : 'The view does not receive the change event.'
+            removalTrace == [[]]
+            additionTrace == [["SATURDAY"]]
+    }
+
 }

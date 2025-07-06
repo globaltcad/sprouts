@@ -26,6 +26,10 @@ public final class PropertyListChangeListeners<T extends @Nullable Object>
         _actions.unsubscribeAll();
     }
 
+    public int numberOfChangeListeners() {
+        return Math.toIntExact(_actions.numberOfChangeListeners());
+    }
+
     public void fireChange(SequenceChange type, Vals<T> source) {
         fireChange(type, -1, (Vals<T>) null, null, source);
     }

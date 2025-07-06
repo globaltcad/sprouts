@@ -890,19 +890,32 @@ class Property_View_Spec extends Specification
         given : 'A mutable property with an initial value and a view derived from it.'
             var property = Var.of("Hello World")
             var view = property.view()
+        and : 'A trace list to record the side effects.'
+            var trace = []
         and : 'We add two change listener to the view, which are called when the property changes.'
             view.onChange(From.ALL, it -> {
-                // Do nothing, just for testing purposes.
+                trace << "Listener 1: " + it.currentValue().orElseThrow()
             })
             view.onChange(From.ALL, it -> {
-                // Still do nothing, just for testing purposes.
+                trace << "Listener 2: " + it.currentValue().orElseThrow()
             })
         expect : 'The property view has two change listener.'
             view.numberOfChangeListeners() == 2
+
+        when : 'We change the value of the property.'
+            property.set("Hello Sprouts")
+        then : 'The change listeners are called and the trace list is updated.'
+            trace == ["Listener 1: Hello Sprouts", "Listener 2: Hello Sprouts"]
+
         when : 'We unsubscribe all listeners from the view.'
             view.unsubscribeAll()
         then : 'The property view now has no change listeners anymore.'
             view.numberOfChangeListeners() == 0
+
+        when : 'We change the value of the property again.'
+            property.set("Hello again")
+        then : 'The change listeners are not called anymore, because they were unsubscribed.'
+            trace == ["Listener 1: Hello Sprouts", "Listener 2: Hello Sprouts"]
     }
 
     /**

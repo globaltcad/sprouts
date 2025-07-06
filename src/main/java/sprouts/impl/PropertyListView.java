@@ -413,4 +413,8 @@ final class PropertyListView<T extends @Nullable Object> implements Viewables<T>
     public void unsubscribeAll() {
         _changeListeners.unsubscribeAll();
     }
+
+    public int numberOfChangeListeners() {
+        return _changeListeners.numberOfChangeListeners();
+    }
 }
