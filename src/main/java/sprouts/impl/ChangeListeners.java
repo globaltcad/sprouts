@@ -2,14 +2,13 @@ package sprouts.impl;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
-import org.slf4j.helpers.NOPLogger;
 import sprouts.Action;
+import sprouts.Channel;
 import sprouts.Subscriber;
 import sprouts.Tuple;
 
 import java.lang.ref.WeakReference;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -18,31 +17,27 @@ final class ChangeListeners<D> {
 
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(ChangeListeners.class);
 
-    private final AtomicReference<Tuple<Action<D>>> _actions = new AtomicReference(Tuple.of(Action.class));
+    private final Tuple<Action<D>> _actions;
 
 
-    ChangeListeners() {}
+    ChangeListeners() {this((Tuple)Tuple.of(Action.class));}
 
-    ChangeListeners(ChangeListeners<D> other) {
-        _setState(other._getState());
-    }
-
-    private void _setState(Tuple<Action<D>> actions) {
-        _actions.set(actions);
+    ChangeListeners(Tuple<Action<D>> newActions) {
+        _actions = newActions;
     }
 
     @SuppressWarnings("NullAway")
     private Tuple<Action<D>> _getState() {
-        return _actions.get();
+        return _actions;
     }
 
-    void add(Action<D> action) {
-        updateActions(actions -> {
+    ChangeListeners<D> add(Action<D> action, @Nullable Channel channel, OwnerCallableForCleanup<D> ref) {
+        return updateActions(actions -> {
             if (action instanceof WeakAction) {
                 WeakAction<?, ?> wa = (WeakAction<?, ?>) action;
                 return wa.owner().map(owner -> {
-                            WeakReference<ChangeListeners<?>> weakThis = new WeakReference<>(this);
-                            AutomaticUnSubscriber cleaner = new AutomaticUnSubscriber(weakThis, wa);
+                            WeakReference<OwnerCallableForCleanup<ChangeListeners<?>>> weakThis = new WeakReference<>((OwnerCallableForCleanup)ref);
+                            AutomaticUnSubscriber cleaner = new AutomaticUnSubscriber(weakThis, channel, wa);
                             ChangeListenerCleaner.getInstance().register(owner, cleaner);
                             return actions.add(action);
                         })
@@ -52,8 +47,8 @@ final class ChangeListeners<D> {
         });
     }
 
-    void unsubscribe(Subscriber subscriber) {
-        updateActions(actions -> actions.removeIf( a -> {
+    ChangeListeners<D> unsubscribe(Subscriber subscriber) {
+        return updateActions(actions -> actions.removeIf( a -> {
             if ( a instanceof ObserverAsActionImpl) {
                 ObserverAsActionImpl<?> pcl = (ObserverAsActionImpl<?>) a;
                 return pcl.listener() == subscriber;
@@ -63,8 +58,8 @@ final class ChangeListeners<D> {
         }));
     }
 
-    void unsubscribeAll() {
-        _setState((Tuple) Tuple.of(Action.class));
+    ChangeListeners<D> unsubscribeAll() {
+        return new ChangeListeners<>((Tuple) Tuple.of(Action.class));
     }
 
     long getActions(Consumer<Tuple<Action<D>>> receiver) {
@@ -74,10 +69,10 @@ final class ChangeListeners<D> {
         return actions.size();
     }
 
-    void updateActions(Function<Tuple<Action<D>>, Tuple<Action<D>>> receiver) {
+    ChangeListeners<D> updateActions(Function<Tuple<Action<D>>, Tuple<Action<D>>> receiver) {
         Tuple<Action<D>> actions = _getState();
         actions = receiver.apply(actions);
-        _setState(actions);
+        return new ChangeListeners<>(actions);
     }
 
     long numberOfChangeListeners() {
@@ -118,37 +113,61 @@ final class ChangeListeners<D> {
     }
 
     private static final class AutomaticUnSubscriber implements Runnable {
-        private final WeakReference<ChangeListeners<?>> weakThis;
-        private final WeakAction<?, ?> wa;
+        private final WeakReference<OwnerCallableForCleanup<ChangeListeners<?>>> weakStateOwner;
+        private final @Nullable Channel channel;
+        private final WeakAction<?, ?> weakAction;
 
-        private AutomaticUnSubscriber(WeakReference<ChangeListeners<?>> weakThis, WeakAction<?, ?> wa) {
-            this.weakThis = weakThis;
-            this.wa = wa;
+        private AutomaticUnSubscriber(
+            WeakReference<OwnerCallableForCleanup<ChangeListeners<?>>> weakStateOwner,
+            @Nullable Channel channel,
+            WeakAction<?, ?> weakAction
+        ) {
+            this.weakStateOwner = weakStateOwner;
+            this.channel        = channel;
+            this.weakAction     = weakAction;
         }
 
         @Override
         public void run() {
-            ChangeListeners<?> strongThis = weakThis.get();
+            OwnerCallableForCleanup<ChangeListeners<?>> strongThis = weakStateOwner.get();
             if (strongThis == null)
                 return;
 
-            strongThis.updateActions(innerActions -> {
+            strongThis.updateState(channel, it->it.updateActions(innerActions -> {
                 try {
-                    wa.clear();
+                    weakAction.clear();
                 } catch (Exception e) {
                     _logError(
                             "An error occurred while clearing the weak action '{}' during the process of " +
-                            "removing it from the list of change actions.", wa, e
+                            "removing it from the list of change actions.", weakAction, e
                         );
                 }
-                return innerActions.remove((Action) wa);
-            });
+                return innerActions.remove((Action) weakAction);
+            }));
         }
     }
 
+    /**
+     *  An implementation of this interface represents the owner of
+     *  a {@link ChangeListeners} instance used by the {@link AutomaticUnSubscriber}
+     *  to clean up the change listeners when a change listener is no longer needed.
+     *  The {@link ChangeListeners} type is completely immutable,
+     *  and so it cannot clean itself up, which is why it needs
+     *  the {@link OwnerCallableForCleanup} interface to call back
+     *  to the owner to perform the cleanup.
+     *
+     * @param <D> The type of the delegate that the change listeners are listening to.
+     */
+    interface OwnerCallableForCleanup<D> {
+        void updateState(
+                @Nullable Channel channel,
+                Function<ChangeListeners<D>,ChangeListeners<D>> updater
+        );
+    }
 
     private static void _logError(String message, @Nullable Object... args) {
         Util._logError(log, message, args);
     }
+
 
 }
