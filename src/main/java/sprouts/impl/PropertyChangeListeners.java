@@ -2,7 +2,6 @@ package sprouts.impl;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
-import org.slf4j.helpers.NOPLogger;
 import sprouts.*;
 
 import java.util.Objects;
@@ -19,7 +18,7 @@ public final class PropertyChangeListeners<T> implements ChangeListeners.OwnerCa
 {
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(PropertyChangeListeners.class);
 
-    private Association<Channel, ChangeListeners<ValDelegate<T>>> _actions = (Association)Association.betweenLinked(Channel.class, ChangeListeners.class);
+    private Association<Channel, ChangeListeners<ValDelegate<T>>> _channelsToListeners = (Association)Association.betweenLinked(Channel.class, ChangeListeners.class);
 
 
     public PropertyChangeListeners() {}
@@ -54,8 +53,8 @@ public final class PropertyChangeListeners<T> implements ChangeListeners.OwnerCa
     }
 
     private void updateActions(Function<ChangeListeners<ValDelegate<T>>, ChangeListeners<ValDelegate<T>>> updater) {
-        _actions = (Association)
-                _actions.entrySet()
+        _channelsToListeners = (Association)
+                _channelsToListeners.entrySet()
                 .stream()
                 .map( entry -> {
                     return entry.withSecond(updater.apply(entry.second()));
@@ -72,7 +71,7 @@ public final class PropertyChangeListeners<T> implements ChangeListeners.OwnerCa
         Channel channel,
         ItemPair<T> pair
     ) {
-        if ( _actions.isEmpty() )
+        if ( _channelsToListeners.isEmpty() )
             return;
         Supplier<ValDelegate<T>> lazilyCreatedDelegate = new Supplier<ValDelegate<T>>() {
             private @Nullable ValDelegate<T> delegate = null;
@@ -85,7 +84,7 @@ public final class PropertyChangeListeners<T> implements ChangeListeners.OwnerCa
         };
         // We clone this property to avoid concurrent modification
         if ( channel == From.ALL)
-            for ( Channel key : _actions.keySet() )
+            for ( Channel key : _channelsToListeners.keySet() )
                 _getActionsFor(key).fireChange( lazilyCreatedDelegate );
         else {
             _getActionsFor(channel).fireChange( lazilyCreatedDelegate );
@@ -100,38 +99,38 @@ public final class PropertyChangeListeners<T> implements ChangeListeners.OwnerCa
      * @return The number of change listeners that are currently registered.
      */
     public long numberOfChangeListeners() {
-        return _actions.values()
+        return _channelsToListeners.values()
                             .stream()
                             .mapToLong(ChangeListeners::numberOfChangeListeners)
                             .sum();
     }
 
     private void _copyFrom(PropertyChangeListeners<T> other) {
-        for ( Pair<Channel, ChangeListeners<ValDelegate<T>>> entry : other._actions ) {
-            _actions = _actions.put(entry.first(), new ChangeListeners<>(entry.second()));
+        for ( Pair<Channel, ChangeListeners<ValDelegate<T>>> entry : other._channelsToListeners) {
+            _channelsToListeners = _channelsToListeners.put(entry.first(), new ChangeListeners<>(entry.second()));
         }
     }
 
     private ChangeListeners<ValDelegate<T>> _getActionsFor( Channel channel ) {
-        if ( !_actions.containsKey(channel) ) {
-            _actions = _actions.put(channel, new ChangeListeners<>());
+        if ( !_channelsToListeners.containsKey(channel) ) {
+            _channelsToListeners = _channelsToListeners.put(channel, new ChangeListeners<>());
         }
-        return _actions.get(channel).get();
+        return _channelsToListeners.get(channel).get();
     }
 
     private void _updateActionsFor(Channel channel, Function<ChangeListeners<ValDelegate<T>>, ChangeListeners<ValDelegate<T>>> updater) {
         ChangeListeners<ValDelegate<T>> listeners = _getActionsFor(channel);
         listeners = updater.apply(listeners);
-        _actions = _actions.put(channel, listeners);
+        _channelsToListeners = _channelsToListeners.put(channel, listeners);
     }
 
     @Override
     public final String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(this.getClass().getSimpleName()).append("[");
-        for ( Channel key : _actions.keySet() ) {
+        for ( Channel key : _channelsToListeners.keySet() ) {
             try {
-                sb.append(key).append("->").append(_actions.get(key).get()).append(", ");
+                sb.append(key).append("->").append(_channelsToListeners.get(key).get()).append(", ");
             } catch ( Exception e ) {
                 _logError("An error occurred while trying to get the number of change listeners for channel '{}'", key, e);
             }

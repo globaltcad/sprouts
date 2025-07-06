@@ -8,16 +8,16 @@ import java.util.function.Function;
 
 public final class PropertyListChangeListeners<T extends @Nullable Object> implements ChangeListeners.OwnerCallableForCleanup<ValsDelegate<T>>
 {
-    private ChangeListeners<ValsDelegate<T>> _actions = new ChangeListeners<>();
+    private ChangeListeners<ValsDelegate<T>> _changeListeners = new ChangeListeners<>();
 
 
     public void onChange( Action<ValsDelegate<T>> action ) {
-        _actions = _actions.add(action, null, this);
+        _changeListeners = _changeListeners.add(action, null, this);
     }
 
     @Override
     public void updateState(@Nullable Channel channel, Function<ChangeListeners<ValsDelegate<T>>, ChangeListeners<ValsDelegate<T>>> updater) {
-        _actions = updater.apply(_actions);
+        _changeListeners = updater.apply(_changeListeners);
     }
 
     public void onChange( Observer observer ) {
@@ -25,15 +25,15 @@ public final class PropertyListChangeListeners<T extends @Nullable Object> imple
     }
 
     public void unsubscribe( Subscriber subscriber ) {
-        _actions = _actions.unsubscribe(subscriber);
+        _changeListeners = _changeListeners.unsubscribe(subscriber);
     }
 
     public void unsubscribeAll() {
-        _actions = _actions.unsubscribeAll();
+        _changeListeners = _changeListeners.unsubscribeAll();
     }
 
     public int numberOfChangeListeners() {
-        return Math.toIntExact(_actions.numberOfChangeListeners());
+        return Math.toIntExact(_changeListeners.numberOfChangeListeners());
     }
 
     public void fireChange(SequenceChange type, Vals<T> source) {
@@ -43,13 +43,13 @@ public final class PropertyListChangeListeners<T extends @Nullable Object> imple
     public void fireChange(
             SequenceChange type, int index, @Nullable Var<T> newVal, @Nullable Var<T> oldVal, Vals<T> source
     ) {
-        _actions.fireChange(()->_createDelegate(index, type, newVal, oldVal, source));
+        _changeListeners.fireChange(()->_createDelegate(index, type, newVal, oldVal, source));
     }
 
     public void fireChange(
             SequenceChange type, int index, @Nullable Vals<T> newVals, @Nullable Vals<T> oldVals, Vals<T> source
     ) {
-        _actions.fireChange(()->_createDelegate(index, type, newVals, oldVals, source));
+        _changeListeners.fireChange(()->_createDelegate(index, type, newVals, oldVals, source));
     }
 
     private ValsDelegate<T> _createDelegate(
