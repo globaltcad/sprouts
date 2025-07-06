@@ -22,10 +22,6 @@ final class ChangeListeners<D> {
 
     ChangeListeners() {this((Tuple)Tuple.of(Action.class));}
 
-    ChangeListeners(ChangeListeners<D> other) {
-        this(other._getState());
-    }
-
     ChangeListeners(Tuple<Action<D>> newActions) {
         _actions = newActions;
     }

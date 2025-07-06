@@ -24,7 +24,7 @@ public final class PropertyChangeListeners<T> implements ChangeListeners.OwnerCa
     public PropertyChangeListeners() {}
 
     public PropertyChangeListeners( PropertyChangeListeners<T> other ) {
-        _copyFrom(other);
+        _channelsToListeners = other._channelsToListeners;
     }
 
 
@@ -103,12 +103,6 @@ public final class PropertyChangeListeners<T> implements ChangeListeners.OwnerCa
                             .stream()
                             .mapToLong(ChangeListeners::numberOfChangeListeners)
                             .sum();
-    }
-
-    private void _copyFrom(PropertyChangeListeners<T> other) {
-        for ( Pair<Channel, ChangeListeners<ValDelegate<T>>> entry : other._channelsToListeners) {
-            _channelsToListeners = _channelsToListeners.put(entry.first(), new ChangeListeners<>(entry.second()));
-        }
     }
 
     private ChangeListeners<ValDelegate<T>> _getActionsFor( Channel channel ) {
