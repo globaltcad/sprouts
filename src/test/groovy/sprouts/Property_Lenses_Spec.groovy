@@ -1553,6 +1553,35 @@ class Property_Lenses_Spec extends Specification
             System.err = originalErr
     }
 
+    def 'You can remove all change listeners from a lens property using `Viewable::unsubscribeAll()`!'()
+    {
+        reportInfo """
+            The `Viewable::unsubscribeAll()` method is used to unsubscribe all listeners
+            from a property. Note that internally, every property, also implements the `Viewable` interface,
+            which is why you can call this method on any property if you cast it to `Viewable`.
+            Keep in mind though, that in most cases you should not cast a property to `Viewable`,
+            and instead use `Var::view()` or `Val::view()` to create a view of the property.
+            
+            But here we are just testing the `unsubscribeAll()` method.
+        """
+        given : 'A mutable property with an initial value and a lens on it.'
+            var property = Var.of(new Author("John", "Doe", LocalDate.of(1829, 8, 12), ["Book1", "Book2"]))
+            var lens = property.zoomTo(Author::firstName, Author::withFirstName)
+        and : 'We add two change listener that will be called when the lens property changes.'
+            Viewable.cast(lens).onChange(From.ALL, it -> {
+                // Do nothing, just for testing purposes.
+            })
+            Viewable.cast(lens).onChange(From.ALL, it -> {
+                // Still do nothing, just for testing purposes.
+            })
+        expect : 'The lens property has two change listener.'
+            Viewable.cast(lens).numberOfChangeListeners() == 2
+        when : 'We unsubscribe all listeners from the lens.'
+            Viewable.cast(lens).unsubscribeAll()
+        then : 'The lens property no longer has any change listeners.'
+            Viewable.cast(lens).numberOfChangeListeners() == 0
+    }
+
     /**
      * This method guarantees that garbage collection is
      * done unlike <code>{@link System#gc()}</code>

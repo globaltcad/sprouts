@@ -693,4 +693,32 @@ class Property_Spec extends Specification
         cleanup : 'We restore the original `System.err` stream.'
             System.err = originalErr
     }
+
+    def 'Use `Viewable::unsubscribeAll()` to unsubscribe all Listeners from a property!'()
+    {
+        reportInfo """
+            The `Viewable::unsubscribeAll()` method is used to unsubscribe all listeners
+            from a property. Note that internally, every property, also implements the `Viewable` interface,
+            which is why you can call this method on any property if you cast it to `Viewable`.
+            Keep in mind though, that in most cases you should not cast a property to `Viewable`,
+            and instead use `Var::view()` or `Val::view()` to create a view of the property.
+            
+            But here we are just testing the `unsubscribeAll()` method.
+        """
+        given : 'A mutable property with an initial value.'
+            var property = Var.of("Hello World")
+        and : 'We add two change listener that will be called when the property changes.'
+            Viewable.cast(property).onChange(From.ALL, it -> {
+                // Do nothing, just for testing purposes.
+            })
+            Viewable.cast(property).onChange(From.ALL, it -> {
+                // Still do nothing, just for testing purposes.
+            })
+        expect : 'The property has two change listener.'
+            Viewable.cast(property).numberOfChangeListeners() == 2
+        when : 'We unsubscribe all listeners from the property.'
+            Viewable.cast(property).unsubscribeAll()
+        then : 'The property has no change listeners anymore.'
+            Viewable.cast(property).numberOfChangeListeners() == 0
+    }
 }

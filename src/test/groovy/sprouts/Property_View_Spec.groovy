@@ -878,6 +878,33 @@ class Property_View_Spec extends Specification
             System.err = originalErr
     }
 
+    def 'Use `Viewable::unsubscribeAll()` to unsubscribe all Listeners from a property view!'()
+    {
+        reportInfo """
+            The `unsubscribeAll()` method can be used to unsubscribe all change listeners
+            from a property view. This effectively stops all change notifications
+            from being sent to the listeners, and it is useful when you want to
+            clean up resources or when you no longer need to listen to changes
+            in a particular context.
+        """
+        given : 'A mutable property with an initial value and a view derived from it.'
+            var property = Var.of("Hello World")
+            var view = property.view()
+        and : 'We add two change listener to the view, which are called when the property changes.'
+            view.onChange(From.ALL, it -> {
+                // Do nothing, just for testing purposes.
+            })
+            view.onChange(From.ALL, it -> {
+                // Still do nothing, just for testing purposes.
+            })
+        expect : 'The property view has two change listener.'
+            view.numberOfChangeListeners() == 2
+        when : 'We unsubscribe all listeners from the view.'
+            view.unsubscribeAll()
+        then : 'The property view now has no change listeners anymore.'
+            view.numberOfChangeListeners() == 0
+    }
+
     /**
      * This method guarantees that garbage collection is
      * done unlike <code>{@link System#gc()}</code>
