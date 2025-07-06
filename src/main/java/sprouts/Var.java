@@ -37,13 +37,14 @@ import java.util.function.Function;
  *  Consider the following example property in your view model:
  *  <pre>{@code
  *      // A username property with a validation action:
- *      private final Var<String> username = Var.of("").onChange(From.VIEW v -> validateUser(v) );
+ *      private final Var<String> username = Var.of("");
+ *      private final Viewable<String> usernameView = this.username.view().onChange(From.VIEW v -> validateUser(v) );
  *  }</pre>
  *  And the following <a href="https://github.com/globaltcad/swing-tree">SwingTree</a>
  *  example UI:
  *  <pre>{@code
  *      UI.textField("")
- *      .peek( tf -> vm.getUsername().onChange(From.VIEW_MODEL t -> tf.setText(t.get()) ) )
+ *      .peek( tf -> vm.getUsernameView().onChange(From.VIEW_MODEL t -> tf.setText(t.get()) ) )
  *      .onKeyRelease( e -> vm.getUsername().set(From.VIEW, ta.getText() ) );
  *  }</pre>
  *  Here your view will automatically update the item of the text property
