@@ -402,7 +402,6 @@ public final class Result<V> implements Maybe<V>
      *     return "?"; // or some other value
      * });
      * }</pre>
-     * </p>
      *
      * @param handler Function that takes a tuple of problems and returns a value
      * @return Present non-null value or the result of applying the handler function

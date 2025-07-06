@@ -11,7 +11,15 @@ public final class TupleWithDiff<T extends @Nullable Object> implements Tuple<T>
     private final TupleTree<T> _tupleTree;
     private final SequenceDiff _diffToPrevious;
 
-
+    /**
+     *  Creates a new instance of {@link TupleWithDiff} with the given items.
+     *  This is an internal method and should not be used directly.
+     *
+     * @param allowsNull Whether the tuple allows null values.
+     * @param type The type of the items in the tuple.
+     * @param items The items to be included in the tuple.
+     * @return A new instance of {@link TupleWithDiff}.
+     */
     @SuppressWarnings("NullAway")
     public static <T> Tuple<T> of(
             boolean allowsNull,
@@ -37,6 +45,13 @@ public final class TupleWithDiff<T extends @Nullable Object> implements Tuple<T>
         return new TupleWithDiff<>(TupleTree.ofAnyArray(allowsNull, type, array), null);
     }
 
+    /**
+     *  Creates a new instance of {@link TupleWithDiff} with the given data and the difference to the previous state.
+     *  This is an internal method and should not be used directly.
+     *
+     * @param data The tuple tree containing the data.
+     * @param diffToPrevious The difference to the previous state, or null if there is no previous state.
+     */
     @SuppressWarnings("NullAway")
     public TupleWithDiff(
             TupleTree<T> data, @Nullable SequenceDiff diffToPrevious

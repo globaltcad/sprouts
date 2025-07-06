@@ -21,13 +21,28 @@ public final class PropertyChangeListeners<T> implements ChangeListeners.OwnerCa
     private Association<Channel, ChangeListeners<ValDelegate<T>>> _channelsToListeners = (Association)Association.betweenLinked(Channel.class, ChangeListeners.class);
 
 
+    /**
+     *  Creates a new instance of {@link PropertyChangeListeners}, without any listeners.
+     */
     public PropertyChangeListeners() {}
 
+    /**
+     *  Creates a new instance of {@link PropertyChangeListeners} by copying the listeners from another instance.
+     *  This is useful for when a property inherits listeners from another property,
+     *
+     * @param other The other instance to copy the listeners from.
+     */
     public PropertyChangeListeners( PropertyChangeListeners<T> other ) {
         _channelsToListeners = other._channelsToListeners;
     }
 
-
+    /**
+     *  Adds a change listener for the given channel.
+     *  This method is used to register a listener that will be notified when the property changes.
+     *
+     * @param channel The channel on which the change listener will be registered.
+     * @param action The action to be performed when the property changes.
+     */
     public void onChange( Channel channel, Action<ValDelegate<T>> action ) {
         Objects.requireNonNull(channel);
         Objects.requireNonNull(action);
@@ -40,14 +55,33 @@ public final class PropertyChangeListeners<T> implements ChangeListeners.OwnerCa
             _updateActionsFor(channel, it -> updater.apply(_getActionsFor(channel)));
     }
 
+    /**
+     *  Adds a plain observer (has no delegate) as a change listener for the default channel.
+     *  This method is used to register a listener that will be notified when the property changes.
+     *
+     * @param observer The observer to be registered as a change listener.
+     */
     public void onChange( Observer observer ) {
         this.onChange(Sprouts.factory().defaultObservableChannel(), new ObserverAsActionImpl<>(observer) );
     }
 
+    /**
+     *  Unsubscribes a {@link Subscriber} from the change listeners.
+     *  This method is used to remove a listener that was previously registered.
+     *  Note that the {@link Subscriber} is a marker interface as well as common
+     *  super type for all listeners that are registered to the change listeners.
+     *
+     * @param subscriber The subscriber to be removed from the change listeners.
+     */
     public void unsubscribe( Subscriber subscriber ) {
         updateActions( it -> it.unsubscribe(subscriber ) );
     }
 
+    /**
+     *  Unsubscribes all change listeners from the change listeners.
+     *  This method is used to remove all listeners that were previously registered.
+     *  Note that this will remove all listeners, regardless of the channel they were registered on.
+     */
     public void unsubscribeAll() {
         updateActions(ChangeListeners::unsubscribeAll);
     }
@@ -62,6 +96,17 @@ public final class PropertyChangeListeners<T> implements ChangeListeners.OwnerCa
                 .collect(Association.collectorOfLinked(Channel.class, ChangeListeners.class));
     }
 
+    /**
+     *  Fires a change event for the given property and channel.
+     *  This method is used to notify all listeners that a change has occurred.
+     *  <b>This is not currently used internally, but may be useful for
+     *  deeply integrated libraries built on top of sprouts.</b>
+     *
+     * @param owner The owner of the property that changed.
+     * @param channel The channel on which the change occurred.
+     * @param newValue The new value of the property.
+     * @param oldValue The old value of the property.
+     */
     public void fireChange( Val<T> owner, Channel channel, @Nullable T newValue, @Nullable T oldValue ) {
         fireChange(owner, channel, new ItemPair<>(owner.type(), newValue, oldValue));
     }
