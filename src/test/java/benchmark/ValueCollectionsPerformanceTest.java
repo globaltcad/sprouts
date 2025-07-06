@@ -49,8 +49,10 @@ public class ValueCollectionsPerformanceTest {
     public static void main(String[] args) {
         testAssociationAgainstHashMap(70_000);
         testSortedAssociationAgainstTreeMap(70_000);
+        testLinkedAssociationAgainstLinkedHashMap(70_000);
         testValueSetAgainstHashSet(70_000);
         testSortedValueSetAgainstTreeSet(70_000);
+        testLinkedValueSetAgainstLinkedHashMap(70_000);
         testTupleAgainstArrayList(60_000, 70_000);
         testTupleAgainstArrayList(30_000, 70_000);
         testTupleAgainstArrayList(10_000, 70_000);
@@ -176,6 +178,65 @@ public class ValueCollectionsPerformanceTest {
         );
     }
 
+    private static void testLinkedAssociationAgainstLinkedHashMap(int numberOfOperations) {
+        List<OperationKeyPair> operations = generateOperations(numberOfOperations);
+        test(
+                "LinkedAssociation", ()->Association.betweenLinked(String.class, String.class), assoc-> {
+                    Association<String, String> result = assoc;
+                    for (OperationKeyPair pair : operations) {
+                        switch (pair.operation) {
+                            case ADD:
+                                result = result.put(pair.key, "value of " + pair.key);
+                                break;
+                            case REMOVE:
+                                result = result.remove(pair.key);
+                                break;
+                            case GET:
+                                result.get(pair.key);
+                                break;
+                            case ITERATE:
+                                int sum = 0;
+                                for (Pair<String, String> entry : result) {
+                                    sum += entry.first().hashCode() + entry.second().hashCode();
+                                }
+                                break;
+                            case STREAM:
+                                int sum2 = result.entrySet().stream().mapToInt(entry -> entry.first().hashCode() * entry.second().hashCode()).filter(it -> it > 0).sum();
+                                break;
+                        }
+                    }
+                    return result;
+                },
+                "LinkedHashMap", ()->new LinkedHashMap<String, String>(),
+                map->{
+                    for (OperationKeyPair pair : operations) {
+                        switch (pair.operation) {
+                            case ADD:
+                                map.put(pair.key, "value of " + pair.key);
+                                break;
+                            case REMOVE:
+                                map.remove(pair.key);
+                                break;
+                            case GET:
+                                map.get(pair.key);
+                                break;
+                            case ITERATE:
+                                int sum = 0;
+                                for (Map.Entry<String, String> entry : map.entrySet()) {
+                                    sum += entry.getKey().hashCode() + entry.getValue().hashCode();
+                                }
+                                break;
+                            case STREAM:
+                                int sum2 = map.entrySet().stream().mapToInt(entry -> entry.getKey().hashCode() * entry.getValue().hashCode()).filter(it -> it > 0).sum();
+                                break;
+                        }
+                    }
+                    return map;
+                },
+                (a, b)-> a.toMap().equals(b)
+        );
+    }
+
     private static void testValueSetAgainstHashSet(int numberOfOperations) {
         List<OperationKeyPair> operations = generateOperations(numberOfOperations);
         test(
@@ -238,7 +299,7 @@ public class ValueCollectionsPerformanceTest {
     private static void testSortedValueSetAgainstTreeSet(int numberOfOperations) {
         List<OperationKeyPair> operations = generateOperations(numberOfOperations);
         test(
-                "OrderedValueSet", ()-> ValueSet.ofSorted(String.class), assoc-> {
+                "SortedValueSet", ()-> ValueSet.ofSorted(String.class), assoc-> {
                     ValueSet<String> result = assoc;
                     for (OperationKeyPair pair : operations) {
                         switch (pair.operation) {
@@ -265,6 +326,65 @@ public class ValueCollectionsPerformanceTest {
                     return result;
                 },
                 "TreeSet", ()->new TreeSet<String>(String::compareTo),
+                map->{
+                    for (OperationKeyPair pair : operations) {
+                        switch (pair.operation) {
+                            case ADD:
+                                map.add(pair.key);
+                                break;
+                            case REMOVE:
+                                map.remove(pair.key);
+                                break;
+                            case GET:
+                                boolean contains = map.contains(pair.key);
+                                break;
+                            case ITERATE:
+                                int sum = 0;
+                                for (String value : map) {
+                                    sum += value.hashCode();
+                                }
+                                break;
+                            case STREAM:
+                                int sum2 = map.stream().map(String::hashCode).filter(it->it>0).mapToInt(i->i).sum();
+                                break;
+                        }
+                    }
+                    return map;
+                },
+                (a, b)->a.toSet().equals(b)
+        );
+    }
+
+    private static void testLinkedValueSetAgainstLinkedHashMap(int numberOfOperations) {
+        List<OperationKeyPair> operations = generateOperations(numberOfOperations);
+        test(
+                "LinkedValueSet", ()-> ValueSet.ofLinked(String.class), assoc-> {
+                    ValueSet<String> result = assoc;
+                    for (OperationKeyPair pair : operations) {
+                        switch (pair.operation) {
+                            case ADD:
+                                result = result.add(pair.key);
+                                break;
+                            case REMOVE:
+                                result = result.remove(pair.key);
+                                break;
+                            case GET:
+                                boolean contains = result.contains(pair.key);
+                                break;
+                            case ITERATE:
+                                int sum = 0;
+                                for (String value : result) {
+                                    sum += value.hashCode();
+                                }
+                                break;
+                            case STREAM:
+                                int prod = result.stream().map(String::hashCode).filter(it->it>0).mapToInt(i->i).sum();
+                                break;
+                        }
+                    }
+                    return result;
+                },
+                "LinkedHashMap", ()->new TreeSet<String>(String::compareTo),
                 map->{
                     for (OperationKeyPair pair : operations) {
                         switch (pair.operation) {
