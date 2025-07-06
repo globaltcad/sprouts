@@ -5,7 +5,6 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.helpers.NOPLogger;
 
 import java.util.Collections;
 import java.util.List;
@@ -271,7 +270,6 @@ public final class Result<V> implements Maybe<V>
 
 
     private static final Logger log = LoggerFactory.getLogger(Result.class);
-    private static final boolean HAS_SLF4J_IMPLEMENTATION = !(log instanceof NOPLogger);
 
     private final boolean        _wasLogged;
     private final Class<V>       _type;
@@ -653,13 +651,7 @@ public final class Result<V> implements Maybe<V>
 						1. Log the exception
 						2. Add it as a problem.
 				*/
-                if ( HAS_SLF4J_IMPLEMENTATION )
-                    log.error("An exception occurred while peeking at the problems of a result.", e);
-                else {
-                    // If we do not have a logger, we just print the stack trace to the console.
-                    System.err.println("An exception occurred while peeking at the problems of a result.");
-                    e.printStackTrace();
-                }
+                _logError("An exception occurred while peeking at the problems of a result.", e);
                 result = Result.of( type(), result._value, newProblems );
             }
         }
