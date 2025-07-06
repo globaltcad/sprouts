@@ -602,4 +602,123 @@ class Property_Spec extends Specification
             lensNullableFood.type() == DayOfWeek.class
     }
 
+
+    def 'Throwing exceptions in property change listeners, will not interrupt the control flow at the source property.'()
+    {
+        reportInfo """
+            When a property changes, it will notify all of its change listeners.
+            If one of the listeners throws an exception, it should not interrupt the control flow
+            at the source property. This is because the change listeners are meant to be
+            independent of each other and should not affect each others operation or
+            that of the source property.
+            This is especially important when you have multiple change listeners that
+            depend on each other, as it ensures that everything gets an opportunity to run.
+        """
+        given : 'A mutable property with an initial value.'
+            var property = Var.of("Hello World")
+        and : 'We add a change listener that throws an exception.'
+            Viewable.cast(property).onChange(From.ALL, it -> {
+                throw new RuntimeException("Boom!")
+            })
+        and : 'We create a new `PrintStream` that will capture the `System.err`.'
+            var originalErr = System.err
+            var outputStream = new ByteArrayOutputStream()
+            var printStream = new PrintStream(outputStream)
+            System.err = printStream
+        when : 'We change the value of the property...'
+            property.set("Goodbye World") // This should not throw an exception.
+        then : 'The exception does not reach us, the caller.'
+            noExceptionThrown()
+        and : 'The output stream on the other hand, will contain the exception message.'
+            outputStream.toString().contains("RuntimeException")
+            outputStream.toString().contains("Boom!")
+            outputStream.toString().contains("at ") // This is the stack trace of the exception.
+        and : 'Despite the exception, the property has the new item.'
+            property.get() == "Goodbye World"
+
+        when : 'We add another change listener that will be called after the first one.'
+            var trace = []
+            Viewable.cast(property).onChange(From.ALL, it -> {
+                trace.add("Second change listener called.")
+            })
+        and : 'We change the value of the property again...'
+            property.set("Hello again!") // This should not throw an exception.
+
+        then : 'The second change listener is called and the exception from the first one does not affect it.'
+            noExceptionThrown()
+            trace == ["Second change listener called."]
+
+        cleanup : 'We restore the original `System.err` stream.'
+            System.err = originalErr
+    }
+
+    def 'Exceptions in the `toString()` of an item, will not cripple the `toString()` of a property.'()
+    {
+        reportInfo """
+            When you call the `toString()` method on a property, it will
+            indirectly call the `toString()` method on the item of the property.
+            Now, if the item throws an exception in its `toString()` method,
+            let's say, because of a bug in the code, then it should not affect
+            the reliability of the `toString()` method of the property itself!
+            This is because the `toString()` method of a property is meant to
+            provide a human-readable representation, ans so if the control
+            flow is interrupted by an exception, then the property would not
+            be able to provide any information at all.
+            
+            If an error occurs in the `toString()` method of an item,
+            then an error message will be logged to the console, and
+            the string representation will tell you about the error.
+        """
+        given : 'We first create a new `PrintStream` that will capture the `System.err`.'
+            var originalErr = System.err
+            var outputStream = new ByteArrayOutputStream()
+            var printStream = new PrintStream(outputStream)
+            System.err = printStream
+        and : 'A mutable property with an item that throws an exception in its `toString()`.'
+            var property = Var.of(new Object() {
+                @Override public String toString() {
+                    throw new RuntimeException("Boom!")
+                }
+            })
+        when : 'We call the toString() method on the property.'
+            var result = property.toString()
+        then : 'The `toString()` method of the property does not throw an exception.'
+            noExceptionThrown()
+        then : 'The `toString()` method of the property does not throw an exception.'
+            result == "Var<>[java.lang.RuntimeException: Boom!]"
+        and : 'The output stream contains the exception message.'
+            outputStream.toString().contains("java.lang.RuntimeException: Boom!")
+            outputStream.toString().contains("at ") // This is the stack trace of the exception.
+
+        cleanup : 'We restore the original `System.err` stream.'
+            System.err = originalErr
+    }
+
+    def 'Use `Viewable::unsubscribeAll()` to unsubscribe all Listeners from a property!'()
+    {
+        reportInfo """
+            The `Viewable::unsubscribeAll()` method is used to unsubscribe all listeners
+            from a property. Note that internally, every property, also implements the `Viewable` interface,
+            which is why you can call this method on any property if you cast it to `Viewable`.
+            Keep in mind though, that in most cases you should not cast a property to `Viewable`,
+            and instead use `Var::view()` or `Val::view()` to create a view of the property.
+            
+            But here we are just testing the `unsubscribeAll()` method.
+        """
+        given : 'A mutable property with an initial value.'
+            var property = Var.of("Hello World")
+        and : 'We add two change listener that will be called when the property changes.'
+            Viewable.cast(property).onChange(From.ALL, it -> {
+                // Do nothing, just for testing purposes.
+            })
+            Viewable.cast(property).onChange(From.ALL, it -> {
+                // Still do nothing, just for testing purposes.
+            })
+        expect : 'The property has two change listener.'
+            Viewable.cast(property).numberOfChangeListeners() == 2
+        when : 'We unsubscribe all listeners from the property.'
+            Viewable.cast(property).unsubscribeAll()
+        then : 'The property has no change listeners anymore.'
+            Viewable.cast(property).numberOfChangeListeners() == 0
+    }
 }

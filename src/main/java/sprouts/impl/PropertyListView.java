@@ -1,6 +1,7 @@
 package sprouts.impl;
 
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
 import sprouts.Observable;
 import sprouts.Observer;
 import sprouts.*;
@@ -12,12 +13,14 @@ import java.util.stream.Collectors;
 
 final class PropertyListView<T extends @Nullable Object> implements Viewables<T> {
 
+    private static final Logger log = org.slf4j.LoggerFactory.getLogger(PropertyListView.class);
+
     public static <T, U> Viewables<U> of(U nullObject, U errorObject, Vals<T> source, Function<T, @Nullable U> mapper) {
         Objects.requireNonNull(nullObject);
         Objects.requireNonNull(errorObject);
 
         final Class<U> targetType = Util.expectedClassFromItem(nullObject);
-        Function<T, U> nonNullMapper = Util.nonNullMapper(nullObject, errorObject, mapper);
+        Function<T, U> nonNullMapper = Util.nonNullMapper(log, nullObject, errorObject, mapper);
 
         PropertyListView<U> view = new PropertyListView<>(targetType, source.allowsNull(), source);
         Function<Val<T>, Var<U>> sourcePropToViewProp = prop -> {
@@ -409,5 +412,9 @@ final class PropertyListView<T extends @Nullable Object> implements Viewables<T>
     @Override
     public void unsubscribeAll() {
         _changeListeners.unsubscribeAll();
+    }
+
+    public int numberOfChangeListeners() {
+        return _changeListeners.numberOfChangeListeners();
     }
 }

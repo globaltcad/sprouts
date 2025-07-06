@@ -45,7 +45,7 @@ public interface Viewable<T> extends Val<T>, Observable {
      *  purpose of registering change listeners on it.<br>
      *  <b>WARNING: Only call this method in a class constructor with
      *  a property which is also a member variable of that class.
-     *  Otherwise, you are risking memory leaks.</b><br>
+     *  Otherwise, you are risking memory leaks!</b><br>
      *  <p>
      *  Regular properties, created from the various factory methods in {@link Val} and {@link Var},
      *  (may) also implement the {@link Viewable} interface internally. <br>

@@ -796,6 +796,128 @@ class Property_View_Spec extends Specification
             view.id() == "property1_and_property2"
     }
 
+    def 'Throwing exceptions in view change listeners, will not interrupt the control flow at the source property.'()
+    {
+        reportInfo """
+            If the code in a view change listener throws an exception, then the exception will not be propagated
+            to the source property. Instead, the exception will be caught and logged.
+            This is important because it allows the source property to continue to function
+            even if a view change listener fails.
+        """
+        given : 'A property with a view derived from it.'
+            var property = Var.of("Hello")
+            var view = property.view()
+        and : 'We register a change listener that throws an exception.'
+            view.onChange(From.ALL, v -> {
+                throw new RuntimeException("This is a test exception.")
+            })
+        and : 'We create a new `PrintStream` that will capture the `System.err`.'
+            var originalErr = System.err
+            var outputStream = new ByteArrayOutputStream()
+            var printStream = new PrintStream(outputStream)
+            System.err = printStream
+
+        when : 'We change the value of the property.'
+            property.set("World")
+        then : 'The exception does not reach us, because it is caught and logged.'
+            noExceptionThrown()
+        and : 'The output stream on the other hand, will contain the exception message.'
+            outputStream.toString().contains("RuntimeException")
+            outputStream.toString().contains("This is a test exception.")
+            outputStream.toString().contains("at ") // This is the stack trace of the exception.
+
+        and : 'The view is still updated and has the expected value.'
+            view.get() == "World"
+
+        cleanup : 'We restore the original `System.err` stream.'
+            System.err = originalErr
+    }
+
+    def 'Exceptions in the `toString()` of an item, will not cripple the `toString()` of a property view.'()
+    {
+        reportInfo """
+            When you call the `toString()` method on a property view, it will
+            indirectly call the `toString()` method on the item of the view.
+            Now, if the item throws an exception in its `toString()` method,
+            let's say, because of a bug in the code, then it should not affect
+            the reliability of the `toString()` method of the view itself!
+            This is because the `toString()` method of a view is meant to
+            provide a human-readable representation, ans so if the control
+            flow is interrupted by an exception, then the property would not
+            be able to provide any information at all.
+            
+            If an error occurs in the `toString()` method of an item,
+            then an error message will be logged to the console, and
+            the string representation will tell you about the error.
+        """
+        given : 'We first create a new `PrintStream` that will capture the `System.err`.'
+            var originalErr = System.err
+            var outputStream = new ByteArrayOutputStream()
+            var printStream = new PrintStream(outputStream)
+            System.err = printStream
+        and : 'A property with an item that throws an exception in its `toString()` method.'
+            var property = Var.of(new Object() {
+                @Override String toString() { throw new RuntimeException("This is a test exception.") }
+            })
+        and : 'A view of the property.'
+            var view = property.view()
+
+        when : 'We call the `toString()` method on the property view.'
+            var result = view.toString()
+
+        then : 'The `toString()` method of the view does not throw an exception.'
+            noExceptionThrown()
+        and :'The result is a string representation of the view, and it contains the exception message.'
+            result == "View<>[java.lang.RuntimeException: This is a test exception.]"
+        and : 'The output stream on the other hand, will contain the exception message.'
+            outputStream.toString().contains("RuntimeException")
+            outputStream.toString().contains("This is a test exception.")
+            outputStream.toString().contains("at ") // This is the stack trace of the exception.
+
+        cleanup : 'We restore the original `System.err` stream.'
+            System.err = originalErr
+    }
+
+    def 'Use `Viewable::unsubscribeAll()` to unsubscribe all Listeners from a property view!'()
+    {
+        reportInfo """
+            The `unsubscribeAll()` method can be used to unsubscribe all change listeners
+            from a property view. This effectively stops all change notifications
+            from being sent to the listeners, and it is useful when you want to
+            clean up resources or when you no longer need to listen to changes
+            in a particular context.
+        """
+        given : 'A mutable property with an initial value and a view derived from it.'
+            var property = Var.of("Hello World")
+            var view = property.view()
+        and : 'A trace list to record the side effects.'
+            var trace = []
+        and : 'We add two change listener to the view, which are called when the property changes.'
+            view.onChange(From.ALL, it -> {
+                trace << "Listener 1: " + it.currentValue().orElseThrow()
+            })
+            view.onChange(From.ALL, it -> {
+                trace << "Listener 2: " + it.currentValue().orElseThrow()
+            })
+        expect : 'The property view has two change listener.'
+            view.numberOfChangeListeners() == 2
+
+        when : 'We change the value of the property.'
+            property.set("Hello Sprouts")
+        then : 'The change listeners are called and the trace list is updated.'
+            trace == ["Listener 1: Hello Sprouts", "Listener 2: Hello Sprouts"]
+
+        when : 'We unsubscribe all listeners from the view.'
+            view.unsubscribeAll()
+        then : 'The property view now has no change listeners anymore.'
+            view.numberOfChangeListeners() == 0
+
+        when : 'We change the value of the property again.'
+            property.set("Hello again")
+        then : 'The change listeners are not called anymore, because they were unsubscribed.'
+            trace == ["Listener 1: Hello Sprouts", "Listener 2: Hello Sprouts"]
+    }
+
     /**
      * This method guarantees that garbage collection is
      * done unlike <code>{@link System#gc()}</code>

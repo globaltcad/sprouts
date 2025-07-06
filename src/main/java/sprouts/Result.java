@@ -5,13 +5,15 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.helpers.NOPLogger;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.*;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  *  A {@link Result} is very similar to an {@link Optional} in that it can either contain an item or not,
@@ -268,7 +270,6 @@ public final class Result<V> implements Maybe<V>
 
 
     private static final Logger log = LoggerFactory.getLogger(Result.class);
-    private static final boolean HAS_SLF4J_IMPLEMENTATION = !(log instanceof NOPLogger);
 
     private final boolean        _wasLogged;
     private final Class<V>       _type;
@@ -535,14 +536,7 @@ public final class Result<V> implements Maybe<V>
                         handler.accept(exceptionType.cast(problem.exception().get()));
                         problems = problems.remove(problem);
                     } catch ( Exception e ) {
-                        // If the handler throws an exception, we catch it and log it.
-                        if ( HAS_SLF4J_IMPLEMENTATION )
-                            log.error("An exception occurred while handling a problem in a result.", e);
-                        else {
-                            // If we do not have a logger, we just print the stack trace to the console.
-                            System.err.println("An exception occurred while handling a problem in a result.");
-                            e.printStackTrace();
-                        }
+                        _logError("An exception occurred while handling a problem in a result.", e);
                     }
                 }
             }
@@ -583,14 +577,7 @@ public final class Result<V> implements Maybe<V>
                     handler.accept(problem);
                     problems = problems.remove(problem);
                 } catch ( Exception e ) {
-                    // If the handler throws an exception, we catch it and log it.
-                    if ( HAS_SLF4J_IMPLEMENTATION )
-                        log.error("An exception occurred while handling a problem in a result.", e);
-                    else {
-                        // If we do not have a logger, we just print the stack trace to the console.
-                        System.err.println("An exception occurred while handling a problem in a result.");
-                        e.printStackTrace();
-                    }
+                    _logError("An exception occurred while handling a problem in a result.", e);
                 }
             }
             return new Result<>(
@@ -630,13 +617,7 @@ public final class Result<V> implements Maybe<V>
 					1. Log the exception
 					2. Add it as a problem.
 			*/
-            if ( HAS_SLF4J_IMPLEMENTATION )
-                log.error("An exception occurred while peeking at the problems of a result.", e);
-            else {
-                // If we do not have a logger, we just print the stack trace to the console.
-                System.err.println("An exception occurred while peeking at the problems of a result.");
-                e.printStackTrace();
-            }
+            _logError("An exception occurred while peeking at the problems of a result.", e);
             return Result.of( type(), this._value, newProblems );
         }
         return this;
@@ -670,13 +651,7 @@ public final class Result<V> implements Maybe<V>
 						1. Log the exception
 						2. Add it as a problem.
 				*/
-                if ( HAS_SLF4J_IMPLEMENTATION )
-                    log.error("An exception occurred while peeking at the problems of a result.", e);
-                else {
-                    // If we do not have a logger, we just print the stack trace to the console.
-                    System.err.println("An exception occurred while peeking at the problems of a result.");
-                    e.printStackTrace();
-                }
+                _logError("An exception occurred while peeking at the problems of a result.", e);
                 result = Result.of( type(), result._value, newProblems );
             }
         }
@@ -1212,6 +1187,10 @@ public final class Result<V> implements Maybe<V>
             }
         }
         return (Class<T>) itemType;
+    }
+
+    private static void _logError(String message, @Nullable Object... args) {
+        Util._logError(log, message, args);
     }
 
 }

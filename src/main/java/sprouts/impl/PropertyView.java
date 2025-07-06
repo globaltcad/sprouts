@@ -57,7 +57,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 		Objects.requireNonNull(nullObject);
 		Objects.requireNonNull(errorObject);
 
-		Function<T, U> nonNullMapper = Util.nonNullMapper(nullObject, errorObject, mapper);
+		Function<T, U> nonNullMapper = Util.nonNullMapper(log, nullObject, errorObject, mapper);
 
 		final U initial = nonNullMapper.apply(source.orElseNull());
 		final Class<U> targetType = Util.expectedClassFromItem(initial);
@@ -145,6 +145,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 			try {
 				return combiner.apply(p1.orElseNull(), p2.orElseNull());
 			} catch ( Exception e ) {
+				_logError("An error occurred while applying the combiner function of a composite property.",e);
 				return null;
 			}
 		};
@@ -157,7 +158,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 				return;
 			T newItem = fullCombiner.apply(v.currentValue(), innerSecond);
 			if (newItem == null)
-				log.error(
+				_logError(
 					"Invalid combiner result! The combination of the first item '{}' (changed) and the second " +
 					"item '{}' was null and null is not allowed! The old item '{}' is retained!",
 					v.currentValue().orElseNull(), innerSecond.orElseNull(), innerResult.orElseNull()
@@ -171,7 +172,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 			Val<T> innerFirst = innerResult._getSource(0);
 			T newItem = fullCombiner.apply(innerFirst, v.currentValue());
 			if (newItem == null)
-				log.error(
+				_logError(
 					"Invalid combiner result! The combination of the first item '{}' and the second " +
 					"item '{}' (changed) was null and null is not allowed! The old item '{}' is retained!",
 					innerFirst.orElseNull(), v.currentValue().orElseNull(), innerResult.orElseNull()
@@ -204,6 +205,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 			try {
 				return combiner.apply(p1.orElseNull(), p2.orElseNull());
 			} catch ( Exception e ) {
+				_logError("An error occurred while applying the combiner function of a composite property.", e);
 				return null;
 			}
 		};
@@ -244,6 +246,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 			try {
 				return combiner.apply(p1.orElseNull(), p2.orElseNull());
 			} catch ( Exception e ) {
+				_logError("An error occurred while applying the combiner function of a composite property.", e);
 				return null;
 			}
 		};
@@ -259,7 +262,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 			Val<U> innerSecond = innerResult._getSource(1);
 			@Nullable R newItem = fullCombiner.apply(v.currentValue(), innerSecond);
 			if (newItem == null)
-				log.error(
+				_logError(
 					"Invalid combiner result! The combination of the first item '{}' (changed) " +
 					"and the second item '{}' was null and null is not allowed! " +
 					"The old item '{}' is retained!",
@@ -274,7 +277,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 			Val<T> innerFirst = innerResult._getSource(0);
 			@Nullable R newItem = fullCombiner.apply(innerFirst, v.currentValue());
 			if (newItem == null)
-				log.error(
+				_logError(
 					"Invalid combiner result! The combination of the first item '{}' and the second " +
 					"item '{}' (changed) was null and null is not allowed! " +
 					"The old item '{}' is retained!",
@@ -300,6 +303,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 			try {
 				return combiner.apply(p1.orElseNull(), p2.orElseNull());
 			} catch ( Exception e ) {
+				_logError("An error occurred while applying the combiner function of a composite property.", e);
 				return null;
 			}
 		};
@@ -363,8 +367,9 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 			// We check if the type is correct
 			if ( !_type.isAssignableFrom(_currentItem.getClass()) )
 				throw new IllegalArgumentException(
-						"The provided type of the initial item is not compatible " +
-								"with the actual type of the variable"
+						"The provided type of the initial item is '" + _currentItem.getClass() + "'\n" +
+						"which is not compatible with the expected type '" + _type + "'\n" +
+						"defined by this property view!"
 				);
 		}
 		if ( !Sprouts.factory().idPattern().matcher(_id).matches() )
@@ -485,7 +490,13 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 
 	@Override
 	public final String toString() {
-		String item = this.mapTo(String.class, Object::toString).orElse("null");
+		String item = "?";
+		try {
+			item = this.mapTo(String.class, Object::toString).orElse("null");
+		} catch ( Exception e ) {
+			item = e.toString();
+			_logError("Failed to convert item to string: {}", e.getMessage(), e);
+		}
 		String id = this.id() == null ? "?" : this.id();
 		if ( id.equals(Sprouts.factory().defaultId()) ) id = "?";
 		String type = ( type() == null ? "?" : type().getSimpleName() );
@@ -495,6 +506,10 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 		String name = "View";
 		String content = ( id.equals("?") ? item : id + "=" + item );
 		return name + "<" + type + ">" + "[" + content + "]";
+	}
+
+	private static void _logError(String message, @Nullable Object... args) {
+		Util._logError(log, message, args);
 	}
 
 }

@@ -1502,6 +1502,140 @@ class Property_Lenses_Spec extends Specification
             trace == ["!"]
     }
 
+    def 'Exceptions in the `toString()` of an item, will not cripple the `toString()` of a lens property.'()
+    {
+        reportInfo """
+            When you call the `toString()` method on a lens property, it will
+            indirectly call the `toString()` method on the item of the lens property.
+            Now, if the item throws an exception in its `toString()` method,
+            let's say, because of a bug in the code, then it should not affect
+            the reliability of the `toString()` method of the lens property itself!
+            This is because the `toString()` method of a property is meant to
+            provide a human-readable representation, ans so if the control
+            flow is interrupted by an exception, then the property would not
+            be able to provide any information at all.
+            
+            If an error occurs in the `toString()` method of an item,
+            then an error message will be logged to the console, and
+            the string representation will tell you about the error.
+        """
+        given : 'We first create a new `PrintStream` that will capture the `System.err`.'
+            var originalErr = System.err
+            var outputStream = new ByteArrayOutputStream()
+            var printStream = new PrintStream(outputStream)
+            System.err = printStream
+        and : 'A data structure that allows us to zoom into the item.'
+            var data = [
+                    go: "Go",
+                    watch: "Watch",
+                    dominion: "Dominion",
+                    now: new Object() {
+                        @Override public String toString() {
+                            throw new RuntimeException("Heart explodes!")
+                        }
+                    }
+            ]
+        and : 'We create a property that wraps the data structure as well as a lens that focuses on the "now" field.'
+            var property = Var.of(data)
+            var lens = property.zoomTo( it -> it.now, (it, now) -> { it.now = now; return it } )
+
+        when : 'We call the `toString()` method on the lens.'
+            var result = lens.toString()
+        then : 'The `toString()` method of the lens property does not throw an exception.'
+            noExceptionThrown()
+        and : 'The string representation of the lens property contains the exception message.'
+            result == "Lens<>[java.lang.RuntimeException: Heart explodes!]"
+        and : 'The output stream contains the exception message.'
+            outputStream.toString().contains("java.lang.RuntimeException: Heart explodes!")
+            outputStream.toString().contains("at ") // This is the stack trace of the exception.
+
+        cleanup : 'We restore the original `System.err` stream.'
+            System.err = originalErr
+    }
+
+    def 'You can remove all change listeners from a lens property using `Viewable::unsubscribeAll()`!'()
+    {
+        reportInfo """
+            The `Viewable::unsubscribeAll()` method is used to unsubscribe all listeners
+            from a property. Note that internally, every property, also implements the `Viewable` interface,
+            which is why you can call this method on any property if you cast it to `Viewable`.
+            Keep in mind though, that in most cases you should not cast a property to `Viewable`,
+            and instead use `Var::view()` or `Val::view()` to create a view of the property.
+            
+            But here we are just testing the `unsubscribeAll()` method.
+        """
+        given : 'A mutable property with an initial value and a lens on it.'
+            var property = Var.of(new Author("John", "Doe", LocalDate.of(1829, 8, 12), ["Book1", "Book2"]))
+            var lens = property.zoomTo(Author::firstName, Author::withFirstName)
+        and : 'A trace list to record the side effects.'
+            var trace = []
+        and : 'We add two change listener that will be called when the lens property changes.'
+            Viewable.cast(lens).onChange(From.ALL, it -> {
+                trace << "Listened to: " + it.currentValue().orElseThrow()
+            })
+            Viewable.cast(lens).onChange(From.ALL, it -> {
+                trace << "Also listened to: " + it.currentValue().orElseThrow()
+            })
+        expect : 'The lens property has two change listener.'
+            Viewable.cast(lens).numberOfChangeListeners() == 2
+
+        when : 'We change the value of the lens property.'
+            lens.set("Smith")
+        then : 'The change listeners are notified.'
+            trace == ["Listened to: Smith", "Also listened to: Smith"]
+
+        when : 'We unsubscribe all listeners from the lens.'
+            Viewable.cast(lens).unsubscribeAll()
+        then : 'The lens property no longer has any change listeners.'
+            Viewable.cast(lens).numberOfChangeListeners() == 0
+
+        when : 'We change the value of the lens property again.'
+            lens.set("Mayer")
+        then : 'The change listeners are not notified anymore, so the trace is unchanged.'
+            trace == ["Listened to: Smith", "Also listened to: Smith"]
+    }
+
+    def 'You can remove all change listeners from a lens property view using `Viewable::unsubscribeAll()`!'()
+    {
+        reportInfo """
+            When we create a view of a lens property, we can also unsubscribe all listeners
+            from the view using the `Viewable::unsubscribeAll()` method.
+            In this test we create a lens property and a view of it,
+            then we add two change listeners to the view, and finally we unsubscribe all listeners
+            from the view using the `unsubscribeAll()` method.
+        """
+        given : 'A mutable property with an initial value and a lens on it, and then a view of the lens.'
+            var property = Var.of(new Author("John", "Doe", LocalDate.of(1829, 8, 12), ["Book1", "Book2"]))
+            var lens = property.zoomTo(Author::firstName, Author::withFirstName)
+            var view = lens.view()
+        and : 'A trace list to record the side effects.'
+            var trace = []
+        and : 'We add two change listener that will be called when the lens property changes.'
+            view.onChange(From.ALL, it -> {
+                trace << "Listened to: " + it.currentValue().orElseThrow()
+            })
+            view.onChange(From.ALL, it -> {
+                trace << "Also listened to: " + it.currentValue().orElseThrow()
+            })
+        expect : 'The lens property view has two change listener.'
+            view.numberOfChangeListeners() == 2
+
+        when : 'We change the value of the lens property.'
+            lens.set("Smith")
+        then : 'The change listeners are notified.'
+            trace == ["Listened to: Smith", "Also listened to: Smith"]
+
+        when : 'We unsubscribe all listeners from the lens view.'
+            view.unsubscribeAll()
+        then : 'The view no longer has any change listeners.'
+            view.numberOfChangeListeners() == 0
+
+        when : 'We change the value of the lens property again.'
+            lens.set("Mayer")
+        then : 'The change listeners are not notified anymore, so the trace is unchanged.'
+            trace == ["Listened to: Smith", "Also listened to: Smith"]
+    }
+
     /**
      * This method guarantees that garbage collection is
      * done unlike <code>{@link System#gc()}</code>

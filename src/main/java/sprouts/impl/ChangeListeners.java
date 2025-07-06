@@ -1,6 +1,8 @@
 package sprouts.impl;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
+import org.slf4j.helpers.NOPLogger;
 import sprouts.Action;
 import sprouts.Subscriber;
 import sprouts.Tuple;
@@ -89,11 +91,10 @@ final class ChangeListeners<D> {
                 try {
                     action.accept(delegate);
                 } catch (Exception e) {
-                    log.error(
-                        "An error occurred while executing " +
-                        "action '" + action + "' for delegate '" + delegate + "'",
-                        e
-                    );
+                    _logError(
+                            "An error occurred while executing action '{}' for delegate '{}'",
+                            action, delegate, e
+                        );
                 }
         });
     }
@@ -106,7 +107,10 @@ final class ChangeListeners<D> {
             try {
                 sb.append(action).append(", ");
             } catch (Exception e) {
-                log.error("An error occurred while trying to get the string representation of the action '{}'", action, e);
+                _logError(
+                            "An error occurred while trying to get the string " +
+                            "representation of the action '{}'", action, e
+                    );
             }
         }
         sb.append("]");
@@ -132,13 +136,19 @@ final class ChangeListeners<D> {
                 try {
                     wa.clear();
                 } catch (Exception e) {
-                    log.error(
-                        "An error occurred while clearing the weak action '{}' during the process of " +
-                        "removing it from the list of change actions.", wa, e
-                    );
+                    _logError(
+                            "An error occurred while clearing the weak action '{}' during the process of " +
+                            "removing it from the list of change actions.", wa, e
+                        );
                 }
                 return innerActions.remove((Action) wa);
             });
         }
     }
+
+
+    private static void _logError(String message, @Nullable Object... args) {
+        Util._logError(log, message, args);
+    }
+
 }

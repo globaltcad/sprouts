@@ -1,5 +1,6 @@
 package sprouts.impl;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import sprouts.*;
 
@@ -44,7 +45,7 @@ final class EventImpl implements Observable, Event {
                 try {
                     observer.invoke();
                 } catch (Exception e) {
-                    log.error("Error invoking observer!", e);
+                    _logError("Error invoking observer!", e);
                 }
             }
             for (WeakReference<EventImpl> vessel : _getVessels()) {
@@ -79,6 +80,10 @@ final class EventImpl implements Observable, Event {
     @Override
     public void unsubscribeAll() {
         _setObservers(_getObservers().clear());
+    }
+
+    private static void _logError(String message, @Nullable Object... args) {
+        Util._logError(log, message, args);
     }
 
 }
