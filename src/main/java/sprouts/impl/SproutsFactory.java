@@ -13,8 +13,8 @@ import java.util.regex.Pattern;
 
 /**
  *  Creates instances of the various property types in the Sprouts library.
- *  This interface allows you to plug in your own implementations of the Sprouts properties
- *  through the {@link Sprouts#setFactory(SproutsFactory)} method.
+ *  This interface allows you to plug in your own implementations of the Sprouts
+ *  properties and collections, through the {@link Sprouts#setFactory(SproutsFactory)} method.
  */
 public interface SproutsFactory
 {

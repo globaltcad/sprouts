@@ -11,6 +11,11 @@ import java.util.function.Consumer;
  */
 public final class MissingItemRuntimeException extends RuntimeException
 {
+    /**
+     *  An immutable tuple of {@link Problem} objects that caused this exception.
+     *  These problems describe the issues that led to this exception being thrown,
+     *  so they may themselves contain exceptions or other descriptive information.
+     */
     private final Tuple<Problem> _problems;
 
     /**

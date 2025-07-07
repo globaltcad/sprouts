@@ -6,6 +6,18 @@ import sprouts.Tuple;
 
 import java.util.*;
 
+/**
+ *  A tuple that contains a difference to the previous state, in
+ *  the form of a {@link SequenceDiff}, which contains a {@link SequenceChange},
+ *  index, and size of the change among other information.
+ *  This is used to track changes in the tuple and provide a way to
+ *  access the difference from the previous state. Change listeners
+ *  can use this information to update themselves efficiently.<br>
+ *  They can check if a tuple contains a difference from the previous state
+ *  by checking if the tuple implements {@link SequenceDiffOwner}.
+ *
+ * @param <T> The type of the items in the tuple.
+ */
 public final class TupleWithDiff<T extends @Nullable Object> implements Tuple<T>, SequenceDiffOwner {
 
     private final TupleTree<T> _tupleTree;
@@ -18,6 +30,7 @@ public final class TupleWithDiff<T extends @Nullable Object> implements Tuple<T>
      * @param allowsNull Whether the tuple allows null values.
      * @param type The type of the items in the tuple.
      * @param items The items to be included in the tuple.
+     * @param <T> The type of the items in the tuple.
      * @return A new instance of {@link TupleWithDiff}.
      */
     @SuppressWarnings("NullAway")

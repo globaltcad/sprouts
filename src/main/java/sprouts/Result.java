@@ -518,6 +518,7 @@ public final class Result<V> implements Maybe<V>
      *
      * @param exceptionType The type of exception to handle.
      * @param handler The handler to invoke with the exception.
+     * @param <E> The type of exception to handle, which must extend {@link Exception}.
      * @return A new result with the problem removed if handled successfully, or unchanged if not.
      * @throws NullPointerException if either parameter is null.
      */
