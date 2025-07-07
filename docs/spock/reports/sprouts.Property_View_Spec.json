@@ -1,0 +1,764 @@
+{
+  "className":"sprouts.Property_View_Spec",
+  "title":"Property Views",
+  "narrative":"Properties are designed to be observable, which means that you can \"react\"\n    to their items being replaced by new items. This sort of \"reaction\"\n    to changes is typically done through the \"observer pattern\", where you\n    register change listeners on a property that are invoked whenever the\n    property item changes...\n\n    Contrary to what you might might expect, you cannot register change listeners\n    on properties directly!\n    This is to prevent you from creating memory leaks, which happen very often\n    due to change listeners not being unregistered when they are no longer needed.\n    To fix this, Sprouts provides the concept of a \"property view\" in\n    the form of instances of the `Viewable` type,\n    which is a weakly referenced live property onto which you can safely register\n    your change listeners.\n    And when you no longer use the view (by holding a reference to it),\n    it will be garbage collected along with all of the change listeners\n    that were registered on it.\n\n    But if you keep a reference to the view and a change occurs on the source property,\n    then the view will be updated and all of the change listeners will be notified\n    of the change.",
+  "subjects":["sprouts.Viewable","sprouts.Var","sprouts.Val","sprouts.Vars","sprouts.Vals"],
+  "statistics":{
+    "runs":"30",
+    "successRate":"100.0%",
+    "failures":"0",
+    "errors":"0",
+    "skipped":"0",
+    "duration":"?"
+  },
+  "headers":[],"tags":{},"see":[],
+  "features":[ 
+    {
+      "id":"Use the `viewAs` method to create a dynamically updated view of a property.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `viewAs` method is used to create a dynamically updated view of a property.\n            In essence it is a property observing another property and updating its value\n            whenever the observed property changes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create a property...","code":["Var<String> property = Var.of(\"Hello World\")"]},
+
+        {"kind":"and","text":"We create an integer view of the property.","code":["Viewable<Integer> view = property.viewAs(Integer, { it.length() })"]},
+
+        {"kind":"expect","text":"The view has the expected value.","code":["view.orElseNull() == 11"]},
+
+        {"kind":"when","text":"We change the value of the property.","code":["property.set(\"Tofu\")"]},
+
+        {"kind":"then","text":"The view is updated.","code":["view.orElseNull() == 4"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A primitive or string type view will map nulls to the types null object.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A nullable property, which is a property that allows null values, can be viewed as a \n            property of a primitive type, in which case the null values will be mapped to\n            the \"null object\" of the given primitive type.\n\n            For example, the null object of an Integer is 0, and the null object of a Boolean is false.\n            The null object of a String is \"\" and so on...\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A nullable property...","code":["Var<File> file = Var.ofNull(File)"]},
+
+        {"kind":"and","text":"A couple of views...","code":["Val<Boolean> exists = file.view( false, f -> f.exists() )","Val<Integer> size = file.viewAsInt( f -> (int) f.length() )","Val<String> name = file.viewAsString( f -> f.getName() )","Val<Long> lastModified = file.view( 0L, f -> f.lastModified() )","Val<Character> firstChar = file.view( '\\u0000' as char, f -> f.getName().charAt(0) )"]},
+
+        {"kind":"expect","text":"All views are non-nullable:","code":["!exists.allowsNull()","!size.allowsNull()","!name.allowsNull()","!lastModified.allowsNull()","!firstChar.allowsNull()"]},
+
+        {"kind":"and","text":"The views have the expected values.","code":["exists.get() == false","size.get() == 0","name.get() == \"\"","lastModified.get() == 0","firstChar.get() == '\\u0000'"]},
+
+        {"kind":"when","text":"We change the value of the property.","code":["file.set(new File(\"build.gradle\"))"]},
+
+        {"kind":"then","text":"The views are updated.","code":["exists.get() == true","size.get() != 0","name.get() == \"build.gradle\"","lastModified.get() > 0","firstChar.get() == 'b'"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Map null to custom values when viewing them as primitive types.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            When viewing a nullable property as a primitive type, you can map the null values to\n            custom values of the given type.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A nullable property...","code":["Var<Random> random = Var.ofNull(Random)"]},
+
+        {"kind":"and","text":"A couple of views...","code":["Val<Integer> randomInt = random.viewAsInt( r -> r == null ? 42 : r.nextInt() )","Val<Double> randomDouble = random.viewAsDouble( r -> r == null ? 3.14d : r.nextDouble() )","Val<Short> randomShort = random.viewAs(Short, r -> r == null ? (short)-1 : (short)r.nextInt() )","Val<String> randomString = random.viewAsString( r -> r == null ? \"?\" : r.getClass().getSimpleName() )"]},
+
+        {"kind":"expect","text":"All views are non-nullable:","code":["!randomInt.allowsNull()","!randomDouble.allowsNull()","!randomShort.allowsNull()","!randomString.allowsNull()"]},
+
+        {"kind":"and","text":"The views have the expected values.","code":["randomInt.get() == 42","randomDouble.get() == 3.14","randomShort.get() == -1","randomString.get() == \"?\""]},
+
+        {"kind":"when","text":"We change the value of the property.","code":["random.set(new Random(0))"]},
+
+        {"kind":"then","text":"The views are updated.","code":["randomInt.get() == -1155484576","randomDouble.get() == 0.8314409887870612","randomShort.get() == 28862","randomString.get() == \"Random\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use the `view(Function)` method to create a view of a property of the same type.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `view(Function)` method can be used to create a view of a property of the same type,\n            but with some transformation applied to it.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A property...","code":["Var<String> name = Var.of(\"John\")"]},
+
+        {"kind":"and","text":"A view of the property...","code":["Val<String> nameView = name.view( n -> n + \" Doe\" )"]},
+
+        {"kind":"expect","text":"The view has the expected value.","code":["nameView.get() == \"John Doe\""]},
+
+        {"kind":"when","text":"We change the value of the property.","code":["name.set(\"Jane\")"]},
+
+        {"kind":"then","text":"The view is updated.","code":["nameView.get() == \"Jane Doe\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `viewAsString()` method can be used to create a null safe view of a property of any type as a String.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `viewAsString()` method can be used to create a view of a property of any type as a String.\n            The null values are mapped to the empty string in order to make the view null safe, \n            which is important inside of a GUI or when displaying the value in a user interface\n            where null pointer exceptions are not acceptable.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A property based on... let's say a Date...","code":["Var<Date> date = Var.ofNull(Date)"]},
+
+        {"kind":"and","text":"A view of the property as a String...","code":["Val<String> dateView = date.viewAsString()"]},
+
+        {"kind":"expect","text":"The string based view is null safe:","code":["dateView.type() == String","dateView.get() == \"\"","!dateView.allowsNull()"]},
+
+        {"kind":"when","text":"We change the value of the property.","code":["date.set(new Date(0))"]},
+
+        {"kind":"then","text":"The view is updated to string representation of the date.","code":["dateView.get() == String.valueOf(new Date(0))"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `viewAsInt()` method can be used to create a null safe view of a property of any type as an int.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `viewAsInt()` method can be used to create a view of a property of any type as an int.\n            The integer is computed by first converting the value to a string and then parsing the string to an int.\n            So it is important to make sure that the value can be converted to a string and that the \n            string can be parsed to an int.\n            In this example, we use a `Short` property, which can easily be converted to a string and parsed to an int.\n\n            The null values are mapped to 0 in order to make the view null safe, \n            which is important inside of a GUI or when displaying the value in a user interface\n            where null pointer exceptions are not acceptable.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A property based on... let's say a Short...","code":["Var<Short> num = Var.ofNull(Short)"]},
+
+        {"kind":"and","text":"A view of the property as an int...","code":["Val<Integer> numView = num.viewAsInt()"]},
+
+        {"kind":"expect","text":"The source property is nullable...","code":["num.allowsNull()"]},
+
+        {"kind":"and","text":"The (integer) view on the other hand is null safe.","code":["numView.type() == Integer","numView.get() == 0","!numView.allowsNull()"]},
+
+        {"kind":"when","text":"We change the value of the property.","code":["num.set((short)42)"]},
+
+        {"kind":"then","text":"The view is updated to the int representation of the short.","code":["numView.get() == 42"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `viewAsDouble()` method can be used to create a null safe view of a property of any type as a double.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `viewAsDouble()` method can be used to create a view of a property of any type as a double.\n            The double is computed by first converting the value to a string and then parsing the string to a double.\n            So it is important to make sure that the value can be converted to a string and that the \n            string can be parsed to a double.\n            In this example, we use a `Float` property, which can easily be converted to a string and parsed to a double.\n\n            The null values are mapped to 0.0 in order to make the view null safe, \n            which is important inside of a GUI or when displaying the value in a user interface\n            where null pointer exceptions are not acceptable.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A property based on... let's say a Float...","code":["Var<Float> num = Var.ofNull(Float)"]},
+
+        {"kind":"and","text":"A view of the property as a double...","code":["Val<Double> numView = num.viewAsDouble()"]},
+
+        {"kind":"expect","text":"The source property is nullable...","code":["num.allowsNull()"]},
+
+        {"kind":"and","text":"The (double) view on the other hand is null safe.","code":["numView.type() == Double","numView.get() == 0.0","!numView.allowsNull()"]},
+
+        {"kind":"when","text":"We change the value of the property.","code":["num.set(3.14f)"]},
+
+        {"kind":"then","text":"The view is updated to the double representation of the float.","code":["numView.get() == 3.14"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A view can handle viewing different sub-types of the given source type.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `viewAs(Class,..)` method takes 2 arguments: the type we want to view \n            through the view property, and a function that transforms the value of the source property.\n            If the viewed type is a more general type than the source type, the view will be able to handle\n            viewing different sub-types of the given source type depending on the transformation function.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A property based on the generic type `Integer`...","code":["Var<Integer> num = Var.of(42 as int)"]},
+
+        {"kind":"and","text":"A view of the property as a generic `Number`...","code":["Val<Number> numView = num.viewAs(Number, n -> n < 0 ? n.floatValue() : n.doubleValue() )"]},
+
+        {"kind":"expect","text":"The view is of the given type and has the expected value.","code":["numView.type() == Number","numView.get() == 42.0","numView.get() instanceof Double"]},
+
+        {"kind":"when","text":"We change the value of the property so that the view holds a float.","code":["num.set(-3)"]},
+
+        {"kind":"then","text":"The view is updated to the float representation of the integer.","code":["numView.type() == Number","numView.get() == -3.0","numView.get() instanceof Float"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A view can use specific items to indicate mapping to `null` or exceptions during mapping.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `view` method allows to provide a specific `nullObject` to be used when the mapping function returns\n            `null` and an `errorObject` to be used when an error occurs.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A property of type integer.","code":["var integerVar = Var.ofNullable(Integer.class, 6);"]},
+
+        {"kind":"and","text":"A string view based on the property.","code":["var view = integerVar.view(\"negative\", \"error\", i -> i < 0 ? null : String.format(\"3 / %d = %.1f\", i, 3 / i))"]},
+
+        {"kind":"expect","text":"The view has the expected value.","code":["view.get() == \"3 / 6 = 0.5\""]},
+
+        {"kind":"when","text":"We update the property so that the mapping function returns `null`.","code":["integerVar.set(-1)"]},
+
+        {"kind":"then","text":"The view has the expected `nullValue`.","code":["view.get() == \"negative\""]},
+
+        {"kind":"when","text":"We update the property so that the mapping function throws an exception.","code":["integerVar.set(0)"]},
+
+        {"kind":"then","text":"The view has the expected `errorValue`.","code":["view.get() == \"error\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A view is updated only once for every change, or not updated at all if no change occurred.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The state of a view is only updated when the source property changes.\n            And this is done only a single time for every change.\n            However, if a change event is triggered manually, the view is also updated\n            even if the value of the source property has not changed.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A simple source property...","code":["Var<String> source = Var.of(\"Hello\")","var changes = 0"]},
+
+        {"kind":"and","text":"A view of the source property as a byte representation of the length of the string.","code":["Val<Byte> view = source.viewAs(Byte, s -> {","    changes++","    return (byte) s.length()","})"]},
+
+        {"kind":"expect","text":"The view has the expected value.","code":["view.get() == 5","changes == 1"]},
+
+        {"kind":"when","text":"We change the value of the source property to the same value.","code":["source.set(\"Hello\")"]},
+
+        {"kind":"then","text":"The view is not updated.","code":["view.get() == 5","changes == 1"]},
+
+        {"kind":"when","text":"We change the value of the source property to a different value.","code":["source.set(\"World\")"]},
+
+        {"kind":"then","text":"The view is updated.","code":["view.get() == 5","changes == 2"]},
+
+        {"kind":"when","text":"We try to trigger a view update through a manual change event.","code":["source.fireChange(From.VIEW_MODEL)"]},
+
+        {"kind":"then","text":"The view is updated despite the value of the source property not changing.","code":["view.get() == 5","changes == 3"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"There are various kinds of convenience methods for creating live views of properties.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create a property...","code":["Var<String> food = Var.of(\"Channa Masala\")"]},
+
+        {"kind":"and","text":"Different kinds of views:","code":["Viewable<Integer> words    = food.viewAsInt( f -> f.split(\" \").length )","Viewable<Integer> words2   = words.view({it * 2})","Viewable<Double>  average  = food.viewAsDouble( f -> f.chars().average().orElse(0) )","Viewable<Boolean> isLong   = food.viewAs(Boolean, f -> f.length() > 14 )","Viewable<String> firstWord = food.view( f -> f.split(\" \")[0] )","Viewable<String> lastWord  = food.view( f -> f.split(\" \")[f.split(\" \").length-1] )"]},
+
+        {"kind":"expect","text":"The views have the expected values.","code":["words.get() == 2","words2.get() == 4","average.get().round(2) == 92.92d","isLong.get() == false","firstWord.get() == \"Channa\"","lastWord.get() == \"Masala\""]},
+
+        {"kind":"when","text":"We change the value of the property.","code":["food.set(\"Tofu Tempeh Saitan\")"]},
+
+        {"kind":"then","text":"The views are updated.","code":["words.get() == 3","words2.get() == 6","average.get().round(2) == 94.28d","isLong.get() == true","firstWord.get() == \"Tofu\"","lastWord.get() == \"Saitan\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `viewIsEmpty()` method returns a property that is true when the original property is empty, and false otherwise.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Calling `viewIsEmpty()` on a property will\n            be a view on the `isEmpty()` method of the property.\n            So when the boolean returned by `isEmpty()` changes,\n            the value of the view will change too.\n\n            Note that in this test we use a nullable property!\n            This is be cause only a nullable property can be empty.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A nullable property which is not empty.","code":["Var<String> name = Var.ofNullable(String, \"John\")"]},
+
+        {"kind":"and","text":"A view of the \"emptiness\" of the property.","code":["Val<Boolean> isEmpty = name.viewIsEmpty()"]},
+
+        {"kind":"expect","text":"The view is false initially.","code":["!isEmpty.get()"]},
+
+        {"kind":"when","text":"We change the value of the property to null.","code":["name.set(null)"]},
+
+        {"kind":"then","text":"The view becomes true.","code":["isEmpty.get()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A `viewIsEmpty()` property from a non nullable property is always false.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A non-nullable property does not permit null items,\n            which means that it cannot be empty.\n            Therefore, the view returned by `viewIsEmpty()`\n            will always be false.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A non-nullable property.","code":["Var<String> name = Var.of(String, \"John\")"]},
+
+        {"kind":"and","text":"A view of thr `isEmpty()` flag of the property.","code":["Viewable<Boolean> isEmpty = name.viewIsEmpty()"]},
+
+        {"kind":"expect","text":"Initially, the view is false.","code":["!isEmpty.get()"]},
+
+        {"kind":"when","text":"We change the value of the property to an empty string.","code":["name.set(\"\")"]},
+
+        {"kind":"then","text":"The view is still false, because the property does not contain null!","code":["!isEmpty.get()"]},
+
+        {"kind":"when","text":"We try to sneak in a null value to make it empty...","code":["name.set(null)"]},
+
+        {"kind":"then","text":"Boom! The property fights back by throwing an exception.","code":["thrown(NullPointerException)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `viewIsPresent()` method returns a property that is true when the original property is not empty, and false otherwise.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Calling `viewIsPresent()` on a property will\n            be a view on the `isPresent()` method of the property.\n            So when the boolean returned by `isPresent()` changes,\n            the value of the view will change too.\n\n            Note that in this test we use a nullable property!\n            This is be cause only a nullable property can be empty.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A nullable property which is not empty.","code":["Var<Integer> age = Var.ofNullable(Integer, 25)"]},
+
+        {"kind":"and","text":"A view of the \"presence\" of the item of the age property.","code":["Viewable<Boolean> isPresent = age.viewIsPresent()"]},
+
+        {"kind":"expect","text":"The view is true initially, because 25 is not null.","code":["isPresent.get()"]},
+
+        {"kind":"when","text":"We change the value of the property to null, to make it empty.","code":["age.set(null)"]},
+
+        {"kind":"then","text":"The view becomes false, because now the property has null as its item.","code":["!isPresent.get()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A `viewIsPresent()` property from a non nullable property is always true.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A non-nullable property does not permit null items,\n            which means that it cannot be empty.\n            Therefore, the view returned by `viewIsPresent()`\n            will always be true.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A non-nullable property.","code":["Var<Integer> age = Var.of(Integer, 25)"]},
+
+        {"kind":"and","text":"A view of the `isPresent()` flag of the property.","code":["Viewable<Boolean> isPresent = age.viewIsPresent()"]},
+
+        {"kind":"expect","text":"The view is true initially, because 25 is not null.","code":["isPresent.get()"]},
+
+        {"kind":"when","text":"We try to change the value of the property to null.","code":["age.set(null)"]},
+
+        {"kind":"then","text":"The property fights back by throwing an exception.","code":["thrown(NullPointerException)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use `viewAsInt(int,Function)` to view a nullable property as a non null integer.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `viewAsInt(int,Function)` method creates and returns an integer based live property view\n            from a nullable property of any type that uses a default value to represent null and a function\n            to convert the non null value to an integer.\n            The view will be updated automatically\n            when the original property changes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A String property holding a japanese sentence.","code":["Var<String> sentence = Var.ofNullable(String, \"ブランコツリーはいいですね\")"]},
+
+        {"kind":"and","text":"A view on the length of the sentence with a unique default value.","code":["Viewable<Integer> length = sentence.viewAsInt(42,String::length)"]},
+
+        {"kind":"expect","text":"The view is 13 initially and it confirms that it is indeed a view.","code":["length.get() == 13","length.isView()"]},
+
+        {"kind":"when","text":"We change the value of the property to null.","code":["sentence.set(null)"]},
+
+        {"kind":"then","text":"The view becomes 42.","code":["length.get() == 42"]},
+
+        {"kind":"when","text":"We change the value of the property to an empty string.","code":["sentence.set(\"\")"]},
+
+        {"kind":"then","text":"The view becomes 0.","code":["length.get() == 0"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use `viewAsDouble(double,Function)` to view a nullable property as a non null double.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `viewAsDouble(double,Function)` method creates and returns a double based live property view\n            from a nullable property of any type that uses a default value to represent null and a function\n            to convert the non null value to a double.\n            The view will be updated automatically\n            when the original property changes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A String property holding an english sentence.","code":["Var<String> sentence = Var.ofNullable(String, \"SwingTree is nice, isn't it?\")"]},
+
+        {"kind":"and","text":"A view on the average word length of the sentence with a unique default value.","code":["Viewable<Double> averageWordLength = sentence.viewAsDouble(-0.5, s -> {","                                            if ( s == null )","                                                return null","                                            var words = s.split(\" \") as List<String>","                                            return words.stream().mapToInt(String::length).average().orElse(-1)","                                        })"]},
+
+        {"kind":"expect","text":"The view is 4.0 initially and it confirms that it is indeed a view.","code":["averageWordLength.get() == 4.8","averageWordLength.isView()"]},
+
+        {"kind":"when","text":"We change the value of the property to null.","code":["sentence.set(null)"]},
+
+        {"kind":"then","text":"The view becomes -0.5.","code":["averageWordLength.get() == -0.5"]},
+
+        {"kind":"when","text":"We change the value of the property to an empty string.","code":["sentence.set(\"\")"]},
+
+        {"kind":"then","text":"The view contains 0.0 because the average of an empty list is 0.","code":["averageWordLength.get() == 0.0"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use the `viewAsString(String,Function)` method to view a nullable property as a non null String.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `viewAsString(String,Function)` method creates and returns a String based live property view\n            from a nullable property of any type that uses a default value to represent null and a function\n            to convert the non null value to a String.\n            The view will be updated automatically\n            when the original property changes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A property holding nullable `TimeUnit` enum items.","code":["Var<TimeUnit> timeUnit = Var.ofNullable(TimeUnit, TimeUnit.SECONDS)"]},
+
+        {"kind":"and","text":"A view on the lowercase name of the time unit with a unique default value.","code":["Viewable<String> lowerCaseName = timeUnit.viewAsString(\"unknown\", u -> u.name().toLowerCase())"]},
+
+        {"kind":"expect","text":"The view is \"seconds\" initially and it confirms that it is indeed a view.","code":["lowerCaseName.get() == \"seconds\"","lowerCaseName.isView()"]},
+
+        {"kind":"when","text":"We change the value of the property to null.","code":["timeUnit.set(null)"]},
+
+        {"kind":"then","text":"The view becomes \"unknown\" because the property is empty.","code":["lowerCaseName.get() == \"unknown\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The channel of a property change event will propagate to its views.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Every mutation to a property can have a channel associated with it.\n            You can call the `Var.set(Channel,T)` method to mutate the property with a custom channel,\n            and then in your change listeners you can check the channel on the property delegate!\n\n            This exact same principle is also true for the views of a property\n            whose change event listeners will also receive the channel of the origin property.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A property based on an enum and 3 different views.","code":["var monthProperty = Var.of(Month.AUGUST)","var intView = monthProperty.viewAsInt(Month::ordinal)","var stringView = monthProperty.viewAsString(Month::name)","var firstMonthOfQuarter = monthProperty.view(Month::firstMonthOfQuarter)"]},
+
+        {"kind":"and","text":"A trace list and a change listener that listens to changes on the views.","code":["var trace1 = []","var trace2 = []","var trace3 = []","intView.onChange(From.ALL, i -> trace1 << i.channel())","stringView.onChange(From.VIEW, s -> trace2 << s.channel())","firstMonthOfQuarter.onChange(From.VIEW_MODEL, m -> trace3 << m.channel())"]},
+
+        {"kind":"expect","text":"The trace list is empty and there are no change listeners registered.","code":["trace1.isEmpty()","trace2.isEmpty()","trace3.isEmpty()"]},
+
+        {"kind":"when","text":"We change the value of the property 3 times with different channels and values.","code":["monthProperty.set(From.ALL, Month.JANUARY)","monthProperty.set(From.VIEW, Month.NOVEMBER)","monthProperty.set(From.VIEW_MODEL, Month.SEPTEMBER)"]},
+
+        {"kind":"then","text":"The listeners are notified of the new value of the views with the correct channels.","code":["trace1 == [From.ALL, From.VIEW, From.VIEW_MODEL]","trace2 == [From.ALL, From.VIEW]","trace3 == [From.ALL, From.VIEW_MODEL]"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `onChange` event delegate tells you the type of change the property experienced.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `onChange` event delegate tells you the type of change the property experienced.\n            The type of change is represented by an enum with the following values:\n            - `NONE` no change occurred.\n            - `TO_NULL_REFERENCE` the property changed from a non-null item to a null item.\n            - `TO_NON_NULL_REFERENCE` the property changed from a null item to a non-null item.\n            - `VALUE` the `Object.equals(Object)` method returned `false` for the old and new items.\n            - `IDENTITY` the old and new items implement `HasIdentity` and their `.id()` objets are not equal!\n            Note that this will never be the case if the item is not an instance of `HasIdentity`.\n            This is because Sprouts assumes all its items to be value objects by default.\n            So if `Object.equals(Object)` returns true, but a `==` comparison returns false,\n            then the item is considered to NOT have changed its identity!\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var value1 = new HasId<Long>() {","    @Override Long id() { return 42L }","}","var value2 = new HasId<Long>() {","    @Override Long id() { return 42L }","}","var value3 = new HasId<Long>() {","    @Override Long id() { return 43L }","    @Override","    boolean equals(Object obj) { return obj instanceof HasId && ((HasId)obj).id() == this.id() }","    @Override","    int hashCode() { return Objects.hash(id()) }","}","var value4 = new HasId<Long>() {","    @Override Long id() { return 43L }","    @Override","    boolean equals(Object obj) { return obj instanceof HasId && ((HasId)obj).id() == this.id() }","    @Override","    int hashCode() { return Objects.hash(id()) }","}"]},
+
+        {"kind":"and","text":"A property with a couple of views.","code":["var property = Var.ofNullable(HasId, value1)","var view = property.view()"]},
+
+        {"kind":"and","text":"A trace list and a change listener that listens to changes on the views.","code":["var trace = []","view.onChange(From.ALL, v -> trace << v.change())"]},
+
+        {"kind":"when","text":"We change the item of the property to a new item with the same value.","code":["property.set(value2)"]},
+
+        {"kind":"then","text":"The listeners are notified of the type of change the property experienced.","code":["trace == [SingleChange.VALUE]"]},
+
+        {"kind":"when","text":"We change the item of the property to a new item with a different identity.","code":["property.set(value3)"]},
+
+        {"kind":"then","text":"The listeners are notified of an identity change, because 42 != 43.","code":["trace == [SingleChange.VALUE, SingleChange.ID]"]},
+
+        {"kind":"when","text":"We change the item of the property to a new item with the same value and identity.","code":["property.set(value4)"]},
+
+        {"kind":"then","text":"The listeners are not notified because the item did not change in terms of value or identity.","code":["trace == [SingleChange.VALUE, SingleChange.ID]"]},
+
+        {"kind":"when","text":"We change the item of the property back to the original item.","code":["property.set(value1)"]},
+
+        {"kind":"then","text":"The listeners are notified of an identity change.","code":["trace == [SingleChange.VALUE, SingleChange.ID, SingleChange.ID]"]},
+
+        {"kind":"when","text":"We change the item of the property to null.","code":["property.set(null)"]},
+
+        {"kind":"then","text":"The listeners are notified of a change to a null reference.","code":["trace == [SingleChange.VALUE, SingleChange.ID, SingleChange.ID, SingleChange.TO_NULL_REFERENCE]"]},
+
+        {"kind":"when","text":"We change the item of the property back to the original item.","code":["property.set(value1)"]},
+
+        {"kind":"then","text":"The listeners are notified of a change to a non-null reference.","code":["trace == [SingleChange.VALUE, SingleChange.ID, SingleChange.ID, SingleChange.TO_NULL_REFERENCE, SingleChange.TO_NON_NULL_REFERENCE]"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Changing the value of a property through the `.set(From.VIEW, T)` method will also affect its views",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Note that you should use `.set(From.VIEW, T)` inside your view to change \n            the value of the original property.\n            It is different from a regular `set(T)` (=`.set(From.VIEW_MODEL, T)`) in \n            that the `set(T)` method\n            runs the mutation through the `From.VIEW_MODEL` channel.\n            This the difference here is the purpose and origin of the mutation,\n            `VIEW` changes are usually caused by user actions and `VIEW_MODEL`\n            changes are caused by the application logic.\n            Irrespective as to how the value of the original property is changed,\n            the views will be updated.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create a property...","code":["Var<String> food = Var.of(\"Animal Crossing\")"]},
+
+        {"kind":"and","text":"We create a view of the property.","code":["Viewable<Integer> words = food.viewAsInt( f -> f.split(\" \").length )"]},
+
+        {"kind":"expect","text":"The view has the expected value.","code":["words.get() == 2"]},
+
+        {"kind":"when","text":"We change the value of the food property through the `.set(From.VIEW, T)` method.","code":["food.set(From.VIEW, \"Faster Than Light\")"]},
+
+        {"kind":"then","text":"The view is updated.","code":["words.get() == 3"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You can recognize a property view from its String representation.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A property view has a specific string representation that can be used to recognize it.\n            The string representation of a property view starts with \"View\" followed by the item\n            type and square brackets\n            containing the current item of the view.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A property based on a string.","code":["var stringProperty = Var.of(\"Hello\")"]},
+
+        {"kind":"and","text":"A view of the property as a byte representation of the length of the string.","code":["Val<Byte> view = stringProperty.viewAs(Byte, s -> (byte) s.length())"]},
+
+        {"kind":"expect","text":"The string representation of the view is as expected.","code":["view.toString() == \"View<Byte>[5]\""]},
+
+        {"kind":"when","text":"We update the view to have a custom id String.","code":["view = view.withId(\"patient_age\")"]},
+
+        {"kind":"then","text":"The string representation of the view is as expected.","code":["view.toString() == \"View<Byte>[patient_age=5]\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use `viewAsTuple` to create a view of a property as a tuple.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `viewAsTuple` method can be used to create a view of a property as a tuple.\n            The tuple is a fixed size sequence of items that can be of different types.\n            The view will be updated automatically when the original property changes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A property based on a string.","code":["var movie = Var.of(\"dominion\")"]},
+
+        {"kind":"and","text":"A view of the property as a tuple of the individual characters of the string.","code":["Val<Tuple<Character>> view = movie.viewAsTuple(Character, str -> Tuple.of(Character, str.chars.collect {it as Character}))"]},
+
+        {"kind":"expect","text":"The has the expected initial state.","code":["view.get() == Tuple.of(String, \"dominion\".split(\"\")).mapTo(Character, {it[0] as Character})"]},
+
+        {"kind":"when","text":"We change the value of the property to another movie.","code":["movie.set(\"earthlings\")"]},
+
+        {"kind":"then","text":"The state of the view is updated again.","code":["view.get() == Tuple.of(String, \"earthlings\".split(\"\")).mapTo(Character, {it[0] as Character})"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A weak observer is removed and garbage collected when no longer referenced.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            You can register an action directly onto a view, which is itself already \n            memory leak safe.\n        ","\n            You can register an action directly onto a view, which is itself already \n            memory leak safe. But you can repeat this pattern and create a view of a view\n            and then treat this view as an `Observable`.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A property, its viewable and an owner:","code":["var property = Var.of(\"I am a some text in a property.\")","var viewable = property.view()","Viewable<String> owner = viewable.view()"]},
+
+        {"kind":"and","text":"A trace list to record the side effect.","code":["var trace = []"]},
+
+        {"kind":"and","text":"Finally we register a weak action on the property.","code":["owner.onChange(From.ALL, (it) -> trace << it.currentValue().orElseThrow() )"]},
+
+        {"kind":"when","text":"We change the source property.","code":["property.set(\"I am a new text.\")"]},
+
+        {"kind":"then","text":"The side effect is executed.","code":["trace == [\"I am a new text.\"]"]},
+
+        {"kind":"when","text":"We remove the owner and then wait for the garbage collector to remove the weak action.","code":["owner = null","waitForGarbageCollection()"]},
+
+        {"kind":"and","text":"We change the source property again...","code":["property.set(\"I am yet another text.\")"]},
+
+        {"kind":"then","text":"The side effect is not executed anymore.","code":["trace == [\"I am a new text.\"]","reportInfo \"\"\"","    You can register an action directly onto a view, which is itself already","    memory leak safe. But you can repeat this pattern and create a view of a view","    and then treat this view as an `Observable`.","\"\"\""]},
+
+        {"kind":"given","text":"A property, its viewable and an owner:","code":["var property = Var.of(42)","var viewable = property.view()","Observable owner = viewable.view()"]},
+
+        {"kind":"and","text":"A trace list to record the side effects.","code":["var trace = []"]},
+
+        {"kind":"and","text":"Finally we register a weak observer on the property.","code":["owner.subscribe({trace << \"!\"})"]},
+
+        {"kind":"when","text":"We change the source property.","code":["property.set(43)"]},
+
+        {"kind":"then","text":"The side effect is executed.","code":["trace == [\"!\"]"]},
+
+        {"kind":"when","text":"We remove the owner and then wait for the garbage collector to remove the weak observer.","code":["owner = null","waitForGarbageCollection()"]},
+
+        {"kind":"and","text":"We change the source property again.","code":["property.set(44)"]},
+
+        {"kind":"then","text":"The side effect is not executed anymore.","code":["trace == [\"!\"]"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A weak observer is removed and garbage collected when no longer referenced.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"A property, its viewable and an owner:","code":["var property = Var.of(\"I am a some text in a property.\")","var viewable = property.view()","Viewable<String> owner = viewable.view()"]},
+
+        {"kind":"and","text":"A trace list to record the side effect.","code":["var trace = []"]},
+
+        {"kind":"and","text":"Finally we register a weak action on the property.","code":["owner.onChange(From.ALL, (it) -> trace << it.currentValue().orElseThrow() )"]},
+
+        {"kind":"when","text":"We change the source property.","code":["property.set(\"I am a new text.\")"]},
+
+        {"kind":"then","text":"The side effect is executed.","code":["trace == [\"I am a new text.\"]"]},
+
+        {"kind":"when","text":"We remove the owner and then wait for the garbage collector to remove the weak action.","code":["owner = null","waitForGarbageCollection()"]},
+
+        {"kind":"and","text":"We change the source property again...","code":["property.set(\"I am yet another text.\")"]},
+
+        {"kind":"then","text":"The side effect is not executed anymore.","code":["trace == [\"I am a new text.\"]","reportInfo \"\"\"","    You can register an action directly onto a view, which is itself already","    memory leak safe. But you can repeat this pattern and create a view of a view","    and then treat this view as an `Observable`.","\"\"\""]},
+
+        {"kind":"given","text":"A property, its viewable and an owner:","code":["var property = Var.of(42)","var viewable = property.view()","Observable owner = viewable.view()"]},
+
+        {"kind":"and","text":"A trace list to record the side effects.","code":["var trace = []"]},
+
+        {"kind":"and","text":"Finally we register a weak observer on the property.","code":["owner.subscribe({trace << \"!\"})"]},
+
+        {"kind":"when","text":"We change the source property.","code":["property.set(43)"]},
+
+        {"kind":"then","text":"The side effect is executed.","code":["trace == [\"!\"]"]},
+
+        {"kind":"when","text":"We remove the owner and then wait for the garbage collector to remove the weak observer.","code":["owner = null","waitForGarbageCollection()"]},
+
+        {"kind":"and","text":"We change the source property again.","code":["property.set(44)"]},
+
+        {"kind":"then","text":"The side effect is not executed anymore.","code":["trace == [\"!\"]"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"This is how not to use views.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"when","text":"","code":["var property = Var.of(\"www.dominionmovement.com/watch\")","var view = property.view( s -> null )"]},
+
+        {"kind":"then","text":"","code":["thrown(IllegalArgumentException)"]},
+
+        {"kind":"when","text":"","code":["var property3 = Var.of(\"www.landofhopeandglory.org\").view().withId(\"Not a valid id\")"]},
+
+        {"kind":"then","text":"","code":["thrown(IllegalArgumentException)"]},
+
+        {"kind":"when","text":"","code":["var property2 = Var.of(\"www.nationearth.com\")","var view2 = property2.viewAs(DayOfWeek, s -> \"WRONG TYPE\" )"]},
+
+        {"kind":"then","text":"","code":["thrown(IllegalArgumentException)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A composite view has an id that is the concatenation of the ids of its source properties.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A composite view takes two properties and creates a new view\n            that combines the two properties in some way. When it comes\n            to the id of the composite view, it is the concatenation of\n            the ids of the two source properties.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two simple properties with unique ids...","code":["var property1 = Var.of(42).withId(\"property1\")","var property2 = Var.of(11).withId(\"property2\")"]},
+
+        {"kind":"when","text":"We create a composite view of the two properties...","code":["var view = Viewable.of(property1, property2, (a, b) -> a + b)"]},
+
+        {"kind":"then","text":"The view has the expected id.","code":["view.id() == \"property1_and_property2\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Throwing exceptions in view change listeners, will not interrupt the control flow at the source property.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            If the code in a view change listener throws an exception, then the exception will not be propagated\n            to the source property. Instead, the exception will be caught and logged.\n            This is important because it allows the source property to continue to function\n            even if a view change listener fails.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A property with a view derived from it.","code":["var property = Var.of(\"Hello\")","var view = property.view()"]},
+
+        {"kind":"and","text":"We register a change listener that throws an exception.","code":["view.onChange(From.ALL, v -> {","    throw new RuntimeException(\"This is a test exception.\")","})"]},
+
+        {"kind":"and","text":"We create a new `PrintStream` that will capture the `System.err`.","code":["var originalErr = System.err","var outputStream = new ByteArrayOutputStream()","var printStream = new PrintStream(outputStream)","System.err = printStream"]},
+
+        {"kind":"when","text":"We change the value of the property.","code":["property.set(\"World\")"]},
+
+        {"kind":"then","text":"The exception does not reach us, because it is caught and logged.","code":["noExceptionThrown()"]},
+
+        {"kind":"and","text":"The output stream on the other hand, will contain the exception message.","code":["outputStream.toString().contains(\"RuntimeException\")","outputStream.toString().contains(\"This is a test exception.\")","outputStream.toString().contains(\"at \") // This is the stack trace of the exception."]},
+
+        {"kind":"and","text":"The view is still updated and has the expected value.","code":["view.get() == \"World\""]},
+
+        {"kind":"cleanup","text":"We restore the original `System.err` stream.","code":["System.err = originalErr"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Exceptions in the `toString()` of an item, will not cripple the `toString()` of a property view.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            When you call the `toString()` method on a property view, it will\n            indirectly call the `toString()` method on the item of the view.\n            Now, if the item throws an exception in its `toString()` method,\n            let's say, because of a bug in the code, then it should not affect\n            the reliability of the `toString()` method of the view itself!\n            This is because the `toString()` method of a view is meant to\n            provide a human-readable representation, ans so if the control\n            flow is interrupted by an exception, then the property would not\n            be able to provide any information at all.\n\n            If an error occurs in the `toString()` method of an item,\n            then an error message will be logged to the console, and\n            the string representation will tell you about the error.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We first create a new `PrintStream` that will capture the `System.err`.","code":["var originalErr = System.err","var outputStream = new ByteArrayOutputStream()","var printStream = new PrintStream(outputStream)","System.err = printStream"]},
+
+        {"kind":"and","text":"A property with an item that throws an exception in its `toString()` method.","code":["var property = Var.of(new Object() {","    @Override String toString() { throw new RuntimeException(\"This is a test exception.\") }","})"]},
+
+        {"kind":"and","text":"A view of the property.","code":["var view = property.view()"]},
+
+        {"kind":"when","text":"We call the `toString()` method on the property view.","code":["var result = view.toString()"]},
+
+        {"kind":"then","text":"The `toString()` method of the view does not throw an exception.","code":["noExceptionThrown()"]},
+
+        {"kind":"and","text":"The result is a string representation of the view, and it contains the exception message.","code":["result == \"View<>[java.lang.RuntimeException: This is a test exception.]\""]},
+
+        {"kind":"and","text":"The output stream on the other hand, will contain the exception message.","code":["outputStream.toString().contains(\"RuntimeException\")","outputStream.toString().contains(\"This is a test exception.\")","outputStream.toString().contains(\"at \") // This is the stack trace of the exception."]},
+
+        {"kind":"cleanup","text":"We restore the original `System.err` stream.","code":["System.err = originalErr"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use `Viewable::unsubscribeAll()` to unsubscribe all Listeners from a property view!",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `unsubscribeAll()` method can be used to unsubscribe all change listeners\n            from a property view. This effectively stops all change notifications\n            from being sent to the listeners, and it is useful when you want to\n            clean up resources or when you no longer need to listen to changes\n            in a particular context.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A mutable property with an initial value and a view derived from it.","code":["var property = Var.of(\"Hello World\")","var view = property.view()"]},
+
+        {"kind":"and","text":"A trace list to record the side effects.","code":["var trace = []"]},
+
+        {"kind":"and","text":"We add two change listener to the view, which are called when the property changes.","code":["view.onChange(From.ALL, it -> {","    trace << \"Listener 1: \" + it.currentValue().orElseThrow()","})","view.onChange(From.ALL, it -> {","    trace << \"Listener 2: \" + it.currentValue().orElseThrow()","})"]},
+
+        {"kind":"expect","text":"The property view has two change listener.","code":["view.numberOfChangeListeners() == 2"]},
+
+        {"kind":"when","text":"We change the value of the property.","code":["property.set(\"Hello Sprouts\")"]},
+
+        {"kind":"then","text":"The change listeners are called and the trace list is updated.","code":["trace == [\"Listener 1: Hello Sprouts\", \"Listener 2: Hello Sprouts\"]"]},
+
+        {"kind":"when","text":"We unsubscribe all listeners from the view.","code":["view.unsubscribeAll()"]},
+
+        {"kind":"then","text":"The property view now has no change listeners anymore.","code":["view.numberOfChangeListeners() == 0"]},
+
+        {"kind":"when","text":"We change the value of the property again.","code":["property.set(\"Hello again\")"]},
+
+        {"kind":"then","text":"The change listeners are not called anymore, because they were unsubscribed.","code":["trace == [\"Listener 1: Hello Sprouts\", \"Listener 2: Hello Sprouts\"]"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    }
+  
+  ],
+  "generator":"https://github.com/renatoathaydes/spock-reports"
+}

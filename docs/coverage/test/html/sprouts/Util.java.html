@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Util.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sprouts</a> &gt; <a href="index.source.html" class="el_package">sprouts</a> &gt; <span class="el_source">Util.java</span></div><h1>Util.java</h1><pre class="source lang-java linenums">package sprouts;
+
+import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.helpers.MessageFormatter;
+import org.slf4j.helpers.NOPLogger;
+
+final class Util {
+
+    private Util() {}
+
+    /**
+     *  Unfortunately, NullAway does not support nullability annotations on type parameters.
+     *  It always assumes that type parameters are non-null, irrespective if
+     *  the user provides a nullability annotation or not.
+     *  This is a problem in the sprouts library, which also uses nullability annotations.
+     *  This method is a workaround for this issue.
+     *
+     * @param var The variable to be faked as non-null.
+     * @return The same variable as the input, but with a non-null type.
+     * @param &lt;T&gt; The type of the variable.
+     */
+    @SuppressWarnings(&quot;NullAway&quot;)
+    static &lt;T&gt; T fakeNonNull( @Nullable T var ) {
+<span class="fc" id="L25">        return var;</span>
+    }
+
+    static void _logError(Logger log, String message, @Nullable Object... args) {
+<span class="pc bpc" id="L29" title="1 of 2 branches missed.">        if ( log instanceof NOPLogger) {</span>
+<span class="fc" id="L30">            Exception lastArgException = null;</span>
+<span class="pc bpc" id="L31" title="3 of 6 branches missed.">            if ( args != null &amp;&amp; args.length &gt; 0 &amp;&amp; args[args.length - 1] instanceof Exception ) {</span>
+<span class="fc" id="L32">                lastArgException = (Exception) args[args.length - 1];</span>
+<span class="fc" id="L33">                args = java.util.Arrays.copyOf(args, args.length - 1);</span>
+            }
+<span class="fc" id="L35">            System.err.println(</span>
+<span class="fc" id="L36">                    MessageFormatter.arrayFormat(&quot;[ERROR] &quot; + message, args).getMessage()</span>
+            );
+<span class="pc bpc" id="L38" title="1 of 2 branches missed.">            if ( lastArgException != null ) {</span>
+<span class="fc" id="L39">                lastArgException.printStackTrace();</span>
+            }
+<span class="fc" id="L41">        } else {</span>
+<span class="nc" id="L42">            log.error(message, args);</span>
+        }
+<span class="fc" id="L44">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

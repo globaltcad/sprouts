@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Viewables.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sprouts</a> &gt; <a href="index.source.html" class="el_package">sprouts</a> &gt; <span class="el_source">Viewables.java</span></div><h1>Viewables.java</h1><pre class="source lang-java linenums">package sprouts;
+
+/**
+ *  A read-only live view on a delegated list of items which can be observed for changes
+ *  using {@link Action}s registered through the {@link #onChange(Action)} method.
+ *  This is a list of properties which are observed together and fire a single event
+ *  when any of them changes.
+ *  &lt;p&gt;
+ *  The API of this is very similar to the {@link Vals} API in the sense that it is a list of properties
+ *  which may also be empty. However, this interface extends the {@link Observable} interface
+ *  to allow registering {@link Action}s which will be called when the list of properties is
+ *  shown (which is called when its state changes).
+ *  &lt;p&gt;
+ *  If you no longer need to observe changes on this list of properties, then you can remove the registered {@link Action}
+ *  callback using the {@link #unsubscribe(Subscriber)} method ({@link Action} is also a {@link Subscriber}).
+ *  &lt;p&gt;
+ *  Instances of this are intended to be created from {@link Vals} property lists.
+ *  {@link sprouts.Viewables} created from such a property list is weakly referenced by it.
+ *  You can register change listeners on it, and when you no longer want changes
+ *  to be propagated to the {@link sprouts.Viewables},
+ *  then you can drop its reference, and it will be garbage collected
+ *  alongside all of its change listeners.
+ *
+ * @see Vals A super type of this class with a read-only API.
+ * @see Var A mutable property API and subtype of {@link Vals}.
+ * @see Viewable A single property with a similar API to this one.
+ * @see Observable The interface which this extends to allow registering {@link Action}s.
+ * @param &lt;T&gt; The type of the items held by this {@link Vals}.
+ */
+public interface Viewables&lt;T&gt; extends Vals&lt;T&gt;, Observable
+{
+    /**
+     *  Regular properties, created from the various factory methods in {@link Vals} and {@link Vars},
+     *  (may) also implement the {@link Viewables} interface internally. &lt;br&gt;
+     *  Although {@link Vals} and {@link Vars} do not extend {@link Viewables} directly,
+     *  you may cast them to a {@link Viewables} to get access to the {@link Viewables} API.&lt;br&gt;
+     *  &lt;p&gt;
+     *  This method is a convenience method that allows you to cast
+     *  the given {@link Vals} instance to a {@link Viewables}.&lt;br&gt;
+     *  The main intention of this method is to allow you to register change listeners
+     *  on the given {@link Vals} instance, which will be called whenever the items
+     *  viewed by this {@link Viewables} changes after operations to
+     *  the source property list.
+     *  &lt;p&gt;&lt;b&gt;
+     *      WARNING:
+     *      The change listeners registered on the cast property list will not
+     *      be garbage collected automatically. You must remove them manually
+     *      when no longer needed. &lt;br&gt;
+     *  &lt;/b&gt;
+     *  &lt;p&gt;
+     *  If you want to protect yourself from memory leaks caused by change listeners,
+     *  create a {@link Viewables} instance through the {@link Vals#view()} method,
+     *  and register change listeners on that instance instead.&lt;br&gt;
+     *  The {@link Viewables} instance created through the {@link Vals#view()} method
+     *  will be garbage collected automatically when no longer needed, and all
+     *  change listeners registered on it will be removed automatically.
+     *
+     * @param vals The {@link Vals} instance to cast to a {@link Viewables}.
+     * @param &lt;T&gt; The type of the item held by the {@link Vals} instance.
+     * @return The supplied {@link Vals} instance cast to a {@link Viewables} instance.
+     */
+    static &lt;T&gt; Viewables&lt;T&gt; cast( Vals&lt;T&gt; vals ) {
+<span class="fc" id="L63">        return Viewables.class.cast(vals);</span>
+    }
+
+    /**
+     *  Similar to {@link Viewable#onChange(Channel, Action)} but for a list of properties.
+     *
+     * @param action The action to perform when the list of properties is shown (which is called when its state changes).
+     * @return This {@link Viewables} list of {@link Viewable} properties.
+     */
+    Viewables&lt;T&gt; onChange( Action&lt;ValsDelegate&lt;T&gt;&gt; action );
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

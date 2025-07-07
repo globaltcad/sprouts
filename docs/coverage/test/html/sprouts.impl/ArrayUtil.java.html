@@ -1,0 +1,325 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ArrayUtil.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sprouts</a> &gt; <a href="index.source.html" class="el_package">sprouts.impl</a> &gt; <span class="el_source">ArrayUtil.java</span></div><h1>ArrayUtil.java</h1><pre class="source lang-java linenums">package sprouts.impl;
+
+import org.jspecify.annotations.Nullable;
+import sprouts.Tuple;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+
+/**
+ *  A utility class for creating and operating on any kind of array, which
+ *  includes both primitive and object arrays.
+ */
+final class ArrayUtil {
+    private ArrayUtil() {}
+
+
+    static Object _withSetAt(int index, Object item, Object dataArray, Class&lt;?&gt; type, boolean allowsNull) {
+<span class="fc" id="L19">        Object newItems = _clone(dataArray, type, allowsNull);</span>
+<span class="fc" id="L20">        _setAt(index, item, newItems);</span>
+<span class="fc" id="L21">        return newItems;</span>
+    }
+
+    static &lt;T&gt; Object _withAddAllAt(int index, Tuple&lt;T&gt; tuple, Object dataArray, Class&lt;T&gt; type, boolean allowsNull ) {
+<span class="fc" id="L25">        Object newItems = _createArray(type, allowsNull, _length(dataArray) + tuple.size());</span>
+<span class="fc" id="L26">        System.arraycopy(dataArray, 0, newItems, 0, index);</span>
+<span class="fc bfc" id="L27" title="All 2 branches covered.">        for (int i = 0; i &lt; tuple.size(); i++ )</span>
+<span class="fc" id="L28">            _setAt(index + i, tuple.get(i), newItems);</span>
+<span class="fc" id="L29">        System.arraycopy(dataArray, index, newItems, index + tuple.size(), _length(dataArray) - index);</span>
+<span class="fc" id="L30">        return newItems;</span>
+    }
+
+    static Object _withRemoveRange(int from, int to, Object dataArray, Class&lt;?&gt; type, boolean allowsNull) {
+<span class="fc" id="L34">        int numberOfItemsToRemove = to - from;</span>
+<span class="fc" id="L35">        int newSize = _length(dataArray) - numberOfItemsToRemove;</span>
+<span class="fc" id="L36">        Object newItems = _createArray(type, allowsNull, newSize);</span>
+<span class="fc" id="L37">        System.arraycopy(dataArray, 0, newItems, 0, from);</span>
+<span class="fc" id="L38">        System.arraycopy(dataArray, to, newItems, from, _length(dataArray) - to);</span>
+<span class="fc" id="L39">        return newItems;</span>
+    }
+
+    static Object _withAddAt( int index, @Nullable Object item, Object dataArray, Class&lt;?&gt; type, boolean allowsNull ) {
+<span class="fc" id="L43">        Object newItems = _createArray(type, allowsNull, _length(dataArray) + 1);</span>
+<span class="fc" id="L44">        System.arraycopy(dataArray, 0, newItems, 0, index);</span>
+<span class="fc" id="L45">        _setAt(index, item, newItems);</span>
+<span class="fc" id="L46">        System.arraycopy(dataArray, index, newItems, index + 1, _length(dataArray) - index);</span>
+<span class="fc" id="L47">        return newItems;</span>
+    }
+
+    static Object _createArray( Class&lt;?&gt; type, boolean nullable, int size ) {
+<span class="fc" id="L51">        type = _toActualPrimitive(type, nullable);</span>
+<span class="fc bfc" id="L52" title="All 2 branches covered.">        if ( type.isPrimitive() ) {</span>
+<span class="fc bfc" id="L53" title="All 2 branches covered.">            if ( type == boolean.class )</span>
+<span class="fc" id="L54">                return new boolean[size];</span>
+<span class="fc bfc" id="L55" title="All 2 branches covered.">            if ( type == byte.class )</span>
+<span class="fc" id="L56">                return new byte[size];</span>
+<span class="fc bfc" id="L57" title="All 2 branches covered.">            if ( type == char.class )</span>
+<span class="fc" id="L58">                return new char[size];</span>
+<span class="fc bfc" id="L59" title="All 2 branches covered.">            if ( type == short.class )</span>
+<span class="fc" id="L60">                return new short[size];</span>
+<span class="fc bfc" id="L61" title="All 2 branches covered.">            if ( type == int.class )</span>
+<span class="fc" id="L62">                return new int[size];</span>
+<span class="fc bfc" id="L63" title="All 2 branches covered.">            if ( type == long.class )</span>
+<span class="fc" id="L64">                return new long[size];</span>
+<span class="fc bfc" id="L65" title="All 2 branches covered.">            if ( type == float.class )</span>
+<span class="fc" id="L66">                return new float[size];</span>
+<span class="pc bpc" id="L67" title="1 of 2 branches missed.">            if ( type == double.class )</span>
+<span class="fc" id="L68">                return new double[size];</span>
+        }
+<span class="fc" id="L70">        return java.lang.reflect.Array.newInstance(type, size);</span>
+    }
+
+    static Class&lt;?&gt; _toActualPrimitive( Class&lt;?&gt; type, boolean nullable ) {
+<span class="fc bfc" id="L74" title="All 2 branches covered.">        if ( nullable )</span>
+<span class="fc" id="L75">            return type; // We can't convert to a primitive type if it is nullable</span>
+        /*
+            We can't use type.isPrimitive() because it returns false for
+            the wrapper classes of primitive types. For example, type.isPrimitive()
+            returns false for Integer.class, but we know that Integer is a wrapper
+            class for int, which is a primitive type.
+
+            So we first convert to the actual primitive type and then check if
+            it is a primitive type.
+        */
+<span class="fc bfc" id="L85" title="All 2 branches covered.">        if ( type == Boolean.class )</span>
+<span class="fc" id="L86">            return boolean.class;</span>
+<span class="fc bfc" id="L87" title="All 2 branches covered.">        if ( type == Byte.class )</span>
+<span class="fc" id="L88">            return byte.class;</span>
+<span class="fc bfc" id="L89" title="All 2 branches covered.">        if ( type == Character.class )</span>
+<span class="fc" id="L90">            return char.class;</span>
+<span class="fc bfc" id="L91" title="All 2 branches covered.">        if ( type == Short.class )</span>
+<span class="fc" id="L92">            return short.class;</span>
+<span class="fc bfc" id="L93" title="All 2 branches covered.">        if ( type == Integer.class )</span>
+<span class="fc" id="L94">            return int.class;</span>
+<span class="fc bfc" id="L95" title="All 2 branches covered.">        if ( type == Long.class )</span>
+<span class="fc" id="L96">            return long.class;</span>
+<span class="fc bfc" id="L97" title="All 2 branches covered.">        if ( type == Float.class )</span>
+<span class="fc" id="L98">            return float.class;</span>
+<span class="fc bfc" id="L99" title="All 2 branches covered.">        if ( type == Double.class )</span>
+<span class="fc" id="L100">            return double.class;</span>
+<span class="fc" id="L101">        return type;</span>
+    }
+
+    static Object _createArrayFromList( Class&lt;?&gt; type, boolean nullable, List&lt;?&gt; list ) {
+<span class="fc" id="L105">        Object array = _createArray(type, nullable, list.size());</span>
+<span class="fc bfc" id="L106" title="All 2 branches covered.">        for ( int i = 0; i &lt; list.size(); i++ ) {</span>
+<span class="fc" id="L107">            Object item = list.get(i);</span>
+<span class="fc bfc" id="L108" title="All 4 branches covered.">            if ( item == null &amp;&amp; !nullable )</span>
+<span class="fc" id="L109">                throw new NullPointerException(</span>
+<span class="fc" id="L110">                    &quot;Failed to initiate non-nullable tuple data array for item type '&quot;+type.getName()+&quot;',\n&quot; +</span>
+                    &quot;due to null item encounter at index '&quot; + i + &quot;' in the supplied list.\n&quot;
+                );
+<span class="fc" id="L113">            _setAt(i, item, array);</span>
+        }
+<span class="fc" id="L115">        return array;</span>
+    }
+
+    static Object _createArrayFromArray( Class&lt;?&gt; type, boolean nullable, Object arrayFromOutside ) {
+<span class="fc" id="L119">        int size = _length(arrayFromOutside);</span>
+<span class="fc" id="L120">        Object array = _createArray(type, nullable, size);</span>
+<span class="fc bfc" id="L121" title="All 2 branches covered.">        for ( int i = 0; i &lt; size; i++ ) {</span>
+<span class="fc" id="L122">            Object item = _getAt(i, arrayFromOutside);</span>
+<span class="fc bfc" id="L123" title="All 4 branches covered.">            if ( item == null &amp;&amp; !nullable )</span>
+<span class="fc" id="L124">                throw new NullPointerException(</span>
+<span class="fc" id="L125">                    &quot;Failed to initiate non-nullable tuple data array for item type '&quot;+type.getName()+&quot;',\n&quot; +</span>
+                    &quot;due to null item encounter at index '&quot; + i + &quot;' in the supplied array.\n&quot;
+                );
+<span class="fc" id="L128">            _setAt(i, item, array);</span>
+        }
+<span class="fc" id="L130">        return array;</span>
+    }
+
+    static Object _tryFlatten( Object array, Class&lt;?&gt; type, boolean nullable ) {
+<span class="fc" id="L134">        type = _toActualPrimitive(type, nullable);</span>
+<span class="pc bpc" id="L135" title="3 of 4 branches missed.">        if ( type == byte.class &amp;&amp; array instanceof Object[] ) {</span>
+<span class="nc" id="L136">            byte[] flattened = new byte[((Object[]) array).length];</span>
+<span class="nc bnc" id="L137" title="All 2 branches missed.">            for ( int i = 0; i &lt; flattened.length; i++ ) {</span>
+<span class="nc" id="L138">                flattened[i] = (byte) ((Object[]) array)[i];</span>
+            }
+<span class="nc" id="L140">            return flattened;</span>
+        }
+<span class="pc bpc" id="L142" title="3 of 4 branches missed.">        if ( type == short.class &amp;&amp; array instanceof Object[] ) {</span>
+<span class="nc" id="L143">            short[] flattened = new short[((Object[]) array).length];</span>
+<span class="nc bnc" id="L144" title="All 2 branches missed.">            for ( int i = 0; i &lt; flattened.length; i++ ) {</span>
+<span class="nc" id="L145">                flattened[i] = (short) ((Object[]) array)[i];</span>
+            }
+<span class="nc" id="L147">            return flattened;</span>
+        }
+<span class="pc bpc" id="L149" title="1 of 4 branches missed.">        if ( type == int.class &amp;&amp; array instanceof Object[] ) {</span>
+<span class="fc" id="L150">            int[] flattened = new int[((Object[]) array).length];</span>
+<span class="fc bfc" id="L151" title="All 2 branches covered.">            for ( int i = 0; i &lt; flattened.length; i++ ) {</span>
+<span class="fc" id="L152">                flattened[i] = (int) ((Object[]) array)[i];</span>
+            }
+<span class="fc" id="L154">            return flattened;</span>
+        }
+<span class="pc bpc" id="L156" title="3 of 4 branches missed.">        if ( type == long.class &amp;&amp; array instanceof Object[] ) {</span>
+<span class="nc" id="L157">            long[] flattened = new long[((Object[]) array).length];</span>
+<span class="nc bnc" id="L158" title="All 2 branches missed.">            for ( int i = 0; i &lt; flattened.length; i++ ) {</span>
+<span class="nc" id="L159">                flattened[i] = (long) ((Object[]) array)[i];</span>
+            }
+<span class="nc" id="L161">            return flattened;</span>
+        }
+<span class="pc bpc" id="L163" title="3 of 4 branches missed.">        if ( type == float.class &amp;&amp; array instanceof Object[] ) {</span>
+<span class="nc" id="L164">            float[] flattened = new float[((Object[]) array).length];</span>
+<span class="nc bnc" id="L165" title="All 2 branches missed.">            for ( int i = 0; i &lt; flattened.length; i++ ) {</span>
+<span class="nc" id="L166">                flattened[i] = (float) ((Object[]) array)[i];</span>
+            }
+<span class="nc" id="L168">            return flattened;</span>
+        }
+<span class="pc bpc" id="L170" title="3 of 4 branches missed.">        if ( type == double.class &amp;&amp; array instanceof Object[] ) {</span>
+<span class="nc" id="L171">            double[] flattened = new double[((Object[]) array).length];</span>
+<span class="nc bnc" id="L172" title="All 2 branches missed.">            for ( int i = 0; i &lt; flattened.length; i++ ) {</span>
+<span class="nc" id="L173">                flattened[i] = (double) ((Object[]) array)[i];</span>
+            }
+<span class="nc" id="L175">            return flattened;</span>
+        }
+<span class="pc bpc" id="L177" title="1 of 4 branches missed.">        if ( type == char.class &amp;&amp; array instanceof Object[] ) {</span>
+<span class="fc" id="L178">            char[] flattened = new char[((Object[]) array).length];</span>
+<span class="fc bfc" id="L179" title="All 2 branches covered.">            for ( int i = 0; i &lt; flattened.length; i++ ) {</span>
+<span class="fc" id="L180">                flattened[i] = (char) ((Object[]) array)[i];</span>
+            }
+<span class="fc" id="L182">            return flattened;</span>
+        }
+<span class="pc bpc" id="L184" title="3 of 4 branches missed.">        if ( type == boolean.class &amp;&amp; array instanceof Object[] ) {</span>
+<span class="nc" id="L185">            boolean[] flattened = new boolean[((Object[]) array).length];</span>
+<span class="nc bnc" id="L186" title="All 2 branches missed.">            for ( int i = 0; i &lt; flattened.length; i++ ) {</span>
+<span class="nc" id="L187">                flattened[i] = (boolean) ((Object[]) array)[i];</span>
+            }
+<span class="nc" id="L189">            return flattened;</span>
+        }
+<span class="fc" id="L191">        return array;</span>
+    }
+
+    static &lt;T&gt; void _setAt(int index, @Nullable T item, Object array ) {
+<span class="fc" id="L195">        java.lang.reflect.Array.set(array, index, item);</span>
+<span class="fc" id="L196">    }</span>
+
+    static &lt;T&gt; @Nullable T _getAt( int index, Object array, Class&lt;T&gt; type ) {
+<span class="fc" id="L199">        return type.cast(java.lang.reflect.Array.get(array, index));</span>
+    }
+
+    /**
+     *  Returns the item at the specified index in the array, casting it to the specified type.
+     *  The returned item is assumed to be non-null (for performance reasons we do not check for null).
+     * @param index The index of the item to retrieve in the array (which may be a primitive array).
+     * @param array The array from which to retrieve the item. This can be an array of primitives or an array of objects.
+     * @param type The type to which the item should be cast. This is used to ensure type safety.
+     * @return The item at the specified index in the array, cast to the specified type.
+     * @param &lt;T&gt; The type to which the item should be cast. This is used to ensure type safety.
+     */
+    static &lt;T&gt; T _getNonNullAt( int index, Object array, Class&lt;T&gt; type ) {
+<span class="fc" id="L212">        return type.cast(java.lang.reflect.Array.get(array, index));</span>
+    }
+
+    /**
+     *  Returns the item at the specified index in the array cast to an inferred type.
+     *  The returned item is assumed to be non-null (for performance reasons we do not check for null).
+     * @param index The index of the item to retrieve in the array (which may be a primitive array).
+     * @param array The array from which to retrieve the item. This can be an array of primitives or an array of objects.
+     * @return The item at the specified index in the array, cast to the specified type.
+     * @param &lt;T&gt; The type to which the item should be cast. This is used to ensure type safety.
+     */
+    static &lt;T&gt; T _getNonNullAt( int index, Object array ) {
+<span class="fc" id="L224">        return (T) java.lang.reflect.Array.get(array, index);</span>
+    }
+
+    static @Nullable Object _getAt( int index, Object array) {
+<span class="fc" id="L228">        return java.lang.reflect.Array.get(array, index);</span>
+    }
+
+    static int _length( Object array ) {
+<span class="fc bfc" id="L232" title="All 2 branches covered.">        if ( array instanceof Object[] )</span>
+<span class="fc" id="L233">            return java.lang.reflect.Array.getLength(array);</span>
+<span class="fc bfc" id="L234" title="All 2 branches covered.">        if ( array instanceof int[] )</span>
+<span class="fc" id="L235">            return ((int[]) array).length;</span>
+<span class="fc bfc" id="L236" title="All 2 branches covered.">        if ( array instanceof double[] )</span>
+<span class="fc" id="L237">            return ((double[]) array).length;</span>
+<span class="fc bfc" id="L238" title="All 2 branches covered.">        if ( array instanceof float[] )</span>
+<span class="fc" id="L239">            return ((float[]) array).length;</span>
+<span class="fc bfc" id="L240" title="All 2 branches covered.">        if ( array instanceof byte[] )</span>
+<span class="fc" id="L241">            return ((byte[]) array).length;</span>
+<span class="fc bfc" id="L242" title="All 2 branches covered.">        if ( array instanceof long[] )</span>
+<span class="fc" id="L243">            return ((long[]) array).length;</span>
+<span class="fc bfc" id="L244" title="All 2 branches covered.">        if ( array instanceof short[] )</span>
+<span class="fc" id="L245">            return ((short[]) array).length;</span>
+<span class="fc bfc" id="L246" title="All 2 branches covered.">        if ( array instanceof char[] )</span>
+<span class="fc" id="L247">            return ((char[]) array).length;</span>
+<span class="pc bpc" id="L248" title="1 of 2 branches missed.">        if ( array instanceof boolean[] )</span>
+<span class="fc" id="L249">            return ((boolean[]) array).length;</span>
+<span class="nc" id="L250">        return java.lang.reflect.Array.getLength(array);</span>
+    }
+
+    static Object _clone( Object array, Class&lt;?&gt; type, boolean nullable ) {
+<span class="fc" id="L254">        int length = _length(array);</span>
+<span class="fc" id="L255">        Object clone = _createArray(type, nullable, length);</span>
+<span class="fc" id="L256">        System.arraycopy(array, 0, clone, 0, length);</span>
+<span class="fc" id="L257">        return clone;</span>
+    }
+
+    static &lt;T&gt; void _each( Object array, Class&lt;T&gt; type, java.util.function.Consumer&lt;T&gt; consumer ) {
+<span class="fc bfc" id="L261" title="All 2 branches covered.">        for ( int i = 0; i &lt; _length(array); i++ ) {</span>
+<span class="fc" id="L262">            consumer.accept(_getAt(i, array, type));</span>
+        }
+<span class="fc" id="L264">    }</span>
+
+    static boolean _isAllNull( Object[] array ) {
+<span class="fc bfc" id="L267" title="All 2 branches covered.">        for ( Object item : array ) {</span>
+<span class="fc bfc" id="L268" title="All 2 branches covered.">            if ( item != null )</span>
+<span class="fc" id="L269">                return false;</span>
+        }
+<span class="fc" id="L271">        return true;</span>
+    }
+
+    /**
+     *  Performs a binary search of the index of an item in the supplied
+     *  array of items of the given type. If the item is not found, the
+     *  returned index is the index at which the item would be inserted
+     *  if it were to be inserted in the array.
+     *  If the item is &quot;smaller&quot; than all the items in the array,
+     *  the returned index is -1. And if the item is &quot;greater&quot; than all
+     *  the items in the array, the returned index is the length of the array.
+     */
+    static &lt;K&gt; int _binarySearch(
+            Object keysArray,
+            Class&lt;K&gt; keyType,
+            Comparator&lt;K&gt; keyComparator,
+            K key
+    ) {
+<span class="fc" id="L289">        final int size = _length(keysArray);</span>
+<span class="fc bfc" id="L290" title="All 2 branches covered.">        if (size == 0) {</span>
+<span class="fc" id="L291">            return -1; // Empty array, key is smaller than all keys</span>
+        }
+<span class="fc" id="L293">        int min = 0;</span>
+<span class="fc" id="L294">        int max = size;</span>
+<span class="fc bfc" id="L295" title="All 2 branches covered.">        while (min &lt; max ) {</span>
+<span class="fc" id="L296">            int mid = (min + max) / 2;</span>
+<span class="fc" id="L297">            int comparison = _compareAt(mid, keysArray, keyType, keyComparator, key);</span>
+<span class="fc bfc" id="L298" title="All 2 branches covered.">            if (comparison &lt; 0) {</span>
+<span class="fc" id="L299">                max = mid; // Key is smaller than the middle key</span>
+<span class="fc bfc" id="L300" title="All 2 branches covered.">            } else if (comparison &gt; 0) {</span>
+<span class="fc" id="L301">                min = mid + 1; // Key is greater than the middle key</span>
+            } else {
+<span class="fc" id="L303">                return mid; // Key found at index mid</span>
+            }
+<span class="fc" id="L305">        }</span>
+        // Key not found, return the index where it would be inserted
+<span class="fc bfc" id="L307" title="All 2 branches covered.">        if (min == 0) {</span>
+<span class="fc" id="L308">            return -1; // Key is smaller than all keys in the array</span>
+        }
+<span class="fc" id="L310">        return min; // Key would be inserted at index min</span>
+    }
+
+    static &lt;E&gt; int _compareAt(
+            int index,
+            Object elementsArray,
+            Class&lt;E&gt; type,
+            Comparator&lt;E&gt; comparator,
+            E element
+    ) {
+<span class="fc" id="L320">        E existingValue = _getAt(index, elementsArray, type);</span>
+<span class="fc" id="L321">        return comparator.compare(element, existingValue);</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

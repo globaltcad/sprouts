@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Observer.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sprouts</a> &gt; <a href="index.source.html" class="el_package">sprouts</a> &gt; <span class="el_source">Observer.java</span></div><h1>Observer.java</h1><pre class="source lang-java linenums">package sprouts;
+
+import java.util.Objects;
+
+/**
+ *  An observer is a callback that is executed when a
+ *  sprouts {@link Observable} is triggered, usually in the
+ *  form of an {@link Event} or property, like
+ *  {@link Val}, {@link Var}, {@link Vals} or {@link Vars}.
+ *  &lt;p&gt;
+ *  Note that this kind of listener is different from the
+ *  {@link Action} listener in that the {@link Action} listener
+ *  also receives a parameter, which is typically the cause of the event
+ *  or other relevant context. &lt;br&gt;
+ *  An observer, on the other hand, is a simple callback executed
+ *  when something happens, without any context.
+ */
+@FunctionalInterface
+public interface Observer extends Subscriber
+{
+	/**
+	 *  Executes this callback.
+     * @throws Exception If during the execution of this method an error occurs.&lt;br&gt;
+     *                   Due to this being an interface with any number of implementations,
+	 *                   the likelihood of exceptions being thrown is extremely high,
+	 *                   and so it is recommended to handle them at the invocation site.
+	 */
+	void invoke() throws Exception;
+
+	/**
+	 *  Returns a new {@link Observer} that will execute this callback
+	 *  and then the given callback.
+	 *
+	 * @param other The other callback to execute after this one.
+	 * @return A new {@link Observer} that will execute this callback
+	 *  and then the given callback.
+	 */
+	default Observer andThen( Observer other ) {
+<span class="nc" id="L39">		Objects.requireNonNull(other);</span>
+<span class="nc" id="L40">		return () -&gt; {</span>
+<span class="nc" id="L41">			this.invoke();</span>
+<span class="nc" id="L42">			other.invoke();</span>
+<span class="nc" id="L43">		};</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>
