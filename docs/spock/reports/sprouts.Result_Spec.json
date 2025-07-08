@@ -1,10 +1,10 @@
 {
   "className":"sprouts.Result_Spec",
   "title":"Results",
-  "narrative":"The `Result` interface is used to represent the optional result of an operation\n    as well as a list of problems that occurred during the operation.\n    The problems of a `Result` are represented by the `Problem` interface,\n    which may be created from an exception or a simple message.\n\n    A `Result` is a fully thread safe immutable value type with useful mapping\n    functions that allow you to transform the value of the result into another\n    effectively making it a monadic value similar to the `Optional` type in Java 8.",
-  "subjects":["sprouts.Result","sprouts.Val","sprouts.Problem"],
+  "narrative":"The `Result` interface is used to represent the optional result of an operation\n    as well as a list of problems that occurred during an operation that produced the result.\n    The problems of a `Result` are represented by the `Problem` class,\n    which may be created from an exception or a simple message.\n\n    A `Result` is a fully thread safe immutable value type with useful mapping\n    functions that allow you to transform the value of the result into another\n    effectively making it a monadic value similar to the `Optional` type in Java 8.\n\n    Note that when using a `Result` as a return type of a method, then\n    this implies that the method has a safe control flow, meaning only returns\n    exceptions through the problems of the result, but never by throwing it.\n    This is the core appeal of the `Result` type, it allows you to write code\n    without hidden breaks and early returns without it being tracked by the compiler.",
+  "subjects":["sprouts.Result","sprouts.Problem"],
   "statistics":{
-    "runs":"23",
+    "runs":"46",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -293,7 +293,7 @@
       "result":"PASS",
       "duration":"?",
       "iterations":{
-      "tags":{},"see":[],"extraInfo":["\n            A `Result` can be peeked into to look at all of its problems.\n            This is especially useful for logging what went wrong while\n            still being able to have a more declarative control flow.\n        "]
+      "tags":{},"see":[],"extraInfo":["\n            A `Result` can be peeked into to look at all of its problems.\n            This is especially useful for logging what went wrong while\n            still being able to have a more declarative control flow.\n\n            But note that peeking at the problems of a result does not\n            cause them to be considered neither logged nor handles.\n            Check out the \"logAs..\" or \"handle..\" methods for that.\n        "]
       },
       "blocks":[
         {"kind":"given","text":"A result with some problems.","code":["var result = Result.of(42, [","    Problem.of(\"too large\", \"Who can count that far?\"),","    Problem.of(\"too even\", \"The customer doesn't like even numbers.\"),","    Problem.of(\"not a prime\", \"Prime numbers sell better.\")","])"]},
@@ -452,6 +452,585 @@
         {"kind":"then","text":"","code":["var exception = thrown(RuntimeException)"]},
 
         {"kind":"and","text":"","code":["exception.message == \"Division by zero\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use `ifMissingLogAsError` to log an empty `Result` to `System.err` if there is no `Slf4j` logger available.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            If there is no `Slf4j` logger available, the `Result` will log to `System.err`.\n            But either way, you can use the `ifMissingLogAsError` method to log the problems of a `Result`\n            to `System.err` if the result is empty. In case of the `Result` being empty and\n            without any problems, it will log that as error as well.\n\n            If an item is present however, the method will not log anything.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We remember the original `System.err` stream.","code":["var originalErr = System.err"]},
+
+        {"kind":"and","text":"We create a new `PrintStream` that will capture the output.","code":["var outputStream = new ByteArrayOutputStream()","var printStream = new PrintStream(outputStream)"]},
+
+        {"kind":"and","text":"We set the `System.err` to the new `PrintStream`.","code":["System.err = printStream"]},
+
+        {"kind":"when","text":"We create a result with two exception based problems.","code":["def result = Result.of(Integer, [","    Problem.of(new IllegalAccessException(\"Access denied\")),","    Problem.of(new IllegalArgumentException(\"Supplements though\"))","])"]},
+
+        {"kind":"and","text":"We call the `ifMissingLogAsError` method on the result.","code":["result.ifMissingLogAsError()"]},
+
+        {"kind":"then","text":"The output stream contains the relevant information.","code":["def output = outputStream.toString().trim()","output.contains(\"[ERROR] IllegalAccessException : Access denied\")","output.contains(\"[ERROR] IllegalArgumentException : Supplements though\")","output.contains(\"at sprouts.Result\") // This indicates that the stack trace is printed"]},
+
+        {"kind":"cleanup","text":"We restore the original `System.err` stream.","code":["System.err = originalErr"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use `ifMissingLogAsWarning` to log an empty `Result` to `System.err` if there is no `Slf4j` logger available.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            If there is no `Slf4j` logger available, the `Result` will log to `System.err`.\n            But either way, you can use the `ifMissingLogAsWarning` method to log the problems of a `Result`\n            to `System.err` if the result is empty. In case of the `Result` being empty and\n            without any problems, it will log that as warning as well.\n\n            If an item is present however, the method will not log anything.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We remember the original `System.err` stream.","code":["var originalErr = System.err"]},
+
+        {"kind":"and","text":"We create a new `PrintStream` that will capture the output.","code":["var outputStream = new ByteArrayOutputStream()","var printStream = new PrintStream(outputStream)"]},
+
+        {"kind":"and","text":"We set the `System.err` to the new `PrintStream`.","code":["System.err = printStream"]},
+
+        {"kind":"when","text":"We create a result with two exception based problems.","code":["def result = Result.of(Integer, [","    Problem.of(new IllegalAccessException(\"Access denied\")),","    Problem.of(new IllegalArgumentException(\"Inconvenience though\"))","])"]},
+
+        {"kind":"and","text":"We call the `ifMissingLogAsWarning` method on the result.","code":["result.ifMissingLogAsWarning()"]},
+
+        {"kind":"then","text":"The output stream contains the relevant information.","code":["def output = outputStream.toString().trim()","output.contains(\"[WARN] IllegalAccessException : Access denied\")","output.contains(\"[WARN] IllegalArgumentException : Inconvenience though\")","output.contains(\"at sprouts.Result\") // This indicates that the stack trace is printed"]},
+
+        {"kind":"cleanup","text":"We restore the original `System.err` stream.","code":["System.err = originalErr"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use `ifMissingLogAsInfo` to log an empty `Result` to `System.out` if there is no `Slf4j` logger available.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            If there is no `Slf4j` logger available, the `Result` will log to `System.out`.\n            But either way, you can use the `ifMissingLogAsInfo` method to log the problems of a `Result`\n            to `System.out` if the result is empty. In case of the `Result` being empty and\n            without any problems, it will log that as info as well.\n\n            If an item is present however, the method will not log anything.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We remember the original `System.out` stream.","code":["var originalOut = System.out"]},
+
+        {"kind":"and","text":"We create a new `PrintStream` that will capture the output.","code":["var outputStream = new ByteArrayOutputStream()","var printStream = new PrintStream(outputStream)"]},
+
+        {"kind":"and","text":"We set the `System.out` to the new `PrintStream`.","code":["System.out = printStream"]},
+
+        {"kind":"when","text":"We create a result with two exception based problems.","code":["def result = Result.of(Integer, [","    Problem.of(new IllegalAccessException(\"Access denied\")),","    Problem.of(new IllegalArgumentException(\"Invalid argument\"))","])"]},
+
+        {"kind":"and","text":"We call the `ifMissingLogAsInfo` method on the result.","code":["result.ifMissingLogAsInfo()"]},
+
+        {"kind":"then","text":"The output stream contains the relevant information.","code":["def output = outputStream.toString().trim()","output.contains(\"[INFO] IllegalAccessException : Access denied\")","output.contains(\"[INFO] IllegalArgumentException : Invalid argument\")","output.contains(\"at sprouts.Result\") // This indicates that the stack trace is printed"]},
+
+        {"kind":"cleanup","text":"We restore the original `System.out` stream.","code":["System.out = originalOut"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use `ifMissingLogAsDebug` to log an empty `Result` to `System.out` if there is no `Slf4j` logger available.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            If there is no `Slf4j` logger available, the `Result` will log to `System.out`.\n            But either way, you can use the `ifMissingLogAsDebug` method to log the problems of a `Result`\n            to `System.out` if the result is empty. In case of the `Result` being empty and\n            without any problems, it will log that as debug as well.\n\n            If an item is present however, the method will not log anything.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We remember the original `System.out` stream.","code":["var originalOut = System.out"]},
+
+        {"kind":"and","text":"We create a new `PrintStream` that will capture the output.","code":["var outputStream = new ByteArrayOutputStream()","var printStream = new PrintStream(outputStream)"]},
+
+        {"kind":"and","text":"We set the `System.out` to the new `PrintStream`.","code":["System.out = printStream"]},
+
+        {"kind":"when","text":"We create a result with two exception based problems.","code":["def result = Result.of(Integer, [","    Problem.of(new IllegalAccessException(\"Access denied\")),","    Problem.of(new IllegalArgumentException(\"Too militant\"))","])"]},
+
+        {"kind":"and","text":"We call the `ifMissingLogAsDebug` method on the result.","code":["result.ifMissingLogAsDebug()"]},
+
+        {"kind":"then","text":"The output stream contains the relevant information.","code":["def output = outputStream.toString().trim()","output.contains(\"[DEBUG] IllegalAccessException : Access denied\")","output.contains(\"[DEBUG] IllegalArgumentException : Too militant\")","output.contains(\"at sprouts.Result\") // This indicates that the stack trace is printed"]},
+
+        {"kind":"cleanup","text":"We restore the original `System.out` stream.","code":["System.out = originalOut"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use `ifMissingLogAsTrace` to log an empty `Result` to `System.out` if there is no `Slf4j` logger available.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            If there is no `Slf4j` logger available, the `Result` will log to `System.out`.\n            But either way, you can use the `ifMissingLogAsTrace` method to log the problems of a `Result`\n            to `System.out` if the result is empty. In case of the `Result` being empty and\n            without any problems, it will log that as trace as well.\n\n            If an item is present however, the method will not log anything.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We remember the original `System.out` stream.","code":["var originalOut = System.out"]},
+
+        {"kind":"and","text":"We create a new `PrintStream` that will capture the output.","code":["var outputStream = new ByteArrayOutputStream()","var printStream = new PrintStream(outputStream)"]},
+
+        {"kind":"and","text":"We set the `System.out` to the new `PrintStream`.","code":["System.out = printStream"]},
+
+        {"kind":"when","text":"We create a result with two exception based problems.","code":["def result = Result.of(Integer, [","    Problem.of(new IllegalAccessException(\"Access denied\")),","    Problem.of(new IllegalArgumentException(\"Invalid argument\"))","])"]},
+
+        {"kind":"and","text":"We call the `ifMissingLogAsTrace` method on the result.","code":["result.ifMissingLogAsTrace()"]},
+
+        {"kind":"then","text":"The output stream contains the relevant information.","code":["def output = outputStream.toString().trim()","output.contains(\"[TRACE] IllegalAccessException : Access denied\")","output.contains(\"[TRACE] IllegalArgumentException : Invalid argument\")","output.contains(\"at sprouts.Result\") // This indicates that the stack trace is printed"]},
+
+        {"kind":"cleanup","text":"We restore the original `System.out` stream.","code":["System.out = originalOut"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `ifMissingLogAsError` method will not log anything, if an item is present.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `ifMissingLogAsError` method will not log anything if the result has an item.\n            This is because the method is designed to log only when the result is empty.\n            If the result has an item, it will not log anything.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We mock the `System.err` stream.","code":["var originalOut = System.err","var outputStream = new ByteArrayOutputStream()","var printStream = new PrintStream(outputStream)","System.err = printStream"]},
+
+        {"kind":"and","text":"A result with an item.","code":["var result = Result.of(42, [","    Problem.of(new IllegalStateException(\"Still some problem\")),","])"]},
+
+        {"kind":"when","text":"We call the `ifMissingLogAsError` method on the result.","code":["result.ifMissingLogAsError()"]},
+
+        {"kind":"then","text":"The output stream is empty.","code":["outputStream.toString().trim() == \"\""]},
+
+        {"kind":"cleanup","text":"We restore the original `System.out` stream.","code":["System.err = originalOut"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `ifMissingLogAsWarning` method will not log anything, if an item is present.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `ifMissingLogAsWarning` method will not log anything if the result has an item.\n            This is because the method is designed to log only when the result is empty.\n            If the result has an item, it will not log anything.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We mock the `System.err` stream.","code":["var originalOut = System.err","var outputStream = new ByteArrayOutputStream()","var printStream = new PrintStream(outputStream)","System.err = printStream"]},
+
+        {"kind":"and","text":"A result with an item.","code":["var result = Result.of(42, [","    Problem.of(new IllegalStateException(\"Still some problem\")),","])"]},
+
+        {"kind":"when","text":"We call the `ifMissingLogAsWarning` method on the result.","code":["result.ifMissingLogAsWarning()"]},
+
+        {"kind":"then","text":"The output stream is empty.","code":["outputStream.toString().trim() == \"\""]},
+
+        {"kind":"cleanup","text":"We restore the original `System.out` stream.","code":["System.err = originalOut"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `ifMissingLogAsInfo` method will not log anything, if an item is present.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `ifMissingLogAsInfo` method will not log anything if the result has an item.\n            This is because the method is designed to log only when the result is empty.\n            If the result has an item, it will not log anything.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We mock the `System.out` stream.","code":["var originalOut = System.out","var outputStream = new ByteArrayOutputStream()","var printStream = new PrintStream(outputStream)","System.out = printStream"]},
+
+        {"kind":"and","text":"A result with an item.","code":["var result = Result.of(42, [","    Problem.of(new IllegalStateException(\"Still some problem\")),","])"]},
+
+        {"kind":"when","text":"We call the `ifMissingLogAsInfo` method on the result.","code":["result.ifMissingLogAsInfo()"]},
+
+        {"kind":"then","text":"The output stream is empty.","code":["outputStream.toString().trim() == \"\""]},
+
+        {"kind":"cleanup","text":"We restore the original `System.out` stream.","code":["System.out = originalOut"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `ifMissingLogAsDebug` method will not log anything, if an item is present.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `ifMissingLogAsDebug` method will not log anything if the result has an item.\n            This is because the method is designed to log only when the result is empty.\n            If the result has an item, it will not log anything.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We mock the `System.out` stream.","code":["var originalOut = System.out","var outputStream = new ByteArrayOutputStream()","var printStream = new PrintStream(outputStream)","System.out = printStream"]},
+
+        {"kind":"and","text":"A result with an item.","code":["var result = Result.of(42, [","    Problem.of(new IllegalStateException(\"Still some problem\")),","])"]},
+
+        {"kind":"when","text":"We call the `ifMissingLogAsDebug` method on the result.","code":["result.ifMissingLogAsDebug()"]},
+
+        {"kind":"then","text":"The output stream is empty.","code":["outputStream.toString().trim() == \"\""]},
+
+        {"kind":"cleanup","text":"We restore the original `System.out` stream.","code":["System.out = originalOut"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `ifMissingLogAsTrace` method will not log anything, if an item is present.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `ifMissingLogAsTrace` method will not log anything if the result has an item.\n            This is because the method is designed to log only when the result is empty.\n            If the result has an item, it will not log anything.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We mock the `System.out` stream.","code":["var originalOut = System.out","var outputStream = new ByteArrayOutputStream()","var printStream = new PrintStream(outputStream)","System.out = printStream"]},
+
+        {"kind":"and","text":"A result with an item.","code":["var result = Result.of(42, [","    Problem.of(new IllegalStateException(\"Still some problem\")),","])"]},
+
+        {"kind":"when","text":"We call the `ifMissingLogAsTrace` method on the result.","code":["result.ifMissingLogAsTrace()"]},
+
+        {"kind":"then","text":"The output stream is empty.","code":["outputStream.toString().trim() == \"\""]},
+
+        {"kind":"cleanup","text":"We restore the original `System.out` stream.","code":["System.out = originalOut"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use `logProblemsAsError` to log an erroneous `Result` to `System.err` if there is no `Slf4j` logger available.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            If there is no `Slf4j` logger available, the `Result` will log to `System.err`.\n            But either way, you can use the `logProblemsAsError` method to log the problems of a `Result`\n            to `System.err` if the result has problems. In case of the `Result` not having\n            any problems, it will not log anything.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We remember the original `System.err` stream.","code":["var originalErr = System.err"]},
+
+        {"kind":"and","text":"We create a new `PrintStream` that will capture the output.","code":["var outputStream = new ByteArrayOutputStream()","var printStream = new PrintStream(outputStream)"]},
+
+        {"kind":"and","text":"We set the `System.err` to the new `PrintStream`.","code":["System.err = printStream"]},
+
+        {"kind":"when","text":"We create a result with two exception based problems.","code":["def result = Result.of(Integer, [","    Problem.of(new IllegalAccessException(\"Access denied\")),","    Problem.of(new IllegalArgumentException(\"Appeal to nature\"))","])"]},
+
+        {"kind":"and","text":"We call the `logProblemsAsError` method on the result.","code":["result.logProblemsAsError()"]},
+
+        {"kind":"then","text":"The output stream contains the relevant information.","code":["def output = outputStream.toString().trim()","output.contains(\"[ERROR] IllegalAccessException : Access denied\")","output.contains(\"[ERROR] IllegalArgumentException : Appeal to nature\")","output.contains(\"at sprouts.Result\") // This indicates that the stack trace is printed"]},
+
+        {"kind":"cleanup","text":"We restore the original `System.err` stream.","code":["System.err = originalErr"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use `logProblemsAsWarning` to log an erroneous `Result` to `System.err` if there is no `Slf4j` logger available.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            If there is no `Slf4j` logger available, the `Result` will log to `System.err`.\n            But either way, you can use the `logProblemsAsWarning` method to log the problems of a `Result`\n            to `System.err` if the result has problems. In case of the `Result` not having\n            any problems, it will not log anything.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We remember the original `System.err` stream.","code":["var originalErr = System.err"]},
+
+        {"kind":"and","text":"We create a new `PrintStream` that will capture the output.","code":["var outputStream = new ByteArrayOutputStream()","var printStream = new PrintStream(outputStream)"]},
+
+        {"kind":"and","text":"We set the `System.err` to the new `PrintStream`.","code":["System.err = printStream"]},
+
+        {"kind":"when","text":"We create a result with two exception based problems.","code":["def result = Result.of(Integer, [","    Problem.of(new IllegalAccessException(\"Access denied\")),","    Problem.of(new IllegalArgumentException(\"It's natural\"))","])"]},
+
+        {"kind":"and","text":"We call the `logProblemsAsWarning` method on the result.","code":["result.logProblemsAsWarning()"]},
+
+        {"kind":"then","text":"The output stream contains the relevant information.","code":["def output = outputStream.toString().trim()","output.contains(\"[WARN] IllegalAccessException : Access denied\")","output.contains(\"[WARN] IllegalArgumentException : It's natural\")","output.contains(\"at sprouts.Result\") // This indicates that the stack trace is printed"]},
+
+        {"kind":"cleanup","text":"We restore the original `System.err` stream.","code":["System.err = originalErr"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"use `logProblemsAsInfo` to log an erroneous `Result` to `System.out` if there is no `Slf4j` logger available.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            If there is no `Slf4j` logger available, the `Result` will log to `System.out`.\n            But either way, you can use the `logProblemsAsInfo` method to log the problems of a `Result`\n            to `System.out` if the result has problems. In case of the `Result` not having\n            any problems, it will not log anything.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We remember the original `System.out` stream.","code":["var originalOut = System.out"]},
+
+        {"kind":"and","text":"We create a new `PrintStream` that will capture the output.","code":["var outputStream = new ByteArrayOutputStream()","def printStream = new PrintStream(outputStream)"]},
+
+        {"kind":"and","text":"We set the `System.out` to the new `PrintStream`.","code":["System.out = printStream"]},
+
+        {"kind":"when","text":"We create a result with two exception based problems.","code":["def result = Result.of(Integer, [","    Problem.of(new IllegalAccessException(\"Access denied\")),","    Problem.of(new IllegalArgumentException(\"Inconvenience though\"))","])"]},
+
+        {"kind":"and","text":"We call the `logProblemsAsInfo` method on the result.","code":["result.logProblemsAsInfo()"]},
+
+        {"kind":"then","text":"The output stream contains the relevant information.","code":["def output = outputStream.toString().trim()","output.contains(\"[INFO] IllegalAccessException : Access denied\")","output.contains(\"[INFO] IllegalArgumentException : Inconvenience though\")","output.contains(\"at sprouts.Result\") // This indicates that the stack trace is printed"]},
+
+        {"kind":"cleanup","text":"We restore the original `System.out` stream.","code":["System.out = originalOut"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"use `logProblemsAsDebug` to log an erroneous `Result` to `System.out` if there is no `Slf4j` logger available.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            If there is no `Slf4j` logger available, the `Result` will log to `System.out`.\n            But either way, you can use the `logProblemsAsDebug` method to log the problems of a `Result`\n            to `System.out` if the result has problems. In case of the `Result` not having\n            any problems, it will not log anything.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We remember the original `System.out` stream.","code":["var originalOut = System.out"]},
+
+        {"kind":"and","text":"We create a new `PrintStream` that will capture the output.","code":["var outputStream = new ByteArrayOutputStream()","def printStream = new PrintStream(outputStream)"]},
+
+        {"kind":"and","text":"We set the `System.out` to the new `PrintStream`.","code":["System.out = printStream"]},
+
+        {"kind":"when","text":"We create a result with two exception based problems.","code":["def result = Result.of(Integer, [","    Problem.of(new IllegalAccessException(\"Access denied\")),","    Problem.of(new IllegalArgumentException(\"Avocado toast\"))","])"]},
+
+        {"kind":"and","text":"We call the `logProblemsAsDebug` method on the result.","code":["result.logProblemsAsDebug()"]},
+
+        {"kind":"then","text":"The output stream contains the relevant information.","code":["def output = outputStream.toString().trim()","output.contains(\"[DEBUG] IllegalAccessException : Access denied\")","output.contains(\"[DEBUG] IllegalArgumentException : Avocado toast\")","output.contains(\"at sprouts.Result\") // This indicates that the stack trace is printed"]},
+
+        {"kind":"cleanup","text":"We restore the original `System.out` stream.","code":["System.out = originalOut"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"use `logProblemsAsTrace` to log an erroneous `Result` to `System.out` if there is no `Slf4j` logger available.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            If there is no `Slf4j` logger available, the `Result` will log to `System.out`.\n            But either way, you can use the `logProblemsAsTrace` method to log the problems of a `Result`\n            to `System.out` if the result has problems. In case of the `Result` not having\n            any problems, it will not log anything.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We remember the original `System.out` stream.","code":["var originalOut = System.out"]},
+
+        {"kind":"and","text":"We create a new `PrintStream` that will capture the output.","code":["var outputStream = new ByteArrayOutputStream()","def printStream = new PrintStream(outputStream)"]},
+
+        {"kind":"and","text":"We set the `System.out` to the new `PrintStream`.","code":["System.out = printStream"]},
+
+        {"kind":"when","text":"We create a result with two exception based problems.","code":["def result = Result.of(Integer, [","    Problem.of(new IllegalAccessException(\"Access denied\")),","    Problem.of(new IllegalArgumentException(\"Invalid argument\"))","])"]},
+
+        {"kind":"and","text":"We call the `logProblemsAsTrace` method on the result.","code":["result.logProblemsAsTrace()"]},
+
+        {"kind":"then","text":"The output stream contains the relevant information.","code":["def output = outputStream.toString().trim()","output.contains(\"[TRACE] IllegalAccessException : Access denied\")","output.contains(\"[TRACE] IllegalArgumentException : Invalid argument\")","output.contains(\"at sprouts.Result\") // This indicates that the stack trace is printed"]},
+
+        {"kind":"cleanup","text":"We restore the original `System.out` stream.","code":["System.out = originalOut"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A `Result` ensures that errors are at least logged...",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            If you don't handle the problems of a `Result`, then it will log them to `System.err`\n            for you as soon as you try to retrieve the item from the result.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We remember the original `System.err` and `System.out` stream.","code":["var originalErr = System.err","var originalOut = System.out","var createNewOutput = {","    var outputStream = new ByteArrayOutputStream()","    var printStream = new PrintStream(outputStream)","    System.err = printStream","    System.out = printStream","    return outputStream","}"]},
+
+        {"kind":"and","text":"We create a result with an exception based problem.","code":["var result = Result.of(Integer, Problem.of(new IllegalAccessException(\"Access denied\")))"]},
+
+        {"kind":"when","text":"We call the `logProblemsAsError` method.","code":["var resultLogged = result.logProblemsAsError()","var out = createNewOutput()"]},
+
+        {"kind":"and","text":"We call the \"or\" methods on the logged result.","code":["resultLogged.orElse(2)","resultLogged.orElseNull()","resultLogged.orElseGet {}"]},
+
+        {"kind":"then","text":"No more logging occurs, because the problems have already been logged.","code":["out.toString().trim() == \"\""]},
+
+        {"kind":"when","text":"We call \"orElse(42)\" on the original result (which has not been logged yet).","code":["result.orElse(42)"]},
+
+        {"kind":"then","text":"The output stream contains the relevant information.","code":["out.toString().contains(\"[ERROR] IllegalAccessException : Access denied\")","out.toString().contains(\"at sprouts.Result\") // This indicates that the stack trace is printed"]},
+
+        {"kind":"when","text":"We reset and call \"orElseNull()\" on the original result (which has not been logged yet).","code":["out = createNewOutput() // We ignore the output of the previous call","result.orElseNull()"]},
+
+        {"kind":"then","text":"The output stream contains the relevant information.","code":["out.toString().contains(\"[ERROR] IllegalAccessException : Access denied\")","out.toString().contains(\"at sprouts.Result\") // This indicates that the stack trace is printed"]},
+
+        {"kind":"when","text":"We reset and call \"orElseGet(()->7)\" on the original result (which has not been logged yet).","code":["out = createNewOutput() // We ignore the output of the previous call","result.orElseGet(()->7)"]},
+
+        {"kind":"then","text":"The output stream contains the relevant information.","code":["out.toString().contains(\"[ERROR] IllegalAccessException : Access denied\")","out.toString().contains(\"at sprouts.Result\") // This indicates that the stack trace is printed"]},
+
+        {"kind":"cleanup","text":"We restore the original `System.out` and `System.err` streams.","code":["System.err = originalErr","System.out = originalOut"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A `Result` will not log anything as long as you do not retrieve the item.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            If you don't handle the problems of a `Result`, then it will log them to `System.err`\n            for you as soon as you try to retrieve the item from the result.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We remember the original `System.err` and `System.out` stream.","code":["var originalErr = System.err","var originalOut = System.out","var createNewOutput = {","    var outputStream = new ByteArrayOutputStream()","    var printStream = new PrintStream(outputStream)","    System.err = printStream","    System.out = printStream","    return outputStream","}"]},
+
+        {"kind":"and","text":"We create two results with an exception based problem.","code":["var result1 = Result.of(Integer, Problem.of(new NullPointerException(\"Thing was missing!\")))","var result2 = Result.of(42, [Problem.of(new IllegalStateException(\"Still some problem\"))])"]},
+
+        {"kind":"and","text":"We create a new output stream to capture the output.","code":["var out = createNewOutput()"]},
+
+        {"kind":"expect","text":"We call various methods on the result without retrieving the item.","code":["!result1.isPresent() && result2.isPresent()","result1.isEmpty() && !result2.isEmpty()","result1.is(null) &&!result2.is(null)","!result1.is(result2) && !result2.is(result1)","result1.is(result1) && result2.is(result2)","!result1.isNot(null) && result2.isNot(null)","result1.isNot(result2) && result2.isNot(result1)"]},
+
+        {"kind":"and","text":"The output stream is still empty, because we did not retrieve the item.","code":["out.toString().trim() == \"\""]},
+
+        {"kind":"when","text":"We call the `orElseNull()` method on the first result.","code":["result1.orElseNull()"]},
+
+        {"kind":"then","text":"The output stream contains the relevant information.","code":["out.toString().contains(\"[ERROR] NullPointerException : Thing was missing!\")","out.toString().contains(\"at sprouts.Result\") // This indicates that the stack trace is printed"]},
+
+        {"kind":"when","text":"We log the second result.","code":["out = createNewOutput() // We ignore the output of the previous call","result2.logProblemsAsInfo()"]},
+
+        {"kind":"then","text":"The output stream contains the relevant information.","code":["out.toString().contains(\"[INFO] IllegalStateException : Still some problem\")","out.toString().contains(\"at sprouts.Result\") // This indicates that the stack trace is printed"]},
+
+        {"kind":"cleanup","text":"We restore the original `System.out` and `System.err` streams.","code":["System.err = originalErr","System.out = originalOut"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use `handle(Class<E>,Consumer<E>)` to handle problems of a specific type.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `handle(Class<E>,Consumer<E>)` method finds all problems\n            holding exceptions of the given type and applies the consumer to them.\n            After that, the matched problems are removed from the result,\n            since they are considered handled.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A list for tracing the call to the consumer.","code":["var trace = []"]},
+
+        {"kind":"and","text":"A result with multiple problems of different types.","code":["var result1 = Result.of(Integer, [","    Problem.of(new IllegalAccessException(\"Access denied\")),","    Problem.of(new IllegalArgumentException(\"Canine tooth\")),","    Problem.of(new NullPointerException(\"Thing was missing!\"))","])"]},
+
+        {"kind":"expect","text":"The result contains three problems.","code":["result1.problems().size() == 3","result1.problems().get(0).description().contains(\"Access denied\")","result1.problems().get(1).description().contains(\"Canine tooth\")","result1.problems().get(2).description().contains(\"Thing was missing!\")"]},
+
+        {"kind":"when","text":"We handle the problems of type IllegalArgumentException.","code":["var result2 = result1.handle(IllegalArgumentException, e -> trace.add(\"Handled: \" + e.getMessage()))"]},
+
+        {"kind":"then","text":"The original result stays unchanged.","code":["result1.problems().size() == 3","result1.problems().get(0).description().contains(\"Access denied\")","result1.problems().get(1).description().contains(\"Canine tooth\")","result1.problems().get(2).description().contains(\"Thing was missing!\")"]},
+
+        {"kind":"and","text":"The new result contains only the problems that were not handled.","code":["result2.problems().size() == 2","result2.problems().get(0).description().contains(\"Access denied\")","result2.problems().get(1).description().contains(\"Thing was missing!\")"]},
+
+        {"kind":"and","text":"The trace contains the handled problem.","code":["trace.contains(\"Handled: Canine tooth\")"]},
+
+        {"kind":"when","text":"We handle the problems of type NullPointerException.","code":["var result3 = result2.handle(NullPointerException, e -> trace.add(\"Handled: \" + e.getMessage()))"]},
+
+        {"kind":"then","text":"The original result stays unchanged.","code":["result2.problems().size() == 2","result2.problems().get(0).description().contains(\"Access denied\")","result2.problems().get(1).description().contains(\"Thing was missing!\")"]},
+
+        {"kind":"and","text":"The new result contains only the problems that were not handled.","code":["result3.problems().size() == 1","result3.problems().get(0).description().contains(\"Access denied\")"]},
+
+        {"kind":"and","text":"The trace contains the handled problem.","code":["trace.contains(\"Handled: Thing was missing!\")"]},
+
+        {"kind":"when","text":"We handle the last problem of type IllegalAccessException.","code":["var result4 = result3.handle(IllegalAccessException, e -> trace.add(\"Handled: \" + e.getMessage()))"]},
+
+        {"kind":"then","text":"The original result stays unchanged.","code":["result3.problems().size() == 1","result3.problems().get(0).description().contains(\"Access denied\")"]},
+
+        {"kind":"and","text":"The new result has no problems left, since we handled the last one.","code":["result4.problems().isEmpty()"]},
+
+        {"kind":"and","text":"The trace contains the handled problem.","code":["trace.contains(\"Handled: Access denied\")"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use `handleAny(Consumer<Problem>)` to handle all problems of a `Result`.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `handle(Consumer<Problem>)` method applies the consumer to all problems\n            of the result. After that, problems are removed from the returned\n            result, since they are considered handled.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A list for tracing the call to the consumer.","code":["var trace = []"]},
+
+        {"kind":"and","text":"A result with multiple exception based problems of different types.","code":["var result1 = Result.of(Integer, [","    Problem.of(new IllegalAccessException(\"Access denied\")),","    Problem.of(new IllegalArgumentException(\"Plants feel pain\")),","    Problem.of(new NullPointerException(\"Thing was missing!\"))","])"]},
+
+        {"kind":"expect","text":"The result contains three problems.","code":["result1.problems().size() == 3","result1.problems().get(0).description().contains(\"Access denied\")","result1.problems().get(1).description().contains(\"Plants feel pain\")","result1.problems().get(2).description().contains(\"Thing was missing!\")"]},
+
+        {"kind":"when","text":"We handle all problems with a consumer that adds their description to the trace.","code":["var result2 = result1.handleAny(p -> trace.add(\"Handled: \" + p.description()))"]},
+
+        {"kind":"then","text":"The original result stays unchanged.","code":["result1.problems().size() == 3","result1.problems().get(0).description().contains(\"Access denied\")","result1.problems().get(1).description().contains(\"Plants feel pain\")","result1.problems().get(2).description().contains(\"Thing was missing!\")"]},
+
+        {"kind":"and","text":"The new result contains no problems left, since we handled all of them.","code":["result2.problems().isEmpty()"]},
+
+        {"kind":"and","text":"The trace contains all handled problems.","code":["trace.contains(\"Handled: Access denied\")","trace.contains(\"Handled: Plants feel pain\")","trace.contains(\"Handled: Thing was missing!\")"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use `orElseHandle(Function<Tuple<Problem>,V>)` to both handle problems and return a value.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `orElseHandle(Function<Tuple<Problem>,V>)` is an advanced\n            variant of methods like `orElse(V)` or `orElseGet(Supplier<V>)`.\n            It allows you to handle all problems of a `Result` and\n            then return a fallback value.\n\n            Note that the supplied function will receive a tuple containing all problems\n            of the result, not just a single problem.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A list for tracing if the consumer was called or not.","code":["var trace = []"]},
+
+        {"kind":"and","text":"An empty result with two problems of different types.","code":["var emptyResult = Result.of(Integer, [","    Problem.of(new IllegalThreadStateException(\"Thread is not alive\")),","    Problem.of(new IllegalArgumentException(\"Vitamin B12 though\"))","])"]},
+
+        {"kind":"and","text":"A non-empty result with one problem.","code":["var nonEmptyResult = Result.of(42, [Problem.of(new IllegalStateException(\"Still some problem\"))])"]},
+
+        {"kind":"when","text":"We call `orElseHandle` on the non-empty result with a function that adds the problems to the trace.","code":["var value1 = nonEmptyResult.orElseHandle(problems -> {","    for (var problem : problems) {","        trace.add(\"Handled: \" + problem.description())","    }","    return 123 // Return a default value","})"]},
+
+        {"kind":"then","text":"The function was not called, because the result has an item.","code":["value1 == 42","trace.isEmpty()"]},
+
+        {"kind":"when","text":"We call `orElseHandle` on the empty result with a function that adds the problems to the trace.","code":["var value2 = emptyResult.orElseHandle(problems -> {","    for (var problem : problems) {","        trace.add(\"Handled: \" + problem.description())","    }","    return 123 // Return a default value","})"]},
+
+        {"kind":"then","text":"The consumer was called, because the result is empty.","code":["value2 == 123 // The default value returned by the function","trace.size() == 2","trace.contains(\"Handled: Thread is not alive\")","trace.contains(\"Handled: Vitamin B12 though\")"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You can use `logProblemsTo(BiConsumer<String, Throwable> logger)` to do custom logging.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `logProblemsTo( BiConsumer<String, Throwable> logger )` method allows you to\n            log the problems of a `Result` using a custom logger in the form of a `BiConsumer`,\n            which takes the problem's message and the exception that caused the problem.\n            This is useful if you want to use a different logging framework or\n            if you want to log the problems in a specific way.\n\n            The logger will be called for each problem in the result.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A list for tracing the calls to the custom logger.","code":["var trace = []"]},
+
+        {"kind":"and","text":"A result with multiple problems.","code":["var result = Result.of(Integer, [","    Problem.of(new IllegalAccessException(\"Access denied\")),","    Problem.of(new IllegalArgumentException(\"Invalid argument\")),","    Problem.of(\"Invalid input\", \"This is not a valid input\")","])"]},
+
+        {"kind":"when","text":"We log the problems using a custom logger that adds them to the trace.","code":["result.logProblemsTo((message, throwable) -> trace.add(message))"]},
+
+        {"kind":"then","text":"The trace contains the logged problems.","code":["trace.size() == 3","trace.contains(\"IllegalAccessException : Access denied\")","trace.contains(\"IllegalArgumentException : Invalid argument\")","trace.contains(\"Invalid input : This is not a valid input\")"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use `ofTry( ResultRunAttempt runAttempt )` to create a `Void` based `Result`.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `ofTry( ResultRunAttempt runAttempt )` method allows you run\n            a procedure which does not have a return value, but may still fail.\n            The `ResultRunAttempt` is a functional interface that is similar to `Runnable`, \n            but it can throw exceptions. When an invocation of the run attempt fails,\n            it will return a `Result<Void>` containing the problems that occurred \n            during the run attempt.\n\n            The method will return a `Result<Void>` that contains the problems\n            if the run attempt fails, or an empty result if it succeeds.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A run attempt that throws an exception.","code":["ResultRunAttempt failingAttempt = { throw new IllegalStateException(\"Something went wrong!\") }"]},
+
+        {"kind":"and","text":"We create a `Result` from the failing attempt.","code":["var result = Result.ofTry(failingAttempt)"]},
+
+        {"kind":"expect","text":"The result contains the problem that occurred during the run attempt.","code":["result.isEmpty()","result.hasProblems()","result.problems().size() == 1","result.problems().get(0).description().contains(\"Something went wrong!\")","result.problems().get(0).exception().isPresent()","result.problems().get(0).exception().get() instanceof IllegalStateException"]},
+
+        {"kind":"when","text":"We create a successful run attempt.","code":["ResultRunAttempt successfulAttempt = { /* Do nothing, just succeed */ }"]},
+
+        {"kind":"and","text":"We create a `Result` from the successful attempt.","code":["var successResult = Result.ofTry(successfulAttempt)"]},
+
+        {"kind":"then","text":"The result is empty, since the run attempt succeeded.","code":["successResult.isEmpty()","!successResult.hasProblems()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use `ifMissingLogTo(BiConsumer<String,Throwable> logger)` to manually log problems.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `ifMissingLogTo(BiConsumer<String,Throwable> logger)` method allows you to\n            manually log the problems of a `Result` using a custom logger in the form of a `BiConsumer`,\n            which takes the problem's message and the exception that caused the problem.\n            This is useful if you want to use a different logging framework or\n            if you want to log the problems in a specific way.\n\n            The logger will be called for each problem in the result, but only if the result is empty.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A list for tracing the calls to the custom logger.","code":["var trace = []"]},
+
+        {"kind":"and","text":"A result with multiple problems.","code":["var result = Result.of(42, [","    Problem.of(new IllegalArgumentException(\"Appeal to nature\")),","    Problem.of(new IllegalArgumentException(\"Appeal to tradition\")),","    Problem.of(new IllegalArgumentException(\"Bacon though\"))","])"]},
+
+        {"kind":"when","text":"We log the problems using a custom logger that adds them to the trace.","code":["result.ifMissingLogTo((message, throwable) -> trace.add(message))"]},
+
+        {"kind":"then","text":"The trace is empty, because the result has an item, so no logging occurs.","code":["trace.isEmpty()"]},
+
+        {"kind":"when","text":"We create an empty result with problems.","code":["var emptyResult = Result.of(Integer, [","    Problem.of(new NullPointerException(\"Brain not found\")),","    Problem.of(new IllegalArgumentException(\"Might makes right\"))","])"]},
+
+        {"kind":"and","text":"We log the problems using the custom logger.","code":["emptyResult.ifMissingLogTo((message, throwable) -> trace.add(message))"]},
+
+        {"kind":"then","text":"The trace contains the logged problems.","code":["trace.size() == 2","trace.contains(\"NullPointerException : Brain not found\")","trace.contains(\"IllegalArgumentException : Might makes right\")"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }

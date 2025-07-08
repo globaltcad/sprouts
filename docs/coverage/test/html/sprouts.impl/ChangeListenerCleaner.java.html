@@ -58,7 +58,7 @@ final class ChangeListenerCleaner
                 try {
 <span class="fc" id="L59">                    _action.run();</span>
 <span class="nc" id="L60">                } catch (Exception e) {</span>
-<span class="nc" id="L61">                    log.error(&quot;Failed to execute cleanup action '&quot;+_action+&quot;'.&quot;, e);</span>
+<span class="nc" id="L61">                    _logError(&quot;Failed to execute cleanup action '{}'.&quot;, _action, e);</span>
                 } finally {
 <span class="fc" id="L63">                    _action = null;</span>
                 }
@@ -68,11 +68,11 @@ final class ChangeListenerCleaner
 
     public void register( @Nullable Object o, Runnable action ) {
 <span class="pc bpc" id="L70" title="1 of 2 branches missed.">        if ( o == null ) {</span>
-<span class="nc" id="L71">            log.warn(&quot;Attempt to register a null object for cleanup. This is not allowed!&quot;);</span>
+<span class="nc" id="L71">            _logError(&quot;Attempt to register a null object for cleanup. This is not allowed!&quot;);</span>
             try {
 <span class="nc" id="L73">                action.run();</span>
 <span class="nc" id="L74">            } catch (Exception e) {</span>
-<span class="nc" id="L75">                log.error(&quot;Failed to execute cleanup action '&quot;+action+&quot;'.&quot;, e);</span>
+<span class="nc" id="L75">                _logError(&quot;Failed to execute cleanup action '&quot;+action+&quot;'.&quot;, e);</span>
 <span class="nc" id="L76">            }</span>
 <span class="nc" id="L77">            return;</span>
         }
@@ -105,7 +105,7 @@ final class ChangeListenerCleaner
 <span class="fc" id="L105">                    _thread.wait();</span>
 <span class="fc" id="L106">                }</span>
 <span class="nc" id="L107">            } catch (Exception e) {</span>
-<span class="nc" id="L108">                log.error(&quot;Failed to make cleaner thread wait for cleaning notification!&quot;, e);</span>
+<span class="nc" id="L108">                _logError(&quot;Failed to make cleaner thread wait for cleaning notification!&quot;, e);</span>
 <span class="pc" id="L109">            }</span>
         }
 <span class="nc" id="L111">    }</span>
@@ -117,13 +117,13 @@ final class ChangeListenerCleaner
                 try {
 <span class="fc" id="L118">                    ref.cleanup();</span>
 <span class="nc" id="L119">                } catch ( Throwable e ) {</span>
-<span class="nc" id="L120">                    log.error(&quot;Failed to perform cleanup!&quot;, e);</span>
+<span class="nc" id="L120">                    _logError(&quot;Failed to perform cleanup!&quot;, e);</span>
                 } finally {
 <span class="fc" id="L122">                    _toBeCleaned.remove(ref);</span>
                 }
             }
 <span class="nc" id="L125">        } catch ( Throwable e ) {</span>
-<span class="nc" id="L126">            log.error(&quot;Failed to call 'remove()' on cleaner internal queue.&quot;, e);</span>
+<span class="nc" id="L126">            _logError(&quot;Failed to call 'remove()' on cleaner internal queue.&quot;, e);</span>
 <span class="fc" id="L127">        }</span>
 <span class="fc" id="L128">    }</span>
 
@@ -133,6 +133,11 @@ final class ChangeListenerCleaner
 <span class="nc" id="L133">                    &quot;registered=&quot; + _toBeCleaned.size() +</span>
                 &quot;]&quot;;
     }
+
+
+    private static void _logError(String message, @Nullable Object... args) {
+<span class="nc" id="L139">        Util._logError(log, message, args);</span>
+<span class="nc" id="L140">    }</span>
 
 }
 

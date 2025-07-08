@@ -4,7 +4,7 @@
   "narrative":"A composite property view is an immutable property that is a live view of two other properties.\n    It is especially useful when you want to observe 2 properties merged into one maybe with some\n    sort of transformation applied to them.",
   "subjects":[],
   "statistics":{
-    "runs":"9",
+    "runs":"13",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -252,6 +252,122 @@
         {"kind":"and","text":"We wait for the garbage collector to run.","code":["waitForGarbageCollection()","Thread.sleep(500)"]},
 
         {"kind":"then","text":"The two parent properties still have 4 change listeners registered.","code":["longProperty.numberOfChangeListeners() == 4","unitProperty.numberOfChangeListeners() == 4"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"An exception thrown in the combiner function of a non-nullable composite property view is logged instead of crashing the control flow.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            An exception thrown in the combiner function of a composite property view is\n            caught and logged, but does not interrupt the applications control flow.\n            This is important because a caller of a composite property view\n            does not expect the control flow to be interrupted.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We first create a new `PrintStream` that will capture the `System.err`.","code":["var originalErr = System.err","var outputStream = new ByteArrayOutputStream()","var printStream = new PrintStream(outputStream)","System.err = printStream"]},
+
+        {"kind":"and","text":"We have two properties modelling a forename and a surname of a person.","code":["Var<String> forename = Var.of(\"John\")","Var<String> surname = Var.of(\"Doe\")"]},
+
+        {"kind":"and","text":"Now we create a view of the 2 properties that represents the full name.","code":["Val<String> fullName = Viewable.of(forename, surname, (f, s) -> {","    if (f == \"\" || s == \"\") {","        throw new IllegalArgumentException(\"Forename or surname cannot be empty\");","    }","    return f + \" \" + s;","})"]},
+
+        {"kind":"expect","text":"Initially, the log does not contain any exceptions.","code":["outputStream.toString().isEmpty()"]},
+
+        {"kind":"when","text":"We change the value of the properties to cause an exception.","code":["forename.set(\"\")"]},
+
+        {"kind":"then","text":"We do not notice any exception being thrown!","code":["noExceptionThrown()"]},
+
+        {"kind":"and","text":"The full name view still has the old item, due to the exception thrown in the combiner function.","code":["fullName.get() == \"John Doe\""]},
+
+        {"kind":"and","text":"Looking at the log, we see that the exception was logged.","code":["outputStream.toString().contains(\"Forename or surname cannot be empty\")","outputStream.toString().contains(\"IllegalArgumentException\")","outputStream.toString().contains(\"at \") // Stack trace is present"]},
+
+        {"kind":"cleanup","text":"We restore the original `System.err` stream.","code":["System.err = originalErr"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"An exception thrown in the combiner function of a nullable composite property view is logged instead of crashing the control flow.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            An exception thrown in the combiner function of a composite property view is\n            caught and logged, but does not interrupt the applications control flow.\n            This is important because a caller of a composite property view\n            does not expect the control flow to be interrupted.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We first create a new `PrintStream` that will capture the `System.err`.","code":["var originalErr = System.err","var outputStream = new ByteArrayOutputStream()","var printStream = new PrintStream(outputStream)","System.err = printStream"]},
+
+        {"kind":"and","text":"We have two properties modelling a adjective and a noun in a sentence.","code":["Var<String> adjective = Var.of(\"tasty\")","Var<String> noun = Var.of(\"Ramen\")"]},
+
+        {"kind":"and","text":"Now we create a view of the 2 properties that represents the full sentence.","code":["Val<String> sentence = Viewable.ofNullable(adjective, noun, (a, n) -> {","    if ( a == \"\" && n == \"\" ) {","        return null; // Allowing null items in the view","    } else if (a == \"\" || n == \"\") {","        throw new IllegalArgumentException(\"Adjective and noun must not be empty\");","    }","    return \"I like \" + a + \" \" + n + \" very much.\";","})"]},
+
+        {"kind":"expect","text":"Initially, the log does not contain any exceptions and the full sentence view is not empty.","code":["outputStream.toString().isEmpty()","sentence.get() == \"I like tasty Ramen very much.\""]},
+
+        {"kind":"when","text":"We change the item of the adjective properties to cause an exception.","code":["adjective.set(\"\")"]},
+
+        {"kind":"then","text":"We do not notice any exception being thrown!","code":["noExceptionThrown()"]},
+
+        {"kind":"and","text":"The full sentence view is empty due to the exception thrown in the combiner function.","code":["sentence.isEmpty()"]},
+
+        {"kind":"and","text":"Looking at the log, we see that the exception was logged.","code":["outputStream.toString().contains(\"Adjective and noun must not be empty\")","outputStream.toString().contains(\"IllegalArgumentException\")","outputStream.toString().contains(\"at \") // Stack trace is present"]},
+
+        {"kind":"cleanup","text":"We restore the original `System.err` stream.","code":["System.err = originalErr"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"An exception thrown in the combiner function of a non-nullable composite property view mapping to a different type, is logged instead of crashing the control flow.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            You can crete a composite property view that maps to a different type,\n            than the types of the properties it is composed of.\n            So for example, you may want to combine a `byte` and a `Month` property\n            into a `String` that represents the month and the day of the month.\n\n            If an exception is thrown in the combiner function of such a composite property view,\n            then instead of crashing the control flow, it is caught and logged.\n            This is important because a caller of a composite property view\n            does not expect the control flow to be interrupted when they set the \n            items of the properties...\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We first create a new `PrintStream` that will capture the `System.err`.","code":["var originalErr = System.err","var outputStream = new ByteArrayOutputStream()","var printStream = new PrintStream(outputStream)","System.err = printStream"]},
+
+        {"kind":"and","text":"We have a property modelling a day of the month as a byte and a property modelling the month as an enum.","code":["Var<Byte> dayOfMonth = Var.of((byte) 15)","Var<Month> month = Var.of(Month.JUNE)"]},
+
+        {"kind":"and","text":"Now we create a view of the 2 properties that represents the full date.","code":["Val<String> fullDate = Viewable.of(String.class, dayOfMonth, month, (d, m) -> {","    if (d < 1 || d > 31) {","        throw new IllegalArgumentException(\"Day of month must be between 1 and 31\");","    }","    return String.format(\"%02d %s\", d, m.name());","})"]},
+
+        {"kind":"expect","text":"Initially, the log does not contain any exceptions and the full date view has the expected value.","code":["outputStream.toString().isEmpty()","fullDate.get() == \"15 JUNE\""]},
+
+        {"kind":"when","text":"We change the value of the properties to cause an exception.","code":["dayOfMonth.set((byte) 40)"]},
+
+        {"kind":"then","text":"We do not notice any exception being thrown!","code":["noExceptionThrown()"]},
+
+        {"kind":"and","text":"The full date view still has the old item, due to the exception thrown in the combiner function.","code":["fullDate.get() == \"15 JUNE\""]},
+
+        {"kind":"and","text":"Looking at the log, we see that the exception was logged.","code":["outputStream.toString().contains(\"Day of month must be between 1 and 31\")","outputStream.toString().contains(\"IllegalArgumentException\")","outputStream.toString().contains(\"at \") // Stack trace is present"]},
+
+        {"kind":"cleanup","text":"We restore the original `System.err` stream.","code":["System.err = originalErr"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"An exception thrown in the combiner function of a nullable composite property view mapping to a different type, is logged instead of crashing the control flow.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            You can crete a composite property view that maps to a different type,\n            than the types of the properties it is composed of.\n            So for example, you may want to combine a `byte` and a `Month` property\n            into a `String` that represents the month and the day of the month.\n\n            If an exception is thrown in the combiner function of such a composite property view,\n            then instead of crashing the control flow, it is caught and logged.\n            This is important because a caller of a composite property view\n            does not expect the control flow to be interrupted when they set the \n            items of the properties...\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We first create a new `PrintStream` that will capture the `System.err`.","code":["var originalErr = System.err","var outputStream = new ByteArrayOutputStream()","var printStream = new PrintStream(outputStream)","System.err = printStream"]},
+
+        {"kind":"and","text":"We have a property modelling a day of the month as a byte and a property modelling the month as an enum.","code":["Var<Byte> dayOfMonth = Var.of((byte) 3)","Var<Month> month = Var.of(Month.SEPTEMBER)"]},
+
+        {"kind":"and","text":"Now we create a view of the 2 properties that represents the full date.","code":["Val<String> fullDate = Viewable.ofNullable(String.class, dayOfMonth, month, (d, m) -> {","    if (d == null || m == null) {","        return null; // Allowing null items in the view","    }","    if (d < 1 || d > 31) {","        throw new IllegalArgumentException(\"Day of month must be between 1 and 31\");","    }","    return String.format(\"%02d %s\", d, m.name());","})"]},
+
+        {"kind":"expect","text":"Initially, the log does not contain any exceptions and the full date view has the expected value.","code":["outputStream.toString().isEmpty()","fullDate.get() == \"03 SEPTEMBER\""]},
+
+        {"kind":"when","text":"We change the value of the properties to cause an exception.","code":["dayOfMonth.set((byte) 42)"]},
+
+        {"kind":"then","text":"We do not notice any exception being thrown!","code":["noExceptionThrown()"]},
+
+        {"kind":"and","text":"The full date view is empty now, due to the exception thrown in the combiner function.","code":["fullDate.isEmpty()"]},
+
+        {"kind":"and","text":"Looking at the log, we see that the exception was logged.","code":["outputStream.toString().contains(\"Day of month must be between 1 and 31\")","outputStream.toString().contains(\"IllegalArgumentException\")","outputStream.toString().contains(\"at \") // Stack trace is present"]},
+
+        {"kind":"cleanup","text":"We restore the original `System.err` stream.","code":["System.err = originalErr"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }

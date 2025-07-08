@@ -2,29 +2,65 @@
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.helpers.MessageFormatter;
+import org.slf4j.helpers.NOPLogger;
 import sprouts.From;
 
 import java.util.function.Function;
 
 final class Util {
 
-<span class="fc" id="L11">    public static From VIEW_CHANNEL = From.ALL;</span>
+<span class="fc" id="L14">    public static From VIEW_CHANNEL = From.ALL;</span>
 
     private Util() {}
+
+    static void _logError(Logger log, String message, @Nullable Object... args) {
+<span class="pc bpc" id="L19" title="1 of 2 branches missed.">        if ( log instanceof NOPLogger) {</span>
+<span class="fc" id="L20">            Exception lastArgException = null;</span>
+<span class="pc bpc" id="L21" title="2 of 6 branches missed.">            if ( args != null &amp;&amp; args.length &gt; 0 &amp;&amp; args[args.length - 1] instanceof Exception ) {</span>
+<span class="fc" id="L22">                lastArgException = (Exception) args[args.length - 1];</span>
+<span class="fc" id="L23">                args = java.util.Arrays.copyOf(args, args.length - 1);</span>
+            }
+<span class="fc" id="L25">            System.err.println(</span>
+<span class="fc" id="L26">                    MessageFormatter.arrayFormat(&quot;[ERROR] &quot; + message, args).getMessage()</span>
+            );
+<span class="fc bfc" id="L28" title="All 2 branches covered.">            if ( lastArgException != null ) {</span>
+<span class="fc" id="L29">                lastArgException.printStackTrace();</span>
+            }
+<span class="fc" id="L31">        } else {</span>
+<span class="nc" id="L32">            log.error(message, args);</span>
+        }
+<span class="fc" id="L34">    }</span>
+
+    static String _toString( @Nullable Object singleItem, Class&lt;?&gt; type ) {
+<span class="pc bpc" id="L37" title="1 of 2 branches missed.">        if ( singleItem == null ) {</span>
+<span class="nc" id="L38">            return &quot;null&quot;;</span>
+<span class="fc bfc" id="L39" title="All 2 branches covered.">        } else if ( type == String.class ) {</span>
+<span class="fc" id="L40">            return &quot;\&quot;&quot; + singleItem + &quot;\&quot;&quot;;</span>
+<span class="fc bfc" id="L41" title="All 2 branches covered.">        } else if ( type == Character.class ) {</span>
+<span class="fc" id="L42">            return &quot;'&quot; + singleItem + &quot;'&quot;;</span>
+<span class="pc bpc" id="L43" title="1 of 2 branches missed.">        } else if ( type == Boolean.class ) {</span>
+<span class="nc" id="L44">            return singleItem.toString();</span>
+        } else {
+<span class="fc" id="L46">            return singleItem.toString();</span>
+        }
+    }
 
     @SuppressWarnings(&quot;ReferenceEquality&quot;)
     static boolean refEquals(@Nullable Object a, @Nullable Object b) {
         // We use == here to compare references, not .equals()!
-<span class="fc bfc" id="L18" title="All 2 branches covered.">        return a == b;</span>
+<span class="fc bfc" id="L53" title="All 2 branches covered.">        return a == b;</span>
     }
 
-    static &lt;T extends @Nullable Object, R&gt; Function&lt;T, R&gt; nonNullMapper(R nullObject, R errorObject, Function&lt;T, @Nullable R&gt; mapper) {
-<span class="fc" id="L22">        return t -&gt; {</span>
+    static &lt;T extends @Nullable Object, R&gt; Function&lt;T, R&gt; nonNullMapper(Logger log, R nullObject, R errorObject, Function&lt;T, @Nullable R&gt; mapper) {
+<span class="fc" id="L57">        return t -&gt; {</span>
             try {
-<span class="fc" id="L24">                @Nullable R r = mapper.apply(t);</span>
-<span class="fc bfc" id="L25" title="All 2 branches covered.">                return r == null ? nullObject : r;</span>
-<span class="fc" id="L26">            } catch (Exception e) {</span>
-<span class="fc" id="L27">                return errorObject;</span>
+<span class="fc" id="L59">                @Nullable R r = mapper.apply(t);</span>
+<span class="fc bfc" id="L60" title="All 2 branches covered.">                return r == null ? nullObject : r;</span>
+<span class="fc" id="L61">            } catch (Exception e) {</span>
+<span class="fc" id="L62">                _logError(log, &quot;An error occurred while mapping item '{}'.&quot;, t, e);</span>
+<span class="fc" id="L63">                return errorObject;</span>
             }
         };
     }
@@ -39,9 +75,9 @@ final class Util {
      * @param &lt;T&gt; The type of the item.
      */
     static &lt;T&gt; Class&lt;T&gt; expectedClassFromItem( @NonNull T item ) {
-<span class="fc" id="L42">        Class&lt;?&gt; itemType = item.getClass();</span>
+<span class="fc" id="L78">        Class&lt;?&gt; itemType = item.getClass();</span>
         // We check if it is an enum:
-<span class="fc bfc" id="L44" title="All 2 branches covered.">        if ( Enum.class.isAssignableFrom(itemType) ) {</span>
+<span class="fc bfc" id="L80" title="All 2 branches covered.">        if ( Enum.class.isAssignableFrom(itemType) ) {</span>
             /*
                 When it comes to enums, there is a pitfall we might
                 fall into if just return the Class instance right away!
@@ -69,13 +105,13 @@ final class Util {
                 Food.class != Food.TOFU.getClass()
             */
             // Let's check for that:
-<span class="fc" id="L72">            Class&lt;?&gt; superClass = itemType.getSuperclass();</span>
-<span class="pc bpc" id="L73" title="1 of 4 branches missed.">            if ( superClass != null &amp;&amp; !superClass.equals(Enum.class) ) {</span>
+<span class="fc" id="L108">            Class&lt;?&gt; superClass = itemType.getSuperclass();</span>
+<span class="pc bpc" id="L109" title="1 of 4 branches missed.">            if ( superClass != null &amp;&amp; !superClass.equals(Enum.class) ) {</span>
                 // We are good to go, it is an enum!
-<span class="fc" id="L75">                return (Class&lt;T&gt;) superClass;</span>
+<span class="fc" id="L111">                return (Class&lt;T&gt;) superClass;</span>
             }
         }
-<span class="fc" id="L78">        return (Class&lt;T&gt;) itemType;</span>
+<span class="fc" id="L114">        return (Class&lt;T&gt;) itemType;</span>
     }
 
     /**
@@ -91,7 +127,7 @@ final class Util {
      */
     @SuppressWarnings(&quot;NullAway&quot;)
     static &lt;T&gt; T fakeNonNull( @Nullable T var ) {
-<span class="fc" id="L94">        return var;</span>
+<span class="fc" id="L130">        return var;</span>
     }
 
 }

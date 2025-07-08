@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Result.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sprouts</a> &gt; <a href="index.source.html" class="el_package">sprouts</a> &gt; <span class="el_source">Result.java</span></div><h1>Result.java</h1><pre class="source lang-java linenums">package sprouts;
 
 
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
-import sprouts.impl.Sprouts;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -37,7 +40,7 @@ import java.util.function.Supplier;
  *
  * @param &lt;V&gt; The type of the item wrapped by this result.
  */
-public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
+public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
 {
     /**
      *  A factory method for creating an empty result
@@ -49,8 +52,8 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
      * @throws NullPointerException if the type is null.
      */
     static &lt;V&gt; Result&lt;V&gt; of( Class&lt;V&gt; type ) {
-<span class="fc" id="L52">        Objects.requireNonNull(type);</span>
-<span class="fc" id="L53">        return Sprouts.factory().resultOf(type);</span>
+<span class="fc" id="L55">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L56">        return new Result&lt;&gt;(false, type, Collections.emptyList(), null);</span>
     }
 
     /**
@@ -61,8 +64,8 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
      * @throws NullPointerException if the value is null.
      */
     static &lt;V&gt; Result&lt;V&gt; of( V value ) {
-<span class="fc" id="L64">        Objects.requireNonNull(value);</span>
-<span class="fc" id="L65">        return Sprouts.factory().resultOf(value);</span>
+<span class="fc" id="L67">        Objects.requireNonNull(value);</span>
+<span class="fc" id="L68">        return of(value, Collections.emptyList());</span>
     }
 
     /**
@@ -77,8 +80,8 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
      * @throws NullPointerException if the type is null.
      */
     static &lt;V&gt; Result&lt;V&gt; of( Class&lt;V&gt; type, @Nullable V value ) {
-<span class="fc" id="L80">        Objects.requireNonNull(type);</span>
-<span class="fc" id="L81">        return Sprouts.factory().resultOf(type, value);</span>
+<span class="fc" id="L83">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L84">        return new Result(false, type, Collections.emptyList(), value);</span>
     }
 
     /**
@@ -90,8 +93,9 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
      * @throws NullPointerException if the value or problems are null.
      */
     static &lt;V&gt; Result&lt;V&gt; of( V value, Iterable&lt;Problem&gt; problems ) {
-<span class="fc" id="L93">        Objects.requireNonNull(value);</span>
-<span class="fc" id="L94">        return Sprouts.factory().resultOf(value, problems);</span>
+<span class="fc" id="L96">        Objects.requireNonNull(value);</span>
+<span class="fc" id="L97">        Class&lt;V&gt; itemType = expectedClassFromItem(value);</span>
+<span class="fc" id="L98">        return new Result&lt;&gt;(false, itemType, problems, value);</span>
     }
 
     /**
@@ -103,8 +107,9 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
      * @throws NullPointerException if the type or problems are null.
      */
     static &lt;V&gt; Result&lt;V&gt; of( Class&lt;V&gt; type, Iterable&lt;Problem&gt; problems ) {
-<span class="fc" id="L106">        Objects.requireNonNull(type);</span>
-<span class="fc" id="L107">        return Sprouts.factory().resultOf(type, problems);</span>
+<span class="fc" id="L110">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L111">        Objects.requireNonNull(problems);</span>
+<span class="fc" id="L112">        return new Result&lt;&gt;(false, type, problems, null);</span>
     }
 
     /**
@@ -117,8 +122,9 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
      * @throws NullPointerException if the type or problems are null.
      */
     static &lt;V&gt; Result&lt;V&gt; of( Class&lt;V&gt; type, @Nullable V value, Iterable&lt;Problem&gt; problems ) {
-<span class="fc" id="L120">        Objects.requireNonNull(type);</span>
-<span class="fc" id="L121">        return Sprouts.factory().resultOf(type, value, problems);</span>
+<span class="fc" id="L125">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L126">        Objects.requireNonNull(problems);</span>
+<span class="fc" id="L127">        return new Result&lt;&gt;(false, type, problems, value);</span>
     }
 
     /**
@@ -131,9 +137,9 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
      * @throws NullPointerException if any of the parameters are null.
      */
     static &lt;V&gt; Result&lt;V&gt; of( Class&lt;V&gt; type, @Nullable V value, Problem problem ) {
-<span class="nc" id="L134">        Objects.requireNonNull(type);</span>
-<span class="nc" id="L135">        Objects.requireNonNull(problem);</span>
-<span class="nc" id="L136">        return Sprouts.factory().resultOf(type, value, problem);</span>
+<span class="nc" id="L140">        Objects.requireNonNull(type);</span>
+<span class="nc" id="L141">        Objects.requireNonNull(problem);</span>
+<span class="nc" id="L142">        return new Result&lt;&gt;(false, type, Collections.singletonList(problem), value);</span>
     }
 
     /**
@@ -145,9 +151,9 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
      * @throws NullPointerException if any of the parameters are null.
      */
     static &lt;V&gt; Result&lt;V&gt; of( Class&lt;V&gt; type, Problem problem ) {
-<span class="nc" id="L148">        Objects.requireNonNull(type);</span>
-<span class="nc" id="L149">        Objects.requireNonNull(problem);</span>
-<span class="nc" id="L150">        return Sprouts.factory().resultOf(type, problem);</span>
+<span class="fc" id="L154">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L155">        Objects.requireNonNull(problem);</span>
+<span class="fc" id="L156">        return new Result&lt;&gt;(false, type, Collections.singletonList(problem), null);</span>
     }
 
     /**
@@ -159,9 +165,9 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
      * @throws NullPointerException if any of the parameters are null.
      */
     static &lt;V&gt; Result&lt;List&lt;V&gt;&gt; ofList( Class&lt;V&gt; type, Problem problem ) {
-<span class="nc" id="L162">        Objects.requireNonNull(type);</span>
-<span class="nc" id="L163">        Objects.requireNonNull(problem);</span>
-<span class="nc" id="L164">        return Sprouts.factory().resultOfList(type, problem);</span>
+<span class="nc" id="L168">        Objects.requireNonNull(type);</span>
+<span class="nc" id="L169">        Objects.requireNonNull(problem);</span>
+<span class="nc" id="L170">        return (Result&lt;List&lt;V&gt;&gt;) (Result) new Result&lt;&gt;(false, List.class, Collections.singletonList(problem), null);</span>
     }
 
     /**
@@ -175,13 +181,13 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
      * @throws NullPointerException if any of the parameters are null.
      */
     static &lt;V&gt; Result&lt;List&lt;V&gt;&gt; ofList( Class&lt;V&gt; type, List&lt;V&gt; list ) {
-<span class="fc" id="L178">        Objects.requireNonNull(type);</span>
-<span class="fc" id="L179">        Objects.requireNonNull(list);</span>
+<span class="fc" id="L184">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L185">        Objects.requireNonNull(list);</span>
         // We check the types of the list elements are of the correct type.
-<span class="fc" id="L181">        boolean matches = list.stream().filter(Objects::nonNull).allMatch(e -&gt; type.isAssignableFrom(e.getClass()));</span>
-<span class="pc bpc" id="L182" title="1 of 2 branches missed.">        if ( !matches )</span>
-<span class="nc" id="L183">            throw new IllegalArgumentException(&quot;List elements must be of type &quot; + type.getName());</span>
-<span class="fc" id="L184">        return Sprouts.factory().resultOfList(type, list);</span>
+<span class="fc" id="L187">        boolean matches = list.stream().filter(Objects::nonNull).allMatch(e -&gt; type.isAssignableFrom(e.getClass()));</span>
+<span class="pc bpc" id="L188" title="1 of 2 branches missed.">        if ( !matches )</span>
+<span class="nc" id="L189">            throw new IllegalArgumentException(&quot;List elements must be of type &quot; + type.getName());</span>
+<span class="fc" id="L190">        return (Result&lt;List&lt;V&gt;&gt;) (Result) new Result&lt;&gt;(false, List.class, Collections.emptyList(), list);</span>
     }
 
     /**
@@ -196,13 +202,14 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
      * @throws NullPointerException if any of the parameters are null.
      */
     static &lt;V&gt; Result&lt;List&lt;V&gt;&gt; ofList( Class&lt;V&gt; type, List&lt;V&gt; list, Iterable&lt;Problem&gt; problems ) {
-<span class="fc" id="L199">        Objects.requireNonNull(type);</span>
-<span class="fc" id="L200">        Objects.requireNonNull(list);</span>
-<span class="fc" id="L201">        boolean matches = list.stream().filter(Objects::nonNull).allMatch(e -&gt; type.isAssignableFrom(e.getClass()));</span>
-<span class="pc bpc" id="L202" title="1 of 2 branches missed.">        if ( !matches )</span>
-<span class="nc" id="L203">            throw new IllegalArgumentException(&quot;List elements must be of type &quot; + type.getName());</span>
+<span class="fc" id="L205">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L206">        Objects.requireNonNull(list);</span>
+<span class="fc" id="L207">        Objects.requireNonNull(problems);</span>
+<span class="fc" id="L208">        boolean matches = list.stream().filter(Objects::nonNull).allMatch(e -&gt; type.isAssignableFrom(e.getClass()));</span>
+<span class="pc bpc" id="L209" title="1 of 2 branches missed.">        if ( !matches )</span>
+<span class="nc" id="L210">            throw new IllegalArgumentException(&quot;List elements must be of type &quot; + type.getName());</span>
 
-<span class="fc" id="L205">        return Sprouts.factory().resultOfList(type, list, problems);</span>
+<span class="fc" id="L212">        return (Result&lt;List&lt;V&gt;&gt;) (Result) new Result&lt;&gt;(false, List.class, problems, list);</span>
     }
 
     /**
@@ -224,9 +231,194 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
      * @throws NullPointerException if the type or supplier is null.
      */
     static &lt;V&gt; Result&lt;V&gt; ofTry( Class&lt;V&gt; type, ResultItemSupplier&lt;V&gt; supplier ) {
-<span class="fc" id="L227">        Objects.requireNonNull(type);</span>
-<span class="fc" id="L228">        Objects.requireNonNull(supplier);</span>
-<span class="fc" id="L229">        return Sprouts.factory().resultOfTry(type, supplier);</span>
+<span class="fc" id="L234">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L235">        Objects.requireNonNull(supplier);        </span>
+        try {
+<span class="fc" id="L237">            return new Result&lt;&gt;(false, type, Collections.emptyList(), supplier.get());</span>
+<span class="fc" id="L238">        } catch (Exception e) {</span>
+<span class="fc" id="L239">            return new Result&lt;&gt;(false, type, Collections.singletonList(Problem.of(e)), null);</span>
+        }
+    }
+
+    /**
+     *  A factory method for creating a {@link Result} from a {@link ResultRunAttempt}
+     *  lambda which may throw a checked or unchecked {@link Exception}, but won't break
+     *  the control flow of your application.&lt;br&gt;
+     *  If the run attempt throws an exception, the exception is caught and a new result is returned
+     *  with the exception as a problem. If the run attempt succeeds, the result will not contain
+     *  any problems. &lt;b&gt;But either way, the result will never contain a value.&lt;/b&gt;&lt;br&gt;
+     *  &lt;p&gt;
+     *  &lt;b&gt;Note that this does not catch {@link Error} subtypes, like {@link OutOfMemoryError} or
+     *  {@link StackOverflowError} because they represent severe platform errors, which are
+     *  considered unrecoverable problems that applications should not typically attempt to handle.&lt;/b&gt;&lt;br&gt;
+     *  Only application errors ({@link Exception}s) are caught and wrapped safely as {@link Result}.
+     *
+     * @param runAttempt The run attempt to execute safely.
+     *                   It may throw a {@link RuntimeException} or checked {@link Exception},
+     *                   in which case the exception is caught without breaking your control flow.
+     * @return A new result with no value and a list of problems describing related issues.
+     */
+    static Result&lt;Void&gt; ofTry( ResultRunAttempt runAttempt ) {
+<span class="fc" id="L262">        Objects.requireNonNull(runAttempt);</span>
+        try {
+<span class="fc" id="L264">            runAttempt.run();</span>
+<span class="fc" id="L265">            return new Result&lt;&gt;(false, Void.class, Collections.emptyList(), null);</span>
+<span class="fc" id="L266">        } catch (Exception e) {</span>
+<span class="fc" id="L267">            return new Result&lt;&gt;(false, Void.class, Collections.singletonList(Problem.of(e)), null);</span>
+        }
+    }
+
+
+<span class="fc" id="L272">    private static final Logger log = LoggerFactory.getLogger(Result.class);</span>
+
+    private final boolean        _wasLogged;
+    private final Class&lt;V&gt;       _type;
+    private final Tuple&lt;Problem&gt; _problems;
+    @Nullable private final V    _value;
+
+
+    private Result(
+        boolean           wasLogged,
+        Class&lt;V&gt;          type,
+        Iterable&lt;Problem&gt; problems,
+        @Nullable         V value
+<span class="fc" id="L285">    ) {</span>
+<span class="fc" id="L286">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L287">        Objects.requireNonNull(problems);</span>
+<span class="fc" id="L288">        _wasLogged = wasLogged;</span>
+<span class="fc" id="L289">        _type      = type;</span>
+<span class="fc" id="L290">        _problems  = Tuple.of(Problem.class, problems);</span>
+<span class="fc" id="L291">        _value     = value;</span>
+<span class="fc" id="L292">    }</span>
+
+    private Result&lt;V&gt; _markAsLoggedOrHandled() {
+        // This is a copy of the current result with the '_wasLogged' flag set to true.
+<span class="fc" id="L296">        return new Result&lt;&gt;(true, this._type, this._problems, this._value);</span>
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public Class&lt;V&gt; type() {
+<span class="fc" id="L302">        return _type; </span>
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean isPresent() {
+<span class="fc bfc" id="L308" title="All 2 branches covered.">        return _value != null;</span>
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean is( @Nullable V otherItem ) {
+<span class="fc" id="L314">        return Val.equals(otherItem, _value);</span>
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean is( @NonNull Maybe&lt;@Nullable V&gt; other ) {
+<span class="fc" id="L320">        Objects.requireNonNull(other);</span>
+<span class="fc" id="L321">        return other.is(_value);</span>
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public @NonNull V orElseThrow() throws MissingItemException {
+        // If the value is null, this throws a checked exception!
+<span class="fc" id="L328">        V value = _value;</span>
+<span class="pc bpc" id="L329" title="1 of 2 branches missed.">        if ( Objects.isNull(value) )</span>
+<span class="fc" id="L330">            throw new MissingItemException(&quot;Expected item to be present in result!&quot;, this._problems);</span>
+<span class="nc" id="L331">        return value;</span>
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public @NonNull V orElseThrowUnchecked() {
+        // This is similar to optionals &quot;get()&quot;, so if the value is null, we throw a unchecked exception!
+<span class="fc" id="L338">        V value = _value;</span>
+<span class="fc bfc" id="L339" title="All 2 branches covered.">        if ( Objects.isNull(value) )</span>
+<span class="fc" id="L340">            throw new MissingItemRuntimeException(&quot;Expected item to be present in result!&quot;, this._problems);</span>
+<span class="fc" id="L341">        return value;</span>
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public @NonNull V orElse( @NonNull V other ) {
+<span class="fc bfc" id="L347" title="All 4 branches covered.">        if ( this.hasProblems() &amp;&amp; !this._wasLogged) {</span>
+            // If we have problems and the result was not logged yet, we log them as errors.
+<span class="fc" id="L349">            this.logProblemsAsError();</span>
+        }
+<span class="fc" id="L351">        return Maybe.super.orElse(other);</span>
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public @Nullable V orElseNullable( @Nullable V other ) {
+<span class="nc bnc" id="L357" title="All 4 branches missed.">        if ( this.hasProblems() &amp;&amp; !this._wasLogged) {</span>
+            // If we have problems and the result was not logged yet, we log them as errors.
+<span class="nc" id="L359">            this.logProblemsAsError();</span>
+        }
+<span class="nc bnc" id="L361" title="All 2 branches missed.">        return _value == null ? other : _value;</span>
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public V orElseGet( @NonNull Supplier&lt;? extends V&gt; supplier ) {
+<span class="pc bpc" id="L367" title="1 of 4 branches missed.">        if ( this.hasProblems() &amp;&amp; !this._wasLogged) {</span>
+            // If we have problems and the result was not logged yet, we log them as errors.
+<span class="fc" id="L369">            this.logProblemsAsError();</span>
+        }
+<span class="fc" id="L371">        return Maybe.super.orElseGet(supplier);</span>
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public @Nullable V orElseNull() {
+<span class="fc bfc" id="L377" title="All 4 branches covered.">        if ( this.hasProblems() &amp;&amp; !this._wasLogged) {</span>
+            // If we have problems and the result was not logged yet, we log them as errors.
+<span class="fc" id="L379">            this.logProblemsAsError();</span>
+        }
+<span class="fc" id="L381">        return _value;</span>
+    }
+
+    /**
+     * Returns the contained non-null value if present, otherwise applies the provided handler function
+     * to the {@link Tuple} of {@link Problem}s associated with this result.
+     * The handler function can be used to provide a fallback value or perform some action based on the problems.
+     *
+     * &lt;p&gt;This method is useful for scenarios where you want to handle the absence of a value
+     * with a custom logic that depends on the specific problems encountered.&lt;/p&gt;
+     *
+     * &lt;p&gt;&lt;b&gt;Example:&lt;/b&gt;
+     * &lt;pre&gt;{@code
+     * result.orElseHandle(problems -&gt; {
+     *     if ( problems.size() == 0 ) {
+     *         return &quot;Default Value&quot;;
+     *     } else {
+     *         for (var problem : problems) {
+     *            // log or other processing
+     *         }
+     *     }
+     *     return &quot;?&quot;; // or some other value
+     * });
+     * }&lt;/pre&gt;
+     *
+     * @param handler Function that takes a tuple of problems and returns a value
+     * @return Present non-null value or the result of applying the handler function
+     * @throws NullPointerException if {@code handler} is null
+     */
+    public @NonNull V orElseHandle( @NonNull Function&lt;Tuple&lt;Problem&gt;, V&gt; handler ) {
+<span class="fc" id="L411">        Objects.requireNonNull(handler);</span>
+<span class="fc" id="L412">        V value = _value;</span>
+<span class="fc bfc" id="L413" title="All 2 branches covered.">        if ( value != null ) {</span>
+<span class="pc bpc" id="L414" title="2 of 4 branches missed.">            if ( this.hasProblems() &amp;&amp; !this._wasLogged) {</span>
+                // If we have problems and the result was not logged yet, we log them as errors.
+<span class="fc" id="L416">                this.logProblemsAsError();</span>
+            }
+<span class="fc" id="L418">            return value;</span>
+        } else {
+<span class="fc" id="L420">            return handler.apply(this.problems());</span>
+        }
     }
 
     /**
@@ -248,13 +440,13 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
      * @throws E when no value is present
      * @throws NullPointerException if {@code exceptionSupplier} is null
      */
-    default &lt;E extends Exception&gt; V orElseThrowProblems(Function&lt;Tuple&lt;Problem&gt;,E&gt; exceptionSupplier) throws E {
-<span class="fc" id="L252">        Objects.requireNonNull(exceptionSupplier);</span>
-<span class="fc" id="L253">        V result = orElseNull();</span>
-<span class="fc bfc" id="L254" title="All 2 branches covered.">        if ( result != null ) {</span>
-<span class="fc" id="L255">            return result;</span>
+    public &lt;E extends Exception&gt; V orElseThrowProblems(Function&lt;Tuple&lt;Problem&gt;,E&gt; exceptionSupplier) throws E {
+<span class="fc" id="L444">        Objects.requireNonNull(exceptionSupplier);</span>
+<span class="fc" id="L445">        V value = _value;</span>
+<span class="fc bfc" id="L446" title="All 2 branches covered.">        if ( value != null ) {</span>
+<span class="fc" id="L447">            return value;</span>
         } else {
-<span class="fc" id="L257">            throw exceptionSupplier.apply(this.problems());</span>
+<span class="fc" id="L449">            throw exceptionSupplier.apply(this.problems());</span>
         }
     }
 
@@ -276,13 +468,13 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
      * @throws RuntimeException when no value is present
      * @throws NullPointerException if {@code exceptionSupplier} is null
      */
-    default V orElseThrowProblemsUnchecked(Function&lt;Tuple&lt;Problem&gt;,RuntimeException&gt; exceptionSupplier) {
-<span class="fc" id="L280">        Objects.requireNonNull(exceptionSupplier);</span>
-<span class="fc" id="L281">        V result = orElseNull();</span>
-<span class="fc bfc" id="L282" title="All 2 branches covered.">        if ( result != null ) {</span>
-<span class="fc" id="L283">            return result;</span>
+    public V orElseThrowProblemsUnchecked(Function&lt;Tuple&lt;Problem&gt;,RuntimeException&gt; exceptionSupplier) {
+<span class="fc" id="L472">        Objects.requireNonNull(exceptionSupplier);</span>
+<span class="fc" id="L473">        V result = _value;</span>
+<span class="fc bfc" id="L474" title="All 2 branches covered.">        if ( result != null ) {</span>
+<span class="fc" id="L475">            return result;</span>
         } else {
-<span class="fc" id="L285">            throw exceptionSupplier.apply(this.problems());</span>
+<span class="fc" id="L477">            throw exceptionSupplier.apply(this.problems());</span>
         }
     }
 
@@ -296,7 +488,9 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
      *
      *  @return The list of {@link Problem}s associated with this result item.
      */
-    Tuple&lt;Problem&gt; problems();
+    public Tuple&lt;Problem&gt; problems() {
+<span class="fc" id="L492">        return _problems;</span>
+    }
 
     /**
      *  Checks if this result has {@link Problem}s associated with it.
@@ -308,7 +502,93 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
      *
      *  @return {@code true} if this result is present, {@code false} otherwise.
      */
-<span class="nc bnc" id="L311" title="All 2 branches missed.">    default boolean hasProblems() { return !problems().isEmpty(); }</span>
+    public boolean hasProblems() {
+<span class="fc bfc" id="L506" title="All 2 branches covered.">        return !problems().isEmpty();</span>
+    }
+
+    /**
+     *  Allows you to handle a specific type of exception that is present in the problems
+     *  associated with this result. If the exception is found, the provided handler is invoked
+     *  with the exception as an argument, and the problem is removed from the list of problems.
+     *  If the handler throws an exception, it is caught and logged, but does not affect the result.&lt;br&gt;
+     *  &lt;p&gt;&lt;b&gt;
+     *      If you want to handle all problems in this result, irrespective of what type of exception
+     *      is associated with them, consider using {@link #handleAny(Consumer)}.
+     *  &lt;/b&gt;
+     *
+     * @param exceptionType The type of exception to handle.
+     * @param handler The handler to invoke with the exception.
+     * @param &lt;E&gt; The type of exception to handle, which must extend {@link Exception}.
+     * @return A new result with the problem removed if handled successfully, or unchanged if not.
+     * @throws NullPointerException if either parameter is null.
+     */
+    public &lt;E extends Exception&gt; Result&lt;V&gt; handle(
+        Class&lt;E&gt; exceptionType,
+        Consumer&lt;E&gt; handler
+    ) {
+<span class="fc" id="L529">        Objects.requireNonNull(exceptionType);</span>
+<span class="fc" id="L530">        Objects.requireNonNull(handler);</span>
+<span class="pc bpc" id="L531" title="1 of 2 branches missed.">        if ( this.hasProblems() ) {</span>
+<span class="fc" id="L532">            Tuple&lt;Problem&gt; problems = this.problems();</span>
+<span class="fc bfc" id="L533" title="All 2 branches covered.">            for ( Problem problem : problems ) {</span>
+<span class="pc bpc" id="L534" title="1 of 4 branches missed.">                if ( problem.exception().isPresent() &amp;&amp; exceptionType.isAssignableFrom(problem.exception().get().getClass()) ) {</span>
+                    try {
+<span class="fc" id="L536">                        handler.accept(exceptionType.cast(problem.exception().get()));</span>
+<span class="fc" id="L537">                        problems = problems.remove(problem);</span>
+<span class="nc" id="L538">                    } catch ( Exception e ) {</span>
+<span class="nc" id="L539">                        _logError(&quot;An exception occurred while handling a problem in a result.&quot;, e);</span>
+<span class="fc" id="L540">                    }</span>
+                }
+<span class="fc" id="L542">            }</span>
+<span class="fc" id="L543">            return new Result&lt;&gt;(</span>
+                this._wasLogged,
+                this._type,
+                problems,
+                this._value
+            );
+        }
+<span class="nc" id="L550">        return this;</span>
+    }
+
+    /**
+     *  Allows you to handle every {@link Problem} in this result individually
+     *  through a {@link Consumer} which receives one problem at a time.
+     *  If the handler throws an exception, it is caught and logged,
+     *  but does not affect the result.&lt;br&gt;
+     *  After handling all problems, a new result is returned that
+     *  no longer contains any problems, since they are now considered
+     *  handled by the handler.&lt;br&gt;
+     *  &lt;p&gt;&lt;b&gt;
+     *      If you want to handle specific exceptions instead of all problems,
+     *      consider using {@link #handle(Class, Consumer)}. Which allows you to
+     *      match and handle the {@link Problem#exception()}s associated with this result.
+     *  &lt;/b&gt;
+     *
+     * @param handler The handler to invoke with each problem.
+     * @return A new result with the problems removed if handled successfully, or unchanged if not.
+     * @throws NullPointerException if the handler is null.
+     */
+    public Result&lt;V&gt; handleAny( Consumer&lt;Problem&gt; handler ) {
+<span class="fc" id="L572">        Objects.requireNonNull(handler);</span>
+<span class="pc bpc" id="L573" title="1 of 2 branches missed.">        if ( this.hasProblems() ) {</span>
+<span class="fc" id="L574">            Tuple&lt;Problem&gt; problems = this.problems();</span>
+<span class="fc bfc" id="L575" title="All 2 branches covered.">            for ( Problem problem : problems ) {</span>
+                try {
+<span class="fc" id="L577">                    handler.accept(problem);</span>
+<span class="fc" id="L578">                    problems = problems.remove(problem);</span>
+<span class="nc" id="L579">                } catch ( Exception e ) {</span>
+<span class="nc" id="L580">                    _logError(&quot;An exception occurred while handling a problem in a result.&quot;, e);</span>
+<span class="fc" id="L581">                }</span>
+<span class="fc" id="L582">            }</span>
+<span class="fc" id="L583">            return new Result&lt;&gt;(</span>
+                this._wasLogged,
+                this._type,
+                problems,
+                this._value
+            );
+        }
+<span class="nc" id="L590">        return this;</span>
+    }
 
     /**
      *  Allows you to peek at the list of problems associated with this result
@@ -323,7 +603,25 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
      * @return This result.
      * @throws NullPointerException if the consumer is null.
      */
-    Result&lt;V&gt; peekAtProblems( Consumer&lt;Tuple&lt;Problem&gt;&gt; consumer );
+    public Result&lt;V&gt; peekAtProblems( Consumer&lt;Tuple&lt;Problem&gt;&gt; consumer ) {
+<span class="fc" id="L607">        Objects.requireNonNull(consumer);</span>
+        try {
+<span class="fc" id="L609">            consumer.accept(problems());</span>
+<span class="fc" id="L610">        } catch ( Exception e ) {</span>
+<span class="fc" id="L611">            Tuple&lt;Problem&gt; newProblems = problems().add( Problem.of(e) );</span>
+			/*
+				An exception in this the user lambda is most likely completely unwanted,
+				but we also do not want to halt the application because of it.
+				So let's do two things here to make sure this does not go
+				unnoticed:
+					1. Log the exception
+					2. Add it as a problem.
+			*/
+<span class="fc" id="L620">            _logError(&quot;An exception occurred while peeking at the problems of a result.&quot;, e);</span>
+<span class="fc" id="L621">            return Result.of( type(), this._value, newProblems );</span>
+<span class="fc" id="L622">        }</span>
+<span class="fc" id="L623">        return this;</span>
+    }
 
     /**
      *  Allows you to peek at each problem inside this result
@@ -337,13 +635,35 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
      * @return This result.
      * @throws NullPointerException if the consumer is null.
      */
-    Result&lt;V&gt; peekAtEachProblem( Consumer&lt;Problem&gt; consumer );
+    public Result&lt;V&gt; peekAtEachProblem( Consumer&lt;Problem&gt; consumer )  {
+<span class="fc" id="L639">        Objects.requireNonNull(consumer);</span>
+<span class="fc" id="L640">        Result&lt;V&gt; result = this;</span>
+<span class="fc bfc" id="L641" title="All 2 branches covered.">        for ( Problem problem : problems() ) {</span>
+            try {
+<span class="fc" id="L643">                consumer.accept(problem);</span>
+<span class="fc" id="L644">            } catch ( Exception e ) {</span>
+<span class="fc" id="L645">                Tuple&lt;Problem&gt; newProblems = result.problems().add( Problem.of(e) );</span>
+				/*
+					An exception in this the user lambda is most likely completely unwanted,
+					but we also do not want to halt the application because of it.
+					So let's do two things here to make sure this does not go
+					unnoticed:
+						1. Log the exception
+						2. Add it as a problem.
+				*/
+<span class="fc" id="L654">                _logError(&quot;An exception occurred while peeking at the problems of a result.&quot;, e);</span>
+<span class="fc" id="L655">                result = Result.of( type(), result._value, newProblems );</span>
+<span class="fc" id="L656">            }</span>
+<span class="fc" id="L657">        }</span>
+<span class="fc" id="L658">        return result;</span>
+    }
 
     /**
      *  If this {@link Result} wraps a non-null item of type {@code V}, then this method will do nothing.
      *  If, however, the item is missing, then an invocation will generate a rich context message and stack
      *  trace from all problems associated with this result and then log them as errors
-     *  to the {@link org.slf4j.Logger#error(String, Throwable)} method.&lt;br&gt;
+     *  to the {@link org.slf4j.Logger#error(String, Throwable)} method, or {@code System.err},
+     *  if Slf4j does not have a logger backend.&lt;br&gt;
      *  It returns the result itself, so you can chain it with other methods.
      *  This is intended to be used in a fluent API style which typically looks like this:
      *  &lt;pre&gt;{@code
@@ -355,22 +675,61 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
      *  The logged information will contain the title and description of an existing {@link Problem}
      *  as well as the local stack trace either based on an exception in a problem 
      *  or a newly created {@link Throwable} to ensure that the issue can be traced back
-     *  to the source of the problem.
+     *  to the source of the problem.&lt;br&gt;
+     *  &lt;p&gt;
+     *  &lt;b&gt;
+     *      Note: Please use {@link #logProblemsAsError()} instead of this method,
+     *      because it will log all problems, even if the result is not missing.
+     *  &lt;/b&gt;
      *  
      * @return This result, unchanged.
      */
-    default Result&lt;V&gt; ifMissingLogAsError() {
-<span class="nc bnc" id="L363" title="All 2 branches missed.">        if ( this.isEmpty() )</span>
-<span class="nc" id="L364">            return peekAtEachProblem(Problem::logAsError);</span>
-        else
-<span class="nc" id="L366">            return this;</span>
+    public Result&lt;V&gt; ifMissingLogAsError() {
+<span class="fc bfc" id="L688" title="All 2 branches covered.">        if ( this.isPresent() )</span>
+<span class="fc" id="L689">            return this; // If the value is present, we do nothing.</span>
+<span class="pc bpc" id="L690" title="1 of 2 branches missed.">        else if ( this.hasProblems() )</span>
+<span class="fc" id="L691">            return peekAtEachProblem(Problem::logAsError)._markAsLoggedOrHandled();</span>
+<span class="nc bnc" id="L692" title="All 2 branches missed.">        else if ( this.isEmpty() ) {</span>
+<span class="nc" id="L693">            Problem.of(new MissingItemRuntimeException(&quot;Expected item to be present in result!&quot;)).logAsError();</span>
+<span class="nc" id="L694">            return this._markAsLoggedOrHandled();</span>
+        }
+<span class="nc" id="L696">        return this;</span>
     }
-    
+
+    /**
+     *  Irrespective of this {@link Result} wrapping a non-null item of type {@code V} or not,
+     *  if the {@link Result} has at least one {@link Problem}, then an invocation to this method
+     *  will generate a rich context message and stack trace from its problems and then log them as errors
+     *  to the {@link org.slf4j.Logger#error(String, Throwable)} method, or {@code System.err},
+     *  if Slf4j does not have a logger backend.&lt;br&gt;
+     *  It returns the result itself, so you can chain it with other methods.
+     *  This is intended to be used in a fluent API style which typically looks like this:
+     *  &lt;pre&gt;{@code
+     *  return
+     *    Result.ofTry(String.class,this::parse)
+     *          .logProblemsAsError()
+     *          .orElseGet(()-&gt;this.defaultValue);
+     *  }&lt;/pre&gt;
+     *  The logged information will contain the title and description of an existing {@link Problem}
+     *  as well as the local stack trace either based on an exception in a problem
+     *  or a newly created {@link Throwable} to ensure that the issue can be traced back
+     *  to the source of the problem.
+     *
+     * @return This result, unchanged.
+     */
+    public Result&lt;V&gt; logProblemsAsError() {
+<span class="pc bpc" id="L721" title="1 of 2 branches missed.">        if ( this.hasProblems() )</span>
+<span class="fc" id="L722">            return peekAtEachProblem(Problem::logAsError)._markAsLoggedOrHandled();</span>
+        else
+<span class="nc" id="L724">            return this;</span>
+    }
+
     /**
      *  If this {@link Result} wraps a non-null item of type {@code V}, then this method will do nothing.
      *  If, however, the item is missing, then an invocation will generate a rich context message and stack
      *  trace from all problems associated with this result and then log them as warnings
-     *  to the {@link org.slf4j.Logger#warn(String, Throwable)} method.&lt;br&gt;
+     *  to the {@link org.slf4j.Logger#warn(String, Throwable)} method, or {@code System.err},
+     *  if Slf4j does not have a logger backend.&lt;br&gt;
      *  It returns the result itself, so you can chain it with other methods.
      *  This is intended to be used in a fluent API style which typically looks like this:
      *  &lt;pre&gt;{@code
@@ -382,22 +741,61 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
      *  The logged information will contain the title and description of an existing {@link Problem}
      *  as well as the local stack trace either based on an exception in a problem 
      *  or a newly created {@link Throwable} to ensure that the issue can be traced back
+     *  to the source of the problem.&lt;br&gt;
+     *  &lt;p&gt;
+     *  &lt;b&gt;
+     *      Note: Please use {@link #logProblemsAsWarning()} instead of this method,
+     *      because it will log all problems, even if the result is not missing.
+     *  &lt;/b&gt;
+     *
+     * @return This result, unchanged.
+     */
+    public Result&lt;V&gt; ifMissingLogAsWarning() {
+<span class="fc bfc" id="L754" title="All 2 branches covered.">        if ( this.isPresent() )</span>
+<span class="fc" id="L755">            return this; // If the value is present, we do nothing.</span>
+<span class="pc bpc" id="L756" title="1 of 2 branches missed.">        else if ( this.hasProblems() )</span>
+<span class="fc" id="L757">            return peekAtEachProblem(Problem::logAsWarning)._markAsLoggedOrHandled();</span>
+<span class="nc bnc" id="L758" title="All 2 branches missed.">        else if ( this.isEmpty() ) {</span>
+<span class="nc" id="L759">            Problem.of(new MissingItemRuntimeException(&quot;Expected item to be present in result!&quot;)).logAsWarning();</span>
+<span class="nc" id="L760">            return this._markAsLoggedOrHandled();</span>
+        }
+<span class="nc" id="L762">        return this;</span>
+    }
+
+    /**
+     *  Irrespective of this {@link Result} wrapping a non-null item of type {@code V} or not,
+     *  if the {@link Result} has at least one {@link Problem}, then an invocation to this method
+     *  will generate a rich context message and stack trace from its problems and then log them as warnings
+     *  to the {@link org.slf4j.Logger#warn(String, Throwable)} method, or {@code System.err},
+     *  if Slf4j does not have a logger backend.&lt;br&gt;
+     *  It returns the result itself, so you can chain it with other methods.
+     *  This is intended to be used in a fluent API style which typically looks like this:
+     *  &lt;pre&gt;{@code
+     *  return
+     *    Result.ofTry(String.class,this::parse)
+     *          .logProblemsAsWarning()
+     *          .orElseGet(()-&gt;this.defaultValue);
+     *  }&lt;/pre&gt;
+     *  The logged information will contain the title and description of an existing {@link Problem}
+     *  as well as the local stack trace either based on an exception in a problem
+     *  or a newly created {@link Throwable} to ensure that the issue can be traced back
      *  to the source of the problem.
      *
      * @return This result, unchanged.
      */
-    default Result&lt;V&gt; ifMissingLogAsWarning() {
-<span class="nc bnc" id="L390" title="All 2 branches missed.">        if ( this.isEmpty() )</span>
-<span class="nc" id="L391">            return peekAtEachProblem(Problem::logAsWarning);</span>
+    public Result&lt;V&gt; logProblemsAsWarning() {
+<span class="pc bpc" id="L787" title="1 of 2 branches missed.">        if ( this.hasProblems() )</span>
+<span class="fc" id="L788">            return peekAtEachProblem(Problem::logAsWarning)._markAsLoggedOrHandled();</span>
         else
-<span class="nc" id="L393">            return this;</span>
+<span class="nc" id="L790">            return this;</span>
     }
-    
+
     /**
      *  If this {@link Result} wraps a non-null item of type {@code V}, then this method will do nothing.
      *  If, however, the item is missing, then an invocation will generate a rich context message and stack
      *  trace from all problems associated with this result and then log them as info
-     *  to the {@link org.slf4j.Logger#info(String, Throwable)} method.&lt;br&gt;
+     *  to the {@link org.slf4j.Logger#info(String, Throwable)} method, or {@code System.err},
+     *  if Slf4j does not have a logger backend.&lt;br&gt;
      *  It returns the result itself, so you can chain it with other methods.
      *  This is intended to be used in a fluent API style which typically looks like this:
      *  &lt;pre&gt;{@code
@@ -409,22 +807,61 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
      *  The logged information will contain the title and description of an existing {@link Problem}
      *  as well as the local stack trace either based on an exception in a problem 
      *  or a newly created {@link Throwable} to ensure that the issue can be traced back
+     *  to the source of the problem.&lt;br&gt;
+     *  &lt;p&gt;
+     *  &lt;b&gt;
+     *      Note: Please use {@link #logProblemsAsInfo()} instead of this method,
+     *      because it will log all problems, even if the result is not missing.
+     *  &lt;/b&gt;
+     *
+     * @return This result, unchanged.
+     */
+    public Result&lt;V&gt; ifMissingLogAsInfo() {
+<span class="fc bfc" id="L820" title="All 2 branches covered.">        if ( this.isPresent() )</span>
+<span class="fc" id="L821">            return this; // If the value is present, we do nothing.</span>
+<span class="pc bpc" id="L822" title="1 of 2 branches missed.">        else if ( this.hasProblems() )</span>
+<span class="fc" id="L823">            return peekAtEachProblem(Problem::logAsInfo)._markAsLoggedOrHandled();</span>
+<span class="nc bnc" id="L824" title="All 2 branches missed.">        else if ( this.isEmpty() ) {</span>
+<span class="nc" id="L825">            Problem.of(new MissingItemRuntimeException(&quot;Expected item to be present in result!&quot;)).logAsInfo();</span>
+<span class="nc" id="L826">            return this._markAsLoggedOrHandled();</span>
+        }
+<span class="nc" id="L828">        return this;</span>
+    }
+
+    /**
+     *  Irrespective of this {@link Result} wrapping a non-null item of type {@code V} or not,
+     *  if the {@link Result} has at least one {@link Problem}, then an invocation to this method
+     *  will generate a rich context message and stack trace from its problems and then log them as info
+     *  to the {@link org.slf4j.Logger#info(String, Throwable)} method, or {@code System.out},
+     *  if Slf4j does not have a logger backend.&lt;br&gt;
+     *  It returns the result itself, so you can chain it with other methods.
+     *  This is intended to be used in a fluent API style which typically looks like this:
+     *  &lt;pre&gt;{@code
+     *  return
+     *    Result.ofTry(String.class,this::parse)
+     *          .logProblemsAsInfo()
+     *          .orElseGet(()-&gt;this.defaultValue);
+     *  }&lt;/pre&gt;
+     *  The logged information will contain the title and description of an existing {@link Problem}
+     *  as well as the local stack trace either based on an exception in a problem
+     *  or a newly created {@link Throwable} to ensure that the issue can be traced back
      *  to the source of the problem.
      *
      * @return This result, unchanged.
      */
-    default Result&lt;V&gt; ifMissingLogAsInfo() {
-<span class="nc bnc" id="L417" title="All 2 branches missed.">        if ( this.isEmpty() )</span>
-<span class="nc" id="L418">            return peekAtEachProblem(Problem::logAsInfo);</span>
+    public Result&lt;V&gt; logProblemsAsInfo() {
+<span class="pc bpc" id="L853" title="1 of 2 branches missed.">        if ( this.hasProblems() )</span>
+<span class="fc" id="L854">            return peekAtEachProblem(Problem::logAsInfo)._markAsLoggedOrHandled();</span>
         else
-<span class="nc" id="L420">            return this;</span>
+<span class="nc" id="L856">            return this;</span>
     }
-    
+
     /**
      *  If this {@link Result} wraps a non-null item of type {@code V}, then this method will do nothing.
      *  If, however, the item is missing, then an invocation will generate a rich context message and stack
      *  trace from all problems associated with this result and then log them as debug
-     *  to the {@link org.slf4j.Logger#debug(String, Throwable)} method.&lt;br&gt;
+     *  to the {@link org.slf4j.Logger#debug(String, Throwable)} method, or {@code System.err},
+     *  if Slf4j does not have a logger backend.&lt;br&gt;
      *  It returns the result itself, so you can chain it with other methods.
      *  This is intended to be used in a fluent API style which typically looks like this:
      *  &lt;pre&gt;{@code
@@ -436,22 +873,61 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
      *  The logged information will contain the title and description of an existing {@link Problem}
      *  as well as the local stack trace either based on an exception in a problem 
      *  or a newly created {@link Throwable} to ensure that the issue can be traced back
+     *  to the source of the problem.&lt;br&gt;
+     *  &lt;p&gt;
+     *  &lt;b&gt;
+     *      Note: Please use {@link #logProblemsAsDebug()} instead of this method,
+     *      because it will log all problems, even if the result is not missing.
+     *  &lt;/b&gt;
+     *
+     * @return This result, unchanged.
+     */
+    public Result&lt;V&gt; ifMissingLogAsDebug() {
+<span class="fc bfc" id="L886" title="All 2 branches covered.">        if ( this.isPresent() )</span>
+<span class="fc" id="L887">            return this; // If the value is present, we do nothing.</span>
+<span class="pc bpc" id="L888" title="1 of 2 branches missed.">        else if ( this.hasProblems() )</span>
+<span class="fc" id="L889">            return peekAtEachProblem(Problem::logAsDebug)._markAsLoggedOrHandled();</span>
+<span class="nc bnc" id="L890" title="All 2 branches missed.">        else if ( this.isEmpty() ) {</span>
+<span class="nc" id="L891">            Problem.of(new MissingItemRuntimeException(&quot;Expected item to be present in result!&quot;)).logAsDebug();</span>
+<span class="nc" id="L892">            return this._markAsLoggedOrHandled();</span>
+        }
+<span class="nc" id="L894">        return this;</span>
+    }
+
+    /**
+     *  Irrespective of this {@link Result} wrapping a non-null item of type {@code V} or not,
+     *  if the {@link Result} has at least one {@link Problem}, then an invocation to this method
+     *  will generate a rich context message and stack trace from its problems and then log them as debug
+     *  to the {@link org.slf4j.Logger#debug(String, Throwable)} method, or {@code System.out},
+     *  if Slf4j does not have a logger backend.&lt;br&gt;
+     *  It returns the result itself, so you can chain it with other methods.
+     *  This is intended to be used in a fluent API style which typically looks like this:
+     *  &lt;pre&gt;{@code
+     *  return
+     *    Result.ofTry(String.class,this::parse)
+     *          .logProblemsAsDebug()
+     *          .orElseGet(()-&gt;this.defaultValue);
+     *  }&lt;/pre&gt;
+     *  The logged information will contain the title and description of an existing {@link Problem}
+     *  as well as the local stack trace either based on an exception in a problem
+     *  or a newly created {@link Throwable} to ensure that the issue can be traced back
      *  to the source of the problem.
      *
      * @return This result, unchanged.
      */
-    default Result&lt;V&gt; ifMissingLogAsDebug() {
-<span class="nc bnc" id="L444" title="All 2 branches missed.">        if ( this.isEmpty() )</span>
-<span class="nc" id="L445">            return peekAtEachProblem(Problem::logAsDebug);</span>
+    public Result&lt;V&gt; logProblemsAsDebug() {
+<span class="pc bpc" id="L919" title="1 of 2 branches missed.">        if ( this.hasProblems() )</span>
+<span class="fc" id="L920">            return peekAtEachProblem(Problem::logAsDebug)._markAsLoggedOrHandled();</span>
         else
-<span class="nc" id="L447">            return this;</span>
+<span class="nc" id="L922">            return this;</span>
     }
-    
+
     /**
      *  If this {@link Result} wraps a non-null item of type {@code V}, then this method will do nothing.
      *  If, however, the item is missing, then an invocation will generate a rich context message and stack
      *  trace from all problems associated with this result and then log them as trace
-     *  to the {@link org.slf4j.Logger#trace(String, Throwable)} method.&lt;br&gt;
+     *  to the {@link org.slf4j.Logger#trace(String, Throwable)} method, or {@code System.err},
+     *  if Slf4j does not have a logger backend.&lt;br&gt;
      *  It returns the result itself, so you can chain it with other methods.
      *  This is intended to be used in a fluent API style which typically looks like this:
      *  &lt;pre&gt;{@code
@@ -463,15 +939,53 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
      *  The logged information will contain the title and description of an existing {@link Problem}
      *  as well as the local stack trace either based on an exception in a problem 
      *  or a newly created {@link Throwable} to ensure that the issue can be traced back
+     *  to the source of the problem.&lt;br&gt;
+     *  &lt;p&gt;
+     *  &lt;b&gt;
+     *      Note: Please use {@link #logProblemsAsTrace()} instead of this method,
+     *      because it will log all problems, even if the result is not missing.
+     *  &lt;/b&gt;
+     *
+     * @return This result, unchanged.
+     */
+    public Result&lt;V&gt; ifMissingLogAsTrace() {
+<span class="fc bfc" id="L952" title="All 2 branches covered.">        if ( this.isPresent() )</span>
+<span class="fc" id="L953">            return this; // If the value is present, we do nothing.</span>
+<span class="pc bpc" id="L954" title="1 of 2 branches missed.">        else if ( this.hasProblems() )</span>
+<span class="fc" id="L955">            return peekAtEachProblem(Problem::logAsTrace)._markAsLoggedOrHandled();</span>
+<span class="nc bnc" id="L956" title="All 2 branches missed.">        else if ( this.isEmpty() ) {</span>
+<span class="nc" id="L957">            Problem.of(new MissingItemRuntimeException(&quot;Expected item to be present in result!&quot;)).logAsTrace();</span>
+<span class="nc" id="L958">            return this._markAsLoggedOrHandled();</span>
+        }
+<span class="nc" id="L960">        return this;</span>
+    }
+
+    /**
+     *  Irrespective of this {@link Result} wrapping a non-null item of type {@code V} or not,
+     *  if the {@link Result} has at least one {@link Problem}, then an invocation to this method
+     *  will generate a rich context message and stack trace from its problems and then log them as trace
+     *  to the {@link org.slf4j.Logger#trace(String, Throwable)} method, or {@code System.out},
+     *  if Slf4j does not have a logger backend.&lt;br&gt;
+     *  It returns the result itself, so you can chain it with other methods.
+     *  This is intended to be used in a fluent API style which typically looks like this:
+     *  &lt;pre&gt;{@code
+     *  return
+     *    Result.ofTry(String.class,this::parse)
+     *          .logProblemsAsTrace()
+     *          .orElseGet(()-&gt;this.defaultValue);
+     *  }&lt;/pre&gt;
+     *  The logged information will contain the title and description of an existing {@link Problem}
+     *  as well as the local stack trace either based on an exception in a problem
+     *  or a newly created {@link Throwable} to ensure that the issue can be traced back
      *  to the source of the problem.
      *
      * @return This result, unchanged.
      */
-    default Result&lt;V&gt; ifMissingLogAsTrace() {
-<span class="nc bnc" id="L471" title="All 2 branches missed.">        if ( this.isEmpty() )</span>
-<span class="nc" id="L472">            return peekAtEachProblem(Problem::logAsTrace);</span>
+    public Result&lt;V&gt; logProblemsAsTrace() {
+<span class="pc bpc" id="L985" title="1 of 2 branches missed.">        if ( this.hasProblems() )</span>
+<span class="fc" id="L986">            return peekAtEachProblem(Problem::logAsTrace)._markAsLoggedOrHandled();</span>
         else
-<span class="nc" id="L474">            return this;</span>
+<span class="nc" id="L988">            return this;</span>
     }
 
     /**
@@ -486,6 +1000,43 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
      *    Result.ofTry(String.class,this::parse)
      *          .ifMissingLogTo(logger::error)
      *          .orElseGet(()-&gt;this.defaultValue);
+     *  }&lt;/pre&gt;&lt;br&gt;
+     *  &lt;p&gt;
+     *  &lt;b&gt;
+     *      Note: Please use {@link #logProblemsTo(BiConsumer)} instead of this method,
+     *      because it will log all problems, even if the result is not missing.
+     *  &lt;/b&gt;
+     *
+     * @param logger The logger to log the problems to, it is a {@link BiConsumer} which
+     *               takes as first argument the {@link String} message to log and as
+     *               second argument the {@link Throwable} associated with the problem.
+     * @return This result, unchanged.
+     */
+    public Result&lt;V&gt; ifMissingLogTo( BiConsumer&lt;String, Throwable&gt; logger ) {
+<span class="fc bfc" id="L1016" title="All 2 branches covered.">        if ( this.isPresent() )</span>
+<span class="fc" id="L1017">            return this; // If the value is present, we do nothing.</span>
+<span class="pc bpc" id="L1018" title="1 of 2 branches missed.">        else if ( this.hasProblems() )</span>
+<span class="fc" id="L1019">            return peekAtEachProblem(problem -&gt; problem.logTo(logger))._markAsLoggedOrHandled();</span>
+<span class="nc bnc" id="L1020" title="All 2 branches missed.">        else if ( this.isEmpty() ) {</span>
+<span class="nc" id="L1021">            Problem problem = Problem.of(new MissingItemRuntimeException(&quot;Expected item to be present in result!&quot;));</span>
+<span class="nc" id="L1022">            problem.logTo(logger);</span>
+<span class="nc" id="L1023">            return this._markAsLoggedOrHandled();</span>
+        }
+<span class="nc" id="L1025">        return this;</span>
+    }
+
+    /**
+     *  If this {@link Result} wraps a non-null item of type {@code V}, then this method will do nothing.
+     *  If, however, the item is missing, then an invocation will generate a rich context message and stack
+     *  trace from all problems associated with this result and then expose this logging information
+     *  to the Supplied {@link BiConsumer} which is expected to log the information the way it sees fit.
+     *  This method returns this result itself, so you can chain it with other methods.
+     *  It is intended to be used in a fluent API style which typically looks like this:
+     *  &lt;pre&gt;{@code
+     *  return
+     *    Result.ofTry(String.class,this::parse)
+     *          .logProblemsTo(logger::error)
+     *          .orElseGet(()-&gt;this.defaultValue);
      *  }&lt;/pre&gt;
      *
      * @param logger The logger to log the problems to, it is a {@link BiConsumer} which
@@ -493,11 +1044,11 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
      *               second argument the {@link Throwable} associated with the problem.
      * @return This result, unchanged.
      */
-    default Result&lt;V&gt; ifMissingLogTo( BiConsumer&lt;String, Throwable&gt; logger ) {
-<span class="nc bnc" id="L497" title="All 2 branches missed.">        if ( this.isEmpty() )</span>
-<span class="nc" id="L498">            return peekAtEachProblem(problem -&gt; problem.logTo(logger));</span>
+    public Result&lt;V&gt; logProblemsTo( BiConsumer&lt;String, Throwable&gt; logger ) {
+<span class="pc bpc" id="L1048" title="1 of 2 branches missed.">        if ( this.hasProblems() )</span>
+<span class="fc" id="L1049">            return peekAtEachProblem(problem -&gt; problem.logTo(logger))._markAsLoggedOrHandled();</span>
         else
-<span class="nc" id="L500">            return this;</span>
+<span class="nc" id="L1051">            return this;</span>
     }
     
     /**
@@ -512,7 +1063,23 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
      * @param &lt;U&gt; The type of the item returned from the mapping function.
      */
     @Override
-    &lt;U&gt; Result&lt;U&gt; mapTo( Class&lt;U&gt; type, Function&lt;V, U&gt; mapper );
+    public &lt;U&gt; Result&lt;U&gt; mapTo( Class&lt;U&gt; type, Function&lt;V, U&gt; mapper ) {
+<span class="fc" id="L1067">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L1068">        Objects.requireNonNull(mapper);</span>
+<span class="fc bfc" id="L1069" title="All 2 branches covered.">        if ( !isPresent() )</span>
+<span class="fc" id="L1070">            return Result.of( type, problems() );</span>
+
+        try {
+<span class="fc" id="L1073">            U newValue = mapper.apply( Objects.requireNonNull(_value) );</span>
+<span class="pc bpc" id="L1074" title="1 of 2 branches missed.">            if (newValue == null)</span>
+<span class="nc" id="L1075">                return Result.of( type );</span>
+            else
+<span class="fc" id="L1077">                return Result.of( newValue, problems() );</span>
+<span class="fc" id="L1078">        } catch ( Exception e ) {</span>
+<span class="fc" id="L1079">            Tuple&lt;Problem&gt; newProblems = problems().add( Problem.of(e) );</span>
+<span class="fc" id="L1080">            return Result.of( type, newProblems );</span>
+        }
+    }
 
     /**
      *  Safely maps the value of this result to a new value of the same type
@@ -524,7 +1091,107 @@ public interface Result&lt;V&gt; extends Maybe&lt;V&gt;
      * @return A new result with the mapped value and a list of problems describing related issues.
      */
     @Override
-    Result&lt;V&gt; map( Function&lt;V, V&gt; mapper );
-    
+    public Result&lt;V&gt; map( Function&lt;V, V&gt; mapper )  {
+<span class="fc" id="L1095">        Objects.requireNonNull(mapper);</span>
+<span class="pc bpc" id="L1096" title="1 of 2 branches missed.">        if ( !isPresent() )</span>
+<span class="nc" id="L1097">            return Result.of( type() );</span>
+
+        try {
+<span class="fc" id="L1100">            V newValue = mapper.apply(Objects.requireNonNull(_value));</span>
+<span class="pc bpc" id="L1101" title="1 of 2 branches missed.">            if (newValue == null)</span>
+<span class="nc" id="L1102">                return Result.of(type(), problems());</span>
+            else
+<span class="fc" id="L1104">                return Result.of(newValue, problems());</span>
+<span class="fc" id="L1105">        } catch ( Exception e ) {</span>
+<span class="fc" id="L1106">            Tuple&lt;Problem&gt; newProblems = problems().add( Problem.of(e) );</span>
+<span class="fc" id="L1107">            return Result.of( type(), newProblems );</span>
+        }
+    }
+
+
+    @Override
+    public String toString() {
+<span class="fc" id="L1114">        String value = this.mapTo(String.class, Object::toString).orElse(&quot;null&quot;);</span>
+<span class="pc bpc" id="L1115" title="1 of 2 branches missed.">        String type = ( type() == null ? &quot;?&quot; : type().getSimpleName() );</span>
+<span class="pc bpc" id="L1116" title="1 of 2 branches missed.">        if ( type.equals(&quot;Object&quot;) )</span>
+<span class="nc" id="L1117">            type = &quot;?&quot;;</span>
+<span class="pc bpc" id="L1118" title="3 of 4 branches missed.">        if ( type.equals(&quot;String&quot;) &amp;&amp; this.isPresent() )</span>
+<span class="nc" id="L1119">            value = &quot;\&quot;&quot; + value + &quot;\&quot;&quot;;</span>
+<span class="fc" id="L1120">        return &quot;Result&lt;&quot; + type + &quot;&gt;&quot; + &quot;[&quot; + value + &quot;]&quot;;</span>
+    }
+
+    @Override
+    public int hashCode() {
+<span class="fc" id="L1125">        return Objects.hash(_type, _value, _problems);</span>
+    }
+
+    @Override
+    public boolean equals( Object obj ) {
+<span class="pc bpc" id="L1130" title="1 of 2 branches missed.">        if ( obj == null ) return false;</span>
+<span class="pc bpc" id="L1131" title="1 of 2 branches missed.">        if ( obj == this ) return true;</span>
+<span class="pc bpc" id="L1132" title="1 of 2 branches missed.">        if ( obj instanceof Result ) {</span>
+<span class="fc" id="L1133">            Result&lt;?&gt; other = (Result&lt;?&gt;) obj;</span>
+<span class="fc bfc" id="L1134" title="All 2 branches covered.">            if ( !Objects.equals(other.type(), _type)         ) return false;</span>
+<span class="pc bpc" id="L1135" title="1 of 2 branches missed.">            if ( !Objects.equals(other.problems(), _problems) ) return false;</span>
+<span class="fc" id="L1136">            return</span>
+<span class="fc" id="L1137">                    Val.equals( other._value, _value ); // Arrays are compared with Arrays.equals</span>
+        }
+<span class="nc" id="L1139">        return false;</span>
+    }
+
+
+    /**
+     *  Returns the &lt;b&gt;expected&lt;/b&gt; class of the property type of the given item.
+     *  This is in the vast majority of cases simply {@code item.getClass()}
+     *  but in case of an enum constant with an anonymous implementation
+     *  {@code getClass()} returns the anonymous class instead of the enum class.
+     * @param item The item to get the property type class from.
+     * @return The expected class of the property type of the given item.
+     * @param &lt;T&gt; The type of the item.
+     */
+    private static &lt;T&gt; Class&lt;T&gt; expectedClassFromItem( @NonNull T item ) {
+<span class="fc" id="L1153">        Class&lt;?&gt; itemType = item.getClass();</span>
+        // We check if it is an enum:
+<span class="fc bfc" id="L1155" title="All 2 branches covered.">        if ( Enum.class.isAssignableFrom(itemType) ) {</span>
+            /*
+                When it comes to enums, there is a pitfall we might
+                fall into if just return the Class instance right away!
+                The pitfall is that an enum constant may actually be
+                an instance of an anonymous inner class instead an
+                instance of the actual enum type!
+
+                Check out this example enum:
+
+                public enum Food {
+                    TOFU { @Override public String toString() { return &quot;Tofu&quot;; } },
+                    TEMPEH { @Override public String toString() { return &quot;Tempeh&quot;; } },
+                    SEITAN { @Override public String toString() { return &quot;Seitan&quot;; } },
+                    NATTO { @Override public String toString() { return &quot;Natto&quot;; } }
+                }
+
+                The problem with the enum declared above is that two
+                different enum constant instances have different class instances,
+                which is to say the following is true:
+
+                Food.TOFU.getClass() != Food.SEITAN.getClass()
+
+                ...and also:
+
+                Food.class != Food.TOFU.getClass()
+            */
+            // Let's check for that:
+<span class="fc" id="L1183">            Class&lt;?&gt; superClass = itemType.getSuperclass();</span>
+<span class="pc bpc" id="L1184" title="1 of 4 branches missed.">            if ( superClass != null &amp;&amp; !superClass.equals(Enum.class) ) {</span>
+                // We are good to go, it is an enum!
+<span class="fc" id="L1186">                return (Class&lt;T&gt;) superClass;</span>
+            }
+        }
+<span class="fc" id="L1189">        return (Class&lt;T&gt;) itemType;</span>
+    }
+
+    private static void _logError(String message, @Nullable Object... args) {
+<span class="fc" id="L1193">        Util._logError(log, message, args);</span>
+<span class="fc" id="L1194">    }</span>
+
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

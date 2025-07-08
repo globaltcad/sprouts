@@ -37,13 +37,14 @@ import java.util.function.Function;
  *  Consider the following example property in your view model:
  *  <pre>{@code
  *      // A username property with a validation action:
- *      private final Var<String> username = Var.of("").onChange(From.VIEW v -> validateUser(v) );
+ *      private final Var<String> username = Var.of("");
+ *      private final Viewable<String> usernameView = this.username.view().onChange(From.VIEW v -> validateUser(v) );
  *  }</pre>
  *  And the following <a href="https://github.com/globaltcad/swing-tree">SwingTree</a>
  *  example UI:
  *  <pre>{@code
  *      UI.textField("")
- *      .peek( tf -> vm.getUsername().onChange(From.VIEW_MODEL t -> tf.setText(t.get()) ) )
+ *      .peek( tf -> vm.getUsernameView().onChange(From.VIEW_MODEL t -> tf.setText(t.get()) ) )
  *      .onKeyRelease( e -> vm.getUsername().set(From.VIEW, ta.getText() ) );
  *  }</pre>
  *  Here your view will automatically update the item of the text property
@@ -461,15 +462,19 @@ public interface Var<T extends @Nullable Object> extends Val<T>
     }
 
     /**
-     * Creates a lens property (Var) that focuses on a specific field of the current property item,
-     * allowing a default value for when the current value is null.
-     * This method is useful when dealing with potentially null parent property values,
-     * providing a null object to handle such cases gracefully.
+     * Creates a lens property (Var) that focuses on a specific field of the item of this property,
+     * allowing a default value for whenever the item of this property is null. The lens property produced by this
+     * method will use the {@code getter} and {@code wither} functions to access and update a specific field
+     * in the item of this property. But in case of the item of this property being null,
+     * then the {@code nullObject} will be used as the non-null fallback value for the lens property
+     * produced by this method. This method is useful when you don't want your lens property to
+     * store null items, despite the parent object storing null items.<br>
      *
-     * <p>For example, consider a record {@code Book} with a nullable field {@code publisher}.
+     * <p>For example, consider a record {@code Book} wrapped by a nullable {@code Var<Book>} property,
+     * which has a {@code publisher} field that we want to focus on and zoom into.
      * Using {@code zoomTo} with a null object, you can create a lens for the {@code publisher} field
      * even when the parent object is null.
-     * <b>So when accessing the value of the lens, you well never have to
+     * <b>So when accessing the value of the lens, you will never have to
      * worry about a {@code NullPointerException}.</b>
      *
      * <pre>{@code
@@ -504,17 +509,63 @@ public interface Var<T extends @Nullable Object> extends Val<T>
         return this.zoomTo( nullObject, Lens.of(getter, wither) );
     }
 
+    /**
+     * Creates a lens property (Var) from the supplied {@link Lens} implementation,
+     * which focuses on a specific field of the potentially nullable item of this property, where 
+     * a default non-null value is provided for cases when the item of this property is null.
+     * The lens property produced by this method will use the supplied {@link Lens} implementation to
+     * access and update a specific field in the item of this property.
+     * But in case of the item of this property being null, then the {@code nullObject} will be used
+     * as the non-null fallback value for the lens property produced by this method.
+     * This method is useful when you don't want your lens property to store null items,
+     * despite the parent object storing null items.<br>
+     *
+     * <p>For example, consider a record {@code Book} wrapped by a nullable {@code Var<Book>},
+     * with a {@code publisher} field that we want to focus on.
+     * Using {@code zoomTo} with a null object, you can create a lens for the {@code publisher} field
+     * even when the parent object is null.
+     * <b>So when accessing the value of the lens, you will never have to
+     * worry about a {@code NullPointerException}.</b>
+     *
+     * <pre>{@code
+     *   // We declare a Book and a Publisher record
+     *   record Book(String title, Publisher publisher) {...}
+     *   record Publisher(String name) {...}
+     *
+     *   // A nullable book property and a "null" publisher object
+     *   var bookProperty = Var.ofNull(Book.class);
+     *   Publisher nullPublisher = new Publisher("Unknown");
+     *
+     *   // Creating a null safe lens property for the publisher field
+     *   var publisherLens = bookProperty.zoomTo(nullPublisher, Lens.of(Book::publisher,Book::withPublisher));
+     *   assert publisherLens.get() == nullPublisher;
+     *
+     *   // Updating the book property with a new publisher
+     *   var book = new Book("Some Title", new Publisher("Publisher1"));
+     *   bookProperty.set(book);
+     *   assert publisherLens.get() == book.publisher();
+     * }</pre>
+     *
+     * @param <B>        The type of the field that the lens will focus on.
+     * @param nullObject The object to use when the focused field or its parent object is null.
+     *                   This object must not be null.
+     * @param lens       The {@link Lens} implementation to focus on the specified
+     *                   field of the parent object, using the null object when the parent object is null.
+     * @return A new Var that acts as a lens focusing on the specified field of the parent object, using
+     *        the null object when the parent object is null.
+     * @throws NullPointerException If the supplied {@code nullObject} or {@code lens} is null.
+     */
     default <B> Var<B> zoomTo( B nullObject, Lens<T,B> lens ) {
         return Sprouts.factory().lensOf( this, nullObject, lens );
     }
 
     /**
      * Creates a nullable lens property (Var) that focuses on a specific nullable field of the current property item.
-     * This method is used to zoom into an immutable nested data structure, allowing read and write operations on
-     * a specific nullable field via getter and wither functions.
+     * The lens is used by the returned property to zoom into an immutable nested data structure, allowing read
+     * and write operations on a specific nullable field via getter and wither functions.
      *
-     * <p>For example, consider a record {@code User} with an optional email field. Using {@code zoomToNullable},
-     * you can create a lens specifically for the email field, which is optional and can be null.
+     * <p>For example, consider a record {@code User} with a nullable email field. Using {@code zoomToNullable},
+     * you can create a lens specifically for the email field, which is a nullable {@code String}.
      *
      * <pre>{@code
      * var user = new User("sam42", MembershipLevel.GOLD, LocalDate.of(2020, 1, 1), "sam.sus@example.com");
@@ -532,12 +583,54 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      * @param getter  Function to get the current value of the focused nullable field from the parent object.
      * @param wither  BiFunction to set or update the value of the focused nullable field and return a new instance
      *                of the parent object with the updated field.
+     * @throws NullPointerException If the type, getter, or wither function is null.
      * @return A new Var that acts as a lens focusing on the specified nullable field of the parent object.
      */
     default <B extends @Nullable Object> Var<B> zoomToNullable( Class<B> type, Function<T,B> getter, BiFunction<T,B,T> wither ) {
         return this.zoomToNullable( type, Lens.of(getter, wither) );
     }
 
+    /**
+     * Creates a nullable lens property (Var) that focuses on a specific nullable field of the current property item,
+     * using a supplied {@link Lens} implementation.
+     * The lens is used by the returned property to zoom into an immutable nested data structure,
+     * allowing read and write operations on a specific nullable field via getter and wither functions.
+     *
+     * <p>For example, consider a record {@code record Employee(String name, @Nullable Department department)}.
+     * Using {@code zoomToNullable}, you can supply a {@link Lens} implementation to create a lens for the
+     * department field, which is nullable. The lens will allow you to read and update the department
+     * field of the employee record, even if it is null.
+     * <pre>{@code
+     *   record Employee(String name, @Nullable Department department) {...}
+     *   record Department(String name) {...}
+     *
+     *   var lensToDepartment = Lens.of(Employee::department, Employee::withDepartment);
+     *   // Create an Employee property
+     *   var employee = new Employee("Alice", null);
+     *   var employeeProperty = Var.of(employee);
+     *   // Create a nullable lens property for the department field
+     *   var departmentProperty = employeeProperty.zoomToNullable(Department.class, lensToDepartment);
+     *  }</pre>
+     *   Note that the {@link Lens} is a generic interface. So instead of the {@link Lens#of(Function, BiFunction)}
+     *   factory method, you may also create more elaborate lenses through a custom implementation.<br>
+     *   The lens in the above example may also be created like so:
+     * <pre>{@code
+     *   var lensToDepartment = new Lens<Employee, Department>() {
+     *     public Department getter( Employee employee ) {
+     *         return employee.department();
+     *     }
+     *     public Employee wither( Employee employee, Department department ) {
+     *         return employee.withDepartment(department);
+     *     }
+     *   };
+     * }</pre>
+     *
+     * @param <B>  The type of the nullable field that the lens will focus on.
+     * @param type The class type of the nullable field.
+     * @param lens The {@link Lens} implementation to focus on the specified nullable field of the parent object.
+     * @return A new Var that acts as a lens focusing on the specified nullable field of the parent object.
+     * @throws NullPointerException If the type or lens is null.
+     */
     default <B extends @Nullable Object> Var<B> zoomToNullable( Class<B> type, Lens<T,B> lens ) {
         return Sprouts.factory().lensOfNullable(type, this, lens);
     }

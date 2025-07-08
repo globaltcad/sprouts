@@ -1524,7 +1524,7 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @return An immutable {@link ValueSet} of items in this {@link Tuple} instance.
      */
     default ValueSet&lt;T&gt; toValueSet() {
-<span class="fc" id="L1527">        return ValueSet.of(this.type(), this);</span>
+<span class="fc" id="L1527">        return ValueSet.of(this);</span>
     }
 
     /**

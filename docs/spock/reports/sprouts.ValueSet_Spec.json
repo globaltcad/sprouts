@@ -4,7 +4,7 @@
   "narrative":"ValueSet is a fundamental building block in sprouts' data-oriented programming model.\n    It represents an immutable collection of unique elements, providing an API focused on\n    deriving new sets from existing ones rather than mutating state. Unlike traditional\n    Java sets, all operations return new `ValueSet` instances, making it ideal for\n    functional-style programming and safe concurrent usage.",
   "subjects":["sprouts.ValueSet"],
   "statistics":{
-    "runs":"30",
+    "runs":"31",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -13,6 +13,23 @@
   },
   "headers":[],"tags":{},"see":[],
   "features":[ 
+    {
+      "id":"Use `ValueSet.of(Class, Iterable)` to create a value set from an iterable.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var iterable = [\"a\", \"b\", \"c\", \"d\", \"e\"] as Iterable<String>"]},
+
+        {"kind":"when","text":"","code":["var valueSet = ValueSet.of(String, iterable)"]},
+
+        {"kind":"then","text":"","code":["valueSet.size() == 5","valueSet.type() == String","valueSet.toSet() == [\"a\", \"b\", \"c\", \"d\", \"e\"] as Set"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
     {
       "id":"An empty ValueSet is created by specifying the element type",
       "result":"PASS",

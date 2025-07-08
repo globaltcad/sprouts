@@ -4,7 +4,7 @@
   "narrative":"Properties are a powerful tool to model the state\n    as well as business logic of your UI without actually depending on it.\n    This is especially useful for testing your UIs logic (in a view model for example).\n    This is the core motivation behind the creation of the Sprouts library.\n\n    In Sprouts, properties are represented by the `Var` and `Val` classes.\n\n    You might be wondering, what is a `Var` or `Val` and what does\n    it have to do with the common concept of a property?\n\n    The answer is quite simply that the sprouts API uses the\n    names `Var` and `Val` to refer to 2 common types of properties.\n    The name `Var` translates to \"variable\" and `Val` to \"value\"\n    which are also words that convey the meaning of a property\n    yet they allow us to distinguish between mutable and immutable properties\n    without having to resort to unnecessary prefixes like \"mutable\" or \"immutable\".\n\n    So when the sprouts documentation refers to properties, it is\n    referring to the `Var` and `Val` classes.\n\n    This specification introduces you to their API and shows you how to use them.",
   "subjects":["sprouts.Val","sprouts.Var"],
   "statistics":{
-    "runs":"25",
+    "runs":"28",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -464,6 +464,85 @@
         {"kind":"when","text":"\n            We do same thing for another enum, which is not based on \n            anonymous classes then we get the same result.\n            So just to be thorough, let's check the same correctness\n            for the `DayOfWeek` enum!\n        ","code":["mutableNonNullFood = Var.of(DayOfWeek.MONDAY)","mutableNullableFood = Var.ofNullable(DayOfWeek, DayOfWeek.TUESDAY)","immutableNonNullFood = Val.of(DayOfWeek.WEDNESDAY)","immutableNullableFood = Val.ofNullable(DayOfWeek, null)","viewNonNullFood = mutableNonNullFood.viewAs(DayOfWeek, { it })","viewNullableFood = mutableNullableFood.viewAs(DayOfWeek, { it })","lensNonNullFood = mutableNonNullFood.zoomTo({it}, {a, it -> it })","lensNullableFood = mutableNullableFood.zoomToNullable(DayOfWeek, {it}, {a, it -> it })"]},
 
         {"kind":"then","text":"Again, all of these properties have the same type: `DayOfWeek`.","code":["mutableNonNullFood.type() == DayOfWeek.class","mutableNullableFood.type() == DayOfWeek.class","immutableNonNullFood.type() == DayOfWeek.class","immutableNullableFood.type() == DayOfWeek.class","viewNonNullFood.type() == DayOfWeek.class","viewNullableFood.type() == DayOfWeek.class","lensNonNullFood.type() == DayOfWeek.class","lensNullableFood.type() == DayOfWeek.class"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Throwing exceptions in property change listeners, will not interrupt the control flow at the source property.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            When a property changes, it will notify all of its change listeners.\n            If one of the listeners throws an exception, it should not interrupt the control flow\n            at the source property. This is because the change listeners are meant to be\n            independent of each other and should not affect each others operation or\n            that of the source property.\n            This is especially important when you have multiple change listeners that\n            depend on each other, as it ensures that everything gets an opportunity to run.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A mutable property with an initial value.","code":["var property = Var.of(\"Hello World\")"]},
+
+        {"kind":"and","text":"We add a change listener that throws an exception.","code":["Viewable.cast(property).onChange(From.ALL, it -> {","    throw new RuntimeException(\"Boom!\")","})"]},
+
+        {"kind":"and","text":"We create a new `PrintStream` that will capture the `System.err`.","code":["var originalErr = System.err","var outputStream = new ByteArrayOutputStream()","var printStream = new PrintStream(outputStream)","System.err = printStream"]},
+
+        {"kind":"when","text":"We change the value of the property...","code":["property.set(\"Goodbye World\") // This should not throw an exception."]},
+
+        {"kind":"then","text":"The exception does not reach us, the caller.","code":["noExceptionThrown()"]},
+
+        {"kind":"and","text":"The output stream on the other hand, will contain the exception message.","code":["outputStream.toString().contains(\"RuntimeException\")","outputStream.toString().contains(\"Boom!\")","outputStream.toString().contains(\"at \") // This is the stack trace of the exception."]},
+
+        {"kind":"and","text":"Despite the exception, the property has the new item.","code":["property.get() == \"Goodbye World\""]},
+
+        {"kind":"when","text":"We add another change listener that will be called after the first one.","code":["var trace = []","Viewable.cast(property).onChange(From.ALL, it -> {","    trace.add(\"Second change listener called.\")","})"]},
+
+        {"kind":"and","text":"We change the value of the property again...","code":["property.set(\"Hello again!\") // This should not throw an exception."]},
+
+        {"kind":"then","text":"The second change listener is called and the exception from the first one does not affect it.","code":["noExceptionThrown()","trace == [\"Second change listener called.\"]"]},
+
+        {"kind":"cleanup","text":"We restore the original `System.err` stream.","code":["System.err = originalErr"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Exceptions in the `toString()` of an item, will not cripple the `toString()` of a property.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            When you call the `toString()` method on a property, it will\n            indirectly call the `toString()` method on the item of the property.\n            Now, if the item throws an exception in its `toString()` method,\n            let's say, because of a bug in the code, then it should not affect\n            the reliability of the `toString()` method of the property itself!\n            This is because the `toString()` method of a property is meant to\n            provide a human-readable representation, ans so if the control\n            flow is interrupted by an exception, then the property would not\n            be able to provide any information at all.\n\n            If an error occurs in the `toString()` method of an item,\n            then an error message will be logged to the console, and\n            the string representation will tell you about the error.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We first create a new `PrintStream` that will capture the `System.err`.","code":["var originalErr = System.err","var outputStream = new ByteArrayOutputStream()","var printStream = new PrintStream(outputStream)","System.err = printStream"]},
+
+        {"kind":"and","text":"A mutable property with an item that throws an exception in its `toString()`.","code":["var property = Var.of(new Object() {","    @Override public String toString() {","        throw new RuntimeException(\"Boom!\")","    }","})"]},
+
+        {"kind":"when","text":"We call the toString() method on the property.","code":["var result = property.toString()"]},
+
+        {"kind":"then","text":"The `toString()` method of the property does not throw an exception.","code":["noExceptionThrown()"]},
+
+        {"kind":"then","text":"The `toString()` method of the property does not throw an exception.","code":["result == \"Var<>[java.lang.RuntimeException: Boom!]\""]},
+
+        {"kind":"and","text":"The output stream contains the exception message.","code":["outputStream.toString().contains(\"java.lang.RuntimeException: Boom!\")","outputStream.toString().contains(\"at \") // This is the stack trace of the exception."]},
+
+        {"kind":"cleanup","text":"We restore the original `System.err` stream.","code":["System.err = originalErr"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use `Viewable::unsubscribeAll()` to unsubscribe all Listeners from a property!",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `Viewable::unsubscribeAll()` method is used to unsubscribe all listeners\n            from a property. Note that internally, every property, also implements the `Viewable` interface,\n            which is why you can call this method on any property if you cast it to `Viewable`.\n            Keep in mind though, that in most cases you should not cast a property to `Viewable`,\n            and instead use `Var::view()` or `Val::view()` to create a view of the property.\n\n            But here we are just testing the `unsubscribeAll()` method.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A mutable property with an initial value.","code":["var property = Var.of(\"Hello World\")"]},
+
+        {"kind":"and","text":"We add two change listener that will be called when the property changes.","code":["Viewable.cast(property).onChange(From.ALL, it -> {","    // Do nothing, just for testing purposes.","})","Viewable.cast(property).onChange(From.ALL, it -> {","    // Still do nothing, just for testing purposes.","})"]},
+
+        {"kind":"expect","text":"The property has two change listener.","code":["Viewable.cast(property).numberOfChangeListeners() == 2"]},
+
+        {"kind":"when","text":"We unsubscribe all listeners from the property.","code":["Viewable.cast(property).unsubscribeAll()"]},
+
+        {"kind":"then","text":"The property has no change listeners anymore.","code":["Viewable.cast(property).numberOfChangeListeners() == 0"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }

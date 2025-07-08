@@ -13,8 +13,8 @@ import java.util.regex.Pattern;
 
 /**
  *  Creates instances of the various property types in the Sprouts library.
- *  This interface allows you to plug in your own implementations of the Sprouts properties
- *  through the {@link Sprouts#setFactory(SproutsFactory)} method.
+ *  This interface allows you to plug in your own implementations of the Sprouts
+ *  properties and collections, through the {@link Sprouts#setFactory(SproutsFactory)} method.
  */
 public interface SproutsFactory
 {
@@ -227,39 +227,19 @@ public interface SproutsFactory
 
     &lt;K, V&gt; Association&lt;K, V&gt; associationOf( Class&lt;K&gt; keyType, Class&lt;V&gt; valueType );
 
+    &lt;K, V&gt; Association&lt;K, V&gt; associationOfLinked( Class&lt;K&gt; keyType, Class&lt;V&gt; valueType );
+
     &lt;K, V&gt; Association&lt;K, V&gt; associationOfSorted(Class&lt;K&gt; keyType, Class&lt;V&gt; valueType, Comparator&lt;K&gt; comparator );
 
     &lt;K extends Comparable&lt;K&gt;, V&gt; Association&lt;K, V&gt; associationOfSorted( Class&lt;K&gt; keyType, Class&lt;V&gt; valueType );
 
     &lt;E&gt; ValueSet&lt;E&gt; valueSetOf( Class&lt;E&gt; type );
 
-    &lt;V&gt; Result&lt;V&gt; resultOf( Class&lt;V&gt; type );
+    &lt;E&gt; ValueSet&lt;E&gt; valueSetOfLinked( Class&lt;E&gt; type );
 
     &lt;E&gt; ValueSet&lt;E&gt; valueSetOfSorted( Class&lt;E&gt; type, Comparator&lt;E&gt; comparator );
 
     &lt;E extends Comparable&lt;? super E&gt;&gt; ValueSet&lt;E&gt; valueSetOfSorted( Class&lt;E&gt; type );
-
-    &lt;V&gt; Result&lt;V&gt; resultOf( V value );
-
-    &lt;V&gt; Result&lt;V&gt; resultOf( Class&lt;V&gt; type, @Nullable V value );
-
-    &lt;V&gt; Result&lt;V&gt; resultOf( V value, Iterable&lt;Problem&gt; problems );
-
-    &lt;V&gt; Result&lt;V&gt; resultOf( Class&lt;V&gt; type, Iterable&lt;Problem&gt; problems );
-
-    &lt;V&gt; Result&lt;V&gt; resultOf( Class&lt;V&gt; type, @Nullable V value, Iterable&lt;Problem&gt; problems );
-
-    &lt;V&gt; Result&lt;V&gt; resultOf( Class&lt;V&gt; type, @Nullable V value, Problem problem );
-
-    &lt;V&gt; Result&lt;V&gt; resultOf( Class&lt;V&gt; type, Problem problem );
-
-    &lt;V&gt; Result&lt;List&lt;V&gt;&gt; resultOfList( Class&lt;V&gt; type, Problem problem );
-
-    &lt;V&gt; Result&lt;List&lt;V&gt;&gt; resultOfList( Class&lt;V&gt; type, List&lt;V&gt; list );
-
-    &lt;V&gt; Result&lt;List&lt;V&gt;&gt; resultOfList( Class&lt;V&gt; type, List&lt;V&gt; list, Iterable&lt;Problem&gt; problems );
-
-    &lt;V&gt; Result&lt;V&gt; resultOfTry( Class&lt;V&gt; type, ResultItemSupplier&lt;V&gt; supplier );
 
     /**
      *   The default id for properties which do not have an id explicitly specified.

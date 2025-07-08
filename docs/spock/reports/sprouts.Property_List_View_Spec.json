@@ -4,7 +4,7 @@
   "narrative":"A property list is more than just a wrapper around values.\n    This interface has a rich API that exposes a plethora of methods,\n    many of which are designed to inform you about\n    their contents without actually exposing them to you.\n\n    For these facts about any property list, we can create views.\n    These views are observable live properties that are updated\n    whenever the source property list changes.",
   "subjects":["sprouts.Viewables","sprouts.Vars","sprouts.Vals"],
   "statistics":{
-    "runs":"9",
+    "runs":"10",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -288,6 +288,35 @@
         {"kind":"and","text":"A view on the names of the days of the week.","code":["Viewables<String> names = days.view(\"null\", \"error\", DayOfWeek::name)"]},
 
         {"kind":"expect","text":"The view has a string representation.","code":["names.toString() == \"Views<String>[MONDAY, WEDNESDAY, FRIDAY]\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You can remove all change listeners from a property list view using `Viewables::unsubscribeAll()`!",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `unsubscribeAll()` method on a property list view\n            will remove all change listeners from the view.\n            This is useful for cleaning up resources and preventing memory leaks\n            in a particular context.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A property list of 3 days of the week.","code":["Vars<DayOfWeek> days = Vars.of(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY, DayOfWeek.FRIDAY)"]},
+
+        {"kind":"and","text":"A view on the names of the days of the week.","code":["Viewables<String> names = days.view(\"null\", \"error\", DayOfWeek::name)"]},
+
+        {"kind":"and","text":"A listener that records the changes and notes the new values.","code":["var removalTrace = []","var additionTrace = []","names.onChange({ removalTrace << it.oldValues().toList() })","names.onChange({ additionTrace << it.newValues().toList() })"]},
+
+        {"kind":"when","text":"We add a month to the source property list.","code":["days.add(DayOfWeek.SATURDAY)"]},
+
+        {"kind":"then","text":"The view receives the change event.","code":["removalTrace == [[]]","additionTrace == [[\"SATURDAY\"]]"]},
+
+        {"kind":"when","text":"We remove all change listeners from the view.","code":["names.unsubscribeAll()"]},
+
+        {"kind":"then","text":"The view has no change listeners anymore.","code":["names.numberOfChangeListeners() == 0"]},
+
+        {"kind":"when","text":"We add another day to the source property list.","code":["days.add(DayOfWeek.SUNDAY)"]},
+
+        {"kind":"then","text":"The view does not receive the change event.","code":["removalTrace == [[]]","additionTrace == [[\"SATURDAY\"]]"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }

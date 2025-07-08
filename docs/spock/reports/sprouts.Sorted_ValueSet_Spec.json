@@ -1,7 +1,7 @@
 {
   "className":"sprouts.Sorted_ValueSet_Spec",
   "title":"Sorted ValueSet - a Data Oriented Set",
-  "narrative":"A sorted ValueSet is a fundamental building block in sprouts' data-oriented programming model.\n    It represents an immutable collection of unique and sorted elements, providing an API focused on\n    deriving new sets from existing ones rather than mutating state. Unlike traditional\n    Java sets, all operations return new `ValueSet` instances, making it ideal for\n    functional-style programming and safe concurrent usage.\n\n    This specification tests the behavior of the `ValueSet` when created using the\n    \"sorted\" factory methods, which produce sets that maintain their elements in a sorted order.\n    This is similar to the JDK's `TreeSet`, but with the added benefits of immutability,\n    structural sharing and enabling of functional programming designs.",
+  "narrative":"A sorted `ValueSet` is a fundamental building block in sprouts' data-oriented programming model.\n    It represents an immutable collection of unique and sorted elements, providing an API focused on\n    deriving new sets from existing ones rather than mutating state. Unlike traditional\n    Java sets, all operations return new `ValueSet` instances, making it ideal for\n    functional-style programming and safe concurrent usage.\n\n    This specification tests the behavior of the `ValueSet` when created using the\n    \"sorted\" factory methods, which produce sets that maintain their elements in a sorted order.\n    This is similar to the JDK's `TreeSet`, but with the added benefits of immutability,\n    structural sharing and enabling of functional programming designs.",
   "subjects":["sprouts.ValueSet"],
   "statistics":{
     "runs":"32",
@@ -42,13 +42,13 @@
       "blocks":[
         {"kind":"given","text":"","code":["var valueSet = ValueSet.ofSorted(String)","var referenceSet = new TreeSet<String>()","var operationsApplier = { currentSet ->","    operations.each { op, element ->","        switch (op) {","            case Operation.ADD:","                currentSet = currentSet.add(element)","                referenceSet.add(element)","                break","            case Operation.REMOVE:","                currentSet = currentSet.remove(element)","                referenceSet.remove(element)","                break","            case Operation.CLEAR:","                currentSet = currentSet.clear()","                referenceSet.clear()","                break","        }","        if ( referenceSet.size() != currentSet.size() ) {","            throw new IllegalStateException(","                \"The size of the set and the value set are not equal after element '$element' was introduced \"+","                \"with operation '$operation'. Set size: ${referenceSet.size()}, Value set size: ${currentSet.size()}\"","            )","        }","    }","    return currentSet","}"]},
 
-        {"kind":"when","text":"Apply operations first time","code":["valueSet = operationsApplier(valueSet)"]},
+        {"kind":"when","text":"Apply operations first time","code":["valueSet = operationsApplier(valueSet) as ValueSet<String>"]},
 
-        {"kind":"then","text":"Immediate invariance","code":["valueSet.size() == referenceSet.size()","valueSet.containsAll(referenceSet)","valueSet.toSet() == referenceSet"]},
+        {"kind":"then","text":"Immediate invariance","code":["valueSet.size() == referenceSet.size()","valueSet.containsAll(referenceSet)","valueSet.toSet() == referenceSet","!valueSet.isLinked()","valueSet.isSorted()"]},
 
-        {"kind":"when","text":"Apply operations multiple times","code":["5.times { valueSet = operationsApplier(valueSet) }"]},
+        {"kind":"when","text":"Apply operations multiple times","code":["5.times {","    valueSet = operationsApplier(valueSet) as ValueSet<String>","}"]},
 
-        {"kind":"then","text":"Consistent state","code":["valueSet.size() == referenceSet.size()","valueSet.containsAll(referenceSet)","valueSet.toSet() == referenceSet"]},
+        {"kind":"then","text":"Consistent state","code":["valueSet.size() == referenceSet.size()","valueSet.containsAll(referenceSet)","valueSet.toSet() == referenceSet","!valueSet.isLinked()","valueSet.isSorted()"]},
 
         {"kind":"and","text":"Their entry sets converted to lists are equal.","code":["valueSet.toList() == referenceSet.toList()"]},
 
@@ -75,13 +75,13 @@
       "blocks":[
         {"kind":"given","text":"","code":["var valueSet = ValueSet.ofSorted(String)","var referenceSet = new TreeSet<String>()","var operationsApplier = { currentSet ->","    operations.each { op, element ->","        switch (op) {","            case Operation.ADD:","                currentSet = currentSet.add(element)","                referenceSet.add(element)","                break","            case Operation.REMOVE:","                currentSet = currentSet.remove(element)","                referenceSet.remove(element)","                break","            case Operation.CLEAR:","                currentSet = currentSet.clear()","                referenceSet.clear()","                break","        }","        if ( referenceSet.size() != currentSet.size() ) {","            throw new IllegalStateException(","                \"The size of the set and the value set are not equal after element '$element' was introduced \"+","                \"with operation '$operation'. Set size: ${referenceSet.size()}, Value set size: ${currentSet.size()}\"","            )","        }","    }","    return currentSet","}"]},
 
-        {"kind":"when","text":"Apply operations first time","code":["valueSet = operationsApplier(valueSet)"]},
+        {"kind":"when","text":"Apply operations first time","code":["valueSet = operationsApplier(valueSet) as ValueSet<String>"]},
 
-        {"kind":"then","text":"Immediate invariance","code":["valueSet.size() == referenceSet.size()","valueSet.containsAll(referenceSet)","valueSet.toSet() == referenceSet"]},
+        {"kind":"then","text":"Immediate invariance","code":["valueSet.size() == referenceSet.size()","valueSet.containsAll(referenceSet)","valueSet.toSet() == referenceSet","!valueSet.isLinked()","valueSet.isSorted()"]},
 
-        {"kind":"when","text":"Apply operations multiple times","code":["5.times { valueSet = operationsApplier(valueSet) }"]},
+        {"kind":"when","text":"Apply operations multiple times","code":["5.times {","    valueSet = operationsApplier(valueSet) as ValueSet<String>","}"]},
 
-        {"kind":"then","text":"Consistent state","code":["valueSet.size() == referenceSet.size()","valueSet.containsAll(referenceSet)","valueSet.toSet() == referenceSet"]},
+        {"kind":"then","text":"Consistent state","code":["valueSet.size() == referenceSet.size()","valueSet.containsAll(referenceSet)","valueSet.toSet() == referenceSet","!valueSet.isLinked()","valueSet.isSorted()"]},
 
         {"kind":"and","text":"Their entry sets converted to lists are equal.","code":["valueSet.toList() == referenceSet.toList()"]},
 
@@ -108,13 +108,13 @@
       "blocks":[
         {"kind":"given","text":"","code":["var valueSet = ValueSet.ofSorted(String)","var referenceSet = new TreeSet<String>()","var operationsApplier = { currentSet ->","    operations.each { op, element ->","        switch (op) {","            case Operation.ADD:","                currentSet = currentSet.add(element)","                referenceSet.add(element)","                break","            case Operation.REMOVE:","                currentSet = currentSet.remove(element)","                referenceSet.remove(element)","                break","            case Operation.CLEAR:","                currentSet = currentSet.clear()","                referenceSet.clear()","                break","        }","        if ( referenceSet.size() != currentSet.size() ) {","            throw new IllegalStateException(","                \"The size of the set and the value set are not equal after element '$element' was introduced \"+","                \"with operation '$operation'. Set size: ${referenceSet.size()}, Value set size: ${currentSet.size()}\"","            )","        }","    }","    return currentSet","}"]},
 
-        {"kind":"when","text":"Apply operations first time","code":["valueSet = operationsApplier(valueSet)"]},
+        {"kind":"when","text":"Apply operations first time","code":["valueSet = operationsApplier(valueSet) as ValueSet<String>"]},
 
-        {"kind":"then","text":"Immediate invariance","code":["valueSet.size() == referenceSet.size()","valueSet.containsAll(referenceSet)","valueSet.toSet() == referenceSet"]},
+        {"kind":"then","text":"Immediate invariance","code":["valueSet.size() == referenceSet.size()","valueSet.containsAll(referenceSet)","valueSet.toSet() == referenceSet","!valueSet.isLinked()","valueSet.isSorted()"]},
 
-        {"kind":"when","text":"Apply operations multiple times","code":["5.times { valueSet = operationsApplier(valueSet) }"]},
+        {"kind":"when","text":"Apply operations multiple times","code":["5.times {","    valueSet = operationsApplier(valueSet) as ValueSet<String>","}"]},
 
-        {"kind":"then","text":"Consistent state","code":["valueSet.size() == referenceSet.size()","valueSet.containsAll(referenceSet)","valueSet.toSet() == referenceSet"]},
+        {"kind":"then","text":"Consistent state","code":["valueSet.size() == referenceSet.size()","valueSet.containsAll(referenceSet)","valueSet.toSet() == referenceSet","!valueSet.isLinked()","valueSet.isSorted()"]},
 
         {"kind":"and","text":"Their entry sets converted to lists are equal.","code":["valueSet.toList() == referenceSet.toList()"]},
 
@@ -141,13 +141,13 @@
       "blocks":[
         {"kind":"given","text":"","code":["var valueSet = ValueSet.ofSorted(String)","var referenceSet = new TreeSet<String>()","var operationsApplier = { currentSet ->","    operations.each { op, element ->","        switch (op) {","            case Operation.ADD:","                currentSet = currentSet.add(element)","                referenceSet.add(element)","                break","            case Operation.REMOVE:","                currentSet = currentSet.remove(element)","                referenceSet.remove(element)","                break","            case Operation.CLEAR:","                currentSet = currentSet.clear()","                referenceSet.clear()","                break","        }","        if ( referenceSet.size() != currentSet.size() ) {","            throw new IllegalStateException(","                \"The size of the set and the value set are not equal after element '$element' was introduced \"+","                \"with operation '$operation'. Set size: ${referenceSet.size()}, Value set size: ${currentSet.size()}\"","            )","        }","    }","    return currentSet","}"]},
 
-        {"kind":"when","text":"Apply operations first time","code":["valueSet = operationsApplier(valueSet)"]},
+        {"kind":"when","text":"Apply operations first time","code":["valueSet = operationsApplier(valueSet) as ValueSet<String>"]},
 
-        {"kind":"then","text":"Immediate invariance","code":["valueSet.size() == referenceSet.size()","valueSet.containsAll(referenceSet)","valueSet.toSet() == referenceSet"]},
+        {"kind":"then","text":"Immediate invariance","code":["valueSet.size() == referenceSet.size()","valueSet.containsAll(referenceSet)","valueSet.toSet() == referenceSet","!valueSet.isLinked()","valueSet.isSorted()"]},
 
-        {"kind":"when","text":"Apply operations multiple times","code":["5.times { valueSet = operationsApplier(valueSet) }"]},
+        {"kind":"when","text":"Apply operations multiple times","code":["5.times {","    valueSet = operationsApplier(valueSet) as ValueSet<String>","}"]},
 
-        {"kind":"then","text":"Consistent state","code":["valueSet.size() == referenceSet.size()","valueSet.containsAll(referenceSet)","valueSet.toSet() == referenceSet"]},
+        {"kind":"then","text":"Consistent state","code":["valueSet.size() == referenceSet.size()","valueSet.containsAll(referenceSet)","valueSet.toSet() == referenceSet","!valueSet.isLinked()","valueSet.isSorted()"]},
 
         {"kind":"and","text":"Their entry sets converted to lists are equal.","code":["valueSet.toList() == referenceSet.toList()"]},
 
@@ -174,13 +174,13 @@
       "blocks":[
         {"kind":"given","text":"","code":["var valueSet = ValueSet.ofSorted(String)","var referenceSet = new TreeSet<String>()","var operationsApplier = { currentSet ->","    operations.each { op, element ->","        switch (op) {","            case Operation.ADD:","                currentSet = currentSet.add(element)","                referenceSet.add(element)","                break","            case Operation.REMOVE:","                currentSet = currentSet.remove(element)","                referenceSet.remove(element)","                break","            case Operation.CLEAR:","                currentSet = currentSet.clear()","                referenceSet.clear()","                break","        }","        if ( referenceSet.size() != currentSet.size() ) {","            throw new IllegalStateException(","                \"The size of the set and the value set are not equal after element '$element' was introduced \"+","                \"with operation '$operation'. Set size: ${referenceSet.size()}, Value set size: ${currentSet.size()}\"","            )","        }","    }","    return currentSet","}"]},
 
-        {"kind":"when","text":"Apply operations first time","code":["valueSet = operationsApplier(valueSet)"]},
+        {"kind":"when","text":"Apply operations first time","code":["valueSet = operationsApplier(valueSet) as ValueSet<String>"]},
 
-        {"kind":"then","text":"Immediate invariance","code":["valueSet.size() == referenceSet.size()","valueSet.containsAll(referenceSet)","valueSet.toSet() == referenceSet"]},
+        {"kind":"then","text":"Immediate invariance","code":["valueSet.size() == referenceSet.size()","valueSet.containsAll(referenceSet)","valueSet.toSet() == referenceSet","!valueSet.isLinked()","valueSet.isSorted()"]},
 
-        {"kind":"when","text":"Apply operations multiple times","code":["5.times { valueSet = operationsApplier(valueSet) }"]},
+        {"kind":"when","text":"Apply operations multiple times","code":["5.times {","    valueSet = operationsApplier(valueSet) as ValueSet<String>","}"]},
 
-        {"kind":"then","text":"Consistent state","code":["valueSet.size() == referenceSet.size()","valueSet.containsAll(referenceSet)","valueSet.toSet() == referenceSet"]},
+        {"kind":"then","text":"Consistent state","code":["valueSet.size() == referenceSet.size()","valueSet.containsAll(referenceSet)","valueSet.toSet() == referenceSet","!valueSet.isLinked()","valueSet.isSorted()"]},
 
         {"kind":"and","text":"Their entry sets converted to lists are equal.","code":["valueSet.toList() == referenceSet.toList()"]},
 
@@ -285,7 +285,7 @@
 
         {"kind":"when","text":"We apply the clear operation.","code":["var cleared = set.clear()"]},
 
-        {"kind":"then","text":"","code":["cleared.isEmpty()","cleared.type() == Integer"]}
+        {"kind":"then","text":"","code":["cleared.isEmpty()","cleared.type() == Integer","cleared.isSorted()","!cleared.isLinked()"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -390,7 +390,7 @@
 
         {"kind":"when","text":"","code":["for ( var element : set ) {","    iterated << element","}"]},
 
-        {"kind":"then","text":"","code":["iterated.size() == 4","iterated as Set == [1,2,3,4] as Set"]}
+        {"kind":"then","text":"","code":["iterated.size() == 4","iterated == [1,2,3,4]"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },

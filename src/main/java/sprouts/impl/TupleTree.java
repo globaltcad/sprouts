@@ -404,6 +404,17 @@ public final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
     private final Class<T> _type;
     private final Node _root;
 
+    /**
+     * Creates a new {@link TupleTree} with the given list of items.
+     * The items are copied into a new array, so the original items
+     * can be modified without affecting this tuple tree.
+     *
+     * @param allowsNull Whether this tuple tree allows null values.
+     * @param type The type of the items in this tuple tree.
+     * @param items The items to be added to this tuple tree.
+     * @param <T> The type of the items in this tuple tree.
+     * @return A new {@link TupleTree} containing the given items.
+     */
     @SuppressWarnings("NullAway")
     public static <T> TupleTree<T> of(
         boolean allowsNull,
@@ -418,6 +429,17 @@ public final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
             );
     }
 
+    /**
+     * Creates a new {@link TupleTree} with the given array of items.
+     * The items are copied into a new array, so the original items
+     * can be modified without affecting this tuple tree.
+     *
+     * @param allowsNull Whether this tuple tree allows null values.
+     * @param type The type of the items in this tuple tree.
+     * @param items The items to be added to this tuple tree.
+     * @param <T> The type of the items in this tuple tree.
+     * @return A new {@link TupleTree} containing the given items.
+     */
     public static <T> TupleTree<T> of(
         boolean allowsNull,
         Class<T> type,

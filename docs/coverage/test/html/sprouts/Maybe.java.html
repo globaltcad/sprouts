@@ -279,17 +279,6 @@ public interface Maybe&lt;T&gt;
     }
 
     /**
-     *  This method check if the provided item is not equal to the item wrapped by this {@link Maybe} instance.
-     *  This is the opposite of {@link #is(Object)} which returns true if the items are equal.
-     *
-     * @param otherItem The other item of the same type as is wrapped by this.
-     * @return The truth value determining if the provided item is not equal to the wrapped item.
-     */
-    default boolean isNot( @Nullable T otherItem ) {
-<span class="fc bfc" id="L289" title="All 2 branches covered.">        return !is(otherItem);</span>
-    }
-
-    /**
      *  This method check if the item by the provided wrapper
      *  is equal to the item wrapped by this {@link Maybe} instance.
      *
@@ -297,8 +286,19 @@ public interface Maybe&lt;T&gt;
      * @return The truth value determining if the item of the supplied wrapper is equal to the wrapped item.
      */
     default boolean is( @NonNull Maybe&lt;@Nullable T&gt; other ) {
-<span class="fc" id="L300">        Objects.requireNonNull(other);</span>
-<span class="fc" id="L301">        return is( other.orElseNull() );</span>
+<span class="fc" id="L289">        Objects.requireNonNull(other);</span>
+<span class="fc" id="L290">        return is( other.orElseNull() );</span>
+    }
+
+    /**
+     *  This method check if the provided item is not equal to the item wrapped by this {@link Maybe} instance.
+     *  This is the opposite of {@link #is(Object)} which returns true if the items are equal.
+     *
+     * @param otherItem The other item of the same type as is wrapped by this.
+     * @return The truth value determining if the provided item is not equal to the wrapped item.
+     */
+    default boolean isNot( @Nullable T otherItem ) {
+<span class="fc bfc" id="L301" title="All 2 branches covered.">        return !is(otherItem);</span>
     }
 
     /**

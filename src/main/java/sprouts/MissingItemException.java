@@ -7,10 +7,15 @@ import java.util.function.Consumer;
 
 /**
  *  A checked exception thrown when an item is missing from a
- *  {@link Maybe} object.
+ *  {@link Maybe} object, which may also be a {@link Val}, {@link Var} or {@link Result}.
  */
 public final class MissingItemException extends Exception
 {
+    /**
+     *  An immutable tuple of {@link Problem} objects that caused this exception.
+     *  These problems describe the issues that led to this exception being thrown,
+     *  so they may themselves contain exceptions or other descriptive information.
+     */
     private final Tuple<Problem> _problems;
 
     /**

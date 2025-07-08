@@ -4,7 +4,7 @@
   "narrative":"Properties are designed to be observable, which means that you can \"react\"\n    to their items being replaced by new items. This sort of \"reaction\"\n    to changes is typically done through the \"observer pattern\", where you\n    register change listeners on a property that are invoked whenever the\n    property item changes...\n\n    Contrary to what you might might expect, you cannot register change listeners\n    on properties directly!\n    This is to prevent you from creating memory leaks, which happen very often\n    due to change listeners not being unregistered when they are no longer needed.\n    To fix this, Sprouts provides the concept of a \"property view\" in\n    the form of instances of the `Viewable` type,\n    which is a weakly referenced live property onto which you can safely register\n    your change listeners.\n    And when you no longer use the view (by holding a reference to it),\n    it will be garbage collected along with all of the change listeners\n    that were registered on it.\n\n    But if you keep a reference to the view and a change occurs on the source property,\n    then the view will be updated and all of the change listeners will be notified\n    of the change.",
   "subjects":["sprouts.Viewable","sprouts.Var","sprouts.Val","sprouts.Vars","sprouts.Vals"],
   "statistics":{
-    "runs":"27",
+    "runs":"30",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -670,6 +670,91 @@
         {"kind":"when","text":"We create a composite view of the two properties...","code":["var view = Viewable.of(property1, property2, (a, b) -> a + b)"]},
 
         {"kind":"then","text":"The view has the expected id.","code":["view.id() == \"property1_and_property2\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Throwing exceptions in view change listeners, will not interrupt the control flow at the source property.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            If the code in a view change listener throws an exception, then the exception will not be propagated\n            to the source property. Instead, the exception will be caught and logged.\n            This is important because it allows the source property to continue to function\n            even if a view change listener fails.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A property with a view derived from it.","code":["var property = Var.of(\"Hello\")","var view = property.view()"]},
+
+        {"kind":"and","text":"We register a change listener that throws an exception.","code":["view.onChange(From.ALL, v -> {","    throw new RuntimeException(\"This is a test exception.\")","})"]},
+
+        {"kind":"and","text":"We create a new `PrintStream` that will capture the `System.err`.","code":["var originalErr = System.err","var outputStream = new ByteArrayOutputStream()","var printStream = new PrintStream(outputStream)","System.err = printStream"]},
+
+        {"kind":"when","text":"We change the value of the property.","code":["property.set(\"World\")"]},
+
+        {"kind":"then","text":"The exception does not reach us, because it is caught and logged.","code":["noExceptionThrown()"]},
+
+        {"kind":"and","text":"The output stream on the other hand, will contain the exception message.","code":["outputStream.toString().contains(\"RuntimeException\")","outputStream.toString().contains(\"This is a test exception.\")","outputStream.toString().contains(\"at \") // This is the stack trace of the exception."]},
+
+        {"kind":"and","text":"The view is still updated and has the expected value.","code":["view.get() == \"World\""]},
+
+        {"kind":"cleanup","text":"We restore the original `System.err` stream.","code":["System.err = originalErr"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Exceptions in the `toString()` of an item, will not cripple the `toString()` of a property view.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            When you call the `toString()` method on a property view, it will\n            indirectly call the `toString()` method on the item of the view.\n            Now, if the item throws an exception in its `toString()` method,\n            let's say, because of a bug in the code, then it should not affect\n            the reliability of the `toString()` method of the view itself!\n            This is because the `toString()` method of a view is meant to\n            provide a human-readable representation, ans so if the control\n            flow is interrupted by an exception, then the property would not\n            be able to provide any information at all.\n\n            If an error occurs in the `toString()` method of an item,\n            then an error message will be logged to the console, and\n            the string representation will tell you about the error.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We first create a new `PrintStream` that will capture the `System.err`.","code":["var originalErr = System.err","var outputStream = new ByteArrayOutputStream()","var printStream = new PrintStream(outputStream)","System.err = printStream"]},
+
+        {"kind":"and","text":"A property with an item that throws an exception in its `toString()` method.","code":["var property = Var.of(new Object() {","    @Override String toString() { throw new RuntimeException(\"This is a test exception.\") }","})"]},
+
+        {"kind":"and","text":"A view of the property.","code":["var view = property.view()"]},
+
+        {"kind":"when","text":"We call the `toString()` method on the property view.","code":["var result = view.toString()"]},
+
+        {"kind":"then","text":"The `toString()` method of the view does not throw an exception.","code":["noExceptionThrown()"]},
+
+        {"kind":"and","text":"The result is a string representation of the view, and it contains the exception message.","code":["result == \"View<>[java.lang.RuntimeException: This is a test exception.]\""]},
+
+        {"kind":"and","text":"The output stream on the other hand, will contain the exception message.","code":["outputStream.toString().contains(\"RuntimeException\")","outputStream.toString().contains(\"This is a test exception.\")","outputStream.toString().contains(\"at \") // This is the stack trace of the exception."]},
+
+        {"kind":"cleanup","text":"We restore the original `System.err` stream.","code":["System.err = originalErr"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use `Viewable::unsubscribeAll()` to unsubscribe all Listeners from a property view!",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `unsubscribeAll()` method can be used to unsubscribe all change listeners\n            from a property view. This effectively stops all change notifications\n            from being sent to the listeners, and it is useful when you want to\n            clean up resources or when you no longer need to listen to changes\n            in a particular context.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A mutable property with an initial value and a view derived from it.","code":["var property = Var.of(\"Hello World\")","var view = property.view()"]},
+
+        {"kind":"and","text":"A trace list to record the side effects.","code":["var trace = []"]},
+
+        {"kind":"and","text":"We add two change listener to the view, which are called when the property changes.","code":["view.onChange(From.ALL, it -> {","    trace << \"Listener 1: \" + it.currentValue().orElseThrow()","})","view.onChange(From.ALL, it -> {","    trace << \"Listener 2: \" + it.currentValue().orElseThrow()","})"]},
+
+        {"kind":"expect","text":"The property view has two change listener.","code":["view.numberOfChangeListeners() == 2"]},
+
+        {"kind":"when","text":"We change the value of the property.","code":["property.set(\"Hello Sprouts\")"]},
+
+        {"kind":"then","text":"The change listeners are called and the trace list is updated.","code":["trace == [\"Listener 1: Hello Sprouts\", \"Listener 2: Hello Sprouts\"]"]},
+
+        {"kind":"when","text":"We unsubscribe all listeners from the view.","code":["view.unsubscribeAll()"]},
+
+        {"kind":"then","text":"The property view now has no change listeners anymore.","code":["view.numberOfChangeListeners() == 0"]},
+
+        {"kind":"when","text":"We change the value of the property again.","code":["property.set(\"Hello again\")"]},
+
+        {"kind":"then","text":"The change listeners are not called anymore, because they were unsubscribed.","code":["trace == [\"Listener 1: Hello Sprouts\", \"Listener 2: Hello Sprouts\"]"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }

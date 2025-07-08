@@ -4,7 +4,7 @@
   "narrative":"The Sprouts Property Lens is based on the Lens design pattern.\n    The Lens design pattern is a functional programming\n    technique used to simplify the process of accessing and updating parts of\n    a nested (immutable) data structures into a new instance of the data structure.\n\n    A Lens is essentially a pair of functions:\n    one to get a value from a specific part of a data structure (like a record),\n    and another to set or update that value while producing a new\n    instance of the data structure. This pattern is particularly useful with Java records,\n    which are immutable by design, as it allows for clean and concise manipulation\n    of deeply nested fields without breaking immutability.\n\n    Now what does this have to do with Sprouts properties?\n    After all, the MVVM properties of this library are mutable\n    wrapper types with regular getter and setter methods.\n    Although properties are mutable, their items are expected to\n    be immutable data carriers, such as ints, doubles, strings or records.\n    In case of records (or other custom value oriented data types),\n    there is really no limit to how deeply nested the data structure can be.\n    You may even want to model your entire application state as a single record\n    composed of other records, lists, maps and primitives.\n    This is where the Property Lens comes in:\n\n    You can create a lens property from any regular property\n    holding an immutable data structure, and then use the lens property\n    like a regular property.\n\n    Under the hood the lens property will use the lens pattern to access\n    and update the nested data structure of the original property.\n\n    In this specification we will demonstrate how to create and use\n    lens properties and also explore edge cases and limitations.\n\n    In this Specification we are using the following\n    data structure classes:\n    ````java\n        import java.time.LocalDate;\n        import java.util.List;\n\n        // Enums\n        enum Genre {\n            FICTION, NON_FICTION, SCIENCE, FANTASY, BIOGRAPHY, HISTORY\n        }\n\n        enum MembershipLevel {\n            BASIC, SILVER, GOLD, PLATINUM\n        }\n\n        // Records\n        public record Author(String firstName, String lastName, LocalDate birthDate, List<String> books) {\n            public Author withFirstName(String firstName) {\n                return new Author(firstName, this.lastName, this.birthDate, this.books);\n            }\n\n            public Author withLastName(String lastName) {\n                return new Author(this.firstName, lastName, this.birthDate, this.books);\n            }\n\n            public Author withBirthDate(LocalDate birthDate) {\n                return new Author(this.firstName, this.lastName, birthDate, this.books);\n            }\n\n            public Author withBooks(List<String> books) {\n                return new Author(this.firstName, this.lastName, this.birthDate, books);\n            }\n        }\n\n        public record Book(String title, Author author, Genre genre, LocalDate publicationDate, int pageCount) {\n            public Book withTitle(String title) {\n                return new Book(title, this.author, this.genre, this.publicationDate, this.pageCount);\n            }\n\n            public Book withAuthor(Author author) {\n                return new Book(this.title, author, this.genre, this.publicationDate, this.pageCount);\n            }\n\n            public Book withGenre(Genre genre) {\n                return new Book(this.title, this.author, genre, this.publicationDate, this.pageCount);\n            }\n\n            public Book withPublicationDate(LocalDate publicationDate) {\n                return new Book(this.title, this.author, this.genre, publicationDate, this.pageCount);\n            }\n\n            public Book withPageCount(int pageCount) {\n                return new Book(this.title, this.author, this.genre, this.publicationDate, pageCount);\n            }\n        }\n\n        public record Member(String memberId, String firstName, String lastName, MembershipLevel membershipLevel, LocalDate joinDate, String email) {\n            public Member withMemberId(String memberId) {\n                return new Member(memberId, this.firstName, this.lastName, this.membershipLevel, this.joinDate, this.email);\n            }\n\n            public Member withFirstName(String firstName) {\n                return new Member(this.memberId, firstName, this.lastName, this.membershipLevel, this.joinDate, this.email);\n            }\n\n            public Member withLastName(String lastName) {\n                return new Member(this.memberId, this.firstName, lastName, this.membershipLevel, this.joinDate, this.email);\n            }\n\n            public Member withMembershipLevel(MembershipLevel membershipLevel) {\n                return new Member(this.memberId, this.firstName, this.lastName, membershipLevel, this.joinDate, this.email);\n            }\n\n            public Member withJoinDate(LocalDate joinDate) {\n                return new Member(this.memberId, this.firstName, this.lastName, this.membershipLevel, joinDate, this.email);\n            }\n\n            public Member withEmail(String email) {\n                return new Member(this.memberId, this.firstName, this.lastName, this.membershipLevel, this.joinDate, email);\n            }\n        }\n\n        public record Loan(String loanId, Book book, Member member, LocalDate loanDate, LocalDate returnDate, boolean returned) {\n            public Loan withLoanId(String loanId) {\n                return new Loan(loanId, this.book, this.member, this.loanDate, this.returnDate, this.returned);\n            }\n\n            public Loan withBook(Book book) {\n                return new Loan(this.loanId, book, this.member, this.loanDate, this.returnDate, this.returned);\n            }\n\n            public Loan withMember(Member member) {\n                return new Loan(this.loanId, this.book, member, this.loanDate, this.returnDate, this.returned);\n            }\n\n            public Loan withLoanDate(LocalDate loanDate) {\n                return new Loan(this.loanId, this.book, this.member, loanDate, this.returnDate, this.returned);\n            }\n\n            public Loan withReturnDate(LocalDate returnDate) {\n                return new Loan(this.loanId, this.book, this.member, this.loanDate, returnDate, this.returned);\n            }\n\n            public Loan withReturned(boolean returned) {\n                return new Loan(this.loanId, this.book, this.member, this.loanDate, this.returnDate, returned);\n            }\n        }\n\n        static record TrainStation(String name, String description, LocalDate foundingDate, List<String> trains) {\n            public TrainStation withName(String name) {\n                return new TrainStation(name, this.description, this.foundingDate, this.trains);\n            }\n\n            public TrainStation withDescription(String description) {\n                return new TrainStation(this.name, description, this.foundingDate, this.trains);\n            }\n\n            public TrainStation withBirthDate(LocalDate birthDate) {\n                return new TrainStation(this.name, this.description, birthDate, this.trains);\n            }\n\n            public TrainStation withBooks(List<String> books) {\n                return new TrainStation(this.name, this.description, this.foundingDate, books);\n            }\n        }\n        ```",
   "subjects":["sprouts.impl.PropertyLens","sprouts.Var"],
   "statistics":{
-    "runs":"28",
+    "runs":"31",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -737,6 +737,95 @@
         {"kind":"and","text":"We change the lens again...","code":["monthLens.set(Month.FEBRUARY)"]},
 
         {"kind":"then","text":"The side effect is not executed anymore.","code":["trace == [\"!\"]"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Exceptions in the `toString()` of an item, will not cripple the `toString()` of a lens property.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            When you call the `toString()` method on a lens property, it will\n            indirectly call the `toString()` method on the item of the lens property.\n            Now, if the item throws an exception in its `toString()` method,\n            let's say, because of a bug in the code, then it should not affect\n            the reliability of the `toString()` method of the lens property itself!\n            This is because the `toString()` method of a property is meant to\n            provide a human-readable representation, ans so if the control\n            flow is interrupted by an exception, then the property would not\n            be able to provide any information at all.\n\n            If an error occurs in the `toString()` method of an item,\n            then an error message will be logged to the console, and\n            the string representation will tell you about the error.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We first create a new `PrintStream` that will capture the `System.err`.","code":["var originalErr = System.err","var outputStream = new ByteArrayOutputStream()","var printStream = new PrintStream(outputStream)","System.err = printStream"]},
+
+        {"kind":"and","text":"A data structure that allows us to zoom into the item.","code":["var data = [","        go: \"Go\",","        watch: \"Watch\",","        dominion: \"Dominion\",","        now: new Object() {","            @Override public String toString() {","                throw new RuntimeException(\"Heart explodes!\")","            }","        }","]"]},
+
+        {"kind":"and","text":"We create a property that wraps the data structure as well as a lens that focuses on the \"now\" field.","code":["var property = Var.of(data)","var lens = property.zoomTo( it -> it.now, (it, now) -> { it.now = now; return it } )"]},
+
+        {"kind":"when","text":"We call the `toString()` method on the lens.","code":["var result = lens.toString()"]},
+
+        {"kind":"then","text":"The `toString()` method of the lens property does not throw an exception.","code":["noExceptionThrown()"]},
+
+        {"kind":"and","text":"The string representation of the lens property contains the exception message.","code":["result == \"Lens<>[java.lang.RuntimeException: Heart explodes!]\""]},
+
+        {"kind":"and","text":"The output stream contains the exception message.","code":["outputStream.toString().contains(\"java.lang.RuntimeException: Heart explodes!\")","outputStream.toString().contains(\"at \") // This is the stack trace of the exception."]},
+
+        {"kind":"cleanup","text":"We restore the original `System.err` stream.","code":["System.err = originalErr"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You can remove all change listeners from a lens property using `Viewable::unsubscribeAll()`!",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `Viewable::unsubscribeAll()` method is used to unsubscribe all listeners\n            from a property. Note that internally, every property, also implements the `Viewable` interface,\n            which is why you can call this method on any property if you cast it to `Viewable`.\n            Keep in mind though, that in most cases you should not cast a property to `Viewable`,\n            and instead use `Var::view()` or `Val::view()` to create a view of the property.\n\n            But here we are just testing the `unsubscribeAll()` method.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A mutable property with an initial value and a lens on it.","code":["var property = Var.of(new Author(\"John\", \"Doe\", LocalDate.of(1829, 8, 12), [\"Book1\", \"Book2\"]))","var lens = property.zoomTo(Author::firstName, Author::withFirstName)"]},
+
+        {"kind":"and","text":"A trace list to record the side effects.","code":["var trace = []"]},
+
+        {"kind":"and","text":"We add two change listener that will be called when the lens property changes.","code":["Viewable.cast(lens).onChange(From.ALL, it -> {","    trace << \"Listened to: \" + it.currentValue().orElseThrow()","})","Viewable.cast(lens).onChange(From.ALL, it -> {","    trace << \"Also listened to: \" + it.currentValue().orElseThrow()","})"]},
+
+        {"kind":"expect","text":"The lens property has two change listener.","code":["Viewable.cast(lens).numberOfChangeListeners() == 2"]},
+
+        {"kind":"when","text":"We change the value of the lens property.","code":["lens.set(\"Smith\")"]},
+
+        {"kind":"then","text":"The change listeners are notified.","code":["trace == [\"Listened to: Smith\", \"Also listened to: Smith\"]"]},
+
+        {"kind":"when","text":"We unsubscribe all listeners from the lens.","code":["Viewable.cast(lens).unsubscribeAll()"]},
+
+        {"kind":"then","text":"The lens property no longer has any change listeners.","code":["Viewable.cast(lens).numberOfChangeListeners() == 0"]},
+
+        {"kind":"when","text":"We change the value of the lens property again.","code":["lens.set(\"Mayer\")"]},
+
+        {"kind":"then","text":"The change listeners are not notified anymore, so the trace is unchanged.","code":["trace == [\"Listened to: Smith\", \"Also listened to: Smith\"]"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You can remove all change listeners from a lens property view using `Viewable::unsubscribeAll()`!",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            When we create a view of a lens property, we can also unsubscribe all listeners\n            from the view using the `Viewable::unsubscribeAll()` method.\n            In this test we create a lens property and a view of it,\n            then we add two change listeners to the view, and finally we unsubscribe all listeners\n            from the view using the `unsubscribeAll()` method.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A mutable property with an initial value and a lens on it, and then a view of the lens.","code":["var property = Var.of(new Author(\"John\", \"Doe\", LocalDate.of(1829, 8, 12), [\"Book1\", \"Book2\"]))","var lens = property.zoomTo(Author::firstName, Author::withFirstName)","var view = lens.view()"]},
+
+        {"kind":"and","text":"A trace list to record the side effects.","code":["var trace = []"]},
+
+        {"kind":"and","text":"We add two change listener that will be called when the lens property changes.","code":["view.onChange(From.ALL, it -> {","    trace << \"Listened to: \" + it.currentValue().orElseThrow()","})","view.onChange(From.ALL, it -> {","    trace << \"Also listened to: \" + it.currentValue().orElseThrow()","})"]},
+
+        {"kind":"expect","text":"The lens property view has two change listener.","code":["view.numberOfChangeListeners() == 2"]},
+
+        {"kind":"when","text":"We change the value of the lens property.","code":["lens.set(\"Smith\")"]},
+
+        {"kind":"then","text":"The change listeners are notified.","code":["trace == [\"Listened to: Smith\", \"Also listened to: Smith\"]"]},
+
+        {"kind":"when","text":"We unsubscribe all listeners from the lens view.","code":["view.unsubscribeAll()"]},
+
+        {"kind":"then","text":"The view no longer has any change listeners.","code":["view.numberOfChangeListeners() == 0"]},
+
+        {"kind":"when","text":"We change the value of the lens property again.","code":["lens.set(\"Mayer\")"]},
+
+        {"kind":"then","text":"The change listeners are not notified anymore, so the trace is unchanged.","code":["trace == [\"Listened to: Smith\", \"Also listened to: Smith\"]"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }

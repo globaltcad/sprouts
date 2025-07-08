@@ -37,13 +37,14 @@ import java.util.function.Function;
  *  Consider the following example property in your view model:
  *  &lt;pre&gt;{@code
  *      // A username property with a validation action:
- *      private final Var&lt;String&gt; username = Var.of(&quot;&quot;).onChange(From.VIEW v -&gt; validateUser(v) );
+ *      private final Var&lt;String&gt; username = Var.of(&quot;&quot;);
+ *      private final Viewable&lt;String&gt; usernameView = this.username.view().onChange(From.VIEW v -&gt; validateUser(v) );
  *  }&lt;/pre&gt;
  *  And the following &lt;a href=&quot;https://github.com/globaltcad/swing-tree&quot;&gt;SwingTree&lt;/a&gt;
  *  example UI:
  *  &lt;pre&gt;{@code
  *      UI.textField(&quot;&quot;)
- *      .peek( tf -&gt; vm.getUsername().onChange(From.VIEW_MODEL t -&gt; tf.setText(t.get()) ) )
+ *      .peek( tf -&gt; vm.getUsernameView().onChange(From.VIEW_MODEL t -&gt; tf.setText(t.get()) ) )
  *      .onKeyRelease( e -&gt; vm.getUsername().set(From.VIEW, ta.getText() ) );
  *  }&lt;/pre&gt;
  *  Here your view will automatically update the item of the text property
@@ -98,8 +99,8 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
      * @throws NullPointerException If the given type is null.
      */
     static &lt;T&gt; Var&lt;@Nullable T&gt; ofNullable( Class&lt;T&gt; type, @Nullable T item ) {
-<span class="fc" id="L101">        Objects.requireNonNull(type);</span>
-<span class="fc" id="L102">        return Sprouts.factory().varOfNullable( type, item );</span>
+<span class="fc" id="L102">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L103">        return Sprouts.factory().varOfNullable( type, item );</span>
     }
 
     /**
@@ -115,7 +116,7 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
      * @param &lt;T&gt; The type of the wrapped item.
      */
     static &lt;T&gt; Var&lt;@Nullable T&gt; ofNull( Class&lt;T&gt; type ) {
-<span class="fc" id="L118">        return Sprouts.factory().varOfNull( type );</span>
+<span class="fc" id="L119">        return Sprouts.factory().varOfNull( type );</span>
     }
 
     /**
@@ -131,7 +132,7 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
      * @throws IllegalArgumentException If the given item is null.
      */
     static &lt;T&gt; Var&lt;T&gt; of( T item ) {
-<span class="fc" id="L134">        return Sprouts.factory().varOf( item );</span>
+<span class="fc" id="L135">        return Sprouts.factory().varOf( item );</span>
     }
 
     /**
@@ -149,7 +150,7 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
      * @throws IllegalArgumentException If the given item is null.
      */
     static &lt;T, V extends T&gt; Var&lt;T&gt; of( Class&lt;T&gt; type, V item ) {
-<span class="fc" id="L152">        return Sprouts.factory().varOf( type, item );</span>
+<span class="fc" id="L153">        return Sprouts.factory().varOf( type, item );</span>
     }
 
     /**
@@ -161,7 +162,7 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
      * @return This very wrapper instance, in order to enable method chaining.
      */
     default Var&lt;T&gt; set( T newItem ) {
-<span class="fc" id="L164">        return this.set(Sprouts.factory().defaultChannel(), newItem);</span>
+<span class="fc" id="L165">        return this.set(Sprouts.factory().defaultChannel(), newItem);</span>
     }
 
     /**
@@ -206,7 +207,7 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
      * @throws NullPointerException If the given mapper is null.
      */
     default Var&lt;T&gt; update( Function&lt;T,@Nullable T&gt; mapper ) {
-<span class="fc" id="L209">        return update(Sprouts.factory().defaultChannel(), mapper);</span>
+<span class="fc" id="L210">        return update(Sprouts.factory().defaultChannel(), mapper);</span>
     }
 
     /**
@@ -242,11 +243,11 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
      * @throws NullPointerException If the given mapper is null.
      */
     default Var&lt;T&gt; update( Channel channel, Function&lt;T,@Nullable T&gt; mapper ) {
-<span class="fc" id="L245">        Objects.requireNonNull(channel);</span>
-<span class="fc" id="L246">        Objects.requireNonNull(mapper);</span>
-<span class="fc bfc" id="L247" title="All 2 branches covered.">        if ( this.isEmpty() )</span>
-<span class="fc" id="L248">            return this;</span>
-<span class="fc" id="L249">        return this.set(channel, mapper.apply(this.get()));</span>
+<span class="fc" id="L246">        Objects.requireNonNull(channel);</span>
+<span class="fc" id="L247">        Objects.requireNonNull(mapper);</span>
+<span class="fc bfc" id="L248" title="All 2 branches covered.">        if ( this.isEmpty() )</span>
+<span class="fc" id="L249">            return this;</span>
+<span class="fc" id="L250">        return this.set(channel, mapper.apply(this.get()));</span>
     }
 
     /**
@@ -279,7 +280,7 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
      * @throws NullPointerException If the given mapper is null.
      */
     default Var&lt;T&gt; updateNullable( Function&lt;@Nullable T,@Nullable T&gt; mapper ) {
-<span class="fc" id="L282">        return this.updateNullable(Sprouts.factory().defaultChannel(), mapper);</span>
+<span class="fc" id="L283">        return this.updateNullable(Sprouts.factory().defaultChannel(), mapper);</span>
     }
 
     /**
@@ -314,9 +315,9 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
      * @throws NullPointerException If the given mapper is null.
      */
     default Var&lt;T&gt; updateNullable( Channel channel, Function&lt;@Nullable T,@Nullable T&gt; mapper ) {
-<span class="fc" id="L317">        Objects.requireNonNull(channel);</span>
-<span class="fc" id="L318">        Objects.requireNonNull(mapper);</span>
-<span class="fc" id="L319">        return this.set(channel, mapper.apply(this.orElseNull()));</span>
+<span class="fc" id="L318">        Objects.requireNonNull(channel);</span>
+<span class="fc" id="L319">        Objects.requireNonNull(mapper);</span>
+<span class="fc" id="L320">        return this.set(channel, mapper.apply(this.orElseNull()));</span>
     }
 
     /**
@@ -351,11 +352,11 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
      *         the mapping function to the item of this property.
      */
     @Override default Var&lt;T&gt; map( Function&lt;T, T&gt; mapper ) {
-<span class="nc bnc" id="L354" title="All 2 branches missed.">        if ( !isPresent() )</span>
-<span class="nc" id="L355">            return Var.ofNull( type() );</span>
+<span class="nc bnc" id="L355" title="All 2 branches missed.">        if ( !isPresent() )</span>
+<span class="nc" id="L356">            return Var.ofNull( type() );</span>
 
-<span class="nc" id="L357">        T newValue = mapper.apply( get() );</span>
-<span class="nc bnc" id="L358" title="All 2 branches missed.">        return allowsNull() ? Var.ofNullable( type(), newValue ) : Var.of( newValue );</span>
+<span class="nc" id="L358">        T newValue = mapper.apply( get() );</span>
+<span class="nc bnc" id="L359" title="All 2 branches missed.">        return allowsNull() ? Var.ofNullable( type(), newValue ) : Var.of( newValue );</span>
     }
 
     /**
@@ -379,7 +380,7 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
      * @param &lt;U&gt; The type of the item returned from the mapping function
      */
     default @Override &lt;U extends @Nullable Object&gt; Var&lt;@Nullable U&gt; mapTo( Class&lt;U&gt; type, Function&lt;@NonNull T, U&gt; mapper ) {
-<span class="fc" id="L382">        return (Var&lt;U&gt;) Val.super.mapTo( type, mapper );</span>
+<span class="fc" id="L383">        return (Var&lt;U&gt;) Val.super.mapTo( type, mapper );</span>
     }
 
     /**
@@ -414,7 +415,7 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
      * @throws NullPointerException If the given getter or wither function is null.
      */
     default &lt;B&gt; Var&lt;B&gt; zoomTo( Function&lt;T,B&gt; getter, BiFunction&lt;T,B,T&gt; wither ) {
-<span class="fc" id="L417">        return zoomTo( Lens.of(getter, wither) );</span>
+<span class="fc" id="L418">        return zoomTo( Lens.of(getter, wither) );</span>
     }
 
     /**
@@ -456,20 +457,24 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
      * @throws NullPointerException If the given lens is null.
      */
     default &lt;B&gt; Var&lt;B&gt; zoomTo( Lens&lt;T,B&gt; lens ) {
-<span class="fc" id="L459">        Objects.requireNonNull(lens);</span>
-<span class="fc" id="L460">        return Sprouts.factory().lensOf( this, lens );</span>
+<span class="fc" id="L460">        Objects.requireNonNull(lens);</span>
+<span class="fc" id="L461">        return Sprouts.factory().lensOf( this, lens );</span>
     }
 
     /**
-     * Creates a lens property (Var) that focuses on a specific field of the current property item,
-     * allowing a default value for when the current value is null.
-     * This method is useful when dealing with potentially null parent property values,
-     * providing a null object to handle such cases gracefully.
+     * Creates a lens property (Var) that focuses on a specific field of the item of this property,
+     * allowing a default value for whenever the item of this property is null. The lens property produced by this
+     * method will use the {@code getter} and {@code wither} functions to access and update a specific field
+     * in the item of this property. But in case of the item of this property being null,
+     * then the {@code nullObject} will be used as the non-null fallback value for the lens property
+     * produced by this method. This method is useful when you don't want your lens property to
+     * store null items, despite the parent object storing null items.&lt;br&gt;
      *
-     * &lt;p&gt;For example, consider a record {@code Book} with a nullable field {@code publisher}.
+     * &lt;p&gt;For example, consider a record {@code Book} wrapped by a nullable {@code Var&lt;Book&gt;} property,
+     * which has a {@code publisher} field that we want to focus on and zoom into.
      * Using {@code zoomTo} with a null object, you can create a lens for the {@code publisher} field
      * even when the parent object is null.
-     * &lt;b&gt;So when accessing the value of the lens, you well never have to
+     * &lt;b&gt;So when accessing the value of the lens, you will never have to
      * worry about a {@code NullPointerException}.&lt;/b&gt;
      *
      * &lt;pre&gt;{@code
@@ -501,20 +506,66 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
      * @throws NullPointerException If the given getter or wither function is null.
      */
     default &lt;B&gt; Var&lt;B&gt; zoomTo( B nullObject, Function&lt;T,B&gt; getter, BiFunction&lt;T,B,T&gt; wither ) {
-<span class="fc" id="L504">        return this.zoomTo( nullObject, Lens.of(getter, wither) );</span>
+<span class="fc" id="L509">        return this.zoomTo( nullObject, Lens.of(getter, wither) );</span>
     }
 
+    /**
+     * Creates a lens property (Var) from the supplied {@link Lens} implementation,
+     * which focuses on a specific field of the potentially nullable item of this property, where 
+     * a default non-null value is provided for cases when the item of this property is null.
+     * The lens property produced by this method will use the supplied {@link Lens} implementation to
+     * access and update a specific field in the item of this property.
+     * But in case of the item of this property being null, then the {@code nullObject} will be used
+     * as the non-null fallback value for the lens property produced by this method.
+     * This method is useful when you don't want your lens property to store null items,
+     * despite the parent object storing null items.&lt;br&gt;
+     *
+     * &lt;p&gt;For example, consider a record {@code Book} wrapped by a nullable {@code Var&lt;Book&gt;},
+     * with a {@code publisher} field that we want to focus on.
+     * Using {@code zoomTo} with a null object, you can create a lens for the {@code publisher} field
+     * even when the parent object is null.
+     * &lt;b&gt;So when accessing the value of the lens, you will never have to
+     * worry about a {@code NullPointerException}.&lt;/b&gt;
+     *
+     * &lt;pre&gt;{@code
+     *   // We declare a Book and a Publisher record
+     *   record Book(String title, Publisher publisher) {...}
+     *   record Publisher(String name) {...}
+     *
+     *   // A nullable book property and a &quot;null&quot; publisher object
+     *   var bookProperty = Var.ofNull(Book.class);
+     *   Publisher nullPublisher = new Publisher(&quot;Unknown&quot;);
+     *
+     *   // Creating a null safe lens property for the publisher field
+     *   var publisherLens = bookProperty.zoomTo(nullPublisher, Lens.of(Book::publisher,Book::withPublisher));
+     *   assert publisherLens.get() == nullPublisher;
+     *
+     *   // Updating the book property with a new publisher
+     *   var book = new Book(&quot;Some Title&quot;, new Publisher(&quot;Publisher1&quot;));
+     *   bookProperty.set(book);
+     *   assert publisherLens.get() == book.publisher();
+     * }&lt;/pre&gt;
+     *
+     * @param &lt;B&gt;        The type of the field that the lens will focus on.
+     * @param nullObject The object to use when the focused field or its parent object is null.
+     *                   This object must not be null.
+     * @param lens       The {@link Lens} implementation to focus on the specified
+     *                   field of the parent object, using the null object when the parent object is null.
+     * @return A new Var that acts as a lens focusing on the specified field of the parent object, using
+     *        the null object when the parent object is null.
+     * @throws NullPointerException If the supplied {@code nullObject} or {@code lens} is null.
+     */
     default &lt;B&gt; Var&lt;B&gt; zoomTo( B nullObject, Lens&lt;T,B&gt; lens ) {
-<span class="fc" id="L508">        return Sprouts.factory().lensOf( this, nullObject, lens );</span>
+<span class="fc" id="L559">        return Sprouts.factory().lensOf( this, nullObject, lens );</span>
     }
 
     /**
      * Creates a nullable lens property (Var) that focuses on a specific nullable field of the current property item.
-     * This method is used to zoom into an immutable nested data structure, allowing read and write operations on
-     * a specific nullable field via getter and wither functions.
+     * The lens is used by the returned property to zoom into an immutable nested data structure, allowing read
+     * and write operations on a specific nullable field via getter and wither functions.
      *
-     * &lt;p&gt;For example, consider a record {@code User} with an optional email field. Using {@code zoomToNullable},
-     * you can create a lens specifically for the email field, which is optional and can be null.
+     * &lt;p&gt;For example, consider a record {@code User} with a nullable email field. Using {@code zoomToNullable},
+     * you can create a lens specifically for the email field, which is a nullable {@code String}.
      *
      * &lt;pre&gt;{@code
      * var user = new User(&quot;sam42&quot;, MembershipLevel.GOLD, LocalDate.of(2020, 1, 1), &quot;sam.sus@example.com&quot;);
@@ -532,14 +583,56 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
      * @param getter  Function to get the current value of the focused nullable field from the parent object.
      * @param wither  BiFunction to set or update the value of the focused nullable field and return a new instance
      *                of the parent object with the updated field.
+     * @throws NullPointerException If the type, getter, or wither function is null.
      * @return A new Var that acts as a lens focusing on the specified nullable field of the parent object.
      */
     default &lt;B extends @Nullable Object&gt; Var&lt;B&gt; zoomToNullable( Class&lt;B&gt; type, Function&lt;T,B&gt; getter, BiFunction&lt;T,B,T&gt; wither ) {
-<span class="fc" id="L538">        return this.zoomToNullable( type, Lens.of(getter, wither) );</span>
+<span class="fc" id="L590">        return this.zoomToNullable( type, Lens.of(getter, wither) );</span>
     }
 
+    /**
+     * Creates a nullable lens property (Var) that focuses on a specific nullable field of the current property item,
+     * using a supplied {@link Lens} implementation.
+     * The lens is used by the returned property to zoom into an immutable nested data structure,
+     * allowing read and write operations on a specific nullable field via getter and wither functions.
+     *
+     * &lt;p&gt;For example, consider a record {@code record Employee(String name, @Nullable Department department)}.
+     * Using {@code zoomToNullable}, you can supply a {@link Lens} implementation to create a lens for the
+     * department field, which is nullable. The lens will allow you to read and update the department
+     * field of the employee record, even if it is null.
+     * &lt;pre&gt;{@code
+     *   record Employee(String name, @Nullable Department department) {...}
+     *   record Department(String name) {...}
+     *
+     *   var lensToDepartment = Lens.of(Employee::department, Employee::withDepartment);
+     *   // Create an Employee property
+     *   var employee = new Employee(&quot;Alice&quot;, null);
+     *   var employeeProperty = Var.of(employee);
+     *   // Create a nullable lens property for the department field
+     *   var departmentProperty = employeeProperty.zoomToNullable(Department.class, lensToDepartment);
+     *  }&lt;/pre&gt;
+     *   Note that the {@link Lens} is a generic interface. So instead of the {@link Lens#of(Function, BiFunction)}
+     *   factory method, you may also create more elaborate lenses through a custom implementation.&lt;br&gt;
+     *   The lens in the above example may also be created like so:
+     * &lt;pre&gt;{@code
+     *   var lensToDepartment = new Lens&lt;Employee, Department&gt;() {
+     *     public Department getter( Employee employee ) {
+     *         return employee.department();
+     *     }
+     *     public Employee wither( Employee employee, Department department ) {
+     *         return employee.withDepartment(department);
+     *     }
+     *   };
+     * }&lt;/pre&gt;
+     *
+     * @param &lt;B&gt;  The type of the nullable field that the lens will focus on.
+     * @param type The class type of the nullable field.
+     * @param lens The {@link Lens} implementation to focus on the specified nullable field of the parent object.
+     * @return A new Var that acts as a lens focusing on the specified nullable field of the parent object.
+     * @throws NullPointerException If the type or lens is null.
+     */
     default &lt;B extends @Nullable Object&gt; Var&lt;B&gt; zoomToNullable( Class&lt;B&gt; type, Lens&lt;T,B&gt; lens ) {
-<span class="fc" id="L542">        return Sprouts.factory().lensOfNullable(type, this, lens);</span>
+<span class="fc" id="L635">        return Sprouts.factory().lensOfNullable(type, this, lens);</span>
     }
 
 }

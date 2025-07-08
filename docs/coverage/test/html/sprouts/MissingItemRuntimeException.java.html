@@ -11,6 +11,11 @@ import java.util.function.Consumer;
  */
 public final class MissingItemRuntimeException extends RuntimeException
 {
+    /**
+     *  An immutable tuple of {@link Problem} objects that caused this exception.
+     *  These problems describe the issues that led to this exception being thrown,
+     *  so they may themselves contain exceptions or other descriptive information.
+     */
     private final Tuple&lt;Problem&gt; _problems;
 
     /**
@@ -20,9 +25,9 @@ public final class MissingItemRuntimeException extends RuntimeException
      * @param message The message of the exception.
      */
     public MissingItemRuntimeException(String message) {
-<span class="fc" id="L23">        super(message);</span>
-<span class="fc" id="L24">        _problems = Tuple.of(Problem.class);</span>
-<span class="fc" id="L25">    }</span>
+<span class="fc" id="L28">        super(message);</span>
+<span class="fc" id="L29">        _problems = Tuple.of(Problem.class);</span>
+<span class="fc" id="L30">    }</span>
 
     /**
      *  Creates a new {@link MissingItemRuntimeException} with the given message
@@ -32,36 +37,36 @@ public final class MissingItemRuntimeException extends RuntimeException
      * @param problems The problems that caused this exception.
      */
     public MissingItemRuntimeException(String message, Tuple&lt;Problem&gt; problems) {
-<span class="fc" id="L35">        super(message, causeFromAllProblems(problems));</span>
-<span class="fc" id="L36">        _problems = problems;</span>
-<span class="fc" id="L37">        addSuppressed(problems, this::addSuppressed);</span>
-<span class="fc" id="L38">    }</span>
+<span class="fc" id="L40">        super(message, causeFromAllProblems(problems));</span>
+<span class="fc" id="L41">        _problems = problems;</span>
+<span class="fc" id="L42">        addSuppressed(problems, this::addSuppressed);</span>
+<span class="fc" id="L43">    }</span>
 
     private static @Nullable Throwable causeFromAllProblems(Tuple&lt;Problem&gt; problems) {
-<span class="pc bpc" id="L41" title="1 of 2 branches missed.">        if ( problems.isEmpty() )</span>
-<span class="nc" id="L42">            return null;</span>
-<span class="fc" id="L43">        Throwable mainCause = _problemAsThrowable(Objects.requireNonNull(problems.first()));</span>
-<span class="fc bfc" id="L44" title="All 2 branches covered.">        for ( Problem problem : problems ) {</span>
-<span class="fc" id="L45">            Throwable cause = _problemAsThrowable(problem);</span>
-<span class="pc bpc" id="L46" title="1 of 2 branches missed.">            if ( cause != mainCause )</span>
-<span class="fc" id="L47">                mainCause.addSuppressed(cause);</span>
-<span class="fc" id="L48">        }</span>
-<span class="fc" id="L49">        return mainCause;</span>
+<span class="pc bpc" id="L46" title="1 of 2 branches missed.">        if ( problems.isEmpty() )</span>
+<span class="nc" id="L47">            return null;</span>
+<span class="fc" id="L48">        Throwable mainCause = _problemAsThrowable(Objects.requireNonNull(problems.first()));</span>
+<span class="fc bfc" id="L49" title="All 2 branches covered.">        for ( Problem problem : problems ) {</span>
+<span class="fc" id="L50">            Throwable cause = _problemAsThrowable(problem);</span>
+<span class="pc bpc" id="L51" title="1 of 2 branches missed.">            if ( cause != mainCause )</span>
+<span class="fc" id="L52">                mainCause.addSuppressed(cause);</span>
+<span class="fc" id="L53">        }</span>
+<span class="fc" id="L54">        return mainCause;</span>
     }
 
     private static void addSuppressed(Tuple&lt;Problem&gt; problems, Consumer&lt;Throwable&gt; addSuppressed) {
-<span class="pc bpc" id="L53" title="1 of 2 branches missed.">        if ( problems.size() &lt; 2 )</span>
-<span class="nc" id="L54">            return;</span>
-<span class="fc bfc" id="L55" title="All 2 branches covered.">        for ( int i = 1; i &lt; problems.size(); i++ ) {</span>
-<span class="fc" id="L56">            addSuppressed.accept(_problemAsThrowable(Objects.requireNonNull(problems.get(i))));</span>
+<span class="pc bpc" id="L58" title="1 of 2 branches missed.">        if ( problems.size() &lt; 2 )</span>
+<span class="nc" id="L59">            return;</span>
+<span class="fc bfc" id="L60" title="All 2 branches covered.">        for ( int i = 1; i &lt; problems.size(); i++ ) {</span>
+<span class="fc" id="L61">            addSuppressed.accept(_problemAsThrowable(Objects.requireNonNull(problems.get(i))));</span>
         }
-<span class="fc" id="L58">    }</span>
+<span class="fc" id="L63">    }</span>
 
     private static Throwable _problemAsThrowable(Problem problem) {
-<span class="fc" id="L61">        return problem</span>
-<span class="fc" id="L62">                .exception()</span>
-<span class="pc" id="L63">                .map(e-&gt; (Throwable) e)</span>
-<span class="fc" id="L64">                .orElseGet(()-&gt;new Throwable(&quot;Problem: &quot; + problem.title() + &quot; : &quot; + problem.description()));</span>
+<span class="fc" id="L66">        return problem</span>
+<span class="fc" id="L67">                .exception()</span>
+<span class="pc" id="L68">                .map(e-&gt; (Throwable) e)</span>
+<span class="fc" id="L69">                .orElseGet(()-&gt;new Throwable(&quot;Problem: &quot; + problem.title() + &quot; : &quot; + problem.description()));</span>
     }
 
     /**
@@ -71,17 +76,17 @@ public final class MissingItemRuntimeException extends RuntimeException
      *         as an immutable {@link Tuple}.
      */
     public Tuple&lt;Problem&gt; problems() {
-<span class="nc" id="L74">        return _problems;</span>
+<span class="nc" id="L79">        return _problems;</span>
     }
 
     @Override
     public void printStackTrace() {
-<span class="nc" id="L79">        super.printStackTrace();</span>
-<span class="nc bnc" id="L80" title="All 2 branches missed.">        for ( Problem problem : _problems) {</span>
-<span class="nc bnc" id="L81" title="All 2 branches missed.">            if ( problem.exception().isPresent() )</span>
-<span class="nc" id="L82">                problem.exception().get().printStackTrace();</span>
-<span class="nc" id="L83">        }</span>
-<span class="nc" id="L84">    }</span>
+<span class="nc" id="L84">        super.printStackTrace();</span>
+<span class="nc bnc" id="L85" title="All 2 branches missed.">        for ( Problem problem : _problems) {</span>
+<span class="nc bnc" id="L86" title="All 2 branches missed.">            if ( problem.exception().isPresent() )</span>
+<span class="nc" id="L87">                problem.exception().get().printStackTrace();</span>
+<span class="nc" id="L88">        }</span>
+<span class="nc" id="L89">    }</span>
 
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>
