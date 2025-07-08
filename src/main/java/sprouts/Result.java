@@ -51,7 +51,7 @@ public final class Result<V> implements Maybe<V>
      * @param <V> The type of the value.
      * @throws NullPointerException if the type is null.
      */
-    static <V> Result<V> of( Class<V> type ) {
+    public static <V> Result<V> of( Class<V> type ) {
         Objects.requireNonNull(type);
         return new Result<>(false, type, Collections.emptyList(), null);
     }
@@ -63,7 +63,7 @@ public final class Result<V> implements Maybe<V>
      * @param <V> The type of the value.
      * @throws NullPointerException if the value is null.
      */
-    static <V> Result<V> of( V value ) {
+    public static <V> Result<V> of( V value ) {
         Objects.requireNonNull(value);
         return of(value, Collections.emptyList());
     }
@@ -79,7 +79,7 @@ public final class Result<V> implements Maybe<V>
      * @param <V> The type of the value.
      * @throws NullPointerException if the type is null.
      */
-    static <V> Result<V> of( Class<V> type, @Nullable V value ) {
+    public static <V> Result<V> of( Class<V> type, @Nullable V value ) {
         Objects.requireNonNull(type);
         return new Result(false, type, Collections.emptyList(), value);
     }
@@ -92,7 +92,7 @@ public final class Result<V> implements Maybe<V>
      * @param <V> The type of the value.
      * @throws NullPointerException if the value or problems are null.
      */
-    static <V> Result<V> of( V value, Iterable<Problem> problems ) {
+    public static <V> Result<V> of( V value, Iterable<Problem> problems ) {
         Objects.requireNonNull(value);
         Class<V> itemType = expectedClassFromItem(value);
         return new Result<>(false, itemType, problems, value);
@@ -106,7 +106,7 @@ public final class Result<V> implements Maybe<V>
      * @param <V> The type of the value.
      * @throws NullPointerException if the type or problems are null.
      */
-    static <V> Result<V> of( Class<V> type, Iterable<Problem> problems ) {
+    public static <V> Result<V> of( Class<V> type, Iterable<Problem> problems ) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(problems);
         return new Result<>(false, type, problems, null);
@@ -121,7 +121,7 @@ public final class Result<V> implements Maybe<V>
      * @param <V> The type of the value.
      * @throws NullPointerException if the type or problems are null.
      */
-    static <V> Result<V> of( Class<V> type, @Nullable V value, Iterable<Problem> problems ) {
+    public static <V> Result<V> of( Class<V> type, @Nullable V value, Iterable<Problem> problems ) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(problems);
         return new Result<>(false, type, problems, value);
@@ -136,7 +136,7 @@ public final class Result<V> implements Maybe<V>
      * @param <V> The type of the value.
      * @throws NullPointerException if any of the parameters are null.
      */
-    static <V> Result<V> of( Class<V> type, @Nullable V value, Problem problem ) {
+    public static <V> Result<V> of( Class<V> type, @Nullable V value, Problem problem ) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(problem);
         return new Result<>(false, type, Collections.singletonList(problem), value);
@@ -150,7 +150,7 @@ public final class Result<V> implements Maybe<V>
      * @param <V> The type of the value.
      * @throws NullPointerException if any of the parameters are null.
      */
-    static <V> Result<V> of( Class<V> type, Problem problem ) {
+    public static <V> Result<V> of( Class<V> type, Problem problem ) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(problem);
         return new Result<>(false, type, Collections.singletonList(problem), null);
@@ -164,7 +164,7 @@ public final class Result<V> implements Maybe<V>
      * @param <V> The type of the value.
      * @throws NullPointerException if any of the parameters are null.
      */
-    static <V> Result<List<V>> ofList( Class<V> type, Problem problem ) {
+    public static <V> Result<List<V>> ofList( Class<V> type, Problem problem ) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(problem);
         return (Result<List<V>>) (Result) new Result<>(false, List.class, Collections.singletonList(problem), null);
@@ -180,7 +180,7 @@ public final class Result<V> implements Maybe<V>
      * @return A result with the given list.
      * @throws NullPointerException if any of the parameters are null.
      */
-    static <V> Result<List<V>> ofList( Class<V> type, List<V> list ) {
+    public static <V> Result<List<V>> ofList( Class<V> type, List<V> list ) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(list);
         // We check the types of the list elements are of the correct type.
@@ -201,7 +201,7 @@ public final class Result<V> implements Maybe<V>
      * @return A result with the given list and problems.
      * @throws NullPointerException if any of the parameters are null.
      */
-    static <V> Result<List<V>> ofList( Class<V> type, List<V> list, Iterable<Problem> problems ) {
+    public static <V> Result<List<V>> ofList( Class<V> type, List<V> list, Iterable<Problem> problems ) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(list);
         Objects.requireNonNull(problems);
@@ -230,7 +230,7 @@ public final class Result<V> implements Maybe<V>
      * @param <V> The type of the value returned from the supplier.
      * @throws NullPointerException if the type or supplier is null.
      */
-    static <V> Result<V> ofTry( Class<V> type, ResultItemSupplier<V> supplier ) {
+    public static <V> Result<V> ofTry( Class<V> type, ResultItemSupplier<V> supplier ) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(supplier);        
         try {
@@ -258,7 +258,7 @@ public final class Result<V> implements Maybe<V>
      *                   in which case the exception is caught without breaking your control flow.
      * @return A new result with no value and a list of problems describing related issues.
      */
-    static Result<Void> ofTry( ResultRunAttempt runAttempt ) {
+    public static Result<Void> ofTry( ResultRunAttempt runAttempt ) {
         Objects.requireNonNull(runAttempt);
         try {
             runAttempt.run();
