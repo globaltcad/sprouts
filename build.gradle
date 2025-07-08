@@ -120,14 +120,10 @@ task deploy() {
     dependsOn 'jar'
     dependsOn 'releaseJDocs'
     dependsOn 'check'
-
+    dependsOn 'publishToSonatype'
+    finalizedBy 'closeAndReleaseSonatypeStagingRepository'
 }
 /*
-  3:
-     execute publishToSonatype
-     go to https://s01.oss.sonatype.org/#stagingRepositories
-     close and release the repository
-
       Note that you need the correct gradle.properties file in
       your home directory (~/.gradle/gradle.properties)
       It should look something like this:
@@ -142,7 +138,7 @@ task deploy() {
             ossrhUsername=<my-username>
             ossrhPassword=<my-password>
 
-            # https://s01.oss.sonatype.org
+            # https://central.sonatype.com/publishing/deployments
             ossrhToken=<my-token-name>
             ossrhTokenPassword=<my-publish-token>
       ```
@@ -175,6 +171,7 @@ task createJDocs(type: Javadoc){
         options.addBooleanOption('html5', true)
     }
 }
+
 
 // MAVEN DEPLOYMENT CONFIGURATION: 
 
@@ -215,9 +212,9 @@ signing {
 nexusPublishing {
     packageGroup = GROUP_ID
     repositories {
-        sonatype {  //only for projects registered in Sonatype after 24 Feb 2021
-            nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
-            snapshotRepositoryUrl.set(uri("https://s01.oss.sonatype.org/content/repositories/snapshots/"))
+        sonatype {
+            nexusUrl.set(uri("https://ossrh-staging-api.central.sonatype.com/service/local/"))
+            snapshotRepositoryUrl.set(uri("https://central.sonatype.com/repository/maven-snapshots/"))
         }
     }
     transitionCheckOptions {
@@ -230,8 +227,8 @@ nexusPublishing {
 publishing {
     repositories {
         maven {
-            name = "nexus"
-            url = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
+            name = 'ossrh-staging-api'
+            url = "https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2/"
             credentials {
                 username = findProperty("ossrhToken") as String
                 password = findProperty("ossrhTokenPassword") as String
@@ -243,7 +240,7 @@ publishing {
             from(components.java)
             pom {
                 name = PROJECT
-                description = 'A property API for MVVM.'
+                description = 'A property and state management library.'
                 url = 'https://globaltcad.github.io/'+PROJECT+'/index.html'
                 organization {
                     name = 'Global TCAD Solutions'
