@@ -51,7 +51,7 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
      * @param &lt;V&gt; The type of the value.
      * @throws NullPointerException if the type is null.
      */
-    static &lt;V&gt; Result&lt;V&gt; of( Class&lt;V&gt; type ) {
+    public static &lt;V&gt; Result&lt;V&gt; of( Class&lt;V&gt; type ) {
 <span class="fc" id="L55">        Objects.requireNonNull(type);</span>
 <span class="fc" id="L56">        return new Result&lt;&gt;(false, type, Collections.emptyList(), null);</span>
     }
@@ -63,7 +63,7 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
      * @param &lt;V&gt; The type of the value.
      * @throws NullPointerException if the value is null.
      */
-    static &lt;V&gt; Result&lt;V&gt; of( V value ) {
+    public static &lt;V&gt; Result&lt;V&gt; of( V value ) {
 <span class="fc" id="L67">        Objects.requireNonNull(value);</span>
 <span class="fc" id="L68">        return of(value, Collections.emptyList());</span>
     }
@@ -79,7 +79,7 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
      * @param &lt;V&gt; The type of the value.
      * @throws NullPointerException if the type is null.
      */
-    static &lt;V&gt; Result&lt;V&gt; of( Class&lt;V&gt; type, @Nullable V value ) {
+    public static &lt;V&gt; Result&lt;V&gt; of( Class&lt;V&gt; type, @Nullable V value ) {
 <span class="fc" id="L83">        Objects.requireNonNull(type);</span>
 <span class="fc" id="L84">        return new Result(false, type, Collections.emptyList(), value);</span>
     }
@@ -92,7 +92,7 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
      * @param &lt;V&gt; The type of the value.
      * @throws NullPointerException if the value or problems are null.
      */
-    static &lt;V&gt; Result&lt;V&gt; of( V value, Iterable&lt;Problem&gt; problems ) {
+    public static &lt;V&gt; Result&lt;V&gt; of( V value, Iterable&lt;Problem&gt; problems ) {
 <span class="fc" id="L96">        Objects.requireNonNull(value);</span>
 <span class="fc" id="L97">        Class&lt;V&gt; itemType = expectedClassFromItem(value);</span>
 <span class="fc" id="L98">        return new Result&lt;&gt;(false, itemType, problems, value);</span>
@@ -106,7 +106,7 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
      * @param &lt;V&gt; The type of the value.
      * @throws NullPointerException if the type or problems are null.
      */
-    static &lt;V&gt; Result&lt;V&gt; of( Class&lt;V&gt; type, Iterable&lt;Problem&gt; problems ) {
+    public static &lt;V&gt; Result&lt;V&gt; of( Class&lt;V&gt; type, Iterable&lt;Problem&gt; problems ) {
 <span class="fc" id="L110">        Objects.requireNonNull(type);</span>
 <span class="fc" id="L111">        Objects.requireNonNull(problems);</span>
 <span class="fc" id="L112">        return new Result&lt;&gt;(false, type, problems, null);</span>
@@ -121,7 +121,7 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
      * @param &lt;V&gt; The type of the value.
      * @throws NullPointerException if the type or problems are null.
      */
-    static &lt;V&gt; Result&lt;V&gt; of( Class&lt;V&gt; type, @Nullable V value, Iterable&lt;Problem&gt; problems ) {
+    public static &lt;V&gt; Result&lt;V&gt; of( Class&lt;V&gt; type, @Nullable V value, Iterable&lt;Problem&gt; problems ) {
 <span class="fc" id="L125">        Objects.requireNonNull(type);</span>
 <span class="fc" id="L126">        Objects.requireNonNull(problems);</span>
 <span class="fc" id="L127">        return new Result&lt;&gt;(false, type, problems, value);</span>
@@ -136,7 +136,7 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
      * @param &lt;V&gt; The type of the value.
      * @throws NullPointerException if any of the parameters are null.
      */
-    static &lt;V&gt; Result&lt;V&gt; of( Class&lt;V&gt; type, @Nullable V value, Problem problem ) {
+    public static &lt;V&gt; Result&lt;V&gt; of( Class&lt;V&gt; type, @Nullable V value, Problem problem ) {
 <span class="nc" id="L140">        Objects.requireNonNull(type);</span>
 <span class="nc" id="L141">        Objects.requireNonNull(problem);</span>
 <span class="nc" id="L142">        return new Result&lt;&gt;(false, type, Collections.singletonList(problem), value);</span>
@@ -150,7 +150,7 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
      * @param &lt;V&gt; The type of the value.
      * @throws NullPointerException if any of the parameters are null.
      */
-    static &lt;V&gt; Result&lt;V&gt; of( Class&lt;V&gt; type, Problem problem ) {
+    public static &lt;V&gt; Result&lt;V&gt; of( Class&lt;V&gt; type, Problem problem ) {
 <span class="fc" id="L154">        Objects.requireNonNull(type);</span>
 <span class="fc" id="L155">        Objects.requireNonNull(problem);</span>
 <span class="fc" id="L156">        return new Result&lt;&gt;(false, type, Collections.singletonList(problem), null);</span>
@@ -164,7 +164,7 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
      * @param &lt;V&gt; The type of the value.
      * @throws NullPointerException if any of the parameters are null.
      */
-    static &lt;V&gt; Result&lt;List&lt;V&gt;&gt; ofList( Class&lt;V&gt; type, Problem problem ) {
+    public static &lt;V&gt; Result&lt;List&lt;V&gt;&gt; ofList( Class&lt;V&gt; type, Problem problem ) {
 <span class="nc" id="L168">        Objects.requireNonNull(type);</span>
 <span class="nc" id="L169">        Objects.requireNonNull(problem);</span>
 <span class="nc" id="L170">        return (Result&lt;List&lt;V&gt;&gt;) (Result) new Result&lt;&gt;(false, List.class, Collections.singletonList(problem), null);</span>
@@ -180,7 +180,7 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
      * @return A result with the given list.
      * @throws NullPointerException if any of the parameters are null.
      */
-    static &lt;V&gt; Result&lt;List&lt;V&gt;&gt; ofList( Class&lt;V&gt; type, List&lt;V&gt; list ) {
+    public static &lt;V&gt; Result&lt;List&lt;V&gt;&gt; ofList( Class&lt;V&gt; type, List&lt;V&gt; list ) {
 <span class="fc" id="L184">        Objects.requireNonNull(type);</span>
 <span class="fc" id="L185">        Objects.requireNonNull(list);</span>
         // We check the types of the list elements are of the correct type.
@@ -201,7 +201,7 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
      * @return A result with the given list and problems.
      * @throws NullPointerException if any of the parameters are null.
      */
-    static &lt;V&gt; Result&lt;List&lt;V&gt;&gt; ofList( Class&lt;V&gt; type, List&lt;V&gt; list, Iterable&lt;Problem&gt; problems ) {
+    public static &lt;V&gt; Result&lt;List&lt;V&gt;&gt; ofList( Class&lt;V&gt; type, List&lt;V&gt; list, Iterable&lt;Problem&gt; problems ) {
 <span class="fc" id="L205">        Objects.requireNonNull(type);</span>
 <span class="fc" id="L206">        Objects.requireNonNull(list);</span>
 <span class="fc" id="L207">        Objects.requireNonNull(problems);</span>
@@ -230,7 +230,7 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
      * @param &lt;V&gt; The type of the value returned from the supplier.
      * @throws NullPointerException if the type or supplier is null.
      */
-    static &lt;V&gt; Result&lt;V&gt; ofTry( Class&lt;V&gt; type, ResultItemSupplier&lt;V&gt; supplier ) {
+    public static &lt;V&gt; Result&lt;V&gt; ofTry( Class&lt;V&gt; type, ResultItemSupplier&lt;V&gt; supplier ) {
 <span class="fc" id="L234">        Objects.requireNonNull(type);</span>
 <span class="fc" id="L235">        Objects.requireNonNull(supplier);        </span>
         try {
@@ -258,7 +258,7 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
      *                   in which case the exception is caught without breaking your control flow.
      * @return A new result with no value and a list of problems describing related issues.
      */
-    static Result&lt;Void&gt; ofTry( ResultRunAttempt runAttempt ) {
+    public static Result&lt;Void&gt; ofTry( ResultRunAttempt runAttempt ) {
 <span class="fc" id="L262">        Objects.requireNonNull(runAttempt);</span>
         try {
 <span class="fc" id="L264">            runAttempt.run();</span>
