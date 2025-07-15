@@ -757,7 +757,31 @@ public final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
 
     @Override
     public Spliterator<T> spliterator() {
-        return new TupleSpliterator<>(0, _size, _type, _allowsNull, _root);
+        return _createFastSpliteratorFor(_root, _type, _allowsNull, 0, _size);
+    }
+
+    private static <T> Spliterator<T> _createFastSpliteratorFor(
+            TupleTree.Node node, Class<T> type, boolean allowsNull, int start, int end
+    ) {
+        if ( node instanceof LeafNode ) {
+            LeafNode leafNode = (LeafNode) node;
+            if ( allowsNull )
+                return Spliterators.spliterator((T[])leafNode._data, 0, end, _spliteratorCharacteristics(allowsNull));
+            else if ( type == Integer.class || type == int.class )
+                return (Spliterator<T>) Spliterators.spliterator((int[])leafNode._data, start, end, _spliteratorCharacteristics(allowsNull));
+            else if ( type == Long.class || type == long.class )
+                return (Spliterator<T>) Spliterators.spliterator((long[])leafNode._data, start, end, _spliteratorCharacteristics(allowsNull));
+            else if ( type == Double.class || type == double.class )
+                return (Spliterator<T>) Spliterators.spliterator((double[])leafNode._data, start, end, _spliteratorCharacteristics(allowsNull));
+        }
+        return new TupleSpliterator<>(start, end, type, allowsNull, node);
+    }
+
+    private static int _spliteratorCharacteristics(boolean allowsNull) {
+        int characteristics = Spliterator.ORDERED | Spliterator.SIZED | Spliterator.SUBSIZED | Spliterator.IMMUTABLE;
+        if (!allowsNull)
+            characteristics |= Spliterator.NONNULL;
+        return characteristics;
     }
 
     @Override
@@ -896,7 +920,7 @@ public final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
             if (mid <= lo)
                 return null;
             // left half will handle [lo, mid), this spliterator becomes [mid, fence)
-            TupleSpliterator<T> prefix = new TupleSpliterator<>(lo, mid, type, allowsNull, root);
+            Spliterator<T> prefix = _createFastSpliteratorFor(root, type, allowsNull, lo, mid);
             this.index = mid;
             return prefix;
         }
@@ -928,9 +952,7 @@ public final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
 
         @Override
         public int characteristics() {
-            int c = Spliterator.ORDERED | Spliterator.SIZED | Spliterator.SUBSIZED | Spliterator.IMMUTABLE;
-            if (!allowsNull) c |= Spliterator.NONNULL;
-            return c;
+            return _spliteratorCharacteristics(allowsNull);
         }
 
         @Override
