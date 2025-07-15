@@ -1,7 +1,6 @@
 package sprouts.impl;
 
 import org.jspecify.annotations.Nullable;
-import sprouts.SequenceChange;
 import sprouts.Tuple;
 import sprouts.Val;
 
@@ -97,6 +96,10 @@ public final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
 
         LeafNode(Object data) {
             _data = data;
+        }
+
+        public Object data() {
+            return  _data;
         }
 
         @Override
@@ -749,47 +752,7 @@ public final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
 
     @Override
     public Iterator<T> iterator() {
-        return new Iterator<T>() {
-            private @Nullable IteratorFrame currentFrame = null;
-            {
-                if (_size > 0)
-                    currentFrame = new IteratorFrame(_root, null);
-            }
-            @Override
-            public boolean hasNext() {
-                while ( currentFrame != null ) {
-                    if ( currentFrame.index >= currentFrame.end ) {
-                        currentFrame = currentFrame.parent;
-                    } else {
-                        if (currentFrame.node instanceof LeafNode) {
-                            return true;
-                        } else {
-                            BranchNode bn = (BranchNode) currentFrame.node;
-                            Node[] children = bn._children;
-                            Node child = children[currentFrame.index++];
-                            if (child != null)
-                                currentFrame = new IteratorFrame(child, currentFrame);
-                        }
-                    }
-                }
-                return false;
-            }
-
-            @Override
-            @SuppressWarnings("unchecked")
-            public T next() {
-                if ( !hasNext() || currentFrame == null )
-                    throw new NoSuchElementException();
-
-                if ( currentFrame.node instanceof LeafNode ) {
-                    T item = currentFrame.node.getAt(currentFrame.index, _type);
-                    currentFrame.index++;
-                    return item;
-                } else {
-                    return next();
-                }
-            }
-        };
+        return new TupleIterator<>(this, ArrayItemAccess.of(_type, _allowsNull));
     }
 
     @Override
@@ -861,6 +824,54 @@ public final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
             hash = 31 * hash + (item == null ? 0 : item.hashCode());
         }
         return hash ^ (_allowsNull ? 1 : 0);
+    }
+
+    private static final class TupleIterator<T> implements Iterator<T>
+    {
+        private final ArrayItemAccess<T, Object> itemGetter;
+        private @Nullable IteratorFrame currentFrame = null;
+
+        TupleIterator(TupleTree<T> tree, ArrayItemAccess<T, Object> itemGetter) {
+            this.itemGetter = itemGetter;
+            if (tree._size > 0)
+                currentFrame = new IteratorFrame(tree._root, null);
+        }
+
+        @Override
+        public boolean hasNext() {
+            while ( currentFrame != null ) {
+                if ( currentFrame.index >= currentFrame.end ) {
+                    currentFrame = currentFrame.parent;
+                } else {
+                    if (currentFrame.node instanceof LeafNode) {
+                        return true;
+                    } else {
+                        BranchNode bn = (BranchNode) currentFrame.node;
+                        Node[] children = bn._children;
+                        Node child = children[currentFrame.index++];
+                        if (child != null)
+                            currentFrame = new IteratorFrame(child, currentFrame);
+                    }
+                }
+            }
+            return false;
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public T next() {
+            if ( !hasNext() || currentFrame == null )
+                throw new NoSuchElementException();
+
+            if ( currentFrame.node instanceof LeafNode ) {
+                LeafNode leaf = (LeafNode) currentFrame.node;
+                T item = itemGetter.get(currentFrame.index, leaf.data());
+                currentFrame.index++;
+                return item;
+            } else {
+                return next();
+            }
+        }
     }
 
     private static final class TupleSpliterator<T> implements Spliterator<T> {
