@@ -532,64 +532,70 @@ final class ValueSetImpl<E> implements ValueSet<E> {
 
     @Override
     public Iterator<E> iterator() {
-        return new Iterator<E>() {
-            // Use a stack to perform depth-first traversal.
-            private @Nullable IteratorFrame<E> currentFrame = null;
-            {
-                // Initialize with this node if there is at least one element.
-                if (_size > 0) {
-                    currentFrame = new IteratorFrame<>(null, ValueSetImpl.this);
-                }
+        return new ValueSetIterator<>(this, ArrayItemAccess.of(_type, false));
+    }
+
+
+    private static final class ValueSetIterator<E> implements Iterator<E>
+    {
+        private final ArrayItemAccess<E,Object> _elementGetter;
+        // Use a stack to perform depth-first traversal.
+        private @Nullable IteratorFrame<E> currentFrame = null;
+
+        ValueSetIterator(ValueSetImpl<E> node, ArrayItemAccess<E, Object> elementGetter) {
+            _elementGetter = elementGetter;
+            // Initialize with this node if there is at least one element.
+            if (node._size > 0) {
+                currentFrame = new IteratorFrame<>(null, node);
             }
+        }
 
-            @Override
-            public boolean hasNext() {
-                // Loop until we find a node state with an unvisited entry or the stack is empty.
-                while ( currentFrame != null ) {
-                    // If there is a key-value pair left in the current node, we're done.
-                    if (currentFrame.arrayIndex < currentFrame.arrayLength) {
-                        return true;
-                    }
+        @Override
+        public boolean hasNext() {
+            // Loop until we find a node state with an unvisited entry or the stack is empty.
+            while ( currentFrame != null ) {
+                // If there is a key-value pair left in the current node, we're done.
+                if (currentFrame.arrayIndex < currentFrame.arrayLength) {
+                    return true;
+                }
 
-                    // Otherwise, check for non-null branches to traverse.
-                    if (currentFrame.branchIndex < currentFrame.branchesLength) {
-                        // Look for the next branch.
-                        while (currentFrame.branchIndex < currentFrame.branchesLength) {
-                            ValueSetImpl<E> branch = currentFrame.node._branches[currentFrame.branchIndex];
-                            currentFrame.branchIndex++;
-                            if (branch != null && branch._size > 0) {
-                                // Found a non-empty branch: push its state on the stack.
-                                currentFrame = new IteratorFrame(currentFrame, branch);
-                                break;
-                            }
+                // Otherwise, check for non-null branches to traverse.
+                if (currentFrame.branchIndex < currentFrame.branchesLength) {
+                    // Look for the next branch.
+                    while (currentFrame.branchIndex < currentFrame.branchesLength) {
+                        ValueSetImpl<E> branch = currentFrame.node._branches[currentFrame.branchIndex];
+                        currentFrame.branchIndex++;
+                        if (branch != null && branch._size > 0) {
+                            // Found a non-empty branch: push its state on the stack.
+                            currentFrame = new IteratorFrame(currentFrame, branch);
+                            break;
                         }
-                        // Continue the while loop: now the top of the stack may have entries.
-                        continue;
                     }
-
-                    // If no more entries or branches are left in the current node, pop it.
-                    currentFrame = currentFrame.parent;
+                    // Continue the while loop: now the top of the stack may have entries.
+                    continue;
                 }
-                return false;
-            }
 
-            @Override
-            public E next() {
-                if (!hasNext() || currentFrame == null) {
-                    throw new NoSuchElementException();
-                }
-                // Retrieve the key and value at the current position.
-                @SuppressWarnings("unchecked")
-                E key = (E) _getAt(currentFrame.arrayIndex, currentFrame.node._elementsArray);
-                currentFrame.arrayIndex++;
-                return Objects.requireNonNull(key);
+                // If no more entries or branches are left in the current node, pop it.
+                currentFrame = currentFrame.parent;
             }
+            return false;
+        }
 
-            @Override
-            public void remove() {
-                throw new UnsupportedOperationException();
+        @Override
+        public E next() {
+            if (!hasNext() || currentFrame == null) {
+                throw new NoSuchElementException();
             }
-        };
+            // Retrieve the key and value at the current position.
+            E key = _elementGetter.get(currentFrame.arrayIndex, currentFrame.node._elementsArray);
+            currentFrame.arrayIndex++;
+            return Objects.requireNonNull(key);
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
     }
 
 }
