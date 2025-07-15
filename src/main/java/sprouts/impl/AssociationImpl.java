@@ -622,69 +622,81 @@ final class AssociationImpl<K, V> implements Association<K, V> {
 
     @Override
     public Iterator<Pair<K, V>> iterator() {
-        return new Iterator<Pair<K, V>>() {
+        return new AssociationIterator<>(this,
+                ArrayItemAccess.of(keyType(), false),
+                ArrayItemAccess.of(valueType(), false)
+            );
+    }
 
-            // Use a stack to perform depth-first traversal.
-            private @Nullable IteratorFrame<K, V> currentFrame = null;
-            {
-                // Initialize with this node if there is at least one element.
-                if (_size > 0) {
-                    currentFrame = new IteratorFrame<>(null, AssociationImpl.this);
-                }
+    private static final class AssociationIterator<K, V> implements Iterator<Pair<K, V>>
+    {
+        private final ArrayItemAccess<K,Object> _keyGetter;
+        private final ArrayItemAccess<V,Object> _valueGetter;
+        // Use a stack to perform depth-first traversal:
+        private @Nullable IteratorFrame<K, V> currentFrame = null;
+
+        AssociationIterator(
+            AssociationImpl<K, V> node,
+            ArrayItemAccess<K, Object> keyFetcher,
+            ArrayItemAccess<V, Object> valueFetcher
+        ) {
+            _keyGetter = keyFetcher;
+            _valueGetter = valueFetcher;
+            // Initialize with this node if there is at least one element.
+            if (node._size > 0) {
+                currentFrame = new IteratorFrame<>(null, node);
             }
+        }
 
-            @Override
-            public boolean hasNext() {
-                // Loop until we find a node state with an unvisited entry or the stack is empty.
-                while ( currentFrame != null ) {
-                    // If there is a key-value pair left in the current node, we're done.
-                    if (currentFrame.arrayIndex < currentFrame.arrayLength) {
-                        return true;
-                    }
+        @Override
+        public boolean hasNext() {
+            // Loop until we find a node state with an unvisited entry or the stack is empty.
+            while ( currentFrame != null ) {
+                // If there is a key-value pair left in the current node, we're done.
+                if (currentFrame.arrayIndex < currentFrame.arrayLength) {
+                    return true;
+                }
 
-                    // Otherwise, check for non-null branches to traverse.
-                    if (currentFrame.branchIndex < currentFrame.branchesLength) {
-                        // Look for the next branch.
-                        while (currentFrame.branchIndex < currentFrame.branchesLength) {
-                            AssociationImpl<K, V> branch = currentFrame.node._branches[currentFrame.branchIndex];
-                            currentFrame.branchIndex++;
-                            if (branch != null && branch._size > 0) {
-                                // Found a non-empty branch: push its state on the stack.
-                                currentFrame = new IteratorFrame<>(currentFrame, branch);
-                                break;
-                            }
+                // Otherwise, check for non-null branches to traverse.
+                if (currentFrame.branchIndex < currentFrame.branchesLength) {
+                    // Look for the next branch.
+                    while (currentFrame.branchIndex < currentFrame.branchesLength) {
+                        AssociationImpl<K, V> branch = currentFrame.node._branches[currentFrame.branchIndex];
+                        currentFrame.branchIndex++;
+                        if (branch != null && branch._size > 0) {
+                            // Found a non-empty branch: push its state on the stack.
+                            currentFrame = new IteratorFrame<>(currentFrame, branch);
+                            break;
                         }
-                        // Continue the while loop: now the top of the stack may have entries.
-                        continue;
                     }
-
-                    // If no more entries or branches are left in the current node, pop it.
-                    currentFrame = currentFrame.parent;
+                    // Continue the while loop: now the top of the stack may have entries.
+                    continue;
                 }
-                return false;
-            }
 
-            @Override
-            public Pair<K, V> next() {
-                if (!hasNext() || currentFrame == null) {
-                    throw new NoSuchElementException();
-                }
-                // Retrieve the key and value at the current position.
-                @SuppressWarnings("unchecked")
-                K key = (K) _getAt(currentFrame.arrayIndex, currentFrame.node._keysArray);
-                @SuppressWarnings("unchecked")
-                V value = (V) _getAt(currentFrame.arrayIndex, currentFrame.node._valuesArray);
-                currentFrame.arrayIndex++;
-                Objects.requireNonNull(key);
-                Objects.requireNonNull(value);
-                return Pair.of(key, value);
+                // If no more entries or branches are left in the current node, pop it.
+                currentFrame = currentFrame.parent;
             }
+            return false;
+        }
 
-            @Override
-            public void remove() {
-                throw new UnsupportedOperationException();
+        @Override
+        public Pair<K, V> next() {
+            if (!hasNext() || currentFrame == null) {
+                throw new NoSuchElementException();
             }
-        };
+            // Retrieve the key and value at the current position.
+            K key = _keyGetter.get(currentFrame.arrayIndex, currentFrame.node._keysArray);
+            V value = _valueGetter.get(currentFrame.arrayIndex, currentFrame.node._valuesArray);
+            currentFrame.arrayIndex++;
+            Objects.requireNonNull(key);
+            Objects.requireNonNull(value);
+            return Pair.of(key, value);
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
     }
 
 }
