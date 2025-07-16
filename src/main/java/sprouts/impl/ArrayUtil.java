@@ -313,6 +313,12 @@ final class ArrayUtil {
         }
     }
 
+    static <T> void _each( Object array, ArrayItemAccess<T, Object> access, java.util.function.Consumer<T> consumer ) {
+        for ( int i = 0; i < _length(array); i++ ) {
+            consumer.accept(access.get(i, array));
+        }
+    }
+
     static boolean _isAllNull( Object[] array ) {
         for ( Object item : array ) {
             if ( item != null )
