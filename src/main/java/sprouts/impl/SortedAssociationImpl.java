@@ -795,44 +795,52 @@ final class SortedAssociationImpl<K, V> implements Association<K, V> {
 
     @Override
     public Iterator<Pair<K, V>> iterator() {
-        return new Iterator<Pair<K, V>>() {
-            private @Nullable IteratorFrame currentFrame = null;
-            {
-                if ( _root.size() > 0 )
-                    currentFrame = new IteratorFrame(null, _root);
-            }
+        return new SortedAssociationIterator<>(this);
+    }
 
-            @Override
-            public boolean hasNext() {
-                while (currentFrame != null) {
-                    if (currentFrame.stage == 0) {
-                        currentFrame.stage = 1;
-                        if (currentFrame.node.left() != null)
-                            this.currentFrame = new IteratorFrame(currentFrame, currentFrame.node.left());
-                    } else if (currentFrame.stage == 1) {
-                        if (currentFrame.index < _length(currentFrame.node.keysArray())) return true;
-                        currentFrame.stage = 2;
-                    } else if (currentFrame.stage == 2) {
-                        currentFrame.stage = 3;
-                        if (currentFrame.node.right() != null)
-                            this.currentFrame = new IteratorFrame(currentFrame, currentFrame.node.right());
-                    } else {
-                        this.currentFrame = currentFrame.parent;
-                    }
+    private static final class SortedAssociationIterator<K,V> implements Iterator<Pair<K, V>>
+    {
+        private final ArrayItemAccess<K, Object> keyGetter;
+        private final ArrayItemAccess<V, Object> valueGetter;
+        private @Nullable IteratorFrame currentFrame = null;
+
+        SortedAssociationIterator(SortedAssociationImpl<K,V> association) {
+            keyGetter = ArrayItemAccess.of(association._keyType, false);
+            valueGetter = ArrayItemAccess.of(association._valueType, false);
+            if ( association._root.size() > 0 )
+                currentFrame = new IteratorFrame(null, association._root);
+        }
+
+        @Override
+        public boolean hasNext() {
+            while (currentFrame != null) {
+                if (currentFrame.stage == 0) {
+                    currentFrame.stage = 1;
+                    if (currentFrame.node.left() != null)
+                        this.currentFrame = new IteratorFrame(currentFrame, currentFrame.node.left());
+                } else if (currentFrame.stage == 1) {
+                    if (currentFrame.index < _length(currentFrame.node.keysArray())) return true;
+                    currentFrame.stage = 2;
+                } else if (currentFrame.stage == 2) {
+                    currentFrame.stage = 3;
+                    if (currentFrame.node.right() != null)
+                        this.currentFrame = new IteratorFrame(currentFrame, currentFrame.node.right());
+                } else {
+                    this.currentFrame = currentFrame.parent;
                 }
-                return false;
             }
+            return false;
+        }
 
-            @Override
-            public Pair<K, V> next() {
-                if ( !hasNext() || currentFrame == null )
-                    throw new NoSuchElementException();
-                K key = _getNonNullAt(currentFrame.index, currentFrame.node.keysArray());
-                V value = _getNonNullAt(currentFrame.index, currentFrame.node.valuesArray());
-                currentFrame.index++;
-                return Pair.of(key, value);
-            }
-        };
+        @Override
+        public Pair<K, V> next() {
+            if ( !hasNext() || currentFrame == null )
+                throw new NoSuchElementException();
+            K key = keyGetter.get(currentFrame.index, currentFrame.node.keysArray());
+            V value = valueGetter.get(currentFrame.index, currentFrame.node.valuesArray());
+            currentFrame.index++;
+            return Pair.of(key, value);
+        }
     }
 
     @Override
