@@ -87,6 +87,7 @@ final class SortedValueSetImpl<E> implements ValueSet<E> {
     }
 
     private final Class<E> _type;
+    private final ArrayItemAccess<E, Object> _itemGetter;
     private final Comparator<E> _comparator;
     private final Node _root;
 
@@ -103,6 +104,7 @@ final class SortedValueSetImpl<E> implements ValueSet<E> {
             final Node root
     ) {
         _type = type;
+        _itemGetter = ArrayItemAccess.of(_type, false);
         _comparator = comparator;
         _root = root;
     }
@@ -135,35 +137,35 @@ final class SortedValueSetImpl<E> implements ValueSet<E> {
         if (!_type.isAssignableFrom(element.getClass())) {
             throw new ClassCastException("Element type mismatch");
         }
-        return _findElement(_root, _type, _comparator, element) != null;
+        return _findElement(_root, _itemGetter, _comparator, element) != null;
     }
 
     private static <E> @Nullable E _findElement(
             Node node,
-            Class<E> type,
+            ArrayItemAccess<E, Object> itemGetter,
             Comparator<E> comparator,
             E element
     ) {
         int numberOfElements = _length(node.elementsArray());
-        int index = _binarySearch(node.elementsArray(), type, comparator, element);
+        int index = _binarySearch(node.elementsArray(), itemGetter, comparator, element);
         if (index < 0) {
             Node left = node.left();
             if (left != null) {
-                E value = _findElement(left, type, comparator, element);
+                E value = _findElement(left, itemGetter, comparator, element);
                 if (value != null) return value;
             }
         }
         if (index >= numberOfElements) {
             Node right = node.right();
             if (right != null) {
-                E value = _findElement(right, type, comparator, element);
+                E value = _findElement(right, itemGetter, comparator, element);
                 if (value != null) return value;
             }
         }
         if (index >= 0 && index < numberOfElements) {
-            boolean elementExists = Objects.equals(element, _getAt(index, node.elementsArray(), type));
+            boolean elementExists = Objects.equals(element, itemGetter.get(index, node.elementsArray()));
             if (elementExists) {
-                return _getAt(index, node.elementsArray(), type);
+                return itemGetter.get(index, node.elementsArray());
             }
         }
         return null;
@@ -177,7 +179,7 @@ final class SortedValueSetImpl<E> implements ValueSet<E> {
         if (!_type.isAssignableFrom(element.getClass())) {
             throw new ClassCastException("Element type mismatch");
         }
-        Node newRoot = _balance(_updateElement(_root, _type, _comparator, element, 0));
+        Node newRoot = _balance(_updateElement(_root, _type, _itemGetter, _comparator, element, 0));
         if (Util.refEquals(newRoot, _root)) {
             return this;
         }
@@ -200,12 +202,13 @@ final class SortedValueSetImpl<E> implements ValueSet<E> {
     private static <E> Node _updateElement(
             Node node,
             Class<E> keyType,
+            ArrayItemAccess<E, Object> itemGetter,
             Comparator<E> keyComparator,
             E key,
             int depth
     ) {
         int numberOfKeys = _length(node.elementsArray());
-        int index = _binarySearch(node.elementsArray(), keyType, keyComparator, key);
+        int index = _binarySearch(node.elementsArray(), itemGetter, keyComparator, key);
         boolean foundInCurrentNode = index >= 0 && index < numberOfKeys;
         boolean leftAndRightAreNull = node.left() == null && node.right() == null;
         if ( leftAndRightAreNull && !foundInCurrentNode && numberOfKeys < BASE_ENTRIES_PER_NODE(depth) ) {
@@ -228,7 +231,7 @@ final class SortedValueSetImpl<E> implements ValueSet<E> {
         if ( index < 0 ) {
             Node left = node.left();
             if ( left != null ) {
-                Node newLeft = _balance(_updateElement(left, keyType, keyComparator, key, depth+1));
+                Node newLeft = _balance(_updateElement(left, keyType, itemGetter, keyComparator, key, depth+1));
                 if ( Util.refEquals(newLeft, left) ) {
                     return node; // No change in the left node
                 }
@@ -242,7 +245,7 @@ final class SortedValueSetImpl<E> implements ValueSet<E> {
         if ( index >= numberOfKeys ) {
             Node right = node.right();
             if ( right != null ) {
-                Node newRight = _balance(_updateElement(right, keyType, keyComparator, key, depth+1));
+                Node newRight = _balance(_updateElement(right, keyType, itemGetter, keyComparator, key, depth+1));
                 if ( Util.refEquals(newRight, right) ) {
                     return node; // No change in the right node
                 }
@@ -254,7 +257,7 @@ final class SortedValueSetImpl<E> implements ValueSet<E> {
             }
         }
 
-        boolean keyAlreadyExists = Objects.equals(key, _getAt(index, node.elementsArray(), keyType));
+        boolean keyAlreadyExists = Objects.equals(key, itemGetter.get(index, node.elementsArray()));
         if ( !keyAlreadyExists ) {
             if ( numberOfKeys < BASE_ENTRIES_PER_NODE(depth) ) {
                 // We need to insert the key in the right place
@@ -281,7 +284,7 @@ final class SortedValueSetImpl<E> implements ValueSet<E> {
                         Node newLeft;
                         if ( node.left() != null ) {
                             // Re-add the popped key and value to the left node
-                            newLeft = _balance(_updateElement(node.left(), keyType, keyComparator, key, depth+1));
+                            newLeft = _balance(_updateElement(node.left(), keyType, itemGetter, keyComparator, key, depth+1));
                         } else {
                             newLeft = _createSingleEntryNode(keyType, key);
                         }
@@ -291,7 +294,7 @@ final class SortedValueSetImpl<E> implements ValueSet<E> {
                     Node newLeft;
                     if ( node.left() != null ) {
                         // Re-add the popped key and value to the left node
-                        newLeft = _balance(_updateElement(node.left(), keyType, keyComparator, poppedOffKey, depth+1));
+                        newLeft = _balance(_updateElement(node.left(), keyType, itemGetter, keyComparator, poppedOffKey, depth+1));
                     } else {
                         newLeft = _createSingleEntryNode(keyType, poppedOffKey);
                     }
@@ -314,7 +317,7 @@ final class SortedValueSetImpl<E> implements ValueSet<E> {
                         Node newRight;
                         if ( node.right() != null ) {
                             // Re-add the popped key and value to the right node
-                            newRight = _balance(_updateElement(node.right(), keyType, keyComparator, key, depth+1));
+                            newRight = _balance(_updateElement(node.right(), keyType, itemGetter, keyComparator, key, depth+1));
                         } else {
                             newRight = _createSingleEntryNode(keyType, key);
                         }
@@ -324,7 +327,7 @@ final class SortedValueSetImpl<E> implements ValueSet<E> {
                     Node newRight;
                     if ( node.right() != null ) {
                         // Re-add the popped key and value to the right node
-                        newRight = _balance(_updateElement(node.right(), keyType, keyComparator, poppedOffKey, depth+1));
+                        newRight = _balance(_updateElement(node.right(), keyType, itemGetter, keyComparator, poppedOffKey, depth+1));
                     } else {
                         newRight = _createSingleEntryNode(keyType, poppedOffKey);
                     }
@@ -410,7 +413,7 @@ final class SortedValueSetImpl<E> implements ValueSet<E> {
         if (!_type.isAssignableFrom(element.getClass())) {
             throw new ClassCastException("Element type mismatch");
         }
-        Node newRoot = _balanceNullable(_removeElement(_root, _type, _comparator, element));
+        Node newRoot = _balanceNullable(_removeElement(_root, _type, _itemGetter, _comparator, element));
         newRoot = newRoot == null ? NULL_NODE : newRoot;
         if ( Util.refEquals(newRoot, _root) ) {
             return this;
@@ -447,6 +450,7 @@ final class SortedValueSetImpl<E> implements ValueSet<E> {
     private static <E> @Nullable Node _removeElement(
             Node node,
             Class<E> keyType,
+            ArrayItemAccess<E, Object> itemGetter,
             Comparator<E> keyComparator,
             E key
     ) {
@@ -455,7 +459,7 @@ final class SortedValueSetImpl<E> implements ValueSet<E> {
         if ( index < 0 ) {
             Node left = node.left();
             if ( left != null ) {
-                Node newLeft = _balanceNullable(_removeElement(left, keyType, keyComparator, key));
+                Node newLeft = _balanceNullable(_removeElement(left, keyType, itemGetter, keyComparator, key));
                 return node.withNewLeft(newLeft);
             }
             return node; // Key not found
@@ -463,12 +467,12 @@ final class SortedValueSetImpl<E> implements ValueSet<E> {
         if ( index >= numberOfKeys ) {
             Node right = node.right();
             if ( right != null ) {
-                Node newRight = _balanceNullable(_removeElement(right, keyType, keyComparator, key));
+                Node newRight = _balanceNullable(_removeElement(right, keyType, itemGetter, keyComparator, key));
                 return node.withNewRight(newRight);
             }
             return node; // Key not found
         }
-        boolean keyAlreadyExists = Objects.equals(key, _getAt(index, node.elementsArray(), keyType));
+        boolean keyAlreadyExists = Objects.equals(key, itemGetter.get(index, node.elementsArray()));
         if ( keyAlreadyExists ) {
             if ( numberOfKeys == 1 ) {
                 Node left = node.left();
@@ -489,11 +493,11 @@ final class SortedValueSetImpl<E> implements ValueSet<E> {
                 if ( leftSize > rightSize ) {
                     E rightMostKey = _findRightMostElement(left, keyType);
                     _setAt(0, rightMostKey, newKeysArray);
-                    left = _balanceNullable(_removeElement(left, keyType, keyComparator, rightMostKey));
+                    left = _balanceNullable(_removeElement(left, keyType, itemGetter, keyComparator, rightMostKey));
                 } else {
                     E leftMostKey = _findLeftMostElement(right, keyType);
                     _setAt(0, leftMostKey, newKeysArray);
-                    right = _balanceNullable(_removeElement(right, keyType, keyComparator, leftMostKey));
+                    right = _balanceNullable(_removeElement(right, keyType, itemGetter, keyComparator, leftMostKey));
                 }
                 return new Node(node._size - 1, newKeysArray, left, right);
             }
