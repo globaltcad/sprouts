@@ -176,19 +176,19 @@ final class SortedAssociationImpl<K, V> implements Association<K, V> {
     @Override
     public Tuple<V> values() {
         List<V> values = new ArrayList<>(_root.size());
-        _populateValues(_root, valueType(), values);
+        _populateValues(_root, ArrayItemAccess.of(valueType(), false), values);
         return Tuple.of(valueType(), values);
     }
 
-    private static <V> void _populateValues(Node node, Class<V> type, List<V> values) {
-        _each(node.valuesArray(), type, values::add);
+    private static <V> void _populateValues(Node node, ArrayItemAccess<V, Object> itemGetter, List<V> values) {
+        _each(node.valuesArray(), itemGetter, values::add);
         Node left = node.left();
         if (left != null) {
-            _populateValues(left, type, values);
+            _populateValues(left, itemGetter, values);
         }
         Node right = node.right();
         if (right != null) {
-            _populateValues(right, type, values);
+            _populateValues(right, itemGetter, values);
         }
     }
 
