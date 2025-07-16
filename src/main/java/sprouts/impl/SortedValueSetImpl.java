@@ -542,43 +542,50 @@ final class SortedValueSetImpl<E> implements ValueSet<E> {
 
     @Override
     public Iterator<E> iterator() {
-        return new Iterator<E>() {
-            private @Nullable IteratorFrame currentFrame = null;
-            {
-                if (_root.size() > 0)
-                    currentFrame = new IteratorFrame(null, _root);
-            }
+        return new SortedValueSetIterator<>(this);
+    }
 
-            @Override
-            public boolean hasNext() {
-                while (currentFrame != null) {
-                    if (currentFrame.stage == 0) {
-                        currentFrame.stage = 1;
-                        if (currentFrame.node.left() != null)
-                            this.currentFrame = new IteratorFrame(currentFrame, currentFrame.node.left());
-                    } else if (currentFrame.stage == 1) {
-                        if (currentFrame.index < _length(currentFrame.node.elementsArray())) return true;
-                        currentFrame.stage = 2;
-                    } else if (currentFrame.stage == 2) {
-                        currentFrame.stage = 3;
-                        if (currentFrame.node.right() != null)
-                            this.currentFrame = new IteratorFrame(currentFrame, currentFrame.node.right());
-                    } else {
-                        this.currentFrame = currentFrame.parent;
-                    }
+    private static final class SortedValueSetIterator<E> implements Iterator<E>
+    {
+        private final ArrayItemAccess<E, Object> elementGetter;
+        private @Nullable IteratorFrame currentFrame = null;
+
+
+        SortedValueSetIterator(SortedValueSetImpl<E> sortedValueSet) {
+            elementGetter = ArrayItemAccess.of(sortedValueSet._type, false);
+            if (sortedValueSet._root.size() > 0)
+                currentFrame = new IteratorFrame(null, sortedValueSet._root);
+        }
+
+        @Override
+        public boolean hasNext() {
+            while (currentFrame != null) {
+                if (currentFrame.stage == 0) {
+                    currentFrame.stage = 1;
+                    if (currentFrame.node.left() != null)
+                        this.currentFrame = new IteratorFrame(currentFrame, currentFrame.node.left());
+                } else if (currentFrame.stage == 1) {
+                    if (currentFrame.index < _length(currentFrame.node.elementsArray())) return true;
+                    currentFrame.stage = 2;
+                } else if (currentFrame.stage == 2) {
+                    currentFrame.stage = 3;
+                    if (currentFrame.node.right() != null)
+                        this.currentFrame = new IteratorFrame(currentFrame, currentFrame.node.right());
+                } else {
+                    this.currentFrame = currentFrame.parent;
                 }
-                return false;
             }
+            return false;
+        }
 
-            @Override
-            public E next() {
-                if (!hasNext() || currentFrame == null)
-                    throw new NoSuchElementException();
-                E element = _getNonNullAt(currentFrame.index, currentFrame.node.elementsArray());
-                currentFrame.index++;
-                return element;
-            }
-        };
+        @Override
+        public E next() {
+            if (!hasNext() || currentFrame == null)
+                throw new NoSuchElementException();
+            E element = elementGetter.get(currentFrame.index, currentFrame.node.elementsArray());
+            currentFrame.index++;
+            return element;
+        }
     }
 
     static class IteratorFrame {
