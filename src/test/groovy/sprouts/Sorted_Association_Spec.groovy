@@ -868,6 +868,141 @@ class Sorted_Association_Spec extends Specification
             assoc.get("a").get() == 1
     }
 
+    def 'The `containsKey` method of a sorted `Association` throws an exception when passing arguments of the wrong type.'()
+    {
+        given :
+            var association = Association.betweenSorted(Integer, Number)
+
+        when :
+            association.containsKey("Boom!")
+        then :
+            thrown(IllegalArgumentException)
+
+        when :
+            association.containsKey(null)
+        then :
+            thrown(NullPointerException)
+
+        when :
+            association.containsKey(42)
+        then :
+            noExceptionThrown()
+    }
+
+    def 'The `remove` method of a sorted `Association` throws an exception when passing arguments of the wrong type.'()
+    {
+        given :
+            var association = Association.betweenSorted(Integer, Number)
+
+        when :
+            association.remove("Boom!")
+        then :
+            thrown(IllegalArgumentException)
+
+        when :
+            association.remove(null)
+        then :
+            thrown(NullPointerException)
+
+        when :
+            association.remove(42)
+        then :
+            noExceptionThrown()
+    }
+
+    def 'The `get` method of a sorted `Association` throws an exception when passing arguments of the wrong type.'()
+    {
+        given :
+            var association = Association.betweenSorted(Integer, Number)
+
+        when :
+            association.get("Boom!")
+        then :
+            thrown(IllegalArgumentException)
+
+        when :
+            association.get(null)
+        then :
+            thrown(NullPointerException)
+
+        when :
+            association.remove(42)
+        then :
+            noExceptionThrown()
+    }
+
+    def 'The `putIfAbsent` method of a sorted `Association` throws an exception when passing arguments of the wrong type.'()
+    {
+        given :
+            var association = Association.betweenSorted(Integer, Number)
+
+        when :
+            association.putIfAbsent("Boom!", 42)
+        then :
+            thrown(IllegalArgumentException)
+
+        when :
+            association.putIfAbsent(42, "Boom!")
+        then :
+            thrown(IllegalArgumentException)
+
+        when :
+            association.putIfAbsent(42.666f, 42)
+        then :
+            thrown(IllegalArgumentException)
+
+        when :
+            association.putIfAbsent(42, null)
+        then :
+            thrown(NullPointerException)
+
+        when :
+            association.putIfAbsent(null, 42)
+        then :
+            thrown(NullPointerException)
+
+        when :
+            association.putIfAbsent(42, 42)
+        then :
+            noExceptionThrown()
+    }
+
+    def 'The `put` method of a sorted `Association` throws an exception when passing arguments of the wrong type.'()
+    {
+        given :
+            var association = Association.betweenSorted(Integer, Number)
+
+        when :
+            association.put("Boom!", 42)
+        then :
+            thrown(IllegalArgumentException)
+
+        when :
+            association.put(42, "Boom!")
+        then :
+            thrown(IllegalArgumentException)
+
+        when :
+            association.put(42.666f, 42)
+        then :
+            thrown(IllegalArgumentException)
+
+        when :
+            association.put(42, null)
+        then :
+            thrown(NullPointerException)
+
+        when :
+            association.put(null, 42)
+        then :
+            thrown(NullPointerException)
+
+        when :
+            association.put(42, 42)
+        then :
+            noExceptionThrown()
+    }
+
     def 'Associations with same entries in different order are equal'() {
         given:
             var comparator = { k1, k2 -> k1 <=> k2 }
