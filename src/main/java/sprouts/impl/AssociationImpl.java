@@ -334,6 +334,8 @@ final class AssociationImpl<K, V> implements Association<K, V> {
 
     @Override
     public Association<K, V> put(final K key, final V value) {
+        Objects.requireNonNull(key);
+        Objects.requireNonNull(value);
         if ( !_keyType.isAssignableFrom(key.getClass()) ) {
             throw new IllegalArgumentException(
                     "The given key '" + key + "' is of type '" + key.getClass().getSimpleName() + "', " +
@@ -351,6 +353,8 @@ final class AssociationImpl<K, V> implements Association<K, V> {
 
     @Override
     public Association<K, V> putIfAbsent(K key, V value) {
+        Objects.requireNonNull(key);
+        Objects.requireNonNull(value);
         if ( !_keyType.isAssignableFrom(key.getClass()) ) {
             throw new IllegalArgumentException(
                     "The given key '" + key + "' is of type '" + key.getClass().getSimpleName() + "', " +

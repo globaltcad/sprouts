@@ -488,8 +488,11 @@ final class SortedAssociationImpl<K, V> implements Association<K, V> {
         if (key == null) {
             throw new NullPointerException("Null key");
         }
-        if (!keyType().isAssignableFrom(key.getClass())) {
-            throw new ClassCastException("Key type mismatch");
+        if ( !_keyType.isAssignableFrom(key.getClass()) ) {
+            throw new IllegalArgumentException(
+                    "The given key '" + key + "' is of type '" + key.getClass().getSimpleName() + "', " +
+                    "instead of the expected type '" + _keyType + "'."
+                );
         }
         return _findValueOfKey(_root, _keyType, _valueType, _keyComparator, key) != null;
     }
@@ -499,8 +502,11 @@ final class SortedAssociationImpl<K, V> implements Association<K, V> {
         if (key == null) {
             throw new NullPointerException("Null key");
         }
-        if (!keyType().isAssignableFrom(key.getClass())) {
-            throw new ClassCastException("Key type mismatch");
+        if ( !_keyType.isAssignableFrom(key.getClass()) ) {
+            throw new IllegalArgumentException(
+                    "The given key '" + key + "' is of type '" + key.getClass().getSimpleName() + "', " +
+                    "instead of the expected type '" + _keyType + "'."
+                );
         }
         V value = _findValueOfKey(_root, _keyType, _valueType, _keyComparator, key);
         return Optional.ofNullable(value);
@@ -511,14 +517,20 @@ final class SortedAssociationImpl<K, V> implements Association<K, V> {
         if (key == null) {
             throw new NullPointerException("Null key");
         }
-        if (!keyType().isAssignableFrom(key.getClass())) {
-            throw new ClassCastException("Key type mismatch");
-        }
         if (value == null) {
             throw new NullPointerException("Null value");
         }
-        if (!valueType().isAssignableFrom(value.getClass())) {
-            throw new ClassCastException("Value type mismatch");
+        if ( !_keyType.isAssignableFrom(key.getClass()) ) {
+            throw new IllegalArgumentException(
+                    "The given key '" + key + "' is of type '" + key.getClass().getSimpleName() + "', " +
+                    "instead of the expected type '" + _keyType + "'."
+                );
+        }
+        if ( !_valueType.isAssignableFrom(value.getClass()) ) {
+            throw new IllegalArgumentException(
+                    "The given value '" + value + "' is of type '" + value.getClass().getSimpleName() + "', " +
+                    "instead of the expected type '" + _valueType + "'."
+                );
         }
         Node newRoot = _balance(_updateValueOfKey(_root, _keyType, _valueType, _keyComparator, key, value, false, 0));
         if (Util.refEquals(newRoot, _root)) {
@@ -537,14 +549,20 @@ final class SortedAssociationImpl<K, V> implements Association<K, V> {
         if (key == null) {
             throw new NullPointerException("Null key");
         }
-        if (!keyType().isAssignableFrom(key.getClass())) {
-            throw new ClassCastException("Key type mismatch");
-        }
         if (value == null) {
             throw new NullPointerException("Null value");
         }
-        if (!valueType().isAssignableFrom(value.getClass())) {
-            throw new ClassCastException("Value type mismatch");
+        if ( !_keyType.isAssignableFrom(key.getClass()) ) {
+            throw new IllegalArgumentException(
+                    "The given key '" + key + "' is of type '" + key.getClass().getSimpleName() + "', " +
+                    "instead of the expected type '" + _keyType + "'."
+                );
+        }
+        if ( !_valueType.isAssignableFrom(value.getClass()) ) {
+            throw new IllegalArgumentException(
+                    "The given value '" + value + "' is of type '" + value.getClass().getSimpleName() + "', " +
+                    "instead of the expected type '" + _valueType + "'."
+                );
         }
         Node newRoot = _balance(_updateValueOfKey(_root, _keyType, _valueType, _keyComparator, key, value, true, 0));
         if (Util.refEquals(newRoot, _root)) {
@@ -563,8 +581,11 @@ final class SortedAssociationImpl<K, V> implements Association<K, V> {
         if (key == null) {
             throw new NullPointerException("Null key");
         }
-        if (!keyType().isAssignableFrom(key.getClass())) {
-            throw new ClassCastException("Key type mismatch");
+        if ( !_keyType.isAssignableFrom(key.getClass()) ) {
+            throw new IllegalArgumentException(
+                    "The given key '" + key + "' is of type '" + key.getClass().getSimpleName() + "', " +
+                    "instead of the expected type '" + _keyType + "'."
+                );
         }
         Node newRoot = _balanceNullable(_removeKey(_root, _keyType, _valueType, _keyComparator, key));
         newRoot = newRoot == null ? NULL_NODE : newRoot;
