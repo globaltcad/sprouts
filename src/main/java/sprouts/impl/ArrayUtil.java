@@ -230,7 +230,7 @@ final class ArrayUtil {
 
     static int _length( Object array ) {
         if ( array instanceof Object[] )
-            return java.lang.reflect.Array.getLength(array);
+            return ((Object[])array).length;
         if ( array instanceof int[] )
             return ((int[]) array).length;
         if ( array instanceof double[] )
