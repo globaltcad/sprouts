@@ -460,13 +460,13 @@ final class SortedAssociationImpl<K, V> implements Association<K, V> {
             final int imbalance = leftSize - rightSize;
             final int leftArraySize = _length(left.keysArray());
             final int leftRightSize = left.right() == null ? 0 : left.right().size();
-            final int newLeftSize = rightSize - leftRightSize - leftArraySize;
-            final int newRightSize = leftSize + leftRightSize + currentNodeArraySize;
+            final int newLeftSize = leftSize - leftRightSize - leftArraySize;
+            final int newRightSize = rightSize + leftRightSize + currentNodeArraySize;
             final int newImbalance = Math.abs(newLeftSize - newRightSize);
             if ( newImbalance < imbalance ) { // We only re-balance if it is worth it!
-                Node newRight = new Node(newRightSize, node.keysArray(), left.right(), right);
+                Node newRight = new Node(newRightSize, node.keysArray(), node.valuesArray(), left.right(), right);
                 return new Node(
-                        node.size(), left.keysArray(), left.left(), newRight
+                        node.size(), left.keysArray(), left.valuesArray(), left.left(), newRight
                     );
             }
         }

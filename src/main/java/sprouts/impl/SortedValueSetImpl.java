@@ -381,8 +381,8 @@ final class SortedValueSetImpl<E> implements ValueSet<E> {
             final int imbalance = leftSize - rightSize;
             final int leftArraySize = _length(left.elementsArray());
             final int leftRightSize = left.right() == null ? 0 : left.right().size();
-            final int newLeftSize = rightSize - leftRightSize - leftArraySize;
-            final int newRightSize = leftSize + leftRightSize + currentNodeArraySize;
+            final int newLeftSize = leftSize - leftRightSize - leftArraySize;
+            final int newRightSize = rightSize + leftRightSize + currentNodeArraySize;
             final int newImbalance = Math.abs(newLeftSize - newRightSize);
             if ( newImbalance < imbalance ) { // We only re-balance if it is worth it!
                 Node newRight = new Node(newRightSize, node.elementsArray(), left.right(), right);
