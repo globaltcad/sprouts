@@ -4,7 +4,7 @@
   "narrative":"Data Oriented programming is a core concept in Sprouts,\n    which is why we provide the `Tuple` type representing\n    an immutable array of elements with proper value semantics.\n    It can also be transformed and filtered in a functional way.\n\n    When modelling value objects, like for example, by declaring\n    records, then we recommend to use the `Tuple` type\n    over of a Java array or a JDK List, because our tuple\n    has better value semantics, immutability guarantees,\n    and it is way more efficient than a Java List.",
   "subjects":["sprouts.Tuple"],
   "statistics":{
-    "runs":"270",
+    "runs":"278",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -5499,6 +5499,190 @@
         {"kind":"when","text":"We transform the second tuple by adding the same item.","code":["tuple2 = tuple2.add(6)"]},
 
         {"kind":"then","text":"The two tuples are now equal again.","code":["tuple1 == tuple2","tuple1.hashCode() == tuple2.hashCode()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A `Tuple` can handle all kinds of item types. [0]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var tuple = Tuple.of(type, items)","var list = items as List"]},
+
+        {"kind":"expect","text":"","code":["tuple.type() == type"]},
+
+        {"kind":"when","text":"","code":["var tuple2 = tuple.slice(1, 5)","var tuple3 = tuple.reversed()","var tuple4 = tuple.makeDistinct()","var tupleResult = tuple2.addAll(tuple3).addAll(tuple4)"]},
+
+        {"kind":"and","text":"","code":["var list2 = list.subList(1, 5)","var list3 = list.reverse()","var list4 = list.stream().distinct().collect(Collectors.toList())","var listResult = list2 + list3 + list4"]},
+
+        {"kind":"then","text":"","code":["tupleResult.toList() == listResult"]},
+
+        {"kind":"where","text":"","code":{"type":["Integer","Byte","Short","Long","Float","Double","Character","String"],"items":["[0,5,-4,-3,5,1,0,4,8,41,2,6,-3,9,4,5] as int[]","[2,8,1,7,5,1,3,7,8,41,2,7,3,0,-4,8,1] as byte[]","[4,5,7,93,5,1,2,77,8,41,2,6,63,9,4,7] as short[]","[6,6,-8,23,5,1,-60,6,-3,41,6,6,3,9,4] as long[]","[0.3f,5f,9.3f,6f,5.2f,1.67f,7f,3f,0f] as float[]","[6.4,-5.2,1d,0d,5.2d,1.11d,5d,83d,3d] as double[]","[0,4,4,7,5,1,8,6,3,41,2,6,3,9,4,84,5] as char[]","[\"watch\",\"dominion\",\"movie\",\"now\",\"!\"] as String[]"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A `Tuple` can handle all kinds of item types. [1]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var tuple = Tuple.of(type, items)","var list = items as List"]},
+
+        {"kind":"expect","text":"","code":["tuple.type() == type"]},
+
+        {"kind":"when","text":"","code":["var tuple2 = tuple.slice(1, 5)","var tuple3 = tuple.reversed()","var tuple4 = tuple.makeDistinct()","var tupleResult = tuple2.addAll(tuple3).addAll(tuple4)"]},
+
+        {"kind":"and","text":"","code":["var list2 = list.subList(1, 5)","var list3 = list.reverse()","var list4 = list.stream().distinct().collect(Collectors.toList())","var listResult = list2 + list3 + list4"]},
+
+        {"kind":"then","text":"","code":["tupleResult.toList() == listResult"]},
+
+        {"kind":"where","text":"","code":{"type":["Integer","Byte","Short","Long","Float","Double","Character","String"],"items":["[0,5,-4,-3,5,1,0,4,8,41,2,6,-3,9,4,5] as int[]","[2,8,1,7,5,1,3,7,8,41,2,7,3,0,-4,8,1] as byte[]","[4,5,7,93,5,1,2,77,8,41,2,6,63,9,4,7] as short[]","[6,6,-8,23,5,1,-60,6,-3,41,6,6,3,9,4] as long[]","[0.3f,5f,9.3f,6f,5.2f,1.67f,7f,3f,0f] as float[]","[6.4,-5.2,1d,0d,5.2d,1.11d,5d,83d,3d] as double[]","[0,4,4,7,5,1,8,6,3,41,2,6,3,9,4,84,5] as char[]","[\"watch\",\"dominion\",\"movie\",\"now\",\"!\"] as String[]"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A `Tuple` can handle all kinds of item types. [2]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var tuple = Tuple.of(type, items)","var list = items as List"]},
+
+        {"kind":"expect","text":"","code":["tuple.type() == type"]},
+
+        {"kind":"when","text":"","code":["var tuple2 = tuple.slice(1, 5)","var tuple3 = tuple.reversed()","var tuple4 = tuple.makeDistinct()","var tupleResult = tuple2.addAll(tuple3).addAll(tuple4)"]},
+
+        {"kind":"and","text":"","code":["var list2 = list.subList(1, 5)","var list3 = list.reverse()","var list4 = list.stream().distinct().collect(Collectors.toList())","var listResult = list2 + list3 + list4"]},
+
+        {"kind":"then","text":"","code":["tupleResult.toList() == listResult"]},
+
+        {"kind":"where","text":"","code":{"type":["Integer","Byte","Short","Long","Float","Double","Character","String"],"items":["[0,5,-4,-3,5,1,0,4,8,41,2,6,-3,9,4,5] as int[]","[2,8,1,7,5,1,3,7,8,41,2,7,3,0,-4,8,1] as byte[]","[4,5,7,93,5,1,2,77,8,41,2,6,63,9,4,7] as short[]","[6,6,-8,23,5,1,-60,6,-3,41,6,6,3,9,4] as long[]","[0.3f,5f,9.3f,6f,5.2f,1.67f,7f,3f,0f] as float[]","[6.4,-5.2,1d,0d,5.2d,1.11d,5d,83d,3d] as double[]","[0,4,4,7,5,1,8,6,3,41,2,6,3,9,4,84,5] as char[]","[\"watch\",\"dominion\",\"movie\",\"now\",\"!\"] as String[]"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A `Tuple` can handle all kinds of item types. [3]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var tuple = Tuple.of(type, items)","var list = items as List"]},
+
+        {"kind":"expect","text":"","code":["tuple.type() == type"]},
+
+        {"kind":"when","text":"","code":["var tuple2 = tuple.slice(1, 5)","var tuple3 = tuple.reversed()","var tuple4 = tuple.makeDistinct()","var tupleResult = tuple2.addAll(tuple3).addAll(tuple4)"]},
+
+        {"kind":"and","text":"","code":["var list2 = list.subList(1, 5)","var list3 = list.reverse()","var list4 = list.stream().distinct().collect(Collectors.toList())","var listResult = list2 + list3 + list4"]},
+
+        {"kind":"then","text":"","code":["tupleResult.toList() == listResult"]},
+
+        {"kind":"where","text":"","code":{"type":["Integer","Byte","Short","Long","Float","Double","Character","String"],"items":["[0,5,-4,-3,5,1,0,4,8,41,2,6,-3,9,4,5] as int[]","[2,8,1,7,5,1,3,7,8,41,2,7,3,0,-4,8,1] as byte[]","[4,5,7,93,5,1,2,77,8,41,2,6,63,9,4,7] as short[]","[6,6,-8,23,5,1,-60,6,-3,41,6,6,3,9,4] as long[]","[0.3f,5f,9.3f,6f,5.2f,1.67f,7f,3f,0f] as float[]","[6.4,-5.2,1d,0d,5.2d,1.11d,5d,83d,3d] as double[]","[0,4,4,7,5,1,8,6,3,41,2,6,3,9,4,84,5] as char[]","[\"watch\",\"dominion\",\"movie\",\"now\",\"!\"] as String[]"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A `Tuple` can handle all kinds of item types. [4]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var tuple = Tuple.of(type, items)","var list = items as List"]},
+
+        {"kind":"expect","text":"","code":["tuple.type() == type"]},
+
+        {"kind":"when","text":"","code":["var tuple2 = tuple.slice(1, 5)","var tuple3 = tuple.reversed()","var tuple4 = tuple.makeDistinct()","var tupleResult = tuple2.addAll(tuple3).addAll(tuple4)"]},
+
+        {"kind":"and","text":"","code":["var list2 = list.subList(1, 5)","var list3 = list.reverse()","var list4 = list.stream().distinct().collect(Collectors.toList())","var listResult = list2 + list3 + list4"]},
+
+        {"kind":"then","text":"","code":["tupleResult.toList() == listResult"]},
+
+        {"kind":"where","text":"","code":{"type":["Integer","Byte","Short","Long","Float","Double","Character","String"],"items":["[0,5,-4,-3,5,1,0,4,8,41,2,6,-3,9,4,5] as int[]","[2,8,1,7,5,1,3,7,8,41,2,7,3,0,-4,8,1] as byte[]","[4,5,7,93,5,1,2,77,8,41,2,6,63,9,4,7] as short[]","[6,6,-8,23,5,1,-60,6,-3,41,6,6,3,9,4] as long[]","[0.3f,5f,9.3f,6f,5.2f,1.67f,7f,3f,0f] as float[]","[6.4,-5.2,1d,0d,5.2d,1.11d,5d,83d,3d] as double[]","[0,4,4,7,5,1,8,6,3,41,2,6,3,9,4,84,5] as char[]","[\"watch\",\"dominion\",\"movie\",\"now\",\"!\"] as String[]"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A `Tuple` can handle all kinds of item types. [5]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var tuple = Tuple.of(type, items)","var list = items as List"]},
+
+        {"kind":"expect","text":"","code":["tuple.type() == type"]},
+
+        {"kind":"when","text":"","code":["var tuple2 = tuple.slice(1, 5)","var tuple3 = tuple.reversed()","var tuple4 = tuple.makeDistinct()","var tupleResult = tuple2.addAll(tuple3).addAll(tuple4)"]},
+
+        {"kind":"and","text":"","code":["var list2 = list.subList(1, 5)","var list3 = list.reverse()","var list4 = list.stream().distinct().collect(Collectors.toList())","var listResult = list2 + list3 + list4"]},
+
+        {"kind":"then","text":"","code":["tupleResult.toList() == listResult"]},
+
+        {"kind":"where","text":"","code":{"type":["Integer","Byte","Short","Long","Float","Double","Character","String"],"items":["[0,5,-4,-3,5,1,0,4,8,41,2,6,-3,9,4,5] as int[]","[2,8,1,7,5,1,3,7,8,41,2,7,3,0,-4,8,1] as byte[]","[4,5,7,93,5,1,2,77,8,41,2,6,63,9,4,7] as short[]","[6,6,-8,23,5,1,-60,6,-3,41,6,6,3,9,4] as long[]","[0.3f,5f,9.3f,6f,5.2f,1.67f,7f,3f,0f] as float[]","[6.4,-5.2,1d,0d,5.2d,1.11d,5d,83d,3d] as double[]","[0,4,4,7,5,1,8,6,3,41,2,6,3,9,4,84,5] as char[]","[\"watch\",\"dominion\",\"movie\",\"now\",\"!\"] as String[]"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A `Tuple` can handle all kinds of item types. [6]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var tuple = Tuple.of(type, items)","var list = items as List"]},
+
+        {"kind":"expect","text":"","code":["tuple.type() == type"]},
+
+        {"kind":"when","text":"","code":["var tuple2 = tuple.slice(1, 5)","var tuple3 = tuple.reversed()","var tuple4 = tuple.makeDistinct()","var tupleResult = tuple2.addAll(tuple3).addAll(tuple4)"]},
+
+        {"kind":"and","text":"","code":["var list2 = list.subList(1, 5)","var list3 = list.reverse()","var list4 = list.stream().distinct().collect(Collectors.toList())","var listResult = list2 + list3 + list4"]},
+
+        {"kind":"then","text":"","code":["tupleResult.toList() == listResult"]},
+
+        {"kind":"where","text":"","code":{"type":["Integer","Byte","Short","Long","Float","Double","Character","String"],"items":["[0,5,-4,-3,5,1,0,4,8,41,2,6,-3,9,4,5] as int[]","[2,8,1,7,5,1,3,7,8,41,2,7,3,0,-4,8,1] as byte[]","[4,5,7,93,5,1,2,77,8,41,2,6,63,9,4,7] as short[]","[6,6,-8,23,5,1,-60,6,-3,41,6,6,3,9,4] as long[]","[0.3f,5f,9.3f,6f,5.2f,1.67f,7f,3f,0f] as float[]","[6.4,-5.2,1d,0d,5.2d,1.11d,5d,83d,3d] as double[]","[0,4,4,7,5,1,8,6,3,41,2,6,3,9,4,84,5] as char[]","[\"watch\",\"dominion\",\"movie\",\"now\",\"!\"] as String[]"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A `Tuple` can handle all kinds of item types. [7]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var tuple = Tuple.of(type, items)","var list = items as List"]},
+
+        {"kind":"expect","text":"","code":["tuple.type() == type"]},
+
+        {"kind":"when","text":"","code":["var tuple2 = tuple.slice(1, 5)","var tuple3 = tuple.reversed()","var tuple4 = tuple.makeDistinct()","var tupleResult = tuple2.addAll(tuple3).addAll(tuple4)"]},
+
+        {"kind":"and","text":"","code":["var list2 = list.subList(1, 5)","var list3 = list.reverse()","var list4 = list.stream().distinct().collect(Collectors.toList())","var listResult = list2 + list3 + list4"]},
+
+        {"kind":"then","text":"","code":["tupleResult.toList() == listResult"]},
+
+        {"kind":"where","text":"","code":{"type":["Integer","Byte","Short","Long","Float","Double","Character","String"],"items":["[0,5,-4,-3,5,1,0,4,8,41,2,6,-3,9,4,5] as int[]","[2,8,1,7,5,1,3,7,8,41,2,7,3,0,-4,8,1] as byte[]","[4,5,7,93,5,1,2,77,8,41,2,6,63,9,4,7] as short[]","[6,6,-8,23,5,1,-60,6,-3,41,6,6,3,9,4] as long[]","[0.3f,5f,9.3f,6f,5.2f,1.67f,7f,3f,0f] as float[]","[6.4,-5.2,1d,0d,5.2d,1.11d,5d,83d,3d] as double[]","[0,4,4,7,5,1,8,6,3,41,2,6,3,9,4,84,5] as char[]","[\"watch\",\"dominion\",\"movie\",\"now\",\"!\"] as String[]"]}}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }

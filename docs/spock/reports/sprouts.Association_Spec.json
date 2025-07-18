@@ -4,7 +4,7 @@
   "narrative":"Sprouts is a property library with a heavy focus on bridging the\n    gap between classical place oriented programming and modern\n    data oriented programming.\n    This is why sprouts has both the `Tuple` and `Association` classes.\n    The `Association` class is a value object that represents a set of\n    key-value pairs. You can think of it as an immutable map, but with\n    an API that is designed around transforming the data in the map\n    rather than mutating it.",
   "subjects":["sprouts.Association"],
   "statistics":{
-    "runs":"61",
+    "runs":"78",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -1480,6 +1480,155 @@
     },
   
     {
+      "id":"The `containsKey` method of an `Association` throws an exception when passing arguments of the wrong type.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var association = Association.between(Integer, Number)"]},
+
+        {"kind":"when","text":"","code":["association.containsKey(\"Boom!\")"]},
+
+        {"kind":"then","text":"","code":["thrown(IllegalArgumentException)"]},
+
+        {"kind":"when","text":"","code":["association.containsKey(null)"]},
+
+        {"kind":"then","text":"","code":["thrown(NullPointerException)"]},
+
+        {"kind":"when","text":"","code":["association.containsKey(42)"]},
+
+        {"kind":"then","text":"","code":["noExceptionThrown()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `remove` method of an `Association` throws an exception when passing arguments of the wrong type.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var association = Association.between(Integer, Number)"]},
+
+        {"kind":"when","text":"","code":["association.remove(\"Boom!\")"]},
+
+        {"kind":"then","text":"","code":["thrown(IllegalArgumentException)"]},
+
+        {"kind":"when","text":"","code":["association.remove(null)"]},
+
+        {"kind":"then","text":"","code":["thrown(NullPointerException)"]},
+
+        {"kind":"when","text":"","code":["association.remove(42)"]},
+
+        {"kind":"then","text":"","code":["noExceptionThrown()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `get` method of an `Association` throws an exception when passing arguments of the wrong type.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var association = Association.between(Integer, Number)"]},
+
+        {"kind":"when","text":"","code":["association.get(\"Boom!\")"]},
+
+        {"kind":"then","text":"","code":["thrown(IllegalArgumentException)"]},
+
+        {"kind":"when","text":"","code":["association.get(null)"]},
+
+        {"kind":"then","text":"","code":["thrown(NullPointerException)"]},
+
+        {"kind":"when","text":"","code":["association.remove(42)"]},
+
+        {"kind":"then","text":"","code":["noExceptionThrown()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `putIfAbsent` method of an `Association` throws an exception when passing arguments of the wrong type.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var association = Association.between(Integer, Number)"]},
+
+        {"kind":"when","text":"","code":["association.putIfAbsent(\"Boom!\", 42)"]},
+
+        {"kind":"then","text":"","code":["thrown(IllegalArgumentException)"]},
+
+        {"kind":"when","text":"","code":["association.putIfAbsent(42, \"Boom!\")"]},
+
+        {"kind":"then","text":"","code":["thrown(IllegalArgumentException)"]},
+
+        {"kind":"when","text":"","code":["association.putIfAbsent(42.666f, 42)"]},
+
+        {"kind":"then","text":"","code":["thrown(IllegalArgumentException)"]},
+
+        {"kind":"when","text":"","code":["association.putIfAbsent(42, null)"]},
+
+        {"kind":"then","text":"","code":["thrown(NullPointerException)"]},
+
+        {"kind":"when","text":"","code":["association.putIfAbsent(null, 42)"]},
+
+        {"kind":"then","text":"","code":["thrown(NullPointerException)"]},
+
+        {"kind":"when","text":"","code":["association.putIfAbsent(42, 42)"]},
+
+        {"kind":"then","text":"","code":["noExceptionThrown()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `put` method of an `Association` throws an exception when passing arguments of the wrong type.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var association = Association.between(Integer, Number)"]},
+
+        {"kind":"when","text":"","code":["association.put(\"Boom!\", 42)"]},
+
+        {"kind":"then","text":"","code":["thrown(IllegalArgumentException)"]},
+
+        {"kind":"when","text":"","code":["association.put(42, \"Boom!\")"]},
+
+        {"kind":"then","text":"","code":["thrown(IllegalArgumentException)"]},
+
+        {"kind":"when","text":"","code":["association.put(42.666f, 42)"]},
+
+        {"kind":"then","text":"","code":["thrown(IllegalArgumentException)"]},
+
+        {"kind":"when","text":"","code":["association.put(42, null)"]},
+
+        {"kind":"then","text":"","code":["thrown(NullPointerException)"]},
+
+        {"kind":"when","text":"","code":["association.put(null, 42)"]},
+
+        {"kind":"then","text":"","code":["thrown(NullPointerException)"]},
+
+        {"kind":"when","text":"","code":["association.put(42, 42)"]},
+
+        {"kind":"then","text":"","code":["noExceptionThrown()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
       "id":"Associations with same entries in different order are equal",
       "result":"PASS",
       "duration":"?",
@@ -1596,6 +1745,330 @@
         {"kind":"when","text":"","code":["var inverseDocumentaries = documentaryTimes.sort( (Comparator<String>) { a, b -> b.compareTo(a) } )"]},
 
         {"kind":"then","text":"","code":["inverseDocumentaries.isSorted()","!inverseDocumentaries.isLinked()","inverseDocumentaries.size() == 5","inverseDocumentaries.keySet().toList() == [","    \"Land of Hope and Glory\",","    \"Forks over Knives\",","    \"Earthlings\",","    \"Dominion\",","    \"Cowspiracy\"","]"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The spliterator of an association has the correct characteristics and can traverse all entries in any order. [0]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The spliterator of a base (unordered) `Association` must report the correct characteristics:\n                - DISTINCT: Entries are unique\n                - IMMUTABLE: Cannot be modified\n                - SIZED: Knows exact size\n                - NONNULL: Entries aren't null\n                - Not ORDERED: No defined iteration order\n\n            It must support both sequential and parallel traversal, including splitting. \n            All entries should be traversed exactly once regardless of splitting strategy.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["given: \"An unordered association of size $size\"","var association = Association.between(Integer, Integer)","(0..<size).each { i -> association = association.put(i, i*i) }","var expectedPairs = (0..<size).collect { Pair.of(it, it*it) } as Set"]},
+
+        {"kind":"when","text":"We create a spliterator","code":["var spliterator = association.spliterator()"]},
+
+        {"kind":"then","text":"The characteristics match an unordered immutable collection","code":["spliterator.characteristics() & Spliterator.DISTINCT","spliterator.characteristics() & Spliterator.IMMUTABLE","spliterator.characteristics() & Spliterator.SIZED","spliterator.characteristics() & Spliterator.NONNULL","!(spliterator.characteristics() & Spliterator.ORDERED)","spliterator.estimateSize() == size"]},
+
+        {"kind":"when","text":"Traversing via forEachRemaining","code":["var collected = [] as Set","spliterator.forEachRemaining { collected.add(it) }"]},
+
+        {"kind":"then","text":"All entries are collected regardless of order","code":["collected.size() == size","collected == expectedPairs"]},
+
+        {"kind":"when","text":"Traversing via tryAdvance with splitting","code":["var spliterator2 = association.spliterator()","var collectedBySplitting = [] as Set","var consumer = { Pair<Integer, Integer> pair -> collectedBySplitting.add(pair) } as Consumer<Pair<Integer, Integer>>","while (spliterator2.tryAdvance(consumer)) {","    var split = spliterator2.trySplit()","    if (split != null) split.forEachRemaining(consumer)","}"]},
+
+        {"kind":"then","text":"All entries are collected despite splitting","code":["collectedBySplitting.size() == size","collectedBySplitting == expectedPairs"]},
+
+        {"kind":"where","text":"","code":{"size":["0","1","2","10","100","1000"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The spliterator of an association has the correct characteristics and can traverse all entries in any order. [1]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The spliterator of a base (unordered) `Association` must report the correct characteristics:\n                - DISTINCT: Entries are unique\n                - IMMUTABLE: Cannot be modified\n                - SIZED: Knows exact size\n                - NONNULL: Entries aren't null\n                - Not ORDERED: No defined iteration order\n\n            It must support both sequential and parallel traversal, including splitting. \n            All entries should be traversed exactly once regardless of splitting strategy.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["given: \"An unordered association of size $size\"","var association = Association.between(Integer, Integer)","(0..<size).each { i -> association = association.put(i, i*i) }","var expectedPairs = (0..<size).collect { Pair.of(it, it*it) } as Set"]},
+
+        {"kind":"when","text":"We create a spliterator","code":["var spliterator = association.spliterator()"]},
+
+        {"kind":"then","text":"The characteristics match an unordered immutable collection","code":["spliterator.characteristics() & Spliterator.DISTINCT","spliterator.characteristics() & Spliterator.IMMUTABLE","spliterator.characteristics() & Spliterator.SIZED","spliterator.characteristics() & Spliterator.NONNULL","!(spliterator.characteristics() & Spliterator.ORDERED)","spliterator.estimateSize() == size"]},
+
+        {"kind":"when","text":"Traversing via forEachRemaining","code":["var collected = [] as Set","spliterator.forEachRemaining { collected.add(it) }"]},
+
+        {"kind":"then","text":"All entries are collected regardless of order","code":["collected.size() == size","collected == expectedPairs"]},
+
+        {"kind":"when","text":"Traversing via tryAdvance with splitting","code":["var spliterator2 = association.spliterator()","var collectedBySplitting = [] as Set","var consumer = { Pair<Integer, Integer> pair -> collectedBySplitting.add(pair) } as Consumer<Pair<Integer, Integer>>","while (spliterator2.tryAdvance(consumer)) {","    var split = spliterator2.trySplit()","    if (split != null) split.forEachRemaining(consumer)","}"]},
+
+        {"kind":"then","text":"All entries are collected despite splitting","code":["collectedBySplitting.size() == size","collectedBySplitting == expectedPairs"]},
+
+        {"kind":"where","text":"","code":{"size":["0","1","2","10","100","1000"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The spliterator of an association has the correct characteristics and can traverse all entries in any order. [2]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The spliterator of a base (unordered) `Association` must report the correct characteristics:\n                - DISTINCT: Entries are unique\n                - IMMUTABLE: Cannot be modified\n                - SIZED: Knows exact size\n                - NONNULL: Entries aren't null\n                - Not ORDERED: No defined iteration order\n\n            It must support both sequential and parallel traversal, including splitting. \n            All entries should be traversed exactly once regardless of splitting strategy.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["given: \"An unordered association of size $size\"","var association = Association.between(Integer, Integer)","(0..<size).each { i -> association = association.put(i, i*i) }","var expectedPairs = (0..<size).collect { Pair.of(it, it*it) } as Set"]},
+
+        {"kind":"when","text":"We create a spliterator","code":["var spliterator = association.spliterator()"]},
+
+        {"kind":"then","text":"The characteristics match an unordered immutable collection","code":["spliterator.characteristics() & Spliterator.DISTINCT","spliterator.characteristics() & Spliterator.IMMUTABLE","spliterator.characteristics() & Spliterator.SIZED","spliterator.characteristics() & Spliterator.NONNULL","!(spliterator.characteristics() & Spliterator.ORDERED)","spliterator.estimateSize() == size"]},
+
+        {"kind":"when","text":"Traversing via forEachRemaining","code":["var collected = [] as Set","spliterator.forEachRemaining { collected.add(it) }"]},
+
+        {"kind":"then","text":"All entries are collected regardless of order","code":["collected.size() == size","collected == expectedPairs"]},
+
+        {"kind":"when","text":"Traversing via tryAdvance with splitting","code":["var spliterator2 = association.spliterator()","var collectedBySplitting = [] as Set","var consumer = { Pair<Integer, Integer> pair -> collectedBySplitting.add(pair) } as Consumer<Pair<Integer, Integer>>","while (spliterator2.tryAdvance(consumer)) {","    var split = spliterator2.trySplit()","    if (split != null) split.forEachRemaining(consumer)","}"]},
+
+        {"kind":"then","text":"All entries are collected despite splitting","code":["collectedBySplitting.size() == size","collectedBySplitting == expectedPairs"]},
+
+        {"kind":"where","text":"","code":{"size":["0","1","2","10","100","1000"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The spliterator of an association has the correct characteristics and can traverse all entries in any order. [3]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The spliterator of a base (unordered) `Association` must report the correct characteristics:\n                - DISTINCT: Entries are unique\n                - IMMUTABLE: Cannot be modified\n                - SIZED: Knows exact size\n                - NONNULL: Entries aren't null\n                - Not ORDERED: No defined iteration order\n\n            It must support both sequential and parallel traversal, including splitting. \n            All entries should be traversed exactly once regardless of splitting strategy.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["given: \"An unordered association of size $size\"","var association = Association.between(Integer, Integer)","(0..<size).each { i -> association = association.put(i, i*i) }","var expectedPairs = (0..<size).collect { Pair.of(it, it*it) } as Set"]},
+
+        {"kind":"when","text":"We create a spliterator","code":["var spliterator = association.spliterator()"]},
+
+        {"kind":"then","text":"The characteristics match an unordered immutable collection","code":["spliterator.characteristics() & Spliterator.DISTINCT","spliterator.characteristics() & Spliterator.IMMUTABLE","spliterator.characteristics() & Spliterator.SIZED","spliterator.characteristics() & Spliterator.NONNULL","!(spliterator.characteristics() & Spliterator.ORDERED)","spliterator.estimateSize() == size"]},
+
+        {"kind":"when","text":"Traversing via forEachRemaining","code":["var collected = [] as Set","spliterator.forEachRemaining { collected.add(it) }"]},
+
+        {"kind":"then","text":"All entries are collected regardless of order","code":["collected.size() == size","collected == expectedPairs"]},
+
+        {"kind":"when","text":"Traversing via tryAdvance with splitting","code":["var spliterator2 = association.spliterator()","var collectedBySplitting = [] as Set","var consumer = { Pair<Integer, Integer> pair -> collectedBySplitting.add(pair) } as Consumer<Pair<Integer, Integer>>","while (spliterator2.tryAdvance(consumer)) {","    var split = spliterator2.trySplit()","    if (split != null) split.forEachRemaining(consumer)","}"]},
+
+        {"kind":"then","text":"All entries are collected despite splitting","code":["collectedBySplitting.size() == size","collectedBySplitting == expectedPairs"]},
+
+        {"kind":"where","text":"","code":{"size":["0","1","2","10","100","1000"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The spliterator of an association has the correct characteristics and can traverse all entries in any order. [4]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The spliterator of a base (unordered) `Association` must report the correct characteristics:\n                - DISTINCT: Entries are unique\n                - IMMUTABLE: Cannot be modified\n                - SIZED: Knows exact size\n                - NONNULL: Entries aren't null\n                - Not ORDERED: No defined iteration order\n\n            It must support both sequential and parallel traversal, including splitting. \n            All entries should be traversed exactly once regardless of splitting strategy.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["given: \"An unordered association of size $size\"","var association = Association.between(Integer, Integer)","(0..<size).each { i -> association = association.put(i, i*i) }","var expectedPairs = (0..<size).collect { Pair.of(it, it*it) } as Set"]},
+
+        {"kind":"when","text":"We create a spliterator","code":["var spliterator = association.spliterator()"]},
+
+        {"kind":"then","text":"The characteristics match an unordered immutable collection","code":["spliterator.characteristics() & Spliterator.DISTINCT","spliterator.characteristics() & Spliterator.IMMUTABLE","spliterator.characteristics() & Spliterator.SIZED","spliterator.characteristics() & Spliterator.NONNULL","!(spliterator.characteristics() & Spliterator.ORDERED)","spliterator.estimateSize() == size"]},
+
+        {"kind":"when","text":"Traversing via forEachRemaining","code":["var collected = [] as Set","spliterator.forEachRemaining { collected.add(it) }"]},
+
+        {"kind":"then","text":"All entries are collected regardless of order","code":["collected.size() == size","collected == expectedPairs"]},
+
+        {"kind":"when","text":"Traversing via tryAdvance with splitting","code":["var spliterator2 = association.spliterator()","var collectedBySplitting = [] as Set","var consumer = { Pair<Integer, Integer> pair -> collectedBySplitting.add(pair) } as Consumer<Pair<Integer, Integer>>","while (spliterator2.tryAdvance(consumer)) {","    var split = spliterator2.trySplit()","    if (split != null) split.forEachRemaining(consumer)","}"]},
+
+        {"kind":"then","text":"All entries are collected despite splitting","code":["collectedBySplitting.size() == size","collectedBySplitting == expectedPairs"]},
+
+        {"kind":"where","text":"","code":{"size":["0","1","2","10","100","1000"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The spliterator of an association has the correct characteristics and can traverse all entries in any order. [5]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The spliterator of a base (unordered) `Association` must report the correct characteristics:\n                - DISTINCT: Entries are unique\n                - IMMUTABLE: Cannot be modified\n                - SIZED: Knows exact size\n                - NONNULL: Entries aren't null\n                - Not ORDERED: No defined iteration order\n\n            It must support both sequential and parallel traversal, including splitting. \n            All entries should be traversed exactly once regardless of splitting strategy.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["given: \"An unordered association of size $size\"","var association = Association.between(Integer, Integer)","(0..<size).each { i -> association = association.put(i, i*i) }","var expectedPairs = (0..<size).collect { Pair.of(it, it*it) } as Set"]},
+
+        {"kind":"when","text":"We create a spliterator","code":["var spliterator = association.spliterator()"]},
+
+        {"kind":"then","text":"The characteristics match an unordered immutable collection","code":["spliterator.characteristics() & Spliterator.DISTINCT","spliterator.characteristics() & Spliterator.IMMUTABLE","spliterator.characteristics() & Spliterator.SIZED","spliterator.characteristics() & Spliterator.NONNULL","!(spliterator.characteristics() & Spliterator.ORDERED)","spliterator.estimateSize() == size"]},
+
+        {"kind":"when","text":"Traversing via forEachRemaining","code":["var collected = [] as Set","spliterator.forEachRemaining { collected.add(it) }"]},
+
+        {"kind":"then","text":"All entries are collected regardless of order","code":["collected.size() == size","collected == expectedPairs"]},
+
+        {"kind":"when","text":"Traversing via tryAdvance with splitting","code":["var spliterator2 = association.spliterator()","var collectedBySplitting = [] as Set","var consumer = { Pair<Integer, Integer> pair -> collectedBySplitting.add(pair) } as Consumer<Pair<Integer, Integer>>","while (spliterator2.tryAdvance(consumer)) {","    var split = spliterator2.trySplit()","    if (split != null) split.forEachRemaining(consumer)","}"]},
+
+        {"kind":"then","text":"All entries are collected despite splitting","code":["collectedBySplitting.size() == size","collectedBySplitting == expectedPairs"]},
+
+        {"kind":"where","text":"","code":{"size":["0","1","2","10","100","1000"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The spliterator of an association which was sorted preserves order during traversal. [0]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The spliterator of a sorted `Association` must report ORDERED characteristic.\n            Elements must be traversed in sorted order regardless of splitting.\n            Parallel splitting should maintain global ordering.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A sorted association created from a non-sorted one:","code":["var base = Association.between(Integer, Integer)","(0..<size).each { i -> base = base.put(i, i*i) }","var sortedAssociation = base.sort(Comparator.naturalOrder())","var expectedOrder = (0..<size).collect { Pair.of(it, it*it) }"]},
+
+        {"kind":"when","text":"We create a spliterator","code":["var spliterator = sortedAssociation.spliterator()"]},
+
+        {"kind":"then","text":"Characteristics include ORDERED","code":["spliterator.characteristics() & Spliterator.ORDERED","spliterator.characteristics() & Spliterator.DISTINCT","spliterator.characteristics() & Spliterator.IMMUTABLE","spliterator.characteristics() & Spliterator.SIZED","spliterator.estimateSize() == size"]},
+
+        {"kind":"when","text":"We do a sequential traversal...","code":["var collected = []","spliterator.forEachRemaining { collected.add(it) }"]},
+
+        {"kind":"then","text":"Elements are in ascending order!","code":["collected == expectedOrder"]},
+
+        {"kind":"when","text":"Parallel-ready traversal is done with splitting...","code":["var spliterator2 = sortedAssociation.spliterator()","var collectedBySplitting = []","var consumer = { Pair<Integer, Integer> pair -> collectedBySplitting.add(pair) } as Consumer<Pair<Integer, Integer>>","while (spliterator2.tryAdvance(consumer)) {","    var split = spliterator2.trySplit()","    if (split != null) split.forEachRemaining(consumer)","}"]},
+
+        {"kind":"then","text":"The global order is maintained, despite doing splits!","code":["collectedBySplitting == expectedOrder"]},
+
+        {"kind":"where","text":"","code":{"size":["0","1","2","10","100","1000"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The spliterator of an association which was sorted preserves order during traversal. [1]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The spliterator of a sorted `Association` must report ORDERED characteristic.\n            Elements must be traversed in sorted order regardless of splitting.\n            Parallel splitting should maintain global ordering.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A sorted association created from a non-sorted one:","code":["var base = Association.between(Integer, Integer)","(0..<size).each { i -> base = base.put(i, i*i) }","var sortedAssociation = base.sort(Comparator.naturalOrder())","var expectedOrder = (0..<size).collect { Pair.of(it, it*it) }"]},
+
+        {"kind":"when","text":"We create a spliterator","code":["var spliterator = sortedAssociation.spliterator()"]},
+
+        {"kind":"then","text":"Characteristics include ORDERED","code":["spliterator.characteristics() & Spliterator.ORDERED","spliterator.characteristics() & Spliterator.DISTINCT","spliterator.characteristics() & Spliterator.IMMUTABLE","spliterator.characteristics() & Spliterator.SIZED","spliterator.estimateSize() == size"]},
+
+        {"kind":"when","text":"We do a sequential traversal...","code":["var collected = []","spliterator.forEachRemaining { collected.add(it) }"]},
+
+        {"kind":"then","text":"Elements are in ascending order!","code":["collected == expectedOrder"]},
+
+        {"kind":"when","text":"Parallel-ready traversal is done with splitting...","code":["var spliterator2 = sortedAssociation.spliterator()","var collectedBySplitting = []","var consumer = { Pair<Integer, Integer> pair -> collectedBySplitting.add(pair) } as Consumer<Pair<Integer, Integer>>","while (spliterator2.tryAdvance(consumer)) {","    var split = spliterator2.trySplit()","    if (split != null) split.forEachRemaining(consumer)","}"]},
+
+        {"kind":"then","text":"The global order is maintained, despite doing splits!","code":["collectedBySplitting == expectedOrder"]},
+
+        {"kind":"where","text":"","code":{"size":["0","1","2","10","100","1000"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The spliterator of an association which was sorted preserves order during traversal. [2]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The spliterator of a sorted `Association` must report ORDERED characteristic.\n            Elements must be traversed in sorted order regardless of splitting.\n            Parallel splitting should maintain global ordering.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A sorted association created from a non-sorted one:","code":["var base = Association.between(Integer, Integer)","(0..<size).each { i -> base = base.put(i, i*i) }","var sortedAssociation = base.sort(Comparator.naturalOrder())","var expectedOrder = (0..<size).collect { Pair.of(it, it*it) }"]},
+
+        {"kind":"when","text":"We create a spliterator","code":["var spliterator = sortedAssociation.spliterator()"]},
+
+        {"kind":"then","text":"Characteristics include ORDERED","code":["spliterator.characteristics() & Spliterator.ORDERED","spliterator.characteristics() & Spliterator.DISTINCT","spliterator.characteristics() & Spliterator.IMMUTABLE","spliterator.characteristics() & Spliterator.SIZED","spliterator.estimateSize() == size"]},
+
+        {"kind":"when","text":"We do a sequential traversal...","code":["var collected = []","spliterator.forEachRemaining { collected.add(it) }"]},
+
+        {"kind":"then","text":"Elements are in ascending order!","code":["collected == expectedOrder"]},
+
+        {"kind":"when","text":"Parallel-ready traversal is done with splitting...","code":["var spliterator2 = sortedAssociation.spliterator()","var collectedBySplitting = []","var consumer = { Pair<Integer, Integer> pair -> collectedBySplitting.add(pair) } as Consumer<Pair<Integer, Integer>>","while (spliterator2.tryAdvance(consumer)) {","    var split = spliterator2.trySplit()","    if (split != null) split.forEachRemaining(consumer)","}"]},
+
+        {"kind":"then","text":"The global order is maintained, despite doing splits!","code":["collectedBySplitting == expectedOrder"]},
+
+        {"kind":"where","text":"","code":{"size":["0","1","2","10","100","1000"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The spliterator of an association which was sorted preserves order during traversal. [3]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The spliterator of a sorted `Association` must report ORDERED characteristic.\n            Elements must be traversed in sorted order regardless of splitting.\n            Parallel splitting should maintain global ordering.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A sorted association created from a non-sorted one:","code":["var base = Association.between(Integer, Integer)","(0..<size).each { i -> base = base.put(i, i*i) }","var sortedAssociation = base.sort(Comparator.naturalOrder())","var expectedOrder = (0..<size).collect { Pair.of(it, it*it) }"]},
+
+        {"kind":"when","text":"We create a spliterator","code":["var spliterator = sortedAssociation.spliterator()"]},
+
+        {"kind":"then","text":"Characteristics include ORDERED","code":["spliterator.characteristics() & Spliterator.ORDERED","spliterator.characteristics() & Spliterator.DISTINCT","spliterator.characteristics() & Spliterator.IMMUTABLE","spliterator.characteristics() & Spliterator.SIZED","spliterator.estimateSize() == size"]},
+
+        {"kind":"when","text":"We do a sequential traversal...","code":["var collected = []","spliterator.forEachRemaining { collected.add(it) }"]},
+
+        {"kind":"then","text":"Elements are in ascending order!","code":["collected == expectedOrder"]},
+
+        {"kind":"when","text":"Parallel-ready traversal is done with splitting...","code":["var spliterator2 = sortedAssociation.spliterator()","var collectedBySplitting = []","var consumer = { Pair<Integer, Integer> pair -> collectedBySplitting.add(pair) } as Consumer<Pair<Integer, Integer>>","while (spliterator2.tryAdvance(consumer)) {","    var split = spliterator2.trySplit()","    if (split != null) split.forEachRemaining(consumer)","}"]},
+
+        {"kind":"then","text":"The global order is maintained, despite doing splits!","code":["collectedBySplitting == expectedOrder"]},
+
+        {"kind":"where","text":"","code":{"size":["0","1","2","10","100","1000"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The spliterator of an association which was sorted preserves order during traversal. [4]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The spliterator of a sorted `Association` must report ORDERED characteristic.\n            Elements must be traversed in sorted order regardless of splitting.\n            Parallel splitting should maintain global ordering.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A sorted association created from a non-sorted one:","code":["var base = Association.between(Integer, Integer)","(0..<size).each { i -> base = base.put(i, i*i) }","var sortedAssociation = base.sort(Comparator.naturalOrder())","var expectedOrder = (0..<size).collect { Pair.of(it, it*it) }"]},
+
+        {"kind":"when","text":"We create a spliterator","code":["var spliterator = sortedAssociation.spliterator()"]},
+
+        {"kind":"then","text":"Characteristics include ORDERED","code":["spliterator.characteristics() & Spliterator.ORDERED","spliterator.characteristics() & Spliterator.DISTINCT","spliterator.characteristics() & Spliterator.IMMUTABLE","spliterator.characteristics() & Spliterator.SIZED","spliterator.estimateSize() == size"]},
+
+        {"kind":"when","text":"We do a sequential traversal...","code":["var collected = []","spliterator.forEachRemaining { collected.add(it) }"]},
+
+        {"kind":"then","text":"Elements are in ascending order!","code":["collected == expectedOrder"]},
+
+        {"kind":"when","text":"Parallel-ready traversal is done with splitting...","code":["var spliterator2 = sortedAssociation.spliterator()","var collectedBySplitting = []","var consumer = { Pair<Integer, Integer> pair -> collectedBySplitting.add(pair) } as Consumer<Pair<Integer, Integer>>","while (spliterator2.tryAdvance(consumer)) {","    var split = spliterator2.trySplit()","    if (split != null) split.forEachRemaining(consumer)","}"]},
+
+        {"kind":"then","text":"The global order is maintained, despite doing splits!","code":["collectedBySplitting == expectedOrder"]},
+
+        {"kind":"where","text":"","code":{"size":["0","1","2","10","100","1000"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The spliterator of an association which was sorted preserves order during traversal. [5]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The spliterator of a sorted `Association` must report ORDERED characteristic.\n            Elements must be traversed in sorted order regardless of splitting.\n            Parallel splitting should maintain global ordering.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A sorted association created from a non-sorted one:","code":["var base = Association.between(Integer, Integer)","(0..<size).each { i -> base = base.put(i, i*i) }","var sortedAssociation = base.sort(Comparator.naturalOrder())","var expectedOrder = (0..<size).collect { Pair.of(it, it*it) }"]},
+
+        {"kind":"when","text":"We create a spliterator","code":["var spliterator = sortedAssociation.spliterator()"]},
+
+        {"kind":"then","text":"Characteristics include ORDERED","code":["spliterator.characteristics() & Spliterator.ORDERED","spliterator.characteristics() & Spliterator.DISTINCT","spliterator.characteristics() & Spliterator.IMMUTABLE","spliterator.characteristics() & Spliterator.SIZED","spliterator.estimateSize() == size"]},
+
+        {"kind":"when","text":"We do a sequential traversal...","code":["var collected = []","spliterator.forEachRemaining { collected.add(it) }"]},
+
+        {"kind":"then","text":"Elements are in ascending order!","code":["collected == expectedOrder"]},
+
+        {"kind":"when","text":"Parallel-ready traversal is done with splitting...","code":["var spliterator2 = sortedAssociation.spliterator()","var collectedBySplitting = []","var consumer = { Pair<Integer, Integer> pair -> collectedBySplitting.add(pair) } as Consumer<Pair<Integer, Integer>>","while (spliterator2.tryAdvance(consumer)) {","    var split = spliterator2.trySplit()","    if (split != null) split.forEachRemaining(consumer)","}"]},
+
+        {"kind":"then","text":"The global order is maintained, despite doing splits!","code":["collectedBySplitting == expectedOrder"]},
+
+        {"kind":"where","text":"","code":{"size":["0","1","2","10","100","1000"]}}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }
