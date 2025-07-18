@@ -146,6 +146,18 @@ final class LinkedAssociation<K,V> implements Association<K, V>
         if (key == null || value == null) {
             throw new NullPointerException("Key and value must not be null");
         }
+        if ( !_entries.keyType().isAssignableFrom(key.getClass()) ) {
+            throw new IllegalArgumentException(
+                    "The given key '" + key + "' is of type '" + key.getClass().getSimpleName() + "', " +
+                            "instead of the expected type '" + _entries.keyType() + "'."
+            );
+        }
+        if ( !_valueType.isAssignableFrom(value.getClass()) ) {
+            throw new IllegalArgumentException(
+                    "The given value '" + value + "' is of type '" + value.getClass().getSimpleName() + "', " +
+                            "instead of the expected type '" + _valueType + "'."
+            );
+        }
         Optional<Entry<K, V>> entry = _entries.get(key);
         if (entry.isPresent()) {
             if (entry.get().value().equals(value)) {
@@ -184,6 +196,18 @@ final class LinkedAssociation<K,V> implements Association<K, V>
     public Association<K, V> putIfAbsent(K key, V value) {
         if (key == null || value == null) {
             throw new NullPointerException("Key and value must not be null");
+        }
+        if ( !_entries.keyType().isAssignableFrom(key.getClass()) ) {
+            throw new IllegalArgumentException(
+                    "The given key '" + key + "' is of type '" + key.getClass().getSimpleName() + "', " +
+                    "instead of the expected type '" + _entries.keyType() + "'."
+                );
+        }
+        if ( !_valueType.isAssignableFrom(value.getClass()) ) {
+            throw new IllegalArgumentException(
+                    "The given value '" + value + "' is of type '" + value.getClass().getSimpleName() + "', " +
+                    "instead of the expected type '" + _valueType + "'."
+                );
         }
         Optional<Entry<K, V>> entry = _entries.get(key);
         if (entry.isPresent()) {

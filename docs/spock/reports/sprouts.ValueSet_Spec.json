@@ -4,7 +4,7 @@
   "narrative":"ValueSet is a fundamental building block in sprouts' data-oriented programming model.\n    It represents an immutable collection of unique elements, providing an API focused on\n    deriving new sets from existing ones rather than mutating state. Unlike traditional\n    Java sets, all operations return new `ValueSet` instances, making it ideal for\n    functional-style programming and safe concurrent usage.",
   "subjects":["sprouts.ValueSet"],
   "statistics":{
-    "runs":"31",
+    "runs":"39",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -606,6 +606,190 @@
         {"kind":"when","text":"We sort the value set in reverse order.","code":["var sortedReverse = valueSet.sort(Comparator.reverseOrder())"]},
 
         {"kind":"then","text":"","code":["sortedReverse.size() == 5","sortedReverse.type() == String","sortedReverse.toList() == [\"e\", \"d\", \"c\", \"b\", \"a\"]"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A `ValueSet` can handle all kinds of item types. [0]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var valueSet = ValueSet.of(Tuple.of(type, items))","var set = items as Set"]},
+
+        {"kind":"expect","text":"","code":["valueSet.type() == type"]},
+
+        {"kind":"when","text":"","code":["var tupleResult = valueSet.removeAll(valueSet.toTuple().sort().slice(1, 5))"]},
+
+        {"kind":"and","text":"","code":["var setResult = set - set.toList().toSorted().subList(1, 5)"]},
+
+        {"kind":"then","text":"","code":["tupleResult.toSet() == setResult"]},
+
+        {"kind":"where","text":"","code":{"type":["Integer","Byte","Short","Long","Float","Double","Character","String"],"items":["[0,5,-4,-3,5,1,0,4,8,41,2,6,-3,9,4,5] as int[]","[2,8,1,7,5,1,3,7,8,41,2,7,3,0,-4,8,1] as byte[]","[4,5,7,93,5,1,2,77,8,41,2,6,63,9,4,7] as short[]","[6,6,-8,23,5,1,-60,6,-3,41,6,6,3,9,4] as long[]","[0.3f,5f,9.3f,6f,5.2f,1.67f,7f,3f,0f] as float[]","[6.4,-5.2,1d,0d,5.2d,1.11d,5d,83d,3d] as double[]","[0,4,4,7,5,1,8,6,3,41,2,6,3,9,4,84,5] as char[]","[\"watch\",\"dominion\",\"movie\",\"now\",\"!\"] as String[]"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A `ValueSet` can handle all kinds of item types. [1]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var valueSet = ValueSet.of(Tuple.of(type, items))","var set = items as Set"]},
+
+        {"kind":"expect","text":"","code":["valueSet.type() == type"]},
+
+        {"kind":"when","text":"","code":["var tupleResult = valueSet.removeAll(valueSet.toTuple().sort().slice(1, 5))"]},
+
+        {"kind":"and","text":"","code":["var setResult = set - set.toList().toSorted().subList(1, 5)"]},
+
+        {"kind":"then","text":"","code":["tupleResult.toSet() == setResult"]},
+
+        {"kind":"where","text":"","code":{"type":["Integer","Byte","Short","Long","Float","Double","Character","String"],"items":["[0,5,-4,-3,5,1,0,4,8,41,2,6,-3,9,4,5] as int[]","[2,8,1,7,5,1,3,7,8,41,2,7,3,0,-4,8,1] as byte[]","[4,5,7,93,5,1,2,77,8,41,2,6,63,9,4,7] as short[]","[6,6,-8,23,5,1,-60,6,-3,41,6,6,3,9,4] as long[]","[0.3f,5f,9.3f,6f,5.2f,1.67f,7f,3f,0f] as float[]","[6.4,-5.2,1d,0d,5.2d,1.11d,5d,83d,3d] as double[]","[0,4,4,7,5,1,8,6,3,41,2,6,3,9,4,84,5] as char[]","[\"watch\",\"dominion\",\"movie\",\"now\",\"!\"] as String[]"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A `ValueSet` can handle all kinds of item types. [2]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var valueSet = ValueSet.of(Tuple.of(type, items))","var set = items as Set"]},
+
+        {"kind":"expect","text":"","code":["valueSet.type() == type"]},
+
+        {"kind":"when","text":"","code":["var tupleResult = valueSet.removeAll(valueSet.toTuple().sort().slice(1, 5))"]},
+
+        {"kind":"and","text":"","code":["var setResult = set - set.toList().toSorted().subList(1, 5)"]},
+
+        {"kind":"then","text":"","code":["tupleResult.toSet() == setResult"]},
+
+        {"kind":"where","text":"","code":{"type":["Integer","Byte","Short","Long","Float","Double","Character","String"],"items":["[0,5,-4,-3,5,1,0,4,8,41,2,6,-3,9,4,5] as int[]","[2,8,1,7,5,1,3,7,8,41,2,7,3,0,-4,8,1] as byte[]","[4,5,7,93,5,1,2,77,8,41,2,6,63,9,4,7] as short[]","[6,6,-8,23,5,1,-60,6,-3,41,6,6,3,9,4] as long[]","[0.3f,5f,9.3f,6f,5.2f,1.67f,7f,3f,0f] as float[]","[6.4,-5.2,1d,0d,5.2d,1.11d,5d,83d,3d] as double[]","[0,4,4,7,5,1,8,6,3,41,2,6,3,9,4,84,5] as char[]","[\"watch\",\"dominion\",\"movie\",\"now\",\"!\"] as String[]"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A `ValueSet` can handle all kinds of item types. [3]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var valueSet = ValueSet.of(Tuple.of(type, items))","var set = items as Set"]},
+
+        {"kind":"expect","text":"","code":["valueSet.type() == type"]},
+
+        {"kind":"when","text":"","code":["var tupleResult = valueSet.removeAll(valueSet.toTuple().sort().slice(1, 5))"]},
+
+        {"kind":"and","text":"","code":["var setResult = set - set.toList().toSorted().subList(1, 5)"]},
+
+        {"kind":"then","text":"","code":["tupleResult.toSet() == setResult"]},
+
+        {"kind":"where","text":"","code":{"type":["Integer","Byte","Short","Long","Float","Double","Character","String"],"items":["[0,5,-4,-3,5,1,0,4,8,41,2,6,-3,9,4,5] as int[]","[2,8,1,7,5,1,3,7,8,41,2,7,3,0,-4,8,1] as byte[]","[4,5,7,93,5,1,2,77,8,41,2,6,63,9,4,7] as short[]","[6,6,-8,23,5,1,-60,6,-3,41,6,6,3,9,4] as long[]","[0.3f,5f,9.3f,6f,5.2f,1.67f,7f,3f,0f] as float[]","[6.4,-5.2,1d,0d,5.2d,1.11d,5d,83d,3d] as double[]","[0,4,4,7,5,1,8,6,3,41,2,6,3,9,4,84,5] as char[]","[\"watch\",\"dominion\",\"movie\",\"now\",\"!\"] as String[]"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A `ValueSet` can handle all kinds of item types. [4]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var valueSet = ValueSet.of(Tuple.of(type, items))","var set = items as Set"]},
+
+        {"kind":"expect","text":"","code":["valueSet.type() == type"]},
+
+        {"kind":"when","text":"","code":["var tupleResult = valueSet.removeAll(valueSet.toTuple().sort().slice(1, 5))"]},
+
+        {"kind":"and","text":"","code":["var setResult = set - set.toList().toSorted().subList(1, 5)"]},
+
+        {"kind":"then","text":"","code":["tupleResult.toSet() == setResult"]},
+
+        {"kind":"where","text":"","code":{"type":["Integer","Byte","Short","Long","Float","Double","Character","String"],"items":["[0,5,-4,-3,5,1,0,4,8,41,2,6,-3,9,4,5] as int[]","[2,8,1,7,5,1,3,7,8,41,2,7,3,0,-4,8,1] as byte[]","[4,5,7,93,5,1,2,77,8,41,2,6,63,9,4,7] as short[]","[6,6,-8,23,5,1,-60,6,-3,41,6,6,3,9,4] as long[]","[0.3f,5f,9.3f,6f,5.2f,1.67f,7f,3f,0f] as float[]","[6.4,-5.2,1d,0d,5.2d,1.11d,5d,83d,3d] as double[]","[0,4,4,7,5,1,8,6,3,41,2,6,3,9,4,84,5] as char[]","[\"watch\",\"dominion\",\"movie\",\"now\",\"!\"] as String[]"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A `ValueSet` can handle all kinds of item types. [5]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var valueSet = ValueSet.of(Tuple.of(type, items))","var set = items as Set"]},
+
+        {"kind":"expect","text":"","code":["valueSet.type() == type"]},
+
+        {"kind":"when","text":"","code":["var tupleResult = valueSet.removeAll(valueSet.toTuple().sort().slice(1, 5))"]},
+
+        {"kind":"and","text":"","code":["var setResult = set - set.toList().toSorted().subList(1, 5)"]},
+
+        {"kind":"then","text":"","code":["tupleResult.toSet() == setResult"]},
+
+        {"kind":"where","text":"","code":{"type":["Integer","Byte","Short","Long","Float","Double","Character","String"],"items":["[0,5,-4,-3,5,1,0,4,8,41,2,6,-3,9,4,5] as int[]","[2,8,1,7,5,1,3,7,8,41,2,7,3,0,-4,8,1] as byte[]","[4,5,7,93,5,1,2,77,8,41,2,6,63,9,4,7] as short[]","[6,6,-8,23,5,1,-60,6,-3,41,6,6,3,9,4] as long[]","[0.3f,5f,9.3f,6f,5.2f,1.67f,7f,3f,0f] as float[]","[6.4,-5.2,1d,0d,5.2d,1.11d,5d,83d,3d] as double[]","[0,4,4,7,5,1,8,6,3,41,2,6,3,9,4,84,5] as char[]","[\"watch\",\"dominion\",\"movie\",\"now\",\"!\"] as String[]"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A `ValueSet` can handle all kinds of item types. [6]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var valueSet = ValueSet.of(Tuple.of(type, items))","var set = items as Set"]},
+
+        {"kind":"expect","text":"","code":["valueSet.type() == type"]},
+
+        {"kind":"when","text":"","code":["var tupleResult = valueSet.removeAll(valueSet.toTuple().sort().slice(1, 5))"]},
+
+        {"kind":"and","text":"","code":["var setResult = set - set.toList().toSorted().subList(1, 5)"]},
+
+        {"kind":"then","text":"","code":["tupleResult.toSet() == setResult"]},
+
+        {"kind":"where","text":"","code":{"type":["Integer","Byte","Short","Long","Float","Double","Character","String"],"items":["[0,5,-4,-3,5,1,0,4,8,41,2,6,-3,9,4,5] as int[]","[2,8,1,7,5,1,3,7,8,41,2,7,3,0,-4,8,1] as byte[]","[4,5,7,93,5,1,2,77,8,41,2,6,63,9,4,7] as short[]","[6,6,-8,23,5,1,-60,6,-3,41,6,6,3,9,4] as long[]","[0.3f,5f,9.3f,6f,5.2f,1.67f,7f,3f,0f] as float[]","[6.4,-5.2,1d,0d,5.2d,1.11d,5d,83d,3d] as double[]","[0,4,4,7,5,1,8,6,3,41,2,6,3,9,4,84,5] as char[]","[\"watch\",\"dominion\",\"movie\",\"now\",\"!\"] as String[]"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A `ValueSet` can handle all kinds of item types. [7]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var valueSet = ValueSet.of(Tuple.of(type, items))","var set = items as Set"]},
+
+        {"kind":"expect","text":"","code":["valueSet.type() == type"]},
+
+        {"kind":"when","text":"","code":["var tupleResult = valueSet.removeAll(valueSet.toTuple().sort().slice(1, 5))"]},
+
+        {"kind":"and","text":"","code":["var setResult = set - set.toList().toSorted().subList(1, 5)"]},
+
+        {"kind":"then","text":"","code":["tupleResult.toSet() == setResult"]},
+
+        {"kind":"where","text":"","code":{"type":["Integer","Byte","Short","Long","Float","Double","Character","String"],"items":["[0,5,-4,-3,5,1,0,4,8,41,2,6,-3,9,4,5] as int[]","[2,8,1,7,5,1,3,7,8,41,2,7,3,0,-4,8,1] as byte[]","[4,5,7,93,5,1,2,77,8,41,2,6,63,9,4,7] as short[]","[6,6,-8,23,5,1,-60,6,-3,41,6,6,3,9,4] as long[]","[0.3f,5f,9.3f,6f,5.2f,1.67f,7f,3f,0f] as float[]","[6.4,-5.2,1d,0d,5.2d,1.11d,5d,83d,3d] as double[]","[0,4,4,7,5,1,8,6,3,41,2,6,3,9,4,84,5] as char[]","[\"watch\",\"dominion\",\"movie\",\"now\",\"!\"] as String[]"]}}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }

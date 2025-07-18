@@ -3,7 +3,6 @@ package sprouts.impl;
 import org.jspecify.annotations.Nullable;
 import sprouts.Tuple;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -192,11 +191,44 @@ final class ArrayUtil {
     }
 
     static <T> void _setAt(int index, @Nullable T item, Object array ) {
-        java.lang.reflect.Array.set(array, index, item);
+        Class<?> arrayType = array.getClass();
+        if ( item != null ) {
+            if (int[].class == arrayType) {
+                ((int[]) array)[index] = (int) item;
+                return;
+            } else if (float[].class == arrayType) {
+                ((float[]) array)[index] = (float) item;
+                return;
+            } else if (boolean[].class == arrayType) {
+                ((boolean[]) array)[index] = (boolean) item;
+                return;
+            } else if (char[].class == arrayType) {
+                ((char[]) array)[index] = (char) item;
+                return;
+            } else if (double[].class == arrayType) {
+                ((double[]) array)[index] = (double) item;
+                return;
+            } else if (long[].class == arrayType) {
+                ((long[]) array)[index] = (long) item;
+                return;
+            } else if (short[].class == arrayType) {
+                ((short[]) array)[index] = (short) item;
+                return;
+            } else if (byte[].class == arrayType) {
+                ((byte[]) array)[index] = (byte) item;
+                return;
+            }
+        }
+        ((Object[])array)[index] = item;
     }
 
+    /**
+     *  This is essentially the same as {@link java.lang.reflect.Array#get(Object, int)}, but
+     *  <b>much faster due to the code being available to the JIT compiler!</b><br>
+     *  Do not use {@link java.lang.reflect.Array#get(Object, int)}!!
+     */
     static <T> @Nullable T _getAt( int index, Object array, Class<T> type ) {
-        return type.cast(java.lang.reflect.Array.get(array, index));
+        return type.cast(_getAt(index, array));
     }
 
     /**
@@ -209,28 +241,34 @@ final class ArrayUtil {
      * @param <T> The type to which the item should be cast. This is used to ensure type safety.
      */
     static <T> T _getNonNullAt( int index, Object array, Class<T> type ) {
-        return type.cast(java.lang.reflect.Array.get(array, index));
-    }
-
-    /**
-     *  Returns the item at the specified index in the array cast to an inferred type.
-     *  The returned item is assumed to be non-null (for performance reasons we do not check for null).
-     * @param index The index of the item to retrieve in the array (which may be a primitive array).
-     * @param array The array from which to retrieve the item. This can be an array of primitives or an array of objects.
-     * @return The item at the specified index in the array, cast to the specified type.
-     * @param <T> The type to which the item should be cast. This is used to ensure type safety.
-     */
-    static <T> T _getNonNullAt( int index, Object array ) {
-        return (T) java.lang.reflect.Array.get(array, index);
+        return type.cast(Util.fakeNonNull(_getAt(index, array)));
     }
 
     static @Nullable Object _getAt( int index, Object array) {
-        return java.lang.reflect.Array.get(array, index);
+        Class<?> arrayType = array.getClass();
+        if (int[].class == arrayType) {
+            return ((int[])array)[index];
+        } else if (float[].class == arrayType) {
+            return ((float[])array)[index];
+        } else if (boolean[].class == arrayType) {
+            return ((boolean[])array)[index];
+        } else if (char[].class == arrayType) {
+            return ((char[])array)[index];
+        } else if (double[].class == arrayType) {
+            return ((double[])array)[index];
+        } else if (long[].class == arrayType) {
+            return ((long[])array)[index];
+        } else if (short[].class == arrayType) {
+            return ((short[])array)[index];
+        } else if (byte[].class == arrayType) {
+            return ((byte[])array)[index];
+        }
+        return ((Object[])array)[index];
     }
 
     static int _length( Object array ) {
         if ( array instanceof Object[] )
-            return java.lang.reflect.Array.getLength(array);
+            return ((Object[])array).length;
         if ( array instanceof int[] )
             return ((int[]) array).length;
         if ( array instanceof double[] )
@@ -260,6 +298,12 @@ final class ArrayUtil {
     static <T> void _each( Object array, Class<T> type, java.util.function.Consumer<T> consumer ) {
         for ( int i = 0; i < _length(array); i++ ) {
             consumer.accept(_getAt(i, array, type));
+        }
+    }
+
+    static <T> void _each( Object array, ArrayItemAccess<T, Object> access, java.util.function.Consumer<T> consumer ) {
+        for ( int i = 0; i < _length(array); i++ ) {
+            consumer.accept(access.get(i, array));
         }
     }
 
@@ -318,6 +362,56 @@ final class ArrayUtil {
             E element
     ) {
         E existingValue = _getAt(index, elementsArray, type);
+        return comparator.compare(element, existingValue);
+    }
+
+    /**
+     *  Performs a binary search of the index of an item in the supplied
+     *  array of items of the given type. If the item is not found, the
+     *  returned index is the index at which the item would be inserted
+     *  if it were to be inserted in the array.
+     *  If the item is "smaller" than all the items in the array,
+     *  the returned index is -1. And if the item is "greater" than all
+     *  the items in the array, the returned index is the length of the array.
+     */
+    static <K> int _binarySearch(
+        final Object keysArray,
+        final ArrayItemAccess<K, Object> keyGetter,
+        final Comparator<K> keyComparator,
+        final K key
+    ) {
+        final int size = _length(keysArray);
+        if (size == 0) {
+            return -1; // Empty array, key is smaller than all keys
+        }
+        int min = 0;
+        int max = size;
+        while (min < max ) {
+            int mid = (min + max) / 2;
+            int comparison = _compareAt(mid, keysArray, keyGetter, keyComparator, key);
+            if (comparison < 0) {
+                max = mid; // Key is smaller than the middle key
+            } else if (comparison > 0) {
+                min = mid + 1; // Key is greater than the middle key
+            } else {
+                return mid; // Key found at index mid
+            }
+        }
+        // Key not found, return the index where it would be inserted
+        if (min == 0) {
+            return -1; // Key is smaller than all keys in the array
+        }
+        return min; // Key would be inserted at index min
+    }
+
+    static <E> int _compareAt(
+        final int index,
+        final Object elementsArray,
+        final ArrayItemAccess<E, Object> getter,
+        final Comparator<E> comparator,
+        final E element
+    ) {
+        E existingValue = getter.get(index, elementsArray);
         return comparator.compare(element, existingValue);
     }
 

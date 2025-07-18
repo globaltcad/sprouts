@@ -830,11 +830,146 @@ class Linked_Association_Spec extends Specification
             !retained.containsKey("b")
     }
 
+    def 'The `containsKey` method of a linked `Association` throws an exception when passing arguments of the wrong type.'()
+    {
+        given :
+            var association = Association.betweenLinked(Integer, Number)
+
+        when :
+            association.containsKey("Boom!")
+        then :
+            thrown(IllegalArgumentException)
+
+        when :
+            association.containsKey(null)
+        then :
+            thrown(NullPointerException)
+
+        when :
+            association.containsKey(42)
+        then :
+            noExceptionThrown()
+    }
+
+    def 'The `remove` method of a linked `Association` throws an exception when passing arguments of the wrong type.'()
+    {
+        given :
+            var association = Association.betweenLinked(Integer, Number)
+
+        when :
+            association.remove("Boom!")
+        then :
+            thrown(IllegalArgumentException)
+
+        when :
+            association.remove(null)
+        then :
+            thrown(NullPointerException)
+
+        when :
+            association.remove(42)
+        then :
+            noExceptionThrown()
+    }
+
+    def 'The `get` method of a linked `Association` throws an exception when passing arguments of the wrong type.'()
+    {
+        given :
+            var association = Association.betweenLinked(Integer, Number)
+
+        when :
+            association.get("Boom!")
+        then :
+            thrown(IllegalArgumentException)
+
+        when :
+            association.get(null)
+        then :
+            thrown(NullPointerException)
+
+        when :
+            association.remove(42)
+        then :
+            noExceptionThrown()
+    }
+
     def 'The `putIfAbsent` does not overwrite an existing value already stored in a linked association.'() {
         given:
             var assoc = Association.ofLinked("a", 1).putIfAbsent("a", 2)
         expect:
             assoc.get("a").get() == 1
+    }
+
+    def 'The `putIfAbsent` method of a linked `Association` throws an exception when passing arguments of the wrong type.'()
+    {
+        given :
+            var association = Association.betweenLinked(Integer, Number)
+
+        when :
+            association.putIfAbsent("Boom!", 42)
+        then :
+            thrown(IllegalArgumentException)
+
+        when :
+            association.putIfAbsent(42, "Boom!")
+        then :
+            thrown(IllegalArgumentException)
+
+        when :
+            association.putIfAbsent(42.666f, 42)
+        then :
+            thrown(IllegalArgumentException)
+
+        when :
+            association.putIfAbsent(42, null)
+        then :
+            thrown(NullPointerException)
+
+        when :
+            association.putIfAbsent(null, 42)
+        then :
+            thrown(NullPointerException)
+
+        when :
+            association.putIfAbsent(42, 42)
+        then :
+            noExceptionThrown()
+    }
+
+    def 'The `put` method of a linked `Association` throws an exception when passing arguments of the wrong type.'()
+    {
+        given :
+            var association = Association.betweenLinked(Integer, Number)
+
+        when :
+            association.put("Boom!", 42)
+        then :
+            thrown(IllegalArgumentException)
+
+        when :
+            association.put(42, "Boom!")
+        then :
+            thrown(IllegalArgumentException)
+
+        when :
+            association.put(42.666f, 42)
+        then :
+            thrown(IllegalArgumentException)
+
+        when :
+            association.put(42, null)
+        then :
+            thrown(NullPointerException)
+
+        when :
+            association.put(null, 42)
+        then :
+            thrown(NullPointerException)
+
+        when :
+            association.put(42, 42)
+        then :
+            noExceptionThrown()
     }
 
     def 'Linked associations with same entries, but in different order are still equal.'() {

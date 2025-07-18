@@ -4,7 +4,7 @@
   "narrative":"Sprouts is a property library with a heavy focus on bridging the\n    gap between classical place oriented programming and modern\n    data oriented programming.\n    This is why sprouts has both the `Tuple` and `Association` classes.\n    The `Association` class is a value object that represents a set of\n    key-value pairs. You can think of it as an immutable map, but with\n    an API that is designed around transforming the data in the map\n    rather than mutating it.\n\n    One type of association is the \"linked Association\", which is\n    similar to a `LinkedHashMap` in Java, but with an API that is\n    designed around data transformation rather than mutation.",
   "subjects":["sprouts.Association"],
   "statistics":{
-    "runs":"60",
+    "runs":"65",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -1470,6 +1470,81 @@
     },
   
     {
+      "id":"The `containsKey` method of a linked `Association` throws an exception when passing arguments of the wrong type.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var association = Association.betweenLinked(Integer, Number)"]},
+
+        {"kind":"when","text":"","code":["association.containsKey(\"Boom!\")"]},
+
+        {"kind":"then","text":"","code":["thrown(IllegalArgumentException)"]},
+
+        {"kind":"when","text":"","code":["association.containsKey(null)"]},
+
+        {"kind":"then","text":"","code":["thrown(NullPointerException)"]},
+
+        {"kind":"when","text":"","code":["association.containsKey(42)"]},
+
+        {"kind":"then","text":"","code":["noExceptionThrown()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `remove` method of a linked `Association` throws an exception when passing arguments of the wrong type.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var association = Association.betweenLinked(Integer, Number)"]},
+
+        {"kind":"when","text":"","code":["association.remove(\"Boom!\")"]},
+
+        {"kind":"then","text":"","code":["thrown(IllegalArgumentException)"]},
+
+        {"kind":"when","text":"","code":["association.remove(null)"]},
+
+        {"kind":"then","text":"","code":["thrown(NullPointerException)"]},
+
+        {"kind":"when","text":"","code":["association.remove(42)"]},
+
+        {"kind":"then","text":"","code":["noExceptionThrown()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `get` method of a linked `Association` throws an exception when passing arguments of the wrong type.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var association = Association.betweenLinked(Integer, Number)"]},
+
+        {"kind":"when","text":"","code":["association.get(\"Boom!\")"]},
+
+        {"kind":"then","text":"","code":["thrown(IllegalArgumentException)"]},
+
+        {"kind":"when","text":"","code":["association.get(null)"]},
+
+        {"kind":"then","text":"","code":["thrown(NullPointerException)"]},
+
+        {"kind":"when","text":"","code":["association.remove(42)"]},
+
+        {"kind":"then","text":"","code":["noExceptionThrown()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
       "id":"The `putIfAbsent` does not overwrite an existing value already stored in a linked association.",
       "result":"PASS",
       "duration":"?",
@@ -1480,6 +1555,80 @@
         {"kind":"given","text":"","code":["var assoc = Association.ofLinked(\"a\", 1).putIfAbsent(\"a\", 2)"]},
 
         {"kind":"expect","text":"","code":["assoc.get(\"a\").get() == 1"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `putIfAbsent` method of a linked `Association` throws an exception when passing arguments of the wrong type.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var association = Association.betweenLinked(Integer, Number)"]},
+
+        {"kind":"when","text":"","code":["association.putIfAbsent(\"Boom!\", 42)"]},
+
+        {"kind":"then","text":"","code":["thrown(IllegalArgumentException)"]},
+
+        {"kind":"when","text":"","code":["association.putIfAbsent(42, \"Boom!\")"]},
+
+        {"kind":"then","text":"","code":["thrown(IllegalArgumentException)"]},
+
+        {"kind":"when","text":"","code":["association.putIfAbsent(42.666f, 42)"]},
+
+        {"kind":"then","text":"","code":["thrown(IllegalArgumentException)"]},
+
+        {"kind":"when","text":"","code":["association.putIfAbsent(42, null)"]},
+
+        {"kind":"then","text":"","code":["thrown(NullPointerException)"]},
+
+        {"kind":"when","text":"","code":["association.putIfAbsent(null, 42)"]},
+
+        {"kind":"then","text":"","code":["thrown(NullPointerException)"]},
+
+        {"kind":"when","text":"","code":["association.putIfAbsent(42, 42)"]},
+
+        {"kind":"then","text":"","code":["noExceptionThrown()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `put` method of a linked `Association` throws an exception when passing arguments of the wrong type.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var association = Association.betweenLinked(Integer, Number)"]},
+
+        {"kind":"when","text":"","code":["association.put(\"Boom!\", 42)"]},
+
+        {"kind":"then","text":"","code":["thrown(IllegalArgumentException)"]},
+
+        {"kind":"when","text":"","code":["association.put(42, \"Boom!\")"]},
+
+        {"kind":"then","text":"","code":["thrown(IllegalArgumentException)"]},
+
+        {"kind":"when","text":"","code":["association.put(42.666f, 42)"]},
+
+        {"kind":"then","text":"","code":["thrown(IllegalArgumentException)"]},
+
+        {"kind":"when","text":"","code":["association.put(42, null)"]},
+
+        {"kind":"then","text":"","code":["thrown(NullPointerException)"]},
+
+        {"kind":"when","text":"","code":["association.put(null, 42)"]},
+
+        {"kind":"then","text":"","code":["thrown(NullPointerException)"]},
+
+        {"kind":"when","text":"","code":["association.put(42, 42)"]},
+
+        {"kind":"then","text":"","code":["noExceptionThrown()"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },

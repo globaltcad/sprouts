@@ -5,6 +5,7 @@ import spock.lang.Specification
 import spock.lang.Subject
 import spock.lang.Title
 
+import java.util.function.Consumer
 import java.util.stream.Collectors
 import java.util.stream.Stream
 
@@ -817,6 +818,141 @@ class Association_Spec extends Specification
             assoc.get("a").get() == 1
     }
 
+    def 'The `containsKey` method of an `Association` throws an exception when passing arguments of the wrong type.'()
+    {
+        given :
+            var association = Association.between(Integer, Number)
+
+        when :
+            association.containsKey("Boom!")
+        then :
+            thrown(IllegalArgumentException)
+
+        when :
+            association.containsKey(null)
+        then :
+            thrown(NullPointerException)
+
+        when :
+            association.containsKey(42)
+        then :
+            noExceptionThrown()
+    }
+
+    def 'The `remove` method of an `Association` throws an exception when passing arguments of the wrong type.'()
+    {
+        given :
+            var association = Association.between(Integer, Number)
+
+        when :
+            association.remove("Boom!")
+        then :
+            thrown(IllegalArgumentException)
+
+        when :
+            association.remove(null)
+        then :
+            thrown(NullPointerException)
+
+        when :
+            association.remove(42)
+        then :
+            noExceptionThrown()
+    }
+
+    def 'The `get` method of an `Association` throws an exception when passing arguments of the wrong type.'()
+    {
+        given :
+            var association = Association.between(Integer, Number)
+
+        when :
+            association.get("Boom!")
+        then :
+            thrown(IllegalArgumentException)
+
+        when :
+            association.get(null)
+        then :
+            thrown(NullPointerException)
+
+        when :
+            association.remove(42)
+        then :
+            noExceptionThrown()
+    }
+
+    def 'The `putIfAbsent` method of an `Association` throws an exception when passing arguments of the wrong type.'()
+    {
+        given :
+            var association = Association.between(Integer, Number)
+
+        when :
+            association.putIfAbsent("Boom!", 42)
+        then :
+            thrown(IllegalArgumentException)
+
+        when :
+            association.putIfAbsent(42, "Boom!")
+        then :
+            thrown(IllegalArgumentException)
+
+        when :
+            association.putIfAbsent(42.666f, 42)
+        then :
+            thrown(IllegalArgumentException)
+
+        when :
+            association.putIfAbsent(42, null)
+        then :
+            thrown(NullPointerException)
+
+        when :
+            association.putIfAbsent(null, 42)
+        then :
+            thrown(NullPointerException)
+
+        when :
+            association.putIfAbsent(42, 42)
+        then :
+            noExceptionThrown()
+    }
+
+    def 'The `put` method of an `Association` throws an exception when passing arguments of the wrong type.'()
+    {
+        given :
+            var association = Association.between(Integer, Number)
+
+        when :
+            association.put("Boom!", 42)
+        then :
+            thrown(IllegalArgumentException)
+
+        when :
+            association.put(42, "Boom!")
+        then :
+            thrown(IllegalArgumentException)
+
+        when :
+            association.put(42.666f, 42)
+        then :
+            thrown(IllegalArgumentException)
+
+        when :
+            association.put(42, null)
+        then :
+            thrown(NullPointerException)
+
+        when :
+            association.put(null, 42)
+        then :
+            thrown(NullPointerException)
+
+        when :
+            association.put(42, 42)
+        then :
+            noExceptionThrown()
+    }
+
     def 'Associations with same entries in different order are equal'() {
         given:
             var assoc1 = Association.of("a", 1).put("b", 2).put("c", 3)
@@ -945,4 +1081,101 @@ class Association_Spec extends Specification
             ]
     }
 
+    def 'The spliterator of an association has the correct characteristics and can traverse all entries in any order.'(int size) {
+        reportInfo """
+            The spliterator of a base (unordered) `Association` must report the correct characteristics:
+                - DISTINCT: Entries are unique
+                - IMMUTABLE: Cannot be modified
+                - SIZED: Knows exact size
+                - NONNULL: Entries aren't null
+                - Not ORDERED: No defined iteration order
+            
+            It must support both sequential and parallel traversal, including splitting. 
+            All entries should be traversed exactly once regardless of splitting strategy.
+        """
+        given: "An unordered association of size $size"
+            var association = Association.between(Integer, Integer)
+            (0..<size).each { i -> association = association.put(i, i*i) }
+            var expectedPairs = (0..<size).collect { Pair.of(it, it*it) } as Set
+
+        when: "We create a spliterator"
+            var spliterator = association.spliterator()
+
+        then: "The characteristics match an unordered immutable collection"
+            spliterator.characteristics() & Spliterator.DISTINCT
+            spliterator.characteristics() & Spliterator.IMMUTABLE
+            spliterator.characteristics() & Spliterator.SIZED
+            spliterator.characteristics() & Spliterator.NONNULL
+            !(spliterator.characteristics() & Spliterator.ORDERED)
+            spliterator.estimateSize() == size
+
+        when: "Traversing via forEachRemaining"
+            var collected = [] as Set
+            spliterator.forEachRemaining { collected.add(it) }
+
+        then: "All entries are collected regardless of order"
+            collected.size() == size
+            collected == expectedPairs
+
+        when: "Traversing via tryAdvance with splitting"
+            var spliterator2 = association.spliterator()
+            var collectedBySplitting = [] as Set
+            var consumer = { Pair<Integer, Integer> pair -> collectedBySplitting.add(pair) } as Consumer<Pair<Integer, Integer>>
+            while (spliterator2.tryAdvance(consumer)) {
+                var split = spliterator2.trySplit()
+                if (split != null) split.forEachRemaining(consumer)
+            }
+
+        then: "All entries are collected despite splitting"
+            collectedBySplitting.size() == size
+            collectedBySplitting == expectedPairs
+
+        where:
+            size << [0, 1, 2, 10, 100, 1000]
+    }
+
+    def 'The spliterator of an association which was sorted preserves order during traversal.'(int size) {
+        reportInfo """
+            The spliterator of a sorted `Association` must report ORDERED characteristic.
+            Elements must be traversed in sorted order regardless of splitting.
+            Parallel splitting should maintain global ordering.
+        """
+        given: "A sorted association created from a non-sorted one:"
+            var base = Association.between(Integer, Integer)
+            (0..<size).each { i -> base = base.put(i, i*i) }
+            var sortedAssociation = base.sort(Comparator.naturalOrder())
+            var expectedOrder = (0..<size).collect { Pair.of(it, it*it) }
+
+        when: "We create a spliterator"
+            var spliterator = sortedAssociation.spliterator()
+
+        then: "Characteristics include ORDERED"
+            spliterator.characteristics() & Spliterator.ORDERED
+            spliterator.characteristics() & Spliterator.DISTINCT
+            spliterator.characteristics() & Spliterator.IMMUTABLE
+            spliterator.characteristics() & Spliterator.SIZED
+            spliterator.estimateSize() == size
+
+        when: "We do a sequential traversal..."
+            var collected = []
+            spliterator.forEachRemaining { collected.add(it) }
+
+        then: "Elements are in ascending order!"
+            collected == expectedOrder
+
+        when: "Parallel-ready traversal is done with splitting..."
+            var spliterator2 = sortedAssociation.spliterator()
+            var collectedBySplitting = []
+            var consumer = { Pair<Integer, Integer> pair -> collectedBySplitting.add(pair) } as Consumer<Pair<Integer, Integer>>
+            while (spliterator2.tryAdvance(consumer)) {
+                var split = spliterator2.trySplit()
+                if (split != null) split.forEachRemaining(consumer)
+            }
+
+        then: "The global order is maintained, despite doing splits!"
+            collectedBySplitting == expectedOrder
+
+        where:
+            size << [0, 1, 2, 10, 100, 1000]
+    }
 }

@@ -64,7 +64,7 @@ import static sprouts.impl.ArrayUtil.*;
  */
 final class ValueSetImpl<E> implements ValueSet<E> {
 
-    private static final ValueSetImpl[] EMPTY_BRANCHES = new  ValueSetImpl<?>[0];
+    private static final Node[] EMPTY_BRANCHES = new Node<?>[0];
     private static final boolean ALLOWS_NULL = false;
     private static final long PRIME_1 = 12055296811267L;
     private static final long PRIME_2 = 53982894593057L;
@@ -73,13 +73,46 @@ final class ValueSetImpl<E> implements ValueSet<E> {
     private static final int BASE_ENTRIES_PER_NODE = 0;
 
 
-    private final int _depth;
-    private final int _size;
     private final Class<E> _type;
-    private final Object _elementsArray;
-    private final int[] _elementsHashes;
-    private final ValueSetImpl<E>[] _branches;
+    private final ArrayItemAccess<E, Object> _itemGetter;
+    private final Node<E> _root;
 
+    private static class Node<E> {
+
+        private final int _depth;
+        private final int _size;
+        private final Object _elementsArray;
+        private final int[] _elementsHashes;
+        private final Node<E>[] _branches;
+
+        Node(
+            final int depth,
+            final Class<E> type,
+            final Object newElementsArray,
+            final int[] keyHashes,
+            final Node<E>[] branches,
+            final boolean rebuild
+        ) {
+            final ArrayItemAccess<?, Object> itemGetter = ArrayItemAccess.of(type,false);
+            final int size = _length(newElementsArray);
+            if ( rebuild && size > 1 ) {
+                _elementsArray = _fillNodeArrays(size, type, itemGetter, newElementsArray);
+            } else {
+                _elementsArray = newElementsArray;
+            }
+            _depth = depth;
+            _branches = branches;
+            _size = size + _sumBranchSizes(_branches);
+            if ( keyHashes.length != size || rebuild ) {
+                _elementsHashes = new int[size];
+                for (int i = 0; i < size; i++) {
+                    _elementsHashes[i] = Objects.requireNonNull(_getAt(i,_elementsArray)).hashCode();
+                }
+            } else {
+                _elementsHashes = keyHashes;
+            }
+        }
+    }
 
     ValueSetImpl(
         final Class<E> type
@@ -97,79 +130,91 @@ final class ValueSetImpl<E> implements ValueSet<E> {
         final Class<E> type,
         final Object newElementsArray,
         final int[] keyHashes,
-        final ValueSetImpl<E>[] branches,
+        final Node<E>[] branches,
         final boolean rebuild
     ) {
-        final int size = _length(newElementsArray);
-        if ( rebuild && size > 1 ) {
-            _elementsArray = _fillNodeArrays(size, type, newElementsArray);
-        } else {
-            _elementsArray = newElementsArray;
-        }
-        _depth = depth;
+        this(
+            Objects.requireNonNull(type),
+            ArrayItemAccess.of(type, false),
+            new Node<>(depth, type, newElementsArray, keyHashes, branches, rebuild)
+        );
+    }
+
+    private ValueSetImpl(
+        final Class<E> type,
+        final ArrayItemAccess<E, Object> itemGetter,
+        final Node<E> root
+    ) {
         _type = Objects.requireNonNull(type);
-        _branches = branches;
-        _size = size + _sumBranchSizes(_branches);
-        if ( keyHashes.length != size || rebuild ) {
-            _elementsHashes = new int[size];
-            for (int i = 0; i < size; i++) {
-                _elementsHashes[i] = Objects.requireNonNull(Array.get(_elementsArray, i)).hashCode();
-            }
-        } else {
-            _elementsHashes = keyHashes;
-        }
+        _itemGetter = itemGetter;
+        _root = root;
+    }
+
+    private ValueSetImpl<E> _withNewRoot(Node<E> newRoot) {
+        if ( newRoot == _root )
+            return this;
+        else
+            return new ValueSetImpl<>(_type, _itemGetter, newRoot);
     }
 
     private static <K> Object _fillNodeArrays(
         final int size,
         final Class<K> type,
+        final ArrayItemAccess<?, Object> itemGetter,
         final Object newElementsArray
     ) {
         Object elementsArray = new Object[size];
         for (int i = 0; i < size; i++) {
             K key = _getAt(i, newElementsArray, type);
             Objects.requireNonNull(key);
-            int index = _findValidIndexFor(key, key.hashCode(), elementsArray);
+            int index = _findValidIndexFor(itemGetter, key, key.hashCode(), elementsArray);
             _setAt(index, key, elementsArray);
         }
         return _tryFlatten(elementsArray, type, ALLOWS_NULL);
     }
 
-    private static int _sumBranchSizes( ValueSetImpl<?>[] branches) {
+    private static int _sumBranchSizes( Node<?>[] branches) {
         int sum = 0;
-        for (ValueSetImpl<?> branch : branches) {
+        for (Node<?> branch : branches) {
             if ( branch != null ) {
-                sum += branch.size();
+                sum += branch._size;
             }
         }
         return sum;
     }
 
-    private int _maxEntriesForThisNode() {
-        return BASE_ENTRIES_PER_NODE + (_depth * _depth);
+    private static int _maxEntriesForThisNode(Node<?> node) {
+        return BASE_ENTRIES_PER_NODE + (node._depth * node._depth);
     }
 
-    private int _minBranchingPerNode() {
-        return BASE_BRANCHING_PER_NODE + _depth;
+    private static int _minBranchingPerNode(Node<?> node) {
+        return BASE_BRANCHING_PER_NODE + node._depth;
     }
 
-    private ValueSetImpl<E> _withBranchAt(
+    private static <E> Node<E> _withBranchAt(
+            Node<E> node,
+            Class<E> type,
             int index,
-            @Nullable ValueSetImpl<E> branch
+            @Nullable Node<E> branch
     ) {
-        ValueSetImpl<E>[] newBranches = _branches.clone();
+        Node<E>[] newBranches = node._branches.clone();
         newBranches[index] = branch;
-        return new ValueSetImpl<>(_depth, _type, _elementsArray, _elementsHashes, newBranches, false);
+        return new Node<>(node._depth, type, node._elementsArray, node._elementsHashes, newBranches, false);
     }
 
-    private int _findValidIndexFor(final E key, final int hash) {
-        int length = _elementsHashes.length;
+    private static <E> int _findValidIndexFor(
+        final Node<E> node,
+        final ArrayItemAccess<?, Object> itemGetter,
+        final E key,
+        final int hash
+    ) {
+        int length = node._elementsHashes.length;
         if ( length < 1 ) {
             return -1;
         }
         int index = Math.abs(hash) % length;
         int tries = 0;
-        while (!_isEqual(_elementsArray, index, key, hash) && tries < length) {
+        while (!_isEqual(node, itemGetter, node._elementsArray, index, key, hash) && tries < length) {
             index = ( index + 1 ) % length;
             tries++;
         }
@@ -179,35 +224,51 @@ final class ValueSetImpl<E> implements ValueSet<E> {
         return index;
     }
 
-    private boolean _isEqual(Object items, int index, Object key, int keyHash) {
-        if ( _elementsHashes[index] != keyHash ) {
+    private static boolean _isEqual(
+        final Node<?> node,
+        final ArrayItemAccess<?, Object> itemGetter,
+        final Object items,
+        final int index,
+        final Object key,
+        final int keyHash
+    ) {
+        if ( node._elementsHashes[index] != keyHash ) {
             return false;
         }
-        return key.equals(Array.get(items, index));
+        return key.equals(itemGetter.get(index, items));
     }
 
-    private static <K> int _findValidIndexFor(final K key, final int hash, final Object elements) {
+    private static <K> int _findValidIndexFor(
+        final ArrayItemAccess<?, Object> itemGetter,
+        final K key,
+        final int hash,
+        final Object elements
+    ) {
         int length = _length(elements);
         if ( length < 1 ) {
             return -1;
         }
         int index = Math.abs(hash) % length;
         int tries = 0;
-        while (Array.get(elements, index) != null && !Objects.equals(Array.get(elements, index), key) && tries < length) {
+        while (itemGetter.get(index, elements) != null && !Objects.equals(itemGetter.get(index, elements), key) && tries < length) {
             index = ( index + 1 ) % length;
             tries++;
         }
         return index;
     }
 
-    private int _computeBranchIndex(int hash, int numberOfBranches) {
-        int localHash = Long.hashCode(PRIME_1 * (hash - PRIME_2 * (hash+_depth)));
+    private static <E> int _computeBranchIndex(
+        final Node<E> node,
+        final int hash,
+        final int numberOfBranches
+    ) {
+        int localHash = Long.hashCode(PRIME_1 * (hash - PRIME_2 * (hash+node._depth)));
         return Math.abs(localHash) % numberOfBranches;
     }
 
     @Override
     public int size() {
-        return _size;
+        return _root._size;
     }
 
     @Override
@@ -227,21 +288,25 @@ final class ValueSetImpl<E> implements ValueSet<E> {
 
     @Override
     public Tuple<E> toTuple() {
-        if ( _branches.length == 0 ) {
-            return new TupleWithDiff<>(TupleTree.ofRaw(false, _type, _elementsArray), null);
+        return _toTuple(_root, _type);
+    }
+
+    private static <E> Tuple<E> _toTuple(Node<E> node, Class<E> type) {
+        if ( node._branches.length == 0 ) {
+            return new TupleWithDiff<>(TupleTree.ofRaw(false, type, node._elementsArray), null);
         } else {
-            List<E> values = new ArrayList<>(_length(_elementsArray));
-            _each(_elementsArray, _type, value -> {
+            List<E> values = new ArrayList<>(_length(node._elementsArray));
+            _each(node._elementsArray, type, value -> {
                 if ( value != null ) {
                     values.add(value);
                 }
             });
-            for (@Nullable ValueSetImpl<E> branch : _branches) {
+            for (@Nullable Node<E> branch : node._branches) {
                 if ( branch != null ) {
-                    values.addAll(branch.toTuple().toList());
+                    values.addAll(_toTuple(branch, type).toList());
                 }
             }
-            return Tuple.of(_type, values);
+            return Tuple.of(type, values);
         }
     }
 
@@ -253,17 +318,23 @@ final class ValueSetImpl<E> implements ValueSet<E> {
                     "instead of the expected type '" + _type + "'."
                 );
         }
-        return _contains(element, element.hashCode());
+        return _contains(_root, _itemGetter, element, element.hashCode());
     }
 
-    private boolean _contains( final E element, final int elementHash ) {
-        int index = _findValidIndexFor(element, elementHash);
+    private static <E> boolean _contains(
+        final Node<E> node,
+        final ArrayItemAccess<?, Object> itemGetter,
+        final E element,
+        final int elementHash
+    ) {
+        Node<E>[] branches = node._branches;
+        int index = _findValidIndexFor(node, itemGetter, element, elementHash);
         if ( index < 0 ) {
-            if ( _branches.length > 0 ) {
-                int branchIndex = _computeBranchIndex(elementHash, _branches.length);
-                @Nullable ValueSetImpl<E> branch = _branches[branchIndex];
+            if ( branches.length > 0 ) {
+                int branchIndex = _computeBranchIndex(node, elementHash, branches.length);
+                @Nullable Node<E> branch = branches[branchIndex];
                 if ( branch != null ) {
-                    return branch._contains(element, elementHash);
+                    return _contains(branch, itemGetter, element, elementHash);
                 } else {
                     return false;
                 }
@@ -282,51 +353,61 @@ final class ValueSetImpl<E> implements ValueSet<E> {
                     "instead of the expected type '" + _type + "'."
                 );
         }
-        return _with(element, element.hashCode());
+        return _withNewRoot(_with(_root, _type, _itemGetter, element, element.hashCode()));
     }
 
-    public ValueSetImpl<E> _with( final E key, final int keyHash ) {
-        int index = _findValidIndexFor(key, keyHash);
-        if ( index < 0 || index >= _length(_elementsArray) ) {
-            if ( _branches.length == 0 && _length(_elementsArray) < _maxEntriesForThisNode() ) {
-                return new ValueSetImpl<>(
-                        _depth,
-                        _type,
-                        _withAddAt(_length(_elementsArray), key, _elementsArray, _type, ALLOWS_NULL),
-                        _elementsHashes,
-                        _branches,
+    private static <E> Node<E> _with(
+        final Node<E> node,
+        final Class<E> type,
+        final ArrayItemAccess<?, Object> itemGetter,
+        final E key,
+        final int keyHash
+    ) {
+        int depth = node._depth;
+        Object elementsArray = node._elementsArray;
+        int[] elementsHashes = node._elementsHashes;
+        Node<E>[] branches = node._branches;
+        int index = _findValidIndexFor(node, itemGetter, key, keyHash);
+        if ( index < 0 || index >= _length(elementsArray) ) {
+            if ( branches.length == 0 && _length(elementsArray) < _maxEntriesForThisNode(node) ) {
+                return new Node<>(
+                        depth,
+                        type,
+                        _withAddAt(_length(elementsArray), key, elementsArray, type, ALLOWS_NULL),
+                        elementsHashes,
+                        branches,
                         true
                 );
             } else {
-                if ( _branches.length > 0 ) {
-                    int branchIndex = _computeBranchIndex(keyHash, _branches.length);
-                    @Nullable ValueSetImpl<E> branch = _branches[branchIndex];
+                if ( branches.length > 0 ) {
+                    int branchIndex = _computeBranchIndex(node, keyHash, branches.length);
+                    @Nullable Node<E> branch = branches[branchIndex];
                     if (branch == null) {
-                        Object newElementsArray = _createArray(_type, ALLOWS_NULL, 1);
+                        Object newElementsArray = _createArray(type, ALLOWS_NULL, 1);
                         _setAt(0, key, newElementsArray);
-                        return _withBranchAt(branchIndex, new ValueSetImpl<>(_depth + 1, _type, newElementsArray, _elementsHashes, EMPTY_BRANCHES, true));
+                        return _withBranchAt(node, type, branchIndex, new Node<>(depth + 1, type, newElementsArray, elementsHashes, EMPTY_BRANCHES, true));
                     } else {
-                        ValueSetImpl<E> newBranch = branch._with(key, keyHash);
+                        Node<E> newBranch = _with(branch, type, itemGetter, key, keyHash);
                         if ( Util.refEquals(newBranch, branch) ) {
-                            return this;
+                            return node;
                         } else {
-                            return _withBranchAt(branchIndex, newBranch);
+                            return _withBranchAt(node, type, branchIndex, newBranch);
                         }
                     }
                 } else {
                     // We create two new branches for this node, this is where the tree grows
-                    int newBranchSize = _minBranchingPerNode();
-                    ValueSetImpl<E>[] newBranches = new ValueSetImpl[newBranchSize];
-                    Object newElementsArray = _createArray(_type, ALLOWS_NULL, 1);
+                    int newBranchSize = _minBranchingPerNode(node);
+                    Node<E>[] newBranches = new Node[newBranchSize];
+                    Object newElementsArray = _createArray(type, ALLOWS_NULL, 1);
                     _setAt(0, key, newElementsArray);
-                    newBranches[_computeBranchIndex(keyHash, newBranchSize)] = new ValueSetImpl<>(
-                            _depth + 1, _type, newElementsArray, _elementsHashes, EMPTY_BRANCHES, true
+                    newBranches[_computeBranchIndex(node, keyHash, newBranchSize)] = new Node<>(
+                            depth + 1, type, newElementsArray, elementsHashes, EMPTY_BRANCHES, true
                     );
-                    return new ValueSetImpl<>(_depth, _type, _elementsArray, _elementsHashes, newBranches, false);
+                    return new Node<>(depth, type, elementsArray, elementsHashes, newBranches, false);
                 }
             }
         }
-        return this;
+        return node;
     }
 
     @Override
@@ -337,42 +418,52 @@ final class ValueSetImpl<E> implements ValueSet<E> {
                     "instead of the expected type '" + _type + "'."
                 );
         }
-        return _without(element, element.hashCode());
+        return _withNewRoot(_without(_root, _type, _itemGetter, element, element.hashCode()));
     }
 
-    private ValueSetImpl<E> _without(final E key, final int keyHash) {
-        int index = _findValidIndexFor(key, keyHash);
+    private static <E> Node<E> _without(
+        final Node<E> node,
+        final Class<E> type,
+        final ArrayItemAccess<?, Object> itemGetter,
+        final E key,
+        final int keyHash
+    ) {
+        int depth = node._depth;
+        Object elementsArray = node._elementsArray;
+        int[] elementsHashes = node._elementsHashes;
+        Node<E>[] branches = node._branches;
+        int index = _findValidIndexFor(node, itemGetter, key, keyHash);
         if ( index < 0 ) {
-            if ( _branches.length == 0 ) {
-                return this;
+            if ( branches.length == 0 ) {
+                return node;
             } else {
-                int branchIndex = _computeBranchIndex(keyHash, _branches.length);
-                @Nullable ValueSetImpl<E> branch = _branches[branchIndex];
+                int branchIndex = _computeBranchIndex(node, keyHash, branches.length);
+                @Nullable Node<E> branch = branches[branchIndex];
                 if ( branch == null ) {
-                    return this;
+                    return node;
                 } else {
-                    ValueSetImpl<E> newBranch = branch._without(key, keyHash);
+                    Node<E> newBranch = _without(branch, type, itemGetter, key, keyHash);
                     if ( Util.refEquals(newBranch, branch) ) {
-                        return this;
+                        return node;
                     } else if ( newBranch._size == 0 ) {
                         // Maybe we can remove all branches now
                         int numberOfNonNullBranches = 0;
-                        for (int i = 0; i < _branches.length; i++) {
-                            if (_branches[i] != null && i != branchIndex) {
+                        for (int i = 0; i < branches.length; i++) {
+                            if (branches[i] != null && i != branchIndex) {
                                 numberOfNonNullBranches++;
                             }
                         }
                         if ( numberOfNonNullBranches == 0 ) {
-                            return new ValueSetImpl<>(_depth, _type, _elementsArray, _elementsHashes, EMPTY_BRANCHES, false);
+                            return new Node<>(depth, type, elementsArray, elementsHashes, EMPTY_BRANCHES, false);
                         }
                         newBranch = null;
                     }
-                    return _withBranchAt(branchIndex, newBranch);
+                    return _withBranchAt(node, type, branchIndex, newBranch);
                 }
             }
         } else {
-            Object newElementsArray = _withRemoveRange(index, index+1, _elementsArray, _type, ALLOWS_NULL);
-            return new ValueSetImpl<>(_depth, _type, newElementsArray, _elementsHashes, _branches, true);
+            Object newElementsArray = _withRemoveRange(index, index+1, elementsArray, type, ALLOWS_NULL);
+            return new Node<>(depth, type, newElementsArray, elementsHashes, branches, true);
         }
     }
 
@@ -425,8 +516,8 @@ final class ValueSetImpl<E> implements ValueSet<E> {
         StringBuilder sb = new StringBuilder();
         sb.append("ValueSet<").append(_type.getSimpleName()).append(">[");
         final int howMany = 8;
-        sb = _appendRecursivelyUpTo(sb, howMany);
-        int numberOfElementsLeft = _size - howMany;
+        sb = _appendRecursivelyUpTo(_root, _type, _itemGetter, sb, howMany);
+        int numberOfElementsLeft = _root._size - howMany;
         if ( numberOfElementsLeft > 0 ) {
             sb.append(", ... ").append(numberOfElementsLeft).append(" items left");
         }
@@ -434,23 +525,29 @@ final class ValueSetImpl<E> implements ValueSet<E> {
         return sb.toString();
     }
 
-    private StringBuilder _appendRecursivelyUpTo( StringBuilder sb, int size ) {
-        int howMany = Math.min(size, _length(_elementsArray));
+    private static <E> StringBuilder _appendRecursivelyUpTo(
+        final Node<E> node,
+        final Class<E>  type,
+        final ArrayItemAccess<E, Object> access,
+        StringBuilder sb,
+        final int size
+    ) {
+        int howMany = Math.min(size, _length(node._elementsArray));
         for (int i = 0; i < howMany; i++) {
-            E key = _getAt(i, _elementsArray, _type);
-            sb.append(Util._toString(key, _type));
+            E key = access.get(i, node._elementsArray);
+            sb.append(Util._toString(key, type));
             if ( i < howMany - 1 ) {
                 sb.append(", ");
             }
         }
         int deltaLeft = size - howMany;
         if ( deltaLeft > 0 ) {
-            for (ValueSetImpl<E> branch : _branches) {
+            for (Node<E> branch : node._branches) {
                 if ( branch != null ) {
                     if ( deltaLeft < size - howMany || howMany > 0 )
                         sb.append(", ");
-                    sb = branch._appendRecursivelyUpTo(sb, deltaLeft);
-                    deltaLeft -= branch.size();
+                    sb = _appendRecursivelyUpTo(branch, type, access, sb, deltaLeft);
+                    deltaLeft -= branch._size;
                     if ( deltaLeft <= 0 ) {
                         break;
                     }
@@ -472,8 +569,8 @@ final class ValueSetImpl<E> implements ValueSet<E> {
             }
             for ( E key : this ) {
                 int keyHash = key.hashCode();
-                Object value = this._contains(key, keyHash);
-                if ( !Objects.equals(value, other._contains(key, keyHash)) ) {
+                Object value = _contains(_root, _itemGetter, key, keyHash);
+                if ( !Objects.equals(value, _contains(other._root, other._itemGetter, key, keyHash)) ) {
                     return false;
                 }
             }
@@ -484,17 +581,17 @@ final class ValueSetImpl<E> implements ValueSet<E> {
 
     @Override
     public int hashCode() {
-        return Long.hashCode(_recursiveHashCode());
+        return Long.hashCode(_recursiveHashCode(_root));
     }
 
-    private long _recursiveHashCode() {
+    private static <E> long _recursiveHashCode(Node<E> node) {
         long baseHash = 0; // -> full 64 bit improve hash distribution
-        for ( int elementsHash : _elementsHashes ) {
+        for ( int elementsHash : node._elementsHashes ) {
             baseHash += elementsHash * PRIME_1; // -> we try to expand to all 64 bits in the long
         }
-        for (ValueSetImpl<E> branch : _branches) {
+        for (Node<E> branch : node._branches) {
             if ( branch != null ) {
-                baseHash += branch._recursiveHashCode();
+                baseHash += _recursiveHashCode(branch);
             }
         }
         return baseHash;
@@ -503,13 +600,13 @@ final class ValueSetImpl<E> implements ValueSet<E> {
     // A helper class to keep track of our position in a node.
     static final class IteratorFrame<E> {
         final @Nullable IteratorFrame<E> parent;
-        final ValueSetImpl<E> node;
+        final Node<E> node;
         final int arrayLength;   // Total entries in the node's arrays
         final int branchesLength; // Total branches in the node
         int arrayIndex;    // Next index in the elements/values arrays
         int branchIndex;   // Next branch index to check
 
-        IteratorFrame(@Nullable IteratorFrame<E> parent, ValueSetImpl<E> node) {
+        IteratorFrame(@Nullable IteratorFrame<E> parent, Node<E> node) {
             this.parent = parent;
             this.node = node;
             this.arrayLength = _length(node._elementsArray);
@@ -521,7 +618,7 @@ final class ValueSetImpl<E> implements ValueSet<E> {
 
     @Override
     public Spliterator<E> spliterator() {
-        return Spliterators.spliterator(iterator(), _size,
+        return Spliterators.spliterator(iterator(), _root._size,
                 Spliterator.DISTINCT |
                 Spliterator.SIZED    |
                 Spliterator.SUBSIZED |
@@ -532,64 +629,70 @@ final class ValueSetImpl<E> implements ValueSet<E> {
 
     @Override
     public Iterator<E> iterator() {
-        return new Iterator<E>() {
-            // Use a stack to perform depth-first traversal.
-            private @Nullable IteratorFrame<E> currentFrame = null;
-            {
-                // Initialize with this node if there is at least one element.
-                if (_size > 0) {
-                    currentFrame = new IteratorFrame<>(null, ValueSetImpl.this);
-                }
+        return new ValueSetIterator<>(_root, ArrayItemAccess.of(_type, false));
+    }
+
+
+    private static final class ValueSetIterator<E> implements Iterator<E>
+    {
+        private final ArrayItemAccess<E,Object> _elementGetter;
+        // Use a stack to perform depth-first traversal.
+        private @Nullable IteratorFrame<E> currentFrame = null;
+
+        ValueSetIterator(Node<E> node, ArrayItemAccess<E, Object> elementGetter) {
+            _elementGetter = elementGetter;
+            // Initialize with this node if there is at least one element.
+            if (node._size > 0) {
+                currentFrame = new IteratorFrame<>(null, node);
             }
+        }
 
-            @Override
-            public boolean hasNext() {
-                // Loop until we find a node state with an unvisited entry or the stack is empty.
-                while ( currentFrame != null ) {
-                    // If there is a key-value pair left in the current node, we're done.
-                    if (currentFrame.arrayIndex < currentFrame.arrayLength) {
-                        return true;
-                    }
+        @Override
+        public boolean hasNext() {
+            // Loop until we find a node state with an unvisited entry or the stack is empty.
+            while ( currentFrame != null ) {
+                // If there is a key-value pair left in the current node, we're done.
+                if (currentFrame.arrayIndex < currentFrame.arrayLength) {
+                    return true;
+                }
 
-                    // Otherwise, check for non-null branches to traverse.
-                    if (currentFrame.branchIndex < currentFrame.branchesLength) {
-                        // Look for the next branch.
-                        while (currentFrame.branchIndex < currentFrame.branchesLength) {
-                            ValueSetImpl<E> branch = currentFrame.node._branches[currentFrame.branchIndex];
-                            currentFrame.branchIndex++;
-                            if (branch != null && branch._size > 0) {
-                                // Found a non-empty branch: push its state on the stack.
-                                currentFrame = new IteratorFrame(currentFrame, branch);
-                                break;
-                            }
+                // Otherwise, check for non-null branches to traverse.
+                if (currentFrame.branchIndex < currentFrame.branchesLength) {
+                    // Look for the next branch.
+                    while (currentFrame.branchIndex < currentFrame.branchesLength) {
+                        Node<E> branch = currentFrame.node._branches[currentFrame.branchIndex];
+                        currentFrame.branchIndex++;
+                        if (branch != null && branch._size > 0) {
+                            // Found a non-empty branch: push its state on the stack.
+                            currentFrame = new IteratorFrame(currentFrame, branch);
+                            break;
                         }
-                        // Continue the while loop: now the top of the stack may have entries.
-                        continue;
                     }
-
-                    // If no more entries or branches are left in the current node, pop it.
-                    currentFrame = currentFrame.parent;
+                    // Continue the while loop: now the top of the stack may have entries.
+                    continue;
                 }
-                return false;
-            }
 
-            @Override
-            public E next() {
-                if (!hasNext() || currentFrame == null) {
-                    throw new NoSuchElementException();
-                }
-                // Retrieve the key and value at the current position.
-                @SuppressWarnings("unchecked")
-                E key = (E) _getAt(currentFrame.arrayIndex, currentFrame.node._elementsArray);
-                currentFrame.arrayIndex++;
-                return Objects.requireNonNull(key);
+                // If no more entries or branches are left in the current node, pop it.
+                currentFrame = currentFrame.parent;
             }
+            return false;
+        }
 
-            @Override
-            public void remove() {
-                throw new UnsupportedOperationException();
+        @Override
+        public E next() {
+            if (!hasNext() || currentFrame == null) {
+                throw new NoSuchElementException();
             }
-        };
+            // Retrieve the key and value at the current position.
+            E key = _elementGetter.get(currentFrame.arrayIndex, currentFrame.node._elementsArray);
+            currentFrame.arrayIndex++;
+            return Objects.requireNonNull(key);
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
     }
 
 }

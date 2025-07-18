@@ -81,7 +81,7 @@ import static sprouts.impl.ArrayUtil.*;
  */
 final class AssociationImpl<K, V> implements Association<K, V> {
 
-    private static final AssociationImpl[] EMPTY_BRANCHES = new AssociationImpl<?, ?>[0];
+    private static final Node[] EMPTY_BRANCHES = new Node<?, ?>[0];
     private static final boolean ALLOWS_NULL = false;
     private static final long PRIME_1 = 12055296811267L;
     private static final long PRIME_2 = 53982894593057L;
@@ -89,62 +89,86 @@ final class AssociationImpl<K, V> implements Association<K, V> {
     private static final int BASE_BRANCHING_PER_NODE = 32;
     private static final int BASE_ENTRIES_PER_NODE = 0;
 
-
-    private final int _depth;
-    private final int _size;
     private final Class<K> _keyType;
-    private final Object _keysArray;
     private final Class<V> _valueType;
-    private final Object _valuesArray;
-    private final int[] _keyHashes;
-    private final AssociationImpl<K, V>[] _branches;
+    private final ArrayItemAccess<K, Object> _keyGetter;
+    private final ArrayItemAccess<V, Object> _valueGetter;
+    private final Node<K,V> _root;
 
+    private static final class Node<K,V> {
+        private final int _depth;
+        private final int _size;
+        private final Object _keysArray;
+        private final Object _valuesArray;
+        private final int[] _keyHashes;
+        private final Node<K, V>[] _branches;
+        private Node(
+                final int depth,
+                final Class<K> keyType,
+                final Object newKeysArray,
+                final Class<V> valueType,
+                final Object newValuesArray,
+                final int[] keyHashes,
+                final Node<K, V>[] branches,
+                final boolean rebuild
+        ){
+            final int size = _length(newKeysArray);
+            if ( rebuild && size > 1 ) {
+                Pair<Object,Object> localData = _fillNodeArrays(size, keyType, valueType, newKeysArray, newValuesArray);
+                _keysArray = localData.first();
+                _valuesArray = localData.second();
+            } else {
+                _keysArray = newKeysArray;
+                _valuesArray = newValuesArray;
+            }
+            _depth = depth;
+            _branches = branches;
+            _size = size + _sumBranchSizes(_branches);
+            if ( keyHashes.length != size || rebuild ) {
+                _keyHashes = new int[size];
+                for (int i = 0; i < size; i++) {
+                    _keyHashes[i] = Objects.requireNonNull(Array.get(_keysArray, i)).hashCode();
+                }
+            } else {
+                _keyHashes = keyHashes;
+            }
+        }
+        Node(
+                final Class<K> keyType,
+                final Class<V> valueType
+        ) {
+            this(
+                    0, keyType,
+                    _createArray(keyType, ALLOWS_NULL, 0),
+                    valueType,
+                    _createArray(valueType, ALLOWS_NULL, 0),
+                    new int[0],
+                    EMPTY_BRANCHES, true
+            );
+        }
+    }
 
-    AssociationImpl(
-        final Class<K> keyType,
-        final Class<V> valueType
-    ) {
+    public AssociationImpl(final Class<K> keyType, final Class<V> valueType) {
         this(
-            0, keyType,
-            _createArray(keyType, ALLOWS_NULL, 0),
-            valueType,
-            _createArray(valueType, ALLOWS_NULL, 0),
-            new int[0],
-            EMPTY_BRANCHES, true
+            Objects.requireNonNull(keyType),
+            Objects.requireNonNull(valueType),
+            new Node<>(keyType, valueType)
         );
     }
 
-    private AssociationImpl(
-        final int depth,
-        final Class<K> keyType,
-        final Object newKeysArray,
-        final Class<V> valueType,
-        final Object newValuesArray,
-        final int[] keyHashes,
-        final AssociationImpl<K, V>[] branches,
-        final boolean rebuild
-    ) {
-        final int size = _length(newKeysArray);
-        if ( rebuild && size > 1 ) {
-            Pair<Object,Object> localData = _fillNodeArrays(size, keyType, valueType, newKeysArray, newValuesArray);
-            _keysArray = localData.first();
-            _valuesArray = localData.second();
-        } else {
-            _keysArray = newKeysArray;
-            _valuesArray = newValuesArray;
-        }
-        _depth = depth;
+    public AssociationImpl(Class<K> keyType, final Class<V> valueType, Node<K,V> newRoot) {
         _keyType = Objects.requireNonNull(keyType);
         _valueType = Objects.requireNonNull(valueType);
-        _branches = branches;
-        _size = size + _sumBranchSizes(_branches);
-        if ( keyHashes.length != size || rebuild ) {
-            _keyHashes = new int[size];
-            for (int i = 0; i < size; i++) {
-                _keyHashes[i] = Objects.requireNonNull(Array.get(_keysArray, i)).hashCode();
-            }
+        _keyGetter = ArrayItemAccess.of(_keyType, false);
+        _valueGetter = ArrayItemAccess.of(_valueType, false);
+        _root = newRoot;
+    }
+
+    private AssociationImpl<K,V> _withNewRoot(Node<K,V> newRoot) {
+        if ( _root == newRoot ) {
+            return this;
         } else {
-            _keyHashes = keyHashes;
+            return new AssociationImpl<>(_keyType, _valueType, newRoot);
         }
     }
 
@@ -155,11 +179,13 @@ final class AssociationImpl<K, V> implements Association<K, V> {
         final Object newKeysArray,
         final Object newValuesArray
     ) {
+        ArrayItemAccess<K,Object> keyGetter = ArrayItemAccess.of(keyType, false);
+        ArrayItemAccess<V,Object> valueGetter = ArrayItemAccess.of(valueType, false);
         Object keysArray   = new Object[size];
         Object valuesArray = new Object[size];
-        for (int i = 0; i < size; i++) {
-            K key = _getAt(i, newKeysArray, keyType);
-            V value = _getAt(i, newValuesArray, valueType);
+        for ( int i = 0; i < size; i++ ) {
+            K key = keyGetter.get(i, newKeysArray);
+            V value = valueGetter.get(i, newValuesArray);
             Objects.requireNonNull(key);
             Objects.requireNonNull(value);
             int index = _findValidIndexFor(key, key.hashCode(), keysArray);
@@ -172,41 +198,49 @@ final class AssociationImpl<K, V> implements Association<K, V> {
             );
     }
 
-    private static int _sumBranchSizes(AssociationImpl<?, ?>[] branches) {
+    private static int _sumBranchSizes(Node<?, ?>[] branches) {
         int sum = 0;
-        for (AssociationImpl<?, ?> branch : branches) {
+        for (Node<?, ?> branch : branches) {
             if ( branch != null ) {
-                sum += branch.size();
+                sum += branch._size;
             }
         }
         return sum;
     }
 
-    private int _maxEntriesForThisNode() {
-        return BASE_ENTRIES_PER_NODE + (_depth * _depth);
+    private static int _maxEntriesForThisNode(Node<?, ?> node) {
+        return BASE_ENTRIES_PER_NODE + (node._depth * node._depth);
     }
 
-    private int _minBranchingPerNode() {
-        return BASE_BRANCHING_PER_NODE + _depth;
+    private static int _minBranchingPerNode(Node<?, ?> node) {
+        return BASE_BRANCHING_PER_NODE + node._depth;
     }
 
-    private AssociationImpl<K, V> _withBranchAt(
+    private static <K,V> Node<K, V> _withBranchAt(
+            Node<K, V> node,
+            Class<K> _keyType,
+            Class<V> _valueType,
             int index,
-            @Nullable AssociationImpl<K, V> branch
+            @Nullable Node<K, V> branch
     ) {
-        AssociationImpl<K, V>[] newBranches = _branches.clone();
+        Node<K, V>[] newBranches = node._branches.clone();
         newBranches[index] = branch;
-        return new AssociationImpl<>(_depth, _keyType, _keysArray, _valueType, _valuesArray, _keyHashes, newBranches, false);
+        return new Node<>(node._depth, _keyType, node._keysArray, _valueType, node._valuesArray, node._keyHashes, newBranches, false);
     }
 
-    private int _findValidIndexFor(final K key, final int hash) {
-        int length = _keyHashes.length;
+    private static <K> int _findValidIndexFor(
+        final Node<K,?> node,
+        final ArrayItemAccess<?,Object> keyGetter,
+        final K key,
+        final int hash
+    ) {
+        int length = node._keyHashes.length;
         if ( length < 1 ) {
             return -1;
         }
         int index = Math.abs(hash) % length;
         int tries = 0;
-        while (!_isEqual(_keysArray, index, key, hash) && tries < length) {
+        while (!_isEqual(node, keyGetter, index, key, hash) && tries < length) {
             index = ( index + 1 ) % length;
             tries++;
         }
@@ -216,11 +250,17 @@ final class AssociationImpl<K, V> implements Association<K, V> {
         return index;
     }
 
-    private boolean _isEqual(Object items, int index, Object key, int keyHash) {
-        if ( _keyHashes[index] != keyHash ) {
+    private static boolean _isEqual(
+        final Node<?, ?> node,
+        final ArrayItemAccess<?,Object> keyGetter,
+        final int index,
+        final Object key,
+        final int keyHash
+    ) {
+        if ( node._keyHashes[index] != keyHash ) {
             return false;
         }
-        return key.equals(Array.get(items, index));
+        return key.equals(keyGetter.get(index, node._keysArray));
     }
 
     private static <K> int _findValidIndexFor(final K key, final int hash, final Object keys) {
@@ -237,14 +277,14 @@ final class AssociationImpl<K, V> implements Association<K, V> {
         return index;
     }
 
-    private int _computeBranchIndex(int hash, int numberOfBranches) {
-        int localHash = Long.hashCode(PRIME_1 * (hash - PRIME_2 * (hash+_depth)));
+    private static int _computeBranchIndex(int hash, int numberOfBranches, int depth) {
+        int localHash = Long.hashCode(PRIME_1 * (hash - PRIME_2 * (hash+depth)));
         return Math.abs(localHash) % numberOfBranches;
     }
 
     @Override
     public int size() {
-        return _size;
+        return _root._size;
     }
 
     @Override
@@ -274,21 +314,29 @@ final class AssociationImpl<K, V> implements Association<K, V> {
 
     @Override
     public Tuple<V> values() {
-        if ( _branches.length == 0 ) {
-            return new TupleWithDiff<>(TupleTree.ofRaw(false, _valueType, _valuesArray), null);
+        return values(_root, _valueType, _valueGetter);
+    }
+
+    private static <K,V> Tuple<V> values(
+        final Node<K,V> node,
+        final Class<V> valueType,
+        final ArrayItemAccess<V, Object> valueGetter
+    ) {
+        if ( node._branches.length == 0 ) {
+            return new TupleWithDiff<>(TupleTree.ofRaw(false, valueType, node._valuesArray), null);
         } else {
-            List<V> values = new java.util.ArrayList<>(_length(_valuesArray));
-            _each(_valuesArray, _valueType, value -> {
+            List<V> values = new java.util.ArrayList<>(_length(node._valuesArray));
+            _each(node._valuesArray, valueGetter, value -> {
                 if ( value != null ) {
                     values.add(value);
                 }
             });
-            for (@Nullable AssociationImpl<K, V> branch : _branches) {
+            for (@Nullable Node<K, V> branch : node._branches) {
                 if ( branch != null ) {
-                    values.addAll(branch.values().toList());
+                    values.addAll(values(branch, valueType, valueGetter).toList());
                 }
             }
-            return Tuple.of(_valueType, values);
+            return Tuple.of(valueType, values);
         }
     }
 
@@ -300,7 +348,7 @@ final class AssociationImpl<K, V> implements Association<K, V> {
                     "instead of the expected type '" + _keyType + "'."
                 );
         }
-        return _get(key, key.hashCode()) != null;
+        return _get(_root, _keyGetter, _valueGetter, key, key.hashCode()) != null;
     }
 
     @Override
@@ -311,17 +359,23 @@ final class AssociationImpl<K, V> implements Association<K, V> {
                     "instead of the expected type '" + _keyType + "'."
                 );
         }
-        return Optional.ofNullable(_get(key, key.hashCode()));
+        return Optional.ofNullable(_get(_root, _keyGetter, _valueGetter, key, key.hashCode()));
     }
 
-    private @Nullable V _get( final K key, final int keyHash ) {
-        int index = _findValidIndexFor(key, keyHash);
+    private static <K,V> @Nullable V _get(
+        final Node<K, V> node,
+        final ArrayItemAccess<K, Object> keyGetter,
+        final ArrayItemAccess<V, Object> valueGetter,
+        final K key,
+        final int keyHash
+    ) {
+        int index = _findValidIndexFor(node, keyGetter, key, keyHash);
         if ( index < 0 ) {
-            if ( _branches.length > 0 ) {
-                int branchIndex = _computeBranchIndex(keyHash, _branches.length);
-                @Nullable AssociationImpl<K, V> branch = _branches[branchIndex];
+            if ( node._branches.length > 0 ) {
+                int branchIndex = _computeBranchIndex(keyHash, node._branches.length, node._depth);
+                @Nullable Node<K, V> branch = node._branches[branchIndex];
                 if ( branch != null ) {
-                    return branch._get(key, keyHash);
+                    return _get(branch, keyGetter, valueGetter, key, keyHash);
                 } else {
                     return null;
                 }
@@ -329,11 +383,13 @@ final class AssociationImpl<K, V> implements Association<K, V> {
                 return null;
             }
         }
-        return _getAt(index, _valuesArray, _valueType);
+        return valueGetter.get(index, node._valuesArray);
     }
 
     @Override
     public Association<K, V> put(final K key, final V value) {
+        Objects.requireNonNull(key);
+        Objects.requireNonNull(value);
         if ( !_keyType.isAssignableFrom(key.getClass()) ) {
             throw new IllegalArgumentException(
                     "The given key '" + key + "' is of type '" + key.getClass().getSimpleName() + "', " +
@@ -346,11 +402,13 @@ final class AssociationImpl<K, V> implements Association<K, V> {
                     "instead of the expected type '" + _valueType + "'."
                 );
         }
-        return _with(key, key.hashCode(), value, false);
+        return _withNewRoot(_with(_root, _keyType, _valueType, _keyGetter, _valueGetter, key, key.hashCode(), value, false));
     }
 
     @Override
     public Association<K, V> putIfAbsent(K key, V value) {
+        Objects.requireNonNull(key);
+        Objects.requireNonNull(value);
         if ( !_keyType.isAssignableFrom(key.getClass()) ) {
             throw new IllegalArgumentException(
                     "The given key '" + key + "' is of type '" + key.getClass().getSimpleName() + "', " +
@@ -363,62 +421,77 @@ final class AssociationImpl<K, V> implements Association<K, V> {
                     "instead of the expected type '" + _valueType + "'."
                 );
         }
-        return _with(key, key.hashCode(), value, true);
+        return _withNewRoot(_with(_root, _keyType, _valueType, _keyGetter, _valueGetter, key, key.hashCode(), value, true));
     }
 
-    public AssociationImpl<K, V> _with(final K key, final int keyHash, final V value, boolean putIfAbsent) {
-        int index = _findValidIndexFor(key, keyHash);
-        if ( index < 0 || index >= _length(_keysArray) ) {
-            if ( _branches.length == 0 && _length(_keysArray) < _maxEntriesForThisNode() ) {
-                return new AssociationImpl<>(
-                        _depth,
-                        _keyType,
-                        _withAddAt(_length(_keysArray), key, _keysArray, _keyType, ALLOWS_NULL),
-                        _valueType,
-                        _withAddAt(_length(_valuesArray), value, _valuesArray, _valueType, ALLOWS_NULL),
-                        _keyHashes,
+    private static <K,V> Node<K, V> _with(
+        final Node<K, V> node,
+        final Class<K> keyType,
+        final Class<V> valueType,
+        final ArrayItemAccess<K, Object> keyGetter,
+        final ArrayItemAccess<V, Object> valueGetter,
+        final K key,
+        final int keyHash,
+        final V value,
+        final boolean putIfAbsent
+    ) {
+        final int depth = node._depth;
+        final Object keysArray = node._keysArray;
+        final Object valuesArray = node._valuesArray;
+        final int[] keyHashes = node._keyHashes;
+        final Node<K, V>[] _branches =  node._branches;
+        int index = _findValidIndexFor(node, keyGetter, key, keyHash);
+        if ( index < 0 || index >= _length(keysArray) ) {
+            if ( _branches.length == 0 && _length(keysArray) < _maxEntriesForThisNode(node) ) {
+                return new Node<>(
+                        depth,
+                        keyType,
+                        _withAddAt(_length(keysArray), key, keysArray, keyType, ALLOWS_NULL),
+                        valueType,
+                        _withAddAt(_length(valuesArray), value, valuesArray, valueType, ALLOWS_NULL),
+                        keyHashes,
                         _branches,
                         true
                 );
             } else {
                 if ( _branches.length > 0 ) {
-                    int branchIndex = _computeBranchIndex(keyHash, _branches.length);
-                    @Nullable AssociationImpl<K, V> branch = _branches[branchIndex];
+                    int branchIndex = _computeBranchIndex(keyHash, _branches.length, depth);
+                    @Nullable Node<K, V> branch = _branches[branchIndex];
                     if (branch == null) {
-                        Object newKeysArray = _createArray(_keyType, ALLOWS_NULL, 1);
+                        Object newKeysArray = _createArray(keyType, ALLOWS_NULL, 1);
                         _setAt(0, key, newKeysArray);
-                        Object newValuesArray = _createArray(_valueType, ALLOWS_NULL, 1);
+                        Object newValuesArray = _createArray(valueType, ALLOWS_NULL, 1);
                         _setAt(0, value, newValuesArray);
-                        return _withBranchAt(branchIndex, new AssociationImpl<>(_depth + 1, _keyType, newKeysArray, _valueType, newValuesArray, _keyHashes, EMPTY_BRANCHES, true));
+                        return _withBranchAt(node, keyType, valueType, branchIndex, new Node<>(depth + 1, keyType, newKeysArray, valueType, newValuesArray, keyHashes, EMPTY_BRANCHES, true));
                     } else {
-                        AssociationImpl<K, V> newBranch = branch._with(key, keyHash, value, putIfAbsent);
+                        Node<K, V> newBranch = _with(branch, keyType, valueType, keyGetter, valueGetter, key, keyHash, value, putIfAbsent);
                         if ( Util.refEquals(newBranch, branch) ) {
-                            return this;
+                            return node;
                         } else {
-                            return _withBranchAt(branchIndex, newBranch);
+                            return _withBranchAt(node, keyType, valueType, branchIndex, newBranch);
                         }
                     }
                 } else {
                     // We create two new branches for this node, this is where the tree grows
-                    int newBranchSize = _minBranchingPerNode();
-                    AssociationImpl<K, V>[] newBranches = new AssociationImpl[newBranchSize];
-                    Object newKeysArray = _createArray(_keyType, ALLOWS_NULL, 1);
+                    int newBranchSize = _minBranchingPerNode(node);
+                    Node<K, V>[] newBranches = new Node[newBranchSize];
+                    Object newKeysArray = _createArray(keyType, ALLOWS_NULL, 1);
                     _setAt(0, key, newKeysArray);
-                    Object newValuesArray = _createArray(_valueType, ALLOWS_NULL, 1);
+                    Object newValuesArray = _createArray(valueType, ALLOWS_NULL, 1);
                     _setAt(0, value, newValuesArray);
-                    newBranches[_computeBranchIndex(keyHash, newBranchSize)] = new AssociationImpl<>(
-                            _depth + 1, _keyType, newKeysArray, _valueType, newValuesArray, _keyHashes, EMPTY_BRANCHES, true
+                    newBranches[_computeBranchIndex(keyHash, newBranchSize, depth)] = new Node<>(
+                            depth + 1, keyType, newKeysArray, valueType, newValuesArray, keyHashes, EMPTY_BRANCHES, true
                     );
-                    return new AssociationImpl<>(_depth, _keyType, _keysArray, _valueType, _valuesArray, _keyHashes, newBranches, false);
+                    return new Node<>(depth, keyType, keysArray, valueType, valuesArray, keyHashes, newBranches, false);
                 }
             }
-        } else if ( Objects.equals(_getAt(index, _valuesArray, _valueType), value) ) {
-            return this;
+        } else if ( Objects.equals(valueGetter.get(index, valuesArray), value) ) {
+            return node;
         } else if ( !putIfAbsent ) {
-            Object newValuesArray = _withSetAt(index, value, _valuesArray, _valueType, ALLOWS_NULL);
-            return new AssociationImpl<>(_depth, _keyType, _keysArray, _valueType, newValuesArray, _keyHashes, _branches, false);
+            Object newValuesArray = _withSetAt(index, value, valuesArray, valueType, ALLOWS_NULL);
+            return new Node<>(depth, keyType, keysArray, valueType, newValuesArray, keyHashes, _branches, false);
         }
-        return this;
+        return node;
     }
 
     @Override
@@ -429,7 +502,7 @@ final class AssociationImpl<K, V> implements Association<K, V> {
                     "instead of the expected type '" + _keyType + "'."
                 );
         }
-        return _without(key, key.hashCode());
+        return _withNewRoot(_without(_root, _keyType, _valueType, _keyGetter, key, key.hashCode()));
     }
 
     @Override
@@ -437,20 +510,32 @@ final class AssociationImpl<K, V> implements Association<K, V> {
         return Sprouts.factory().associationOf(this.keyType(), this.valueType());
     }
 
-    private AssociationImpl<K, V> _without(final K key, final int keyHash) {
-        int index = _findValidIndexFor(key, keyHash);
+    private static <K,V> Node<K, V> _without(
+        final Node<K,V> node,
+        final Class<K> keyType,
+        final Class<V> valueType,
+        final ArrayItemAccess<K,Object> keyGetter,
+        final K key,
+        final int keyHash
+    ) {
+        final int depth = node._depth;
+        final Object keysArray = node._keysArray;
+        final Object valuesArray = node._valuesArray;
+        final int[] keyHashes = node._keyHashes;
+        final Node<K, V>[] _branches =  node._branches;
+        int index = _findValidIndexFor(node, keyGetter, key, keyHash);
         if ( index < 0 ) {
             if ( _branches.length == 0 ) {
-                return this;
+                return node;
             } else {
-                int branchIndex = _computeBranchIndex(keyHash, _branches.length);
-                @Nullable AssociationImpl<K, V> branch = _branches[branchIndex];
+                int branchIndex = _computeBranchIndex(keyHash, _branches.length, depth);
+                @Nullable Node<K, V> branch = _branches[branchIndex];
                 if ( branch == null ) {
-                    return this;
+                    return node;
                 } else {
-                    AssociationImpl<K, V> newBranch = branch._without(key, keyHash);
+                    Node<K, V> newBranch = _without(branch, keyType, valueType, keyGetter, key, keyHash);
                     if ( Util.refEquals(newBranch, branch) ) {
-                        return this;
+                        return node;
                     } else if ( newBranch._size == 0 ) {
                         // Maybe we can remove all branches now
                         int numberOfNonNullBranches = 0;
@@ -460,37 +545,45 @@ final class AssociationImpl<K, V> implements Association<K, V> {
                             }
                         }
                         if ( numberOfNonNullBranches == 0 ) {
-                            return new AssociationImpl<>(_depth, _keyType, _keysArray, _valueType, _valuesArray, _keyHashes, EMPTY_BRANCHES, false);
+                            return new Node<>(depth, keyType, keysArray, valueType, valuesArray, keyHashes, EMPTY_BRANCHES, false);
                         }
                         newBranch = null;
                     }
-                    return _withBranchAt(branchIndex, newBranch);
+                    return _withBranchAt(node, keyType, valueType, branchIndex, newBranch);
                 }
             }
         } else {
-            Object newKeysArray = _withRemoveRange(index, index+1, _keysArray, _keyType, ALLOWS_NULL);
-            Object newValuesArray = _withRemoveRange(index, index+1, _valuesArray, _valueType, ALLOWS_NULL);
-            return new AssociationImpl<>(_depth, _keyType, newKeysArray, _valueType, newValuesArray, _keyHashes, _branches, true);
+            Object newKeysArray = _withRemoveRange(index, index+1, keysArray, keyType, ALLOWS_NULL);
+            Object newValuesArray = _withRemoveRange(index, index+1, valuesArray, valueType, ALLOWS_NULL);
+            return new Node<>(depth, keyType, newKeysArray, valueType, newValuesArray, keyHashes, _branches, true);
         }
     }
 
     @Override
     public Map<K, V> toMap() {
         Map<K, V> map = new java.util.HashMap<>();
-        _toMapRecursively(map);
+        _toMapRecursively(_root, _keyGetter, _valueGetter, map);
         return Collections.unmodifiableMap(map);
     }
 
-    private void _toMapRecursively( Map<K, V> map ) {
-        int size = _length(_keysArray);
+    private static <K,V> void _toMapRecursively(
+        final Node<K,V> node,
+        final ArrayItemAccess<K, Object> keyGetter,
+        final ArrayItemAccess<V, Object> valueGetter,
+        final Map<K, V> map
+    ) {
+        final Object keysArray = node._keysArray;
+        final Object valuesArray = node._valuesArray;
+        final Node<K, V>[] branches = node._branches;
+        final int size = _length(keysArray);
         for (int i = 0; i < size; i++) {
-            K key = _getAt(i, _keysArray, _keyType);
-            V value = _getAt(i, _valuesArray, _valueType);
+            K key = keyGetter.get(i, keysArray);
+            V value = valueGetter.get(i, valuesArray);
             map.put(key, value);
         }
-        for (AssociationImpl<K, V> branch : _branches) {
+        for (Node<K, V> branch : branches) {
             if (branch != null) {
-                branch._toMapRecursively(map);
+                _toMapRecursively(branch, keyGetter, valueGetter, map);
             }
         }
     }
@@ -502,8 +595,8 @@ final class AssociationImpl<K, V> implements Association<K, V> {
         sb.append(_keyType.getSimpleName()).append(",");
         sb.append(_valueType.getSimpleName()).append(">[");
         final int howMany = 8;
-        sb = _appendRecursivelyUpTo(sb, howMany);
-        int numberOfEntriesLeft = _size - howMany;
+        sb = _appendRecursivelyUpTo(_root, _keyType, _valueType, _keyGetter, _valueGetter, sb, howMany);
+        int numberOfEntriesLeft = _root._size - howMany;
         if ( numberOfEntriesLeft > 0 ) {
             sb.append(", ...").append(numberOfEntriesLeft).append(" more entries");
         }
@@ -511,24 +604,32 @@ final class AssociationImpl<K, V> implements Association<K, V> {
         return sb.toString();
     }
 
-    private StringBuilder _appendRecursivelyUpTo( StringBuilder sb, int size ) {
-        int howMany = Math.min(size, _length(_keysArray));
+    private static <K,V> StringBuilder _appendRecursivelyUpTo(
+        final Node<K,V> node,
+        final Class<K> keyType,
+        final Class<V> valueType,
+        final ArrayItemAccess<K, Object> keyGetter,
+        final ArrayItemAccess<V, Object> valueGetter,
+        StringBuilder sb,
+        final int size
+    ) {
+        int howMany = Math.min(size, _length(node._keysArray));
         for (int i = 0; i < howMany; i++) {
-            K key = _getAt(i, _keysArray, _keyType);
-            V value = _getAt(i, _valuesArray, _valueType);
-            sb.append(Util._toString(key, _keyType)).append(" ↦ ").append(Util._toString(value, _valueType));
+            K key = keyGetter.get(i, node._keysArray);
+            V value = valueGetter.get(i, node._valuesArray);
+            sb.append(Util._toString(key, keyType)).append(" ↦ ").append(Util._toString(value, valueType));
             if ( i < howMany - 1 ) {
                 sb.append(", ");
             }
         }
         int deltaLeft = size - howMany;
         if ( deltaLeft > 0 ) {
-            for (AssociationImpl<K, V> branch : _branches) {
+            for (Node<K, V> branch : node._branches) {
                 if ( branch != null ) {
                     if ( deltaLeft < size - howMany || howMany > 0 )
                         sb.append(", ");
-                    sb = branch._appendRecursivelyUpTo(sb, deltaLeft);
-                    deltaLeft -= branch.size();
+                    sb = _appendRecursivelyUpTo(branch, keyType, valueType, keyGetter, valueGetter, sb, deltaLeft);
+                    deltaLeft -= branch._size;
                     if ( deltaLeft <= 0 ) {
                         break;
                     }
@@ -544,14 +645,14 @@ final class AssociationImpl<K, V> implements Association<K, V> {
             return true;
         }
         if ( obj instanceof AssociationImpl) {
-            AssociationImpl<K, ?> other = (AssociationImpl) obj;
+            AssociationImpl<K, V> other = (AssociationImpl) obj;
             if ( other.size() != this.size() ) {
                 return false;
             }
             for ( K key : this.keySet() ) {
                 int keyHash = key.hashCode();
-                Object value = this._get(key, keyHash);
-                if ( !Objects.equals(value, other._get(key, keyHash)) ) {
+                Object value = _get(_root, _keyGetter, _valueGetter, key, keyHash);
+                if ( !Objects.equals(value, _get(other._root, other._keyGetter, other._valueGetter, key, keyHash)) ) {
                     return false;
                 }
             }
@@ -562,17 +663,17 @@ final class AssociationImpl<K, V> implements Association<K, V> {
 
     @Override
     public int hashCode() {
-        return Long.hashCode(_recursiveHashCode());
+        return Long.hashCode(_recursiveHashCode(_root));
     }
 
-    private long _recursiveHashCode() {
+    private static <K,V> long _recursiveHashCode(Node<K, V> node) {
         long baseHash = 0; // -> full 64 bit improve hash distribution
-        for (int i = 0; i < _keyHashes.length; i++) {
-            baseHash += _fullKeyPairHash(_keyHashes[i], Array.get(_valuesArray, i));
+        for (int i = 0; i < node._keyHashes.length; i++) {
+            baseHash += _fullKeyPairHash(node._keyHashes[i], Array.get(node._valuesArray, i));
         }
-        for (AssociationImpl<K, V> branch : _branches) {
+        for (Node<K, V> branch : node._branches) {
             if ( branch != null ) {
-                baseHash += branch._recursiveHashCode();
+                baseHash += _recursiveHashCode(branch);
             }
         }
         return baseHash;
@@ -589,13 +690,13 @@ final class AssociationImpl<K, V> implements Association<K, V> {
     // A helper class to keep track of our position in a node.
     static final class IteratorFrame<K, V> {
         final @Nullable IteratorFrame<K, V> parent;
-        final AssociationImpl<K, V> node;
+        final Node<K, V> node;
         final int arrayLength;   // Total entries in the node's arrays
         final int branchesLength; // Total branches in the node
         int arrayIndex;    // Next index in the keys/values arrays
         int branchIndex;   // Next branch index to check
 
-        IteratorFrame(@Nullable IteratorFrame<K, V> parent, AssociationImpl<K, V> node) {
+        IteratorFrame(@Nullable IteratorFrame<K, V> parent, Node<K, V> node) {
             this.parent = parent;
             this.node = node;
             this.arrayLength = _length(node._keysArray);
@@ -607,7 +708,7 @@ final class AssociationImpl<K, V> implements Association<K, V> {
 
     @Override
     public Spliterator<Pair<K, V>> spliterator() {
-        return Spliterators.spliterator(iterator(), _size,
+        return Spliterators.spliterator(iterator(), _root._size,
                 Spliterator.DISTINCT |
                 Spliterator.SIZED    |
                 Spliterator.SUBSIZED |
@@ -618,69 +719,76 @@ final class AssociationImpl<K, V> implements Association<K, V> {
 
     @Override
     public Iterator<Pair<K, V>> iterator() {
-        return new Iterator<Pair<K, V>>() {
+        return new AssociationIterator<>(this);
+    }
 
-            // Use a stack to perform depth-first traversal.
-            private @Nullable IteratorFrame<K, V> currentFrame = null;
-            {
-                // Initialize with this node if there is at least one element.
-                if (_size > 0) {
-                    currentFrame = new IteratorFrame<>(null, AssociationImpl.this);
-                }
+    private static final class AssociationIterator<K, V> implements Iterator<Pair<K, V>>
+    {
+        private final ArrayItemAccess<K,Object> _keyGetter;
+        private final ArrayItemAccess<V,Object> _valueGetter;
+        // Use a stack to perform depth-first traversal:
+        private @Nullable IteratorFrame<K, V> currentFrame = null;
+
+        AssociationIterator(
+            AssociationImpl<K, V> node
+        ) {
+            _keyGetter = node._keyGetter;
+            _valueGetter = node._valueGetter;
+            // Initialize with this node if there is at least one element.
+            if (node._root._size > 0) {
+                currentFrame = new IteratorFrame<>(null, node._root);
             }
+        }
 
-            @Override
-            public boolean hasNext() {
-                // Loop until we find a node state with an unvisited entry or the stack is empty.
-                while ( currentFrame != null ) {
-                    // If there is a key-value pair left in the current node, we're done.
-                    if (currentFrame.arrayIndex < currentFrame.arrayLength) {
-                        return true;
-                    }
+        @Override
+        public boolean hasNext() {
+            // Loop until we find a node state with an unvisited entry or the stack is empty.
+            while ( currentFrame != null ) {
+                // If there is a key-value pair left in the current node, we're done.
+                if (currentFrame.arrayIndex < currentFrame.arrayLength) {
+                    return true;
+                }
 
-                    // Otherwise, check for non-null branches to traverse.
-                    if (currentFrame.branchIndex < currentFrame.branchesLength) {
-                        // Look for the next branch.
-                        while (currentFrame.branchIndex < currentFrame.branchesLength) {
-                            AssociationImpl<K, V> branch = currentFrame.node._branches[currentFrame.branchIndex];
-                            currentFrame.branchIndex++;
-                            if (branch != null && branch._size > 0) {
-                                // Found a non-empty branch: push its state on the stack.
-                                currentFrame = new IteratorFrame<>(currentFrame, branch);
-                                break;
-                            }
+                // Otherwise, check for non-null branches to traverse.
+                if (currentFrame.branchIndex < currentFrame.branchesLength) {
+                    // Look for the next branch.
+                    while (currentFrame.branchIndex < currentFrame.branchesLength) {
+                        Node<K, V> branch = currentFrame.node._branches[currentFrame.branchIndex];
+                        currentFrame.branchIndex++;
+                        if (branch != null && branch._size > 0) {
+                            // Found a non-empty branch: push its state on the stack.
+                            currentFrame = new IteratorFrame<>(currentFrame, branch);
+                            break;
                         }
-                        // Continue the while loop: now the top of the stack may have entries.
-                        continue;
                     }
-
-                    // If no more entries or branches are left in the current node, pop it.
-                    currentFrame = currentFrame.parent;
+                    // Continue the while loop: now the top of the stack may have entries.
+                    continue;
                 }
-                return false;
-            }
 
-            @Override
-            public Pair<K, V> next() {
-                if (!hasNext() || currentFrame == null) {
-                    throw new NoSuchElementException();
-                }
-                // Retrieve the key and value at the current position.
-                @SuppressWarnings("unchecked")
-                K key = (K) _getAt(currentFrame.arrayIndex, currentFrame.node._keysArray);
-                @SuppressWarnings("unchecked")
-                V value = (V) _getAt(currentFrame.arrayIndex, currentFrame.node._valuesArray);
-                currentFrame.arrayIndex++;
-                Objects.requireNonNull(key);
-                Objects.requireNonNull(value);
-                return Pair.of(key, value);
+                // If no more entries or branches are left in the current node, pop it.
+                currentFrame = currentFrame.parent;
             }
+            return false;
+        }
 
-            @Override
-            public void remove() {
-                throw new UnsupportedOperationException();
+        @Override
+        public Pair<K, V> next() {
+            if (!hasNext() || currentFrame == null) {
+                throw new NoSuchElementException();
             }
-        };
+            // Retrieve the key and value at the current position.
+            K key = _keyGetter.get(currentFrame.arrayIndex, currentFrame.node._keysArray);
+            V value = _valueGetter.get(currentFrame.arrayIndex, currentFrame.node._valuesArray);
+            currentFrame.arrayIndex++;
+            Objects.requireNonNull(key);
+            Objects.requireNonNull(value);
+            return Pair.of(key, value);
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
     }
 
 }

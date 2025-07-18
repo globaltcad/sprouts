@@ -1281,4 +1281,39 @@ class Tuple_Spec extends Specification
             tuple1 == tuple2
             tuple1.hashCode() == tuple2.hashCode()
     }
+
+    def 'A `Tuple` can handle all kinds of item types.'(
+        Class<?> type, Object items
+    ) {
+        given :
+            var tuple = Tuple.of(type, items)
+            var list = items as List
+        expect :
+            tuple.type() == type
+
+        when :
+            var tuple2 = tuple.slice(1, 5)
+            var tuple3 = tuple.reversed()
+            var tuple4 = tuple.makeDistinct()
+            var tupleResult = tuple2.addAll(tuple3).addAll(tuple4)
+        and :
+            var list2 = list.subList(1, 5)
+            var list3 = list.reverse()
+            var list4 = list.stream().distinct().collect(Collectors.toList())
+            var listResult = list2 + list3 + list4
+
+        then :
+            tupleResult.toList() == listResult
+
+        where :
+            type      |  items
+            Integer   | [0,5,-4,-3,5,1,0,4,8,41,2,6,-3,9,4,5] as int[]
+            Byte      | [2,8,1,7,5,1,3,7,8,41,2,7,3,0,-4,8,1] as byte[]
+            Short     | [4,5,7,93,5,1,2,77,8,41,2,6,63,9,4,7] as short[]
+            Long      | [6,6,-8,23,5,1,-60,6,-3,41,6,6,3,9,4] as long[]
+            Float     | [0.3f,5f,9.3f,6f,5.2f,1.67f,7f,3f,0f] as float[]
+            Double    | [6.4,-5.2,1d,0d,5.2d,1.11d,5d,83d,3d] as double[]
+            Character | [0,4,4,7,5,1,8,6,3,41,2,6,3,9,4,84,5] as char[]
+            String    | ["watch","dominion","movie","now","!"] as String[]
+    }
 }
