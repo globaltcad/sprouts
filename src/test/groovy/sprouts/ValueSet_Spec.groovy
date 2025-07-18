@@ -464,4 +464,32 @@ class ValueSet_Spec extends Specification {
             sortedReverse.toList() == ["e", "d", "c", "b", "a"]
     }
 
+    def 'A `ValueSet` can handle all kinds of item types.'(
+        Class<?> type, Object items
+    ) {
+        given :
+            var valueSet = ValueSet.of(Tuple.of(type, items))
+            var set = items as Set
+        expect :
+            valueSet.type() == type
+
+        when :
+            var tupleResult = valueSet.removeAll(valueSet.toTuple().sort().slice(1, 5))
+        and :
+            var setResult = set - set.toList().toSorted().subList(1, 5)
+
+        then :
+            tupleResult.toSet() == setResult
+
+        where :
+            type      |  items
+            Integer   | [0,5,-4,-3,5,1,0,4,8,41,2,6,-3,9,4,5] as int[]
+            Byte      | [2,8,1,7,5,1,3,7,8,41,2,7,3,0,-4,8,1] as byte[]
+            Short     | [4,5,7,93,5,1,2,77,8,41,2,6,63,9,4,7] as short[]
+            Long      | [6,6,-8,23,5,1,-60,6,-3,41,6,6,3,9,4] as long[]
+            Float     | [0.3f,5f,9.3f,6f,5.2f,1.67f,7f,3f,0f] as float[]
+            Double    | [6.4,-5.2,1d,0d,5.2d,1.11d,5d,83d,3d] as double[]
+            Character | [0,4,4,7,5,1,8,6,3,41,2,6,3,9,4,84,5] as char[]
+            String    | ["watch","dominion","movie","now","!"] as String[]
+    }
 }
