@@ -14,7 +14,7 @@ import java.util.Objects;
  *  You may create these "views" through the following methods, among others:
  *  <ul>
  *      <li>{@link Event#observable()}</li>
- *      <li>{@link Var#view()} ()}</li>
+ *      <li>{@link Var#view()}</li>
  *      <li>{@link Val#view()}</li>
  *      <li>{@link Vars#view()}</li>
  *      <li>{@link Vals#view()}</li>
