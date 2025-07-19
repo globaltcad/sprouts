@@ -910,7 +910,7 @@ class Linked_Association_Spec extends Specification
                 Pair.of(4, ":3"),
                 Pair.of(6, ":I")
             )
-        when : 'We add some values to the linked association using the `putAllIfAbsent` method:.'
+        when : 'We add some values to the linked association using the `putAllIfAbsent` method:'
             associations = associations.putAllIfAbsent([
                 Pair.of(1, "I"),
                 Pair.of(2, "was"),
