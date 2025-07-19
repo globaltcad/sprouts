@@ -684,7 +684,7 @@ class Linked_Association_Spec extends Specification
                 Pair.of('t' as char, "to"),
                 Pair.of('t' as char, "the"), // overwrites the previous value
                 Pair.of('a' as char, "association") // overwrites the previous value
-            ])
+            ] as Set)
         then : 'The association contains the values.'
             associations.size() == 4
             associations.get('I' as char).orElseThrow(MissingItemException::new) == "I"
@@ -828,6 +828,135 @@ class Linked_Association_Spec extends Specification
             retained.containsKey("a")
             retained.containsKey("c")
             !retained.containsKey("b")
+    }
+
+    def 'Use `putAllIfAbsent(Pair...)` to populate a linked association at once from multiple pairs.'() {
+        reportInfo """
+            The `putAllIfAbsent(Pair...)` method allows you to populate a linked association from
+            an array of entry pairs. However, it only adds new entries to the new association,
+            if they are not already present.
+            So contrary to `putAll`, the `putAllIfAbsent` does not overwrite existing entries!
+        """
+        given : 'We create a linked association with some initial entries:'
+            var associations = Association.betweenLinked(String, Integer).putAll(
+                Pair.of("was", -1),
+                Pair.of("the", -2),
+                Pair.of("association", -3)
+            )
+        when : 'We add some values to the linked association.'
+            associations = associations.putAllIfAbsent(
+                Pair.of("I", 1),
+                Pair.of("was", 2),
+                Pair.of("added", 3),
+                Pair.of("to", 4),
+                Pair.of("the", 5),
+                Pair.of("association", 6)
+            )
+        then : 'The linked association contains the values.'
+            associations.size() == 6
+            associations.get("I").orElseThrow(MissingItemException::new) == 1
+            associations.get("was").orElseThrow(MissingItemException::new) == -1
+            associations.get("added").orElseThrow(MissingItemException::new) == 3
+            associations.get("to").orElseThrow(MissingItemException::new) == 4
+            associations.get("the").orElseThrow(MissingItemException::new) == -2
+            associations.get("association").orElseThrow(MissingItemException::new) == -3
+    }
+
+    def 'Use `putAllIfAbsent(Tuple<Pair>)` to populate a linked association at once from multiple pairs.'() {
+        reportInfo """
+            The `putAllIfAbsent(Tuple<Pair>)` method allows you to populate a linked association from
+            a tuple of entry pairs. However, it only adds new entries to the new association,
+            if they are not already present.
+            So contrary to `putAll`, the `putAllIfAbsent` does not overwrite existing entries!
+        """
+        given : 'We create a linked association with some initial entries:'
+            var associations = Association.betweenLinked(Integer, String).putAll(
+                Pair.of(2, ":o"),
+                Pair.of(4, ":3"),
+                Pair.of(6, ":I")
+            )
+        when : 'We add some values to the linked association using the `putAllIfAbsent` method:'
+            associations = associations.putAllIfAbsent(
+                Tuple.of(
+                    Pair.of(1, "I"),
+                    Pair.of(2, "was"),
+                    Pair.of(3, "added"),
+                    Pair.of(4, "to"),
+                    Pair.of(5, "the"),
+                    Pair.of(6, "association")
+                )
+            )
+        then : 'The linked association contains the values.'
+            associations.size() == 6
+            associations.get(1).orElseThrow(MissingItemException::new) == "I"
+            associations.get(2).orElseThrow(MissingItemException::new) == ":o"
+            associations.get(3).orElseThrow(MissingItemException::new) == "added"
+            associations.get(4).orElseThrow(MissingItemException::new) == ":3"
+            associations.get(5).orElseThrow(MissingItemException::new) == "the"
+            associations.get(6).orElseThrow(MissingItemException::new) == ":I"
+    }
+
+    def 'Use `putAllIfAbsent(Collection<Pair>)` to populate a linked association at once from multiple pairs.'() {
+        reportInfo """
+            This method ensures compatibility with the `Collection` interface, which
+            is especially useful when you have a list of pairs that you want to
+            populate the association with if they are not already present.
+            
+            So contrary to `putAll`, the `putAllIfAbsent` does not overwrite existing entries!
+        """
+        given : 'We create a linked association with some initial entries:'
+            var associations = Association.betweenLinked(Integer, String).putAll(
+                Pair.of(2, ":o"),
+                Pair.of(4, ":3"),
+                Pair.of(6, ":I")
+            )
+        when : 'We add some values to the linked association using the `putAllIfAbsent` method:.'
+            associations = associations.putAllIfAbsent([
+                Pair.of(1, "I"),
+                Pair.of(2, "was"),
+                Pair.of(3, "added"),
+                Pair.of(4, "to"),
+                Pair.of(5, "the"),
+                Pair.of(6, "association")
+            ])
+        then : 'The linked association contains the values.'
+            associations.size() == 6
+            associations.get(1).orElseThrow(MissingItemException::new) == "I"
+            associations.get(2).orElseThrow(MissingItemException::new) == ":o"
+            associations.get(3).orElseThrow(MissingItemException::new) == "added"
+            associations.get(4).orElseThrow(MissingItemException::new) == ":3"
+            associations.get(5).orElseThrow(MissingItemException::new) == "the"
+            associations.get(6).orElseThrow(MissingItemException::new) == ":I"
+    }
+
+    def 'Use `putAllIfAbsent(Set<Pair>)` to populate a linked association at once from multiple pairs.'() {
+        reportInfo """
+            This method ensures compatibility with the `Set` interface, which
+            is especially useful when you have a set of pairs that you want to
+            populate the association with if they are not already present.
+            
+            So contrary to `putAll`, the `putAllIfAbsent` does not overwrite existing entries!
+        """
+        given : 'We create a linked association with some initial entries:'
+            var associations = Association.betweenLinked(Character, String).putAll(
+                Pair.of('w' as char, ":)"),
+                Pair.of('t' as char, ":P")
+            )
+        when : 'We add some values to the linked association using the `putAllIfAbsent` method:'
+            associations = associations.putAllIfAbsent([
+                Pair.of('I' as char, "I"),
+                Pair.of('w' as char, "was"),
+                Pair.of('a' as char, "added"),
+                Pair.of('t' as char, "to"),
+                Pair.of('t' as char, "the"), // does not overwrite the previous value
+                Pair.of('a' as char, "association") // does not overwrite the previous value
+            ] as Set)
+        then : 'The linked association contains the values.'
+            associations.size() == 4
+            associations.get('I' as char).orElseThrow(MissingItemException::new) == "I"
+            associations.get('w' as char).orElseThrow(MissingItemException::new) == ":)"
+            associations.get('a' as char).orElseThrow(MissingItemException::new) == "added"
+            associations.get('t' as char).orElseThrow(MissingItemException::new) == ":P"
     }
 
     def 'The `containsKey` method of a linked `Association` throws an exception when passing arguments of the wrong type.'()

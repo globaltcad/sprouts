@@ -668,6 +668,181 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
     }
 
     /**
+     *  Returns a new association with all the key-value pairs from the supplied association
+     *  added to it, if, and only if, they are not already present in this association.
+     *  This means that existing entry pairs are not overwritten!<br>
+     *  If the given association is empty, then this
+     *  association is returned unchanged.<br>
+     *  Note that this method is essentially a batched variant
+     *  of {@link #putIfAbsent(Object, Object)}.
+     *
+     * @param other The association to add to this one.
+     * @return A new association with all new key-value pairs from the given association.
+     * @throws NullPointerException if the provided association is {@code null}.
+     * @see #putIfAbsent(Object, Object)
+     * @see #putAll(Association) If you want to add all key-value pairs from an association, even
+     *                           if they replace existing entries!
+     */
+    default Association<K, V> putAllIfAbsent( final Association<? extends K, ? extends V> other ) {
+        Objects.requireNonNull(other, "The provided association cannot be null.");
+        if ( other.isEmpty() )
+            return this;
+        return putAllIfAbsent( (Stream)other.entrySet().stream() );
+    }
+
+    /**
+     *  Returns a new association with all the key-value pairs from the
+     *  supplied {@link Map} added to it, if, and only if, they are not
+     *  already present in this association.
+     *  This means that existing entry pairs are not overwritten!<br>
+     *  If the provided map is empty, then this
+     *  association is returned unchanged.<br>
+     *  Note that this method is essentially a batched variant
+     *  of {@link #putIfAbsent(Object, Object)}.
+     *
+     * @param map The {@link Map} to add to this association.
+     * @return A new association with new key-value pairs from the supplied map.
+     * @throws NullPointerException if the provided map is {@code null}.
+     * @see #putIfAbsent(Object, Object)
+     * @see #putAll(Map) If you want to add all key-value pairs from a map, even
+     *                   if they replace existing entries!
+     */
+    default Association<K, V> putAllIfAbsent( final Map<? extends K, ? extends V> map ) {
+        Objects.requireNonNull(map, "The provided map cannot be null.");
+        if ( map.isEmpty() )
+            return this;
+        return putAllIfAbsent(map.entrySet().stream().map(Pair::of));
+    }
+
+    /**
+     *  Returns a new association with all the key-value pairs from the
+     *  supplied {@link Set} of {@link Pair} instances added to it,
+     *  if, and only if, they are not already present in this association.
+     *  This means that existing entry pairs are not overwritten!<br>
+     *  If the provided set is empty, then this association is
+     *  returned unchanged.<br>
+     *  Note that this method is essentially a batched variant
+     *  of {@link #putIfAbsent(Object, Object)}.
+     *
+     * @param entries The set of key-value pairs to add to this association.
+     * @return A new association with the key-value pairs from the provided set.
+     * @throws NullPointerException if the provided set is {@code null}.
+     * @see #putIfAbsent(Object, Object)
+     * @see #putAll(Set) If you want to add all key-value pairs from a set, even
+     *                   if they replace existing entries!
+     */
+    default Association<K, V> putAllIfAbsent( final Set<Pair<? extends K, ? extends V>> entries ) {
+        Objects.requireNonNull(entries, "The provided set cannot be null.");
+        if ( entries.isEmpty() )
+            return this;
+        return putAllIfAbsent(entries.stream());
+    }
+
+    /**
+     *  Returns a new association with all the key-value pairs from the
+     *  supplied array of {@link Pair}s added to it, if, and only if,
+     *  they are not already present in this association.
+     *  This means that existing entry pairs are not overwritten!<br>
+     *  In the items of the supplied array, the {@link Pair#first()}
+     *  is the key and the {@link Pair#second()} is the value.
+     *  If the provided array is empty, then this
+     *  association is returned unchanged.<br>
+     *  Note that this method is essentially a batched variant
+     *  of {@link #putIfAbsent(Object, Object)}.
+     *
+     * @param entries The array of key-value pairs to add to this association.
+     * @return A new association with new key-value pairs from the provided array.
+     * @throws NullPointerException if the provided array is {@code null}.
+     * @see #putIfAbsent(Object, Object)
+     * @see #putAll(Pair[]) If you want to add all key-value pairs from an array, even
+     *                      if they replace existing entries!
+     */
+    default Association<K, V> putAllIfAbsent( final Pair<? extends K, ? extends V>... entries ) {
+        Objects.requireNonNull(entries, "The provided array cannot be null.");
+        if ( entries.length == 0 )
+            return this;
+        return putAllIfAbsent(Arrays.stream(entries));
+    }
+
+    /**
+     *  Returns a new association with all the key-value pairs of the
+     *  supplied {@link Tuple} of {@link Pair} instances added to it,
+     *  if, and only if, they are not already present in this association.
+     *  This means that existing entry pairs are not overwritten!<br>
+     *  In the items of the supplied tuple, the {@link Pair#first()}
+     *  object of each pair is the key and the {@link Pair#second()} object is the value.
+     *  If the provided tuple is empty, then this association is returned unchanged.<br>
+     *  Note that this method is essentially a batched variant
+     *  of {@link #putIfAbsent(Object, Object)}.
+     *
+     * @param entries The tuple of key-value pairs to add to this association if not already present.
+     * @return A new association with the new key-value pairs from the provided tuple.
+     * @throws NullPointerException if the provided tuple is {@code null}.
+     * @see #putIfAbsent(Object, Object)
+     * @see #putAll(Tuple) If you want to add all key-value pairs from a tuple, even
+     *                      if they replace existing entries!
+     */
+    default Association<K, V> putAllIfAbsent( final Tuple<Pair<? extends K, ? extends V>> entries ) {
+        Objects.requireNonNull(entries, "The provided tuple cannot be null.");
+        if ( entries.isEmpty() )
+            return this;
+        return putAllIfAbsent(entries.stream());
+    }
+
+    /**
+     *  Returns a new association with all the key-value pairs from the
+     *  supplied {@link Collection} of {@link Pair}s added to it,
+     *  if, and only if, they are not already present in this association.
+     *  This means that existing entry pairs are not overwritten!<br>
+     *  If the provided collection is empty, then this
+     *  association is returned unchanged.<br>
+     *  Note that this method is essentially a batched variant
+     *  of {@link #putIfAbsent(Object, Object)}.
+     *
+     * @param entries The collection of key-value pairs to add to this association.
+     * @return A new association with the new key-value pairs from the provided collection.
+     * @throws NullPointerException if the provided collection is {@code null}.
+     * @see #putIfAbsent(Object, Object)
+     * @see #putAll(Collection) If you want to add all key-value pairs from a collection, even
+     *                         if they replace existing entries!
+     */
+    default Association<K, V> putAllIfAbsent( final Collection<Pair<? extends K, ? extends V>> entries ) {
+        Objects.requireNonNull(entries, "The provided collection cannot be null.");
+        if ( entries.isEmpty() )
+            return this;
+        return putAllIfAbsent(entries.stream());
+    }
+
+    /**
+     *  Returns a new association with all the key-value pairs from the
+     *  supplied {@link Stream} of {@link Pair} instances added to it,
+     *  if, and only if, they are not already present in this association.
+     *  This means that existing entry pairs are not overwritten!<br>
+     *  If the provided stream is empty, then this
+     *  association is returned unchanged.<br>
+     *  Note that this method is essentially a batched variant
+     *  of {@link #putIfAbsent(Object, Object)}.
+     *
+     * @param entries The stream of key-value pairs to add to this association.
+     * @return A new association with the new key-value pairs from the provided stream.
+     * @throws NullPointerException if the provided stream is {@code null}.
+     * @see #putIfAbsent(Object, Object)
+     * @see #putAll(Stream) If you want to add all key-value pairs from a stream, even
+     *                      if they replace existing entries!
+     */
+    default Association<K, V> putAllIfAbsent( final Stream<Pair<? extends K, ? extends V>> entries ) {
+        Objects.requireNonNull(entries);
+        // TODO: implement branching based bulk insert
+        Association<K, V> result = this;
+        // reduce the stream to a single association
+        return entries.reduce(
+                result,
+                (acc,
+                 entry) -> acc.putIfAbsent(entry.first(), entry.second()),
+                (a, b) -> a);
+    }
+
+    /**
      *  Returns a new association where an existing key-value pair
      *  is replaced with the given key-value pair if the key is
      *  present in this association.
