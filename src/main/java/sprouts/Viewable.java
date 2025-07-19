@@ -26,7 +26,12 @@ import java.util.function.BiFunction;
  *  callback using the {@link #unsubscribe(Subscriber)} method ({@link Action} is also a {@link Subscriber}).
  *  <p>
  *  Instances of this are intended to be created from {@link Val}
- *  and {@link Var} properties. When they are created from these
+ *  and {@link Var} properties, using the following methods, among others:
+ *  <ul>
+ *      <li>{@link Var#view()}</li>
+ *      <li>{@link Val#view()}</li>
+ *  </ul><br>
+ *  When they are created from these
  *  regular properties, then they are weakly referenced there.
  *  You can register change listeners on instances of this, and
  *  when you no longer want changes to be propagated to an instance
