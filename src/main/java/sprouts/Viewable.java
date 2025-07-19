@@ -9,12 +9,11 @@ import java.util.Optional;
 import java.util.function.BiFunction;
 
 /**
- *  A read-only live view on a delegated item which can be observed for changes
- *  using {@link Action}s registered through the {@link #onChange(Channel, Action)} method,
- *  where the {@link Channel} is used to distinguish between changes from
- *  different sources (usually application layers like the view model or the view).
- *  The API of this is very similar to the {@link Optional} API in the
- *  sense that it is a null safe wrapper around a single item, which may also be missing (null).
+ *  A read-only live view on a delegated item derived from a {@link Var} or {@link Val}, which
+ *  can be observed for changes using {@link Action}s registered through the
+ *  {@link #onChange(Channel, Action)} method, where the {@link Channel} is used to distinguish
+ *  between changes from different sources (usually application layers like the view model or the view).
+ *  The API of this is designed to be a null safe wrapper around a single item, which may also be missing (null).
  *  <p>
  *  The {@link Channel} supplied to the {@link #onChange(Channel, Action)} method to register an {@link Action}
  *  callback is expected to be a simple constant, usually one of the {@link From} constants
