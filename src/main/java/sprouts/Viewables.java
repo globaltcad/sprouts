@@ -1,25 +1,23 @@
 package sprouts;
 
 /**
- *  A read-only live view on a delegated list of items which can be observed for changes
- *  using {@link Action}s registered through the {@link #onChange(Action)} method.
- *  This is a list of properties which are observed together and fire a single event
- *  when any of them changes.
+ *  A read-only live view on a delegated list of items derived from a {@link Vars} or {@link Vals},
+ *  which can be observed for changes using {@link Action}s registered through the {@link #onChange(Action)} method.
  *  <p>
- *  The API of this is very similar to the {@link Vals} API in the sense that it is a list of properties
- *  which may also be empty. However, this interface extends the {@link Observable} interface
- *  to allow registering {@link Action}s which will be called when the list of properties is
- *  shown (which is called when its state changes).
+ *  The API of this is very similar to the {@link Vals} API in the sense that it is a readonly list of properties.
+ *  However, this interface extends the {@link Observable} interface
+ *  to allow registering {@link Action}s which will be called when the list of properties
+ *  change their state.
  *  <p>
  *  If you no longer need to observe changes on this list of properties, then you can remove the registered {@link Action}
  *  callback using the {@link #unsubscribe(Subscriber)} method ({@link Action} is also a {@link Subscriber}).
  *  <p>
- *  Instances of this are intended to be created from {@link Vals} property lists.
+ *  Instances of this are intended to be created from {@link Vals}/{@link Vars} property lists.
  *  {@link sprouts.Viewables} created from such a property list is weakly referenced by it.
  *  You can register change listeners on it, and when you no longer want changes
  *  to be propagated to the {@link sprouts.Viewables},
  *  then you can drop its reference, and it will be garbage collected
- *  alongside all of its change listeners.
+ *  alongside all of its change listeners automatically.
  *
  * @see Vals A super type of this class with a read-only API.
  * @see Var A mutable property API and subtype of {@link Vals}.
