@@ -283,7 +283,7 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
     }
 
     /**
-     *  Creates a new linked association from the given key-value pair
+     *  Creates a linked association from a single key-value pair
      *  where the types of the key and value are inferred from the
      *  two supplied objects.<br>
      *  A linked association is an association where the order of the
@@ -303,10 +303,12 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
     }
 
     /**
-     *  Creates a new association from the given key-value pair
-     *  with the given comparator for sorting the keys.
+     *  Creates a sorted association from a single key-value pair
+     *  and a comparator for sorting the keys.
      *  The types of the key and value are inferred from the
-     *  types of the given key and value objects.
+     *  types of the given key and value objects.<br>
+     *  A sorted association is an association where the order of the
+     *  key-value pairs is based on a {@link Comparator} used for sorting.
      *
      * @param key The key to associate with the given value.
      * @param value The value to associate with the given key.
