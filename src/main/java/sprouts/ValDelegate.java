@@ -2,8 +2,8 @@ package sprouts;
 
 /**
  *  A context object passed to the various types of change listeners registered
- *  on a property such as {@link Val} and {@link Var}.
- *  It exposes the state of the current property as well as the
+ *  on a {@link Viewable}, derived from a {@link Var} or {@link Val} property.
+ *  It exposes the current property item, the previous one as well as the
  *  {@link Channel} constant from which the change originated.
  *
  * @param <T> The type of the value wrapped by the delegated property...
