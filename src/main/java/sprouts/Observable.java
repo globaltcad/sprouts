@@ -24,7 +24,7 @@ import java.util.Objects;
  *  Instead, you have to create an {@link Observable} from them. These observables are
  *  then weakly referenced by its source, and can be garbage collected alongside all of its
  *  change listeners when the {@link Observable} is no longer strongly referenced anywhere.
- *  This is a deliberate design decision which as it reduces the likelihood of memory leaks
+ *  This is a deliberate design decision as it reduces the likelihood of memory leaks
  *  through forgotten change listeners.
  */
 public interface Observable
