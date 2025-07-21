@@ -22,7 +22,7 @@ import java.util.Objects;
  *  Note that in the Sprouts framework, the various property types do not implement
  *  {@link Observable} (or {@link Viewable} and {@link Viewables}) directly.
  *  Instead, you have to create an {@link Observable} from them. These observables are
- *  then weakly referenced by its source, and can be garbage alongside all of its
+ *  then weakly referenced by its source, and can be garbage collected alongside all of its
  *  change listeners when the {@link Observable} is no longer strongly referenced anywhere.
  *  This is a deliberate design decision which as it reduces the likelihood of memory leaks
  *  through forgotten change listeners.
