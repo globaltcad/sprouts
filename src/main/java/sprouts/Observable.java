@@ -19,7 +19,7 @@ import java.util.Objects;
  *      <li>{@link Vars#view()}</li>
  *      <li>{@link Vals#view()}</li>
  *  </ul>
- *  Note that in Sprouts the various property types do not implement
+ *  Note that in the Sprouts framework, the various property types do not implement
  *  {@link Observable} (or {@link Viewable} and {@link {@link Viewables}} directly.
  *  Instead, you have to create an {@link Observable} from them. These observables are
  *  then weakly referenced by its source, and can be garbage alongside all of its
