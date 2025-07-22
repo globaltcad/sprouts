@@ -4,13 +4,28 @@ import java.util.Objects;
 
 /**
  *  This represents an event that can be observed but not triggered.
- *  It is used to register {@link Observer}s to, so that they can be notified when
- *  something happens.
- *  Contrary to events received by property observers, observing a {@link Observable}
- *  does not involve any state.
+ *  It allows for the registration as well as removal of {@link Observer}s,
+ *  so that they can be notified when something happens.
+ *  Note that observing a {@link Observable} does not involve any state!
+ *  This is because it is designed as a general super type for more specialized
+ *  kinds of state "views" like {@link Viewable} and {@link Viewables},
+ *  all of which extend this interface.<br>
  *  <br>
- *  This is a super type of many other important sprouts classes, like
- *  {@link Event}, {@link Val}, {@link Var}, {@link Vals} and {@link Vars}.
+ *  You may create these "views" through the following methods, among others:
+ *  <ul>
+ *      <li>{@link Event#observable()}</li>
+ *      <li>{@link Var#view()}</li>
+ *      <li>{@link Val#view()}</li>
+ *      <li>{@link Vars#view()}</li>
+ *      <li>{@link Vals#view()}</li>
+ *  </ul>
+ *  Note that in the Sprouts framework, the various property types do not implement
+ *  {@link Observable} (or {@link Viewable} and {@link Viewables}) directly.
+ *  Instead, you have to create an {@link Observable} from them. These observables are
+ *  then weakly referenced by its source, and can be garbage collected alongside all of its
+ *  change listeners when the {@link Observable} is no longer strongly referenced anywhere.
+ *  This is a deliberate design decision as it reduces the likelihood of memory leaks
+ *  through forgotten change listeners.
  */
 public interface Observable
 {

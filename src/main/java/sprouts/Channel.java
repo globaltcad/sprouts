@@ -8,6 +8,9 @@ package sprouts;
  *  <p>
  *  Please consider using {@link From} instead of implementing this interface directly.
  *  If you do implement this interface directly, please make sure to implement
- *  {@link Object#equals(Object)} and {@link Object#hashCode()}.
+ *  {@link Object#equals(Object)} and {@link Object#hashCode()}, or use an object
+ *  with native value semantics, like a record or value class...
  */
-public interface Channel { }
+public interface Channel {
+    // This is a marker interface
+}

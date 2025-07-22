@@ -3,7 +3,7 @@ package sprouts;
 /**
  *  A functional interface for observing state changes
  *  and performing some action in response.
- *  The action is being informed of the change through
+ *  The action receives information about the change through
  *  a delegate object denoted by the type parameter {@code D}.
  *  <p>
  *  Implementations of this are usually triggered by UI components

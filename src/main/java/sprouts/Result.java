@@ -36,7 +36,27 @@ import java.util.function.Supplier;
  *  There, a {@link Result} exposes a versatile API for handling all possible (non-fatal) scenarios.
  *  This is especially important in cases where the consumer has no control over these errors and cannot handle them in
  *  any meaningful way, but instead just wants to opt-into an alternative value through methods like
- *  {@link Result#orElse(Object)}, or {@link Result#orElseGet(Supplier)}.
+ *  {@link Result#orElse(Object)}, or {@link Result#orElseGet(Supplier)}.<br>
+ *
+ *  Consider the following example as a demonstration for how to
+ *  use a result at the implementation side of things:
+ *  <pre>{@code
+ *  public Result<Doc> parse(String doc) {
+ *      return Result.ofTry(Doc.class,()->{
+ *          // An algorithm which may fail!
+ *          // ...or returns a document...
+ *      });
+ *  }
+ *  }</pre>
+ *  A user of that method may then safely react to an exceptional
+ *  case instead of experiencing a control flow interruption:
+ *  <pre>{@code
+ *  var rawText = loadText();
+ *  var parser = new DocParser();
+ *  Doc doc = parser.parse(rawText)
+ *                  .logProblemsAsError()
+ *                  .orElse(Doc.EMPTY);
+ *  }</pre>
  *
  * @param <V> The type of the item wrapped by this result.
  */
