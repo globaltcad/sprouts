@@ -20,9 +20,9 @@ package sprouts;
  *  alongside all of its change listeners automatically.
  *
  * @see Vals A super type of this class with a read-only API.
- * @see Var A mutable property API and subtype of {@link Vals}.
+ * @see Var A mutable property API and subtype of {@code Vals}.
  * @see Viewable A single property with a similar API to this one.
- * @see Observable The interface which this extends to allow registering {@link Action}s.
+ * @see Observable The interface which this extends to allow registering {@code Action}s.
  * @param <T> The type of the items held by this {@link Vals}.
  */
 public interface Viewables<T> extends Vals<T>, Observable

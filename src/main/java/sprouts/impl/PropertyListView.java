@@ -32,7 +32,7 @@ final class PropertyListView<T extends @Nullable Object> implements Viewables<T>
         }
 
         WeakReference<Vals<T>> weakSource = new WeakReference<>(source);
-        Viewables.cast(source).onChange(WeakActionImpl.of(view, (innerView, delegate) -> {
+        Viewables.cast(source).onChange(WeakAction.of(view, (innerView, delegate) -> {
             Vals<T> innerSource = weakSource.get();
             if (innerSource == null) {
                 return;
