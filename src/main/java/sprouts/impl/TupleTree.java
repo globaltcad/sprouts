@@ -70,7 +70,7 @@ import static sprouts.impl.ArrayUtil.*;
  * @see sprouts.Tuple
  * @see sprouts.Pair
  */
-public final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
+final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
 
     private static final int BRANCHING_FACTOR = 32;
     private static final int IDEAL_LEAF_NODE_SIZE = 512;

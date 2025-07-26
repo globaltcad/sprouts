@@ -21,7 +21,7 @@ import java.util.function.Predicate;
  *
  * @param <T> The type of the items in the tuple.
  */
-public final class TupleWithDiff<T extends @Nullable Object> implements Tuple<T>, SequenceDiffOwner {
+final class TupleWithDiff<T extends @Nullable Object> implements Tuple<T>, SequenceDiffOwner {
 
     private final TupleTree<T> _tupleTree;
     private final SequenceDiff _diffToPrevious;
