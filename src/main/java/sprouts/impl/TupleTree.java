@@ -4,8 +4,11 @@ import org.jspecify.annotations.Nullable;
 import sprouts.Tuple;
 import sprouts.Val;
 
+import java.lang.reflect.Array;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 import static sprouts.impl.ArrayUtil.*;
 
@@ -421,7 +424,7 @@ public final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
      * @return A new {@link TupleTree} containing the given items.
      */
     @SuppressWarnings("NullAway")
-    public static <T> TupleTree<T> of(
+    static <T> TupleTree<T> of(
         boolean allowsNull,
         Class<T> type,
         List<T> items
@@ -446,7 +449,7 @@ public final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
      * @return A new {@link TupleTree} containing the given items.
      */
     @SafeVarargs
-    public static <T> TupleTree<T> of(
+    static <T> TupleTree<T> of(
         boolean allowsNull,
         Class<T> type,
         @Nullable T... items
@@ -589,6 +592,36 @@ public final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
     }
 
     @Override
+    public Tuple<T> removeIf( Predicate<T> predicate ) {
+        List<T> itemsToKeep = new ArrayList<>();
+        for ( int i = 0; i < size(); i++ ) {
+            T item = get(i);
+            if ( !predicate.test(item) ) {
+                itemsToKeep.add(item);
+            }
+        }
+        if ( itemsToKeep.size() == this.size() )
+            return this;
+        T[] newItems = (T[]) Array.newInstance(type(), itemsToKeep.size());
+        itemsToKeep.toArray(newItems);
+        return TupleTree.of( allowsNull(), type(), newItems);
+    }
+
+    @Override
+    public Tuple<T> retainIf( Predicate<T> predicate ) {
+        List<T> filteredItems = new ArrayList<>();
+        for ( int i = 0; i < size(); i++ ) {
+            T item = get(i);
+            if ( predicate.test(item) ) {
+                filteredItems.add(item);
+            }
+        }
+        if ( filteredItems.size() == this.size() )
+            return this;
+        return TupleTree.of(allowsNull(), type(), filteredItems);
+    }
+
+    @Override
     public TupleTree<T> removeAll(Tuple<T> properties) {
         if (properties.size() == 0) {
             return this;
@@ -705,6 +738,34 @@ public final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
     @Override
     public TupleTree<T> clear() {
         return new TupleTree<>(0, _allowsNull, _type, null);
+    }
+
+    @Override
+    public Tuple<T> map( Function<T,T> mapper ) {
+        Objects.requireNonNull(mapper);
+        @SuppressWarnings("unchecked")
+        T[] mappedItems = (T[]) Array.newInstance(type(), size());
+        int i = 0;
+        for ( T v : this ) {
+            mappedItems[i++] = mapper.apply( v );
+        }
+        return TupleTree.of( allowsNull(), type(), mappedItems);
+    }
+
+    @Override
+    public <U extends @Nullable Object> Tuple<U> mapTo(
+        Class<U>      type,
+        Function<T,U> mapper
+    ) {
+        Objects.requireNonNull(type);
+        Objects.requireNonNull(mapper);
+        U[] array = (U[]) Array.newInstance(type, size());
+        int i = 0;
+        for ( T v : this ) {
+            U m = mapper.apply( v );
+            array[i++] = m;
+        }
+        return TupleTree.of( allowsNull(), type, array );
     }
 
     @Override
