@@ -39,7 +39,7 @@ import java.util.function.BiFunction;
  *  alongside all of its change listeners.
  *
  * @see Val A super type of this class with a read-only API.
- * @see Var A mutable property API and subtype of {@link Val}.
+ * @see Var A mutable property API and subtype of {@code Val}.
  * @param <T> The type of the item held by this {@link Val}.
  */
 public interface Viewable<T> extends Val<T>, Observable {

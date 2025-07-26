@@ -5,7 +5,6 @@ import org.jspecify.annotations.Nullable;
 import sprouts.*;
 
 import java.util.Comparator;
-import java.util.List;
 import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -18,6 +17,16 @@ import java.util.regex.Pattern;
  */
 public interface SproutsFactory
 {
+    /**
+     *  Creates a delegate for a {@link Val} property.
+     * @param source The source property for which the delegate is created.
+     * @param channel The channel on which the delegate will be registered.
+     * @param change The type of change that occurred on the property.
+     * @param newValue The new value of the property after the change.
+     * @param oldValue The old value of the property before the change.
+     * @return A delegate for the given {@link Val} property.
+     * @param <T> The type of the property for which the delegate is created.
+     */
     <T> ValDelegate<T> delegateOf(
         Val<T> source,
         Channel channel,
@@ -26,6 +35,16 @@ public interface SproutsFactory
         @Nullable T oldValue
     );
 
+    /**
+     *  Creates a delegate for a {@link Vals} property.
+     * @param source The source property for which the delegate is created.
+     * @param changeType The type of change that occurred on the property.
+     * @param index The index at which the change occurred.
+     * @param newValues The new values of the property after the change.
+     * @param oldValues The old values of the property before the change.
+     * @return A delegate for the given {@link Vals} property.
+     * @param <T> The type of the property for which the delegate is created.
+     */
     <T> ValsDelegate<T> delegateOf(
         Vals<T> source,
         SequenceChange changeType,
@@ -34,74 +53,339 @@ public interface SproutsFactory
         Vals<T> oldValues
     );
 
+    /**
+     *  A factory method to create a new {@link Event} instance.
+     * @return A new {@link Event} instance with the default executor.
+     */
     Event event();
 
+    /**
+     *  A factory method to create a new {@link Event} instance with the given executor.
+     * @param executor The executor to be used for the event.
+     * @return A new {@link Event} instance with the specified executor.
+     */
     Event eventOf( Event.Executor executor );
 
+    /**
+     *  Creates a nullable {@link Maybe} instance of the given type with the specified item.
+     * @param type The type of the item to be wrapped in the {@link Maybe}.
+     * @param item The item to be wrapped in the {@link Maybe}. It can be {@code null}.
+     * @return A {@link Maybe} instance containing the item, or an empty {@link Maybe} if the item is {@code null}.
+     * @param <T> The type of the item to be wrapped in the {@link Maybe}.
+     */
     default <T> Maybe<@Nullable T> maybeOfNullable( Class<T> type, @Nullable T item ) {
         return valOfNullable( type, item );
     }
 
+    /**
+     *  Creates a {@link Maybe} instance of the given type with a {@code null} item.
+     * @param type The type of the item to be wrapped in the {@link Maybe}.
+     * @return A {@link Maybe} instance containing a {@code null} item.
+     * @param <T> The type of the item to be wrapped in the {@link Maybe}.
+     */
     default <T> Maybe<@Nullable T> maybeOfNull( Class<T> type ) {
         return valOfNull( type );
     }
 
+    /**
+     *  Creates a non-null {@link Maybe} instance of the given type with the specified item.
+     * @param item The item to be wrapped in the {@link Maybe}. It must not be {@code null}.
+     * @return A {@link Maybe} instance containing the item.
+     * @param <T> The type of the item to be wrapped in the {@link Maybe}.
+     */
     default <T> Maybe<T> maybeOf( T item ) {
         return valOf( item );
     }
 
+    /**
+     *  Creates a {@link Maybe} instance of the given type by copying the value from another {@link Maybe}.
+     * @param toBeCopied The {@link Maybe} instance to be copied.
+     * @return A new {@link Maybe} instance containing the value from the given {@link Maybe}.
+     * @param <T> The type of the item to be wrapped in the {@link Maybe}.
+     */
     default <T> Maybe<T> maybeOf( Maybe<T> toBeCopied ) {
         Objects.requireNonNull(toBeCopied);
         return valOf( toBeCopied.orElseThrowUnchecked() );
     }
 
+    /**
+     *  Creates a nullable {@link Maybe} instance of the given type by copying the value from another {@link Maybe}.
+     * @param toBeCopied The {@link Maybe} instance to be copied.
+     * @return A new {@link Maybe} instance containing the value from the given {@link Maybe}, or an empty {@link Maybe} if the value is {@code null}.
+     * @param <T> The type of the item to be wrapped in the {@link Maybe}.
+     */
     default <T extends @Nullable Object> Maybe<@Nullable T> maybeOfNullable( Maybe<T> toBeCopied ) {
         Objects.requireNonNull(toBeCopied);
         return valOfNullable( toBeCopied.type(), toBeCopied.orElseNull() );
     }
 
+    /**
+     *  Creates a nullable {@link Val} instance of the given type with the specified item.
+     * @param type The type of the item to be wrapped in the {@link Val}.
+     * @param item The item to be wrapped in the {@link Val}. It can be {@code null}.
+     * @return A {@link Val} instance containing the item, or an empty {@link Val} if the item is {@code null}.
+     * @param <T> The type of the item to be wrapped in the {@link Val}.
+     */
     <T> Val<@Nullable T> valOfNullable( Class<T> type, @Nullable T item );
 
+    /**
+     *  Creates a nullable {@link Val} instance of the given type with a {@code null} item.
+     * @param type The type of the item to be wrapped in the {@link Val}.
+     * @return A {@link Val} instance containing a {@code null} item.
+     * @param <T> The type of the item to be wrapped in the {@link Val}.
+     */
     <T> Val<@Nullable T> valOfNull( Class<T> type );
 
+    /**
+     *  Creates a non-null {@link Val} instance of the given type with the specified item.
+     * @param item The item to be wrapped in the {@link Val}. It must not be {@code null}.
+     * @return A {@link Val} instance containing the item.
+     * @param <T> The type of the item to be wrapped in the {@link Val}.
+     */
     <T> Val<T> valOf( T item );
 
+    /**
+     *  Creates a non-null {@link Val} instance of the given type by copying the value from another {@link Val}.
+     * @param toBeCopied The {@link Val} instance to be copied.
+     * @return A new {@link Val} instance containing the value from the given {@link Val}.
+     * @param <T> The type of the item to be wrapped in the {@link Val}.
+     */
     <T> Val<T> valOf( Val<T> toBeCopied );
 
+    /**
+     *  Creates a nullable {@link Val} instance of the given type by copying the value from another {@link Val}.
+     * @param toBeCopied The {@link Val} instance to be copied.
+     * @return A new {@link Val} instance containing the value from the given {@link Val}, or an empty {@link Val} if the value is {@code null}.
+     * @param <T> The type of the item to be wrapped in the {@link Val}.
+     */
     <T extends @Nullable Object> Val<@Nullable T> valOfNullable( Val<T> toBeCopied );
 
+    /**
+     *  Creates a {@link Viewable} instance of the given {@link Val}.
+     *  You can register observers on the returned {@link Viewable} to receive updates
+     *  when the value of the {@link Val} changes.
+     *
+     * @param source The source {@link Val} for which the view is created.
+     * @return A {@link Viewable} instance that wraps the given {@link Val}.
+     * @param <T> The type of the item in the {@link Val}.
+     */
     <T extends @Nullable Object> Viewable<T> viewOf( Val<T> source );
 
+    /**
+     *  Creates a non-null {@link Viewable} instance which is a composite of two {@link Val} instances
+     *  whose values are combined using the specified combiner function. You may register observers
+     *  on the resulting viewable to receive updates when the values of either of the
+     *  two {@link Val} instances change.
+     *
+     * @param first The first {@link Val} to be combined into a {@link Viewable} composite.
+     * @param second The second {@link Val} to be combined into a {@link Viewable} composite.
+     * @param combiner The function that combines the values of the two {@link Val} instances into a single value.
+     * @return A {@link Viewable} instance that combines the values of the two {@link Val} instances using the specified combiner function.
+     * @param <T> The type of the first {@link Val} value.
+     * @param <U> The type of the second {@link Val} value.
+     */
     <T extends @Nullable Object, U extends @Nullable Object> Viewable<@NonNull T> viewOf(Val<T> first, Val<U> second, BiFunction<T, U, @NonNull T> combiner );
 
+    /**
+     *  Creates a nullable {@link Viewable} instance which is a composite of two {@link Val} instances
+     *  whose values are combined using the specified combiner function. You may register observers
+     *  on the resulting viewable to receive updates when the values of either of the
+     *  two {@link Val} instances change.
+     *
+     * @param first The first {@link Val} to be combined into a {@link Viewable} composite.
+     * @param second The second {@link Val} to be combined into a {@link Viewable} composite.
+     * @param combiner The function that combines the values of the two {@link Val} instances into a single value.
+     * @return A {@link Viewable} instance that combines the values of the two {@link Val} instances using the specified combiner function.
+     * @param <T> The type of the first {@link Val} value.
+     * @param <U> The type of the second {@link Val} value.
+     */
     <T extends @Nullable Object, U extends @Nullable Object> Viewable<@Nullable T> viewOfNullable( Val<T> first, Val<U> second, BiFunction<T, U, @Nullable T> combiner );
 
+    /**
+     *  Creates a non-nullable {@link Viewable} instance of the given type which is a composite of two {@link Val}
+     *  instances whose values are combined using the specified combiner function. You may register observers
+     *  on the resulting viewable to receive updates when the values of either of the
+     *  two {@link Val} instances change.
+     *
+     * @param type The type of the resulting {@link Viewable}.
+     * @param first The first {@link Val} to be combined into a {@link Viewable} composite.
+     * @param second The second {@link Val} to be combined into a {@link Viewable} composite.
+     * @param combiner The function that combines the values of the two {@link Val} instances into a single value.
+     * @return A {@link Viewable} instance that combines the values of the two {@link Val} instances using the specified combiner function.
+     * @param <T> The type of the first {@link Val} value.
+     * @param <U> The type of the second {@link Val} value.
+     * @param <R> The type of the resulting {@link Viewable}.
+     */
     <T extends @Nullable Object, U extends @Nullable Object, R> Viewable<R> viewOf(Class<R> type, Val<T> first, Val<U> second, BiFunction<T,U,R> combiner);
 
+    /**
+     *  Creates a nullable {@link Viewable} instance of the given type which is a composite of two {@link Val}
+     *  instances whose values are combined using the specified combiner function. You may register observers
+     *  on the resulting viewable to receive updates when the values of either of the
+     *  two {@link Val} instances change.
+     *
+     * @param type The type of the resulting {@link Viewable}.
+     * @param first The first {@link Val} to be combined into a {@link Viewable} composite.
+     * @param second The second {@link Val} to be combined into a {@link Viewable} composite.
+     * @param combiner The function that combines the values of the two {@link Val} instances into a single value.
+     * @return A {@link Viewable} instance that combines the values of the two {@link Val} instances using the specified combiner function.
+     * @param <T> The type of the first {@link Val} value.
+     * @param <U> The type of the second {@link Val} value.
+     * @param <R> The type of the resulting {@link Viewable}.
+     */
     <T extends @Nullable Object, U extends @Nullable Object, R> Viewable<@Nullable R> viewOfNullable(Class<R> type, Val<T> first, Val<U> second, BiFunction<T, U, @Nullable R> combiner);
 
+    /**
+     *  Creates a {@link Viewables} instance of the given {@link Vals}.
+     *  You can register observers on the returned {@link Viewables} to receive updates
+     *  when the items in the {@link Vals} change.
+     *
+     * @param source The source {@link Vals} for which the view is created.
+     * @return A {@link Viewables} instance that wraps the given {@link Vals}.
+     * @param <T> The type of the items in the {@link Vals}.
+     */
     <T extends @Nullable Object> Viewables<T> viewOf( Vals<T> source );
 
+    /**
+     *  Creates a {@link Viewables} instance of the given {@link Vals} with specified null and error objects.
+     *  This is useful when you want to provide default values for the {@link Viewables} when the source
+     *  property contains a {@code null} value or an error occurs during mapping.
+     *
+     * @param nullObject The default value to be used when the source value is null.
+     * @param errorObject The default value to be used when an error occurs during mapping.
+     * @param source The source {@link Vals} for which the view is created.
+     * @return A {@link Viewables} instance that wraps the given {@link Vals} with specified null and error objects.
+     * @param <T> The type of the items in the {@link Vals}.
+     * @param <U> The type of the items in the resulting {@link Viewables}.
+     */
     <T extends @Nullable Object, U> Viewables<U> viewOf( U nullObject, U errorObject, Vals<T> source, Function<T, @Nullable U> mapper );
 
+    /**
+     *  Creates a {@link Viewable} instance of the given type which is a view of the specified source {@link Val}.
+     *  You can register observers on the returned {@link Viewable} to receive updates
+     *  when the value of the source property changes.
+     *
+     * @param type The type of the resulting {@link Viewable}.
+     * @param source The source {@link Val} for which the view is created.
+     * @param mapper The function that maps the source value to the resulting value.
+     * @return A {@link Viewable} instance that wraps the given {@link Val} with the specified mapper.
+     * @param <T> The type of the resulting {@link Viewable}.
+     * @param <U> The type of the source {@link Val}.
+     */
     <T extends @Nullable Object, U extends @Nullable Object> Viewable<T> viewOf( Class<T> type, Val<U> source, Function<U, T> mapper );
 
+    /**
+     *  Creates a {@link Viewable} instance of the given type which is a view of the specified source {@link Val}
+     *  with specified null and error objects. This is useful when you want to provide default values for the
+     *  {@link Viewable} when the source property contains a {@code null} value or an error occurs during mapping.
+     *
+     * @param nullObject The default value to be used when the source value is null.
+     * @param errorObject The default value to be used when an error occurs during mapping.
+     * @param source The source {@link Val} for which the view is created.
+     * @param mapper The function that maps the source value to the resulting value.
+     * @return A {@link Viewable} instance that wraps the given {@link Val} with specified null and error objects.
+     * @param <T> The type of the resulting {@link Viewable}.
+     * @param <U> The type of the source {@link Val}.
+     */
     <T extends @Nullable Object, U extends @Nullable Object> Viewable<U> viewOf( U nullObject, U errorObject, Val<T> source, Function<T, @Nullable U> mapper );
 
+    /**
+     *  Creates a nullable {@link Viewable} instance of the given type which is a view of the specified source {@link Val}.
+     *  You can register observers on the returned {@link Viewable} to receive updates
+     *  when the value of the source property changes.
+     *
+     * @param type The type of the resulting {@link Viewable}.
+     * @param source The source {@link Val} for which the view is created.
+     * @param mapper The function that maps the source value to the resulting value.
+     * @return A {@link Viewable} instance that wraps the given {@link Val} with the specified mapper.
+     * @param <T> The type of the source {@link Val}.
+     * @param <U> The type of the resulting {@link Viewable}.
+     */
     <T extends @Nullable Object, U extends @Nullable Object> Viewable<@Nullable U> viewOfNullable( Class<U> type, Val<T> source, Function<T, @Nullable U> mapper );
 
+    /**
+     *  A factory method for creating a {@link Lens} based {@link Var} property, which
+     *  is zooms to a field of type {@code B} that is part of the source property value {@code T}.
+     *  The resulting {@link Var} can be mutated, and the changes will be propagated
+     *  to the source property value through the lens.
+     *
+     * @param source The source {@link Var} from which the lens is created.
+     * @param lens The lens that defines how to access the field of type {@code B} in the source property value {@code T}.
+     * @return A {@link Var} instance that represents the field of type {@code B} in the source property value {@code T}.
+     * @param <T> The type of the source property value, which is expected to be non-nullable.
+     * @param <B> The type of the field in the source property value {@code T}, which can be nullable.
+     */
     <T extends @Nullable Object, B extends @Nullable Object> Var<B> lensOf( Var<T> source, Lens<T, B> lens );
 
+    /**
+     *  A factory method for creating a {@link Lens} based {@link Var} property, which
+     *  is zooms to a field of type {@code B} that is part of the source property value {@code T}.
+     *  The resulting {@link Var} can be mutated, and the changes will be propagated
+     *  to the source property value through the lens.
+     *
+     * @param source The source {@link Var} from which the lens is created.
+     * @param nullObject The default value to be used when the source value is null.
+     * @param lens The lens that defines how to access the field of type {@code B} in the source property value {@code T}.
+     * @return A {@link Var} instance that represents the field of type {@code B} in the source property value {@code T}.
+     * @param <T> The type of the source property value, which is expected to be non-nullable.
+     * @param <B> The type of the field in the source property value {@code T}, which can be nullable.
+     */
     <T extends @Nullable Object, B extends @Nullable Object> Var<B> lensOf( Var<T> source, B nullObject, Lens<T, B> lens);
 
+    /**
+     *  A factory method for creating a {@link Lens} based {@link Var} property, which
+     *  is zooms to a field of type {@code B} that is part of the source property value {@code T}.
+     *  The resulting {@link Var} can be mutated, and the changes will be propagated
+     *  to the source property value through the lens.
+     *
+     * @param type The type of the resulting {@link Var}.
+     * @param source The source {@link Var} from which the lens is created.
+     * @param lens The lens that defines how to access the field of type {@code B} in the source property value {@code T}.
+     * @return A {@link Var} instance that represents the field of type {@code B} in the source property value {@code T}.
+     * @param <T> The type of the source property value, which is expected to be non-nullable.
+     * @param <B> The type of the field in the source property value {@code T}, which can be nullable.
+     */
     <T extends @Nullable Object, B extends @Nullable Object> Var<B> lensOfNullable( Class<B> type, Var<T> source, Lens<T, B> lens );
 
+    /**
+     * Creates a nullable {@link Var} instance of the given type with the specified item, which can be {@code null}.
+     * This is useful when you want to create a variable that can hold a value of the given type or be {@code null}.
+     *
+     * @param type The type of the item to be wrapped in the {@link Var}.
+     * @param item The item to be wrapped in the {@link Var}. It can be {@code null}.
+     * @return A {@link Var} instance containing the item, or an empty {@link Var} if the item is {@code null}.
+     * @param <T> The type of the item to be wrapped in the {@link Var}.
+     */
     <T> Var<@Nullable T> varOfNullable( Class<T> type, @Nullable T item );
 
+    /**
+     * Creates a nullable {@link Var} instance of the given type with a {@code null} item.
+     * This is useful when you want to create a variable that can hold a value of the given type or be {@code null}.
+     *
+     * @param type The type of the item to be wrapped in the {@link Var}.
+     * @return A {@link Var} instance containing a {@code null} item.
+     * @param <T> The type of the item to be wrapped in the {@link Var}.
+     */
     <T> Var<@Nullable T> varOfNull( Class<T> type );
 
+    /**
+     * Creates a non-null {@link Var} instance of the given type with the specified item.
+     * This is useful when you want to create a variable that must hold a value of the given type.
+     *
+     * @param item The item to be wrapped in the {@link Var}. It must not be {@code null}.
+     * @return A {@link Var} instance containing the item.
+     * @param <T> The type of the item to be wrapped in the {@link Var}.
+     */
     <T> Var<T> varOf( T item );
 
+    /**
+     *  Creates a non-null {@link Var} instance of the given type and wraps the specified item.
+     * @param type The type of the item to be wrapped in the {@link Var}.
+     * @param item The item to be wrapped in the {@link Var}. It must not be {@code null}.
+     * @return A non-nullable {@link Var} instance containing the item.
+     * @param <T> The type of the item to be wrapped in the {@link Var}.
+     * @param <V> The type of the item to be wrapped in the {@link Var}, which must be a subtype of {@code T}.
+     */
     <T, V extends T> Var<T> varOf( Class<T> type, V item );
 
     <T> Vals<T> valsOf( Class<T> type );
