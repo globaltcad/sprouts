@@ -2,8 +2,6 @@ package sprouts.impl;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
-import org.slf4j.helpers.MessageFormatter;
-import org.slf4j.helpers.NOPLogger;
 import sprouts.*;
 
 import java.util.Objects;
@@ -155,7 +153,7 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
         _changeListeners = changeListeners == null ? new PropertyChangeListeners<>() : new PropertyChangeListeners<>(changeListeners);
 
         _lastItem = initialItem;
-        Viewable.cast(parent).onChange(From.ALL, WeakActionImpl.of(this, (thisLens, v) -> {
+        Viewable.cast(parent).onChange(From.ALL, WeakAction.of(this, (thisLens, v) -> {
             T newValue = thisLens._fetchItemFromParent();
             ItemPair<T> pair = new ItemPair<>(thisLens._type, newValue, thisLens._lastItem);
             if ( pair.change() != SingleChange.NONE ) {
