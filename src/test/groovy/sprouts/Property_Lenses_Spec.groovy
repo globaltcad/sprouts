@@ -1450,7 +1450,7 @@ class Property_Lenses_Spec extends Specification
         and : 'A trace list to record the side effect.'
             var trace = []
         and : 'Finally we register a weak action on the property.'
-            Viewable.cast(nameLens).onChange(From.ALL, new sprouts.impl.WeakActionImpl(owner, (o, it) -> trace << it.currentValue().orElseThrow()))
+            Viewable.cast(nameLens).onChange(From.ALL, new sprouts.impl.WeakAction(owner, (o, it) -> trace << it.currentValue().orElseThrow()))
 
         when : 'We change the lens...'
             nameLens.set("William")
