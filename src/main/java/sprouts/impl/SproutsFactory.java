@@ -18,10 +18,15 @@ import java.util.regex.Pattern;
 public interface SproutsFactory
 {
     /**
-     *  Creates a delegate for a {@link Val} property.
+     *  Creates a delegate for when a {@link Val}/{@link Var} property
+     *  changes its value or is explicitly triggered to propagate the
+     *  event to all derived {@link Viewable} instances and their {@link Action}s.
+     *
      * @param source The source property for which the delegate is created.
      * @param channel The channel on which the delegate will be registered.
-     * @param change The type of change that occurred on the property.
+     * @param change The type of change that occurred on the property, which may
+     *               also be {@link SingleChange#NONE} if the change was triggered
+     *               without any actual change in the value.
      * @param newValue The new value of the property after the change.
      * @param oldValue The old value of the property before the change.
      * @return A delegate for the given {@link Val} property.
@@ -36,7 +41,9 @@ public interface SproutsFactory
     );
 
     /**
-     *  Creates a delegate for a {@link Vals} property.
+     *  Creates a delegate for when a {@link Vals}/{@link Vars} property list
+     *  
+     *
      * @param source The source property for which the delegate is created.
      * @param changeType The type of change that occurred on the property.
      * @param index The index at which the change occurred.
@@ -55,20 +62,30 @@ public interface SproutsFactory
 
     /**
      *  A factory method to create a new {@link Event} instance.
+     *  An {@link Event} can be triggered using the {@link Event#fire()} method,
+     *  and it will notify all {@link Action}s registered on {@link Observer}s
+     *  derived from the {@link Event} instance through the
+     *  {@link Event#observable()} method.
+     *
      * @return A new {@link Event} instance with the default executor.
      */
     Event event();
 
     /**
      *  A factory method to create a new {@link Event} instance with the given executor.
-     * @param executor The executor to be used for the event.
+     *  An {@link Event} can be triggered using the {@link Event#fire()} method,
+     *  and it will notify all {@link Action}s registered on {@link Observer}s
+     *  derived from the {@link Event} instance through the
+     *  {@link Event#observable()} method.
+     *
+     * @param executor The executor to be used for the event. It must not be {@code null}.
      * @return A new {@link Event} instance with the specified executor.
      */
     Event eventOf( Event.Executor executor );
 
     /**
      *  Creates a nullable {@link Maybe} instance of the given type with the specified item.
-     * @param type The type of the item to be wrapped in the {@link Maybe}.
+     * @param type The type of the item to be wrapped in the {@link Maybe}. It must not be {@code null}.
      * @param item The item to be wrapped in the {@link Maybe}. It can be {@code null}.
      * @return A {@link Maybe} instance containing the item, or an empty {@link Maybe} if the item is {@code null}.
      * @param <T> The type of the item to be wrapped in the {@link Maybe}.
@@ -79,7 +96,11 @@ public interface SproutsFactory
 
     /**
      *  Creates a {@link Maybe} instance of the given type with a {@code null} item.
+     *  The {@link Maybe#isEmpty()} method of the returned instance will <b>always</b>
+     *  return {@code true}, indicating that the {@link Maybe} does not contain a value.
+     *
      * @param type The type of the item to be wrapped in the {@link Maybe}.
+     *             It must not be {@code null}.
      * @return A {@link Maybe} instance containing a {@code null} item.
      * @param <T> The type of the item to be wrapped in the {@link Maybe}.
      */
@@ -89,6 +110,9 @@ public interface SproutsFactory
 
     /**
      *  Creates a non-null {@link Maybe} instance of the given type with the specified item.
+     *  The {@link Maybe#isEmpty()} method of the returned instance will <b>always</b>
+     *  return {@code false}, indicating that the {@link Maybe} contains a value.
+     *  
      * @param item The item to be wrapped in the {@link Maybe}. It must not be {@code null}.
      * @return A {@link Maybe} instance containing the item.
      * @param <T> The type of the item to be wrapped in the {@link Maybe}.
@@ -99,7 +123,8 @@ public interface SproutsFactory
 
     /**
      *  Creates a {@link Maybe} instance of the given type by copying the value from another {@link Maybe}.
-     * @param toBeCopied The {@link Maybe} instance to be copied.
+     * @param toBeCopied The {@link Maybe} instance to be copied. It must not be {@code null} and it
+     *                   also must not contain a {@code null} value.
      * @return A new {@link Maybe} instance containing the value from the given {@link Maybe}.
      * @param <T> The type of the item to be wrapped in the {@link Maybe}.
      */
@@ -113,6 +138,8 @@ public interface SproutsFactory
      * @param toBeCopied The {@link Maybe} instance to be copied.
      * @return A new {@link Maybe} instance containing the value from the given {@link Maybe}, or an empty {@link Maybe} if the value is {@code null}.
      * @param <T> The type of the item to be wrapped in the {@link Maybe}.
+     * @throws NullPointerException if {@code toBeCopied} is {@code null}. 
+     *         (However, the item in the supplied {@link Maybe} can be {@code null}.)
      */
     default <T extends @Nullable Object> Maybe<@Nullable T> maybeOfNullable( Maybe<T> toBeCopied ) {
         Objects.requireNonNull(toBeCopied);
@@ -130,7 +157,10 @@ public interface SproutsFactory
 
     /**
      *  Creates a nullable {@link Val} instance of the given type with a {@code null} item.
-     * @param type The type of the item to be wrapped in the {@link Val}.
+     *  The {@link Val#isEmpty()} method of the returned instance will <b>always</b>
+     *  return {@code true}, indicating that the {@link Val} does not contain a value.
+     *  
+     * @param type The type of the item to be wrapped in the {@link Val}. It must not be {@code null}.
      * @return A {@link Val} instance containing a {@code null} item.
      * @param <T> The type of the item to be wrapped in the {@link Val}.
      */
@@ -141,22 +171,27 @@ public interface SproutsFactory
      * @param item The item to be wrapped in the {@link Val}. It must not be {@code null}.
      * @return A {@link Val} instance containing the item.
      * @param <T> The type of the item to be wrapped in the {@link Val}.
+     * @throws NullPointerException if {@code item} is {@code null}.
      */
     <T> Val<T> valOf( T item );
 
     /**
      *  Creates a non-null {@link Val} instance of the given type by copying the value from another {@link Val}.
-     * @param toBeCopied The {@link Val} instance to be copied.
+     * @param toBeCopied The {@link Val} instance to be copied. It must not be {@code null} and it
+     *                   must not contain a {@code null} value.
      * @return A new {@link Val} instance containing the value from the given {@link Val}.
      * @param <T> The type of the item to be wrapped in the {@link Val}.
+     * @throws NullPointerException if {@code toBeCopied} is {@code null}.
      */
     <T> Val<T> valOf( Val<T> toBeCopied );
 
     /**
      *  Creates a nullable {@link Val} instance of the given type by copying the value from another {@link Val}.
-     * @param toBeCopied The {@link Val} instance to be copied.
+     * @param toBeCopied The {@link Val} instance to be copied. It must not be {@code null}, 
+     *                   however, the value in the {@link Val} can be {@code null}.
      * @return A new {@link Val} instance containing the value from the given {@link Val}, or an empty {@link Val} if the value is {@code null}.
      * @param <T> The type of the item to be wrapped in the {@link Val}.
+     * @throws NullPointerException if {@code toBeCopied} is {@code null}.
      */
     <T extends @Nullable Object> Val<@Nullable T> valOfNullable( Val<T> toBeCopied );
 
@@ -166,8 +201,9 @@ public interface SproutsFactory
      *  when the value of the {@link Val} changes.
      *
      * @param source The source {@link Val} for which the view is created.
-     * @return A {@link Viewable} instance that wraps the given {@link Val}.
+     * @return A {@link Viewable} instance that wraps the given {@link Val}. The source may not be {@code null}.
      * @param <T> The type of the item in the {@link Val}.
+     * @throws NullPointerException if {@code source} is {@code null}.
      */
     <T extends @Nullable Object> Viewable<T> viewOf( Val<T> source );
 
@@ -183,6 +219,7 @@ public interface SproutsFactory
      * @return A {@link Viewable} instance that combines the values of the two {@link Val} instances using the specified combiner function.
      * @param <T> The type of the first {@link Val} value.
      * @param <U> The type of the second {@link Val} value.
+     * @throws NullPointerException if any of the supplied parameters are {@code null}.
      */
     <T extends @Nullable Object, U extends @Nullable Object> Viewable<@NonNull T> viewOf(Val<T> first, Val<U> second, BiFunction<T, U, @NonNull T> combiner );
 
@@ -198,6 +235,7 @@ public interface SproutsFactory
      * @return A {@link Viewable} instance that combines the values of the two {@link Val} instances using the specified combiner function.
      * @param <T> The type of the first {@link Val} value.
      * @param <U> The type of the second {@link Val} value.
+     * @throws NullPointerException if any of the supplied parameters are {@code null}.
      */
     <T extends @Nullable Object, U extends @Nullable Object> Viewable<@Nullable T> viewOfNullable( Val<T> first, Val<U> second, BiFunction<T, U, @Nullable T> combiner );
 
@@ -215,6 +253,7 @@ public interface SproutsFactory
      * @param <T> The type of the first {@link Val} value.
      * @param <U> The type of the second {@link Val} value.
      * @param <R> The type of the resulting {@link Viewable}.
+     * @throws NullPointerException if any of the supplied parameters are {@code null}.
      */
     <T extends @Nullable Object, U extends @Nullable Object, R> Viewable<R> viewOf(Class<R> type, Val<T> first, Val<U> second, BiFunction<T,U,R> combiner);
 
@@ -232,6 +271,7 @@ public interface SproutsFactory
      * @param <T> The type of the first {@link Val} value.
      * @param <U> The type of the second {@link Val} value.
      * @param <R> The type of the resulting {@link Viewable}.
+     * @throws NullPointerException if any of the supplied parameters are {@code null}.
      */
     <T extends @Nullable Object, U extends @Nullable Object, R> Viewable<@Nullable R> viewOfNullable(Class<R> type, Val<T> first, Val<U> second, BiFunction<T, U, @Nullable R> combiner);
 
@@ -243,11 +283,12 @@ public interface SproutsFactory
      * @param source The source {@link Vals} for which the view is created.
      * @return A {@link Viewables} instance that wraps the given {@link Vals}.
      * @param <T> The type of the items in the {@link Vals}.
+     * @throws NullPointerException if {@code source} is {@code null}.
      */
     <T extends @Nullable Object> Viewables<T> viewOf( Vals<T> source );
 
     /**
-     *  Creates a {@link Viewables} instance of the given {@link Vals} with specified null and error objects.
+     *  Creates a mapped {@link Viewables} instance of the given {@link Vals} with specified null and error objects.
      *  This is useful when you want to provide default values for the {@link Viewables} when the source
      *  property contains a {@code null} value or an error occurs during mapping.
      *
@@ -255,8 +296,10 @@ public interface SproutsFactory
      * @param errorObject The default value to be used when an error occurs during mapping.
      * @param source The source {@link Vals} for which the view is created.
      * @return A {@link Viewables} instance that wraps the given {@link Vals} with specified null and error objects.
+     * @param mapper The function that maps the source value to the resulting value.
      * @param <T> The type of the items in the {@link Vals}.
      * @param <U> The type of the items in the resulting {@link Viewables}.
+     * @throws NullPointerException if any of the supplied parameters are {@code null}.
      */
     <T extends @Nullable Object, U> Viewables<U> viewOf( U nullObject, U errorObject, Vals<T> source, Function<T, @Nullable U> mapper );
 
@@ -271,13 +314,16 @@ public interface SproutsFactory
      * @return A {@link Viewable} instance that wraps the given {@link Val} with the specified mapper.
      * @param <T> The type of the resulting {@link Viewable}.
      * @param <U> The type of the source {@link Val}.
+     * @throws NullPointerException if any of the supplied parameters are {@code null}.
      */
     <T extends @Nullable Object, U extends @Nullable Object> Viewable<T> viewOf( Class<T> type, Val<U> source, Function<U, T> mapper );
 
     /**
      *  Creates a {@link Viewable} instance of the given type which is a view of the specified source {@link Val}
-     *  with specified null and error objects. This is useful when you want to provide default values for the
-     *  {@link Viewable} when the source property contains a {@code null} value or an error occurs during mapping.
+     *  with specified null and error objects. You can register {@link Action}s or {@link Observer}s
+     *  on the returned {@link Viewable} to receive updates when the value of the source property changes.
+     *  This method is useful when you want a {@link Viewable} with a default/fallback values in case
+     *  the source property contains a {@code null} value or an error occurs during mapping.
      *
      * @param nullObject The default value to be used when the source value is null.
      * @param errorObject The default value to be used when an error occurs during mapping.
@@ -286,12 +332,15 @@ public interface SproutsFactory
      * @return A {@link Viewable} instance that wraps the given {@link Val} with specified null and error objects.
      * @param <T> The type of the resulting {@link Viewable}.
      * @param <U> The type of the source {@link Val}.
+     * @throws NullPointerException if any of the supplied parameters are {@code null}.
      */
     <T extends @Nullable Object, U extends @Nullable Object> Viewable<U> viewOf( U nullObject, U errorObject, Val<T> source, Function<T, @Nullable U> mapper );
 
     /**
-     *  Creates a nullable {@link Viewable} instance of the given type which is a view of the specified source {@link Val}.
-     *  You can register observers on the returned {@link Viewable} to receive updates
+     *  Creates a nullable {@link Viewable} instance of the given type, which is
+     *  a view of the specified source {@link Val}.
+     *  You can register {@link Action}s or {@link Observer}s
+     *  on the returned {@link Viewable} to receive updates
      *  when the value of the source property changes.
      *
      * @param type The type of the resulting {@link Viewable}.
@@ -300,6 +349,7 @@ public interface SproutsFactory
      * @return A {@link Viewable} instance that wraps the given {@link Val} with the specified mapper.
      * @param <T> The type of the source {@link Val}.
      * @param <U> The type of the resulting {@link Viewable}.
+     * @throws NullPointerException if any of the supplied parameters are {@code null}.
      */
     <T extends @Nullable Object, U extends @Nullable Object> Viewable<@Nullable U> viewOfNullable( Class<U> type, Val<T> source, Function<T, @Nullable U> mapper );
 
