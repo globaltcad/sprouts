@@ -445,6 +445,7 @@ public final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
      * @param <T> The type of the items in this tuple tree.
      * @return A new {@link TupleTree} containing the given items.
      */
+    @SafeVarargs
     public static <T> TupleTree<T> of(
         boolean allowsNull,
         Class<T> type,
