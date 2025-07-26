@@ -4,7 +4,10 @@ import org.jspecify.annotations.Nullable;
 import sprouts.SequenceChange;
 import sprouts.Tuple;
 
+import java.lang.reflect.Array;
 import java.util.*;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 /**
  *  A tuple that contains a difference to the previous state, in
@@ -136,6 +139,59 @@ public final class TupleWithDiff<T extends @Nullable Object> implements Tuple<T>
     }
 
     @Override
+    public Tuple<T> removeIf( Predicate<T> predicate ) {
+        List<T> itemsToKeep = new ArrayList<>();
+        int singleSequenceIndex = size() > 0 ? -2 : -1;
+        int removalSequenceSize = 0;
+        for ( int i = 0; i < size(); i++ ) {
+            T item = get(i);
+            if ( !predicate.test(item) ) {
+                itemsToKeep.add(item);
+            } else {
+                if ( singleSequenceIndex != -1 ) {
+                    if ( singleSequenceIndex == -2 )
+                        singleSequenceIndex = i;
+                    else if ( i > singleSequenceIndex + removalSequenceSize )
+                        singleSequenceIndex = -1;
+                }
+                if ( singleSequenceIndex >= 0 )
+                    removalSequenceSize++;
+            }
+        }
+        if ( itemsToKeep.size() == this.size() )
+            return this;
+        T[] newItems = (T[]) Array.newInstance(type(), itemsToKeep.size());
+        itemsToKeep.toArray(newItems);
+        SequenceDiff diff = SequenceDiff.of(this, SequenceChange.REMOVE, singleSequenceIndex, size() - itemsToKeep.size());
+        return new TupleWithDiff<>(TupleTree.of( allowsNull(), type(), newItems), diff);
+    }
+
+    @Override
+    public Tuple<T> retainIf( Predicate<T> predicate ) {
+        List<T> filteredItems = new ArrayList<>();
+        int singleSequenceIndex = size() > 0 ? -2 : -1;
+        int retainSequenceSize = 0;
+        for ( int i = 0; i < size(); i++ ) {
+            T item = get(i);
+            if ( predicate.test(item) ) {
+                filteredItems.add(item);
+                if ( singleSequenceIndex != -1 ) {
+                    if ( singleSequenceIndex == -2 )
+                        singleSequenceIndex = i;
+                    else if ( i > singleSequenceIndex + retainSequenceSize )
+                        singleSequenceIndex = -1;
+                }
+                if ( singleSequenceIndex >= 0 )
+                    retainSequenceSize++;
+            }
+        }
+        if ( filteredItems.size() == this.size() )
+            return this;
+        SequenceDiff diff = SequenceDiff.of(this, SequenceChange.RETAIN, singleSequenceIndex, filteredItems.size());
+        return new TupleWithDiff<>(TupleTree.of(allowsNull(), type(), filteredItems), diff);
+    }
+
+    @Override
     public Tuple<T> removeAll(Tuple<T> properties) {
         TupleTree<T> withoutItems = _tupleTree.removeAll(properties);
         if ( Util.refEquals(withoutItems, _tupleTree) )
@@ -220,6 +276,19 @@ public final class TupleWithDiff<T extends @Nullable Object> implements Tuple<T>
             return this;
         SequenceDiff diff = SequenceDiff.of(this, SequenceChange.CLEAR, 0, size());
         return new TupleWithDiff<>(_tupleTree.clear(), diff);
+    }
+
+    @Override
+    public Tuple<T> map( Function<T,T> mapper ) {
+        return new TupleWithDiff<>((TupleTree<T>) _tupleTree.map(mapper), SequenceDiff.of(this, SequenceChange.SET, 0, size()) );
+    }
+
+    @Override
+    public <U extends @Nullable Object> Tuple<U> mapTo(
+        Class<U>      type,
+        Function<T,U> mapper
+    ) {
+        return new TupleWithDiff<>((TupleTree<U>) _tupleTree.mapTo(type, mapper), SequenceDiff.of(this, SequenceChange.SET, 0, size()) );
     }
 
     @Override
