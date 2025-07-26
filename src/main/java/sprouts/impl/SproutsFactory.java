@@ -304,51 +304,58 @@ public interface SproutsFactory
     <T extends @Nullable Object, U> Viewables<U> viewOf( U nullObject, U errorObject, Vals<T> source, Function<T, @Nullable U> mapper );
 
     /**
-     *  Creates a {@link Viewable} instance of the given type which is a view of the specified source {@link Val}.
+     *  Creates a mapped {@link Viewable} instance of the given type which is a
+     *  view of the value of the specified source {@link Val} mapped to a different type
+     *  using the provided mapper function.<br>
      *  You can register observers on the returned {@link Viewable} to receive updates
      *  when the value of the source property changes.
      *
-     * @param type The type of the resulting {@link Viewable}.
+     * @param type The type class to which the source value will be mapped into the resulting {@link Viewable}.
      * @param source The source {@link Val} for which the view is created.
-     * @param mapper The function that maps the source value to the resulting value.
-     * @return A {@link Viewable} instance that wraps the given {@link Val} with the specified mapper.
-     * @param <T> The type of the resulting {@link Viewable}.
-     * @param <U> The type of the source {@link Val}.
+     * @param mapper The function that maps the source value to the resulting value in the {@link Viewable}.
+     * @return A {@link Viewable} instance which is a view of the specified source {@link Val} mapped to the given type.
+     * @param <T> The type parameter to which the source value will be mapped in the resulting {@link Viewable}.
+     * @param <U> The type of the value in the source {@link Val}.
      * @throws NullPointerException if any of the supplied parameters are {@code null}.
      */
     <T extends @Nullable Object, U extends @Nullable Object> Viewable<T> viewOf( Class<T> type, Val<U> source, Function<U, T> mapper );
 
     /**
-     *  Creates a {@link Viewable} instance of the given type which is a view of the specified source {@link Val}
-     *  with specified null and error objects. You can register {@link Action}s or {@link Observer}s
+     *  Creates a {@link Viewable} instance where he item of a supplied source {@link Val} is mapped to a different
+     *  (non-null) type using the provided mapper function as well as an error and null object in case the source value
+     *  is {@code null} or an error occurs during mapping.<br>
+     *  You can register {@link Action}s or {@link Observer}s
      *  on the returned {@link Viewable} to receive updates when the value of the source property changes.
-     *  This method is useful when you want a {@link Viewable} with a default/fallback values in case
+     *  This method is useful when you want a mapped {@link Viewable} with a default/fallback values in case
      *  the source property contains a {@code null} value or an error occurs during mapping.
      *
      * @param nullObject The default value to be used when the source value is null.
      * @param errorObject The default value to be used when an error occurs during mapping.
      * @param source The source {@link Val} for which the view is created.
-     * @param mapper The function that maps the source value to the resulting value.
-     * @return A {@link Viewable} instance that wraps the given {@link Val} with specified null and error objects.
-     * @param <T> The type of the resulting {@link Viewable}.
-     * @param <U> The type of the source {@link Val}.
+     * @param mapper The function that maps the source value to the resulting value in the {@link Viewable} returned by this method.
+     * @return A {@link Viewable} instance that dynamically maps the source value
+     *         or alternatively uses the specified null and error objects.
+     * @param <T> The type of the item in the source {@link Val} to be mapped. It can be nullable.
+     * @param <U> The type of the item to map to in the resulting {@link Viewable}.
+     *            It may never be {@code null} in the resulting {@link Viewable}.
      * @throws NullPointerException if any of the supplied parameters are {@code null}.
      */
     <T extends @Nullable Object, U extends @Nullable Object> Viewable<U> viewOf( U nullObject, U errorObject, Val<T> source, Function<T, @Nullable U> mapper );
 
     /**
-     *  Creates a nullable {@link Viewable} instance of the given type, which is
-     *  a view of the specified source {@link Val}.
-     *  You can register {@link Action}s or {@link Observer}s
-     *  on the returned {@link Viewable} to receive updates
+     *  Creates a {@link Viewable} instance of the given nullable type which is a
+     *  view of the value of the specified source {@link Val} mapped to a different
+     *  (nullable) type using the provided mapper function.<br>
+     *  You can register observers on the returned {@link Viewable} to receive updates
      *  when the value of the source property changes.
      *
-     * @param type The type of the resulting {@link Viewable}.
+     * @param type The type class to which the source value will be mapped into the resulting {@link Viewable}.
+     *             This argument may not be {@code null} (Although the resulting {@link Viewable} can contain {@code null} values).
      * @param source The source {@link Val} for which the view is created.
-     * @param mapper The function that maps the source value to the resulting value.
-     * @return A {@link Viewable} instance that wraps the given {@link Val} with the specified mapper.
-     * @param <T> The type of the source {@link Val}.
-     * @param <U> The type of the resulting {@link Viewable}.
+     * @param mapper The function that maps the source value to the resulting value in the {@link Viewable}.
+     * @return A {@link Viewable} instance which is a view of the specified source {@link Val} mapped to the given (nullable) type.
+     * @param <T> The type parameter to which the source value will be mapped in the resulting {@link Viewable}. It can be nullable.
+     * @param <U> The type of the value in the source {@link Val}. It can also be nullable.
      * @throws NullPointerException if any of the supplied parameters are {@code null}.
      */
     <T extends @Nullable Object, U extends @Nullable Object> Viewable<@Nullable U> viewOfNullable( Class<U> type, Val<T> source, Function<T, @Nullable U> mapper );
