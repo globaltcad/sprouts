@@ -496,7 +496,7 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      *   assert publisherLens.get() == book.publisher();
      * }</pre>
      *
-     * @param <B>        The type of the field that the lens will focus on.
+     * @param <B>        The type of the field that the lens will focus on, which must not be null.
      * @param nullObject The object to use when the focused field or its parent object is null.
      * @param getter     Function to get the current value of the focused field from the parent object.
      * @param wither     BiFunction to set or update the value of the focused field and return a new instance
@@ -505,7 +505,7 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      *         the null object when the parent object is null.
      * @throws NullPointerException If the given getter or wither function is null.
      */
-    default <B> Var<B> zoomTo( B nullObject, Function<T,B> getter, BiFunction<T,B,T> wither ) {
+    default <B extends @NonNull Object> Var<B> zoomTo( B nullObject, Function<T,B> getter, BiFunction<T,B,T> wither ) {
         return this.zoomTo( nullObject, Lens.of(getter, wither) );
     }
 
@@ -546,7 +546,7 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      *   assert publisherLens.get() == book.publisher();
      * }</pre>
      *
-     * @param <B>        The type of the field that the lens will focus on.
+     * @param <B>        The type of the field that the lens will focus on, which must not be null.
      * @param nullObject The object to use when the focused field or its parent object is null.
      *                   This object must not be null.
      * @param lens       The {@link Lens} implementation to focus on the specified
@@ -555,7 +555,7 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      *        the null object when the parent object is null.
      * @throws NullPointerException If the supplied {@code nullObject} or {@code lens} is null.
      */
-    default <B> Var<B> zoomTo( B nullObject, Lens<T,B> lens ) {
+    default <B extends @NonNull Object> Var<B> zoomTo( B nullObject, Lens<T,B> lens ) {
         return Sprouts.factory().lensOf( this, nullObject, lens );
     }
 
