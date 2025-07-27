@@ -20,7 +20,7 @@ import java.util.stream.StreamSupport;
  * and robust handling of {@code null} values.<br>
  * <br>
  * <p>
- * The name of this class is short for "tuple". This name was deliberately chosen because
+ * The name of this class was deliberately chosen because
  * as a mathematical object, a tuple is not a place in memory where items are stored,
  * but a sequence of raw pieces of information with value object semantics.<br>
  * So two {@link Tuple} instances with the same items and the same order are considered equal,
