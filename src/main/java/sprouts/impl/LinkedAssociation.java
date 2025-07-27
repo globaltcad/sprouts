@@ -237,7 +237,7 @@ final class LinkedAssociation<K,V> implements Association<K, V>
 
     @Override
     public Association<K, V> remove(K key) {
-        if (key == null) {
+        if (Util.refEquals(key, null)) {
             throw new NullPointerException("Key must not be null");
         }
         Optional<Entry<K, V>> entry = _entries.get(key);

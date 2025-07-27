@@ -5,8 +5,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.helpers.NOPLogger;
 
+import java.io.BufferedWriter;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Writer;
+import java.nio.charset.Charset;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiConsumer;
@@ -197,7 +200,7 @@ public final class Problem
      *  If an exception is present, it will be printed with its stack trace.
      */
     public void printToSystemOut() { 
-        printTo(new PrintWriter(System.out)); 
+        printTo(new PrintWriter(new BufferedWriter(new OutputStreamWriter(System.out, Charset.defaultCharset())), false));
     }
 
     /**

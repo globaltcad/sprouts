@@ -42,8 +42,8 @@ final class LinkedValueSet<E> implements ValueSet<E> {
             if (this == o) return true;
             if (!(o instanceof Entry)) return false;
             Entry<?> entry = (Entry<?>) o;
-            return (Objects.equals(previousElement, entry.previousElement)) &&
-                   (Objects.equals(nextElement, entry.nextElement));
+            return Objects.equals(previousElement, entry.previousElement) &&
+                   Objects.equals(nextElement, entry.nextElement);
         }
 
         @Override
@@ -102,7 +102,7 @@ final class LinkedValueSet<E> implements ValueSet<E> {
 
     @Override
     public ValueSet<E> add(E element) {
-        if (element == null) {
+        if (Util.refEquals(element, null)) {
             throw new NullPointerException("Element cannot be null");
         }
         if (_entries.containsKey(element)) {
@@ -111,13 +111,12 @@ final class LinkedValueSet<E> implements ValueSet<E> {
 
         Entry<E> newEntry = new Entry<>(_lastInsertedKey, null);
         AssociationImpl<E, Entry<E>> newEntries = (AssociationImpl<E, Entry<E>>) _entries.put(element, newEntry);
-        if (newEntries == _entries) {
+        if (Util.refEquals(newEntries, _entries)) {
             return this; // No change in entries, return unchanged set
         }
         if (_lastInsertedKey != null) {
             Entry<E> previousEntry = newEntries.get(_lastInsertedKey).orElse(null);
             if (previousEntry != null) {
-                newEntry = newEntry.withPreviousKey(_lastInsertedKey);
                 previousEntry = previousEntry.withNextKey(element);
                 newEntries = (AssociationImpl<E, Entry<E>>) newEntries.put(_lastInsertedKey, previousEntry);
             }
@@ -127,7 +126,7 @@ final class LinkedValueSet<E> implements ValueSet<E> {
 
     @Override
     public ValueSet<E> addAll(Stream<? extends E> elements) {
-        if (elements == null) {
+        if (Util.refEquals(elements, null)) {
             throw new NullPointerException("Elements stream cannot be null");
         }
         ValueSet<E> result = this;
@@ -140,7 +139,7 @@ final class LinkedValueSet<E> implements ValueSet<E> {
 
     @Override
     public ValueSet<E> remove(E element) {
-        if (element == null) {
+        if (Util.refEquals(element, null)) {
             throw new NullPointerException("Element cannot be null");
         }
         if (!_entries.containsKey(element)) {
@@ -148,7 +147,7 @@ final class LinkedValueSet<E> implements ValueSet<E> {
         }
 
         AssociationImpl<E, Entry<E>> newEntries = (AssociationImpl<E, Entry<E>>) _entries.remove(element);
-        if (newEntries == _entries) {
+        if (Util.refEquals(newEntries,_entries)) {
             return this; // No change in entries, return unchanged set
         }
 

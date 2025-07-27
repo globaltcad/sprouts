@@ -35,6 +35,7 @@ final class WeakAction<O extends @Nullable Object, D> implements Action<D>
         _action = action;
     }
 
+    @Override
     public void accept( D delegate ) {
         if ( _action == null )
             return;
