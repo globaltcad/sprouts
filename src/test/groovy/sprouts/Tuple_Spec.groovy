@@ -389,6 +389,28 @@ class Tuple_Spec extends Specification
             Tuple.of(Integer, 0..10)| { tuple -> tuple.setAllAt(2, Tuple.of(2, 3, 4)) }     || SequenceChange.NONE    | -1 | 0
     }
 
+    def 'The `classTyped` method returns the correct class and handles null parameters.'() {
+        reportInfo """
+            The `Tuple.classTyped(Class)` may seem strange at first,
+            but it is really important when you want to use the tuple
+            as a generic parameter type inferred from the class pointer.
+            
+            Like for example:
+            ```java
+                Var<Tuple<String>> strings = Var.of(Tuple.classTyped(String.class));
+            ```
+        """
+        when:
+            var associationClass = Tuple.classTyped(String)
+        then:
+            associationClass == Tuple.class
+
+        when:
+            Tuple.classTyped(null)
+        then:
+            thrown(NullPointerException)
+    }
+
     def 'You can tell two tuples with different nullability apart from their String representations.'()
     {
         given : 'A nullable tuple and a non-nullable tuple:'

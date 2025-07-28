@@ -454,10 +454,25 @@ class Linked_ValueSet_Spec extends Specification {
     }
 
     def 'Use `ValueSet.classTyped(Class)` to created a typed class pointer to `ValueSet`.'() {
+        reportInfo """
+            The `ValueSet.classTyped(Class)` may seem strange at first,
+            but it is really important when you want to use the value set
+            as a generic parameter type inferred from the class pointer.
+            
+            Like for example:
+            ```java
+                Var<ValueSet<String>> strings = Var.of(ValueSet.classTyped(String.class));
+            ```
+        """
         given:
             var typed = ValueSet.classTyped(String)
         expect:
             typed == ValueSet.class
+
+        when:
+            ValueSet.classTyped(null)
+        then:
+            thrown(NullPointerException)
     }
 
     def 'A value set can directly be created from a tuple.'() {

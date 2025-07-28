@@ -903,7 +903,7 @@ class Association_Spec extends Specification
             associations.get(4.0).orElseThrow(MissingItemException::new) == 4.0
     }
 
-    def 'The classTyped method returns the correct class and handles null parameters'() {
+    def 'The `classTyped` method returns the correct class and handles null parameters.'() {
         when:
             var associationClass = Association.classTyped(String, Integer)
         then:
