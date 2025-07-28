@@ -994,6 +994,36 @@ class Linked_Association_Spec extends Specification
             associations.get('t' as char).orElseThrow(MissingItemException::new) == ":P"
     }
 
+    def 'Use `putAllIfAbsent(Association<K,V>)` to populate a linked association from another one.'() {
+        reportInfo """
+            This method merges a linked association with another one
+            in a way where only those key-value pairs are added from the supplied 
+            association, whose keys are not already present in the targeted one.
+            
+            So contrary to `putAll`, the `putAllIfAbsent` does not overwrite existing entries!
+        """
+        given : 'We create a linked association with some initial entries:'
+            var associations = Association.betweenLinked(Character, String).putAll(
+                Pair.of('w' as char, ":)"),
+                Pair.of('t' as char, ":P")
+            )
+        when : 'We add some values to the association.'
+            associations = associations.putAllIfAbsent(Association.betweenLinked(Character, String).putAll(
+                Pair.of('I' as char, "I"),
+                Pair.of('w' as char, "was"),
+                Pair.of('a' as char, "added"),
+                Pair.of('t' as char, "to"),
+                Pair.of('t' as char, "the"),
+                Pair.of('a' as char, "association")
+            ))
+        then : 'The association contains the expected values.'
+            associations.size() == 4
+            associations.get('I' as char).orElseThrow(MissingItemException::new) == "I"
+            associations.get('w' as char).orElseThrow(MissingItemException::new) == ":)"
+            associations.get('a' as char).orElseThrow(MissingItemException::new) == "association"
+            associations.get('t' as char).orElseThrow(MissingItemException::new) == ":P"
+    }
+
     def 'The `containsKey` method of a linked `Association` throws an exception when passing arguments of the wrong type.'()
     {
         given :
