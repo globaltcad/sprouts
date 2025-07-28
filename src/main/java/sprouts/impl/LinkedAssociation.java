@@ -11,12 +11,12 @@ import java.util.stream.StreamSupport;
 
 final class LinkedAssociation<K,V> implements Association<K, V>
 {
-    static final class Entry<K, V> {
+    private static final class LinkedEntry<K, V> {
         private final V value;
         private final @Nullable K previousKey;
         private final @Nullable K nextKey;
 
-        Entry(V value, @Nullable K previousKey, @Nullable K nextKey) {
+        LinkedEntry(V value, @Nullable K previousKey, @Nullable K nextKey) {
             this.value = value;
             this.previousKey = previousKey;
             this.nextKey = nextKey;
@@ -32,21 +32,21 @@ final class LinkedAssociation<K,V> implements Association<K, V>
         K nextKey() {
             return nextKey;
         }
-        Entry<K,V> withValue(V value) {
-            return new Entry<>(value, this.previousKey, this.nextKey);
+        LinkedEntry<K,V> withValue(V value) {
+            return new LinkedEntry<>(value, this.previousKey, this.nextKey);
         }
-        Entry<K,V> withPreviousKey(@Nullable K previousKey) {
-            return new Entry<>(this.value, previousKey, this.nextKey);
+        LinkedEntry<K,V> withPreviousKey(@Nullable K previousKey) {
+            return new LinkedEntry<>(this.value, previousKey, this.nextKey);
         }
-        Entry<K,V> withNextKey(@Nullable K nextKey) {
-            return new Entry<>(this.value, this.previousKey, nextKey);
+        LinkedEntry<K,V> withNextKey(@Nullable K nextKey) {
+            return new LinkedEntry<>(this.value, this.previousKey, nextKey);
         }
 
         @Override
         public boolean equals(Object obj) {
             if (this == obj) return true;
-            if (!(obj instanceof Entry)) return false;
-            Entry<?, ?> entry = (Entry<?, ?>) obj;
+            if (!(obj instanceof LinkedAssociation.LinkedEntry)) return false;
+            LinkedEntry<?, ?> entry = (LinkedEntry<?, ?>) obj;
             return Objects.equals(value, entry.value) &&
                    Objects.equals(previousKey, entry.previousKey) &&
                    Objects.equals(nextKey, entry.nextKey);
@@ -64,7 +64,7 @@ final class LinkedAssociation<K,V> implements Association<K, V>
     }
 
     private final Class<V> _valueType;
-    private final AssociationImpl<K, Entry<K, V>> _entries;
+    private final AssociationImpl<K, LinkedEntry<K, V>> _entries;
     private final @Nullable K _firstInsertedKey;
     private final @Nullable K _lastInsertedKey;
 
@@ -72,12 +72,12 @@ final class LinkedAssociation<K,V> implements Association<K, V>
         final Class<K> keyType,
         final Class<V> valueType
     ) {
-        this(valueType, new AssociationImpl(keyType, Entry.class), null, null);
+        this(valueType, new AssociationImpl(keyType, LinkedEntry.class), null, null);
     }
 
     private LinkedAssociation(
             final Class<V> valueType,
-            final AssociationImpl<K, Entry<K, V>> entries,
+            final AssociationImpl<K, LinkedEntry<K, V>> entries,
             final @Nullable K firstInsertedKey,
             final @Nullable K lastInsertedKey
     ) {
@@ -138,7 +138,7 @@ final class LinkedAssociation<K,V> implements Association<K, V>
 
     @Override
     public Optional<V> get(K key) {
-        return _entries.get(key).map(Entry::value);
+        return _entries.get(key).map(LinkedEntry::value);
     }
 
     @Override
@@ -158,30 +158,30 @@ final class LinkedAssociation<K,V> implements Association<K, V>
                             "instead of the expected type '" + _valueType + "'."
             );
         }
-        Optional<Entry<K, V>> entry = _entries.get(key);
+        Optional<LinkedEntry<K, V>> entry = _entries.get(key);
         if (entry.isPresent()) {
             if (entry.get().value().equals(value)) {
                 // If the value is the same, we do not need to change anything
                 return this;
             }
-            Entry<K, V> existingEntry = entry.get();
-            AssociationImpl<K, Entry<K, V>> newEntries = (AssociationImpl)_entries.put(
+            LinkedEntry<K, V> existingEntry = entry.get();
+            AssociationImpl<K, LinkedEntry<K, V>> newEntries = (AssociationImpl)_entries.put(
                     key,
                     existingEntry.withValue(value)
             );
             return new LinkedAssociation<>(valueType(), newEntries, _firstInsertedKey, _lastInsertedKey);
         } else {
             // If the key does not exist, we create a new entry
-            Entry<K, V> newEntry = new Entry<>(value, _lastInsertedKey, null);
-            AssociationImpl<K, Entry<K, V>> newEntries = (AssociationImpl)_entries.put(
+            LinkedEntry<K, V> newEntry = new LinkedEntry<>(value, _lastInsertedKey, null);
+            AssociationImpl<K, LinkedEntry<K, V>> newEntries = (AssociationImpl)_entries.put(
                     key,
                     newEntry
             );
             if (_lastInsertedKey != null) {
                 // Update the previous entry's nextKey to point to the new key
-                Optional<Entry<K, V>> lastEntry = _entries.get(_lastInsertedKey);
+                Optional<LinkedEntry<K, V>> lastEntry = _entries.get(_lastInsertedKey);
                 if (lastEntry.isPresent()) {
-                    Entry<K, V> updatedLastEntry = lastEntry.get().withNextKey(key);
+                    LinkedEntry<K, V> updatedLastEntry = lastEntry.get().withNextKey(key);
                     newEntries = (AssociationImpl)newEntries.put(
                             _lastInsertedKey,
                             updatedLastEntry
@@ -209,22 +209,22 @@ final class LinkedAssociation<K,V> implements Association<K, V>
                     "instead of the expected type '" + _valueType + "'."
                 );
         }
-        Optional<Entry<K, V>> entry = _entries.get(key);
+        Optional<LinkedEntry<K, V>> entry = _entries.get(key);
         if (entry.isPresent()) {
             // If the key already exists, we do nothing
             return this;
         } else {
             // If the key does not exist, we create a new entry
-            Entry<K, V> newEntry = new Entry<>(value, _lastInsertedKey, null);
-            AssociationImpl<K, Entry<K, V>> newEntries = (AssociationImpl)_entries.put(
+            LinkedEntry<K, V> newEntry = new LinkedEntry<>(value, _lastInsertedKey, null);
+            AssociationImpl<K, LinkedEntry<K, V>> newEntries = (AssociationImpl)_entries.put(
                     key,
                     newEntry
             );
             if (_lastInsertedKey != null) {
                 // Update the previous entry's nextKey to point to the new key
-                Optional<Entry<K, V>> lastEntry = _entries.get(_lastInsertedKey);
+                Optional<LinkedEntry<K, V>> lastEntry = _entries.get(_lastInsertedKey);
                 if (lastEntry.isPresent()) {
-                    Entry<K, V> updatedLastEntry = lastEntry.get().withNextKey(key);
+                    LinkedEntry<K, V> updatedLastEntry = lastEntry.get().withNextKey(key);
                     newEntries = (AssociationImpl)newEntries.put(
                             _lastInsertedKey,
                             updatedLastEntry
@@ -240,7 +240,7 @@ final class LinkedAssociation<K,V> implements Association<K, V>
         if (Util.refEquals(key, null)) {
             throw new NullPointerException("Key must not be null");
         }
-        Optional<Entry<K, V>> entry = _entries.get(key);
+        Optional<LinkedEntry<K, V>> entry = _entries.get(key);
         if (entry.isPresent()) {
             K firstInsertedKey = _firstInsertedKey;
             K lastInsertedKey = _lastInsertedKey;
@@ -252,13 +252,13 @@ final class LinkedAssociation<K,V> implements Association<K, V>
                 // If we are removing the last inserted key, we need to update it
                 lastInsertedKey = entry.get().previousKey();
             }
-            Entry<K, V> existingEntry = entry.get();
-            AssociationImpl<K, Entry<K, V>> newEntries = (AssociationImpl)_entries.remove(key);
+            LinkedEntry<K, V> existingEntry = entry.get();
+            AssociationImpl<K, LinkedEntry<K, V>> newEntries = (AssociationImpl)_entries.remove(key);
             if (existingEntry.previousKey() != null) {
                 // Update the previous entry's nextKey to point to the next key
-                Optional<Entry<K, V>> previousEntry = _entries.get(existingEntry.previousKey());
+                Optional<LinkedEntry<K, V>> previousEntry = _entries.get(existingEntry.previousKey());
                 if (previousEntry.isPresent()) {
-                    Entry<K, V> updatedPreviousEntry = previousEntry.get().withNextKey(existingEntry.nextKey());
+                    LinkedEntry<K, V> updatedPreviousEntry = previousEntry.get().withNextKey(existingEntry.nextKey());
                     newEntries = (AssociationImpl)newEntries.put(
                             existingEntry.previousKey(),
                             updatedPreviousEntry
@@ -267,9 +267,9 @@ final class LinkedAssociation<K,V> implements Association<K, V>
             }
             if (existingEntry.nextKey() != null) {
                 // Update the next entry's previousKey to point to the previous key
-                Optional<Entry<K, V>> nextEntry = _entries.get(existingEntry.nextKey());
+                Optional<LinkedEntry<K, V>> nextEntry = _entries.get(existingEntry.nextKey());
                 if (nextEntry.isPresent()) {
-                    Entry<K, V> updatedNextEntry = nextEntry.get().withPreviousKey(existingEntry.previousKey());
+                    LinkedEntry<K, V> updatedNextEntry = nextEntry.get().withPreviousKey(existingEntry.previousKey());
                     newEntries = (AssociationImpl)newEntries.put(
                             existingEntry.nextKey(),
                             updatedNextEntry
@@ -283,7 +283,7 @@ final class LinkedAssociation<K,V> implements Association<K, V>
 
     @Override
     public Association<K, V> clear() {
-        AssociationImpl<K, Entry<K, V>> clearedEntries = (AssociationImpl<K, Entry<K, V>>) _entries.clear();
+        AssociationImpl<K, LinkedEntry<K, V>> clearedEntries = (AssociationImpl<K, LinkedEntry<K, V>>) _entries.clear();
         return new LinkedAssociation<>(valueType(), clearedEntries, null, null);
     }
 
@@ -343,7 +343,7 @@ final class LinkedAssociation<K,V> implements Association<K, V>
                     throw new NoSuchElementException();
                 }
                 currentKey = nextKey;
-                Entry<K, V> entry = _entries.get(currentKey).orElseThrow(NoSuchElementException::new);
+                LinkedEntry<K, V> entry = _entries.get(currentKey).orElseThrow(NoSuchElementException::new);
                 nextKey = entry.nextKey();
                 return Pair.of(currentKey, entry.value());
             }
