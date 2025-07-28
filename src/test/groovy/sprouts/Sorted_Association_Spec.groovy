@@ -1026,12 +1026,63 @@ class Sorted_Association_Spec extends Specification
             entries.contains(Pair.of(6, "association"))
     }
 
-    def 'replaceAll with Map only updates existing keys'() {
+    def 'Use the `replaceAll(Map<K,V>)` to only updates existing keys.'() {
         given:
             var original = Association.ofSorted("a", 1, (k1, k2) -> k1 <=> k2).put("b", 2).put("c", 3)
             var replacementMap = [a:10, d:40, c:30] as Map
         when:
             var updated = original.replaceAll(replacementMap)
+        then:
+            updated.size() == 3
+            updated.get("a").get() == 10
+            updated.get("b").get() == 2  // Should remain unchanged
+            updated.get("c").get() == 30
+            !updated.containsKey("d")
+    }
+
+    def 'The `replaceAll(Pair<K,V>...)` method only updates existing key-value pairs.'() {
+        given:
+            var original = Association.ofSorted("a", 1, (k1, k2) -> k1 <=> k2).put("b", 2).put("c", 3)
+        when:
+            var updated = original.replaceAll(
+                    Pair.of("a", 10),
+                    Pair.of("d", 40),
+                    Pair.of("c", 30)
+                )
+        then:
+            updated.size() == 3
+            updated.get("a").get() == 10
+            updated.get("b").get() == 2  // Should remain unchanged
+            updated.get("c").get() == 30
+            !updated.containsKey("d")
+    }
+
+    def 'The `replaceAll(Tuple<Pair<K,V>>)` method only updates existing key-value pairs.'() {
+        given:
+            var original = Association.ofSorted("a", 1, (k1, k2) -> k1 <=> k2).put("b", 2).put("c", 3)
+        when:
+            var updated = original.replaceAll(Tuple.of(
+                    Pair.of("a", 10),
+                    Pair.of("d", 40),
+                    Pair.of("c", 30)
+                ))
+        then:
+            updated.size() == 3
+            updated.get("a").get() == 10
+            updated.get("b").get() == 2  // Should remain unchanged
+            updated.get("c").get() == 30
+            !updated.containsKey("d")
+    }
+
+    def 'The `replaceAll(Set<Pair<K,V>>)` method only updates existing key-value pairs.'() {
+        given:
+            var original = Association.ofSorted("a", 1, (k1, k2) -> k1 <=> k2).put("b", 2).put("c", 3)
+        when:
+            var updated = original.replaceAll([
+                    Pair.of("a", 10),
+                    Pair.of("d", 40),
+                    Pair.of("c", 30)
+                ] as Set)
         then:
             updated.size() == 3
             updated.get("a").get() == 10
