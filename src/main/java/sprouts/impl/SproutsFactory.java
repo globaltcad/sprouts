@@ -11,9 +11,16 @@ import java.util.function.Function;
 import java.util.regex.Pattern;
 
 /**
- *  Creates instances of the various property types in the Sprouts library.
+ *  Creates instances of the various types of the Sprouts library, like its
+ *  persistent data structures (see {@link Tuple}, {@link Association}, {@link ValueSet})
+ *  or reactive properties ({@link Val}, {@link Var}, {@link Vals}, {@link Vars}).<br>
  *  This interface allows you to plug in your own implementations of the Sprouts
- *  properties and collections, through the {@link Sprouts#setFactory(SproutsFactory)} method.
+ *  properties and collections, through the {@link Sprouts#setFactory(SproutsFactory)} method.<br>
+ *  <p>
+ *      All other (static) factory methods on the various Sprouts
+ *      types delegate to this API for instantiation.
+ *      <b>So please be careful when plugging a custom implementation!</b>
+ *  </p>
  */
 public interface SproutsFactory
 {
@@ -23,14 +30,14 @@ public interface SproutsFactory
      *  event to all derived {@link Viewable} instances and their {@link Action}s.
      *
      * @param source The source property for which the delegate is created.
-     * @param channel The channel on which the delegate will be registered.
-     * @param change The type of change that occurred on the property, which may
+     * @param channel The channel on which the change event was triggered (see {@link Val#fireChange(Channel)}).
+     * @param change The type of change that occurred in the property, which may
      *               also be {@link SingleChange#NONE} if the change was triggered
-     *               without any actual change in the value.
+     *               explicitly without any actual change in the value.
      * @param newValue The new value of the property after the change.
      * @param oldValue The old value of the property before the change.
      * @return A delegate for the given {@link Val} property.
-     * @param <T> The type of the property for which the delegate is created.
+     * @param <T> The item type of the property for which the delegate is created.
      */
     <T> ValDelegate<T> delegateOf(
         Val<T> source,
@@ -47,7 +54,7 @@ public interface SproutsFactory
      *  {@link Viewable#onChange(Channel, Action)} method.
      *
      * @param source The source property for which the delegate is created.
-     * @param changeType The type of change that occurred on the property.
+     * @param changeType The type of change that occurred in the property.
      * @param index The (start) index at which the change occurred.
      * @param newValues The new values of the property after the change.
      * @param oldValues The old values of the property before the change.
@@ -111,9 +118,9 @@ public interface SproutsFactory
     }
 
     /**
-     *  Creates a non-null {@link Maybe} instance of the given type with the specified item.
-     *  The {@link Maybe#isEmpty()} method of the returned instance will <b>always</b>
-     *  return {@code false}, indicating that the {@link Maybe} contains a value.
+     *  Creates a {@link Maybe} instance from a non-nullable item.
+     *  The {@link Maybe#isPresent()} method of the returned instance will <b>always</b>
+     *  return {@code true}, indicating that the {@link Maybe} contains a value.
      *  
      * @param item The item to be wrapped in the {@link Maybe}. It must not be {@code null}.
      * @return A {@link Maybe} instance containing the item.
@@ -124,7 +131,13 @@ public interface SproutsFactory
     }
 
     /**
-     *  Creates a {@link Maybe} instance of the given type by copying the value from another {@link Maybe}.
+     *  Creates a non-empty {@link Maybe} copy from the supplied {@link Maybe}.
+     *  The supplied {@link Maybe} must not contain a null item.
+     *  So if the factory call was successful, then the {@link Maybe#isPresent()} method of the
+     *  returned instance will <b>always</b> return {@code true},
+     *  indicating that the {@link Maybe} contains a value.
+     *  The returned instance is effectively an immutable copy of the supplied {@link Maybe}.
+     *
      * @param toBeCopied The {@link Maybe} instance to be copied. It must not be {@code null} and it
      *                   also must not contain a {@code null} value.
      * @return A new {@link Maybe} instance containing the value from the given {@link Maybe}.
@@ -136,9 +149,13 @@ public interface SproutsFactory
     }
 
     /**
-     *  Creates a nullable {@link Maybe} instance of the given type by copying the value from another {@link Maybe}.
+     *  Creates a potentially empty {@link Maybe} copy from the supplied {@link Maybe},
+     *  which may or may not contain a null item.
+     *  The returned instance is effectively an immutable copy of the supplied {@link Maybe}.
+     *
      * @param toBeCopied The {@link Maybe} instance to be copied.
-     * @return A new {@link Maybe} instance containing the value from the given {@link Maybe}, or an empty {@link Maybe} if the value is {@code null}.
+     * @return A new {@link Maybe} instance containing the value from the given {@link Maybe},
+     *         or an empty {@link Maybe} if the value is {@code null}.
      * @param <T> The type of the item to be wrapped in the {@link Maybe}.
      * @throws NullPointerException if {@code toBeCopied} is {@code null}. 
      *         (However, the item in the supplied {@link Maybe} can be {@code null}.)
@@ -149,36 +166,46 @@ public interface SproutsFactory
     }
 
     /**
-     *  Creates a nullable {@link Val} instance of the given type with the specified item.
-     * @param type The type of the item to be wrapped in the {@link Val}.
+     *  Creates a new {@link Val} property from a type class and an item which may or may not be null.
+     *  The resulting property may or may not be empty (see {@link Val#isEmpty()}.
+     * @param type The type of the item to be wrapped in the {@link Val}, which must not be null.
      * @param item The item to be wrapped in the {@link Val}. It can be {@code null}.
      * @return A {@link Val} instance containing the item, or an empty {@link Val} if the item is {@code null}.
-     * @param <T> The type of the item to be wrapped in the {@link Val}.
+     * @param <T> The type of the item to be wrapped in the {@link Val} property.
+     * @throws NullPointerException if {@code type} is {@code null}.
      */
     <T> Val<@Nullable T> valOfNullable( Class<T> type, @Nullable T item );
 
     /**
-     *  Creates a nullable {@link Val} instance of the given type with a {@code null} item.
+     *  Creates an empty {@link Val} property from the given type class.
      *  The {@link Val#isEmpty()} method of the returned instance will <b>always</b>
      *  return {@code true}, indicating that the {@link Val} does not contain a value.
      *  
      * @param type The type of the item to be wrapped in the {@link Val}. It must not be {@code null}.
-     * @return A {@link Val} instance containing a {@code null} item.
+     * @return An immutable and empty {@link Val} instance containing a {@code null} item.
      * @param <T> The type of the item to be wrapped in the {@link Val}.
      */
     <T> Val<@Nullable T> valOfNull( Class<T> type );
 
     /**
-     *  Creates a non-null {@link Val} instance of the given type with the specified item.
+     *  Creates a non-null {@link Val} instance of the given non-null item.
+     *  The {@link Val#isPresent()} method of the returned instance will <b>always</b>
+     *  return {@code true}, indicating that the {@link Val} does contain a value.
+     *
      * @param item The item to be wrapped in the {@link Val}. It must not be {@code null}.
-     * @return A {@link Val} instance containing the item.
+     * @return An immutable and non-empty {@link Val} instance containing the item.
      * @param <T> The type of the item to be wrapped in the {@link Val}.
      * @throws NullPointerException if {@code item} is {@code null}.
      */
     <T> Val<T> valOf( T item );
 
     /**
-     *  Creates a non-null {@link Val} instance of the given type by copying the value from another {@link Val}.
+     *  Creates a non-empty {@link Val} copy from the supplied {@link Val}.
+     *  The supplied {@link Val} must not contain a null item.
+     *  So if the factory call was successful, then the {@link Val#isPresent()} method of the
+     *  returned instance will <b>always</b> return {@code true},
+     *  indicating that the {@link Val} contains a value.
+     *  The returned instance is effectively an immutable copy of the supplied {@link Val}.
      * @param toBeCopied The {@link Val} instance to be copied. It must not be {@code null} and it
      *                   must not contain a {@code null} value.
      * @return A new {@link Val} instance containing the value from the given {@link Val}.
