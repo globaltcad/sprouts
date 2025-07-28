@@ -34,14 +34,15 @@ class Association_Spec extends Specification
 
     def 'An empty association is created by supplying the type of the key and value'() {
         given:
-            var associations = Association.between(String, Integer)
+            var association = Association.between(String, Integer)
 
         expect:
-            !associations.isSorted()
-            !associations.isLinked()
-            associations.isEmpty()
-            associations.keyType() == String
-            associations.valueType() == Integer
+            !association.isSorted()
+            !association.isLinked()
+            association.isEmpty()
+            !association.isNotEmpty()
+            association.keyType() == String
+            association.valueType() == Integer
     }
 
     def 'An association is invariant to a map.'(
@@ -400,18 +401,21 @@ class Association_Spec extends Specification
 
     def 'The `clear` method creates an empty association with the same key and value types.'() {
         given :
-            var associations = Association.between(String, Integer)
-            associations = associations.put("a", 1).put("b", 2).put("c", 3)
+            var association = Association.between(String, Integer)
+            association = association.put("a", 1).put("b", 2).put("c", 3)
         expect : 'The association is not empty.'
-            !associations.isEmpty()
-
+            association.isNotEmpty()
+            !association.isEmpty()
+        and : 'It is a regular association, meaning it is neither sorted nor linked.'
+            !association.isSorted()
+            !association.isLinked()
         when : 'We clear the association.'
-            associations = associations.clear()
+            association = association.clear()
         then : 'The association is empty.'
-            associations.isEmpty()
+            association.isEmpty()
         and : 'The key and value types are the same.'
-            associations.keyType() == String
-            associations.valueType() == Integer
+            association.keyType() == String
+            association.valueType() == Integer
     }
 
     def 'You can merge two large associations into one using the `putAll` method.'(int size) {
@@ -788,6 +792,36 @@ class Association_Spec extends Specification
             associations.get('I' as char).orElseThrow(MissingItemException::new) == "I"
             associations.get('w' as char).orElseThrow(MissingItemException::new) == ":)"
             associations.get('a' as char).orElseThrow(MissingItemException::new) == "added"
+            associations.get('t' as char).orElseThrow(MissingItemException::new) == ":P"
+    }
+
+    def 'Use `putAllIfAbsent(Map<K,V>)` to populate an association at once from a regular Java map.'() {
+        reportInfo """
+            This method ensures compatibility with the `Map` interface, which
+            is especially useful when you have a plain old key-value mapping that you want to
+            use to populate the association with for keys which are not already present.
+            
+            So contrary to `putAll`, the `putAllIfAbsent` does not overwrite existing entries!
+        """
+        given : 'We create an association with some initial entries:'
+            var associations = Association.between(Character, String).putAll(
+                Pair.of('w' as char, ":)"),
+                Pair.of('t' as char, ":P")
+            )
+        when : 'We add some values to the association.'
+            associations = associations.putAllIfAbsent([
+                ('I' as char): "I",
+                ('w' as char): "was",
+                ('a' as char): "added",
+                ('t' as char): "to",
+                ('t' as char): "the",
+                ('a' as char): "association"
+            ] as LinkedHashMap)
+        then : 'The association contains the values.'
+            associations.size() == 4
+            associations.get('I' as char).orElseThrow(MissingItemException::new) == "I"
+            associations.get('w' as char).orElseThrow(MissingItemException::new) == ":)"
+            associations.get('a' as char).orElseThrow(MissingItemException::new) == "association"
             associations.get('t' as char).orElseThrow(MissingItemException::new) == ":P"
     }
 
