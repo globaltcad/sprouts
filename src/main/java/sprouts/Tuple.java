@@ -1047,6 +1047,8 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      */
     default Tuple<T> maybeSetAt( int index, Maybe<T> maybeItem ) {
         Objects.requireNonNull(maybeItem);
+        if ( index < 0 || index >= size() )
+            throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + size());
         if ( !allowsNull() && maybeItem.isEmpty() )
             return this;
 
@@ -1231,6 +1233,8 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      */
     default Tuple<T> maybeAddAllAt( int index, Maybe<T>... items ) {
         Objects.requireNonNull(items);
+        if ( index < 0 || index > size() )
+            throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + size());
         if ( !allowsNull() ) {
             List<Maybe<T>> onlyPresent = new ArrayList<>();
             for ( Maybe<T> item : items ) {
@@ -1300,6 +1304,8 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      */
     default Tuple<T> maybeSetAllAt( int index, Maybe<T>... items ) {
         Objects.requireNonNull(items);
+        if ( index < 0 || index >= size() )
+            throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + size());
         if ( !allowsNull() ) {
             List<Maybe<T>> onlyPresent = new ArrayList<>();
             for ( Maybe<T> item : items ) {
