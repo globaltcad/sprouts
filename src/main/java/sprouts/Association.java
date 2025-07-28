@@ -589,9 +589,7 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
      */
     default Association<K, V> putAll( final Set<Pair<? extends K, ? extends V>> entries ) {
         Objects.requireNonNull(entries, "The provided set cannot be null.");
-        if ( entries.isEmpty() )
-            return this;
-        return putAll(entries.stream());
+        return putAll((Collection<Pair<? extends K,? extends V>>) entries);
     }
 
     /**
@@ -735,9 +733,7 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
      */
     default Association<K, V> putAllIfAbsent( final Set<Pair<? extends K, ? extends V>> entries ) {
         Objects.requireNonNull(entries, "The provided set cannot be null.");
-        if ( entries.isEmpty() )
-            return this;
-        return putAllIfAbsent(entries.stream());
+        return putAllIfAbsent((Collection<Pair<? extends K,? extends V>>) entries);
     }
 
     /**
