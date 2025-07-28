@@ -939,9 +939,7 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
      */
     default Association<K, V> replaceAll( Set<Pair<? extends K, ? extends V>> entries ) {
         Objects.requireNonNull(entries, "The provided set cannot be null.");
-        if (entries.isEmpty())
-            return this;
-        return replaceAll(entries.stream());
+        return replaceAll((Collection<Pair<? extends K,? extends V>>) entries);
     }
 
     /**
