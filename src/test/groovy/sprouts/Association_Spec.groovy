@@ -34,14 +34,15 @@ class Association_Spec extends Specification
 
     def 'An empty association is created by supplying the type of the key and value'() {
         given:
-            var associations = Association.between(String, Integer)
+            var association = Association.between(String, Integer)
 
         expect:
-            !associations.isSorted()
-            !associations.isLinked()
-            associations.isEmpty()
-            associations.keyType() == String
-            associations.valueType() == Integer
+            !association.isSorted()
+            !association.isLinked()
+            association.isEmpty()
+            !association.isNotEmpty()
+            association.keyType() == String
+            association.valueType() == Integer
     }
 
     def 'An association is invariant to a map.'(
@@ -400,18 +401,21 @@ class Association_Spec extends Specification
 
     def 'The `clear` method creates an empty association with the same key and value types.'() {
         given :
-            var associations = Association.between(String, Integer)
-            associations = associations.put("a", 1).put("b", 2).put("c", 3)
+            var association = Association.between(String, Integer)
+            association = association.put("a", 1).put("b", 2).put("c", 3)
         expect : 'The association is not empty.'
-            !associations.isEmpty()
-
+            association.isNotEmpty()
+            !association.isEmpty()
+        and : 'It is a regular association, meaning it is neither sorted nor linked.'
+            !association.isSorted()
+            !association.isLinked()
         when : 'We clear the association.'
-            associations = associations.clear()
+            association = association.clear()
         then : 'The association is empty.'
-            associations.isEmpty()
+            association.isEmpty()
         and : 'The key and value types are the same.'
-            associations.keyType() == String
-            associations.valueType() == Integer
+            association.keyType() == String
+            association.valueType() == Integer
     }
 
     def 'You can merge two large associations into one using the `putAll` method.'(int size) {
@@ -791,6 +795,66 @@ class Association_Spec extends Specification
             associations.get('t' as char).orElseThrow(MissingItemException::new) == ":P"
     }
 
+    def 'Use `putAllIfAbsent(Map<K,V>)` to populate an association at once from a regular Java map.'() {
+        reportInfo """
+            This method ensures compatibility with the `Map` interface, which
+            is especially useful when you have a plain old key-value mapping that you want to
+            use to populate the association with for keys which are not already present.
+            
+            So contrary to `putAll`, the `putAllIfAbsent` does not overwrite existing entries!
+        """
+        given : 'We create an association with some initial entries:'
+            var associations = Association.between(Character, String).putAll(
+                Pair.of('w' as char, ":)"),
+                Pair.of('t' as char, ":P")
+            )
+        when : 'We add some values to the association.'
+            associations = associations.putAllIfAbsent([
+                ('I' as char): "I",
+                ('w' as char): "was",
+                ('a' as char): "added",
+                ('t' as char): "to",
+                ('t' as char): "the",
+                ('a' as char): "association"
+            ] as LinkedHashMap)
+        then : 'The association contains the values.'
+            associations.size() == 4
+            associations.get('I' as char).orElseThrow(MissingItemException::new) == "I"
+            associations.get('w' as char).orElseThrow(MissingItemException::new) == ":)"
+            associations.get('a' as char).orElseThrow(MissingItemException::new) == "association"
+            associations.get('t' as char).orElseThrow(MissingItemException::new) == ":P"
+    }
+
+    def 'Use `putAllIfAbsent(Association<K,V>)` to populate an association from another one.'() {
+        reportInfo """
+            This method merges an association with another one
+            in a way where only those key-value pairs are added from the supplied 
+            association, whose keys are not already present in the targeted one.
+            
+            So contrary to `putAll`, the `putAllIfAbsent` does not overwrite existing entries!
+        """
+        given : 'We create an association with some initial entries:'
+            var associations = Association.between(Character, String).putAll(
+                Pair.of('w' as char, ":)"),
+                Pair.of('t' as char, ":P")
+            )
+        when : 'We add some values to the association.'
+            associations = associations.putAllIfAbsent(Association.between(Character, String).putAll(
+                Pair.of('I' as char, "I"),
+                Pair.of('w' as char, "was"),
+                Pair.of('a' as char, "added"),
+                Pair.of('t' as char, "to"),
+                Pair.of('t' as char, "the"),
+                Pair.of('a' as char, "association")
+            ))
+        then : 'The association contains the expected values.'
+            associations.size() == 4
+            associations.get('I' as char).orElseThrow(MissingItemException::new) == "I"
+            associations.get('w' as char).orElseThrow(MissingItemException::new) == ":)"
+            associations.get('a' as char).orElseThrow(MissingItemException::new) == "association"
+            associations.get('t' as char).orElseThrow(MissingItemException::new) == ":P"
+    }
+
     def 'The `putIfAbsent(K, V)` method adds a key-value pair to the association if, and only if, the key is not present.'() {
         given : 'We create an association between shorts and chars and add a bunch of entries to the association.'
             var associations = Association.between(Short, Character).putAll([
@@ -839,7 +903,7 @@ class Association_Spec extends Specification
             associations.get(4.0).orElseThrow(MissingItemException::new) == 4.0
     }
 
-    def 'The classTyped method returns the correct class and handles null parameters'() {
+    def 'The `classTyped` method returns the correct class and handles null parameters.'() {
         when:
             var associationClass = Association.classTyped(String, Integer)
         then:
@@ -914,12 +978,63 @@ class Association_Spec extends Specification
             entries.contains(Pair.of(6, "association"))
     }
 
-    def 'replaceAll with Map only updates existing keys'() {
+    def 'Use `replaceAll(Map<K,V>)` to only updates existing keys.'() {
         given:
             var original = Association.of("a", 1).put("b", 2).put("c", 3)
             var replacementMap = [a:10, d:40, c:30] as Map
         when:
             var updated = original.replaceAll(replacementMap)
+        then:
+            updated.size() == 3
+            updated.get("a").get() == 10
+            updated.get("b").get() == 2  // Should remain unchanged
+            updated.get("c").get() == 30
+            !updated.containsKey("d")
+    }
+
+    def 'The `replaceAll(Pair<K,V>...)` method only updates existing key-value pairs.'() {
+        given:
+            var original = Association.of("a", 1).put("b", 2).put("c", 3)
+        when:
+            var updated = original.replaceAll(
+                    Pair.of("a", 10),
+                    Pair.of("d", 40),
+                    Pair.of("c", 30)
+                )
+        then:
+            updated.size() == 3
+            updated.get("a").get() == 10
+            updated.get("b").get() == 2  // Should remain unchanged
+            updated.get("c").get() == 30
+            !updated.containsKey("d")
+    }
+
+    def 'The `replaceAll(Tuple<Pair<K,V>>)` method only updates existing key-value pairs.'() {
+        given:
+            var original = Association.of("a", 1).put("b", 2).put("c", 3)
+        when:
+            var updated = original.replaceAll(Tuple.of(
+                    Pair.of("a", 10),
+                    Pair.of("d", 40),
+                    Pair.of("c", 30)
+                ))
+        then:
+            updated.size() == 3
+            updated.get("a").get() == 10
+            updated.get("b").get() == 2  // Should remain unchanged
+            updated.get("c").get() == 30
+            !updated.containsKey("d")
+    }
+
+    def 'The `replaceAll(Set<Pair<K,V>>)` method only updates existing key-value pairs.'() {
+        given:
+            var original = Association.of("a", 1).put("b", 2).put("c", 3)
+        when:
+            var updated = original.replaceAll([
+                    Pair.of("a", 10),
+                    Pair.of("d", 40),
+                    Pair.of("c", 30)
+                ] as Set)
         then:
             updated.size() == 3
             updated.get("a").get() == 10

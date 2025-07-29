@@ -8,42 +8,41 @@ import java.util.stream.Stream;
 
 final class LinkedValueSet<E> implements ValueSet<E> {
 
-    static final class Entry<K> {
+    private static final class LinkedEntry<K> {
         private final @Nullable K previousElement;
         private final @Nullable K nextElement;
 
-        Entry(@Nullable K previousElement, @Nullable K nextElement) {
+        LinkedEntry(@Nullable K previousElement, @Nullable K nextElement) {
             this.previousElement = previousElement;
             this.nextElement = nextElement;
         }
         @Nullable
-        K previousKey() {
-            return previousElement;
+        K previousElement() {
+            return this.previousElement;
         }
         @Nullable
-        K nextKey() {
-            return nextElement;
+        K nextElement() {
+            return this.nextElement;
         }
-        Entry<K> withPreviousKey(@Nullable K previousKey) {
-            return new Entry<>(previousKey, this.nextElement);
+        LinkedEntry<K> withPreviousElement(@Nullable K previousElement) {
+            return new LinkedEntry<>(previousElement, this.nextElement);
         }
-        Entry<K> withNextKey(@Nullable K nextKey) {
-            return new Entry<>(this.previousElement, nextKey);
+        LinkedEntry<K> withNextElement(@Nullable K nextKey) {
+            return new LinkedEntry<>(this.previousElement, nextKey);
         }
 
         @Override
         public String toString() {
-            return "Entry[previous=" + previousElement +
-                   ", next=" + nextElement + "]";
+            return "LinkedEntry[previousElement=" + previousElement + ", nextElement=" + nextElement + "]";
         }
 
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (!(o instanceof Entry)) return false;
-            Entry<?> entry = (Entry<?>) o;
-            return (Objects.equals(previousElement, entry.previousElement)) &&
-                   (Objects.equals(nextElement, entry.nextElement));
+            if (!(o instanceof LinkedEntry)) return false;
+            LinkedEntry<?> entry = (LinkedEntry<?>) o;
+            return Objects.equals(previousElement, entry.previousElement) &&
+                   Objects.equals(nextElement, entry.nextElement);
         }
 
         @Override
@@ -54,18 +53,18 @@ final class LinkedValueSet<E> implements ValueSet<E> {
         }
     }
 
-    private final AssociationImpl<E, Entry<E>> _entries;
+    private final AssociationImpl<E, LinkedEntry<E>> _entries;
     private final @Nullable E _firstInsertedKey;
     private final @Nullable E _lastInsertedKey;
 
     LinkedValueSet(
             final Class<E> elementType
     ) {
-        this(new AssociationImpl(elementType, Entry.class), null, null);
+        this(new AssociationImpl(elementType, LinkedEntry.class), null, null);
     }
 
     private LinkedValueSet(
-            final AssociationImpl<E, Entry<E>> entries,
+            final AssociationImpl<E, LinkedEntry<E>> entries,
             final @Nullable E firstInsertedKey,
             final @Nullable E lastInsertedKey
     ) {
@@ -102,24 +101,23 @@ final class LinkedValueSet<E> implements ValueSet<E> {
 
     @Override
     public ValueSet<E> add(E element) {
-        if (element == null) {
+        if (Util.refEquals(element, null)) {
             throw new NullPointerException("Element cannot be null");
         }
         if (_entries.containsKey(element)) {
             return this; // Element already exists, return unchanged set
         }
 
-        Entry<E> newEntry = new Entry<>(_lastInsertedKey, null);
-        AssociationImpl<E, Entry<E>> newEntries = (AssociationImpl<E, Entry<E>>) _entries.put(element, newEntry);
-        if (newEntries == _entries) {
+        LinkedEntry<E> newEntry = new LinkedEntry<>(_lastInsertedKey, null);
+        AssociationImpl<E, LinkedEntry<E>> newEntries = (AssociationImpl<E, LinkedEntry<E>>) _entries.put(element, newEntry);
+        if (Util.refEquals(newEntries, _entries)) {
             return this; // No change in entries, return unchanged set
         }
         if (_lastInsertedKey != null) {
-            Entry<E> previousEntry = newEntries.get(_lastInsertedKey).orElse(null);
+            LinkedEntry<E> previousEntry = newEntries.get(_lastInsertedKey).orElse(null);
             if (previousEntry != null) {
-                newEntry = newEntry.withPreviousKey(_lastInsertedKey);
-                previousEntry = previousEntry.withNextKey(element);
-                newEntries = (AssociationImpl<E, Entry<E>>) newEntries.put(_lastInsertedKey, previousEntry);
+                previousEntry = previousEntry.withNextElement(element);
+                newEntries = (AssociationImpl<E, LinkedEntry<E>>) newEntries.put(_lastInsertedKey, previousEntry);
             }
         }
         return new LinkedValueSet<>(newEntries, _firstInsertedKey, element);
@@ -127,7 +125,7 @@ final class LinkedValueSet<E> implements ValueSet<E> {
 
     @Override
     public ValueSet<E> addAll(Stream<? extends E> elements) {
-        if (elements == null) {
+        if (Util.refEquals(elements, null)) {
             throw new NullPointerException("Elements stream cannot be null");
         }
         ValueSet<E> result = this;
@@ -140,42 +138,42 @@ final class LinkedValueSet<E> implements ValueSet<E> {
 
     @Override
     public ValueSet<E> remove(E element) {
-        if (element == null) {
+        if (Util.refEquals(element, null)) {
             throw new NullPointerException("Element cannot be null");
         }
         if (!_entries.containsKey(element)) {
             return this; // Element does not exist, return unchanged set
         }
 
-        AssociationImpl<E, Entry<E>> newEntries = (AssociationImpl<E, Entry<E>>) _entries.remove(element);
-        if (newEntries == _entries) {
+        AssociationImpl<E, LinkedEntry<E>> newEntries = (AssociationImpl<E, LinkedEntry<E>>) _entries.remove(element);
+        if (Util.refEquals(newEntries,_entries)) {
             return this; // No change in entries, return unchanged set
         }
 
-        Entry<E> entry = _entries.get(element).orElse(null);
+        LinkedEntry<E> entry = _entries.get(element).orElse(null);
         if (entry != null) {
             E firstInsertedKey = _firstInsertedKey;
             E lastInsertedKey = _lastInsertedKey;
             if (firstInsertedKey != null && firstInsertedKey.equals(element)) {
-                firstInsertedKey = entry.nextKey(); // Update firstInsertedKey if it is the removed element
+                firstInsertedKey = entry.nextElement(); // Update firstInsertedKey if it is the removed element
             }
             if (lastInsertedKey != null && lastInsertedKey.equals(element)) {
-                lastInsertedKey = entry.previousKey(); // Update lastInsertedKey if it is the removed element
+                lastInsertedKey = entry.previousElement(); // Update lastInsertedKey if it is the removed element
             }
-            E previousKey = entry.previousKey();
-            E nextKey = entry.nextKey();
+            E previousKey = entry.previousElement();
+            E nextKey = entry.nextElement();
             if (previousKey != null) {
-                Entry<E> previousEntry = newEntries.get(previousKey).orElse(null);
+                LinkedEntry<E> previousEntry = newEntries.get(previousKey).orElse(null);
                 if (previousEntry != null) {
-                    previousEntry = previousEntry.withNextKey(nextKey);
-                    newEntries = (AssociationImpl<E, Entry<E>>) newEntries.put(previousKey, previousEntry);
+                    previousEntry = previousEntry.withNextElement(nextKey);
+                    newEntries = (AssociationImpl<E, LinkedEntry<E>>) newEntries.put(previousKey, previousEntry);
                 }
             }
             if (nextKey != null) {
-                Entry<E> nextEntry = newEntries.get(nextKey).orElse(null);
+                LinkedEntry<E> nextEntry = newEntries.get(nextKey).orElse(null);
                 if (nextEntry != null) {
-                    nextEntry = nextEntry.withPreviousKey(previousKey);
-                    newEntries = (AssociationImpl<E, Entry<E>>) newEntries.put(nextKey, nextEntry);
+                    nextEntry = nextEntry.withPreviousElement(previousKey);
+                    newEntries = (AssociationImpl<E, LinkedEntry<E>>) newEntries.put(nextKey, nextEntry);
                 }
             }
             return new LinkedValueSet<>(newEntries, firstInsertedKey, lastInsertedKey);
@@ -218,7 +216,7 @@ final class LinkedValueSet<E> implements ValueSet<E> {
         if (_entries.isEmpty()) {
             return this; // Already empty, return unchanged set
         }
-        return new LinkedValueSet<>((AssociationImpl) new AssociationImpl<>(type(), Entry.class), null, null);
+        return new LinkedValueSet<>((AssociationImpl) new AssociationImpl<>(type(), LinkedEntry.class), null, null);
     }
 
     @Override
@@ -249,9 +247,9 @@ final class LinkedValueSet<E> implements ValueSet<E> {
                     throw new java.util.NoSuchElementException("No more elements in the set");
                 }
                 E nextElement = current;
-                Entry<E> entry = _entries.get(current).orElse(null);
+                LinkedEntry<E> entry = _entries.get(current).orElse(null);
                 if (entry != null) {
-                    current = entry.nextKey();
+                    current = entry.nextElement();
                 } else {
                     current = null; // No next element
                 }

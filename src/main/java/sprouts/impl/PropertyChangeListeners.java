@@ -56,8 +56,10 @@ public final class PropertyChangeListeners<T> implements ChangeListeners.OwnerCa
     }
 
     /**
-     *  Adds a plain observer (has no delegate) as a change listener for the default channel.
-     *  This method is used to register a listener that will be notified when the property changes.
+     *  Adds a plain observer (has no delegate) as a change listener for the default channel,
+     *  which is defined by {@link SproutsFactory#defaultObservableChannel()}.
+     *  The listener will be notified when the property changes, or when it
+     *  is triggered explicitly through ({@link Val#fireChange(Channel)}).
      *
      * @param observer The observer to be registered as a change listener.
      */
@@ -78,7 +80,7 @@ public final class PropertyChangeListeners<T> implements ChangeListeners.OwnerCa
     }
 
     /**
-     *  Unsubscribes all change listeners from the change listeners.
+     *  Unsubscribes all change listeners from this {@link PropertyChangeListeners}.
      *  This method is used to remove all listeners that were previously registered.
      *  Note that this will remove all listeners, regardless of the channel they were registered on.
      */

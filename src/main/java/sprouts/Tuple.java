@@ -1,7 +1,7 @@
 package sprouts;
 
 import org.jspecify.annotations.Nullable;
-import sprouts.impl.*;
+import sprouts.impl.Sprouts;
 
 import java.lang.reflect.Array;
 import java.util.*;
@@ -20,7 +20,7 @@ import java.util.stream.StreamSupport;
  * and robust handling of {@code null} values.<br>
  * <br>
  * <p>
- * The name of this class is short for "tuple". This name was deliberately chosen because
+ * The name of this class was deliberately chosen because
  * as a mathematical object, a tuple is not a place in memory where items are stored,
  * but a sequence of raw pieces of information with value object semantics.<br>
  * So two {@link Tuple} instances with the same items and the same order are considered equal,
@@ -910,32 +910,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @param predicate the predicate to test each item.
      * @return A new tuple of items with the desired change.
      */
-    default Tuple<T> removeIf( Predicate<T> predicate ) {
-        List<T> itemsToKeep = new ArrayList<>();
-        int singleSequenceIndex = size() > 0 ? -2 : -1;
-        int removalSequenceSize = 0;
-        for ( int i = 0; i < size(); i++ ) {
-            T item = get(i);
-            if ( !predicate.test(item) ) {
-                itemsToKeep.add(item);
-            } else {
-                if ( singleSequenceIndex != -1 ) {
-                    if ( singleSequenceIndex == -2 )
-                        singleSequenceIndex = i;
-                    else if ( i > singleSequenceIndex + removalSequenceSize )
-                        singleSequenceIndex = -1;
-                }
-                if ( singleSequenceIndex >= 0 )
-                    removalSequenceSize++;
-            }
-        }
-        if ( itemsToKeep.size() == this.size() )
-            return this;
-        T[] newItems = (T[]) Array.newInstance(type(), itemsToKeep.size());
-        itemsToKeep.toArray(newItems);
-        SequenceDiff diff = SequenceDiff.of(this, SequenceChange.REMOVE, singleSequenceIndex, size() - itemsToKeep.size());
-        return new TupleWithDiff<>(TupleTree.of( allowsNull(), type(), newItems), diff);
-    }
+    Tuple<T> removeIf( Predicate<T> predicate );
 
     /**
      *  Creates a new tuple of items where only 
@@ -946,29 +921,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @param predicate the predicate to test each item.
      * @return a new tuple of items.
      */
-    default Tuple<T> retainIf( Predicate<T> predicate ) {
-        List<T> filteredItems = new ArrayList<>();
-        int singleSequenceIndex = size() > 0 ? -2 : -1;
-        int retainSequenceSize = 0;
-        for ( int i = 0; i < size(); i++ ) {
-            T item = get(i);
-            if ( predicate.test(item) ) {
-                filteredItems.add(item);
-                if ( singleSequenceIndex != -1 ) {
-                    if ( singleSequenceIndex == -2 )
-                        singleSequenceIndex = i;
-                    else if ( i > singleSequenceIndex + retainSequenceSize )
-                        singleSequenceIndex = -1;
-                }
-                if ( singleSequenceIndex >= 0 )
-                    retainSequenceSize++;
-            }
-        }
-        if ( filteredItems.size() == this.size() )
-            return this;
-        SequenceDiff diff = SequenceDiff.of(this, SequenceChange.RETAIN, singleSequenceIndex, filteredItems.size());
-        return new TupleWithDiff<>(TupleTree.of(allowsNull(), type(), filteredItems), diff);
-    }
+    Tuple<T> retainIf( Predicate<T> predicate );
 
     /**
      * Creates a new tuple of items without the items of the provided
@@ -1094,6 +1047,8 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      */
     default Tuple<T> maybeSetAt( int index, Maybe<T> maybeItem ) {
         Objects.requireNonNull(maybeItem);
+        if ( index < 0 || index >= size() )
+            throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + size());
         if ( !allowsNull() && maybeItem.isEmpty() )
             return this;
 
@@ -1278,6 +1233,8 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      */
     default Tuple<T> maybeAddAllAt( int index, Maybe<T>... items ) {
         Objects.requireNonNull(items);
+        if ( index < 0 || index > size() )
+            throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + size());
         if ( !allowsNull() ) {
             List<Maybe<T>> onlyPresent = new ArrayList<>();
             for ( Maybe<T> item : items ) {
@@ -1347,6 +1304,8 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      */
     default Tuple<T> maybeSetAllAt( int index, Maybe<T>... items ) {
         Objects.requireNonNull(items);
+        if ( index < 0 || index >= size() )
+            throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + size());
         if ( !allowsNull() ) {
             List<Maybe<T>> onlyPresent = new ArrayList<>();
             for ( Maybe<T> item : items ) {
@@ -1437,16 +1396,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      *         supplied mapper function to the corresponding item in this tuple.
      * @throws NullPointerException if the mapper is {@code null}.
      */
-    default Tuple<T> map( Function<T,T> mapper ) {
-        Objects.requireNonNull(mapper);
-        @SuppressWarnings("unchecked")
-        T[] mappedItems = (T[]) Array.newInstance(type(), size());
-        int i = 0;
-        for ( T v : this ) {
-            mappedItems[i++] = mapper.apply( v );
-        }
-        return new TupleWithDiff<>(TupleTree.of( allowsNull(), type(), mappedItems), SequenceDiff.of(this, SequenceChange.SET, 0, size()) );
-    }
+    Tuple<T> map( Function<T,T> mapper );
 
     /**
      *  Returns a new tuple of items where each item is mapped to a new item
@@ -1460,20 +1410,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      *        supplied mapper function to the corresponding item in this tuple.
      * @throws NullPointerException if the type or the mapper is {@code null}.
      */
-    default <U extends @Nullable Object> Tuple<U> mapTo(
-        Class<U>      type,
-        Function<T,U> mapper
-    ) {
-        Objects.requireNonNull(type);
-        Objects.requireNonNull(mapper);
-        U[] array = (U[]) Array.newInstance(type, size());
-        int i = 0;
-        for ( T v : this ) {
-            U m = mapper.apply( v );
-            array[i++] = m;
-        }
-        return new TupleWithDiff<>(TupleTree.of( allowsNull(), type, array), SequenceDiff.of(this, SequenceChange.SET, 0, size()) );
-    }
+    <U extends @Nullable Object> Tuple<U> mapTo( Class<U> type, Function<T,U> mapper );
 
     /**
      *  Converts this tuple of items to a JDK {@link List} of items

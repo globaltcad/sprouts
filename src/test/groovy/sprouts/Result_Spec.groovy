@@ -6,6 +6,7 @@ import spock.lang.Subject
 import spock.lang.Title
 
 import java.time.DayOfWeek
+import java.time.Month
 import java.util.function.Supplier
 
 @Title("Results")
@@ -247,13 +248,39 @@ class Result_Spec extends Specification
         reportInfo """
             A `Result` instance has a specific string representation that 
             tells you both the type of the result and the current item of the result.
-            The string representation of starts with "Result" followed by the type of the result
+            The string representation starts with "Result", followed by the type of the result
             and the item of the result.
         """
-        given : 'A result object holding a common enum value.'
-            def result = Result.of(DayOfWeek.MONDAY)
+        given : 'Various result objects for holding different types of items...'
+            var result1 = Result.of(DayOfWeek.MONDAY)
+            var result2 = Result.of("Joey Carbstrong")
+            var result3 = Result.of(Object.class, Month.AUGUST)
         expect : 'The string representation of the result.'
-            result.toString() == "Result<DayOfWeek>[MONDAY]"
+            result1.toString() == "Result<DayOfWeek>[MONDAY]"
+            result2.toString() == 'Result<String>["Joey Carbstrong"]'
+            result3.toString() == 'Result<?>[AUGUST]'
+    }
+
+    def 'The `Result` type has proper value semantics!'()
+    {
+        reportInfo """
+            A `Result` is a value object, meaning that its equality
+            is defined based on its contents and not necessarily its place
+            in system memory (reference identity).
+        """
+        given : 'Various result objects for holding different types of items...'
+            var result1 = Result.of(DayOfWeek.SUNDAY)
+            var result2 = Result.of(DayOfWeek.SUNDAY)
+            var result3 = Result.of(DayOfWeek.MONDAY)
+        expect : 'Their `hashCode` and `equals` methods behave as expected:'
+            result1 == result2
+            result2 == result1
+            result1 != result3
+            result3 != result1
+            result1.hashCode() == result2.hashCode()
+            result2.hashCode() == result1.hashCode()
+            result1.hashCode() != result3.hashCode()
+            result3.hashCode() != result1.hashCode()
     }
 
     def 'The equality of two `Result` instances is based on the type and the item of the result.'()

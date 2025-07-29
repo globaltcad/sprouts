@@ -562,7 +562,7 @@ public interface ValueSet<E> extends Iterable<E> {
      */
     default boolean containsAll( Set<? extends E> elements ) {
         Objects.requireNonNull(elements, "The provided set cannot be null.");
-        return elements.stream().parallel().allMatch(this::contains);
+        return containsAll((Collection<? extends E>) elements);
     }
     
     /**
@@ -680,9 +680,7 @@ public interface ValueSet<E> extends Iterable<E> {
      */
     default ValueSet<E> addAll( final Set<? extends E> elements ) {
         Objects.requireNonNull(elements, "The provided set cannot be null.");
-        if ( elements.isEmpty() )
-            return this;
-        return addAll(elements.stream());
+        return addAll((Collection<? extends E>) elements);
     }
 
     /**

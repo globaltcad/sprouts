@@ -389,6 +389,28 @@ class Tuple_Spec extends Specification
             Tuple.of(Integer, 0..10)| { tuple -> tuple.setAllAt(2, Tuple.of(2, 3, 4)) }     || SequenceChange.NONE    | -1 | 0
     }
 
+    def 'The `classTyped` method returns the correct class and handles null parameters.'() {
+        reportInfo """
+            The `Tuple.classTyped(Class)` may seem strange at first,
+            but it is really important when you want to use the tuple
+            as a generic parameter type inferred from the class pointer.
+            
+            Like for example:
+            ```java
+                Var<Tuple<String>> strings = Var.of(Tuple.classTyped(String.class));
+            ```
+        """
+        when:
+            var associationClass = Tuple.classTyped(String)
+        then:
+            associationClass == Tuple.class
+
+        when:
+            Tuple.classTyped(null)
+        then:
+            thrown(NullPointerException)
+    }
+
     def 'You can tell two tuples with different nullability apart from their String representations.'()
     {
         given : 'A nullable tuple and a non-nullable tuple:'
@@ -675,6 +697,42 @@ class Tuple_Spec extends Specification
             Tuple.of(1, 2, 3) | { tuple -> tuple.maybeSetAllAt(1, Maybe.ofNull(Integer)) }
             Tuple.of(1, 2, 3) | { tuple -> tuple.maybeSetAt(1, 2, Maybe.ofNull(Integer)) }
             Tuple.of(1, 2, 3) | { tuple -> tuple.maybeSetRange(0, 3, Maybe.ofNull(Integer)) }
+    }
+
+    def 'A tuple will throw `IndexOutOfBounds` if its range is exceeded.'(
+        Tuple<Object> input, Closure<Tuple<Object>> operation
+    ) {
+        when : 'We apply the erroneous operation...'
+            var result = operation(input)
+        then : 'The result is the same as the input.'
+            thrown(IndexOutOfBoundsException)
+
+        where :
+            input             | operation
+            Tuple.of(1, 2, 3) | { tuple -> tuple.maybeAddAllAt(-1, Maybe.ofNull(Integer)) }
+            Tuple.of(1, 2, 3) | { tuple -> tuple.maybeSetAt(-1, Maybe.ofNull(Integer)) }
+            Tuple.of(1, 2, 3) | { tuple -> tuple.maybeSetAllAt(-1, Maybe.ofNull(Integer)) }
+            Tuple.of(1, 2, 3) | { tuple -> tuple.maybeSetAt(-1, 2, Maybe.ofNull(Integer)) }
+            Tuple.of(1, 2, 3) | { tuple -> tuple.maybeSetRange(-1, 3, Maybe.ofNull(Integer)) }
+            Tuple.of(1, 2, 3) | { tuple -> tuple.maybeAddAllAt(4, Maybe.ofNull(Integer)) }
+            Tuple.of(1, 2, 3) | { tuple -> tuple.maybeSetAt(3, Maybe.ofNull(Integer)) }
+            Tuple.of(1, 2, 3) | { tuple -> tuple.maybeSetAllAt(3, Maybe.ofNull(Integer)) }
+            Tuple.of(1, 2, 3) | { tuple -> tuple.maybeSetAt(3, 2, Maybe.ofNull(Integer)) }
+            Tuple.of(1, 2, 3) | { tuple -> tuple.maybeSetRange(3, 2, Maybe.ofNull(Integer)) }
+            Tuple.of(1, 2, 3) | { tuple -> tuple.maybeSetAt(0, 5, Maybe.ofNull(Integer)) }
+            Tuple.of(1, 2, 3) | { tuple -> tuple.maybeSetRange(0, 8, Maybe.ofNull(Integer)) }
+            Tuple.of(1, 2, 3) | { tuple -> tuple.addAllAt(-1, 42) }
+            Tuple.of(1, 2, 3) | { tuple -> tuple.setAt(-1, 42) }
+            Tuple.of(1, 2, 3) | { tuple -> tuple.setAllAt(-1, 4) }
+            Tuple.of(1, 2, 3) | { tuple -> tuple.setAt(-1, 2, 42) }
+            Tuple.of(1, 2, 3) | { tuple -> tuple.setRange(-1, 3, 42) }
+            Tuple.of(1, 2, 3) | { tuple -> tuple.addAllAt(4, 42) }
+            Tuple.of(1, 2, 3) | { tuple -> tuple.setAt(3, 42) }
+            Tuple.of(1, 2, 3) | { tuple -> tuple.setAllAt(3, 42) }
+            Tuple.of(1, 2, 3) | { tuple -> tuple.setAt(3, 2, 42) }
+            Tuple.of(1, 2, 3) | { tuple -> tuple.setRange(3, 2, 42) }
+            Tuple.of(1, 2, 3) | { tuple -> tuple.setAt(0, 5, 42) }
+            Tuple.of(1, 2, 3) | { tuple -> tuple.setRange(0, 8, 42) }
     }
 
     def 'You can updating a non-nullable tuple with a non-empty `Maybe`.'(
