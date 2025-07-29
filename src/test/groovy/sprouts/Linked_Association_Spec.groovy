@@ -988,7 +988,7 @@ class Linked_Association_Spec extends Specification
     def 'Use `putAllIfAbsent(Set<Pair>)` to populate a linked association at once from multiple pairs.'() {
         reportInfo """
             This method ensures compatibility with the `Set` interface, which
-            is especially useful when you have a plain old key-value mapping that you want to
+            is especially useful when you have a collection of key-value pairs (represented as `Pair` objects) that you want to
             use to populate the association with if they are not already present.
             
             So contrary to `putAll`, the `putAllIfAbsent` does not overwrite existing entries!
