@@ -20,7 +20,7 @@ import java.util.function.Supplier;
  *  of the thing that it is a wrapper for. &lt;br&gt;
  *  Note that contrary to the popular known {@link Optional} type, a {@link Maybe}
  *  does not have a {@code .get()} method.&lt;br&gt;
- *  Instead, it has a {@link #orElseThrowUnchecked()} method
+ *  Instead, it has an {@link #orElseThrowUnchecked()} method
  *  which is deliberately clear about the fact that it may throw an unchecked exception
  *  if the item is missing so that a user of this API can make an informed decision
  *  about how to handle the case where the item is missing.

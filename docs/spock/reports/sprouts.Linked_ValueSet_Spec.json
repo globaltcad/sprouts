@@ -566,12 +566,16 @@
       "result":"PASS",
       "duration":"?",
       "iterations":{
-      "tags":{},"see":[],"extraInfo":[]
+      "tags":{},"see":[],"extraInfo":["\n            The `ValueSet.classTyped(Class)` may seem strange at first,\n            but it is really important when you want to use the value set\n            as a generic parameter type inferred from the class pointer.\n\n            Like for example:\n            ```java\n                Var<ValueSet<String>> strings = Var.of(ValueSet.classTyped(String.class));\n            ```\n        "]
       },
       "blocks":[
         {"kind":"given","text":"","code":["var typed = ValueSet.classTyped(String)"]},
 
-        {"kind":"expect","text":"","code":["typed == ValueSet.class"]}
+        {"kind":"expect","text":"","code":["typed == ValueSet.class"]},
+
+        {"kind":"when","text":"","code":["ValueSet.classTyped(null)"]},
+
+        {"kind":"then","text":"","code":["thrown(NullPointerException)"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },

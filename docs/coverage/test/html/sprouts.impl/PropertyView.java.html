@@ -46,7 +46,7 @@ final class PropertyView&lt;T extends @Nullable Object&gt; implements Var&lt;T&g
 <span class="nc bnc" id="L46" title="All 2 branches missed.">			return Viewable.cast(initialItem == null ? Val.ofNull(type) : Val.of(initialItem));</span>
 		}
 <span class="fc" id="L48">		final PropertyView&lt;@Nullable U&gt; viewProperty = PropertyView._ofNullable(type, initialItem, source);</span>
-<span class="fc" id="L49">		Viewable.cast(source).onChange(Util.VIEW_CHANNEL, WeakActionImpl.of( viewProperty, (innerViewProperty, v) -&gt; {</span>
+<span class="fc" id="L49">		Viewable.cast(source).onChange(Util.VIEW_CHANNEL, WeakAction.of( viewProperty, (innerViewProperty, v) -&gt; {</span>
 <span class="nc" id="L50">			ItemPair&lt;U&gt; pair = innerViewProperty._setInternal(mapper.apply(v.currentValue().orElseNull()));</span>
 <span class="nc" id="L51">			innerViewProperty.fireChange(v.channel(), pair);</span>
 <span class="nc" id="L52">		}));</span>
@@ -66,7 +66,7 @@ final class PropertyView&lt;T extends @Nullable Object&gt; implements Var&lt;T&g
 		}
 
 <span class="fc" id="L68">		final PropertyView&lt;U&gt; viewProperty = PropertyView._of( targetType, initial, source );</span>
-<span class="fc" id="L69">		Viewable.cast(source).onChange(Util.VIEW_CHANNEL, WeakActionImpl.of( viewProperty, (innerViewProperty, v) -&gt; {</span>
+<span class="fc" id="L69">		Viewable.cast(source).onChange(Util.VIEW_CHANNEL, WeakAction.of( viewProperty, (innerViewProperty, v) -&gt; {</span>
 <span class="fc" id="L70">			@Nullable Val&lt;T&gt; innerSource = innerViewProperty._getSource(0);</span>
 <span class="pc bpc" id="L71" title="1 of 2 branches missed.">			if ( innerSource == null )</span>
 <span class="nc" id="L72">				return;</span>
@@ -91,7 +91,7 @@ final class PropertyView&lt;T extends @Nullable Object&gt; implements Var&lt;T&g
 <span class="fc" id="L91">			viewProperty = PropertyView._ofNullable( source.type(), initial, source );</span>
 		else
 <span class="fc" id="L93">			viewProperty = PropertyView._of( source.type(), Objects.requireNonNull(initial), source );</span>
-<span class="fc" id="L94">		Viewable.cast(source).onChange(Util.VIEW_CHANNEL, WeakActionImpl.of( viewProperty, (innerViewProperty, v) -&gt; {</span>
+<span class="fc" id="L94">		Viewable.cast(source).onChange(Util.VIEW_CHANNEL, WeakAction.of( viewProperty, (innerViewProperty, v) -&gt; {</span>
 <span class="fc" id="L95">			@Nullable Val&lt;T&gt; innerSource = innerViewProperty._getSource(0);</span>
 <span class="pc bpc" id="L96" title="1 of 2 branches missed.">			if ( innerSource == null )</span>
 <span class="nc" id="L97">				return;</span>
@@ -107,7 +107,7 @@ final class PropertyView&lt;T extends @Nullable Object&gt; implements Var&lt;T&g
 <span class="pc bpc" id="L107" title="2 of 4 branches missed.">		if ( parent.isMutable() &amp;&amp; parent instanceof Var ) {</span>
 <span class="fc" id="L108">			Var&lt;U&gt; source = (Var&lt;U&gt;) parent;</span>
 <span class="fc" id="L109">			PropertyView&lt;T&gt; view = PropertyView._of( type, initialItem, parent );</span>
-<span class="fc" id="L110">			Viewable.cast(source).onChange(From.ALL, WeakActionImpl.of(view, (innerViewProperty, v) -&gt; {</span>
+<span class="fc" id="L110">			Viewable.cast(source).onChange(From.ALL, WeakAction.of(view, (innerViewProperty, v) -&gt; {</span>
 <span class="fc" id="L111">				T newItem = mapper.apply(v.currentValue().orElseNull());</span>
 <span class="fc" id="L112">				ItemPair&lt;T&gt; pair = innerViewProperty._setInternal(newItem);</span>
 <span class="fc" id="L113">				innerViewProperty.fireChange(v.channel(), pair);</span>
@@ -191,9 +191,9 @@ final class PropertyView&lt;T extends @Nullable Object&gt; implements Var&lt;T&g
 
 <span class="fc" id="L192">		PropertyView&lt;T&gt; result = PropertyView._of( first.type(), initial, first, second ).withId(id);</span>
 <span class="pc bpc" id="L193" title="1 of 2 branches missed.">		if ( !firstIsImmutable )</span>
-<span class="fc" id="L194">			Viewable.cast(first).onChange(From.ALL, WeakActionImpl.of( result, firstListener ));</span>
+<span class="fc" id="L194">			Viewable.cast(first).onChange(From.ALL, WeakAction.of( result, firstListener ));</span>
 <span class="pc bpc" id="L195" title="1 of 2 branches missed.">		if ( !secondIsImmutable )</span>
-<span class="fc" id="L196">			Viewable.cast(second).onChange(From.ALL, WeakActionImpl.of( result, secondListener ));</span>
+<span class="fc" id="L196">			Viewable.cast(second).onChange(From.ALL, WeakAction.of( result, secondListener ));</span>
 <span class="fc" id="L197">		return result;</span>
 	}
 
@@ -220,13 +220,13 @@ final class PropertyView&lt;T extends @Nullable Object&gt; implements Var&lt;T&g
 
 <span class="fc" id="L221">		PropertyView&lt;@Nullable T&gt; result = PropertyView._ofNullable( first.type(), initial, first, second ).withId(id);</span>
 <span class="pc bpc" id="L222" title="1 of 2 branches missed.">		if ( !firstIsImmutable )</span>
-<span class="fc" id="L223">			Viewable.cast(first).onChange(From.ALL, WeakActionImpl.of(result, (innerResult,v) -&gt; {</span>
+<span class="fc" id="L223">			Viewable.cast(first).onChange(From.ALL, WeakAction.of(result, (innerResult, v) -&gt; {</span>
 <span class="fc" id="L224">				Val&lt;U&gt; innerSecond = innerResult._getSource(1);</span>
 <span class="fc" id="L225">				ItemPair&lt;T&gt; pair = innerResult._setInternal(fullCombiner.apply(v.currentValue(), innerSecond));</span>
 <span class="fc" id="L226">				innerResult.fireChange(v.channel(), pair);</span>
 <span class="fc" id="L227">			}));</span>
 <span class="pc bpc" id="L228" title="1 of 2 branches missed.">		if ( !secondIsImmutable )</span>
-<span class="fc" id="L229">			Viewable.cast(second).onChange(From.ALL, WeakActionImpl.of(result, (innerResult,v) -&gt; {</span>
+<span class="fc" id="L229">			Viewable.cast(second).onChange(From.ALL, WeakAction.of(result, (innerResult, v) -&gt; {</span>
 <span class="fc" id="L230">				Val&lt;T&gt; innerFirst = innerResult._getSource(0);</span>
 <span class="fc" id="L231">				ItemPair&lt;T&gt; pair = innerResult._setInternal(fullCombiner.apply(innerFirst, v.currentValue()));</span>
 <span class="fc" id="L232">				innerResult.fireChange(v.channel(), pair);</span>
@@ -258,7 +258,7 @@ final class PropertyView&lt;T extends @Nullable Object&gt; implements Var&lt;T&g
 
 <span class="fc" id="L259">		PropertyView&lt;R&gt; result = PropertyView._of(type, initial, first, second ).withId(id);</span>
 
-<span class="fc" id="L261">		Viewable.cast(first).onChange(From.ALL, WeakActionImpl.of(result, (innerResult,v) -&gt; {</span>
+<span class="fc" id="L261">		Viewable.cast(first).onChange(From.ALL, WeakAction.of(result, (innerResult, v) -&gt; {</span>
 <span class="fc" id="L262">			Val&lt;U&gt; innerSecond = innerResult._getSource(1);</span>
 <span class="fc" id="L263">			@Nullable R newItem = fullCombiner.apply(v.currentValue(), innerSecond);</span>
 <span class="fc bfc" id="L264" title="All 2 branches covered.">			if (newItem == null)</span>
@@ -273,7 +273,7 @@ final class PropertyView&lt;T extends @Nullable Object&gt; implements Var&lt;T&g
 <span class="fc" id="L273">				innerResult.fireChange(v.channel(), pair);</span>
 			}
 <span class="fc" id="L275">		}));</span>
-<span class="fc" id="L276">		Viewable.cast(second).onChange(From.ALL, WeakActionImpl.of(result, (innerResult,v) -&gt; {</span>
+<span class="fc" id="L276">		Viewable.cast(second).onChange(From.ALL, WeakAction.of(result, (innerResult, v) -&gt; {</span>
 <span class="fc" id="L277">			Val&lt;T&gt; innerFirst = innerResult._getSource(0);</span>
 <span class="fc" id="L278">			@Nullable R newItem = fullCombiner.apply(innerFirst, v.currentValue());</span>
 <span class="fc bfc" id="L279" title="All 2 branches covered.">			if (newItem == null)</span>
@@ -309,12 +309,12 @@ final class PropertyView&lt;T extends @Nullable Object&gt; implements Var&lt;T&g
 		};
 
 <span class="fc" id="L311">		PropertyView&lt;@Nullable R&gt; result =  PropertyView._ofNullable( type, fullCombiner.apply(first, second), first, second ).withId(id);</span>
-<span class="fc" id="L312">		Viewable.cast(first).onChange(From.ALL, WeakActionImpl.of(result, (innerResult,v) -&gt; {</span>
+<span class="fc" id="L312">		Viewable.cast(first).onChange(From.ALL, WeakAction.of(result, (innerResult, v) -&gt; {</span>
 <span class="fc" id="L313">			Val&lt;U&gt; innerSecond = innerResult._getSource(1);</span>
 <span class="fc" id="L314">			ItemPair&lt;R&gt; pair = innerResult._setInternal(fullCombiner.apply(v.currentValue(), innerSecond));</span>
 <span class="fc" id="L315">			innerResult.fireChange(v.channel(), pair);</span>
 <span class="fc" id="L316">		}));</span>
-<span class="fc" id="L317">		Viewable.cast(second).onChange(From.ALL, WeakActionImpl.of(result, (innerResult,v) -&gt; {</span>
+<span class="fc" id="L317">		Viewable.cast(second).onChange(From.ALL, WeakAction.of(result, (innerResult, v) -&gt; {</span>
 <span class="fc" id="L318">			Val&lt;T&gt; innerFirst = innerResult._getSource(0);</span>
 <span class="fc" id="L319">			ItemPair&lt;R&gt; pair = innerResult._setInternal(fullCombiner.apply(innerFirst, v.currentValue()));</span>
 <span class="fc" id="L320">			innerResult.fireChange(v.channel(), pair);</span>

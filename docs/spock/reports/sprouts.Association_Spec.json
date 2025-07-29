@@ -4,7 +4,7 @@
   "narrative":"Sprouts is a property library with a heavy focus on bridging the\n    gap between classical place oriented programming and modern\n    data oriented programming.\n    This is why sprouts has both the `Tuple` and `Association` classes.\n    The `Association` class is a value object that represents a set of\n    key-value pairs. You can think of it as an immutable map, but with\n    an API that is designed around transforming the data in the map\n    rather than mutating it.",
   "subjects":["sprouts.Association"],
   "statistics":{
-    "runs":"78",
+    "runs":"87",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -21,9 +21,9 @@
       "tags":{},"see":[],"extraInfo":[]
       },
       "blocks":[
-        {"kind":"given","text":"","code":["var associations = Association.between(String, Integer)"]},
+        {"kind":"given","text":"","code":["var association = Association.between(String, Integer)"]},
 
-        {"kind":"expect","text":"","code":["!associations.isSorted()","!associations.isLinked()","associations.isEmpty()","associations.keyType() == String","associations.valueType() == Integer"]}
+        {"kind":"expect","text":"","code":["!association.isSorted()","!association.isLinked()","association.isEmpty()","!association.isNotEmpty()","association.keyType() == String","association.valueType() == Integer"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -838,15 +838,17 @@
       "tags":{},"see":[],"extraInfo":[]
       },
       "blocks":[
-        {"kind":"given","text":"","code":["var associations = Association.between(String, Integer)","associations = associations.put(\"a\", 1).put(\"b\", 2).put(\"c\", 3)"]},
+        {"kind":"given","text":"","code":["var association = Association.between(String, Integer)","association = association.put(\"a\", 1).put(\"b\", 2).put(\"c\", 3)"]},
 
-        {"kind":"expect","text":"The association is not empty.","code":["!associations.isEmpty()"]},
+        {"kind":"expect","text":"The association is not empty.","code":["association.isNotEmpty()","!association.isEmpty()"]},
 
-        {"kind":"when","text":"We clear the association.","code":["associations = associations.clear()"]},
+        {"kind":"and","text":"It is a regular association, meaning it is neither sorted nor linked.","code":["!association.isSorted()","!association.isLinked()"]},
 
-        {"kind":"then","text":"The association is empty.","code":["associations.isEmpty()"]},
+        {"kind":"when","text":"We clear the association.","code":["association = association.clear()"]},
 
-        {"kind":"and","text":"The key and value types are the same.","code":["associations.keyType() == String","associations.valueType() == Integer"]}
+        {"kind":"then","text":"The association is empty.","code":["association.isEmpty()"]},
+
+        {"kind":"and","text":"The key and value types are the same.","code":["association.keyType() == String","association.valueType() == Integer"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -1297,9 +1299,111 @@
       "blocks":[
         {"kind":"given","text":"","code":["var associations = Association.between(Character, String)"]},
 
-        {"kind":"when","text":"We add some values to the association.","code":["associations = associations.putAll([","    Pair.of('I' as char, \"I\"),","    Pair.of('w' as char, \"was\"),","    Pair.of('a' as char, \"added\"),","    Pair.of('t' as char, \"to\"),","    Pair.of('t' as char, \"the\"), // overwrites the previous value","    Pair.of('a' as char, \"association\") // overwrites the previous value","])"]},
+        {"kind":"when","text":"We add some values to the association.","code":["associations = associations.putAll([","    Pair.of('I' as char, \"I\"),","    Pair.of('w' as char, \"was\"),","    Pair.of('a' as char, \"added\"),","    Pair.of('t' as char, \"to\"),","    Pair.of('t' as char, \"the\"), // overwrites the previous value","    Pair.of('a' as char, \"association\") // overwrites the previous value","] as Set)"]},
 
         {"kind":"then","text":"The association contains the values.","code":["associations.size() == 4","associations.get('I' as char).orElseThrow(MissingItemException::new) == \"I\"","associations.get('w' as char).orElseThrow(MissingItemException::new) == \"was\"","associations.get('a' as char).orElseThrow(MissingItemException::new) == \"association\"","associations.get('t' as char).orElseThrow(MissingItemException::new) == \"the\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use `putAllIfAbsent(Pair...)` to populate an association at once from multiple pairs.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `putAllIfAbsent(Pair...)` method allows you to populate an association from\n            an array of entry pairs. However, it only adds new entries to the new association,\n            if they are not already present.\n            So contrary to `putAll`, the `putAllIfAbsent` does not overwrite existing entries!\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create an association with some initial entries:","code":["var associations = Association.between(String, Integer).putAll(","    Pair.of(\"was\", -1),","    Pair.of(\"the\", -2),","    Pair.of(\"association\", -3)",")"]},
+
+        {"kind":"when","text":"We add some values to the association.","code":["associations = associations.putAllIfAbsent(","    Pair.of(\"I\", 1),","    Pair.of(\"was\", 2),","    Pair.of(\"added\", 3),","    Pair.of(\"to\", 4),","    Pair.of(\"the\", 5),","    Pair.of(\"association\", 6)",")"]},
+
+        {"kind":"then","text":"The association contains the values.","code":["associations.size() == 6","associations.get(\"I\").orElseThrow(MissingItemException::new) == 1","associations.get(\"was\").orElseThrow(MissingItemException::new) == -1","associations.get(\"added\").orElseThrow(MissingItemException::new) == 3","associations.get(\"to\").orElseThrow(MissingItemException::new) == 4","associations.get(\"the\").orElseThrow(MissingItemException::new) == -2","associations.get(\"association\").orElseThrow(MissingItemException::new) == -3"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use `putAllIfAbsent(Tuple<Pair>)` to populate an association at once from multiple pairs.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `putAllIfAbsent(Tuple<Pair>)` method allows you to populate an association from\n            a tuple of entry pairs. However, it only adds new entries to the new association,\n            if they are not already present.\n            So contrary to `putAll`, the `putAllIfAbsent` does not overwrite existing entries!\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create an association with some initial entries:","code":["var associations = Association.between(Integer, String).putAll(","    Pair.of(2, \":o\"),","    Pair.of(4, \":3\"),","    Pair.of(6, \":I\")",")"]},
+
+        {"kind":"when","text":"We add some values to the association.","code":["associations = associations.putAllIfAbsent(","    Tuple.of(","        Pair.of(1, \"I\"),","        Pair.of(2, \"was\"),","        Pair.of(3, \"added\"),","        Pair.of(4, \"to\"),","        Pair.of(5, \"the\"),","        Pair.of(6, \"association\")","    )",")"]},
+
+        {"kind":"then","text":"The association contains the values.","code":["associations.size() == 6","associations.get(1).orElseThrow(MissingItemException::new) == \"I\"","associations.get(2).orElseThrow(MissingItemException::new) == \":o\"","associations.get(3).orElseThrow(MissingItemException::new) == \"added\"","associations.get(4).orElseThrow(MissingItemException::new) == \":3\"","associations.get(5).orElseThrow(MissingItemException::new) == \"the\"","associations.get(6).orElseThrow(MissingItemException::new) == \":I\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use `putAllIfAbsent(Collection<Pair>)` to populate an association at once from multiple pairs.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            This method ensures compatibility with the `Collection` interface, which\n            is especially useful when you have a list of pairs that you want to\n            populate the association with if they are not already present.\n\n            So contrary to `putAll`, the `putAllIfAbsent` does not overwrite existing entries!\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create an association with some initial entries:","code":["var associations = Association.between(Integer, String).putAll(","    Pair.of(2, \":o\"),","    Pair.of(4, \":3\"),","    Pair.of(6, \":I\")",")"]},
+
+        {"kind":"when","text":"We add some values to the association.","code":["associations = associations.putAllIfAbsent([","    Pair.of(1, \"I\"),","    Pair.of(2, \"was\"),","    Pair.of(3, \"added\"),","    Pair.of(4, \"to\"),","    Pair.of(5, \"the\"),","    Pair.of(6, \"association\")","])"]},
+
+        {"kind":"then","text":"The association contains the values.","code":["associations.size() == 6","associations.get(1).orElseThrow(MissingItemException::new) == \"I\"","associations.get(2).orElseThrow(MissingItemException::new) == \":o\"","associations.get(3).orElseThrow(MissingItemException::new) == \"added\"","associations.get(4).orElseThrow(MissingItemException::new) == \":3\"","associations.get(5).orElseThrow(MissingItemException::new) == \"the\"","associations.get(6).orElseThrow(MissingItemException::new) == \":I\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use `putAllIfAbsent(Set<Pair>)` to populate an association at once from multiple pairs.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            This method ensures compatibility with the `Set` interface, which\n            is especially useful when you have a set of pairs that you want to\n            populate the association with if they are not already present.\n\n            So contrary to `putAll`, the `putAllIfAbsent` does not overwrite existing entries!\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create an association with some initial entries:","code":["var associations = Association.between(Character, String).putAll(","    Pair.of('w' as char, \":)\"),","    Pair.of('t' as char, \":P\")",")"]},
+
+        {"kind":"when","text":"We add some values to the association.","code":["associations = associations.putAllIfAbsent([","    Pair.of('I' as char, \"I\"),","    Pair.of('w' as char, \"was\"),","    Pair.of('a' as char, \"added\"),","    Pair.of('t' as char, \"to\"),","    Pair.of('t' as char, \"the\"), // does not overwrite the previous value","    Pair.of('a' as char, \"association\") // does not overwrite the previous value","] as Set)"]},
+
+        {"kind":"then","text":"The association contains the values.","code":["associations.size() == 4","associations.get('I' as char).orElseThrow(MissingItemException::new) == \"I\"","associations.get('w' as char).orElseThrow(MissingItemException::new) == \":)\"","associations.get('a' as char).orElseThrow(MissingItemException::new) == \"added\"","associations.get('t' as char).orElseThrow(MissingItemException::new) == \":P\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use `putAllIfAbsent(Map<K,V>)` to populate an association at once from a regular Java map.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            This method ensures compatibility with the `Map` interface, which\n            is especially useful when you have a plain old key-value mapping that you want to\n            use to populate the association with for keys which are not already present.\n\n            So contrary to `putAll`, the `putAllIfAbsent` does not overwrite existing entries!\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create an association with some initial entries:","code":["var associations = Association.between(Character, String).putAll(","    Pair.of('w' as char, \":)\"),","    Pair.of('t' as char, \":P\")",")"]},
+
+        {"kind":"when","text":"We add some values to the association.","code":["associations = associations.putAllIfAbsent([","    ('I' as char): \"I\",","    ('w' as char): \"was\",","    ('a' as char): \"added\",","    ('t' as char): \"to\",","    ('t' as char): \"the\",","    ('a' as char): \"association\"","] as LinkedHashMap)"]},
+
+        {"kind":"then","text":"The association contains the values.","code":["associations.size() == 4","associations.get('I' as char).orElseThrow(MissingItemException::new) == \"I\"","associations.get('w' as char).orElseThrow(MissingItemException::new) == \":)\"","associations.get('a' as char).orElseThrow(MissingItemException::new) == \"association\"","associations.get('t' as char).orElseThrow(MissingItemException::new) == \":P\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use `putAllIfAbsent(Association<K,V>)` to populate an association from another one.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            This method merges an association with another one\n            in a way where only those key-value pairs are added from the supplied \n            association, whose keys are not already present in the targeted one.\n\n            So contrary to `putAll`, the `putAllIfAbsent` does not overwrite existing entries!\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create an association with some initial entries:","code":["var associations = Association.between(Character, String).putAll(","    Pair.of('w' as char, \":)\"),","    Pair.of('t' as char, \":P\")",")"]},
+
+        {"kind":"when","text":"We add some values to the association.","code":["associations = associations.putAllIfAbsent(Association.between(Character, String).putAll(","    Pair.of('I' as char, \"I\"),","    Pair.of('w' as char, \"was\"),","    Pair.of('a' as char, \"added\"),","    Pair.of('t' as char, \"to\"),","    Pair.of('t' as char, \"the\"),","    Pair.of('a' as char, \"association\")","))"]},
+
+        {"kind":"then","text":"The association contains the expected values.","code":["associations.size() == 4","associations.get('I' as char).orElseThrow(MissingItemException::new) == \"I\"","associations.get('w' as char).orElseThrow(MissingItemException::new) == \":)\"","associations.get('a' as char).orElseThrow(MissingItemException::new) == \"association\"","associations.get('t' as char).orElseThrow(MissingItemException::new) == \":P\""]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -1349,7 +1453,7 @@
     },
   
     {
-      "id":"The classTyped method returns the correct class and handles null parameters",
+      "id":"The `classTyped` method returns the correct class and handles null parameters.",
       "result":"PASS",
       "duration":"?",
       "iterations":{
@@ -1431,7 +1535,7 @@
     },
   
     {
-      "id":"replaceAll with Map only updates existing keys",
+      "id":"Use `replaceAll(Map<K,V>)` to only updates existing keys.",
       "result":"PASS",
       "duration":"?",
       "iterations":{
@@ -1441,6 +1545,57 @@
         {"kind":"given","text":"","code":["var original = Association.of(\"a\", 1).put(\"b\", 2).put(\"c\", 3)","var replacementMap = [a:10, d:40, c:30] as Map"]},
 
         {"kind":"when","text":"","code":["var updated = original.replaceAll(replacementMap)"]},
+
+        {"kind":"then","text":"","code":["updated.size() == 3","updated.get(\"a\").get() == 10","updated.get(\"b\").get() == 2  // Should remain unchanged","updated.get(\"c\").get() == 30","!updated.containsKey(\"d\")"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `replaceAll(Pair<K,V>...)` method only updates existing key-value pairs.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var original = Association.of(\"a\", 1).put(\"b\", 2).put(\"c\", 3)"]},
+
+        {"kind":"when","text":"","code":["var updated = original.replaceAll(","        Pair.of(\"a\", 10),","        Pair.of(\"d\", 40),","        Pair.of(\"c\", 30)","    )"]},
+
+        {"kind":"then","text":"","code":["updated.size() == 3","updated.get(\"a\").get() == 10","updated.get(\"b\").get() == 2  // Should remain unchanged","updated.get(\"c\").get() == 30","!updated.containsKey(\"d\")"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `replaceAll(Tuple<Pair<K,V>>)` method only updates existing key-value pairs.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var original = Association.of(\"a\", 1).put(\"b\", 2).put(\"c\", 3)"]},
+
+        {"kind":"when","text":"","code":["var updated = original.replaceAll(Tuple.of(","        Pair.of(\"a\", 10),","        Pair.of(\"d\", 40),","        Pair.of(\"c\", 30)","    ))"]},
+
+        {"kind":"then","text":"","code":["updated.size() == 3","updated.get(\"a\").get() == 10","updated.get(\"b\").get() == 2  // Should remain unchanged","updated.get(\"c\").get() == 30","!updated.containsKey(\"d\")"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `replaceAll(Set<Pair<K,V>>)` method only updates existing key-value pairs.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var original = Association.of(\"a\", 1).put(\"b\", 2).put(\"c\", 3)"]},
+
+        {"kind":"when","text":"","code":["var updated = original.replaceAll([","        Pair.of(\"a\", 10),","        Pair.of(\"d\", 40),","        Pair.of(\"c\", 30)","    ] as Set)"]},
 
         {"kind":"then","text":"","code":["updated.size() == 3","updated.get(\"a\").get() == 10","updated.get(\"b\").get() == 2  // Should remain unchanged","updated.get(\"c\").get() == 30","!updated.containsKey(\"d\")"]}
       ],

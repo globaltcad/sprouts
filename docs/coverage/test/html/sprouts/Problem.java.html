@@ -5,8 +5,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.helpers.NOPLogger;
 
+import java.io.BufferedWriter;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Writer;
+import java.nio.charset.Charset;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiConsumer;
@@ -54,14 +57,14 @@ public final class Problem
      * @return A problem that describes the given exception.
      */
     public static Problem of( Exception e ) {
-<span class="fc" id="L57">        Objects.requireNonNull(e);</span>
-<span class="fc" id="L58">        String message = e.getMessage();</span>
-<span class="pc bpc" id="L59" title="2 of 4 branches missed.">        if ( message == null || message.isEmpty() ) message = String.valueOf(e.getCause());</span>
-<span class="pc bpc" id="L60" title="2 of 4 branches missed.">        if ( message == null || message.isEmpty() ) message = e.toString();</span>
-<span class="fc" id="L61">        Objects.requireNonNull(message);</span>
-<span class="fc" id="L62">        String finalMessage = message;</span>
-<span class="fc" id="L63">        String title = e.getClass().getSimpleName();</span>
-<span class="fc" id="L64">        return new Problem(title, finalMessage, e, null);</span>
+<span class="fc" id="L60">        Objects.requireNonNull(e);</span>
+<span class="fc" id="L61">        String message = e.getMessage();</span>
+<span class="pc bpc" id="L62" title="2 of 4 branches missed.">        if ( message == null || message.isEmpty() ) message = String.valueOf(e.getCause());</span>
+<span class="pc bpc" id="L63" title="2 of 4 branches missed.">        if ( message == null || message.isEmpty() ) message = e.toString();</span>
+<span class="fc" id="L64">        Objects.requireNonNull(message);</span>
+<span class="fc" id="L65">        String finalMessage = message;</span>
+<span class="fc" id="L66">        String title = e.getClass().getSimpleName();</span>
+<span class="fc" id="L67">        return new Problem(title, finalMessage, e, null);</span>
     }
 
     /**
@@ -70,7 +73,7 @@ public final class Problem
      * @param title The title of the problem, which may not be null.
      * @return A problem with the given title and description.
      */
-<span class="fc" id="L73">    public static Problem of( String title ) { return of(title, &quot;&quot;); }</span>
+<span class="fc" id="L76">    public static Problem of( String title ) { return of(title, &quot;&quot;); }</span>
 
     /**
      *  A factory method for creating a problem with a title and a description.
@@ -80,9 +83,9 @@ public final class Problem
      * @return A problem with the given title and description.
      */
     public static Problem of( String title, String description ) {
-<span class="fc" id="L83">        Objects.requireNonNull(title);</span>
-<span class="fc" id="L84">        Objects.requireNonNull(description);</span>
-<span class="fc" id="L85">        return new Problem(title, description , null , null );</span>
+<span class="fc" id="L86">        Objects.requireNonNull(title);</span>
+<span class="fc" id="L87">        Objects.requireNonNull(description);</span>
+<span class="fc" id="L88">        return new Problem(title, description , null , null );</span>
     }
 
     /**
@@ -94,15 +97,15 @@ public final class Problem
      * @return A problem with the given title and description.
      */
     public static Problem of( Object reporter, String title, String description ) {
-<span class="fc" id="L97">        Objects.requireNonNull(reporter);</span>
-<span class="fc" id="L98">        Objects.requireNonNull(title);</span>
-<span class="fc" id="L99">        Objects.requireNonNull(description);</span>
-<span class="fc" id="L100">        return new Problem(title, description, null, reporter);</span>
+<span class="fc" id="L100">        Objects.requireNonNull(reporter);</span>
+<span class="fc" id="L101">        Objects.requireNonNull(title);</span>
+<span class="fc" id="L102">        Objects.requireNonNull(description);</span>
+<span class="fc" id="L103">        return new Problem(title, description, null, reporter);</span>
     }
 
 
-<span class="fc" id="L104">    private static final Logger log = LoggerFactory.getLogger(Problem.class);</span>
-<span class="pc bpc" id="L105" title="1 of 2 branches missed.">    private static final boolean HAS_SLF4J_IMPLEMENTATION = !(log instanceof NOPLogger);</span>
+<span class="fc" id="L107">    private static final Logger log = LoggerFactory.getLogger(Problem.class);</span>
+<span class="pc bpc" id="L108" title="1 of 2 branches missed.">    private static final boolean HAS_SLF4J_IMPLEMENTATION = !(log instanceof NOPLogger);</span>
 
     private final String              _title;
     private final String              _description;
@@ -114,12 +117,12 @@ public final class Problem
         String              description,
         @Nullable Exception exception,
         @Nullable Object    reporter
-<span class="fc" id="L117">    ) {</span>
-<span class="fc" id="L118">        _title       = title;</span>
-<span class="fc" id="L119">        _description = description;</span>
-<span class="fc" id="L120">        _exception   = exception;</span>
-<span class="fc" id="L121">        _reporter    = reporter;</span>
-<span class="fc" id="L122">    }</span>
+<span class="fc" id="L120">    ) {</span>
+<span class="fc" id="L121">        _title       = title;</span>
+<span class="fc" id="L122">        _description = description;</span>
+<span class="fc" id="L123">        _exception   = exception;</span>
+<span class="fc" id="L124">        _reporter    = reporter;</span>
+<span class="fc" id="L125">    }</span>
 
 
     /**
@@ -129,7 +132,7 @@ public final class Problem
      * @return The title of the problem, which may not be null (but may be empty).
      */
     public String title() {
-<span class="fc" id="L132">        return _title;</span>
+<span class="fc" id="L135">        return _title;</span>
     }
 
     /**
@@ -140,7 +143,7 @@ public final class Problem
      * @return The description of the problem, which may not be null (but may be empty).
      */
     public String description() {
-<span class="fc" id="L143">        return _description;</span>
+<span class="fc" id="L146">        return _description;</span>
     }
 
     /**
@@ -150,7 +153,7 @@ public final class Problem
      * @return The exception that was thrown while getting the value, if any.
      */
     public Optional&lt;Exception&gt; exception() {
-<span class="fc" id="L153">        return Optional.ofNullable(_exception);</span>
+<span class="fc" id="L156">        return Optional.ofNullable(_exception);</span>
     }
 
     /**
@@ -160,7 +163,7 @@ public final class Problem
      * @return The object that reported the problem, if any.
      */
     public Optional&lt;Object&gt; reporter() {
-<span class="fc" id="L163">        return Optional.ofNullable(_reporter);</span>
+<span class="fc" id="L166">        return Optional.ofNullable(_reporter);</span>
     }
 
     /**
@@ -171,9 +174,9 @@ public final class Problem
      * @param out The writer to print to, which may not be null.
      */
     public void printTo( Writer out ) {
-<span class="nc" id="L174">        Objects.requireNonNull(out);</span>
-<span class="nc" id="L175">        printTo(new PrintWriter(out));</span>
-<span class="nc" id="L176">    }</span>
+<span class="nc" id="L177">        Objects.requireNonNull(out);</span>
+<span class="nc" id="L178">        printTo(new PrintWriter(out));</span>
+<span class="nc" id="L179">    }</span>
     
     /**
      *  Prints the title and description and optionally the exception to the given writer.
@@ -183,22 +186,22 @@ public final class Problem
      * @param writer The writer to print to, which may not be null.
      */
     public void printTo( PrintWriter writer ) {
-<span class="nc" id="L186">        Objects.requireNonNull(writer);</span>
-<span class="nc" id="L187">        writer.println(title()+&quot; : &quot;+description());</span>
-<span class="nc" id="L188">        exception().ifPresent(e -&gt; {</span>
-<span class="nc" id="L189">            writer.println(e.getClass().getName());</span>
-<span class="nc" id="L190">            e.printStackTrace(writer);</span>
-<span class="nc" id="L191">        });</span>
-<span class="nc" id="L192">        writer.flush();</span>
-<span class="nc" id="L193">    }</span>
+<span class="nc" id="L189">        Objects.requireNonNull(writer);</span>
+<span class="nc" id="L190">        writer.println(title()+&quot; : &quot;+description());</span>
+<span class="nc" id="L191">        exception().ifPresent(e -&gt; {</span>
+<span class="nc" id="L192">            writer.println(e.getClass().getName());</span>
+<span class="nc" id="L193">            e.printStackTrace(writer);</span>
+<span class="nc" id="L194">        });</span>
+<span class="nc" id="L195">        writer.flush();</span>
+<span class="nc" id="L196">    }</span>
 
     /**
      *  Prints the title and description and optionally the exception to the standard output stream.
      *  If an exception is present, it will be printed with its stack trace.
      */
     public void printToSystemOut() { 
-<span class="nc" id="L200">        printTo(new PrintWriter(System.out)); </span>
-<span class="nc" id="L201">    }</span>
+<span class="nc" id="L203">        printTo(new PrintWriter(new BufferedWriter(new OutputStreamWriter(System.out, Charset.defaultCharset())), false));</span>
+<span class="nc" id="L204">    }</span>
 
     /**
      *  Allows you to log the problem to a custom logger of your choice, by supplying a {@link BiConsumer}
@@ -220,120 +223,120 @@ public final class Problem
      * @throws NullPointerException If the logger is null.   
      */
     public void logTo( BiConsumer&lt;String, Throwable&gt; logger ) {
-<span class="fc" id="L223">        Objects.requireNonNull(logger);</span>
-<span class="fc" id="L224">        String titleAndDescription = title() + &quot; : &quot; + description();</span>
+<span class="fc" id="L226">        Objects.requireNonNull(logger);</span>
+<span class="fc" id="L227">        String titleAndDescription = title() + &quot; : &quot; + description();</span>
         try {
-<span class="fc bfc" id="L226" title="All 2 branches covered.">            if (exception().isPresent())</span>
-<span class="fc" id="L227">                logger.accept(titleAndDescription, exception().get());</span>
+<span class="fc bfc" id="L229" title="All 2 branches covered.">            if (exception().isPresent())</span>
+<span class="fc" id="L230">                logger.accept(titleAndDescription, exception().get());</span>
             else
-<span class="fc" id="L229">                logger.accept(titleAndDescription, new Throwable());</span>
-<span class="nc" id="L230">        } catch (Exception e) {</span>
-<span class="nc" id="L231">            _logError(&quot;Failed to log problem: '{}'&quot;, titleAndDescription, e);</span>
+<span class="fc" id="L232">                logger.accept(titleAndDescription, new Throwable());</span>
+<span class="nc" id="L233">        } catch (Exception e) {</span>
+<span class="nc" id="L234">            _logError(&quot;Failed to log problem: '{}'&quot;, titleAndDescription, e);</span>
             // Oh boy, how bad can a user's logging be if it throws an exception? Well, we got you covered!
-<span class="fc" id="L233">        }</span>
-<span class="fc" id="L234">    }</span>
+<span class="fc" id="L236">        }</span>
+<span class="fc" id="L237">    }</span>
     
     /**
      *  Logs the problem as a {@link Logger#error} message to the default logger of the implementing class.
      *  If a SLF4J backend is not available, it will log to the standard error stream {@code System.err}.
      */
     public void logAsError() {
-<span class="pc bpc" id="L241" title="1 of 2 branches missed.">        if ( HAS_SLF4J_IMPLEMENTATION )</span>
-<span class="nc" id="L242">            logTo(log::error);</span>
+<span class="pc bpc" id="L244" title="1 of 2 branches missed.">        if ( HAS_SLF4J_IMPLEMENTATION )</span>
+<span class="nc" id="L245">            logTo(log::error);</span>
         else
-<span class="fc" id="L244">            logTo((msg, t) -&gt; {</span>
-<span class="fc" id="L245">                System.err.println(&quot;[ERROR] &quot; + msg );</span>
-<span class="pc bpc" id="L246" title="1 of 2 branches missed.">                if ( t != null ) {</span>
-<span class="fc" id="L247">                    t.printStackTrace(System.err);</span>
+<span class="fc" id="L247">            logTo((msg, t) -&gt; {</span>
+<span class="fc" id="L248">                System.err.println(&quot;[ERROR] &quot; + msg );</span>
+<span class="pc bpc" id="L249" title="1 of 2 branches missed.">                if ( t != null ) {</span>
+<span class="fc" id="L250">                    t.printStackTrace(System.err);</span>
                 }
-<span class="fc" id="L249">            });</span>
-<span class="fc" id="L250">    }</span>
+<span class="fc" id="L252">            });</span>
+<span class="fc" id="L253">    }</span>
     
     /**
      *  Logs the problem as a {@link Logger#warn} message to the default logger of the implementing class.
      *  If a SLF4J backend is not available, it will log to the standard error stream {@code System.err}.
      */
     public void logAsWarning() {
-<span class="pc bpc" id="L257" title="1 of 2 branches missed.">        if ( HAS_SLF4J_IMPLEMENTATION )</span>
-<span class="nc" id="L258">            logTo(log::warn);</span>
+<span class="pc bpc" id="L260" title="1 of 2 branches missed.">        if ( HAS_SLF4J_IMPLEMENTATION )</span>
+<span class="nc" id="L261">            logTo(log::warn);</span>
         else
-<span class="fc" id="L260">            logTo((msg, t) -&gt; {</span>
-<span class="fc" id="L261">                System.err.println(&quot;[WARN] &quot; + msg );</span>
-<span class="pc bpc" id="L262" title="1 of 2 branches missed.">                if ( t != null ) {</span>
-<span class="fc" id="L263">                    t.printStackTrace(System.err);</span>
+<span class="fc" id="L263">            logTo((msg, t) -&gt; {</span>
+<span class="fc" id="L264">                System.err.println(&quot;[WARN] &quot; + msg );</span>
+<span class="pc bpc" id="L265" title="1 of 2 branches missed.">                if ( t != null ) {</span>
+<span class="fc" id="L266">                    t.printStackTrace(System.err);</span>
                 }
-<span class="fc" id="L265">            });</span>
-<span class="fc" id="L266">    }</span>
+<span class="fc" id="L268">            });</span>
+<span class="fc" id="L269">    }</span>
     
     /**
      *  Logs the problem as a {@link Logger#info} message to the default logger of the implementing class.
      *  If a SLF4J backend is not available, it will log to the standard output stream {@code System.out}.
      */
     public void logAsInfo() {
-<span class="pc bpc" id="L273" title="1 of 2 branches missed.">        if ( HAS_SLF4J_IMPLEMENTATION )</span>
-<span class="nc" id="L274">            logTo(log::info);</span>
+<span class="pc bpc" id="L276" title="1 of 2 branches missed.">        if ( HAS_SLF4J_IMPLEMENTATION )</span>
+<span class="nc" id="L277">            logTo(log::info);</span>
         else
-<span class="fc" id="L276">            logTo((msg, t) -&gt; {</span>
-<span class="fc" id="L277">                System.out.println(&quot;[INFO] &quot; + msg );</span>
-<span class="pc bpc" id="L278" title="1 of 2 branches missed.">                if ( t != null ) {</span>
-<span class="fc" id="L279">                    t.printStackTrace(System.out);</span>
+<span class="fc" id="L279">            logTo((msg, t) -&gt; {</span>
+<span class="fc" id="L280">                System.out.println(&quot;[INFO] &quot; + msg );</span>
+<span class="pc bpc" id="L281" title="1 of 2 branches missed.">                if ( t != null ) {</span>
+<span class="fc" id="L282">                    t.printStackTrace(System.out);</span>
                 }
-<span class="fc" id="L281">            });</span>
-<span class="fc" id="L282">    }</span>
+<span class="fc" id="L284">            });</span>
+<span class="fc" id="L285">    }</span>
     
     /**
      *  Logs the problem as a {@link Logger#debug} message to the default logger of the implementing class.
      *  If a SLF4J backend is not available, it will log to the standard output stream {@code System.out}.
      */
     public void logAsDebug() {
-<span class="pc bpc" id="L289" title="1 of 2 branches missed.">        if ( HAS_SLF4J_IMPLEMENTATION )</span>
-<span class="nc" id="L290">            logTo(log::debug);</span>
+<span class="pc bpc" id="L292" title="1 of 2 branches missed.">        if ( HAS_SLF4J_IMPLEMENTATION )</span>
+<span class="nc" id="L293">            logTo(log::debug);</span>
         else
-<span class="fc" id="L292">            logTo((msg, t) -&gt; {</span>
-<span class="fc" id="L293">                System.out.println(&quot;[DEBUG] &quot; + msg );</span>
-<span class="pc bpc" id="L294" title="1 of 2 branches missed.">                if ( t != null ) {</span>
-<span class="fc" id="L295">                    t.printStackTrace(System.out);</span>
+<span class="fc" id="L295">            logTo((msg, t) -&gt; {</span>
+<span class="fc" id="L296">                System.out.println(&quot;[DEBUG] &quot; + msg );</span>
+<span class="pc bpc" id="L297" title="1 of 2 branches missed.">                if ( t != null ) {</span>
+<span class="fc" id="L298">                    t.printStackTrace(System.out);</span>
                 }
-<span class="fc" id="L297">            });</span>
-<span class="fc" id="L298">    }</span>
+<span class="fc" id="L300">            });</span>
+<span class="fc" id="L301">    }</span>
     
     /**
      *  Logs the problem as a {@link Logger#trace} message to the default logger of the implementing class.
      *  If a SLF4J backend is not available, it will log to the standard output stream {@code System.out}.
      */
     public void logAsTrace() {
-<span class="pc bpc" id="L305" title="1 of 2 branches missed.">        if ( HAS_SLF4J_IMPLEMENTATION )</span>
-<span class="nc" id="L306">            logTo(log::trace);</span>
+<span class="pc bpc" id="L308" title="1 of 2 branches missed.">        if ( HAS_SLF4J_IMPLEMENTATION )</span>
+<span class="nc" id="L309">            logTo(log::trace);</span>
         else
-<span class="fc" id="L308">            logTo((msg, t) -&gt; {</span>
-<span class="fc" id="L309">                System.out.println(&quot;[TRACE] &quot; + msg );</span>
-<span class="pc bpc" id="L310" title="1 of 2 branches missed.">                if ( t != null ) {</span>
-<span class="fc" id="L311">                    t.printStackTrace(System.out);</span>
+<span class="fc" id="L311">            logTo((msg, t) -&gt; {</span>
+<span class="fc" id="L312">                System.out.println(&quot;[TRACE] &quot; + msg );</span>
+<span class="pc bpc" id="L313" title="1 of 2 branches missed.">                if ( t != null ) {</span>
+<span class="fc" id="L314">                    t.printStackTrace(System.out);</span>
                 }
-<span class="fc" id="L313">            });</span>
-<span class="fc" id="L314">    }</span>
+<span class="fc" id="L316">            });</span>
+<span class="fc" id="L317">    }</span>
 
     @Override public String toString() { 
-<span class="nc" id="L317">        return String.format(&quot;%s:\n%s&quot;, title(), description()); </span>
+<span class="nc" id="L320">        return String.format(&quot;%s:\n%s&quot;, title(), description()); </span>
     }
 
     @Override public boolean equals( Object obj ) {
-<span class="pc bpc" id="L321" title="1 of 2 branches missed.">        if ( this == obj ) return true;</span>
-<span class="pc bpc" id="L322" title="1 of 2 branches missed.">        if ( !(obj instanceof Problem) ) return false;</span>
-<span class="fc" id="L323">        Problem other = (Problem) obj;</span>
-<span class="pc bpc" id="L324" title="1 of 2 branches missed.">        return _title.equals(other._title) &amp;&amp;</span>
-<span class="nc bnc" id="L325" title="All 2 branches missed.">               _description.equals(other._description) &amp;&amp;</span>
-<span class="nc bnc" id="L326" title="All 2 branches missed.">               Objects.equals(_exception, other._exception) &amp;&amp;</span>
-<span class="pc bnc" id="L327" title="All 2 branches missed.">               Objects.equals(_reporter, other._reporter);</span>
+<span class="pc bpc" id="L324" title="1 of 2 branches missed.">        if ( this == obj ) return true;</span>
+<span class="pc bpc" id="L325" title="1 of 2 branches missed.">        if ( !(obj instanceof Problem) ) return false;</span>
+<span class="fc" id="L326">        Problem other = (Problem) obj;</span>
+<span class="pc bpc" id="L327" title="1 of 2 branches missed.">        return _title.equals(other._title) &amp;&amp;</span>
+<span class="nc bnc" id="L328" title="All 2 branches missed.">               _description.equals(other._description) &amp;&amp;</span>
+<span class="nc bnc" id="L329" title="All 2 branches missed.">               Objects.equals(_exception, other._exception) &amp;&amp;</span>
+<span class="pc bnc" id="L330" title="All 2 branches missed.">               Objects.equals(_reporter, other._reporter);</span>
     }
 
     @Override public int hashCode() {
-<span class="nc" id="L331">        return Objects.hash(_title, _description, _exception, _reporter);</span>
+<span class="nc" id="L334">        return Objects.hash(_title, _description, _exception, _reporter);</span>
     }
 
     private static void _logError(String message, @Nullable Object... args) {
-<span class="nc" id="L335">        Util._logError(log, message, args);</span>
-<span class="nc" id="L336">    }</span>
+<span class="nc" id="L338">        Util._logError(log, message, args);</span>
+<span class="nc" id="L339">    }</span>
 
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>

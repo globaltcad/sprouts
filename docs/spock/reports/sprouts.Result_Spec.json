@@ -1,10 +1,10 @@
 {
   "className":"sprouts.Result_Spec",
   "title":"Results",
-  "narrative":"The `Result` interface is used to represent the optional result of an operation\n    as well as a list of problems that occurred during an operation that produced the result.\n    The problems of a `Result` are represented by the `Problem` class,\n    which may be created from an exception or a simple message.\n\n    A `Result` is a fully thread safe immutable value type with useful mapping\n    functions that allow you to transform the value of the result into another\n    effectively making it a monadic value similar to the `Optional` type in Java 8.\n\n    Note that when using a `Result` as a return type of a method, then\n    this implies that the method has a safe control flow, meaning only returns\n    exceptions through the problems of the result, but never by throwing it.\n    This is the core appeal of the `Result` type, it allows you to write code\n    without hidden breaks and early returns without it being tracked by the compiler.",
+  "narrative":"The `Result` type models an optional result value from an operation\n    as well as a list of problems that occurred during an operation that produced the result.\n    The problems of a `Result` are represented by the `Problem` class,\n    which may be created from an exception or a simple message.\n\n    A `Result` is a fully thread safe immutable value type with useful mapping\n    functions that allow you to transform the value of the result into another\n    effectively making it a monadic value similar to the `Optional` type in Java 8.\n\n    Note that when using a `Result` as a return type of a method, then\n    this implies that the method has a safe control flow, meaning only returns\n    exceptions through the problems of the result, but never by throwing it.\n    This is the core appeal of the `Result` type, it allows you to write code\n    without hidden breaks and early returns without it being tracked by the compiler.",
   "subjects":["sprouts.Result","sprouts.Problem"],
   "statistics":{
-    "runs":"46",
+    "runs":"47",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -229,12 +229,27 @@
       "result":"PASS",
       "duration":"?",
       "iterations":{
-      "tags":{},"see":[],"extraInfo":["\n            A `Result` instance has a specific string representation that \n            tells you both the type of the result and the current item of the result.\n            The string representation of starts with \"Result\" followed by the type of the result\n            and the item of the result.\n        "]
+      "tags":{},"see":[],"extraInfo":["\n            A `Result` instance has a specific string representation that \n            tells you both the type of the result and the current item of the result.\n            The string representation starts with \"Result\", followed by the type of the result\n            and the item of the result.\n        "]
       },
       "blocks":[
-        {"kind":"given","text":"A result object holding a common enum value.","code":["def result = Result.of(DayOfWeek.MONDAY)"]},
+        {"kind":"given","text":"Various result objects for holding different types of items...","code":["var result1 = Result.of(DayOfWeek.MONDAY)","var result2 = Result.of(\"Joey Carbstrong\")","var result3 = Result.of(Object.class, Month.AUGUST)"]},
 
-        {"kind":"expect","text":"The string representation of the result.","code":["result.toString() == \"Result<DayOfWeek>[MONDAY]\""]}
+        {"kind":"expect","text":"The string representation of the result.","code":["result1.toString() == \"Result<DayOfWeek>[MONDAY]\"","result2.toString() == 'Result<String>[\"Joey Carbstrong\"]'","result3.toString() == 'Result<?>[AUGUST]'"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `Result` type has proper value semantics!",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A `Result` is a value object, meaning that its equality\n            is defined based on its contents and not necessarily its place\n            in system memory (reference identity).\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Various result objects for holding different types of items...","code":["var result1 = Result.of(DayOfWeek.SUNDAY)","var result2 = Result.of(DayOfWeek.SUNDAY)","var result3 = Result.of(DayOfWeek.MONDAY)"]},
+
+        {"kind":"expect","text":"Their `hashCode` and `equals` methods behave as expected:","code":["result1 == result2","result2 == result1","result1 != result3","result3 != result1","result1.hashCode() == result2.hashCode()","result2.hashCode() == result1.hashCode()","result1.hashCode() != result3.hashCode()","result3.hashCode() != result1.hashCode()"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },

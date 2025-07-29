@@ -7,12 +7,12 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.function.Consumer;
 
 /**
- *  An event is something that can be triggered and reacted through {@link Observable}s
+ *  An event is something that can be triggered and reacted to, through {@link Observable}s
  *  created by the {@link #observable()} method.
- *  It is a form of the observer pattern
- *  where an {@link Event} is a source of events (or notifications) and the {@link Observable}s
- *  are the objects where you register to receive these notifications through your
- *  implementations of the functional interface {@link Observer}.
+ *  It is a form of the observer pattern where an {@link Event} is a source of
+ *  events (or notifications) and the {@link Observable}s are the objects where
+ *  you register to receive these notifications through your
+ *  implementations of the functional {@link Observer} interface.
  *  &lt;p&gt;
  *  The registered {@link Observer}s are invoked when the {@link #fire()} method is called
  *  on the {@link Event}.
