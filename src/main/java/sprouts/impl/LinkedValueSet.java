@@ -17,24 +17,23 @@ final class LinkedValueSet<E> implements ValueSet<E> {
             this.nextElement = nextElement;
         }
         @Nullable
-        K previousKey() {
-            return previousElement;
+        K previousElement() {
+            return this.previousElement;
         }
         @Nullable
-        K nextKey() {
-            return nextElement;
+        K nextElement() {
+            return this.nextElement;
         }
-        LinkedEntry<K> withPreviousKey(@Nullable K previousKey) {
-            return new LinkedEntry<>(previousKey, this.nextElement);
+        LinkedEntry<K> withPreviousElement(@Nullable K previousElement) {
+            return new LinkedEntry<>(previousElement, this.nextElement);
         }
-        LinkedEntry<K> withNextKey(@Nullable K nextKey) {
+        LinkedEntry<K> withNextElement(@Nullable K nextKey) {
             return new LinkedEntry<>(this.previousElement, nextKey);
         }
 
         @Override
         public String toString() {
-            return "Entry[previous=" + previousElement +
-                   ", next=" + nextElement + "]";
+            return "LinkedEntry[previousElement=" + previousElement + ", nextElement=" + nextElement + "]";
         }
 
         @Override
@@ -117,7 +116,7 @@ final class LinkedValueSet<E> implements ValueSet<E> {
         if (_lastInsertedKey != null) {
             LinkedEntry<E> previousEntry = newEntries.get(_lastInsertedKey).orElse(null);
             if (previousEntry != null) {
-                previousEntry = previousEntry.withNextKey(element);
+                previousEntry = previousEntry.withNextElement(element);
                 newEntries = (AssociationImpl<E, LinkedEntry<E>>) newEntries.put(_lastInsertedKey, previousEntry);
             }
         }
@@ -156,24 +155,24 @@ final class LinkedValueSet<E> implements ValueSet<E> {
             E firstInsertedKey = _firstInsertedKey;
             E lastInsertedKey = _lastInsertedKey;
             if (firstInsertedKey != null && firstInsertedKey.equals(element)) {
-                firstInsertedKey = entry.nextKey(); // Update firstInsertedKey if it is the removed element
+                firstInsertedKey = entry.nextElement(); // Update firstInsertedKey if it is the removed element
             }
             if (lastInsertedKey != null && lastInsertedKey.equals(element)) {
-                lastInsertedKey = entry.previousKey(); // Update lastInsertedKey if it is the removed element
+                lastInsertedKey = entry.previousElement(); // Update lastInsertedKey if it is the removed element
             }
-            E previousKey = entry.previousKey();
-            E nextKey = entry.nextKey();
+            E previousKey = entry.previousElement();
+            E nextKey = entry.nextElement();
             if (previousKey != null) {
                 LinkedEntry<E> previousEntry = newEntries.get(previousKey).orElse(null);
                 if (previousEntry != null) {
-                    previousEntry = previousEntry.withNextKey(nextKey);
+                    previousEntry = previousEntry.withNextElement(nextKey);
                     newEntries = (AssociationImpl<E, LinkedEntry<E>>) newEntries.put(previousKey, previousEntry);
                 }
             }
             if (nextKey != null) {
                 LinkedEntry<E> nextEntry = newEntries.get(nextKey).orElse(null);
                 if (nextEntry != null) {
-                    nextEntry = nextEntry.withPreviousKey(previousKey);
+                    nextEntry = nextEntry.withPreviousElement(previousKey);
                     newEntries = (AssociationImpl<E, LinkedEntry<E>>) newEntries.put(nextKey, nextEntry);
                 }
             }
@@ -250,7 +249,7 @@ final class LinkedValueSet<E> implements ValueSet<E> {
                 E nextElement = current;
                 LinkedEntry<E> entry = _entries.get(current).orElse(null);
                 if (entry != null) {
-                    current = entry.nextKey();
+                    current = entry.nextElement();
                 } else {
                     current = null; // No next element
                 }

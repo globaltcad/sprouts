@@ -22,15 +22,15 @@ final class LinkedAssociation<K,V> implements Association<K, V>
             this.nextKey = nextKey;
         }
         V value() {
-            return value;
+            return this.value;
         }
         @Nullable
         K previousKey() {
-            return previousKey;
+            return this.previousKey;
         }
         @Nullable
         K nextKey() {
-            return nextKey;
+            return this.nextKey;
         }
         LinkedEntry<K,V> withValue(V value) {
             return new LinkedEntry<>(value, this.previousKey, this.nextKey);
@@ -57,7 +57,7 @@ final class LinkedAssociation<K,V> implements Association<K, V>
         }
         @Override
         public String toString() {
-            return "Entry[value=" + value +
+            return "LinkedEntry[value=" + value +
                    ", previousKey=" + previousKey +
                    ", nextKey=" + nextKey + "]";
         }
