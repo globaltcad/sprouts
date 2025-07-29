@@ -8,7 +8,7 @@ import spock.lang.Title
 import java.util.function.Consumer
 import java.util.stream.Stream
 
-@Title("Lists of Properties")
+@Title("Reactive Lists of Properties")
 @Narrative('''
 
     Just like properties you can create lists of properties
