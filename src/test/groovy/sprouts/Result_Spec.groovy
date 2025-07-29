@@ -248,7 +248,7 @@ class Result_Spec extends Specification
         reportInfo """
             A `Result` instance has a specific string representation that 
             tells you both the type of the result and the current item of the result.
-            The string representation starts with "Result" followed by the type of the result
+            The string representation starts with "Result", followed by the type of the result
             and the item of the result.
         """
         given : 'Various result objects for holding different types of items...'
