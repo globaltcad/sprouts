@@ -100,16 +100,13 @@ check.dependsOn jacocoTestReport
 
 // CUSTOM DEPLOYMENT TASKS :
 
-def deleteFilesIn(String path) {
-    var file = new File(path)
-    if ( file.exists() && file.listFiles() != null && file.listFiles().length > 0 )
-        delete file
-}
-
 // 1: Cleanup
 task cleanForDeployment(type: Delete) {
     delete "$rootDir/build"
-    deleteFilesIn("$rootDir/docs/jdocs")
+    delete fileTree("$rootDir/docs/jdocs/") { include '**/*' }
+    delete fileTree("$rootDir/docs/spock/json/") { include '**/*' }
+    delete fileTree("$rootDir/docs/spock/reports/") { include '**/*' }
+    delete fileTree("$rootDir/docs/coverage/test/") { include '**/*' }
 }
 
 // 2:
