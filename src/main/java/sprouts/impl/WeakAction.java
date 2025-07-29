@@ -16,14 +16,32 @@ import java.util.function.BiConsumer;
  *  lifetime of the action. A library internal cleaner
  *  is responsible for removing the action when the owner
  *  is garbage collected.
+ *  <p>
+ *  This class is marked as {@code final} and its constructor is private
+ *  to enforce the use of the static factory method {@link #of(Object, BiConsumer)}.
+ *  The factory method provides a controlled way to create instances
+ *  and encapsulates any additional logic required during instantiation.
+ *  This design ensures consistency and prevents misuse.
+ *  <p><b>
+ *      Note: This class is designed for internal use within the Sprouts library
+ *      and should not be made public or used directly by external code.
+ *  </b></p>
  *
  * @param <O> The type of the owner of this action.
  * @param <D> The type of the delegate that will be passed to this event handler.
  */
-final class WeakAction<O extends @Nullable Object, D> implements Action<D>
+final class WeakAction<O, D> implements Action<D>
 {
-
-    static <O, D> WeakAction<O, D> of(O owner, BiConsumer<O, D> action ) {
+    /**
+     *  Creates a new instance of {@link WeakAction} with the given owner and action.
+     *  The owner is weakly referenced, meaning that the action will be cleared
+     *  when the owner is garbage collected.
+     *
+     * @param owner The owner of this action, which will be weakly referenced.
+     * @param action The action to be executed when this event handler is invoked.
+     * @return A new instance of {@link WeakAction}.
+     */
+    static <O, D> WeakAction<O, D> of(@NonNull O owner, @NonNull BiConsumer<O, D> action ) {
         return new WeakAction<>(owner, action);
     }
 
