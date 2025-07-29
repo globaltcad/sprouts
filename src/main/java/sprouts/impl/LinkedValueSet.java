@@ -40,7 +40,7 @@ final class LinkedValueSet<E> implements ValueSet<E> {
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (!(o instanceof LinkedValueSet.LinkedEntry)) return false;
+            if (!(o instanceof LinkedEntry)) return false;
             LinkedEntry<?> entry = (LinkedEntry<?>) o;
             return Objects.equals(previousElement, entry.previousElement) &&
                    Objects.equals(nextElement, entry.nextElement);
