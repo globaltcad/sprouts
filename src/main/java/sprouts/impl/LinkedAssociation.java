@@ -45,7 +45,7 @@ final class LinkedAssociation<K,V> implements Association<K, V>
         @Override
         public boolean equals(Object obj) {
             if (this == obj) return true;
-            if (!(obj instanceof LinkedAssociation.LinkedEntry)) return false;
+            if (!(obj instanceof LinkedEntry)) return false;
             LinkedEntry<?, ?> entry = (LinkedEntry<?, ?>) obj;
             return Objects.equals(value, entry.value) &&
                    Objects.equals(previousKey, entry.previousKey) &&
