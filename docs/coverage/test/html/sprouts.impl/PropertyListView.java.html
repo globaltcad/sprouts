@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
         }
 
 <span class="fc" id="L34">        WeakReference&lt;Vals&lt;T&gt;&gt; weakSource = new WeakReference&lt;&gt;(source);</span>
-<span class="fc" id="L35">        Viewables.cast(source).onChange(WeakActionImpl.of(view, (innerView, delegate) -&gt; {</span>
+<span class="fc" id="L35">        Viewables.cast(source).onChange(WeakAction.of(view, (innerView, delegate) -&gt; {</span>
 <span class="fc" id="L36">            Vals&lt;T&gt; innerSource = weakSource.get();</span>
 <span class="pc bpc" id="L37" title="1 of 2 branches missed.">            if (innerSource == null) {</span>
 <span class="nc" id="L38">                return;</span>

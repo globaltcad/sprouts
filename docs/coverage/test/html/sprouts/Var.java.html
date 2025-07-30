@@ -496,7 +496,7 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
      *   assert publisherLens.get() == book.publisher();
      * }&lt;/pre&gt;
      *
-     * @param &lt;B&gt;        The type of the field that the lens will focus on.
+     * @param &lt;B&gt;        The type of the field that the lens will focus on, which must not be null.
      * @param nullObject The object to use when the focused field or its parent object is null.
      * @param getter     Function to get the current value of the focused field from the parent object.
      * @param wither     BiFunction to set or update the value of the focused field and return a new instance
@@ -505,7 +505,7 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
      *         the null object when the parent object is null.
      * @throws NullPointerException If the given getter or wither function is null.
      */
-    default &lt;B&gt; Var&lt;B&gt; zoomTo( B nullObject, Function&lt;T,B&gt; getter, BiFunction&lt;T,B,T&gt; wither ) {
+    default &lt;B extends @NonNull Object&gt; Var&lt;B&gt; zoomTo( B nullObject, Function&lt;T,B&gt; getter, BiFunction&lt;T,B,T&gt; wither ) {
 <span class="fc" id="L509">        return this.zoomTo( nullObject, Lens.of(getter, wither) );</span>
     }
 
@@ -546,7 +546,7 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
      *   assert publisherLens.get() == book.publisher();
      * }&lt;/pre&gt;
      *
-     * @param &lt;B&gt;        The type of the field that the lens will focus on.
+     * @param &lt;B&gt;        The type of the field that the lens will focus on, which must not be null.
      * @param nullObject The object to use when the focused field or its parent object is null.
      *                   This object must not be null.
      * @param lens       The {@link Lens} implementation to focus on the specified
@@ -555,7 +555,7 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
      *        the null object when the parent object is null.
      * @throws NullPointerException If the supplied {@code nullObject} or {@code lens} is null.
      */
-    default &lt;B&gt; Var&lt;B&gt; zoomTo( B nullObject, Lens&lt;T,B&gt; lens ) {
+    default &lt;B extends @NonNull Object&gt; Var&lt;B&gt; zoomTo( B nullObject, Lens&lt;T,B&gt; lens ) {
 <span class="fc" id="L559">        return Sprouts.factory().lensOf( this, nullObject, lens );</span>
     }
 

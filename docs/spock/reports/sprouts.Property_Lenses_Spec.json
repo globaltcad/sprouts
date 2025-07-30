@@ -697,7 +697,7 @@
 
         {"kind":"and","text":"A trace list to record the side effect.","code":["var trace = []"]},
 
-        {"kind":"and","text":"Finally we register a weak action on the property.","code":["Viewable.cast(nameLens).onChange(From.ALL, new sprouts.impl.WeakActionImpl(owner, (o, it) -> trace << it.currentValue().orElseThrow()))"]},
+        {"kind":"and","text":"Finally we register a weak action on the property.","code":["Viewable.cast(nameLens).onChange(From.ALL, new sprouts.impl.WeakAction(owner, (o, it) -> trace << it.currentValue().orElseThrow()))"]},
 
         {"kind":"when","text":"We change the lens...","code":["nameLens.set(\"William\")"]},
 

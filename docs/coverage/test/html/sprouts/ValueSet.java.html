@@ -562,7 +562,7 @@ public interface ValueSet&lt;E&gt; extends Iterable&lt;E&gt; {
      */
     default boolean containsAll( Set&lt;? extends E&gt; elements ) {
 <span class="fc" id="L564">        Objects.requireNonNull(elements, &quot;The provided set cannot be null.&quot;);</span>
-<span class="fc" id="L565">        return elements.stream().parallel().allMatch(this::contains);</span>
+<span class="fc" id="L565">        return containsAll((Collection&lt;? extends E&gt;) elements);</span>
     }
     
     /**
@@ -680,9 +680,7 @@ public interface ValueSet&lt;E&gt; extends Iterable&lt;E&gt; {
      */
     default ValueSet&lt;E&gt; addAll( final Set&lt;? extends E&gt; elements ) {
 <span class="fc" id="L682">        Objects.requireNonNull(elements, &quot;The provided set cannot be null.&quot;);</span>
-<span class="fc bfc" id="L683" title="All 2 branches covered.">        if ( elements.isEmpty() )</span>
-<span class="fc" id="L684">            return this;</span>
-<span class="fc" id="L685">        return addAll(elements.stream());</span>
+<span class="fc" id="L683">        return addAll((Collection&lt;? extends E&gt;) elements);</span>
     }
 
     /**
@@ -696,10 +694,10 @@ public interface ValueSet&lt;E&gt; extends Iterable&lt;E&gt; {
      * @throws NullPointerException if the provided array is {@code null}.
      */
     default ValueSet&lt;E&gt; addAll( final E... elements ) {
-<span class="fc" id="L699">        Objects.requireNonNull(elements, &quot;The provided array cannot be null.&quot;);</span>
-<span class="fc bfc" id="L700" title="All 2 branches covered.">        if ( elements.length == 0 )</span>
-<span class="fc" id="L701">            return this;</span>
-<span class="fc" id="L702">        return addAll(Arrays.stream(elements));</span>
+<span class="fc" id="L697">        Objects.requireNonNull(elements, &quot;The provided array cannot be null.&quot;);</span>
+<span class="fc bfc" id="L698" title="All 2 branches covered.">        if ( elements.length == 0 )</span>
+<span class="fc" id="L699">            return this;</span>
+<span class="fc" id="L700">        return addAll(Arrays.stream(elements));</span>
     }
 
     /**
@@ -713,10 +711,10 @@ public interface ValueSet&lt;E&gt; extends Iterable&lt;E&gt; {
      * @throws NullPointerException if the provided tuple is {@code null}.
      */
     default ValueSet&lt;E&gt; addAll( final Tuple&lt;E&gt; elements ) {
-<span class="fc" id="L716">        Objects.requireNonNull(elements, &quot;The provided tuple cannot be null.&quot;);</span>
-<span class="pc bpc" id="L717" title="1 of 2 branches missed.">        if ( elements.isEmpty() )</span>
-<span class="nc" id="L718">            return this;</span>
-<span class="fc" id="L719">        return addAll(elements.stream());</span>
+<span class="fc" id="L714">        Objects.requireNonNull(elements, &quot;The provided tuple cannot be null.&quot;);</span>
+<span class="pc bpc" id="L715" title="1 of 2 branches missed.">        if ( elements.isEmpty() )</span>
+<span class="nc" id="L716">            return this;</span>
+<span class="fc" id="L717">        return addAll(elements.stream());</span>
     }
 
     /**
@@ -730,10 +728,10 @@ public interface ValueSet&lt;E&gt; extends Iterable&lt;E&gt; {
      * @throws NullPointerException if the provided collection is {@code null}.
      */
     default ValueSet&lt;E&gt; addAll( final Collection&lt;? extends E&gt; elements ) {
-<span class="fc" id="L733">        Objects.requireNonNull(elements, &quot;The provided collection cannot be null.&quot;);</span>
-<span class="pc bpc" id="L734" title="1 of 2 branches missed.">        if ( elements.isEmpty() )</span>
-<span class="nc" id="L735">            return this;</span>
-<span class="fc" id="L736">        return addAll(elements.stream());</span>
+<span class="fc" id="L731">        Objects.requireNonNull(elements, &quot;The provided collection cannot be null.&quot;);</span>
+<span class="fc bfc" id="L732" title="All 2 branches covered.">        if ( elements.isEmpty() )</span>
+<span class="fc" id="L733">            return this;</span>
+<span class="fc" id="L734">        return addAll(elements.stream());</span>
     }
 
     /**
@@ -747,8 +745,8 @@ public interface ValueSet&lt;E&gt; extends Iterable&lt;E&gt; {
      * @throws NullPointerException if the provided iterable is {@code null}.
      */
     default ValueSet&lt;E&gt; addAll( final Iterable&lt;? extends E&gt; elements ) {
-<span class="fc" id="L750">        Objects.requireNonNull(elements, &quot;The provided iterable cannot be null.&quot;);</span>
-<span class="fc" id="L751">        return addAll(StreamSupport.stream(elements.spliterator(), false));</span>
+<span class="fc" id="L748">        Objects.requireNonNull(elements, &quot;The provided iterable cannot be null.&quot;);</span>
+<span class="fc" id="L749">        return addAll(StreamSupport.stream(elements.spliterator(), false));</span>
     }
 
     /**
@@ -785,10 +783,10 @@ public interface ValueSet&lt;E&gt; extends Iterable&lt;E&gt; {
      * @return A new value set without the elements in the given set.
      */
     default ValueSet&lt;E&gt; removeAll( Set&lt;? extends E&gt; elements ) {
-<span class="fc" id="L788">        Objects.requireNonNull(elements);</span>
-<span class="fc bfc" id="L789" title="All 2 branches covered.">        if ( elements.isEmpty() )</span>
-<span class="fc" id="L790">            return this;</span>
-<span class="fc" id="L791">        return removeAll(elements.stream());</span>
+<span class="fc" id="L786">        Objects.requireNonNull(elements);</span>
+<span class="fc bfc" id="L787" title="All 2 branches covered.">        if ( elements.isEmpty() )</span>
+<span class="fc" id="L788">            return this;</span>
+<span class="fc" id="L789">        return removeAll(elements.stream());</span>
     }
 
     /**
@@ -802,10 +800,10 @@ public interface ValueSet&lt;E&gt; extends Iterable&lt;E&gt; {
      * @return A new value set without the elements in the given value set, a.k.a. &lt;i&gt;asymmetric set difference&lt;/i&gt;.
      */
     default ValueSet&lt;E&gt; removeAll( final ValueSet&lt;? extends E&gt; elements ) {
-<span class="nc" id="L805">        Objects.requireNonNull(elements, &quot;The provided value set cannot be null.&quot;);</span>
-<span class="nc bnc" id="L806" title="All 2 branches missed.">        if ( elements.isEmpty() )</span>
-<span class="nc" id="L807">            return this;</span>
-<span class="nc" id="L808">        return removeAll(elements.stream());</span>
+<span class="nc" id="L803">        Objects.requireNonNull(elements, &quot;The provided value set cannot be null.&quot;);</span>
+<span class="nc bnc" id="L804" title="All 2 branches missed.">        if ( elements.isEmpty() )</span>
+<span class="nc" id="L805">            return this;</span>
+<span class="nc" id="L806">        return removeAll(elements.stream());</span>
     }
 
     /**
@@ -820,10 +818,10 @@ public interface ValueSet&lt;E&gt; extends Iterable&lt;E&gt; {
      * @return A new value set without the elements in the given array, a.k.a. &lt;i&gt;asymmetric set difference&lt;/i&gt;.
      */
     default ValueSet&lt;E&gt; removeAll( final E... elements ) {
-<span class="fc" id="L823">        Objects.requireNonNull(elements, &quot;The provided array cannot be null.&quot;);</span>
-<span class="pc bpc" id="L824" title="1 of 2 branches missed.">        if ( elements.length == 0 )</span>
-<span class="nc" id="L825">            return this;</span>
-<span class="fc" id="L826">        return removeAll(Arrays.stream(elements));</span>
+<span class="fc" id="L821">        Objects.requireNonNull(elements, &quot;The provided array cannot be null.&quot;);</span>
+<span class="pc bpc" id="L822" title="1 of 2 branches missed.">        if ( elements.length == 0 )</span>
+<span class="nc" id="L823">            return this;</span>
+<span class="fc" id="L824">        return removeAll(Arrays.stream(elements));</span>
     }
 
     /**
@@ -838,10 +836,10 @@ public interface ValueSet&lt;E&gt; extends Iterable&lt;E&gt; {
      * @return A new value set without the elements in the supplied collection, a.k.a. &lt;i&gt;asymmetric set difference&lt;/i&gt;.
      */
     default ValueSet&lt;E&gt; removeAll( final Collection&lt;? extends E&gt; elements ) {
-<span class="fc" id="L841">        Objects.requireNonNull(elements, &quot;The provided collection cannot be null.&quot;);</span>
-<span class="pc bpc" id="L842" title="1 of 2 branches missed.">        if ( elements.isEmpty() )</span>
-<span class="nc" id="L843">            return this;</span>
-<span class="fc" id="L844">        return removeAll(elements.stream());</span>
+<span class="fc" id="L839">        Objects.requireNonNull(elements, &quot;The provided collection cannot be null.&quot;);</span>
+<span class="pc bpc" id="L840" title="1 of 2 branches missed.">        if ( elements.isEmpty() )</span>
+<span class="nc" id="L841">            return this;</span>
+<span class="fc" id="L842">        return removeAll(elements.stream());</span>
     }
 
     /**
@@ -857,10 +855,10 @@ public interface ValueSet&lt;E&gt; extends Iterable&lt;E&gt; {
      * @return A new value set without the elements in the supplied tuple, a.k.a. &lt;i&gt;asymmetric set difference&lt;/i&gt;.
      */
     default ValueSet&lt;E&gt; removeAll( final Tuple&lt;? extends E&gt; elements ) {
-<span class="fc" id="L860">        Objects.requireNonNull(elements, &quot;The provided tuple cannot be null.&quot;);</span>
-<span class="pc bpc" id="L861" title="1 of 2 branches missed.">        if (toTuple().isEmpty() )</span>
-<span class="nc" id="L862">            return this;</span>
-<span class="fc" id="L863">        return removeAll(elements.stream());</span>
+<span class="fc" id="L858">        Objects.requireNonNull(elements, &quot;The provided tuple cannot be null.&quot;);</span>
+<span class="pc bpc" id="L859" title="1 of 2 branches missed.">        if (toTuple().isEmpty() )</span>
+<span class="nc" id="L860">            return this;</span>
+<span class="fc" id="L861">        return removeAll(elements.stream());</span>
     }
 
     /**
@@ -875,8 +873,8 @@ public interface ValueSet&lt;E&gt; extends Iterable&lt;E&gt; {
      * @return A new value set without the elements found in the supplied iterable, a.k.a. &lt;i&gt;asymmetric set difference&lt;/i&gt;.
      */
     default ValueSet&lt;E&gt; removeAll( final Iterable&lt;? extends E&gt; elements ) {
-<span class="nc" id="L878">        Objects.requireNonNull(elements, &quot;The provided iterable cannot be null.&quot;);</span>
-<span class="nc" id="L879">        return removeAll(StreamSupport.stream(elements.spliterator(), false));</span>
+<span class="nc" id="L876">        Objects.requireNonNull(elements, &quot;The provided iterable cannot be null.&quot;);</span>
+<span class="nc" id="L877">        return removeAll(StreamSupport.stream(elements.spliterator(), false));</span>
     }
 
     /**
@@ -921,8 +919,8 @@ public interface ValueSet&lt;E&gt; extends Iterable&lt;E&gt; {
      * @return A new value set with only the elements in the given value set.
      */
     default ValueSet&lt;E&gt; retainAll( ValueSet&lt;? extends E&gt; elements ) {
-<span class="nc" id="L924">        Objects.requireNonNull(elements, &quot;The provided value set cannot be null.&quot;);</span>
-<span class="nc" id="L925">        return retainAll(elements.toSet());</span>
+<span class="nc" id="L922">        Objects.requireNonNull(elements, &quot;The provided value set cannot be null.&quot;);</span>
+<span class="nc" id="L923">        return retainAll(elements.toSet());</span>
     }
 
     /**
@@ -942,8 +940,8 @@ public interface ValueSet&lt;E&gt; extends Iterable&lt;E&gt; {
      * @throws NullPointerException If the array of elements is null or one of the elements is null.
      */
     default ValueSet&lt;E&gt; retainAll( E... elements ) {
-<span class="fc" id="L945">        Objects.requireNonNull(elements, &quot;The provided array cannot be null.&quot;);</span>
-<span class="fc" id="L946">        return retainAll(Arrays.stream(elements));</span>
+<span class="fc" id="L943">        Objects.requireNonNull(elements, &quot;The provided array cannot be null.&quot;);</span>
+<span class="fc" id="L944">        return retainAll(Arrays.stream(elements));</span>
     }
 
     /**
@@ -963,8 +961,8 @@ public interface ValueSet&lt;E&gt; extends Iterable&lt;E&gt; {
      * @throws NullPointerException If the collection of elements is null or one of the elements is null.
      */
     default ValueSet&lt;E&gt; retainAll( Collection&lt;? extends E&gt; elements ) {
-<span class="fc" id="L966">        Objects.requireNonNull(elements, &quot;The provided collection cannot be null.&quot;);</span>
-<span class="fc" id="L967">        return retainAll(elements.stream());</span>
+<span class="fc" id="L964">        Objects.requireNonNull(elements, &quot;The provided collection cannot be null.&quot;);</span>
+<span class="fc" id="L965">        return retainAll(elements.stream());</span>
     }
 
     /**
@@ -984,8 +982,8 @@ public interface ValueSet&lt;E&gt; extends Iterable&lt;E&gt; {
      * @throws NullPointerException If the tuple of elements is null or one of the elements is null.
      */
     default ValueSet&lt;E&gt; retainAll( Tuple&lt;? extends E&gt; elements ) {
-<span class="fc" id="L987">        Objects.requireNonNull(elements, &quot;The provided tuple cannot be null.&quot;);</span>
-<span class="fc" id="L988">        return retainAll(elements.stream());</span>
+<span class="fc" id="L985">        Objects.requireNonNull(elements, &quot;The provided tuple cannot be null.&quot;);</span>
+<span class="fc" id="L986">        return retainAll(elements.stream());</span>
     }
 
     /**
@@ -1005,8 +1003,8 @@ public interface ValueSet&lt;E&gt; extends Iterable&lt;E&gt; {
      * @throws NullPointerException If the iterable of elements is null or one of the elements is null.
      */
     default ValueSet&lt;E&gt; retainAll( Iterable&lt;? extends E&gt; elements ) {
-<span class="nc" id="L1008">        Objects.requireNonNull(elements, &quot;The provided iterable cannot be null.&quot;);</span>
-<span class="nc" id="L1009">        return retainAll(StreamSupport.stream(elements.spliterator(), false));</span>
+<span class="nc" id="L1006">        Objects.requireNonNull(elements, &quot;The provided iterable cannot be null.&quot;);</span>
+<span class="nc" id="L1007">        return retainAll(StreamSupport.stream(elements.spliterator(), false));</span>
     }
 
     /**
@@ -1026,10 +1024,10 @@ public interface ValueSet&lt;E&gt; extends Iterable&lt;E&gt; {
      * @throws NullPointerException If the stream of elements is null or one of the elements is null.
      */
     default ValueSet&lt;E&gt; retainAll( Stream&lt;? extends E&gt; elements ) {
-<span class="pc bpc" id="L1029" title="1 of 2 branches missed.">        if ( this.isEmpty() )</span>
-<span class="nc" id="L1030">            return this;</span>
-<span class="fc" id="L1031">        Set&lt;E&gt; elementsSet = elements.collect(HashSet::new, HashSet::add, HashSet::addAll);</span>
-<span class="fc" id="L1032">        return retainAll(elementsSet);</span>
+<span class="pc bpc" id="L1027" title="1 of 2 branches missed.">        if ( this.isEmpty() )</span>
+<span class="nc" id="L1028">            return this;</span>
+<span class="fc" id="L1029">        Set&lt;E&gt; elementsSet = elements.collect(HashSet::new, HashSet::add, HashSet::addAll);</span>
+<span class="fc" id="L1030">        return retainAll(elementsSet);</span>
     }
 
     /**
@@ -1050,21 +1048,21 @@ public interface ValueSet&lt;E&gt; extends Iterable&lt;E&gt; {
      * @return A java.util.Map representation of this value set.
      */
     default Set&lt;E&gt; toSet()  {
-<span class="fc" id="L1053">        return new AbstractSet&lt;E&gt;() {</span>
+<span class="fc" id="L1051">        return new AbstractSet&lt;E&gt;() {</span>
             @Override
             public Iterator&lt;E&gt; iterator() {
-<span class="fc" id="L1056">                return ValueSet.this.iterator();</span>
+<span class="fc" id="L1054">                return ValueSet.this.iterator();</span>
             }
             @Override
             public int size() {
-<span class="fc" id="L1060">                return ValueSet.this.size();</span>
+<span class="fc" id="L1058">                return ValueSet.this.size();</span>
             }
             @Override
             public boolean contains(@Nullable Object o) {
-<span class="pc bpc" id="L1064" title="2 of 4 branches missed.">                if (o != null &amp;&amp; ValueSet.this.type().isAssignableFrom(o.getClass())) {</span>
-<span class="fc" id="L1065">                    return ValueSet.this.contains(ValueSet.this.type().cast(o));</span>
+<span class="pc bpc" id="L1062" title="2 of 4 branches missed.">                if (o != null &amp;&amp; ValueSet.this.type().isAssignableFrom(o.getClass())) {</span>
+<span class="fc" id="L1063">                    return ValueSet.this.contains(ValueSet.this.type().cast(o));</span>
                 }
-<span class="nc" id="L1067">                return false;</span>
+<span class="nc" id="L1065">                return false;</span>
             }
         };
     }
@@ -1080,8 +1078,8 @@ public interface ValueSet&lt;E&gt; extends Iterable&lt;E&gt; {
      *  @throws NullPointerException if the predicate is {@code null}.
      */
     default boolean any( Predicate&lt;E&gt; predicate ) {
-<span class="nc" id="L1083">        Objects.requireNonNull(predicate);</span>
-<span class="nc" id="L1084">        return this.stream().anyMatch( predicate );</span>
+<span class="nc" id="L1081">        Objects.requireNonNull(predicate);</span>
+<span class="nc" id="L1082">        return this.stream().anyMatch( predicate );</span>
     }
 
     /**
@@ -1095,8 +1093,8 @@ public interface ValueSet&lt;E&gt; extends Iterable&lt;E&gt; {
      *  @throws NullPointerException if the predicate is {@code null}.
      */
     default boolean all( Predicate&lt;E&gt; predicate ) {
-<span class="nc" id="L1098">        Objects.requireNonNull(predicate);</span>
-<span class="nc" id="L1099">        return this.stream().allMatch( predicate );</span>
+<span class="nc" id="L1096">        Objects.requireNonNull(predicate);</span>
+<span class="nc" id="L1097">        return this.stream().allMatch( predicate );</span>
     }
 
     /**
@@ -1110,8 +1108,8 @@ public interface ValueSet&lt;E&gt; extends Iterable&lt;E&gt; {
      *  @throws NullPointerException if the predicate is {@code null}.
      */
     default boolean none( Predicate&lt;E&gt; predicate ) {
-<span class="nc" id="L1113">        Objects.requireNonNull(predicate);</span>
-<span class="nc" id="L1114">        return this.stream().noneMatch( predicate );</span>
+<span class="nc" id="L1111">        Objects.requireNonNull(predicate);</span>
+<span class="nc" id="L1112">        return this.stream().noneMatch( predicate );</span>
     }
     
     /**
@@ -1120,7 +1118,7 @@ public interface ValueSet&lt;E&gt; extends Iterable&lt;E&gt; {
      * @return A sequential stream of the elements in this value set.
      */
     default Stream&lt;E&gt; stream() {
-<span class="fc" id="L1123">        return StreamSupport.stream(spliterator(), false);</span>
+<span class="fc" id="L1121">        return StreamSupport.stream(spliterator(), false);</span>
     }
 
     /**
@@ -1129,7 +1127,7 @@ public interface ValueSet&lt;E&gt; extends Iterable&lt;E&gt; {
      * @return A parallel stream of the elements in this value set.
      */
     default Stream&lt;E&gt; parallelStream() {
-<span class="fc" id="L1132">        return StreamSupport.stream(spliterator(), true);</span>
+<span class="fc" id="L1130">        return StreamSupport.stream(spliterator(), true);</span>
     }
 
     /**
@@ -1143,8 +1141,8 @@ public interface ValueSet&lt;E&gt; extends Iterable&lt;E&gt; {
      * @throws NullPointerException if the provided comparator is {@code null}.
      */
     default ValueSet&lt;E&gt; sort( Comparator&lt;E&gt; comparator ) {
-<span class="fc" id="L1146">        Objects.requireNonNull(comparator, &quot;The provided comparator cannot be null.&quot;);</span>
-<span class="fc" id="L1147">        return Sprouts.factory().valueSetOfSorted(type(), comparator).addAll(this);</span>
+<span class="fc" id="L1144">        Objects.requireNonNull(comparator, &quot;The provided comparator cannot be null.&quot;);</span>
+<span class="fc" id="L1145">        return Sprouts.factory().valueSetOfSorted(type(), comparator).addAll(this);</span>
     }
 
     /**
@@ -1156,7 +1154,7 @@ public interface ValueSet&lt;E&gt; extends Iterable&lt;E&gt; {
      * @return A {@link Tuple} of all the elements in this value set.
      */
     default Tuple&lt;E&gt; toTuple() {
-<span class="fc" id="L1159">        return Tuple.of(type(), this);</span>
+<span class="fc" id="L1157">        return Tuple.of(type(), this);</span>
     }
 
     /**

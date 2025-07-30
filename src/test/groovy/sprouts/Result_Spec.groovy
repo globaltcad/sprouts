@@ -11,7 +11,7 @@ import java.util.function.Supplier
 
 @Title("Results")
 @Narrative('''
-    The `Result` interface is used to represent the optional result of an operation
+    The `Result` type models an optional result value from an operation
     as well as a list of problems that occurred during an operation that produced the result.
     The problems of a `Result` are represented by the `Problem` class,
     which may be created from an exception or a simple message.

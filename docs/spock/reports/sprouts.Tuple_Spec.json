@@ -4,7 +4,7 @@
   "narrative":"Data Oriented programming is a core concept in Sprouts,\n    which is why we provide the `Tuple` type representing\n    an immutable array of elements with proper value semantics.\n    It can also be transformed and filtered in a functional way.\n\n    When modelling value objects, like for example, by declaring\n    records, then we recommend to use the `Tuple` type\n    over of a Java array or a JDK List, because our tuple\n    has better value semantics, immutability guarantees,\n    and it is way more efficient than a Java List.",
   "subjects":["sprouts.Tuple"],
   "statistics":{
-    "runs":"278",
+    "runs":"303",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -2859,6 +2859,25 @@
     },
   
     {
+      "id":"The `classTyped` method returns the correct class and handles null parameters.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `Tuple.classTyped(Class)` may seem strange at first,\n            but it is really important when you want to use the tuple\n            as a generic parameter type inferred from the class pointer.\n\n            Like for example:\n            ```java\n                Var<Tuple<String>> strings = Var.of(Tuple.classTyped(String.class));\n            ```\n        "]
+      },
+      "blocks":[
+        {"kind":"when","text":"","code":["var associationClass = Tuple.classTyped(String)"]},
+
+        {"kind":"then","text":"","code":["associationClass == Tuple.class"]},
+
+        {"kind":"when","text":"","code":["Tuple.classTyped(null)"]},
+
+        {"kind":"then","text":"","code":["thrown(NullPointerException)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
       "id":"You can tell two tuples with different nullability apart from their String representations.",
       "result":"PASS",
       "duration":"?",
@@ -4322,6 +4341,414 @@
         {"kind":"then","text":"The result is the same as the input.","code":["result == input"]},
 
         {"kind":"where","text":"","code":{"input":["Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)"],"operation":["{ tuple -> tuple.maybeAdd(Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeAddAll(Maybe.ofNull(Integer), Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeAddAllAt(1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAllAt(1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(1, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(0, 3, Maybe.ofNull(Integer)) }"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A tuple will throw `IndexOutOfBounds` if its range is exceeded. [0]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"when","text":"We apply the erroneous operation...","code":["var result = operation(input)"]},
+
+        {"kind":"then","text":"The result is the same as the input.","code":["thrown(IndexOutOfBoundsException)"]},
+
+        {"kind":"where","text":"","code":{"input":["Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)"],"operation":["{ tuple -> tuple.maybeAddAllAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAllAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(-1, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(-1, 3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeAddAllAt(4, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAllAt(3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(3, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(3, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(0, 5, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(0, 8, Maybe.ofNull(Integer)) }","{ tuple -> tuple.addAllAt(-1, 42) }","{ tuple -> tuple.setAt(-1, 42) }","{ tuple -> tuple.setAllAt(-1, 4) }","{ tuple -> tuple.setAt(-1, 2, 42) }","{ tuple -> tuple.setRange(-1, 3, 42) }","{ tuple -> tuple.addAllAt(4, 42) }","{ tuple -> tuple.setAt(3, 42) }","{ tuple -> tuple.setAllAt(3, 42) }","{ tuple -> tuple.setAt(3, 2, 42) }","{ tuple -> tuple.setRange(3, 2, 42) }","{ tuple -> tuple.setAt(0, 5, 42) }","{ tuple -> tuple.setRange(0, 8, 42) }"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A tuple will throw `IndexOutOfBounds` if its range is exceeded. [1]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"when","text":"We apply the erroneous operation...","code":["var result = operation(input)"]},
+
+        {"kind":"then","text":"The result is the same as the input.","code":["thrown(IndexOutOfBoundsException)"]},
+
+        {"kind":"where","text":"","code":{"input":["Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)"],"operation":["{ tuple -> tuple.maybeAddAllAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAllAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(-1, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(-1, 3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeAddAllAt(4, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAllAt(3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(3, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(3, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(0, 5, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(0, 8, Maybe.ofNull(Integer)) }","{ tuple -> tuple.addAllAt(-1, 42) }","{ tuple -> tuple.setAt(-1, 42) }","{ tuple -> tuple.setAllAt(-1, 4) }","{ tuple -> tuple.setAt(-1, 2, 42) }","{ tuple -> tuple.setRange(-1, 3, 42) }","{ tuple -> tuple.addAllAt(4, 42) }","{ tuple -> tuple.setAt(3, 42) }","{ tuple -> tuple.setAllAt(3, 42) }","{ tuple -> tuple.setAt(3, 2, 42) }","{ tuple -> tuple.setRange(3, 2, 42) }","{ tuple -> tuple.setAt(0, 5, 42) }","{ tuple -> tuple.setRange(0, 8, 42) }"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A tuple will throw `IndexOutOfBounds` if its range is exceeded. [2]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"when","text":"We apply the erroneous operation...","code":["var result = operation(input)"]},
+
+        {"kind":"then","text":"The result is the same as the input.","code":["thrown(IndexOutOfBoundsException)"]},
+
+        {"kind":"where","text":"","code":{"input":["Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)"],"operation":["{ tuple -> tuple.maybeAddAllAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAllAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(-1, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(-1, 3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeAddAllAt(4, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAllAt(3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(3, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(3, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(0, 5, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(0, 8, Maybe.ofNull(Integer)) }","{ tuple -> tuple.addAllAt(-1, 42) }","{ tuple -> tuple.setAt(-1, 42) }","{ tuple -> tuple.setAllAt(-1, 4) }","{ tuple -> tuple.setAt(-1, 2, 42) }","{ tuple -> tuple.setRange(-1, 3, 42) }","{ tuple -> tuple.addAllAt(4, 42) }","{ tuple -> tuple.setAt(3, 42) }","{ tuple -> tuple.setAllAt(3, 42) }","{ tuple -> tuple.setAt(3, 2, 42) }","{ tuple -> tuple.setRange(3, 2, 42) }","{ tuple -> tuple.setAt(0, 5, 42) }","{ tuple -> tuple.setRange(0, 8, 42) }"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A tuple will throw `IndexOutOfBounds` if its range is exceeded. [3]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"when","text":"We apply the erroneous operation...","code":["var result = operation(input)"]},
+
+        {"kind":"then","text":"The result is the same as the input.","code":["thrown(IndexOutOfBoundsException)"]},
+
+        {"kind":"where","text":"","code":{"input":["Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)"],"operation":["{ tuple -> tuple.maybeAddAllAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAllAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(-1, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(-1, 3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeAddAllAt(4, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAllAt(3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(3, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(3, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(0, 5, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(0, 8, Maybe.ofNull(Integer)) }","{ tuple -> tuple.addAllAt(-1, 42) }","{ tuple -> tuple.setAt(-1, 42) }","{ tuple -> tuple.setAllAt(-1, 4) }","{ tuple -> tuple.setAt(-1, 2, 42) }","{ tuple -> tuple.setRange(-1, 3, 42) }","{ tuple -> tuple.addAllAt(4, 42) }","{ tuple -> tuple.setAt(3, 42) }","{ tuple -> tuple.setAllAt(3, 42) }","{ tuple -> tuple.setAt(3, 2, 42) }","{ tuple -> tuple.setRange(3, 2, 42) }","{ tuple -> tuple.setAt(0, 5, 42) }","{ tuple -> tuple.setRange(0, 8, 42) }"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A tuple will throw `IndexOutOfBounds` if its range is exceeded. [4]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"when","text":"We apply the erroneous operation...","code":["var result = operation(input)"]},
+
+        {"kind":"then","text":"The result is the same as the input.","code":["thrown(IndexOutOfBoundsException)"]},
+
+        {"kind":"where","text":"","code":{"input":["Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)"],"operation":["{ tuple -> tuple.maybeAddAllAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAllAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(-1, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(-1, 3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeAddAllAt(4, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAllAt(3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(3, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(3, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(0, 5, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(0, 8, Maybe.ofNull(Integer)) }","{ tuple -> tuple.addAllAt(-1, 42) }","{ tuple -> tuple.setAt(-1, 42) }","{ tuple -> tuple.setAllAt(-1, 4) }","{ tuple -> tuple.setAt(-1, 2, 42) }","{ tuple -> tuple.setRange(-1, 3, 42) }","{ tuple -> tuple.addAllAt(4, 42) }","{ tuple -> tuple.setAt(3, 42) }","{ tuple -> tuple.setAllAt(3, 42) }","{ tuple -> tuple.setAt(3, 2, 42) }","{ tuple -> tuple.setRange(3, 2, 42) }","{ tuple -> tuple.setAt(0, 5, 42) }","{ tuple -> tuple.setRange(0, 8, 42) }"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A tuple will throw `IndexOutOfBounds` if its range is exceeded. [5]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"when","text":"We apply the erroneous operation...","code":["var result = operation(input)"]},
+
+        {"kind":"then","text":"The result is the same as the input.","code":["thrown(IndexOutOfBoundsException)"]},
+
+        {"kind":"where","text":"","code":{"input":["Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)"],"operation":["{ tuple -> tuple.maybeAddAllAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAllAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(-1, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(-1, 3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeAddAllAt(4, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAllAt(3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(3, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(3, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(0, 5, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(0, 8, Maybe.ofNull(Integer)) }","{ tuple -> tuple.addAllAt(-1, 42) }","{ tuple -> tuple.setAt(-1, 42) }","{ tuple -> tuple.setAllAt(-1, 4) }","{ tuple -> tuple.setAt(-1, 2, 42) }","{ tuple -> tuple.setRange(-1, 3, 42) }","{ tuple -> tuple.addAllAt(4, 42) }","{ tuple -> tuple.setAt(3, 42) }","{ tuple -> tuple.setAllAt(3, 42) }","{ tuple -> tuple.setAt(3, 2, 42) }","{ tuple -> tuple.setRange(3, 2, 42) }","{ tuple -> tuple.setAt(0, 5, 42) }","{ tuple -> tuple.setRange(0, 8, 42) }"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A tuple will throw `IndexOutOfBounds` if its range is exceeded. [6]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"when","text":"We apply the erroneous operation...","code":["var result = operation(input)"]},
+
+        {"kind":"then","text":"The result is the same as the input.","code":["thrown(IndexOutOfBoundsException)"]},
+
+        {"kind":"where","text":"","code":{"input":["Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)"],"operation":["{ tuple -> tuple.maybeAddAllAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAllAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(-1, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(-1, 3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeAddAllAt(4, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAllAt(3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(3, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(3, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(0, 5, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(0, 8, Maybe.ofNull(Integer)) }","{ tuple -> tuple.addAllAt(-1, 42) }","{ tuple -> tuple.setAt(-1, 42) }","{ tuple -> tuple.setAllAt(-1, 4) }","{ tuple -> tuple.setAt(-1, 2, 42) }","{ tuple -> tuple.setRange(-1, 3, 42) }","{ tuple -> tuple.addAllAt(4, 42) }","{ tuple -> tuple.setAt(3, 42) }","{ tuple -> tuple.setAllAt(3, 42) }","{ tuple -> tuple.setAt(3, 2, 42) }","{ tuple -> tuple.setRange(3, 2, 42) }","{ tuple -> tuple.setAt(0, 5, 42) }","{ tuple -> tuple.setRange(0, 8, 42) }"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A tuple will throw `IndexOutOfBounds` if its range is exceeded. [7]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"when","text":"We apply the erroneous operation...","code":["var result = operation(input)"]},
+
+        {"kind":"then","text":"The result is the same as the input.","code":["thrown(IndexOutOfBoundsException)"]},
+
+        {"kind":"where","text":"","code":{"input":["Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)"],"operation":["{ tuple -> tuple.maybeAddAllAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAllAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(-1, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(-1, 3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeAddAllAt(4, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAllAt(3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(3, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(3, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(0, 5, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(0, 8, Maybe.ofNull(Integer)) }","{ tuple -> tuple.addAllAt(-1, 42) }","{ tuple -> tuple.setAt(-1, 42) }","{ tuple -> tuple.setAllAt(-1, 4) }","{ tuple -> tuple.setAt(-1, 2, 42) }","{ tuple -> tuple.setRange(-1, 3, 42) }","{ tuple -> tuple.addAllAt(4, 42) }","{ tuple -> tuple.setAt(3, 42) }","{ tuple -> tuple.setAllAt(3, 42) }","{ tuple -> tuple.setAt(3, 2, 42) }","{ tuple -> tuple.setRange(3, 2, 42) }","{ tuple -> tuple.setAt(0, 5, 42) }","{ tuple -> tuple.setRange(0, 8, 42) }"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A tuple will throw `IndexOutOfBounds` if its range is exceeded. [8]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"when","text":"We apply the erroneous operation...","code":["var result = operation(input)"]},
+
+        {"kind":"then","text":"The result is the same as the input.","code":["thrown(IndexOutOfBoundsException)"]},
+
+        {"kind":"where","text":"","code":{"input":["Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)"],"operation":["{ tuple -> tuple.maybeAddAllAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAllAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(-1, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(-1, 3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeAddAllAt(4, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAllAt(3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(3, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(3, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(0, 5, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(0, 8, Maybe.ofNull(Integer)) }","{ tuple -> tuple.addAllAt(-1, 42) }","{ tuple -> tuple.setAt(-1, 42) }","{ tuple -> tuple.setAllAt(-1, 4) }","{ tuple -> tuple.setAt(-1, 2, 42) }","{ tuple -> tuple.setRange(-1, 3, 42) }","{ tuple -> tuple.addAllAt(4, 42) }","{ tuple -> tuple.setAt(3, 42) }","{ tuple -> tuple.setAllAt(3, 42) }","{ tuple -> tuple.setAt(3, 2, 42) }","{ tuple -> tuple.setRange(3, 2, 42) }","{ tuple -> tuple.setAt(0, 5, 42) }","{ tuple -> tuple.setRange(0, 8, 42) }"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A tuple will throw `IndexOutOfBounds` if its range is exceeded. [9]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"when","text":"We apply the erroneous operation...","code":["var result = operation(input)"]},
+
+        {"kind":"then","text":"The result is the same as the input.","code":["thrown(IndexOutOfBoundsException)"]},
+
+        {"kind":"where","text":"","code":{"input":["Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)"],"operation":["{ tuple -> tuple.maybeAddAllAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAllAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(-1, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(-1, 3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeAddAllAt(4, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAllAt(3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(3, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(3, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(0, 5, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(0, 8, Maybe.ofNull(Integer)) }","{ tuple -> tuple.addAllAt(-1, 42) }","{ tuple -> tuple.setAt(-1, 42) }","{ tuple -> tuple.setAllAt(-1, 4) }","{ tuple -> tuple.setAt(-1, 2, 42) }","{ tuple -> tuple.setRange(-1, 3, 42) }","{ tuple -> tuple.addAllAt(4, 42) }","{ tuple -> tuple.setAt(3, 42) }","{ tuple -> tuple.setAllAt(3, 42) }","{ tuple -> tuple.setAt(3, 2, 42) }","{ tuple -> tuple.setRange(3, 2, 42) }","{ tuple -> tuple.setAt(0, 5, 42) }","{ tuple -> tuple.setRange(0, 8, 42) }"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A tuple will throw `IndexOutOfBounds` if its range is exceeded. [10]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"when","text":"We apply the erroneous operation...","code":["var result = operation(input)"]},
+
+        {"kind":"then","text":"The result is the same as the input.","code":["thrown(IndexOutOfBoundsException)"]},
+
+        {"kind":"where","text":"","code":{"input":["Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)"],"operation":["{ tuple -> tuple.maybeAddAllAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAllAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(-1, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(-1, 3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeAddAllAt(4, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAllAt(3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(3, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(3, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(0, 5, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(0, 8, Maybe.ofNull(Integer)) }","{ tuple -> tuple.addAllAt(-1, 42) }","{ tuple -> tuple.setAt(-1, 42) }","{ tuple -> tuple.setAllAt(-1, 4) }","{ tuple -> tuple.setAt(-1, 2, 42) }","{ tuple -> tuple.setRange(-1, 3, 42) }","{ tuple -> tuple.addAllAt(4, 42) }","{ tuple -> tuple.setAt(3, 42) }","{ tuple -> tuple.setAllAt(3, 42) }","{ tuple -> tuple.setAt(3, 2, 42) }","{ tuple -> tuple.setRange(3, 2, 42) }","{ tuple -> tuple.setAt(0, 5, 42) }","{ tuple -> tuple.setRange(0, 8, 42) }"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A tuple will throw `IndexOutOfBounds` if its range is exceeded. [11]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"when","text":"We apply the erroneous operation...","code":["var result = operation(input)"]},
+
+        {"kind":"then","text":"The result is the same as the input.","code":["thrown(IndexOutOfBoundsException)"]},
+
+        {"kind":"where","text":"","code":{"input":["Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)"],"operation":["{ tuple -> tuple.maybeAddAllAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAllAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(-1, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(-1, 3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeAddAllAt(4, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAllAt(3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(3, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(3, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(0, 5, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(0, 8, Maybe.ofNull(Integer)) }","{ tuple -> tuple.addAllAt(-1, 42) }","{ tuple -> tuple.setAt(-1, 42) }","{ tuple -> tuple.setAllAt(-1, 4) }","{ tuple -> tuple.setAt(-1, 2, 42) }","{ tuple -> tuple.setRange(-1, 3, 42) }","{ tuple -> tuple.addAllAt(4, 42) }","{ tuple -> tuple.setAt(3, 42) }","{ tuple -> tuple.setAllAt(3, 42) }","{ tuple -> tuple.setAt(3, 2, 42) }","{ tuple -> tuple.setRange(3, 2, 42) }","{ tuple -> tuple.setAt(0, 5, 42) }","{ tuple -> tuple.setRange(0, 8, 42) }"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A tuple will throw `IndexOutOfBounds` if its range is exceeded. [12]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"when","text":"We apply the erroneous operation...","code":["var result = operation(input)"]},
+
+        {"kind":"then","text":"The result is the same as the input.","code":["thrown(IndexOutOfBoundsException)"]},
+
+        {"kind":"where","text":"","code":{"input":["Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)"],"operation":["{ tuple -> tuple.maybeAddAllAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAllAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(-1, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(-1, 3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeAddAllAt(4, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAllAt(3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(3, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(3, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(0, 5, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(0, 8, Maybe.ofNull(Integer)) }","{ tuple -> tuple.addAllAt(-1, 42) }","{ tuple -> tuple.setAt(-1, 42) }","{ tuple -> tuple.setAllAt(-1, 4) }","{ tuple -> tuple.setAt(-1, 2, 42) }","{ tuple -> tuple.setRange(-1, 3, 42) }","{ tuple -> tuple.addAllAt(4, 42) }","{ tuple -> tuple.setAt(3, 42) }","{ tuple -> tuple.setAllAt(3, 42) }","{ tuple -> tuple.setAt(3, 2, 42) }","{ tuple -> tuple.setRange(3, 2, 42) }","{ tuple -> tuple.setAt(0, 5, 42) }","{ tuple -> tuple.setRange(0, 8, 42) }"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A tuple will throw `IndexOutOfBounds` if its range is exceeded. [13]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"when","text":"We apply the erroneous operation...","code":["var result = operation(input)"]},
+
+        {"kind":"then","text":"The result is the same as the input.","code":["thrown(IndexOutOfBoundsException)"]},
+
+        {"kind":"where","text":"","code":{"input":["Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)"],"operation":["{ tuple -> tuple.maybeAddAllAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAllAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(-1, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(-1, 3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeAddAllAt(4, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAllAt(3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(3, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(3, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(0, 5, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(0, 8, Maybe.ofNull(Integer)) }","{ tuple -> tuple.addAllAt(-1, 42) }","{ tuple -> tuple.setAt(-1, 42) }","{ tuple -> tuple.setAllAt(-1, 4) }","{ tuple -> tuple.setAt(-1, 2, 42) }","{ tuple -> tuple.setRange(-1, 3, 42) }","{ tuple -> tuple.addAllAt(4, 42) }","{ tuple -> tuple.setAt(3, 42) }","{ tuple -> tuple.setAllAt(3, 42) }","{ tuple -> tuple.setAt(3, 2, 42) }","{ tuple -> tuple.setRange(3, 2, 42) }","{ tuple -> tuple.setAt(0, 5, 42) }","{ tuple -> tuple.setRange(0, 8, 42) }"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A tuple will throw `IndexOutOfBounds` if its range is exceeded. [14]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"when","text":"We apply the erroneous operation...","code":["var result = operation(input)"]},
+
+        {"kind":"then","text":"The result is the same as the input.","code":["thrown(IndexOutOfBoundsException)"]},
+
+        {"kind":"where","text":"","code":{"input":["Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)"],"operation":["{ tuple -> tuple.maybeAddAllAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAllAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(-1, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(-1, 3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeAddAllAt(4, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAllAt(3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(3, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(3, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(0, 5, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(0, 8, Maybe.ofNull(Integer)) }","{ tuple -> tuple.addAllAt(-1, 42) }","{ tuple -> tuple.setAt(-1, 42) }","{ tuple -> tuple.setAllAt(-1, 4) }","{ tuple -> tuple.setAt(-1, 2, 42) }","{ tuple -> tuple.setRange(-1, 3, 42) }","{ tuple -> tuple.addAllAt(4, 42) }","{ tuple -> tuple.setAt(3, 42) }","{ tuple -> tuple.setAllAt(3, 42) }","{ tuple -> tuple.setAt(3, 2, 42) }","{ tuple -> tuple.setRange(3, 2, 42) }","{ tuple -> tuple.setAt(0, 5, 42) }","{ tuple -> tuple.setRange(0, 8, 42) }"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A tuple will throw `IndexOutOfBounds` if its range is exceeded. [15]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"when","text":"We apply the erroneous operation...","code":["var result = operation(input)"]},
+
+        {"kind":"then","text":"The result is the same as the input.","code":["thrown(IndexOutOfBoundsException)"]},
+
+        {"kind":"where","text":"","code":{"input":["Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)"],"operation":["{ tuple -> tuple.maybeAddAllAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAllAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(-1, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(-1, 3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeAddAllAt(4, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAllAt(3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(3, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(3, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(0, 5, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(0, 8, Maybe.ofNull(Integer)) }","{ tuple -> tuple.addAllAt(-1, 42) }","{ tuple -> tuple.setAt(-1, 42) }","{ tuple -> tuple.setAllAt(-1, 4) }","{ tuple -> tuple.setAt(-1, 2, 42) }","{ tuple -> tuple.setRange(-1, 3, 42) }","{ tuple -> tuple.addAllAt(4, 42) }","{ tuple -> tuple.setAt(3, 42) }","{ tuple -> tuple.setAllAt(3, 42) }","{ tuple -> tuple.setAt(3, 2, 42) }","{ tuple -> tuple.setRange(3, 2, 42) }","{ tuple -> tuple.setAt(0, 5, 42) }","{ tuple -> tuple.setRange(0, 8, 42) }"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A tuple will throw `IndexOutOfBounds` if its range is exceeded. [16]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"when","text":"We apply the erroneous operation...","code":["var result = operation(input)"]},
+
+        {"kind":"then","text":"The result is the same as the input.","code":["thrown(IndexOutOfBoundsException)"]},
+
+        {"kind":"where","text":"","code":{"input":["Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)"],"operation":["{ tuple -> tuple.maybeAddAllAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAllAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(-1, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(-1, 3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeAddAllAt(4, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAllAt(3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(3, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(3, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(0, 5, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(0, 8, Maybe.ofNull(Integer)) }","{ tuple -> tuple.addAllAt(-1, 42) }","{ tuple -> tuple.setAt(-1, 42) }","{ tuple -> tuple.setAllAt(-1, 4) }","{ tuple -> tuple.setAt(-1, 2, 42) }","{ tuple -> tuple.setRange(-1, 3, 42) }","{ tuple -> tuple.addAllAt(4, 42) }","{ tuple -> tuple.setAt(3, 42) }","{ tuple -> tuple.setAllAt(3, 42) }","{ tuple -> tuple.setAt(3, 2, 42) }","{ tuple -> tuple.setRange(3, 2, 42) }","{ tuple -> tuple.setAt(0, 5, 42) }","{ tuple -> tuple.setRange(0, 8, 42) }"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A tuple will throw `IndexOutOfBounds` if its range is exceeded. [17]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"when","text":"We apply the erroneous operation...","code":["var result = operation(input)"]},
+
+        {"kind":"then","text":"The result is the same as the input.","code":["thrown(IndexOutOfBoundsException)"]},
+
+        {"kind":"where","text":"","code":{"input":["Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)"],"operation":["{ tuple -> tuple.maybeAddAllAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAllAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(-1, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(-1, 3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeAddAllAt(4, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAllAt(3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(3, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(3, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(0, 5, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(0, 8, Maybe.ofNull(Integer)) }","{ tuple -> tuple.addAllAt(-1, 42) }","{ tuple -> tuple.setAt(-1, 42) }","{ tuple -> tuple.setAllAt(-1, 4) }","{ tuple -> tuple.setAt(-1, 2, 42) }","{ tuple -> tuple.setRange(-1, 3, 42) }","{ tuple -> tuple.addAllAt(4, 42) }","{ tuple -> tuple.setAt(3, 42) }","{ tuple -> tuple.setAllAt(3, 42) }","{ tuple -> tuple.setAt(3, 2, 42) }","{ tuple -> tuple.setRange(3, 2, 42) }","{ tuple -> tuple.setAt(0, 5, 42) }","{ tuple -> tuple.setRange(0, 8, 42) }"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A tuple will throw `IndexOutOfBounds` if its range is exceeded. [18]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"when","text":"We apply the erroneous operation...","code":["var result = operation(input)"]},
+
+        {"kind":"then","text":"The result is the same as the input.","code":["thrown(IndexOutOfBoundsException)"]},
+
+        {"kind":"where","text":"","code":{"input":["Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)"],"operation":["{ tuple -> tuple.maybeAddAllAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAllAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(-1, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(-1, 3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeAddAllAt(4, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAllAt(3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(3, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(3, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(0, 5, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(0, 8, Maybe.ofNull(Integer)) }","{ tuple -> tuple.addAllAt(-1, 42) }","{ tuple -> tuple.setAt(-1, 42) }","{ tuple -> tuple.setAllAt(-1, 4) }","{ tuple -> tuple.setAt(-1, 2, 42) }","{ tuple -> tuple.setRange(-1, 3, 42) }","{ tuple -> tuple.addAllAt(4, 42) }","{ tuple -> tuple.setAt(3, 42) }","{ tuple -> tuple.setAllAt(3, 42) }","{ tuple -> tuple.setAt(3, 2, 42) }","{ tuple -> tuple.setRange(3, 2, 42) }","{ tuple -> tuple.setAt(0, 5, 42) }","{ tuple -> tuple.setRange(0, 8, 42) }"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A tuple will throw `IndexOutOfBounds` if its range is exceeded. [19]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"when","text":"We apply the erroneous operation...","code":["var result = operation(input)"]},
+
+        {"kind":"then","text":"The result is the same as the input.","code":["thrown(IndexOutOfBoundsException)"]},
+
+        {"kind":"where","text":"","code":{"input":["Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)"],"operation":["{ tuple -> tuple.maybeAddAllAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAllAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(-1, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(-1, 3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeAddAllAt(4, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAllAt(3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(3, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(3, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(0, 5, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(0, 8, Maybe.ofNull(Integer)) }","{ tuple -> tuple.addAllAt(-1, 42) }","{ tuple -> tuple.setAt(-1, 42) }","{ tuple -> tuple.setAllAt(-1, 4) }","{ tuple -> tuple.setAt(-1, 2, 42) }","{ tuple -> tuple.setRange(-1, 3, 42) }","{ tuple -> tuple.addAllAt(4, 42) }","{ tuple -> tuple.setAt(3, 42) }","{ tuple -> tuple.setAllAt(3, 42) }","{ tuple -> tuple.setAt(3, 2, 42) }","{ tuple -> tuple.setRange(3, 2, 42) }","{ tuple -> tuple.setAt(0, 5, 42) }","{ tuple -> tuple.setRange(0, 8, 42) }"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A tuple will throw `IndexOutOfBounds` if its range is exceeded. [20]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"when","text":"We apply the erroneous operation...","code":["var result = operation(input)"]},
+
+        {"kind":"then","text":"The result is the same as the input.","code":["thrown(IndexOutOfBoundsException)"]},
+
+        {"kind":"where","text":"","code":{"input":["Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)"],"operation":["{ tuple -> tuple.maybeAddAllAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAllAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(-1, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(-1, 3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeAddAllAt(4, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAllAt(3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(3, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(3, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(0, 5, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(0, 8, Maybe.ofNull(Integer)) }","{ tuple -> tuple.addAllAt(-1, 42) }","{ tuple -> tuple.setAt(-1, 42) }","{ tuple -> tuple.setAllAt(-1, 4) }","{ tuple -> tuple.setAt(-1, 2, 42) }","{ tuple -> tuple.setRange(-1, 3, 42) }","{ tuple -> tuple.addAllAt(4, 42) }","{ tuple -> tuple.setAt(3, 42) }","{ tuple -> tuple.setAllAt(3, 42) }","{ tuple -> tuple.setAt(3, 2, 42) }","{ tuple -> tuple.setRange(3, 2, 42) }","{ tuple -> tuple.setAt(0, 5, 42) }","{ tuple -> tuple.setRange(0, 8, 42) }"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A tuple will throw `IndexOutOfBounds` if its range is exceeded. [21]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"when","text":"We apply the erroneous operation...","code":["var result = operation(input)"]},
+
+        {"kind":"then","text":"The result is the same as the input.","code":["thrown(IndexOutOfBoundsException)"]},
+
+        {"kind":"where","text":"","code":{"input":["Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)"],"operation":["{ tuple -> tuple.maybeAddAllAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAllAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(-1, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(-1, 3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeAddAllAt(4, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAllAt(3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(3, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(3, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(0, 5, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(0, 8, Maybe.ofNull(Integer)) }","{ tuple -> tuple.addAllAt(-1, 42) }","{ tuple -> tuple.setAt(-1, 42) }","{ tuple -> tuple.setAllAt(-1, 4) }","{ tuple -> tuple.setAt(-1, 2, 42) }","{ tuple -> tuple.setRange(-1, 3, 42) }","{ tuple -> tuple.addAllAt(4, 42) }","{ tuple -> tuple.setAt(3, 42) }","{ tuple -> tuple.setAllAt(3, 42) }","{ tuple -> tuple.setAt(3, 2, 42) }","{ tuple -> tuple.setRange(3, 2, 42) }","{ tuple -> tuple.setAt(0, 5, 42) }","{ tuple -> tuple.setRange(0, 8, 42) }"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A tuple will throw `IndexOutOfBounds` if its range is exceeded. [22]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"when","text":"We apply the erroneous operation...","code":["var result = operation(input)"]},
+
+        {"kind":"then","text":"The result is the same as the input.","code":["thrown(IndexOutOfBoundsException)"]},
+
+        {"kind":"where","text":"","code":{"input":["Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)"],"operation":["{ tuple -> tuple.maybeAddAllAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAllAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(-1, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(-1, 3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeAddAllAt(4, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAllAt(3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(3, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(3, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(0, 5, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(0, 8, Maybe.ofNull(Integer)) }","{ tuple -> tuple.addAllAt(-1, 42) }","{ tuple -> tuple.setAt(-1, 42) }","{ tuple -> tuple.setAllAt(-1, 4) }","{ tuple -> tuple.setAt(-1, 2, 42) }","{ tuple -> tuple.setRange(-1, 3, 42) }","{ tuple -> tuple.addAllAt(4, 42) }","{ tuple -> tuple.setAt(3, 42) }","{ tuple -> tuple.setAllAt(3, 42) }","{ tuple -> tuple.setAt(3, 2, 42) }","{ tuple -> tuple.setRange(3, 2, 42) }","{ tuple -> tuple.setAt(0, 5, 42) }","{ tuple -> tuple.setRange(0, 8, 42) }"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A tuple will throw `IndexOutOfBounds` if its range is exceeded. [23]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"when","text":"We apply the erroneous operation...","code":["var result = operation(input)"]},
+
+        {"kind":"then","text":"The result is the same as the input.","code":["thrown(IndexOutOfBoundsException)"]},
+
+        {"kind":"where","text":"","code":{"input":["Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)"],"operation":["{ tuple -> tuple.maybeAddAllAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAllAt(-1, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(-1, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(-1, 3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeAddAllAt(4, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAllAt(3, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(3, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(3, 2, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetAt(0, 5, Maybe.ofNull(Integer)) }","{ tuple -> tuple.maybeSetRange(0, 8, Maybe.ofNull(Integer)) }","{ tuple -> tuple.addAllAt(-1, 42) }","{ tuple -> tuple.setAt(-1, 42) }","{ tuple -> tuple.setAllAt(-1, 4) }","{ tuple -> tuple.setAt(-1, 2, 42) }","{ tuple -> tuple.setRange(-1, 3, 42) }","{ tuple -> tuple.addAllAt(4, 42) }","{ tuple -> tuple.setAt(3, 42) }","{ tuple -> tuple.setAllAt(3, 42) }","{ tuple -> tuple.setAt(3, 2, 42) }","{ tuple -> tuple.setRange(3, 2, 42) }","{ tuple -> tuple.setAt(0, 5, 42) }","{ tuple -> tuple.setRange(0, 8, 42) }"]}}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
