@@ -8,49 +8,16 @@ import java.util.stream.Stream;
 
 final class LinkedValueSet<E> implements ValueSet<E> {
 
-    private static final class LinkedEntry<K> {
-        private final @Nullable K previousElement;
-        private final @Nullable K nextElement;
-
-        LinkedEntry(@Nullable K previousElement, @Nullable K nextElement) {
-            this.previousElement = previousElement;
-            this.nextElement = nextElement;
-        }
-        @Nullable
-        K previousElement() {
-            return this.previousElement;
-        }
-        @Nullable
-        K nextElement() {
-            return this.nextElement;
-        }
+    private record LinkedEntry<K>(
+        @Nullable K previousElement,
+        @Nullable K nextElement
+    ) {
         LinkedEntry<K> withPreviousElement(@Nullable K previousElement) {
-            return new LinkedEntry<>(previousElement, this.nextElement);
-        }
+                return new LinkedEntry<>(previousElement, this.nextElement);
+            }
         LinkedEntry<K> withNextElement(@Nullable K nextKey) {
-            return new LinkedEntry<>(this.previousElement, nextKey);
-        }
-
-        @Override
-        public String toString() {
-            return "LinkedEntry[previousElement=" + previousElement + ", nextElement=" + nextElement + "]";
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (!(o instanceof LinkedEntry)) return false;
-            LinkedEntry<?> entry = (LinkedEntry<?>) o;
-            return Objects.equals(previousElement, entry.previousElement) &&
-                   Objects.equals(nextElement, entry.nextElement);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = previousElement != null ? previousElement.hashCode() : 0;
-            result = 31 * result + (nextElement != null ? nextElement.hashCode() : 0);
-            return result;
-        }
+                return new LinkedEntry<>(this.previousElement, nextKey);
+            }
     }
 
     private final AssociationImpl<E, LinkedEntry<E>> _entries;
