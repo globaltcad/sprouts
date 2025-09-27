@@ -2,6 +2,7 @@ package sprouts.impl;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import sprouts.Action;
 import sprouts.Channel;
 import sprouts.Subscriber;
@@ -13,17 +14,14 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-final class ChangeListeners<D> {
+record ChangeListeners<D>(
+    Tuple<Action<D>> _actions
+) {
 
-    private static final Logger log = org.slf4j.LoggerFactory.getLogger(ChangeListeners.class);
+    private static final Logger log = LoggerFactory.getLogger(ChangeListeners.class);
 
-    private final Tuple<Action<D>> _actions;
-
-
-    ChangeListeners() {this((Tuple)Tuple.of(Action.class));}
-
-    ChangeListeners(Tuple<Action<D>> newActions) {
-        _actions = newActions;
+    ChangeListeners() {
+        this((Tuple) Tuple.of(Action.class));
     }
 
     @SuppressWarnings("NullAway")
@@ -112,20 +110,11 @@ final class ChangeListeners<D> {
         return sb.toString();
     }
 
-    private static final class AutomaticUnSubscriber implements Runnable {
-        private final WeakReference<OwnerCallableForCleanup<ChangeListeners<?>>> weakStateOwner;
-        private final @Nullable Channel channel;
-        private final WeakAction<?, ?> weakAction;
-
-        private AutomaticUnSubscriber(
-            WeakReference<OwnerCallableForCleanup<ChangeListeners<?>>> weakStateOwner,
-            @Nullable Channel channel,
-            WeakAction<?, ?> weakAction
-        ) {
-            this.weakStateOwner = weakStateOwner;
-            this.channel        = channel;
-            this.weakAction     = weakAction;
-        }
+    private record AutomaticUnSubscriber(
+        WeakReference<OwnerCallableForCleanup<ChangeListeners<?>>> weakStateOwner,
+        @Nullable Channel channel,
+        WeakAction<?, ?> weakAction
+    ) implements Runnable {
 
         @Override
         public void run() {
