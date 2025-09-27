@@ -76,42 +76,48 @@ record ValueSetImpl<E>(
     private static final int BASE_ENTRIES_PER_NODE = 0;
 
 
-    private static class Node<E> {
+    private record Node<E>(
+            int _depth,
+            int _size,
+            Object _elementsArray,
+            int[] _elementsHashes,
+            Node<E>[] _branches
+    ) {
 
-        private final int _depth;
-        private final int _size;
-        private final Object _elementsArray;
-        private final int[] _elementsHashes;
-        private final Node<E>[] _branches;
-
-        Node(
-                final int depth,
-                final Class<E> type,
-                final Object newElementsArray,
-                final int[] keyHashes,
-                final Node<E>[] branches,
-                final boolean rebuild
-        ) {
-            final ArrayItemAccess<?, Object> itemGetter = ArrayItemAccess.of(type, false);
-            final int size = _length(newElementsArray);
-            if (rebuild && size > 1) {
-                _elementsArray = _fillNodeArrays(size, type, newElementsArray);
-            } else {
-                _elementsArray = newElementsArray;
-            }
-            _depth = depth;
-            _branches = branches;
-            _size = size + _sumBranchSizes(_branches);
-            if (keyHashes.length != size || rebuild) {
-                _elementsHashes = new int[size];
-                for (int i = 0; i < size; i++) {
-                    _elementsHashes[i] = Objects.requireNonNull(_getAt(i, _elementsArray)).hashCode();
+        static <E> Node<E> of(
+                    final int depth,
+                    final Class<E> type,
+                    final Object newElementsArray,
+                    final int[] keyHashes,
+                    final Node<E>[] branches,
+                    final boolean rebuild
+            ) {
+                final ArrayItemAccess<?, Object> itemGetter = ArrayItemAccess.of(type, false);
+                final int size = _length(newElementsArray);
+                Object elementsArray;
+                if (rebuild && size > 1) {
+                    elementsArray = _fillNodeArrays(size, type, newElementsArray);
+                } else {
+                    elementsArray = newElementsArray;
                 }
-            } else {
-                _elementsHashes = keyHashes;
+                int[] elementsHashes;
+                if (keyHashes.length != size || rebuild) {
+                    elementsHashes = new int[size];
+                    for (int i = 0; i < size; i++) {
+                        elementsHashes[i] = Objects.requireNonNull(_getAt(i, elementsArray)).hashCode();
+                    }
+                } else {
+                    elementsHashes = keyHashes;
+                }
+                return new Node<>(
+                        depth,
+                        size + _sumBranchSizes(branches),
+                        elementsArray,
+                        elementsHashes,
+                        branches
+                );
             }
         }
-    }
 
     ValueSetImpl(
             final Class<E> type
@@ -135,7 +141,7 @@ record ValueSetImpl<E>(
         this(
                 Objects.requireNonNull(type),
                 ArrayItemAccess.of(type, false),
-                new Node<>(depth, type, newElementsArray, keyHashes, branches, rebuild)
+                Node.of(depth, type, newElementsArray, keyHashes, branches, rebuild)
         );
     }
 
@@ -198,7 +204,7 @@ record ValueSetImpl<E>(
     ) {
         Node<E>[] newBranches = node._branches.clone();
         newBranches[index] = branch;
-        return new Node<>(node._depth, type, node._elementsArray, node._elementsHashes, newBranches, false);
+        return Node.of(node._depth, type, node._elementsArray, node._elementsHashes, newBranches, false);
     }
 
     private static <E> int _findValidIndexFor(
@@ -369,7 +375,7 @@ record ValueSetImpl<E>(
         int index = _findValidIndexFor(node, itemGetter, key, keyHash);
         if (index < 0 || index >= _length(elementsArray)) {
             if (branches.length == 0 && _length(elementsArray) < _maxEntriesForThisNode(node)) {
-                return new Node<>(
+                return Node.of(
                         depth,
                         type,
                         _withAddAt(_length(elementsArray), key, elementsArray, type, ALLOWS_NULL),
@@ -384,7 +390,7 @@ record ValueSetImpl<E>(
                     if (branch == null) {
                         Object newElementsArray = _createArray(type, ALLOWS_NULL, 1);
                         _setAt(0, key, newElementsArray);
-                        return _withBranchAt(node, type, branchIndex, new Node<>(depth + 1, type, newElementsArray, elementsHashes, EMPTY_BRANCHES, true));
+                        return _withBranchAt(node, type, branchIndex, Node.of(depth + 1, type, newElementsArray, elementsHashes, EMPTY_BRANCHES, true));
                     } else {
                         Node<E> newBranch = _with(branch, type, itemGetter, key, keyHash);
                         if (Util.refEquals(newBranch, branch)) {
@@ -399,10 +405,10 @@ record ValueSetImpl<E>(
                     Node<E>[] newBranches = new Node[newBranchSize];
                     Object newElementsArray = _createArray(type, ALLOWS_NULL, 1);
                     _setAt(0, key, newElementsArray);
-                    newBranches[_computeBranchIndex(node, keyHash, newBranchSize)] = new Node<>(
+                    newBranches[_computeBranchIndex(node, keyHash, newBranchSize)] = Node.of(
                             depth + 1, type, newElementsArray, elementsHashes, EMPTY_BRANCHES, true
                     );
-                    return new Node<>(depth, type, elementsArray, elementsHashes, newBranches, false);
+                    return Node.of(depth, type, elementsArray, elementsHashes, newBranches, false);
                 }
             }
         }
@@ -453,7 +459,7 @@ record ValueSetImpl<E>(
                             }
                         }
                         if (numberOfNonNullBranches == 0) {
-                            return new Node<>(depth, type, elementsArray, elementsHashes, EMPTY_BRANCHES, false);
+                            return Node.of(depth, type, elementsArray, elementsHashes, EMPTY_BRANCHES, false);
                         }
                         newBranch = null;
                     }
@@ -462,7 +468,7 @@ record ValueSetImpl<E>(
             }
         } else {
             Object newElementsArray = _withRemoveRange(index, index + 1, elementsArray, type, ALLOWS_NULL);
-            return new Node<>(depth, type, newElementsArray, elementsHashes, branches, true);
+            return Node.of(depth, type, newElementsArray, elementsHashes, branches, true);
         }
     }
 
