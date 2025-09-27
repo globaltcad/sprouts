@@ -11,55 +11,21 @@ import java.util.stream.StreamSupport;
 
 final class LinkedAssociation<K,V> implements Association<K, V>
 {
-    private static final class LinkedEntry<K, V> {
-        private final V value;
-        private final @Nullable K previousKey;
-        private final @Nullable K nextKey;
-
-        LinkedEntry(V value, @Nullable K previousKey, @Nullable K nextKey) {
-            this.value = value;
-            this.previousKey = previousKey;
-            this.nextKey = nextKey;
-        }
-        V value() {
-            return this.value;
-        }
-        @Nullable
-        K previousKey() {
-            return this.previousKey;
-        }
-        @Nullable
-        K nextKey() {
-            return this.nextKey;
-        }
-        LinkedEntry<K,V> withValue(V value) {
+    private record LinkedEntry<K, V>(
+        V value,
+        @Nullable K previousKey,
+        @Nullable K nextKey
+    ) {
+        LinkedEntry<K, V> withValue(V value) {
             return new LinkedEntry<>(value, this.previousKey, this.nextKey);
         }
-        LinkedEntry<K,V> withPreviousKey(@Nullable K previousKey) {
+
+        LinkedEntry<K, V> withPreviousKey(@Nullable K previousKey) {
             return new LinkedEntry<>(this.value, previousKey, this.nextKey);
         }
-        LinkedEntry<K,V> withNextKey(@Nullable K nextKey) {
-            return new LinkedEntry<>(this.value, this.previousKey, nextKey);
-        }
 
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) return true;
-            if (!(obj instanceof LinkedEntry)) return false;
-            LinkedEntry<?, ?> entry = (LinkedEntry<?, ?>) obj;
-            return Objects.equals(value, entry.value) &&
-                   Objects.equals(previousKey, entry.previousKey) &&
-                   Objects.equals(nextKey, entry.nextKey);
-        }
-        @Override
-        public int hashCode() {
-            return Objects.hash(value, previousKey, nextKey);
-        }
-        @Override
-        public String toString() {
-            return "LinkedEntry[value=" + value +
-                   ", previousKey=" + previousKey +
-                   ", nextKey=" + nextKey + "]";
+        LinkedEntry<K, V> withNextKey(@Nullable K nextKey) {
+            return new LinkedEntry<>(this.value, this.previousKey, nextKey);
         }
     }
 
