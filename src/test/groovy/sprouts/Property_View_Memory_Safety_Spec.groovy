@@ -326,6 +326,32 @@ class Property_View_Memory_Safety_Spec extends Specification
             c.get() == "aB"
     }
 
+    def 'You cannot cause a memory leak even if a property view references itself or its source in a listener.'() {
+        reportInfo """
+            A property view is supposed to be garbage collected alongside
+            all of its listeners if it is no longer strongly referenced...
+            
+            But what if it is referenced by one of its listeners?
+            Well, not even then it makes a difference. The viewable
+            will safely be collected if set to null anywhere else!
+        """
+        given : 'A property based on an enum with a string view derived from it.'
+            var dayOfWeekProp = Var.of(DayOfWeek.FRIDAY)
+            Viewable<String> asStr = dayOfWeekProp.viewAsString()
+            var weakString = new WeakReference(asStr)
+        and : 'We now register a change listener with a back reference to the event system.'
+            asStr.onChange(From.ALL, it -> {
+                println asStr.get() + dayOfWeekProp.get()
+            })
+
+        when : 'We get rid of the only strong reference to the second property.'
+            asStr = null
+        and : 'We wait for the garbage collector to do its job.'
+            waitForGarbageCollection()
+        then : 'We can confirm, the second property `b` was garbage collected:'
+            weakString.get() == null
+    }
+
     def 'Even if property views have change listeners, they will be garbage collected if you do not reference them.'(
         Supplier<Val<?>> propertySupplier
     ) {
