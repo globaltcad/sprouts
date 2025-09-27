@@ -27,31 +27,25 @@ record SortedAssociationImpl<K, V>(
     }
 
 
-    static class Node {
-        private final int _size;
-        private final Object _keysArray;
-        private final Object _valuesArray;
-        private final @Nullable Node _left;
-        private final @Nullable Node _right;
-
+    record Node(
+        int _size,
+        Object _keysArray,
+        Object _valuesArray,
+        @Nullable Node _left,
+        @Nullable Node _right
+    ) {
         Node(Object keysArray, Object valuesArray) {
             this(_length(keysArray), keysArray, valuesArray, null, null);
         }
 
         Node(Object keysArray, Object valuesArray, @Nullable Node left, @Nullable Node right) {
-            _size = _length(keysArray) + (left == null ? 0 : left.size()) + (right == null ? 0 : right.size());
-            _keysArray = keysArray;
-            _valuesArray = valuesArray;
-            _left = left;
-            _right = right;
-        }
-
-        Node(int size, Object keysArray, Object valuesArray, @Nullable Node left, @Nullable Node right) {
-            _size = size;
-            _keysArray = keysArray;
-            _valuesArray = valuesArray;
-            _left = left;
-            _right = right;
+            this(
+                _length(keysArray) + (left == null ? 0 : left.size()) + (right == null ? 0 : right.size()),
+                keysArray,
+                valuesArray,
+                left,
+                right
+            );
         }
 
         public Object keysArray() {
