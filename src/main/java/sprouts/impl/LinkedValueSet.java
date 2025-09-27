@@ -6,23 +6,24 @@ import sprouts.ValueSet;
 import java.util.*;
 import java.util.stream.Stream;
 
-final class LinkedValueSet<E> implements ValueSet<E> {
+record LinkedValueSet<E>(
+    AssociationImpl<E, LinkedEntry<E>> _entries,
+    @Nullable E _firstInsertedKey,
+    @Nullable E _lastInsertedKey
+) implements ValueSet<E> {
 
     private record LinkedEntry<K>(
-        @Nullable K previousElement,
-        @Nullable K nextElement
+            @Nullable K previousElement,
+            @Nullable K nextElement
     ) {
         LinkedEntry<K> withPreviousElement(@Nullable K previousElement) {
-                return new LinkedEntry<>(previousElement, this.nextElement);
-            }
-        LinkedEntry<K> withNextElement(@Nullable K nextKey) {
-                return new LinkedEntry<>(this.previousElement, nextKey);
-            }
-    }
+            return new LinkedEntry<>(previousElement, this.nextElement);
+        }
 
-    private final AssociationImpl<E, LinkedEntry<E>> _entries;
-    private final @Nullable E _firstInsertedKey;
-    private final @Nullable E _lastInsertedKey;
+        LinkedEntry<K> withNextElement(@Nullable K nextKey) {
+            return new LinkedEntry<>(this.previousElement, nextKey);
+        }
+    }
 
     LinkedValueSet(
             final Class<E> elementType
@@ -30,14 +31,16 @@ final class LinkedValueSet<E> implements ValueSet<E> {
         this(new AssociationImpl(elementType, LinkedEntry.class), null, null);
     }
 
-    private LinkedValueSet(
+    private static <E> LinkedValueSet<E> of(
             final AssociationImpl<E, LinkedEntry<E>> entries,
             final @Nullable E firstInsertedKey,
             final @Nullable E lastInsertedKey
     ) {
-        _entries = entries;
-        _firstInsertedKey = firstInsertedKey != null ? firstInsertedKey : lastInsertedKey;
-        _lastInsertedKey = lastInsertedKey;
+        return new LinkedValueSet<E>(
+            entries,
+            firstInsertedKey != null ? firstInsertedKey : lastInsertedKey,
+            lastInsertedKey
+        );
     }
 
 
@@ -87,7 +90,7 @@ final class LinkedValueSet<E> implements ValueSet<E> {
                 newEntries = (AssociationImpl<E, LinkedEntry<E>>) newEntries.put(_lastInsertedKey, previousEntry);
             }
         }
-        return new LinkedValueSet<>(newEntries, _firstInsertedKey, element);
+        return LinkedValueSet.of(newEntries, _firstInsertedKey, element);
     }
 
     @Override
@@ -143,7 +146,7 @@ final class LinkedValueSet<E> implements ValueSet<E> {
                     newEntries = (AssociationImpl<E, LinkedEntry<E>>) newEntries.put(nextKey, nextEntry);
                 }
             }
-            return new LinkedValueSet<>(newEntries, firstInsertedKey, lastInsertedKey);
+            return LinkedValueSet.of(newEntries, firstInsertedKey, lastInsertedKey);
         }
         return this; // If the entry was not found, return unchanged set
     }
@@ -183,7 +186,7 @@ final class LinkedValueSet<E> implements ValueSet<E> {
         if (_entries.isEmpty()) {
             return this; // Already empty, return unchanged set
         }
-        return new LinkedValueSet<>((AssociationImpl) new AssociationImpl<>(type(), LinkedEntry.class), null, null);
+        return LinkedValueSet.of((AssociationImpl) new AssociationImpl<>(type(), LinkedEntry.class), null, null);
     }
 
     @Override
@@ -211,7 +214,7 @@ final class LinkedValueSet<E> implements ValueSet<E> {
             @Override
             public E next() {
                 if (current == null) {
-                    throw new java.util.NoSuchElementException("No more elements in the set");
+                    throw new NoSuchElementException("No more elements in the set");
                 }
                 E nextElement = current;
                 LinkedEntry<E> entry = _entries.get(current).orElse(null);
