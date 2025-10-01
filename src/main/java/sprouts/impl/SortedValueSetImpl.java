@@ -12,61 +12,58 @@ import static sprouts.impl.ArrayUtil.*;
 final class SortedValueSetImpl<E> implements ValueSet<E> {
 
     private static final boolean ALLOWS_NULL = false;
-    private static final Node NULL_NODE = new Node(
-            _createArray(Object.class, ALLOWS_NULL, 0)
-    );
+    private static final Node NULL_NODE = new Node(_createArray(Object.class, ALLOWS_NULL, 0));
 
     private static int BASE_ENTRIES_PER_NODE(int depth) {
         return Math.max(1, depth * depth / 2);
     }
 
-    static class Node {
-        private final int _size;
-        private final Object _elementsArray;
-        private final @Nullable Node _left;
-        private final @Nullable Node _right;
-
+    record Node(
+        int _size,
+        Object _elementsArray,
+        @Nullable Node _left,
+        @Nullable Node _right
+    ) {
         Node(Object elementsArray) {
             this(elementsArray, null, null);
         }
 
         Node(Object elementsArray, @Nullable Node left, @Nullable Node right) {
-            _size = _length(elementsArray) +
-                    (left == null ? 0 : left.size()) +
-                    (right == null ? 0 : right.size());
-            _elementsArray = elementsArray;
-            _left = left;
-            _right = right;
-        }
-
-        Node(int size, Object elementsArray, @Nullable Node left, @Nullable Node right) {
-            _size = size;
-            _elementsArray = elementsArray;
-            _left = left;
-            _right = right;
+            this(_length(elementsArray) +
+                            (left == null ? 0 : left.size()) +
+                            (right == null ? 0 : right.size()),
+                    elementsArray,
+                    left, right
+            );
         }
 
         public Object elementsArray() {
-            return _elementsArray;
-        }
+                return _elementsArray;
+            }
+
         public @Nullable Node left() {
-            return _left;
-        }
+                return _left;
+            }
+
         public @Nullable Node right() {
-            return _right;
-        }
+                return _right;
+            }
+
         public int size() {
-            return _size;
-        }
+                return _size;
+            }
+
         public Node withNewArrays(Object newElementsArray) {
-            return new Node(newElementsArray, _left, _right);
-        }
+                return new Node(newElementsArray, _left, _right);
+            }
+
         public Node withNewLeft(@Nullable Node left) {
-            return new Node(_elementsArray, left, _right);
-        }
+                return new Node(_elementsArray, left, _right);
+            }
+
         public Node withNewRight(@Nullable Node right) {
-            return new Node(_elementsArray, _left, right);
-        }
+                return new Node(_elementsArray, _left, right);
+            }
 
         @Override
         public int hashCode() {
