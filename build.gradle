@@ -86,7 +86,7 @@ test {
 // CONFIGURING TEST REPORTING :
 
 jacoco {
-    toolVersion = "0.8.5"
+    toolVersion = "0.8.13"
     reportsDirectory.set(file("docs/coverage"))
 }
 
