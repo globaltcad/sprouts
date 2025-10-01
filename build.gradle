@@ -22,14 +22,14 @@ String GROUP_ID = "io.github.globaltcad"
 String PROJECT  = "sprouts"
 String VERSION  = "2.0.0"
 
-group GROUP_ID
-version VERSION
+group = GROUP_ID
+version = VERSION
 
 [compileJava, compileTestJava, compileGroovy, compileTestGroovy]*.options*.encoding = 'UTF-8'
 
 repositories {
     mavenCentral()
-    maven { url 'https://jitpack.io' }
+    maven { url = 'https://jitpack.io' }
 }
 
 dependencies {
@@ -201,7 +201,7 @@ sourceSets.main.output.dir genOutputDir, builtBy: generateVersionTxt
 
 
 signing {
-    required { !VERSION.startsWith("0.") && gradle.taskGraph.hasTask("publish") }
+    required = { !VERSION.startsWith("0.") && gradle.taskGraph.hasTask("publish") }
     sign configurations.archives
     sign publishing.publications
 }
