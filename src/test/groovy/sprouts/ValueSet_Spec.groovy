@@ -5,6 +5,8 @@ import spock.lang.Specification
 import spock.lang.Subject
 import spock.lang.Title
 
+import java.time.Month
+import java.util.function.Predicate
 import java.util.stream.Collectors
 import java.util.stream.Stream
 
@@ -324,6 +326,37 @@ class ValueSet_Spec extends Specification {
             initial.removeAll(Tuple.of("d", "e")).toSet() == ["a", "b", "c"] as Set
             initial.removeAll(["b", "c"] as String[]).toSet() == ["a", "d"] as Set
             initial.removeAll(Stream.of("a", "d")).toSet() == ["b", "c"] as Set
+    }
+
+    def 'You can remove items from a value set selectively, using `removeIf(Predicate)`.'(
+        Class<?> type, List<Object> elements, Predicate<Object> predicate
+    ) {
+        reportInfo """
+            You can remove elements from a value set which satisfy
+            a given `Predicate`. Or in other words,
+            if the `Predicate.test(Object)` method yields `true` for a particular
+            element, then it will be removed, otherwise, it will remain in the
+            returned set.
+        """
+        given : 'We create a value set and a regular JDK set containing some test elements.'
+            var valueSet = ValueSet.of(type, elements)
+            var set = elements.toSet()
+
+        when : 'We apply a predicate to both types of sets...'
+            var updatedValueSet = valueSet.removeIf(predicate)
+            set.removeIf(predicate)
+        then : 'They contain he same elements!'
+            updatedValueSet.toSet() == set
+
+        where :
+            type      |  elements                                               |  predicate
+            Float     | [4.3f, 7f, 0.1f, 26.34f, 23f, 86.3f, 218f, 2f, 1.2f, 9f]|  { (it - it % 1) == it  }
+            Integer   | (-50..50).toList()                                      |  { it % 3 == 1 }
+            String    | (-50..50).collect({Integer it -> it + "!"}).toList()    |  { it.hashCode() % 5 == 1 }
+            Short     | (0..1000).collect({Integer it -> it as Short}).toList() |  { it * 1997 % 8 == 2 }
+            Character | ['a' as char, 'x' as char, '4' as char, '#' as char]    |  { it == 'x' as char }
+            Boolean   | (0..100).collect({Integer it -> ( it * 1997 ) % 2 == 0})|  { it }
+            Month     | (0..100).collect({Integer it -> Month.values()[it%12]}) |  { it == Month.DECEMBER }
     }
 
     def 'retainAll works with diverse collection sources'() {
