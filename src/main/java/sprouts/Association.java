@@ -1021,8 +1021,7 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
         // reduce the stream to a single association
         return entries.reduce(
                 result,
-                (acc,
-                 entry) -> acc.replace(entry.first(), entry.second()),
+                (acc, entry) -> acc.replace(entry.first(), entry.second()),
                 (a, b) -> a);
     }
 
@@ -1037,8 +1036,8 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
     Association<K, V> remove( K key );
 
     /**
-     *  Returns a new association that is the same as this one
-     *  but without any of the keys in the supplied set. If the
+     *  Creates and returns a new association in which all entry pairs are
+     *  removed whose keys are present in the supplied {@link ValueSet}. If the
      *  supplied set is empty, then this association is returned
      *  unchanged.
      *
@@ -1056,8 +1055,8 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
     }
 
     /**
-     *  Returns a new association that is the same as this one
-     *  but without any of the keys in the supplied set. If the
+     *  Creates and returns a new association in which all entry pairs are
+     *  removed whose keys are present in the supplied {@link Set}. If the
      *  supplied set is empty, then this association is returned
      *  unchanged.
      *
