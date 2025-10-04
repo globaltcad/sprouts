@@ -407,6 +407,21 @@ class Linked_Association_Spec extends Specification
             result.get("a").orElseThrow(MissingItemException::new) == 1
     }
 
+    def 'You remove the entries of one linked association from another, using the `removeAll(Stream)` method.'() {
+        given : 'Two empty associations between strings and integers.'
+            var association1 = Association.betweenLinked(String, Integer)
+            var association2 = Association.betweenLinked(String, Integer)
+        when : 'We add some values to the first association.'
+            association1 = association1.put("x", 1).put("y", 2).put("z", 3)
+        and : 'We add some values to the second association.'
+            association2 = association2.put("y", 2).put("z", 3).put("i", 4)
+        and : 'We remove the entries of the second association from the first using a stream of keys.'
+            var result = association1.removeAll(association2.keySet().stream())
+        then : 'The result contains only the entries that were not in the second association.'
+            result.size() == 1
+            result.get("x").orElseThrow(MissingItemException::new) == 1
+    }
+
     def 'The `clear` method creates an empty association with the same key and value types.'() {
         given :
             var association = Association.betweenLinked(String, Integer)

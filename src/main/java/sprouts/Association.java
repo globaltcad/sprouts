@@ -1074,6 +1074,22 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
     }
 
     /**
+     *  Creates and returns a new association in which all entry pairs are
+     *  removed whose keys are found in the supplied {@link Stream}. If the
+     *  supplied stream does not provide any elements, then this association is returned
+     *  unchanged.
+     *
+     * @param keys A stream of keys to remove from this association.
+     * @return A new association without any of the keys found in the supplied stream.
+     */
+    default Association<K, V> removeAll( Stream<? extends K> keys ) {
+        Objects.requireNonNull(keys);
+        Association<K, V> result = this;
+        // reduce the stream to a single association
+        return keys.reduce(result, Association::remove, (a, b) -> a);
+    }
+
+    /**
      *  Returns a new association where only those key-value pairs
      *  are kept that have a key present in the supplied value set.
      *  If the supplied set is empty, then this association is

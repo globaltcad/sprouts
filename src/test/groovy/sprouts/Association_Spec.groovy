@@ -371,14 +371,14 @@ class Association_Spec extends Specification
 
     def 'You remove the entries of one association from another, using the `removeAll(ValueSet)` method.'() {
         given : 'Two empty associations between strings and integers.'
-            var associations1 = Association.between(String, Integer)
-            var associations2 = Association.between(String, Integer)
+            var association1 = Association.between(String, Integer)
+            var association2 = Association.between(String, Integer)
         when : 'We add some values to the first association.'
-            associations1 = associations1.put("x", 1).put("y", 2).put("z", 3)
+            association1 = association1.put("x", 1).put("y", 2).put("z", 3)
         and : 'We add some values to the second association.'
-            associations2 = associations2.put("y", 2).put("z", 3).put("o", 4)
+            association2 = association2.put("y", 2).put("z", 3).put("o", 4)
         and : 'We remove the entries of the second association from the first.'
-            var result = associations1.removeAll(associations2.keySet())
+            var result = association1.removeAll(association2.keySet())
         then : 'The result contains only the entries that were not in the second association.'
             result.size() == 1
             result.get("x").orElseThrow(MissingItemException::new) == 1
@@ -386,17 +386,32 @@ class Association_Spec extends Specification
 
     def 'You remove the entries of one association from another, using the `removeAll(Set)` method.'() {
         given : 'Two empty associations between strings and integers.'
-            var associations1 = Association.between(String, Integer)
-            var associations2 = Association.between(String, Integer)
+            var association1 = Association.between(String, Integer)
+            var association2 = Association.between(String, Integer)
         when : 'We add some values to the first association.'
-            associations1 = associations1.put("a", 1).put("b", 2).put("c", 3)
+            association1 = association1.put("a", 1).put("b", 2).put("c", 3)
         and : 'We add some values to the second association.'
-            associations2 = associations2.put("b", 2).put("c", 3).put("d", 4)
+            association2 = association2.put("b", 2).put("c", 3).put("d", 4)
         and : 'We remove the entries of the second association from the first.'
-            var result = associations1.removeAll(associations2.keySet().toSet())
+            var result = association1.removeAll(association2.keySet().toSet())
         then : 'The result contains only the entries that were not in the second association.'
             result.size() == 1
             result.get("a").orElseThrow(MissingItemException::new) == 1
+    }
+
+    def 'You remove the entries of one association from another, using the `removeAll(Stream)` method.'() {
+        given : 'Two empty associations between strings and integers.'
+            var association1 = Association.between(String, Integer)
+            var association2 = Association.between(String, Integer)
+        when : 'We add some values to the first association.'
+            association1 = association1.put("x", 1).put("y", 2).put("z", 3)
+        and : 'We add some values to the second association.'
+            association2 = association2.put("y", 2).put("z", 3).put("i", 4)
+        and : 'We remove the entries of the second association from the first using a stream of keys.'
+            var result = association1.removeAll(association2.keySet().stream())
+        then : 'The result contains only the entries that were not in the second association.'
+            result.size() == 1
+            result.get("x").orElseThrow(MissingItemException::new) == 1
     }
 
     def 'The `clear` method creates an empty association with the same key and value types.'() {
