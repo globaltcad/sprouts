@@ -149,7 +149,7 @@ public interface Maybe<T>
 
     /**
      * If an item is present, returns the item, otherwise returns
-     * {@code other}, <b>but neve {@code null}</b>. <br>
+     * {@code other}, <b>but never {@code null}</b>. <br>
      * If the supplied alternative is {@code null},
      * then this method will throw a {@code NullPointerException}.
      *

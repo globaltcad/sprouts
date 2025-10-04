@@ -56,7 +56,22 @@ import java.util.function.Supplier;
  *  Doc doc = parser.parse(rawText)
  *                  .logProblemsAsError()
  *                  .orElse(Doc.EMPTY);
+ *  }</pre><br>
+ *
+ * Also note that a freshly created {@link Result} containing at least one
+ * {@link Problem}, will be flagged as "{@link #needsHandling()}", in which
+ * case <b>a call to methods which try to resolve the result in some way, like
+ * {@link #orElse(Object)}, {@link #orElseNull()}, {@link #toOptional()}, etc...
+ * will automatically trigger error logging for you!</b><br>
+ * This ensures that problems do not go unnoticed in scenarios like this:<br>
+ *  <pre>{@code
+ *  Doc doc = parser.parse(rawText).orElse(Doc.EMPTY);
  *  }</pre>
+ *
+ * Use methods like {@link #handle(Class, Consumer)}, {@link #handleAny(Consumer)}
+ * or {@link #logProblemsTo(BiConsumer)} among others to do manual exception
+ * or general problem handling instead of automatic logging...
+ *
  *
  * @param <V> The type of the item wrapped by this result.
  */
@@ -316,10 +331,52 @@ public final class Result<V> implements Maybe<V>
         return new Result<>(true, this._type, this._problems, this._value);
     }
 
+    /**
+     *  This flag tells you if the {@link Problem}s of a {@link Result} 
+     *  need to be handled or if they were already handled previously, 
+     *  which either means that the result <b>was freshly
+     *  created with at least one {@link Problem}</b> or it was transformed
+     *  into a "handled result", through methods like {@link #handle(Class, Consumer)},
+     *  {@link #handleAny(Consumer)}, {@link #logProblemsTo(BiConsumer)}, etc...<br>
+     *  The reason why this state is tracked in a result, is to ensure that
+     *  problems do not go unnoticed. In practice this means that <b>when you try to 
+     *  resolve a "problematic {@link Result}" using methods like 
+     *  {@link #toOptional()} or {@link #orElse(Object)}, then the result will
+     *  automatically log an error for you!</b><br>
+     *  So a result containing problems, will always be created with this flag
+     *  being set to {@code true}, which ensures that an API user has to 
+     *  handle problems in some way.
+     *  
+     * @return If the {@link Problem}s of this {@link Result} were
+     *         not handled in some way, like through logging for example.
+     */
+    public boolean needsHandling() {
+        return !_wasLogged && this.hasProblems();
+    }
+
     /** {@inheritDoc} */
     @Override
     public Class<V> type() {
         return _type; 
+    }
+
+    /**
+     *  Use this to turn this {@link Result} to an {@link Optional}, which allows
+     *  for better interoperability with the JDK and support for further functional processing.<br>
+     *  <b>
+     *      Note that a freshly created {@link Result} containing at least one
+     *      {@link Problem}, will be flagged as "{@link #needsHandling()}", in which
+     *      case a call to this method will automatically trigger an error log
+     *      to ensure that problems do not go unnoticed.<br>
+     *      Use methods like {@link #handle(Class, Consumer)}, {@link #handleAny(Consumer)}
+     *      or {@link #logProblemsTo(BiConsumer)} among others to do manual exception
+     *      or general problem handling instead of automatic logging...
+     *  </b>
+     * @return An {@link Optional} wrapping the item wrapped by this {@link Maybe}.
+     */
+    @Override
+    public Optional<V> toOptional() {
+        return Optional.ofNullable(this.orElseNull());
     }
 
     /** {@inheritDoc} */
@@ -361,7 +418,26 @@ public final class Result<V> implements Maybe<V>
         return value;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * If an item is present, returns the item, otherwise returns
+     * {@code other}, <b>but never {@code null}</b>. <br>
+     * If the supplied alternative is {@code null},
+     * then this method will throw a {@code NullPointerException}.<br>
+     * <b>
+     *     Note that a freshly created {@link Result} containing at least one
+     *     {@link Problem}, will be flagged as "{@link #needsHandling()}", in which
+     *     case a call to this method will automatically trigger an error log
+     *     to ensure that problems do not go unnoticed.<br>
+     *     Use methods like {@link #handle(Class, Consumer)}, {@link #handleAny(Consumer)}
+     *     or {@link #logProblemsTo(BiConsumer)} among others to do manual exception
+     *     or general problem handling instead of automatic logging...
+     * </b>
+     *
+     * @param other the item to be returned, if no item is present.
+     *        May never be {@code null}.
+     * @return the item, if present, otherwise {@code other}
+     * @throws NullPointerException if the supplied alternative is {@code null}.
+     **/
     @Override
     public @NonNull V orElse( @NonNull V other ) {
         if ( this.hasProblems() && !this._wasLogged) {
@@ -371,7 +447,22 @@ public final class Result<V> implements Maybe<V>
         return Maybe.super.orElse(other);
     }
 
-    /** {@inheritDoc} */
+    /**
+     * If an item is present, returns the item, otherwise returns {@code other}.<br>
+     * <b>
+     *     Note that a freshly created {@link Result} containing at least one
+     *     {@link Problem}, will be flagged as "{@link #needsHandling()}", in which
+     *     case a call to this method will automatically trigger an error log
+     *     to ensure that problems do not go unnoticed.<br>
+     *     Use methods like {@link #handle(Class, Consumer)}, {@link #handleAny(Consumer)}
+     *     or {@link #logProblemsTo(BiConsumer)} among others to do manual exception
+     *     or general problem handling instead of automatic logging...
+     * </b>
+     *
+     * @param other the item to be returned, if no item is present.
+     *        May be {@code null}.
+     * @return the item, if present, otherwise {@code other}
+     */
     @Override
     public @Nullable V orElseNullable( @Nullable V other ) {
         if ( this.hasProblems() && !this._wasLogged) {
@@ -381,7 +472,25 @@ public final class Result<V> implements Maybe<V>
         return _value == null ? other : _value;
     }
 
-    /** {@inheritDoc} */
+    /**
+     * If an item is present, returns the item, otherwise returns the result
+     * produced by the supplying function.<br>
+     * <b>
+     *     Note that a freshly created {@link Result} containing at least one
+     *     {@link Problem}, will be flagged as "{@link #needsHandling()}", in which
+     *     case a call to this method will automatically trigger an error log
+     *     to ensure that problems do not go unnoticed.<br>
+     *     Use methods like {@link #handle(Class, Consumer)}, {@link #handleAny(Consumer)}
+     *     or {@link #logProblemsTo(BiConsumer)} among others to do manual exception
+     *     or general problem handling instead of automatic logging...
+     * </b>
+     *
+     * @param supplier the supplying function that produces an item to be returned
+     * @return the item, if present, otherwise the result produced by the
+     *         supplying function
+     * @throws NullPointerException if no item is present and the supplying
+     *         function is {@code null}
+     */
     @Override
     public V orElseGet( @NonNull Supplier<? extends V> supplier ) {
         if ( this.hasProblems() && !this._wasLogged) {
@@ -391,7 +500,21 @@ public final class Result<V> implements Maybe<V>
         return Maybe.super.orElseGet(supplier);
     }
 
-    /** {@inheritDoc} */
+    /**
+     * If an item is present, returns the item, otherwise returns
+     * {@code null}.<br>
+     * <b>
+     *     Note that a freshly created {@link Result} containing at least one
+     *     {@link Problem}, will be flagged as "{@link #needsHandling()}", in which
+     *     case a call to this method will automatically trigger an error log
+     *     to ensure that problems do not go unnoticed.<br>
+     *     Use methods like {@link #handle(Class, Consumer)}, {@link #handleAny(Consumer)}
+     *     or {@link #logProblemsTo(BiConsumer)} among others to do manual exception
+     *     or general problem handling instead of automatic logging...
+     * </b>
+     *
+     * @return the item, if present, otherwise {@code null}
+     */
     @Override
     public @Nullable V orElseNull() {
         if ( this.hasProblems() && !this._wasLogged) {
