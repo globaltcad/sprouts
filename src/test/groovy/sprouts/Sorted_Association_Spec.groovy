@@ -5,7 +5,9 @@ import spock.lang.Specification
 import spock.lang.Subject
 import spock.lang.Title
 
+import java.time.Month
 import java.util.function.Consumer
+import java.util.function.Predicate
 import java.util.stream.Collectors
 import java.util.stream.Stream
 
@@ -460,6 +462,37 @@ class Sorted_Association_Spec extends Specification
         then : 'The result contains only the entries that were not in the second association.'
             result.size() == 1
             result.get("x").orElseThrow(MissingItemException::new) == 1
+    }
+
+    def 'You can remove entries from a sorted association selectively, using `removeIf(Predicate)`.'(
+        Class<?> type, List<Object> elements, Predicate<Pair<Object, String>> predicate
+    ) {
+        reportInfo """
+            You can remove key/value pairs from a sorted association which satisfy
+            a given `Predicate` lambda. Or in other words,
+            if the `Predicate.test(Object)` method yields `true` for a particular
+            pair, then it will be removed, otherwise, it will remain in the
+            returned association.
+        """
+        given : 'We create a sorted association and a regular JDK map containing some test elements.'
+            var assoc = Association.betweenSorted(type, String).putAll(elements.stream().map(it->Pair.of(it, it.toString())))
+            Map<?,String> map = new TreeMap<Object, String>().putAll(elements.stream().map(it->new AbstractMap.SimpleEntry<>(it, it.toString())).collect(Collectors.toList()))
+
+        when : 'We apply a predicate to both types of mappings...'
+            var updatedAssoc = assoc.removeIf(predicate)
+            map.removeAll(entry -> predicate.test(Pair.of(entry.key, entry.value)))
+        then : 'They contain the exact same entries!'
+            updatedAssoc.toMap() == map
+
+        where :
+            type      |  elements                                               |  predicate
+            Float     | [4.3f, 7f, 0.1f, 26.34f, 23f, 86.3f, 218f, 2f, 1.2f, 9f]|  { (it.first() - it.first() % 1) == it  }
+            Integer   | (-50..50).toList()                                      |  { it.first() % 3 == 1 }
+            String    | (-50..50).collect({Integer it -> it + "!"}).toList()    |  { it.first().hashCode() % 5 == 1 }
+            Short     | (0..1000).collect({Integer it -> it as Short}).toList() |  { it.hashCode() * 1997 % 8 == 2 }
+            Character | ['a' as char, 'x' as char, '4' as char, '#' as char]    |  { it.first() == 'x' as char }
+            Boolean   | (0..100).collect({Integer it -> ( it * 1997 ) % 2 == 0})|  { it.first() }
+            Month     | (0..100).collect({ Integer it -> Month.values()[it%12]}) | { it.first() == Month.DECEMBER }
     }
 
     def 'The `clear` method creates an empty association with the same key and value types.'() {
