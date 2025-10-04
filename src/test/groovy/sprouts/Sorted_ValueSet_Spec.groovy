@@ -414,6 +414,41 @@ class Sorted_ValueSet_Spec extends Specification {
             Month     | (0..100).collect({ Integer it -> Month.values()[it%12]}) |  { it == Month.DECEMBER }
     }
 
+    def 'You can keep items in a sorted value set selectively, using `retainIf(Predicate)`.'(
+        Class<?> type, List<Object> elements, Predicate<Object> predicate
+    ) {
+        reportInfo """
+            You can keep elements in a value set which satisfy
+            a given `Predicate` and have them removed otherwise. Or in other words,
+            if the `Predicate.test(Object)` method yields `false` for a particular
+            element, then it will be removed, otherwise, it will remain in the
+            returned set.
+        """
+        given : 'We create a sorted value set and a regular JDK set containing some test elements.'
+            var valueSet = ValueSet.ofSorted(type, Comparator.naturalOrder()).addAll(elements)
+            var set = elements.toSet()
+
+        when : """
+            We apply a predicate to both types of sets...
+            In case of the JDK set we use the negation of `removeIf`,
+            which does the same thing effectively.
+        """
+            var updatedValueSet = valueSet.retainIf(predicate)
+            set.removeIf(predicate.negate())
+        then : 'They contain he same elements!'
+            updatedValueSet.toSet() == set
+
+        where :
+            type      |  elements                                               |  predicate
+            Float     | [4.3f, 7f, 0.1f, 26.34f, 23f, 86.3f, 218f, 2f, 1.2f, 9f]|  { (it - it % 1) == it  }
+            Integer   | (-50..50).toList()                                      |  { it % 3 == 1 }
+            String    | (-50..50).collect({Integer it -> it + "!"}).toList()    |  { it.hashCode() % 5 == 1 }
+            Short     | (0..1000).collect({Integer it -> it as Short}).toList() |  { it * 1997 % 8 == 2 }
+            Character | ['a' as char, 'x' as char, '4' as char, '#' as char]    |  { it == 'x' as char }
+            Boolean   | (0..100).collect({Integer it -> ( it * 1997 ) % 2 == 0})|  { it }
+            Month     | (0..100).collect({Integer it -> Month.values()[it%12]}) |  { it == Month.DECEMBER }
+    }
+
     def 'retainAll works with diverse collection sources'() {
         given:
             var initial = ValueSet.ofSorted("a", "b", "c", "d")
