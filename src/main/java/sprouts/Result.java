@@ -734,6 +734,47 @@ public final class Result<V> implements Maybe<V>
     }
 
     /**
+     *  Use this to turn this {@link Result} into a new
+     *  result instance but without any {@link Problem}s
+     *  attached to it and where the {@link #needsHandling()} method
+     *  is guaranteed to return {@code false}.<br>
+     *  This method is effectively equivalent to calling:
+     *  <pre>{@code
+     *      .handleAny( problem -> {} ) // ignored
+     *  }</pre><br>
+     *  And in the context of classical Java error handling
+     *  it is a comparable pattern to an empty catch block:
+     *  <pre>{@code
+     *      try {
+     *          value = api.fetchSomething()
+     *      } catch ( Exception ignored ) {
+     *          // don't care
+     *      }
+     *  }</pre><br>
+     *  <b>
+     *      Note that using this method is typically a code smell,
+     *      and it only exists to have a token to reliably look for
+     *      cases where errors may go unnoticed.
+     *      In most cases you should log or otherwise handle
+     *      problems instead of ignoring them!
+     *  </b>
+     *
+     * @return A new {@link Result} without any {@link Problem}s,
+     *         or this instance if no problems exists.
+     */
+    public Result<V> ignoreProblems() {
+        if ( this.hasProblems() ) {
+            return new Result<>(
+                this._wasLogged,
+                this._type,
+                this._problems.clear(),
+                this._value
+            );
+        }
+        return this;
+    }
+
+    /**
      *  Allows you to peek at the list of problems associated with this result
      *  through a {@link Consumer} which receives the list of all problems.
      *  If an exception is thrown during the process of peeking at the problems,

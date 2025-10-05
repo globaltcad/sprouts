@@ -61,6 +61,9 @@ class Result_Spec extends Specification
             result.problems().toList() == problems
         and : 'Although they are the same problems, they are not the same instances.'
             result.problems().toList() !== problems
+        and : 'The result requires handling!'
+            result.needsHandling()
+
         when : 'We try to mutate the problems.'
             result.problems().toList().add(null)
         then : 'An exception is thrown.'
@@ -75,6 +78,9 @@ class Result_Spec extends Specification
     {
         given : 'A result.'
             def result = Result.of(42)
+        expect : 'The result has no problems, and so it does not need handling:'
+            !result.needsHandling()
+
         when : 'We map the result to another result with the value plus one.'
             def mapped = result.map { it + 1 }
         then : 'The mapped result has the value of the result plus one.'
@@ -1368,5 +1374,74 @@ class Result_Spec extends Specification
             trace.size() == 2
             trace.contains("NullPointerException : Brain not found")
             trace.contains("IllegalArgumentException : Might makes right")
+    }
+
+
+    def 'Ignoring the problems of a result without problems does nothing.'()
+    {
+        given : 'A result without problems:'
+            var result = Result.ofTry(String.class, ()->{
+                return "All good!"
+            })
+        expect :
+            !result.needsHandling()
+            !result.hasProblems()
+            result.problems().size() == 0
+        and : 'Invoking `ignoreProblems` simply returns the current error free result instance!'
+            result.ignoreProblems() === result
+    }
+
+    def 'There are various ways to handle the problems of a result.'()
+    {
+        reportInfo """
+            A freshly created `Result` containing at least one `Problem`, will be flagged 
+            as `needsHandling()`, in which case **a call to methods which try to resolve 
+            the result in some way, like `orElse(V)`, `orElseNull()`, `toOptional()`, etc...
+            will automatically trigger error logging for you!**<br>
+            This ensures that problems do not go unnoticed in scenarios like this:<br>
+            ```
+             Doc doc = parser.parse(rawText).orElse(Doc.EMPTY);
+            ```
+            Use methods like `handle(Class, Consumer)`, `handleAny(Consumer)`
+            or `logProblemsTo(BiConsumer)` among others to do manual exception
+            or general problem handling instead of automatic logging...
+        """
+        given : 'A result with problems:'
+            var result = Result.ofTry(String.class, ()->{
+                throw new IndexOutOfBoundsException()
+            })
+
+        expect :
+            result.needsHandling()
+            result.hasProblems()
+            result.problems().size() == 1
+        and :
+            !result.handleAny({}).needsHandling()
+            !result.handleAny({}).hasProblems()
+            result.handleAny({}).problems().size() == 0
+        and :
+            !result.ignoreProblems().needsHandling()
+            !result.ignoreProblems().hasProblems()
+            result.ignoreProblems().problems().size() == 0
+        and :
+            !result.logProblemsAsDebug().needsHandling()
+            result.logProblemsAsDebug().hasProblems()
+            result.logProblemsAsDebug().problems().size() == 1
+        and :
+            !result.logProblemsAsInfo().needsHandling()
+            result.logProblemsAsInfo().hasProblems()
+            result.logProblemsAsInfo().problems().size() == 1
+        and :
+            !result.logProblemsAsWarning().needsHandling()
+            result.logProblemsAsWarning().hasProblems()
+            result.logProblemsAsWarning().problems().size() == 1
+        and :
+            !result.logProblemsAsTrace().needsHandling()
+            result.logProblemsAsTrace().hasProblems()
+            result.logProblemsAsTrace().problems().size() == 1
+        and :
+            !result.logProblemsAsError().needsHandling()
+            result.logProblemsAsError().hasProblems()
+            result.logProblemsAsError().problems().size() == 1
     }
 }
