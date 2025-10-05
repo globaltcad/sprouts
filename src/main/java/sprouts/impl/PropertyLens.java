@@ -193,7 +193,7 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
             _parent.set(channel, newParentItem);
         } catch ( Exception e ) {
             _logError(
-                    "Property lens {} (for item type '{}') failed to update its parent " +
+                    "Property lens with id '{}' (for item type '{}') failed to update its parent " +
                     "property '{}' (with item type '{}') using the current setter lambda!",
                     _idForError(_id), _type, _idForError(_parent.id()), _parent.type(), e
                 );

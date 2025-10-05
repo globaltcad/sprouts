@@ -2,6 +2,7 @@ package sprouts.impl;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Marker;
 import sprouts.*;
 
 import java.util.Comparator;
@@ -1242,4 +1243,18 @@ public interface SproutsFactory
      *            or cached object due to this method being called frequently.
      */
     Channel defaultObservableChannel();
+
+    /**
+     * Many features in Sprouts are designed to preserve the control
+     * flow of your application by catching exceptions and then logging them.
+     * This typically happens in a {@link Result} or {@link Var} property when
+     * a user {@link Action} fails...<br>
+     * This method configures a Slf4j {@link Marker} to be used by
+     * Sprouts at all places where logging is being done.
+     * You can then use this marker to identify and filter these log entries.
+     *
+     * @return A constant which serves as a sort of logging channel used
+     *         on all logging sites of the sprouts library.
+     */
+    Marker loggingMarker();
 }
