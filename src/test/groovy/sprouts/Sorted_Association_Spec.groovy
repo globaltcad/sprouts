@@ -486,7 +486,7 @@ class Sorted_Association_Spec extends Specification
 
         where :
             type      |  elements                                               |  predicate
-            Float     | [4.3f, 7f, 0.1f, 26.34f, 23f, 86.3f, 218f, 2f, 1.2f, 9f]|  { (it.first() - it.first() % 1) == it  }
+            Float     | [4.3f, 7f, 0.1f, 26.34f, 23f, 86.3f, 218f, 2f, 1.2f, 9f]|  { (it.first() - it.first() % 1) == it.first() }
             Integer   | (-50..50).toList()                                      |  { it.first() % 3 == 1 }
             String    | (-50..50).collect({Integer it -> it + "!"}).toList()    |  { it.first().hashCode() % 5 == 1 }
             Short     | (0..1000).collect({Integer it -> it as Short}).toList() |  { it.hashCode() * 1997 % 8 == 2 }

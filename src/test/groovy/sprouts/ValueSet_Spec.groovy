@@ -345,7 +345,7 @@ class ValueSet_Spec extends Specification {
         when : 'We apply a predicate to both types of sets...'
             var updatedValueSet = valueSet.removeIf(predicate)
             set.removeIf(predicate)
-        then : 'They contain he same elements!'
+        then : 'They contain the same elements!'
             updatedValueSet.toSet() == set
 
         where :
@@ -380,7 +380,7 @@ class ValueSet_Spec extends Specification {
         """
             var updatedValueSet = valueSet.retainIf(predicate)
             set.removeIf(predicate.negate())
-        then : 'They contain he same elements!'
+        then : 'They contain the same elements!'
             updatedValueSet.toSet() == set
 
         where :

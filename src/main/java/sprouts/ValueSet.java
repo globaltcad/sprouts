@@ -891,7 +891,7 @@ public interface ValueSet<E> extends Iterable<E> {
     ValueSet<E> removeAll( final Stream<? extends E> elements );
 
     /**
-     *  Creates an updates {@link ValueSet} where all elements satisfying
+     *  Creates an updated {@link ValueSet} where all elements satisfying
      *  the given {@link Predicate}, are removed. Or in other words,
      *  if {@link Predicate#test(Object)} yields {@code true} for a particular
      *  element, then it will be removed, otherwise, it will remain in the
@@ -1051,7 +1051,7 @@ public interface ValueSet<E> extends Iterable<E> {
     }
 
     /**
-     *  Creates an updates {@link ValueSet} where only those elements are
+     *  Creates an updated {@link ValueSet} where only those elements are
      *  kept which satisfy the given {@link Predicate}. Or in other words,
      *  if {@link Predicate#test(Object)} yields {@code true} for a particular
      *  element, then it will be kept, otherwise, it will be removed from
