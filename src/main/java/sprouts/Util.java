@@ -4,6 +4,7 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.helpers.MessageFormatter;
 import org.slf4j.helpers.NOPLogger;
+import sprouts.impl.Sprouts;
 
 final class Util {
 
@@ -32,14 +33,19 @@ final class Util {
                 lastArgException = (Exception) args[args.length - 1];
                 args = java.util.Arrays.copyOf(args, args.length - 1);
             }
+            String loggingMarker = Sprouts.factory().loggingMarker().toString().trim();
+            if ( !loggingMarker.isEmpty() && !loggingMarker.startsWith("[") && !loggingMarker.endsWith("]") ) {
+                loggingMarker = "[" + loggingMarker + "]";
+            }
             System.err.println(
-                    MessageFormatter.arrayFormat("[ERROR] " + message, args).getMessage()
+                MessageFormatter.arrayFormat("[ERROR]"+loggingMarker+" " + message, args)
+                .getMessage()
             );
             if ( lastArgException != null ) {
                 lastArgException.printStackTrace();
             }
         } else {
-            log.error(message, args);
+            log.error(Sprouts.factory().loggingMarker(), message, args);
         }
     }
 }

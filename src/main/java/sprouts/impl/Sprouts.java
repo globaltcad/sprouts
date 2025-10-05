@@ -2,6 +2,8 @@ package sprouts.impl;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
 import sprouts.*;
 
 import java.util.*;
@@ -17,13 +19,19 @@ import java.util.stream.StreamSupport;
  *  The methods implemented here are used by the various factory methods of the sprouts API like
  *  {@link Var#of(Object)}, {@link Vals#of(Object, Object[])}...<br>
  *  <b>So technically speaking, this is a configurable singleton, so be careful when using it
- *  as it effectively maintains global + mutable state!</b>
+ *  as it effectively maintains global + mutable state!</b><br>
+ *  <p>
+ *      You can also configure general library defaults here,
+ *      like a library global logging marker (see {@link #loggingMarker()}).
+ *  </p>
  */
 public final class Sprouts implements SproutsFactory
 {
     private static final Pattern DEFAULT_ID_PATTERN = Pattern.compile("[a-zA-Z0-9_]*");
 
     private static SproutsFactory FACTORY = new Sprouts();
+
+    private Marker marker = MarkerFactory.getMarker("");
 
     /**
      *  A {@link SproutsFactory} is used by the various factory methods of this API like
@@ -479,6 +487,23 @@ public final class Sprouts implements SproutsFactory
     @Override
     public Channel defaultObservableChannel() {
         return From.ALL;
+    }
+
+    @Override
+    public Marker loggingMarker() {
+        return marker;
+    }
+
+    /**
+     *  You may want to set this to filter logging done by Sprouts, which
+     *  is typically a type of log that is contains exceptions caused by
+     *  bugs and failed sanity checks.
+     *  So you may want to filter that using this marker...
+     * @param marker The Slf4j {@link Marker} constant which should
+     *               be used for all logging that occurs in Sprouts.
+     */
+    public void setLoggingMarker(Marker marker) {
+        this.marker = marker;
     }
 
 }
