@@ -891,6 +891,26 @@ public interface ValueSet<E> extends Iterable<E> {
     ValueSet<E> removeAll( final Stream<? extends E> elements );
 
     /**
+     *  Creates an updated {@link ValueSet} where all elements satisfying
+     *  the given {@link Predicate}, are removed. Or in other words,
+     *  if {@link Predicate#test(Object)} yields {@code true} for a particular
+     *  element, then it will be removed, otherwise, it will remain in the
+     *  returned set.<br>
+     *  Note that errors or runtime exceptions thrown
+     *  during iteration or by the predicate are relayed to the caller.
+     *
+     * @param filter A function which takes in a set element {@link E}, and returns
+     *               {@code true} to trigger its removal and {@code false} to ensure it is kept.
+     * @return An updated {@link ValueSet} where elements are removed according to the
+     *         supplied predicate test, or this instance if nothing was removed.
+     * @throws NullPointerException - if the specified filter is null
+     */
+    default ValueSet<E> removeIf( Predicate<? super E> filter ) {
+        Objects.requireNonNull(filter);
+        return removeAll(stream().filter(filter));
+    }
+
+    /**
      *  Returns a new value set where only those elements
      *  are kept that have an element present in the supplied set. 
      *  In other words, removes all of its elements in the new set that are 
@@ -1028,6 +1048,26 @@ public interface ValueSet<E> extends Iterable<E> {
             return this;
         Set<E> elementsSet = elements.collect(HashSet::new, HashSet::add, HashSet::addAll);
         return retainAll(elementsSet);
+    }
+
+    /**
+     *  Creates an updated {@link ValueSet} where only those elements are
+     *  kept which satisfy the given {@link Predicate}. Or in other words,
+     *  if {@link Predicate#test(Object)} yields {@code true} for a particular
+     *  element, then it will be kept, otherwise, it will be removed from
+     *  returned set.<br>
+     *  Note that errors or runtime exceptions thrown
+     *  during iteration or by the predicate are relayed to the caller.
+     *
+     * @param filter A function which takes in a set element {@link E}, and returns
+     *               {@code false} to trigger its removal and {@code true} to ensure it is kept.
+     * @return An updated {@link ValueSet} where elements are removed according to the
+     *         supplied predicate test, or this instance if nothing was removed.
+     * @throws NullPointerException - if the specified filter is null
+     */
+    default ValueSet<E> retainIf( Predicate<? super E> filter ) {
+        Objects.requireNonNull(filter);
+        return retainAll(stream().filter(filter));
     }
 
     /**

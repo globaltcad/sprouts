@@ -1021,8 +1021,7 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
         // reduce the stream to a single association
         return entries.reduce(
                 result,
-                (acc,
-                 entry) -> acc.replace(entry.first(), entry.second()),
+                (acc, entry) -> acc.replace(entry.first(), entry.second()),
                 (a, b) -> a);
     }
 
@@ -1037,8 +1036,8 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
     Association<K, V> remove( K key );
 
     /**
-     *  Returns a new association that is the same as this one
-     *  but without any of the keys in the supplied set. If the
+     *  Creates and returns a new association in which all entry pairs are
+     *  removed whose keys are present in the supplied {@link ValueSet}. If the
      *  supplied set is empty, then this association is returned
      *  unchanged.
      *
@@ -1056,8 +1055,8 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
     }
 
     /**
-     *  Returns a new association that is the same as this one
-     *  but without any of the keys in the supplied set. If the
+     *  Creates and returns a new association in which all entry pairs are
+     *  removed whose keys are present in the supplied {@link Set}. If the
      *  supplied set is empty, then this association is returned
      *  unchanged.
      *
@@ -1072,6 +1071,43 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
             result = result.remove(key);
         }
         return result;
+    }
+
+    /**
+     *  Creates and returns a new association in which all entry pairs are
+     *  removed whose keys are found in the supplied {@link Stream}. If the
+     *  supplied stream does not provide any elements, then this association is returned
+     *  unchanged.
+     *
+     * @param keys A stream of keys to remove from this association.
+     * @return A new association without any of the keys found in the supplied stream.
+     * @throws NullPointerException - if the supplied stream is null
+     */
+    default Association<K, V> removeAll( Stream<? extends K> keys ) {
+        Objects.requireNonNull(keys);
+        Association<K, V> result = this;
+        // reduce the stream to a single association
+        return keys.reduce(result, Association::remove, (a, b) -> a);
+    }
+
+    /**
+     *  Creates an updates {@link Association} where all key/value pairs satisfying
+     *  the given {@link Predicate}, are removed. Or in other words,
+     *  if {@link Predicate#test(Object)} yields {@code true} for a particular
+     *  entry {@link Pair}, then it will be removed, otherwise, it will remain in the
+     *  returned association.<br>
+     *  Note that errors or runtime exceptions thrown
+     *  during iteration or by the predicate are relayed to the caller.
+     *
+     * @param filter A function which takes in a key/value {@link Pair}, and returns
+     *               {@code true} to trigger its removal and {@code false} to ensure it is kept.
+     * @return An updated {@link Association} where elements are removed according to the
+     *         supplied predicate test, or this instance if nothing was removed.
+     * @throws NullPointerException - if the specified filter is null
+     */
+    default Association<K,V> removeIf( Predicate<Pair<K,V>> filter ) {
+        Objects.requireNonNull(filter);
+        return removeAll(entrySet().stream().filter(filter).map(Pair::first));
     }
 
     /**

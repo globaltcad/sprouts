@@ -93,10 +93,9 @@ final class ValueSetImpl<E> implements ValueSet<E> {
             final Node<E>[] branches,
             final boolean rebuild
         ) {
-            final ArrayItemAccess<?, Object> itemGetter = ArrayItemAccess.of(type,false);
             final int size = _length(newElementsArray);
             if ( rebuild && size > 1 ) {
-                _elementsArray = _fillNodeArrays(size, type, itemGetter, newElementsArray);
+                _elementsArray = _fillNodeArrays(size, type, newElementsArray);
             } else {
                 _elementsArray = newElementsArray;
             }
@@ -160,10 +159,10 @@ final class ValueSetImpl<E> implements ValueSet<E> {
     private static <K> Object _fillNodeArrays(
         final int size,
         final Class<K> type,
-        final ArrayItemAccess<?, Object> itemGetter,
         final Object newElementsArray
     ) {
         Object elementsArray = new Object[size];
+        final ArrayItemAccess<?, Object> itemGetter = (ArrayItemAccess) ArrayItemAccess.FOR_OBJECT;
         for (int i = 0; i < size; i++) {
             K key = _getAt(i, newElementsArray, type);
             Objects.requireNonNull(key);
