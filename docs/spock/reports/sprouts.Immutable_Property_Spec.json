@@ -1,0 +1,488 @@
+{
+  "className":"sprouts.Immutable_Property_Spec",
+  "title":"Immutable Properties",
+  "narrative":"Immutable properties are properties created by one\n    of the many factory methods on the `Val` interface.\n    The returned `Val` properties are immutable and\n    cannot be changed once they are created.\n    Their equality is based on the value they hold,\n    not the identity of the property itself.",
+  "subjects":["sprouts.Val"],
+  "statistics":{
+    "runs":"32",
+    "successRate":"100.0%",
+    "failures":"0",
+    "errors":"0",
+    "skipped":"0",
+    "duration":"?"
+  },
+  "headers":[],"tags":{},"see":[],
+  "features":[ 
+    {
+      "id":"The `Val.equals(..)` method compares two objects by value. [0]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The basis for the `equals` implementation of a `Val` property instance\n            is an equality comparison of the values they hold.\n            This is done by the `Val.equals(..)` method,\n            which you can access statically.\n        "]
+      },
+      "blocks":[
+        {"kind":"expect","text":"","code":["Val.equals(first, second) == expected"]},
+
+        {"kind":"where","text":"","code":{"first":["new float[] { 1.0f, 2.0f, 3.0f }","new float[] { 1.0f, 2.0f, 3.0f }","new int[] { 1, 2, 3 }","new int[] { 1, 2, 3 }","new long[] { 1, 2, 3 }","new long[] { 1, 2, 3 }","new double[] { 1.0, 2.0, 3.0 }","new double[] { 1.0, 2.0, 3.0 }","new char[] { 'a', 'b', 'c' }","new char[] { 'a', 'b', 'c' }","new boolean[] { true, false }","new boolean[] { true, false }","new String[] { 'a', 'b', 'c' }","new String[] { 'a', 'b', 'c' }","new Object[] { 1, 2, 3 }","new Object[] { 1, 2, 3 }","new Object[] { 1, 2, 3 }"],"second":["new float[] { 1.0f, 2.0f, 3.0f }","new float[] { 1.0f, 2.0f, 4.0f }","new int[] { 1, 2, 3 }","new int[] { 1, 2, 4 }","new long[] { 1, 2, 3 }","new long[] { 1, 2, 4 }","new double[] { 1.0, 2.0, 3.0 }","new double[] { 1.0, 2.0, 4.0 }","new char[] { 'a', 'b', 'c' }","new char[] { 'a', 'b', 'd' }","new boolean[] { true, false }","new boolean[] { true, true }","new String[] { 'a', 'b', 'c' }","new String[] { 'a', 'b', 'd' }","new Object[] { 1, 2, 3 }","new Object[] { 1, 2, 4 }","new Object[] { 1, 2, 3, 4 }"],"expected":["true","false","true","false","true","false","true","false","true","false","true","false","true","false","true","false","false"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `Val.equals(..)` method compares two objects by value. [1]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The basis for the `equals` implementation of a `Val` property instance\n            is an equality comparison of the values they hold.\n            This is done by the `Val.equals(..)` method,\n            which you can access statically.\n        "]
+      },
+      "blocks":[
+        {"kind":"expect","text":"","code":["Val.equals(first, second) == expected"]},
+
+        {"kind":"where","text":"","code":{"first":["new float[] { 1.0f, 2.0f, 3.0f }","new float[] { 1.0f, 2.0f, 3.0f }","new int[] { 1, 2, 3 }","new int[] { 1, 2, 3 }","new long[] { 1, 2, 3 }","new long[] { 1, 2, 3 }","new double[] { 1.0, 2.0, 3.0 }","new double[] { 1.0, 2.0, 3.0 }","new char[] { 'a', 'b', 'c' }","new char[] { 'a', 'b', 'c' }","new boolean[] { true, false }","new boolean[] { true, false }","new String[] { 'a', 'b', 'c' }","new String[] { 'a', 'b', 'c' }","new Object[] { 1, 2, 3 }","new Object[] { 1, 2, 3 }","new Object[] { 1, 2, 3 }"],"second":["new float[] { 1.0f, 2.0f, 3.0f }","new float[] { 1.0f, 2.0f, 4.0f }","new int[] { 1, 2, 3 }","new int[] { 1, 2, 4 }","new long[] { 1, 2, 3 }","new long[] { 1, 2, 4 }","new double[] { 1.0, 2.0, 3.0 }","new double[] { 1.0, 2.0, 4.0 }","new char[] { 'a', 'b', 'c' }","new char[] { 'a', 'b', 'd' }","new boolean[] { true, false }","new boolean[] { true, true }","new String[] { 'a', 'b', 'c' }","new String[] { 'a', 'b', 'd' }","new Object[] { 1, 2, 3 }","new Object[] { 1, 2, 4 }","new Object[] { 1, 2, 3, 4 }"],"expected":["true","false","true","false","true","false","true","false","true","false","true","false","true","false","true","false","false"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `Val.equals(..)` method compares two objects by value. [2]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The basis for the `equals` implementation of a `Val` property instance\n            is an equality comparison of the values they hold.\n            This is done by the `Val.equals(..)` method,\n            which you can access statically.\n        "]
+      },
+      "blocks":[
+        {"kind":"expect","text":"","code":["Val.equals(first, second) == expected"]},
+
+        {"kind":"where","text":"","code":{"first":["new float[] { 1.0f, 2.0f, 3.0f }","new float[] { 1.0f, 2.0f, 3.0f }","new int[] { 1, 2, 3 }","new int[] { 1, 2, 3 }","new long[] { 1, 2, 3 }","new long[] { 1, 2, 3 }","new double[] { 1.0, 2.0, 3.0 }","new double[] { 1.0, 2.0, 3.0 }","new char[] { 'a', 'b', 'c' }","new char[] { 'a', 'b', 'c' }","new boolean[] { true, false }","new boolean[] { true, false }","new String[] { 'a', 'b', 'c' }","new String[] { 'a', 'b', 'c' }","new Object[] { 1, 2, 3 }","new Object[] { 1, 2, 3 }","new Object[] { 1, 2, 3 }"],"second":["new float[] { 1.0f, 2.0f, 3.0f }","new float[] { 1.0f, 2.0f, 4.0f }","new int[] { 1, 2, 3 }","new int[] { 1, 2, 4 }","new long[] { 1, 2, 3 }","new long[] { 1, 2, 4 }","new double[] { 1.0, 2.0, 3.0 }","new double[] { 1.0, 2.0, 4.0 }","new char[] { 'a', 'b', 'c' }","new char[] { 'a', 'b', 'd' }","new boolean[] { true, false }","new boolean[] { true, true }","new String[] { 'a', 'b', 'c' }","new String[] { 'a', 'b', 'd' }","new Object[] { 1, 2, 3 }","new Object[] { 1, 2, 4 }","new Object[] { 1, 2, 3, 4 }"],"expected":["true","false","true","false","true","false","true","false","true","false","true","false","true","false","true","false","false"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `Val.equals(..)` method compares two objects by value. [3]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The basis for the `equals` implementation of a `Val` property instance\n            is an equality comparison of the values they hold.\n            This is done by the `Val.equals(..)` method,\n            which you can access statically.\n        "]
+      },
+      "blocks":[
+        {"kind":"expect","text":"","code":["Val.equals(first, second) == expected"]},
+
+        {"kind":"where","text":"","code":{"first":["new float[] { 1.0f, 2.0f, 3.0f }","new float[] { 1.0f, 2.0f, 3.0f }","new int[] { 1, 2, 3 }","new int[] { 1, 2, 3 }","new long[] { 1, 2, 3 }","new long[] { 1, 2, 3 }","new double[] { 1.0, 2.0, 3.0 }","new double[] { 1.0, 2.0, 3.0 }","new char[] { 'a', 'b', 'c' }","new char[] { 'a', 'b', 'c' }","new boolean[] { true, false }","new boolean[] { true, false }","new String[] { 'a', 'b', 'c' }","new String[] { 'a', 'b', 'c' }","new Object[] { 1, 2, 3 }","new Object[] { 1, 2, 3 }","new Object[] { 1, 2, 3 }"],"second":["new float[] { 1.0f, 2.0f, 3.0f }","new float[] { 1.0f, 2.0f, 4.0f }","new int[] { 1, 2, 3 }","new int[] { 1, 2, 4 }","new long[] { 1, 2, 3 }","new long[] { 1, 2, 4 }","new double[] { 1.0, 2.0, 3.0 }","new double[] { 1.0, 2.0, 4.0 }","new char[] { 'a', 'b', 'c' }","new char[] { 'a', 'b', 'd' }","new boolean[] { true, false }","new boolean[] { true, true }","new String[] { 'a', 'b', 'c' }","new String[] { 'a', 'b', 'd' }","new Object[] { 1, 2, 3 }","new Object[] { 1, 2, 4 }","new Object[] { 1, 2, 3, 4 }"],"expected":["true","false","true","false","true","false","true","false","true","false","true","false","true","false","true","false","false"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `Val.equals(..)` method compares two objects by value. [4]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The basis for the `equals` implementation of a `Val` property instance\n            is an equality comparison of the values they hold.\n            This is done by the `Val.equals(..)` method,\n            which you can access statically.\n        "]
+      },
+      "blocks":[
+        {"kind":"expect","text":"","code":["Val.equals(first, second) == expected"]},
+
+        {"kind":"where","text":"","code":{"first":["new float[] { 1.0f, 2.0f, 3.0f }","new float[] { 1.0f, 2.0f, 3.0f }","new int[] { 1, 2, 3 }","new int[] { 1, 2, 3 }","new long[] { 1, 2, 3 }","new long[] { 1, 2, 3 }","new double[] { 1.0, 2.0, 3.0 }","new double[] { 1.0, 2.0, 3.0 }","new char[] { 'a', 'b', 'c' }","new char[] { 'a', 'b', 'c' }","new boolean[] { true, false }","new boolean[] { true, false }","new String[] { 'a', 'b', 'c' }","new String[] { 'a', 'b', 'c' }","new Object[] { 1, 2, 3 }","new Object[] { 1, 2, 3 }","new Object[] { 1, 2, 3 }"],"second":["new float[] { 1.0f, 2.0f, 3.0f }","new float[] { 1.0f, 2.0f, 4.0f }","new int[] { 1, 2, 3 }","new int[] { 1, 2, 4 }","new long[] { 1, 2, 3 }","new long[] { 1, 2, 4 }","new double[] { 1.0, 2.0, 3.0 }","new double[] { 1.0, 2.0, 4.0 }","new char[] { 'a', 'b', 'c' }","new char[] { 'a', 'b', 'd' }","new boolean[] { true, false }","new boolean[] { true, true }","new String[] { 'a', 'b', 'c' }","new String[] { 'a', 'b', 'd' }","new Object[] { 1, 2, 3 }","new Object[] { 1, 2, 4 }","new Object[] { 1, 2, 3, 4 }"],"expected":["true","false","true","false","true","false","true","false","true","false","true","false","true","false","true","false","false"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `Val.equals(..)` method compares two objects by value. [5]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The basis for the `equals` implementation of a `Val` property instance\n            is an equality comparison of the values they hold.\n            This is done by the `Val.equals(..)` method,\n            which you can access statically.\n        "]
+      },
+      "blocks":[
+        {"kind":"expect","text":"","code":["Val.equals(first, second) == expected"]},
+
+        {"kind":"where","text":"","code":{"first":["new float[] { 1.0f, 2.0f, 3.0f }","new float[] { 1.0f, 2.0f, 3.0f }","new int[] { 1, 2, 3 }","new int[] { 1, 2, 3 }","new long[] { 1, 2, 3 }","new long[] { 1, 2, 3 }","new double[] { 1.0, 2.0, 3.0 }","new double[] { 1.0, 2.0, 3.0 }","new char[] { 'a', 'b', 'c' }","new char[] { 'a', 'b', 'c' }","new boolean[] { true, false }","new boolean[] { true, false }","new String[] { 'a', 'b', 'c' }","new String[] { 'a', 'b', 'c' }","new Object[] { 1, 2, 3 }","new Object[] { 1, 2, 3 }","new Object[] { 1, 2, 3 }"],"second":["new float[] { 1.0f, 2.0f, 3.0f }","new float[] { 1.0f, 2.0f, 4.0f }","new int[] { 1, 2, 3 }","new int[] { 1, 2, 4 }","new long[] { 1, 2, 3 }","new long[] { 1, 2, 4 }","new double[] { 1.0, 2.0, 3.0 }","new double[] { 1.0, 2.0, 4.0 }","new char[] { 'a', 'b', 'c' }","new char[] { 'a', 'b', 'd' }","new boolean[] { true, false }","new boolean[] { true, true }","new String[] { 'a', 'b', 'c' }","new String[] { 'a', 'b', 'd' }","new Object[] { 1, 2, 3 }","new Object[] { 1, 2, 4 }","new Object[] { 1, 2, 3, 4 }"],"expected":["true","false","true","false","true","false","true","false","true","false","true","false","true","false","true","false","false"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `Val.equals(..)` method compares two objects by value. [6]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The basis for the `equals` implementation of a `Val` property instance\n            is an equality comparison of the values they hold.\n            This is done by the `Val.equals(..)` method,\n            which you can access statically.\n        "]
+      },
+      "blocks":[
+        {"kind":"expect","text":"","code":["Val.equals(first, second) == expected"]},
+
+        {"kind":"where","text":"","code":{"first":["new float[] { 1.0f, 2.0f, 3.0f }","new float[] { 1.0f, 2.0f, 3.0f }","new int[] { 1, 2, 3 }","new int[] { 1, 2, 3 }","new long[] { 1, 2, 3 }","new long[] { 1, 2, 3 }","new double[] { 1.0, 2.0, 3.0 }","new double[] { 1.0, 2.0, 3.0 }","new char[] { 'a', 'b', 'c' }","new char[] { 'a', 'b', 'c' }","new boolean[] { true, false }","new boolean[] { true, false }","new String[] { 'a', 'b', 'c' }","new String[] { 'a', 'b', 'c' }","new Object[] { 1, 2, 3 }","new Object[] { 1, 2, 3 }","new Object[] { 1, 2, 3 }"],"second":["new float[] { 1.0f, 2.0f, 3.0f }","new float[] { 1.0f, 2.0f, 4.0f }","new int[] { 1, 2, 3 }","new int[] { 1, 2, 4 }","new long[] { 1, 2, 3 }","new long[] { 1, 2, 4 }","new double[] { 1.0, 2.0, 3.0 }","new double[] { 1.0, 2.0, 4.0 }","new char[] { 'a', 'b', 'c' }","new char[] { 'a', 'b', 'd' }","new boolean[] { true, false }","new boolean[] { true, true }","new String[] { 'a', 'b', 'c' }","new String[] { 'a', 'b', 'd' }","new Object[] { 1, 2, 3 }","new Object[] { 1, 2, 4 }","new Object[] { 1, 2, 3, 4 }"],"expected":["true","false","true","false","true","false","true","false","true","false","true","false","true","false","true","false","false"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `Val.equals(..)` method compares two objects by value. [7]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The basis for the `equals` implementation of a `Val` property instance\n            is an equality comparison of the values they hold.\n            This is done by the `Val.equals(..)` method,\n            which you can access statically.\n        "]
+      },
+      "blocks":[
+        {"kind":"expect","text":"","code":["Val.equals(first, second) == expected"]},
+
+        {"kind":"where","text":"","code":{"first":["new float[] { 1.0f, 2.0f, 3.0f }","new float[] { 1.0f, 2.0f, 3.0f }","new int[] { 1, 2, 3 }","new int[] { 1, 2, 3 }","new long[] { 1, 2, 3 }","new long[] { 1, 2, 3 }","new double[] { 1.0, 2.0, 3.0 }","new double[] { 1.0, 2.0, 3.0 }","new char[] { 'a', 'b', 'c' }","new char[] { 'a', 'b', 'c' }","new boolean[] { true, false }","new boolean[] { true, false }","new String[] { 'a', 'b', 'c' }","new String[] { 'a', 'b', 'c' }","new Object[] { 1, 2, 3 }","new Object[] { 1, 2, 3 }","new Object[] { 1, 2, 3 }"],"second":["new float[] { 1.0f, 2.0f, 3.0f }","new float[] { 1.0f, 2.0f, 4.0f }","new int[] { 1, 2, 3 }","new int[] { 1, 2, 4 }","new long[] { 1, 2, 3 }","new long[] { 1, 2, 4 }","new double[] { 1.0, 2.0, 3.0 }","new double[] { 1.0, 2.0, 4.0 }","new char[] { 'a', 'b', 'c' }","new char[] { 'a', 'b', 'd' }","new boolean[] { true, false }","new boolean[] { true, true }","new String[] { 'a', 'b', 'c' }","new String[] { 'a', 'b', 'd' }","new Object[] { 1, 2, 3 }","new Object[] { 1, 2, 4 }","new Object[] { 1, 2, 3, 4 }"],"expected":["true","false","true","false","true","false","true","false","true","false","true","false","true","false","true","false","false"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `Val.equals(..)` method compares two objects by value. [8]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The basis for the `equals` implementation of a `Val` property instance\n            is an equality comparison of the values they hold.\n            This is done by the `Val.equals(..)` method,\n            which you can access statically.\n        "]
+      },
+      "blocks":[
+        {"kind":"expect","text":"","code":["Val.equals(first, second) == expected"]},
+
+        {"kind":"where","text":"","code":{"first":["new float[] { 1.0f, 2.0f, 3.0f }","new float[] { 1.0f, 2.0f, 3.0f }","new int[] { 1, 2, 3 }","new int[] { 1, 2, 3 }","new long[] { 1, 2, 3 }","new long[] { 1, 2, 3 }","new double[] { 1.0, 2.0, 3.0 }","new double[] { 1.0, 2.0, 3.0 }","new char[] { 'a', 'b', 'c' }","new char[] { 'a', 'b', 'c' }","new boolean[] { true, false }","new boolean[] { true, false }","new String[] { 'a', 'b', 'c' }","new String[] { 'a', 'b', 'c' }","new Object[] { 1, 2, 3 }","new Object[] { 1, 2, 3 }","new Object[] { 1, 2, 3 }"],"second":["new float[] { 1.0f, 2.0f, 3.0f }","new float[] { 1.0f, 2.0f, 4.0f }","new int[] { 1, 2, 3 }","new int[] { 1, 2, 4 }","new long[] { 1, 2, 3 }","new long[] { 1, 2, 4 }","new double[] { 1.0, 2.0, 3.0 }","new double[] { 1.0, 2.0, 4.0 }","new char[] { 'a', 'b', 'c' }","new char[] { 'a', 'b', 'd' }","new boolean[] { true, false }","new boolean[] { true, true }","new String[] { 'a', 'b', 'c' }","new String[] { 'a', 'b', 'd' }","new Object[] { 1, 2, 3 }","new Object[] { 1, 2, 4 }","new Object[] { 1, 2, 3, 4 }"],"expected":["true","false","true","false","true","false","true","false","true","false","true","false","true","false","true","false","false"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `Val.equals(..)` method compares two objects by value. [9]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The basis for the `equals` implementation of a `Val` property instance\n            is an equality comparison of the values they hold.\n            This is done by the `Val.equals(..)` method,\n            which you can access statically.\n        "]
+      },
+      "blocks":[
+        {"kind":"expect","text":"","code":["Val.equals(first, second) == expected"]},
+
+        {"kind":"where","text":"","code":{"first":["new float[] { 1.0f, 2.0f, 3.0f }","new float[] { 1.0f, 2.0f, 3.0f }","new int[] { 1, 2, 3 }","new int[] { 1, 2, 3 }","new long[] { 1, 2, 3 }","new long[] { 1, 2, 3 }","new double[] { 1.0, 2.0, 3.0 }","new double[] { 1.0, 2.0, 3.0 }","new char[] { 'a', 'b', 'c' }","new char[] { 'a', 'b', 'c' }","new boolean[] { true, false }","new boolean[] { true, false }","new String[] { 'a', 'b', 'c' }","new String[] { 'a', 'b', 'c' }","new Object[] { 1, 2, 3 }","new Object[] { 1, 2, 3 }","new Object[] { 1, 2, 3 }"],"second":["new float[] { 1.0f, 2.0f, 3.0f }","new float[] { 1.0f, 2.0f, 4.0f }","new int[] { 1, 2, 3 }","new int[] { 1, 2, 4 }","new long[] { 1, 2, 3 }","new long[] { 1, 2, 4 }","new double[] { 1.0, 2.0, 3.0 }","new double[] { 1.0, 2.0, 4.0 }","new char[] { 'a', 'b', 'c' }","new char[] { 'a', 'b', 'd' }","new boolean[] { true, false }","new boolean[] { true, true }","new String[] { 'a', 'b', 'c' }","new String[] { 'a', 'b', 'd' }","new Object[] { 1, 2, 3 }","new Object[] { 1, 2, 4 }","new Object[] { 1, 2, 3, 4 }"],"expected":["true","false","true","false","true","false","true","false","true","false","true","false","true","false","true","false","false"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `Val.equals(..)` method compares two objects by value. [10]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The basis for the `equals` implementation of a `Val` property instance\n            is an equality comparison of the values they hold.\n            This is done by the `Val.equals(..)` method,\n            which you can access statically.\n        "]
+      },
+      "blocks":[
+        {"kind":"expect","text":"","code":["Val.equals(first, second) == expected"]},
+
+        {"kind":"where","text":"","code":{"first":["new float[] { 1.0f, 2.0f, 3.0f }","new float[] { 1.0f, 2.0f, 3.0f }","new int[] { 1, 2, 3 }","new int[] { 1, 2, 3 }","new long[] { 1, 2, 3 }","new long[] { 1, 2, 3 }","new double[] { 1.0, 2.0, 3.0 }","new double[] { 1.0, 2.0, 3.0 }","new char[] { 'a', 'b', 'c' }","new char[] { 'a', 'b', 'c' }","new boolean[] { true, false }","new boolean[] { true, false }","new String[] { 'a', 'b', 'c' }","new String[] { 'a', 'b', 'c' }","new Object[] { 1, 2, 3 }","new Object[] { 1, 2, 3 }","new Object[] { 1, 2, 3 }"],"second":["new float[] { 1.0f, 2.0f, 3.0f }","new float[] { 1.0f, 2.0f, 4.0f }","new int[] { 1, 2, 3 }","new int[] { 1, 2, 4 }","new long[] { 1, 2, 3 }","new long[] { 1, 2, 4 }","new double[] { 1.0, 2.0, 3.0 }","new double[] { 1.0, 2.0, 4.0 }","new char[] { 'a', 'b', 'c' }","new char[] { 'a', 'b', 'd' }","new boolean[] { true, false }","new boolean[] { true, true }","new String[] { 'a', 'b', 'c' }","new String[] { 'a', 'b', 'd' }","new Object[] { 1, 2, 3 }","new Object[] { 1, 2, 4 }","new Object[] { 1, 2, 3, 4 }"],"expected":["true","false","true","false","true","false","true","false","true","false","true","false","true","false","true","false","false"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `Val.equals(..)` method compares two objects by value. [11]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The basis for the `equals` implementation of a `Val` property instance\n            is an equality comparison of the values they hold.\n            This is done by the `Val.equals(..)` method,\n            which you can access statically.\n        "]
+      },
+      "blocks":[
+        {"kind":"expect","text":"","code":["Val.equals(first, second) == expected"]},
+
+        {"kind":"where","text":"","code":{"first":["new float[] { 1.0f, 2.0f, 3.0f }","new float[] { 1.0f, 2.0f, 3.0f }","new int[] { 1, 2, 3 }","new int[] { 1, 2, 3 }","new long[] { 1, 2, 3 }","new long[] { 1, 2, 3 }","new double[] { 1.0, 2.0, 3.0 }","new double[] { 1.0, 2.0, 3.0 }","new char[] { 'a', 'b', 'c' }","new char[] { 'a', 'b', 'c' }","new boolean[] { true, false }","new boolean[] { true, false }","new String[] { 'a', 'b', 'c' }","new String[] { 'a', 'b', 'c' }","new Object[] { 1, 2, 3 }","new Object[] { 1, 2, 3 }","new Object[] { 1, 2, 3 }"],"second":["new float[] { 1.0f, 2.0f, 3.0f }","new float[] { 1.0f, 2.0f, 4.0f }","new int[] { 1, 2, 3 }","new int[] { 1, 2, 4 }","new long[] { 1, 2, 3 }","new long[] { 1, 2, 4 }","new double[] { 1.0, 2.0, 3.0 }","new double[] { 1.0, 2.0, 4.0 }","new char[] { 'a', 'b', 'c' }","new char[] { 'a', 'b', 'd' }","new boolean[] { true, false }","new boolean[] { true, true }","new String[] { 'a', 'b', 'c' }","new String[] { 'a', 'b', 'd' }","new Object[] { 1, 2, 3 }","new Object[] { 1, 2, 4 }","new Object[] { 1, 2, 3, 4 }"],"expected":["true","false","true","false","true","false","true","false","true","false","true","false","true","false","true","false","false"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `Val.equals(..)` method compares two objects by value. [12]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The basis for the `equals` implementation of a `Val` property instance\n            is an equality comparison of the values they hold.\n            This is done by the `Val.equals(..)` method,\n            which you can access statically.\n        "]
+      },
+      "blocks":[
+        {"kind":"expect","text":"","code":["Val.equals(first, second) == expected"]},
+
+        {"kind":"where","text":"","code":{"first":["new float[] { 1.0f, 2.0f, 3.0f }","new float[] { 1.0f, 2.0f, 3.0f }","new int[] { 1, 2, 3 }","new int[] { 1, 2, 3 }","new long[] { 1, 2, 3 }","new long[] { 1, 2, 3 }","new double[] { 1.0, 2.0, 3.0 }","new double[] { 1.0, 2.0, 3.0 }","new char[] { 'a', 'b', 'c' }","new char[] { 'a', 'b', 'c' }","new boolean[] { true, false }","new boolean[] { true, false }","new String[] { 'a', 'b', 'c' }","new String[] { 'a', 'b', 'c' }","new Object[] { 1, 2, 3 }","new Object[] { 1, 2, 3 }","new Object[] { 1, 2, 3 }"],"second":["new float[] { 1.0f, 2.0f, 3.0f }","new float[] { 1.0f, 2.0f, 4.0f }","new int[] { 1, 2, 3 }","new int[] { 1, 2, 4 }","new long[] { 1, 2, 3 }","new long[] { 1, 2, 4 }","new double[] { 1.0, 2.0, 3.0 }","new double[] { 1.0, 2.0, 4.0 }","new char[] { 'a', 'b', 'c' }","new char[] { 'a', 'b', 'd' }","new boolean[] { true, false }","new boolean[] { true, true }","new String[] { 'a', 'b', 'c' }","new String[] { 'a', 'b', 'd' }","new Object[] { 1, 2, 3 }","new Object[] { 1, 2, 4 }","new Object[] { 1, 2, 3, 4 }"],"expected":["true","false","true","false","true","false","true","false","true","false","true","false","true","false","true","false","false"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `Val.equals(..)` method compares two objects by value. [13]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The basis for the `equals` implementation of a `Val` property instance\n            is an equality comparison of the values they hold.\n            This is done by the `Val.equals(..)` method,\n            which you can access statically.\n        "]
+      },
+      "blocks":[
+        {"kind":"expect","text":"","code":["Val.equals(first, second) == expected"]},
+
+        {"kind":"where","text":"","code":{"first":["new float[] { 1.0f, 2.0f, 3.0f }","new float[] { 1.0f, 2.0f, 3.0f }","new int[] { 1, 2, 3 }","new int[] { 1, 2, 3 }","new long[] { 1, 2, 3 }","new long[] { 1, 2, 3 }","new double[] { 1.0, 2.0, 3.0 }","new double[] { 1.0, 2.0, 3.0 }","new char[] { 'a', 'b', 'c' }","new char[] { 'a', 'b', 'c' }","new boolean[] { true, false }","new boolean[] { true, false }","new String[] { 'a', 'b', 'c' }","new String[] { 'a', 'b', 'c' }","new Object[] { 1, 2, 3 }","new Object[] { 1, 2, 3 }","new Object[] { 1, 2, 3 }"],"second":["new float[] { 1.0f, 2.0f, 3.0f }","new float[] { 1.0f, 2.0f, 4.0f }","new int[] { 1, 2, 3 }","new int[] { 1, 2, 4 }","new long[] { 1, 2, 3 }","new long[] { 1, 2, 4 }","new double[] { 1.0, 2.0, 3.0 }","new double[] { 1.0, 2.0, 4.0 }","new char[] { 'a', 'b', 'c' }","new char[] { 'a', 'b', 'd' }","new boolean[] { true, false }","new boolean[] { true, true }","new String[] { 'a', 'b', 'c' }","new String[] { 'a', 'b', 'd' }","new Object[] { 1, 2, 3 }","new Object[] { 1, 2, 4 }","new Object[] { 1, 2, 3, 4 }"],"expected":["true","false","true","false","true","false","true","false","true","false","true","false","true","false","true","false","false"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `Val.equals(..)` method compares two objects by value. [14]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The basis for the `equals` implementation of a `Val` property instance\n            is an equality comparison of the values they hold.\n            This is done by the `Val.equals(..)` method,\n            which you can access statically.\n        "]
+      },
+      "blocks":[
+        {"kind":"expect","text":"","code":["Val.equals(first, second) == expected"]},
+
+        {"kind":"where","text":"","code":{"first":["new float[] { 1.0f, 2.0f, 3.0f }","new float[] { 1.0f, 2.0f, 3.0f }","new int[] { 1, 2, 3 }","new int[] { 1, 2, 3 }","new long[] { 1, 2, 3 }","new long[] { 1, 2, 3 }","new double[] { 1.0, 2.0, 3.0 }","new double[] { 1.0, 2.0, 3.0 }","new char[] { 'a', 'b', 'c' }","new char[] { 'a', 'b', 'c' }","new boolean[] { true, false }","new boolean[] { true, false }","new String[] { 'a', 'b', 'c' }","new String[] { 'a', 'b', 'c' }","new Object[] { 1, 2, 3 }","new Object[] { 1, 2, 3 }","new Object[] { 1, 2, 3 }"],"second":["new float[] { 1.0f, 2.0f, 3.0f }","new float[] { 1.0f, 2.0f, 4.0f }","new int[] { 1, 2, 3 }","new int[] { 1, 2, 4 }","new long[] { 1, 2, 3 }","new long[] { 1, 2, 4 }","new double[] { 1.0, 2.0, 3.0 }","new double[] { 1.0, 2.0, 4.0 }","new char[] { 'a', 'b', 'c' }","new char[] { 'a', 'b', 'd' }","new boolean[] { true, false }","new boolean[] { true, true }","new String[] { 'a', 'b', 'c' }","new String[] { 'a', 'b', 'd' }","new Object[] { 1, 2, 3 }","new Object[] { 1, 2, 4 }","new Object[] { 1, 2, 3, 4 }"],"expected":["true","false","true","false","true","false","true","false","true","false","true","false","true","false","true","false","false"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `Val.equals(..)` method compares two objects by value. [15]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The basis for the `equals` implementation of a `Val` property instance\n            is an equality comparison of the values they hold.\n            This is done by the `Val.equals(..)` method,\n            which you can access statically.\n        "]
+      },
+      "blocks":[
+        {"kind":"expect","text":"","code":["Val.equals(first, second) == expected"]},
+
+        {"kind":"where","text":"","code":{"first":["new float[] { 1.0f, 2.0f, 3.0f }","new float[] { 1.0f, 2.0f, 3.0f }","new int[] { 1, 2, 3 }","new int[] { 1, 2, 3 }","new long[] { 1, 2, 3 }","new long[] { 1, 2, 3 }","new double[] { 1.0, 2.0, 3.0 }","new double[] { 1.0, 2.0, 3.0 }","new char[] { 'a', 'b', 'c' }","new char[] { 'a', 'b', 'c' }","new boolean[] { true, false }","new boolean[] { true, false }","new String[] { 'a', 'b', 'c' }","new String[] { 'a', 'b', 'c' }","new Object[] { 1, 2, 3 }","new Object[] { 1, 2, 3 }","new Object[] { 1, 2, 3 }"],"second":["new float[] { 1.0f, 2.0f, 3.0f }","new float[] { 1.0f, 2.0f, 4.0f }","new int[] { 1, 2, 3 }","new int[] { 1, 2, 4 }","new long[] { 1, 2, 3 }","new long[] { 1, 2, 4 }","new double[] { 1.0, 2.0, 3.0 }","new double[] { 1.0, 2.0, 4.0 }","new char[] { 'a', 'b', 'c' }","new char[] { 'a', 'b', 'd' }","new boolean[] { true, false }","new boolean[] { true, true }","new String[] { 'a', 'b', 'c' }","new String[] { 'a', 'b', 'd' }","new Object[] { 1, 2, 3 }","new Object[] { 1, 2, 4 }","new Object[] { 1, 2, 3, 4 }"],"expected":["true","false","true","false","true","false","true","false","true","false","true","false","true","false","true","false","false"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `Val.equals(..)` method compares two objects by value. [16]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The basis for the `equals` implementation of a `Val` property instance\n            is an equality comparison of the values they hold.\n            This is done by the `Val.equals(..)` method,\n            which you can access statically.\n        "]
+      },
+      "blocks":[
+        {"kind":"expect","text":"","code":["Val.equals(first, second) == expected"]},
+
+        {"kind":"where","text":"","code":{"first":["new float[] { 1.0f, 2.0f, 3.0f }","new float[] { 1.0f, 2.0f, 3.0f }","new int[] { 1, 2, 3 }","new int[] { 1, 2, 3 }","new long[] { 1, 2, 3 }","new long[] { 1, 2, 3 }","new double[] { 1.0, 2.0, 3.0 }","new double[] { 1.0, 2.0, 3.0 }","new char[] { 'a', 'b', 'c' }","new char[] { 'a', 'b', 'c' }","new boolean[] { true, false }","new boolean[] { true, false }","new String[] { 'a', 'b', 'c' }","new String[] { 'a', 'b', 'c' }","new Object[] { 1, 2, 3 }","new Object[] { 1, 2, 3 }","new Object[] { 1, 2, 3 }"],"second":["new float[] { 1.0f, 2.0f, 3.0f }","new float[] { 1.0f, 2.0f, 4.0f }","new int[] { 1, 2, 3 }","new int[] { 1, 2, 4 }","new long[] { 1, 2, 3 }","new long[] { 1, 2, 4 }","new double[] { 1.0, 2.0, 3.0 }","new double[] { 1.0, 2.0, 4.0 }","new char[] { 'a', 'b', 'c' }","new char[] { 'a', 'b', 'd' }","new boolean[] { true, false }","new boolean[] { true, true }","new String[] { 'a', 'b', 'c' }","new String[] { 'a', 'b', 'd' }","new Object[] { 1, 2, 3 }","new Object[] { 1, 2, 4 }","new Object[] { 1, 2, 3, 4 }"],"expected":["true","false","true","false","true","false","true","false","true","false","true","false","true","false","true","false","false"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `Val.hashCode(..)` method returns the hash code of the value. [0]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `hashCode` implementation of a `Val` property instance\n            is based on the hash code of the value they hold.\n            This is done by the `Val.hashCode(..)` method,\n            which you can access statically.\n        "]
+      },
+      "blocks":[
+        {"kind":"expect","text":"","code":["Val.hashCode(value) == expected"]},
+
+        {"kind":"where","text":"","code":{"value":["new float[] { 1.0f, 2.0f, 3.0f }","new int[] { 1, 2, 3 }","new long[] { 1, 2, 3 }","new double[] { 1.0, 2.0, 3.0 }","new char[] { 'a', 'b', 'c' }","new boolean[] { true, false }","new String[] { 'a', 'b', 'c' }","new Object[] { 1, 2, 3 }"],"expected":["[1.0f, 2.0f, 3.0f].hashCode()","[1, 2, 3].hashCode()","[1, 2, 3].hashCode()","[1d, 2d, 3d].hashCode()","['a', 'b', 'c'].hashCode()","[true, false].hashCode()","['a', 'b', 'c'].hashCode()","[1, 2, 3].hashCode()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `Val.hashCode(..)` method returns the hash code of the value. [1]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `hashCode` implementation of a `Val` property instance\n            is based on the hash code of the value they hold.\n            This is done by the `Val.hashCode(..)` method,\n            which you can access statically.\n        "]
+      },
+      "blocks":[
+        {"kind":"expect","text":"","code":["Val.hashCode(value) == expected"]},
+
+        {"kind":"where","text":"","code":{"value":["new float[] { 1.0f, 2.0f, 3.0f }","new int[] { 1, 2, 3 }","new long[] { 1, 2, 3 }","new double[] { 1.0, 2.0, 3.0 }","new char[] { 'a', 'b', 'c' }","new boolean[] { true, false }","new String[] { 'a', 'b', 'c' }","new Object[] { 1, 2, 3 }"],"expected":["[1.0f, 2.0f, 3.0f].hashCode()","[1, 2, 3].hashCode()","[1, 2, 3].hashCode()","[1d, 2d, 3d].hashCode()","['a', 'b', 'c'].hashCode()","[true, false].hashCode()","['a', 'b', 'c'].hashCode()","[1, 2, 3].hashCode()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `Val.hashCode(..)` method returns the hash code of the value. [2]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `hashCode` implementation of a `Val` property instance\n            is based on the hash code of the value they hold.\n            This is done by the `Val.hashCode(..)` method,\n            which you can access statically.\n        "]
+      },
+      "blocks":[
+        {"kind":"expect","text":"","code":["Val.hashCode(value) == expected"]},
+
+        {"kind":"where","text":"","code":{"value":["new float[] { 1.0f, 2.0f, 3.0f }","new int[] { 1, 2, 3 }","new long[] { 1, 2, 3 }","new double[] { 1.0, 2.0, 3.0 }","new char[] { 'a', 'b', 'c' }","new boolean[] { true, false }","new String[] { 'a', 'b', 'c' }","new Object[] { 1, 2, 3 }"],"expected":["[1.0f, 2.0f, 3.0f].hashCode()","[1, 2, 3].hashCode()","[1, 2, 3].hashCode()","[1d, 2d, 3d].hashCode()","['a', 'b', 'c'].hashCode()","[true, false].hashCode()","['a', 'b', 'c'].hashCode()","[1, 2, 3].hashCode()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `Val.hashCode(..)` method returns the hash code of the value. [3]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `hashCode` implementation of a `Val` property instance\n            is based on the hash code of the value they hold.\n            This is done by the `Val.hashCode(..)` method,\n            which you can access statically.\n        "]
+      },
+      "blocks":[
+        {"kind":"expect","text":"","code":["Val.hashCode(value) == expected"]},
+
+        {"kind":"where","text":"","code":{"value":["new float[] { 1.0f, 2.0f, 3.0f }","new int[] { 1, 2, 3 }","new long[] { 1, 2, 3 }","new double[] { 1.0, 2.0, 3.0 }","new char[] { 'a', 'b', 'c' }","new boolean[] { true, false }","new String[] { 'a', 'b', 'c' }","new Object[] { 1, 2, 3 }"],"expected":["[1.0f, 2.0f, 3.0f].hashCode()","[1, 2, 3].hashCode()","[1, 2, 3].hashCode()","[1d, 2d, 3d].hashCode()","['a', 'b', 'c'].hashCode()","[true, false].hashCode()","['a', 'b', 'c'].hashCode()","[1, 2, 3].hashCode()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `Val.hashCode(..)` method returns the hash code of the value. [4]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `hashCode` implementation of a `Val` property instance\n            is based on the hash code of the value they hold.\n            This is done by the `Val.hashCode(..)` method,\n            which you can access statically.\n        "]
+      },
+      "blocks":[
+        {"kind":"expect","text":"","code":["Val.hashCode(value) == expected"]},
+
+        {"kind":"where","text":"","code":{"value":["new float[] { 1.0f, 2.0f, 3.0f }","new int[] { 1, 2, 3 }","new long[] { 1, 2, 3 }","new double[] { 1.0, 2.0, 3.0 }","new char[] { 'a', 'b', 'c' }","new boolean[] { true, false }","new String[] { 'a', 'b', 'c' }","new Object[] { 1, 2, 3 }"],"expected":["[1.0f, 2.0f, 3.0f].hashCode()","[1, 2, 3].hashCode()","[1, 2, 3].hashCode()","[1d, 2d, 3d].hashCode()","['a', 'b', 'c'].hashCode()","[true, false].hashCode()","['a', 'b', 'c'].hashCode()","[1, 2, 3].hashCode()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `Val.hashCode(..)` method returns the hash code of the value. [5]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `hashCode` implementation of a `Val` property instance\n            is based on the hash code of the value they hold.\n            This is done by the `Val.hashCode(..)` method,\n            which you can access statically.\n        "]
+      },
+      "blocks":[
+        {"kind":"expect","text":"","code":["Val.hashCode(value) == expected"]},
+
+        {"kind":"where","text":"","code":{"value":["new float[] { 1.0f, 2.0f, 3.0f }","new int[] { 1, 2, 3 }","new long[] { 1, 2, 3 }","new double[] { 1.0, 2.0, 3.0 }","new char[] { 'a', 'b', 'c' }","new boolean[] { true, false }","new String[] { 'a', 'b', 'c' }","new Object[] { 1, 2, 3 }"],"expected":["[1.0f, 2.0f, 3.0f].hashCode()","[1, 2, 3].hashCode()","[1, 2, 3].hashCode()","[1d, 2d, 3d].hashCode()","['a', 'b', 'c'].hashCode()","[true, false].hashCode()","['a', 'b', 'c'].hashCode()","[1, 2, 3].hashCode()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `Val.hashCode(..)` method returns the hash code of the value. [6]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `hashCode` implementation of a `Val` property instance\n            is based on the hash code of the value they hold.\n            This is done by the `Val.hashCode(..)` method,\n            which you can access statically.\n        "]
+      },
+      "blocks":[
+        {"kind":"expect","text":"","code":["Val.hashCode(value) == expected"]},
+
+        {"kind":"where","text":"","code":{"value":["new float[] { 1.0f, 2.0f, 3.0f }","new int[] { 1, 2, 3 }","new long[] { 1, 2, 3 }","new double[] { 1.0, 2.0, 3.0 }","new char[] { 'a', 'b', 'c' }","new boolean[] { true, false }","new String[] { 'a', 'b', 'c' }","new Object[] { 1, 2, 3 }"],"expected":["[1.0f, 2.0f, 3.0f].hashCode()","[1, 2, 3].hashCode()","[1, 2, 3].hashCode()","[1d, 2d, 3d].hashCode()","['a', 'b', 'c'].hashCode()","[true, false].hashCode()","['a', 'b', 'c'].hashCode()","[1, 2, 3].hashCode()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `Val.hashCode(..)` method returns the hash code of the value. [7]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `hashCode` implementation of a `Val` property instance\n            is based on the hash code of the value they hold.\n            This is done by the `Val.hashCode(..)` method,\n            which you can access statically.\n        "]
+      },
+      "blocks":[
+        {"kind":"expect","text":"","code":["Val.hashCode(value) == expected"]},
+
+        {"kind":"where","text":"","code":{"value":["new float[] { 1.0f, 2.0f, 3.0f }","new int[] { 1, 2, 3 }","new long[] { 1, 2, 3 }","new double[] { 1.0, 2.0, 3.0 }","new char[] { 'a', 'b', 'c' }","new boolean[] { true, false }","new String[] { 'a', 'b', 'c' }","new Object[] { 1, 2, 3 }"],"expected":["[1.0f, 2.0f, 3.0f].hashCode()","[1, 2, 3].hashCode()","[1, 2, 3].hashCode()","[1d, 2d, 3d].hashCode()","['a', 'b', 'c'].hashCode()","[true, false].hashCode()","['a', 'b', 'c'].hashCode()","[1, 2, 3].hashCode()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use `isOneOf(..)` to check if a property item is equal to one of the provided items.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `isOneOf(..)` method is a shorthand for checking if the wrapped value of a property\n            is equal to one of the provided items.\n        "]
+      },
+      "blocks":[
+        {"kind":"expect","text":"","code":["Val.of(42).isOneOf(24, 42, 7)","!Val.of(4).isOneOf(1, -1, 0)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use `isOneOf(..)` to check if property item is equal to an item in an array of provided properties.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `isOneOf(..)` method is a shorthand for checking if the wrapped value of a property\n            is equal to one of the provided items.\n        "]
+      },
+      "blocks":[
+        {"kind":"expect","text":"","code":["Val.of(2).isOneOf(Val.of(1), Val.of(2), Val.of(3))","!Val.of(42).isOneOf(Val.of(11), Val.of(7), Val.of(4))"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `or(Supplier)` method allows you to provide a fallback property if the property is empty.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `or` method is similar to the `or` method on `Optional`.\n            If the current property is empty (i.e. `null`), the `supplier` is called\n            and the first non-null value is returned.\n        "]
+      },
+      "blocks":[
+        {"kind":"expect","text":"","code":["Val.ofNull(Integer).or(() -> Val.of(42)).get() == 42","Val.of(42).or(() -> Val.of(24)).get() == 42"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use `ifPresentOrElse(..)` to execute a consumer if the property is not empty, otherwise execute a runnable.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `ifPresentOrElse` method is similar to the `ifPresentOrElse` method on `Optional`.\n            If the current property is not empty (i.e. not `null`), the `consumer` is called.\n            Otherwise, the `runnable` is executed.\n        "]
+      },
+      "blocks":[
+        {"kind":"expect","text":"","code":["def result = 0","Val.of(42).ifPresentOrElse({ result = it }, { result = -1 })","result == 42","Val.ofNull(Integer).ifPresentOrElse({ result = it }, { result = -1 })","result == -1"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use `orElseGet(..)` to provide a fallback value if the property is empty.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `orElseGet` method is similar to the `orElseGet` method on `Optional`.\n            If the current property is empty (i.e. `null`), the `supplier` is called\n            and the first non-null value is returned.\n        "]
+      },
+      "blocks":[
+        {"kind":"expect","text":"","code":["Val.ofNull(Integer).orElseGet(() -> 42) == 42","Val.of(42).orElseGet(() -> 24) == 42"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use `orElseNullable(T)` to provide a fallback value if the property is empty.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `orElseNullable` method is similar to the `orElse` method on `Optional`.\n            If the current property is empty (i.e. `null`), the provided value is returned.\n        "]
+      },
+      "blocks":[
+        {"kind":"expect","text":"","code":["Val.ofNull(Integer).orElseNullable(42) == 42","Val.of(42).orElseNullable(24) == 42","Val.ofNull(Integer).orElseNullable(null) == null"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `orElse(T)` method throws an exception when passing null to it.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `orElse` method is similar to the `orElse` method on `Optional`\n            with the exception that it throws an `NullPointerException` when\n            passing `null` to it.\n            Use `orElseNullable` if you want to return `null` as a fallback value.\n            If the current property is empty (i.e. `null`), the provided value is returned,\n            otherwise the value of the property is returned.\n        "]
+      },
+      "blocks":[
+        {"kind":"expect","text":"","code":["Val.ofNull(Integer).orElse(42) == 42","Val.of(42).orElse(24) == 42"]},
+
+        {"kind":"when","text":"","code":["Val.ofNull(Integer).orElse(null)"]},
+
+        {"kind":"then","text":"","code":["thrown(NullPointerException)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    }
+  
+  ],
+  "generator":"https://github.com/renatoathaydes/spock-reports"
+}

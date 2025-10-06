@@ -1,0 +1,415 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LinkedAssociation.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sprouts</a> &gt; <a href="index.source.html" class="el_package">sprouts.impl</a> &gt; <span class="el_source">LinkedAssociation.java</span></div><h1>LinkedAssociation.java</h1><pre class="source lang-java linenums">package sprouts.impl;
+
+import org.jspecify.annotations.Nullable;
+import sprouts.Association;
+import sprouts.Pair;
+import sprouts.Tuple;
+import sprouts.ValueSet;
+
+import java.util.*;
+import java.util.stream.StreamSupport;
+
+final class LinkedAssociation&lt;K,V&gt; implements Association&lt;K, V&gt;
+{
+    private static final class LinkedEntry&lt;K, V&gt; {
+        private final V value;
+        private final @Nullable K previousKey;
+        private final @Nullable K nextKey;
+
+<span class="fc" id="L19">        LinkedEntry(V value, @Nullable K previousKey, @Nullable K nextKey) {</span>
+<span class="fc" id="L20">            this.value = value;</span>
+<span class="fc" id="L21">            this.previousKey = previousKey;</span>
+<span class="fc" id="L22">            this.nextKey = nextKey;</span>
+<span class="fc" id="L23">        }</span>
+        V value() {
+<span class="fc" id="L25">            return this.value;</span>
+        }
+        @Nullable
+        K previousKey() {
+<span class="fc" id="L29">            return this.previousKey;</span>
+        }
+        @Nullable
+        K nextKey() {
+<span class="fc" id="L33">            return this.nextKey;</span>
+        }
+        LinkedEntry&lt;K,V&gt; withValue(V value) {
+<span class="fc" id="L36">            return new LinkedEntry&lt;&gt;(value, this.previousKey, this.nextKey);</span>
+        }
+        LinkedEntry&lt;K,V&gt; withPreviousKey(@Nullable K previousKey) {
+<span class="fc" id="L39">            return new LinkedEntry&lt;&gt;(this.value, previousKey, this.nextKey);</span>
+        }
+        LinkedEntry&lt;K,V&gt; withNextKey(@Nullable K nextKey) {
+<span class="fc" id="L42">            return new LinkedEntry&lt;&gt;(this.value, this.previousKey, nextKey);</span>
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+<span class="pc bpc" id="L47" title="1 of 2 branches missed.">            if (this == obj) return true;</span>
+<span class="pc bpc" id="L48" title="1 of 2 branches missed.">            if (!(obj instanceof LinkedEntry)) return false;</span>
+<span class="fc" id="L49">            LinkedEntry&lt;?, ?&gt; entry = (LinkedEntry&lt;?, ?&gt;) obj;</span>
+<span class="fc bfc" id="L50" title="All 2 branches covered.">            return Objects.equals(value, entry.value) &amp;&amp;</span>
+<span class="fc bfc" id="L51" title="All 2 branches covered.">                   Objects.equals(previousKey, entry.previousKey) &amp;&amp;</span>
+<span class="pc bpc" id="L52" title="1 of 2 branches missed.">                   Objects.equals(nextKey, entry.nextKey);</span>
+        }
+        @Override
+        public int hashCode() {
+<span class="nc" id="L56">            return Objects.hash(value, previousKey, nextKey);</span>
+        }
+        @Override
+        public String toString() {
+<span class="nc" id="L60">            return &quot;LinkedEntry[value=&quot; + value +</span>
+                   &quot;, previousKey=&quot; + previousKey +
+                   &quot;, nextKey=&quot; + nextKey + &quot;]&quot;;
+        }
+    }
+
+    private final Class&lt;V&gt; _valueType;
+    private final AssociationImpl&lt;K, LinkedEntry&lt;K, V&gt;&gt; _entries;
+    private final @Nullable K _firstInsertedKey;
+    private final @Nullable K _lastInsertedKey;
+
+    LinkedAssociation(
+        final Class&lt;K&gt; keyType,
+        final Class&lt;V&gt; valueType
+    ) {
+<span class="fc" id="L75">        this(valueType, new AssociationImpl(keyType, LinkedEntry.class), null, null);</span>
+<span class="fc" id="L76">    }</span>
+
+    private LinkedAssociation(
+            final Class&lt;V&gt; valueType,
+            final AssociationImpl&lt;K, LinkedEntry&lt;K, V&gt;&gt; entries,
+            final @Nullable K firstInsertedKey,
+            final @Nullable K lastInsertedKey
+<span class="fc" id="L83">    ) {</span>
+<span class="fc" id="L84">        _valueType = valueType;</span>
+<span class="fc" id="L85">        _entries = entries;</span>
+<span class="fc bfc" id="L86" title="All 2 branches covered.">        _firstInsertedKey = firstInsertedKey != null ? firstInsertedKey : lastInsertedKey;</span>
+<span class="fc" id="L87">        _lastInsertedKey = lastInsertedKey;</span>
+<span class="fc" id="L88">    }</span>
+
+
+
+    @Override
+    public int size() {
+<span class="fc" id="L94">        return _entries.size();</span>
+    }
+
+    @Override
+    public boolean isLinked() {
+<span class="fc" id="L99">        return true;</span>
+    }
+
+    @Override
+    public boolean isSorted() {
+<span class="fc" id="L104">        return false;</span>
+    }
+
+    @Override
+    public Class&lt;K&gt; keyType() {
+<span class="fc" id="L109">        return _entries.keyType();</span>
+    }
+
+    @Override
+    public Class&lt;V&gt; valueType() {
+<span class="fc" id="L114">        return _valueType;</span>
+    }
+
+    @Override
+    public ValueSet&lt;K&gt; keySet() {
+<span class="fc" id="L119">        return StreamSupport.stream(spliterator(), false)</span>
+<span class="fc" id="L120">                .reduce(</span>
+<span class="fc" id="L121">                        new LinkedValueSet&lt;&gt;(keyType()),</span>
+<span class="fc" id="L122">                        (set, pair) -&gt; (LinkedValueSet&lt;K&gt;) set.add(pair.first()),</span>
+<span class="nc" id="L123">                        (a, b) -&gt; a</span>
+                );
+    }
+
+    @Override
+    public Tuple&lt;V&gt; values() {
+<span class="fc" id="L129">        return StreamSupport.stream(spliterator(), false)</span>
+<span class="fc" id="L130">                .map(Pair::second)</span>
+<span class="fc" id="L131">                .collect(Tuple.collectorOf(valueType()));</span>
+    }
+
+    @Override
+    public boolean containsKey(K key) {
+<span class="fc" id="L136">        return _entries.containsKey(key);</span>
+    }
+
+    @Override
+    public Optional&lt;V&gt; get(K key) {
+<span class="fc" id="L141">        return _entries.get(key).map(LinkedEntry::value);</span>
+    }
+
+    @Override
+    public Association&lt;K, V&gt; put(K key, V value) {
+<span class="fc bfc" id="L146" title="All 4 branches covered.">        if (key == null || value == null) {</span>
+<span class="fc" id="L147">            throw new NullPointerException(&quot;Key and value must not be null&quot;);</span>
+        }
+<span class="fc bfc" id="L149" title="All 2 branches covered.">        if ( !_entries.keyType().isAssignableFrom(key.getClass()) ) {</span>
+<span class="fc" id="L150">            throw new IllegalArgumentException(</span>
+<span class="fc" id="L151">                    &quot;The given key '&quot; + key + &quot;' is of type '&quot; + key.getClass().getSimpleName() + &quot;', &quot; +</span>
+<span class="fc" id="L152">                            &quot;instead of the expected type '&quot; + _entries.keyType() + &quot;'.&quot;</span>
+            );
+        }
+<span class="fc bfc" id="L155" title="All 2 branches covered.">        if ( !_valueType.isAssignableFrom(value.getClass()) ) {</span>
+<span class="fc" id="L156">            throw new IllegalArgumentException(</span>
+<span class="fc" id="L157">                    &quot;The given value '&quot; + value + &quot;' is of type '&quot; + value.getClass().getSimpleName() + &quot;', &quot; +</span>
+                            &quot;instead of the expected type '&quot; + _valueType + &quot;'.&quot;
+            );
+        }
+<span class="fc" id="L161">        Optional&lt;LinkedEntry&lt;K, V&gt;&gt; entry = _entries.get(key);</span>
+<span class="fc bfc" id="L162" title="All 2 branches covered.">        if (entry.isPresent()) {</span>
+<span class="fc bfc" id="L163" title="All 2 branches covered.">            if (entry.get().value().equals(value)) {</span>
+                // If the value is the same, we do not need to change anything
+<span class="fc" id="L165">                return this;</span>
+            }
+<span class="fc" id="L167">            LinkedEntry&lt;K, V&gt; existingEntry = entry.get();</span>
+<span class="fc" id="L168">            AssociationImpl&lt;K, LinkedEntry&lt;K, V&gt;&gt; newEntries = (AssociationImpl)_entries.put(</span>
+                    key,
+<span class="fc" id="L170">                    existingEntry.withValue(value)</span>
+            );
+<span class="fc" id="L172">            return new LinkedAssociation&lt;&gt;(valueType(), newEntries, _firstInsertedKey, _lastInsertedKey);</span>
+        } else {
+            // If the key does not exist, we create a new entry
+<span class="fc" id="L175">            LinkedEntry&lt;K, V&gt; newEntry = new LinkedEntry&lt;&gt;(value, _lastInsertedKey, null);</span>
+<span class="fc" id="L176">            AssociationImpl&lt;K, LinkedEntry&lt;K, V&gt;&gt; newEntries = (AssociationImpl)_entries.put(</span>
+                    key,
+                    newEntry
+            );
+<span class="fc bfc" id="L180" title="All 2 branches covered.">            if (_lastInsertedKey != null) {</span>
+                // Update the previous entry's nextKey to point to the new key
+<span class="fc" id="L182">                Optional&lt;LinkedEntry&lt;K, V&gt;&gt; lastEntry = _entries.get(_lastInsertedKey);</span>
+<span class="pc bpc" id="L183" title="1 of 2 branches missed.">                if (lastEntry.isPresent()) {</span>
+<span class="fc" id="L184">                    LinkedEntry&lt;K, V&gt; updatedLastEntry = lastEntry.get().withNextKey(key);</span>
+<span class="fc" id="L185">                    newEntries = (AssociationImpl)newEntries.put(</span>
+                            _lastInsertedKey,
+                            updatedLastEntry
+                    );
+                }
+            }
+<span class="fc" id="L191">            return new LinkedAssociation&lt;&gt;(valueType(), newEntries, _firstInsertedKey, key);</span>
+        }
+    }
+
+    @Override
+    public Association&lt;K, V&gt; putIfAbsent(K key, V value) {
+<span class="fc bfc" id="L197" title="All 4 branches covered.">        if (key == null || value == null) {</span>
+<span class="fc" id="L198">            throw new NullPointerException(&quot;Key and value must not be null&quot;);</span>
+        }
+<span class="fc bfc" id="L200" title="All 2 branches covered.">        if ( !_entries.keyType().isAssignableFrom(key.getClass()) ) {</span>
+<span class="fc" id="L201">            throw new IllegalArgumentException(</span>
+<span class="fc" id="L202">                    &quot;The given key '&quot; + key + &quot;' is of type '&quot; + key.getClass().getSimpleName() + &quot;', &quot; +</span>
+<span class="fc" id="L203">                    &quot;instead of the expected type '&quot; + _entries.keyType() + &quot;'.&quot;</span>
+                );
+        }
+<span class="fc bfc" id="L206" title="All 2 branches covered.">        if ( !_valueType.isAssignableFrom(value.getClass()) ) {</span>
+<span class="fc" id="L207">            throw new IllegalArgumentException(</span>
+<span class="fc" id="L208">                    &quot;The given value '&quot; + value + &quot;' is of type '&quot; + value.getClass().getSimpleName() + &quot;', &quot; +</span>
+                    &quot;instead of the expected type '&quot; + _valueType + &quot;'.&quot;
+                );
+        }
+<span class="fc" id="L212">        Optional&lt;LinkedEntry&lt;K, V&gt;&gt; entry = _entries.get(key);</span>
+<span class="fc bfc" id="L213" title="All 2 branches covered.">        if (entry.isPresent()) {</span>
+            // If the key already exists, we do nothing
+<span class="fc" id="L215">            return this;</span>
+        } else {
+            // If the key does not exist, we create a new entry
+<span class="fc" id="L218">            LinkedEntry&lt;K, V&gt; newEntry = new LinkedEntry&lt;&gt;(value, _lastInsertedKey, null);</span>
+<span class="fc" id="L219">            AssociationImpl&lt;K, LinkedEntry&lt;K, V&gt;&gt; newEntries = (AssociationImpl)_entries.put(</span>
+                    key,
+                    newEntry
+            );
+<span class="fc bfc" id="L223" title="All 2 branches covered.">            if (_lastInsertedKey != null) {</span>
+                // Update the previous entry's nextKey to point to the new key
+<span class="fc" id="L225">                Optional&lt;LinkedEntry&lt;K, V&gt;&gt; lastEntry = _entries.get(_lastInsertedKey);</span>
+<span class="pc bpc" id="L226" title="1 of 2 branches missed.">                if (lastEntry.isPresent()) {</span>
+<span class="fc" id="L227">                    LinkedEntry&lt;K, V&gt; updatedLastEntry = lastEntry.get().withNextKey(key);</span>
+<span class="fc" id="L228">                    newEntries = (AssociationImpl)newEntries.put(</span>
+                            _lastInsertedKey,
+                            updatedLastEntry
+                    );
+                }
+            }
+<span class="fc" id="L234">            return new LinkedAssociation&lt;&gt;(valueType(), newEntries, _firstInsertedKey, key);</span>
+        }
+    }
+
+    @Override
+    public Association&lt;K, V&gt; remove(K key) {
+<span class="fc bfc" id="L240" title="All 2 branches covered.">        if (Util.refEquals(key, null)) {</span>
+<span class="fc" id="L241">            throw new NullPointerException(&quot;Key must not be null&quot;);</span>
+        }
+<span class="fc" id="L243">        Optional&lt;LinkedEntry&lt;K, V&gt;&gt; entry = _entries.get(key);</span>
+<span class="fc bfc" id="L244" title="All 2 branches covered.">        if (entry.isPresent()) {</span>
+<span class="fc" id="L245">            K firstInsertedKey = _firstInsertedKey;</span>
+<span class="fc" id="L246">            K lastInsertedKey = _lastInsertedKey;</span>
+<span class="pc bpc" id="L247" title="1 of 4 branches missed.">            if (firstInsertedKey != null &amp;&amp; firstInsertedKey.equals(key)) {</span>
+                // If we are removing the first inserted key, we need to update it
+<span class="fc" id="L249">                firstInsertedKey = entry.get().nextKey();</span>
+            }
+<span class="pc bpc" id="L251" title="1 of 4 branches missed.">            if (lastInsertedKey != null &amp;&amp; lastInsertedKey.equals(key)) {</span>
+                // If we are removing the last inserted key, we need to update it
+<span class="fc" id="L253">                lastInsertedKey = entry.get().previousKey();</span>
+            }
+<span class="fc" id="L255">            LinkedEntry&lt;K, V&gt; existingEntry = entry.get();</span>
+<span class="fc" id="L256">            AssociationImpl&lt;K, LinkedEntry&lt;K, V&gt;&gt; newEntries = (AssociationImpl)_entries.remove(key);</span>
+<span class="fc bfc" id="L257" title="All 2 branches covered.">            if (existingEntry.previousKey() != null) {</span>
+                // Update the previous entry's nextKey to point to the next key
+<span class="fc" id="L259">                Optional&lt;LinkedEntry&lt;K, V&gt;&gt; previousEntry = _entries.get(existingEntry.previousKey());</span>
+<span class="pc bpc" id="L260" title="1 of 2 branches missed.">                if (previousEntry.isPresent()) {</span>
+<span class="fc" id="L261">                    LinkedEntry&lt;K, V&gt; updatedPreviousEntry = previousEntry.get().withNextKey(existingEntry.nextKey());</span>
+<span class="fc" id="L262">                    newEntries = (AssociationImpl)newEntries.put(</span>
+<span class="fc" id="L263">                            existingEntry.previousKey(),</span>
+                            updatedPreviousEntry
+                    );
+                }
+            }
+<span class="fc bfc" id="L268" title="All 2 branches covered.">            if (existingEntry.nextKey() != null) {</span>
+                // Update the next entry's previousKey to point to the previous key
+<span class="fc" id="L270">                Optional&lt;LinkedEntry&lt;K, V&gt;&gt; nextEntry = _entries.get(existingEntry.nextKey());</span>
+<span class="pc bpc" id="L271" title="1 of 2 branches missed.">                if (nextEntry.isPresent()) {</span>
+<span class="fc" id="L272">                    LinkedEntry&lt;K, V&gt; updatedNextEntry = nextEntry.get().withPreviousKey(existingEntry.previousKey());</span>
+<span class="fc" id="L273">                    newEntries = (AssociationImpl)newEntries.put(</span>
+<span class="fc" id="L274">                            existingEntry.nextKey(),</span>
+                            updatedNextEntry
+                    );
+                }
+            }
+<span class="fc" id="L279">            return new LinkedAssociation&lt;&gt;(valueType(), newEntries, firstInsertedKey, lastInsertedKey);</span>
+        }
+<span class="fc" id="L281">        return this; // If the key does not exist, we do nothing</span>
+    }
+
+    @Override
+    public Association&lt;K, V&gt; clear() {
+<span class="fc" id="L286">        AssociationImpl&lt;K, LinkedEntry&lt;K, V&gt;&gt; clearedEntries = (AssociationImpl&lt;K, LinkedEntry&lt;K, V&gt;&gt;) _entries.clear();</span>
+<span class="fc" id="L287">        return new LinkedAssociation&lt;&gt;(valueType(), clearedEntries, null, null);</span>
+    }
+
+    @Override
+    public Map&lt;K, V&gt; toMap() {
+<span class="fc" id="L292">        return new AbstractMap&lt;K, V&gt;() {</span>
+            @Override
+            public @Nullable V get(Object key) {
+<span class="fc" id="L295">                return LinkedAssociation.this.get((K) key).orElse(null);</span>
+            }
+
+            @Override
+            public Set&lt;Entry&lt;K, V&gt;&gt; entrySet() {
+<span class="fc" id="L300">                return new AbstractSet&lt;Entry&lt;K, V&gt;&gt;() {</span>
+                    @Override
+                    public Iterator&lt;Entry&lt;K, V&gt;&gt; iterator() {
+<span class="fc" id="L303">                        return StreamSupport.stream(LinkedAssociation.this.spliterator(), false)</span>
+<span class="fc" id="L304">                                .map(pair -&gt; (Map.Entry&lt;K,V&gt;)new AbstractMap.SimpleEntry&lt;&gt;(pair.first(), pair.second()))</span>
+<span class="fc" id="L305">                                .iterator();</span>
+                    }
+
+                    @Override
+                    public int size() {
+<span class="fc" id="L310">                        return LinkedAssociation.this.size();</span>
+                    }
+                };
+            }
+        };
+    }
+
+    @Override
+    public Spliterator&lt;Pair&lt;K,V&gt;&gt; spliterator() {
+<span class="fc" id="L319">        return Spliterators.spliterator(iterator(), _entries.size(),</span>
+                        Spliterator.ORDERED |
+                        Spliterator.DISTINCT |
+                        Spliterator.SIZED |
+                        Spliterator.SUBSIZED |
+                        Spliterator.NONNULL |
+                        Spliterator.IMMUTABLE
+                    );
+    }
+
+    @Override
+    public Iterator&lt;Pair&lt;K, V&gt;&gt; iterator() {
+<span class="fc" id="L331">        return new Iterator&lt;Pair&lt;K, V&gt;&gt;() {</span>
+<span class="fc" id="L332">            private @Nullable K currentKey = null;</span>
+<span class="fc" id="L333">            private @Nullable K nextKey = _firstInsertedKey;</span>
+
+            @Override
+            public boolean hasNext() {
+<span class="fc bfc" id="L337" title="All 2 branches covered.">                return nextKey != null;</span>
+            }
+
+            @Override
+            public Pair&lt;K, V&gt; next() {
+<span class="pc bpc" id="L342" title="2 of 4 branches missed.">                if (!hasNext() || nextKey == null) {</span>
+<span class="nc" id="L343">                    throw new NoSuchElementException();</span>
+                }
+<span class="fc" id="L345">                currentKey = nextKey;</span>
+<span class="fc" id="L346">                LinkedEntry&lt;K, V&gt; entry = _entries.get(currentKey).orElseThrow(NoSuchElementException::new);</span>
+<span class="fc" id="L347">                nextKey = entry.nextKey();</span>
+<span class="fc" id="L348">                return Pair.of(currentKey, entry.value());</span>
+            }
+        };
+    }
+
+
+    @Override
+    public String toString() {
+<span class="fc" id="L356">        StringBuilder sb = new StringBuilder();</span>
+<span class="fc" id="L357">        sb.append(&quot;LinkedAssociation&lt;&quot;);</span>
+<span class="fc" id="L358">        sb.append(keyType().getSimpleName()).append(&quot;,&quot;);</span>
+<span class="fc" id="L359">        sb.append(_valueType.getSimpleName()).append(&quot;&gt;[&quot;);</span>
+<span class="fc" id="L360">        final int howMany = 8;</span>
+<span class="fc" id="L361">        sb = _appendRecursivelyUpTo(sb, howMany);</span>
+<span class="fc" id="L362">        int numberOfEntriesLeft = size() - howMany;</span>
+<span class="fc bfc" id="L363" title="All 2 branches covered.">        if ( numberOfEntriesLeft &gt; 0 ) {</span>
+<span class="fc" id="L364">            sb.append(&quot;, ...&quot;).append(numberOfEntriesLeft).append(&quot; more entries&quot;);</span>
+        }
+<span class="fc" id="L366">        sb.append(&quot;]&quot;);</span>
+<span class="fc" id="L367">        return sb.toString();</span>
+    }
+
+    private StringBuilder _appendRecursivelyUpTo(StringBuilder sb, int howMany) {
+<span class="pc bpc" id="L371" title="1 of 2 branches missed.">        if (howMany &lt;= 0) {</span>
+<span class="nc" id="L372">            return sb;</span>
+        }
+<span class="fc" id="L374">        Iterator&lt;Pair&lt;K, V&gt;&gt; it = iterator();</span>
+<span class="fc" id="L375">        int count = 0;</span>
+<span class="fc bfc" id="L376" title="All 4 branches covered.">        while (it.hasNext() &amp;&amp; count &lt; howMany) {</span>
+<span class="fc" id="L377">            Pair&lt;K, V&gt; pair = it.next();</span>
+<span class="fc" id="L378">            String keyString = Util._toString(pair.first(), keyType());</span>
+<span class="fc" id="L379">            String valueString = Util._toString(pair.second(), valueType());</span>
+<span class="fc" id="L380">            sb.append(keyString).append(&quot; ↦ &quot;).append(valueString);</span>
+<span class="fc bfc" id="L381" title="All 2 branches covered.">            if (it.hasNext()) {</span>
+<span class="fc" id="L382">                sb.append(&quot;, &quot;);</span>
+            }
+<span class="fc" id="L384">            count++;</span>
+<span class="fc" id="L385">        }</span>
+<span class="fc" id="L386">        return sb;</span>
+    }
+
+    @Override
+    public boolean equals(Object o) {
+<span class="pc bpc" id="L391" title="1 of 2 branches missed.">        if (this == o) return true;</span>
+<span class="pc bpc" id="L392" title="1 of 2 branches missed.">        if (!(o instanceof LinkedAssociation))</span>
+<span class="nc" id="L393">            return false;</span>
+<span class="fc" id="L394">        LinkedAssociation&lt;?, ?&gt; other = (LinkedAssociation&lt;?, ?&gt;) o;</span>
+<span class="pc bpc" id="L395" title="1 of 2 branches missed.">        if ( !_valueType.equals(other._valueType) )</span>
+<span class="nc" id="L396">            return false;</span>
+<span class="pc bpc" id="L397" title="1 of 2 branches missed.">        if ( !_entries.keyType().equals(other._entries.keyType()) )</span>
+<span class="nc" id="L398">            return false;</span>
+<span class="fc bfc" id="L399" title="All 2 branches covered.">        if ( _entries.size() != other._entries.size() )</span>
+<span class="fc" id="L400">            return false;</span>
+
+<span class="fc" id="L402">        return this.toMap().equals(other.toMap());</span>
+    }
+
+    @Override
+    public int hashCode() {
+<span class="fc" id="L407">        int result = _valueType.hashCode();</span>
+<span class="fc" id="L408">        result = 31 * result + _entries.keyType().hashCode();</span>
+<span class="fc" id="L409">        result = 31 * result + _entries.size();</span>
+<span class="fc" id="L410">        result = 31 * result + toMap().hashCode();</span>
+<span class="fc" id="L411">        return result;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>
