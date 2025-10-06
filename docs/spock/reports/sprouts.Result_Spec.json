@@ -4,7 +4,7 @@
   "narrative":"The `Result` type models an optional result value from an operation\n    as well as a list of problems that occurred during an operation that produced the result.\n    The problems of a `Result` are represented by the `Problem` class,\n    which may be created from an exception or a simple message.\n\n    A `Result` is a fully thread safe immutable value type with useful mapping\n    functions that allow you to transform the value of the result into another\n    effectively making it a monadic value similar to the `Optional` type in Java 8.\n\n    Note that when using a `Result` as a return type of a method, then\n    this implies that the method has a safe control flow, meaning only returns\n    exceptions through the problems of the result, but never by throwing it.\n    This is the core appeal of the `Result` type, it allows you to write code\n    without hidden breaks and early returns without it being tracked by the compiler.",
   "subjects":["sprouts.Result","sprouts.Problem"],
   "statistics":{
-    "runs":"47",
+    "runs":"49",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -42,6 +42,8 @@
 
         {"kind":"and","text":"Although they are the same problems, they are not the same instances.","code":["result.problems().toList() !== problems"]},
 
+        {"kind":"and","text":"The result requires handling!","code":["result.needsHandling()"]},
+
         {"kind":"when","text":"We try to mutate the problems.","code":["result.problems().toList().add(null)"]},
 
         {"kind":"then","text":"An exception is thrown.","code":["thrown(UnsupportedOperationException)"]},
@@ -62,6 +64,8 @@
       },
       "blocks":[
         {"kind":"given","text":"A result.","code":["def result = Result.of(42)"]},
+
+        {"kind":"expect","text":"The result has no problems, and so it does not need handling:","code":["!result.needsHandling()"]},
 
         {"kind":"when","text":"We map the result to another result with the value plus one.","code":["def mapped = result.map { it + 1 }"]},
 
@@ -1046,6 +1050,52 @@
         {"kind":"and","text":"We log the problems using the custom logger.","code":["emptyResult.ifMissingLogTo((message, throwable) -> trace.add(message))"]},
 
         {"kind":"then","text":"The trace contains the logged problems.","code":["trace.size() == 2","trace.contains(\"NullPointerException : Brain not found\")","trace.contains(\"IllegalArgumentException : Might makes right\")"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Ignoring the problems of a result without problems does nothing.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"A result without problems:","code":["var result = Result.ofTry(String.class, ()->{","    return \"All good!\"","})"]},
+
+        {"kind":"expect","text":"","code":["!result.needsHandling()","!result.hasProblems()","result.problems().size() == 0"]},
+
+        {"kind":"and","text":"Invoking `ignoreProblems` simply returns the current error free result instance!","code":["result.ignoreProblems() === result"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"There are various ways to handle the problems of a result.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A freshly created `Result` containing at least one `Problem`, will be flagged \n            as `needsHandling()`, in which case **a call to methods which try to resolve \n            the result in some way, like `orElse(V)`, `orElseNull()`, `toOptional()`, etc...\n            will automatically trigger error logging for you!**<br>\n            This ensures that problems do not go unnoticed in scenarios like this:<br>\n            ```\n             Doc doc = parser.parse(rawText).orElse(Doc.EMPTY);\n            ```\n            Use methods like `handle(Class, Consumer)`, `handleAny(Consumer)`\n            or `logProblemsTo(BiConsumer)` among others to do manual exception\n            or general problem handling instead of automatic logging...\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A result with problems:","code":["var result = Result.ofTry(String.class, ()->{","    throw new IndexOutOfBoundsException()","})"]},
+
+        {"kind":"expect","text":"","code":["result.needsHandling()","result.hasProblems()","result.problems().size() == 1"]},
+
+        {"kind":"and","text":"","code":["!result.handleAny({}).needsHandling()","!result.handleAny({}).hasProblems()","result.handleAny({}).problems().size() == 0"]},
+
+        {"kind":"and","text":"","code":["!result.ignoreProblems().needsHandling()","!result.ignoreProblems().hasProblems()","result.ignoreProblems().problems().size() == 0"]},
+
+        {"kind":"and","text":"","code":["!result.logProblemsAsDebug().needsHandling()","result.logProblemsAsDebug().hasProblems()","result.logProblemsAsDebug().problems().size() == 1"]},
+
+        {"kind":"and","text":"","code":["!result.logProblemsAsInfo().needsHandling()","result.logProblemsAsInfo().hasProblems()","result.logProblemsAsInfo().problems().size() == 1"]},
+
+        {"kind":"and","text":"","code":["!result.logProblemsAsWarning().needsHandling()","result.logProblemsAsWarning().hasProblems()","result.logProblemsAsWarning().problems().size() == 1"]},
+
+        {"kind":"and","text":"","code":["!result.logProblemsAsTrace().needsHandling()","result.logProblemsAsTrace().hasProblems()","result.logProblemsAsTrace().problems().size() == 1"]},
+
+        {"kind":"and","text":"","code":["!result.logProblemsAsError().needsHandling()","result.logProblemsAsError().hasProblems()","result.logProblemsAsError().problems().size() == 1"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }

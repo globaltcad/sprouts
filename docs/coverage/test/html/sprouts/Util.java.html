@@ -4,6 +4,7 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.helpers.MessageFormatter;
 import org.slf4j.helpers.NOPLogger;
+import sprouts.impl.Sprouts;
 
 final class Util {
 
@@ -22,25 +23,30 @@ final class Util {
      */
     @SuppressWarnings(&quot;NullAway&quot;)
     static &lt;T&gt; T fakeNonNull( @Nullable T var ) {
-<span class="fc" id="L25">        return var;</span>
+<span class="fc" id="L26">        return var;</span>
     }
 
     static void _logError(Logger log, String message, @Nullable Object... args) {
-<span class="pc bpc" id="L29" title="1 of 2 branches missed.">        if ( log instanceof NOPLogger) {</span>
-<span class="fc" id="L30">            Exception lastArgException = null;</span>
-<span class="pc bpc" id="L31" title="3 of 6 branches missed.">            if ( args != null &amp;&amp; args.length &gt; 0 &amp;&amp; args[args.length - 1] instanceof Exception ) {</span>
-<span class="fc" id="L32">                lastArgException = (Exception) args[args.length - 1];</span>
-<span class="fc" id="L33">                args = java.util.Arrays.copyOf(args, args.length - 1);</span>
+<span class="pc bpc" id="L30" title="1 of 2 branches missed.">        if ( log instanceof NOPLogger) {</span>
+<span class="fc" id="L31">            Exception lastArgException = null;</span>
+<span class="pc bpc" id="L32" title="3 of 6 branches missed.">            if ( args != null &amp;&amp; args.length &gt; 0 &amp;&amp; args[args.length - 1] instanceof Exception ) {</span>
+<span class="fc" id="L33">                lastArgException = (Exception) args[args.length - 1];</span>
+<span class="fc" id="L34">                args = java.util.Arrays.copyOf(args, args.length - 1);</span>
             }
-<span class="fc" id="L35">            System.err.println(</span>
-<span class="fc" id="L36">                    MessageFormatter.arrayFormat(&quot;[ERROR] &quot; + message, args).getMessage()</span>
+<span class="fc" id="L36">            String loggingMarker = Sprouts.factory().loggingMarker().toString().trim();</span>
+<span class="pc bpc" id="L37" title="5 of 6 branches missed.">            if ( !loggingMarker.isEmpty() &amp;&amp; !loggingMarker.startsWith(&quot;[&quot;) &amp;&amp; !loggingMarker.endsWith(&quot;]&quot;) ) {</span>
+<span class="nc" id="L38">                loggingMarker = &quot;[&quot; + loggingMarker + &quot;]&quot;;</span>
+            }
+<span class="fc" id="L40">            System.err.println(</span>
+<span class="fc" id="L41">                MessageFormatter.arrayFormat(&quot;[ERROR]&quot;+loggingMarker+&quot; &quot; + message, args)</span>
+<span class="fc" id="L42">                .getMessage()</span>
             );
-<span class="pc bpc" id="L38" title="1 of 2 branches missed.">            if ( lastArgException != null ) {</span>
-<span class="fc" id="L39">                lastArgException.printStackTrace();</span>
+<span class="pc bpc" id="L44" title="1 of 2 branches missed.">            if ( lastArgException != null ) {</span>
+<span class="fc" id="L45">                lastArgException.printStackTrace();</span>
             }
-<span class="fc" id="L41">        } else {</span>
-<span class="nc" id="L42">            log.error(message, args);</span>
+<span class="fc" id="L47">        } else {</span>
+<span class="nc" id="L48">            log.error(Sprouts.factory().loggingMarker(), message, args);</span>
         }
-<span class="fc" id="L44">    }</span>
+<span class="fc" id="L50">    }</span>
 }
-</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

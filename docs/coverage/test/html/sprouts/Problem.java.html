@@ -59,7 +59,7 @@ public final class Problem
     public static Problem of( Exception e ) {
 <span class="fc" id="L60">        Objects.requireNonNull(e);</span>
 <span class="fc" id="L61">        String message = e.getMessage();</span>
-<span class="pc bpc" id="L62" title="2 of 4 branches missed.">        if ( message == null || message.isEmpty() ) message = String.valueOf(e.getCause());</span>
+<span class="pc bpc" id="L62" title="1 of 4 branches missed.">        if ( message == null || message.isEmpty() ) message = String.valueOf(e.getCause());</span>
 <span class="pc bpc" id="L63" title="2 of 4 branches missed.">        if ( message == null || message.isEmpty() ) message = e.toString();</span>
 <span class="fc" id="L64">        Objects.requireNonNull(message);</span>
 <span class="fc" id="L65">        String finalMessage = message;</span>
@@ -339,4 +339,4 @@ public final class Problem
 <span class="nc" id="L339">    }</span>
 
 }
-</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

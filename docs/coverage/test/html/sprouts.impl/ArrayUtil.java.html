@@ -138,12 +138,12 @@ final class ArrayUtil {
             }
 <span class="nc" id="L139">            return flattened;</span>
         }
-<span class="pc bpc" id="L141" title="3 of 4 branches missed.">        if ( type == short.class &amp;&amp; array instanceof Object[] ) {</span>
-<span class="nc" id="L142">            short[] flattened = new short[((Object[]) array).length];</span>
-<span class="nc bnc" id="L143" title="All 2 branches missed.">            for ( int i = 0; i &lt; flattened.length; i++ ) {</span>
-<span class="nc" id="L144">                flattened[i] = (short) ((Object[]) array)[i];</span>
+<span class="pc bpc" id="L141" title="1 of 4 branches missed.">        if ( type == short.class &amp;&amp; array instanceof Object[] ) {</span>
+<span class="fc" id="L142">            short[] flattened = new short[((Object[]) array).length];</span>
+<span class="fc bfc" id="L143" title="All 2 branches covered.">            for ( int i = 0; i &lt; flattened.length; i++ ) {</span>
+<span class="fc" id="L144">                flattened[i] = (short) ((Object[]) array)[i];</span>
             }
-<span class="nc" id="L146">            return flattened;</span>
+<span class="fc" id="L146">            return flattened;</span>
         }
 <span class="pc bpc" id="L148" title="1 of 4 branches missed.">        if ( type == int.class &amp;&amp; array instanceof Object[] ) {</span>
 <span class="fc" id="L149">            int[] flattened = new int[((Object[]) array).length];</span>
@@ -250,8 +250,8 @@ final class ArrayUtil {
 <span class="fc" id="L250">            return ((int[])array)[index];</span>
 <span class="fc bfc" id="L251" title="All 2 branches covered.">        } else if (float[].class == arrayType) {</span>
 <span class="fc" id="L252">            return ((float[])array)[index];</span>
-<span class="pc bpc" id="L253" title="1 of 2 branches missed.">        } else if (boolean[].class == arrayType) {</span>
-<span class="nc" id="L254">            return ((boolean[])array)[index];</span>
+<span class="fc bfc" id="L253" title="All 2 branches covered.">        } else if (boolean[].class == arrayType) {</span>
+<span class="fc" id="L254">            return ((boolean[])array)[index];</span>
 <span class="fc bfc" id="L255" title="All 2 branches covered.">        } else if (char[].class == arrayType) {</span>
 <span class="fc" id="L256">            return ((char[])array)[index];</span>
 <span class="fc bfc" id="L257" title="All 2 branches covered.">        } else if (double[].class == arrayType) {</span>
@@ -416,4 +416,4 @@ final class ArrayUtil {
     }
 
 }
-</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

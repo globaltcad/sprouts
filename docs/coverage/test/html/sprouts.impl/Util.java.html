@@ -22,45 +22,50 @@ final class Util {
 <span class="fc" id="L22">                lastArgException = (Exception) args[args.length - 1];</span>
 <span class="fc" id="L23">                args = java.util.Arrays.copyOf(args, args.length - 1);</span>
             }
-<span class="fc" id="L25">            System.err.println(</span>
-<span class="fc" id="L26">                    MessageFormatter.arrayFormat(&quot;[ERROR] &quot; + message, args).getMessage()</span>
-            );
-<span class="fc bfc" id="L28" title="All 2 branches covered.">            if ( lastArgException != null ) {</span>
-<span class="fc" id="L29">                lastArgException.printStackTrace();</span>
+<span class="fc" id="L25">            String loggingMarker = Sprouts.factory().loggingMarker().toString().trim();</span>
+<span class="pc bpc" id="L26" title="5 of 6 branches missed.">            if ( !loggingMarker.isEmpty() &amp;&amp; !loggingMarker.startsWith(&quot;[&quot;) &amp;&amp; !loggingMarker.endsWith(&quot;]&quot;) ) {</span>
+<span class="nc" id="L27">                loggingMarker = &quot;[&quot; + loggingMarker + &quot;]&quot;;</span>
             }
-<span class="fc" id="L31">        } else {</span>
-<span class="nc" id="L32">            log.error(message, args);</span>
+<span class="fc" id="L29">            System.err.println(</span>
+<span class="fc" id="L30">                MessageFormatter.arrayFormat(&quot;[ERROR]&quot;+loggingMarker+&quot; &quot; + message, args)</span>
+<span class="fc" id="L31">                .getMessage()</span>
+            );
+<span class="fc bfc" id="L33" title="All 2 branches covered.">            if ( lastArgException != null ) {</span>
+<span class="fc" id="L34">                lastArgException.printStackTrace();</span>
+            }
+<span class="fc" id="L36">        } else {</span>
+<span class="nc" id="L37">            log.error(Sprouts.factory().loggingMarker(), message, args);</span>
         }
-<span class="fc" id="L34">    }</span>
+<span class="fc" id="L39">    }</span>
 
     static String _toString( @Nullable Object singleItem, Class&lt;?&gt; type ) {
-<span class="pc bpc" id="L37" title="1 of 2 branches missed.">        if ( singleItem == null ) {</span>
-<span class="nc" id="L38">            return &quot;null&quot;;</span>
-<span class="fc bfc" id="L39" title="All 2 branches covered.">        } else if ( type == String.class ) {</span>
-<span class="fc" id="L40">            return &quot;\&quot;&quot; + singleItem + &quot;\&quot;&quot;;</span>
-<span class="fc bfc" id="L41" title="All 2 branches covered.">        } else if ( type == Character.class ) {</span>
-<span class="fc" id="L42">            return &quot;'&quot; + singleItem + &quot;'&quot;;</span>
-<span class="pc bpc" id="L43" title="1 of 2 branches missed.">        } else if ( type == Boolean.class ) {</span>
-<span class="nc" id="L44">            return singleItem.toString();</span>
+<span class="pc bpc" id="L42" title="1 of 2 branches missed.">        if ( singleItem == null ) {</span>
+<span class="nc" id="L43">            return &quot;null&quot;;</span>
+<span class="fc bfc" id="L44" title="All 2 branches covered.">        } else if ( type == String.class ) {</span>
+<span class="fc" id="L45">            return &quot;\&quot;&quot; + singleItem + &quot;\&quot;&quot;;</span>
+<span class="fc bfc" id="L46" title="All 2 branches covered.">        } else if ( type == Character.class ) {</span>
+<span class="fc" id="L47">            return &quot;'&quot; + singleItem + &quot;'&quot;;</span>
+<span class="pc bpc" id="L48" title="1 of 2 branches missed.">        } else if ( type == Boolean.class ) {</span>
+<span class="nc" id="L49">            return singleItem.toString();</span>
         } else {
-<span class="fc" id="L46">            return singleItem.toString();</span>
+<span class="fc" id="L51">            return singleItem.toString();</span>
         }
     }
 
     @SuppressWarnings(&quot;ReferenceEquality&quot;)
     static boolean refEquals(@Nullable Object a, @Nullable Object b) {
         // We use == here to compare references, not .equals()!
-<span class="fc bfc" id="L53" title="All 2 branches covered.">        return a == b;</span>
+<span class="fc bfc" id="L58" title="All 2 branches covered.">        return a == b;</span>
     }
 
     static &lt;T extends @Nullable Object, R&gt; Function&lt;T, R&gt; nonNullMapper(Logger log, R nullObject, R errorObject, Function&lt;T, @Nullable R&gt; mapper) {
-<span class="fc" id="L57">        return t -&gt; {</span>
+<span class="fc" id="L62">        return t -&gt; {</span>
             try {
-<span class="fc" id="L59">                @Nullable R r = mapper.apply(t);</span>
-<span class="fc bfc" id="L60" title="All 2 branches covered.">                return r == null ? nullObject : r;</span>
-<span class="fc" id="L61">            } catch (Exception e) {</span>
-<span class="fc" id="L62">                _logError(log, &quot;An error occurred while mapping item '{}'.&quot;, t, e);</span>
-<span class="fc" id="L63">                return errorObject;</span>
+<span class="fc" id="L64">                @Nullable R r = mapper.apply(t);</span>
+<span class="fc bfc" id="L65" title="All 2 branches covered.">                return r == null ? nullObject : r;</span>
+<span class="fc" id="L66">            } catch (Exception e) {</span>
+<span class="fc" id="L67">                _logError(log, &quot;An error occurred while mapping item '{}'.&quot;, t, e);</span>
+<span class="fc" id="L68">                return errorObject;</span>
             }
         };
     }
@@ -75,9 +80,9 @@ final class Util {
      * @param &lt;T&gt; The type of the item.
      */
     static &lt;T&gt; Class&lt;T&gt; expectedClassFromItem( @NonNull T item ) {
-<span class="fc" id="L78">        Class&lt;?&gt; itemType = item.getClass();</span>
+<span class="fc" id="L83">        Class&lt;?&gt; itemType = item.getClass();</span>
         // We check if it is an enum:
-<span class="fc bfc" id="L80" title="All 2 branches covered.">        if ( Enum.class.isAssignableFrom(itemType) ) {</span>
+<span class="fc bfc" id="L85" title="All 2 branches covered.">        if ( Enum.class.isAssignableFrom(itemType) ) {</span>
             /*
                 When it comes to enums, there is a pitfall we might
                 fall into if just return the Class instance right away!
@@ -105,13 +110,13 @@ final class Util {
                 Food.class != Food.TOFU.getClass()
             */
             // Let's check for that:
-<span class="fc" id="L108">            Class&lt;?&gt; superClass = itemType.getSuperclass();</span>
-<span class="pc bpc" id="L109" title="1 of 4 branches missed.">            if ( superClass != null &amp;&amp; !superClass.equals(Enum.class) ) {</span>
+<span class="fc" id="L113">            Class&lt;?&gt; superClass = itemType.getSuperclass();</span>
+<span class="pc bpc" id="L114" title="1 of 4 branches missed.">            if ( superClass != null &amp;&amp; !superClass.equals(Enum.class) ) {</span>
                 // We are good to go, it is an enum!
-<span class="fc" id="L111">                return (Class&lt;T&gt;) superClass;</span>
+<span class="fc" id="L116">                return (Class&lt;T&gt;) superClass;</span>
             }
         }
-<span class="fc" id="L114">        return (Class&lt;T&gt;) itemType;</span>
+<span class="fc" id="L119">        return (Class&lt;T&gt;) itemType;</span>
     }
 
     /**
@@ -127,8 +132,8 @@ final class Util {
      */
     @SuppressWarnings(&quot;NullAway&quot;)
     static &lt;T&gt; T fakeNonNull( @Nullable T var ) {
-<span class="fc" id="L130">        return var;</span>
+<span class="fc" id="L135">        return var;</span>
     }
 
 }
-</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

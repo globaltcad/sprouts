@@ -11,7 +11,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-<span class="pc bpc" id="L14" title="1 of 2 branches missed.">final class PropertyListView&lt;T extends @Nullable Object&gt; implements Viewables&lt;T&gt; {</span>
+final class PropertyListView&lt;T extends @Nullable Object&gt; implements Viewables&lt;T&gt; {
 
 <span class="fc" id="L16">    private static final Logger log = org.slf4j.LoggerFactory.getLogger(PropertyListView.class);</span>
 
@@ -69,7 +69,7 @@ import java.util.stream.Collectors;
     }
 
     private static &lt;T, U&gt; void onRemove(ValsDelegate&lt;T&gt; delegate, PropertyListView&lt;U&gt; view) {
-<span class="pc bpc" id="L72" title="2 of 4 branches missed.">        assert delegate.change() == SequenceChange.REMOVE;</span>
+<span class="pc bpc" id="L72" title="1 of 2 branches missed.">        assert delegate.change() == SequenceChange.REMOVE;</span>
 <span class="fc" id="L73">        int index = delegate.index().orElse(-1);</span>
 <span class="pc bpc" id="L74" title="2 of 4 branches missed.">        if (delegate.oldValues().isEmpty() || index &lt; 0)</span>
 <span class="nc" id="L75">            throw new UnsupportedOperationException(); // todo: implement</span>
@@ -84,7 +84,7 @@ import java.util.stream.Collectors;
             Class&lt;U&gt;                 targetType,
             Function&lt;Val&lt;T&gt;, Var&lt;U&gt;&gt; sourcePropToViewProp
     ) {
-<span class="pc bpc" id="L87" title="2 of 4 branches missed.">        assert delegate.change() == SequenceChange.ADD;</span>
+<span class="pc bpc" id="L87" title="1 of 2 branches missed.">        assert delegate.change() == SequenceChange.ADD;</span>
 <span class="fc" id="L88">        int index = delegate.index().orElse(-1);</span>
 
 <span class="pc bpc" id="L90" title="2 of 4 branches missed.">        if (delegate.newValues().isEmpty() || index &lt; 0)</span>
@@ -106,7 +106,7 @@ import java.util.stream.Collectors;
             PropertyListView&lt;U&gt;      view,
             Function&lt;Val&lt;T&gt;, Var&lt;U&gt;&gt; sourcePropToViewProp
     ) {
-<span class="pc bpc" id="L109" title="2 of 4 branches missed.">        assert delegate.change() == SequenceChange.SET;</span>
+<span class="pc bpc" id="L109" title="1 of 2 branches missed.">        assert delegate.change() == SequenceChange.SET;</span>
 <span class="fc" id="L110">        int index = delegate.index().orElse(-1);</span>
 
 <span class="pc bpc" id="L112" title="2 of 4 branches missed.">        if (delegate.newValues().isEmpty() || index &lt; 0)</span>
@@ -418,4 +418,4 @@ import java.util.stream.Collectors;
 <span class="fc" id="L418">        return _changeListeners.numberOfChangeListeners();</span>
     }
 }
-</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

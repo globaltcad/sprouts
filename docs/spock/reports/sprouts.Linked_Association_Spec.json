@@ -4,7 +4,7 @@
   "narrative":"Sprouts is a property library with a heavy focus on bridging the\n    gap between classical place oriented programming and modern\n    data oriented programming.\n    This is why sprouts has both the `Tuple` and `Association` classes.\n    The `Association` class is a value object that represents a set of\n    key-value pairs. You can think of it as an immutable map, but with\n    an API that is designed around transforming the data in the map\n    rather than mutating it.\n\n    One type of association is the \"linked Association\", which is\n    similar to a `LinkedHashMap` in Java, but with an API that is\n    designed around data transformation rather than mutation.",
   "subjects":["sprouts.Association"],
   "statistics":{
-    "runs":"74",
+    "runs":"82",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -826,6 +826,160 @@
         {"kind":"and","text":"We remove the entries of the second association from the first.","code":["var result = association1.removeAll(association2.keySet().toSet())"]},
 
         {"kind":"then","text":"The result contains only the entries that were not in the second association.","code":["result.size() == 1","result.get(\"a\").orElseThrow(MissingItemException::new) == 1"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You remove the entries of one linked association from another, using the `removeAll(Stream)` method.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two empty associations between strings and integers.","code":["var association1 = Association.betweenLinked(String, Integer)","var association2 = Association.betweenLinked(String, Integer)"]},
+
+        {"kind":"when","text":"We add some values to the first association.","code":["association1 = association1.put(\"x\", 1).put(\"y\", 2).put(\"z\", 3)"]},
+
+        {"kind":"and","text":"We add some values to the second association.","code":["association2 = association2.put(\"y\", 2).put(\"z\", 3).put(\"i\", 4)"]},
+
+        {"kind":"and","text":"We remove the entries of the second association from the first using a stream of keys.","code":["var result = association1.removeAll(association2.keySet().stream())"]},
+
+        {"kind":"then","text":"The result contains only the entries that were not in the second association.","code":["result.size() == 1","result.get(\"x\").orElseThrow(MissingItemException::new) == 1"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You can remove entries from a linked association selectively, using `removeIf(Predicate)`. [0]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            You can remove key/value pairs from an association which satisfy\n            a given `Predicate` lambda. Or in other words,\n            if the `Predicate.test(Object)` method yields `true` for a particular\n            pair, then it will be removed, otherwise, it will remain in the\n            returned association.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create a linked association and a regular linked JDK map containing some test elements.","code":["var assoc = Association.betweenLinked(type, String).putAll(elements.stream().map(it->Pair.of(it, it.toString())))","Map<?,String> map = new LinkedHashMap<Object, String>().putAll(elements.stream().map(it->new AbstractMap.SimpleEntry<>(it, it.toString())).collect(Collectors.toList()))"]},
+
+        {"kind":"when","text":"We apply a predicate to both types of mappings...","code":["var updatedAssoc = assoc.removeIf(predicate)","map.removeAll(entry -> predicate.test(Pair.of(entry.key, entry.value)))"]},
+
+        {"kind":"then","text":"They contain the exact same entries!","code":["updatedAssoc.toMap() == map"]},
+
+        {"kind":"where","text":"","code":{"type":["Float","Integer","String","Short","Character","Boolean","Month"],"elements":["[4.3f, 7f, 0.1f, 26.34f, 23f, 86.3f, 218f, 2f, 1.2f, 9f]","(-50..50).toList()","(-50..50).collect({Integer it -> it + \"!\"}).toList()","(0..1000).collect({Integer it -> it as Short}).toList()","['a' as char, 'x' as char, '4' as char, '#' as char]","(0..100).collect({Integer it -> ( it * 1997 ) % 2 == 0})","(0..100).collect({ Integer it -> Month.values()[it%12]})"],"predicate":["{ (it.first() - it.first() % 1) == it.first() }","{ it.first() % 3 == 1 }","{ it.first().hashCode() % 5 == 1 }","{ it.hashCode() * 1997 % 8 == 2 }","{ it.first() == 'x' as char }","{ it.first() }","{ it.first() == Month.DECEMBER }"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You can remove entries from a linked association selectively, using `removeIf(Predicate)`. [1]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            You can remove key/value pairs from an association which satisfy\n            a given `Predicate` lambda. Or in other words,\n            if the `Predicate.test(Object)` method yields `true` for a particular\n            pair, then it will be removed, otherwise, it will remain in the\n            returned association.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create a linked association and a regular linked JDK map containing some test elements.","code":["var assoc = Association.betweenLinked(type, String).putAll(elements.stream().map(it->Pair.of(it, it.toString())))","Map<?,String> map = new LinkedHashMap<Object, String>().putAll(elements.stream().map(it->new AbstractMap.SimpleEntry<>(it, it.toString())).collect(Collectors.toList()))"]},
+
+        {"kind":"when","text":"We apply a predicate to both types of mappings...","code":["var updatedAssoc = assoc.removeIf(predicate)","map.removeAll(entry -> predicate.test(Pair.of(entry.key, entry.value)))"]},
+
+        {"kind":"then","text":"They contain the exact same entries!","code":["updatedAssoc.toMap() == map"]},
+
+        {"kind":"where","text":"","code":{"type":["Float","Integer","String","Short","Character","Boolean","Month"],"elements":["[4.3f, 7f, 0.1f, 26.34f, 23f, 86.3f, 218f, 2f, 1.2f, 9f]","(-50..50).toList()","(-50..50).collect({Integer it -> it + \"!\"}).toList()","(0..1000).collect({Integer it -> it as Short}).toList()","['a' as char, 'x' as char, '4' as char, '#' as char]","(0..100).collect({Integer it -> ( it * 1997 ) % 2 == 0})","(0..100).collect({ Integer it -> Month.values()[it%12]})"],"predicate":["{ (it.first() - it.first() % 1) == it.first() }","{ it.first() % 3 == 1 }","{ it.first().hashCode() % 5 == 1 }","{ it.hashCode() * 1997 % 8 == 2 }","{ it.first() == 'x' as char }","{ it.first() }","{ it.first() == Month.DECEMBER }"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You can remove entries from a linked association selectively, using `removeIf(Predicate)`. [2]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            You can remove key/value pairs from an association which satisfy\n            a given `Predicate` lambda. Or in other words,\n            if the `Predicate.test(Object)` method yields `true` for a particular\n            pair, then it will be removed, otherwise, it will remain in the\n            returned association.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create a linked association and a regular linked JDK map containing some test elements.","code":["var assoc = Association.betweenLinked(type, String).putAll(elements.stream().map(it->Pair.of(it, it.toString())))","Map<?,String> map = new LinkedHashMap<Object, String>().putAll(elements.stream().map(it->new AbstractMap.SimpleEntry<>(it, it.toString())).collect(Collectors.toList()))"]},
+
+        {"kind":"when","text":"We apply a predicate to both types of mappings...","code":["var updatedAssoc = assoc.removeIf(predicate)","map.removeAll(entry -> predicate.test(Pair.of(entry.key, entry.value)))"]},
+
+        {"kind":"then","text":"They contain the exact same entries!","code":["updatedAssoc.toMap() == map"]},
+
+        {"kind":"where","text":"","code":{"type":["Float","Integer","String","Short","Character","Boolean","Month"],"elements":["[4.3f, 7f, 0.1f, 26.34f, 23f, 86.3f, 218f, 2f, 1.2f, 9f]","(-50..50).toList()","(-50..50).collect({Integer it -> it + \"!\"}).toList()","(0..1000).collect({Integer it -> it as Short}).toList()","['a' as char, 'x' as char, '4' as char, '#' as char]","(0..100).collect({Integer it -> ( it * 1997 ) % 2 == 0})","(0..100).collect({ Integer it -> Month.values()[it%12]})"],"predicate":["{ (it.first() - it.first() % 1) == it.first() }","{ it.first() % 3 == 1 }","{ it.first().hashCode() % 5 == 1 }","{ it.hashCode() * 1997 % 8 == 2 }","{ it.first() == 'x' as char }","{ it.first() }","{ it.first() == Month.DECEMBER }"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You can remove entries from a linked association selectively, using `removeIf(Predicate)`. [3]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            You can remove key/value pairs from an association which satisfy\n            a given `Predicate` lambda. Or in other words,\n            if the `Predicate.test(Object)` method yields `true` for a particular\n            pair, then it will be removed, otherwise, it will remain in the\n            returned association.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create a linked association and a regular linked JDK map containing some test elements.","code":["var assoc = Association.betweenLinked(type, String).putAll(elements.stream().map(it->Pair.of(it, it.toString())))","Map<?,String> map = new LinkedHashMap<Object, String>().putAll(elements.stream().map(it->new AbstractMap.SimpleEntry<>(it, it.toString())).collect(Collectors.toList()))"]},
+
+        {"kind":"when","text":"We apply a predicate to both types of mappings...","code":["var updatedAssoc = assoc.removeIf(predicate)","map.removeAll(entry -> predicate.test(Pair.of(entry.key, entry.value)))"]},
+
+        {"kind":"then","text":"They contain the exact same entries!","code":["updatedAssoc.toMap() == map"]},
+
+        {"kind":"where","text":"","code":{"type":["Float","Integer","String","Short","Character","Boolean","Month"],"elements":["[4.3f, 7f, 0.1f, 26.34f, 23f, 86.3f, 218f, 2f, 1.2f, 9f]","(-50..50).toList()","(-50..50).collect({Integer it -> it + \"!\"}).toList()","(0..1000).collect({Integer it -> it as Short}).toList()","['a' as char, 'x' as char, '4' as char, '#' as char]","(0..100).collect({Integer it -> ( it * 1997 ) % 2 == 0})","(0..100).collect({ Integer it -> Month.values()[it%12]})"],"predicate":["{ (it.first() - it.first() % 1) == it.first() }","{ it.first() % 3 == 1 }","{ it.first().hashCode() % 5 == 1 }","{ it.hashCode() * 1997 % 8 == 2 }","{ it.first() == 'x' as char }","{ it.first() }","{ it.first() == Month.DECEMBER }"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You can remove entries from a linked association selectively, using `removeIf(Predicate)`. [4]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            You can remove key/value pairs from an association which satisfy\n            a given `Predicate` lambda. Or in other words,\n            if the `Predicate.test(Object)` method yields `true` for a particular\n            pair, then it will be removed, otherwise, it will remain in the\n            returned association.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create a linked association and a regular linked JDK map containing some test elements.","code":["var assoc = Association.betweenLinked(type, String).putAll(elements.stream().map(it->Pair.of(it, it.toString())))","Map<?,String> map = new LinkedHashMap<Object, String>().putAll(elements.stream().map(it->new AbstractMap.SimpleEntry<>(it, it.toString())).collect(Collectors.toList()))"]},
+
+        {"kind":"when","text":"We apply a predicate to both types of mappings...","code":["var updatedAssoc = assoc.removeIf(predicate)","map.removeAll(entry -> predicate.test(Pair.of(entry.key, entry.value)))"]},
+
+        {"kind":"then","text":"They contain the exact same entries!","code":["updatedAssoc.toMap() == map"]},
+
+        {"kind":"where","text":"","code":{"type":["Float","Integer","String","Short","Character","Boolean","Month"],"elements":["[4.3f, 7f, 0.1f, 26.34f, 23f, 86.3f, 218f, 2f, 1.2f, 9f]","(-50..50).toList()","(-50..50).collect({Integer it -> it + \"!\"}).toList()","(0..1000).collect({Integer it -> it as Short}).toList()","['a' as char, 'x' as char, '4' as char, '#' as char]","(0..100).collect({Integer it -> ( it * 1997 ) % 2 == 0})","(0..100).collect({ Integer it -> Month.values()[it%12]})"],"predicate":["{ (it.first() - it.first() % 1) == it.first() }","{ it.first() % 3 == 1 }","{ it.first().hashCode() % 5 == 1 }","{ it.hashCode() * 1997 % 8 == 2 }","{ it.first() == 'x' as char }","{ it.first() }","{ it.first() == Month.DECEMBER }"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You can remove entries from a linked association selectively, using `removeIf(Predicate)`. [5]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            You can remove key/value pairs from an association which satisfy\n            a given `Predicate` lambda. Or in other words,\n            if the `Predicate.test(Object)` method yields `true` for a particular\n            pair, then it will be removed, otherwise, it will remain in the\n            returned association.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create a linked association and a regular linked JDK map containing some test elements.","code":["var assoc = Association.betweenLinked(type, String).putAll(elements.stream().map(it->Pair.of(it, it.toString())))","Map<?,String> map = new LinkedHashMap<Object, String>().putAll(elements.stream().map(it->new AbstractMap.SimpleEntry<>(it, it.toString())).collect(Collectors.toList()))"]},
+
+        {"kind":"when","text":"We apply a predicate to both types of mappings...","code":["var updatedAssoc = assoc.removeIf(predicate)","map.removeAll(entry -> predicate.test(Pair.of(entry.key, entry.value)))"]},
+
+        {"kind":"then","text":"They contain the exact same entries!","code":["updatedAssoc.toMap() == map"]},
+
+        {"kind":"where","text":"","code":{"type":["Float","Integer","String","Short","Character","Boolean","Month"],"elements":["[4.3f, 7f, 0.1f, 26.34f, 23f, 86.3f, 218f, 2f, 1.2f, 9f]","(-50..50).toList()","(-50..50).collect({Integer it -> it + \"!\"}).toList()","(0..1000).collect({Integer it -> it as Short}).toList()","['a' as char, 'x' as char, '4' as char, '#' as char]","(0..100).collect({Integer it -> ( it * 1997 ) % 2 == 0})","(0..100).collect({ Integer it -> Month.values()[it%12]})"],"predicate":["{ (it.first() - it.first() % 1) == it.first() }","{ it.first() % 3 == 1 }","{ it.first().hashCode() % 5 == 1 }","{ it.hashCode() * 1997 % 8 == 2 }","{ it.first() == 'x' as char }","{ it.first() }","{ it.first() == Month.DECEMBER }"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You can remove entries from a linked association selectively, using `removeIf(Predicate)`. [6]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            You can remove key/value pairs from an association which satisfy\n            a given `Predicate` lambda. Or in other words,\n            if the `Predicate.test(Object)` method yields `true` for a particular\n            pair, then it will be removed, otherwise, it will remain in the\n            returned association.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create a linked association and a regular linked JDK map containing some test elements.","code":["var assoc = Association.betweenLinked(type, String).putAll(elements.stream().map(it->Pair.of(it, it.toString())))","Map<?,String> map = new LinkedHashMap<Object, String>().putAll(elements.stream().map(it->new AbstractMap.SimpleEntry<>(it, it.toString())).collect(Collectors.toList()))"]},
+
+        {"kind":"when","text":"We apply a predicate to both types of mappings...","code":["var updatedAssoc = assoc.removeIf(predicate)","map.removeAll(entry -> predicate.test(Pair.of(entry.key, entry.value)))"]},
+
+        {"kind":"then","text":"They contain the exact same entries!","code":["updatedAssoc.toMap() == map"]},
+
+        {"kind":"where","text":"","code":{"type":["Float","Integer","String","Short","Character","Boolean","Month"],"elements":["[4.3f, 7f, 0.1f, 26.34f, 23f, 86.3f, 218f, 2f, 1.2f, 9f]","(-50..50).toList()","(-50..50).collect({Integer it -> it + \"!\"}).toList()","(0..1000).collect({Integer it -> it as Short}).toList()","['a' as char, 'x' as char, '4' as char, '#' as char]","(0..100).collect({Integer it -> ( it * 1997 ) % 2 == 0})","(0..100).collect({ Integer it -> Month.values()[it%12]})"],"predicate":["{ (it.first() - it.first() % 1) == it.first() }","{ it.first() % 3 == 1 }","{ it.first().hashCode() % 5 == 1 }","{ it.hashCode() * 1997 % 8 == 2 }","{ it.first() == 'x' as char }","{ it.first() }","{ it.first() == Month.DECEMBER }"]}}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },

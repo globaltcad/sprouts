@@ -1021,9 +1021,8 @@ public interface Association&lt;K, V&gt; extends Iterable&lt;Pair&lt;K, V&gt;&gt
         // reduce the stream to a single association
 <span class="fc" id="L1022">        return entries.reduce(</span>
                 result,
-                (acc,
-<span class="fc" id="L1025">                 entry) -&gt; acc.replace(entry.first(), entry.second()),</span>
-<span class="nc" id="L1026">                (a, b) -&gt; a);</span>
+<span class="fc" id="L1024">                (acc, entry) -&gt; acc.replace(entry.first(), entry.second()),</span>
+<span class="nc" id="L1025">                (a, b) -&gt; a);</span>
     }
 
     /**
@@ -1037,8 +1036,8 @@ public interface Association&lt;K, V&gt; extends Iterable&lt;Pair&lt;K, V&gt;&gt
     Association&lt;K, V&gt; remove( K key );
 
     /**
-     *  Returns a new association that is the same as this one
-     *  but without any of the keys in the supplied set. If the
+     *  Creates and returns a new association in which all entry pairs are
+     *  removed whose keys are present in the supplied {@link ValueSet}. If the
      *  supplied set is empty, then this association is returned
      *  unchanged.
      *
@@ -1046,18 +1045,18 @@ public interface Association&lt;K, V&gt; extends Iterable&lt;Pair&lt;K, V&gt;&gt
      * @return A new association without the keys in the given set.
      */
     default Association&lt;K, V&gt; removeAll( ValueSet&lt;? extends K&gt; keys ) {
-<span class="pc bpc" id="L1049" title="2 of 4 branches missed.">        if ( this.isEmpty() || keys.isEmpty() )</span>
-<span class="nc" id="L1050">            return this;</span>
-<span class="fc" id="L1051">        Association&lt;K, V&gt; result = this;</span>
-<span class="fc bfc" id="L1052" title="All 2 branches covered.">        for ( K key : keys ) {</span>
-<span class="fc" id="L1053">            result = result.remove(key);</span>
-<span class="fc" id="L1054">        }</span>
-<span class="fc" id="L1055">        return result;</span>
+<span class="pc bpc" id="L1048" title="2 of 4 branches missed.">        if ( this.isEmpty() || keys.isEmpty() )</span>
+<span class="nc" id="L1049">            return this;</span>
+<span class="fc" id="L1050">        Association&lt;K, V&gt; result = this;</span>
+<span class="fc bfc" id="L1051" title="All 2 branches covered.">        for ( K key : keys ) {</span>
+<span class="fc" id="L1052">            result = result.remove(key);</span>
+<span class="fc" id="L1053">        }</span>
+<span class="fc" id="L1054">        return result;</span>
     }
 
     /**
-     *  Returns a new association that is the same as this one
-     *  but without any of the keys in the supplied set. If the
+     *  Creates and returns a new association in which all entry pairs are
+     *  removed whose keys are present in the supplied {@link Set}. If the
      *  supplied set is empty, then this association is returned
      *  unchanged.
      *
@@ -1065,13 +1064,50 @@ public interface Association&lt;K, V&gt; extends Iterable&lt;Pair&lt;K, V&gt;&gt
      * @return A new association without the keys in the given set.
      */
     default Association&lt;K, V&gt; removeAll( Set&lt;? extends K&gt; keys ) {
-<span class="pc bpc" id="L1068" title="1 of 4 branches missed.">        if ( this.isEmpty() || keys.isEmpty() )</span>
-<span class="fc" id="L1069">            return this;</span>
-<span class="fc" id="L1070">        Association&lt;K, V&gt; result = this;</span>
-<span class="fc bfc" id="L1071" title="All 2 branches covered.">        for ( K key : keys ) {</span>
-<span class="fc" id="L1072">            result = result.remove(key);</span>
-<span class="fc" id="L1073">        }</span>
-<span class="fc" id="L1074">        return result;</span>
+<span class="pc bpc" id="L1067" title="1 of 4 branches missed.">        if ( this.isEmpty() || keys.isEmpty() )</span>
+<span class="fc" id="L1068">            return this;</span>
+<span class="fc" id="L1069">        Association&lt;K, V&gt; result = this;</span>
+<span class="fc bfc" id="L1070" title="All 2 branches covered.">        for ( K key : keys ) {</span>
+<span class="fc" id="L1071">            result = result.remove(key);</span>
+<span class="fc" id="L1072">        }</span>
+<span class="fc" id="L1073">        return result;</span>
+    }
+
+    /**
+     *  Creates and returns a new association in which all entry pairs are
+     *  removed whose keys are found in the supplied {@link Stream}. If the
+     *  supplied stream does not provide any elements, then this association is returned
+     *  unchanged.
+     *
+     * @param keys A stream of keys to remove from this association.
+     * @return A new association without any of the keys found in the supplied stream.
+     * @throws NullPointerException - if the supplied stream is null
+     */
+    default Association&lt;K, V&gt; removeAll( Stream&lt;? extends K&gt; keys ) {
+<span class="fc" id="L1087">        Objects.requireNonNull(keys);</span>
+<span class="fc" id="L1088">        Association&lt;K, V&gt; result = this;</span>
+        // reduce the stream to a single association
+<span class="pc" id="L1090">        return keys.reduce(result, Association::remove, (a, b) -&gt; a);</span>
+    }
+
+    /**
+     *  Creates an updates {@link Association} where all key/value pairs satisfying
+     *  the given {@link Predicate}, are removed. Or in other words,
+     *  if {@link Predicate#test(Object)} yields {@code true} for a particular
+     *  entry {@link Pair}, then it will be removed, otherwise, it will remain in the
+     *  returned association.&lt;br&gt;
+     *  Note that errors or runtime exceptions thrown
+     *  during iteration or by the predicate are relayed to the caller.
+     *
+     * @param filter A function which takes in a key/value {@link Pair}, and returns
+     *               {@code true} to trigger its removal and {@code false} to ensure it is kept.
+     * @return An updated {@link Association} where elements are removed according to the
+     *         supplied predicate test, or this instance if nothing was removed.
+     * @throws NullPointerException - if the specified filter is null
+     */
+    default Association&lt;K,V&gt; removeIf( Predicate&lt;Pair&lt;K,V&gt;&gt; filter ) {
+<span class="fc" id="L1109">        Objects.requireNonNull(filter);</span>
+<span class="fc" id="L1110">        return removeAll(entrySet().stream().filter(filter).map(Pair::first));</span>
     }
 
     /**
@@ -1084,15 +1120,15 @@ public interface Association&lt;K, V&gt; extends Iterable&lt;Pair&lt;K, V&gt;&gt
      * @return A new association with only the keys in the given set.
      */
     default Association&lt;K, V&gt; retainAll( ValueSet&lt;? extends K&gt; keys ) {
-<span class="pc bpc" id="L1087" title="2 of 4 branches missed.">        if ( this.isEmpty() || keys.isEmpty() )</span>
-<span class="nc" id="L1088">            return this;</span>
-<span class="fc" id="L1089">        Association&lt;K, V&gt; result = this;</span>
-<span class="fc bfc" id="L1090" title="All 2 branches covered.">        for ( K key : this.keySet() ) {</span>
-<span class="pc bpc" id="L1091" title="1 of 2 branches missed.">            if ( !((ValueSet&lt;K&gt;)keys).contains(key) ) {</span>
-<span class="nc" id="L1092">                result = result.remove(key);</span>
+<span class="pc bpc" id="L1123" title="2 of 4 branches missed.">        if ( this.isEmpty() || keys.isEmpty() )</span>
+<span class="nc" id="L1124">            return this;</span>
+<span class="fc" id="L1125">        Association&lt;K, V&gt; result = this;</span>
+<span class="fc bfc" id="L1126" title="All 2 branches covered.">        for ( K key : this.keySet() ) {</span>
+<span class="pc bpc" id="L1127" title="1 of 2 branches missed.">            if ( !((ValueSet&lt;K&gt;)keys).contains(key) ) {</span>
+<span class="nc" id="L1128">                result = result.remove(key);</span>
             }
-<span class="fc" id="L1094">        }</span>
-<span class="fc" id="L1095">        return result;</span>
+<span class="fc" id="L1130">        }</span>
+<span class="fc" id="L1131">        return result;</span>
     }
 
     /**
@@ -1105,15 +1141,15 @@ public interface Association&lt;K, V&gt; extends Iterable&lt;Pair&lt;K, V&gt;&gt
      * @return A new association with only the keys in the given set.
      */
     default Association&lt;K, V&gt; retainAll(Set&lt;? extends K&gt; keys) {
-<span class="pc bpc" id="L1108" title="1 of 4 branches missed.">        if ( this.isEmpty() || keys.isEmpty() )</span>
-<span class="fc" id="L1109">            return this;</span>
-<span class="fc" id="L1110">        Association&lt;K, V&gt; result = this;</span>
-<span class="fc bfc" id="L1111" title="All 2 branches covered.">        for ( K key : this.keySet() ) {</span>
-<span class="fc bfc" id="L1112" title="All 2 branches covered.">            if ( !keys.contains(key) ) {</span>
-<span class="fc" id="L1113">                result = result.remove(key);</span>
+<span class="pc bpc" id="L1144" title="1 of 4 branches missed.">        if ( this.isEmpty() || keys.isEmpty() )</span>
+<span class="fc" id="L1145">            return this;</span>
+<span class="fc" id="L1146">        Association&lt;K, V&gt; result = this;</span>
+<span class="fc bfc" id="L1147" title="All 2 branches covered.">        for ( K key : this.keySet() ) {</span>
+<span class="fc bfc" id="L1148" title="All 2 branches covered.">            if ( !keys.contains(key) ) {</span>
+<span class="fc" id="L1149">                result = result.remove(key);</span>
             }
-<span class="fc" id="L1115">        }</span>
-<span class="fc" id="L1116">        return result;</span>
+<span class="fc" id="L1151">        }</span>
+<span class="fc" id="L1152">        return result;</span>
     }
 
     /**
@@ -1134,9 +1170,9 @@ public interface Association&lt;K, V&gt; extends Iterable&lt;Pair&lt;K, V&gt;&gt
      *        based on the provided comparator.
      */
     default Association&lt;K,V&gt; sort( Comparator&lt;K&gt; comparator ) {
-<span class="fc" id="L1137">        Objects.requireNonNull(comparator, &quot;The provided comparator cannot be null.&quot;);</span>
-<span class="fc" id="L1138">        return Sprouts.factory().associationOfSorted(this.keyType(), this.valueType(), comparator)</span>
-<span class="fc" id="L1139">                .putAll((Stream) this.entrySet().stream());</span>
+<span class="fc" id="L1173">        Objects.requireNonNull(comparator, &quot;The provided comparator cannot be null.&quot;);</span>
+<span class="fc" id="L1174">        return Sprouts.factory().associationOfSorted(this.keyType(), this.valueType(), comparator)</span>
+<span class="fc" id="L1175">                .putAll((Stream) this.entrySet().stream());</span>
     }
 
     /**
@@ -1155,8 +1191,8 @@ public interface Association&lt;K, V&gt; extends Iterable&lt;Pair&lt;K, V&gt;&gt
      *  @throws NullPointerException if the predicate is {@code null}.
      */
     default boolean any( Predicate&lt;Pair&lt;K,V&gt;&gt; predicate ) {
-<span class="nc" id="L1158">        Objects.requireNonNull(predicate);</span>
-<span class="nc" id="L1159">        return this.entrySet().stream().anyMatch( predicate );</span>
+<span class="nc" id="L1194">        Objects.requireNonNull(predicate);</span>
+<span class="nc" id="L1195">        return this.entrySet().stream().anyMatch( predicate );</span>
     }
 
     /**
@@ -1167,8 +1203,8 @@ public interface Association&lt;K, V&gt; extends Iterable&lt;Pair&lt;K, V&gt;&gt
      *  @throws NullPointerException if the predicate is {@code null}.
      */
     default boolean all( Predicate&lt;Pair&lt;K,V&gt;&gt; predicate ) {
-<span class="nc" id="L1170">        Objects.requireNonNull(predicate);</span>
-<span class="nc" id="L1171">        return this.entrySet().stream().allMatch( predicate );</span>
+<span class="nc" id="L1206">        Objects.requireNonNull(predicate);</span>
+<span class="nc" id="L1207">        return this.entrySet().stream().allMatch( predicate );</span>
     }
 
     /**
@@ -1179,9 +1215,9 @@ public interface Association&lt;K, V&gt; extends Iterable&lt;Pair&lt;K, V&gt;&gt
      *  @throws NullPointerException if the predicate is {@code null}.
      */
     default boolean none( Predicate&lt;Pair&lt;K,V&gt;&gt; predicate ) {
-<span class="nc" id="L1182">        Objects.requireNonNull(predicate);</span>
-<span class="nc" id="L1183">        return this.entrySet().stream().noneMatch( predicate );</span>
+<span class="nc" id="L1218">        Objects.requireNonNull(predicate);</span>
+<span class="nc" id="L1219">        return this.entrySet().stream().noneMatch( predicate );</span>
     }
 
 }
-</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

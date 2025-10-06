@@ -4,7 +4,7 @@
   "narrative":"A linked `ValueSet` is a fundamental building block in sprouts' data-oriented programming model.\n    It represents an immutable collection of unique and ordered elements, providing an API focused on\n    deriving new sets from existing ones rather than mutating state. Unlike traditional\n    Java sets, all operations return new `ValueSet` instances, making it ideal for\n    functional/data-oriented programming and safe concurrent usage.\n\n    You can create a linked `ValueSet` through various factories, such as `ValueSet.ofLinked(Class<T>)`\n    or `ValueSet.ofLinked(T first, T... rest)`. All operations on a linked `ValueSet` return a new instance,\n    ensuring immutability and thread safety. The linked nature of the set ensures that the order of elements\n    is preserved, which is particularly relevant to make iteration and stream operations more\n    deterministic and easier to reason about.",
   "subjects":["sprouts.ValueSet"],
   "statistics":{
-    "runs":"31",
+    "runs":"45",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -446,6 +446,272 @@
         {"kind":"given","text":"","code":["var initial = ValueSet.ofLinked(\"a\", \"b\", \"c\", \"d\")"]},
 
         {"kind":"expect","text":"Elements are removed regardless of input collection type","code":["initial.removeAll([\"a\", \"b\"] as List).toSet() == [\"c\", \"d\"] as Set","initial.removeAll([\"c\"] as Set).toSet() == [\"a\", \"b\", \"d\"] as Set","initial.removeAll(Tuple.of(\"d\", \"e\")).toSet() == [\"a\", \"b\", \"c\"] as Set","initial.removeAll([\"b\", \"c\"] as String[]).toSet() == [\"a\", \"d\"] as Set","initial.removeAll(Stream.of(\"a\", \"d\")).toSet() == [\"b\", \"c\"] as Set"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You can remove items from a linked value set selectively, using `removeIf(Predicate)`. [0]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            You can remove elements from a value set which satisfy\n            a given `Predicate`. Or in other words,\n            if the `Predicate.test(Object)` method yields `true` for a particular\n            element, then it will be removed, otherwise, it will remain in the\n            returned set.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create a linked value set and a regular JDK set containing some test elements.","code":["var valueSet = ValueSet.ofLinked(type, elements)","var set = elements.toSet()"]},
+
+        {"kind":"when","text":"We apply a predicate to both types of sets...","code":["var updatedValueSet = valueSet.removeIf(predicate)","set.removeIf(predicate)"]},
+
+        {"kind":"then","text":"They contain the same elements!","code":["updatedValueSet.toSet() == set"]},
+
+        {"kind":"where","text":"","code":{"type":["Float","Integer","String","Short","Character","Boolean","Month"],"elements":["[4.3f, 7f, 0.1f, 26.34f, 23f, 86.3f, 218f, 2f, 1.2f, 9f]","(-50..50).toList()","(-50..50).collect({Integer it -> it + \"!\"}).toList()","(0..1000).collect({Integer it -> it as Short}).toList()","['a' as char, 'x' as char, '4' as char, '#' as char]","(0..100).collect({Integer it -> ( it * 1997 ) % 2 == 0})","(0..100).collect({ Integer it -> Month.values()[it%12]})"],"predicate":["{ (it - it % 1) == it  }","{ it % 3 == 1 }","{ it.hashCode() % 5 == 1 }","{ it * 1997 % 8 == 2 }","{ it == 'x' as char }","{ it }","{ it == Month.DECEMBER }"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You can remove items from a linked value set selectively, using `removeIf(Predicate)`. [1]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            You can remove elements from a value set which satisfy\n            a given `Predicate`. Or in other words,\n            if the `Predicate.test(Object)` method yields `true` for a particular\n            element, then it will be removed, otherwise, it will remain in the\n            returned set.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create a linked value set and a regular JDK set containing some test elements.","code":["var valueSet = ValueSet.ofLinked(type, elements)","var set = elements.toSet()"]},
+
+        {"kind":"when","text":"We apply a predicate to both types of sets...","code":["var updatedValueSet = valueSet.removeIf(predicate)","set.removeIf(predicate)"]},
+
+        {"kind":"then","text":"They contain the same elements!","code":["updatedValueSet.toSet() == set"]},
+
+        {"kind":"where","text":"","code":{"type":["Float","Integer","String","Short","Character","Boolean","Month"],"elements":["[4.3f, 7f, 0.1f, 26.34f, 23f, 86.3f, 218f, 2f, 1.2f, 9f]","(-50..50).toList()","(-50..50).collect({Integer it -> it + \"!\"}).toList()","(0..1000).collect({Integer it -> it as Short}).toList()","['a' as char, 'x' as char, '4' as char, '#' as char]","(0..100).collect({Integer it -> ( it * 1997 ) % 2 == 0})","(0..100).collect({ Integer it -> Month.values()[it%12]})"],"predicate":["{ (it - it % 1) == it  }","{ it % 3 == 1 }","{ it.hashCode() % 5 == 1 }","{ it * 1997 % 8 == 2 }","{ it == 'x' as char }","{ it }","{ it == Month.DECEMBER }"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You can remove items from a linked value set selectively, using `removeIf(Predicate)`. [2]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            You can remove elements from a value set which satisfy\n            a given `Predicate`. Or in other words,\n            if the `Predicate.test(Object)` method yields `true` for a particular\n            element, then it will be removed, otherwise, it will remain in the\n            returned set.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create a linked value set and a regular JDK set containing some test elements.","code":["var valueSet = ValueSet.ofLinked(type, elements)","var set = elements.toSet()"]},
+
+        {"kind":"when","text":"We apply a predicate to both types of sets...","code":["var updatedValueSet = valueSet.removeIf(predicate)","set.removeIf(predicate)"]},
+
+        {"kind":"then","text":"They contain the same elements!","code":["updatedValueSet.toSet() == set"]},
+
+        {"kind":"where","text":"","code":{"type":["Float","Integer","String","Short","Character","Boolean","Month"],"elements":["[4.3f, 7f, 0.1f, 26.34f, 23f, 86.3f, 218f, 2f, 1.2f, 9f]","(-50..50).toList()","(-50..50).collect({Integer it -> it + \"!\"}).toList()","(0..1000).collect({Integer it -> it as Short}).toList()","['a' as char, 'x' as char, '4' as char, '#' as char]","(0..100).collect({Integer it -> ( it * 1997 ) % 2 == 0})","(0..100).collect({ Integer it -> Month.values()[it%12]})"],"predicate":["{ (it - it % 1) == it  }","{ it % 3 == 1 }","{ it.hashCode() % 5 == 1 }","{ it * 1997 % 8 == 2 }","{ it == 'x' as char }","{ it }","{ it == Month.DECEMBER }"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You can remove items from a linked value set selectively, using `removeIf(Predicate)`. [3]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            You can remove elements from a value set which satisfy\n            a given `Predicate`. Or in other words,\n            if the `Predicate.test(Object)` method yields `true` for a particular\n            element, then it will be removed, otherwise, it will remain in the\n            returned set.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create a linked value set and a regular JDK set containing some test elements.","code":["var valueSet = ValueSet.ofLinked(type, elements)","var set = elements.toSet()"]},
+
+        {"kind":"when","text":"We apply a predicate to both types of sets...","code":["var updatedValueSet = valueSet.removeIf(predicate)","set.removeIf(predicate)"]},
+
+        {"kind":"then","text":"They contain the same elements!","code":["updatedValueSet.toSet() == set"]},
+
+        {"kind":"where","text":"","code":{"type":["Float","Integer","String","Short","Character","Boolean","Month"],"elements":["[4.3f, 7f, 0.1f, 26.34f, 23f, 86.3f, 218f, 2f, 1.2f, 9f]","(-50..50).toList()","(-50..50).collect({Integer it -> it + \"!\"}).toList()","(0..1000).collect({Integer it -> it as Short}).toList()","['a' as char, 'x' as char, '4' as char, '#' as char]","(0..100).collect({Integer it -> ( it * 1997 ) % 2 == 0})","(0..100).collect({ Integer it -> Month.values()[it%12]})"],"predicate":["{ (it - it % 1) == it  }","{ it % 3 == 1 }","{ it.hashCode() % 5 == 1 }","{ it * 1997 % 8 == 2 }","{ it == 'x' as char }","{ it }","{ it == Month.DECEMBER }"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You can remove items from a linked value set selectively, using `removeIf(Predicate)`. [4]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            You can remove elements from a value set which satisfy\n            a given `Predicate`. Or in other words,\n            if the `Predicate.test(Object)` method yields `true` for a particular\n            element, then it will be removed, otherwise, it will remain in the\n            returned set.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create a linked value set and a regular JDK set containing some test elements.","code":["var valueSet = ValueSet.ofLinked(type, elements)","var set = elements.toSet()"]},
+
+        {"kind":"when","text":"We apply a predicate to both types of sets...","code":["var updatedValueSet = valueSet.removeIf(predicate)","set.removeIf(predicate)"]},
+
+        {"kind":"then","text":"They contain the same elements!","code":["updatedValueSet.toSet() == set"]},
+
+        {"kind":"where","text":"","code":{"type":["Float","Integer","String","Short","Character","Boolean","Month"],"elements":["[4.3f, 7f, 0.1f, 26.34f, 23f, 86.3f, 218f, 2f, 1.2f, 9f]","(-50..50).toList()","(-50..50).collect({Integer it -> it + \"!\"}).toList()","(0..1000).collect({Integer it -> it as Short}).toList()","['a' as char, 'x' as char, '4' as char, '#' as char]","(0..100).collect({Integer it -> ( it * 1997 ) % 2 == 0})","(0..100).collect({ Integer it -> Month.values()[it%12]})"],"predicate":["{ (it - it % 1) == it  }","{ it % 3 == 1 }","{ it.hashCode() % 5 == 1 }","{ it * 1997 % 8 == 2 }","{ it == 'x' as char }","{ it }","{ it == Month.DECEMBER }"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You can remove items from a linked value set selectively, using `removeIf(Predicate)`. [5]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            You can remove elements from a value set which satisfy\n            a given `Predicate`. Or in other words,\n            if the `Predicate.test(Object)` method yields `true` for a particular\n            element, then it will be removed, otherwise, it will remain in the\n            returned set.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create a linked value set and a regular JDK set containing some test elements.","code":["var valueSet = ValueSet.ofLinked(type, elements)","var set = elements.toSet()"]},
+
+        {"kind":"when","text":"We apply a predicate to both types of sets...","code":["var updatedValueSet = valueSet.removeIf(predicate)","set.removeIf(predicate)"]},
+
+        {"kind":"then","text":"They contain the same elements!","code":["updatedValueSet.toSet() == set"]},
+
+        {"kind":"where","text":"","code":{"type":["Float","Integer","String","Short","Character","Boolean","Month"],"elements":["[4.3f, 7f, 0.1f, 26.34f, 23f, 86.3f, 218f, 2f, 1.2f, 9f]","(-50..50).toList()","(-50..50).collect({Integer it -> it + \"!\"}).toList()","(0..1000).collect({Integer it -> it as Short}).toList()","['a' as char, 'x' as char, '4' as char, '#' as char]","(0..100).collect({Integer it -> ( it * 1997 ) % 2 == 0})","(0..100).collect({ Integer it -> Month.values()[it%12]})"],"predicate":["{ (it - it % 1) == it  }","{ it % 3 == 1 }","{ it.hashCode() % 5 == 1 }","{ it * 1997 % 8 == 2 }","{ it == 'x' as char }","{ it }","{ it == Month.DECEMBER }"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You can remove items from a linked value set selectively, using `removeIf(Predicate)`. [6]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            You can remove elements from a value set which satisfy\n            a given `Predicate`. Or in other words,\n            if the `Predicate.test(Object)` method yields `true` for a particular\n            element, then it will be removed, otherwise, it will remain in the\n            returned set.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create a linked value set and a regular JDK set containing some test elements.","code":["var valueSet = ValueSet.ofLinked(type, elements)","var set = elements.toSet()"]},
+
+        {"kind":"when","text":"We apply a predicate to both types of sets...","code":["var updatedValueSet = valueSet.removeIf(predicate)","set.removeIf(predicate)"]},
+
+        {"kind":"then","text":"They contain the same elements!","code":["updatedValueSet.toSet() == set"]},
+
+        {"kind":"where","text":"","code":{"type":["Float","Integer","String","Short","Character","Boolean","Month"],"elements":["[4.3f, 7f, 0.1f, 26.34f, 23f, 86.3f, 218f, 2f, 1.2f, 9f]","(-50..50).toList()","(-50..50).collect({Integer it -> it + \"!\"}).toList()","(0..1000).collect({Integer it -> it as Short}).toList()","['a' as char, 'x' as char, '4' as char, '#' as char]","(0..100).collect({Integer it -> ( it * 1997 ) % 2 == 0})","(0..100).collect({ Integer it -> Month.values()[it%12]})"],"predicate":["{ (it - it % 1) == it  }","{ it % 3 == 1 }","{ it.hashCode() % 5 == 1 }","{ it * 1997 % 8 == 2 }","{ it == 'x' as char }","{ it }","{ it == Month.DECEMBER }"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You can keep items in a linked value set selectively, using `retainIf(Predicate)`. [0]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            You can keep elements in a value set which satisfy\n            a given `Predicate` and have them removed otherwise. Or in other words,\n            if the `Predicate.test(Object)` method yields `false` for a particular\n            element, then it will be removed, otherwise, it will remain in the\n            returned set.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create a linked value set and a regular JDK set containing some test elements.","code":["var valueSet = ValueSet.ofLinked(type, elements)","var set = elements.toSet()"]},
+
+        {"kind":"when","text":"\n            We apply a predicate to both types of sets...\n            In case of the JDK set we use the negation of `removeIf`,\n            which does the same thing effectively.\n        ","code":["var updatedValueSet = valueSet.retainIf(predicate)","set.removeIf(predicate.negate())"]},
+
+        {"kind":"then","text":"They contain he same elements!","code":["updatedValueSet.toSet() == set"]},
+
+        {"kind":"where","text":"","code":{"type":["Float","Integer","String","Short","Character","Boolean","Month"],"elements":["[4.3f, 7f, 0.1f, 26.34f, 23f, 86.3f, 218f, 2f, 1.2f, 9f]","(-50..50).toList()","(-50..50).collect({Integer it -> it + \"!\"}).toList()","(0..1000).collect({Integer it -> it as Short}).toList()","['a' as char, 'x' as char, '4' as char, '#' as char]","(0..100).collect({Integer it -> ( it * 1997 ) % 2 == 0})","(0..100).collect({Integer it -> Month.values()[it%12]})"],"predicate":["{ (it - it % 1) == it  }","{ it % 3 == 1 }","{ it.hashCode() % 5 == 1 }","{ it * 1997 % 8 == 2 }","{ it == 'x' as char }","{ it }","{ it == Month.DECEMBER }"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You can keep items in a linked value set selectively, using `retainIf(Predicate)`. [1]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            You can keep elements in a value set which satisfy\n            a given `Predicate` and have them removed otherwise. Or in other words,\n            if the `Predicate.test(Object)` method yields `false` for a particular\n            element, then it will be removed, otherwise, it will remain in the\n            returned set.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create a linked value set and a regular JDK set containing some test elements.","code":["var valueSet = ValueSet.ofLinked(type, elements)","var set = elements.toSet()"]},
+
+        {"kind":"when","text":"\n            We apply a predicate to both types of sets...\n            In case of the JDK set we use the negation of `removeIf`,\n            which does the same thing effectively.\n        ","code":["var updatedValueSet = valueSet.retainIf(predicate)","set.removeIf(predicate.negate())"]},
+
+        {"kind":"then","text":"They contain he same elements!","code":["updatedValueSet.toSet() == set"]},
+
+        {"kind":"where","text":"","code":{"type":["Float","Integer","String","Short","Character","Boolean","Month"],"elements":["[4.3f, 7f, 0.1f, 26.34f, 23f, 86.3f, 218f, 2f, 1.2f, 9f]","(-50..50).toList()","(-50..50).collect({Integer it -> it + \"!\"}).toList()","(0..1000).collect({Integer it -> it as Short}).toList()","['a' as char, 'x' as char, '4' as char, '#' as char]","(0..100).collect({Integer it -> ( it * 1997 ) % 2 == 0})","(0..100).collect({Integer it -> Month.values()[it%12]})"],"predicate":["{ (it - it % 1) == it  }","{ it % 3 == 1 }","{ it.hashCode() % 5 == 1 }","{ it * 1997 % 8 == 2 }","{ it == 'x' as char }","{ it }","{ it == Month.DECEMBER }"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You can keep items in a linked value set selectively, using `retainIf(Predicate)`. [2]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            You can keep elements in a value set which satisfy\n            a given `Predicate` and have them removed otherwise. Or in other words,\n            if the `Predicate.test(Object)` method yields `false` for a particular\n            element, then it will be removed, otherwise, it will remain in the\n            returned set.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create a linked value set and a regular JDK set containing some test elements.","code":["var valueSet = ValueSet.ofLinked(type, elements)","var set = elements.toSet()"]},
+
+        {"kind":"when","text":"\n            We apply a predicate to both types of sets...\n            In case of the JDK set we use the negation of `removeIf`,\n            which does the same thing effectively.\n        ","code":["var updatedValueSet = valueSet.retainIf(predicate)","set.removeIf(predicate.negate())"]},
+
+        {"kind":"then","text":"They contain he same elements!","code":["updatedValueSet.toSet() == set"]},
+
+        {"kind":"where","text":"","code":{"type":["Float","Integer","String","Short","Character","Boolean","Month"],"elements":["[4.3f, 7f, 0.1f, 26.34f, 23f, 86.3f, 218f, 2f, 1.2f, 9f]","(-50..50).toList()","(-50..50).collect({Integer it -> it + \"!\"}).toList()","(0..1000).collect({Integer it -> it as Short}).toList()","['a' as char, 'x' as char, '4' as char, '#' as char]","(0..100).collect({Integer it -> ( it * 1997 ) % 2 == 0})","(0..100).collect({Integer it -> Month.values()[it%12]})"],"predicate":["{ (it - it % 1) == it  }","{ it % 3 == 1 }","{ it.hashCode() % 5 == 1 }","{ it * 1997 % 8 == 2 }","{ it == 'x' as char }","{ it }","{ it == Month.DECEMBER }"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You can keep items in a linked value set selectively, using `retainIf(Predicate)`. [3]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            You can keep elements in a value set which satisfy\n            a given `Predicate` and have them removed otherwise. Or in other words,\n            if the `Predicate.test(Object)` method yields `false` for a particular\n            element, then it will be removed, otherwise, it will remain in the\n            returned set.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create a linked value set and a regular JDK set containing some test elements.","code":["var valueSet = ValueSet.ofLinked(type, elements)","var set = elements.toSet()"]},
+
+        {"kind":"when","text":"\n            We apply a predicate to both types of sets...\n            In case of the JDK set we use the negation of `removeIf`,\n            which does the same thing effectively.\n        ","code":["var updatedValueSet = valueSet.retainIf(predicate)","set.removeIf(predicate.negate())"]},
+
+        {"kind":"then","text":"They contain he same elements!","code":["updatedValueSet.toSet() == set"]},
+
+        {"kind":"where","text":"","code":{"type":["Float","Integer","String","Short","Character","Boolean","Month"],"elements":["[4.3f, 7f, 0.1f, 26.34f, 23f, 86.3f, 218f, 2f, 1.2f, 9f]","(-50..50).toList()","(-50..50).collect({Integer it -> it + \"!\"}).toList()","(0..1000).collect({Integer it -> it as Short}).toList()","['a' as char, 'x' as char, '4' as char, '#' as char]","(0..100).collect({Integer it -> ( it * 1997 ) % 2 == 0})","(0..100).collect({Integer it -> Month.values()[it%12]})"],"predicate":["{ (it - it % 1) == it  }","{ it % 3 == 1 }","{ it.hashCode() % 5 == 1 }","{ it * 1997 % 8 == 2 }","{ it == 'x' as char }","{ it }","{ it == Month.DECEMBER }"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You can keep items in a linked value set selectively, using `retainIf(Predicate)`. [4]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            You can keep elements in a value set which satisfy\n            a given `Predicate` and have them removed otherwise. Or in other words,\n            if the `Predicate.test(Object)` method yields `false` for a particular\n            element, then it will be removed, otherwise, it will remain in the\n            returned set.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create a linked value set and a regular JDK set containing some test elements.","code":["var valueSet = ValueSet.ofLinked(type, elements)","var set = elements.toSet()"]},
+
+        {"kind":"when","text":"\n            We apply a predicate to both types of sets...\n            In case of the JDK set we use the negation of `removeIf`,\n            which does the same thing effectively.\n        ","code":["var updatedValueSet = valueSet.retainIf(predicate)","set.removeIf(predicate.negate())"]},
+
+        {"kind":"then","text":"They contain he same elements!","code":["updatedValueSet.toSet() == set"]},
+
+        {"kind":"where","text":"","code":{"type":["Float","Integer","String","Short","Character","Boolean","Month"],"elements":["[4.3f, 7f, 0.1f, 26.34f, 23f, 86.3f, 218f, 2f, 1.2f, 9f]","(-50..50).toList()","(-50..50).collect({Integer it -> it + \"!\"}).toList()","(0..1000).collect({Integer it -> it as Short}).toList()","['a' as char, 'x' as char, '4' as char, '#' as char]","(0..100).collect({Integer it -> ( it * 1997 ) % 2 == 0})","(0..100).collect({Integer it -> Month.values()[it%12]})"],"predicate":["{ (it - it % 1) == it  }","{ it % 3 == 1 }","{ it.hashCode() % 5 == 1 }","{ it * 1997 % 8 == 2 }","{ it == 'x' as char }","{ it }","{ it == Month.DECEMBER }"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You can keep items in a linked value set selectively, using `retainIf(Predicate)`. [5]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            You can keep elements in a value set which satisfy\n            a given `Predicate` and have them removed otherwise. Or in other words,\n            if the `Predicate.test(Object)` method yields `false` for a particular\n            element, then it will be removed, otherwise, it will remain in the\n            returned set.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create a linked value set and a regular JDK set containing some test elements.","code":["var valueSet = ValueSet.ofLinked(type, elements)","var set = elements.toSet()"]},
+
+        {"kind":"when","text":"\n            We apply a predicate to both types of sets...\n            In case of the JDK set we use the negation of `removeIf`,\n            which does the same thing effectively.\n        ","code":["var updatedValueSet = valueSet.retainIf(predicate)","set.removeIf(predicate.negate())"]},
+
+        {"kind":"then","text":"They contain he same elements!","code":["updatedValueSet.toSet() == set"]},
+
+        {"kind":"where","text":"","code":{"type":["Float","Integer","String","Short","Character","Boolean","Month"],"elements":["[4.3f, 7f, 0.1f, 26.34f, 23f, 86.3f, 218f, 2f, 1.2f, 9f]","(-50..50).toList()","(-50..50).collect({Integer it -> it + \"!\"}).toList()","(0..1000).collect({Integer it -> it as Short}).toList()","['a' as char, 'x' as char, '4' as char, '#' as char]","(0..100).collect({Integer it -> ( it * 1997 ) % 2 == 0})","(0..100).collect({Integer it -> Month.values()[it%12]})"],"predicate":["{ (it - it % 1) == it  }","{ it % 3 == 1 }","{ it.hashCode() % 5 == 1 }","{ it * 1997 % 8 == 2 }","{ it == 'x' as char }","{ it }","{ it == Month.DECEMBER }"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"You can keep items in a linked value set selectively, using `retainIf(Predicate)`. [6]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            You can keep elements in a value set which satisfy\n            a given `Predicate` and have them removed otherwise. Or in other words,\n            if the `Predicate.test(Object)` method yields `false` for a particular\n            element, then it will be removed, otherwise, it will remain in the\n            returned set.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create a linked value set and a regular JDK set containing some test elements.","code":["var valueSet = ValueSet.ofLinked(type, elements)","var set = elements.toSet()"]},
+
+        {"kind":"when","text":"\n            We apply a predicate to both types of sets...\n            In case of the JDK set we use the negation of `removeIf`,\n            which does the same thing effectively.\n        ","code":["var updatedValueSet = valueSet.retainIf(predicate)","set.removeIf(predicate.negate())"]},
+
+        {"kind":"then","text":"They contain he same elements!","code":["updatedValueSet.toSet() == set"]},
+
+        {"kind":"where","text":"","code":{"type":["Float","Integer","String","Short","Character","Boolean","Month"],"elements":["[4.3f, 7f, 0.1f, 26.34f, 23f, 86.3f, 218f, 2f, 1.2f, 9f]","(-50..50).toList()","(-50..50).collect({Integer it -> it + \"!\"}).toList()","(0..1000).collect({Integer it -> it as Short}).toList()","['a' as char, 'x' as char, '4' as char, '#' as char]","(0..100).collect({Integer it -> ( it * 1997 ) % 2 == 0})","(0..100).collect({Integer it -> Month.values()[it%12]})"],"predicate":["{ (it - it % 1) == it  }","{ it % 3 == 1 }","{ it.hashCode() % 5 == 1 }","{ it * 1997 % 8 == 2 }","{ it == 'x' as char }","{ it }","{ it == Month.DECEMBER }"]}}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },

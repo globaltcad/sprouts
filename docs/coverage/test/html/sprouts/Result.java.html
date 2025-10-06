@@ -56,7 +56,22 @@ import java.util.function.Supplier;
  *  Doc doc = parser.parse(rawText)
  *                  .logProblemsAsError()
  *                  .orElse(Doc.EMPTY);
+ *  }&lt;/pre&gt;&lt;br&gt;
+ *
+ * Also note that a freshly created {@link Result} containing at least one
+ * {@link Problem}, will be flagged as &quot;{@link #needsHandling()}&quot;, in which
+ * case &lt;b&gt;a call to methods which try to resolve the result in some way, like
+ * {@link #orElse(Object)}, {@link #orElseNull()}, {@link #toOptional()}, etc...
+ * will automatically trigger error logging for you!&lt;/b&gt;&lt;br&gt;
+ * This ensures that problems do not go unnoticed in scenarios like this:&lt;br&gt;
+ *  &lt;pre&gt;{@code
+ *  Doc doc = parser.parse(rawText).orElse(Doc.EMPTY);
  *  }&lt;/pre&gt;
+ *
+ * Use methods like {@link #handle(Class, Consumer)}, {@link #handleAny(Consumer)}
+ * or {@link #logProblemsTo(BiConsumer)} among others to do manual exception
+ * or general problem handling instead of automatic logging...
+ *
  *
  * @param &lt;V&gt; The type of the item wrapped by this result.
  */
@@ -72,8 +87,8 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
      * @throws NullPointerException if the type is null.
      */
     public static &lt;V&gt; Result&lt;V&gt; of( Class&lt;V&gt; type ) {
-<span class="fc" id="L75">        Objects.requireNonNull(type);</span>
-<span class="fc" id="L76">        return new Result&lt;&gt;(false, type, Collections.emptyList(), null);</span>
+<span class="fc" id="L90">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L91">        return new Result&lt;&gt;(false, type, Collections.emptyList(), null);</span>
     }
 
     /**
@@ -84,8 +99,8 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
      * @throws NullPointerException if the value is null.
      */
     public static &lt;V&gt; Result&lt;V&gt; of( V value ) {
-<span class="fc" id="L87">        Objects.requireNonNull(value);</span>
-<span class="fc" id="L88">        return of(value, Collections.emptyList());</span>
+<span class="fc" id="L102">        Objects.requireNonNull(value);</span>
+<span class="fc" id="L103">        return of(value, Collections.emptyList());</span>
     }
 
     /**
@@ -100,8 +115,8 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
      * @throws NullPointerException if the type is null.
      */
     public static &lt;V&gt; Result&lt;V&gt; of( Class&lt;V&gt; type, @Nullable V value ) {
-<span class="fc" id="L103">        Objects.requireNonNull(type);</span>
-<span class="fc" id="L104">        return new Result(false, type, Collections.emptyList(), value);</span>
+<span class="fc" id="L118">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L119">        return new Result(false, type, Collections.emptyList(), value);</span>
     }
 
     /**
@@ -113,9 +128,9 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
      * @throws NullPointerException if the value or problems are null.
      */
     public static &lt;V&gt; Result&lt;V&gt; of( V value, Iterable&lt;Problem&gt; problems ) {
-<span class="fc" id="L116">        Objects.requireNonNull(value);</span>
-<span class="fc" id="L117">        Class&lt;V&gt; itemType = expectedClassFromItem(value);</span>
-<span class="fc" id="L118">        return new Result&lt;&gt;(false, itemType, problems, value);</span>
+<span class="fc" id="L131">        Objects.requireNonNull(value);</span>
+<span class="fc" id="L132">        Class&lt;V&gt; itemType = expectedClassFromItem(value);</span>
+<span class="fc" id="L133">        return new Result&lt;&gt;(false, itemType, problems, value);</span>
     }
 
     /**
@@ -127,9 +142,9 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
      * @throws NullPointerException if the type or problems are null.
      */
     public static &lt;V&gt; Result&lt;V&gt; of( Class&lt;V&gt; type, Iterable&lt;Problem&gt; problems ) {
-<span class="fc" id="L130">        Objects.requireNonNull(type);</span>
-<span class="fc" id="L131">        Objects.requireNonNull(problems);</span>
-<span class="fc" id="L132">        return new Result&lt;&gt;(false, type, problems, null);</span>
+<span class="fc" id="L145">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L146">        Objects.requireNonNull(problems);</span>
+<span class="fc" id="L147">        return new Result&lt;&gt;(false, type, problems, null);</span>
     }
 
     /**
@@ -142,9 +157,9 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
      * @throws NullPointerException if the type or problems are null.
      */
     public static &lt;V&gt; Result&lt;V&gt; of( Class&lt;V&gt; type, @Nullable V value, Iterable&lt;Problem&gt; problems ) {
-<span class="fc" id="L145">        Objects.requireNonNull(type);</span>
-<span class="fc" id="L146">        Objects.requireNonNull(problems);</span>
-<span class="fc" id="L147">        return new Result&lt;&gt;(false, type, problems, value);</span>
+<span class="fc" id="L160">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L161">        Objects.requireNonNull(problems);</span>
+<span class="fc" id="L162">        return new Result&lt;&gt;(false, type, problems, value);</span>
     }
 
     /**
@@ -157,9 +172,9 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
      * @throws NullPointerException if any of the parameters are null.
      */
     public static &lt;V&gt; Result&lt;V&gt; of( Class&lt;V&gt; type, @Nullable V value, Problem problem ) {
-<span class="nc" id="L160">        Objects.requireNonNull(type);</span>
-<span class="nc" id="L161">        Objects.requireNonNull(problem);</span>
-<span class="nc" id="L162">        return new Result&lt;&gt;(false, type, Collections.singletonList(problem), value);</span>
+<span class="nc" id="L175">        Objects.requireNonNull(type);</span>
+<span class="nc" id="L176">        Objects.requireNonNull(problem);</span>
+<span class="nc" id="L177">        return new Result&lt;&gt;(false, type, Collections.singletonList(problem), value);</span>
     }
 
     /**
@@ -171,9 +186,9 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
      * @throws NullPointerException if any of the parameters are null.
      */
     public static &lt;V&gt; Result&lt;V&gt; of( Class&lt;V&gt; type, Problem problem ) {
-<span class="fc" id="L174">        Objects.requireNonNull(type);</span>
-<span class="fc" id="L175">        Objects.requireNonNull(problem);</span>
-<span class="fc" id="L176">        return new Result&lt;&gt;(false, type, Collections.singletonList(problem), null);</span>
+<span class="fc" id="L189">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L190">        Objects.requireNonNull(problem);</span>
+<span class="fc" id="L191">        return new Result&lt;&gt;(false, type, Collections.singletonList(problem), null);</span>
     }
 
     /**
@@ -185,9 +200,9 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
      * @throws NullPointerException if any of the parameters are null.
      */
     public static &lt;V&gt; Result&lt;List&lt;V&gt;&gt; ofList( Class&lt;V&gt; type, Problem problem ) {
-<span class="nc" id="L188">        Objects.requireNonNull(type);</span>
-<span class="nc" id="L189">        Objects.requireNonNull(problem);</span>
-<span class="nc" id="L190">        return (Result&lt;List&lt;V&gt;&gt;) (Result) new Result&lt;&gt;(false, List.class, Collections.singletonList(problem), null);</span>
+<span class="nc" id="L203">        Objects.requireNonNull(type);</span>
+<span class="nc" id="L204">        Objects.requireNonNull(problem);</span>
+<span class="nc" id="L205">        return (Result&lt;List&lt;V&gt;&gt;) (Result) new Result&lt;&gt;(false, List.class, Collections.singletonList(problem), null);</span>
     }
 
     /**
@@ -201,13 +216,13 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
      * @throws NullPointerException if any of the parameters are null.
      */
     public static &lt;V&gt; Result&lt;List&lt;V&gt;&gt; ofList( Class&lt;V&gt; type, List&lt;V&gt; list ) {
-<span class="fc" id="L204">        Objects.requireNonNull(type);</span>
-<span class="fc" id="L205">        Objects.requireNonNull(list);</span>
+<span class="fc" id="L219">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L220">        Objects.requireNonNull(list);</span>
         // We check the types of the list elements are of the correct type.
-<span class="fc" id="L207">        boolean matches = list.stream().filter(Objects::nonNull).allMatch(e -&gt; type.isAssignableFrom(e.getClass()));</span>
-<span class="pc bpc" id="L208" title="1 of 2 branches missed.">        if ( !matches )</span>
-<span class="nc" id="L209">            throw new IllegalArgumentException(&quot;List elements must be of type &quot; + type.getName());</span>
-<span class="fc" id="L210">        return (Result&lt;List&lt;V&gt;&gt;) (Result) new Result&lt;&gt;(false, List.class, Collections.emptyList(), list);</span>
+<span class="fc" id="L222">        boolean matches = list.stream().filter(Objects::nonNull).allMatch(e -&gt; type.isAssignableFrom(e.getClass()));</span>
+<span class="pc bpc" id="L223" title="1 of 2 branches missed.">        if ( !matches )</span>
+<span class="nc" id="L224">            throw new IllegalArgumentException(&quot;List elements must be of type &quot; + type.getName());</span>
+<span class="fc" id="L225">        return (Result&lt;List&lt;V&gt;&gt;) (Result) new Result&lt;&gt;(false, List.class, Collections.emptyList(), list);</span>
     }
 
     /**
@@ -222,14 +237,14 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
      * @throws NullPointerException if any of the parameters are null.
      */
     public static &lt;V&gt; Result&lt;List&lt;V&gt;&gt; ofList( Class&lt;V&gt; type, List&lt;V&gt; list, Iterable&lt;Problem&gt; problems ) {
-<span class="fc" id="L225">        Objects.requireNonNull(type);</span>
-<span class="fc" id="L226">        Objects.requireNonNull(list);</span>
-<span class="fc" id="L227">        Objects.requireNonNull(problems);</span>
-<span class="fc" id="L228">        boolean matches = list.stream().filter(Objects::nonNull).allMatch(e -&gt; type.isAssignableFrom(e.getClass()));</span>
-<span class="pc bpc" id="L229" title="1 of 2 branches missed.">        if ( !matches )</span>
-<span class="nc" id="L230">            throw new IllegalArgumentException(&quot;List elements must be of type &quot; + type.getName());</span>
+<span class="fc" id="L240">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L241">        Objects.requireNonNull(list);</span>
+<span class="fc" id="L242">        Objects.requireNonNull(problems);</span>
+<span class="fc" id="L243">        boolean matches = list.stream().filter(Objects::nonNull).allMatch(e -&gt; type.isAssignableFrom(e.getClass()));</span>
+<span class="pc bpc" id="L244" title="1 of 2 branches missed.">        if ( !matches )</span>
+<span class="nc" id="L245">            throw new IllegalArgumentException(&quot;List elements must be of type &quot; + type.getName());</span>
 
-<span class="fc" id="L232">        return (Result&lt;List&lt;V&gt;&gt;) (Result) new Result&lt;&gt;(false, List.class, problems, list);</span>
+<span class="fc" id="L247">        return (Result&lt;List&lt;V&gt;&gt;) (Result) new Result&lt;&gt;(false, List.class, problems, list);</span>
     }
 
     /**
@@ -251,12 +266,12 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
      * @throws NullPointerException if the type or supplier is null.
      */
     public static &lt;V&gt; Result&lt;V&gt; ofTry( Class&lt;V&gt; type, ResultItemSupplier&lt;V&gt; supplier ) {
-<span class="fc" id="L254">        Objects.requireNonNull(type);</span>
-<span class="fc" id="L255">        Objects.requireNonNull(supplier);        </span>
+<span class="fc" id="L269">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L270">        Objects.requireNonNull(supplier);        </span>
         try {
-<span class="fc" id="L257">            return new Result&lt;&gt;(false, type, Collections.emptyList(), supplier.get());</span>
-<span class="fc" id="L258">        } catch (Exception e) {</span>
-<span class="fc" id="L259">            return new Result&lt;&gt;(false, type, Collections.singletonList(Problem.of(e)), null);</span>
+<span class="fc" id="L272">            return new Result&lt;&gt;(false, type, Collections.emptyList(), supplier.get());</span>
+<span class="fc" id="L273">        } catch (Exception e) {</span>
+<span class="fc" id="L274">            return new Result&lt;&gt;(false, type, Collections.singletonList(Problem.of(e)), null);</span>
         }
     }
 
@@ -279,17 +294,17 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
      * @return A new result with no value and a list of problems describing related issues.
      */
     public static Result&lt;Void&gt; ofTry( ResultRunAttempt runAttempt ) {
-<span class="fc" id="L282">        Objects.requireNonNull(runAttempt);</span>
+<span class="fc" id="L297">        Objects.requireNonNull(runAttempt);</span>
         try {
-<span class="fc" id="L284">            runAttempt.run();</span>
-<span class="fc" id="L285">            return new Result&lt;&gt;(false, Void.class, Collections.emptyList(), null);</span>
-<span class="fc" id="L286">        } catch (Exception e) {</span>
-<span class="fc" id="L287">            return new Result&lt;&gt;(false, Void.class, Collections.singletonList(Problem.of(e)), null);</span>
+<span class="fc" id="L299">            runAttempt.run();</span>
+<span class="fc" id="L300">            return new Result&lt;&gt;(false, Void.class, Collections.emptyList(), null);</span>
+<span class="fc" id="L301">        } catch (Exception e) {</span>
+<span class="fc" id="L302">            return new Result&lt;&gt;(false, Void.class, Collections.singletonList(Problem.of(e)), null);</span>
         }
     }
 
 
-<span class="fc" id="L292">    private static final Logger log = LoggerFactory.getLogger(Result.class);</span>
+<span class="fc" id="L307">    private static final Logger log = LoggerFactory.getLogger(Result.class);</span>
 
     private final boolean        _wasLogged;
     private final Class&lt;V&gt;       _type;
@@ -302,103 +317,211 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
         Class&lt;V&gt;          type,
         Iterable&lt;Problem&gt; problems,
         @Nullable         V value
-<span class="fc" id="L305">    ) {</span>
-<span class="fc" id="L306">        Objects.requireNonNull(type);</span>
-<span class="fc" id="L307">        Objects.requireNonNull(problems);</span>
-<span class="fc" id="L308">        _wasLogged = wasLogged;</span>
-<span class="fc" id="L309">        _type      = type;</span>
-<span class="fc" id="L310">        _problems  = Tuple.of(Problem.class, problems);</span>
-<span class="fc" id="L311">        _value     = value;</span>
-<span class="fc" id="L312">    }</span>
+<span class="fc" id="L320">    ) {</span>
+<span class="fc" id="L321">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L322">        Objects.requireNonNull(problems);</span>
+<span class="fc" id="L323">        _wasLogged = wasLogged;</span>
+<span class="fc" id="L324">        _type      = type;</span>
+<span class="fc" id="L325">        _problems  = Tuple.of(Problem.class, problems);</span>
+<span class="fc" id="L326">        _value     = value;</span>
+<span class="fc" id="L327">    }</span>
 
     private Result&lt;V&gt; _markAsLoggedOrHandled() {
         // This is a copy of the current result with the '_wasLogged' flag set to true.
-<span class="fc" id="L316">        return new Result&lt;&gt;(true, this._type, this._problems, this._value);</span>
+<span class="fc" id="L331">        return new Result&lt;&gt;(true, this._type, this._problems, this._value);</span>
+    }
+
+    /**
+     *  This flag tells you if the {@link Problem}s of a {@link Result} 
+     *  need to be handled or if they were already handled previously, 
+     *  which either means that the result &lt;b&gt;was freshly
+     *  created with at least one {@link Problem}&lt;/b&gt; or it was transformed
+     *  into a &quot;handled result&quot;, through methods like {@link #handle(Class, Consumer)},
+     *  {@link #handleAny(Consumer)}, {@link #logProblemsTo(BiConsumer)}, etc...&lt;br&gt;
+     *  The reason why this state is tracked in a result, is to ensure that
+     *  problems do not go unnoticed. In practice this means that &lt;b&gt;when you try to 
+     *  resolve a &quot;problematic {@link Result}&quot; using methods like 
+     *  {@link #toOptional()} or {@link #orElse(Object)}, then the result will
+     *  automatically log an error for you!&lt;/b&gt;&lt;br&gt;
+     *  So a result containing problems, will always be created with this flag
+     *  being set to {@code true}, which ensures that an API user has to 
+     *  handle problems in some way.
+     *  
+     * @return If the {@link Problem}s of this {@link Result} were
+     *         not handled in some way, like through logging for example.
+     */
+    public boolean needsHandling() {
+<span class="fc bfc" id="L354" title="All 4 branches covered.">        return !_wasLogged &amp;&amp; this.hasProblems();</span>
     }
 
     /** {@inheritDoc} */
     @Override
     public Class&lt;V&gt; type() {
-<span class="fc" id="L322">        return _type; </span>
+<span class="fc" id="L360">        return _type; </span>
+    }
+
+    /**
+     *  Use this to turn this {@link Result} to an {@link Optional}, which allows
+     *  for better interoperability with the JDK and support for further functional processing.&lt;br&gt;
+     *  &lt;b&gt;
+     *      Note that a freshly created {@link Result} containing at least one
+     *      {@link Problem}, will be flagged as &quot;{@link #needsHandling()}&quot;, in which
+     *      case a call to this method will automatically trigger an error log
+     *      to ensure that problems do not go unnoticed.&lt;br&gt;
+     *      Use methods like {@link #handle(Class, Consumer)}, {@link #handleAny(Consumer)}
+     *      or {@link #logProblemsTo(BiConsumer)} among others to do manual exception
+     *      or general problem handling instead of automatic logging...
+     *  &lt;/b&gt;
+     * @return An {@link Optional} wrapping the item wrapped by this {@link Maybe}.
+     */
+    @Override
+    public Optional&lt;V&gt; toOptional() {
+<span class="fc" id="L379">        return Optional.ofNullable(this.orElseNull());</span>
     }
 
     /** {@inheritDoc} */
     @Override
     public boolean isPresent() {
-<span class="fc bfc" id="L328" title="All 2 branches covered.">        return _value != null;</span>
+<span class="fc bfc" id="L385" title="All 2 branches covered.">        return _value != null;</span>
     }
 
     /** {@inheritDoc} */
     @Override
     public boolean is( @Nullable V otherItem ) {
-<span class="fc" id="L334">        return Val.equals(otherItem, _value);</span>
+<span class="fc" id="L391">        return Val.equals(otherItem, _value);</span>
     }
 
     /** {@inheritDoc} */
     @Override
     public boolean is( @NonNull Maybe&lt;@Nullable V&gt; other ) {
-<span class="fc" id="L340">        Objects.requireNonNull(other);</span>
-<span class="fc" id="L341">        return other.is(_value);</span>
+<span class="fc" id="L397">        Objects.requireNonNull(other);</span>
+<span class="fc" id="L398">        return other.is(_value);</span>
     }
 
     /** {@inheritDoc} */
     @Override
     public @NonNull V orElseThrow() throws MissingItemException {
         // If the value is null, this throws a checked exception!
-<span class="fc" id="L348">        V value = _value;</span>
-<span class="pc bpc" id="L349" title="1 of 2 branches missed.">        if ( Objects.isNull(value) )</span>
-<span class="fc" id="L350">            throw new MissingItemException(&quot;Expected item to be present in result!&quot;, this._problems);</span>
-<span class="nc" id="L351">        return value;</span>
+<span class="fc" id="L405">        V value = _value;</span>
+<span class="pc bpc" id="L406" title="1 of 2 branches missed.">        if ( Objects.isNull(value) )</span>
+<span class="fc" id="L407">            throw new MissingItemException(&quot;Expected item to be present in result!&quot;, this._problems);</span>
+<span class="nc" id="L408">        return value;</span>
     }
 
     /** {@inheritDoc} */
     @Override
     public @NonNull V orElseThrowUnchecked() {
         // This is similar to optionals &quot;get()&quot;, so if the value is null, we throw a unchecked exception!
-<span class="fc" id="L358">        V value = _value;</span>
-<span class="fc bfc" id="L359" title="All 2 branches covered.">        if ( Objects.isNull(value) )</span>
-<span class="fc" id="L360">            throw new MissingItemRuntimeException(&quot;Expected item to be present in result!&quot;, this._problems);</span>
-<span class="fc" id="L361">        return value;</span>
+<span class="fc" id="L415">        V value = _value;</span>
+<span class="fc bfc" id="L416" title="All 2 branches covered.">        if ( Objects.isNull(value) )</span>
+<span class="fc" id="L417">            throw new MissingItemRuntimeException(&quot;Expected item to be present in result!&quot;, this._problems);</span>
+<span class="fc" id="L418">        return value;</span>
     }
 
-    /** {@inheritDoc} */
+    /**
+     * If an item is present, returns the item, otherwise returns
+     * {@code other}, &lt;b&gt;but never {@code null}&lt;/b&gt;. &lt;br&gt;
+     * If the supplied alternative is {@code null},
+     * then this method will throw a {@code NullPointerException}.&lt;br&gt;
+     * &lt;b&gt;
+     *     Note that a freshly created {@link Result} containing at least one
+     *     {@link Problem}, will be flagged as &quot;{@link #needsHandling()}&quot;, in which
+     *     case a call to this method will automatically trigger an error log
+     *     to ensure that problems do not go unnoticed.&lt;br&gt;
+     *     Use methods like {@link #handle(Class, Consumer)}, {@link #handleAny(Consumer)}
+     *     or {@link #logProblemsTo(BiConsumer)} among others to do manual exception
+     *     or general problem handling instead of automatic logging...
+     * &lt;/b&gt;
+     *
+     * @param other the item to be returned, if no item is present.
+     *        May never be {@code null}.
+     * @return the item, if present, otherwise {@code other}
+     * @throws NullPointerException if the supplied alternative is {@code null}.
+     **/
     @Override
     public @NonNull V orElse( @NonNull V other ) {
-<span class="fc bfc" id="L367" title="All 4 branches covered.">        if ( this.hasProblems() &amp;&amp; !this._wasLogged) {</span>
+<span class="fc bfc" id="L443" title="All 4 branches covered.">        if ( this.hasProblems() &amp;&amp; !this._wasLogged) {</span>
             // If we have problems and the result was not logged yet, we log them as errors.
-<span class="fc" id="L369">            this.logProblemsAsError();</span>
+<span class="fc" id="L445">            this.logProblemsAsError();</span>
         }
-<span class="fc" id="L371">        return Maybe.super.orElse(other);</span>
+<span class="fc" id="L447">        return Maybe.super.orElse(other);</span>
     }
 
-    /** {@inheritDoc} */
+    /**
+     * If an item is present, returns the item, otherwise returns {@code other}.&lt;br&gt;
+     * &lt;b&gt;
+     *     Note that a freshly created {@link Result} containing at least one
+     *     {@link Problem}, will be flagged as &quot;{@link #needsHandling()}&quot;, in which
+     *     case a call to this method will automatically trigger an error log
+     *     to ensure that problems do not go unnoticed.&lt;br&gt;
+     *     Use methods like {@link #handle(Class, Consumer)}, {@link #handleAny(Consumer)}
+     *     or {@link #logProblemsTo(BiConsumer)} among others to do manual exception
+     *     or general problem handling instead of automatic logging...
+     * &lt;/b&gt;
+     *
+     * @param other the item to be returned, if no item is present.
+     *        May be {@code null}.
+     * @return the item, if present, otherwise {@code other}
+     */
     @Override
     public @Nullable V orElseNullable( @Nullable V other ) {
-<span class="nc bnc" id="L377" title="All 4 branches missed.">        if ( this.hasProblems() &amp;&amp; !this._wasLogged) {</span>
+<span class="nc bnc" id="L468" title="All 4 branches missed.">        if ( this.hasProblems() &amp;&amp; !this._wasLogged) {</span>
             // If we have problems and the result was not logged yet, we log them as errors.
-<span class="nc" id="L379">            this.logProblemsAsError();</span>
+<span class="nc" id="L470">            this.logProblemsAsError();</span>
         }
-<span class="nc bnc" id="L381" title="All 2 branches missed.">        return _value == null ? other : _value;</span>
+<span class="nc bnc" id="L472" title="All 2 branches missed.">        return _value == null ? other : _value;</span>
     }
 
-    /** {@inheritDoc} */
+    /**
+     * If an item is present, returns the item, otherwise returns the result
+     * produced by the supplying function.&lt;br&gt;
+     * &lt;b&gt;
+     *     Note that a freshly created {@link Result} containing at least one
+     *     {@link Problem}, will be flagged as &quot;{@link #needsHandling()}&quot;, in which
+     *     case a call to this method will automatically trigger an error log
+     *     to ensure that problems do not go unnoticed.&lt;br&gt;
+     *     Use methods like {@link #handle(Class, Consumer)}, {@link #handleAny(Consumer)}
+     *     or {@link #logProblemsTo(BiConsumer)} among others to do manual exception
+     *     or general problem handling instead of automatic logging...
+     * &lt;/b&gt;
+     *
+     * @param supplier the supplying function that produces an item to be returned
+     * @return the item, if present, otherwise the result produced by the
+     *         supplying function
+     * @throws NullPointerException if no item is present and the supplying
+     *         function is {@code null}
+     */
     @Override
     public V orElseGet( @NonNull Supplier&lt;? extends V&gt; supplier ) {
-<span class="pc bpc" id="L387" title="1 of 4 branches missed.">        if ( this.hasProblems() &amp;&amp; !this._wasLogged) {</span>
+<span class="pc bpc" id="L496" title="1 of 4 branches missed.">        if ( this.hasProblems() &amp;&amp; !this._wasLogged) {</span>
             // If we have problems and the result was not logged yet, we log them as errors.
-<span class="fc" id="L389">            this.logProblemsAsError();</span>
+<span class="fc" id="L498">            this.logProblemsAsError();</span>
         }
-<span class="fc" id="L391">        return Maybe.super.orElseGet(supplier);</span>
+<span class="fc" id="L500">        return Maybe.super.orElseGet(supplier);</span>
     }
 
-    /** {@inheritDoc} */
+    /**
+     * If an item is present, returns the item, otherwise returns
+     * {@code null}.&lt;br&gt;
+     * &lt;b&gt;
+     *     Note that a freshly created {@link Result} containing at least one
+     *     {@link Problem}, will be flagged as &quot;{@link #needsHandling()}&quot;, in which
+     *     case a call to this method will automatically trigger an error log
+     *     to ensure that problems do not go unnoticed.&lt;br&gt;
+     *     Use methods like {@link #handle(Class, Consumer)}, {@link #handleAny(Consumer)}
+     *     or {@link #logProblemsTo(BiConsumer)} among others to do manual exception
+     *     or general problem handling instead of automatic logging...
+     * &lt;/b&gt;
+     *
+     * @return the item, if present, otherwise {@code null}
+     */
     @Override
     public @Nullable V orElseNull() {
-<span class="fc bfc" id="L397" title="All 4 branches covered.">        if ( this.hasProblems() &amp;&amp; !this._wasLogged) {</span>
+<span class="fc bfc" id="L520" title="All 4 branches covered.">        if ( this.hasProblems() &amp;&amp; !this._wasLogged) {</span>
             // If we have problems and the result was not logged yet, we log them as errors.
-<span class="fc" id="L399">            this.logProblemsAsError();</span>
+<span class="fc" id="L522">            this.logProblemsAsError();</span>
         }
-<span class="fc" id="L401">        return _value;</span>
+<span class="fc" id="L524">        return _value;</span>
     }
 
     /**
@@ -428,16 +551,16 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
      * @throws NullPointerException if {@code handler} is null
      */
     public @NonNull V orElseHandle( @NonNull Function&lt;Tuple&lt;Problem&gt;, V&gt; handler ) {
-<span class="fc" id="L431">        Objects.requireNonNull(handler);</span>
-<span class="fc" id="L432">        V value = _value;</span>
-<span class="fc bfc" id="L433" title="All 2 branches covered.">        if ( value != null ) {</span>
-<span class="pc bpc" id="L434" title="2 of 4 branches missed.">            if ( this.hasProblems() &amp;&amp; !this._wasLogged) {</span>
+<span class="fc" id="L554">        Objects.requireNonNull(handler);</span>
+<span class="fc" id="L555">        V value = _value;</span>
+<span class="fc bfc" id="L556" title="All 2 branches covered.">        if ( value != null ) {</span>
+<span class="pc bpc" id="L557" title="2 of 4 branches missed.">            if ( this.hasProblems() &amp;&amp; !this._wasLogged) {</span>
                 // If we have problems and the result was not logged yet, we log them as errors.
-<span class="fc" id="L436">                this.logProblemsAsError();</span>
+<span class="fc" id="L559">                this.logProblemsAsError();</span>
             }
-<span class="fc" id="L438">            return value;</span>
+<span class="fc" id="L561">            return value;</span>
         } else {
-<span class="fc" id="L440">            return handler.apply(this.problems());</span>
+<span class="fc" id="L563">            return handler.apply(this.problems());</span>
         }
     }
 
@@ -461,12 +584,12 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
      * @throws NullPointerException if {@code exceptionSupplier} is null
      */
     public &lt;E extends Exception&gt; V orElseThrowProblems(Function&lt;Tuple&lt;Problem&gt;,E&gt; exceptionSupplier) throws E {
-<span class="fc" id="L464">        Objects.requireNonNull(exceptionSupplier);</span>
-<span class="fc" id="L465">        V value = _value;</span>
-<span class="fc bfc" id="L466" title="All 2 branches covered.">        if ( value != null ) {</span>
-<span class="fc" id="L467">            return value;</span>
+<span class="fc" id="L587">        Objects.requireNonNull(exceptionSupplier);</span>
+<span class="fc" id="L588">        V value = _value;</span>
+<span class="fc bfc" id="L589" title="All 2 branches covered.">        if ( value != null ) {</span>
+<span class="fc" id="L590">            return value;</span>
         } else {
-<span class="fc" id="L469">            throw exceptionSupplier.apply(this.problems());</span>
+<span class="fc" id="L592">            throw exceptionSupplier.apply(this.problems());</span>
         }
     }
 
@@ -489,12 +612,12 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
      * @throws NullPointerException if {@code exceptionSupplier} is null
      */
     public V orElseThrowProblemsUnchecked(Function&lt;Tuple&lt;Problem&gt;,RuntimeException&gt; exceptionSupplier) {
-<span class="fc" id="L492">        Objects.requireNonNull(exceptionSupplier);</span>
-<span class="fc" id="L493">        V result = _value;</span>
-<span class="fc bfc" id="L494" title="All 2 branches covered.">        if ( result != null ) {</span>
-<span class="fc" id="L495">            return result;</span>
+<span class="fc" id="L615">        Objects.requireNonNull(exceptionSupplier);</span>
+<span class="fc" id="L616">        V result = _value;</span>
+<span class="fc bfc" id="L617" title="All 2 branches covered.">        if ( result != null ) {</span>
+<span class="fc" id="L618">            return result;</span>
         } else {
-<span class="fc" id="L497">            throw exceptionSupplier.apply(this.problems());</span>
+<span class="fc" id="L620">            throw exceptionSupplier.apply(this.problems());</span>
         }
     }
 
@@ -509,7 +632,7 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
      *  @return The list of {@link Problem}s associated with this result item.
      */
     public Tuple&lt;Problem&gt; problems() {
-<span class="fc" id="L512">        return _problems;</span>
+<span class="fc" id="L635">        return _problems;</span>
     }
 
     /**
@@ -523,7 +646,7 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
      *  @return {@code true} if this result is present, {@code false} otherwise.
      */
     public boolean hasProblems() {
-<span class="fc bfc" id="L526" title="All 2 branches covered.">        return !problems().isEmpty();</span>
+<span class="fc bfc" id="L649" title="All 2 branches covered.">        return !problems().isEmpty();</span>
     }
 
     /**
@@ -546,28 +669,28 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
         Class&lt;E&gt; exceptionType,
         Consumer&lt;E&gt; handler
     ) {
-<span class="fc" id="L549">        Objects.requireNonNull(exceptionType);</span>
-<span class="fc" id="L550">        Objects.requireNonNull(handler);</span>
-<span class="pc bpc" id="L551" title="1 of 2 branches missed.">        if ( this.hasProblems() ) {</span>
-<span class="fc" id="L552">            Tuple&lt;Problem&gt; problems = this.problems();</span>
-<span class="fc bfc" id="L553" title="All 2 branches covered.">            for ( Problem problem : problems ) {</span>
-<span class="pc bpc" id="L554" title="1 of 4 branches missed.">                if ( problem.exception().isPresent() &amp;&amp; exceptionType.isAssignableFrom(problem.exception().get().getClass()) ) {</span>
+<span class="fc" id="L672">        Objects.requireNonNull(exceptionType);</span>
+<span class="fc" id="L673">        Objects.requireNonNull(handler);</span>
+<span class="pc bpc" id="L674" title="1 of 2 branches missed.">        if ( this.hasProblems() ) {</span>
+<span class="fc" id="L675">            Tuple&lt;Problem&gt; problems = this.problems();</span>
+<span class="fc bfc" id="L676" title="All 2 branches covered.">            for ( Problem problem : problems ) {</span>
+<span class="pc bpc" id="L677" title="1 of 4 branches missed.">                if ( problem.exception().isPresent() &amp;&amp; exceptionType.isAssignableFrom(problem.exception().get().getClass()) ) {</span>
                     try {
-<span class="fc" id="L556">                        handler.accept(exceptionType.cast(problem.exception().get()));</span>
-<span class="fc" id="L557">                        problems = problems.remove(problem);</span>
-<span class="nc" id="L558">                    } catch ( Exception e ) {</span>
-<span class="nc" id="L559">                        _logError(&quot;An exception occurred while handling a problem in a result.&quot;, e);</span>
-<span class="fc" id="L560">                    }</span>
+<span class="fc" id="L679">                        handler.accept(exceptionType.cast(problem.exception().get()));</span>
+<span class="fc" id="L680">                        problems = problems.remove(problem);</span>
+<span class="nc" id="L681">                    } catch ( Exception e ) {</span>
+<span class="nc" id="L682">                        _logError(&quot;An exception occurred while handling a problem in a result.&quot;, e);</span>
+<span class="fc" id="L683">                    }</span>
                 }
-<span class="fc" id="L562">            }</span>
-<span class="fc" id="L563">            return new Result&lt;&gt;(</span>
+<span class="fc" id="L685">            }</span>
+<span class="fc" id="L686">            return new Result&lt;&gt;(</span>
                 this._wasLogged,
                 this._type,
                 problems,
                 this._value
             );
         }
-<span class="nc" id="L570">        return this;</span>
+<span class="nc" id="L693">        return this;</span>
     }
 
     /**
@@ -589,25 +712,66 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
      * @throws NullPointerException if the handler is null.
      */
     public Result&lt;V&gt; handleAny( Consumer&lt;Problem&gt; handler ) {
-<span class="fc" id="L592">        Objects.requireNonNull(handler);</span>
-<span class="pc bpc" id="L593" title="1 of 2 branches missed.">        if ( this.hasProblems() ) {</span>
-<span class="fc" id="L594">            Tuple&lt;Problem&gt; problems = this.problems();</span>
-<span class="fc bfc" id="L595" title="All 2 branches covered.">            for ( Problem problem : problems ) {</span>
+<span class="fc" id="L715">        Objects.requireNonNull(handler);</span>
+<span class="pc bpc" id="L716" title="1 of 2 branches missed.">        if ( this.hasProblems() ) {</span>
+<span class="fc" id="L717">            Tuple&lt;Problem&gt; problems = this.problems();</span>
+<span class="fc bfc" id="L718" title="All 2 branches covered.">            for ( Problem problem : problems ) {</span>
                 try {
-<span class="fc" id="L597">                    handler.accept(problem);</span>
-<span class="fc" id="L598">                    problems = problems.remove(problem);</span>
-<span class="nc" id="L599">                } catch ( Exception e ) {</span>
-<span class="nc" id="L600">                    _logError(&quot;An exception occurred while handling a problem in a result.&quot;, e);</span>
-<span class="fc" id="L601">                }</span>
-<span class="fc" id="L602">            }</span>
-<span class="fc" id="L603">            return new Result&lt;&gt;(</span>
+<span class="fc" id="L720">                    handler.accept(problem);</span>
+<span class="fc" id="L721">                    problems = problems.remove(problem);</span>
+<span class="nc" id="L722">                } catch ( Exception e ) {</span>
+<span class="nc" id="L723">                    _logError(&quot;An exception occurred while handling a problem in a result.&quot;, e);</span>
+<span class="fc" id="L724">                }</span>
+<span class="fc" id="L725">            }</span>
+<span class="fc" id="L726">            return new Result&lt;&gt;(</span>
                 this._wasLogged,
                 this._type,
                 problems,
                 this._value
             );
         }
-<span class="nc" id="L610">        return this;</span>
+<span class="nc" id="L733">        return this;</span>
+    }
+
+    /**
+     *  Use this to turn this {@link Result} into a new
+     *  result instance but without any {@link Problem}s
+     *  attached to it and where the {@link #needsHandling()} method
+     *  is guaranteed to return {@code false}.&lt;br&gt;
+     *  This method is effectively equivalent to calling:
+     *  &lt;pre&gt;{@code
+     *      .handleAny( problem -&gt; {} ) // ignored
+     *  }&lt;/pre&gt;&lt;br&gt;
+     *  And in the context of classical Java error handling
+     *  it is a comparable pattern to an empty catch block:
+     *  &lt;pre&gt;{@code
+     *      try {
+     *          value = api.fetchSomething()
+     *      } catch ( Exception ignored ) {
+     *          // don't care
+     *      }
+     *  }&lt;/pre&gt;&lt;br&gt;
+     *  &lt;b&gt;
+     *      Note that using this method is typically a code smell,
+     *      and it only exists to have a token to reliably look for
+     *      cases where errors may go unnoticed.
+     *      In most cases you should log or otherwise handle
+     *      problems instead of ignoring them!
+     *  &lt;/b&gt;
+     *
+     * @return A new {@link Result} without any {@link Problem}s,
+     *         or this instance if no problems exists.
+     */
+    public Result&lt;V&gt; ignoreProblems() {
+<span class="fc bfc" id="L766" title="All 2 branches covered.">        if ( this.hasProblems() ) {</span>
+<span class="fc" id="L767">            return new Result&lt;&gt;(</span>
+                this._wasLogged,
+                this._type,
+<span class="fc" id="L770">                this._problems.clear(),</span>
+                this._value
+            );
+        }
+<span class="fc" id="L774">        return this;</span>
     }
 
     /**
@@ -624,11 +788,11 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
      * @throws NullPointerException if the consumer is null.
      */
     public Result&lt;V&gt; peekAtProblems( Consumer&lt;Tuple&lt;Problem&gt;&gt; consumer ) {
-<span class="fc" id="L627">        Objects.requireNonNull(consumer);</span>
+<span class="fc" id="L791">        Objects.requireNonNull(consumer);</span>
         try {
-<span class="fc" id="L629">            consumer.accept(problems());</span>
-<span class="fc" id="L630">        } catch ( Exception e ) {</span>
-<span class="fc" id="L631">            Tuple&lt;Problem&gt; newProblems = problems().add( Problem.of(e) );</span>
+<span class="fc" id="L793">            consumer.accept(problems());</span>
+<span class="fc" id="L794">        } catch ( Exception e ) {</span>
+<span class="fc" id="L795">            Tuple&lt;Problem&gt; newProblems = problems().add( Problem.of(e) );</span>
 			/*
 				An exception in this the user lambda is most likely completely unwanted,
 				but we also do not want to halt the application because of it.
@@ -637,10 +801,10 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
 					1. Log the exception
 					2. Add it as a problem.
 			*/
-<span class="fc" id="L640">            _logError(&quot;An exception occurred while peeking at the problems of a result.&quot;, e);</span>
-<span class="fc" id="L641">            return Result.of( type(), this._value, newProblems );</span>
-<span class="fc" id="L642">        }</span>
-<span class="fc" id="L643">        return this;</span>
+<span class="fc" id="L804">            _logError(&quot;An exception occurred while peeking at the problems of a result.&quot;, e);</span>
+<span class="fc" id="L805">            return Result.of( type(), this._value, newProblems );</span>
+<span class="fc" id="L806">        }</span>
+<span class="fc" id="L807">        return this;</span>
     }
 
     /**
@@ -656,13 +820,13 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
      * @throws NullPointerException if the consumer is null.
      */
     public Result&lt;V&gt; peekAtEachProblem( Consumer&lt;Problem&gt; consumer )  {
-<span class="fc" id="L659">        Objects.requireNonNull(consumer);</span>
-<span class="fc" id="L660">        Result&lt;V&gt; result = this;</span>
-<span class="fc bfc" id="L661" title="All 2 branches covered.">        for ( Problem problem : problems() ) {</span>
+<span class="fc" id="L823">        Objects.requireNonNull(consumer);</span>
+<span class="fc" id="L824">        Result&lt;V&gt; result = this;</span>
+<span class="fc bfc" id="L825" title="All 2 branches covered.">        for ( Problem problem : problems() ) {</span>
             try {
-<span class="fc" id="L663">                consumer.accept(problem);</span>
-<span class="fc" id="L664">            } catch ( Exception e ) {</span>
-<span class="fc" id="L665">                Tuple&lt;Problem&gt; newProblems = result.problems().add( Problem.of(e) );</span>
+<span class="fc" id="L827">                consumer.accept(problem);</span>
+<span class="fc" id="L828">            } catch ( Exception e ) {</span>
+<span class="fc" id="L829">                Tuple&lt;Problem&gt; newProblems = result.problems().add( Problem.of(e) );</span>
 				/*
 					An exception in this the user lambda is most likely completely unwanted,
 					but we also do not want to halt the application because of it.
@@ -671,11 +835,11 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
 						1. Log the exception
 						2. Add it as a problem.
 				*/
-<span class="fc" id="L674">                _logError(&quot;An exception occurred while peeking at the problems of a result.&quot;, e);</span>
-<span class="fc" id="L675">                result = Result.of( type(), result._value, newProblems );</span>
-<span class="fc" id="L676">            }</span>
-<span class="fc" id="L677">        }</span>
-<span class="fc" id="L678">        return result;</span>
+<span class="fc" id="L838">                _logError(&quot;An exception occurred while peeking at the problems of a result.&quot;, e);</span>
+<span class="fc" id="L839">                result = Result.of( type(), result._value, newProblems );</span>
+<span class="fc" id="L840">            }</span>
+<span class="fc" id="L841">        }</span>
+<span class="fc" id="L842">        return result;</span>
     }
 
     /**
@@ -705,15 +869,15 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
      * @return This result, unchanged.
      */
     public Result&lt;V&gt; ifMissingLogAsError() {
-<span class="fc bfc" id="L708" title="All 2 branches covered.">        if ( this.isPresent() )</span>
-<span class="fc" id="L709">            return this; // If the value is present, we do nothing.</span>
-<span class="pc bpc" id="L710" title="1 of 2 branches missed.">        else if ( this.hasProblems() )</span>
-<span class="fc" id="L711">            return peekAtEachProblem(Problem::logAsError)._markAsLoggedOrHandled();</span>
-<span class="nc bnc" id="L712" title="All 2 branches missed.">        else if ( this.isEmpty() ) {</span>
-<span class="nc" id="L713">            Problem.of(new MissingItemRuntimeException(&quot;Expected item to be present in result!&quot;)).logAsError();</span>
-<span class="nc" id="L714">            return this._markAsLoggedOrHandled();</span>
+<span class="fc bfc" id="L872" title="All 2 branches covered.">        if ( this.isPresent() )</span>
+<span class="fc" id="L873">            return this; // If the value is present, we do nothing.</span>
+<span class="pc bpc" id="L874" title="1 of 2 branches missed.">        else if ( this.hasProblems() )</span>
+<span class="fc" id="L875">            return peekAtEachProblem(Problem::logAsError)._markAsLoggedOrHandled();</span>
+<span class="nc bnc" id="L876" title="All 2 branches missed.">        else if ( this.isEmpty() ) {</span>
+<span class="nc" id="L877">            Problem.of(new MissingItemRuntimeException(&quot;Expected item to be present in result!&quot;)).logAsError();</span>
+<span class="nc" id="L878">            return this._markAsLoggedOrHandled();</span>
         }
-<span class="nc" id="L716">        return this;</span>
+<span class="nc" id="L880">        return this;</span>
     }
 
     /**
@@ -738,10 +902,10 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
      * @return This result, unchanged.
      */
     public Result&lt;V&gt; logProblemsAsError() {
-<span class="pc bpc" id="L741" title="1 of 2 branches missed.">        if ( this.hasProblems() )</span>
-<span class="fc" id="L742">            return peekAtEachProblem(Problem::logAsError)._markAsLoggedOrHandled();</span>
+<span class="pc bpc" id="L905" title="1 of 2 branches missed.">        if ( this.hasProblems() )</span>
+<span class="fc" id="L906">            return peekAtEachProblem(Problem::logAsError)._markAsLoggedOrHandled();</span>
         else
-<span class="nc" id="L744">            return this;</span>
+<span class="nc" id="L908">            return this;</span>
     }
 
     /**
@@ -771,15 +935,15 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
      * @return This result, unchanged.
      */
     public Result&lt;V&gt; ifMissingLogAsWarning() {
-<span class="fc bfc" id="L774" title="All 2 branches covered.">        if ( this.isPresent() )</span>
-<span class="fc" id="L775">            return this; // If the value is present, we do nothing.</span>
-<span class="pc bpc" id="L776" title="1 of 2 branches missed.">        else if ( this.hasProblems() )</span>
-<span class="fc" id="L777">            return peekAtEachProblem(Problem::logAsWarning)._markAsLoggedOrHandled();</span>
-<span class="nc bnc" id="L778" title="All 2 branches missed.">        else if ( this.isEmpty() ) {</span>
-<span class="nc" id="L779">            Problem.of(new MissingItemRuntimeException(&quot;Expected item to be present in result!&quot;)).logAsWarning();</span>
-<span class="nc" id="L780">            return this._markAsLoggedOrHandled();</span>
+<span class="fc bfc" id="L938" title="All 2 branches covered.">        if ( this.isPresent() )</span>
+<span class="fc" id="L939">            return this; // If the value is present, we do nothing.</span>
+<span class="pc bpc" id="L940" title="1 of 2 branches missed.">        else if ( this.hasProblems() )</span>
+<span class="fc" id="L941">            return peekAtEachProblem(Problem::logAsWarning)._markAsLoggedOrHandled();</span>
+<span class="nc bnc" id="L942" title="All 2 branches missed.">        else if ( this.isEmpty() ) {</span>
+<span class="nc" id="L943">            Problem.of(new MissingItemRuntimeException(&quot;Expected item to be present in result!&quot;)).logAsWarning();</span>
+<span class="nc" id="L944">            return this._markAsLoggedOrHandled();</span>
         }
-<span class="nc" id="L782">        return this;</span>
+<span class="nc" id="L946">        return this;</span>
     }
 
     /**
@@ -804,10 +968,10 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
      * @return This result, unchanged.
      */
     public Result&lt;V&gt; logProblemsAsWarning() {
-<span class="pc bpc" id="L807" title="1 of 2 branches missed.">        if ( this.hasProblems() )</span>
-<span class="fc" id="L808">            return peekAtEachProblem(Problem::logAsWarning)._markAsLoggedOrHandled();</span>
+<span class="pc bpc" id="L971" title="1 of 2 branches missed.">        if ( this.hasProblems() )</span>
+<span class="fc" id="L972">            return peekAtEachProblem(Problem::logAsWarning)._markAsLoggedOrHandled();</span>
         else
-<span class="nc" id="L810">            return this;</span>
+<span class="nc" id="L974">            return this;</span>
     }
 
     /**
@@ -837,15 +1001,15 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
      * @return This result, unchanged.
      */
     public Result&lt;V&gt; ifMissingLogAsInfo() {
-<span class="fc bfc" id="L840" title="All 2 branches covered.">        if ( this.isPresent() )</span>
-<span class="fc" id="L841">            return this; // If the value is present, we do nothing.</span>
-<span class="pc bpc" id="L842" title="1 of 2 branches missed.">        else if ( this.hasProblems() )</span>
-<span class="fc" id="L843">            return peekAtEachProblem(Problem::logAsInfo)._markAsLoggedOrHandled();</span>
-<span class="nc bnc" id="L844" title="All 2 branches missed.">        else if ( this.isEmpty() ) {</span>
-<span class="nc" id="L845">            Problem.of(new MissingItemRuntimeException(&quot;Expected item to be present in result!&quot;)).logAsInfo();</span>
-<span class="nc" id="L846">            return this._markAsLoggedOrHandled();</span>
+<span class="fc bfc" id="L1004" title="All 2 branches covered.">        if ( this.isPresent() )</span>
+<span class="fc" id="L1005">            return this; // If the value is present, we do nothing.</span>
+<span class="pc bpc" id="L1006" title="1 of 2 branches missed.">        else if ( this.hasProblems() )</span>
+<span class="fc" id="L1007">            return peekAtEachProblem(Problem::logAsInfo)._markAsLoggedOrHandled();</span>
+<span class="nc bnc" id="L1008" title="All 2 branches missed.">        else if ( this.isEmpty() ) {</span>
+<span class="nc" id="L1009">            Problem.of(new MissingItemRuntimeException(&quot;Expected item to be present in result!&quot;)).logAsInfo();</span>
+<span class="nc" id="L1010">            return this._markAsLoggedOrHandled();</span>
         }
-<span class="nc" id="L848">        return this;</span>
+<span class="nc" id="L1012">        return this;</span>
     }
 
     /**
@@ -870,10 +1034,10 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
      * @return This result, unchanged.
      */
     public Result&lt;V&gt; logProblemsAsInfo() {
-<span class="pc bpc" id="L873" title="1 of 2 branches missed.">        if ( this.hasProblems() )</span>
-<span class="fc" id="L874">            return peekAtEachProblem(Problem::logAsInfo)._markAsLoggedOrHandled();</span>
+<span class="pc bpc" id="L1037" title="1 of 2 branches missed.">        if ( this.hasProblems() )</span>
+<span class="fc" id="L1038">            return peekAtEachProblem(Problem::logAsInfo)._markAsLoggedOrHandled();</span>
         else
-<span class="nc" id="L876">            return this;</span>
+<span class="nc" id="L1040">            return this;</span>
     }
 
     /**
@@ -903,15 +1067,15 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
      * @return This result, unchanged.
      */
     public Result&lt;V&gt; ifMissingLogAsDebug() {
-<span class="fc bfc" id="L906" title="All 2 branches covered.">        if ( this.isPresent() )</span>
-<span class="fc" id="L907">            return this; // If the value is present, we do nothing.</span>
-<span class="pc bpc" id="L908" title="1 of 2 branches missed.">        else if ( this.hasProblems() )</span>
-<span class="fc" id="L909">            return peekAtEachProblem(Problem::logAsDebug)._markAsLoggedOrHandled();</span>
-<span class="nc bnc" id="L910" title="All 2 branches missed.">        else if ( this.isEmpty() ) {</span>
-<span class="nc" id="L911">            Problem.of(new MissingItemRuntimeException(&quot;Expected item to be present in result!&quot;)).logAsDebug();</span>
-<span class="nc" id="L912">            return this._markAsLoggedOrHandled();</span>
+<span class="fc bfc" id="L1070" title="All 2 branches covered.">        if ( this.isPresent() )</span>
+<span class="fc" id="L1071">            return this; // If the value is present, we do nothing.</span>
+<span class="pc bpc" id="L1072" title="1 of 2 branches missed.">        else if ( this.hasProblems() )</span>
+<span class="fc" id="L1073">            return peekAtEachProblem(Problem::logAsDebug)._markAsLoggedOrHandled();</span>
+<span class="nc bnc" id="L1074" title="All 2 branches missed.">        else if ( this.isEmpty() ) {</span>
+<span class="nc" id="L1075">            Problem.of(new MissingItemRuntimeException(&quot;Expected item to be present in result!&quot;)).logAsDebug();</span>
+<span class="nc" id="L1076">            return this._markAsLoggedOrHandled();</span>
         }
-<span class="nc" id="L914">        return this;</span>
+<span class="nc" id="L1078">        return this;</span>
     }
 
     /**
@@ -936,10 +1100,10 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
      * @return This result, unchanged.
      */
     public Result&lt;V&gt; logProblemsAsDebug() {
-<span class="pc bpc" id="L939" title="1 of 2 branches missed.">        if ( this.hasProblems() )</span>
-<span class="fc" id="L940">            return peekAtEachProblem(Problem::logAsDebug)._markAsLoggedOrHandled();</span>
+<span class="pc bpc" id="L1103" title="1 of 2 branches missed.">        if ( this.hasProblems() )</span>
+<span class="fc" id="L1104">            return peekAtEachProblem(Problem::logAsDebug)._markAsLoggedOrHandled();</span>
         else
-<span class="nc" id="L942">            return this;</span>
+<span class="nc" id="L1106">            return this;</span>
     }
 
     /**
@@ -969,15 +1133,15 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
      * @return This result, unchanged.
      */
     public Result&lt;V&gt; ifMissingLogAsTrace() {
-<span class="fc bfc" id="L972" title="All 2 branches covered.">        if ( this.isPresent() )</span>
-<span class="fc" id="L973">            return this; // If the value is present, we do nothing.</span>
-<span class="pc bpc" id="L974" title="1 of 2 branches missed.">        else if ( this.hasProblems() )</span>
-<span class="fc" id="L975">            return peekAtEachProblem(Problem::logAsTrace)._markAsLoggedOrHandled();</span>
-<span class="nc bnc" id="L976" title="All 2 branches missed.">        else if ( this.isEmpty() ) {</span>
-<span class="nc" id="L977">            Problem.of(new MissingItemRuntimeException(&quot;Expected item to be present in result!&quot;)).logAsTrace();</span>
-<span class="nc" id="L978">            return this._markAsLoggedOrHandled();</span>
+<span class="fc bfc" id="L1136" title="All 2 branches covered.">        if ( this.isPresent() )</span>
+<span class="fc" id="L1137">            return this; // If the value is present, we do nothing.</span>
+<span class="pc bpc" id="L1138" title="1 of 2 branches missed.">        else if ( this.hasProblems() )</span>
+<span class="fc" id="L1139">            return peekAtEachProblem(Problem::logAsTrace)._markAsLoggedOrHandled();</span>
+<span class="nc bnc" id="L1140" title="All 2 branches missed.">        else if ( this.isEmpty() ) {</span>
+<span class="nc" id="L1141">            Problem.of(new MissingItemRuntimeException(&quot;Expected item to be present in result!&quot;)).logAsTrace();</span>
+<span class="nc" id="L1142">            return this._markAsLoggedOrHandled();</span>
         }
-<span class="nc" id="L980">        return this;</span>
+<span class="nc" id="L1144">        return this;</span>
     }
 
     /**
@@ -1002,10 +1166,10 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
      * @return This result, unchanged.
      */
     public Result&lt;V&gt; logProblemsAsTrace() {
-<span class="pc bpc" id="L1005" title="1 of 2 branches missed.">        if ( this.hasProblems() )</span>
-<span class="fc" id="L1006">            return peekAtEachProblem(Problem::logAsTrace)._markAsLoggedOrHandled();</span>
+<span class="pc bpc" id="L1169" title="1 of 2 branches missed.">        if ( this.hasProblems() )</span>
+<span class="fc" id="L1170">            return peekAtEachProblem(Problem::logAsTrace)._markAsLoggedOrHandled();</span>
         else
-<span class="nc" id="L1008">            return this;</span>
+<span class="nc" id="L1172">            return this;</span>
     }
 
     /**
@@ -1033,16 +1197,16 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
      * @return This result, unchanged.
      */
     public Result&lt;V&gt; ifMissingLogTo( BiConsumer&lt;String, Throwable&gt; logger ) {
-<span class="fc bfc" id="L1036" title="All 2 branches covered.">        if ( this.isPresent() )</span>
-<span class="fc" id="L1037">            return this; // If the value is present, we do nothing.</span>
-<span class="pc bpc" id="L1038" title="1 of 2 branches missed.">        else if ( this.hasProblems() )</span>
-<span class="fc" id="L1039">            return peekAtEachProblem(problem -&gt; problem.logTo(logger))._markAsLoggedOrHandled();</span>
-<span class="nc bnc" id="L1040" title="All 2 branches missed.">        else if ( this.isEmpty() ) {</span>
-<span class="nc" id="L1041">            Problem problem = Problem.of(new MissingItemRuntimeException(&quot;Expected item to be present in result!&quot;));</span>
-<span class="nc" id="L1042">            problem.logTo(logger);</span>
-<span class="nc" id="L1043">            return this._markAsLoggedOrHandled();</span>
+<span class="fc bfc" id="L1200" title="All 2 branches covered.">        if ( this.isPresent() )</span>
+<span class="fc" id="L1201">            return this; // If the value is present, we do nothing.</span>
+<span class="pc bpc" id="L1202" title="1 of 2 branches missed.">        else if ( this.hasProblems() )</span>
+<span class="fc" id="L1203">            return peekAtEachProblem(problem -&gt; problem.logTo(logger))._markAsLoggedOrHandled();</span>
+<span class="nc bnc" id="L1204" title="All 2 branches missed.">        else if ( this.isEmpty() ) {</span>
+<span class="nc" id="L1205">            Problem problem = Problem.of(new MissingItemRuntimeException(&quot;Expected item to be present in result!&quot;));</span>
+<span class="nc" id="L1206">            problem.logTo(logger);</span>
+<span class="nc" id="L1207">            return this._markAsLoggedOrHandled();</span>
         }
-<span class="nc" id="L1045">        return this;</span>
+<span class="nc" id="L1209">        return this;</span>
     }
 
     /**
@@ -1065,10 +1229,10 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
      * @return This result, unchanged.
      */
     public Result&lt;V&gt; logProblemsTo( BiConsumer&lt;String, Throwable&gt; logger ) {
-<span class="pc bpc" id="L1068" title="1 of 2 branches missed.">        if ( this.hasProblems() )</span>
-<span class="fc" id="L1069">            return peekAtEachProblem(problem -&gt; problem.logTo(logger))._markAsLoggedOrHandled();</span>
+<span class="pc bpc" id="L1232" title="1 of 2 branches missed.">        if ( this.hasProblems() )</span>
+<span class="fc" id="L1233">            return peekAtEachProblem(problem -&gt; problem.logTo(logger))._markAsLoggedOrHandled();</span>
         else
-<span class="nc" id="L1071">            return this;</span>
+<span class="nc" id="L1235">            return this;</span>
     }
     
     /**
@@ -1084,20 +1248,20 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
      */
     @Override
     public &lt;U&gt; Result&lt;U&gt; mapTo( Class&lt;U&gt; type, Function&lt;V, U&gt; mapper ) {
-<span class="fc" id="L1087">        Objects.requireNonNull(type);</span>
-<span class="fc" id="L1088">        Objects.requireNonNull(mapper);</span>
-<span class="fc bfc" id="L1089" title="All 2 branches covered.">        if ( !isPresent() )</span>
-<span class="fc" id="L1090">            return Result.of( type, problems() );</span>
+<span class="fc" id="L1251">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L1252">        Objects.requireNonNull(mapper);</span>
+<span class="fc bfc" id="L1253" title="All 2 branches covered.">        if ( !isPresent() )</span>
+<span class="fc" id="L1254">            return Result.of( type, problems() );</span>
 
         try {
-<span class="fc" id="L1093">            U newValue = mapper.apply( Objects.requireNonNull(_value) );</span>
-<span class="pc bpc" id="L1094" title="1 of 2 branches missed.">            if (newValue == null)</span>
-<span class="nc" id="L1095">                return Result.of( type );</span>
+<span class="fc" id="L1257">            U newValue = mapper.apply( Objects.requireNonNull(_value) );</span>
+<span class="pc bpc" id="L1258" title="1 of 2 branches missed.">            if (newValue == null)</span>
+<span class="nc" id="L1259">                return Result.of( type );</span>
             else
-<span class="fc" id="L1097">                return Result.of( newValue, problems() );</span>
-<span class="fc" id="L1098">        } catch ( Exception e ) {</span>
-<span class="fc" id="L1099">            Tuple&lt;Problem&gt; newProblems = problems().add( Problem.of(e) );</span>
-<span class="fc" id="L1100">            return Result.of( type, newProblems );</span>
+<span class="fc" id="L1261">                return Result.of( newValue, problems() );</span>
+<span class="fc" id="L1262">        } catch ( Exception e ) {</span>
+<span class="fc" id="L1263">            Tuple&lt;Problem&gt; newProblems = problems().add( Problem.of(e) );</span>
+<span class="fc" id="L1264">            return Result.of( type, newProblems );</span>
         }
     }
 
@@ -1112,51 +1276,51 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
      */
     @Override
     public Result&lt;V&gt; map( Function&lt;V, V&gt; mapper )  {
-<span class="fc" id="L1115">        Objects.requireNonNull(mapper);</span>
-<span class="pc bpc" id="L1116" title="1 of 2 branches missed.">        if ( !isPresent() )</span>
-<span class="nc" id="L1117">            return Result.of( type() );</span>
+<span class="fc" id="L1279">        Objects.requireNonNull(mapper);</span>
+<span class="pc bpc" id="L1280" title="1 of 2 branches missed.">        if ( !isPresent() )</span>
+<span class="nc" id="L1281">            return Result.of( type() );</span>
 
         try {
-<span class="fc" id="L1120">            V newValue = mapper.apply(Objects.requireNonNull(_value));</span>
-<span class="pc bpc" id="L1121" title="1 of 2 branches missed.">            if (newValue == null)</span>
-<span class="nc" id="L1122">                return Result.of(type(), problems());</span>
+<span class="fc" id="L1284">            V newValue = mapper.apply(Objects.requireNonNull(_value));</span>
+<span class="pc bpc" id="L1285" title="1 of 2 branches missed.">            if (newValue == null)</span>
+<span class="nc" id="L1286">                return Result.of(type(), problems());</span>
             else
-<span class="fc" id="L1124">                return Result.of(newValue, problems());</span>
-<span class="fc" id="L1125">        } catch ( Exception e ) {</span>
-<span class="fc" id="L1126">            Tuple&lt;Problem&gt; newProblems = problems().add( Problem.of(e) );</span>
-<span class="fc" id="L1127">            return Result.of( type(), newProblems );</span>
+<span class="fc" id="L1288">                return Result.of(newValue, problems());</span>
+<span class="fc" id="L1289">        } catch ( Exception e ) {</span>
+<span class="fc" id="L1290">            Tuple&lt;Problem&gt; newProblems = problems().add( Problem.of(e) );</span>
+<span class="fc" id="L1291">            return Result.of( type(), newProblems );</span>
         }
     }
 
 
     @Override
     public String toString() {
-<span class="fc" id="L1134">        String value = this.mapTo(String.class, Object::toString).orElse(&quot;null&quot;);</span>
-<span class="pc bpc" id="L1135" title="1 of 2 branches missed.">        String type = ( type() == null ? &quot;?&quot; : type().getSimpleName() );</span>
-<span class="fc bfc" id="L1136" title="All 2 branches covered.">        if ( type.equals(&quot;Object&quot;) )</span>
-<span class="fc" id="L1137">            type = &quot;?&quot;;</span>
-<span class="pc bpc" id="L1138" title="1 of 4 branches missed.">        if ( type.equals(&quot;String&quot;) &amp;&amp; this.isPresent() )</span>
-<span class="fc" id="L1139">            value = &quot;\&quot;&quot; + value + &quot;\&quot;&quot;;</span>
-<span class="fc" id="L1140">        return &quot;Result&lt;&quot; + type + &quot;&gt;&quot; + &quot;[&quot; + value + &quot;]&quot;;</span>
+<span class="fc" id="L1298">        String value = this.mapTo(String.class, Object::toString).orElse(&quot;null&quot;);</span>
+<span class="pc bpc" id="L1299" title="1 of 2 branches missed.">        String type = ( type() == null ? &quot;?&quot; : type().getSimpleName() );</span>
+<span class="fc bfc" id="L1300" title="All 2 branches covered.">        if ( type.equals(&quot;Object&quot;) )</span>
+<span class="fc" id="L1301">            type = &quot;?&quot;;</span>
+<span class="pc bpc" id="L1302" title="1 of 4 branches missed.">        if ( type.equals(&quot;String&quot;) &amp;&amp; this.isPresent() )</span>
+<span class="fc" id="L1303">            value = &quot;\&quot;&quot; + value + &quot;\&quot;&quot;;</span>
+<span class="fc" id="L1304">        return &quot;Result&lt;&quot; + type + &quot;&gt;&quot; + &quot;[&quot; + value + &quot;]&quot;;</span>
     }
 
     @Override
     public int hashCode() {
-<span class="fc" id="L1145">        return Objects.hash(_type, _value, _problems);</span>
+<span class="fc" id="L1309">        return Objects.hash(_type, _value, _problems);</span>
     }
 
     @Override
     public boolean equals( Object obj ) {
-<span class="pc bpc" id="L1150" title="1 of 2 branches missed.">        if ( obj == null ) return false;</span>
-<span class="pc bpc" id="L1151" title="1 of 2 branches missed.">        if ( obj == this ) return true;</span>
-<span class="pc bpc" id="L1152" title="1 of 2 branches missed.">        if ( obj instanceof Result ) {</span>
-<span class="fc" id="L1153">            Result&lt;?&gt; other = (Result&lt;?&gt;) obj;</span>
-<span class="fc bfc" id="L1154" title="All 2 branches covered.">            if ( !Objects.equals(other.type(), _type)         ) return false;</span>
-<span class="pc bpc" id="L1155" title="1 of 2 branches missed.">            if ( !Objects.equals(other.problems(), _problems) ) return false;</span>
-<span class="fc" id="L1156">            return</span>
-<span class="fc" id="L1157">                    Val.equals( other._value, _value ); // Arrays are compared with Arrays.equals</span>
+<span class="pc bpc" id="L1314" title="1 of 2 branches missed.">        if ( obj == null ) return false;</span>
+<span class="pc bpc" id="L1315" title="1 of 2 branches missed.">        if ( obj == this ) return true;</span>
+<span class="pc bpc" id="L1316" title="1 of 2 branches missed.">        if ( obj instanceof Result ) {</span>
+<span class="fc" id="L1317">            Result&lt;?&gt; other = (Result&lt;?&gt;) obj;</span>
+<span class="fc bfc" id="L1318" title="All 2 branches covered.">            if ( !Objects.equals(other.type(), _type)         ) return false;</span>
+<span class="pc bpc" id="L1319" title="1 of 2 branches missed.">            if ( !Objects.equals(other.problems(), _problems) ) return false;</span>
+<span class="fc" id="L1320">            return</span>
+<span class="fc" id="L1321">                    Val.equals( other._value, _value ); // Arrays are compared with Arrays.equals</span>
         }
-<span class="nc" id="L1159">        return false;</span>
+<span class="nc" id="L1323">        return false;</span>
     }
 
 
@@ -1170,9 +1334,9 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
      * @param &lt;T&gt; The type of the item.
      */
     private static &lt;T&gt; Class&lt;T&gt; expectedClassFromItem( @NonNull T item ) {
-<span class="fc" id="L1173">        Class&lt;?&gt; itemType = item.getClass();</span>
+<span class="fc" id="L1337">        Class&lt;?&gt; itemType = item.getClass();</span>
         // We check if it is an enum:
-<span class="fc bfc" id="L1175" title="All 2 branches covered.">        if ( Enum.class.isAssignableFrom(itemType) ) {</span>
+<span class="fc bfc" id="L1339" title="All 2 branches covered.">        if ( Enum.class.isAssignableFrom(itemType) ) {</span>
             /*
                 When it comes to enums, there is a pitfall we might
                 fall into if just return the Class instance right away!
@@ -1200,18 +1364,18 @@ public final class Result&lt;V&gt; implements Maybe&lt;V&gt;
                 Food.class != Food.TOFU.getClass()
             */
             // Let's check for that:
-<span class="fc" id="L1203">            Class&lt;?&gt; superClass = itemType.getSuperclass();</span>
-<span class="pc bpc" id="L1204" title="1 of 4 branches missed.">            if ( superClass != null &amp;&amp; !superClass.equals(Enum.class) ) {</span>
+<span class="fc" id="L1367">            Class&lt;?&gt; superClass = itemType.getSuperclass();</span>
+<span class="pc bpc" id="L1368" title="1 of 4 branches missed.">            if ( superClass != null &amp;&amp; !superClass.equals(Enum.class) ) {</span>
                 // We are good to go, it is an enum!
-<span class="fc" id="L1206">                return (Class&lt;T&gt;) superClass;</span>
+<span class="fc" id="L1370">                return (Class&lt;T&gt;) superClass;</span>
             }
         }
-<span class="fc" id="L1209">        return (Class&lt;T&gt;) itemType;</span>
+<span class="fc" id="L1373">        return (Class&lt;T&gt;) itemType;</span>
     }
 
     private static void _logError(String message, @Nullable Object... args) {
-<span class="fc" id="L1213">        Util._logError(log, message, args);</span>
-<span class="fc" id="L1214">    }</span>
+<span class="fc" id="L1377">        Util._logError(log, message, args);</span>
+<span class="fc" id="L1378">    }</span>
 
 }
-</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

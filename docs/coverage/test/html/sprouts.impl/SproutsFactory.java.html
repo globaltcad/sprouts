@@ -2,6 +2,7 @@
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Marker;
 import sprouts.*;
 
 import java.util.Comparator;
@@ -100,7 +101,7 @@ public interface SproutsFactory
      * @param &lt;T&gt; The type of the item to be wrapped in the {@link Maybe}.
      */
     default &lt;T&gt; Maybe&lt;@Nullable T&gt; maybeOfNullable( Class&lt;T&gt; type, @Nullable T item ) {
-<span class="fc" id="L103">        return valOfNullable( type, item );</span>
+<span class="fc" id="L104">        return valOfNullable( type, item );</span>
     }
 
     /**
@@ -114,7 +115,7 @@ public interface SproutsFactory
      * @param &lt;T&gt; The type of the item to be wrapped in the {@link Maybe}.
      */
     default &lt;T&gt; Maybe&lt;@Nullable T&gt; maybeOfNull( Class&lt;T&gt; type ) {
-<span class="fc" id="L117">        return valOfNull( type );</span>
+<span class="fc" id="L118">        return valOfNull( type );</span>
     }
 
     /**
@@ -127,7 +128,7 @@ public interface SproutsFactory
      * @param &lt;T&gt; The type of the item to be wrapped in the {@link Maybe}.
      */
     default &lt;T&gt; Maybe&lt;T&gt; maybeOf( T item ) {
-<span class="fc" id="L130">        return valOf( item );</span>
+<span class="fc" id="L131">        return valOf( item );</span>
     }
 
     /**
@@ -144,8 +145,8 @@ public interface SproutsFactory
      * @param &lt;T&gt; The type of the item to be wrapped in the {@link Maybe}.
      */
     default &lt;T&gt; Maybe&lt;T&gt; maybeOf( Maybe&lt;T&gt; toBeCopied ) {
-<span class="nc" id="L147">        Objects.requireNonNull(toBeCopied);</span>
-<span class="nc" id="L148">        return valOf( toBeCopied.orElseThrowUnchecked() );</span>
+<span class="nc" id="L148">        Objects.requireNonNull(toBeCopied);</span>
+<span class="nc" id="L149">        return valOf( toBeCopied.orElseThrowUnchecked() );</span>
     }
 
     /**
@@ -161,8 +162,8 @@ public interface SproutsFactory
      *         (However, the item in the supplied {@link Maybe} can be {@code null}.)
      */
     default &lt;T extends @Nullable Object&gt; Maybe&lt;@Nullable T&gt; maybeOfNullable( Maybe&lt;T&gt; toBeCopied ) {
-<span class="nc" id="L164">        Objects.requireNonNull(toBeCopied);</span>
-<span class="nc" id="L165">        return valOfNullable( toBeCopied.type(), toBeCopied.orElseNull() );</span>
+<span class="nc" id="L165">        Objects.requireNonNull(toBeCopied);</span>
+<span class="nc" id="L166">        return valOfNullable( toBeCopied.type(), toBeCopied.orElseNull() );</span>
     }
 
     /**
@@ -881,12 +882,12 @@ public interface SproutsFactory
      */
     @SuppressWarnings(&quot;unchecked&quot;)
     default &lt;T&gt; Tuple&lt;T&gt; tupleOf( Maybe&lt;T&gt; first, Maybe&lt;T&gt;... rest )  {
-<span class="nc" id="L884">        T[] items = (T[]) new Object[rest.length + 1];</span>
-<span class="nc" id="L885">        items[0] = first.orElseNull();</span>
-<span class="nc bnc" id="L886" title="All 2 branches missed.">        for (int i = 0; i &lt; rest.length; i++) {</span>
-<span class="nc" id="L887">            items[i + 1] = rest[i].orElseNull();</span>
+<span class="nc" id="L885">        T[] items = (T[]) new Object[rest.length + 1];</span>
+<span class="nc" id="L886">        items[0] = first.orElseNull();</span>
+<span class="nc bnc" id="L887" title="All 2 branches missed.">        for (int i = 0; i &lt; rest.length; i++) {</span>
+<span class="nc" id="L888">            items[i + 1] = rest[i].orElseNull();</span>
         }
-<span class="nc" id="L889">        return tupleOf(Util.expectedClassFromItem(first.orElseThrowUnchecked()), items);</span>
+<span class="nc" id="L890">        return tupleOf(Util.expectedClassFromItem(first.orElseThrowUnchecked()), items);</span>
     }
 
     /**
@@ -1008,11 +1009,11 @@ public interface SproutsFactory
      */
     @SuppressWarnings(&quot;unchecked&quot;)
     default &lt;T&gt; Tuple&lt;@Nullable T&gt; tupleOfNullable( Class&lt;T&gt; type, Maybe&lt;@Nullable T&gt;... maybes ) {
-<span class="nc" id="L1011">        T[] items = (T[]) new Object[maybes.length];</span>
-<span class="nc bnc" id="L1012" title="All 2 branches missed.">        for (int i = 0; i &lt; maybes.length; i++) {</span>
-<span class="nc" id="L1013">            items[i] = maybes[i].orElseNull();</span>
+<span class="nc" id="L1012">        T[] items = (T[]) new Object[maybes.length];</span>
+<span class="nc bnc" id="L1013" title="All 2 branches missed.">        for (int i = 0; i &lt; maybes.length; i++) {</span>
+<span class="nc" id="L1014">            items[i] = maybes[i].orElseNull();</span>
         }
-<span class="nc" id="L1015">        return tupleOfNullable(type, items);</span>
+<span class="nc" id="L1016">        return tupleOfNullable(type, items);</span>
     }
 
     /**
@@ -1052,12 +1053,12 @@ public interface SproutsFactory
      */
     @SuppressWarnings(&quot;unchecked&quot;)
     default &lt;T&gt; Tuple&lt;@Nullable T&gt; tupleOfNullable( Maybe&lt;@Nullable T&gt; first, Maybe&lt;@Nullable T&gt;... rest ) {
-<span class="nc" id="L1055">        T[] items = (T[]) new Object[rest.length + 1];</span>
-<span class="nc" id="L1056">        items[0] = first.orElseNull();</span>
-<span class="nc bnc" id="L1057" title="All 2 branches missed.">        for (int i = 0; i &lt; rest.length; i++) {</span>
-<span class="nc" id="L1058">            items[i + 1] = rest[i].orElseNull();</span>
+<span class="nc" id="L1056">        T[] items = (T[]) new Object[rest.length + 1];</span>
+<span class="nc" id="L1057">        items[0] = first.orElseNull();</span>
+<span class="nc bnc" id="L1058" title="All 2 branches missed.">        for (int i = 0; i &lt; rest.length; i++) {</span>
+<span class="nc" id="L1059">            items[i + 1] = rest[i].orElseNull();</span>
         }
-<span class="nc" id="L1060">        return tupleOfNullable(first.type(), items);</span>
+<span class="nc" id="L1061">        return tupleOfNullable(first.type(), items);</span>
     }
 
     /**
@@ -1242,5 +1243,19 @@ public interface SproutsFactory
      *            or cached object due to this method being called frequently.
      */
     Channel defaultObservableChannel();
+
+    /**
+     * Many features in Sprouts are designed to preserve the control
+     * flow of your application by catching exceptions and then logging them.
+     * This typically happens in a {@link Result} or {@link Var} property when
+     * a user {@link Action} fails...&lt;br&gt;
+     * This method configures a Slf4j {@link Marker} to be used by
+     * Sprouts at all places where logging is being done.
+     * You can then use this marker to identify and filter these log entries.
+     *
+     * @return A constant which serves as a sort of logging channel used
+     *         on all logging sites of the sprouts library.
+     */
+    Marker loggingMarker();
 }
-</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.5.201910111838</span></div></body></html>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>
