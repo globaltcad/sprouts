@@ -219,7 +219,7 @@ record ValueSetImpl<E>(
         }
         int index = Math.abs(hash) % length;
         int tries = 0;
-        while (!_isEqual(node, itemGetter, node._elementsArray, index, key, hash) && tries < length) {
+        while (tries < length && !_isEqual(node, itemGetter, node._elementsArray, index, key, hash)) {
             index = (index + 1) % length;
             tries++;
         }
@@ -255,7 +255,7 @@ record ValueSetImpl<E>(
         }
         int index = Math.abs(hash) % length;
         int tries = 0;
-        while (itemGetter.get(index, elements) != null && !Objects.equals(itemGetter.get(index, elements), key) && tries < length) {
+        while (tries < length && itemGetter.get(index, elements) != null && !Objects.equals(itemGetter.get(index, elements), key)) {
             index = (index + 1) % length;
             tries++;
         }

@@ -244,7 +244,7 @@ record AssociationImpl<K, V>(
         }
         int index = Math.abs(hash) % length;
         int tries = 0;
-        while (!_isEqual(node, keyGetter, index, key, hash) && tries < length) {
+        while (tries < length && !_isEqual(node, keyGetter, index, key, hash)) {
             index = ( index + 1 ) % length;
             tries++;
         }
@@ -274,7 +274,7 @@ record AssociationImpl<K, V>(
         }
         int index = Math.abs(hash) % length;
         int tries = 0;
-        while (Array.get(keys, index) != null && !Objects.equals(Array.get(keys, index), key) && tries < length) {
+        while (tries < length && Array.get(keys, index) != null && !Objects.equals(Array.get(keys, index), key)) {
             index = ( index + 1 ) % length;
             tries++;
         }
