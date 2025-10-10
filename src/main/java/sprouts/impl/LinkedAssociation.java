@@ -9,64 +9,30 @@ import sprouts.ValueSet;
 import java.util.*;
 import java.util.stream.StreamSupport;
 
-final class LinkedAssociation<K,V> implements Association<K, V>
-{
-    private static final class LinkedEntry<K, V> {
-        private final V value;
-        private final @Nullable K previousKey;
-        private final @Nullable K nextKey;
+record LinkedAssociation<K, V>(
+        Class<V> _valueType,
+        AssociationImpl<K, LinkedEntry<K, V>> _entries,
+        @Nullable K _firstInsertedKey,
+        @Nullable K _lastInsertedKey
+) implements Association<K, V> {
 
-        LinkedEntry(V value, @Nullable K previousKey, @Nullable K nextKey) {
-            this.value = value;
-            this.previousKey = previousKey;
-            this.nextKey = nextKey;
-        }
-        V value() {
-            return this.value;
-        }
-        @Nullable
-        K previousKey() {
-            return this.previousKey;
-        }
-        @Nullable
-        K nextKey() {
-            return this.nextKey;
-        }
-        LinkedEntry<K,V> withValue(V value) {
+    private record LinkedEntry<K, V>(
+            V value,
+            @Nullable K previousKey,
+            @Nullable K nextKey
+    ) {
+        LinkedEntry<K, V> withValue(V value) {
             return new LinkedEntry<>(value, this.previousKey, this.nextKey);
         }
-        LinkedEntry<K,V> withPreviousKey(@Nullable K previousKey) {
+
+        LinkedEntry<K, V> withPreviousKey(@Nullable K previousKey) {
             return new LinkedEntry<>(this.value, previousKey, this.nextKey);
         }
-        LinkedEntry<K,V> withNextKey(@Nullable K nextKey) {
+
+        LinkedEntry<K, V> withNextKey(@Nullable K nextKey) {
             return new LinkedEntry<>(this.value, this.previousKey, nextKey);
         }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) return true;
-            if (!(obj instanceof LinkedEntry)) return false;
-            LinkedEntry<?, ?> entry = (LinkedEntry<?, ?>) obj;
-            return Objects.equals(value, entry.value) &&
-                   Objects.equals(previousKey, entry.previousKey) &&
-                   Objects.equals(nextKey, entry.nextKey);
-        }
-        @Override
-        public int hashCode() {
-            return Objects.hash(value, previousKey, nextKey);
-        }
-        @Override
-        public String toString() {
-            return "LinkedEntry[value=" + value +
-                   ", previousKey=" + previousKey +
-                   ", nextKey=" + nextKey + "]";
-        }
     }
-
-    private final Class<V> _valueType;
-    private final AssociationImpl<K, LinkedEntry<K, V>> _entries;
-    private final @Nullable K _firstInsertedKey;
-    private final @Nullable K _lastInsertedKey;
 
     LinkedAssociation(
         final Class<K> keyType,
@@ -75,18 +41,19 @@ final class LinkedAssociation<K,V> implements Association<K, V>
         this(valueType, new AssociationImpl(keyType, LinkedEntry.class), null, null);
     }
 
-    private LinkedAssociation(
+    private static <K, V> LinkedAssociation<K, V> of(
             final Class<V> valueType,
             final AssociationImpl<K, LinkedEntry<K, V>> entries,
             final @Nullable K firstInsertedKey,
             final @Nullable K lastInsertedKey
     ) {
-        _valueType = valueType;
-        _entries = entries;
-        _firstInsertedKey = firstInsertedKey != null ? firstInsertedKey : lastInsertedKey;
-        _lastInsertedKey = lastInsertedKey;
+        return new LinkedAssociation<>(
+                valueType,
+                entries,
+                firstInsertedKey != null ? firstInsertedKey : lastInsertedKey,
+                lastInsertedKey
+        );
     }
-
 
 
     @Override
@@ -146,7 +113,7 @@ final class LinkedAssociation<K,V> implements Association<K, V>
         if (key == null || value == null) {
             throw new NullPointerException("Key and value must not be null");
         }
-        if ( !_entries.keyType().isAssignableFrom(key.getClass()) ) {
+        if (!_entries.keyType().isAssignableFrom(key.getClass())) {
             throw new IllegalArgumentException(
                     "The given key '" + key + "' is of type '" + key.getClass().getSimpleName() + "', " +
                             "instead of the expected type '" + _entries.keyType() + "'."
@@ -169,7 +136,7 @@ final class LinkedAssociation<K,V> implements Association<K, V>
                     key,
                     existingEntry.withValue(value)
             );
-            return new LinkedAssociation<>(valueType(), newEntries, _firstInsertedKey, _lastInsertedKey);
+            return LinkedAssociation.of(valueType(), newEntries, _firstInsertedKey, _lastInsertedKey);
         } else {
             // If the key does not exist, we create a new entry
             LinkedEntry<K, V> newEntry = new LinkedEntry<>(value, _lastInsertedKey, null);
@@ -188,7 +155,7 @@ final class LinkedAssociation<K,V> implements Association<K, V>
                     );
                 }
             }
-            return new LinkedAssociation<>(valueType(), newEntries, _firstInsertedKey, key);
+            return LinkedAssociation.of(valueType(), newEntries, _firstInsertedKey, key);
         }
     }
 
@@ -231,7 +198,7 @@ final class LinkedAssociation<K,V> implements Association<K, V>
                     );
                 }
             }
-            return new LinkedAssociation<>(valueType(), newEntries, _firstInsertedKey, key);
+            return LinkedAssociation.of(valueType(), newEntries, _firstInsertedKey, key);
         }
     }
 
@@ -276,7 +243,7 @@ final class LinkedAssociation<K,V> implements Association<K, V>
                     );
                 }
             }
-            return new LinkedAssociation<>(valueType(), newEntries, firstInsertedKey, lastInsertedKey);
+            return LinkedAssociation.of(valueType(), newEntries, firstInsertedKey, lastInsertedKey);
         }
         return this; // If the key does not exist, we do nothing
     }
@@ -284,7 +251,7 @@ final class LinkedAssociation<K,V> implements Association<K, V>
     @Override
     public Association<K, V> clear() {
         AssociationImpl<K, LinkedEntry<K, V>> clearedEntries = (AssociationImpl<K, LinkedEntry<K, V>>) _entries.clear();
-        return new LinkedAssociation<>(valueType(), clearedEntries, null, null);
+        return LinkedAssociation.of(valueType(), clearedEntries, null, null);
     }
 
     @Override
