@@ -8,44 +8,65 @@ import sprouts.ValDelegate;
 
 import java.util.Objects;
 
-record ValDelegateImpl<T>(
-    Channel channel,
-    SingleChange change,
-    String id,
-    Class<T> type,
-    @Nullable T currentValueOrNull,
-    @Nullable T oldValueOrNull
-) implements ValDelegate<T> {
+final class ValDelegateImpl<T> implements ValDelegate<T> {
+
+    private final Channel    channel;
+    private final SingleChange change;
+    private final String     id;
+    private final Class<T>   type;
+    private final @Nullable T currentValue;
+    private final @Nullable T oldValue;
+
 
     ValDelegateImpl(
-            Channel channel, SingleChange change, String id, Class<T> type, @Nullable T currentValueOrNull, @Nullable T oldValueOrNull
+            Channel channel, SingleChange change, String id, Class<T> type, @Nullable T newValue, @Nullable T oldValue
     ) {
-        this.channel = Objects.requireNonNull(channel);
-        this.change = Objects.requireNonNull(change);
-        this.id = Objects.requireNonNull(id);
-        this.type = Objects.requireNonNull(type);
-        this.currentValueOrNull = currentValueOrNull;
-        this.oldValueOrNull = oldValueOrNull;
+        this.channel      = Objects.requireNonNull(channel);
+        this.change       = Objects.requireNonNull(change);
+        this.id           = Objects.requireNonNull(id);
+        this.type         = Objects.requireNonNull(type);
+        this.currentValue = newValue;
+        this.oldValue     = oldValue;
     }
 
     @Override
     public Maybe<T> currentValue() {
-        return Maybe.ofNullable(type, currentValueOrNull);
+        return Maybe.ofNullable(type, currentValue);
     }
 
     @Override
     public Maybe<T> oldValue() {
-        return Maybe.ofNullable(type, oldValueOrNull);
+        return Maybe.ofNullable(type, oldValue);
+    }
+
+    @Override
+    public Channel channel() {
+        return channel;
+    }
+
+    @Override
+    public String id() {
+        return id;
+    }
+
+    @Override
+    public SingleChange change() {
+        return change;
+    }
+
+    @Override
+    public Class<T> type() {
+        return type;
     }
 
     @Override
     public String toString() {
-        return "ValDelegate<" + type.getSimpleName() + ">[" +
-                    "channel=" + channel + ", " +
-                    "change=" + change + ", " +
-                    "newValue=" + currentValueOrNull + ", " +
-                    "oldValue=" + oldValueOrNull + ", " +
-                    "id='" + id + "'" +
+        return "ValDelegate<"+type.getSimpleName()+">[" +
+                    "channel="   + channel       + ", " +
+                    "change="    + change        + ", " +
+                    "newValue="  + currentValue  + ", " +
+                    "oldValue="  + oldValue      + ", " +
+                    "id='"        + id           + "'" +
                 "]";
     }
 
@@ -53,14 +74,19 @@ record ValDelegateImpl<T>(
     public boolean equals(Object obj) {
         if (obj == null) return false;
         if (obj == this) return true;
-        if (obj.getClass() != this.getClass()) return false;
+        if ( obj.getClass() != this.getClass() ) return false;
         ValDelegateImpl<?> other = (ValDelegateImpl<?>) obj;
         return this.channel.equals(other.channel) &&
                 this.change.equals(other.change) &&
                 this.id.equals(other.id) &&
                 this.type.equals(other.type) &&
-                Objects.equals(this.currentValueOrNull, other.currentValueOrNull) &&
-                Objects.equals(this.oldValueOrNull, other.oldValueOrNull);
+                Objects.equals(this.currentValue, other.currentValue) &&
+                Objects.equals(this.oldValue, other.oldValue);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash( channel, change, id, type, currentValue, oldValue );
     }
 
 }
