@@ -5,16 +5,19 @@ import sprouts.Observer;
 
 import java.util.Objects;
 
-record ObserverAsActionImpl<D>(
-    Observer listener
-) implements Action<D> {
+final class ObserverAsActionImpl<D> implements Action<D>
+{
+    private final Observer _observer;
 
-    ObserverAsActionImpl(Observer listener) {
-        this.listener = Objects.requireNonNull(listener);
+
+    ObserverAsActionImpl( Observer observer ) {
+        _observer = Objects.requireNonNull(observer);
     }
 
+    Observer listener() { return _observer; }
+
     @Override
-    public void accept(D delegate) throws Exception {
-        listener.invoke();
+    public void accept( D delegate ) throws Exception {
+        _observer.invoke();
     }
 }

@@ -6,24 +6,56 @@ import sprouts.ValueSet;
 import java.util.*;
 import java.util.stream.Stream;
 
-record LinkedValueSet<E>(
-    AssociationImpl<E, LinkedEntry<E>> _entries,
-    @Nullable E _firstInsertedKey,
-    @Nullable E _lastInsertedKey
-) implements ValueSet<E> {
+final class LinkedValueSet<E> implements ValueSet<E> {
 
-    private record LinkedEntry<K>(
-            @Nullable K previousElement,
-            @Nullable K nextElement
-    ) {
+    private static final class LinkedEntry<K> {
+        private final @Nullable K previousElement;
+        private final @Nullable K nextElement;
+
+        LinkedEntry(@Nullable K previousElement, @Nullable K nextElement) {
+            this.previousElement = previousElement;
+            this.nextElement = nextElement;
+        }
+        @Nullable
+        K previousElement() {
+            return this.previousElement;
+        }
+        @Nullable
+        K nextElement() {
+            return this.nextElement;
+        }
         LinkedEntry<K> withPreviousElement(@Nullable K previousElement) {
             return new LinkedEntry<>(previousElement, this.nextElement);
         }
-
         LinkedEntry<K> withNextElement(@Nullable K nextKey) {
             return new LinkedEntry<>(this.previousElement, nextKey);
         }
+
+        @Override
+        public String toString() {
+            return "LinkedEntry[previousElement=" + previousElement + ", nextElement=" + nextElement + "]";
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof LinkedEntry)) return false;
+            LinkedEntry<?> entry = (LinkedEntry<?>) o;
+            return Objects.equals(previousElement, entry.previousElement) &&
+                   Objects.equals(nextElement, entry.nextElement);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = previousElement != null ? previousElement.hashCode() : 0;
+            result = 31 * result + (nextElement != null ? nextElement.hashCode() : 0);
+            return result;
+        }
     }
+
+    private final AssociationImpl<E, LinkedEntry<E>> _entries;
+    private final @Nullable E _firstInsertedKey;
+    private final @Nullable E _lastInsertedKey;
 
     LinkedValueSet(
             final Class<E> elementType
@@ -31,16 +63,14 @@ record LinkedValueSet<E>(
         this(new AssociationImpl(elementType, LinkedEntry.class), null, null);
     }
 
-    private static <E> LinkedValueSet<E> of(
+    private LinkedValueSet(
             final AssociationImpl<E, LinkedEntry<E>> entries,
             final @Nullable E firstInsertedKey,
             final @Nullable E lastInsertedKey
     ) {
-        return new LinkedValueSet<E>(
-            entries,
-            firstInsertedKey != null ? firstInsertedKey : lastInsertedKey,
-            lastInsertedKey
-        );
+        _entries = entries;
+        _firstInsertedKey = firstInsertedKey != null ? firstInsertedKey : lastInsertedKey;
+        _lastInsertedKey = lastInsertedKey;
     }
 
 
@@ -90,7 +120,7 @@ record LinkedValueSet<E>(
                 newEntries = (AssociationImpl<E, LinkedEntry<E>>) newEntries.put(_lastInsertedKey, previousEntry);
             }
         }
-        return LinkedValueSet.of(newEntries, _firstInsertedKey, element);
+        return new LinkedValueSet<>(newEntries, _firstInsertedKey, element);
     }
 
     @Override
@@ -146,7 +176,7 @@ record LinkedValueSet<E>(
                     newEntries = (AssociationImpl<E, LinkedEntry<E>>) newEntries.put(nextKey, nextEntry);
                 }
             }
-            return LinkedValueSet.of(newEntries, firstInsertedKey, lastInsertedKey);
+            return new LinkedValueSet<>(newEntries, firstInsertedKey, lastInsertedKey);
         }
         return this; // If the entry was not found, return unchanged set
     }
@@ -186,7 +216,7 @@ record LinkedValueSet<E>(
         if (_entries.isEmpty()) {
             return this; // Already empty, return unchanged set
         }
-        return LinkedValueSet.of((AssociationImpl) new AssociationImpl<>(type(), LinkedEntry.class), null, null);
+        return new LinkedValueSet<>((AssociationImpl) new AssociationImpl<>(type(), LinkedEntry.class), null, null);
     }
 
     @Override
@@ -214,7 +244,7 @@ record LinkedValueSet<E>(
             @Override
             public E next() {
                 if (current == null) {
-                    throw new NoSuchElementException("No more elements in the set");
+                    throw new java.util.NoSuchElementException("No more elements in the set");
                 }
                 E nextElement = current;
                 LinkedEntry<E> entry = _entries.get(current).orElse(null);

@@ -9,55 +9,69 @@ import java.util.stream.Stream;
 
 import static sprouts.impl.ArrayUtil.*;
 
-record SortedValueSetImpl<E>(
-    Class<E> _type,
-    ArrayItemAccess<E, Object> _itemGetter,
-    Comparator<E> _comparator,
-    Node _root
-) implements ValueSet<E> {
+final class SortedValueSetImpl<E> implements ValueSet<E> {
 
     private static final boolean ALLOWS_NULL = false;
-    private static final Node NULL_NODE = new Node(_createArray(Object.class, ALLOWS_NULL, 0));
+    private static final Node NULL_NODE = new Node(
+            _createArray(Object.class, ALLOWS_NULL, 0)
+    );
 
     private static int BASE_ENTRIES_PER_NODE(int depth) {
         return Math.max(1, depth * depth / 2);
     }
 
-    record Node(
-        int size,
-        Object elementsArray,
-        @Nullable Node left,
-        @Nullable Node right
-    ) {
+    static class Node {
+        private final int _size;
+        private final Object _elementsArray;
+        private final @Nullable Node _left;
+        private final @Nullable Node _right;
+
         Node(Object elementsArray) {
             this(elementsArray, null, null);
         }
 
         Node(Object elementsArray, @Nullable Node left, @Nullable Node right) {
-            this(_length(elementsArray) +
-                            (left == null ? 0 : left.size()) +
-                            (right == null ? 0 : right.size()),
-                    elementsArray,
-                    left, right
-            );
+            _size = _length(elementsArray) +
+                    (left == null ? 0 : left.size()) +
+                    (right == null ? 0 : right.size());
+            _elementsArray = elementsArray;
+            _left = left;
+            _right = right;
         }
 
+        Node(int size, Object elementsArray, @Nullable Node left, @Nullable Node right) {
+            _size = size;
+            _elementsArray = elementsArray;
+            _left = left;
+            _right = right;
+        }
+
+        public Object elementsArray() {
+            return _elementsArray;
+        }
+        public @Nullable Node left() {
+            return _left;
+        }
+        public @Nullable Node right() {
+            return _right;
+        }
+        public int size() {
+            return _size;
+        }
         public Node withNewArrays(Object newElementsArray) {
-            return new Node(newElementsArray, left, right);
+            return new Node(newElementsArray, _left, _right);
         }
-
         public Node withNewLeft(@Nullable Node left) {
-            return new Node(elementsArray, left, right);
+            return new Node(_elementsArray, left, _right);
         }
-
         public Node withNewRight(@Nullable Node right) {
-            return new Node(elementsArray, left, right);
+            return new Node(_elementsArray, _left, right);
         }
 
         @Override
         public int hashCode() {
-            int elementsHash = Val.hashCode(elementsArray);
-            return Objects.hash(size, elementsHash, left, right);
+            int elementsHash = Val.hashCode(_elementsArray);
+            return Objects.hash(_size, elementsHash, _left, _right);
         }
 
         @Override
@@ -65,12 +79,17 @@ record SortedValueSetImpl<E>(
             if (this == obj) return true;
             if (!(obj instanceof Node)) return false;
             Node other = (Node) obj;
-            return size == other.size &&
-                    Val.equals(elementsArray, other.elementsArray) &&
-                    Objects.equals(left, other.left) &&
-                    Objects.equals(right, other.right);
+            return _size == other._size &&
+                    Val.equals(_elementsArray, other._elementsArray) &&
+                    Objects.equals(_left, other._left) &&
+                    Objects.equals(_right, other._right);
         }
     }
+
+    private final Class<E> _type;
+    private final ArrayItemAccess<E, Object> _itemGetter;
+    private final Comparator<E> _comparator;
+    private final Node _root;
 
     SortedValueSetImpl(
             final Class<E> type,
@@ -84,7 +103,10 @@ record SortedValueSetImpl<E>(
             final Comparator<E> comparator,
             final Node root
     ) {
-        this(type, ArrayItemAccess.of(type, false), comparator, root);
+        _type = type;
+        _itemGetter = ArrayItemAccess.of(_type, false);
+        _comparator = comparator;
+        _root = root;
     }
 
     @Override
@@ -189,28 +211,28 @@ record SortedValueSetImpl<E>(
         int index = _binarySearch(node.elementsArray(), itemGetter, keyComparator, key);
         boolean foundInCurrentNode = index >= 0 && index < numberOfKeys;
         boolean leftAndRightAreNull = node.left() == null && node.right() == null;
-        if (leftAndRightAreNull && !foundInCurrentNode && numberOfKeys < BASE_ENTRIES_PER_NODE(depth)) {
+        if ( leftAndRightAreNull && !foundInCurrentNode && numberOfKeys < BASE_ENTRIES_PER_NODE(depth) ) {
             // We add to the left
-            Object newKeysArray = _createArray(keyType, ALLOWS_NULL, numberOfKeys + 1);
+            Object newKeysArray = _createArray(keyType, ALLOWS_NULL, numberOfKeys+1);
             // arraycopy
-            if (index < 0) {
-                if (numberOfKeys > 0) {
+            if ( index < 0 ) {
+                if ( numberOfKeys > 0 ) {
                     System.arraycopy(node.elementsArray(), 0, newKeysArray, 1, numberOfKeys);
                 }
                 _setAt(0, key, newKeysArray);
             } else {
-                if (numberOfKeys > 0) {
+                if ( numberOfKeys > 0 ) {
                     System.arraycopy(node.elementsArray(), 0, newKeysArray, 0, numberOfKeys);
                 }
                 _setAt(numberOfKeys, key, newKeysArray);
             }
             return node.withNewArrays(newKeysArray);
         }
-        if (index < 0) {
+        if ( index < 0 ) {
             Node left = node.left();
-            if (left != null) {
-                Node newLeft = _balance(_updateElement(left, keyType, itemGetter, keyComparator, key, depth + 1));
-                if (Util.refEquals(newLeft, left)) {
+            if ( left != null ) {
+                Node newLeft = _balance(_updateElement(left, keyType, itemGetter, keyComparator, key, depth+1));
+                if ( Util.refEquals(newLeft, left) ) {
                     return node; // No change in the left node
                 }
                 return node.withNewLeft(newLeft);
@@ -220,11 +242,11 @@ record SortedValueSetImpl<E>(
                 return node.withNewLeft(new Node(newKeysArray));
             }
         }
-        if (index >= numberOfKeys) {
+        if ( index >= numberOfKeys ) {
             Node right = node.right();
-            if (right != null) {
-                Node newRight = _balance(_updateElement(right, keyType, itemGetter, keyComparator, key, depth + 1));
-                if (Util.refEquals(newRight, right)) {
+            if ( right != null ) {
+                Node newRight = _balance(_updateElement(right, keyType, itemGetter, keyComparator, key, depth+1));
+                if ( Util.refEquals(newRight, right) ) {
                     return node; // No change in the right node
                 }
                 return node.withNewRight(newRight);
@@ -236,8 +258,8 @@ record SortedValueSetImpl<E>(
         }
 
         boolean keyAlreadyExists = Objects.equals(key, itemGetter.get(index, node.elementsArray()));
-        if (!keyAlreadyExists) {
-            if (numberOfKeys < BASE_ENTRIES_PER_NODE(depth)) {
+        if ( !keyAlreadyExists ) {
+            if ( numberOfKeys < BASE_ENTRIES_PER_NODE(depth) ) {
                 // We need to insert the key in the right place
                 Object newKeysArray = _createArray(keyType, ALLOWS_NULL, numberOfKeys + 1);
                 // arraycopy up to index, item, and then trailing item copy
@@ -256,13 +278,13 @@ record SortedValueSetImpl<E>(
                 Object newKeysArray = _createArray(keyType, ALLOWS_NULL, numberOfKeys);
                 int numberOfEntriesLeft = node.left() == null ? 0 : _length(node.left().elementsArray());
                 int numberOfEntriesRight = node.right() == null ? 0 : _length(node.right().elementsArray());
-                if (numberOfEntriesLeft < numberOfEntriesRight) {
-                    if (index == 0) {
+                if ( numberOfEntriesLeft < numberOfEntriesRight ) {
+                    if ( index == 0 ) {
                         // we just update the left node
                         Node newLeft;
-                        if (node.left() != null) {
+                        if ( node.left() != null ) {
                             // Re-add the popped key and value to the left node
-                            newLeft = _balance(_updateElement(node.left(), keyType, itemGetter, keyComparator, key, depth + 1));
+                            newLeft = _balance(_updateElement(node.left(), keyType, itemGetter, keyComparator, key, depth+1));
                         } else {
                             newLeft = _createSingleEntryNode(keyType, key);
                         }
@@ -270,47 +292,47 @@ record SortedValueSetImpl<E>(
                     }
                     E poppedOffKey = _getNonNullAt(0, node.elementsArray(), keyType);
                     Node newLeft;
-                    if (node.left() != null) {
+                    if ( node.left() != null ) {
                         // Re-add the popped key and value to the left node
-                        newLeft = _balance(_updateElement(node.left(), keyType, itemGetter, keyComparator, poppedOffKey, depth + 1));
+                        newLeft = _balance(_updateElement(node.left(), keyType, itemGetter, keyComparator, poppedOffKey, depth+1));
                     } else {
                         newLeft = _createSingleEntryNode(keyType, poppedOffKey);
                     }
                     // We pop from the left
-                    if (numberOfKeys == 1) {
+                    if ( numberOfKeys == 1 ) {
                         // We add the actual key and value to the current node as well as the new left node
                         _setAt(0, key, newKeysArray);
                     } else {
                         // First, insert the key and value at the index (adjust for the popped key)
-                        _setAt(index - 1, key, newKeysArray);
+                        _setAt(index-1, key, newKeysArray);
                         // Then, copy up to the index
-                        System.arraycopy(node.elementsArray(), 1, newKeysArray, 0, index - 1);
+                        System.arraycopy(node.elementsArray(), 1, newKeysArray, 0, index-1);
                         // Finally, copy the rest of the keys and values
                         System.arraycopy(node.elementsArray(), index, newKeysArray, index, numberOfKeys - index);
                     }
                     return new Node(newKeysArray, newLeft, node.right());
                 } else {
-                    if (index == numberOfKeys) {
+                    if ( index == numberOfKeys ) {
                         // we just update the right node
                         Node newRight;
-                        if (node.right() != null) {
+                        if ( node.right() != null ) {
                             // Re-add the popped key and value to the right node
-                            newRight = _balance(_updateElement(node.right(), keyType, itemGetter, keyComparator, key, depth + 1));
+                            newRight = _balance(_updateElement(node.right(), keyType, itemGetter, keyComparator, key, depth+1));
                         } else {
                             newRight = _createSingleEntryNode(keyType, key);
                         }
                         return node.withNewRight(newRight);
                     }
-                    E poppedOffKey = _getNonNullAt(numberOfKeys - 1, node.elementsArray(), keyType);
+                    E poppedOffKey = _getNonNullAt(numberOfKeys-1, node.elementsArray(), keyType);
                     Node newRight;
-                    if (node.right() != null) {
+                    if ( node.right() != null ) {
                         // Re-add the popped key and value to the right node
-                        newRight = _balance(_updateElement(node.right(), keyType, itemGetter, keyComparator, poppedOffKey, depth + 1));
+                        newRight = _balance(_updateElement(node.right(), keyType, itemGetter, keyComparator, poppedOffKey, depth+1));
                     } else {
                         newRight = _createSingleEntryNode(keyType, poppedOffKey);
                     }
                     // We pop from the right
-                    if (numberOfKeys == 1) {
+                    if ( numberOfKeys == 1 ) {
                         // We add the actual key and value to the current node as well as the new right node
                         _setAt(0, key, newKeysArray);
                     } else {
@@ -319,7 +341,7 @@ record SortedValueSetImpl<E>(
                         // Then, copy up to the index
                         System.arraycopy(node.elementsArray(), 0, newKeysArray, 0, index);
                         // Finally, copy the rest of the keys and values
-                        System.arraycopy(node.elementsArray(), index, newKeysArray, index + 1, numberOfKeys - index - 1);
+                        System.arraycopy(node.elementsArray(), index, newKeysArray, index+1, numberOfKeys - index - 1);
                     }
                     return new Node(newKeysArray, node.left(), newRight);
                 }
@@ -328,48 +350,48 @@ record SortedValueSetImpl<E>(
         return node;
     }
 
-    private static @Nullable Node _balanceNullable(@Nullable Node node) {
+    private static @Nullable Node _balanceNullable(@Nullable Node node){
         if (node == null)
             return null;
         return _balance(node);
     }
 
-    private static Node _balance(Node node) {
-
+    private static Node _balance(Node node){
+        
         final Node right = node.right();
         final Node left = node.left();
         final int leftSize = left == null ? 0 : left.size();
         final int rightSize = right == null ? 0 : right.size();
-        if (leftSize == rightSize) {
+        if ( leftSize == rightSize ) {
             return node;
         }
         final int currentNodeArraySize = _length(node.elementsArray());
-        if (leftSize < rightSize && right != null) {
+        if ( leftSize < rightSize && right != null ) {
             final int imbalance = rightSize - leftSize;
             final int rightArraySize = _length(right.elementsArray());
             final int rightLeftSize = right.left() == null ? 0 : right.left().size();
             final int newRightSize = rightSize - rightLeftSize - rightArraySize;
             final int newLeftSize = leftSize + rightLeftSize + currentNodeArraySize;
             final int newImbalance = Math.abs(newRightSize - newLeftSize);
-            if (newImbalance < imbalance) { // We only re-balance if it is worth it!
+            if ( newImbalance < imbalance ) { // We only re-balance if it is worth it!
                 Node newLeft = new Node(newLeftSize, node.elementsArray(), left, right.left());
                 return new Node(
                         node.size(), right.elementsArray(), newLeft, right.right()
-                );
+                    );
             }
         }
-        if (rightSize < leftSize && left != null) {
+        if ( rightSize < leftSize && left != null ) {
             final int imbalance = leftSize - rightSize;
             final int leftArraySize = _length(left.elementsArray());
             final int leftRightSize = left.right() == null ? 0 : left.right().size();
             final int newLeftSize = leftSize - leftRightSize - leftArraySize;
             final int newRightSize = rightSize + leftRightSize + currentNodeArraySize;
             final int newImbalance = Math.abs(newLeftSize - newRightSize);
-            if (newImbalance < imbalance) { // We only re-balance if it is worth it!
+            if ( newImbalance < imbalance ) { // We only re-balance if it is worth it!
                 Node newRight = new Node(newRightSize, node.elementsArray(), left.right(), right);
                 return new Node(
                         node.size(), left.elementsArray(), left.left(), newRight
-                );
+                    );
             }
         }
         return node;
@@ -393,7 +415,7 @@ record SortedValueSetImpl<E>(
         }
         Node newRoot = _balanceNullable(_removeElement(_root, _type, _itemGetter, _comparator, element));
         newRoot = newRoot == null ? NULL_NODE : newRoot;
-        if (Util.refEquals(newRoot, _root)) {
+        if ( Util.refEquals(newRoot, _root) ) {
             return this;
         }
         return new SortedValueSetImpl<>(_type, _comparator, newRoot);
@@ -401,7 +423,7 @@ record SortedValueSetImpl<E>(
 
     @Override
     public ValueSet<E> removeAll(Stream<? extends E> elements) {
-        if (this.isEmpty())
+        if ( this.isEmpty() )
             return this;
         ValueSet<E> result = this;
         result = elements.reduce(result,
@@ -412,13 +434,13 @@ record SortedValueSetImpl<E>(
 
     @Override
     public ValueSet<E> retainAll(Set<? extends E> elements) {
-        if (this.isEmpty())
+        if ( this.isEmpty() )
             return this;
         ValueSet<E> result = this;
-        if (elements.isEmpty())
+        if ( elements.isEmpty() )
             return clear();
-        for (E currentElement : this) {
-            if (!elements.contains(currentElement)) {
+        for ( E currentElement : this ) {
+            if ( !elements.contains(currentElement) ) {
                 result = result.remove(currentElement);
             }
         }
@@ -434,32 +456,32 @@ record SortedValueSetImpl<E>(
     ) {
         int numberOfKeys = _length(node.elementsArray());
         int index = _binarySearch(node.elementsArray(), keyType, keyComparator, key);
-        if (index < 0) {
+        if ( index < 0 ) {
             Node left = node.left();
-            if (left != null) {
+            if ( left != null ) {
                 Node newLeft = _balanceNullable(_removeElement(left, keyType, itemGetter, keyComparator, key));
                 return node.withNewLeft(newLeft);
             }
             return node; // Key not found
         }
-        if (index >= numberOfKeys) {
+        if ( index >= numberOfKeys ) {
             Node right = node.right();
-            if (right != null) {
+            if ( right != null ) {
                 Node newRight = _balanceNullable(_removeElement(right, keyType, itemGetter, keyComparator, key));
                 return node.withNewRight(newRight);
             }
             return node; // Key not found
         }
         boolean keyAlreadyExists = Objects.equals(key, itemGetter.get(index, node.elementsArray()));
-        if (keyAlreadyExists) {
-            if (numberOfKeys == 1) {
+        if ( keyAlreadyExists ) {
+            if ( numberOfKeys == 1 ) {
                 Node left = node.left();
                 Node right = node.right();
-                if (left == null || right == null) {
-                    if (left != null) {
+                if ( left == null || right == null ) {
+                    if ( left != null ) {
                         return left;
                     }
-                    if (right != null) {
+                    if ( right != null ) {
                         return right;
                     }
                     return null;
@@ -468,7 +490,7 @@ record SortedValueSetImpl<E>(
                 int leftSize = left.size();
                 int rightSize = right.size();
                 // Only the root node is allowed to be empty, so we rebalance here
-                if (leftSize > rightSize) {
+                if ( leftSize > rightSize ) {
                     E rightMostKey = _findRightMostElement(left, keyType);
                     _setAt(0, rightMostKey, newKeysArray);
                     left = _balanceNullable(_removeElement(left, keyType, itemGetter, keyComparator, rightMostKey));
@@ -477,13 +499,13 @@ record SortedValueSetImpl<E>(
                     _setAt(0, leftMostKey, newKeysArray);
                     right = _balanceNullable(_removeElement(right, keyType, itemGetter, keyComparator, leftMostKey));
                 }
-                return new Node(node.size - 1, newKeysArray, left, right);
+                return new Node(node._size - 1, newKeysArray, left, right);
             }
             // We found the key, we need to remove it
-            Object newKeysArray = _createArray(keyType, ALLOWS_NULL, numberOfKeys - 1);
+            Object newKeysArray = _createArray(keyType, ALLOWS_NULL, numberOfKeys-1);
             // arraycopy
             System.arraycopy(node.elementsArray(), 0, newKeysArray, 0, index);
-            System.arraycopy(node.elementsArray(), index + 1, newKeysArray, index, numberOfKeys - index - 1);
+            System.arraycopy(node.elementsArray(), index+1, newKeysArray, index, numberOfKeys-index-1);
             return node.withNewArrays(newKeysArray);
         }
         return node;
@@ -527,7 +549,8 @@ record SortedValueSetImpl<E>(
         return new SortedValueSetIterator<>(this);
     }
 
-    private static final class SortedValueSetIterator<E> implements Iterator<E> {
+    private static final class SortedValueSetIterator<E> implements Iterator<E>
+    {
         private final ArrayItemAccess<E, Object> elementGetter;
         private @Nullable IteratorFrame currentFrame = null;
 

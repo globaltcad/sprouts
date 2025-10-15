@@ -21,10 +21,10 @@ import java.util.function.Predicate;
  *
  * @param <T> The type of the items in the tuple.
  */
-record TupleWithDiff<T extends @Nullable Object>(
-        TupleTree<T> _tupleTree,
-        SequenceDiff _diffToPrevious
-) implements Tuple<T>, SequenceDiffOwner {
+final class TupleWithDiff<T extends @Nullable Object> implements Tuple<T>, SequenceDiffOwner {
+
+    private final TupleTree<T> _tupleTree;
+    private final SequenceDiff _diffToPrevious;
 
     /**
      *  Creates a new instance of {@link TupleWithDiff} with the given items.
@@ -65,15 +65,15 @@ record TupleWithDiff<T extends @Nullable Object>(
      *  Creates a new instance of {@link TupleWithDiff} with the given data and the difference to the previous state.
      *  This is an internal method and should not be used directly.
      *
-     * @param _tupleTree The tuple tree containing the data.
-     * @param _diffToPrevious The difference to the previous state, or null if there is no previous state.
+     * @param data The tuple tree containing the data.
+     * @param diffToPrevious The difference to the previous state, or null if there is no previous state.
      */
     @SuppressWarnings("NullAway")
-    TupleWithDiff(
-            TupleTree<T> _tupleTree, @Nullable SequenceDiff _diffToPrevious
+    public TupleWithDiff(
+            TupleTree<T> data, @Nullable SequenceDiff diffToPrevious
     ) {
-        this._tupleTree = _tupleTree;
-        this._diffToPrevious = (_diffToPrevious == null ? SequenceDiff.initial() : _diffToPrevious);
+        _tupleTree = data;
+        _diffToPrevious = ( diffToPrevious == null ? SequenceDiff.initial() : diffToPrevious );
     }
 
     TupleTree<T> getData() {
