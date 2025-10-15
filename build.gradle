@@ -14,6 +14,10 @@ plugins {
     id "net.ltgt.errorprone" version "3.1.0"
 }
 
+// If current version >= 11 we can do static analysis:
+boolean WE_CAN_DO_STATIC_ANALYSIS = JavaVersion.current().isJava11Compatible()
+println "Static analysis enabled: $WE_CAN_DO_STATIC_ANALYSIS"
+
 String GROUP_ID = "io.github.globaltcad"
 String PROJECT  = "sprouts"
 String VERSION  = "2.1.0"
@@ -30,9 +34,13 @@ repositories {
 
 dependencies {
 
-    errorprone "com.uber.nullaway:nullaway:0.11.1"
-    compileOnly "com.google.code.findbugs:jsr305:3.0.2"
-    errorprone "com.google.errorprone:error_prone_core:2.42.0"
+    if ( WE_CAN_DO_STATIC_ANALYSIS ) {
+        errorprone "com.uber.nullaway:nullaway:0.11.1"
+        compileOnly "com.google.code.findbugs:jsr305:3.0.2"
+        errorprone "com.google.errorprone:error_prone_core:2.29.2"
+    }
+    else
+        errorprone "com.google.errorprone:error_prone_core:2.9.+"
 
     implementation group: 'org.jspecify', name: 'jspecify', version: '[1+, )'
 
@@ -54,22 +62,22 @@ dependencies {
     testCompileOnly 'org.slf4j:slf4j-simple:1.7.30'
 }
 
-tasks.withType(JavaCompile) {
-    // remove the if condition if you want to run NullAway on test code
-    if (!name.toLowerCase().contains("test")) {
-        options.errorprone {
-            check("NullAway", net.ltgt.gradle.errorprone.CheckSeverity.ERROR)
-            option("NullAway:AnnotatedPackages", "")
-        }
-    } else {
-        options.errorprone {
-            check("NullAway", net.ltgt.gradle.errorprone.CheckSeverity.WARN)
-            option("NullAway:AnnotatedPackages", "")
+if ( WE_CAN_DO_STATIC_ANALYSIS ) {
+    tasks.withType(JavaCompile) {
+        // remove the if condition if you want to run NullAway on test code
+        if (!name.toLowerCase().contains("test")) {
+            options.errorprone {
+                check("NullAway", net.ltgt.gradle.errorprone.CheckSeverity.ERROR)
+                option("NullAway:AnnotatedPackages", "")
+            }
+        } else {
+            options.errorprone {
+                check("NullAway", net.ltgt.gradle.errorprone.CheckSeverity.WARN)
+                option("NullAway:AnnotatedPackages", "")
+            }
         }
     }
-    options.compilerArgs += ['--should-stop=ifError=FLOW']
 }
-
 test {
     useJUnitPlatform()
     testLogging {
@@ -171,8 +179,8 @@ artifacts {
 }
 
 java {
-    sourceCompatibility = 17
-    targetCompatibility = 17
+    sourceCompatibility = 8
+    targetCompatibility = 8
     withJavadocJar()
     withSourcesJar()
 }
