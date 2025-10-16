@@ -646,6 +646,9 @@ final class AssociationImpl<K, V> implements Association<K, V> {
         }
         if ( obj instanceof Association ) {
             Association other = (Association)obj;
+            if ( this.keyType() != other.keyType() || this.valueType() != other.valueType() ) {
+                return false;
+            }
             if ( other instanceof AssociationImpl) {
                 AssociationImpl<K, V> otherImpl = (AssociationImpl) other;
                 return _recursiveEquals(_root, otherImpl._root, keyType(), valueType());

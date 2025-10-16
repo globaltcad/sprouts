@@ -1,6 +1,7 @@
 package sprouts.impl;
 
 import org.jspecify.annotations.Nullable;
+import sprouts.Association;
 import sprouts.Tuple;
 import sprouts.ValueSet;
 
@@ -561,21 +562,58 @@ final class ValueSetImpl<E> implements ValueSet<E> {
         if ( obj == this ) {
             return true;
         }
-        if ( obj instanceof ValueSetImpl) {
-             ValueSetImpl<E> other = (ValueSetImpl) obj;
-            if ( other.size() != this.size() ) {
+        if ( obj instanceof ValueSet) {
+            ValueSet other = (ValueSet)obj;
+            if ( this.type() != other.type() ) {
                 return false;
             }
-            for ( E key : this ) {
-                int keyHash = key.hashCode();
-                Object value = _contains(_root, _itemGetter, key, keyHash);
-                if ( !Objects.equals(value, _contains(other._root, other._itemGetter, key, keyHash)) ) {
-                    return false;
-                }
+            if ( other instanceof ValueSetImpl) {
+                ValueSetImpl<E> otherImpl = (ValueSetImpl) other;
+                return _recursiveEquals(_root, otherImpl._root, type());
+            } else if ( other.isLinked() == this.isLinked() && other.isSorted() == this.isSorted()) {
+                return this.toSet().equals(other.toSet());
             }
-            return true;
         }
         return false;
+    }
+
+    private static <E> boolean _exhaustiveEquals(ValueSetImpl<E> set1, ValueSetImpl<E> set2) {
+        if ( set2.size() != set1.size() ) {
+            return false;
+        }
+        for ( E element : set1 ) {
+            int keyHash = element.hashCode();
+            if ( !_contains(set2._root, set2._itemGetter, element, keyHash) ) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static <E> boolean _recursiveEquals(Node<E> node1, Node<E> node2, Class<E> type) {
+        if ( node1 == node2 ) {
+            return true;
+        } else {
+            if (
+                node1._size == node2._size &&
+                node1._elementsArray == node2._elementsArray &&
+                node1._elementsHashes == node2._elementsHashes &&
+                node1._branches.length == node2._branches.length &&
+                node1._branches != node2._branches // The only difference is somewhere deep down!
+            ) {
+                for ( int i = 0; i < node1._branches.length; i++ ) {
+                    if ( !_recursiveEquals(node1._branches[i], node2._branches[i], type) ) {
+                        return false;
+                    }
+                }
+                return true;
+            } else {
+                return _exhaustiveEquals(
+                        new ValueSetImpl<>(type, ArrayItemAccess.of(type, false), node1),
+                        new ValueSetImpl<>(type, ArrayItemAccess.of(type, false), node2)
+                    );
+            }
+        }
     }
 
     @Override
