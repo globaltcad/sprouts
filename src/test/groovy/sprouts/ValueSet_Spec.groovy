@@ -560,4 +560,93 @@ class ValueSet_Spec extends Specification {
             Character | [0,4,4,7,5,1,8,6,3,41,2,6,3,9,4,84,5] as char[]
             String    | ["watch","dominion","movie","now","!"] as String[]
     }
+
+
+    def 'The `equals` and `hashCode` implementations of a ValueSet work reliably for a large number of entries.'(
+        Class<Object> type, List<Object> elements
+    ) {
+        reportInfo """
+            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.
+            This may look like an exaggerated amount of test data and equality checks, but you
+            have to know that under the hood specifically the `equals` implementations are
+            highly optimized to specific cases which need to be covered.
+            
+            More specifically, if there are only small differences between sets,
+            we can avoid a lot of work due to two sets sharing most of their branches.
+        """
+        given : 'We create randomly sorted variants of the test data:'
+            var keyHasher1 = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }
+            var keyHasher2 = { (it.hashCode() + (it.hashCode() ** 2)) as int }
+            Comparator<Object> randomSort1 = (a, b) -> (keyHasher1(a)<=>keyHasher1(b))
+            Comparator<Object> randomSort2 = (a, b) -> (keyHasher2(a)<=>keyHasher2(b))
+            var scrambledElements1 = elements.toSorted(randomSort1)
+            var scrambledElements2 = elements.toSorted(randomSort2)
+
+        when : 'We create two different `ValueSet` instances from the two scrambled list...'
+            var set1 = ValueSet.of(type, scrambledElements1)
+            var set2 = ValueSet.of(type, scrambledElements2)
+        then : 'The two sets are equal!'
+            set1.equals(set2)
+        and : 'They also have the same hash codes:'
+            set1.hashCode() == set2.hashCode()
+
+        when : 'We create modified version of the two sets...'
+            var randomElement = elements[Math.abs(elements.hashCode()*1997)%elements.size()]
+            var modifiedSet1 = set1.remove(randomElement)
+            var modifiedSet2 = set2.remove(randomElement)
+        then : 'We have the expected relationships between all of the objects:'
+            !modifiedSet1.equals(set1)
+            !modifiedSet2.equals(set2)
+            !modifiedSet1.equals(set2)
+            !modifiedSet2.equals(set1)
+            modifiedSet1.equals(modifiedSet2)
+
+        when : 'We put back in the old element to restore the previous states...'
+            var restoredSet1 = modifiedSet1.add(randomElement)
+            var restoredSet2 = modifiedSet2.add(randomElement)
+        then : 'We have the expected relationships between all of the objects:'
+            !restoredSet1.equals(modifiedSet1)
+            !restoredSet2.equals(modifiedSet2)
+            !restoredSet1.equals(modifiedSet2)
+            !restoredSet2.equals(modifiedSet1)
+            restoredSet1.equals(restoredSet2)
+            restoredSet1.equals(set1)
+            restoredSet2.equals(set2)
+            restoredSet1.equals(set2)
+            restoredSet2.equals(set1)
+
+        when : 'We create smaller version of the two sets by removing something...'
+            var randomElement2 = elements[Math.abs(elements.hashCode()*31)%elements.size()]
+            var smallerSet1 = set1.remove(randomElement2)
+            var smallerSet2 = set2.remove(randomElement2)
+        then : 'We have the expected relationships between all of the objects:'
+            !smallerSet1.equals(set1)
+            !smallerSet2.equals(set2)
+            !smallerSet1.equals(set2)
+            !smallerSet2.equals(set1)
+            smallerSet1.equals(smallerSet2)
+        and :
+            smallerSet1.hashCode() != set1.hashCode()
+            smallerSet2.hashCode() != set2.hashCode()
+            smallerSet1.hashCode() != set2.hashCode()
+            smallerSet2.hashCode() != set1.hashCode()
+            smallerSet1.hashCode() == smallerSet2.hashCode()
+
+        where : 'We use the following entry data source:'
+            type     |  elements
+            Byte     | (0..100).collect(it -> it as Byte).toList()
+            Short    | (0..100).collect(it -> it as Short).toList()
+            Integer  | (0..100).collect(it -> it).toList()
+            String   | (0..100).collect(it -> String.valueOf(it)).toList()
+
+            Byte     | (0..100).collect(it -> it as Byte).toList()
+            Short    | (0..100).collect(it -> it as Short).toList()
+            Integer  | (0..100).collect(it -> it).toList()
+            String   | (0..100).collect(it -> String.valueOf(it)).toList()
+
+            Byte     | (0..100).collect(it -> it as Byte).toList()
+            Short    | (0..100).collect(it -> it as Short).toList()
+            Integer  | (0..100).collect(it -> it).toList()
+            String   | (0..100).collect(it -> String.valueOf(it)).toList()
+    }
 }

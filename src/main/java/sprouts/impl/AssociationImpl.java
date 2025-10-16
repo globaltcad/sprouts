@@ -91,17 +91,17 @@ final class AssociationImpl<K, V> implements Association<K, V> {
 
     private final Class<K> _keyType;
     private final Class<V> _valueType;
-    private final ArrayItemAccess<K, Object> _keyGetter;
-    private final ArrayItemAccess<V, Object> _valueGetter;
-    private final Node<K,V> _root;
+    final ArrayItemAccess<K, Object> _keyGetter;
+    final ArrayItemAccess<V, Object> _valueGetter;
+    final Node<K,V> _root;
 
-    private static final class Node<K,V> {
-        private final int _depth;
-        private final int _size;
-        private final Object _keysArray;
-        private final Object _valuesArray;
-        private final int[] _keyHashes;
-        private final Node<K, V>[] _branches;
+    static final class Node<K,V> {
+        final int _depth;
+        final int _size;
+        final Object _keysArray;
+        final Object _valuesArray;
+        final int[] _keyHashes;
+        final Node<K, V>[] _branches;
         private Node(
                 final int depth,
                 final Class<K> keyType,
@@ -362,12 +362,12 @@ final class AssociationImpl<K, V> implements Association<K, V> {
         return Optional.ofNullable(_get(_root, _keyGetter, _valueGetter, key, key.hashCode()));
     }
 
-    private static <K,V> @Nullable V _get(
-        final Node<K, V> node,
-        final ArrayItemAccess<K, Object> keyGetter,
-        final ArrayItemAccess<V, Object> valueGetter,
-        final K key,
-        final int keyHash
+    static <K,V> @Nullable V _get(
+            final Node<K, V> node,
+            final ArrayItemAccess<K, Object> keyGetter,
+            final ArrayItemAccess<V, Object> valueGetter,
+            final K key,
+            final int keyHash
     ) {
         int index = _findValidIndexFor(node, keyGetter, key, keyHash);
         if ( index < 0 ) {
@@ -644,21 +644,60 @@ final class AssociationImpl<K, V> implements Association<K, V> {
         if ( obj == this ) {
             return true;
         }
-        if ( obj instanceof AssociationImpl) {
-            AssociationImpl<K, V> other = (AssociationImpl) obj;
-            if ( other.size() != this.size() ) {
+        if ( obj instanceof Association ) {
+            Association other = (Association)obj;
+            if ( this.keyType() != other.keyType() || this.valueType() != other.valueType() ) {
                 return false;
             }
-            for ( K key : this.keySet() ) {
-                int keyHash = key.hashCode();
-                Object value = _get(_root, _keyGetter, _valueGetter, key, keyHash);
-                if ( !Objects.equals(value, _get(other._root, other._keyGetter, other._valueGetter, key, keyHash)) ) {
-                    return false;
-                }
+            if ( other instanceof AssociationImpl) {
+                AssociationImpl<K, V> otherImpl = (AssociationImpl) other;
+                return _recursiveEquals(_root, otherImpl._root, keyType(), valueType());
+            } else if ( other.isLinked() == this.isLinked() && other.isSorted() == this.isSorted()) {
+                return this.toMap().equals(other.toMap());
             }
-            return true;
         }
         return false;
+    }
+
+    private static <K,V> boolean _exhaustiveEquals(AssociationImpl<K,V> assoc1, AssociationImpl<K,V> assoc2) {
+        if ( assoc2.size() != assoc1.size() ) {
+            return false;
+        }
+        for ( K key : assoc1.keySet() ) {
+            int keyHash = key.hashCode();
+            Object value = _get(assoc1._root, assoc1._keyGetter, assoc1._valueGetter, key, keyHash);
+            if ( !Objects.equals(value, _get(assoc2._root, assoc2._keyGetter, assoc2._valueGetter, key, keyHash)) ) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static <K,V> boolean _recursiveEquals(Node<K,V> node1, Node<K,V> node2, Class<K> keyType, Class<V> valueTye) {
+        if ( node1 == node2 ) {
+            return true;
+        } else {
+            if (
+                node1._size == node2._size &&
+                node1._keysArray == node2._keysArray &&
+                node1._valuesArray == node2._valuesArray &&
+                node1._keyHashes == node2._keyHashes &&
+                node1._branches.length == node2._branches.length &&
+                node1._branches != node2._branches // The only difference is somewhere deep down!
+            ) {
+                for ( int i = 0; i < node1._branches.length; i++ ) {
+                    if ( !_recursiveEquals(node1._branches[i], node2._branches[i], keyType, valueTye) ) {
+                        return false;
+                    }
+                }
+                return true;
+            } else {
+                return _exhaustiveEquals(
+                        new AssociationImpl<>(keyType, valueTye, node1),
+                        new AssociationImpl<>(keyType, valueTye, node2)
+                    );
+            }
+        }
     }
 
     @Override

@@ -1374,4 +1374,87 @@ class Tuple_Spec extends Specification
             Character | [0,4,4,7,5,1,8,6,3,41,2,6,3,9,4,84,5] as char[]
             String    | ["watch","dominion","movie","now","!"] as String[]
     }
+
+
+    def 'The `equals` and `hashCode` implementations of a Tuple work reliably for a large number of items.'(
+        Class<Object> type, List<Object> items
+    ) {
+        reportInfo """
+            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.
+            This may look like an exaggerated amount of test data and equality checks, but you
+            have to know that under the hood specifically the `equals` implementations are
+            highly optimized to specific cases which need to be covered.
+            
+            More specifically, if there are only small differences between sets,
+            we can avoid a lot of work due to two sets sharing most of their branches.
+        """
+        given : 'We create two different "different" `Tuple` instances from the a single list...'
+            var tuple1 = Tuple.of(type, items)
+            var tuple2 = Tuple.of(type, items)
+        expect : 'The two sets are not equal!'
+            tuple1.equals(tuple2)
+        and : 'They also have do not have the same hash codes:'
+            tuple1.hashCode() == tuple2.hashCode()
+
+        when : 'We create modified version of the two tuples...'
+            var randomItem = items[Math.abs(items.hashCode()*1997)%items.size()]
+            int index1 = tuple1.firstIndexOf(randomItem)
+            int index2 = tuple2.firstIndexOf(randomItem)
+            var modifiedTuple1 = tuple1.remove(randomItem)
+            var modifiedTuple2 = tuple2.remove(randomItem)
+        then : 'We have the expected relationships between all of the objects:'
+            !modifiedTuple1.equals(tuple1)
+            !modifiedTuple2.equals(tuple2)
+            !modifiedTuple1.equals(tuple2)
+            !modifiedTuple2.equals(tuple1)
+            modifiedTuple1.equals(modifiedTuple2)
+
+        when : 'We put back in the old item to restore the previous states...'
+            var restoredTuple1 = modifiedTuple1.addAt(index1, randomItem)
+            var restoredTuple2 = modifiedTuple2.addAt(index2, randomItem)
+        then : 'We have the expected relationships between all of the objects:'
+            !restoredTuple1.equals(modifiedTuple1)
+            !restoredTuple2.equals(modifiedTuple2)
+            !restoredTuple1.equals(modifiedTuple2)
+            !restoredTuple2.equals(modifiedTuple1)
+            restoredTuple1.equals(restoredTuple2)
+            restoredTuple1.equals(tuple1)
+            restoredTuple2.equals(tuple2)
+            restoredTuple1.equals(tuple2)
+            restoredTuple2.equals(tuple1)
+
+        when : 'We create smaller version of the two tuples by removing something...'
+            var randomElement2 = items[Math.abs(items.hashCode()*31)%items.size()]
+            var smallerTuple1 = tuple1.remove(randomElement2)
+            var smallerTuple2 = tuple2.remove(randomElement2)
+        then : 'We have the expected relationships between all of the objects:'
+            !smallerTuple1.equals(tuple1)
+            !smallerTuple2.equals(tuple2)
+            !smallerTuple1.equals(tuple2)
+            !smallerTuple2.equals(tuple1)
+            smallerTuple1.equals(smallerTuple2)
+        and :
+            smallerTuple1.hashCode() != tuple1.hashCode()
+            smallerTuple2.hashCode() != tuple2.hashCode()
+            smallerTuple1.hashCode() != tuple2.hashCode()
+            smallerTuple2.hashCode() != tuple1.hashCode()
+            smallerTuple1.hashCode() == smallerTuple2.hashCode()
+
+        where : 'We use the following entry data source:'
+            type     |  items
+            Byte     | (0..100).collect(it -> it as Byte).toList()
+            Short    | (0..100).collect(it -> it as Short).toList()
+            Integer  | (0..100).collect(it -> it).toList()
+            String   | (0..100).collect(it -> String.valueOf(it)).toList()
+
+            Byte     | (0..100).collect(it -> it as Byte).toList()
+            Short    | (0..100).collect(it -> it as Short).toList()
+            Integer  | (0..100).collect(it -> it).toList()
+            String   | (0..100).collect(it -> String.valueOf(it)).toList()
+
+            Byte     | (0..100).collect(it -> it as Byte).toList()
+            Short    | (0..100).collect(it -> it as Short).toList()
+            Integer  | (0..100).collect(it -> it).toList()
+            String   | (0..100).collect(it -> String.valueOf(it)).toList()
+    }
 }
