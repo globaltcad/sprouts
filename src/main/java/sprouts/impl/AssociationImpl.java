@@ -91,17 +91,17 @@ final class AssociationImpl<K, V> implements Association<K, V> {
 
     private final Class<K> _keyType;
     private final Class<V> _valueType;
-    private final ArrayItemAccess<K, Object> _keyGetter;
-    private final ArrayItemAccess<V, Object> _valueGetter;
-    private final Node<K,V> _root;
+    final ArrayItemAccess<K, Object> _keyGetter;
+    final ArrayItemAccess<V, Object> _valueGetter;
+    final Node<K,V> _root;
 
-    private static final class Node<K,V> {
-        private final int _depth;
-        private final int _size;
-        private final Object _keysArray;
-        private final Object _valuesArray;
-        private final int[] _keyHashes;
-        private final Node<K, V>[] _branches;
+    static final class Node<K,V> {
+        final int _depth;
+        final int _size;
+        final Object _keysArray;
+        final Object _valuesArray;
+        final int[] _keyHashes;
+        final Node<K, V>[] _branches;
         private Node(
                 final int depth,
                 final Class<K> keyType,
@@ -362,12 +362,12 @@ final class AssociationImpl<K, V> implements Association<K, V> {
         return Optional.ofNullable(_get(_root, _keyGetter, _valueGetter, key, key.hashCode()));
     }
 
-    private static <K,V> @Nullable V _get(
-        final Node<K, V> node,
-        final ArrayItemAccess<K, Object> keyGetter,
-        final ArrayItemAccess<V, Object> valueGetter,
-        final K key,
-        final int keyHash
+    static <K,V> @Nullable V _get(
+            final Node<K, V> node,
+            final ArrayItemAccess<K, Object> keyGetter,
+            final ArrayItemAccess<V, Object> valueGetter,
+            final K key,
+            final int keyHash
     ) {
         int index = _findValidIndexFor(node, keyGetter, key, keyHash);
         if ( index < 0 ) {

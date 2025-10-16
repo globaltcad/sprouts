@@ -391,7 +391,7 @@ final class LinkedAssociation<K,V> implements Association<K, V>
         if (this == o) return true;
         if (!(o instanceof LinkedAssociation))
             return false;
-        LinkedAssociation<?, ?> other = (LinkedAssociation<?, ?>) o;
+        LinkedAssociation<K,V> other = (LinkedAssociation) o;
         if ( !_valueType.equals(other._valueType) )
             return false;
         if ( !_entries.keyType().equals(other._entries.keyType()) )
@@ -399,7 +399,61 @@ final class LinkedAssociation<K,V> implements Association<K, V>
         if ( _entries.size() != other._entries.size() )
             return false;
 
-        return this.toMap().equals(other.toMap());
+        return _recursiveEquals(this._entries._root, other._entries._root, this.keyType());
+    }
+
+    private static <K,V> boolean _exhaustiveEquals(
+            AssociationImpl<K,LinkedEntry<K,V>> assoc1, AssociationImpl<K,LinkedEntry<K,V>> assoc2
+    ) {
+        if ( assoc2.size() != assoc1.size() ) {
+            return false;
+        }
+        for ( K key : assoc1.keySet() ) {
+            int keyHash = key.hashCode();
+            LinkedEntry<K,V> firstEntry = AssociationImpl._get(assoc1._root, assoc1._keyGetter, assoc1._valueGetter, key, keyHash);
+            if ( firstEntry == null ) {
+                return false;
+            }
+            LinkedEntry<K,V> otherEntry = AssociationImpl._get(assoc2._root, assoc2._keyGetter, assoc2._valueGetter, key, keyHash);
+            if ( otherEntry == null ) {
+                return false;
+            }
+            if (!Objects.equals(firstEntry.value, otherEntry.value) ) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static <K,V> boolean _recursiveEquals(
+            AssociationImpl.Node<K,LinkedEntry<K,V>> node1,
+            AssociationImpl.Node<K,LinkedEntry<K,V>> node2,
+            Class<K> keyType
+    ) {
+        if ( node1 == node2 ) {
+            return true;
+        } else {
+            if (
+                node1._size == node2._size &&
+                node1._keysArray == node2._keysArray &&
+                node1._valuesArray == node2._valuesArray &&
+                node1._keyHashes == node2._keyHashes &&
+                node1._branches.length == node2._branches.length &&
+                node1._branches != node2._branches // The only difference is somewhere deep down!
+            ) {
+                for ( int i = 0; i < node1._branches.length; i++ ) {
+                    if ( !_recursiveEquals(node1._branches[i], node2._branches[i], keyType) ) {
+                        return false;
+                    }
+                }
+                return true;
+            } else {
+                return _exhaustiveEquals(
+                        new AssociationImpl(keyType, LinkedEntry.class, node1),
+                        new AssociationImpl(keyType, LinkedEntry.class, node2)
+                );
+            }
+        }
     }
 
     @Override
