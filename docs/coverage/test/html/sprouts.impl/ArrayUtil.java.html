@@ -131,12 +131,12 @@ final class ArrayUtil {
 
     static Object _tryFlatten( Object array, Class&lt;?&gt; type, boolean nullable ) {
 <span class="fc" id="L133">        type = _toActualPrimitive(type, nullable);</span>
-<span class="pc bpc" id="L134" title="3 of 4 branches missed.">        if ( type == byte.class &amp;&amp; array instanceof Object[] ) {</span>
-<span class="nc" id="L135">            byte[] flattened = new byte[((Object[]) array).length];</span>
-<span class="nc bnc" id="L136" title="All 2 branches missed.">            for ( int i = 0; i &lt; flattened.length; i++ ) {</span>
-<span class="nc" id="L137">                flattened[i] = (byte) ((Object[]) array)[i];</span>
+<span class="pc bpc" id="L134" title="1 of 4 branches missed.">        if ( type == byte.class &amp;&amp; array instanceof Object[] ) {</span>
+<span class="fc" id="L135">            byte[] flattened = new byte[((Object[]) array).length];</span>
+<span class="fc bfc" id="L136" title="All 2 branches covered.">            for ( int i = 0; i &lt; flattened.length; i++ ) {</span>
+<span class="fc" id="L137">                flattened[i] = (byte) ((Object[]) array)[i];</span>
             }
-<span class="nc" id="L139">            return flattened;</span>
+<span class="fc" id="L139">            return flattened;</span>
         }
 <span class="pc bpc" id="L141" title="1 of 4 branches missed.">        if ( type == short.class &amp;&amp; array instanceof Object[] ) {</span>
 <span class="fc" id="L142">            short[] flattened = new short[((Object[]) array).length];</span>
@@ -166,12 +166,12 @@ final class ArrayUtil {
             }
 <span class="nc" id="L167">            return flattened;</span>
         }
-<span class="pc bpc" id="L169" title="3 of 4 branches missed.">        if ( type == double.class &amp;&amp; array instanceof Object[] ) {</span>
-<span class="nc" id="L170">            double[] flattened = new double[((Object[]) array).length];</span>
-<span class="nc bnc" id="L171" title="All 2 branches missed.">            for ( int i = 0; i &lt; flattened.length; i++ ) {</span>
-<span class="nc" id="L172">                flattened[i] = (double) ((Object[]) array)[i];</span>
+<span class="pc bpc" id="L169" title="1 of 4 branches missed.">        if ( type == double.class &amp;&amp; array instanceof Object[] ) {</span>
+<span class="fc" id="L170">            double[] flattened = new double[((Object[]) array).length];</span>
+<span class="fc bfc" id="L171" title="All 2 branches covered.">            for ( int i = 0; i &lt; flattened.length; i++ ) {</span>
+<span class="fc" id="L172">                flattened[i] = (double) ((Object[]) array)[i];</span>
             }
-<span class="nc" id="L174">            return flattened;</span>
+<span class="fc" id="L174">            return flattened;</span>
         }
 <span class="pc bpc" id="L176" title="1 of 4 branches missed.">        if ( type == char.class &amp;&amp; array instanceof Object[] ) {</span>
 <span class="fc" id="L177">            char[] flattened = new char[((Object[]) array).length];</span>
@@ -180,12 +180,12 @@ final class ArrayUtil {
             }
 <span class="fc" id="L181">            return flattened;</span>
         }
-<span class="pc bpc" id="L183" title="3 of 4 branches missed.">        if ( type == boolean.class &amp;&amp; array instanceof Object[] ) {</span>
-<span class="nc" id="L184">            boolean[] flattened = new boolean[((Object[]) array).length];</span>
-<span class="nc bnc" id="L185" title="All 2 branches missed.">            for ( int i = 0; i &lt; flattened.length; i++ ) {</span>
-<span class="nc" id="L186">                flattened[i] = (boolean) ((Object[]) array)[i];</span>
+<span class="pc bpc" id="L183" title="1 of 4 branches missed.">        if ( type == boolean.class &amp;&amp; array instanceof Object[] ) {</span>
+<span class="fc" id="L184">            boolean[] flattened = new boolean[((Object[]) array).length];</span>
+<span class="fc bfc" id="L185" title="All 2 branches covered.">            for ( int i = 0; i &lt; flattened.length; i++ ) {</span>
+<span class="fc" id="L186">                flattened[i] = (boolean) ((Object[]) array)[i];</span>
             }
-<span class="nc" id="L188">            return flattened;</span>
+<span class="fc" id="L188">            return flattened;</span>
         }
 <span class="fc" id="L190">        return array;</span>
     }

@@ -292,7 +292,7 @@ final class LinkedAssociation&lt;K,V&gt; implements Association&lt;K, V&gt;
 <span class="fc" id="L292">        return new AbstractMap&lt;K, V&gt;() {</span>
             @Override
             public @Nullable V get(Object key) {
-<span class="fc" id="L295">                return LinkedAssociation.this.get((K) key).orElse(null);</span>
+<span class="nc" id="L295">                return LinkedAssociation.this.get((K) key).orElse(null);</span>
             }
 
             @Override
@@ -391,7 +391,7 @@ final class LinkedAssociation&lt;K,V&gt; implements Association&lt;K, V&gt;
 <span class="pc bpc" id="L391" title="1 of 2 branches missed.">        if (this == o) return true;</span>
 <span class="pc bpc" id="L392" title="1 of 2 branches missed.">        if (!(o instanceof LinkedAssociation))</span>
 <span class="nc" id="L393">            return false;</span>
-<span class="fc" id="L394">        LinkedAssociation&lt;?, ?&gt; other = (LinkedAssociation&lt;?, ?&gt;) o;</span>
+<span class="fc" id="L394">        LinkedAssociation&lt;K,V&gt; other = (LinkedAssociation) o;</span>
 <span class="pc bpc" id="L395" title="1 of 2 branches missed.">        if ( !_valueType.equals(other._valueType) )</span>
 <span class="nc" id="L396">            return false;</span>
 <span class="pc bpc" id="L397" title="1 of 2 branches missed.">        if ( !_entries.keyType().equals(other._entries.keyType()) )</span>
@@ -399,16 +399,70 @@ final class LinkedAssociation&lt;K,V&gt; implements Association&lt;K, V&gt;
 <span class="fc bfc" id="L399" title="All 2 branches covered.">        if ( _entries.size() != other._entries.size() )</span>
 <span class="fc" id="L400">            return false;</span>
 
-<span class="fc" id="L402">        return this.toMap().equals(other.toMap());</span>
+<span class="fc" id="L402">        return _recursiveEquals(this._entries._root, other._entries._root, this.keyType());</span>
+    }
+
+    private static &lt;K,V&gt; boolean _exhaustiveEquals(
+            AssociationImpl&lt;K,LinkedEntry&lt;K,V&gt;&gt; assoc1, AssociationImpl&lt;K,LinkedEntry&lt;K,V&gt;&gt; assoc2
+    ) {
+<span class="pc bpc" id="L408" title="1 of 2 branches missed.">        if ( assoc2.size() != assoc1.size() ) {</span>
+<span class="nc" id="L409">            return false;</span>
+        }
+<span class="fc bfc" id="L411" title="All 2 branches covered.">        for ( K key : assoc1.keySet() ) {</span>
+<span class="fc" id="L412">            int keyHash = key.hashCode();</span>
+<span class="fc" id="L413">            LinkedEntry&lt;K,V&gt; firstEntry = AssociationImpl._get(assoc1._root, assoc1._keyGetter, assoc1._valueGetter, key, keyHash);</span>
+<span class="pc bpc" id="L414" title="1 of 2 branches missed.">            if ( firstEntry == null ) {</span>
+<span class="nc" id="L415">                return false;</span>
+            }
+<span class="fc" id="L417">            LinkedEntry&lt;K,V&gt; otherEntry = AssociationImpl._get(assoc2._root, assoc2._keyGetter, assoc2._valueGetter, key, keyHash);</span>
+<span class="pc bpc" id="L418" title="1 of 2 branches missed.">            if ( otherEntry == null ) {</span>
+<span class="nc" id="L419">                return false;</span>
+            }
+<span class="fc bfc" id="L421" title="All 2 branches covered.">            if (!Objects.equals(firstEntry.value, otherEntry.value) ) {</span>
+<span class="fc" id="L422">                return false;</span>
+            }
+<span class="fc" id="L424">        }</span>
+<span class="fc" id="L425">        return true;</span>
+    }
+
+    private static &lt;K,V&gt; boolean _recursiveEquals(
+            AssociationImpl.Node&lt;K,LinkedEntry&lt;K,V&gt;&gt; node1,
+            AssociationImpl.Node&lt;K,LinkedEntry&lt;K,V&gt;&gt; node2,
+            Class&lt;K&gt; keyType
+    ) {
+<span class="fc bfc" id="L433" title="All 2 branches covered.">        if ( node1 == node2 ) {</span>
+<span class="fc" id="L434">            return true;</span>
+        } else {
+<span class="pc bpc" id="L436" title="3 of 12 branches missed.">            if (</span>
+                node1._size == node2._size &amp;&amp;
+                node1._keysArray == node2._keysArray &amp;&amp;
+                node1._valuesArray == node2._valuesArray &amp;&amp;
+                node1._keyHashes == node2._keyHashes &amp;&amp;
+                node1._branches.length == node2._branches.length &amp;&amp;
+                node1._branches != node2._branches // The only difference is somewhere deep down!
+            ) {
+<span class="fc bfc" id="L444" title="All 2 branches covered.">                for ( int i = 0; i &lt; node1._branches.length; i++ ) {</span>
+<span class="fc bfc" id="L445" title="All 2 branches covered.">                    if ( !_recursiveEquals(node1._branches[i], node2._branches[i], keyType) ) {</span>
+<span class="fc" id="L446">                        return false;</span>
+                    }
+                }
+<span class="fc" id="L449">                return true;</span>
+            } else {
+<span class="fc" id="L451">                return _exhaustiveEquals(</span>
+                        new AssociationImpl(keyType, LinkedEntry.class, node1),
+                        new AssociationImpl(keyType, LinkedEntry.class, node2)
+                );
+            }
+        }
     }
 
     @Override
     public int hashCode() {
-<span class="fc" id="L407">        int result = _valueType.hashCode();</span>
-<span class="fc" id="L408">        result = 31 * result + _entries.keyType().hashCode();</span>
-<span class="fc" id="L409">        result = 31 * result + _entries.size();</span>
-<span class="fc" id="L410">        result = 31 * result + toMap().hashCode();</span>
-<span class="fc" id="L411">        return result;</span>
+<span class="fc" id="L461">        int result = _valueType.hashCode();</span>
+<span class="fc" id="L462">        result = 31 * result + _entries.keyType().hashCode();</span>
+<span class="fc" id="L463">        result = 31 * result + _entries.size();</span>
+<span class="fc" id="L464">        result = 31 * result + toMap().hashCode();</span>
+<span class="fc" id="L465">        return result;</span>
     }
 
 }

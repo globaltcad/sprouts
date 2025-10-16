@@ -4,7 +4,7 @@
   "narrative":"ValueSet is a fundamental building block in sprouts' data-oriented programming model.\n    It represents an immutable collection of unique elements, providing an API focused on\n    deriving new sets from existing ones rather than mutating state. Unlike traditional\n    Java sets, all operations return new `ValueSet` instances, making it ideal for\n    functional-style programming and safe concurrent usage.",
   "subjects":["sprouts.ValueSet"],
   "statistics":{
-    "runs":"53",
+    "runs":"65",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -1056,6 +1056,426 @@
         {"kind":"then","text":"","code":["tupleResult.toSet() == setResult"]},
 
         {"kind":"where","text":"","code":{"type":["Integer","Byte","Short","Long","Float","Double","Character","String"],"items":["[0,5,-4,-3,5,1,0,4,8,41,2,6,-3,9,4,5] as int[]","[2,8,1,7,5,1,3,7,8,41,2,7,3,0,-4,8,1] as byte[]","[4,5,7,93,5,1,2,77,8,41,2,6,63,9,4,7] as short[]","[6,6,-8,23,5,1,-60,6,-3,41,6,6,3,9,4] as long[]","[0.3f,5f,9.3f,6f,5.2f,1.67f,7f,3f,0f] as float[]","[6.4,-5.2,1d,0d,5.2d,1.11d,5d,83d,3d] as double[]","[0,4,4,7,5,1,8,6,3,41,2,6,3,9,4,84,5] as char[]","[\"watch\",\"dominion\",\"movie\",\"now\",\"!\"] as String[]"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of a ValueSet work reliably for a large number of entries. [0]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between sets,\n            we can avoid a lot of work due to two sets sharing most of their branches.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher1 = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","var keyHasher2 = { (it.hashCode() + (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort1 = (a, b) -> (keyHasher1(a)<=>keyHasher1(b))","Comparator<Object> randomSort2 = (a, b) -> (keyHasher2(a)<=>keyHasher2(b))","var scrambledElements1 = elements.toSorted(randomSort1)","var scrambledElements2 = elements.toSorted(randomSort2)"]},
+
+        {"kind":"when","text":"We create two different `ValueSet` instances from the two scrambled list...","code":["var set1 = ValueSet.of(type, scrambledElements1)","var set2 = ValueSet.of(type, scrambledElements2)"]},
+
+        {"kind":"then","text":"The two sets are equal!","code":["set1.equals(set2)"]},
+
+        {"kind":"and","text":"They also have the same hash codes:","code":["set1.hashCode() == set2.hashCode()"]},
+
+        {"kind":"when","text":"We create modified version of the two sets...","code":["var randomElement = elements[Math.abs(elements.hashCode()*1997)%elements.size()]","var modifiedSet1 = set1.remove(randomElement)","var modifiedSet2 = set2.remove(randomElement)"]},
+
+        {"kind":"then","text":"We have the expected relationships between all of the objects:","code":["!modifiedSet1.equals(set1)","!modifiedSet2.equals(set2)","!modifiedSet1.equals(set2)","!modifiedSet2.equals(set1)","modifiedSet1.equals(modifiedSet2)"]},
+
+        {"kind":"when","text":"We put back in the old element to restore the previous states...","code":["var restoredSet1 = modifiedSet1.add(randomElement)","var restoredSet2 = modifiedSet2.add(randomElement)"]},
+
+        {"kind":"then","text":"We have the expected relationships between all of the objects:","code":["!restoredSet1.equals(modifiedSet1)","!restoredSet2.equals(modifiedSet2)","!restoredSet1.equals(modifiedSet2)","!restoredSet2.equals(modifiedSet1)","restoredSet1.equals(restoredSet2)","restoredSet1.equals(set1)","restoredSet2.equals(set2)","restoredSet1.equals(set2)","restoredSet2.equals(set1)"]},
+
+        {"kind":"when","text":"We create smaller version of the two sets by removing something...","code":["var randomElement2 = elements[Math.abs(elements.hashCode()*31)%elements.size()]","var smallerSet1 = set1.remove(randomElement2)","var smallerSet2 = set2.remove(randomElement2)"]},
+
+        {"kind":"then","text":"We have the expected relationships between all of the objects:","code":["!smallerSet1.equals(set1)","!smallerSet2.equals(set2)","!smallerSet1.equals(set2)","!smallerSet2.equals(set1)","smallerSet1.equals(smallerSet2)"]},
+
+        {"kind":"and","text":"","code":["smallerSet1.hashCode() != set1.hashCode()","smallerSet2.hashCode() != set2.hashCode()","smallerSet1.hashCode() != set2.hashCode()","smallerSet2.hashCode() != set1.hashCode()","smallerSet1.hashCode() == smallerSet2.hashCode()"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"type":["Byte","Short","Integer","String","Byte","Short","Integer","String","Byte","Short","Integer","String"],"elements":["(0..100).collect(it -> it as Byte).toList()","(0..100).collect(it -> it as Short).toList()","(0..100).collect(it -> it).toList()","(0..100).collect(it -> String.valueOf(it)).toList()","(0..100).collect(it -> it as Byte).toList()","(0..100).collect(it -> it as Short).toList()","(0..100).collect(it -> it).toList()","(0..100).collect(it -> String.valueOf(it)).toList()","(0..100).collect(it -> it as Byte).toList()","(0..100).collect(it -> it as Short).toList()","(0..100).collect(it -> it).toList()","(0..100).collect(it -> String.valueOf(it)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of a ValueSet work reliably for a large number of entries. [1]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between sets,\n            we can avoid a lot of work due to two sets sharing most of their branches.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher1 = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","var keyHasher2 = { (it.hashCode() + (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort1 = (a, b) -> (keyHasher1(a)<=>keyHasher1(b))","Comparator<Object> randomSort2 = (a, b) -> (keyHasher2(a)<=>keyHasher2(b))","var scrambledElements1 = elements.toSorted(randomSort1)","var scrambledElements2 = elements.toSorted(randomSort2)"]},
+
+        {"kind":"when","text":"We create two different `ValueSet` instances from the two scrambled list...","code":["var set1 = ValueSet.of(type, scrambledElements1)","var set2 = ValueSet.of(type, scrambledElements2)"]},
+
+        {"kind":"then","text":"The two sets are equal!","code":["set1.equals(set2)"]},
+
+        {"kind":"and","text":"They also have the same hash codes:","code":["set1.hashCode() == set2.hashCode()"]},
+
+        {"kind":"when","text":"We create modified version of the two sets...","code":["var randomElement = elements[Math.abs(elements.hashCode()*1997)%elements.size()]","var modifiedSet1 = set1.remove(randomElement)","var modifiedSet2 = set2.remove(randomElement)"]},
+
+        {"kind":"then","text":"We have the expected relationships between all of the objects:","code":["!modifiedSet1.equals(set1)","!modifiedSet2.equals(set2)","!modifiedSet1.equals(set2)","!modifiedSet2.equals(set1)","modifiedSet1.equals(modifiedSet2)"]},
+
+        {"kind":"when","text":"We put back in the old element to restore the previous states...","code":["var restoredSet1 = modifiedSet1.add(randomElement)","var restoredSet2 = modifiedSet2.add(randomElement)"]},
+
+        {"kind":"then","text":"We have the expected relationships between all of the objects:","code":["!restoredSet1.equals(modifiedSet1)","!restoredSet2.equals(modifiedSet2)","!restoredSet1.equals(modifiedSet2)","!restoredSet2.equals(modifiedSet1)","restoredSet1.equals(restoredSet2)","restoredSet1.equals(set1)","restoredSet2.equals(set2)","restoredSet1.equals(set2)","restoredSet2.equals(set1)"]},
+
+        {"kind":"when","text":"We create smaller version of the two sets by removing something...","code":["var randomElement2 = elements[Math.abs(elements.hashCode()*31)%elements.size()]","var smallerSet1 = set1.remove(randomElement2)","var smallerSet2 = set2.remove(randomElement2)"]},
+
+        {"kind":"then","text":"We have the expected relationships between all of the objects:","code":["!smallerSet1.equals(set1)","!smallerSet2.equals(set2)","!smallerSet1.equals(set2)","!smallerSet2.equals(set1)","smallerSet1.equals(smallerSet2)"]},
+
+        {"kind":"and","text":"","code":["smallerSet1.hashCode() != set1.hashCode()","smallerSet2.hashCode() != set2.hashCode()","smallerSet1.hashCode() != set2.hashCode()","smallerSet2.hashCode() != set1.hashCode()","smallerSet1.hashCode() == smallerSet2.hashCode()"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"type":["Byte","Short","Integer","String","Byte","Short","Integer","String","Byte","Short","Integer","String"],"elements":["(0..100).collect(it -> it as Byte).toList()","(0..100).collect(it -> it as Short).toList()","(0..100).collect(it -> it).toList()","(0..100).collect(it -> String.valueOf(it)).toList()","(0..100).collect(it -> it as Byte).toList()","(0..100).collect(it -> it as Short).toList()","(0..100).collect(it -> it).toList()","(0..100).collect(it -> String.valueOf(it)).toList()","(0..100).collect(it -> it as Byte).toList()","(0..100).collect(it -> it as Short).toList()","(0..100).collect(it -> it).toList()","(0..100).collect(it -> String.valueOf(it)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of a ValueSet work reliably for a large number of entries. [2]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between sets,\n            we can avoid a lot of work due to two sets sharing most of their branches.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher1 = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","var keyHasher2 = { (it.hashCode() + (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort1 = (a, b) -> (keyHasher1(a)<=>keyHasher1(b))","Comparator<Object> randomSort2 = (a, b) -> (keyHasher2(a)<=>keyHasher2(b))","var scrambledElements1 = elements.toSorted(randomSort1)","var scrambledElements2 = elements.toSorted(randomSort2)"]},
+
+        {"kind":"when","text":"We create two different `ValueSet` instances from the two scrambled list...","code":["var set1 = ValueSet.of(type, scrambledElements1)","var set2 = ValueSet.of(type, scrambledElements2)"]},
+
+        {"kind":"then","text":"The two sets are equal!","code":["set1.equals(set2)"]},
+
+        {"kind":"and","text":"They also have the same hash codes:","code":["set1.hashCode() == set2.hashCode()"]},
+
+        {"kind":"when","text":"We create modified version of the two sets...","code":["var randomElement = elements[Math.abs(elements.hashCode()*1997)%elements.size()]","var modifiedSet1 = set1.remove(randomElement)","var modifiedSet2 = set2.remove(randomElement)"]},
+
+        {"kind":"then","text":"We have the expected relationships between all of the objects:","code":["!modifiedSet1.equals(set1)","!modifiedSet2.equals(set2)","!modifiedSet1.equals(set2)","!modifiedSet2.equals(set1)","modifiedSet1.equals(modifiedSet2)"]},
+
+        {"kind":"when","text":"We put back in the old element to restore the previous states...","code":["var restoredSet1 = modifiedSet1.add(randomElement)","var restoredSet2 = modifiedSet2.add(randomElement)"]},
+
+        {"kind":"then","text":"We have the expected relationships between all of the objects:","code":["!restoredSet1.equals(modifiedSet1)","!restoredSet2.equals(modifiedSet2)","!restoredSet1.equals(modifiedSet2)","!restoredSet2.equals(modifiedSet1)","restoredSet1.equals(restoredSet2)","restoredSet1.equals(set1)","restoredSet2.equals(set2)","restoredSet1.equals(set2)","restoredSet2.equals(set1)"]},
+
+        {"kind":"when","text":"We create smaller version of the two sets by removing something...","code":["var randomElement2 = elements[Math.abs(elements.hashCode()*31)%elements.size()]","var smallerSet1 = set1.remove(randomElement2)","var smallerSet2 = set2.remove(randomElement2)"]},
+
+        {"kind":"then","text":"We have the expected relationships between all of the objects:","code":["!smallerSet1.equals(set1)","!smallerSet2.equals(set2)","!smallerSet1.equals(set2)","!smallerSet2.equals(set1)","smallerSet1.equals(smallerSet2)"]},
+
+        {"kind":"and","text":"","code":["smallerSet1.hashCode() != set1.hashCode()","smallerSet2.hashCode() != set2.hashCode()","smallerSet1.hashCode() != set2.hashCode()","smallerSet2.hashCode() != set1.hashCode()","smallerSet1.hashCode() == smallerSet2.hashCode()"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"type":["Byte","Short","Integer","String","Byte","Short","Integer","String","Byte","Short","Integer","String"],"elements":["(0..100).collect(it -> it as Byte).toList()","(0..100).collect(it -> it as Short).toList()","(0..100).collect(it -> it).toList()","(0..100).collect(it -> String.valueOf(it)).toList()","(0..100).collect(it -> it as Byte).toList()","(0..100).collect(it -> it as Short).toList()","(0..100).collect(it -> it).toList()","(0..100).collect(it -> String.valueOf(it)).toList()","(0..100).collect(it -> it as Byte).toList()","(0..100).collect(it -> it as Short).toList()","(0..100).collect(it -> it).toList()","(0..100).collect(it -> String.valueOf(it)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of a ValueSet work reliably for a large number of entries. [3]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between sets,\n            we can avoid a lot of work due to two sets sharing most of their branches.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher1 = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","var keyHasher2 = { (it.hashCode() + (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort1 = (a, b) -> (keyHasher1(a)<=>keyHasher1(b))","Comparator<Object> randomSort2 = (a, b) -> (keyHasher2(a)<=>keyHasher2(b))","var scrambledElements1 = elements.toSorted(randomSort1)","var scrambledElements2 = elements.toSorted(randomSort2)"]},
+
+        {"kind":"when","text":"We create two different `ValueSet` instances from the two scrambled list...","code":["var set1 = ValueSet.of(type, scrambledElements1)","var set2 = ValueSet.of(type, scrambledElements2)"]},
+
+        {"kind":"then","text":"The two sets are equal!","code":["set1.equals(set2)"]},
+
+        {"kind":"and","text":"They also have the same hash codes:","code":["set1.hashCode() == set2.hashCode()"]},
+
+        {"kind":"when","text":"We create modified version of the two sets...","code":["var randomElement = elements[Math.abs(elements.hashCode()*1997)%elements.size()]","var modifiedSet1 = set1.remove(randomElement)","var modifiedSet2 = set2.remove(randomElement)"]},
+
+        {"kind":"then","text":"We have the expected relationships between all of the objects:","code":["!modifiedSet1.equals(set1)","!modifiedSet2.equals(set2)","!modifiedSet1.equals(set2)","!modifiedSet2.equals(set1)","modifiedSet1.equals(modifiedSet2)"]},
+
+        {"kind":"when","text":"We put back in the old element to restore the previous states...","code":["var restoredSet1 = modifiedSet1.add(randomElement)","var restoredSet2 = modifiedSet2.add(randomElement)"]},
+
+        {"kind":"then","text":"We have the expected relationships between all of the objects:","code":["!restoredSet1.equals(modifiedSet1)","!restoredSet2.equals(modifiedSet2)","!restoredSet1.equals(modifiedSet2)","!restoredSet2.equals(modifiedSet1)","restoredSet1.equals(restoredSet2)","restoredSet1.equals(set1)","restoredSet2.equals(set2)","restoredSet1.equals(set2)","restoredSet2.equals(set1)"]},
+
+        {"kind":"when","text":"We create smaller version of the two sets by removing something...","code":["var randomElement2 = elements[Math.abs(elements.hashCode()*31)%elements.size()]","var smallerSet1 = set1.remove(randomElement2)","var smallerSet2 = set2.remove(randomElement2)"]},
+
+        {"kind":"then","text":"We have the expected relationships between all of the objects:","code":["!smallerSet1.equals(set1)","!smallerSet2.equals(set2)","!smallerSet1.equals(set2)","!smallerSet2.equals(set1)","smallerSet1.equals(smallerSet2)"]},
+
+        {"kind":"and","text":"","code":["smallerSet1.hashCode() != set1.hashCode()","smallerSet2.hashCode() != set2.hashCode()","smallerSet1.hashCode() != set2.hashCode()","smallerSet2.hashCode() != set1.hashCode()","smallerSet1.hashCode() == smallerSet2.hashCode()"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"type":["Byte","Short","Integer","String","Byte","Short","Integer","String","Byte","Short","Integer","String"],"elements":["(0..100).collect(it -> it as Byte).toList()","(0..100).collect(it -> it as Short).toList()","(0..100).collect(it -> it).toList()","(0..100).collect(it -> String.valueOf(it)).toList()","(0..100).collect(it -> it as Byte).toList()","(0..100).collect(it -> it as Short).toList()","(0..100).collect(it -> it).toList()","(0..100).collect(it -> String.valueOf(it)).toList()","(0..100).collect(it -> it as Byte).toList()","(0..100).collect(it -> it as Short).toList()","(0..100).collect(it -> it).toList()","(0..100).collect(it -> String.valueOf(it)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of a ValueSet work reliably for a large number of entries. [4]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between sets,\n            we can avoid a lot of work due to two sets sharing most of their branches.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher1 = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","var keyHasher2 = { (it.hashCode() + (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort1 = (a, b) -> (keyHasher1(a)<=>keyHasher1(b))","Comparator<Object> randomSort2 = (a, b) -> (keyHasher2(a)<=>keyHasher2(b))","var scrambledElements1 = elements.toSorted(randomSort1)","var scrambledElements2 = elements.toSorted(randomSort2)"]},
+
+        {"kind":"when","text":"We create two different `ValueSet` instances from the two scrambled list...","code":["var set1 = ValueSet.of(type, scrambledElements1)","var set2 = ValueSet.of(type, scrambledElements2)"]},
+
+        {"kind":"then","text":"The two sets are equal!","code":["set1.equals(set2)"]},
+
+        {"kind":"and","text":"They also have the same hash codes:","code":["set1.hashCode() == set2.hashCode()"]},
+
+        {"kind":"when","text":"We create modified version of the two sets...","code":["var randomElement = elements[Math.abs(elements.hashCode()*1997)%elements.size()]","var modifiedSet1 = set1.remove(randomElement)","var modifiedSet2 = set2.remove(randomElement)"]},
+
+        {"kind":"then","text":"We have the expected relationships between all of the objects:","code":["!modifiedSet1.equals(set1)","!modifiedSet2.equals(set2)","!modifiedSet1.equals(set2)","!modifiedSet2.equals(set1)","modifiedSet1.equals(modifiedSet2)"]},
+
+        {"kind":"when","text":"We put back in the old element to restore the previous states...","code":["var restoredSet1 = modifiedSet1.add(randomElement)","var restoredSet2 = modifiedSet2.add(randomElement)"]},
+
+        {"kind":"then","text":"We have the expected relationships between all of the objects:","code":["!restoredSet1.equals(modifiedSet1)","!restoredSet2.equals(modifiedSet2)","!restoredSet1.equals(modifiedSet2)","!restoredSet2.equals(modifiedSet1)","restoredSet1.equals(restoredSet2)","restoredSet1.equals(set1)","restoredSet2.equals(set2)","restoredSet1.equals(set2)","restoredSet2.equals(set1)"]},
+
+        {"kind":"when","text":"We create smaller version of the two sets by removing something...","code":["var randomElement2 = elements[Math.abs(elements.hashCode()*31)%elements.size()]","var smallerSet1 = set1.remove(randomElement2)","var smallerSet2 = set2.remove(randomElement2)"]},
+
+        {"kind":"then","text":"We have the expected relationships between all of the objects:","code":["!smallerSet1.equals(set1)","!smallerSet2.equals(set2)","!smallerSet1.equals(set2)","!smallerSet2.equals(set1)","smallerSet1.equals(smallerSet2)"]},
+
+        {"kind":"and","text":"","code":["smallerSet1.hashCode() != set1.hashCode()","smallerSet2.hashCode() != set2.hashCode()","smallerSet1.hashCode() != set2.hashCode()","smallerSet2.hashCode() != set1.hashCode()","smallerSet1.hashCode() == smallerSet2.hashCode()"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"type":["Byte","Short","Integer","String","Byte","Short","Integer","String","Byte","Short","Integer","String"],"elements":["(0..100).collect(it -> it as Byte).toList()","(0..100).collect(it -> it as Short).toList()","(0..100).collect(it -> it).toList()","(0..100).collect(it -> String.valueOf(it)).toList()","(0..100).collect(it -> it as Byte).toList()","(0..100).collect(it -> it as Short).toList()","(0..100).collect(it -> it).toList()","(0..100).collect(it -> String.valueOf(it)).toList()","(0..100).collect(it -> it as Byte).toList()","(0..100).collect(it -> it as Short).toList()","(0..100).collect(it -> it).toList()","(0..100).collect(it -> String.valueOf(it)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of a ValueSet work reliably for a large number of entries. [5]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between sets,\n            we can avoid a lot of work due to two sets sharing most of their branches.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher1 = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","var keyHasher2 = { (it.hashCode() + (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort1 = (a, b) -> (keyHasher1(a)<=>keyHasher1(b))","Comparator<Object> randomSort2 = (a, b) -> (keyHasher2(a)<=>keyHasher2(b))","var scrambledElements1 = elements.toSorted(randomSort1)","var scrambledElements2 = elements.toSorted(randomSort2)"]},
+
+        {"kind":"when","text":"We create two different `ValueSet` instances from the two scrambled list...","code":["var set1 = ValueSet.of(type, scrambledElements1)","var set2 = ValueSet.of(type, scrambledElements2)"]},
+
+        {"kind":"then","text":"The two sets are equal!","code":["set1.equals(set2)"]},
+
+        {"kind":"and","text":"They also have the same hash codes:","code":["set1.hashCode() == set2.hashCode()"]},
+
+        {"kind":"when","text":"We create modified version of the two sets...","code":["var randomElement = elements[Math.abs(elements.hashCode()*1997)%elements.size()]","var modifiedSet1 = set1.remove(randomElement)","var modifiedSet2 = set2.remove(randomElement)"]},
+
+        {"kind":"then","text":"We have the expected relationships between all of the objects:","code":["!modifiedSet1.equals(set1)","!modifiedSet2.equals(set2)","!modifiedSet1.equals(set2)","!modifiedSet2.equals(set1)","modifiedSet1.equals(modifiedSet2)"]},
+
+        {"kind":"when","text":"We put back in the old element to restore the previous states...","code":["var restoredSet1 = modifiedSet1.add(randomElement)","var restoredSet2 = modifiedSet2.add(randomElement)"]},
+
+        {"kind":"then","text":"We have the expected relationships between all of the objects:","code":["!restoredSet1.equals(modifiedSet1)","!restoredSet2.equals(modifiedSet2)","!restoredSet1.equals(modifiedSet2)","!restoredSet2.equals(modifiedSet1)","restoredSet1.equals(restoredSet2)","restoredSet1.equals(set1)","restoredSet2.equals(set2)","restoredSet1.equals(set2)","restoredSet2.equals(set1)"]},
+
+        {"kind":"when","text":"We create smaller version of the two sets by removing something...","code":["var randomElement2 = elements[Math.abs(elements.hashCode()*31)%elements.size()]","var smallerSet1 = set1.remove(randomElement2)","var smallerSet2 = set2.remove(randomElement2)"]},
+
+        {"kind":"then","text":"We have the expected relationships between all of the objects:","code":["!smallerSet1.equals(set1)","!smallerSet2.equals(set2)","!smallerSet1.equals(set2)","!smallerSet2.equals(set1)","smallerSet1.equals(smallerSet2)"]},
+
+        {"kind":"and","text":"","code":["smallerSet1.hashCode() != set1.hashCode()","smallerSet2.hashCode() != set2.hashCode()","smallerSet1.hashCode() != set2.hashCode()","smallerSet2.hashCode() != set1.hashCode()","smallerSet1.hashCode() == smallerSet2.hashCode()"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"type":["Byte","Short","Integer","String","Byte","Short","Integer","String","Byte","Short","Integer","String"],"elements":["(0..100).collect(it -> it as Byte).toList()","(0..100).collect(it -> it as Short).toList()","(0..100).collect(it -> it).toList()","(0..100).collect(it -> String.valueOf(it)).toList()","(0..100).collect(it -> it as Byte).toList()","(0..100).collect(it -> it as Short).toList()","(0..100).collect(it -> it).toList()","(0..100).collect(it -> String.valueOf(it)).toList()","(0..100).collect(it -> it as Byte).toList()","(0..100).collect(it -> it as Short).toList()","(0..100).collect(it -> it).toList()","(0..100).collect(it -> String.valueOf(it)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of a ValueSet work reliably for a large number of entries. [6]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between sets,\n            we can avoid a lot of work due to two sets sharing most of their branches.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher1 = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","var keyHasher2 = { (it.hashCode() + (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort1 = (a, b) -> (keyHasher1(a)<=>keyHasher1(b))","Comparator<Object> randomSort2 = (a, b) -> (keyHasher2(a)<=>keyHasher2(b))","var scrambledElements1 = elements.toSorted(randomSort1)","var scrambledElements2 = elements.toSorted(randomSort2)"]},
+
+        {"kind":"when","text":"We create two different `ValueSet` instances from the two scrambled list...","code":["var set1 = ValueSet.of(type, scrambledElements1)","var set2 = ValueSet.of(type, scrambledElements2)"]},
+
+        {"kind":"then","text":"The two sets are equal!","code":["set1.equals(set2)"]},
+
+        {"kind":"and","text":"They also have the same hash codes:","code":["set1.hashCode() == set2.hashCode()"]},
+
+        {"kind":"when","text":"We create modified version of the two sets...","code":["var randomElement = elements[Math.abs(elements.hashCode()*1997)%elements.size()]","var modifiedSet1 = set1.remove(randomElement)","var modifiedSet2 = set2.remove(randomElement)"]},
+
+        {"kind":"then","text":"We have the expected relationships between all of the objects:","code":["!modifiedSet1.equals(set1)","!modifiedSet2.equals(set2)","!modifiedSet1.equals(set2)","!modifiedSet2.equals(set1)","modifiedSet1.equals(modifiedSet2)"]},
+
+        {"kind":"when","text":"We put back in the old element to restore the previous states...","code":["var restoredSet1 = modifiedSet1.add(randomElement)","var restoredSet2 = modifiedSet2.add(randomElement)"]},
+
+        {"kind":"then","text":"We have the expected relationships between all of the objects:","code":["!restoredSet1.equals(modifiedSet1)","!restoredSet2.equals(modifiedSet2)","!restoredSet1.equals(modifiedSet2)","!restoredSet2.equals(modifiedSet1)","restoredSet1.equals(restoredSet2)","restoredSet1.equals(set1)","restoredSet2.equals(set2)","restoredSet1.equals(set2)","restoredSet2.equals(set1)"]},
+
+        {"kind":"when","text":"We create smaller version of the two sets by removing something...","code":["var randomElement2 = elements[Math.abs(elements.hashCode()*31)%elements.size()]","var smallerSet1 = set1.remove(randomElement2)","var smallerSet2 = set2.remove(randomElement2)"]},
+
+        {"kind":"then","text":"We have the expected relationships between all of the objects:","code":["!smallerSet1.equals(set1)","!smallerSet2.equals(set2)","!smallerSet1.equals(set2)","!smallerSet2.equals(set1)","smallerSet1.equals(smallerSet2)"]},
+
+        {"kind":"and","text":"","code":["smallerSet1.hashCode() != set1.hashCode()","smallerSet2.hashCode() != set2.hashCode()","smallerSet1.hashCode() != set2.hashCode()","smallerSet2.hashCode() != set1.hashCode()","smallerSet1.hashCode() == smallerSet2.hashCode()"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"type":["Byte","Short","Integer","String","Byte","Short","Integer","String","Byte","Short","Integer","String"],"elements":["(0..100).collect(it -> it as Byte).toList()","(0..100).collect(it -> it as Short).toList()","(0..100).collect(it -> it).toList()","(0..100).collect(it -> String.valueOf(it)).toList()","(0..100).collect(it -> it as Byte).toList()","(0..100).collect(it -> it as Short).toList()","(0..100).collect(it -> it).toList()","(0..100).collect(it -> String.valueOf(it)).toList()","(0..100).collect(it -> it as Byte).toList()","(0..100).collect(it -> it as Short).toList()","(0..100).collect(it -> it).toList()","(0..100).collect(it -> String.valueOf(it)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of a ValueSet work reliably for a large number of entries. [7]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between sets,\n            we can avoid a lot of work due to two sets sharing most of their branches.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher1 = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","var keyHasher2 = { (it.hashCode() + (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort1 = (a, b) -> (keyHasher1(a)<=>keyHasher1(b))","Comparator<Object> randomSort2 = (a, b) -> (keyHasher2(a)<=>keyHasher2(b))","var scrambledElements1 = elements.toSorted(randomSort1)","var scrambledElements2 = elements.toSorted(randomSort2)"]},
+
+        {"kind":"when","text":"We create two different `ValueSet` instances from the two scrambled list...","code":["var set1 = ValueSet.of(type, scrambledElements1)","var set2 = ValueSet.of(type, scrambledElements2)"]},
+
+        {"kind":"then","text":"The two sets are equal!","code":["set1.equals(set2)"]},
+
+        {"kind":"and","text":"They also have the same hash codes:","code":["set1.hashCode() == set2.hashCode()"]},
+
+        {"kind":"when","text":"We create modified version of the two sets...","code":["var randomElement = elements[Math.abs(elements.hashCode()*1997)%elements.size()]","var modifiedSet1 = set1.remove(randomElement)","var modifiedSet2 = set2.remove(randomElement)"]},
+
+        {"kind":"then","text":"We have the expected relationships between all of the objects:","code":["!modifiedSet1.equals(set1)","!modifiedSet2.equals(set2)","!modifiedSet1.equals(set2)","!modifiedSet2.equals(set1)","modifiedSet1.equals(modifiedSet2)"]},
+
+        {"kind":"when","text":"We put back in the old element to restore the previous states...","code":["var restoredSet1 = modifiedSet1.add(randomElement)","var restoredSet2 = modifiedSet2.add(randomElement)"]},
+
+        {"kind":"then","text":"We have the expected relationships between all of the objects:","code":["!restoredSet1.equals(modifiedSet1)","!restoredSet2.equals(modifiedSet2)","!restoredSet1.equals(modifiedSet2)","!restoredSet2.equals(modifiedSet1)","restoredSet1.equals(restoredSet2)","restoredSet1.equals(set1)","restoredSet2.equals(set2)","restoredSet1.equals(set2)","restoredSet2.equals(set1)"]},
+
+        {"kind":"when","text":"We create smaller version of the two sets by removing something...","code":["var randomElement2 = elements[Math.abs(elements.hashCode()*31)%elements.size()]","var smallerSet1 = set1.remove(randomElement2)","var smallerSet2 = set2.remove(randomElement2)"]},
+
+        {"kind":"then","text":"We have the expected relationships between all of the objects:","code":["!smallerSet1.equals(set1)","!smallerSet2.equals(set2)","!smallerSet1.equals(set2)","!smallerSet2.equals(set1)","smallerSet1.equals(smallerSet2)"]},
+
+        {"kind":"and","text":"","code":["smallerSet1.hashCode() != set1.hashCode()","smallerSet2.hashCode() != set2.hashCode()","smallerSet1.hashCode() != set2.hashCode()","smallerSet2.hashCode() != set1.hashCode()","smallerSet1.hashCode() == smallerSet2.hashCode()"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"type":["Byte","Short","Integer","String","Byte","Short","Integer","String","Byte","Short","Integer","String"],"elements":["(0..100).collect(it -> it as Byte).toList()","(0..100).collect(it -> it as Short).toList()","(0..100).collect(it -> it).toList()","(0..100).collect(it -> String.valueOf(it)).toList()","(0..100).collect(it -> it as Byte).toList()","(0..100).collect(it -> it as Short).toList()","(0..100).collect(it -> it).toList()","(0..100).collect(it -> String.valueOf(it)).toList()","(0..100).collect(it -> it as Byte).toList()","(0..100).collect(it -> it as Short).toList()","(0..100).collect(it -> it).toList()","(0..100).collect(it -> String.valueOf(it)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of a ValueSet work reliably for a large number of entries. [8]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between sets,\n            we can avoid a lot of work due to two sets sharing most of their branches.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher1 = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","var keyHasher2 = { (it.hashCode() + (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort1 = (a, b) -> (keyHasher1(a)<=>keyHasher1(b))","Comparator<Object> randomSort2 = (a, b) -> (keyHasher2(a)<=>keyHasher2(b))","var scrambledElements1 = elements.toSorted(randomSort1)","var scrambledElements2 = elements.toSorted(randomSort2)"]},
+
+        {"kind":"when","text":"We create two different `ValueSet` instances from the two scrambled list...","code":["var set1 = ValueSet.of(type, scrambledElements1)","var set2 = ValueSet.of(type, scrambledElements2)"]},
+
+        {"kind":"then","text":"The two sets are equal!","code":["set1.equals(set2)"]},
+
+        {"kind":"and","text":"They also have the same hash codes:","code":["set1.hashCode() == set2.hashCode()"]},
+
+        {"kind":"when","text":"We create modified version of the two sets...","code":["var randomElement = elements[Math.abs(elements.hashCode()*1997)%elements.size()]","var modifiedSet1 = set1.remove(randomElement)","var modifiedSet2 = set2.remove(randomElement)"]},
+
+        {"kind":"then","text":"We have the expected relationships between all of the objects:","code":["!modifiedSet1.equals(set1)","!modifiedSet2.equals(set2)","!modifiedSet1.equals(set2)","!modifiedSet2.equals(set1)","modifiedSet1.equals(modifiedSet2)"]},
+
+        {"kind":"when","text":"We put back in the old element to restore the previous states...","code":["var restoredSet1 = modifiedSet1.add(randomElement)","var restoredSet2 = modifiedSet2.add(randomElement)"]},
+
+        {"kind":"then","text":"We have the expected relationships between all of the objects:","code":["!restoredSet1.equals(modifiedSet1)","!restoredSet2.equals(modifiedSet2)","!restoredSet1.equals(modifiedSet2)","!restoredSet2.equals(modifiedSet1)","restoredSet1.equals(restoredSet2)","restoredSet1.equals(set1)","restoredSet2.equals(set2)","restoredSet1.equals(set2)","restoredSet2.equals(set1)"]},
+
+        {"kind":"when","text":"We create smaller version of the two sets by removing something...","code":["var randomElement2 = elements[Math.abs(elements.hashCode()*31)%elements.size()]","var smallerSet1 = set1.remove(randomElement2)","var smallerSet2 = set2.remove(randomElement2)"]},
+
+        {"kind":"then","text":"We have the expected relationships between all of the objects:","code":["!smallerSet1.equals(set1)","!smallerSet2.equals(set2)","!smallerSet1.equals(set2)","!smallerSet2.equals(set1)","smallerSet1.equals(smallerSet2)"]},
+
+        {"kind":"and","text":"","code":["smallerSet1.hashCode() != set1.hashCode()","smallerSet2.hashCode() != set2.hashCode()","smallerSet1.hashCode() != set2.hashCode()","smallerSet2.hashCode() != set1.hashCode()","smallerSet1.hashCode() == smallerSet2.hashCode()"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"type":["Byte","Short","Integer","String","Byte","Short","Integer","String","Byte","Short","Integer","String"],"elements":["(0..100).collect(it -> it as Byte).toList()","(0..100).collect(it -> it as Short).toList()","(0..100).collect(it -> it).toList()","(0..100).collect(it -> String.valueOf(it)).toList()","(0..100).collect(it -> it as Byte).toList()","(0..100).collect(it -> it as Short).toList()","(0..100).collect(it -> it).toList()","(0..100).collect(it -> String.valueOf(it)).toList()","(0..100).collect(it -> it as Byte).toList()","(0..100).collect(it -> it as Short).toList()","(0..100).collect(it -> it).toList()","(0..100).collect(it -> String.valueOf(it)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of a ValueSet work reliably for a large number of entries. [9]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between sets,\n            we can avoid a lot of work due to two sets sharing most of their branches.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher1 = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","var keyHasher2 = { (it.hashCode() + (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort1 = (a, b) -> (keyHasher1(a)<=>keyHasher1(b))","Comparator<Object> randomSort2 = (a, b) -> (keyHasher2(a)<=>keyHasher2(b))","var scrambledElements1 = elements.toSorted(randomSort1)","var scrambledElements2 = elements.toSorted(randomSort2)"]},
+
+        {"kind":"when","text":"We create two different `ValueSet` instances from the two scrambled list...","code":["var set1 = ValueSet.of(type, scrambledElements1)","var set2 = ValueSet.of(type, scrambledElements2)"]},
+
+        {"kind":"then","text":"The two sets are equal!","code":["set1.equals(set2)"]},
+
+        {"kind":"and","text":"They also have the same hash codes:","code":["set1.hashCode() == set2.hashCode()"]},
+
+        {"kind":"when","text":"We create modified version of the two sets...","code":["var randomElement = elements[Math.abs(elements.hashCode()*1997)%elements.size()]","var modifiedSet1 = set1.remove(randomElement)","var modifiedSet2 = set2.remove(randomElement)"]},
+
+        {"kind":"then","text":"We have the expected relationships between all of the objects:","code":["!modifiedSet1.equals(set1)","!modifiedSet2.equals(set2)","!modifiedSet1.equals(set2)","!modifiedSet2.equals(set1)","modifiedSet1.equals(modifiedSet2)"]},
+
+        {"kind":"when","text":"We put back in the old element to restore the previous states...","code":["var restoredSet1 = modifiedSet1.add(randomElement)","var restoredSet2 = modifiedSet2.add(randomElement)"]},
+
+        {"kind":"then","text":"We have the expected relationships between all of the objects:","code":["!restoredSet1.equals(modifiedSet1)","!restoredSet2.equals(modifiedSet2)","!restoredSet1.equals(modifiedSet2)","!restoredSet2.equals(modifiedSet1)","restoredSet1.equals(restoredSet2)","restoredSet1.equals(set1)","restoredSet2.equals(set2)","restoredSet1.equals(set2)","restoredSet2.equals(set1)"]},
+
+        {"kind":"when","text":"We create smaller version of the two sets by removing something...","code":["var randomElement2 = elements[Math.abs(elements.hashCode()*31)%elements.size()]","var smallerSet1 = set1.remove(randomElement2)","var smallerSet2 = set2.remove(randomElement2)"]},
+
+        {"kind":"then","text":"We have the expected relationships between all of the objects:","code":["!smallerSet1.equals(set1)","!smallerSet2.equals(set2)","!smallerSet1.equals(set2)","!smallerSet2.equals(set1)","smallerSet1.equals(smallerSet2)"]},
+
+        {"kind":"and","text":"","code":["smallerSet1.hashCode() != set1.hashCode()","smallerSet2.hashCode() != set2.hashCode()","smallerSet1.hashCode() != set2.hashCode()","smallerSet2.hashCode() != set1.hashCode()","smallerSet1.hashCode() == smallerSet2.hashCode()"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"type":["Byte","Short","Integer","String","Byte","Short","Integer","String","Byte","Short","Integer","String"],"elements":["(0..100).collect(it -> it as Byte).toList()","(0..100).collect(it -> it as Short).toList()","(0..100).collect(it -> it).toList()","(0..100).collect(it -> String.valueOf(it)).toList()","(0..100).collect(it -> it as Byte).toList()","(0..100).collect(it -> it as Short).toList()","(0..100).collect(it -> it).toList()","(0..100).collect(it -> String.valueOf(it)).toList()","(0..100).collect(it -> it as Byte).toList()","(0..100).collect(it -> it as Short).toList()","(0..100).collect(it -> it).toList()","(0..100).collect(it -> String.valueOf(it)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of a ValueSet work reliably for a large number of entries. [10]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between sets,\n            we can avoid a lot of work due to two sets sharing most of their branches.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher1 = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","var keyHasher2 = { (it.hashCode() + (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort1 = (a, b) -> (keyHasher1(a)<=>keyHasher1(b))","Comparator<Object> randomSort2 = (a, b) -> (keyHasher2(a)<=>keyHasher2(b))","var scrambledElements1 = elements.toSorted(randomSort1)","var scrambledElements2 = elements.toSorted(randomSort2)"]},
+
+        {"kind":"when","text":"We create two different `ValueSet` instances from the two scrambled list...","code":["var set1 = ValueSet.of(type, scrambledElements1)","var set2 = ValueSet.of(type, scrambledElements2)"]},
+
+        {"kind":"then","text":"The two sets are equal!","code":["set1.equals(set2)"]},
+
+        {"kind":"and","text":"They also have the same hash codes:","code":["set1.hashCode() == set2.hashCode()"]},
+
+        {"kind":"when","text":"We create modified version of the two sets...","code":["var randomElement = elements[Math.abs(elements.hashCode()*1997)%elements.size()]","var modifiedSet1 = set1.remove(randomElement)","var modifiedSet2 = set2.remove(randomElement)"]},
+
+        {"kind":"then","text":"We have the expected relationships between all of the objects:","code":["!modifiedSet1.equals(set1)","!modifiedSet2.equals(set2)","!modifiedSet1.equals(set2)","!modifiedSet2.equals(set1)","modifiedSet1.equals(modifiedSet2)"]},
+
+        {"kind":"when","text":"We put back in the old element to restore the previous states...","code":["var restoredSet1 = modifiedSet1.add(randomElement)","var restoredSet2 = modifiedSet2.add(randomElement)"]},
+
+        {"kind":"then","text":"We have the expected relationships between all of the objects:","code":["!restoredSet1.equals(modifiedSet1)","!restoredSet2.equals(modifiedSet2)","!restoredSet1.equals(modifiedSet2)","!restoredSet2.equals(modifiedSet1)","restoredSet1.equals(restoredSet2)","restoredSet1.equals(set1)","restoredSet2.equals(set2)","restoredSet1.equals(set2)","restoredSet2.equals(set1)"]},
+
+        {"kind":"when","text":"We create smaller version of the two sets by removing something...","code":["var randomElement2 = elements[Math.abs(elements.hashCode()*31)%elements.size()]","var smallerSet1 = set1.remove(randomElement2)","var smallerSet2 = set2.remove(randomElement2)"]},
+
+        {"kind":"then","text":"We have the expected relationships between all of the objects:","code":["!smallerSet1.equals(set1)","!smallerSet2.equals(set2)","!smallerSet1.equals(set2)","!smallerSet2.equals(set1)","smallerSet1.equals(smallerSet2)"]},
+
+        {"kind":"and","text":"","code":["smallerSet1.hashCode() != set1.hashCode()","smallerSet2.hashCode() != set2.hashCode()","smallerSet1.hashCode() != set2.hashCode()","smallerSet2.hashCode() != set1.hashCode()","smallerSet1.hashCode() == smallerSet2.hashCode()"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"type":["Byte","Short","Integer","String","Byte","Short","Integer","String","Byte","Short","Integer","String"],"elements":["(0..100).collect(it -> it as Byte).toList()","(0..100).collect(it -> it as Short).toList()","(0..100).collect(it -> it).toList()","(0..100).collect(it -> String.valueOf(it)).toList()","(0..100).collect(it -> it as Byte).toList()","(0..100).collect(it -> it as Short).toList()","(0..100).collect(it -> it).toList()","(0..100).collect(it -> String.valueOf(it)).toList()","(0..100).collect(it -> it as Byte).toList()","(0..100).collect(it -> it as Short).toList()","(0..100).collect(it -> it).toList()","(0..100).collect(it -> String.valueOf(it)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of a ValueSet work reliably for a large number of entries. [11]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between sets,\n            we can avoid a lot of work due to two sets sharing most of their branches.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher1 = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","var keyHasher2 = { (it.hashCode() + (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort1 = (a, b) -> (keyHasher1(a)<=>keyHasher1(b))","Comparator<Object> randomSort2 = (a, b) -> (keyHasher2(a)<=>keyHasher2(b))","var scrambledElements1 = elements.toSorted(randomSort1)","var scrambledElements2 = elements.toSorted(randomSort2)"]},
+
+        {"kind":"when","text":"We create two different `ValueSet` instances from the two scrambled list...","code":["var set1 = ValueSet.of(type, scrambledElements1)","var set2 = ValueSet.of(type, scrambledElements2)"]},
+
+        {"kind":"then","text":"The two sets are equal!","code":["set1.equals(set2)"]},
+
+        {"kind":"and","text":"They also have the same hash codes:","code":["set1.hashCode() == set2.hashCode()"]},
+
+        {"kind":"when","text":"We create modified version of the two sets...","code":["var randomElement = elements[Math.abs(elements.hashCode()*1997)%elements.size()]","var modifiedSet1 = set1.remove(randomElement)","var modifiedSet2 = set2.remove(randomElement)"]},
+
+        {"kind":"then","text":"We have the expected relationships between all of the objects:","code":["!modifiedSet1.equals(set1)","!modifiedSet2.equals(set2)","!modifiedSet1.equals(set2)","!modifiedSet2.equals(set1)","modifiedSet1.equals(modifiedSet2)"]},
+
+        {"kind":"when","text":"We put back in the old element to restore the previous states...","code":["var restoredSet1 = modifiedSet1.add(randomElement)","var restoredSet2 = modifiedSet2.add(randomElement)"]},
+
+        {"kind":"then","text":"We have the expected relationships between all of the objects:","code":["!restoredSet1.equals(modifiedSet1)","!restoredSet2.equals(modifiedSet2)","!restoredSet1.equals(modifiedSet2)","!restoredSet2.equals(modifiedSet1)","restoredSet1.equals(restoredSet2)","restoredSet1.equals(set1)","restoredSet2.equals(set2)","restoredSet1.equals(set2)","restoredSet2.equals(set1)"]},
+
+        {"kind":"when","text":"We create smaller version of the two sets by removing something...","code":["var randomElement2 = elements[Math.abs(elements.hashCode()*31)%elements.size()]","var smallerSet1 = set1.remove(randomElement2)","var smallerSet2 = set2.remove(randomElement2)"]},
+
+        {"kind":"then","text":"We have the expected relationships between all of the objects:","code":["!smallerSet1.equals(set1)","!smallerSet2.equals(set2)","!smallerSet1.equals(set2)","!smallerSet2.equals(set1)","smallerSet1.equals(smallerSet2)"]},
+
+        {"kind":"and","text":"","code":["smallerSet1.hashCode() != set1.hashCode()","smallerSet2.hashCode() != set2.hashCode()","smallerSet1.hashCode() != set2.hashCode()","smallerSet2.hashCode() != set1.hashCode()","smallerSet1.hashCode() == smallerSet2.hashCode()"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"type":["Byte","Short","Integer","String","Byte","Short","Integer","String","Byte","Short","Integer","String"],"elements":["(0..100).collect(it -> it as Byte).toList()","(0..100).collect(it -> it as Short).toList()","(0..100).collect(it -> it).toList()","(0..100).collect(it -> String.valueOf(it)).toList()","(0..100).collect(it -> it as Byte).toList()","(0..100).collect(it -> it as Short).toList()","(0..100).collect(it -> it).toList()","(0..100).collect(it -> String.valueOf(it)).toList()","(0..100).collect(it -> it as Byte).toList()","(0..100).collect(it -> it as Short).toList()","(0..100).collect(it -> it).toList()","(0..100).collect(it -> String.valueOf(it)).toList()"]}}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }
