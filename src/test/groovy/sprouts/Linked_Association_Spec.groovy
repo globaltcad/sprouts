@@ -1390,4 +1390,93 @@ class Linked_Association_Spec extends Specification
             ]
     }
 
+    def 'The `equals` and `hashCode` implementations of an Association works reliably for a large number of entries.'(
+        Class<Object> keyType, Class<Object> valueType, List<Pair<Object, Object>> entries
+    ) {
+        reportInfo """
+            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.
+            This may look like an exaggerated amount of test data and equality checks, but you
+            have to know that under the hood specifically the `equals` implementations are
+            highly optimized to specific cases which need to be covered.
+            
+            More specifically, if there are only small differences between associations,
+            we can avoid a lot of work due to two associations sharing most of their branches.
+        """
+        given : 'We create randomly sorted variants of the test data:'
+            var keyHasher1 = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }
+            var keyHasher2 = { (it.hashCode() + (it.hashCode() ** 2)) as int }
+            Comparator<Object> randomSort1 = (a, b) -> (keyHasher1(a)<=>keyHasher1(b))
+            Comparator<Object> randomSort2 = (a, b) -> (keyHasher2(a)<=>keyHasher2(b))
+            var scrambledEntries1 = entries.toSorted(randomSort1)
+            var scrambledEntries2 = entries.toSorted(randomSort2)
+
+        when : 'We create two different `Association` instances from the two scrambled list...'
+            var association1 = Association.betweenLinked(keyType, valueType).putAll(scrambledEntries1)
+            var association2 = Association.betweenLinked(keyType, valueType).putAll(scrambledEntries2)
+        then : 'The two associations are equal!'
+            association1.equals(association2)
+        and : 'They also have the same hash codes:'
+            association1.hashCode() == association2.hashCode()
+
+        when : 'We create modified version of the two associations...'
+            var randomEntry = entries[Math.abs(entries.hashCode()*1997)%entries.size()]
+            var randomKey1 = randomEntry.first()
+            var randomValue = entries.find({it.first() != randomKey1 && it.second() != association1.get(randomKey1).get()}).second()
+            var modifiedAssociation1 = association1.put(randomKey1, randomValue)
+            var modifiedAssociation2 = association2.put(randomKey1, randomValue)
+        then : 'We have the expected relationships between all of the objects:'
+            !modifiedAssociation1.equals(association1)
+            !modifiedAssociation2.equals(association2)
+            !modifiedAssociation1.equals(association2)
+            !modifiedAssociation2.equals(association1)
+            modifiedAssociation1.equals(modifiedAssociation2)
+
+        when : 'We put back in the old value to restore the previous states...'
+            var restoredAssociation1 = modifiedAssociation1.put(randomKey1, randomEntry.second())
+            var restoredAssociation2 = modifiedAssociation2.put(randomKey1, randomEntry.second())
+        then : 'We have the expected relationships between all of the objects:'
+            !restoredAssociation1.equals(modifiedAssociation1)
+            !restoredAssociation2.equals(modifiedAssociation2)
+            !restoredAssociation1.equals(modifiedAssociation2)
+            !restoredAssociation2.equals(modifiedAssociation1)
+            restoredAssociation1.equals(restoredAssociation2)
+            restoredAssociation1.equals(association1)
+            restoredAssociation2.equals(association2)
+            restoredAssociation1.equals(association2)
+            restoredAssociation2.equals(association1)
+
+        when : 'We create smaller version of the two associations by removing something...'
+            var randomKey2 = entries[Math.abs(entries.hashCode()*31)%entries.size()].first()
+            var smallerAssociation1 = association1.remove(randomKey2)
+            var smallerAssociation2 = association2.remove(randomKey2)
+        then : 'We have the expected relationships between all of the objects:'
+            !smallerAssociation1.equals(association1)
+            !smallerAssociation2.equals(association2)
+            !smallerAssociation1.equals(association2)
+            !smallerAssociation2.equals(association1)
+            smallerAssociation1.equals(smallerAssociation2)
+        and :
+            smallerAssociation1.hashCode() != association1.hashCode()
+            smallerAssociation2.hashCode() != association2.hashCode()
+            smallerAssociation1.hashCode() != association2.hashCode()
+            smallerAssociation2.hashCode() != association1.hashCode()
+            smallerAssociation1.hashCode() == smallerAssociation2.hashCode()
+
+        where : 'We use the following entry data source:'
+            keyType  |  valueType  |   entries
+            Byte     | Boolean     |  (0..100).collect(it -> Pair.of(it as Byte, (it as Byte)%2==0)).toList()
+            Short    | Byte        |  (0..100).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()
+            Integer  | Integer     |  (0..100).collect(it -> Pair.of(it, -it)).toList()
+            String   | Double      |  (0..100).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()
+
+            Byte     | Boolean     |  (0..1_000).collect(it -> Pair.of(it as Byte, (it as Byte)%2==0)).toList()
+            Short    | Byte        |  (0..1_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()
+            Integer  | Integer     |  (0..1_000).collect(it -> Pair.of(it, -it)).toList()
+            String   | Double      |  (0..1_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()
+
+            Byte     | Boolean     |  (0..10_000).collect(it -> Pair.of(it as Byte, (it as Byte)%2==0)).toList()
+            Short    | Byte        |  (0..10_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()
+            Integer  | Integer     |  (0..10_000).collect(it -> Pair.of(it, -it)).toList()
+            String   | Double      |  (0..10_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()
+    }
 }
