@@ -426,13 +426,16 @@ final class LinkedAssociation<K,V> implements Association<K, V>
     }
 
     private static <K,V> boolean _recursiveEquals(
-            AssociationImpl.Node<K,LinkedEntry<K,V>> node1,
-            AssociationImpl.Node<K,LinkedEntry<K,V>> node2,
+            AssociationImpl.@Nullable Node<K,LinkedEntry<K,V>> node1,
+            AssociationImpl.@Nullable Node<K,LinkedEntry<K,V>> node2,
             Class<K> keyType
     ) {
         if ( node1 == node2 ) {
             return true;
         } else {
+            if ( node1 == null || node2 == null ) {
+                return false;
+            }
             if (
                 node1._size == node2._size &&
                 node1._keysArray == node2._keysArray &&
