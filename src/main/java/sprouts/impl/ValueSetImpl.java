@@ -590,10 +590,13 @@ final class ValueSetImpl<E> implements ValueSet<E> {
         return true;
     }
 
-    private static <E> boolean _recursiveEquals(Node<E> node1, Node<E> node2, Class<E> type) {
+    private static <E> boolean _recursiveEquals(@Nullable Node<E> node1, @Nullable Node<E> node2, Class<E> type) {
         if ( node1 == node2 ) {
             return true;
         } else {
+            if ( node1 == null || node2 == null ) {
+                return false;
+            }
             if (
                 node1._size == node2._size &&
                 node1._elementsArray == node2._elementsArray &&

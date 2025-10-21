@@ -673,10 +673,13 @@ final class AssociationImpl<K, V> implements Association<K, V> {
         return true;
     }
 
-    private static <K,V> boolean _recursiveEquals(Node<K,V> node1, Node<K,V> node2, Class<K> keyType, Class<V> valueTye) {
+    private static <K,V> boolean _recursiveEquals(@Nullable Node<K,V> node1, @Nullable Node<K,V> node2, Class<K> keyType, Class<V> valueTye) {
         if ( node1 == node2 ) {
             return true;
         } else {
+            if ( node1 == null || node2 == null ) {
+                return false;
+            }
             if (
                 node1._size == node2._size &&
                 node1._keysArray == node2._keysArray &&

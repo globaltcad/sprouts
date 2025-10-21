@@ -291,17 +291,70 @@ final class LinkedValueSet<E> implements ValueSet<E> {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o)
-            return true;
+        if (this == o) return true;
         if (!(o instanceof LinkedValueSet))
             return false;
-        LinkedValueSet<?> that = (LinkedValueSet<?>) o;
-        if ( !that.type().equals(type()) )
+        LinkedValueSet<E> other = (LinkedValueSet) o;
+        if ( !_entries.keyType().equals(other._entries.keyType()) )
             return false;
-        if (that.size() != size())
+        if ( _entries.size() != other._entries.size() )
             return false;
 
-        return this.toSet().equals(that.toSet());
+        return _recursiveEquals(this._entries._root, other._entries._root, this.type());
+    }
+
+    private static <K> boolean _exhaustiveEquals(
+            AssociationImpl<K,LinkedEntry<K>> assoc1, AssociationImpl<K,LinkedEntry<K>> assoc2
+    ) {
+        if ( assoc2.size() != assoc1.size() ) {
+            return false;
+        }
+        for ( K key : assoc1.keySet() ) {
+            int keyHash = key.hashCode();
+            LinkedEntry<K> firstEntry = AssociationImpl._get(assoc1._root, assoc1._keyGetter, assoc1._valueGetter, key, keyHash);
+            if ( firstEntry == null ) {
+                return false;
+            }
+            LinkedEntry<K> otherEntry = AssociationImpl._get(assoc2._root, assoc2._keyGetter, assoc2._valueGetter, key, keyHash);
+            if ( otherEntry == null ) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static <K> boolean _recursiveEquals(
+            AssociationImpl.@Nullable Node<K,LinkedEntry<K>> node1,
+            AssociationImpl.@Nullable Node<K,LinkedEntry<K>> node2,
+            Class<K> keyType
+    ) {
+        if ( node1 == node2 ) {
+            return true;
+        } else {
+            if ( node1 == null || node2 == null ) {
+                return false;
+            }
+            if (
+                node1._size == node2._size &&
+                node1._keysArray == node2._keysArray &&
+                node1._valuesArray == node2._valuesArray &&
+                node1._keyHashes == node2._keyHashes &&
+                node1._branches.length == node2._branches.length &&
+                node1._branches != node2._branches // The only difference is somewhere deep down!
+            ) {
+                for ( int i = 0; i < node1._branches.length; i++ ) {
+                    if ( !_recursiveEquals(node1._branches[i], node2._branches[i], keyType) ) {
+                        return false;
+                    }
+                }
+                return true;
+            } else {
+                return _exhaustiveEquals(
+                        new AssociationImpl(keyType, LinkedEntry.class, node1),
+                        new AssociationImpl(keyType, LinkedEntry.class, node2)
+                );
+            }
+        }
     }
 
     @Override
