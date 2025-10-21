@@ -673,11 +673,14 @@ final class AssociationImpl&lt;K, V&gt; implements Association&lt;K, V&gt; {
 <span class="fc" id="L673">        return true;</span>
     }
 
-    private static &lt;K,V&gt; boolean _recursiveEquals(Node&lt;K,V&gt; node1, Node&lt;K,V&gt; node2, Class&lt;K&gt; keyType, Class&lt;V&gt; valueTye) {
+    private static &lt;K,V&gt; boolean _recursiveEquals(@Nullable Node&lt;K,V&gt; node1, @Nullable Node&lt;K,V&gt; node2, Class&lt;K&gt; keyType, Class&lt;V&gt; valueTye) {
 <span class="fc bfc" id="L677" title="All 2 branches covered.">        if ( node1 == node2 ) {</span>
 <span class="fc" id="L678">            return true;</span>
         } else {
-<span class="pc bpc" id="L680" title="2 of 12 branches missed.">            if (</span>
+<span class="fc bfc" id="L680" title="All 4 branches covered.">            if ( node1 == null || node2 == null ) {</span>
+<span class="fc" id="L681">                return false;</span>
+            }
+<span class="pc bpc" id="L683" title="2 of 12 branches missed.">            if (</span>
                 node1._size == node2._size &amp;&amp;
                 node1._keysArray == node2._keysArray &amp;&amp;
                 node1._valuesArray == node2._valuesArray &amp;&amp;
@@ -685,14 +688,14 @@ final class AssociationImpl&lt;K, V&gt; implements Association&lt;K, V&gt; {
                 node1._branches.length == node2._branches.length &amp;&amp;
                 node1._branches != node2._branches // The only difference is somewhere deep down!
             ) {
-<span class="fc bfc" id="L688" title="All 2 branches covered.">                for ( int i = 0; i &lt; node1._branches.length; i++ ) {</span>
-<span class="fc bfc" id="L689" title="All 2 branches covered.">                    if ( !_recursiveEquals(node1._branches[i], node2._branches[i], keyType, valueTye) ) {</span>
-<span class="fc" id="L690">                        return false;</span>
+<span class="fc bfc" id="L691" title="All 2 branches covered.">                for ( int i = 0; i &lt; node1._branches.length; i++ ) {</span>
+<span class="fc bfc" id="L692" title="All 2 branches covered.">                    if ( !_recursiveEquals(node1._branches[i], node2._branches[i], keyType, valueTye) ) {</span>
+<span class="fc" id="L693">                        return false;</span>
                     }
                 }
-<span class="fc" id="L693">                return true;</span>
+<span class="fc" id="L696">                return true;</span>
             } else {
-<span class="fc" id="L695">                return _exhaustiveEquals(</span>
+<span class="fc" id="L698">                return _exhaustiveEquals(</span>
                         new AssociationImpl&lt;&gt;(keyType, valueTye, node1),
                         new AssociationImpl&lt;&gt;(keyType, valueTye, node2)
                     );
@@ -702,28 +705,28 @@ final class AssociationImpl&lt;K, V&gt; implements Association&lt;K, V&gt; {
 
     @Override
     public int hashCode() {
-<span class="fc" id="L705">        return Long.hashCode(_recursiveHashCode(_root));</span>
+<span class="fc" id="L708">        return Long.hashCode(_recursiveHashCode(_root));</span>
     }
 
     private static &lt;K,V&gt; long _recursiveHashCode(Node&lt;K, V&gt; node) {
-<span class="fc" id="L709">        long baseHash = 0; // -&gt; full 64 bit improve hash distribution</span>
-<span class="fc bfc" id="L710" title="All 2 branches covered.">        for (int i = 0; i &lt; node._keyHashes.length; i++) {</span>
-<span class="fc" id="L711">            baseHash += _fullKeyPairHash(node._keyHashes[i], Array.get(node._valuesArray, i));</span>
+<span class="fc" id="L712">        long baseHash = 0; // -&gt; full 64 bit improve hash distribution</span>
+<span class="fc bfc" id="L713" title="All 2 branches covered.">        for (int i = 0; i &lt; node._keyHashes.length; i++) {</span>
+<span class="fc" id="L714">            baseHash += _fullKeyPairHash(node._keyHashes[i], Array.get(node._valuesArray, i));</span>
         }
-<span class="fc bfc" id="L713" title="All 2 branches covered.">        for (Node&lt;K, V&gt; branch : node._branches) {</span>
-<span class="fc bfc" id="L714" title="All 2 branches covered.">            if ( branch != null ) {</span>
-<span class="fc" id="L715">                baseHash += _recursiveHashCode(branch);</span>
+<span class="fc bfc" id="L716" title="All 2 branches covered.">        for (Node&lt;K, V&gt; branch : node._branches) {</span>
+<span class="fc bfc" id="L717" title="All 2 branches covered.">            if ( branch != null ) {</span>
+<span class="fc" id="L718">                baseHash += _recursiveHashCode(branch);</span>
             }
         }
-<span class="fc" id="L718">        return baseHash;</span>
+<span class="fc" id="L721">        return baseHash;</span>
     }
 
     private static long _fullKeyPairHash( int keyHash, Object value ) {
-<span class="fc" id="L722">        return _combine(keyHash, value.hashCode());</span>
+<span class="fc" id="L725">        return _combine(keyHash, value.hashCode());</span>
     }
 
     private static long _combine( int first32Bits, int last32Bits ) {
-<span class="fc" id="L726">        return (long) first32Bits &lt;&lt; 32 | (last32Bits &amp; 0xFFFFFFFFL);</span>
+<span class="fc" id="L729">        return (long) first32Bits &lt;&lt; 32 | (last32Bits &amp; 0xFFFFFFFFL);</span>
     }
 
     // A helper class to keep track of our position in a node.
@@ -735,19 +738,19 @@ final class AssociationImpl&lt;K, V&gt; implements Association&lt;K, V&gt; {
         int arrayIndex;    // Next index in the keys/values arrays
         int branchIndex;   // Next branch index to check
 
-<span class="fc" id="L738">        IteratorFrame(@Nullable IteratorFrame&lt;K, V&gt; parent, Node&lt;K, V&gt; node) {</span>
-<span class="fc" id="L739">            this.parent = parent;</span>
-<span class="fc" id="L740">            this.node = node;</span>
-<span class="fc" id="L741">            this.arrayLength = _length(node._keysArray);</span>
-<span class="fc" id="L742">            this.branchesLength = node._branches.length;</span>
-<span class="fc" id="L743">            this.arrayIndex = 0;</span>
-<span class="fc" id="L744">            this.branchIndex = 0;</span>
-<span class="fc" id="L745">        }</span>
+<span class="fc" id="L741">        IteratorFrame(@Nullable IteratorFrame&lt;K, V&gt; parent, Node&lt;K, V&gt; node) {</span>
+<span class="fc" id="L742">            this.parent = parent;</span>
+<span class="fc" id="L743">            this.node = node;</span>
+<span class="fc" id="L744">            this.arrayLength = _length(node._keysArray);</span>
+<span class="fc" id="L745">            this.branchesLength = node._branches.length;</span>
+<span class="fc" id="L746">            this.arrayIndex = 0;</span>
+<span class="fc" id="L747">            this.branchIndex = 0;</span>
+<span class="fc" id="L748">        }</span>
     }
 
     @Override
     public Spliterator&lt;Pair&lt;K, V&gt;&gt; spliterator() {
-<span class="fc" id="L750">        return Spliterators.spliterator(iterator(), _root._size,</span>
+<span class="fc" id="L753">        return Spliterators.spliterator(iterator(), _root._size,</span>
                 Spliterator.DISTINCT |
                 Spliterator.SIZED    |
                 Spliterator.SUBSIZED |
@@ -758,7 +761,7 @@ final class AssociationImpl&lt;K, V&gt; implements Association&lt;K, V&gt; {
 
     @Override
     public Iterator&lt;Pair&lt;K, V&gt;&gt; iterator() {
-<span class="fc" id="L761">        return new AssociationIterator&lt;&gt;(this);</span>
+<span class="fc" id="L764">        return new AssociationIterator&lt;&gt;(this);</span>
     }
 
     private static final class AssociationIterator&lt;K, V&gt; implements Iterator&lt;Pair&lt;K, V&gt;&gt;
@@ -766,67 +769,67 @@ final class AssociationImpl&lt;K, V&gt; implements Association&lt;K, V&gt; {
         private final ArrayItemAccess&lt;K,Object&gt; _keyGetter;
         private final ArrayItemAccess&lt;V,Object&gt; _valueGetter;
         // Use a stack to perform depth-first traversal:
-<span class="fc" id="L769">        private @Nullable IteratorFrame&lt;K, V&gt; currentFrame = null;</span>
+<span class="fc" id="L772">        private @Nullable IteratorFrame&lt;K, V&gt; currentFrame = null;</span>
 
         AssociationIterator(
             AssociationImpl&lt;K, V&gt; node
-<span class="fc" id="L773">        ) {</span>
-<span class="fc" id="L774">            _keyGetter = node._keyGetter;</span>
-<span class="fc" id="L775">            _valueGetter = node._valueGetter;</span>
+<span class="fc" id="L776">        ) {</span>
+<span class="fc" id="L777">            _keyGetter = node._keyGetter;</span>
+<span class="fc" id="L778">            _valueGetter = node._valueGetter;</span>
             // Initialize with this node if there is at least one element.
-<span class="fc bfc" id="L777" title="All 2 branches covered.">            if (node._root._size &gt; 0) {</span>
-<span class="fc" id="L778">                currentFrame = new IteratorFrame&lt;&gt;(null, node._root);</span>
+<span class="fc bfc" id="L780" title="All 2 branches covered.">            if (node._root._size &gt; 0) {</span>
+<span class="fc" id="L781">                currentFrame = new IteratorFrame&lt;&gt;(null, node._root);</span>
             }
-<span class="fc" id="L780">        }</span>
+<span class="fc" id="L783">        }</span>
 
         @Override
         public boolean hasNext() {
             // Loop until we find a node state with an unvisited entry or the stack is empty.
-<span class="fc bfc" id="L785" title="All 2 branches covered.">            while ( currentFrame != null ) {</span>
+<span class="fc bfc" id="L788" title="All 2 branches covered.">            while ( currentFrame != null ) {</span>
                 // If there is a key-value pair left in the current node, we're done.
-<span class="fc bfc" id="L787" title="All 2 branches covered.">                if (currentFrame.arrayIndex &lt; currentFrame.arrayLength) {</span>
-<span class="fc" id="L788">                    return true;</span>
+<span class="fc bfc" id="L790" title="All 2 branches covered.">                if (currentFrame.arrayIndex &lt; currentFrame.arrayLength) {</span>
+<span class="fc" id="L791">                    return true;</span>
                 }
 
                 // Otherwise, check for non-null branches to traverse.
-<span class="fc bfc" id="L792" title="All 2 branches covered.">                if (currentFrame.branchIndex &lt; currentFrame.branchesLength) {</span>
+<span class="fc bfc" id="L795" title="All 2 branches covered.">                if (currentFrame.branchIndex &lt; currentFrame.branchesLength) {</span>
                     // Look for the next branch.
-<span class="fc bfc" id="L794" title="All 2 branches covered.">                    while (currentFrame.branchIndex &lt; currentFrame.branchesLength) {</span>
-<span class="fc" id="L795">                        Node&lt;K, V&gt; branch = currentFrame.node._branches[currentFrame.branchIndex];</span>
-<span class="fc" id="L796">                        currentFrame.branchIndex++;</span>
-<span class="pc bpc" id="L797" title="1 of 4 branches missed.">                        if (branch != null &amp;&amp; branch._size &gt; 0) {</span>
+<span class="fc bfc" id="L797" title="All 2 branches covered.">                    while (currentFrame.branchIndex &lt; currentFrame.branchesLength) {</span>
+<span class="fc" id="L798">                        Node&lt;K, V&gt; branch = currentFrame.node._branches[currentFrame.branchIndex];</span>
+<span class="fc" id="L799">                        currentFrame.branchIndex++;</span>
+<span class="pc bpc" id="L800" title="1 of 4 branches missed.">                        if (branch != null &amp;&amp; branch._size &gt; 0) {</span>
                             // Found a non-empty branch: push its state on the stack.
-<span class="fc" id="L799">                            currentFrame = new IteratorFrame&lt;&gt;(currentFrame, branch);</span>
-<span class="fc" id="L800">                            break;</span>
+<span class="fc" id="L802">                            currentFrame = new IteratorFrame&lt;&gt;(currentFrame, branch);</span>
+<span class="fc" id="L803">                            break;</span>
                         }
-<span class="fc" id="L802">                    }</span>
+<span class="fc" id="L805">                    }</span>
                     // Continue the while loop: now the top of the stack may have entries.
                     continue;
                 }
 
                 // If no more entries or branches are left in the current node, pop it.
-<span class="fc" id="L808">                currentFrame = currentFrame.parent;</span>
+<span class="fc" id="L811">                currentFrame = currentFrame.parent;</span>
             }
-<span class="fc" id="L810">            return false;</span>
+<span class="fc" id="L813">            return false;</span>
         }
 
         @Override
         public Pair&lt;K, V&gt; next() {
-<span class="pc bpc" id="L815" title="2 of 4 branches missed.">            if (!hasNext() || currentFrame == null) {</span>
-<span class="nc" id="L816">                throw new NoSuchElementException();</span>
+<span class="pc bpc" id="L818" title="2 of 4 branches missed.">            if (!hasNext() || currentFrame == null) {</span>
+<span class="nc" id="L819">                throw new NoSuchElementException();</span>
             }
             // Retrieve the key and value at the current position.
-<span class="fc" id="L819">            K key = _keyGetter.get(currentFrame.arrayIndex, currentFrame.node._keysArray);</span>
-<span class="fc" id="L820">            V value = _valueGetter.get(currentFrame.arrayIndex, currentFrame.node._valuesArray);</span>
-<span class="fc" id="L821">            currentFrame.arrayIndex++;</span>
-<span class="fc" id="L822">            Objects.requireNonNull(key);</span>
-<span class="fc" id="L823">            Objects.requireNonNull(value);</span>
-<span class="fc" id="L824">            return Pair.of(key, value);</span>
+<span class="fc" id="L822">            K key = _keyGetter.get(currentFrame.arrayIndex, currentFrame.node._keysArray);</span>
+<span class="fc" id="L823">            V value = _valueGetter.get(currentFrame.arrayIndex, currentFrame.node._valuesArray);</span>
+<span class="fc" id="L824">            currentFrame.arrayIndex++;</span>
+<span class="fc" id="L825">            Objects.requireNonNull(key);</span>
+<span class="fc" id="L826">            Objects.requireNonNull(value);</span>
+<span class="fc" id="L827">            return Pair.of(key, value);</span>
         }
 
         @Override
         public void remove() {
-<span class="nc" id="L829">            throw new UnsupportedOperationException();</span>
+<span class="nc" id="L832">            throw new UnsupportedOperationException();</span>
         }
     }
 

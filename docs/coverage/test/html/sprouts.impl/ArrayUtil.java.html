@@ -152,12 +152,12 @@ final class ArrayUtil {
             }
 <span class="fc" id="L153">            return flattened;</span>
         }
-<span class="pc bpc" id="L155" title="3 of 4 branches missed.">        if ( type == long.class &amp;&amp; array instanceof Object[] ) {</span>
-<span class="nc" id="L156">            long[] flattened = new long[((Object[]) array).length];</span>
-<span class="nc bnc" id="L157" title="All 2 branches missed.">            for ( int i = 0; i &lt; flattened.length; i++ ) {</span>
-<span class="nc" id="L158">                flattened[i] = (long) ((Object[]) array)[i];</span>
+<span class="pc bpc" id="L155" title="1 of 4 branches missed.">        if ( type == long.class &amp;&amp; array instanceof Object[] ) {</span>
+<span class="fc" id="L156">            long[] flattened = new long[((Object[]) array).length];</span>
+<span class="fc bfc" id="L157" title="All 2 branches covered.">            for ( int i = 0; i &lt; flattened.length; i++ ) {</span>
+<span class="fc" id="L158">                flattened[i] = (long) ((Object[]) array)[i];</span>
             }
-<span class="nc" id="L160">            return flattened;</span>
+<span class="fc" id="L160">            return flattened;</span>
         }
 <span class="pc bpc" id="L162" title="3 of 4 branches missed.">        if ( type == float.class &amp;&amp; array instanceof Object[] ) {</span>
 <span class="nc" id="L163">            float[] flattened = new float[((Object[]) array).length];</span>

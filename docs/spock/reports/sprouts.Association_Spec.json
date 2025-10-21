@@ -4,7 +4,7 @@
   "narrative":"Sprouts is a property library with a heavy focus on bridging the\n    gap between classical place oriented programming and modern\n    data oriented programming.\n    This is why sprouts has both the `Tuple` and `Association` classes.\n    The `Association` class is a value object that represents a set of\n    key-value pairs. You can think of it as an immutable map, but with\n    an API that is designed around transforming the data in the map\n    rather than mutating it.",
   "subjects":["sprouts.Association"],
   "statistics":{
-    "runs":"107",
+    "runs":"139",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -2798,6 +2798,998 @@
         {"kind":"and","text":"","code":["smallerAssociation1.hashCode() != association1.hashCode()","smallerAssociation2.hashCode() != association2.hashCode()","smallerAssociation1.hashCode() != association2.hashCode()","smallerAssociation2.hashCode() != association1.hashCode()","smallerAssociation1.hashCode() == smallerAssociation2.hashCode()"]},
 
         {"kind":"where","text":"We use the following entry data source:","code":{"keyType":["Byte","Short","Integer","String","Byte","Short","Integer","String","Byte","Short","Integer","String"],"valueType":["Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double"],"entries":["(0..100).collect(it -> Pair.of(it as Byte, (it as Byte)%2==0)).toList()","(0..100).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..100).collect(it -> Pair.of(it, -it)).toList()","(0..100).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..1_000).collect(it -> Pair.of(it as Byte, (it as Byte)%2==0)).toList()","(0..1_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..1_000).collect(it -> Pair.of(it, -it)).toList()","(0..1_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..10_000).collect(it -> Pair.of(it as Byte, (it as Byte)%2==0)).toList()","(0..10_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..10_000).collect(it -> Pair.of(it, -it)).toList()","(0..10_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of an Association works reliably after removing a large part of entries. [0]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between associations,\n            we can avoid a lot of work due to two associations sharing most of their branches.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher1 = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","var keyHasher2 = { (it.hashCode() + (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort1 = (a, b) -> (keyHasher1(a)<=>keyHasher1(b))","Comparator<Object> randomSort2 = (a, b) -> (keyHasher2(a)<=>keyHasher2(b))","var scrambledEntries1 = entries.toSorted(randomSort1)","var scrambledEntries2 = entries.toSorted(randomSort2)"]},
+
+        {"kind":"when","text":"We create two different `Association` instances from the two scrambled list...","code":["var association1 = Association.between(keyType, valueType).putAll(scrambledEntries1)","var association2 = Association.between(keyType, valueType).putAll(scrambledEntries2)"]},
+
+        {"kind":"then","text":"The two associations are equal!","code":["association1.equals(association2)"]},
+
+        {"kind":"and","text":"They also have the same hash codes:","code":["association1.hashCode() == association2.hashCode()"]},
+
+        {"kind":"when","text":"We create versions of the associations where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it.first()}).toSet()","var smallerAssociation1 = association1.removeAll(toRemove)","var smallerAssociation2 = association2.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"They are equal...","code":["smallerAssociation1 == smallerAssociation2","smallerAssociation1.hashCode() == smallerAssociation2.hashCode()"]},
+
+        {"kind":"when","text":"We make them different by adding to them...","code":["var toAdd1 = subList.subList(0, (subList.size() * 0.5) as int).toSet()","var toAdd2 = subList.subList((subList.size() * 0.5) as int, subList.size()).toSet()","var lessSmallAssociation1 = smallerAssociation1.putAll(toAdd1)","var lessSmallAssociation2 = smallerAssociation2.putAll(toAdd2)"]},
+
+        {"kind":"then","text":"","code":["lessSmallAssociation1.size() == lessSmallAssociation2.size()","lessSmallAssociation1 != lessSmallAssociation2","lessSmallAssociation1.hashCode() != lessSmallAssociation2.hashCode()"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"keyType":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"valueType":["Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double"],"entries":["(0..24).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..24).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..24).collect(it -> Pair.of(it, -it)).toList()","(0..24).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..128).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..128).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..128).collect(it -> Pair.of(it, -it)).toList()","(0..128).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..1_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..1_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..1_000).collect(it -> Pair.of(it, -it)).toList()","(0..1_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..10_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..10_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..10_000).collect(it -> Pair.of(it, -it)).toList()","(0..10_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of an Association works reliably after removing a large part of entries. [1]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between associations,\n            we can avoid a lot of work due to two associations sharing most of their branches.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher1 = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","var keyHasher2 = { (it.hashCode() + (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort1 = (a, b) -> (keyHasher1(a)<=>keyHasher1(b))","Comparator<Object> randomSort2 = (a, b) -> (keyHasher2(a)<=>keyHasher2(b))","var scrambledEntries1 = entries.toSorted(randomSort1)","var scrambledEntries2 = entries.toSorted(randomSort2)"]},
+
+        {"kind":"when","text":"We create two different `Association` instances from the two scrambled list...","code":["var association1 = Association.between(keyType, valueType).putAll(scrambledEntries1)","var association2 = Association.between(keyType, valueType).putAll(scrambledEntries2)"]},
+
+        {"kind":"then","text":"The two associations are equal!","code":["association1.equals(association2)"]},
+
+        {"kind":"and","text":"They also have the same hash codes:","code":["association1.hashCode() == association2.hashCode()"]},
+
+        {"kind":"when","text":"We create versions of the associations where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it.first()}).toSet()","var smallerAssociation1 = association1.removeAll(toRemove)","var smallerAssociation2 = association2.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"They are equal...","code":["smallerAssociation1 == smallerAssociation2","smallerAssociation1.hashCode() == smallerAssociation2.hashCode()"]},
+
+        {"kind":"when","text":"We make them different by adding to them...","code":["var toAdd1 = subList.subList(0, (subList.size() * 0.5) as int).toSet()","var toAdd2 = subList.subList((subList.size() * 0.5) as int, subList.size()).toSet()","var lessSmallAssociation1 = smallerAssociation1.putAll(toAdd1)","var lessSmallAssociation2 = smallerAssociation2.putAll(toAdd2)"]},
+
+        {"kind":"then","text":"","code":["lessSmallAssociation1.size() == lessSmallAssociation2.size()","lessSmallAssociation1 != lessSmallAssociation2","lessSmallAssociation1.hashCode() != lessSmallAssociation2.hashCode()"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"keyType":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"valueType":["Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double"],"entries":["(0..24).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..24).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..24).collect(it -> Pair.of(it, -it)).toList()","(0..24).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..128).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..128).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..128).collect(it -> Pair.of(it, -it)).toList()","(0..128).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..1_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..1_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..1_000).collect(it -> Pair.of(it, -it)).toList()","(0..1_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..10_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..10_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..10_000).collect(it -> Pair.of(it, -it)).toList()","(0..10_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of an Association works reliably after removing a large part of entries. [2]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between associations,\n            we can avoid a lot of work due to two associations sharing most of their branches.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher1 = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","var keyHasher2 = { (it.hashCode() + (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort1 = (a, b) -> (keyHasher1(a)<=>keyHasher1(b))","Comparator<Object> randomSort2 = (a, b) -> (keyHasher2(a)<=>keyHasher2(b))","var scrambledEntries1 = entries.toSorted(randomSort1)","var scrambledEntries2 = entries.toSorted(randomSort2)"]},
+
+        {"kind":"when","text":"We create two different `Association` instances from the two scrambled list...","code":["var association1 = Association.between(keyType, valueType).putAll(scrambledEntries1)","var association2 = Association.between(keyType, valueType).putAll(scrambledEntries2)"]},
+
+        {"kind":"then","text":"The two associations are equal!","code":["association1.equals(association2)"]},
+
+        {"kind":"and","text":"They also have the same hash codes:","code":["association1.hashCode() == association2.hashCode()"]},
+
+        {"kind":"when","text":"We create versions of the associations where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it.first()}).toSet()","var smallerAssociation1 = association1.removeAll(toRemove)","var smallerAssociation2 = association2.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"They are equal...","code":["smallerAssociation1 == smallerAssociation2","smallerAssociation1.hashCode() == smallerAssociation2.hashCode()"]},
+
+        {"kind":"when","text":"We make them different by adding to them...","code":["var toAdd1 = subList.subList(0, (subList.size() * 0.5) as int).toSet()","var toAdd2 = subList.subList((subList.size() * 0.5) as int, subList.size()).toSet()","var lessSmallAssociation1 = smallerAssociation1.putAll(toAdd1)","var lessSmallAssociation2 = smallerAssociation2.putAll(toAdd2)"]},
+
+        {"kind":"then","text":"","code":["lessSmallAssociation1.size() == lessSmallAssociation2.size()","lessSmallAssociation1 != lessSmallAssociation2","lessSmallAssociation1.hashCode() != lessSmallAssociation2.hashCode()"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"keyType":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"valueType":["Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double"],"entries":["(0..24).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..24).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..24).collect(it -> Pair.of(it, -it)).toList()","(0..24).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..128).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..128).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..128).collect(it -> Pair.of(it, -it)).toList()","(0..128).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..1_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..1_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..1_000).collect(it -> Pair.of(it, -it)).toList()","(0..1_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..10_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..10_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..10_000).collect(it -> Pair.of(it, -it)).toList()","(0..10_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of an Association works reliably after removing a large part of entries. [3]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between associations,\n            we can avoid a lot of work due to two associations sharing most of their branches.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher1 = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","var keyHasher2 = { (it.hashCode() + (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort1 = (a, b) -> (keyHasher1(a)<=>keyHasher1(b))","Comparator<Object> randomSort2 = (a, b) -> (keyHasher2(a)<=>keyHasher2(b))","var scrambledEntries1 = entries.toSorted(randomSort1)","var scrambledEntries2 = entries.toSorted(randomSort2)"]},
+
+        {"kind":"when","text":"We create two different `Association` instances from the two scrambled list...","code":["var association1 = Association.between(keyType, valueType).putAll(scrambledEntries1)","var association2 = Association.between(keyType, valueType).putAll(scrambledEntries2)"]},
+
+        {"kind":"then","text":"The two associations are equal!","code":["association1.equals(association2)"]},
+
+        {"kind":"and","text":"They also have the same hash codes:","code":["association1.hashCode() == association2.hashCode()"]},
+
+        {"kind":"when","text":"We create versions of the associations where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it.first()}).toSet()","var smallerAssociation1 = association1.removeAll(toRemove)","var smallerAssociation2 = association2.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"They are equal...","code":["smallerAssociation1 == smallerAssociation2","smallerAssociation1.hashCode() == smallerAssociation2.hashCode()"]},
+
+        {"kind":"when","text":"We make them different by adding to them...","code":["var toAdd1 = subList.subList(0, (subList.size() * 0.5) as int).toSet()","var toAdd2 = subList.subList((subList.size() * 0.5) as int, subList.size()).toSet()","var lessSmallAssociation1 = smallerAssociation1.putAll(toAdd1)","var lessSmallAssociation2 = smallerAssociation2.putAll(toAdd2)"]},
+
+        {"kind":"then","text":"","code":["lessSmallAssociation1.size() == lessSmallAssociation2.size()","lessSmallAssociation1 != lessSmallAssociation2","lessSmallAssociation1.hashCode() != lessSmallAssociation2.hashCode()"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"keyType":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"valueType":["Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double"],"entries":["(0..24).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..24).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..24).collect(it -> Pair.of(it, -it)).toList()","(0..24).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..128).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..128).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..128).collect(it -> Pair.of(it, -it)).toList()","(0..128).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..1_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..1_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..1_000).collect(it -> Pair.of(it, -it)).toList()","(0..1_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..10_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..10_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..10_000).collect(it -> Pair.of(it, -it)).toList()","(0..10_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of an Association works reliably after removing a large part of entries. [4]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between associations,\n            we can avoid a lot of work due to two associations sharing most of their branches.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher1 = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","var keyHasher2 = { (it.hashCode() + (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort1 = (a, b) -> (keyHasher1(a)<=>keyHasher1(b))","Comparator<Object> randomSort2 = (a, b) -> (keyHasher2(a)<=>keyHasher2(b))","var scrambledEntries1 = entries.toSorted(randomSort1)","var scrambledEntries2 = entries.toSorted(randomSort2)"]},
+
+        {"kind":"when","text":"We create two different `Association` instances from the two scrambled list...","code":["var association1 = Association.between(keyType, valueType).putAll(scrambledEntries1)","var association2 = Association.between(keyType, valueType).putAll(scrambledEntries2)"]},
+
+        {"kind":"then","text":"The two associations are equal!","code":["association1.equals(association2)"]},
+
+        {"kind":"and","text":"They also have the same hash codes:","code":["association1.hashCode() == association2.hashCode()"]},
+
+        {"kind":"when","text":"We create versions of the associations where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it.first()}).toSet()","var smallerAssociation1 = association1.removeAll(toRemove)","var smallerAssociation2 = association2.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"They are equal...","code":["smallerAssociation1 == smallerAssociation2","smallerAssociation1.hashCode() == smallerAssociation2.hashCode()"]},
+
+        {"kind":"when","text":"We make them different by adding to them...","code":["var toAdd1 = subList.subList(0, (subList.size() * 0.5) as int).toSet()","var toAdd2 = subList.subList((subList.size() * 0.5) as int, subList.size()).toSet()","var lessSmallAssociation1 = smallerAssociation1.putAll(toAdd1)","var lessSmallAssociation2 = smallerAssociation2.putAll(toAdd2)"]},
+
+        {"kind":"then","text":"","code":["lessSmallAssociation1.size() == lessSmallAssociation2.size()","lessSmallAssociation1 != lessSmallAssociation2","lessSmallAssociation1.hashCode() != lessSmallAssociation2.hashCode()"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"keyType":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"valueType":["Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double"],"entries":["(0..24).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..24).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..24).collect(it -> Pair.of(it, -it)).toList()","(0..24).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..128).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..128).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..128).collect(it -> Pair.of(it, -it)).toList()","(0..128).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..1_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..1_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..1_000).collect(it -> Pair.of(it, -it)).toList()","(0..1_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..10_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..10_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..10_000).collect(it -> Pair.of(it, -it)).toList()","(0..10_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of an Association works reliably after removing a large part of entries. [5]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between associations,\n            we can avoid a lot of work due to two associations sharing most of their branches.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher1 = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","var keyHasher2 = { (it.hashCode() + (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort1 = (a, b) -> (keyHasher1(a)<=>keyHasher1(b))","Comparator<Object> randomSort2 = (a, b) -> (keyHasher2(a)<=>keyHasher2(b))","var scrambledEntries1 = entries.toSorted(randomSort1)","var scrambledEntries2 = entries.toSorted(randomSort2)"]},
+
+        {"kind":"when","text":"We create two different `Association` instances from the two scrambled list...","code":["var association1 = Association.between(keyType, valueType).putAll(scrambledEntries1)","var association2 = Association.between(keyType, valueType).putAll(scrambledEntries2)"]},
+
+        {"kind":"then","text":"The two associations are equal!","code":["association1.equals(association2)"]},
+
+        {"kind":"and","text":"They also have the same hash codes:","code":["association1.hashCode() == association2.hashCode()"]},
+
+        {"kind":"when","text":"We create versions of the associations where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it.first()}).toSet()","var smallerAssociation1 = association1.removeAll(toRemove)","var smallerAssociation2 = association2.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"They are equal...","code":["smallerAssociation1 == smallerAssociation2","smallerAssociation1.hashCode() == smallerAssociation2.hashCode()"]},
+
+        {"kind":"when","text":"We make them different by adding to them...","code":["var toAdd1 = subList.subList(0, (subList.size() * 0.5) as int).toSet()","var toAdd2 = subList.subList((subList.size() * 0.5) as int, subList.size()).toSet()","var lessSmallAssociation1 = smallerAssociation1.putAll(toAdd1)","var lessSmallAssociation2 = smallerAssociation2.putAll(toAdd2)"]},
+
+        {"kind":"then","text":"","code":["lessSmallAssociation1.size() == lessSmallAssociation2.size()","lessSmallAssociation1 != lessSmallAssociation2","lessSmallAssociation1.hashCode() != lessSmallAssociation2.hashCode()"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"keyType":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"valueType":["Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double"],"entries":["(0..24).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..24).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..24).collect(it -> Pair.of(it, -it)).toList()","(0..24).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..128).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..128).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..128).collect(it -> Pair.of(it, -it)).toList()","(0..128).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..1_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..1_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..1_000).collect(it -> Pair.of(it, -it)).toList()","(0..1_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..10_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..10_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..10_000).collect(it -> Pair.of(it, -it)).toList()","(0..10_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of an Association works reliably after removing a large part of entries. [6]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between associations,\n            we can avoid a lot of work due to two associations sharing most of their branches.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher1 = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","var keyHasher2 = { (it.hashCode() + (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort1 = (a, b) -> (keyHasher1(a)<=>keyHasher1(b))","Comparator<Object> randomSort2 = (a, b) -> (keyHasher2(a)<=>keyHasher2(b))","var scrambledEntries1 = entries.toSorted(randomSort1)","var scrambledEntries2 = entries.toSorted(randomSort2)"]},
+
+        {"kind":"when","text":"We create two different `Association` instances from the two scrambled list...","code":["var association1 = Association.between(keyType, valueType).putAll(scrambledEntries1)","var association2 = Association.between(keyType, valueType).putAll(scrambledEntries2)"]},
+
+        {"kind":"then","text":"The two associations are equal!","code":["association1.equals(association2)"]},
+
+        {"kind":"and","text":"They also have the same hash codes:","code":["association1.hashCode() == association2.hashCode()"]},
+
+        {"kind":"when","text":"We create versions of the associations where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it.first()}).toSet()","var smallerAssociation1 = association1.removeAll(toRemove)","var smallerAssociation2 = association2.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"They are equal...","code":["smallerAssociation1 == smallerAssociation2","smallerAssociation1.hashCode() == smallerAssociation2.hashCode()"]},
+
+        {"kind":"when","text":"We make them different by adding to them...","code":["var toAdd1 = subList.subList(0, (subList.size() * 0.5) as int).toSet()","var toAdd2 = subList.subList((subList.size() * 0.5) as int, subList.size()).toSet()","var lessSmallAssociation1 = smallerAssociation1.putAll(toAdd1)","var lessSmallAssociation2 = smallerAssociation2.putAll(toAdd2)"]},
+
+        {"kind":"then","text":"","code":["lessSmallAssociation1.size() == lessSmallAssociation2.size()","lessSmallAssociation1 != lessSmallAssociation2","lessSmallAssociation1.hashCode() != lessSmallAssociation2.hashCode()"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"keyType":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"valueType":["Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double"],"entries":["(0..24).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..24).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..24).collect(it -> Pair.of(it, -it)).toList()","(0..24).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..128).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..128).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..128).collect(it -> Pair.of(it, -it)).toList()","(0..128).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..1_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..1_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..1_000).collect(it -> Pair.of(it, -it)).toList()","(0..1_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..10_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..10_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..10_000).collect(it -> Pair.of(it, -it)).toList()","(0..10_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of an Association works reliably after removing a large part of entries. [7]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between associations,\n            we can avoid a lot of work due to two associations sharing most of their branches.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher1 = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","var keyHasher2 = { (it.hashCode() + (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort1 = (a, b) -> (keyHasher1(a)<=>keyHasher1(b))","Comparator<Object> randomSort2 = (a, b) -> (keyHasher2(a)<=>keyHasher2(b))","var scrambledEntries1 = entries.toSorted(randomSort1)","var scrambledEntries2 = entries.toSorted(randomSort2)"]},
+
+        {"kind":"when","text":"We create two different `Association` instances from the two scrambled list...","code":["var association1 = Association.between(keyType, valueType).putAll(scrambledEntries1)","var association2 = Association.between(keyType, valueType).putAll(scrambledEntries2)"]},
+
+        {"kind":"then","text":"The two associations are equal!","code":["association1.equals(association2)"]},
+
+        {"kind":"and","text":"They also have the same hash codes:","code":["association1.hashCode() == association2.hashCode()"]},
+
+        {"kind":"when","text":"We create versions of the associations where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it.first()}).toSet()","var smallerAssociation1 = association1.removeAll(toRemove)","var smallerAssociation2 = association2.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"They are equal...","code":["smallerAssociation1 == smallerAssociation2","smallerAssociation1.hashCode() == smallerAssociation2.hashCode()"]},
+
+        {"kind":"when","text":"We make them different by adding to them...","code":["var toAdd1 = subList.subList(0, (subList.size() * 0.5) as int).toSet()","var toAdd2 = subList.subList((subList.size() * 0.5) as int, subList.size()).toSet()","var lessSmallAssociation1 = smallerAssociation1.putAll(toAdd1)","var lessSmallAssociation2 = smallerAssociation2.putAll(toAdd2)"]},
+
+        {"kind":"then","text":"","code":["lessSmallAssociation1.size() == lessSmallAssociation2.size()","lessSmallAssociation1 != lessSmallAssociation2","lessSmallAssociation1.hashCode() != lessSmallAssociation2.hashCode()"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"keyType":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"valueType":["Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double"],"entries":["(0..24).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..24).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..24).collect(it -> Pair.of(it, -it)).toList()","(0..24).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..128).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..128).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..128).collect(it -> Pair.of(it, -it)).toList()","(0..128).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..1_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..1_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..1_000).collect(it -> Pair.of(it, -it)).toList()","(0..1_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..10_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..10_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..10_000).collect(it -> Pair.of(it, -it)).toList()","(0..10_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of an Association works reliably after removing a large part of entries. [8]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between associations,\n            we can avoid a lot of work due to two associations sharing most of their branches.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher1 = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","var keyHasher2 = { (it.hashCode() + (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort1 = (a, b) -> (keyHasher1(a)<=>keyHasher1(b))","Comparator<Object> randomSort2 = (a, b) -> (keyHasher2(a)<=>keyHasher2(b))","var scrambledEntries1 = entries.toSorted(randomSort1)","var scrambledEntries2 = entries.toSorted(randomSort2)"]},
+
+        {"kind":"when","text":"We create two different `Association` instances from the two scrambled list...","code":["var association1 = Association.between(keyType, valueType).putAll(scrambledEntries1)","var association2 = Association.between(keyType, valueType).putAll(scrambledEntries2)"]},
+
+        {"kind":"then","text":"The two associations are equal!","code":["association1.equals(association2)"]},
+
+        {"kind":"and","text":"They also have the same hash codes:","code":["association1.hashCode() == association2.hashCode()"]},
+
+        {"kind":"when","text":"We create versions of the associations where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it.first()}).toSet()","var smallerAssociation1 = association1.removeAll(toRemove)","var smallerAssociation2 = association2.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"They are equal...","code":["smallerAssociation1 == smallerAssociation2","smallerAssociation1.hashCode() == smallerAssociation2.hashCode()"]},
+
+        {"kind":"when","text":"We make them different by adding to them...","code":["var toAdd1 = subList.subList(0, (subList.size() * 0.5) as int).toSet()","var toAdd2 = subList.subList((subList.size() * 0.5) as int, subList.size()).toSet()","var lessSmallAssociation1 = smallerAssociation1.putAll(toAdd1)","var lessSmallAssociation2 = smallerAssociation2.putAll(toAdd2)"]},
+
+        {"kind":"then","text":"","code":["lessSmallAssociation1.size() == lessSmallAssociation2.size()","lessSmallAssociation1 != lessSmallAssociation2","lessSmallAssociation1.hashCode() != lessSmallAssociation2.hashCode()"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"keyType":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"valueType":["Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double"],"entries":["(0..24).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..24).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..24).collect(it -> Pair.of(it, -it)).toList()","(0..24).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..128).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..128).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..128).collect(it -> Pair.of(it, -it)).toList()","(0..128).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..1_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..1_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..1_000).collect(it -> Pair.of(it, -it)).toList()","(0..1_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..10_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..10_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..10_000).collect(it -> Pair.of(it, -it)).toList()","(0..10_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of an Association works reliably after removing a large part of entries. [9]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between associations,\n            we can avoid a lot of work due to two associations sharing most of their branches.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher1 = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","var keyHasher2 = { (it.hashCode() + (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort1 = (a, b) -> (keyHasher1(a)<=>keyHasher1(b))","Comparator<Object> randomSort2 = (a, b) -> (keyHasher2(a)<=>keyHasher2(b))","var scrambledEntries1 = entries.toSorted(randomSort1)","var scrambledEntries2 = entries.toSorted(randomSort2)"]},
+
+        {"kind":"when","text":"We create two different `Association` instances from the two scrambled list...","code":["var association1 = Association.between(keyType, valueType).putAll(scrambledEntries1)","var association2 = Association.between(keyType, valueType).putAll(scrambledEntries2)"]},
+
+        {"kind":"then","text":"The two associations are equal!","code":["association1.equals(association2)"]},
+
+        {"kind":"and","text":"They also have the same hash codes:","code":["association1.hashCode() == association2.hashCode()"]},
+
+        {"kind":"when","text":"We create versions of the associations where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it.first()}).toSet()","var smallerAssociation1 = association1.removeAll(toRemove)","var smallerAssociation2 = association2.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"They are equal...","code":["smallerAssociation1 == smallerAssociation2","smallerAssociation1.hashCode() == smallerAssociation2.hashCode()"]},
+
+        {"kind":"when","text":"We make them different by adding to them...","code":["var toAdd1 = subList.subList(0, (subList.size() * 0.5) as int).toSet()","var toAdd2 = subList.subList((subList.size() * 0.5) as int, subList.size()).toSet()","var lessSmallAssociation1 = smallerAssociation1.putAll(toAdd1)","var lessSmallAssociation2 = smallerAssociation2.putAll(toAdd2)"]},
+
+        {"kind":"then","text":"","code":["lessSmallAssociation1.size() == lessSmallAssociation2.size()","lessSmallAssociation1 != lessSmallAssociation2","lessSmallAssociation1.hashCode() != lessSmallAssociation2.hashCode()"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"keyType":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"valueType":["Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double"],"entries":["(0..24).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..24).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..24).collect(it -> Pair.of(it, -it)).toList()","(0..24).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..128).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..128).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..128).collect(it -> Pair.of(it, -it)).toList()","(0..128).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..1_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..1_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..1_000).collect(it -> Pair.of(it, -it)).toList()","(0..1_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..10_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..10_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..10_000).collect(it -> Pair.of(it, -it)).toList()","(0..10_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of an Association works reliably after removing a large part of entries. [10]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between associations,\n            we can avoid a lot of work due to two associations sharing most of their branches.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher1 = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","var keyHasher2 = { (it.hashCode() + (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort1 = (a, b) -> (keyHasher1(a)<=>keyHasher1(b))","Comparator<Object> randomSort2 = (a, b) -> (keyHasher2(a)<=>keyHasher2(b))","var scrambledEntries1 = entries.toSorted(randomSort1)","var scrambledEntries2 = entries.toSorted(randomSort2)"]},
+
+        {"kind":"when","text":"We create two different `Association` instances from the two scrambled list...","code":["var association1 = Association.between(keyType, valueType).putAll(scrambledEntries1)","var association2 = Association.between(keyType, valueType).putAll(scrambledEntries2)"]},
+
+        {"kind":"then","text":"The two associations are equal!","code":["association1.equals(association2)"]},
+
+        {"kind":"and","text":"They also have the same hash codes:","code":["association1.hashCode() == association2.hashCode()"]},
+
+        {"kind":"when","text":"We create versions of the associations where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it.first()}).toSet()","var smallerAssociation1 = association1.removeAll(toRemove)","var smallerAssociation2 = association2.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"They are equal...","code":["smallerAssociation1 == smallerAssociation2","smallerAssociation1.hashCode() == smallerAssociation2.hashCode()"]},
+
+        {"kind":"when","text":"We make them different by adding to them...","code":["var toAdd1 = subList.subList(0, (subList.size() * 0.5) as int).toSet()","var toAdd2 = subList.subList((subList.size() * 0.5) as int, subList.size()).toSet()","var lessSmallAssociation1 = smallerAssociation1.putAll(toAdd1)","var lessSmallAssociation2 = smallerAssociation2.putAll(toAdd2)"]},
+
+        {"kind":"then","text":"","code":["lessSmallAssociation1.size() == lessSmallAssociation2.size()","lessSmallAssociation1 != lessSmallAssociation2","lessSmallAssociation1.hashCode() != lessSmallAssociation2.hashCode()"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"keyType":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"valueType":["Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double"],"entries":["(0..24).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..24).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..24).collect(it -> Pair.of(it, -it)).toList()","(0..24).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..128).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..128).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..128).collect(it -> Pair.of(it, -it)).toList()","(0..128).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..1_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..1_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..1_000).collect(it -> Pair.of(it, -it)).toList()","(0..1_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..10_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..10_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..10_000).collect(it -> Pair.of(it, -it)).toList()","(0..10_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of an Association works reliably after removing a large part of entries. [11]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between associations,\n            we can avoid a lot of work due to two associations sharing most of their branches.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher1 = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","var keyHasher2 = { (it.hashCode() + (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort1 = (a, b) -> (keyHasher1(a)<=>keyHasher1(b))","Comparator<Object> randomSort2 = (a, b) -> (keyHasher2(a)<=>keyHasher2(b))","var scrambledEntries1 = entries.toSorted(randomSort1)","var scrambledEntries2 = entries.toSorted(randomSort2)"]},
+
+        {"kind":"when","text":"We create two different `Association` instances from the two scrambled list...","code":["var association1 = Association.between(keyType, valueType).putAll(scrambledEntries1)","var association2 = Association.between(keyType, valueType).putAll(scrambledEntries2)"]},
+
+        {"kind":"then","text":"The two associations are equal!","code":["association1.equals(association2)"]},
+
+        {"kind":"and","text":"They also have the same hash codes:","code":["association1.hashCode() == association2.hashCode()"]},
+
+        {"kind":"when","text":"We create versions of the associations where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it.first()}).toSet()","var smallerAssociation1 = association1.removeAll(toRemove)","var smallerAssociation2 = association2.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"They are equal...","code":["smallerAssociation1 == smallerAssociation2","smallerAssociation1.hashCode() == smallerAssociation2.hashCode()"]},
+
+        {"kind":"when","text":"We make them different by adding to them...","code":["var toAdd1 = subList.subList(0, (subList.size() * 0.5) as int).toSet()","var toAdd2 = subList.subList((subList.size() * 0.5) as int, subList.size()).toSet()","var lessSmallAssociation1 = smallerAssociation1.putAll(toAdd1)","var lessSmallAssociation2 = smallerAssociation2.putAll(toAdd2)"]},
+
+        {"kind":"then","text":"","code":["lessSmallAssociation1.size() == lessSmallAssociation2.size()","lessSmallAssociation1 != lessSmallAssociation2","lessSmallAssociation1.hashCode() != lessSmallAssociation2.hashCode()"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"keyType":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"valueType":["Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double"],"entries":["(0..24).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..24).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..24).collect(it -> Pair.of(it, -it)).toList()","(0..24).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..128).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..128).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..128).collect(it -> Pair.of(it, -it)).toList()","(0..128).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..1_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..1_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..1_000).collect(it -> Pair.of(it, -it)).toList()","(0..1_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..10_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..10_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..10_000).collect(it -> Pair.of(it, -it)).toList()","(0..10_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of an Association works reliably after removing a large part of entries. [12]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between associations,\n            we can avoid a lot of work due to two associations sharing most of their branches.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher1 = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","var keyHasher2 = { (it.hashCode() + (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort1 = (a, b) -> (keyHasher1(a)<=>keyHasher1(b))","Comparator<Object> randomSort2 = (a, b) -> (keyHasher2(a)<=>keyHasher2(b))","var scrambledEntries1 = entries.toSorted(randomSort1)","var scrambledEntries2 = entries.toSorted(randomSort2)"]},
+
+        {"kind":"when","text":"We create two different `Association` instances from the two scrambled list...","code":["var association1 = Association.between(keyType, valueType).putAll(scrambledEntries1)","var association2 = Association.between(keyType, valueType).putAll(scrambledEntries2)"]},
+
+        {"kind":"then","text":"The two associations are equal!","code":["association1.equals(association2)"]},
+
+        {"kind":"and","text":"They also have the same hash codes:","code":["association1.hashCode() == association2.hashCode()"]},
+
+        {"kind":"when","text":"We create versions of the associations where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it.first()}).toSet()","var smallerAssociation1 = association1.removeAll(toRemove)","var smallerAssociation2 = association2.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"They are equal...","code":["smallerAssociation1 == smallerAssociation2","smallerAssociation1.hashCode() == smallerAssociation2.hashCode()"]},
+
+        {"kind":"when","text":"We make them different by adding to them...","code":["var toAdd1 = subList.subList(0, (subList.size() * 0.5) as int).toSet()","var toAdd2 = subList.subList((subList.size() * 0.5) as int, subList.size()).toSet()","var lessSmallAssociation1 = smallerAssociation1.putAll(toAdd1)","var lessSmallAssociation2 = smallerAssociation2.putAll(toAdd2)"]},
+
+        {"kind":"then","text":"","code":["lessSmallAssociation1.size() == lessSmallAssociation2.size()","lessSmallAssociation1 != lessSmallAssociation2","lessSmallAssociation1.hashCode() != lessSmallAssociation2.hashCode()"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"keyType":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"valueType":["Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double"],"entries":["(0..24).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..24).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..24).collect(it -> Pair.of(it, -it)).toList()","(0..24).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..128).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..128).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..128).collect(it -> Pair.of(it, -it)).toList()","(0..128).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..1_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..1_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..1_000).collect(it -> Pair.of(it, -it)).toList()","(0..1_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..10_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..10_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..10_000).collect(it -> Pair.of(it, -it)).toList()","(0..10_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of an Association works reliably after removing a large part of entries. [13]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between associations,\n            we can avoid a lot of work due to two associations sharing most of their branches.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher1 = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","var keyHasher2 = { (it.hashCode() + (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort1 = (a, b) -> (keyHasher1(a)<=>keyHasher1(b))","Comparator<Object> randomSort2 = (a, b) -> (keyHasher2(a)<=>keyHasher2(b))","var scrambledEntries1 = entries.toSorted(randomSort1)","var scrambledEntries2 = entries.toSorted(randomSort2)"]},
+
+        {"kind":"when","text":"We create two different `Association` instances from the two scrambled list...","code":["var association1 = Association.between(keyType, valueType).putAll(scrambledEntries1)","var association2 = Association.between(keyType, valueType).putAll(scrambledEntries2)"]},
+
+        {"kind":"then","text":"The two associations are equal!","code":["association1.equals(association2)"]},
+
+        {"kind":"and","text":"They also have the same hash codes:","code":["association1.hashCode() == association2.hashCode()"]},
+
+        {"kind":"when","text":"We create versions of the associations where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it.first()}).toSet()","var smallerAssociation1 = association1.removeAll(toRemove)","var smallerAssociation2 = association2.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"They are equal...","code":["smallerAssociation1 == smallerAssociation2","smallerAssociation1.hashCode() == smallerAssociation2.hashCode()"]},
+
+        {"kind":"when","text":"We make them different by adding to them...","code":["var toAdd1 = subList.subList(0, (subList.size() * 0.5) as int).toSet()","var toAdd2 = subList.subList((subList.size() * 0.5) as int, subList.size()).toSet()","var lessSmallAssociation1 = smallerAssociation1.putAll(toAdd1)","var lessSmallAssociation2 = smallerAssociation2.putAll(toAdd2)"]},
+
+        {"kind":"then","text":"","code":["lessSmallAssociation1.size() == lessSmallAssociation2.size()","lessSmallAssociation1 != lessSmallAssociation2","lessSmallAssociation1.hashCode() != lessSmallAssociation2.hashCode()"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"keyType":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"valueType":["Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double"],"entries":["(0..24).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..24).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..24).collect(it -> Pair.of(it, -it)).toList()","(0..24).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..128).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..128).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..128).collect(it -> Pair.of(it, -it)).toList()","(0..128).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..1_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..1_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..1_000).collect(it -> Pair.of(it, -it)).toList()","(0..1_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..10_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..10_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..10_000).collect(it -> Pair.of(it, -it)).toList()","(0..10_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of an Association works reliably after removing a large part of entries. [14]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between associations,\n            we can avoid a lot of work due to two associations sharing most of their branches.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher1 = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","var keyHasher2 = { (it.hashCode() + (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort1 = (a, b) -> (keyHasher1(a)<=>keyHasher1(b))","Comparator<Object> randomSort2 = (a, b) -> (keyHasher2(a)<=>keyHasher2(b))","var scrambledEntries1 = entries.toSorted(randomSort1)","var scrambledEntries2 = entries.toSorted(randomSort2)"]},
+
+        {"kind":"when","text":"We create two different `Association` instances from the two scrambled list...","code":["var association1 = Association.between(keyType, valueType).putAll(scrambledEntries1)","var association2 = Association.between(keyType, valueType).putAll(scrambledEntries2)"]},
+
+        {"kind":"then","text":"The two associations are equal!","code":["association1.equals(association2)"]},
+
+        {"kind":"and","text":"They also have the same hash codes:","code":["association1.hashCode() == association2.hashCode()"]},
+
+        {"kind":"when","text":"We create versions of the associations where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it.first()}).toSet()","var smallerAssociation1 = association1.removeAll(toRemove)","var smallerAssociation2 = association2.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"They are equal...","code":["smallerAssociation1 == smallerAssociation2","smallerAssociation1.hashCode() == smallerAssociation2.hashCode()"]},
+
+        {"kind":"when","text":"We make them different by adding to them...","code":["var toAdd1 = subList.subList(0, (subList.size() * 0.5) as int).toSet()","var toAdd2 = subList.subList((subList.size() * 0.5) as int, subList.size()).toSet()","var lessSmallAssociation1 = smallerAssociation1.putAll(toAdd1)","var lessSmallAssociation2 = smallerAssociation2.putAll(toAdd2)"]},
+
+        {"kind":"then","text":"","code":["lessSmallAssociation1.size() == lessSmallAssociation2.size()","lessSmallAssociation1 != lessSmallAssociation2","lessSmallAssociation1.hashCode() != lessSmallAssociation2.hashCode()"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"keyType":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"valueType":["Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double"],"entries":["(0..24).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..24).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..24).collect(it -> Pair.of(it, -it)).toList()","(0..24).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..128).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..128).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..128).collect(it -> Pair.of(it, -it)).toList()","(0..128).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..1_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..1_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..1_000).collect(it -> Pair.of(it, -it)).toList()","(0..1_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..10_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..10_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..10_000).collect(it -> Pair.of(it, -it)).toList()","(0..10_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of an Association works reliably after removing a large part of entries. [15]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between associations,\n            we can avoid a lot of work due to two associations sharing most of their branches.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher1 = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","var keyHasher2 = { (it.hashCode() + (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort1 = (a, b) -> (keyHasher1(a)<=>keyHasher1(b))","Comparator<Object> randomSort2 = (a, b) -> (keyHasher2(a)<=>keyHasher2(b))","var scrambledEntries1 = entries.toSorted(randomSort1)","var scrambledEntries2 = entries.toSorted(randomSort2)"]},
+
+        {"kind":"when","text":"We create two different `Association` instances from the two scrambled list...","code":["var association1 = Association.between(keyType, valueType).putAll(scrambledEntries1)","var association2 = Association.between(keyType, valueType).putAll(scrambledEntries2)"]},
+
+        {"kind":"then","text":"The two associations are equal!","code":["association1.equals(association2)"]},
+
+        {"kind":"and","text":"They also have the same hash codes:","code":["association1.hashCode() == association2.hashCode()"]},
+
+        {"kind":"when","text":"We create versions of the associations where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it.first()}).toSet()","var smallerAssociation1 = association1.removeAll(toRemove)","var smallerAssociation2 = association2.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"They are equal...","code":["smallerAssociation1 == smallerAssociation2","smallerAssociation1.hashCode() == smallerAssociation2.hashCode()"]},
+
+        {"kind":"when","text":"We make them different by adding to them...","code":["var toAdd1 = subList.subList(0, (subList.size() * 0.5) as int).toSet()","var toAdd2 = subList.subList((subList.size() * 0.5) as int, subList.size()).toSet()","var lessSmallAssociation1 = smallerAssociation1.putAll(toAdd1)","var lessSmallAssociation2 = smallerAssociation2.putAll(toAdd2)"]},
+
+        {"kind":"then","text":"","code":["lessSmallAssociation1.size() == lessSmallAssociation2.size()","lessSmallAssociation1 != lessSmallAssociation2","lessSmallAssociation1.hashCode() != lessSmallAssociation2.hashCode()"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"keyType":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"valueType":["Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double"],"entries":["(0..24).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..24).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..24).collect(it -> Pair.of(it, -it)).toList()","(0..24).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..128).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..128).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..128).collect(it -> Pair.of(it, -it)).toList()","(0..128).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..1_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..1_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..1_000).collect(it -> Pair.of(it, -it)).toList()","(0..1_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..10_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..10_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..10_000).collect(it -> Pair.of(it, -it)).toList()","(0..10_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of an Association works reliably after a serious of modifications. [0]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between associations,\n            we can avoid a lot of work due to two associations sharing most of their branches.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort = (a, b) -> (keyHasher(a)<=>keyHasher(b))","entries.sort(randomSort)","var firstHalf = entries.subList(0, (entries.size() * 0.5) as int)","var secondHalf = entries.subList(1 + (entries.size() * 0.5) as int, entries.size())"]},
+
+        {"kind":"and","text":"","code":["var originalAssociation = Association.between(keyType, valueType).putAll(firstHalf)"]},
+
+        {"kind":"when","text":"","code":["var quarter = firstHalf.subList(0, (firstHalf.size() * 0.5) as int)","var toRemove = quarter.collect({it.first()}).toSet()","var associationModified = originalAssociation.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"","code":["associationModified != originalAssociation","associationModified.hashCode() != originalAssociation.hashCode()"]},
+
+        {"kind":"when","text":"","code":["var subSubList1 = secondHalf.subList(0, (secondHalf.size() * 0.5) as int)","var subSubList2 = secondHalf.subList((secondHalf.size() * 0.5) as int, secondHalf.size())","var associationModified1 = associationModified.putAll(subSubList1)","var associationModified2 = associationModified.putAll(subSubList2)"]},
+
+        {"kind":"then","text":"","code":["associationModified1.size() == associationModified2.size()","associationModified1 != associationModified2"]},
+
+        {"kind":"when","text":"","code":["associationModified = associationModified.putAll(firstHalf)"]},
+
+        {"kind":"then","text":"","code":["originalAssociation == associationModified","originalAssociation.hashCode() == associationModified.hashCode()"]},
+
+        {"kind":"when","text":"","code":["associationModified1 = associationModified.putAll(subSubList1)","associationModified2 = associationModified.putAll(subSubList2)"]},
+
+        {"kind":"then","text":"","code":["associationModified1.size() == associationModified2.size()","associationModified1 != associationModified2"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"keyType":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"valueType":["Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double"],"entries":["(0..24).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..24).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..24).collect(it -> Pair.of(it, -it)).toList()","(0..24).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..128).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..128).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..128).collect(it -> Pair.of(it, -it)).toList()","(0..128).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..1_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..1_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..1_000).collect(it -> Pair.of(it, -it)).toList()","(0..1_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..10_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..10_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..10_000).collect(it -> Pair.of(it, -it)).toList()","(0..10_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of an Association works reliably after a serious of modifications. [1]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between associations,\n            we can avoid a lot of work due to two associations sharing most of their branches.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort = (a, b) -> (keyHasher(a)<=>keyHasher(b))","entries.sort(randomSort)","var firstHalf = entries.subList(0, (entries.size() * 0.5) as int)","var secondHalf = entries.subList(1 + (entries.size() * 0.5) as int, entries.size())"]},
+
+        {"kind":"and","text":"","code":["var originalAssociation = Association.between(keyType, valueType).putAll(firstHalf)"]},
+
+        {"kind":"when","text":"","code":["var quarter = firstHalf.subList(0, (firstHalf.size() * 0.5) as int)","var toRemove = quarter.collect({it.first()}).toSet()","var associationModified = originalAssociation.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"","code":["associationModified != originalAssociation","associationModified.hashCode() != originalAssociation.hashCode()"]},
+
+        {"kind":"when","text":"","code":["var subSubList1 = secondHalf.subList(0, (secondHalf.size() * 0.5) as int)","var subSubList2 = secondHalf.subList((secondHalf.size() * 0.5) as int, secondHalf.size())","var associationModified1 = associationModified.putAll(subSubList1)","var associationModified2 = associationModified.putAll(subSubList2)"]},
+
+        {"kind":"then","text":"","code":["associationModified1.size() == associationModified2.size()","associationModified1 != associationModified2"]},
+
+        {"kind":"when","text":"","code":["associationModified = associationModified.putAll(firstHalf)"]},
+
+        {"kind":"then","text":"","code":["originalAssociation == associationModified","originalAssociation.hashCode() == associationModified.hashCode()"]},
+
+        {"kind":"when","text":"","code":["associationModified1 = associationModified.putAll(subSubList1)","associationModified2 = associationModified.putAll(subSubList2)"]},
+
+        {"kind":"then","text":"","code":["associationModified1.size() == associationModified2.size()","associationModified1 != associationModified2"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"keyType":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"valueType":["Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double"],"entries":["(0..24).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..24).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..24).collect(it -> Pair.of(it, -it)).toList()","(0..24).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..128).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..128).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..128).collect(it -> Pair.of(it, -it)).toList()","(0..128).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..1_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..1_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..1_000).collect(it -> Pair.of(it, -it)).toList()","(0..1_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..10_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..10_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..10_000).collect(it -> Pair.of(it, -it)).toList()","(0..10_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of an Association works reliably after a serious of modifications. [2]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between associations,\n            we can avoid a lot of work due to two associations sharing most of their branches.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort = (a, b) -> (keyHasher(a)<=>keyHasher(b))","entries.sort(randomSort)","var firstHalf = entries.subList(0, (entries.size() * 0.5) as int)","var secondHalf = entries.subList(1 + (entries.size() * 0.5) as int, entries.size())"]},
+
+        {"kind":"and","text":"","code":["var originalAssociation = Association.between(keyType, valueType).putAll(firstHalf)"]},
+
+        {"kind":"when","text":"","code":["var quarter = firstHalf.subList(0, (firstHalf.size() * 0.5) as int)","var toRemove = quarter.collect({it.first()}).toSet()","var associationModified = originalAssociation.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"","code":["associationModified != originalAssociation","associationModified.hashCode() != originalAssociation.hashCode()"]},
+
+        {"kind":"when","text":"","code":["var subSubList1 = secondHalf.subList(0, (secondHalf.size() * 0.5) as int)","var subSubList2 = secondHalf.subList((secondHalf.size() * 0.5) as int, secondHalf.size())","var associationModified1 = associationModified.putAll(subSubList1)","var associationModified2 = associationModified.putAll(subSubList2)"]},
+
+        {"kind":"then","text":"","code":["associationModified1.size() == associationModified2.size()","associationModified1 != associationModified2"]},
+
+        {"kind":"when","text":"","code":["associationModified = associationModified.putAll(firstHalf)"]},
+
+        {"kind":"then","text":"","code":["originalAssociation == associationModified","originalAssociation.hashCode() == associationModified.hashCode()"]},
+
+        {"kind":"when","text":"","code":["associationModified1 = associationModified.putAll(subSubList1)","associationModified2 = associationModified.putAll(subSubList2)"]},
+
+        {"kind":"then","text":"","code":["associationModified1.size() == associationModified2.size()","associationModified1 != associationModified2"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"keyType":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"valueType":["Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double"],"entries":["(0..24).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..24).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..24).collect(it -> Pair.of(it, -it)).toList()","(0..24).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..128).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..128).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..128).collect(it -> Pair.of(it, -it)).toList()","(0..128).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..1_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..1_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..1_000).collect(it -> Pair.of(it, -it)).toList()","(0..1_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..10_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..10_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..10_000).collect(it -> Pair.of(it, -it)).toList()","(0..10_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of an Association works reliably after a serious of modifications. [3]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between associations,\n            we can avoid a lot of work due to two associations sharing most of their branches.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort = (a, b) -> (keyHasher(a)<=>keyHasher(b))","entries.sort(randomSort)","var firstHalf = entries.subList(0, (entries.size() * 0.5) as int)","var secondHalf = entries.subList(1 + (entries.size() * 0.5) as int, entries.size())"]},
+
+        {"kind":"and","text":"","code":["var originalAssociation = Association.between(keyType, valueType).putAll(firstHalf)"]},
+
+        {"kind":"when","text":"","code":["var quarter = firstHalf.subList(0, (firstHalf.size() * 0.5) as int)","var toRemove = quarter.collect({it.first()}).toSet()","var associationModified = originalAssociation.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"","code":["associationModified != originalAssociation","associationModified.hashCode() != originalAssociation.hashCode()"]},
+
+        {"kind":"when","text":"","code":["var subSubList1 = secondHalf.subList(0, (secondHalf.size() * 0.5) as int)","var subSubList2 = secondHalf.subList((secondHalf.size() * 0.5) as int, secondHalf.size())","var associationModified1 = associationModified.putAll(subSubList1)","var associationModified2 = associationModified.putAll(subSubList2)"]},
+
+        {"kind":"then","text":"","code":["associationModified1.size() == associationModified2.size()","associationModified1 != associationModified2"]},
+
+        {"kind":"when","text":"","code":["associationModified = associationModified.putAll(firstHalf)"]},
+
+        {"kind":"then","text":"","code":["originalAssociation == associationModified","originalAssociation.hashCode() == associationModified.hashCode()"]},
+
+        {"kind":"when","text":"","code":["associationModified1 = associationModified.putAll(subSubList1)","associationModified2 = associationModified.putAll(subSubList2)"]},
+
+        {"kind":"then","text":"","code":["associationModified1.size() == associationModified2.size()","associationModified1 != associationModified2"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"keyType":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"valueType":["Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double"],"entries":["(0..24).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..24).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..24).collect(it -> Pair.of(it, -it)).toList()","(0..24).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..128).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..128).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..128).collect(it -> Pair.of(it, -it)).toList()","(0..128).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..1_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..1_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..1_000).collect(it -> Pair.of(it, -it)).toList()","(0..1_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..10_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..10_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..10_000).collect(it -> Pair.of(it, -it)).toList()","(0..10_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of an Association works reliably after a serious of modifications. [4]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between associations,\n            we can avoid a lot of work due to two associations sharing most of their branches.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort = (a, b) -> (keyHasher(a)<=>keyHasher(b))","entries.sort(randomSort)","var firstHalf = entries.subList(0, (entries.size() * 0.5) as int)","var secondHalf = entries.subList(1 + (entries.size() * 0.5) as int, entries.size())"]},
+
+        {"kind":"and","text":"","code":["var originalAssociation = Association.between(keyType, valueType).putAll(firstHalf)"]},
+
+        {"kind":"when","text":"","code":["var quarter = firstHalf.subList(0, (firstHalf.size() * 0.5) as int)","var toRemove = quarter.collect({it.first()}).toSet()","var associationModified = originalAssociation.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"","code":["associationModified != originalAssociation","associationModified.hashCode() != originalAssociation.hashCode()"]},
+
+        {"kind":"when","text":"","code":["var subSubList1 = secondHalf.subList(0, (secondHalf.size() * 0.5) as int)","var subSubList2 = secondHalf.subList((secondHalf.size() * 0.5) as int, secondHalf.size())","var associationModified1 = associationModified.putAll(subSubList1)","var associationModified2 = associationModified.putAll(subSubList2)"]},
+
+        {"kind":"then","text":"","code":["associationModified1.size() == associationModified2.size()","associationModified1 != associationModified2"]},
+
+        {"kind":"when","text":"","code":["associationModified = associationModified.putAll(firstHalf)"]},
+
+        {"kind":"then","text":"","code":["originalAssociation == associationModified","originalAssociation.hashCode() == associationModified.hashCode()"]},
+
+        {"kind":"when","text":"","code":["associationModified1 = associationModified.putAll(subSubList1)","associationModified2 = associationModified.putAll(subSubList2)"]},
+
+        {"kind":"then","text":"","code":["associationModified1.size() == associationModified2.size()","associationModified1 != associationModified2"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"keyType":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"valueType":["Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double"],"entries":["(0..24).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..24).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..24).collect(it -> Pair.of(it, -it)).toList()","(0..24).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..128).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..128).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..128).collect(it -> Pair.of(it, -it)).toList()","(0..128).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..1_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..1_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..1_000).collect(it -> Pair.of(it, -it)).toList()","(0..1_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..10_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..10_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..10_000).collect(it -> Pair.of(it, -it)).toList()","(0..10_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of an Association works reliably after a serious of modifications. [5]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between associations,\n            we can avoid a lot of work due to two associations sharing most of their branches.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort = (a, b) -> (keyHasher(a)<=>keyHasher(b))","entries.sort(randomSort)","var firstHalf = entries.subList(0, (entries.size() * 0.5) as int)","var secondHalf = entries.subList(1 + (entries.size() * 0.5) as int, entries.size())"]},
+
+        {"kind":"and","text":"","code":["var originalAssociation = Association.between(keyType, valueType).putAll(firstHalf)"]},
+
+        {"kind":"when","text":"","code":["var quarter = firstHalf.subList(0, (firstHalf.size() * 0.5) as int)","var toRemove = quarter.collect({it.first()}).toSet()","var associationModified = originalAssociation.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"","code":["associationModified != originalAssociation","associationModified.hashCode() != originalAssociation.hashCode()"]},
+
+        {"kind":"when","text":"","code":["var subSubList1 = secondHalf.subList(0, (secondHalf.size() * 0.5) as int)","var subSubList2 = secondHalf.subList((secondHalf.size() * 0.5) as int, secondHalf.size())","var associationModified1 = associationModified.putAll(subSubList1)","var associationModified2 = associationModified.putAll(subSubList2)"]},
+
+        {"kind":"then","text":"","code":["associationModified1.size() == associationModified2.size()","associationModified1 != associationModified2"]},
+
+        {"kind":"when","text":"","code":["associationModified = associationModified.putAll(firstHalf)"]},
+
+        {"kind":"then","text":"","code":["originalAssociation == associationModified","originalAssociation.hashCode() == associationModified.hashCode()"]},
+
+        {"kind":"when","text":"","code":["associationModified1 = associationModified.putAll(subSubList1)","associationModified2 = associationModified.putAll(subSubList2)"]},
+
+        {"kind":"then","text":"","code":["associationModified1.size() == associationModified2.size()","associationModified1 != associationModified2"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"keyType":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"valueType":["Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double"],"entries":["(0..24).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..24).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..24).collect(it -> Pair.of(it, -it)).toList()","(0..24).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..128).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..128).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..128).collect(it -> Pair.of(it, -it)).toList()","(0..128).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..1_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..1_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..1_000).collect(it -> Pair.of(it, -it)).toList()","(0..1_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..10_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..10_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..10_000).collect(it -> Pair.of(it, -it)).toList()","(0..10_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of an Association works reliably after a serious of modifications. [6]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between associations,\n            we can avoid a lot of work due to two associations sharing most of their branches.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort = (a, b) -> (keyHasher(a)<=>keyHasher(b))","entries.sort(randomSort)","var firstHalf = entries.subList(0, (entries.size() * 0.5) as int)","var secondHalf = entries.subList(1 + (entries.size() * 0.5) as int, entries.size())"]},
+
+        {"kind":"and","text":"","code":["var originalAssociation = Association.between(keyType, valueType).putAll(firstHalf)"]},
+
+        {"kind":"when","text":"","code":["var quarter = firstHalf.subList(0, (firstHalf.size() * 0.5) as int)","var toRemove = quarter.collect({it.first()}).toSet()","var associationModified = originalAssociation.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"","code":["associationModified != originalAssociation","associationModified.hashCode() != originalAssociation.hashCode()"]},
+
+        {"kind":"when","text":"","code":["var subSubList1 = secondHalf.subList(0, (secondHalf.size() * 0.5) as int)","var subSubList2 = secondHalf.subList((secondHalf.size() * 0.5) as int, secondHalf.size())","var associationModified1 = associationModified.putAll(subSubList1)","var associationModified2 = associationModified.putAll(subSubList2)"]},
+
+        {"kind":"then","text":"","code":["associationModified1.size() == associationModified2.size()","associationModified1 != associationModified2"]},
+
+        {"kind":"when","text":"","code":["associationModified = associationModified.putAll(firstHalf)"]},
+
+        {"kind":"then","text":"","code":["originalAssociation == associationModified","originalAssociation.hashCode() == associationModified.hashCode()"]},
+
+        {"kind":"when","text":"","code":["associationModified1 = associationModified.putAll(subSubList1)","associationModified2 = associationModified.putAll(subSubList2)"]},
+
+        {"kind":"then","text":"","code":["associationModified1.size() == associationModified2.size()","associationModified1 != associationModified2"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"keyType":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"valueType":["Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double"],"entries":["(0..24).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..24).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..24).collect(it -> Pair.of(it, -it)).toList()","(0..24).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..128).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..128).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..128).collect(it -> Pair.of(it, -it)).toList()","(0..128).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..1_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..1_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..1_000).collect(it -> Pair.of(it, -it)).toList()","(0..1_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..10_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..10_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..10_000).collect(it -> Pair.of(it, -it)).toList()","(0..10_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of an Association works reliably after a serious of modifications. [7]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between associations,\n            we can avoid a lot of work due to two associations sharing most of their branches.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort = (a, b) -> (keyHasher(a)<=>keyHasher(b))","entries.sort(randomSort)","var firstHalf = entries.subList(0, (entries.size() * 0.5) as int)","var secondHalf = entries.subList(1 + (entries.size() * 0.5) as int, entries.size())"]},
+
+        {"kind":"and","text":"","code":["var originalAssociation = Association.between(keyType, valueType).putAll(firstHalf)"]},
+
+        {"kind":"when","text":"","code":["var quarter = firstHalf.subList(0, (firstHalf.size() * 0.5) as int)","var toRemove = quarter.collect({it.first()}).toSet()","var associationModified = originalAssociation.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"","code":["associationModified != originalAssociation","associationModified.hashCode() != originalAssociation.hashCode()"]},
+
+        {"kind":"when","text":"","code":["var subSubList1 = secondHalf.subList(0, (secondHalf.size() * 0.5) as int)","var subSubList2 = secondHalf.subList((secondHalf.size() * 0.5) as int, secondHalf.size())","var associationModified1 = associationModified.putAll(subSubList1)","var associationModified2 = associationModified.putAll(subSubList2)"]},
+
+        {"kind":"then","text":"","code":["associationModified1.size() == associationModified2.size()","associationModified1 != associationModified2"]},
+
+        {"kind":"when","text":"","code":["associationModified = associationModified.putAll(firstHalf)"]},
+
+        {"kind":"then","text":"","code":["originalAssociation == associationModified","originalAssociation.hashCode() == associationModified.hashCode()"]},
+
+        {"kind":"when","text":"","code":["associationModified1 = associationModified.putAll(subSubList1)","associationModified2 = associationModified.putAll(subSubList2)"]},
+
+        {"kind":"then","text":"","code":["associationModified1.size() == associationModified2.size()","associationModified1 != associationModified2"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"keyType":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"valueType":["Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double"],"entries":["(0..24).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..24).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..24).collect(it -> Pair.of(it, -it)).toList()","(0..24).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..128).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..128).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..128).collect(it -> Pair.of(it, -it)).toList()","(0..128).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..1_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..1_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..1_000).collect(it -> Pair.of(it, -it)).toList()","(0..1_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..10_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..10_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..10_000).collect(it -> Pair.of(it, -it)).toList()","(0..10_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of an Association works reliably after a serious of modifications. [8]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between associations,\n            we can avoid a lot of work due to two associations sharing most of their branches.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort = (a, b) -> (keyHasher(a)<=>keyHasher(b))","entries.sort(randomSort)","var firstHalf = entries.subList(0, (entries.size() * 0.5) as int)","var secondHalf = entries.subList(1 + (entries.size() * 0.5) as int, entries.size())"]},
+
+        {"kind":"and","text":"","code":["var originalAssociation = Association.between(keyType, valueType).putAll(firstHalf)"]},
+
+        {"kind":"when","text":"","code":["var quarter = firstHalf.subList(0, (firstHalf.size() * 0.5) as int)","var toRemove = quarter.collect({it.first()}).toSet()","var associationModified = originalAssociation.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"","code":["associationModified != originalAssociation","associationModified.hashCode() != originalAssociation.hashCode()"]},
+
+        {"kind":"when","text":"","code":["var subSubList1 = secondHalf.subList(0, (secondHalf.size() * 0.5) as int)","var subSubList2 = secondHalf.subList((secondHalf.size() * 0.5) as int, secondHalf.size())","var associationModified1 = associationModified.putAll(subSubList1)","var associationModified2 = associationModified.putAll(subSubList2)"]},
+
+        {"kind":"then","text":"","code":["associationModified1.size() == associationModified2.size()","associationModified1 != associationModified2"]},
+
+        {"kind":"when","text":"","code":["associationModified = associationModified.putAll(firstHalf)"]},
+
+        {"kind":"then","text":"","code":["originalAssociation == associationModified","originalAssociation.hashCode() == associationModified.hashCode()"]},
+
+        {"kind":"when","text":"","code":["associationModified1 = associationModified.putAll(subSubList1)","associationModified2 = associationModified.putAll(subSubList2)"]},
+
+        {"kind":"then","text":"","code":["associationModified1.size() == associationModified2.size()","associationModified1 != associationModified2"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"keyType":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"valueType":["Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double"],"entries":["(0..24).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..24).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..24).collect(it -> Pair.of(it, -it)).toList()","(0..24).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..128).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..128).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..128).collect(it -> Pair.of(it, -it)).toList()","(0..128).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..1_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..1_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..1_000).collect(it -> Pair.of(it, -it)).toList()","(0..1_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..10_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..10_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..10_000).collect(it -> Pair.of(it, -it)).toList()","(0..10_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of an Association works reliably after a serious of modifications. [9]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between associations,\n            we can avoid a lot of work due to two associations sharing most of their branches.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort = (a, b) -> (keyHasher(a)<=>keyHasher(b))","entries.sort(randomSort)","var firstHalf = entries.subList(0, (entries.size() * 0.5) as int)","var secondHalf = entries.subList(1 + (entries.size() * 0.5) as int, entries.size())"]},
+
+        {"kind":"and","text":"","code":["var originalAssociation = Association.between(keyType, valueType).putAll(firstHalf)"]},
+
+        {"kind":"when","text":"","code":["var quarter = firstHalf.subList(0, (firstHalf.size() * 0.5) as int)","var toRemove = quarter.collect({it.first()}).toSet()","var associationModified = originalAssociation.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"","code":["associationModified != originalAssociation","associationModified.hashCode() != originalAssociation.hashCode()"]},
+
+        {"kind":"when","text":"","code":["var subSubList1 = secondHalf.subList(0, (secondHalf.size() * 0.5) as int)","var subSubList2 = secondHalf.subList((secondHalf.size() * 0.5) as int, secondHalf.size())","var associationModified1 = associationModified.putAll(subSubList1)","var associationModified2 = associationModified.putAll(subSubList2)"]},
+
+        {"kind":"then","text":"","code":["associationModified1.size() == associationModified2.size()","associationModified1 != associationModified2"]},
+
+        {"kind":"when","text":"","code":["associationModified = associationModified.putAll(firstHalf)"]},
+
+        {"kind":"then","text":"","code":["originalAssociation == associationModified","originalAssociation.hashCode() == associationModified.hashCode()"]},
+
+        {"kind":"when","text":"","code":["associationModified1 = associationModified.putAll(subSubList1)","associationModified2 = associationModified.putAll(subSubList2)"]},
+
+        {"kind":"then","text":"","code":["associationModified1.size() == associationModified2.size()","associationModified1 != associationModified2"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"keyType":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"valueType":["Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double"],"entries":["(0..24).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..24).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..24).collect(it -> Pair.of(it, -it)).toList()","(0..24).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..128).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..128).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..128).collect(it -> Pair.of(it, -it)).toList()","(0..128).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..1_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..1_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..1_000).collect(it -> Pair.of(it, -it)).toList()","(0..1_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..10_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..10_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..10_000).collect(it -> Pair.of(it, -it)).toList()","(0..10_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of an Association works reliably after a serious of modifications. [10]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between associations,\n            we can avoid a lot of work due to two associations sharing most of their branches.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort = (a, b) -> (keyHasher(a)<=>keyHasher(b))","entries.sort(randomSort)","var firstHalf = entries.subList(0, (entries.size() * 0.5) as int)","var secondHalf = entries.subList(1 + (entries.size() * 0.5) as int, entries.size())"]},
+
+        {"kind":"and","text":"","code":["var originalAssociation = Association.between(keyType, valueType).putAll(firstHalf)"]},
+
+        {"kind":"when","text":"","code":["var quarter = firstHalf.subList(0, (firstHalf.size() * 0.5) as int)","var toRemove = quarter.collect({it.first()}).toSet()","var associationModified = originalAssociation.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"","code":["associationModified != originalAssociation","associationModified.hashCode() != originalAssociation.hashCode()"]},
+
+        {"kind":"when","text":"","code":["var subSubList1 = secondHalf.subList(0, (secondHalf.size() * 0.5) as int)","var subSubList2 = secondHalf.subList((secondHalf.size() * 0.5) as int, secondHalf.size())","var associationModified1 = associationModified.putAll(subSubList1)","var associationModified2 = associationModified.putAll(subSubList2)"]},
+
+        {"kind":"then","text":"","code":["associationModified1.size() == associationModified2.size()","associationModified1 != associationModified2"]},
+
+        {"kind":"when","text":"","code":["associationModified = associationModified.putAll(firstHalf)"]},
+
+        {"kind":"then","text":"","code":["originalAssociation == associationModified","originalAssociation.hashCode() == associationModified.hashCode()"]},
+
+        {"kind":"when","text":"","code":["associationModified1 = associationModified.putAll(subSubList1)","associationModified2 = associationModified.putAll(subSubList2)"]},
+
+        {"kind":"then","text":"","code":["associationModified1.size() == associationModified2.size()","associationModified1 != associationModified2"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"keyType":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"valueType":["Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double"],"entries":["(0..24).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..24).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..24).collect(it -> Pair.of(it, -it)).toList()","(0..24).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..128).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..128).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..128).collect(it -> Pair.of(it, -it)).toList()","(0..128).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..1_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..1_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..1_000).collect(it -> Pair.of(it, -it)).toList()","(0..1_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..10_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..10_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..10_000).collect(it -> Pair.of(it, -it)).toList()","(0..10_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of an Association works reliably after a serious of modifications. [11]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between associations,\n            we can avoid a lot of work due to two associations sharing most of their branches.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort = (a, b) -> (keyHasher(a)<=>keyHasher(b))","entries.sort(randomSort)","var firstHalf = entries.subList(0, (entries.size() * 0.5) as int)","var secondHalf = entries.subList(1 + (entries.size() * 0.5) as int, entries.size())"]},
+
+        {"kind":"and","text":"","code":["var originalAssociation = Association.between(keyType, valueType).putAll(firstHalf)"]},
+
+        {"kind":"when","text":"","code":["var quarter = firstHalf.subList(0, (firstHalf.size() * 0.5) as int)","var toRemove = quarter.collect({it.first()}).toSet()","var associationModified = originalAssociation.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"","code":["associationModified != originalAssociation","associationModified.hashCode() != originalAssociation.hashCode()"]},
+
+        {"kind":"when","text":"","code":["var subSubList1 = secondHalf.subList(0, (secondHalf.size() * 0.5) as int)","var subSubList2 = secondHalf.subList((secondHalf.size() * 0.5) as int, secondHalf.size())","var associationModified1 = associationModified.putAll(subSubList1)","var associationModified2 = associationModified.putAll(subSubList2)"]},
+
+        {"kind":"then","text":"","code":["associationModified1.size() == associationModified2.size()","associationModified1 != associationModified2"]},
+
+        {"kind":"when","text":"","code":["associationModified = associationModified.putAll(firstHalf)"]},
+
+        {"kind":"then","text":"","code":["originalAssociation == associationModified","originalAssociation.hashCode() == associationModified.hashCode()"]},
+
+        {"kind":"when","text":"","code":["associationModified1 = associationModified.putAll(subSubList1)","associationModified2 = associationModified.putAll(subSubList2)"]},
+
+        {"kind":"then","text":"","code":["associationModified1.size() == associationModified2.size()","associationModified1 != associationModified2"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"keyType":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"valueType":["Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double"],"entries":["(0..24).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..24).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..24).collect(it -> Pair.of(it, -it)).toList()","(0..24).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..128).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..128).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..128).collect(it -> Pair.of(it, -it)).toList()","(0..128).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..1_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..1_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..1_000).collect(it -> Pair.of(it, -it)).toList()","(0..1_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..10_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..10_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..10_000).collect(it -> Pair.of(it, -it)).toList()","(0..10_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of an Association works reliably after a serious of modifications. [12]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between associations,\n            we can avoid a lot of work due to two associations sharing most of their branches.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort = (a, b) -> (keyHasher(a)<=>keyHasher(b))","entries.sort(randomSort)","var firstHalf = entries.subList(0, (entries.size() * 0.5) as int)","var secondHalf = entries.subList(1 + (entries.size() * 0.5) as int, entries.size())"]},
+
+        {"kind":"and","text":"","code":["var originalAssociation = Association.between(keyType, valueType).putAll(firstHalf)"]},
+
+        {"kind":"when","text":"","code":["var quarter = firstHalf.subList(0, (firstHalf.size() * 0.5) as int)","var toRemove = quarter.collect({it.first()}).toSet()","var associationModified = originalAssociation.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"","code":["associationModified != originalAssociation","associationModified.hashCode() != originalAssociation.hashCode()"]},
+
+        {"kind":"when","text":"","code":["var subSubList1 = secondHalf.subList(0, (secondHalf.size() * 0.5) as int)","var subSubList2 = secondHalf.subList((secondHalf.size() * 0.5) as int, secondHalf.size())","var associationModified1 = associationModified.putAll(subSubList1)","var associationModified2 = associationModified.putAll(subSubList2)"]},
+
+        {"kind":"then","text":"","code":["associationModified1.size() == associationModified2.size()","associationModified1 != associationModified2"]},
+
+        {"kind":"when","text":"","code":["associationModified = associationModified.putAll(firstHalf)"]},
+
+        {"kind":"then","text":"","code":["originalAssociation == associationModified","originalAssociation.hashCode() == associationModified.hashCode()"]},
+
+        {"kind":"when","text":"","code":["associationModified1 = associationModified.putAll(subSubList1)","associationModified2 = associationModified.putAll(subSubList2)"]},
+
+        {"kind":"then","text":"","code":["associationModified1.size() == associationModified2.size()","associationModified1 != associationModified2"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"keyType":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"valueType":["Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double"],"entries":["(0..24).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..24).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..24).collect(it -> Pair.of(it, -it)).toList()","(0..24).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..128).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..128).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..128).collect(it -> Pair.of(it, -it)).toList()","(0..128).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..1_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..1_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..1_000).collect(it -> Pair.of(it, -it)).toList()","(0..1_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..10_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..10_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..10_000).collect(it -> Pair.of(it, -it)).toList()","(0..10_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of an Association works reliably after a serious of modifications. [13]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between associations,\n            we can avoid a lot of work due to two associations sharing most of their branches.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort = (a, b) -> (keyHasher(a)<=>keyHasher(b))","entries.sort(randomSort)","var firstHalf = entries.subList(0, (entries.size() * 0.5) as int)","var secondHalf = entries.subList(1 + (entries.size() * 0.5) as int, entries.size())"]},
+
+        {"kind":"and","text":"","code":["var originalAssociation = Association.between(keyType, valueType).putAll(firstHalf)"]},
+
+        {"kind":"when","text":"","code":["var quarter = firstHalf.subList(0, (firstHalf.size() * 0.5) as int)","var toRemove = quarter.collect({it.first()}).toSet()","var associationModified = originalAssociation.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"","code":["associationModified != originalAssociation","associationModified.hashCode() != originalAssociation.hashCode()"]},
+
+        {"kind":"when","text":"","code":["var subSubList1 = secondHalf.subList(0, (secondHalf.size() * 0.5) as int)","var subSubList2 = secondHalf.subList((secondHalf.size() * 0.5) as int, secondHalf.size())","var associationModified1 = associationModified.putAll(subSubList1)","var associationModified2 = associationModified.putAll(subSubList2)"]},
+
+        {"kind":"then","text":"","code":["associationModified1.size() == associationModified2.size()","associationModified1 != associationModified2"]},
+
+        {"kind":"when","text":"","code":["associationModified = associationModified.putAll(firstHalf)"]},
+
+        {"kind":"then","text":"","code":["originalAssociation == associationModified","originalAssociation.hashCode() == associationModified.hashCode()"]},
+
+        {"kind":"when","text":"","code":["associationModified1 = associationModified.putAll(subSubList1)","associationModified2 = associationModified.putAll(subSubList2)"]},
+
+        {"kind":"then","text":"","code":["associationModified1.size() == associationModified2.size()","associationModified1 != associationModified2"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"keyType":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"valueType":["Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double"],"entries":["(0..24).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..24).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..24).collect(it -> Pair.of(it, -it)).toList()","(0..24).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..128).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..128).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..128).collect(it -> Pair.of(it, -it)).toList()","(0..128).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..1_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..1_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..1_000).collect(it -> Pair.of(it, -it)).toList()","(0..1_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..10_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..10_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..10_000).collect(it -> Pair.of(it, -it)).toList()","(0..10_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of an Association works reliably after a serious of modifications. [14]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between associations,\n            we can avoid a lot of work due to two associations sharing most of their branches.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort = (a, b) -> (keyHasher(a)<=>keyHasher(b))","entries.sort(randomSort)","var firstHalf = entries.subList(0, (entries.size() * 0.5) as int)","var secondHalf = entries.subList(1 + (entries.size() * 0.5) as int, entries.size())"]},
+
+        {"kind":"and","text":"","code":["var originalAssociation = Association.between(keyType, valueType).putAll(firstHalf)"]},
+
+        {"kind":"when","text":"","code":["var quarter = firstHalf.subList(0, (firstHalf.size() * 0.5) as int)","var toRemove = quarter.collect({it.first()}).toSet()","var associationModified = originalAssociation.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"","code":["associationModified != originalAssociation","associationModified.hashCode() != originalAssociation.hashCode()"]},
+
+        {"kind":"when","text":"","code":["var subSubList1 = secondHalf.subList(0, (secondHalf.size() * 0.5) as int)","var subSubList2 = secondHalf.subList((secondHalf.size() * 0.5) as int, secondHalf.size())","var associationModified1 = associationModified.putAll(subSubList1)","var associationModified2 = associationModified.putAll(subSubList2)"]},
+
+        {"kind":"then","text":"","code":["associationModified1.size() == associationModified2.size()","associationModified1 != associationModified2"]},
+
+        {"kind":"when","text":"","code":["associationModified = associationModified.putAll(firstHalf)"]},
+
+        {"kind":"then","text":"","code":["originalAssociation == associationModified","originalAssociation.hashCode() == associationModified.hashCode()"]},
+
+        {"kind":"when","text":"","code":["associationModified1 = associationModified.putAll(subSubList1)","associationModified2 = associationModified.putAll(subSubList2)"]},
+
+        {"kind":"then","text":"","code":["associationModified1.size() == associationModified2.size()","associationModified1 != associationModified2"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"keyType":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"valueType":["Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double"],"entries":["(0..24).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..24).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..24).collect(it -> Pair.of(it, -it)).toList()","(0..24).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..128).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..128).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..128).collect(it -> Pair.of(it, -it)).toList()","(0..128).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..1_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..1_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..1_000).collect(it -> Pair.of(it, -it)).toList()","(0..1_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..10_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..10_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..10_000).collect(it -> Pair.of(it, -it)).toList()","(0..10_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of an Association works reliably after a serious of modifications. [15]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between associations,\n            we can avoid a lot of work due to two associations sharing most of their branches.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort = (a, b) -> (keyHasher(a)<=>keyHasher(b))","entries.sort(randomSort)","var firstHalf = entries.subList(0, (entries.size() * 0.5) as int)","var secondHalf = entries.subList(1 + (entries.size() * 0.5) as int, entries.size())"]},
+
+        {"kind":"and","text":"","code":["var originalAssociation = Association.between(keyType, valueType).putAll(firstHalf)"]},
+
+        {"kind":"when","text":"","code":["var quarter = firstHalf.subList(0, (firstHalf.size() * 0.5) as int)","var toRemove = quarter.collect({it.first()}).toSet()","var associationModified = originalAssociation.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"","code":["associationModified != originalAssociation","associationModified.hashCode() != originalAssociation.hashCode()"]},
+
+        {"kind":"when","text":"","code":["var subSubList1 = secondHalf.subList(0, (secondHalf.size() * 0.5) as int)","var subSubList2 = secondHalf.subList((secondHalf.size() * 0.5) as int, secondHalf.size())","var associationModified1 = associationModified.putAll(subSubList1)","var associationModified2 = associationModified.putAll(subSubList2)"]},
+
+        {"kind":"then","text":"","code":["associationModified1.size() == associationModified2.size()","associationModified1 != associationModified2"]},
+
+        {"kind":"when","text":"","code":["associationModified = associationModified.putAll(firstHalf)"]},
+
+        {"kind":"then","text":"","code":["originalAssociation == associationModified","originalAssociation.hashCode() == associationModified.hashCode()"]},
+
+        {"kind":"when","text":"","code":["associationModified1 = associationModified.putAll(subSubList1)","associationModified2 = associationModified.putAll(subSubList2)"]},
+
+        {"kind":"then","text":"","code":["associationModified1.size() == associationModified2.size()","associationModified1 != associationModified2"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"keyType":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"valueType":["Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double"],"entries":["(0..24).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..24).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..24).collect(it -> Pair.of(it, -it)).toList()","(0..24).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..128).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..128).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..128).collect(it -> Pair.of(it, -it)).toList()","(0..128).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..1_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..1_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..1_000).collect(it -> Pair.of(it, -it)).toList()","(0..1_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..10_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..10_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..10_000).collect(it -> Pair.of(it, -it)).toList()","(0..10_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()"]}}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }
