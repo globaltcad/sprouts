@@ -883,26 +883,66 @@ final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
             return false;
         if (!other.type().equals(_type))
             return false;
-        if ( this._root instanceof LeafNode ) {
-            TupleTree<?> otherHamt = null;
-             if ( other instanceof TupleTree) {
-                 otherHamt = (TupleTree<?>) other;
-             } else if ( other instanceof TupleWithDiff<?>) {
-                 TupleWithDiff<?> otherDiff = (TupleWithDiff<?>) other;
-                 otherHamt = otherDiff.getData();
-             }
-            if ( otherHamt != null && otherHamt._root instanceof LeafNode ) {
-                LeafNode thisLeaf = (LeafNode) this._root;
-                LeafNode otherLeaf = (LeafNode) otherHamt._root;
-                return Val.equals(thisLeaf._data, otherLeaf._data);
-            }
+        if ( other instanceof TupleWithDiff ) {
+            other = ((TupleWithDiff)other).getData();
         }
-        for (int i = 0; i < this.size(); i++) {
-            if (!Objects.equals(this.get(i), other.get(i)))
+        TupleTree<?> otherHamt = null;
+        if ( other instanceof TupleTree ) {
+            otherHamt = (TupleTree<?>) other;
+        }
+        if ( otherHamt != null ) {
+            return _recursiveEquals(this._root, otherHamt._root, allowsNull(), type());
+        }
+        return _exhaustiveEquals(this, (Tuple<T>)other);
+    }
+
+
+    private static <E> boolean _exhaustiveEquals(Tuple<E> tuple1, Tuple<E> tuple2) {
+        if ( tuple2.size() != tuple1.size() ) {
+            return false;
+        }
+        for (int i = 0; i < tuple1.size(); i++) {
+            if (!Objects.equals(tuple1.get(i), tuple2.get(i)))
                 return false;
         }
         return true;
     }
+
+    private static <E> boolean _recursiveEquals(@Nullable Node node1, @Nullable Node node2, boolean allowsNull, Class<E> type) {
+        if ( node1 == node2 ) {
+            return true;
+        }
+        if ( node1 == null || node2 == null ) {
+            return false;
+        }
+        boolean firstIsLeaf = node1 instanceof LeafNode;
+        boolean secondIsLeaf = node2 instanceof LeafNode;
+        if ( firstIsLeaf && secondIsLeaf ) {
+            LeafNode thisLeaf = (LeafNode) node1;
+            LeafNode otherLeaf = (LeafNode) node2;
+            return Val.equals(thisLeaf._data, otherLeaf._data);
+        } else if ( !firstIsLeaf && !secondIsLeaf ) {
+            BranchNode branchNode1 = (BranchNode) node1;
+            BranchNode branchNode2 = (BranchNode) node2;
+            // same type
+            if (
+                branchNode1.size() == branchNode2.size() &&
+                branchNode1._children != branchNode2._children // The only difference is somewhere deep down!
+            ) {
+                for ( int i = 0; i < branchNode1._children.length; i++ ) {
+                    if ( !_recursiveEquals(branchNode1._children[i], branchNode2._children[i], allowsNull, type) ) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+        }
+        return _exhaustiveEquals(
+                new TupleTree<>(node1.size(), allowsNull, type, node1),
+                new TupleTree<>(node1.size(), allowsNull, type, node2)
+        );
+    }
+
 
     @Override
     public int hashCode() {
