@@ -722,61 +722,6 @@ final class SortedAssociationImpl<K, V> implements Association<K, V> {
     }
 
     @Override
-    public Map<K, V> toMap() {
-        return new AbstractMap<K, V>() {
-            @Override
-            public V get(Object key) {
-                if (key == null) {
-                    throw new NullPointerException("Null key");
-                }
-                if (!keyType().isAssignableFrom(key.getClass())) {
-                    throw new ClassCastException("Key type mismatch");
-                }
-                return SortedAssociationImpl.this.get((K) key).orElseThrow(
-                                () -> new NoSuchElementException("Key not found")
-                            );
-            }
-            @Override
-            public boolean containsKey(Object key) {
-                if (key == null) {
-                    throw new NullPointerException("Null key");
-                }
-                if (!keyType().isAssignableFrom(key.getClass())) {
-                    throw new ClassCastException("Key type mismatch");
-                }
-                return SortedAssociationImpl.this.containsKey((K) key);
-            }
-            @Override
-            public Set<Entry<K, V>> entrySet() {
-                return new AbstractSet<Entry<K, V>>() {
-                    @Override
-                    public Iterator<Entry<K, V>> iterator() {
-                        return new Iterator<Entry<K, V>>() {
-                            private final Iterator<Pair<K, V>> _iterator = SortedAssociationImpl.this.iterator();
-
-                            @Override
-                            public boolean hasNext() {
-                                return _iterator.hasNext();
-                            }
-
-                            @Override
-                            public Entry<K, V> next() {
-                                Pair<K, V> pair = _iterator.next();
-                                return new SimpleEntry<>(pair.first(), pair.second());
-                            }
-                        };
-                    }
-
-                    @Override
-                    public int size() {
-                        return SortedAssociationImpl.this.size();
-                    }
-                };
-            }
-        };
-    }
-
-    @Override
     public Spliterator<Pair<K, V>> spliterator() {
         return Spliterators.spliterator(iterator(), _root.size(),
                 Spliterator.SORTED   |

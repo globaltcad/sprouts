@@ -288,33 +288,6 @@ final class LinkedAssociation<K,V> implements Association<K, V>
     }
 
     @Override
-    public Map<K, V> toMap() {
-        return new AbstractMap<K, V>() {
-            @Override
-            public @Nullable V get(Object key) {
-                return LinkedAssociation.this.get((K) key).orElse(null);
-            }
-
-            @Override
-            public Set<Entry<K, V>> entrySet() {
-                return new AbstractSet<Entry<K, V>>() {
-                    @Override
-                    public Iterator<Entry<K, V>> iterator() {
-                        return StreamSupport.stream(LinkedAssociation.this.spliterator(), false)
-                                .map(pair -> (Map.Entry<K,V>)new AbstractMap.SimpleEntry<>(pair.first(), pair.second()))
-                                .iterator();
-                    }
-
-                    @Override
-                    public int size() {
-                        return LinkedAssociation.this.size();
-                    }
-                };
-            }
-        };
-    }
-
-    @Override
     public Spliterator<Pair<K,V>> spliterator() {
         return Spliterators.spliterator(iterator(), _entries.size(),
                         Spliterator.ORDERED |
