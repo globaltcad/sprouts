@@ -1457,4 +1457,155 @@ class Tuple_Spec extends Specification
             Integer  | (0..100).collect(it -> it).toList()
             String   | (0..100).collect(it -> String.valueOf(it)).toList()
     }
+
+
+    def 'The `equals` and `hashCode` implementations of a Tuple works reliably after removing a large part of elements.'(
+        Class<Object> type, List<Object> entries
+    ) {
+        reportInfo """
+            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.
+            This may look like an exaggerated amount of test data and equality checks, but you
+            have to know that under the hood specifically the `equals` implementations are
+            highly optimized to specific cases which need to be covered.
+            
+            More specifically, if there are only small differences between tuple, then
+            we can avoid a lot of work due to two tuples sharing most of their branches/nodes.
+        """
+        given : 'We create randomly sorted variants of the test data:'
+            var keyHasher1 = { (31 * it.hashCode() * (1997 * it.hashCode() ** 2)%128) as int }
+            var keyHasher2 = { (73 * it.hashCode() * (1997 * it.hashCode() ** 2)%256) as int }
+            Comparator<Object> randomSort1 = (a, b) -> (keyHasher1(a)<=>keyHasher1(b))
+            Comparator<Object> randomSort2 = (a, b) -> (keyHasher2(a)<=>keyHasher2(b))
+            var scrambledEntries1 = entries.toSorted(randomSort1)
+            var scrambledEntries2 = entries.toSorted(randomSort2)
+
+        when : 'We create two different `Tuple` instances from the two scrambled list...'
+            var tuple1 = Tuple.of(type).addAll(scrambledEntries1)
+            var tuple2 = Tuple.of(type).addAll(scrambledEntries2)
+        then : 'The two tuples are NOT equal!'
+            !tuple1.equals(tuple2)
+        and : 'They also do not have the same hash codes:'
+            tuple1.hashCode() != tuple2.hashCode()
+
+        when : '...we sort them...'
+            tuple1 = tuple1.sort(Comparator.naturalOrder())
+            tuple2 = tuple2.sort(Comparator.naturalOrder())
+        then : 'The two tuples are equal!'
+            tuple1.equals(tuple2)
+
+        when : 'We create versions of the associations where parts are removed...'
+            var subList = entries.subList(0, (entries.size() * 0.5) as int)
+            var toRemove = subList.collect({it}).toSet()
+            var smallerTuple1 = tuple1.removeAll(toRemove)
+            var smallerTuple2 = tuple2.removeAll(toRemove)
+        then : 'They are equal...'
+            smallerTuple1 == smallerTuple2
+            smallerTuple1.hashCode() == smallerTuple2.hashCode()
+
+        when : 'We make them different by adding to them...'
+            var toAdd1 = subList.subList(0, (subList.size() * 0.5) as int).toSet()
+            var toAdd2 = subList.subList((subList.size() * 0.5) as int, subList.size()).toSet()
+            var lessSmallTuple1 = smallerTuple1.addAll(toAdd1)
+            var lessSmallTuple2 = smallerTuple2.addAll(toAdd2)
+        then :
+            lessSmallTuple1.size() == lessSmallTuple2.size()
+            lessSmallTuple1 != lessSmallTuple2
+            lessSmallTuple1.hashCode() != lessSmallTuple2.hashCode()
+
+        where : 'We use the following entry data source:'
+            type     |   entries
+            Long     |  (0..24).collect(it -> it as Long).toList()
+            Short    |  (0..24).collect(it -> it as Short).toList()
+            Integer  |  (0..24).collect(it -> it).toList()
+            String   |  (0..24).collect(it -> String.valueOf(it)).toList()
+
+            Long     |  (0..128).collect(it -> it as Long).toList()
+            Short    |  (0..128).collect(it -> it as Short).toList()
+            Integer  |  (0..128).collect(it -> it).toList()
+            String   |  (0..128).collect(it -> String.valueOf(it)).toList()
+
+            Long     |  (0..1_000).collect(it -> it as Long).toList()
+            Short    |  (0..1_000).collect(it -> it as Short).toList()
+            Integer  |  (0..1_000).collect(it -> it).toList()
+            String   |  (0..1_000).collect(it -> String.valueOf(it)).toList()
+
+            Long     |  (0..10_000).collect(it -> it as Long).toList()
+            Short    |  (0..10_000).collect(it -> it as Short).toList()
+            Integer  |  (0..10_000).collect(it -> it).toList()
+            String   |  (0..10_000).collect(it -> String.valueOf(it)).toList()
+    }
+
+    def 'The `equals` and `hashCode` implementations of a Tuple works reliably after a serious of modifications.'(
+        Class<Object> type, List<Object> items
+    ) {
+        reportInfo """
+            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.
+            This may look like an exaggerated amount of test data and equality checks, but you
+            have to know that under the hood specifically the `equals` implementations are
+            highly optimized to specific cases which need to be covered.
+            
+            More specifically, if there are only small differences between tuples, then
+            we can avoid a lot of work due to two tuples sharing most of their branches/nodes.
+        """
+        given : 'We create randomly sorted variants of the test data:'
+            var keyHasher = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }
+            Comparator<Object> randomSort = (a, b) -> (keyHasher(a)<=>keyHasher(b))
+            items.sort(randomSort)
+            var firstHalf = items.subList(0, (items.size() * 0.5) as int)
+            var secondHalf = items.subList(1 + (items.size() * 0.5) as int, items.size())
+        and :
+            var originalTuple = Tuple.of(type).addAll(firstHalf)
+
+        when :
+            var quarter = firstHalf.subList(0, (firstHalf.size() * 0.5) as int)
+            var modifiedTuple = originalTuple.removeAll(quarter.toSet())
+        then :
+            modifiedTuple != originalTuple
+            modifiedTuple.hashCode() != originalTuple.hashCode()
+
+        when :
+            var subSubList1 = secondHalf.subList(0, (secondHalf.size() * 0.5) as int)
+            var subSubList2 = secondHalf.subList((secondHalf.size() * 0.5) as int, secondHalf.size())
+            int randomIndex = Math.abs(modifiedTuple.hashCode()) % modifiedTuple.size()
+            var modifiedTuple1 = modifiedTuple.addAllAt(randomIndex, subSubList1)
+            var modifiedTuple2 = modifiedTuple.addAllAt(randomIndex, subSubList2)
+        then :
+            modifiedTuple1.size() == modifiedTuple2.size()
+            modifiedTuple1 != modifiedTuple2
+
+        when :
+            modifiedTuple = modifiedTuple.addAll(firstHalf)
+        then :
+            originalTuple != modifiedTuple
+            originalTuple.hashCode() != modifiedTuple.hashCode()
+
+        when :
+            modifiedTuple1 = modifiedTuple.addAllAt(randomIndex, subSubList1)
+            modifiedTuple2 = modifiedTuple.addAllAt(randomIndex, subSubList2)
+        then :
+            modifiedTuple1.size() == modifiedTuple2.size()
+            modifiedTuple1 != modifiedTuple2
+
+        where : 'We use the following entry data source:'
+            type     |  items
+            Long     | (0..24).collect(it -> it as Long).toList()
+            Short    | (0..24).collect(it -> it as Short).toList()
+            Integer  | (0..24).collect(it -> it).toList()
+            String   | (0..24).collect(it -> String.valueOf(it)).toList()
+
+            Long     | (0..128).collect(it -> it as Long).toList()
+            Short    | (0..128).collect(it -> it as Short).toList()
+            Integer  | (0..128).collect(it -> it).toList()
+            String   | (0..128).collect(it -> String.valueOf(it)).toList()
+
+            Long     | (0..1_000).collect(it -> it as Long).toList()
+            Short    | (0..1_000).collect(it -> it as Short).toList()
+            Integer  | (0..1_000).collect(it -> it).toList()
+            String   | (0..1_000).collect(it -> String.valueOf(it)).toList()
+
+            Long     | (0..10_000).collect(it -> it as Long).toList()
+            Short    | (0..10_000).collect(it -> it as Short).toList()
+            Integer  | (0..10_000).collect(it -> it).toList()
+            String   | (0..10_000).collect(it -> String.valueOf(it)).toList()
+    }
 }
