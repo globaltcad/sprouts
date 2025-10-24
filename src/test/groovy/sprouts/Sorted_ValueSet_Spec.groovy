@@ -680,7 +680,7 @@ class Sorted_ValueSet_Spec extends Specification {
             String   |  (0..10_000).collect(it -> String.valueOf(it)).toList()
     }
 
-    def 'The `equals` and `hashCode` implementations of a sorted ValueSet works reliably after a serious of modifications.'(
+    def 'The `equals` and `hashCode` implementations of a sorted ValueSet works reliably after a series of modifications.'(
         Class<Object> type, List<Object> entries
     ) {
         reportInfo """
@@ -692,7 +692,7 @@ class Sorted_ValueSet_Spec extends Specification {
             More specifically, if there are only small differences between sorted value sets,
             we can avoid a lot of work due to two sets sharing most of their branches.
         """
-        given : 'We create randomly randomly sorted variants of the test data:'
+        given : 'We create randomly sorted variants of the test data:'
             var keyHasher = { (31 * it.hashCode() * (1997 * it.hashCode() ** 3)%2048) as int }
             Comparator<Object> randomSort = (a, b) -> (keyHasher(a)<=>keyHasher(b))
             entries.sort(randomSort)

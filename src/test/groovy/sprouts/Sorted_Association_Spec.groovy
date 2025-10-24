@@ -1594,7 +1594,7 @@ class Sorted_Association_Spec extends Specification
             String   | Double      |  (0..10_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()
     }
 
-    def 'The `equals` and `hashCode` implementations of a sorted Association works reliably after a serious of modifications.'(
+    def 'The `equals` and `hashCode` implementations of a sorted Association works reliably after a series of modifications.'(
         Class<Object> keyType, Class<Object> valueType, List<Pair<Object, Object>> entries
     ) {
         reportInfo """

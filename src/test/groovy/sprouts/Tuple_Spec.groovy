@@ -1535,7 +1535,7 @@ class Tuple_Spec extends Specification
             String   |  (0..10_000).collect(it -> String.valueOf(it)).toList()
     }
 
-    def 'The `equals` and `hashCode` implementations of a Tuple works reliably after a serious of modifications.'(
+    def 'The `equals` and `hashCode` implementations of a Tuple works reliably after a series of modifications.'(
         Class<Object> type, List<Object> items
     ) {
         reportInfo """
