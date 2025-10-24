@@ -367,7 +367,11 @@ final class LinkedValueSet<E> implements ValueSet<E> {
         }
         int hash = 7;
         hash = 31 * hash + Objects.hashCode(_entries.keyType());
-        hash = 31 * hash + toSet().hashCode();
+        int elementsHash = 0;
+        for ( E element : this ) {
+            elementsHash += Objects.hashCode(element);
+        }
+        hash = 31 * hash + elementsHash;
         _cachedHashCode.set(hash);
         return hash;
     }

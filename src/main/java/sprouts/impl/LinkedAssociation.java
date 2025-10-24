@@ -443,7 +443,10 @@ final class LinkedAssociation<K,V> implements Association<K, V>
         int result = _valueType.hashCode();
         result = 31 * result + _entries.keyType().hashCode();
         result = 31 * result + _entries.size();
-        result = 31 * result + toMap().hashCode();
+        int pairsHash = 0;
+        for (Pair<K, V> kvPair : this)
+            pairsHash += kvPair.hashCode();
+        result = 31 * result + pairsHash;
         _cachedHashCode.set(result);
         return result;
     }
