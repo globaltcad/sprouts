@@ -8,6 +8,7 @@ import sprouts.ValueSet;
 
 import java.lang.reflect.Array;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static sprouts.impl.ArrayUtil.*;
 
@@ -94,6 +95,7 @@ final class AssociationImpl<K, V> implements Association<K, V> {
     final ArrayItemAccess<K, Object> _keyGetter;
     final ArrayItemAccess<V, Object> _valueGetter;
     final Node<K,V> _root;
+    private final AtomicReference<@Nullable Integer> _cachedHashCode = new AtomicReference<>(null);
 
     static final class Node<K,V> {
         final int _depth;
@@ -676,7 +678,13 @@ final class AssociationImpl<K, V> implements Association<K, V> {
 
     @Override
     public int hashCode() {
-        return Long.hashCode(_recursiveHashCode(_root));
+        Integer cached = _cachedHashCode.get();
+        if ( cached != null ) {
+            return cached;
+        }
+        int result = Long.hashCode(_recursiveHashCode(_root));
+        _cachedHashCode.set(result);
+        return result;
     }
 
     private static <K,V> long _recursiveHashCode(Node<K, V> node) {

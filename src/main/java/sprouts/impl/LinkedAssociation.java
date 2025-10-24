@@ -7,6 +7,7 @@ import sprouts.Tuple;
 import sprouts.ValueSet;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.StreamSupport;
 
 final class LinkedAssociation<K,V> implements Association<K, V>
@@ -67,6 +68,7 @@ final class LinkedAssociation<K,V> implements Association<K, V>
     private final AssociationImpl<K, LinkedEntry<K, V>> _entries;
     private final @Nullable K _firstInsertedKey;
     private final @Nullable K _lastInsertedKey;
+    private final AtomicReference<@Nullable Integer> _cachedHashCode = new AtomicReference<>(null);
 
     LinkedAssociation(
         final Class<K> keyType,
@@ -434,10 +436,15 @@ final class LinkedAssociation<K,V> implements Association<K, V>
 
     @Override
     public int hashCode() {
+        Integer cached = _cachedHashCode.get();
+        if ( cached != null ) {
+            return cached;
+        }
         int result = _valueType.hashCode();
         result = 31 * result + _entries.keyType().hashCode();
         result = 31 * result + _entries.size();
         result = 31 * result + toMap().hashCode();
+        _cachedHashCode.set(result);
         return result;
     }
 

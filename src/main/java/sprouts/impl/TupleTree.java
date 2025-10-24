@@ -6,6 +6,7 @@ import sprouts.Val;
 
 import java.lang.reflect.Array;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -411,6 +412,7 @@ final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
     private final Class<T> _type;
     private final ArrayItemAccess<T, Object> _itemGetter;
     private final Node _root;
+    private final AtomicReference<@Nullable Integer> _cachedHashCode = new AtomicReference<>(null);
 
     /**
      * Creates a new {@link TupleTree} with the given list of items.
@@ -946,12 +948,17 @@ final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
 
     @Override
     public int hashCode() {
+        Integer cached = _cachedHashCode.get();
+        if ( cached != null )
+            return cached;
         int hash = _type.hashCode() ^ _size;
         for (int i = 0; i < _size; i++) {
             T item = get(i);
             hash = 31 * hash + (item == null ? 0 : item.hashCode());
         }
-        return hash ^ (_allowsNull ? 1 : 0);
+        int result = hash ^ (_allowsNull ? 1 : 0);
+        _cachedHashCode.set(result);
+        return result;
     }
 
     private static final class TupleIterator<T> implements Iterator<T>

@@ -4,6 +4,7 @@ import org.jspecify.annotations.Nullable;
 import sprouts.*;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static sprouts.impl.ArrayUtil.*;
 
@@ -24,6 +25,7 @@ final class SortedAssociationImpl<K, V> implements Association<K, V> {
     private final ArrayItemAccess<V, Object> _valueGetter;
     private final Comparator<K> _keyComparator;
     private final Node _root;
+    private final AtomicReference<@Nullable Integer> _cachedHashCode = new AtomicReference<>(null);
 
 
     static class Node {
@@ -797,12 +799,18 @@ final class SortedAssociationImpl<K, V> implements Association<K, V> {
 
     @Override
     public int hashCode() {
+        Integer cached = _cachedHashCode.get();
+        if (cached != null) {
+            return cached;
+        }
         int headerHash = Objects.hash(_keyType, _valueType, _keyComparator);
         int contentHash = 31;
         for (Pair<K, V> thisPair : this) {
             contentHash = 31 * contentHash + Objects.hash(thisPair.first(), thisPair.second());
         }
-        return 31 * headerHash + contentHash;
+        int result = 31 * headerHash + contentHash;
+        _cachedHashCode.set(result);
+        return result;
     }
 
     @Override

@@ -7,6 +7,7 @@ import sprouts.ValueSet;
 
 import java.lang.reflect.Array;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 import static sprouts.impl.ArrayUtil.*;
@@ -77,6 +78,7 @@ final class ValueSetImpl<E> implements ValueSet<E> {
     private final Class<E> _type;
     private final ArrayItemAccess<E, Object> _itemGetter;
     private final Node<E> _root;
+    private final AtomicReference<@Nullable Integer> _cachedHashCode = new AtomicReference<>(null);
 
     private static class Node<E> {
 
@@ -621,7 +623,13 @@ final class ValueSetImpl<E> implements ValueSet<E> {
 
     @Override
     public int hashCode() {
-        return Long.hashCode(_recursiveHashCode(_root));
+        Integer cached = _cachedHashCode.get();
+        if ( cached != null ) {
+            return cached;
+        }
+        int result = Long.hashCode(_recursiveHashCode(_root));
+        _cachedHashCode.set(result);
+        return result;
     }
 
     private static <E> long _recursiveHashCode(Node<E> node) {
