@@ -939,7 +939,7 @@ final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
         }
         return _exhaustiveEquals(
                 new TupleTree<>(node1.size(), allowsNull, type, node1),
-                new TupleTree<>(node1.size(), allowsNull, type, node2)
+                new TupleTree<>(node2.size(), allowsNull, type, node2)
         );
     }
 
