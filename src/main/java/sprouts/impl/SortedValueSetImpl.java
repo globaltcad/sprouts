@@ -635,15 +635,48 @@ final class SortedValueSetImpl<E> implements ValueSet<E> {
         boolean headersEqual = Objects.equals(_type, other._type) && Objects.equals(_comparator, other._comparator);
         if (!headersEqual)
             return false;
+        if ( this.size() != other.size() ) {
+            return false;
+        }
+        return _recursiveEquals(this._root, other._root, type(), _comparator);
+    }
 
-        Iterator<E> thisIterator = iterator();
-        Iterator<E> otherIterator = (Iterator<E>) other.iterator();
+    private static <E> boolean _exhaustiveEquals(SortedValueSetImpl<E> set1, SortedValueSetImpl<E> set2) {
+        Iterator<E> thisIterator = set1.iterator();
+        Iterator<E> otherIterator = set2.iterator();
         while (thisIterator.hasNext() && otherIterator.hasNext()) {
             if (!Objects.equals(thisIterator.next(), otherIterator.next())) {
                 return false;
             }
         }
         return !thisIterator.hasNext() && !otherIterator.hasNext();
+    }
+
+    private static <E> boolean _recursiveEquals(@Nullable Node node1, @Nullable Node node2, Class<E> type, Comparator<E> comparator) {
+        if ( node1 == node2 ) {
+            return true;
+        }
+        if ( node1 == null || node2 == null ) {
+            return false;
+        }
+        if (
+            node1._size == node2._size &&
+            node1._elementsArray == node2._elementsArray &&
+            (node1._left != node2._left || node1._right != node2._right)  // The only difference is somewhere deep down!
+        ) {
+            if ( !_recursiveEquals(node1._left, node2._left, type, comparator) ) {
+                return false;
+            }
+            if ( !_recursiveEquals(node1._right, node2._right, type, comparator) ) {
+                return false;
+            }
+            return true;
+        } else {
+            return _exhaustiveEquals(
+                    new SortedValueSetImpl<>(type, comparator, node1),
+                    new SortedValueSetImpl<>(type, comparator, node2)
+                );
+        }
     }
 
     @Override

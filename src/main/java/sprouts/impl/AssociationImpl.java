@@ -560,35 +560,6 @@ final class AssociationImpl<K, V> implements Association<K, V> {
     }
 
     @Override
-    public Map<K, V> toMap() {
-        Map<K, V> map = new java.util.HashMap<>();
-        _toMapRecursively(_root, _keyGetter, _valueGetter, map);
-        return Collections.unmodifiableMap(map);
-    }
-
-    private static <K,V> void _toMapRecursively(
-        final Node<K,V> node,
-        final ArrayItemAccess<K, Object> keyGetter,
-        final ArrayItemAccess<V, Object> valueGetter,
-        final Map<K, V> map
-    ) {
-        final Object keysArray = node._keysArray;
-        final Object valuesArray = node._valuesArray;
-        final Node<K, V>[] branches = node._branches;
-        final int size = _length(keysArray);
-        for (int i = 0; i < size; i++) {
-            K key = keyGetter.get(i, keysArray);
-            V value = valueGetter.get(i, valuesArray);
-            map.put(key, value);
-        }
-        for (Node<K, V> branch : branches) {
-            if (branch != null) {
-                _toMapRecursively(branch, keyGetter, valueGetter, map);
-            }
-        }
-    }
-
-    @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("Association<");

@@ -674,12 +674,12 @@ class ValueSet_Spec extends Specification {
         when : 'We create two different `ValueSet` instances from the two scrambled list...'
             var set1 = ValueSet.of(type).addAll(scrambledEntries1)
             var set2 = ValueSet.of(type).addAll(scrambledEntries2)
-        then : 'The two associations are equal!'
+        then : 'The two sets are equal!'
             set1.equals(set2)
         and : 'They also have the same hash codes:'
             set1.hashCode() == set2.hashCode()
 
-        when : 'We create versions of the associations where parts are removed...'
+        when : 'We create versions of the sets where parts are removed...'
             var subList = entries.subList(0, (entries.size() * 0.5) as int)
             var toRemove = subList.collect({it}).toSet()
             var smallerSet1 = set1.removeAll(toRemove)

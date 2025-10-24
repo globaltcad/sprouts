@@ -1181,7 +1181,59 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
      *
      * @return A java.util.Map representation of this association.
      */
-    Map<K, V> toMap();
+    default Map<K, V> toMap() {
+        return new AbstractMap<K, V>() {
+            @Override
+            public V get(Object key) {
+                if (key == null) {
+                    throw new NullPointerException("Null key");
+                }
+                if (!keyType().isAssignableFrom(key.getClass())) {
+                    throw new ClassCastException("Key type mismatch");
+                }
+                return Association.this.get((K) key).orElseThrow(
+                        () -> new NoSuchElementException("Key not found")
+                );
+            }
+            @Override
+            public boolean containsKey(Object key) {
+                if (key == null) {
+                    throw new NullPointerException("Null key");
+                }
+                if (!keyType().isAssignableFrom(key.getClass())) {
+                    throw new ClassCastException("Key type mismatch");
+                }
+                return Association.this.containsKey((K) key);
+            }
+            @Override
+            public Set<Entry<K, V>> entrySet() {
+                return new AbstractSet<Entry<K, V>>() {
+                    @Override
+                    public Iterator<Entry<K, V>> iterator() {
+                        return new Iterator<Entry<K, V>>() {
+                            private final Iterator<Pair<K, V>> _iterator = Association.this.iterator();
+
+                            @Override
+                            public boolean hasNext() {
+                                return _iterator.hasNext();
+                            }
+
+                            @Override
+                            public Entry<K, V> next() {
+                                Pair<K, V> pair = _iterator.next();
+                                return new SimpleEntry<>(pair.first(), pair.second());
+                            }
+                        };
+                    }
+
+                    @Override
+                    public int size() {
+                        return Association.this.size();
+                    }
+                };
+            }
+        };
+    }
 
     /**
      *  Checks if any of the key-value pairs in this association match the given predicate

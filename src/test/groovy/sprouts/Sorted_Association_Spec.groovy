@@ -1522,4 +1522,149 @@ class Sorted_Association_Spec extends Specification
         where:
             size << [0, 1, 2, 10, 100, 1000]
     }
+
+
+    def 'The `equals` and `hashCode` implementations of a sorted Association works reliably after removing a large part of entries.'(
+        Class<Object> keyType, Class<Object> valueType, List<Pair<Object, Object>> entries
+    ) {
+        reportInfo """
+            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.
+            This may look like an exaggerated amount of test data and equality checks, but you
+            have to know that under the hood specifically the `equals` implementations are
+            highly optimized to specific cases which need to be covered.
+            
+            More specifically, if there are only small differences between sorted associations,
+            we can avoid a lot of work due to two sorted associations sharing most of their branches.
+        """
+        given : 'We create randomly sorted variants of the test data:'
+            var keyHasher1 = { (31 * it.hashCode() * (1997 * it.hashCode() ** 3)%1024) as int }
+            var keyHasher2 = { (256 * it.hashCode() * (1997 * it.hashCode() ** 2)%256) as int }
+            Comparator<Object> randomSort1 = (a, b) -> (keyHasher1(a)<=>keyHasher1(b))
+            Comparator<Object> randomSort2 = (a, b) -> (keyHasher2(a)<=>keyHasher2(b))
+            var scrambledEntries1 = entries.toSorted(randomSort1)
+            var scrambledEntries2 = entries.toSorted(randomSort2)
+
+        when : 'We create two different sorted `Association` instances from the two scrambled list...'
+            var association1 = Association.betweenSorted(keyType, valueType).putAll(scrambledEntries1)
+            var association2 = Association.betweenSorted(keyType, valueType).putAll(scrambledEntries2)
+        then : 'The two associations are equal!'
+            association1.equals(association2)
+        and : 'They also have the same hash codes:'
+            association1.hashCode() == association2.hashCode()
+
+        when : 'We create versions of the associations where parts are removed...'
+            var subList = entries.subList(0, (entries.size() * 0.5) as int)
+            var toRemove = subList.collect({it.first()}).toSet()
+            var smallerAssociation1 = association1.removeAll(toRemove)
+            var smallerAssociation2 = association2.removeAll(toRemove)
+        then : 'They are equal...'
+            smallerAssociation1 == smallerAssociation2
+            smallerAssociation1.hashCode() == smallerAssociation2.hashCode()
+
+        when : 'We make them different by adding to them...'
+            var toAdd1 = subList.subList(0, (subList.size() * 0.5) as int).toSet()
+            var toAdd2 = subList.subList((subList.size() * 0.5) as int, subList.size()).toSet()
+            var lessSmallAssociation1 = smallerAssociation1.putAll(toAdd1)
+            var lessSmallAssociation2 = smallerAssociation2.putAll(toAdd2)
+        then :
+            lessSmallAssociation1.size() == lessSmallAssociation2.size()
+            lessSmallAssociation1 != lessSmallAssociation2
+            lessSmallAssociation1.hashCode() != lessSmallAssociation2.hashCode()
+
+        where : 'We use the following entry data source:'
+            keyType  |  valueType  |   entries
+            Long     | Boolean     |  (0..24).collect(it -> Pair.of(it as Long, it%2==0)).toList()
+            Short    | Byte        |  (0..24).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()
+            Integer  | Integer     |  (0..24).collect(it -> Pair.of(it, -it)).toList()
+            String   | Double      |  (0..24).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()
+
+            Long     | Boolean     |  (0..128).collect(it -> Pair.of(it as Long, it%2==0)).toList()
+            Short    | Byte        |  (0..128).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()
+            Integer  | Integer     |  (0..128).collect(it -> Pair.of(it, -it)).toList()
+            String   | Double      |  (0..128).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()
+
+            Long     | Boolean     |  (0..1_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()
+            Short    | Byte        |  (0..1_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()
+            Integer  | Integer     |  (0..1_000).collect(it -> Pair.of(it, -it)).toList()
+            String   | Double      |  (0..1_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()
+
+            Long     | Boolean     |  (0..10_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()
+            Short    | Byte        |  (0..10_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()
+            Integer  | Integer     |  (0..10_000).collect(it -> Pair.of(it, -it)).toList()
+            String   | Double      |  (0..10_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()
+    }
+
+    def 'The `equals` and `hashCode` implementations of a sorted Association works reliably after a series of modifications.'(
+        Class<Object> keyType, Class<Object> valueType, List<Pair<Object, Object>> entries
+    ) {
+        reportInfo """
+            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.
+            This may look like an exaggerated amount of test data and equality checks, but you
+            have to know that under the hood specifically the `equals` implementations are
+            highly optimized to specific cases which need to be covered.
+            
+            More specifically, if there are only small differences between sorted associations,
+            we can avoid a lot of work due to two  sorted associations sharing most of their branches.
+        """
+        given : 'We create randomly sorted variants of the test data:'
+            var keyHasher = {42 * it.hashCode() * (1997 * it.hashCode() ** 3)%256}
+            Comparator<Object> randomSort = (a, b) -> (keyHasher(a)<=>keyHasher(b))
+            entries.sort(randomSort)
+            var firstHalf = entries.subList(0, (entries.size() * 0.5) as int)
+            var secondHalf = entries.subList(1 + (entries.size() * 0.5) as int, entries.size())
+        and :
+            var originalAssociation = Association.betweenSorted(keyType, valueType).putAll(firstHalf)
+
+        when :
+            var quarter = firstHalf.subList(0, (firstHalf.size() * 0.5) as int)
+            var toRemove = quarter.collect({it.first()}).toSet()
+            var associationModified = originalAssociation.removeAll(toRemove)
+        then :
+            associationModified != originalAssociation
+            associationModified.hashCode() != originalAssociation.hashCode()
+
+        when :
+            var subSubList1 = secondHalf.subList(0, (secondHalf.size() * 0.5) as int)
+            var subSubList2 = secondHalf.subList((secondHalf.size() * 0.5) as int, secondHalf.size())
+            var associationModified1 = associationModified.putAll(subSubList1)
+            var associationModified2 = associationModified.putAll(subSubList2)
+        then :
+            associationModified1.size() == associationModified2.size()
+            associationModified1 != associationModified2
+
+        when :
+            associationModified = associationModified.putAll(firstHalf)
+        then :
+            originalAssociation == associationModified
+            originalAssociation.hashCode() == associationModified.hashCode()
+
+        when :
+            associationModified1 = associationModified.putAll(subSubList1)
+            associationModified2 = associationModified.putAll(subSubList2)
+        then :
+            associationModified1.size() == associationModified2.size()
+            associationModified1 != associationModified2
+
+        where : 'We use the following entry data source:'
+            keyType  |  valueType  |   entries
+            Long     | Boolean     |  (0..24).collect(it -> Pair.of(it as Long, it%2==0)).toList()
+            Short    | Byte        |  (0..24).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()
+            Integer  | Integer     |  (0..24).collect(it -> Pair.of(it, -it)).toList()
+            String   | Double      |  (0..24).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()
+
+            Long     | Boolean     |  (0..128).collect(it -> Pair.of(it as Long, it%2==0)).toList()
+            Short    | Byte        |  (0..128).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()
+            Integer  | Integer     |  (0..128).collect(it -> Pair.of(it, -it)).toList()
+            String   | Double      |  (0..128).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()
+
+            Long     | Boolean     |  (0..1_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()
+            Short    | Byte        |  (0..1_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()
+            Integer  | Integer     |  (0..1_000).collect(it -> Pair.of(it, -it)).toList()
+            String   | Double      |  (0..1_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()
+
+            Long     | Boolean     |  (0..10_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()
+            Short    | Byte        |  (0..10_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()
+            Integer  | Integer     |  (0..10_000).collect(it -> Pair.of(it, -it)).toList()
+            String   | Double      |  (0..10_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()
+    }
 }

@@ -609,4 +609,147 @@ class Sorted_ValueSet_Spec extends Specification {
             thrown(UnsupportedOperationException)
     }
 
+
+    def 'The `equals` and `hashCode` implementations of a sorted ValueSet works reliably after removing a large part of elements.'(
+        Class<Object> type, List<Object> entries
+    ) {
+        reportInfo """
+            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.
+            This may look like an exaggerated amount of test data and equality checks, but you
+            have to know that under the hood specifically the `equals` implementations are
+            highly optimized to specific cases which need to be covered.
+            
+            More specifically, if there are only small differences between sorted value set,
+            we can avoid a lot of work due to two set sharing most of their branches.
+        """
+        given : 'We create randomly sorted variants of the test data:'
+            var keyHasher1 = { (64 * it.hashCode() * (1997 * it.hashCode() ** 2)%1024) as int }
+            var keyHasher2 = { (31 * it.hashCode() * (1997 * it.hashCode() ** 2)%256) as int }
+            Comparator<Object> randomSort1 = (a, b) -> (keyHasher1(a)<=>keyHasher1(b))
+            Comparator<Object> randomSort2 = (a, b) -> (keyHasher2(a)<=>keyHasher2(b))
+            var scrambledEntries1 = entries.toSorted(randomSort1)
+            var scrambledEntries2 = entries.toSorted(randomSort2)
+
+        when : 'We create two different sorted `ValueSet` instances from the two scrambled list...'
+            var set1 = ValueSet.ofSorted(type).addAll(scrambledEntries1)
+            var set2 = ValueSet.ofSorted(type).addAll(scrambledEntries2)
+        then : 'The two sets are equal!'
+            set1.equals(set2)
+        and : 'They also have the same hash codes:'
+            set1.hashCode() == set2.hashCode()
+
+        when : 'We create versions of the sets where parts are removed...'
+            var subList = entries.subList(0, (entries.size() * 0.5) as int)
+            var toRemove = subList.collect({it}).toSet()
+            var smallerSet1 = set1.removeAll(toRemove)
+            var smallerSet2 = set2.removeAll(toRemove)
+        then : 'They are equal...'
+            smallerSet1 == smallerSet2
+            smallerSet1.hashCode() == smallerSet2.hashCode()
+
+        when : 'We make them different by adding to them...'
+            var toAdd1 = subList.subList(0, (subList.size() * 0.5) as int).toSet()
+            var toAdd2 = subList.subList((subList.size() * 0.5) as int, subList.size()).toSet()
+            var lessSmallSet1 = smallerSet1.addAll(toAdd1)
+            var lessSmallSet2 = smallerSet2.addAll(toAdd2)
+        then :
+            lessSmallSet1.size() == lessSmallSet2.size()
+            lessSmallSet1 != lessSmallSet2
+            lessSmallSet1.hashCode() != lessSmallSet2.hashCode()
+
+        where : 'We use the following entry data source:'
+            type     |   entries
+            Long     |  (0..24).collect(it -> it as Long).toList()
+            Short    |  (0..24).collect(it -> it as Short).toList()
+            Integer  |  (0..24).collect(it -> it).toList()
+            String   |  (0..24).collect(it -> String.valueOf(it)).toList()
+
+            Long     |  (0..128).collect(it -> it as Long).toList()
+            Short    |  (0..128).collect(it -> it as Short).toList()
+            Integer  |  (0..128).collect(it -> it).toList()
+            String   |  (0..128).collect(it -> String.valueOf(it)).toList()
+
+            Long     |  (0..1_000).collect(it -> it as Long).toList()
+            Short    |  (0..1_000).collect(it -> it as Short).toList()
+            Integer  |  (0..1_000).collect(it -> it).toList()
+            String   |  (0..1_000).collect(it -> String.valueOf(it)).toList()
+
+            Long     |  (0..10_000).collect(it -> it as Long).toList()
+            Short    |  (0..10_000).collect(it -> it as Short).toList()
+            Integer  |  (0..10_000).collect(it -> it).toList()
+            String   |  (0..10_000).collect(it -> String.valueOf(it)).toList()
+    }
+
+    def 'The `equals` and `hashCode` implementations of a sorted ValueSet works reliably after a series of modifications.'(
+        Class<Object> type, List<Object> entries
+    ) {
+        reportInfo """
+            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.
+            This may look like an exaggerated amount of test data and equality checks, but you
+            have to know that under the hood specifically the `equals` implementations are
+            highly optimized to specific cases which need to be covered.
+            
+            More specifically, if there are only small differences between sorted value sets,
+            we can avoid a lot of work due to two sets sharing most of their branches.
+        """
+        given : 'We create randomly sorted variants of the test data:'
+            var keyHasher = { (31 * it.hashCode() * (1997 * it.hashCode() ** 3)%2048) as int }
+            Comparator<Object> randomSort = (a, b) -> (keyHasher(a)<=>keyHasher(b))
+            entries.sort(randomSort)
+            var firstHalf = entries.subList(0, (entries.size() * 0.5) as int)
+            var secondHalf = entries.subList(1 + (entries.size() * 0.5) as int, entries.size())
+        and :
+            var originalSet = ValueSet.ofSorted(type).addAll(firstHalf)
+
+        when :
+            var quarter = firstHalf.subList(0, (firstHalf.size() * 0.5) as int)
+            var modifiedSet = originalSet.removeAll(quarter.toSet())
+        then :
+            modifiedSet != originalSet
+            modifiedSet.hashCode() != originalSet.hashCode()
+
+        when :
+            var subSubList1 = secondHalf.subList(0, (secondHalf.size() * 0.5) as int)
+            var subSubList2 = secondHalf.subList((secondHalf.size() * 0.5) as int, secondHalf.size())
+            var modifiedSet1 = modifiedSet.addAll(subSubList1)
+            var modifiedSet2 = modifiedSet.addAll(subSubList2)
+        then :
+            modifiedSet1.size() == modifiedSet2.size()
+            modifiedSet1 != modifiedSet2
+
+        when :
+            modifiedSet = modifiedSet.addAll(firstHalf)
+        then :
+            originalSet == modifiedSet
+            originalSet.hashCode() == modifiedSet.hashCode()
+
+        when :
+            modifiedSet1 = modifiedSet.addAll(subSubList1)
+            modifiedSet2 = modifiedSet.addAll(subSubList2)
+        then :
+            modifiedSet1.size() == modifiedSet2.size()
+            modifiedSet1 != modifiedSet2
+
+        where : 'We use the following entry data source:'
+            type     |  entries
+            Long     | (0..24).collect(it -> it as Long).toList()
+            Short    | (0..24).collect(it -> it as Short).toList()
+            Integer  | (0..24).collect(it -> it).toList()
+            String   | (0..24).collect(it -> String.valueOf(it)).toList()
+
+            Long     | (0..128).collect(it -> it as Long).toList()
+            Short    | (0..128).collect(it -> it as Short).toList()
+            Integer  | (0..128).collect(it -> it).toList()
+            String   | (0..128).collect(it -> String.valueOf(it)).toList()
+
+            Long     | (0..1_000).collect(it -> it as Long).toList()
+            Short    | (0..1_000).collect(it -> it as Short).toList()
+            Integer  | (0..1_000).collect(it -> it).toList()
+            String   | (0..1_000).collect(it -> String.valueOf(it)).toList()
+
+            Long     | (0..10_000).collect(it -> it as Long).toList()
+            Short    | (0..10_000).collect(it -> it as Short).toList()
+            Integer  | (0..10_000).collect(it -> it).toList()
+            String   | (0..10_000).collect(it -> String.valueOf(it)).toList()
+    }
 }
