@@ -384,7 +384,7 @@ public class ValueCollectionsPerformanceTest {
                     }
                     return result;
                 },
-                "LinkedHashMap", ()->new TreeSet<String>(String::compareTo),
+                "TreeSet", ()->new TreeSet<String>(String::compareTo),
                 map->{
                     for (OperationKeyPair pair : operations) {
                         switch (pair.operation) {
@@ -522,7 +522,7 @@ public class ValueCollectionsPerformanceTest {
 
         System.out.println(titleA+" total time: " + associationTimeSeconds + " s");
         System.out.println(titleB+" total time: " + mapTimeSeconds + " s");
-        System.out.println("Factor: " + associationTimeSeconds / mapTimeSeconds + "x");
+        System.out.println("Factor: " + associationTimeSeconds / mapTimeSeconds + "x\n");
     }
 
 

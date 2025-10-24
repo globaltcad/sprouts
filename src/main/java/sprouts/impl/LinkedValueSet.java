@@ -4,6 +4,7 @@ import org.jspecify.annotations.Nullable;
 import sprouts.ValueSet;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 final class LinkedValueSet<E> implements ValueSet<E> {
@@ -56,6 +57,7 @@ final class LinkedValueSet<E> implements ValueSet<E> {
     private final AssociationImpl<E, LinkedEntry<E>> _entries;
     private final @Nullable E _firstInsertedKey;
     private final @Nullable E _lastInsertedKey;
+    private final AtomicReference<@Nullable Integer> _cachedHashCode = new AtomicReference<>(null);
 
     LinkedValueSet(
             final Class<E> elementType
@@ -359,9 +361,18 @@ final class LinkedValueSet<E> implements ValueSet<E> {
 
     @Override
     public int hashCode() {
+        Integer cached = _cachedHashCode.get();
+        if ( cached != null ) {
+            return cached;
+        }
         int hash = 7;
         hash = 31 * hash + Objects.hashCode(_entries.keyType());
-        hash = 31 * hash + toSet().hashCode();
+        int elementsHash = 0;
+        for ( E element : this ) {
+            elementsHash += Objects.hashCode(element);
+        }
+        hash = 31 * hash + elementsHash;
+        _cachedHashCode.set(hash);
         return hash;
     }
 

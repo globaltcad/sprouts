@@ -5,6 +5,7 @@ import sprouts.Val;
 import sprouts.ValueSet;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 import static sprouts.impl.ArrayUtil.*;
@@ -90,6 +91,7 @@ final class SortedValueSetImpl<E> implements ValueSet<E> {
     private final ArrayItemAccess<E, Object> _itemGetter;
     private final Comparator<E> _comparator;
     private final Node _root;
+    private final AtomicReference<@Nullable Integer> _cachedHashCode = new AtomicReference<>(null);
 
     SortedValueSetImpl(
             final Class<E> type,
@@ -681,11 +683,16 @@ final class SortedValueSetImpl<E> implements ValueSet<E> {
 
     @Override
     public int hashCode() {
+        Integer cached = _cachedHashCode.get();
+        if (cached != null)
+            return cached;
         int headerHash = Objects.hash(_type, _comparator);
         int contentHash = 31;
         for (E element : this) {
             contentHash = 31 * contentHash + Objects.hash(element);
         }
-        return 31 * headerHash + contentHash;
+        int result = 31 * headerHash + contentHash;
+        _cachedHashCode.set(result);
+        return result;
     }
 }
