@@ -821,9 +821,15 @@ final class SortedAssociationImpl<K, V> implements Association<K, V> {
 
         if (!headersEqual)
             return false;
+        if ( this.size() != other.size() ) {
+            return false;
+        }
+        return _recursiveEquals(this._root, other._root, keyType(), valueType(), _keyComparator);
+    }
 
-        Iterator<Pair<K, V>> thisIterator = iterator();
-        Iterator<Pair<K, V>> otherIterator = other.iterator();
+    private static <K,V> boolean _exhaustiveEquals(SortedAssociationImpl<K, V> set1, SortedAssociationImpl<K, V> set2) {
+        Iterator<Pair<K, V>> thisIterator = set1.iterator();
+        Iterator<Pair<K, V>> otherIterator = set2.iterator();
         while (thisIterator.hasNext() && otherIterator.hasNext()) {
             Pair<K, V> thisPair = thisIterator.next();
             Pair<K, V> otherPair = otherIterator.next();
@@ -833,6 +839,36 @@ final class SortedAssociationImpl<K, V> implements Association<K, V> {
             }
         }
         return !thisIterator.hasNext() && !otherIterator.hasNext();
+    }
+
+    private static <K,V> boolean _recursiveEquals(
+            @Nullable Node node1, @Nullable Node node2, Class<K> keyType, Class<V> valueType, Comparator<K> comparator
+    ) {
+        if ( node1 == node2 ) {
+            return true;
+        }
+        if ( node1 == null || node2 == null ) {
+            return false;
+        }
+        if (
+            node1._size == node2._size &&
+            node1._keysArray == node2._keysArray &&
+            node1._valuesArray == node2._valuesArray &&
+            (node1._left != node2._left || node1._right != node2._right)  // The only difference is somewhere deep down!
+        ) {
+            if ( !_recursiveEquals(node1._left, node2._left, keyType, valueType, comparator) ) {
+                return false;
+            }
+            if ( !_recursiveEquals(node1._right, node2._right, keyType, valueType, comparator) ) {
+                return false;
+            }
+            return true;
+        } else {
+            return _exhaustiveEquals(
+                    new SortedAssociationImpl<>(keyType, valueType, comparator, node1),
+                    new SortedAssociationImpl<>(keyType, valueType, comparator, node2)
+                );
+        }
     }
 
     @Override
