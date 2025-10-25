@@ -23,7 +23,7 @@ systems using the lens pattern on reactive properties.
 <dependency>
   <groupId>io.github.globaltcad</groupId>
   <artifactId>sprouts</artifactId>
-  <version>2.1.2</version>
+  <version>2.1.3</version>
 </dependency>
 ```
 
@@ -32,11 +32,11 @@ systems using the lens pattern on reactive properties.
 ## Getting started with Gradle ##
 Groovy DSL:
 ```
-implementation 'io.github.globaltcad:sprouts:2.1.2'
+implementation 'io.github.globaltcad:sprouts:2.1.3'
 ```
 Kotlin DSL:
 ```
-implementation("io.github.globaltcad:sprouts:2.1.2")
+implementation("io.github.globaltcad:sprouts:2.1.3")
 ```
 ---
 
@@ -55,7 +55,7 @@ allprojects {
 ...either by specifying the version tag:
 ```
 dependencies {
-	implementation 'com.github.globaltcad:sprouts:2.1.2'
+	implementation 'com.github.globaltcad:sprouts:2.1.3'
 }
 ```
 ...or by using a custom commit hash instead:
