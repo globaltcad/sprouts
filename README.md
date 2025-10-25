@@ -15,6 +15,7 @@ systems using the lens pattern on reactive properties.
 
 - [Documentation](https://globaltcad.github.io/sprouts/)
 - [Motivation](docs/markdown/Motivation.md)
+- [Usage Guide](docs/markdown/Growing-Sprouts.md)
 
 ---
 ## Getting started with Apache Maven ##
