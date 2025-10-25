@@ -10,6 +10,15 @@ final class Util {
 
     private Util() {}
 
+    @SuppressWarnings("unchecked")
+    static <E extends Throwable> E sneakyThrow(Throwable e) throws E {
+        return  (E) e; // throw the returned thing and the compiler believes this is unchecked
+    }
+
+    static void canThrow(Runnable toRun) throws Exception {
+        toRun.run();
+    }
+
     /**
      *  Unfortunately, NullAway does not support nullability annotations on type parameters.
      *  It always assumes that type parameters are non-null, irrespective if

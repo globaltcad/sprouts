@@ -270,6 +270,9 @@ public final class Result<V> implements Maybe<V>
         Objects.requireNonNull(supplier);        
         try {
             return new Result<>(false, type, Collections.emptyList(), supplier.get());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw Util.sneakyThrow(e);
         } catch (Exception e) {
             return new Result<>(false, type, Collections.singletonList(Problem.of(e)), null);
         }
@@ -298,6 +301,9 @@ public final class Result<V> implements Maybe<V>
         try {
             runAttempt.run();
             return new Result<>(false, Void.class, Collections.emptyList(), null);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw Util.sneakyThrow(e);
         } catch (Exception e) {
             return new Result<>(false, Void.class, Collections.singletonList(Problem.of(e)), null);
         }
