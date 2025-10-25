@@ -44,6 +44,9 @@ final class EventImpl implements Observable, Event {
             for (Observer observer : _getObservers()) {
                 try {
                     observer.invoke();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw Util.sneakyThrow(e);
                 } catch (Exception e) {
                     _logError("Error invoking observer!", e);
                 }

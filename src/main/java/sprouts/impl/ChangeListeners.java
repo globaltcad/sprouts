@@ -85,6 +85,9 @@ final class ChangeListeners<D> {
             for (Action<D> action : actions) // We copy the list to avoid concurrent modification
                 try {
                     action.accept(delegate);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw Util.sneakyThrow(e);
                 } catch (Exception e) {
                     _logError(
                             "An error occurred while executing action '{}' for delegate '{}'",
@@ -100,7 +103,12 @@ final class ChangeListeners<D> {
         sb.append(this.getClass().getSimpleName()).append("[");
         for (Action<D> action : _getState()) {
             try {
-                sb.append(action).append(", ");
+                Util.canThrow(()-> {
+                    sb.append(action).append(", ");
+                });
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw Util.sneakyThrow(e);
             } catch (Exception e) {
                 _logError(
                             "An error occurred while trying to get the string " +
@@ -135,7 +143,10 @@ final class ChangeListeners<D> {
 
             strongThis.updateState(channel, it->it.updateActions(innerActions -> {
                 try {
-                    weakAction.clear();
+                    Util.canThrow(weakAction::clear);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw Util.sneakyThrow(e);
                 } catch (Exception e) {
                     _logError(
                             "An error occurred while clearing the weak action '{}' during the process of " +

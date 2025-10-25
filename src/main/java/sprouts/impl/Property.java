@@ -172,7 +172,12 @@ final class Property<T extends @Nullable Object> implements Var<T>, Viewable<T> 
     public final String toString() {
         String value = "?";
         try {
-            value = this.mapTo(String.class, Object::toString).orElse("null");
+            value = Util.canThrowAndGet(()-> {
+                return this.mapTo(String.class, Object::toString).orElse("null");
+            });
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw Util.sneakyThrow(e);
         } catch (Exception e) {
             value = e.toString();
             _logError(

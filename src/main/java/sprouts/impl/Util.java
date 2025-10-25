@@ -8,12 +8,26 @@ import org.slf4j.helpers.NOPLogger;
 import sprouts.From;
 
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 final class Util {
 
     public static From VIEW_CHANNEL = From.ALL;
 
     private Util() {}
+
+    @SuppressWarnings("unchecked")
+    static <E extends Throwable> E sneakyThrow(Throwable e) throws E {
+        return  (E) e; // throw the returned thing and the compiler believes this is unchecked
+    }
+
+    static void canThrow(Runnable toRun) throws Exception {
+        toRun.run();
+    }
+
+    static <T> T canThrowAndGet(Supplier<T> toRun) throws Exception {
+        return toRun.get();
+    }
 
     static void _logError(Logger log, String message, @Nullable Object... args) {
         if ( log instanceof NOPLogger) {
@@ -61,13 +75,20 @@ final class Util {
     static <T extends @Nullable Object, R> Function<T, R> nonNullMapper(Logger log, R nullObject, R errorObject, Function<T, @Nullable R> mapper) {
         return t -> {
             try {
-                @Nullable R r = mapper.apply(t);
-                return r == null ? nullObject : r;
+                return canThrow(t, nullObject, mapper);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw Util.sneakyThrow(e);
             } catch (Exception e) {
                 _logError(log, "An error occurred while mapping item '{}'.", t, e);
                 return errorObject;
             }
         };
+    }
+
+    private static <T extends @Nullable Object, R> R canThrow(T t, R nullObject, Function<T, @Nullable R> mapper) throws Exception {
+        @Nullable R r = mapper.apply(t);
+        return r == null ? nullObject : r;
     }
 
     /**
