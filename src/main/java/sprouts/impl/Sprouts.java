@@ -205,10 +205,8 @@ public final class Sprouts implements SproutsFactory
         B initialValue;
         try {
             initialValue = lens.getter(Util.fakeNonNull(source.orElseNull()));
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw Util.sneakyThrow(e);
         } catch (Exception e) {
+            Util.sneakyThrowExceptionIfFatal(e);
             throw new IllegalArgumentException("Lens getter must not throw an exception", e);
         }
         Class<B> type = Util.expectedClassFromItem(initialValue);

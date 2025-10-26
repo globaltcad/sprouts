@@ -6,17 +6,47 @@ import org.slf4j.helpers.MessageFormatter;
 import org.slf4j.helpers.NOPLogger;
 import sprouts.impl.Sprouts;
 
+import java.util.function.Supplier;
+
 final class Util {
 
     private Util() {}
 
-    @SuppressWarnings("unchecked")
-    static <E extends Throwable> E sneakyThrow(Throwable e) throws E {
-        return  (E) e; // throw the returned thing and the compiler believes this is unchecked
+    static void sneakyThrowExceptionIfFatal(Throwable throwable) {
+        if (isFatal(throwable)) {
+            if (throwable instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
+            sneakyThrow(throwable);
+        }
     }
 
-    static void canThrow(Runnable toRun) throws Exception {
-        toRun.run();
+    static boolean isFatal(Throwable throwable) {
+        return throwable instanceof InterruptedException
+                || throwable instanceof LinkageError
+                || ThreadDeathResolver.isThreadDeath(throwable)
+                || throwable instanceof VirtualMachineError;
+    }
+
+    @SuppressWarnings("unchecked")
+    static <E extends Throwable, R> R sneakyThrow(Throwable e) throws E {
+        throw (E) e; // throw the returned thing and the compiler believes this is unchecked
+    }
+
+    private static class ThreadDeathResolver {
+        static final @Nullable Class<?> THREAD_DEATH_CLASS = resolve();
+
+        static boolean isThreadDeath(Throwable throwable) {
+            return THREAD_DEATH_CLASS != null && THREAD_DEATH_CLASS.isInstance(throwable);
+        }
+
+        private static @Nullable Class<?> resolve() {
+            try {
+                return Class.forName("java.lang.ThreadDeath");
+            } catch (ClassNotFoundException e) {
+                return null;
+            }
+        }
     }
 
     /**

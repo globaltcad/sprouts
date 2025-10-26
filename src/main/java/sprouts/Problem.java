@@ -226,16 +226,12 @@ public final class Problem
         Objects.requireNonNull(logger);
         String titleAndDescription = title() + " : " + description();
         try {
-            Util.canThrow(()->{
-                if (exception().isPresent())
-                    logger.accept(titleAndDescription, exception().get());
-                else
-                    logger.accept(titleAndDescription, new Throwable());
-            });
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw Util.sneakyThrow(e);
+            if (exception().isPresent())
+                logger.accept(titleAndDescription, exception().get());
+            else
+                logger.accept(titleAndDescription, new Throwable());
         } catch (Exception e) {
+            Util.sneakyThrowExceptionIfFatal(e);
             _logError("Failed to log problem: '{}'", titleAndDescription, e);
             // Oh boy, how bad can a user's logging be if it throws an exception? Well, we got you covered!
         }

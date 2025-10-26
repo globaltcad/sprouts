@@ -66,6 +66,7 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
         try {
             initialValue = nullSafeLens.getter(Util.fakeNonNull(source.orElseNull()));
         } catch ( Exception e ) {
+            Util.sneakyThrowExceptionIfFatal(e);
             throw new IllegalArgumentException(
                     "Failed to fetch initial value from source property " +
                     "using the provided lens getter.",
@@ -107,6 +108,7 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
         try {
             initialValue = nullSafeLens.getter(Util.fakeNonNull(source.orElseNull()));
         } catch ( Exception e ) {
+            Util.sneakyThrowExceptionIfFatal(e);
             throw new IllegalArgumentException(
                     "Failed to fetch initial value from source property " +
                     "using the provided lens getter.",
@@ -177,6 +179,7 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
         try {
             fetchedValue = _lens.getter(Util.fakeNonNull(_parent.orElseNull()));
         } catch ( Exception e ) {
+            Util.sneakyThrowExceptionIfFatal(e);
             _logError(
                     "Failed to fetch item of type '{}' for property lens '{}' from parent " +
                     "property '{}' (with item type '{}') using the current lens getter.",
@@ -192,6 +195,7 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
             _lastItem = newItem;
             _parent.set(channel, newParentItem);
         } catch ( Exception e ) {
+            Util.sneakyThrowExceptionIfFatal(e);
             _logError(
                     "Property lens with id '{}' (for item type '{}') failed to update its parent " +
                     "property '{}' (with item type '{}') using the current setter lambda!",
@@ -246,6 +250,7 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
         try {
             value = this.mapTo(String.class, Object::toString).orElse("null");
         } catch ( Exception e ) {
+            Util.sneakyThrowExceptionIfFatal(e);
             value = e.toString();
             _logError(
                 "Failed to convert the item of type '{}' to a string for property lens with id '{}'.",

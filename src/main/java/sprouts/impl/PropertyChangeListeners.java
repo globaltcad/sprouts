@@ -173,7 +173,11 @@ public final class PropertyChangeListeners<T> implements ChangeListeners.OwnerCa
             try {
                 sb.append(key).append("->").append(_channelsToListeners.get(key).get()).append(", ");
             } catch ( Exception e ) {
-                _logError("An error occurred while trying to get the number of change listeners for channel '{}'", key, e);
+                Util.sneakyThrowExceptionIfFatal(e);
+                _logError( // We want to prevent user code from breaking toString()
+                    "An error occurred while trying to convert property " +
+                    "change listeners with channel '{}' to a string!", key, e
+                );
             }
         }
         sb.append("]");

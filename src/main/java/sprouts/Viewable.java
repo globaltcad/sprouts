@@ -232,7 +232,18 @@ public interface Viewable<T> extends Val<T>, Observable {
      *  by this {@link Viewable} changes through the {@code Var::set(Channel, T)} method.
      *  The lambda will receive the current item of this property.
      *  The default channel is {@link From#VIEW_MODEL}, so if you use the {@code Var::set(T)} method
-     *  then the observer lambdas registered through this method will be called.
+     *  then the observer lambdas registered through this method will be called.<br>
+     *  <p>
+     *  <b>Note that most {@link Exception}s thrown by the supplied {@link Action} will be caught and logged
+     *  in order to avoid disturbing the control flow of the source property, to prevent inconsistent states
+     *  and unpredictable behavior at runtime.<br>
+     *  </b>
+     *  However, this does NOT apply to serious {@link Error} subtypes,
+     *  like {@link OutOfMemoryError} or {@link StackOverflowError} because they
+     *  represent severe platform errors, which are considered unrecoverable problems that applications
+     *  should not typically attempt to handle.<br>
+     *  <b>Any {@link InterruptedException} is also re-thrown unchanged instead of being logged to
+     *  comply with how concurrency interruption is designed to work in Java.</b>
      *
      * @param channel The channel from which the item is set.
      * @param action The lambda which will be called whenever the item wrapped by this {@link Var} changes.
