@@ -66,9 +66,8 @@ public interface Viewables<T> extends Vals<T>, Observable
      *  <p>
      *  <b>Note that most {@link Exception}s thrown by the supplied {@link Action} will be caught and logged
      *  in order to avoid disturbing the control flow of the source property, to prevent inconsistent states
-     *  and unpredictable behavior at runtime.
-     *  </b>
-     *  </b>
+     *  and unpredictable behavior at runtime.</b>
+     *  <br>
      *  However, this does NOT apply to serious {@link Error} subtypes,
      *  like {@link OutOfMemoryError} or {@link StackOverflowError} because they
      *  represent severe platform errors, which are considered unrecoverable problems that applications
