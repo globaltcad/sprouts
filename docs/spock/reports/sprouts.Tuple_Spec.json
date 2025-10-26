@@ -4,7 +4,7 @@
   "narrative":"Data Oriented programming is a core concept in Sprouts,\n    which is why we provide the `Tuple` type representing\n    an immutable array of elements with proper value semantics.\n    It can also be transformed and filtered in a functional way.\n\n    When modelling value objects, like for example, by declaring\n    records, then we recommend to use the `Tuple` type\n    over of a Java array or a JDK List, because our tuple\n    has better value semantics, immutability guarantees,\n    and it is way more efficient than a Java List.",
   "subjects":["sprouts.Tuple"],
   "statistics":{
-    "runs":"315",
+    "runs":"347",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -6506,6 +6506,1062 @@
         {"kind":"and","text":"","code":["smallerTuple1.hashCode() != tuple1.hashCode()","smallerTuple2.hashCode() != tuple2.hashCode()","smallerTuple1.hashCode() != tuple2.hashCode()","smallerTuple2.hashCode() != tuple1.hashCode()","smallerTuple1.hashCode() == smallerTuple2.hashCode()"]},
 
         {"kind":"where","text":"We use the following entry data source:","code":{"type":["Byte","Short","Integer","String","Byte","Short","Integer","String","Byte","Short","Integer","String"],"items":["(0..100).collect(it -> it as Byte).toList()","(0..100).collect(it -> it as Short).toList()","(0..100).collect(it -> it).toList()","(0..100).collect(it -> String.valueOf(it)).toList()","(0..100).collect(it -> it as Byte).toList()","(0..100).collect(it -> it as Short).toList()","(0..100).collect(it -> it).toList()","(0..100).collect(it -> String.valueOf(it)).toList()","(0..100).collect(it -> it as Byte).toList()","(0..100).collect(it -> it as Short).toList()","(0..100).collect(it -> it).toList()","(0..100).collect(it -> String.valueOf(it)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of a Tuple works reliably after removing a large part of elements. [0]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between tuple, then\n            we can avoid a lot of work due to two tuples sharing most of their branches/nodes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher1 = { (31 * it.hashCode() * (1997 * it.hashCode() ** 2)%128) as int }","var keyHasher2 = { (73 * it.hashCode() * (1997 * it.hashCode() ** 2)%256) as int }","Comparator<Object> randomSort1 = (a, b) -> (keyHasher1(a)<=>keyHasher1(b))","Comparator<Object> randomSort2 = (a, b) -> (keyHasher2(a)<=>keyHasher2(b))","var scrambledEntries1 = entries.toSorted(randomSort1)","var scrambledEntries2 = entries.toSorted(randomSort2)"]},
+
+        {"kind":"when","text":"We create two different `Tuple` instances from the two scrambled list...","code":["var tuple1 = Tuple.of(type).addAll(scrambledEntries1)","var tuple2 = Tuple.of(type).addAll(scrambledEntries2)"]},
+
+        {"kind":"then","text":"The two tuples are NOT equal!","code":["!tuple1.equals(tuple2)"]},
+
+        {"kind":"and","text":"They also do not have the same hash codes:","code":["tuple1.hashCode() != tuple2.hashCode()"]},
+
+        {"kind":"when","text":"...we sort them...","code":["tuple1 = tuple1.sort(Comparator.naturalOrder())","tuple2 = tuple2.sort(Comparator.naturalOrder())"]},
+
+        {"kind":"then","text":"The two tuples are equal!","code":["tuple1.equals(tuple2)"]},
+
+        {"kind":"when","text":"We create versions of the associations where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it}).toSet()","var smallerTuple1 = tuple1.removeAll(toRemove)","var smallerTuple2 = tuple2.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"They are equal...","code":["smallerTuple1 == smallerTuple2","smallerTuple1.hashCode() == smallerTuple2.hashCode()"]},
+
+        {"kind":"when","text":"We make them different by adding to them...","code":["var toAdd1 = subList.subList(0, (subList.size() * 0.5) as int).toSet()","var toAdd2 = subList.subList((subList.size() * 0.5) as int, subList.size()).toSet()","var lessSmallTuple1 = smallerTuple1.addAll(toAdd1)","var lessSmallTuple2 = smallerTuple2.addAll(toAdd2)"]},
+
+        {"kind":"then","text":"","code":["lessSmallTuple1.size() == lessSmallTuple2.size()","lessSmallTuple1 != lessSmallTuple2","lessSmallTuple1.hashCode() != lessSmallTuple2.hashCode()"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"type":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"entries":["(0..24).collect(it -> it as Long).toList()","(0..24).collect(it -> it as Short).toList()","(0..24).collect(it -> it).toList()","(0..24).collect(it -> String.valueOf(it)).toList()","(0..128).collect(it -> it as Long).toList()","(0..128).collect(it -> it as Short).toList()","(0..128).collect(it -> it).toList()","(0..128).collect(it -> String.valueOf(it)).toList()","(0..1_000).collect(it -> it as Long).toList()","(0..1_000).collect(it -> it as Short).toList()","(0..1_000).collect(it -> it).toList()","(0..1_000).collect(it -> String.valueOf(it)).toList()","(0..10_000).collect(it -> it as Long).toList()","(0..10_000).collect(it -> it as Short).toList()","(0..10_000).collect(it -> it).toList()","(0..10_000).collect(it -> String.valueOf(it)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of a Tuple works reliably after removing a large part of elements. [1]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between tuple, then\n            we can avoid a lot of work due to two tuples sharing most of their branches/nodes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher1 = { (31 * it.hashCode() * (1997 * it.hashCode() ** 2)%128) as int }","var keyHasher2 = { (73 * it.hashCode() * (1997 * it.hashCode() ** 2)%256) as int }","Comparator<Object> randomSort1 = (a, b) -> (keyHasher1(a)<=>keyHasher1(b))","Comparator<Object> randomSort2 = (a, b) -> (keyHasher2(a)<=>keyHasher2(b))","var scrambledEntries1 = entries.toSorted(randomSort1)","var scrambledEntries2 = entries.toSorted(randomSort2)"]},
+
+        {"kind":"when","text":"We create two different `Tuple` instances from the two scrambled list...","code":["var tuple1 = Tuple.of(type).addAll(scrambledEntries1)","var tuple2 = Tuple.of(type).addAll(scrambledEntries2)"]},
+
+        {"kind":"then","text":"The two tuples are NOT equal!","code":["!tuple1.equals(tuple2)"]},
+
+        {"kind":"and","text":"They also do not have the same hash codes:","code":["tuple1.hashCode() != tuple2.hashCode()"]},
+
+        {"kind":"when","text":"...we sort them...","code":["tuple1 = tuple1.sort(Comparator.naturalOrder())","tuple2 = tuple2.sort(Comparator.naturalOrder())"]},
+
+        {"kind":"then","text":"The two tuples are equal!","code":["tuple1.equals(tuple2)"]},
+
+        {"kind":"when","text":"We create versions of the associations where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it}).toSet()","var smallerTuple1 = tuple1.removeAll(toRemove)","var smallerTuple2 = tuple2.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"They are equal...","code":["smallerTuple1 == smallerTuple2","smallerTuple1.hashCode() == smallerTuple2.hashCode()"]},
+
+        {"kind":"when","text":"We make them different by adding to them...","code":["var toAdd1 = subList.subList(0, (subList.size() * 0.5) as int).toSet()","var toAdd2 = subList.subList((subList.size() * 0.5) as int, subList.size()).toSet()","var lessSmallTuple1 = smallerTuple1.addAll(toAdd1)","var lessSmallTuple2 = smallerTuple2.addAll(toAdd2)"]},
+
+        {"kind":"then","text":"","code":["lessSmallTuple1.size() == lessSmallTuple2.size()","lessSmallTuple1 != lessSmallTuple2","lessSmallTuple1.hashCode() != lessSmallTuple2.hashCode()"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"type":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"entries":["(0..24).collect(it -> it as Long).toList()","(0..24).collect(it -> it as Short).toList()","(0..24).collect(it -> it).toList()","(0..24).collect(it -> String.valueOf(it)).toList()","(0..128).collect(it -> it as Long).toList()","(0..128).collect(it -> it as Short).toList()","(0..128).collect(it -> it).toList()","(0..128).collect(it -> String.valueOf(it)).toList()","(0..1_000).collect(it -> it as Long).toList()","(0..1_000).collect(it -> it as Short).toList()","(0..1_000).collect(it -> it).toList()","(0..1_000).collect(it -> String.valueOf(it)).toList()","(0..10_000).collect(it -> it as Long).toList()","(0..10_000).collect(it -> it as Short).toList()","(0..10_000).collect(it -> it).toList()","(0..10_000).collect(it -> String.valueOf(it)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of a Tuple works reliably after removing a large part of elements. [2]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between tuple, then\n            we can avoid a lot of work due to two tuples sharing most of their branches/nodes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher1 = { (31 * it.hashCode() * (1997 * it.hashCode() ** 2)%128) as int }","var keyHasher2 = { (73 * it.hashCode() * (1997 * it.hashCode() ** 2)%256) as int }","Comparator<Object> randomSort1 = (a, b) -> (keyHasher1(a)<=>keyHasher1(b))","Comparator<Object> randomSort2 = (a, b) -> (keyHasher2(a)<=>keyHasher2(b))","var scrambledEntries1 = entries.toSorted(randomSort1)","var scrambledEntries2 = entries.toSorted(randomSort2)"]},
+
+        {"kind":"when","text":"We create two different `Tuple` instances from the two scrambled list...","code":["var tuple1 = Tuple.of(type).addAll(scrambledEntries1)","var tuple2 = Tuple.of(type).addAll(scrambledEntries2)"]},
+
+        {"kind":"then","text":"The two tuples are NOT equal!","code":["!tuple1.equals(tuple2)"]},
+
+        {"kind":"and","text":"They also do not have the same hash codes:","code":["tuple1.hashCode() != tuple2.hashCode()"]},
+
+        {"kind":"when","text":"...we sort them...","code":["tuple1 = tuple1.sort(Comparator.naturalOrder())","tuple2 = tuple2.sort(Comparator.naturalOrder())"]},
+
+        {"kind":"then","text":"The two tuples are equal!","code":["tuple1.equals(tuple2)"]},
+
+        {"kind":"when","text":"We create versions of the associations where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it}).toSet()","var smallerTuple1 = tuple1.removeAll(toRemove)","var smallerTuple2 = tuple2.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"They are equal...","code":["smallerTuple1 == smallerTuple2","smallerTuple1.hashCode() == smallerTuple2.hashCode()"]},
+
+        {"kind":"when","text":"We make them different by adding to them...","code":["var toAdd1 = subList.subList(0, (subList.size() * 0.5) as int).toSet()","var toAdd2 = subList.subList((subList.size() * 0.5) as int, subList.size()).toSet()","var lessSmallTuple1 = smallerTuple1.addAll(toAdd1)","var lessSmallTuple2 = smallerTuple2.addAll(toAdd2)"]},
+
+        {"kind":"then","text":"","code":["lessSmallTuple1.size() == lessSmallTuple2.size()","lessSmallTuple1 != lessSmallTuple2","lessSmallTuple1.hashCode() != lessSmallTuple2.hashCode()"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"type":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"entries":["(0..24).collect(it -> it as Long).toList()","(0..24).collect(it -> it as Short).toList()","(0..24).collect(it -> it).toList()","(0..24).collect(it -> String.valueOf(it)).toList()","(0..128).collect(it -> it as Long).toList()","(0..128).collect(it -> it as Short).toList()","(0..128).collect(it -> it).toList()","(0..128).collect(it -> String.valueOf(it)).toList()","(0..1_000).collect(it -> it as Long).toList()","(0..1_000).collect(it -> it as Short).toList()","(0..1_000).collect(it -> it).toList()","(0..1_000).collect(it -> String.valueOf(it)).toList()","(0..10_000).collect(it -> it as Long).toList()","(0..10_000).collect(it -> it as Short).toList()","(0..10_000).collect(it -> it).toList()","(0..10_000).collect(it -> String.valueOf(it)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of a Tuple works reliably after removing a large part of elements. [3]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between tuple, then\n            we can avoid a lot of work due to two tuples sharing most of their branches/nodes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher1 = { (31 * it.hashCode() * (1997 * it.hashCode() ** 2)%128) as int }","var keyHasher2 = { (73 * it.hashCode() * (1997 * it.hashCode() ** 2)%256) as int }","Comparator<Object> randomSort1 = (a, b) -> (keyHasher1(a)<=>keyHasher1(b))","Comparator<Object> randomSort2 = (a, b) -> (keyHasher2(a)<=>keyHasher2(b))","var scrambledEntries1 = entries.toSorted(randomSort1)","var scrambledEntries2 = entries.toSorted(randomSort2)"]},
+
+        {"kind":"when","text":"We create two different `Tuple` instances from the two scrambled list...","code":["var tuple1 = Tuple.of(type).addAll(scrambledEntries1)","var tuple2 = Tuple.of(type).addAll(scrambledEntries2)"]},
+
+        {"kind":"then","text":"The two tuples are NOT equal!","code":["!tuple1.equals(tuple2)"]},
+
+        {"kind":"and","text":"They also do not have the same hash codes:","code":["tuple1.hashCode() != tuple2.hashCode()"]},
+
+        {"kind":"when","text":"...we sort them...","code":["tuple1 = tuple1.sort(Comparator.naturalOrder())","tuple2 = tuple2.sort(Comparator.naturalOrder())"]},
+
+        {"kind":"then","text":"The two tuples are equal!","code":["tuple1.equals(tuple2)"]},
+
+        {"kind":"when","text":"We create versions of the associations where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it}).toSet()","var smallerTuple1 = tuple1.removeAll(toRemove)","var smallerTuple2 = tuple2.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"They are equal...","code":["smallerTuple1 == smallerTuple2","smallerTuple1.hashCode() == smallerTuple2.hashCode()"]},
+
+        {"kind":"when","text":"We make them different by adding to them...","code":["var toAdd1 = subList.subList(0, (subList.size() * 0.5) as int).toSet()","var toAdd2 = subList.subList((subList.size() * 0.5) as int, subList.size()).toSet()","var lessSmallTuple1 = smallerTuple1.addAll(toAdd1)","var lessSmallTuple2 = smallerTuple2.addAll(toAdd2)"]},
+
+        {"kind":"then","text":"","code":["lessSmallTuple1.size() == lessSmallTuple2.size()","lessSmallTuple1 != lessSmallTuple2","lessSmallTuple1.hashCode() != lessSmallTuple2.hashCode()"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"type":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"entries":["(0..24).collect(it -> it as Long).toList()","(0..24).collect(it -> it as Short).toList()","(0..24).collect(it -> it).toList()","(0..24).collect(it -> String.valueOf(it)).toList()","(0..128).collect(it -> it as Long).toList()","(0..128).collect(it -> it as Short).toList()","(0..128).collect(it -> it).toList()","(0..128).collect(it -> String.valueOf(it)).toList()","(0..1_000).collect(it -> it as Long).toList()","(0..1_000).collect(it -> it as Short).toList()","(0..1_000).collect(it -> it).toList()","(0..1_000).collect(it -> String.valueOf(it)).toList()","(0..10_000).collect(it -> it as Long).toList()","(0..10_000).collect(it -> it as Short).toList()","(0..10_000).collect(it -> it).toList()","(0..10_000).collect(it -> String.valueOf(it)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of a Tuple works reliably after removing a large part of elements. [4]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between tuple, then\n            we can avoid a lot of work due to two tuples sharing most of their branches/nodes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher1 = { (31 * it.hashCode() * (1997 * it.hashCode() ** 2)%128) as int }","var keyHasher2 = { (73 * it.hashCode() * (1997 * it.hashCode() ** 2)%256) as int }","Comparator<Object> randomSort1 = (a, b) -> (keyHasher1(a)<=>keyHasher1(b))","Comparator<Object> randomSort2 = (a, b) -> (keyHasher2(a)<=>keyHasher2(b))","var scrambledEntries1 = entries.toSorted(randomSort1)","var scrambledEntries2 = entries.toSorted(randomSort2)"]},
+
+        {"kind":"when","text":"We create two different `Tuple` instances from the two scrambled list...","code":["var tuple1 = Tuple.of(type).addAll(scrambledEntries1)","var tuple2 = Tuple.of(type).addAll(scrambledEntries2)"]},
+
+        {"kind":"then","text":"The two tuples are NOT equal!","code":["!tuple1.equals(tuple2)"]},
+
+        {"kind":"and","text":"They also do not have the same hash codes:","code":["tuple1.hashCode() != tuple2.hashCode()"]},
+
+        {"kind":"when","text":"...we sort them...","code":["tuple1 = tuple1.sort(Comparator.naturalOrder())","tuple2 = tuple2.sort(Comparator.naturalOrder())"]},
+
+        {"kind":"then","text":"The two tuples are equal!","code":["tuple1.equals(tuple2)"]},
+
+        {"kind":"when","text":"We create versions of the associations where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it}).toSet()","var smallerTuple1 = tuple1.removeAll(toRemove)","var smallerTuple2 = tuple2.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"They are equal...","code":["smallerTuple1 == smallerTuple2","smallerTuple1.hashCode() == smallerTuple2.hashCode()"]},
+
+        {"kind":"when","text":"We make them different by adding to them...","code":["var toAdd1 = subList.subList(0, (subList.size() * 0.5) as int).toSet()","var toAdd2 = subList.subList((subList.size() * 0.5) as int, subList.size()).toSet()","var lessSmallTuple1 = smallerTuple1.addAll(toAdd1)","var lessSmallTuple2 = smallerTuple2.addAll(toAdd2)"]},
+
+        {"kind":"then","text":"","code":["lessSmallTuple1.size() == lessSmallTuple2.size()","lessSmallTuple1 != lessSmallTuple2","lessSmallTuple1.hashCode() != lessSmallTuple2.hashCode()"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"type":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"entries":["(0..24).collect(it -> it as Long).toList()","(0..24).collect(it -> it as Short).toList()","(0..24).collect(it -> it).toList()","(0..24).collect(it -> String.valueOf(it)).toList()","(0..128).collect(it -> it as Long).toList()","(0..128).collect(it -> it as Short).toList()","(0..128).collect(it -> it).toList()","(0..128).collect(it -> String.valueOf(it)).toList()","(0..1_000).collect(it -> it as Long).toList()","(0..1_000).collect(it -> it as Short).toList()","(0..1_000).collect(it -> it).toList()","(0..1_000).collect(it -> String.valueOf(it)).toList()","(0..10_000).collect(it -> it as Long).toList()","(0..10_000).collect(it -> it as Short).toList()","(0..10_000).collect(it -> it).toList()","(0..10_000).collect(it -> String.valueOf(it)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of a Tuple works reliably after removing a large part of elements. [5]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between tuple, then\n            we can avoid a lot of work due to two tuples sharing most of their branches/nodes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher1 = { (31 * it.hashCode() * (1997 * it.hashCode() ** 2)%128) as int }","var keyHasher2 = { (73 * it.hashCode() * (1997 * it.hashCode() ** 2)%256) as int }","Comparator<Object> randomSort1 = (a, b) -> (keyHasher1(a)<=>keyHasher1(b))","Comparator<Object> randomSort2 = (a, b) -> (keyHasher2(a)<=>keyHasher2(b))","var scrambledEntries1 = entries.toSorted(randomSort1)","var scrambledEntries2 = entries.toSorted(randomSort2)"]},
+
+        {"kind":"when","text":"We create two different `Tuple` instances from the two scrambled list...","code":["var tuple1 = Tuple.of(type).addAll(scrambledEntries1)","var tuple2 = Tuple.of(type).addAll(scrambledEntries2)"]},
+
+        {"kind":"then","text":"The two tuples are NOT equal!","code":["!tuple1.equals(tuple2)"]},
+
+        {"kind":"and","text":"They also do not have the same hash codes:","code":["tuple1.hashCode() != tuple2.hashCode()"]},
+
+        {"kind":"when","text":"...we sort them...","code":["tuple1 = tuple1.sort(Comparator.naturalOrder())","tuple2 = tuple2.sort(Comparator.naturalOrder())"]},
+
+        {"kind":"then","text":"The two tuples are equal!","code":["tuple1.equals(tuple2)"]},
+
+        {"kind":"when","text":"We create versions of the associations where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it}).toSet()","var smallerTuple1 = tuple1.removeAll(toRemove)","var smallerTuple2 = tuple2.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"They are equal...","code":["smallerTuple1 == smallerTuple2","smallerTuple1.hashCode() == smallerTuple2.hashCode()"]},
+
+        {"kind":"when","text":"We make them different by adding to them...","code":["var toAdd1 = subList.subList(0, (subList.size() * 0.5) as int).toSet()","var toAdd2 = subList.subList((subList.size() * 0.5) as int, subList.size()).toSet()","var lessSmallTuple1 = smallerTuple1.addAll(toAdd1)","var lessSmallTuple2 = smallerTuple2.addAll(toAdd2)"]},
+
+        {"kind":"then","text":"","code":["lessSmallTuple1.size() == lessSmallTuple2.size()","lessSmallTuple1 != lessSmallTuple2","lessSmallTuple1.hashCode() != lessSmallTuple2.hashCode()"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"type":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"entries":["(0..24).collect(it -> it as Long).toList()","(0..24).collect(it -> it as Short).toList()","(0..24).collect(it -> it).toList()","(0..24).collect(it -> String.valueOf(it)).toList()","(0..128).collect(it -> it as Long).toList()","(0..128).collect(it -> it as Short).toList()","(0..128).collect(it -> it).toList()","(0..128).collect(it -> String.valueOf(it)).toList()","(0..1_000).collect(it -> it as Long).toList()","(0..1_000).collect(it -> it as Short).toList()","(0..1_000).collect(it -> it).toList()","(0..1_000).collect(it -> String.valueOf(it)).toList()","(0..10_000).collect(it -> it as Long).toList()","(0..10_000).collect(it -> it as Short).toList()","(0..10_000).collect(it -> it).toList()","(0..10_000).collect(it -> String.valueOf(it)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of a Tuple works reliably after removing a large part of elements. [6]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between tuple, then\n            we can avoid a lot of work due to two tuples sharing most of their branches/nodes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher1 = { (31 * it.hashCode() * (1997 * it.hashCode() ** 2)%128) as int }","var keyHasher2 = { (73 * it.hashCode() * (1997 * it.hashCode() ** 2)%256) as int }","Comparator<Object> randomSort1 = (a, b) -> (keyHasher1(a)<=>keyHasher1(b))","Comparator<Object> randomSort2 = (a, b) -> (keyHasher2(a)<=>keyHasher2(b))","var scrambledEntries1 = entries.toSorted(randomSort1)","var scrambledEntries2 = entries.toSorted(randomSort2)"]},
+
+        {"kind":"when","text":"We create two different `Tuple` instances from the two scrambled list...","code":["var tuple1 = Tuple.of(type).addAll(scrambledEntries1)","var tuple2 = Tuple.of(type).addAll(scrambledEntries2)"]},
+
+        {"kind":"then","text":"The two tuples are NOT equal!","code":["!tuple1.equals(tuple2)"]},
+
+        {"kind":"and","text":"They also do not have the same hash codes:","code":["tuple1.hashCode() != tuple2.hashCode()"]},
+
+        {"kind":"when","text":"...we sort them...","code":["tuple1 = tuple1.sort(Comparator.naturalOrder())","tuple2 = tuple2.sort(Comparator.naturalOrder())"]},
+
+        {"kind":"then","text":"The two tuples are equal!","code":["tuple1.equals(tuple2)"]},
+
+        {"kind":"when","text":"We create versions of the associations where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it}).toSet()","var smallerTuple1 = tuple1.removeAll(toRemove)","var smallerTuple2 = tuple2.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"They are equal...","code":["smallerTuple1 == smallerTuple2","smallerTuple1.hashCode() == smallerTuple2.hashCode()"]},
+
+        {"kind":"when","text":"We make them different by adding to them...","code":["var toAdd1 = subList.subList(0, (subList.size() * 0.5) as int).toSet()","var toAdd2 = subList.subList((subList.size() * 0.5) as int, subList.size()).toSet()","var lessSmallTuple1 = smallerTuple1.addAll(toAdd1)","var lessSmallTuple2 = smallerTuple2.addAll(toAdd2)"]},
+
+        {"kind":"then","text":"","code":["lessSmallTuple1.size() == lessSmallTuple2.size()","lessSmallTuple1 != lessSmallTuple2","lessSmallTuple1.hashCode() != lessSmallTuple2.hashCode()"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"type":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"entries":["(0..24).collect(it -> it as Long).toList()","(0..24).collect(it -> it as Short).toList()","(0..24).collect(it -> it).toList()","(0..24).collect(it -> String.valueOf(it)).toList()","(0..128).collect(it -> it as Long).toList()","(0..128).collect(it -> it as Short).toList()","(0..128).collect(it -> it).toList()","(0..128).collect(it -> String.valueOf(it)).toList()","(0..1_000).collect(it -> it as Long).toList()","(0..1_000).collect(it -> it as Short).toList()","(0..1_000).collect(it -> it).toList()","(0..1_000).collect(it -> String.valueOf(it)).toList()","(0..10_000).collect(it -> it as Long).toList()","(0..10_000).collect(it -> it as Short).toList()","(0..10_000).collect(it -> it).toList()","(0..10_000).collect(it -> String.valueOf(it)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of a Tuple works reliably after removing a large part of elements. [7]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between tuple, then\n            we can avoid a lot of work due to two tuples sharing most of their branches/nodes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher1 = { (31 * it.hashCode() * (1997 * it.hashCode() ** 2)%128) as int }","var keyHasher2 = { (73 * it.hashCode() * (1997 * it.hashCode() ** 2)%256) as int }","Comparator<Object> randomSort1 = (a, b) -> (keyHasher1(a)<=>keyHasher1(b))","Comparator<Object> randomSort2 = (a, b) -> (keyHasher2(a)<=>keyHasher2(b))","var scrambledEntries1 = entries.toSorted(randomSort1)","var scrambledEntries2 = entries.toSorted(randomSort2)"]},
+
+        {"kind":"when","text":"We create two different `Tuple` instances from the two scrambled list...","code":["var tuple1 = Tuple.of(type).addAll(scrambledEntries1)","var tuple2 = Tuple.of(type).addAll(scrambledEntries2)"]},
+
+        {"kind":"then","text":"The two tuples are NOT equal!","code":["!tuple1.equals(tuple2)"]},
+
+        {"kind":"and","text":"They also do not have the same hash codes:","code":["tuple1.hashCode() != tuple2.hashCode()"]},
+
+        {"kind":"when","text":"...we sort them...","code":["tuple1 = tuple1.sort(Comparator.naturalOrder())","tuple2 = tuple2.sort(Comparator.naturalOrder())"]},
+
+        {"kind":"then","text":"The two tuples are equal!","code":["tuple1.equals(tuple2)"]},
+
+        {"kind":"when","text":"We create versions of the associations where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it}).toSet()","var smallerTuple1 = tuple1.removeAll(toRemove)","var smallerTuple2 = tuple2.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"They are equal...","code":["smallerTuple1 == smallerTuple2","smallerTuple1.hashCode() == smallerTuple2.hashCode()"]},
+
+        {"kind":"when","text":"We make them different by adding to them...","code":["var toAdd1 = subList.subList(0, (subList.size() * 0.5) as int).toSet()","var toAdd2 = subList.subList((subList.size() * 0.5) as int, subList.size()).toSet()","var lessSmallTuple1 = smallerTuple1.addAll(toAdd1)","var lessSmallTuple2 = smallerTuple2.addAll(toAdd2)"]},
+
+        {"kind":"then","text":"","code":["lessSmallTuple1.size() == lessSmallTuple2.size()","lessSmallTuple1 != lessSmallTuple2","lessSmallTuple1.hashCode() != lessSmallTuple2.hashCode()"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"type":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"entries":["(0..24).collect(it -> it as Long).toList()","(0..24).collect(it -> it as Short).toList()","(0..24).collect(it -> it).toList()","(0..24).collect(it -> String.valueOf(it)).toList()","(0..128).collect(it -> it as Long).toList()","(0..128).collect(it -> it as Short).toList()","(0..128).collect(it -> it).toList()","(0..128).collect(it -> String.valueOf(it)).toList()","(0..1_000).collect(it -> it as Long).toList()","(0..1_000).collect(it -> it as Short).toList()","(0..1_000).collect(it -> it).toList()","(0..1_000).collect(it -> String.valueOf(it)).toList()","(0..10_000).collect(it -> it as Long).toList()","(0..10_000).collect(it -> it as Short).toList()","(0..10_000).collect(it -> it).toList()","(0..10_000).collect(it -> String.valueOf(it)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of a Tuple works reliably after removing a large part of elements. [8]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between tuple, then\n            we can avoid a lot of work due to two tuples sharing most of their branches/nodes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher1 = { (31 * it.hashCode() * (1997 * it.hashCode() ** 2)%128) as int }","var keyHasher2 = { (73 * it.hashCode() * (1997 * it.hashCode() ** 2)%256) as int }","Comparator<Object> randomSort1 = (a, b) -> (keyHasher1(a)<=>keyHasher1(b))","Comparator<Object> randomSort2 = (a, b) -> (keyHasher2(a)<=>keyHasher2(b))","var scrambledEntries1 = entries.toSorted(randomSort1)","var scrambledEntries2 = entries.toSorted(randomSort2)"]},
+
+        {"kind":"when","text":"We create two different `Tuple` instances from the two scrambled list...","code":["var tuple1 = Tuple.of(type).addAll(scrambledEntries1)","var tuple2 = Tuple.of(type).addAll(scrambledEntries2)"]},
+
+        {"kind":"then","text":"The two tuples are NOT equal!","code":["!tuple1.equals(tuple2)"]},
+
+        {"kind":"and","text":"They also do not have the same hash codes:","code":["tuple1.hashCode() != tuple2.hashCode()"]},
+
+        {"kind":"when","text":"...we sort them...","code":["tuple1 = tuple1.sort(Comparator.naturalOrder())","tuple2 = tuple2.sort(Comparator.naturalOrder())"]},
+
+        {"kind":"then","text":"The two tuples are equal!","code":["tuple1.equals(tuple2)"]},
+
+        {"kind":"when","text":"We create versions of the associations where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it}).toSet()","var smallerTuple1 = tuple1.removeAll(toRemove)","var smallerTuple2 = tuple2.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"They are equal...","code":["smallerTuple1 == smallerTuple2","smallerTuple1.hashCode() == smallerTuple2.hashCode()"]},
+
+        {"kind":"when","text":"We make them different by adding to them...","code":["var toAdd1 = subList.subList(0, (subList.size() * 0.5) as int).toSet()","var toAdd2 = subList.subList((subList.size() * 0.5) as int, subList.size()).toSet()","var lessSmallTuple1 = smallerTuple1.addAll(toAdd1)","var lessSmallTuple2 = smallerTuple2.addAll(toAdd2)"]},
+
+        {"kind":"then","text":"","code":["lessSmallTuple1.size() == lessSmallTuple2.size()","lessSmallTuple1 != lessSmallTuple2","lessSmallTuple1.hashCode() != lessSmallTuple2.hashCode()"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"type":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"entries":["(0..24).collect(it -> it as Long).toList()","(0..24).collect(it -> it as Short).toList()","(0..24).collect(it -> it).toList()","(0..24).collect(it -> String.valueOf(it)).toList()","(0..128).collect(it -> it as Long).toList()","(0..128).collect(it -> it as Short).toList()","(0..128).collect(it -> it).toList()","(0..128).collect(it -> String.valueOf(it)).toList()","(0..1_000).collect(it -> it as Long).toList()","(0..1_000).collect(it -> it as Short).toList()","(0..1_000).collect(it -> it).toList()","(0..1_000).collect(it -> String.valueOf(it)).toList()","(0..10_000).collect(it -> it as Long).toList()","(0..10_000).collect(it -> it as Short).toList()","(0..10_000).collect(it -> it).toList()","(0..10_000).collect(it -> String.valueOf(it)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of a Tuple works reliably after removing a large part of elements. [9]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between tuple, then\n            we can avoid a lot of work due to two tuples sharing most of their branches/nodes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher1 = { (31 * it.hashCode() * (1997 * it.hashCode() ** 2)%128) as int }","var keyHasher2 = { (73 * it.hashCode() * (1997 * it.hashCode() ** 2)%256) as int }","Comparator<Object> randomSort1 = (a, b) -> (keyHasher1(a)<=>keyHasher1(b))","Comparator<Object> randomSort2 = (a, b) -> (keyHasher2(a)<=>keyHasher2(b))","var scrambledEntries1 = entries.toSorted(randomSort1)","var scrambledEntries2 = entries.toSorted(randomSort2)"]},
+
+        {"kind":"when","text":"We create two different `Tuple` instances from the two scrambled list...","code":["var tuple1 = Tuple.of(type).addAll(scrambledEntries1)","var tuple2 = Tuple.of(type).addAll(scrambledEntries2)"]},
+
+        {"kind":"then","text":"The two tuples are NOT equal!","code":["!tuple1.equals(tuple2)"]},
+
+        {"kind":"and","text":"They also do not have the same hash codes:","code":["tuple1.hashCode() != tuple2.hashCode()"]},
+
+        {"kind":"when","text":"...we sort them...","code":["tuple1 = tuple1.sort(Comparator.naturalOrder())","tuple2 = tuple2.sort(Comparator.naturalOrder())"]},
+
+        {"kind":"then","text":"The two tuples are equal!","code":["tuple1.equals(tuple2)"]},
+
+        {"kind":"when","text":"We create versions of the associations where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it}).toSet()","var smallerTuple1 = tuple1.removeAll(toRemove)","var smallerTuple2 = tuple2.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"They are equal...","code":["smallerTuple1 == smallerTuple2","smallerTuple1.hashCode() == smallerTuple2.hashCode()"]},
+
+        {"kind":"when","text":"We make them different by adding to them...","code":["var toAdd1 = subList.subList(0, (subList.size() * 0.5) as int).toSet()","var toAdd2 = subList.subList((subList.size() * 0.5) as int, subList.size()).toSet()","var lessSmallTuple1 = smallerTuple1.addAll(toAdd1)","var lessSmallTuple2 = smallerTuple2.addAll(toAdd2)"]},
+
+        {"kind":"then","text":"","code":["lessSmallTuple1.size() == lessSmallTuple2.size()","lessSmallTuple1 != lessSmallTuple2","lessSmallTuple1.hashCode() != lessSmallTuple2.hashCode()"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"type":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"entries":["(0..24).collect(it -> it as Long).toList()","(0..24).collect(it -> it as Short).toList()","(0..24).collect(it -> it).toList()","(0..24).collect(it -> String.valueOf(it)).toList()","(0..128).collect(it -> it as Long).toList()","(0..128).collect(it -> it as Short).toList()","(0..128).collect(it -> it).toList()","(0..128).collect(it -> String.valueOf(it)).toList()","(0..1_000).collect(it -> it as Long).toList()","(0..1_000).collect(it -> it as Short).toList()","(0..1_000).collect(it -> it).toList()","(0..1_000).collect(it -> String.valueOf(it)).toList()","(0..10_000).collect(it -> it as Long).toList()","(0..10_000).collect(it -> it as Short).toList()","(0..10_000).collect(it -> it).toList()","(0..10_000).collect(it -> String.valueOf(it)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of a Tuple works reliably after removing a large part of elements. [10]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between tuple, then\n            we can avoid a lot of work due to two tuples sharing most of their branches/nodes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher1 = { (31 * it.hashCode() * (1997 * it.hashCode() ** 2)%128) as int }","var keyHasher2 = { (73 * it.hashCode() * (1997 * it.hashCode() ** 2)%256) as int }","Comparator<Object> randomSort1 = (a, b) -> (keyHasher1(a)<=>keyHasher1(b))","Comparator<Object> randomSort2 = (a, b) -> (keyHasher2(a)<=>keyHasher2(b))","var scrambledEntries1 = entries.toSorted(randomSort1)","var scrambledEntries2 = entries.toSorted(randomSort2)"]},
+
+        {"kind":"when","text":"We create two different `Tuple` instances from the two scrambled list...","code":["var tuple1 = Tuple.of(type).addAll(scrambledEntries1)","var tuple2 = Tuple.of(type).addAll(scrambledEntries2)"]},
+
+        {"kind":"then","text":"The two tuples are NOT equal!","code":["!tuple1.equals(tuple2)"]},
+
+        {"kind":"and","text":"They also do not have the same hash codes:","code":["tuple1.hashCode() != tuple2.hashCode()"]},
+
+        {"kind":"when","text":"...we sort them...","code":["tuple1 = tuple1.sort(Comparator.naturalOrder())","tuple2 = tuple2.sort(Comparator.naturalOrder())"]},
+
+        {"kind":"then","text":"The two tuples are equal!","code":["tuple1.equals(tuple2)"]},
+
+        {"kind":"when","text":"We create versions of the associations where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it}).toSet()","var smallerTuple1 = tuple1.removeAll(toRemove)","var smallerTuple2 = tuple2.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"They are equal...","code":["smallerTuple1 == smallerTuple2","smallerTuple1.hashCode() == smallerTuple2.hashCode()"]},
+
+        {"kind":"when","text":"We make them different by adding to them...","code":["var toAdd1 = subList.subList(0, (subList.size() * 0.5) as int).toSet()","var toAdd2 = subList.subList((subList.size() * 0.5) as int, subList.size()).toSet()","var lessSmallTuple1 = smallerTuple1.addAll(toAdd1)","var lessSmallTuple2 = smallerTuple2.addAll(toAdd2)"]},
+
+        {"kind":"then","text":"","code":["lessSmallTuple1.size() == lessSmallTuple2.size()","lessSmallTuple1 != lessSmallTuple2","lessSmallTuple1.hashCode() != lessSmallTuple2.hashCode()"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"type":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"entries":["(0..24).collect(it -> it as Long).toList()","(0..24).collect(it -> it as Short).toList()","(0..24).collect(it -> it).toList()","(0..24).collect(it -> String.valueOf(it)).toList()","(0..128).collect(it -> it as Long).toList()","(0..128).collect(it -> it as Short).toList()","(0..128).collect(it -> it).toList()","(0..128).collect(it -> String.valueOf(it)).toList()","(0..1_000).collect(it -> it as Long).toList()","(0..1_000).collect(it -> it as Short).toList()","(0..1_000).collect(it -> it).toList()","(0..1_000).collect(it -> String.valueOf(it)).toList()","(0..10_000).collect(it -> it as Long).toList()","(0..10_000).collect(it -> it as Short).toList()","(0..10_000).collect(it -> it).toList()","(0..10_000).collect(it -> String.valueOf(it)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of a Tuple works reliably after removing a large part of elements. [11]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between tuple, then\n            we can avoid a lot of work due to two tuples sharing most of their branches/nodes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher1 = { (31 * it.hashCode() * (1997 * it.hashCode() ** 2)%128) as int }","var keyHasher2 = { (73 * it.hashCode() * (1997 * it.hashCode() ** 2)%256) as int }","Comparator<Object> randomSort1 = (a, b) -> (keyHasher1(a)<=>keyHasher1(b))","Comparator<Object> randomSort2 = (a, b) -> (keyHasher2(a)<=>keyHasher2(b))","var scrambledEntries1 = entries.toSorted(randomSort1)","var scrambledEntries2 = entries.toSorted(randomSort2)"]},
+
+        {"kind":"when","text":"We create two different `Tuple` instances from the two scrambled list...","code":["var tuple1 = Tuple.of(type).addAll(scrambledEntries1)","var tuple2 = Tuple.of(type).addAll(scrambledEntries2)"]},
+
+        {"kind":"then","text":"The two tuples are NOT equal!","code":["!tuple1.equals(tuple2)"]},
+
+        {"kind":"and","text":"They also do not have the same hash codes:","code":["tuple1.hashCode() != tuple2.hashCode()"]},
+
+        {"kind":"when","text":"...we sort them...","code":["tuple1 = tuple1.sort(Comparator.naturalOrder())","tuple2 = tuple2.sort(Comparator.naturalOrder())"]},
+
+        {"kind":"then","text":"The two tuples are equal!","code":["tuple1.equals(tuple2)"]},
+
+        {"kind":"when","text":"We create versions of the associations where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it}).toSet()","var smallerTuple1 = tuple1.removeAll(toRemove)","var smallerTuple2 = tuple2.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"They are equal...","code":["smallerTuple1 == smallerTuple2","smallerTuple1.hashCode() == smallerTuple2.hashCode()"]},
+
+        {"kind":"when","text":"We make them different by adding to them...","code":["var toAdd1 = subList.subList(0, (subList.size() * 0.5) as int).toSet()","var toAdd2 = subList.subList((subList.size() * 0.5) as int, subList.size()).toSet()","var lessSmallTuple1 = smallerTuple1.addAll(toAdd1)","var lessSmallTuple2 = smallerTuple2.addAll(toAdd2)"]},
+
+        {"kind":"then","text":"","code":["lessSmallTuple1.size() == lessSmallTuple2.size()","lessSmallTuple1 != lessSmallTuple2","lessSmallTuple1.hashCode() != lessSmallTuple2.hashCode()"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"type":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"entries":["(0..24).collect(it -> it as Long).toList()","(0..24).collect(it -> it as Short).toList()","(0..24).collect(it -> it).toList()","(0..24).collect(it -> String.valueOf(it)).toList()","(0..128).collect(it -> it as Long).toList()","(0..128).collect(it -> it as Short).toList()","(0..128).collect(it -> it).toList()","(0..128).collect(it -> String.valueOf(it)).toList()","(0..1_000).collect(it -> it as Long).toList()","(0..1_000).collect(it -> it as Short).toList()","(0..1_000).collect(it -> it).toList()","(0..1_000).collect(it -> String.valueOf(it)).toList()","(0..10_000).collect(it -> it as Long).toList()","(0..10_000).collect(it -> it as Short).toList()","(0..10_000).collect(it -> it).toList()","(0..10_000).collect(it -> String.valueOf(it)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of a Tuple works reliably after removing a large part of elements. [12]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between tuple, then\n            we can avoid a lot of work due to two tuples sharing most of their branches/nodes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher1 = { (31 * it.hashCode() * (1997 * it.hashCode() ** 2)%128) as int }","var keyHasher2 = { (73 * it.hashCode() * (1997 * it.hashCode() ** 2)%256) as int }","Comparator<Object> randomSort1 = (a, b) -> (keyHasher1(a)<=>keyHasher1(b))","Comparator<Object> randomSort2 = (a, b) -> (keyHasher2(a)<=>keyHasher2(b))","var scrambledEntries1 = entries.toSorted(randomSort1)","var scrambledEntries2 = entries.toSorted(randomSort2)"]},
+
+        {"kind":"when","text":"We create two different `Tuple` instances from the two scrambled list...","code":["var tuple1 = Tuple.of(type).addAll(scrambledEntries1)","var tuple2 = Tuple.of(type).addAll(scrambledEntries2)"]},
+
+        {"kind":"then","text":"The two tuples are NOT equal!","code":["!tuple1.equals(tuple2)"]},
+
+        {"kind":"and","text":"They also do not have the same hash codes:","code":["tuple1.hashCode() != tuple2.hashCode()"]},
+
+        {"kind":"when","text":"...we sort them...","code":["tuple1 = tuple1.sort(Comparator.naturalOrder())","tuple2 = tuple2.sort(Comparator.naturalOrder())"]},
+
+        {"kind":"then","text":"The two tuples are equal!","code":["tuple1.equals(tuple2)"]},
+
+        {"kind":"when","text":"We create versions of the associations where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it}).toSet()","var smallerTuple1 = tuple1.removeAll(toRemove)","var smallerTuple2 = tuple2.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"They are equal...","code":["smallerTuple1 == smallerTuple2","smallerTuple1.hashCode() == smallerTuple2.hashCode()"]},
+
+        {"kind":"when","text":"We make them different by adding to them...","code":["var toAdd1 = subList.subList(0, (subList.size() * 0.5) as int).toSet()","var toAdd2 = subList.subList((subList.size() * 0.5) as int, subList.size()).toSet()","var lessSmallTuple1 = smallerTuple1.addAll(toAdd1)","var lessSmallTuple2 = smallerTuple2.addAll(toAdd2)"]},
+
+        {"kind":"then","text":"","code":["lessSmallTuple1.size() == lessSmallTuple2.size()","lessSmallTuple1 != lessSmallTuple2","lessSmallTuple1.hashCode() != lessSmallTuple2.hashCode()"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"type":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"entries":["(0..24).collect(it -> it as Long).toList()","(0..24).collect(it -> it as Short).toList()","(0..24).collect(it -> it).toList()","(0..24).collect(it -> String.valueOf(it)).toList()","(0..128).collect(it -> it as Long).toList()","(0..128).collect(it -> it as Short).toList()","(0..128).collect(it -> it).toList()","(0..128).collect(it -> String.valueOf(it)).toList()","(0..1_000).collect(it -> it as Long).toList()","(0..1_000).collect(it -> it as Short).toList()","(0..1_000).collect(it -> it).toList()","(0..1_000).collect(it -> String.valueOf(it)).toList()","(0..10_000).collect(it -> it as Long).toList()","(0..10_000).collect(it -> it as Short).toList()","(0..10_000).collect(it -> it).toList()","(0..10_000).collect(it -> String.valueOf(it)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of a Tuple works reliably after removing a large part of elements. [13]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between tuple, then\n            we can avoid a lot of work due to two tuples sharing most of their branches/nodes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher1 = { (31 * it.hashCode() * (1997 * it.hashCode() ** 2)%128) as int }","var keyHasher2 = { (73 * it.hashCode() * (1997 * it.hashCode() ** 2)%256) as int }","Comparator<Object> randomSort1 = (a, b) -> (keyHasher1(a)<=>keyHasher1(b))","Comparator<Object> randomSort2 = (a, b) -> (keyHasher2(a)<=>keyHasher2(b))","var scrambledEntries1 = entries.toSorted(randomSort1)","var scrambledEntries2 = entries.toSorted(randomSort2)"]},
+
+        {"kind":"when","text":"We create two different `Tuple` instances from the two scrambled list...","code":["var tuple1 = Tuple.of(type).addAll(scrambledEntries1)","var tuple2 = Tuple.of(type).addAll(scrambledEntries2)"]},
+
+        {"kind":"then","text":"The two tuples are NOT equal!","code":["!tuple1.equals(tuple2)"]},
+
+        {"kind":"and","text":"They also do not have the same hash codes:","code":["tuple1.hashCode() != tuple2.hashCode()"]},
+
+        {"kind":"when","text":"...we sort them...","code":["tuple1 = tuple1.sort(Comparator.naturalOrder())","tuple2 = tuple2.sort(Comparator.naturalOrder())"]},
+
+        {"kind":"then","text":"The two tuples are equal!","code":["tuple1.equals(tuple2)"]},
+
+        {"kind":"when","text":"We create versions of the associations where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it}).toSet()","var smallerTuple1 = tuple1.removeAll(toRemove)","var smallerTuple2 = tuple2.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"They are equal...","code":["smallerTuple1 == smallerTuple2","smallerTuple1.hashCode() == smallerTuple2.hashCode()"]},
+
+        {"kind":"when","text":"We make them different by adding to them...","code":["var toAdd1 = subList.subList(0, (subList.size() * 0.5) as int).toSet()","var toAdd2 = subList.subList((subList.size() * 0.5) as int, subList.size()).toSet()","var lessSmallTuple1 = smallerTuple1.addAll(toAdd1)","var lessSmallTuple2 = smallerTuple2.addAll(toAdd2)"]},
+
+        {"kind":"then","text":"","code":["lessSmallTuple1.size() == lessSmallTuple2.size()","lessSmallTuple1 != lessSmallTuple2","lessSmallTuple1.hashCode() != lessSmallTuple2.hashCode()"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"type":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"entries":["(0..24).collect(it -> it as Long).toList()","(0..24).collect(it -> it as Short).toList()","(0..24).collect(it -> it).toList()","(0..24).collect(it -> String.valueOf(it)).toList()","(0..128).collect(it -> it as Long).toList()","(0..128).collect(it -> it as Short).toList()","(0..128).collect(it -> it).toList()","(0..128).collect(it -> String.valueOf(it)).toList()","(0..1_000).collect(it -> it as Long).toList()","(0..1_000).collect(it -> it as Short).toList()","(0..1_000).collect(it -> it).toList()","(0..1_000).collect(it -> String.valueOf(it)).toList()","(0..10_000).collect(it -> it as Long).toList()","(0..10_000).collect(it -> it as Short).toList()","(0..10_000).collect(it -> it).toList()","(0..10_000).collect(it -> String.valueOf(it)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of a Tuple works reliably after removing a large part of elements. [14]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between tuple, then\n            we can avoid a lot of work due to two tuples sharing most of their branches/nodes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher1 = { (31 * it.hashCode() * (1997 * it.hashCode() ** 2)%128) as int }","var keyHasher2 = { (73 * it.hashCode() * (1997 * it.hashCode() ** 2)%256) as int }","Comparator<Object> randomSort1 = (a, b) -> (keyHasher1(a)<=>keyHasher1(b))","Comparator<Object> randomSort2 = (a, b) -> (keyHasher2(a)<=>keyHasher2(b))","var scrambledEntries1 = entries.toSorted(randomSort1)","var scrambledEntries2 = entries.toSorted(randomSort2)"]},
+
+        {"kind":"when","text":"We create two different `Tuple` instances from the two scrambled list...","code":["var tuple1 = Tuple.of(type).addAll(scrambledEntries1)","var tuple2 = Tuple.of(type).addAll(scrambledEntries2)"]},
+
+        {"kind":"then","text":"The two tuples are NOT equal!","code":["!tuple1.equals(tuple2)"]},
+
+        {"kind":"and","text":"They also do not have the same hash codes:","code":["tuple1.hashCode() != tuple2.hashCode()"]},
+
+        {"kind":"when","text":"...we sort them...","code":["tuple1 = tuple1.sort(Comparator.naturalOrder())","tuple2 = tuple2.sort(Comparator.naturalOrder())"]},
+
+        {"kind":"then","text":"The two tuples are equal!","code":["tuple1.equals(tuple2)"]},
+
+        {"kind":"when","text":"We create versions of the associations where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it}).toSet()","var smallerTuple1 = tuple1.removeAll(toRemove)","var smallerTuple2 = tuple2.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"They are equal...","code":["smallerTuple1 == smallerTuple2","smallerTuple1.hashCode() == smallerTuple2.hashCode()"]},
+
+        {"kind":"when","text":"We make them different by adding to them...","code":["var toAdd1 = subList.subList(0, (subList.size() * 0.5) as int).toSet()","var toAdd2 = subList.subList((subList.size() * 0.5) as int, subList.size()).toSet()","var lessSmallTuple1 = smallerTuple1.addAll(toAdd1)","var lessSmallTuple2 = smallerTuple2.addAll(toAdd2)"]},
+
+        {"kind":"then","text":"","code":["lessSmallTuple1.size() == lessSmallTuple2.size()","lessSmallTuple1 != lessSmallTuple2","lessSmallTuple1.hashCode() != lessSmallTuple2.hashCode()"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"type":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"entries":["(0..24).collect(it -> it as Long).toList()","(0..24).collect(it -> it as Short).toList()","(0..24).collect(it -> it).toList()","(0..24).collect(it -> String.valueOf(it)).toList()","(0..128).collect(it -> it as Long).toList()","(0..128).collect(it -> it as Short).toList()","(0..128).collect(it -> it).toList()","(0..128).collect(it -> String.valueOf(it)).toList()","(0..1_000).collect(it -> it as Long).toList()","(0..1_000).collect(it -> it as Short).toList()","(0..1_000).collect(it -> it).toList()","(0..1_000).collect(it -> String.valueOf(it)).toList()","(0..10_000).collect(it -> it as Long).toList()","(0..10_000).collect(it -> it as Short).toList()","(0..10_000).collect(it -> it).toList()","(0..10_000).collect(it -> String.valueOf(it)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of a Tuple works reliably after removing a large part of elements. [15]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between tuple, then\n            we can avoid a lot of work due to two tuples sharing most of their branches/nodes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher1 = { (31 * it.hashCode() * (1997 * it.hashCode() ** 2)%128) as int }","var keyHasher2 = { (73 * it.hashCode() * (1997 * it.hashCode() ** 2)%256) as int }","Comparator<Object> randomSort1 = (a, b) -> (keyHasher1(a)<=>keyHasher1(b))","Comparator<Object> randomSort2 = (a, b) -> (keyHasher2(a)<=>keyHasher2(b))","var scrambledEntries1 = entries.toSorted(randomSort1)","var scrambledEntries2 = entries.toSorted(randomSort2)"]},
+
+        {"kind":"when","text":"We create two different `Tuple` instances from the two scrambled list...","code":["var tuple1 = Tuple.of(type).addAll(scrambledEntries1)","var tuple2 = Tuple.of(type).addAll(scrambledEntries2)"]},
+
+        {"kind":"then","text":"The two tuples are NOT equal!","code":["!tuple1.equals(tuple2)"]},
+
+        {"kind":"and","text":"They also do not have the same hash codes:","code":["tuple1.hashCode() != tuple2.hashCode()"]},
+
+        {"kind":"when","text":"...we sort them...","code":["tuple1 = tuple1.sort(Comparator.naturalOrder())","tuple2 = tuple2.sort(Comparator.naturalOrder())"]},
+
+        {"kind":"then","text":"The two tuples are equal!","code":["tuple1.equals(tuple2)"]},
+
+        {"kind":"when","text":"We create versions of the associations where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it}).toSet()","var smallerTuple1 = tuple1.removeAll(toRemove)","var smallerTuple2 = tuple2.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"They are equal...","code":["smallerTuple1 == smallerTuple2","smallerTuple1.hashCode() == smallerTuple2.hashCode()"]},
+
+        {"kind":"when","text":"We make them different by adding to them...","code":["var toAdd1 = subList.subList(0, (subList.size() * 0.5) as int).toSet()","var toAdd2 = subList.subList((subList.size() * 0.5) as int, subList.size()).toSet()","var lessSmallTuple1 = smallerTuple1.addAll(toAdd1)","var lessSmallTuple2 = smallerTuple2.addAll(toAdd2)"]},
+
+        {"kind":"then","text":"","code":["lessSmallTuple1.size() == lessSmallTuple2.size()","lessSmallTuple1 != lessSmallTuple2","lessSmallTuple1.hashCode() != lessSmallTuple2.hashCode()"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"type":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"entries":["(0..24).collect(it -> it as Long).toList()","(0..24).collect(it -> it as Short).toList()","(0..24).collect(it -> it).toList()","(0..24).collect(it -> String.valueOf(it)).toList()","(0..128).collect(it -> it as Long).toList()","(0..128).collect(it -> it as Short).toList()","(0..128).collect(it -> it).toList()","(0..128).collect(it -> String.valueOf(it)).toList()","(0..1_000).collect(it -> it as Long).toList()","(0..1_000).collect(it -> it as Short).toList()","(0..1_000).collect(it -> it).toList()","(0..1_000).collect(it -> String.valueOf(it)).toList()","(0..10_000).collect(it -> it as Long).toList()","(0..10_000).collect(it -> it as Short).toList()","(0..10_000).collect(it -> it).toList()","(0..10_000).collect(it -> String.valueOf(it)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of a Tuple works reliably after a series of modifications. [0]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between tuples, then\n            we can avoid a lot of work due to two tuples sharing most of their branches/nodes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort = (a, b) -> (keyHasher(a)<=>keyHasher(b))","items.sort(randomSort)","var firstHalf = items.subList(0, (items.size() * 0.5) as int)","var secondHalf = items.subList(1 + (items.size() * 0.5) as int, items.size())"]},
+
+        {"kind":"and","text":"","code":["var originalTuple = Tuple.of(type).addAll(firstHalf)"]},
+
+        {"kind":"when","text":"","code":["var quarter = firstHalf.subList(0, (firstHalf.size() * 0.5) as int)","var modifiedTuple = originalTuple.removeAll(quarter.toSet())"]},
+
+        {"kind":"then","text":"","code":["modifiedTuple != originalTuple","modifiedTuple.hashCode() != originalTuple.hashCode()"]},
+
+        {"kind":"when","text":"","code":["var subSubList1 = secondHalf.subList(0, (secondHalf.size() * 0.5) as int)","var subSubList2 = secondHalf.subList((secondHalf.size() * 0.5) as int, secondHalf.size())","int randomIndex = Math.abs(modifiedTuple.hashCode()) % modifiedTuple.size()","var modifiedTuple1 = modifiedTuple.addAllAt(randomIndex, subSubList1)","var modifiedTuple2 = modifiedTuple.addAllAt(randomIndex, subSubList2)"]},
+
+        {"kind":"then","text":"","code":["modifiedTuple1.size() == modifiedTuple2.size()","modifiedTuple1 != modifiedTuple2"]},
+
+        {"kind":"when","text":"","code":["modifiedTuple = modifiedTuple.addAll(firstHalf)"]},
+
+        {"kind":"then","text":"","code":["originalTuple != modifiedTuple","originalTuple.hashCode() != modifiedTuple.hashCode()"]},
+
+        {"kind":"when","text":"","code":["modifiedTuple1 = modifiedTuple.addAllAt(randomIndex, subSubList1)","modifiedTuple2 = modifiedTuple.addAllAt(randomIndex, subSubList2)"]},
+
+        {"kind":"then","text":"","code":["modifiedTuple1.size() == modifiedTuple2.size()","modifiedTuple1 != modifiedTuple2"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"type":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"items":["(0..24).collect(it -> it as Long).toList()","(0..24).collect(it -> it as Short).toList()","(0..24).collect(it -> it).toList()","(0..24).collect(it -> String.valueOf(it)).toList()","(0..128).collect(it -> it as Long).toList()","(0..128).collect(it -> it as Short).toList()","(0..128).collect(it -> it).toList()","(0..128).collect(it -> String.valueOf(it)).toList()","(0..1_000).collect(it -> it as Long).toList()","(0..1_000).collect(it -> it as Short).toList()","(0..1_000).collect(it -> it).toList()","(0..1_000).collect(it -> String.valueOf(it)).toList()","(0..10_000).collect(it -> it as Long).toList()","(0..10_000).collect(it -> it as Short).toList()","(0..10_000).collect(it -> it).toList()","(0..10_000).collect(it -> String.valueOf(it)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of a Tuple works reliably after a series of modifications. [1]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between tuples, then\n            we can avoid a lot of work due to two tuples sharing most of their branches/nodes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort = (a, b) -> (keyHasher(a)<=>keyHasher(b))","items.sort(randomSort)","var firstHalf = items.subList(0, (items.size() * 0.5) as int)","var secondHalf = items.subList(1 + (items.size() * 0.5) as int, items.size())"]},
+
+        {"kind":"and","text":"","code":["var originalTuple = Tuple.of(type).addAll(firstHalf)"]},
+
+        {"kind":"when","text":"","code":["var quarter = firstHalf.subList(0, (firstHalf.size() * 0.5) as int)","var modifiedTuple = originalTuple.removeAll(quarter.toSet())"]},
+
+        {"kind":"then","text":"","code":["modifiedTuple != originalTuple","modifiedTuple.hashCode() != originalTuple.hashCode()"]},
+
+        {"kind":"when","text":"","code":["var subSubList1 = secondHalf.subList(0, (secondHalf.size() * 0.5) as int)","var subSubList2 = secondHalf.subList((secondHalf.size() * 0.5) as int, secondHalf.size())","int randomIndex = Math.abs(modifiedTuple.hashCode()) % modifiedTuple.size()","var modifiedTuple1 = modifiedTuple.addAllAt(randomIndex, subSubList1)","var modifiedTuple2 = modifiedTuple.addAllAt(randomIndex, subSubList2)"]},
+
+        {"kind":"then","text":"","code":["modifiedTuple1.size() == modifiedTuple2.size()","modifiedTuple1 != modifiedTuple2"]},
+
+        {"kind":"when","text":"","code":["modifiedTuple = modifiedTuple.addAll(firstHalf)"]},
+
+        {"kind":"then","text":"","code":["originalTuple != modifiedTuple","originalTuple.hashCode() != modifiedTuple.hashCode()"]},
+
+        {"kind":"when","text":"","code":["modifiedTuple1 = modifiedTuple.addAllAt(randomIndex, subSubList1)","modifiedTuple2 = modifiedTuple.addAllAt(randomIndex, subSubList2)"]},
+
+        {"kind":"then","text":"","code":["modifiedTuple1.size() == modifiedTuple2.size()","modifiedTuple1 != modifiedTuple2"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"type":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"items":["(0..24).collect(it -> it as Long).toList()","(0..24).collect(it -> it as Short).toList()","(0..24).collect(it -> it).toList()","(0..24).collect(it -> String.valueOf(it)).toList()","(0..128).collect(it -> it as Long).toList()","(0..128).collect(it -> it as Short).toList()","(0..128).collect(it -> it).toList()","(0..128).collect(it -> String.valueOf(it)).toList()","(0..1_000).collect(it -> it as Long).toList()","(0..1_000).collect(it -> it as Short).toList()","(0..1_000).collect(it -> it).toList()","(0..1_000).collect(it -> String.valueOf(it)).toList()","(0..10_000).collect(it -> it as Long).toList()","(0..10_000).collect(it -> it as Short).toList()","(0..10_000).collect(it -> it).toList()","(0..10_000).collect(it -> String.valueOf(it)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of a Tuple works reliably after a series of modifications. [2]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between tuples, then\n            we can avoid a lot of work due to two tuples sharing most of their branches/nodes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort = (a, b) -> (keyHasher(a)<=>keyHasher(b))","items.sort(randomSort)","var firstHalf = items.subList(0, (items.size() * 0.5) as int)","var secondHalf = items.subList(1 + (items.size() * 0.5) as int, items.size())"]},
+
+        {"kind":"and","text":"","code":["var originalTuple = Tuple.of(type).addAll(firstHalf)"]},
+
+        {"kind":"when","text":"","code":["var quarter = firstHalf.subList(0, (firstHalf.size() * 0.5) as int)","var modifiedTuple = originalTuple.removeAll(quarter.toSet())"]},
+
+        {"kind":"then","text":"","code":["modifiedTuple != originalTuple","modifiedTuple.hashCode() != originalTuple.hashCode()"]},
+
+        {"kind":"when","text":"","code":["var subSubList1 = secondHalf.subList(0, (secondHalf.size() * 0.5) as int)","var subSubList2 = secondHalf.subList((secondHalf.size() * 0.5) as int, secondHalf.size())","int randomIndex = Math.abs(modifiedTuple.hashCode()) % modifiedTuple.size()","var modifiedTuple1 = modifiedTuple.addAllAt(randomIndex, subSubList1)","var modifiedTuple2 = modifiedTuple.addAllAt(randomIndex, subSubList2)"]},
+
+        {"kind":"then","text":"","code":["modifiedTuple1.size() == modifiedTuple2.size()","modifiedTuple1 != modifiedTuple2"]},
+
+        {"kind":"when","text":"","code":["modifiedTuple = modifiedTuple.addAll(firstHalf)"]},
+
+        {"kind":"then","text":"","code":["originalTuple != modifiedTuple","originalTuple.hashCode() != modifiedTuple.hashCode()"]},
+
+        {"kind":"when","text":"","code":["modifiedTuple1 = modifiedTuple.addAllAt(randomIndex, subSubList1)","modifiedTuple2 = modifiedTuple.addAllAt(randomIndex, subSubList2)"]},
+
+        {"kind":"then","text":"","code":["modifiedTuple1.size() == modifiedTuple2.size()","modifiedTuple1 != modifiedTuple2"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"type":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"items":["(0..24).collect(it -> it as Long).toList()","(0..24).collect(it -> it as Short).toList()","(0..24).collect(it -> it).toList()","(0..24).collect(it -> String.valueOf(it)).toList()","(0..128).collect(it -> it as Long).toList()","(0..128).collect(it -> it as Short).toList()","(0..128).collect(it -> it).toList()","(0..128).collect(it -> String.valueOf(it)).toList()","(0..1_000).collect(it -> it as Long).toList()","(0..1_000).collect(it -> it as Short).toList()","(0..1_000).collect(it -> it).toList()","(0..1_000).collect(it -> String.valueOf(it)).toList()","(0..10_000).collect(it -> it as Long).toList()","(0..10_000).collect(it -> it as Short).toList()","(0..10_000).collect(it -> it).toList()","(0..10_000).collect(it -> String.valueOf(it)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of a Tuple works reliably after a series of modifications. [3]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between tuples, then\n            we can avoid a lot of work due to two tuples sharing most of their branches/nodes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort = (a, b) -> (keyHasher(a)<=>keyHasher(b))","items.sort(randomSort)","var firstHalf = items.subList(0, (items.size() * 0.5) as int)","var secondHalf = items.subList(1 + (items.size() * 0.5) as int, items.size())"]},
+
+        {"kind":"and","text":"","code":["var originalTuple = Tuple.of(type).addAll(firstHalf)"]},
+
+        {"kind":"when","text":"","code":["var quarter = firstHalf.subList(0, (firstHalf.size() * 0.5) as int)","var modifiedTuple = originalTuple.removeAll(quarter.toSet())"]},
+
+        {"kind":"then","text":"","code":["modifiedTuple != originalTuple","modifiedTuple.hashCode() != originalTuple.hashCode()"]},
+
+        {"kind":"when","text":"","code":["var subSubList1 = secondHalf.subList(0, (secondHalf.size() * 0.5) as int)","var subSubList2 = secondHalf.subList((secondHalf.size() * 0.5) as int, secondHalf.size())","int randomIndex = Math.abs(modifiedTuple.hashCode()) % modifiedTuple.size()","var modifiedTuple1 = modifiedTuple.addAllAt(randomIndex, subSubList1)","var modifiedTuple2 = modifiedTuple.addAllAt(randomIndex, subSubList2)"]},
+
+        {"kind":"then","text":"","code":["modifiedTuple1.size() == modifiedTuple2.size()","modifiedTuple1 != modifiedTuple2"]},
+
+        {"kind":"when","text":"","code":["modifiedTuple = modifiedTuple.addAll(firstHalf)"]},
+
+        {"kind":"then","text":"","code":["originalTuple != modifiedTuple","originalTuple.hashCode() != modifiedTuple.hashCode()"]},
+
+        {"kind":"when","text":"","code":["modifiedTuple1 = modifiedTuple.addAllAt(randomIndex, subSubList1)","modifiedTuple2 = modifiedTuple.addAllAt(randomIndex, subSubList2)"]},
+
+        {"kind":"then","text":"","code":["modifiedTuple1.size() == modifiedTuple2.size()","modifiedTuple1 != modifiedTuple2"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"type":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"items":["(0..24).collect(it -> it as Long).toList()","(0..24).collect(it -> it as Short).toList()","(0..24).collect(it -> it).toList()","(0..24).collect(it -> String.valueOf(it)).toList()","(0..128).collect(it -> it as Long).toList()","(0..128).collect(it -> it as Short).toList()","(0..128).collect(it -> it).toList()","(0..128).collect(it -> String.valueOf(it)).toList()","(0..1_000).collect(it -> it as Long).toList()","(0..1_000).collect(it -> it as Short).toList()","(0..1_000).collect(it -> it).toList()","(0..1_000).collect(it -> String.valueOf(it)).toList()","(0..10_000).collect(it -> it as Long).toList()","(0..10_000).collect(it -> it as Short).toList()","(0..10_000).collect(it -> it).toList()","(0..10_000).collect(it -> String.valueOf(it)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of a Tuple works reliably after a series of modifications. [4]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between tuples, then\n            we can avoid a lot of work due to two tuples sharing most of their branches/nodes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort = (a, b) -> (keyHasher(a)<=>keyHasher(b))","items.sort(randomSort)","var firstHalf = items.subList(0, (items.size() * 0.5) as int)","var secondHalf = items.subList(1 + (items.size() * 0.5) as int, items.size())"]},
+
+        {"kind":"and","text":"","code":["var originalTuple = Tuple.of(type).addAll(firstHalf)"]},
+
+        {"kind":"when","text":"","code":["var quarter = firstHalf.subList(0, (firstHalf.size() * 0.5) as int)","var modifiedTuple = originalTuple.removeAll(quarter.toSet())"]},
+
+        {"kind":"then","text":"","code":["modifiedTuple != originalTuple","modifiedTuple.hashCode() != originalTuple.hashCode()"]},
+
+        {"kind":"when","text":"","code":["var subSubList1 = secondHalf.subList(0, (secondHalf.size() * 0.5) as int)","var subSubList2 = secondHalf.subList((secondHalf.size() * 0.5) as int, secondHalf.size())","int randomIndex = Math.abs(modifiedTuple.hashCode()) % modifiedTuple.size()","var modifiedTuple1 = modifiedTuple.addAllAt(randomIndex, subSubList1)","var modifiedTuple2 = modifiedTuple.addAllAt(randomIndex, subSubList2)"]},
+
+        {"kind":"then","text":"","code":["modifiedTuple1.size() == modifiedTuple2.size()","modifiedTuple1 != modifiedTuple2"]},
+
+        {"kind":"when","text":"","code":["modifiedTuple = modifiedTuple.addAll(firstHalf)"]},
+
+        {"kind":"then","text":"","code":["originalTuple != modifiedTuple","originalTuple.hashCode() != modifiedTuple.hashCode()"]},
+
+        {"kind":"when","text":"","code":["modifiedTuple1 = modifiedTuple.addAllAt(randomIndex, subSubList1)","modifiedTuple2 = modifiedTuple.addAllAt(randomIndex, subSubList2)"]},
+
+        {"kind":"then","text":"","code":["modifiedTuple1.size() == modifiedTuple2.size()","modifiedTuple1 != modifiedTuple2"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"type":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"items":["(0..24).collect(it -> it as Long).toList()","(0..24).collect(it -> it as Short).toList()","(0..24).collect(it -> it).toList()","(0..24).collect(it -> String.valueOf(it)).toList()","(0..128).collect(it -> it as Long).toList()","(0..128).collect(it -> it as Short).toList()","(0..128).collect(it -> it).toList()","(0..128).collect(it -> String.valueOf(it)).toList()","(0..1_000).collect(it -> it as Long).toList()","(0..1_000).collect(it -> it as Short).toList()","(0..1_000).collect(it -> it).toList()","(0..1_000).collect(it -> String.valueOf(it)).toList()","(0..10_000).collect(it -> it as Long).toList()","(0..10_000).collect(it -> it as Short).toList()","(0..10_000).collect(it -> it).toList()","(0..10_000).collect(it -> String.valueOf(it)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of a Tuple works reliably after a series of modifications. [5]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between tuples, then\n            we can avoid a lot of work due to two tuples sharing most of their branches/nodes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort = (a, b) -> (keyHasher(a)<=>keyHasher(b))","items.sort(randomSort)","var firstHalf = items.subList(0, (items.size() * 0.5) as int)","var secondHalf = items.subList(1 + (items.size() * 0.5) as int, items.size())"]},
+
+        {"kind":"and","text":"","code":["var originalTuple = Tuple.of(type).addAll(firstHalf)"]},
+
+        {"kind":"when","text":"","code":["var quarter = firstHalf.subList(0, (firstHalf.size() * 0.5) as int)","var modifiedTuple = originalTuple.removeAll(quarter.toSet())"]},
+
+        {"kind":"then","text":"","code":["modifiedTuple != originalTuple","modifiedTuple.hashCode() != originalTuple.hashCode()"]},
+
+        {"kind":"when","text":"","code":["var subSubList1 = secondHalf.subList(0, (secondHalf.size() * 0.5) as int)","var subSubList2 = secondHalf.subList((secondHalf.size() * 0.5) as int, secondHalf.size())","int randomIndex = Math.abs(modifiedTuple.hashCode()) % modifiedTuple.size()","var modifiedTuple1 = modifiedTuple.addAllAt(randomIndex, subSubList1)","var modifiedTuple2 = modifiedTuple.addAllAt(randomIndex, subSubList2)"]},
+
+        {"kind":"then","text":"","code":["modifiedTuple1.size() == modifiedTuple2.size()","modifiedTuple1 != modifiedTuple2"]},
+
+        {"kind":"when","text":"","code":["modifiedTuple = modifiedTuple.addAll(firstHalf)"]},
+
+        {"kind":"then","text":"","code":["originalTuple != modifiedTuple","originalTuple.hashCode() != modifiedTuple.hashCode()"]},
+
+        {"kind":"when","text":"","code":["modifiedTuple1 = modifiedTuple.addAllAt(randomIndex, subSubList1)","modifiedTuple2 = modifiedTuple.addAllAt(randomIndex, subSubList2)"]},
+
+        {"kind":"then","text":"","code":["modifiedTuple1.size() == modifiedTuple2.size()","modifiedTuple1 != modifiedTuple2"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"type":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"items":["(0..24).collect(it -> it as Long).toList()","(0..24).collect(it -> it as Short).toList()","(0..24).collect(it -> it).toList()","(0..24).collect(it -> String.valueOf(it)).toList()","(0..128).collect(it -> it as Long).toList()","(0..128).collect(it -> it as Short).toList()","(0..128).collect(it -> it).toList()","(0..128).collect(it -> String.valueOf(it)).toList()","(0..1_000).collect(it -> it as Long).toList()","(0..1_000).collect(it -> it as Short).toList()","(0..1_000).collect(it -> it).toList()","(0..1_000).collect(it -> String.valueOf(it)).toList()","(0..10_000).collect(it -> it as Long).toList()","(0..10_000).collect(it -> it as Short).toList()","(0..10_000).collect(it -> it).toList()","(0..10_000).collect(it -> String.valueOf(it)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of a Tuple works reliably after a series of modifications. [6]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between tuples, then\n            we can avoid a lot of work due to two tuples sharing most of their branches/nodes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort = (a, b) -> (keyHasher(a)<=>keyHasher(b))","items.sort(randomSort)","var firstHalf = items.subList(0, (items.size() * 0.5) as int)","var secondHalf = items.subList(1 + (items.size() * 0.5) as int, items.size())"]},
+
+        {"kind":"and","text":"","code":["var originalTuple = Tuple.of(type).addAll(firstHalf)"]},
+
+        {"kind":"when","text":"","code":["var quarter = firstHalf.subList(0, (firstHalf.size() * 0.5) as int)","var modifiedTuple = originalTuple.removeAll(quarter.toSet())"]},
+
+        {"kind":"then","text":"","code":["modifiedTuple != originalTuple","modifiedTuple.hashCode() != originalTuple.hashCode()"]},
+
+        {"kind":"when","text":"","code":["var subSubList1 = secondHalf.subList(0, (secondHalf.size() * 0.5) as int)","var subSubList2 = secondHalf.subList((secondHalf.size() * 0.5) as int, secondHalf.size())","int randomIndex = Math.abs(modifiedTuple.hashCode()) % modifiedTuple.size()","var modifiedTuple1 = modifiedTuple.addAllAt(randomIndex, subSubList1)","var modifiedTuple2 = modifiedTuple.addAllAt(randomIndex, subSubList2)"]},
+
+        {"kind":"then","text":"","code":["modifiedTuple1.size() == modifiedTuple2.size()","modifiedTuple1 != modifiedTuple2"]},
+
+        {"kind":"when","text":"","code":["modifiedTuple = modifiedTuple.addAll(firstHalf)"]},
+
+        {"kind":"then","text":"","code":["originalTuple != modifiedTuple","originalTuple.hashCode() != modifiedTuple.hashCode()"]},
+
+        {"kind":"when","text":"","code":["modifiedTuple1 = modifiedTuple.addAllAt(randomIndex, subSubList1)","modifiedTuple2 = modifiedTuple.addAllAt(randomIndex, subSubList2)"]},
+
+        {"kind":"then","text":"","code":["modifiedTuple1.size() == modifiedTuple2.size()","modifiedTuple1 != modifiedTuple2"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"type":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"items":["(0..24).collect(it -> it as Long).toList()","(0..24).collect(it -> it as Short).toList()","(0..24).collect(it -> it).toList()","(0..24).collect(it -> String.valueOf(it)).toList()","(0..128).collect(it -> it as Long).toList()","(0..128).collect(it -> it as Short).toList()","(0..128).collect(it -> it).toList()","(0..128).collect(it -> String.valueOf(it)).toList()","(0..1_000).collect(it -> it as Long).toList()","(0..1_000).collect(it -> it as Short).toList()","(0..1_000).collect(it -> it).toList()","(0..1_000).collect(it -> String.valueOf(it)).toList()","(0..10_000).collect(it -> it as Long).toList()","(0..10_000).collect(it -> it as Short).toList()","(0..10_000).collect(it -> it).toList()","(0..10_000).collect(it -> String.valueOf(it)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of a Tuple works reliably after a series of modifications. [7]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between tuples, then\n            we can avoid a lot of work due to two tuples sharing most of their branches/nodes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort = (a, b) -> (keyHasher(a)<=>keyHasher(b))","items.sort(randomSort)","var firstHalf = items.subList(0, (items.size() * 0.5) as int)","var secondHalf = items.subList(1 + (items.size() * 0.5) as int, items.size())"]},
+
+        {"kind":"and","text":"","code":["var originalTuple = Tuple.of(type).addAll(firstHalf)"]},
+
+        {"kind":"when","text":"","code":["var quarter = firstHalf.subList(0, (firstHalf.size() * 0.5) as int)","var modifiedTuple = originalTuple.removeAll(quarter.toSet())"]},
+
+        {"kind":"then","text":"","code":["modifiedTuple != originalTuple","modifiedTuple.hashCode() != originalTuple.hashCode()"]},
+
+        {"kind":"when","text":"","code":["var subSubList1 = secondHalf.subList(0, (secondHalf.size() * 0.5) as int)","var subSubList2 = secondHalf.subList((secondHalf.size() * 0.5) as int, secondHalf.size())","int randomIndex = Math.abs(modifiedTuple.hashCode()) % modifiedTuple.size()","var modifiedTuple1 = modifiedTuple.addAllAt(randomIndex, subSubList1)","var modifiedTuple2 = modifiedTuple.addAllAt(randomIndex, subSubList2)"]},
+
+        {"kind":"then","text":"","code":["modifiedTuple1.size() == modifiedTuple2.size()","modifiedTuple1 != modifiedTuple2"]},
+
+        {"kind":"when","text":"","code":["modifiedTuple = modifiedTuple.addAll(firstHalf)"]},
+
+        {"kind":"then","text":"","code":["originalTuple != modifiedTuple","originalTuple.hashCode() != modifiedTuple.hashCode()"]},
+
+        {"kind":"when","text":"","code":["modifiedTuple1 = modifiedTuple.addAllAt(randomIndex, subSubList1)","modifiedTuple2 = modifiedTuple.addAllAt(randomIndex, subSubList2)"]},
+
+        {"kind":"then","text":"","code":["modifiedTuple1.size() == modifiedTuple2.size()","modifiedTuple1 != modifiedTuple2"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"type":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"items":["(0..24).collect(it -> it as Long).toList()","(0..24).collect(it -> it as Short).toList()","(0..24).collect(it -> it).toList()","(0..24).collect(it -> String.valueOf(it)).toList()","(0..128).collect(it -> it as Long).toList()","(0..128).collect(it -> it as Short).toList()","(0..128).collect(it -> it).toList()","(0..128).collect(it -> String.valueOf(it)).toList()","(0..1_000).collect(it -> it as Long).toList()","(0..1_000).collect(it -> it as Short).toList()","(0..1_000).collect(it -> it).toList()","(0..1_000).collect(it -> String.valueOf(it)).toList()","(0..10_000).collect(it -> it as Long).toList()","(0..10_000).collect(it -> it as Short).toList()","(0..10_000).collect(it -> it).toList()","(0..10_000).collect(it -> String.valueOf(it)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of a Tuple works reliably after a series of modifications. [8]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between tuples, then\n            we can avoid a lot of work due to two tuples sharing most of their branches/nodes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort = (a, b) -> (keyHasher(a)<=>keyHasher(b))","items.sort(randomSort)","var firstHalf = items.subList(0, (items.size() * 0.5) as int)","var secondHalf = items.subList(1 + (items.size() * 0.5) as int, items.size())"]},
+
+        {"kind":"and","text":"","code":["var originalTuple = Tuple.of(type).addAll(firstHalf)"]},
+
+        {"kind":"when","text":"","code":["var quarter = firstHalf.subList(0, (firstHalf.size() * 0.5) as int)","var modifiedTuple = originalTuple.removeAll(quarter.toSet())"]},
+
+        {"kind":"then","text":"","code":["modifiedTuple != originalTuple","modifiedTuple.hashCode() != originalTuple.hashCode()"]},
+
+        {"kind":"when","text":"","code":["var subSubList1 = secondHalf.subList(0, (secondHalf.size() * 0.5) as int)","var subSubList2 = secondHalf.subList((secondHalf.size() * 0.5) as int, secondHalf.size())","int randomIndex = Math.abs(modifiedTuple.hashCode()) % modifiedTuple.size()","var modifiedTuple1 = modifiedTuple.addAllAt(randomIndex, subSubList1)","var modifiedTuple2 = modifiedTuple.addAllAt(randomIndex, subSubList2)"]},
+
+        {"kind":"then","text":"","code":["modifiedTuple1.size() == modifiedTuple2.size()","modifiedTuple1 != modifiedTuple2"]},
+
+        {"kind":"when","text":"","code":["modifiedTuple = modifiedTuple.addAll(firstHalf)"]},
+
+        {"kind":"then","text":"","code":["originalTuple != modifiedTuple","originalTuple.hashCode() != modifiedTuple.hashCode()"]},
+
+        {"kind":"when","text":"","code":["modifiedTuple1 = modifiedTuple.addAllAt(randomIndex, subSubList1)","modifiedTuple2 = modifiedTuple.addAllAt(randomIndex, subSubList2)"]},
+
+        {"kind":"then","text":"","code":["modifiedTuple1.size() == modifiedTuple2.size()","modifiedTuple1 != modifiedTuple2"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"type":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"items":["(0..24).collect(it -> it as Long).toList()","(0..24).collect(it -> it as Short).toList()","(0..24).collect(it -> it).toList()","(0..24).collect(it -> String.valueOf(it)).toList()","(0..128).collect(it -> it as Long).toList()","(0..128).collect(it -> it as Short).toList()","(0..128).collect(it -> it).toList()","(0..128).collect(it -> String.valueOf(it)).toList()","(0..1_000).collect(it -> it as Long).toList()","(0..1_000).collect(it -> it as Short).toList()","(0..1_000).collect(it -> it).toList()","(0..1_000).collect(it -> String.valueOf(it)).toList()","(0..10_000).collect(it -> it as Long).toList()","(0..10_000).collect(it -> it as Short).toList()","(0..10_000).collect(it -> it).toList()","(0..10_000).collect(it -> String.valueOf(it)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of a Tuple works reliably after a series of modifications. [9]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between tuples, then\n            we can avoid a lot of work due to two tuples sharing most of their branches/nodes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort = (a, b) -> (keyHasher(a)<=>keyHasher(b))","items.sort(randomSort)","var firstHalf = items.subList(0, (items.size() * 0.5) as int)","var secondHalf = items.subList(1 + (items.size() * 0.5) as int, items.size())"]},
+
+        {"kind":"and","text":"","code":["var originalTuple = Tuple.of(type).addAll(firstHalf)"]},
+
+        {"kind":"when","text":"","code":["var quarter = firstHalf.subList(0, (firstHalf.size() * 0.5) as int)","var modifiedTuple = originalTuple.removeAll(quarter.toSet())"]},
+
+        {"kind":"then","text":"","code":["modifiedTuple != originalTuple","modifiedTuple.hashCode() != originalTuple.hashCode()"]},
+
+        {"kind":"when","text":"","code":["var subSubList1 = secondHalf.subList(0, (secondHalf.size() * 0.5) as int)","var subSubList2 = secondHalf.subList((secondHalf.size() * 0.5) as int, secondHalf.size())","int randomIndex = Math.abs(modifiedTuple.hashCode()) % modifiedTuple.size()","var modifiedTuple1 = modifiedTuple.addAllAt(randomIndex, subSubList1)","var modifiedTuple2 = modifiedTuple.addAllAt(randomIndex, subSubList2)"]},
+
+        {"kind":"then","text":"","code":["modifiedTuple1.size() == modifiedTuple2.size()","modifiedTuple1 != modifiedTuple2"]},
+
+        {"kind":"when","text":"","code":["modifiedTuple = modifiedTuple.addAll(firstHalf)"]},
+
+        {"kind":"then","text":"","code":["originalTuple != modifiedTuple","originalTuple.hashCode() != modifiedTuple.hashCode()"]},
+
+        {"kind":"when","text":"","code":["modifiedTuple1 = modifiedTuple.addAllAt(randomIndex, subSubList1)","modifiedTuple2 = modifiedTuple.addAllAt(randomIndex, subSubList2)"]},
+
+        {"kind":"then","text":"","code":["modifiedTuple1.size() == modifiedTuple2.size()","modifiedTuple1 != modifiedTuple2"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"type":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"items":["(0..24).collect(it -> it as Long).toList()","(0..24).collect(it -> it as Short).toList()","(0..24).collect(it -> it).toList()","(0..24).collect(it -> String.valueOf(it)).toList()","(0..128).collect(it -> it as Long).toList()","(0..128).collect(it -> it as Short).toList()","(0..128).collect(it -> it).toList()","(0..128).collect(it -> String.valueOf(it)).toList()","(0..1_000).collect(it -> it as Long).toList()","(0..1_000).collect(it -> it as Short).toList()","(0..1_000).collect(it -> it).toList()","(0..1_000).collect(it -> String.valueOf(it)).toList()","(0..10_000).collect(it -> it as Long).toList()","(0..10_000).collect(it -> it as Short).toList()","(0..10_000).collect(it -> it).toList()","(0..10_000).collect(it -> String.valueOf(it)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of a Tuple works reliably after a series of modifications. [10]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between tuples, then\n            we can avoid a lot of work due to two tuples sharing most of their branches/nodes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort = (a, b) -> (keyHasher(a)<=>keyHasher(b))","items.sort(randomSort)","var firstHalf = items.subList(0, (items.size() * 0.5) as int)","var secondHalf = items.subList(1 + (items.size() * 0.5) as int, items.size())"]},
+
+        {"kind":"and","text":"","code":["var originalTuple = Tuple.of(type).addAll(firstHalf)"]},
+
+        {"kind":"when","text":"","code":["var quarter = firstHalf.subList(0, (firstHalf.size() * 0.5) as int)","var modifiedTuple = originalTuple.removeAll(quarter.toSet())"]},
+
+        {"kind":"then","text":"","code":["modifiedTuple != originalTuple","modifiedTuple.hashCode() != originalTuple.hashCode()"]},
+
+        {"kind":"when","text":"","code":["var subSubList1 = secondHalf.subList(0, (secondHalf.size() * 0.5) as int)","var subSubList2 = secondHalf.subList((secondHalf.size() * 0.5) as int, secondHalf.size())","int randomIndex = Math.abs(modifiedTuple.hashCode()) % modifiedTuple.size()","var modifiedTuple1 = modifiedTuple.addAllAt(randomIndex, subSubList1)","var modifiedTuple2 = modifiedTuple.addAllAt(randomIndex, subSubList2)"]},
+
+        {"kind":"then","text":"","code":["modifiedTuple1.size() == modifiedTuple2.size()","modifiedTuple1 != modifiedTuple2"]},
+
+        {"kind":"when","text":"","code":["modifiedTuple = modifiedTuple.addAll(firstHalf)"]},
+
+        {"kind":"then","text":"","code":["originalTuple != modifiedTuple","originalTuple.hashCode() != modifiedTuple.hashCode()"]},
+
+        {"kind":"when","text":"","code":["modifiedTuple1 = modifiedTuple.addAllAt(randomIndex, subSubList1)","modifiedTuple2 = modifiedTuple.addAllAt(randomIndex, subSubList2)"]},
+
+        {"kind":"then","text":"","code":["modifiedTuple1.size() == modifiedTuple2.size()","modifiedTuple1 != modifiedTuple2"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"type":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"items":["(0..24).collect(it -> it as Long).toList()","(0..24).collect(it -> it as Short).toList()","(0..24).collect(it -> it).toList()","(0..24).collect(it -> String.valueOf(it)).toList()","(0..128).collect(it -> it as Long).toList()","(0..128).collect(it -> it as Short).toList()","(0..128).collect(it -> it).toList()","(0..128).collect(it -> String.valueOf(it)).toList()","(0..1_000).collect(it -> it as Long).toList()","(0..1_000).collect(it -> it as Short).toList()","(0..1_000).collect(it -> it).toList()","(0..1_000).collect(it -> String.valueOf(it)).toList()","(0..10_000).collect(it -> it as Long).toList()","(0..10_000).collect(it -> it as Short).toList()","(0..10_000).collect(it -> it).toList()","(0..10_000).collect(it -> String.valueOf(it)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of a Tuple works reliably after a series of modifications. [11]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between tuples, then\n            we can avoid a lot of work due to two tuples sharing most of their branches/nodes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort = (a, b) -> (keyHasher(a)<=>keyHasher(b))","items.sort(randomSort)","var firstHalf = items.subList(0, (items.size() * 0.5) as int)","var secondHalf = items.subList(1 + (items.size() * 0.5) as int, items.size())"]},
+
+        {"kind":"and","text":"","code":["var originalTuple = Tuple.of(type).addAll(firstHalf)"]},
+
+        {"kind":"when","text":"","code":["var quarter = firstHalf.subList(0, (firstHalf.size() * 0.5) as int)","var modifiedTuple = originalTuple.removeAll(quarter.toSet())"]},
+
+        {"kind":"then","text":"","code":["modifiedTuple != originalTuple","modifiedTuple.hashCode() != originalTuple.hashCode()"]},
+
+        {"kind":"when","text":"","code":["var subSubList1 = secondHalf.subList(0, (secondHalf.size() * 0.5) as int)","var subSubList2 = secondHalf.subList((secondHalf.size() * 0.5) as int, secondHalf.size())","int randomIndex = Math.abs(modifiedTuple.hashCode()) % modifiedTuple.size()","var modifiedTuple1 = modifiedTuple.addAllAt(randomIndex, subSubList1)","var modifiedTuple2 = modifiedTuple.addAllAt(randomIndex, subSubList2)"]},
+
+        {"kind":"then","text":"","code":["modifiedTuple1.size() == modifiedTuple2.size()","modifiedTuple1 != modifiedTuple2"]},
+
+        {"kind":"when","text":"","code":["modifiedTuple = modifiedTuple.addAll(firstHalf)"]},
+
+        {"kind":"then","text":"","code":["originalTuple != modifiedTuple","originalTuple.hashCode() != modifiedTuple.hashCode()"]},
+
+        {"kind":"when","text":"","code":["modifiedTuple1 = modifiedTuple.addAllAt(randomIndex, subSubList1)","modifiedTuple2 = modifiedTuple.addAllAt(randomIndex, subSubList2)"]},
+
+        {"kind":"then","text":"","code":["modifiedTuple1.size() == modifiedTuple2.size()","modifiedTuple1 != modifiedTuple2"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"type":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"items":["(0..24).collect(it -> it as Long).toList()","(0..24).collect(it -> it as Short).toList()","(0..24).collect(it -> it).toList()","(0..24).collect(it -> String.valueOf(it)).toList()","(0..128).collect(it -> it as Long).toList()","(0..128).collect(it -> it as Short).toList()","(0..128).collect(it -> it).toList()","(0..128).collect(it -> String.valueOf(it)).toList()","(0..1_000).collect(it -> it as Long).toList()","(0..1_000).collect(it -> it as Short).toList()","(0..1_000).collect(it -> it).toList()","(0..1_000).collect(it -> String.valueOf(it)).toList()","(0..10_000).collect(it -> it as Long).toList()","(0..10_000).collect(it -> it as Short).toList()","(0..10_000).collect(it -> it).toList()","(0..10_000).collect(it -> String.valueOf(it)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of a Tuple works reliably after a series of modifications. [12]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between tuples, then\n            we can avoid a lot of work due to two tuples sharing most of their branches/nodes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort = (a, b) -> (keyHasher(a)<=>keyHasher(b))","items.sort(randomSort)","var firstHalf = items.subList(0, (items.size() * 0.5) as int)","var secondHalf = items.subList(1 + (items.size() * 0.5) as int, items.size())"]},
+
+        {"kind":"and","text":"","code":["var originalTuple = Tuple.of(type).addAll(firstHalf)"]},
+
+        {"kind":"when","text":"","code":["var quarter = firstHalf.subList(0, (firstHalf.size() * 0.5) as int)","var modifiedTuple = originalTuple.removeAll(quarter.toSet())"]},
+
+        {"kind":"then","text":"","code":["modifiedTuple != originalTuple","modifiedTuple.hashCode() != originalTuple.hashCode()"]},
+
+        {"kind":"when","text":"","code":["var subSubList1 = secondHalf.subList(0, (secondHalf.size() * 0.5) as int)","var subSubList2 = secondHalf.subList((secondHalf.size() * 0.5) as int, secondHalf.size())","int randomIndex = Math.abs(modifiedTuple.hashCode()) % modifiedTuple.size()","var modifiedTuple1 = modifiedTuple.addAllAt(randomIndex, subSubList1)","var modifiedTuple2 = modifiedTuple.addAllAt(randomIndex, subSubList2)"]},
+
+        {"kind":"then","text":"","code":["modifiedTuple1.size() == modifiedTuple2.size()","modifiedTuple1 != modifiedTuple2"]},
+
+        {"kind":"when","text":"","code":["modifiedTuple = modifiedTuple.addAll(firstHalf)"]},
+
+        {"kind":"then","text":"","code":["originalTuple != modifiedTuple","originalTuple.hashCode() != modifiedTuple.hashCode()"]},
+
+        {"kind":"when","text":"","code":["modifiedTuple1 = modifiedTuple.addAllAt(randomIndex, subSubList1)","modifiedTuple2 = modifiedTuple.addAllAt(randomIndex, subSubList2)"]},
+
+        {"kind":"then","text":"","code":["modifiedTuple1.size() == modifiedTuple2.size()","modifiedTuple1 != modifiedTuple2"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"type":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"items":["(0..24).collect(it -> it as Long).toList()","(0..24).collect(it -> it as Short).toList()","(0..24).collect(it -> it).toList()","(0..24).collect(it -> String.valueOf(it)).toList()","(0..128).collect(it -> it as Long).toList()","(0..128).collect(it -> it as Short).toList()","(0..128).collect(it -> it).toList()","(0..128).collect(it -> String.valueOf(it)).toList()","(0..1_000).collect(it -> it as Long).toList()","(0..1_000).collect(it -> it as Short).toList()","(0..1_000).collect(it -> it).toList()","(0..1_000).collect(it -> String.valueOf(it)).toList()","(0..10_000).collect(it -> it as Long).toList()","(0..10_000).collect(it -> it as Short).toList()","(0..10_000).collect(it -> it).toList()","(0..10_000).collect(it -> String.valueOf(it)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of a Tuple works reliably after a series of modifications. [13]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between tuples, then\n            we can avoid a lot of work due to two tuples sharing most of their branches/nodes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort = (a, b) -> (keyHasher(a)<=>keyHasher(b))","items.sort(randomSort)","var firstHalf = items.subList(0, (items.size() * 0.5) as int)","var secondHalf = items.subList(1 + (items.size() * 0.5) as int, items.size())"]},
+
+        {"kind":"and","text":"","code":["var originalTuple = Tuple.of(type).addAll(firstHalf)"]},
+
+        {"kind":"when","text":"","code":["var quarter = firstHalf.subList(0, (firstHalf.size() * 0.5) as int)","var modifiedTuple = originalTuple.removeAll(quarter.toSet())"]},
+
+        {"kind":"then","text":"","code":["modifiedTuple != originalTuple","modifiedTuple.hashCode() != originalTuple.hashCode()"]},
+
+        {"kind":"when","text":"","code":["var subSubList1 = secondHalf.subList(0, (secondHalf.size() * 0.5) as int)","var subSubList2 = secondHalf.subList((secondHalf.size() * 0.5) as int, secondHalf.size())","int randomIndex = Math.abs(modifiedTuple.hashCode()) % modifiedTuple.size()","var modifiedTuple1 = modifiedTuple.addAllAt(randomIndex, subSubList1)","var modifiedTuple2 = modifiedTuple.addAllAt(randomIndex, subSubList2)"]},
+
+        {"kind":"then","text":"","code":["modifiedTuple1.size() == modifiedTuple2.size()","modifiedTuple1 != modifiedTuple2"]},
+
+        {"kind":"when","text":"","code":["modifiedTuple = modifiedTuple.addAll(firstHalf)"]},
+
+        {"kind":"then","text":"","code":["originalTuple != modifiedTuple","originalTuple.hashCode() != modifiedTuple.hashCode()"]},
+
+        {"kind":"when","text":"","code":["modifiedTuple1 = modifiedTuple.addAllAt(randomIndex, subSubList1)","modifiedTuple2 = modifiedTuple.addAllAt(randomIndex, subSubList2)"]},
+
+        {"kind":"then","text":"","code":["modifiedTuple1.size() == modifiedTuple2.size()","modifiedTuple1 != modifiedTuple2"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"type":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"items":["(0..24).collect(it -> it as Long).toList()","(0..24).collect(it -> it as Short).toList()","(0..24).collect(it -> it).toList()","(0..24).collect(it -> String.valueOf(it)).toList()","(0..128).collect(it -> it as Long).toList()","(0..128).collect(it -> it as Short).toList()","(0..128).collect(it -> it).toList()","(0..128).collect(it -> String.valueOf(it)).toList()","(0..1_000).collect(it -> it as Long).toList()","(0..1_000).collect(it -> it as Short).toList()","(0..1_000).collect(it -> it).toList()","(0..1_000).collect(it -> String.valueOf(it)).toList()","(0..10_000).collect(it -> it as Long).toList()","(0..10_000).collect(it -> it as Short).toList()","(0..10_000).collect(it -> it).toList()","(0..10_000).collect(it -> String.valueOf(it)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of a Tuple works reliably after a series of modifications. [14]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between tuples, then\n            we can avoid a lot of work due to two tuples sharing most of their branches/nodes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort = (a, b) -> (keyHasher(a)<=>keyHasher(b))","items.sort(randomSort)","var firstHalf = items.subList(0, (items.size() * 0.5) as int)","var secondHalf = items.subList(1 + (items.size() * 0.5) as int, items.size())"]},
+
+        {"kind":"and","text":"","code":["var originalTuple = Tuple.of(type).addAll(firstHalf)"]},
+
+        {"kind":"when","text":"","code":["var quarter = firstHalf.subList(0, (firstHalf.size() * 0.5) as int)","var modifiedTuple = originalTuple.removeAll(quarter.toSet())"]},
+
+        {"kind":"then","text":"","code":["modifiedTuple != originalTuple","modifiedTuple.hashCode() != originalTuple.hashCode()"]},
+
+        {"kind":"when","text":"","code":["var subSubList1 = secondHalf.subList(0, (secondHalf.size() * 0.5) as int)","var subSubList2 = secondHalf.subList((secondHalf.size() * 0.5) as int, secondHalf.size())","int randomIndex = Math.abs(modifiedTuple.hashCode()) % modifiedTuple.size()","var modifiedTuple1 = modifiedTuple.addAllAt(randomIndex, subSubList1)","var modifiedTuple2 = modifiedTuple.addAllAt(randomIndex, subSubList2)"]},
+
+        {"kind":"then","text":"","code":["modifiedTuple1.size() == modifiedTuple2.size()","modifiedTuple1 != modifiedTuple2"]},
+
+        {"kind":"when","text":"","code":["modifiedTuple = modifiedTuple.addAll(firstHalf)"]},
+
+        {"kind":"then","text":"","code":["originalTuple != modifiedTuple","originalTuple.hashCode() != modifiedTuple.hashCode()"]},
+
+        {"kind":"when","text":"","code":["modifiedTuple1 = modifiedTuple.addAllAt(randomIndex, subSubList1)","modifiedTuple2 = modifiedTuple.addAllAt(randomIndex, subSubList2)"]},
+
+        {"kind":"then","text":"","code":["modifiedTuple1.size() == modifiedTuple2.size()","modifiedTuple1 != modifiedTuple2"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"type":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"items":["(0..24).collect(it -> it as Long).toList()","(0..24).collect(it -> it as Short).toList()","(0..24).collect(it -> it).toList()","(0..24).collect(it -> String.valueOf(it)).toList()","(0..128).collect(it -> it as Long).toList()","(0..128).collect(it -> it as Short).toList()","(0..128).collect(it -> it).toList()","(0..128).collect(it -> String.valueOf(it)).toList()","(0..1_000).collect(it -> it as Long).toList()","(0..1_000).collect(it -> it as Short).toList()","(0..1_000).collect(it -> it).toList()","(0..1_000).collect(it -> String.valueOf(it)).toList()","(0..10_000).collect(it -> it as Long).toList()","(0..10_000).collect(it -> it as Short).toList()","(0..10_000).collect(it -> it).toList()","(0..10_000).collect(it -> String.valueOf(it)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `equals` and `hashCode` implementations of a Tuple works reliably after a series of modifications. [15]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here we test the implementation of the `equals` and `hashCode` methods exhaustively.\n            This may look like an exaggerated amount of test data and equality checks, but you\n            have to know that under the hood specifically the `equals` implementations are\n            highly optimized to specific cases which need to be covered.\n\n            More specifically, if there are only small differences between tuples, then\n            we can avoid a lot of work due to two tuples sharing most of their branches/nodes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create randomly sorted variants of the test data:","code":["var keyHasher = { (it.hashCode() ^ (it.hashCode() ** 2)) as int }","Comparator<Object> randomSort = (a, b) -> (keyHasher(a)<=>keyHasher(b))","items.sort(randomSort)","var firstHalf = items.subList(0, (items.size() * 0.5) as int)","var secondHalf = items.subList(1 + (items.size() * 0.5) as int, items.size())"]},
+
+        {"kind":"and","text":"","code":["var originalTuple = Tuple.of(type).addAll(firstHalf)"]},
+
+        {"kind":"when","text":"","code":["var quarter = firstHalf.subList(0, (firstHalf.size() * 0.5) as int)","var modifiedTuple = originalTuple.removeAll(quarter.toSet())"]},
+
+        {"kind":"then","text":"","code":["modifiedTuple != originalTuple","modifiedTuple.hashCode() != originalTuple.hashCode()"]},
+
+        {"kind":"when","text":"","code":["var subSubList1 = secondHalf.subList(0, (secondHalf.size() * 0.5) as int)","var subSubList2 = secondHalf.subList((secondHalf.size() * 0.5) as int, secondHalf.size())","int randomIndex = Math.abs(modifiedTuple.hashCode()) % modifiedTuple.size()","var modifiedTuple1 = modifiedTuple.addAllAt(randomIndex, subSubList1)","var modifiedTuple2 = modifiedTuple.addAllAt(randomIndex, subSubList2)"]},
+
+        {"kind":"then","text":"","code":["modifiedTuple1.size() == modifiedTuple2.size()","modifiedTuple1 != modifiedTuple2"]},
+
+        {"kind":"when","text":"","code":["modifiedTuple = modifiedTuple.addAll(firstHalf)"]},
+
+        {"kind":"then","text":"","code":["originalTuple != modifiedTuple","originalTuple.hashCode() != modifiedTuple.hashCode()"]},
+
+        {"kind":"when","text":"","code":["modifiedTuple1 = modifiedTuple.addAllAt(randomIndex, subSubList1)","modifiedTuple2 = modifiedTuple.addAllAt(randomIndex, subSubList2)"]},
+
+        {"kind":"then","text":"","code":["modifiedTuple1.size() == modifiedTuple2.size()","modifiedTuple1 != modifiedTuple2"]},
+
+        {"kind":"where","text":"We use the following entry data source:","code":{"type":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"items":["(0..24).collect(it -> it as Long).toList()","(0..24).collect(it -> it as Short).toList()","(0..24).collect(it -> it).toList()","(0..24).collect(it -> String.valueOf(it)).toList()","(0..128).collect(it -> it as Long).toList()","(0..128).collect(it -> it as Short).toList()","(0..128).collect(it -> it).toList()","(0..128).collect(it -> String.valueOf(it)).toList()","(0..1_000).collect(it -> it as Long).toList()","(0..1_000).collect(it -> it as Short).toList()","(0..1_000).collect(it -> it).toList()","(0..1_000).collect(it -> String.valueOf(it)).toList()","(0..10_000).collect(it -> it as Long).toList()","(0..10_000).collect(it -> it as Short).toList()","(0..10_000).collect(it -> it).toList()","(0..10_000).collect(it -> String.valueOf(it)).toList()"]}}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }

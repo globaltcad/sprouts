@@ -56,11 +56,9 @@ final class ChangeListenerCleaner
         public void cleanup() {
             if ( _action != null ) {
                 try {
-                    Util.canThrow(_action);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    throw Util.sneakyThrow(e);
+                    _action.run();
                 } catch (Exception e) {
+                    Util.sneakyThrowExceptionIfFatal(e);
                     _logError("Failed to execute cleanup action '{}'.", _action, e);
                 } finally {
                     _action = null;
@@ -73,11 +71,9 @@ final class ChangeListenerCleaner
         if ( o == null ) {
             _logError("Attempt to register a null object for cleanup. This is not allowed!");
             try {
-                Util.canThrow(action);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw Util.sneakyThrow(e);
+                action.run();
             } catch (Exception e) {
+                Util.sneakyThrowExceptionIfFatal(e);
                 _logError("Failed to execute cleanup action '"+action+"'.", e);
             }
             return;
@@ -110,10 +106,8 @@ final class ChangeListenerCleaner
                 synchronized ( _thread ) {
                     _thread.wait();
                 }
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw Util.sneakyThrow(e);
             } catch (Exception e) {
+                Util.sneakyThrowExceptionIfFatal(e);
                 _logError("Failed to make cleaner thread wait for cleaning notification!", e);
             }
         }

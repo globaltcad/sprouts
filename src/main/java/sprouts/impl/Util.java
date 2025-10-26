@@ -7,6 +7,7 @@ import org.slf4j.helpers.MessageFormatter;
 import org.slf4j.helpers.NOPLogger;
 import sprouts.From;
 
+import java.lang.reflect.UndeclaredThrowableException;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -16,17 +17,47 @@ final class Util {
 
     private Util() {}
 
+    static void sneakyThrowExceptionIfFatal(Throwable throwable) {
+        if (
+            throwable instanceof UndeclaredThrowableException &&
+            throwable.getCause() instanceof InterruptedException
+        ) {
+            throwable = throwable.getCause();
+        }
+        if (isFatal(throwable)) {
+            if (throwable instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
+            sneakyThrow(throwable);
+        }
+    }
+
+    static boolean isFatal(Throwable throwable) {
+        return throwable instanceof InterruptedException
+                || throwable instanceof LinkageError
+                || ThreadDeathResolver.isThreadDeath(throwable)
+                || throwable instanceof VirtualMachineError;
+    }
+
+    private static class ThreadDeathResolver {
+        static final @Nullable Class<?> THREAD_DEATH_CLASS = resolve();
+
+        static boolean isThreadDeath(Throwable throwable) {
+            return THREAD_DEATH_CLASS != null && THREAD_DEATH_CLASS.isInstance(throwable);
+        }
+
+        private static @Nullable Class<?> resolve() {
+            try {
+                return Class.forName("java.lang.ThreadDeath");
+            } catch (ClassNotFoundException e) {
+                return null;
+            }
+        }
+    }
+
     @SuppressWarnings("unchecked")
-    static <E extends Throwable> E sneakyThrow(Throwable e) throws E {
-        return  (E) e; // throw the returned thing and the compiler believes this is unchecked
-    }
-
-    static void canThrow(Runnable toRun) throws Exception {
-        toRun.run();
-    }
-
-    static <T> T canThrowAndGet(Supplier<T> toRun) throws Exception {
-        return toRun.get();
+    static <E extends Throwable, R> R sneakyThrow(Throwable e) throws E {
+        throw (E) e; // throw the returned thing and the compiler believes this is unchecked
     }
 
     static void _logError(Logger log, String message, @Nullable Object... args) {
@@ -75,20 +106,14 @@ final class Util {
     static <T extends @Nullable Object, R> Function<T, R> nonNullMapper(Logger log, R nullObject, R errorObject, Function<T, @Nullable R> mapper) {
         return t -> {
             try {
-                return canThrow(t, nullObject, mapper);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw Util.sneakyThrow(e);
+                @Nullable R r = mapper.apply(t);
+                return r == null ? nullObject : r;
             } catch (Exception e) {
+                Util.sneakyThrowExceptionIfFatal(e);
                 _logError(log, "An error occurred while mapping item '{}'.", t, e);
                 return errorObject;
             }
         };
-    }
-
-    private static <T extends @Nullable Object, R> R canThrow(T t, R nullObject, Function<T, @Nullable R> mapper) throws Exception {
-        @Nullable R r = mapper.apply(t);
-        return r == null ? nullObject : r;
     }
 
     /**

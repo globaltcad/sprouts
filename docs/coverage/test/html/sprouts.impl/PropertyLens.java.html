@@ -66,15 +66,16 @@ final class PropertyLens&lt;A extends @Nullable Object, T extends @Nullable Obje
         try {
 <span class="fc" id="L67">            initialValue = nullSafeLens.getter(Util.fakeNonNull(source.orElseNull()));</span>
 <span class="nc" id="L68">        } catch ( Exception e ) {</span>
-<span class="nc" id="L69">            throw new IllegalArgumentException(</span>
+<span class="nc" id="L69">            Util.sneakyThrowExceptionIfFatal(e);</span>
+<span class="nc" id="L70">            throw new IllegalArgumentException(</span>
                     &quot;Failed to fetch initial value from source property &quot; +
                     &quot;using the provided lens getter.&quot;,
                     e
                 );
-<span class="fc" id="L74">        }</span>
-<span class="fc" id="L75">        return new PropertyLens&lt;&gt;(</span>
+<span class="fc" id="L75">        }</span>
+<span class="fc" id="L76">        return new PropertyLens&lt;&gt;(</span>
                 itemType,
-<span class="fc" id="L77">                Sprouts.factory().defaultId(),</span>
+<span class="fc" id="L78">                Sprouts.factory().defaultId(),</span>
                 false,//does not allow null
                 initialValue, //may NOT be null
                 source,
@@ -84,38 +85,39 @@ final class PropertyLens&lt;A extends @Nullable Object, T extends @Nullable Obje
     }
 
     public static &lt;T, B&gt; Var&lt;B&gt; ofNullable(Class&lt;B&gt; type, Var&lt;T&gt; source, Lens&lt;T, B&gt; lens) {
-<span class="fc" id="L87">        Objects.requireNonNull(type, &quot;Type must not be null&quot;);</span>
-<span class="fc" id="L88">        Objects.requireNonNull(lens, &quot;Lens must not be null&quot;);</span>
-<span class="fc" id="L89">        Lens&lt;T, B&gt; nullSafeLens = new Lens&lt;T, B&gt;() {</span>
+<span class="fc" id="L88">        Objects.requireNonNull(type, &quot;Type must not be null&quot;);</span>
+<span class="fc" id="L89">        Objects.requireNonNull(lens, &quot;Lens must not be null&quot;);</span>
+<span class="fc" id="L90">        Lens&lt;T, B&gt; nullSafeLens = new Lens&lt;T, B&gt;() {</span>
             @Override
             public B getter(T parentValue) throws Exception {
-<span class="fc bfc" id="L92" title="All 2 branches covered.">                if ( parentValue == null )</span>
-<span class="fc" id="L93">                    return Util.fakeNonNull(null);</span>
+<span class="fc bfc" id="L93" title="All 2 branches covered.">                if ( parentValue == null )</span>
+<span class="fc" id="L94">                    return Util.fakeNonNull(null);</span>
 
-<span class="fc" id="L95">                return lens.getter(parentValue);</span>
+<span class="fc" id="L96">                return lens.getter(parentValue);</span>
             }
 
             @Override
             public T wither(T parentValue, B newValue) throws Exception {
-<span class="pc bpc" id="L100" title="1 of 2 branches missed.">                if ( parentValue == null )</span>
-<span class="nc" id="L101">                    return Util.fakeNonNull(null);</span>
+<span class="pc bpc" id="L101" title="1 of 2 branches missed.">                if ( parentValue == null )</span>
+<span class="nc" id="L102">                    return Util.fakeNonNull(null);</span>
 
-<span class="fc" id="L103">                return lens.wither(parentValue, newValue);</span>
+<span class="fc" id="L104">                return lens.wither(parentValue, newValue);</span>
             }
         };
         B initialValue;
         try {
-<span class="fc" id="L108">            initialValue = nullSafeLens.getter(Util.fakeNonNull(source.orElseNull()));</span>
-<span class="nc" id="L109">        } catch ( Exception e ) {</span>
-<span class="nc" id="L110">            throw new IllegalArgumentException(</span>
+<span class="fc" id="L109">            initialValue = nullSafeLens.getter(Util.fakeNonNull(source.orElseNull()));</span>
+<span class="nc" id="L110">        } catch ( Exception e ) {</span>
+<span class="nc" id="L111">            Util.sneakyThrowExceptionIfFatal(e);</span>
+<span class="nc" id="L112">            throw new IllegalArgumentException(</span>
                     &quot;Failed to fetch initial value from source property &quot; +
                     &quot;using the provided lens getter.&quot;,
                     e
                 );
-<span class="fc" id="L115">        }</span>
-<span class="fc" id="L116">        return new PropertyLens&lt;&gt;(</span>
+<span class="fc" id="L117">        }</span>
+<span class="fc" id="L118">        return new PropertyLens&lt;&gt;(</span>
                 type,
-<span class="fc" id="L118">                Sprouts.factory().defaultId(),</span>
+<span class="fc" id="L120">                Sprouts.factory().defaultId(),</span>
                 true,//allows null
                 initialValue, //may be null
                 source,
@@ -142,207 +144,210 @@ final class PropertyLens&lt;A extends @Nullable Object, T extends @Nullable Obje
             Var&lt;A&gt;                          parent,
             Lens&lt;A,@Nullable T&gt;             lens,
             @Nullable PropertyChangeListeners&lt;T&gt; changeListeners
-<span class="fc" id="L145">    ) {</span>
-<span class="fc" id="L146">        Objects.requireNonNull(id);</span>
-<span class="fc" id="L147">        Objects.requireNonNull(type);</span>
-<span class="fc" id="L148">        _type            = type;</span>
-<span class="fc" id="L149">        _id              = id;</span>
-<span class="fc" id="L150">        _nullable        = allowsNull;</span>
-<span class="fc" id="L151">        _parent          = parent;</span>
-<span class="fc" id="L152">        _lens            = lens;</span>
-<span class="fc bfc" id="L153" title="All 2 branches covered.">        _changeListeners = changeListeners == null ? new PropertyChangeListeners&lt;&gt;() : new PropertyChangeListeners&lt;&gt;(changeListeners);</span>
+<span class="fc" id="L147">    ) {</span>
+<span class="fc" id="L148">        Objects.requireNonNull(id);</span>
+<span class="fc" id="L149">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L150">        _type            = type;</span>
+<span class="fc" id="L151">        _id              = id;</span>
+<span class="fc" id="L152">        _nullable        = allowsNull;</span>
+<span class="fc" id="L153">        _parent          = parent;</span>
+<span class="fc" id="L154">        _lens            = lens;</span>
+<span class="fc bfc" id="L155" title="All 2 branches covered.">        _changeListeners = changeListeners == null ? new PropertyChangeListeners&lt;&gt;() : new PropertyChangeListeners&lt;&gt;(changeListeners);</span>
 
-<span class="fc" id="L155">        _lastItem = initialItem;</span>
-<span class="fc" id="L156">        Viewable.cast(parent).onChange(From.ALL, WeakAction.of(this, (thisLens, v) -&gt; {</span>
-<span class="fc" id="L157">            T newValue = thisLens._fetchItemFromParent();</span>
-<span class="fc" id="L158">            ItemPair&lt;T&gt; pair = new ItemPair&lt;&gt;(thisLens._type, newValue, thisLens._lastItem);</span>
-<span class="fc bfc" id="L159" title="All 2 branches covered.">            if ( pair.change() != SingleChange.NONE ) {</span>
-<span class="fc" id="L160">                thisLens._lastItem = newValue;</span>
-<span class="fc" id="L161">                thisLens.fireChange(v.channel(), pair);</span>
+<span class="fc" id="L157">        _lastItem = initialItem;</span>
+<span class="fc" id="L158">        Viewable.cast(parent).onChange(From.ALL, WeakAction.of(this, (thisLens, v) -&gt; {</span>
+<span class="fc" id="L159">            T newValue = thisLens._fetchItemFromParent();</span>
+<span class="fc" id="L160">            ItemPair&lt;T&gt; pair = new ItemPair&lt;&gt;(thisLens._type, newValue, thisLens._lastItem);</span>
+<span class="fc bfc" id="L161" title="All 2 branches covered.">            if ( pair.change() != SingleChange.NONE ) {</span>
+<span class="fc" id="L162">                thisLens._lastItem = newValue;</span>
+<span class="fc" id="L163">                thisLens.fireChange(v.channel(), pair);</span>
             }
-<span class="fc" id="L163">        }));</span>
+<span class="fc" id="L165">        }));</span>
 
-<span class="pc bpc" id="L165" title="1 of 2 branches missed.">        if ( !Sprouts.factory().idPattern().matcher(_id).matches() )</span>
-<span class="nc" id="L166">            throw new IllegalArgumentException(&quot;The provided id '&quot;+_id+&quot;' is not valid! It must match the pattern '&quot;+Sprouts.factory().idPattern().pattern()+&quot;'&quot;);</span>
-<span class="pc bpc" id="L167" title="1 of 4 branches missed.">        if ( !allowsNull &amp;&amp; initialItem == null )</span>
-<span class="nc" id="L168">            throw new IllegalArgumentException(&quot;The provided initial value is null, but the property does not allow null values!&quot;);</span>
-<span class="fc" id="L169">    }</span>
+<span class="pc bpc" id="L167" title="1 of 2 branches missed.">        if ( !Sprouts.factory().idPattern().matcher(_id).matches() )</span>
+<span class="nc" id="L168">            throw new IllegalArgumentException(&quot;The provided id '&quot;+_id+&quot;' is not valid! It must match the pattern '&quot;+Sprouts.factory().idPattern().pattern()+&quot;'&quot;);</span>
+<span class="pc bpc" id="L169" title="1 of 4 branches missed.">        if ( !allowsNull &amp;&amp; initialItem == null )</span>
+<span class="nc" id="L170">            throw new IllegalArgumentException(&quot;The provided initial value is null, but the property does not allow null values!&quot;);</span>
+<span class="fc" id="L171">    }</span>
 
     private String _idForError(String id) {
-<span class="pc bpc" id="L172" title="1 of 2 branches missed.">        return id.isEmpty() ? &quot;&quot; : &quot;'&quot;+id+&quot;' &quot;;</span>
+<span class="pc bpc" id="L174" title="1 of 2 branches missed.">        return id.isEmpty() ? &quot;&quot; : &quot;'&quot;+id+&quot;' &quot;;</span>
     }
 
     private @Nullable T _fetchItemFromParent() {
-<span class="fc" id="L176">        T fetchedValue = _lastItem;</span>
+<span class="fc" id="L178">        T fetchedValue = _lastItem;</span>
         try {
-<span class="fc" id="L178">            fetchedValue = _lens.getter(Util.fakeNonNull(_parent.orElseNull()));</span>
-<span class="fc" id="L179">        } catch ( Exception e ) {</span>
-<span class="fc" id="L180">            _logError(</span>
+<span class="fc" id="L180">            fetchedValue = _lens.getter(Util.fakeNonNull(_parent.orElseNull()));</span>
+<span class="fc" id="L181">        } catch ( Exception e ) {</span>
+<span class="fc" id="L182">            Util.sneakyThrowExceptionIfFatal(e);</span>
+<span class="fc" id="L183">            _logError(</span>
                     &quot;Failed to fetch item of type '{}' for property lens '{}' from parent &quot; +
                     &quot;property '{}' (with item type '{}') using the current lens getter.&quot;,
-<span class="fc" id="L183">                    _type, _idForError(_id), _idForError(_parent.id()), _parent.type(), e</span>
+<span class="fc" id="L186">                    _type, _idForError(_id), _idForError(_parent.id()), _parent.type(), e</span>
                 );
-<span class="fc" id="L185">        }</span>
-<span class="fc" id="L186">        return fetchedValue;</span>
+<span class="fc" id="L188">        }</span>
+<span class="fc" id="L189">        return fetchedValue;</span>
     }
 
     private void _setInParentAndInternally(Channel channel, @Nullable T newItem) {
         try {
-<span class="fc" id="L191">            A newParentItem = _lens.wither(Util.fakeNonNull(_parent.orElseNull()), Util.fakeNonNull(newItem));</span>
-<span class="fc" id="L192">            _lastItem = newItem;</span>
-<span class="fc" id="L193">            _parent.set(channel, newParentItem);</span>
-<span class="fc" id="L194">        } catch ( Exception e ) {</span>
-<span class="fc" id="L195">            _logError(</span>
+<span class="fc" id="L194">            A newParentItem = _lens.wither(Util.fakeNonNull(_parent.orElseNull()), Util.fakeNonNull(newItem));</span>
+<span class="fc" id="L195">            _lastItem = newItem;</span>
+<span class="fc" id="L196">            _parent.set(channel, newParentItem);</span>
+<span class="fc" id="L197">        } catch ( Exception e ) {</span>
+<span class="fc" id="L198">            Util.sneakyThrowExceptionIfFatal(e);</span>
+<span class="fc" id="L199">            _logError(</span>
                     &quot;Property lens with id '{}' (for item type '{}') failed to update its parent &quot; +
                     &quot;property '{}' (with item type '{}') using the current setter lambda!&quot;,
-<span class="fc" id="L198">                    _idForError(_id), _type, _idForError(_parent.id()), _parent.type(), e</span>
+<span class="fc" id="L202">                    _idForError(_id), _type, _idForError(_parent.id()), _parent.type(), e</span>
                 );
-<span class="fc" id="L200">        }</span>
-<span class="fc" id="L201">    }</span>
+<span class="fc" id="L204">        }</span>
+<span class="fc" id="L205">    }</span>
 
     private @Nullable T _item() {
-<span class="fc" id="L204">        @Nullable T currentItem = _fetchItemFromParent();</span>
-<span class="fc bfc" id="L205" title="All 2 branches covered.">        if ( currentItem != null ) {</span>
+<span class="fc" id="L208">        @Nullable T currentItem = _fetchItemFromParent();</span>
+<span class="fc bfc" id="L209" title="All 2 branches covered.">        if ( currentItem != null ) {</span>
             // We check if the type is correct
-<span class="pc bpc" id="L207" title="1 of 2 branches missed.">            if ( !_type.isAssignableFrom(currentItem.getClass()) )</span>
-<span class="nc" id="L208">                throw new IllegalArgumentException(</span>
+<span class="pc bpc" id="L211" title="1 of 2 branches missed.">            if ( !_type.isAssignableFrom(currentItem.getClass()) )</span>
+<span class="nc" id="L212">                throw new IllegalArgumentException(</span>
                         &quot;The provided type of the initial value is not compatible with the actual type of the variable&quot;
                 );
         }
-<span class="fc" id="L212">        return currentItem;</span>
+<span class="fc" id="L216">        return currentItem;</span>
     }
 
     /** {@inheritDoc} */
-<span class="fc" id="L216">    @Override public final Class&lt;T&gt; type() { return _type; }</span>
+<span class="fc" id="L220">    @Override public final Class&lt;T&gt; type() { return _type; }</span>
 
     /** {@inheritDoc} */
-<span class="fc" id="L219">    @Override public final String id() { return _id; }</span>
+<span class="fc" id="L223">    @Override public final String id() { return _id; }</span>
 
     /** {@inheritDoc} */
     @Override
-<span class="fc" id="L223">    public final @Nullable T orElseNull() { return _item(); }</span>
+<span class="fc" id="L227">    public final @Nullable T orElseNull() { return _item(); }</span>
 
     /** {@inheritDoc} */
-<span class="fc" id="L226">    @Override public final boolean allowsNull() { return _nullable; }</span>
+<span class="fc" id="L230">    @Override public final boolean allowsNull() { return _nullable; }</span>
 
     @Override
     public boolean isMutable() {
-<span class="fc" id="L230">        return true;</span>
+<span class="fc" id="L234">        return true;</span>
     }
 
     @Override
     public boolean isLens() {
-<span class="fc" id="L235">        return true;</span>
+<span class="fc" id="L239">        return true;</span>
     }
 
     @Override
     public boolean isView() {
-<span class="fc" id="L240">        return false;</span>
+<span class="fc" id="L244">        return false;</span>
     }
 
     @Override
     public final String toString() {
-<span class="fc" id="L245">        String value = &quot;?&quot;;</span>
+<span class="fc" id="L249">        String value = &quot;?&quot;;</span>
         try {
-<span class="fc" id="L247">            value = this.mapTo(String.class, Object::toString).orElse(&quot;null&quot;);</span>
-<span class="fc" id="L248">        } catch ( Exception e ) {</span>
-<span class="fc" id="L249">            value = e.toString();</span>
-<span class="fc" id="L250">            _logError(</span>
+<span class="fc" id="L251">            value = this.mapTo(String.class, Object::toString).orElse(&quot;null&quot;);</span>
+<span class="fc" id="L252">        } catch ( Exception e ) {</span>
+<span class="fc" id="L253">            Util.sneakyThrowExceptionIfFatal(e);</span>
+<span class="fc" id="L254">            value = e.toString();</span>
+<span class="fc" id="L255">            _logError(</span>
                 &quot;Failed to convert the item of type '{}' to a string for property lens with id '{}'.&quot;,
                 _type, _id, e
             );
-<span class="fc" id="L254">        }</span>
-<span class="pc bpc" id="L255" title="1 of 2 branches missed.">        String id = this.id() == null ? &quot;?&quot; : this.id();</span>
-<span class="fc bfc" id="L256" title="All 2 branches covered.">        if ( id.equals(Sprouts.factory().defaultId()) ) id = &quot;?&quot;;</span>
-<span class="pc bpc" id="L257" title="1 of 2 branches missed.">        String type = ( type() == null ? &quot;?&quot; : type().getSimpleName() );</span>
-<span class="pc bpc" id="L258" title="1 of 2 branches missed.">        if ( type.equals(&quot;Object&quot;) ) type = &quot;?&quot;;</span>
-<span class="pc bpc" id="L259" title="3 of 4 branches missed.">        if ( type.equals(&quot;String&quot;) &amp;&amp; this.isPresent() ) value = &quot;\&quot;&quot; + value + &quot;\&quot;&quot;;</span>
-<span class="pc bpc" id="L260" title="1 of 2 branches missed.">        if (_nullable) type = type + &quot;?&quot;;</span>
-<span class="fc" id="L261">        String name = &quot;Lens&quot;;</span>
-<span class="fc bfc" id="L262" title="All 2 branches covered.">        String content = ( id.equals(&quot;?&quot;) ? value : id + &quot;=&quot; + value );</span>
-<span class="fc" id="L263">        return name + &quot;&lt;&quot; + type + &quot;&gt;&quot; + &quot;[&quot; + content + &quot;]&quot;;</span>
+<span class="fc" id="L259">        }</span>
+<span class="pc bpc" id="L260" title="1 of 2 branches missed.">        String id = this.id() == null ? &quot;?&quot; : this.id();</span>
+<span class="fc bfc" id="L261" title="All 2 branches covered.">        if ( id.equals(Sprouts.factory().defaultId()) ) id = &quot;?&quot;;</span>
+<span class="pc bpc" id="L262" title="1 of 2 branches missed.">        String type = ( type() == null ? &quot;?&quot; : type().getSimpleName() );</span>
+<span class="pc bpc" id="L263" title="1 of 2 branches missed.">        if ( type.equals(&quot;Object&quot;) ) type = &quot;?&quot;;</span>
+<span class="pc bpc" id="L264" title="3 of 4 branches missed.">        if ( type.equals(&quot;String&quot;) &amp;&amp; this.isPresent() ) value = &quot;\&quot;&quot; + value + &quot;\&quot;&quot;;</span>
+<span class="pc bpc" id="L265" title="1 of 2 branches missed.">        if (_nullable) type = type + &quot;?&quot;;</span>
+<span class="fc" id="L266">        String name = &quot;Lens&quot;;</span>
+<span class="fc bfc" id="L267" title="All 2 branches covered.">        String content = ( id.equals(&quot;?&quot;) ? value : id + &quot;=&quot; + value );</span>
+<span class="fc" id="L268">        return name + &quot;&lt;&quot; + type + &quot;&gt;&quot; + &quot;[&quot; + content + &quot;]&quot;;</span>
     }
 
     /** {@inheritDoc} */
     @Override public final Var&lt;T&gt; withId( String id ) {
-<span class="fc" id="L268">        return new PropertyLens&lt;&gt;(_type, id, _nullable, _item(), _parent, _lens, _changeListeners);</span>
+<span class="fc" id="L273">        return new PropertyLens&lt;&gt;(_type, id, _nullable, _item(), _parent, _lens, _changeListeners);</span>
     }
 
     @Override
     public Viewable&lt;T&gt; onChange( Channel channel, Action&lt;ValDelegate&lt;T&gt;&gt; action ) {
-<span class="fc" id="L273">        _changeListeners.onChange(channel, action);</span>
-<span class="fc" id="L274">        return this;</span>
+<span class="fc" id="L278">        _changeListeners.onChange(channel, action);</span>
+<span class="fc" id="L279">        return this;</span>
     }
 
     /** {@inheritDoc} */
     @Override public final Var&lt;T&gt; fireChange( Channel channel ) {
-<span class="fc" id="L279">        this.fireChange(channel, new ItemPair&lt;&gt;(this));</span>
-<span class="fc" id="L280">        return this;</span>
+<span class="fc" id="L284">        this.fireChange(channel, new ItemPair&lt;&gt;(this));</span>
+<span class="fc" id="L285">        return this;</span>
     }
 
     void fireChange( Channel channel, ItemPair&lt;T&gt; pair ) {
-<span class="fc" id="L284">        _changeListeners.fireChange(this, channel, pair);</span>
-<span class="fc" id="L285">    }</span>
+<span class="fc" id="L289">        _changeListeners.fireChange(this, channel, pair);</span>
+<span class="fc" id="L290">    }</span>
 
     /** {@inheritDoc} */
     @Override
     public final Var&lt;T&gt; set( Channel channel, T newItem ) {
-<span class="fc" id="L290">        Objects.requireNonNull(channel);</span>
-<span class="fc" id="L291">        ItemPair&lt;T&gt; pair = _setInternal(channel, newItem);</span>
-<span class="fc bfc" id="L292" title="All 2 branches covered.">        if ( pair.change() != SingleChange.NONE )</span>
-<span class="fc" id="L293">            this.fireChange(channel, pair);</span>
-<span class="fc" id="L294">        return this;</span>
+<span class="fc" id="L295">        Objects.requireNonNull(channel);</span>
+<span class="fc" id="L296">        ItemPair&lt;T&gt; pair = _setInternal(channel, newItem);</span>
+<span class="fc bfc" id="L297" title="All 2 branches covered.">        if ( pair.change() != SingleChange.NONE )</span>
+<span class="fc" id="L298">            this.fireChange(channel, pair);</span>
+<span class="fc" id="L299">        return this;</span>
     }
 
     private ItemPair&lt;T&gt; _setInternal( Channel channel, T newValue ) {
-<span class="fc bfc" id="L298" title="All 4 branches covered.">        if ( !_nullable &amp;&amp; newValue == null )</span>
-<span class="fc" id="L299">            throw new NullPointerException(</span>
+<span class="fc bfc" id="L303" title="All 4 branches covered.">        if ( !_nullable &amp;&amp; newValue == null )</span>
+<span class="fc" id="L304">            throw new NullPointerException(</span>
                     &quot;This property is configured to not allow null values! &quot; +
                             &quot;If you want your property to allow null values, use the 'ofNullable(Class, T)' factory method.&quot;
             );
 
-<span class="fc" id="L304">        T oldValue = _item();</span>
+<span class="fc" id="L309">        T oldValue = _item();</span>
 
-<span class="fc" id="L306">        ItemPair&lt;T&gt; pair = new ItemPair&lt;&gt;(_type, newValue, oldValue);</span>
+<span class="fc" id="L311">        ItemPair&lt;T&gt; pair = new ItemPair&lt;&gt;(_type, newValue, oldValue);</span>
 
-<span class="fc bfc" id="L308" title="All 2 branches covered.">        if ( pair.change() != SingleChange.NONE ) {</span>
+<span class="fc bfc" id="L313" title="All 2 branches covered.">        if ( pair.change() != SingleChange.NONE ) {</span>
             // First we check if the value is compatible with the type
-<span class="pc bpc" id="L310" title="1 of 4 branches missed.">            if ( newValue != null &amp;&amp; !_type.isAssignableFrom(newValue.getClass()) )</span>
-<span class="nc" id="L311">                throw new IllegalArgumentException(</span>
-<span class="nc" id="L312">                        &quot;The provided type '&quot;+newValue.getClass()+&quot;' of the new value is not compatible &quot; +</span>
+<span class="pc bpc" id="L315" title="1 of 4 branches missed.">            if ( newValue != null &amp;&amp; !_type.isAssignableFrom(newValue.getClass()) )</span>
+<span class="nc" id="L316">                throw new IllegalArgumentException(</span>
+<span class="nc" id="L317">                        &quot;The provided type '&quot;+newValue.getClass()+&quot;' of the new value is not compatible &quot; +</span>
                                 &quot;with the expected item type '&quot;+_type+&quot;' of this property lens.&quot;
                 );
 
-<span class="fc" id="L316">            _setInParentAndInternally(channel, newValue);</span>
+<span class="fc" id="L321">            _setInParentAndInternally(channel, newValue);</span>
         }
-<span class="fc" id="L318">        return pair;</span>
+<span class="fc" id="L323">        return pair;</span>
     }
 
     @Override
     public final sprouts.Observable subscribe(Observer observer ) {
-<span class="fc" id="L323">        _changeListeners.onChange( observer );</span>
-<span class="fc" id="L324">        return this;</span>
+<span class="fc" id="L328">        _changeListeners.onChange( observer );</span>
+<span class="fc" id="L329">        return this;</span>
     }
 
     @Override
     public final Observable unsubscribe(Subscriber subscriber ) {
-<span class="fc" id="L329">        _changeListeners.unsubscribe(subscriber);</span>
-<span class="fc" id="L330">        return this;</span>
+<span class="fc" id="L334">        _changeListeners.unsubscribe(subscriber);</span>
+<span class="fc" id="L335">        return this;</span>
     }
 
     @Override
     public void unsubscribeAll() {
-<span class="fc" id="L335">        _changeListeners.unsubscribeAll();</span>
-<span class="fc" id="L336">    }</span>
+<span class="fc" id="L340">        _changeListeners.unsubscribeAll();</span>
+<span class="fc" id="L341">    }</span>
 
     public final long numberOfChangeListeners() {
-<span class="fc" id="L339">        return _changeListeners.numberOfChangeListeners();</span>
+<span class="fc" id="L344">        return _changeListeners.numberOfChangeListeners();</span>
     }
 
 
     private static void _logError(String message, @Nullable Object... args) {
-<span class="fc" id="L344">        Util._logError(log, message, args);</span>
-<span class="fc" id="L345">    }</span>
+<span class="fc" id="L349">        Util._logError(log, message, args);</span>
+<span class="fc" id="L350">    }</span>
 
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

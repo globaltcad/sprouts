@@ -62,7 +62,18 @@ public interface Viewables<T> extends Vals<T>, Observable
     }
 
     /**
-     *  Similar to {@link Viewable#onChange(Channel, Action)} but for a list of properties.
+     *  Similar to {@link Viewable#onChange(Channel, Action)} but for a list of properties.<br>
+     *  <p>
+     *  <b>Note that most {@link Exception}s thrown by the supplied {@link Action} will be caught and logged
+     *  in order to avoid disturbing the control flow of the source property, to prevent inconsistent states
+     *  and unpredictable behavior at runtime.</b>
+     *  <br>
+     *  However, this does NOT apply to serious {@link Error} subtypes,
+     *  like {@link OutOfMemoryError} or {@link StackOverflowError} because they
+     *  represent severe platform errors, which are considered unrecoverable problems that applications
+     *  should not typically attempt to handle.<br>
+     *  <b>The {@link InterruptedException} is also re-thrown unchanged instead of being logged to
+     *  comply with how concurrency interruption is designed to work in Java.</b>
      *
      * @param action The action to perform when the list of properties is shown (which is called when its state changes).
      * @return This {@link Viewables} list of {@link Viewable} properties.

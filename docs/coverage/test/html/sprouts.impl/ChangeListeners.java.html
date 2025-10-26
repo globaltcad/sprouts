@@ -86,30 +86,32 @@ final class ChangeListeners&lt;D&gt; {
                 try {
 <span class="fc" id="L87">                    action.accept(delegate);</span>
 <span class="fc" id="L88">                } catch (Exception e) {</span>
-<span class="fc" id="L89">                    _logError(</span>
+<span class="fc" id="L89">                    Util.sneakyThrowExceptionIfFatal(e);</span>
+<span class="fc" id="L90">                    _logError(</span>
                             &quot;An error occurred while executing action '{}' for delegate '{}'&quot;,
                             action, delegate, e
                         );
-<span class="fc" id="L93">                }</span>
-<span class="fc" id="L94">        });</span>
-<span class="fc" id="L95">    }</span>
+<span class="fc" id="L94">                }</span>
+<span class="fc" id="L95">        });</span>
+<span class="fc" id="L96">    }</span>
 
     @Override
     public final String toString() {
-<span class="nc" id="L99">        StringBuilder sb = new StringBuilder();</span>
-<span class="nc" id="L100">        sb.append(this.getClass().getSimpleName()).append(&quot;[&quot;);</span>
-<span class="nc bnc" id="L101" title="All 2 branches missed.">        for (Action&lt;D&gt; action : _getState()) {</span>
+<span class="nc" id="L100">        StringBuilder sb = new StringBuilder();</span>
+<span class="nc" id="L101">        sb.append(this.getClass().getSimpleName()).append(&quot;[&quot;);</span>
+<span class="nc bnc" id="L102" title="All 2 branches missed.">        for (Action&lt;D&gt; action : _getState()) {</span>
             try {
-<span class="nc" id="L103">                sb.append(action).append(&quot;, &quot;);</span>
-<span class="nc" id="L104">            } catch (Exception e) {</span>
-<span class="nc" id="L105">                _logError(</span>
+<span class="nc" id="L104">                sb.append(action).append(&quot;, &quot;);</span>
+<span class="nc" id="L105">            } catch (Exception e) {</span>
+<span class="nc" id="L106">                Util.sneakyThrowExceptionIfFatal(e);</span>
+<span class="nc" id="L107">                _logError(</span>
                             &quot;An error occurred while trying to get the string &quot; +
                             &quot;representation of the action '{}'&quot;, action, e
                     );
-<span class="nc" id="L109">            }</span>
-<span class="nc" id="L110">        }</span>
-<span class="nc" id="L111">        sb.append(&quot;]&quot;);</span>
-<span class="nc" id="L112">        return sb.toString();</span>
+<span class="nc" id="L111">            }</span>
+<span class="nc" id="L112">        }</span>
+<span class="nc" id="L113">        sb.append(&quot;]&quot;);</span>
+<span class="nc" id="L114">        return sb.toString();</span>
     }
 
     private static final class AutomaticUnSubscriber implements Runnable {
@@ -121,30 +123,31 @@ final class ChangeListeners&lt;D&gt; {
             WeakReference&lt;OwnerCallableForCleanup&lt;ChangeListeners&lt;?&gt;&gt;&gt; weakStateOwner,
             @Nullable Channel channel,
             WeakAction&lt;?, ?&gt; weakAction
-<span class="fc" id="L124">        ) {</span>
-<span class="fc" id="L125">            this.weakStateOwner = weakStateOwner;</span>
-<span class="fc" id="L126">            this.channel        = channel;</span>
-<span class="fc" id="L127">            this.weakAction     = weakAction;</span>
-<span class="fc" id="L128">        }</span>
+<span class="fc" id="L126">        ) {</span>
+<span class="fc" id="L127">            this.weakStateOwner = weakStateOwner;</span>
+<span class="fc" id="L128">            this.channel        = channel;</span>
+<span class="fc" id="L129">            this.weakAction     = weakAction;</span>
+<span class="fc" id="L130">        }</span>
 
         @Override
         public void run() {
-<span class="fc" id="L132">            OwnerCallableForCleanup&lt;ChangeListeners&lt;?&gt;&gt; strongThis = weakStateOwner.get();</span>
-<span class="fc bfc" id="L133" title="All 2 branches covered.">            if (strongThis == null)</span>
-<span class="fc" id="L134">                return;</span>
+<span class="fc" id="L134">            OwnerCallableForCleanup&lt;ChangeListeners&lt;?&gt;&gt; strongThis = weakStateOwner.get();</span>
+<span class="fc bfc" id="L135" title="All 2 branches covered.">            if (strongThis == null)</span>
+<span class="fc" id="L136">                return;</span>
 
-<span class="fc" id="L136">            strongThis.updateState(channel, it-&gt;it.updateActions(innerActions -&gt; {</span>
+<span class="fc" id="L138">            strongThis.updateState(channel, it-&gt;it.updateActions(innerActions -&gt; {</span>
                 try {
-<span class="fc" id="L138">                    weakAction.clear();</span>
-<span class="nc" id="L139">                } catch (Exception e) {</span>
-<span class="nc" id="L140">                    _logError(</span>
+<span class="fc" id="L140">                    weakAction.clear();</span>
+<span class="nc" id="L141">                } catch (Exception e) {</span>
+<span class="nc" id="L142">                    Util.sneakyThrowExceptionIfFatal(e);</span>
+<span class="nc" id="L143">                    _logError(</span>
                             &quot;An error occurred while clearing the weak action '{}' during the process of &quot; +
                             &quot;removing it from the list of change actions.&quot;, weakAction, e
                         );
-<span class="fc" id="L144">                }</span>
-<span class="fc" id="L145">                return innerActions.remove((Action) weakAction);</span>
+<span class="fc" id="L147">                }</span>
+<span class="fc" id="L148">                return innerActions.remove((Action) weakAction);</span>
             }));
-<span class="fc" id="L147">        }</span>
+<span class="fc" id="L150">        }</span>
     }
 
     /**
@@ -166,8 +169,8 @@ final class ChangeListeners&lt;D&gt; {
     }
 
     private static void _logError(String message, @Nullable Object... args) {
-<span class="fc" id="L169">        Util._logError(log, message, args);</span>
-<span class="fc" id="L170">    }</span>
+<span class="fc" id="L172">        Util._logError(log, message, args);</span>
+<span class="fc" id="L173">    }</span>
 
 
 }

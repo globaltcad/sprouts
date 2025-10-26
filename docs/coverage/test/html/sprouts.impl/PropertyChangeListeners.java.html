@@ -173,17 +173,21 @@ public final class PropertyChangeListeners&lt;T&gt; implements ChangeListeners.O
             try {
 <span class="nc" id="L174">                sb.append(key).append(&quot;-&gt;&quot;).append(_channelsToListeners.get(key).get()).append(&quot;, &quot;);</span>
 <span class="nc" id="L175">            } catch ( Exception e ) {</span>
-<span class="nc" id="L176">                _logError(&quot;An error occurred while trying to get the number of change listeners for channel '{}'&quot;, key, e);</span>
-<span class="nc" id="L177">            }</span>
-<span class="nc" id="L178">        }</span>
-<span class="nc" id="L179">        sb.append(&quot;]&quot;);</span>
-<span class="nc" id="L180">        return sb.toString();</span>
+<span class="nc" id="L176">                Util.sneakyThrowExceptionIfFatal(e);</span>
+<span class="nc" id="L177">                _logError( // We want to prevent user code from breaking toString()</span>
+                    &quot;An error occurred while trying to convert property &quot; +
+                    &quot;change listeners with channel '{}' to a string!&quot;, key, e
+                );
+<span class="nc" id="L181">            }</span>
+<span class="nc" id="L182">        }</span>
+<span class="nc" id="L183">        sb.append(&quot;]&quot;);</span>
+<span class="nc" id="L184">        return sb.toString();</span>
     }
 
 
     private static void _logError(String message, @Nullable Object... args) {
-<span class="nc" id="L185">        Util._logError(log, message, args);</span>
-<span class="nc" id="L186">    }</span>
+<span class="nc" id="L189">        Util._logError(log, message, args);</span>
+<span class="nc" id="L190">    }</span>
 
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

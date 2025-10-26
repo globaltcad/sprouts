@@ -172,13 +172,9 @@ final class Property<T extends @Nullable Object> implements Var<T>, Viewable<T> 
     public final String toString() {
         String value = "?";
         try {
-            value = Util.canThrowAndGet(()-> {
-                return this.mapTo(String.class, Object::toString).orElse("null");
-            });
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw Util.sneakyThrow(e);
+            value = this.mapTo(String.class, Object::toString).orElse("null");
         } catch (Exception e) {
+            Util.sneakyThrowExceptionIfFatal(e);
             value = e.toString();
             _logError(
                 "An error occurred while converting the item of type '{}' " +

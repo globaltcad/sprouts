@@ -174,55 +174,56 @@ final class Property&lt;T extends @Nullable Object&gt; implements Var&lt;T&gt;, 
         try {
 <span class="fc" id="L175">            value = this.mapTo(String.class, Object::toString).orElse(&quot;null&quot;);</span>
 <span class="fc" id="L176">        } catch (Exception e) {</span>
-<span class="fc" id="L177">            value = e.toString();</span>
-<span class="fc" id="L178">            _logError(</span>
+<span class="fc" id="L177">            Util.sneakyThrowExceptionIfFatal(e);</span>
+<span class="fc" id="L178">            value = e.toString();</span>
+<span class="fc" id="L179">            _logError(</span>
                 &quot;An error occurred while converting the item of type '{}' &quot; +
                 &quot;with id '{}' to String&quot;,
-<span class="fc" id="L181">                this.type(), this.id(), e</span>
+<span class="fc" id="L182">                this.type(), this.id(), e</span>
             );
-<span class="fc" id="L183">        }</span>
-<span class="pc bpc" id="L184" title="1 of 2 branches missed.">        String id = this.id() == null ? &quot;?&quot; : this.id();</span>
-<span class="fc bfc" id="L185" title="All 2 branches covered.">        if ( id.equals(Sprouts.factory().defaultId()) ) id = &quot;?&quot;;</span>
-<span class="pc bpc" id="L186" title="1 of 2 branches missed.">        String type = ( type() == null ? &quot;?&quot; : type().getSimpleName() );</span>
-<span class="pc bpc" id="L187" title="1 of 2 branches missed.">        if ( type.equals(&quot;Object&quot;) ) type = &quot;?&quot;;</span>
-<span class="fc bfc" id="L188" title="All 4 branches covered.">        if ( type.equals(&quot;String&quot;) &amp;&amp; this.isPresent() ) value = &quot;\&quot;&quot; + value + &quot;\&quot;&quot;;</span>
-<span class="fc bfc" id="L189" title="All 2 branches covered.">        if (_nullable) type = type + &quot;?&quot;;</span>
-<span class="fc bfc" id="L190" title="All 2 branches covered.">        String name = _isImmutable ? &quot;Val&quot; : &quot;Var&quot;;</span>
-<span class="fc bfc" id="L191" title="All 2 branches covered.">        String content = ( id.equals(&quot;?&quot;) ? value : id + &quot;=&quot; + value );</span>
-<span class="fc" id="L192">        return name + &quot;&lt;&quot; + type + &quot;&gt;&quot; + &quot;[&quot; + content + &quot;]&quot;;</span>
+<span class="fc" id="L184">        }</span>
+<span class="pc bpc" id="L185" title="1 of 2 branches missed.">        String id = this.id() == null ? &quot;?&quot; : this.id();</span>
+<span class="fc bfc" id="L186" title="All 2 branches covered.">        if ( id.equals(Sprouts.factory().defaultId()) ) id = &quot;?&quot;;</span>
+<span class="pc bpc" id="L187" title="1 of 2 branches missed.">        String type = ( type() == null ? &quot;?&quot; : type().getSimpleName() );</span>
+<span class="pc bpc" id="L188" title="1 of 2 branches missed.">        if ( type.equals(&quot;Object&quot;) ) type = &quot;?&quot;;</span>
+<span class="fc bfc" id="L189" title="All 4 branches covered.">        if ( type.equals(&quot;String&quot;) &amp;&amp; this.isPresent() ) value = &quot;\&quot;&quot; + value + &quot;\&quot;&quot;;</span>
+<span class="fc bfc" id="L190" title="All 2 branches covered.">        if (_nullable) type = type + &quot;?&quot;;</span>
+<span class="fc bfc" id="L191" title="All 2 branches covered.">        String name = _isImmutable ? &quot;Val&quot; : &quot;Var&quot;;</span>
+<span class="fc bfc" id="L192" title="All 2 branches covered.">        String content = ( id.equals(&quot;?&quot;) ? value : id + &quot;=&quot; + value );</span>
+<span class="fc" id="L193">        return name + &quot;&lt;&quot; + type + &quot;&gt;&quot; + &quot;[&quot; + content + &quot;]&quot;;</span>
     }
 
     @Override
     public final boolean equals( Object obj ) {
-<span class="pc bpc" id="L197" title="1 of 2 branches missed.">        if ( obj == null ) return false;</span>
-<span class="fc bfc" id="L198" title="All 2 branches covered.">        if ( obj == this ) return true;</span>
-<span class="fc bfc" id="L199" title="All 2 branches covered.">        if ( !_isImmutable ) {</span>
-<span class="fc" id="L200">            return false;</span>
+<span class="pc bpc" id="L198" title="1 of 2 branches missed.">        if ( obj == null ) return false;</span>
+<span class="fc bfc" id="L199" title="All 2 branches covered.">        if ( obj == this ) return true;</span>
+<span class="fc bfc" id="L200" title="All 2 branches covered.">        if ( !_isImmutable ) {</span>
+<span class="fc" id="L201">            return false;</span>
         }
-<span class="pc bpc" id="L202" title="1 of 2 branches missed.">        if ( obj instanceof Val ) {</span>
-<span class="fc" id="L203">            Val&lt;?&gt; other = (Val&lt;?&gt;) obj;</span>
-<span class="fc bfc" id="L204" title="All 2 branches covered.">            if ( other.type() != _type) return false;</span>
-<span class="pc bpc" id="L205" title="1 of 4 branches missed.">            if ( other.orElseNull() == null ) return _value == null;</span>
-<span class="fc" id="L206">            return Val.equals( other.orElseThrowUnchecked(), _value); // Arrays are compared with Arrays.equals</span>
+<span class="pc bpc" id="L203" title="1 of 2 branches missed.">        if ( obj instanceof Val ) {</span>
+<span class="fc" id="L204">            Val&lt;?&gt; other = (Val&lt;?&gt;) obj;</span>
+<span class="fc bfc" id="L205" title="All 2 branches covered.">            if ( other.type() != _type) return false;</span>
+<span class="pc bpc" id="L206" title="1 of 4 branches missed.">            if ( other.orElseNull() == null ) return _value == null;</span>
+<span class="fc" id="L207">            return Val.equals( other.orElseThrowUnchecked(), _value); // Arrays are compared with Arrays.equals</span>
         }
-<span class="nc" id="L208">        return false;</span>
+<span class="nc" id="L209">        return false;</span>
     }
 
     @Override
     public final int hashCode() {
-<span class="fc bfc" id="L213" title="All 2 branches covered.">        if ( !_isImmutable ) {</span>
-<span class="fc" id="L214">            return System.identityHashCode(this);</span>
+<span class="fc bfc" id="L214" title="All 2 branches covered.">        if ( !_isImmutable ) {</span>
+<span class="fc" id="L215">            return System.identityHashCode(this);</span>
         }
-<span class="fc" id="L216">        int hash = 7;</span>
-<span class="fc bfc" id="L217" title="All 2 branches covered.">        hash = 31 * hash + ( _value == null ? 0 : Val.hashCode(_value) );</span>
-<span class="pc bpc" id="L218" title="1 of 2 branches missed.">        hash = 31 * hash + ( _type  == null ? 0 : _type.hashCode()     );</span>
-<span class="pc bpc" id="L219" title="1 of 2 branches missed.">        hash = 31 * hash + ( _id    == null ? 0 : _id.hashCode()       );</span>
-<span class="fc" id="L220">        return hash;</span>
+<span class="fc" id="L217">        int hash = 7;</span>
+<span class="fc bfc" id="L218" title="All 2 branches covered.">        hash = 31 * hash + ( _value == null ? 0 : Val.hashCode(_value) );</span>
+<span class="pc bpc" id="L219" title="1 of 2 branches missed.">        hash = 31 * hash + ( _type  == null ? 0 : _type.hashCode()     );</span>
+<span class="pc bpc" id="L220" title="1 of 2 branches missed.">        hash = 31 * hash + ( _id    == null ? 0 : _id.hashCode()       );</span>
+<span class="fc" id="L221">        return hash;</span>
     }
 
     private static void _logError(String message, @Nullable Object... args) {
-<span class="fc" id="L224">        Util._logError(log, message, args);</span>
-<span class="fc" id="L225">    }</span>
+<span class="fc" id="L225">        Util._logError(log, message, args);</span>
+<span class="fc" id="L226">    }</span>
 
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

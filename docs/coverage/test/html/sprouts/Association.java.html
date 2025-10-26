@@ -1181,7 +1181,59 @@ public interface Association&lt;K, V&gt; extends Iterable&lt;Pair&lt;K, V&gt;&gt
      *
      * @return A java.util.Map representation of this association.
      */
-    Map&lt;K, V&gt; toMap();
+    default Map&lt;K, V&gt; toMap() {
+<span class="fc" id="L1185">        return new AbstractMap&lt;K, V&gt;() {</span>
+            @Override
+            public V get(Object key) {
+<span class="pc bpc" id="L1188" title="1 of 2 branches missed.">                if (key == null) {</span>
+<span class="nc" id="L1189">                    throw new NullPointerException(&quot;Null key&quot;);</span>
+                }
+<span class="pc bpc" id="L1191" title="1 of 2 branches missed.">                if (!keyType().isAssignableFrom(key.getClass())) {</span>
+<span class="nc" id="L1192">                    throw new ClassCastException(&quot;Key type mismatch&quot;);</span>
+                }
+<span class="fc" id="L1194">                return Association.this.get((K) key).orElseThrow(</span>
+<span class="nc" id="L1195">                        () -&gt; new NoSuchElementException(&quot;Key not found&quot;)</span>
+                );
+            }
+            @Override
+            public boolean containsKey(Object key) {
+<span class="pc bpc" id="L1200" title="1 of 2 branches missed.">                if (key == null) {</span>
+<span class="nc" id="L1201">                    throw new NullPointerException(&quot;Null key&quot;);</span>
+                }
+<span class="pc bpc" id="L1203" title="1 of 2 branches missed.">                if (!keyType().isAssignableFrom(key.getClass())) {</span>
+<span class="nc" id="L1204">                    throw new ClassCastException(&quot;Key type mismatch&quot;);</span>
+                }
+<span class="fc" id="L1206">                return Association.this.containsKey((K) key);</span>
+            }
+            @Override
+            public Set&lt;Entry&lt;K, V&gt;&gt; entrySet() {
+<span class="fc" id="L1210">                return new AbstractSet&lt;Entry&lt;K, V&gt;&gt;() {</span>
+                    @Override
+                    public Iterator&lt;Entry&lt;K, V&gt;&gt; iterator() {
+<span class="fc" id="L1213">                        return new Iterator&lt;Entry&lt;K, V&gt;&gt;() {</span>
+<span class="fc" id="L1214">                            private final Iterator&lt;Pair&lt;K, V&gt;&gt; _iterator = Association.this.iterator();</span>
+
+                            @Override
+                            public boolean hasNext() {
+<span class="fc" id="L1218">                                return _iterator.hasNext();</span>
+                            }
+
+                            @Override
+                            public Entry&lt;K, V&gt; next() {
+<span class="fc" id="L1223">                                Pair&lt;K, V&gt; pair = _iterator.next();</span>
+<span class="fc" id="L1224">                                return new SimpleEntry&lt;&gt;(pair.first(), pair.second());</span>
+                            }
+                        };
+                    }
+
+                    @Override
+                    public int size() {
+<span class="fc" id="L1231">                        return Association.this.size();</span>
+                    }
+                };
+            }
+        };
+    }
 
     /**
      *  Checks if any of the key-value pairs in this association match the given predicate
@@ -1191,8 +1243,8 @@ public interface Association&lt;K, V&gt; extends Iterable&lt;Pair&lt;K, V&gt;&gt
      *  @throws NullPointerException if the predicate is {@code null}.
      */
     default boolean any( Predicate&lt;Pair&lt;K,V&gt;&gt; predicate ) {
-<span class="nc" id="L1194">        Objects.requireNonNull(predicate);</span>
-<span class="nc" id="L1195">        return this.entrySet().stream().anyMatch( predicate );</span>
+<span class="nc" id="L1246">        Objects.requireNonNull(predicate);</span>
+<span class="nc" id="L1247">        return this.entrySet().stream().anyMatch( predicate );</span>
     }
 
     /**
@@ -1203,8 +1255,8 @@ public interface Association&lt;K, V&gt; extends Iterable&lt;Pair&lt;K, V&gt;&gt
      *  @throws NullPointerException if the predicate is {@code null}.
      */
     default boolean all( Predicate&lt;Pair&lt;K,V&gt;&gt; predicate ) {
-<span class="nc" id="L1206">        Objects.requireNonNull(predicate);</span>
-<span class="nc" id="L1207">        return this.entrySet().stream().allMatch( predicate );</span>
+<span class="nc" id="L1258">        Objects.requireNonNull(predicate);</span>
+<span class="nc" id="L1259">        return this.entrySet().stream().allMatch( predicate );</span>
     }
 
     /**
@@ -1215,8 +1267,8 @@ public interface Association&lt;K, V&gt; extends Iterable&lt;Pair&lt;K, V&gt;&gt
      *  @throws NullPointerException if the predicate is {@code null}.
      */
     default boolean none( Predicate&lt;Pair&lt;K,V&gt;&gt; predicate ) {
-<span class="nc" id="L1218">        Objects.requireNonNull(predicate);</span>
-<span class="nc" id="L1219">        return this.entrySet().stream().noneMatch( predicate );</span>
+<span class="nc" id="L1270">        Objects.requireNonNull(predicate);</span>
+<span class="nc" id="L1271">        return this.entrySet().stream().noneMatch( predicate );</span>
     }
 
 }

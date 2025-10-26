@@ -1492,11 +1492,11 @@
 
         {"kind":"when","text":"We create two different `ValueSet` instances from the two scrambled list...","code":["var set1 = ValueSet.of(type).addAll(scrambledEntries1)","var set2 = ValueSet.of(type).addAll(scrambledEntries2)"]},
 
-        {"kind":"then","text":"The two associations are equal!","code":["set1.equals(set2)"]},
+        {"kind":"then","text":"The two sets are equal!","code":["set1.equals(set2)"]},
 
         {"kind":"and","text":"They also have the same hash codes:","code":["set1.hashCode() == set2.hashCode()"]},
 
-        {"kind":"when","text":"We create versions of the associations where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it}).toSet()","var smallerSet1 = set1.removeAll(toRemove)","var smallerSet2 = set2.removeAll(toRemove)"]},
+        {"kind":"when","text":"We create versions of the sets where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it}).toSet()","var smallerSet1 = set1.removeAll(toRemove)","var smallerSet2 = set2.removeAll(toRemove)"]},
 
         {"kind":"then","text":"They are equal...","code":["smallerSet1 == smallerSet2","smallerSet1.hashCode() == smallerSet2.hashCode()"]},
 
@@ -1521,11 +1521,11 @@
 
         {"kind":"when","text":"We create two different `ValueSet` instances from the two scrambled list...","code":["var set1 = ValueSet.of(type).addAll(scrambledEntries1)","var set2 = ValueSet.of(type).addAll(scrambledEntries2)"]},
 
-        {"kind":"then","text":"The two associations are equal!","code":["set1.equals(set2)"]},
+        {"kind":"then","text":"The two sets are equal!","code":["set1.equals(set2)"]},
 
         {"kind":"and","text":"They also have the same hash codes:","code":["set1.hashCode() == set2.hashCode()"]},
 
-        {"kind":"when","text":"We create versions of the associations where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it}).toSet()","var smallerSet1 = set1.removeAll(toRemove)","var smallerSet2 = set2.removeAll(toRemove)"]},
+        {"kind":"when","text":"We create versions of the sets where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it}).toSet()","var smallerSet1 = set1.removeAll(toRemove)","var smallerSet2 = set2.removeAll(toRemove)"]},
 
         {"kind":"then","text":"They are equal...","code":["smallerSet1 == smallerSet2","smallerSet1.hashCode() == smallerSet2.hashCode()"]},
 
@@ -1550,11 +1550,11 @@
 
         {"kind":"when","text":"We create two different `ValueSet` instances from the two scrambled list...","code":["var set1 = ValueSet.of(type).addAll(scrambledEntries1)","var set2 = ValueSet.of(type).addAll(scrambledEntries2)"]},
 
-        {"kind":"then","text":"The two associations are equal!","code":["set1.equals(set2)"]},
+        {"kind":"then","text":"The two sets are equal!","code":["set1.equals(set2)"]},
 
         {"kind":"and","text":"They also have the same hash codes:","code":["set1.hashCode() == set2.hashCode()"]},
 
-        {"kind":"when","text":"We create versions of the associations where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it}).toSet()","var smallerSet1 = set1.removeAll(toRemove)","var smallerSet2 = set2.removeAll(toRemove)"]},
+        {"kind":"when","text":"We create versions of the sets where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it}).toSet()","var smallerSet1 = set1.removeAll(toRemove)","var smallerSet2 = set2.removeAll(toRemove)"]},
 
         {"kind":"then","text":"They are equal...","code":["smallerSet1 == smallerSet2","smallerSet1.hashCode() == smallerSet2.hashCode()"]},
 
@@ -1579,11 +1579,11 @@
 
         {"kind":"when","text":"We create two different `ValueSet` instances from the two scrambled list...","code":["var set1 = ValueSet.of(type).addAll(scrambledEntries1)","var set2 = ValueSet.of(type).addAll(scrambledEntries2)"]},
 
-        {"kind":"then","text":"The two associations are equal!","code":["set1.equals(set2)"]},
+        {"kind":"then","text":"The two sets are equal!","code":["set1.equals(set2)"]},
 
         {"kind":"and","text":"They also have the same hash codes:","code":["set1.hashCode() == set2.hashCode()"]},
 
-        {"kind":"when","text":"We create versions of the associations where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it}).toSet()","var smallerSet1 = set1.removeAll(toRemove)","var smallerSet2 = set2.removeAll(toRemove)"]},
+        {"kind":"when","text":"We create versions of the sets where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it}).toSet()","var smallerSet1 = set1.removeAll(toRemove)","var smallerSet2 = set2.removeAll(toRemove)"]},
 
         {"kind":"then","text":"They are equal...","code":["smallerSet1 == smallerSet2","smallerSet1.hashCode() == smallerSet2.hashCode()"]},
 
@@ -1608,11 +1608,11 @@
 
         {"kind":"when","text":"We create two different `ValueSet` instances from the two scrambled list...","code":["var set1 = ValueSet.of(type).addAll(scrambledEntries1)","var set2 = ValueSet.of(type).addAll(scrambledEntries2)"]},
 
-        {"kind":"then","text":"The two associations are equal!","code":["set1.equals(set2)"]},
+        {"kind":"then","text":"The two sets are equal!","code":["set1.equals(set2)"]},
 
         {"kind":"and","text":"They also have the same hash codes:","code":["set1.hashCode() == set2.hashCode()"]},
 
-        {"kind":"when","text":"We create versions of the associations where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it}).toSet()","var smallerSet1 = set1.removeAll(toRemove)","var smallerSet2 = set2.removeAll(toRemove)"]},
+        {"kind":"when","text":"We create versions of the sets where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it}).toSet()","var smallerSet1 = set1.removeAll(toRemove)","var smallerSet2 = set2.removeAll(toRemove)"]},
 
         {"kind":"then","text":"They are equal...","code":["smallerSet1 == smallerSet2","smallerSet1.hashCode() == smallerSet2.hashCode()"]},
 
@@ -1637,11 +1637,11 @@
 
         {"kind":"when","text":"We create two different `ValueSet` instances from the two scrambled list...","code":["var set1 = ValueSet.of(type).addAll(scrambledEntries1)","var set2 = ValueSet.of(type).addAll(scrambledEntries2)"]},
 
-        {"kind":"then","text":"The two associations are equal!","code":["set1.equals(set2)"]},
+        {"kind":"then","text":"The two sets are equal!","code":["set1.equals(set2)"]},
 
         {"kind":"and","text":"They also have the same hash codes:","code":["set1.hashCode() == set2.hashCode()"]},
 
-        {"kind":"when","text":"We create versions of the associations where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it}).toSet()","var smallerSet1 = set1.removeAll(toRemove)","var smallerSet2 = set2.removeAll(toRemove)"]},
+        {"kind":"when","text":"We create versions of the sets where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it}).toSet()","var smallerSet1 = set1.removeAll(toRemove)","var smallerSet2 = set2.removeAll(toRemove)"]},
 
         {"kind":"then","text":"They are equal...","code":["smallerSet1 == smallerSet2","smallerSet1.hashCode() == smallerSet2.hashCode()"]},
 
@@ -1666,11 +1666,11 @@
 
         {"kind":"when","text":"We create two different `ValueSet` instances from the two scrambled list...","code":["var set1 = ValueSet.of(type).addAll(scrambledEntries1)","var set2 = ValueSet.of(type).addAll(scrambledEntries2)"]},
 
-        {"kind":"then","text":"The two associations are equal!","code":["set1.equals(set2)"]},
+        {"kind":"then","text":"The two sets are equal!","code":["set1.equals(set2)"]},
 
         {"kind":"and","text":"They also have the same hash codes:","code":["set1.hashCode() == set2.hashCode()"]},
 
-        {"kind":"when","text":"We create versions of the associations where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it}).toSet()","var smallerSet1 = set1.removeAll(toRemove)","var smallerSet2 = set2.removeAll(toRemove)"]},
+        {"kind":"when","text":"We create versions of the sets where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it}).toSet()","var smallerSet1 = set1.removeAll(toRemove)","var smallerSet2 = set2.removeAll(toRemove)"]},
 
         {"kind":"then","text":"They are equal...","code":["smallerSet1 == smallerSet2","smallerSet1.hashCode() == smallerSet2.hashCode()"]},
 
@@ -1695,11 +1695,11 @@
 
         {"kind":"when","text":"We create two different `ValueSet` instances from the two scrambled list...","code":["var set1 = ValueSet.of(type).addAll(scrambledEntries1)","var set2 = ValueSet.of(type).addAll(scrambledEntries2)"]},
 
-        {"kind":"then","text":"The two associations are equal!","code":["set1.equals(set2)"]},
+        {"kind":"then","text":"The two sets are equal!","code":["set1.equals(set2)"]},
 
         {"kind":"and","text":"They also have the same hash codes:","code":["set1.hashCode() == set2.hashCode()"]},
 
-        {"kind":"when","text":"We create versions of the associations where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it}).toSet()","var smallerSet1 = set1.removeAll(toRemove)","var smallerSet2 = set2.removeAll(toRemove)"]},
+        {"kind":"when","text":"We create versions of the sets where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it}).toSet()","var smallerSet1 = set1.removeAll(toRemove)","var smallerSet2 = set2.removeAll(toRemove)"]},
 
         {"kind":"then","text":"They are equal...","code":["smallerSet1 == smallerSet2","smallerSet1.hashCode() == smallerSet2.hashCode()"]},
 
@@ -1724,11 +1724,11 @@
 
         {"kind":"when","text":"We create two different `ValueSet` instances from the two scrambled list...","code":["var set1 = ValueSet.of(type).addAll(scrambledEntries1)","var set2 = ValueSet.of(type).addAll(scrambledEntries2)"]},
 
-        {"kind":"then","text":"The two associations are equal!","code":["set1.equals(set2)"]},
+        {"kind":"then","text":"The two sets are equal!","code":["set1.equals(set2)"]},
 
         {"kind":"and","text":"They also have the same hash codes:","code":["set1.hashCode() == set2.hashCode()"]},
 
-        {"kind":"when","text":"We create versions of the associations where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it}).toSet()","var smallerSet1 = set1.removeAll(toRemove)","var smallerSet2 = set2.removeAll(toRemove)"]},
+        {"kind":"when","text":"We create versions of the sets where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it}).toSet()","var smallerSet1 = set1.removeAll(toRemove)","var smallerSet2 = set2.removeAll(toRemove)"]},
 
         {"kind":"then","text":"They are equal...","code":["smallerSet1 == smallerSet2","smallerSet1.hashCode() == smallerSet2.hashCode()"]},
 
@@ -1753,11 +1753,11 @@
 
         {"kind":"when","text":"We create two different `ValueSet` instances from the two scrambled list...","code":["var set1 = ValueSet.of(type).addAll(scrambledEntries1)","var set2 = ValueSet.of(type).addAll(scrambledEntries2)"]},
 
-        {"kind":"then","text":"The two associations are equal!","code":["set1.equals(set2)"]},
+        {"kind":"then","text":"The two sets are equal!","code":["set1.equals(set2)"]},
 
         {"kind":"and","text":"They also have the same hash codes:","code":["set1.hashCode() == set2.hashCode()"]},
 
-        {"kind":"when","text":"We create versions of the associations where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it}).toSet()","var smallerSet1 = set1.removeAll(toRemove)","var smallerSet2 = set2.removeAll(toRemove)"]},
+        {"kind":"when","text":"We create versions of the sets where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it}).toSet()","var smallerSet1 = set1.removeAll(toRemove)","var smallerSet2 = set2.removeAll(toRemove)"]},
 
         {"kind":"then","text":"They are equal...","code":["smallerSet1 == smallerSet2","smallerSet1.hashCode() == smallerSet2.hashCode()"]},
 
@@ -1782,11 +1782,11 @@
 
         {"kind":"when","text":"We create two different `ValueSet` instances from the two scrambled list...","code":["var set1 = ValueSet.of(type).addAll(scrambledEntries1)","var set2 = ValueSet.of(type).addAll(scrambledEntries2)"]},
 
-        {"kind":"then","text":"The two associations are equal!","code":["set1.equals(set2)"]},
+        {"kind":"then","text":"The two sets are equal!","code":["set1.equals(set2)"]},
 
         {"kind":"and","text":"They also have the same hash codes:","code":["set1.hashCode() == set2.hashCode()"]},
 
-        {"kind":"when","text":"We create versions of the associations where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it}).toSet()","var smallerSet1 = set1.removeAll(toRemove)","var smallerSet2 = set2.removeAll(toRemove)"]},
+        {"kind":"when","text":"We create versions of the sets where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it}).toSet()","var smallerSet1 = set1.removeAll(toRemove)","var smallerSet2 = set2.removeAll(toRemove)"]},
 
         {"kind":"then","text":"They are equal...","code":["smallerSet1 == smallerSet2","smallerSet1.hashCode() == smallerSet2.hashCode()"]},
 
@@ -1811,11 +1811,11 @@
 
         {"kind":"when","text":"We create two different `ValueSet` instances from the two scrambled list...","code":["var set1 = ValueSet.of(type).addAll(scrambledEntries1)","var set2 = ValueSet.of(type).addAll(scrambledEntries2)"]},
 
-        {"kind":"then","text":"The two associations are equal!","code":["set1.equals(set2)"]},
+        {"kind":"then","text":"The two sets are equal!","code":["set1.equals(set2)"]},
 
         {"kind":"and","text":"They also have the same hash codes:","code":["set1.hashCode() == set2.hashCode()"]},
 
-        {"kind":"when","text":"We create versions of the associations where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it}).toSet()","var smallerSet1 = set1.removeAll(toRemove)","var smallerSet2 = set2.removeAll(toRemove)"]},
+        {"kind":"when","text":"We create versions of the sets where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it}).toSet()","var smallerSet1 = set1.removeAll(toRemove)","var smallerSet2 = set2.removeAll(toRemove)"]},
 
         {"kind":"then","text":"They are equal...","code":["smallerSet1 == smallerSet2","smallerSet1.hashCode() == smallerSet2.hashCode()"]},
 
@@ -1840,11 +1840,11 @@
 
         {"kind":"when","text":"We create two different `ValueSet` instances from the two scrambled list...","code":["var set1 = ValueSet.of(type).addAll(scrambledEntries1)","var set2 = ValueSet.of(type).addAll(scrambledEntries2)"]},
 
-        {"kind":"then","text":"The two associations are equal!","code":["set1.equals(set2)"]},
+        {"kind":"then","text":"The two sets are equal!","code":["set1.equals(set2)"]},
 
         {"kind":"and","text":"They also have the same hash codes:","code":["set1.hashCode() == set2.hashCode()"]},
 
-        {"kind":"when","text":"We create versions of the associations where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it}).toSet()","var smallerSet1 = set1.removeAll(toRemove)","var smallerSet2 = set2.removeAll(toRemove)"]},
+        {"kind":"when","text":"We create versions of the sets where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it}).toSet()","var smallerSet1 = set1.removeAll(toRemove)","var smallerSet2 = set2.removeAll(toRemove)"]},
 
         {"kind":"then","text":"They are equal...","code":["smallerSet1 == smallerSet2","smallerSet1.hashCode() == smallerSet2.hashCode()"]},
 
@@ -1869,11 +1869,11 @@
 
         {"kind":"when","text":"We create two different `ValueSet` instances from the two scrambled list...","code":["var set1 = ValueSet.of(type).addAll(scrambledEntries1)","var set2 = ValueSet.of(type).addAll(scrambledEntries2)"]},
 
-        {"kind":"then","text":"The two associations are equal!","code":["set1.equals(set2)"]},
+        {"kind":"then","text":"The two sets are equal!","code":["set1.equals(set2)"]},
 
         {"kind":"and","text":"They also have the same hash codes:","code":["set1.hashCode() == set2.hashCode()"]},
 
-        {"kind":"when","text":"We create versions of the associations where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it}).toSet()","var smallerSet1 = set1.removeAll(toRemove)","var smallerSet2 = set2.removeAll(toRemove)"]},
+        {"kind":"when","text":"We create versions of the sets where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it}).toSet()","var smallerSet1 = set1.removeAll(toRemove)","var smallerSet2 = set2.removeAll(toRemove)"]},
 
         {"kind":"then","text":"They are equal...","code":["smallerSet1 == smallerSet2","smallerSet1.hashCode() == smallerSet2.hashCode()"]},
 
@@ -1898,11 +1898,11 @@
 
         {"kind":"when","text":"We create two different `ValueSet` instances from the two scrambled list...","code":["var set1 = ValueSet.of(type).addAll(scrambledEntries1)","var set2 = ValueSet.of(type).addAll(scrambledEntries2)"]},
 
-        {"kind":"then","text":"The two associations are equal!","code":["set1.equals(set2)"]},
+        {"kind":"then","text":"The two sets are equal!","code":["set1.equals(set2)"]},
 
         {"kind":"and","text":"They also have the same hash codes:","code":["set1.hashCode() == set2.hashCode()"]},
 
-        {"kind":"when","text":"We create versions of the associations where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it}).toSet()","var smallerSet1 = set1.removeAll(toRemove)","var smallerSet2 = set2.removeAll(toRemove)"]},
+        {"kind":"when","text":"We create versions of the sets where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it}).toSet()","var smallerSet1 = set1.removeAll(toRemove)","var smallerSet2 = set2.removeAll(toRemove)"]},
 
         {"kind":"then","text":"They are equal...","code":["smallerSet1 == smallerSet2","smallerSet1.hashCode() == smallerSet2.hashCode()"]},
 
@@ -1927,11 +1927,11 @@
 
         {"kind":"when","text":"We create two different `ValueSet` instances from the two scrambled list...","code":["var set1 = ValueSet.of(type).addAll(scrambledEntries1)","var set2 = ValueSet.of(type).addAll(scrambledEntries2)"]},
 
-        {"kind":"then","text":"The two associations are equal!","code":["set1.equals(set2)"]},
+        {"kind":"then","text":"The two sets are equal!","code":["set1.equals(set2)"]},
 
         {"kind":"and","text":"They also have the same hash codes:","code":["set1.hashCode() == set2.hashCode()"]},
 
-        {"kind":"when","text":"We create versions of the associations where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it}).toSet()","var smallerSet1 = set1.removeAll(toRemove)","var smallerSet2 = set2.removeAll(toRemove)"]},
+        {"kind":"when","text":"We create versions of the sets where parts are removed...","code":["var subList = entries.subList(0, (entries.size() * 0.5) as int)","var toRemove = subList.collect({it}).toSet()","var smallerSet1 = set1.removeAll(toRemove)","var smallerSet2 = set2.removeAll(toRemove)"]},
 
         {"kind":"then","text":"They are equal...","code":["smallerSet1 == smallerSet2","smallerSet1.hashCode() == smallerSet2.hashCode()"]},
 

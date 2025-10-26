@@ -145,6 +145,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 			try {
 				return combiner.apply(p1.orElseNull(), p2.orElseNull());
 			} catch ( Exception e ) {
+                Util.sneakyThrowExceptionIfFatal(e);
 				_logError("An error occurred while applying the combiner function of a composite property.",e);
 				return null;
 			}
@@ -205,6 +206,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 			try {
 				return combiner.apply(p1.orElseNull(), p2.orElseNull());
 			} catch ( Exception e ) {
+                Util.sneakyThrowExceptionIfFatal(e);
 				_logError("An error occurred while applying the combiner function of a composite property.", e);
 				return null;
 			}
@@ -246,6 +248,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 			try {
 				return combiner.apply(p1.orElseNull(), p2.orElseNull());
 			} catch ( Exception e ) {
+                Util.sneakyThrowExceptionIfFatal(e);
 				_logError("An error occurred while applying the combiner function of a composite property.", e);
 				return null;
 			}
@@ -303,6 +306,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 			try {
 				return combiner.apply(p1.orElseNull(), p2.orElseNull());
 			} catch ( Exception e ) {
+                Util.sneakyThrowExceptionIfFatal(e);
 				_logError("An error occurred while applying the combiner function of a composite property.", e);
 				return null;
 			}
@@ -494,7 +498,8 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 		try {
 			item = this.mapTo(String.class, Object::toString).orElse("null");
 		} catch ( Exception e ) {
-			item = e.toString();
+            Util.sneakyThrowExceptionIfFatal(e);
+			item = e.toString(); // We want to prevent user code from breaking toString()
 			_logError("Failed to convert item to string: {}", e.getMessage(), e);
 		}
 		String id = this.id() == null ? "?" : this.id();

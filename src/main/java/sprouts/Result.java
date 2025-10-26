@@ -256,6 +256,8 @@ public final class Result<V> implements Maybe<V>
      *  <b>Note that this does not catch {@link Error} subtypes, like {@link OutOfMemoryError} or
      *  {@link StackOverflowError} because they represent severe platform errors, which are
      *  considered unrecoverable problems that applications should not typically attempt to handle.</b><br>
+     *  The {@link InterruptedException} is also not handled and is instead re-thrown unchanged to
+     *  comply with how concurrency interruption is supposed to work in Java.<br>
      *  Only application errors ({@link Exception}s) are caught and wrapped safely as {@link Result}.
      *
      * @param type The type of the value returned from the supplier.
@@ -270,10 +272,8 @@ public final class Result<V> implements Maybe<V>
         Objects.requireNonNull(supplier);        
         try {
             return new Result<>(false, type, Collections.emptyList(), supplier.get());
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw Util.sneakyThrow(e);
         } catch (Exception e) {
+            Util.sneakyThrowExceptionIfFatal(e);
             return new Result<>(false, type, Collections.singletonList(Problem.of(e)), null);
         }
     }
@@ -289,6 +289,8 @@ public final class Result<V> implements Maybe<V>
      *  <b>Note that this does not catch {@link Error} subtypes, like {@link OutOfMemoryError} or
      *  {@link StackOverflowError} because they represent severe platform errors, which are
      *  considered unrecoverable problems that applications should not typically attempt to handle.</b><br>
+     *  The {@link InterruptedException} is also not handled and is instead re-thrown unchanged to
+     *  comply with how concurrency interruption is supposed to work in Java.<br>
      *  Only application errors ({@link Exception}s) are caught and wrapped safely as {@link Result}.
      *
      * @param runAttempt The run attempt to execute safely.
@@ -301,10 +303,8 @@ public final class Result<V> implements Maybe<V>
         try {
             runAttempt.run();
             return new Result<>(false, Void.class, Collections.emptyList(), null);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw Util.sneakyThrow(e);
         } catch (Exception e) {
+            Util.sneakyThrowExceptionIfFatal(e);
             return new Result<>(false, Void.class, Collections.singletonList(Problem.of(e)), null);
         }
     }
@@ -663,7 +663,17 @@ public final class Result<V> implements Maybe<V>
      *  <p><b>
      *      If you want to handle all problems in this result, irrespective of what type of exception
      *      is associated with them, consider using {@link #handleAny(Consumer)}.
-     *  </b>
+     *  </b><br>
+     *  <p>
+     *  <b>Note that most {@link Exception}s thrown by the supplied {@link Consumer} will be caught and stored
+     *  as {@link Problem}s inside the returned result. </b>
+     *  <br>
+     *  However, this does NOT apply to serious {@link Error} subtypes,
+     *  like {@link OutOfMemoryError} or {@link StackOverflowError} because they
+     *  represent severe platform errors, which are considered unrecoverable problems that applications
+     *  should not typically attempt to handle.<br>
+     *  <b>Any {@link InterruptedException} is also re-thrown unchanged instead of being logged,
+     *  to comply with how concurrency interruption is designed to work in Java.</b>
      *
      * @param exceptionType The type of exception to handle.
      * @param handler The handler to invoke with the exception.
@@ -684,7 +694,8 @@ public final class Result<V> implements Maybe<V>
                     try {
                         handler.accept(exceptionType.cast(problem.exception().get()));
                         problems = problems.remove(problem);
-                    } catch ( Exception e ) {
+                    } catch ( Exception e ) { // We want to prevent failed handlers from breaking the flow.
+                        Util.sneakyThrowExceptionIfFatal(e);
                         _logError("An exception occurred while handling a problem in a result.", e);
                     }
                 }
@@ -711,7 +722,17 @@ public final class Result<V> implements Maybe<V>
      *      If you want to handle specific exceptions instead of all problems,
      *      consider using {@link #handle(Class, Consumer)}. Which allows you to
      *      match and handle the {@link Problem#exception()}s associated with this result.
-     *  </b>
+     *  </b><br>
+     *  <p>
+     *  <b>Als note that most {@link Exception}s thrown by the supplied {@link Consumer} will be caught and stored
+     *  as {@link Problem}s inside the returned result. </b>
+     *  <br>
+     *  However, this does NOT apply to serious {@link Error} subtypes,
+     *  like {@link OutOfMemoryError} or {@link StackOverflowError} because they
+     *  represent severe platform errors, which are considered unrecoverable problems that applications
+     *  should not typically attempt to handle.<br>
+     *  <b>Any {@link InterruptedException} is also re-thrown unchanged instead of being logged,
+     *  to comply with how concurrency interruption is designed to work in Java.</b>
      *
      * @param handler The handler to invoke with each problem.
      * @return A new result with the problems removed if handled successfully, or unchanged if not.
@@ -726,6 +747,7 @@ public final class Result<V> implements Maybe<V>
                     handler.accept(problem);
                     problems = problems.remove(problem);
                 } catch ( Exception e ) {
+                    Util.sneakyThrowExceptionIfFatal(e);
                     _logError("An exception occurred while handling a problem in a result.", e);
                 }
             }
@@ -787,7 +809,17 @@ public final class Result<V> implements Maybe<V>
      *  then the exception is caught, logged, and a new result is returned
      *  with the exception as a problem.
      *  <p>
-     *  This method is useful for debugging and logging purposes.
+     *  This method is useful for debugging and logging purposes.<br>
+     *  <p>
+     *  <b>Note that most {@link Exception}s thrown by the supplied {@link Consumer} will be caught and stored
+     *  as {@link Problem}s inside the returned result. </b>
+     *  <br>
+     *  However, this does NOT apply to serious {@link Error} subtypes,
+     *  like {@link OutOfMemoryError} or {@link StackOverflowError} because they
+     *  represent severe platform errors, which are considered unrecoverable problems that applications
+     *  should not typically attempt to handle.<br>
+     *  <b>Any {@link InterruptedException} is also re-thrown unchanged instead of being logged,
+     *  to comply with how concurrency interruption is designed to work in Java.</b>
      *
      * @param consumer The consumer to receive the list of problems.
      * @return This result.
@@ -798,6 +830,7 @@ public final class Result<V> implements Maybe<V>
         try {
             consumer.accept(problems());
         } catch ( Exception e ) {
+            Util.sneakyThrowExceptionIfFatal(e);
             Tuple<Problem> newProblems = problems().add( Problem.of(e) );
 			/*
 				An exception in this the user lambda is most likely completely unwanted,
@@ -819,7 +852,17 @@ public final class Result<V> implements Maybe<V>
      *  Any exceptions thrown during the process of peeking at the problems are caught
      *  logged and then returned as new problems inside a new result.
      *  <p>
-     *  This method is useful for debugging and logging purposes.
+     *  This method is useful for debugging and logging purposes.<br>
+     *  <p>
+     *  <b>Note that most {@link Exception}s thrown by the supplied {@link Consumer} will be caught and stored
+     *  as {@link Problem}s inside the returned result. </b>
+     *  <br>
+     *  However, this does NOT apply to serious {@link Error} subtypes,
+     *  like {@link OutOfMemoryError} or {@link StackOverflowError} because they
+     *  represent severe platform errors, which are considered unrecoverable problems that applications
+     *  should not typically attempt to handle.<br>
+     *  <b>Any {@link InterruptedException} is also re-thrown unchanged instead of being logged,
+     *  to comply with how concurrency interruption is designed to work in Java.</b>
      *
      * @param consumer The consumer to receive each problem.
      * @return This result.
@@ -832,6 +875,7 @@ public final class Result<V> implements Maybe<V>
             try {
                 consumer.accept(problem);
             } catch ( Exception e ) {
+                Util.sneakyThrowExceptionIfFatal(e);
                 Tuple<Problem> newProblems = result.problems().add( Problem.of(e) );
 				/*
 					An exception in this the user lambda is most likely completely unwanted,
@@ -1245,7 +1289,15 @@ public final class Result<V> implements Maybe<V>
      *  Safely maps the value of this result to a new value of a different type
      *  even if an exception is thrown during the mapping process,
      *  in which case the exception is caught and a new result is returned
-     *  with the exception as a problem.
+     *  with the exception as a problem.<br>
+     *  <p>
+     *  <b>Note that most {@link Exception}s thrown by the supplied {@link Function} will be caught
+     *  and stored as {@link Problem}s inside the returned result.</b>
+     *  <br>
+     *  However, this does NOT apply to serious {@link Error} subtypes, like {@link OutOfMemoryError} or
+     *  {@link StackOverflowError} because they represent severe platform errors, which are considered
+     *  unrecoverable problems that applications should not typically attempt to handle.<br>
+     *  <b>Any {@link InterruptedException} is also re-thrown unchanged!</b>
      *
      * @param type The type of the item returned from the mapping function.
      * @param mapper The mapping function to apply to an item, if present.
@@ -1266,6 +1318,7 @@ public final class Result<V> implements Maybe<V>
             else
                 return Result.of( newValue, problems() );
         } catch ( Exception e ) {
+            Util.sneakyThrowExceptionIfFatal(e);
             Tuple<Problem> newProblems = problems().add( Problem.of(e) );
             return Result.of( type, newProblems );
         }
@@ -1275,7 +1328,15 @@ public final class Result<V> implements Maybe<V>
      *  Safely maps the value of this result to a new value of the same type
      *  even if an exception is thrown during the mapping process,
      *  in which case the exception is caught and a new result is returned
-     *  with the exception as a problem.
+     *  with the exception as a problem.<br>
+     *  <p>
+     *  <b>Note that most {@link Exception}s thrown by the supplied {@link Function} will be caught
+     *  and stored as {@link Problem}s inside the returned result.</b>
+     *  <br>
+     *  However, this does NOT apply to serious {@link Error} subtypes, like {@link OutOfMemoryError} or
+     *  {@link StackOverflowError} because they represent severe platform errors, which are considered
+     *  unrecoverable problems that applications should not typically attempt to handle.<br>
+     *  <b>Any {@link InterruptedException} is also re-thrown unchanged!</b>
      *
      * @param mapper The mapping function to apply to an item, if present.
      * @return A new result with the mapped value and a list of problems describing related issues.
@@ -1285,7 +1346,6 @@ public final class Result<V> implements Maybe<V>
         Objects.requireNonNull(mapper);
         if ( !isPresent() )
             return Result.of( type() );
-
         try {
             V newValue = mapper.apply(Objects.requireNonNull(_value));
             if (newValue == null)
@@ -1293,6 +1353,7 @@ public final class Result<V> implements Maybe<V>
             else
                 return Result.of(newValue, problems());
         } catch ( Exception e ) {
+            Util.sneakyThrowExceptionIfFatal(e);
             Tuple<Problem> newProblems = problems().add( Problem.of(e) );
             return Result.of( type(), newProblems );
         }

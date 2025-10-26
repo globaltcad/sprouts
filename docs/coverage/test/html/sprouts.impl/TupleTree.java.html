@@ -6,6 +6,7 @@ import sprouts.Val;
 
 import java.lang.reflect.Array;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -97,158 +98,158 @@ final class TupleTree&lt;T extends @Nullable Object&gt; implements Tuple&lt;T&gt
     static final class LeafNode implements Node {
         private final Object _data;
 
-<span class="fc" id="L100">        LeafNode(Object data) {</span>
-<span class="fc" id="L101">            _data = data;</span>
-<span class="fc" id="L102">        }</span>
+<span class="fc" id="L101">        LeafNode(Object data) {</span>
+<span class="fc" id="L102">            _data = data;</span>
+<span class="fc" id="L103">        }</span>
 
         public Object data() {
-<span class="fc" id="L105">            return  _data;</span>
+<span class="fc" id="L106">            return  _data;</span>
         }
 
         @Override
         public int size() {
-<span class="fc" id="L110">            return _length(_data);</span>
+<span class="fc" id="L111">            return _length(_data);</span>
         }
 
         @Override
         public &lt;T&gt; T getAt(int index, ArrayItemAccess&lt;T, Object&gt; access) {
-<span class="fc" id="L115">            return Util.fakeNonNull(access.get(index, _data));</span>
+<span class="fc" id="L116">            return Util.fakeNonNull(access.get(index, _data));</span>
         }
 
         @Override
         public @Nullable Node slice(int from, int to, Class&lt;?&gt; type, boolean allowsNull) {
-<span class="fc bfc" id="L120" title="All 4 branches covered.">            if ( from == 0 &amp;&amp; to == _length(_data) )</span>
-<span class="fc" id="L121">                return this;</span>
+<span class="fc bfc" id="L121" title="All 4 branches covered.">            if ( from == 0 &amp;&amp; to == _length(_data) )</span>
+<span class="fc" id="L122">                return this;</span>
             else {
-<span class="fc" id="L123">                int newSize = (to - from);</span>
-<span class="fc" id="L124">                Object newItems = _createArray(type, allowsNull, newSize);</span>
-<span class="fc" id="L125">                System.arraycopy(_data, from, newItems, 0, newSize);</span>
-<span class="fc" id="L126">                return new LeafNode(newItems);</span>
+<span class="fc" id="L124">                int newSize = (to - from);</span>
+<span class="fc" id="L125">                Object newItems = _createArray(type, allowsNull, newSize);</span>
+<span class="fc" id="L126">                System.arraycopy(_data, from, newItems, 0, newSize);</span>
+<span class="fc" id="L127">                return new LeafNode(newItems);</span>
             }
         }
 
         @Override
         public @Nullable Node removeRange(int from, int to, Class&lt;?&gt; type, ArrayItemAccess&lt;?, Object&gt; access, boolean allowsNull) {
-<span class="pc bpc" id="L132" title="2 of 4 branches missed.">            if ( from &lt; 0 || to &gt; _length(_data) )</span>
-<span class="nc" id="L133">                return this;</span>
-<span class="pc bpc" id="L134" title="1 of 2 branches missed.">            if ( from &gt; to )</span>
-<span class="nc" id="L135">                return this;</span>
-<span class="fc" id="L136">            int numberOfItemsToRemove = to - from;</span>
-<span class="pc bpc" id="L137" title="1 of 2 branches missed.">            if ( numberOfItemsToRemove == 0 )</span>
-<span class="nc" id="L138">                return this;</span>
-<span class="fc bfc" id="L139" title="All 2 branches covered.">            if ( numberOfItemsToRemove == this.size() )</span>
-<span class="fc" id="L140">                return null;</span>
+<span class="pc bpc" id="L133" title="2 of 4 branches missed.">            if ( from &lt; 0 || to &gt; _length(_data) )</span>
+<span class="nc" id="L134">                return this;</span>
+<span class="pc bpc" id="L135" title="1 of 2 branches missed.">            if ( from &gt; to )</span>
+<span class="nc" id="L136">                return this;</span>
+<span class="fc" id="L137">            int numberOfItemsToRemove = to - from;</span>
+<span class="pc bpc" id="L138" title="1 of 2 branches missed.">            if ( numberOfItemsToRemove == 0 )</span>
+<span class="nc" id="L139">                return this;</span>
+<span class="fc bfc" id="L140" title="All 2 branches covered.">            if ( numberOfItemsToRemove == this.size() )</span>
+<span class="fc" id="L141">                return null;</span>
             else {
-<span class="fc" id="L142">                int newSize = _length(_data) - numberOfItemsToRemove;</span>
-<span class="fc bfc" id="L143" title="All 2 branches covered.">                if ( newSize &gt; IDEAL_LEAF_NODE_SIZE) {</span>
-<span class="fc" id="L144">                    return _createRootFromList(type, allowsNull, new AbstractList() {</span>
+<span class="fc" id="L143">                int newSize = _length(_data) - numberOfItemsToRemove;</span>
+<span class="fc bfc" id="L144" title="All 2 branches covered.">                if ( newSize &gt; IDEAL_LEAF_NODE_SIZE) {</span>
+<span class="fc" id="L145">                    return _createRootFromList(type, allowsNull, new AbstractList() {</span>
                         @Override
                         public int size() {
-<span class="fc" id="L147">                            return newSize;</span>
+<span class="fc" id="L148">                            return newSize;</span>
                         }
                         @Override
                         public @Nullable Object get(int fetchIndex) {
-<span class="fc bfc" id="L151" title="All 2 branches covered.">                            if ( fetchIndex &gt;= from ) {</span>
-<span class="fc" id="L152">                                fetchIndex = fetchIndex + numberOfItemsToRemove;</span>
+<span class="fc bfc" id="L152" title="All 2 branches covered.">                            if ( fetchIndex &gt;= from ) {</span>
+<span class="fc" id="L153">                                fetchIndex = fetchIndex + numberOfItemsToRemove;</span>
                             }
-<span class="fc" id="L154">                            return access.get(fetchIndex, _data);</span>
+<span class="fc" id="L155">                            return access.get(fetchIndex, _data);</span>
                         }
                     });
                 }
-<span class="fc" id="L158">                return new LeafNode(_withRemoveRange(from, to, _data, type, allowsNull));</span>
+<span class="fc" id="L159">                return new LeafNode(_withRemoveRange(from, to, _data, type, allowsNull));</span>
             }
         }
 
         @Override
         public @Nullable &lt;T&gt; Node addAllAt(int index, Tuple&lt;T&gt; tuple, Class&lt;T&gt; type, ArrayItemAccess&lt;?, Object&gt; access, boolean allowsNull) {
-<span class="fc" id="L164">            int currentSize = _length(_data);</span>
-<span class="fc" id="L165">            int newSize = (currentSize + tuple.size());</span>
-<span class="fc bfc" id="L166" title="All 2 branches covered.">            if ( newSize &gt; IDEAL_LEAF_NODE_SIZE) {</span>
-<span class="fc" id="L167">                return _createRootFromList(type, allowsNull, new AbstractList&lt;T&gt;() {</span>
+<span class="fc" id="L165">            int currentSize = _length(_data);</span>
+<span class="fc" id="L166">            int newSize = (currentSize + tuple.size());</span>
+<span class="fc bfc" id="L167" title="All 2 branches covered.">            if ( newSize &gt; IDEAL_LEAF_NODE_SIZE) {</span>
+<span class="fc" id="L168">                return _createRootFromList(type, allowsNull, new AbstractList&lt;T&gt;() {</span>
                     @Override
                     public int size() {
-<span class="fc" id="L170">                        return newSize;</span>
+<span class="fc" id="L171">                        return newSize;</span>
                     }
                     @Override
                     @SuppressWarnings(&quot;unchecked&quot;)
                     public @Nullable T get(int fetchIndex) {
-<span class="fc bfc" id="L175" title="All 2 branches covered.">                        if ( fetchIndex &lt; index ) {</span>
-<span class="fc" id="L176">                            return (T) access.get(fetchIndex, _data);</span>
+<span class="fc bfc" id="L176" title="All 2 branches covered.">                        if ( fetchIndex &lt; index ) {</span>
+<span class="fc" id="L177">                            return (T) access.get(fetchIndex, _data);</span>
                         }
-<span class="fc bfc" id="L178" title="All 2 branches covered.">                        if ( fetchIndex &lt; (index + tuple.size()) ) {</span>
-<span class="fc" id="L179">                            return tuple.get(fetchIndex - index);</span>
+<span class="fc bfc" id="L179" title="All 2 branches covered.">                        if ( fetchIndex &lt; (index + tuple.size()) ) {</span>
+<span class="fc" id="L180">                            return tuple.get(fetchIndex - index);</span>
                         }
-<span class="fc" id="L181">                        return (T) access.get(fetchIndex - tuple.size(), _data);</span>
+<span class="fc" id="L182">                        return (T) access.get(fetchIndex - tuple.size(), _data);</span>
                     }
                 });
             }
-<span class="fc" id="L185">            Object newItems = _withAddAllAt(index, tuple, _data, type, allowsNull);</span>
-<span class="fc" id="L186">            return new LeafNode(newItems);</span>
+<span class="fc" id="L186">            Object newItems = _withAddAllAt(index, tuple, _data, type, allowsNull);</span>
+<span class="fc" id="L187">            return new LeafNode(newItems);</span>
         }
 
         @Override
         public @Nullable &lt;T&gt; Node setAllAt(int index, int offset, Tuple&lt;T&gt; tuple, Class&lt;T&gt; type, ArrayItemAccess&lt;?, Object&gt; access, boolean allowsNull) {
-<span class="fc" id="L191">            int currentSize = _length(_data);</span>
-<span class="fc" id="L192">            int offsetInTuple = Math.abs(Math.min(0, index))+offset;</span>
-<span class="fc" id="L193">            int startIndex = Math.max(0, index);</span>
-<span class="fc" id="L194">            boolean isAlreadyTheSame = true;</span>
-<span class="fc" id="L195">            Object newItems = _clone(_data, type, allowsNull);</span>
-<span class="fc" id="L196">            int numberToSet = Math.min(tuple.size()-offsetInTuple, currentSize - startIndex);</span>
-<span class="fc bfc" id="L197" title="All 2 branches covered.">            for (int i = 0; i &lt; numberToSet; i++) {</span>
-<span class="fc" id="L198">                Object itemToSet = tuple.get(offsetInTuple+i);</span>
-<span class="fc" id="L199">                _setAt(startIndex + i, itemToSet, newItems);</span>
-<span class="fc bfc" id="L200" title="All 2 branches covered.">                if ( !Objects.equals(itemToSet, access.get(startIndex+i, _data)) )</span>
-<span class="fc" id="L201">                    isAlreadyTheSame = false;</span>
+<span class="fc" id="L192">            int currentSize = _length(_data);</span>
+<span class="fc" id="L193">            int offsetInTuple = Math.abs(Math.min(0, index))+offset;</span>
+<span class="fc" id="L194">            int startIndex = Math.max(0, index);</span>
+<span class="fc" id="L195">            boolean isAlreadyTheSame = true;</span>
+<span class="fc" id="L196">            Object newItems = _clone(_data, type, allowsNull);</span>
+<span class="fc" id="L197">            int numberToSet = Math.min(tuple.size()-offsetInTuple, currentSize - startIndex);</span>
+<span class="fc bfc" id="L198" title="All 2 branches covered.">            for (int i = 0; i &lt; numberToSet; i++) {</span>
+<span class="fc" id="L199">                Object itemToSet = tuple.get(offsetInTuple+i);</span>
+<span class="fc" id="L200">                _setAt(startIndex + i, itemToSet, newItems);</span>
+<span class="fc bfc" id="L201" title="All 2 branches covered.">                if ( !Objects.equals(itemToSet, access.get(startIndex+i, _data)) )</span>
+<span class="fc" id="L202">                    isAlreadyTheSame = false;</span>
             }
-<span class="fc bfc" id="L203" title="All 2 branches covered.">            if ( isAlreadyTheSame )</span>
-<span class="fc" id="L204">                return this;</span>
-<span class="fc" id="L205">            return new LeafNode(newItems);</span>
+<span class="fc bfc" id="L204" title="All 2 branches covered.">            if ( isAlreadyTheSame )</span>
+<span class="fc" id="L205">                return this;</span>
+<span class="fc" id="L206">            return new LeafNode(newItems);</span>
         }
 
         @Override
         public &lt;T&gt; void forEach(ArrayItemAccess&lt;T, Object&gt; access, Consumer&lt;T&gt; consumer) {
-<span class="nc" id="L210">            _each(_data, access, consumer);</span>
-<span class="nc" id="L211">        }</span>
+<span class="nc" id="L211">            _each(_data, access, consumer);</span>
+<span class="nc" id="L212">        }</span>
     }
 
     static final class BranchNode implements Node {
         private final Node[] _children;
         private final int _size;
 
-<span class="fc" id="L218">        BranchNode(Node[] children) {</span>
-<span class="fc" id="L219">            _children = children;</span>
-<span class="fc" id="L220">            int sum = 0;</span>
-<span class="fc bfc" id="L221" title="All 2 branches covered.">            for (Node child : children) {</span>
-<span class="fc bfc" id="L222" title="All 2 branches covered.">                if ( child != null )</span>
-<span class="fc" id="L223">                    sum += child.size();</span>
+<span class="fc" id="L219">        BranchNode(Node[] children) {</span>
+<span class="fc" id="L220">            _children = children;</span>
+<span class="fc" id="L221">            int sum = 0;</span>
+<span class="fc bfc" id="L222" title="All 2 branches covered.">            for (Node child : children) {</span>
+<span class="fc bfc" id="L223" title="All 2 branches covered.">                if ( child != null )</span>
+<span class="fc" id="L224">                    sum += child.size();</span>
             }
-<span class="fc" id="L225">            _size = sum;</span>
-<span class="fc" id="L226">        }</span>
+<span class="fc" id="L226">            _size = sum;</span>
+<span class="fc" id="L227">        }</span>
 
         @Override
         public int size() {
-<span class="fc" id="L230">            return _size;</span>
+<span class="fc" id="L231">            return _size;</span>
         }
 
         @Override
         public &lt;T&gt; T getAt(int index, ArrayItemAccess&lt;T, Object&gt; access) {
-<span class="fc" id="L235">            int currentBranchStartIndex = 0;</span>
-<span class="fc" id="L236">            Node[] children = _children;</span>
-<span class="fc" id="L237">            Node lastNode = children[0];</span>
-<span class="pc bpc" id="L238" title="1 of 2 branches missed.">            for (Node branch : children) {</span>
-<span class="fc bfc" id="L239" title="All 2 branches covered.">                if ( branch != null ) {</span>
-<span class="fc bfc" id="L240" title="All 2 branches covered.">                    if (index &lt; currentBranchStartIndex + branch.size()) {</span>
-<span class="fc" id="L241">                        lastNode = branch;</span>
-<span class="fc" id="L242">                        break;</span>
+<span class="fc" id="L236">            int currentBranchStartIndex = 0;</span>
+<span class="fc" id="L237">            Node[] children = _children;</span>
+<span class="fc" id="L238">            Node lastNode = children[0];</span>
+<span class="pc bpc" id="L239" title="1 of 2 branches missed.">            for (Node branch : children) {</span>
+<span class="fc bfc" id="L240" title="All 2 branches covered.">                if ( branch != null ) {</span>
+<span class="fc bfc" id="L241" title="All 2 branches covered.">                    if (index &lt; currentBranchStartIndex + branch.size()) {</span>
+<span class="fc" id="L242">                        lastNode = branch;</span>
+<span class="fc" id="L243">                        break;</span>
                     }
-<span class="fc" id="L244">                    currentBranchStartIndex += branch.size();</span>
+<span class="fc" id="L245">                    currentBranchStartIndex += branch.size();</span>
                 }
             }
-<span class="fc" id="L247">            int childIndex = index - currentBranchStartIndex;</span>
-<span class="pc bpc" id="L248" title="2 of 4 branches missed.">            if (childIndex &lt; 0 || childIndex &gt;= lastNode.size()) {</span>
-<span class="nc" id="L249">                throw new IndexOutOfBoundsException(&quot;Index: &quot; + index + &quot;, Size: &quot; + _size);</span>
+<span class="fc" id="L248">            int childIndex = index - currentBranchStartIndex;</span>
+<span class="pc bpc" id="L249" title="2 of 4 branches missed.">            if (childIndex &lt; 0 || childIndex &gt;= lastNode.size()) {</span>
+<span class="nc" id="L250">                throw new IndexOutOfBoundsException(&quot;Index: &quot; + index + &quot;, Size: &quot; + _size);</span>
             }
-<span class="fc" id="L251">            return lastNode.getAt(childIndex, access);</span>
+<span class="fc" id="L252">            return lastNode.getAt(childIndex, access);</span>
         }
 
         @Override
@@ -258,30 +259,30 @@ final class TupleTree&lt;T extends @Nullable Object&gt; implements Tuple&lt;T&gt
             final Class&lt;?&gt; type,
             final boolean allowsNull
         ) {
-<span class="fc" id="L261">            int currentBranchStartIndex = 0;</span>
-<span class="fc" id="L262">            Node @Nullable[] children = _children;</span>
-<span class="fc" id="L263">            @Nullable Node[] newChildren = null;</span>
-<span class="fc bfc" id="L264" title="All 2 branches covered.">            for ( int i = 0; i &lt; children.length; i++ ) {</span>
-<span class="fc" id="L265">                @Nullable Node branch = children[i];</span>
-<span class="fc bfc" id="L266" title="All 2 branches covered.">                if ( branch != null ) {</span>
-<span class="fc bfc" id="L267" title="All 2 branches covered.">                    if (from &lt; currentBranchStartIndex + branch.size()) {</span>
-<span class="fc" id="L268">                        int childFrom = Math.max(0, from - currentBranchStartIndex);</span>
-<span class="fc" id="L269">                        int childTo = Math.min(to - currentBranchStartIndex, branch.size());</span>
-<span class="fc bfc" id="L270" title="All 2 branches covered.">                        if (childFrom &lt; childTo) {</span>
-<span class="fc bfc" id="L271" title="All 2 branches covered.">                            if (newChildren == null)</span>
-<span class="fc" id="L272">                                newChildren = new Node[children.length];</span>
-<span class="fc" id="L273">                            newChildren[i] = branch.slice(childFrom, childTo, type, allowsNull);</span>
+<span class="fc" id="L262">            int currentBranchStartIndex = 0;</span>
+<span class="fc" id="L263">            Node @Nullable[] children = _children;</span>
+<span class="fc" id="L264">            @Nullable Node[] newChildren = null;</span>
+<span class="fc bfc" id="L265" title="All 2 branches covered.">            for ( int i = 0; i &lt; children.length; i++ ) {</span>
+<span class="fc" id="L266">                @Nullable Node branch = children[i];</span>
+<span class="fc bfc" id="L267" title="All 2 branches covered.">                if ( branch != null ) {</span>
+<span class="fc bfc" id="L268" title="All 2 branches covered.">                    if (from &lt; currentBranchStartIndex + branch.size()) {</span>
+<span class="fc" id="L269">                        int childFrom = Math.max(0, from - currentBranchStartIndex);</span>
+<span class="fc" id="L270">                        int childTo = Math.min(to - currentBranchStartIndex, branch.size());</span>
+<span class="fc bfc" id="L271" title="All 2 branches covered.">                        if (childFrom &lt; childTo) {</span>
+<span class="fc bfc" id="L272" title="All 2 branches covered.">                            if (newChildren == null)</span>
+<span class="fc" id="L273">                                newChildren = new Node[children.length];</span>
+<span class="fc" id="L274">                            newChildren[i] = branch.slice(childFrom, childTo, type, allowsNull);</span>
                         }
                     }
-<span class="fc" id="L276">                    currentBranchStartIndex += branch.size();</span>
+<span class="fc" id="L277">                    currentBranchStartIndex += branch.size();</span>
                 }
             }
-<span class="pc bpc" id="L279" title="1 of 2 branches missed.">            if ( newChildren == null )</span>
-<span class="nc" id="L280">                return null;</span>
-<span class="pc bpc" id="L281" title="1 of 2 branches missed.">            else if ( _isAllNull(newChildren) )</span>
-<span class="nc" id="L282">                return null;</span>
+<span class="pc bpc" id="L280" title="1 of 2 branches missed.">            if ( newChildren == null )</span>
+<span class="nc" id="L281">                return null;</span>
+<span class="pc bpc" id="L282" title="1 of 2 branches missed.">            else if ( _isAllNull(newChildren) )</span>
+<span class="nc" id="L283">                return null;</span>
             else
-<span class="fc" id="L284">                return new BranchNode(newChildren);</span>
+<span class="fc" id="L285">                return new BranchNode(newChildren);</span>
         }
 
         @Override
@@ -292,118 +293,118 @@ final class TupleTree&lt;T extends @Nullable Object&gt; implements Tuple&lt;T&gt
             ArrayItemAccess&lt;?, Object&gt; access,
             final boolean allowsNull
         ) {
-<span class="pc bpc" id="L295" title="1 of 2 branches missed.">            if ( from == to )</span>
-<span class="nc" id="L296">                return this;</span>
-<span class="fc" id="L297">            int currentBranchStartIndex = 0;</span>
-<span class="fc" id="L298">            Node @Nullable[] children = _children;</span>
-<span class="fc" id="L299">            Node[] newChildren = children;</span>
-<span class="fc bfc" id="L300" title="All 2 branches covered.">            for ( int i = 0; i &lt; children.length; i++ ) {</span>
-<span class="fc" id="L301">                @Nullable Node branch = children[i];</span>
-<span class="fc bfc" id="L302" title="All 2 branches covered.">                if ( branch != null ) {</span>
-<span class="fc" id="L303">                    int nextPosition = currentBranchStartIndex + branch.size();</span>
-<span class="fc bfc" id="L304" title="All 2 branches covered.">                    if (from &lt; nextPosition) {</span>
-<span class="fc" id="L305">                        int childFrom = Math.max(0, from - currentBranchStartIndex);</span>
-<span class="fc" id="L306">                        int childTo = Math.min(to - currentBranchStartIndex, branch.size());</span>
-<span class="fc bfc" id="L307" title="All 2 branches covered.">                        if (childFrom &lt; childTo) {</span>
-<span class="fc bfc" id="L308" title="All 2 branches covered.">                            if (newChildren == children)</span>
-<span class="fc" id="L309">                                newChildren = children.clone();</span>
-<span class="fc" id="L310">                            newChildren[i] = branch.removeRange(childFrom, childTo, type, access, allowsNull);</span>
+<span class="pc bpc" id="L296" title="1 of 2 branches missed.">            if ( from == to )</span>
+<span class="nc" id="L297">                return this;</span>
+<span class="fc" id="L298">            int currentBranchStartIndex = 0;</span>
+<span class="fc" id="L299">            Node @Nullable[] children = _children;</span>
+<span class="fc" id="L300">            Node[] newChildren = children;</span>
+<span class="fc bfc" id="L301" title="All 2 branches covered.">            for ( int i = 0; i &lt; children.length; i++ ) {</span>
+<span class="fc" id="L302">                @Nullable Node branch = children[i];</span>
+<span class="fc bfc" id="L303" title="All 2 branches covered.">                if ( branch != null ) {</span>
+<span class="fc" id="L304">                    int nextPosition = currentBranchStartIndex + branch.size();</span>
+<span class="fc bfc" id="L305" title="All 2 branches covered.">                    if (from &lt; nextPosition) {</span>
+<span class="fc" id="L306">                        int childFrom = Math.max(0, from - currentBranchStartIndex);</span>
+<span class="fc" id="L307">                        int childTo = Math.min(to - currentBranchStartIndex, branch.size());</span>
+<span class="fc bfc" id="L308" title="All 2 branches covered.">                        if (childFrom &lt; childTo) {</span>
+<span class="fc bfc" id="L309" title="All 2 branches covered.">                            if (newChildren == children)</span>
+<span class="fc" id="L310">                                newChildren = children.clone();</span>
+<span class="fc" id="L311">                            newChildren[i] = branch.removeRange(childFrom, childTo, type, access, allowsNull);</span>
                         }
                     }
-<span class="fc" id="L313">                    currentBranchStartIndex = nextPosition;</span>
+<span class="fc" id="L314">                    currentBranchStartIndex = nextPosition;</span>
                 }
             }
-<span class="pc bpc" id="L316" title="1 of 2 branches missed.">            if ( newChildren == children )</span>
-<span class="nc" id="L317">                return this; // this was not affected</span>
-<span class="fc bfc" id="L318" title="All 2 branches covered.">            else if ( _isAllNull(newChildren) )</span>
-<span class="fc" id="L319">                return null;</span>
+<span class="pc bpc" id="L317" title="1 of 2 branches missed.">            if ( newChildren == children )</span>
+<span class="nc" id="L318">                return this; // this was not affected</span>
+<span class="fc bfc" id="L319" title="All 2 branches covered.">            else if ( _isAllNull(newChildren) )</span>
+<span class="fc" id="L320">                return null;</span>
             else
-<span class="fc" id="L321">                return new BranchNode(newChildren);</span>
+<span class="fc" id="L322">                return new BranchNode(newChildren);</span>
         }
 
         @Override
         public @Nullable &lt;T&gt; Node addAllAt(int index, Tuple&lt;T&gt; tuple, Class&lt;T&gt; type, ArrayItemAccess&lt;?, Object&gt; access, boolean allowsNull) {
-<span class="fc" id="L326">            int currentBranchStartIndex = 0;</span>
-<span class="fc" id="L327">            Node @Nullable[] children = _children;</span>
-<span class="fc" id="L328">            Node[] newChildren = children;</span>
-<span class="fc" id="L329">            int bestIndex = -1;</span>
-<span class="fc" id="L330">            int bestIndexStart = -1;</span>
-<span class="fc bfc" id="L331" title="All 2 branches covered.">            for ( int i = 0; i &lt; children.length; i++ ) {</span>
-<span class="fc" id="L332">                @Nullable Node branch = children[i];</span>
-<span class="fc bfc" id="L333" title="All 2 branches covered.">                if ( branch != null ) {</span>
-<span class="fc" id="L334">                    int nextPosition = currentBranchStartIndex + branch.size();</span>
-<span class="fc bfc" id="L335" title="All 4 branches covered.">                    if ( currentBranchStartIndex &lt;= index &amp;&amp; index &lt;= nextPosition ) {</span>
-<span class="fc" id="L336">                        bestIndex = i;</span>
-<span class="fc" id="L337">                        bestIndexStart = currentBranchStartIndex;</span>
+<span class="fc" id="L327">            int currentBranchStartIndex = 0;</span>
+<span class="fc" id="L328">            Node @Nullable[] children = _children;</span>
+<span class="fc" id="L329">            Node[] newChildren = children;</span>
+<span class="fc" id="L330">            int bestIndex = -1;</span>
+<span class="fc" id="L331">            int bestIndexStart = -1;</span>
+<span class="fc bfc" id="L332" title="All 2 branches covered.">            for ( int i = 0; i &lt; children.length; i++ ) {</span>
+<span class="fc" id="L333">                @Nullable Node branch = children[i];</span>
+<span class="fc bfc" id="L334" title="All 2 branches covered.">                if ( branch != null ) {</span>
+<span class="fc" id="L335">                    int nextPosition = currentBranchStartIndex + branch.size();</span>
+<span class="fc bfc" id="L336" title="All 4 branches covered.">                    if ( currentBranchStartIndex &lt;= index &amp;&amp; index &lt;= nextPosition ) {</span>
+<span class="fc" id="L337">                        bestIndex = i;</span>
+<span class="fc" id="L338">                        bestIndexStart = currentBranchStartIndex;</span>
                     }
-<span class="fc" id="L339">                    currentBranchStartIndex = nextPosition;</span>
+<span class="fc" id="L340">                    currentBranchStartIndex = nextPosition;</span>
                 }
             }
-<span class="pc bpc" id="L342" title="1 of 2 branches missed.">            if (newChildren == children)</span>
-<span class="fc" id="L343">                newChildren = children.clone();</span>
-<span class="fc" id="L344">            int childIndex = index - bestIndexStart;</span>
-<span class="fc" id="L345">            Node branch = newChildren[bestIndex];</span>
-<span class="pc bpc" id="L346" title="1 of 2 branches missed.">            if ( branch == null )</span>
-<span class="nc" id="L347">                newChildren[bestIndex] = _createRootFromList(type, allowsNull, tuple.toList());</span>
+<span class="pc bpc" id="L343" title="1 of 2 branches missed.">            if (newChildren == children)</span>
+<span class="fc" id="L344">                newChildren = children.clone();</span>
+<span class="fc" id="L345">            int childIndex = index - bestIndexStart;</span>
+<span class="fc" id="L346">            Node branch = newChildren[bestIndex];</span>
+<span class="pc bpc" id="L347" title="1 of 2 branches missed.">            if ( branch == null )</span>
+<span class="nc" id="L348">                newChildren[bestIndex] = _createRootFromList(type, allowsNull, tuple.toList());</span>
             else
-<span class="fc" id="L349">                newChildren[bestIndex] = branch.addAllAt(childIndex, tuple, type, access, allowsNull);</span>
+<span class="fc" id="L350">                newChildren[bestIndex] = branch.addAllAt(childIndex, tuple, type, access, allowsNull);</span>
 
-<span class="pc bpc" id="L351" title="1 of 2 branches missed.">            if (newChildren[bestIndex] == branch)</span>
-<span class="nc" id="L352">                throw new IllegalStateException(&quot;TupleNode was not modified&quot;);</span>
-<span class="pc bpc" id="L353" title="1 of 2 branches missed.">            if ( _isAllNull(newChildren) )</span>
-<span class="nc" id="L354">                throw new IllegalStateException(&quot;TupleNode is all null&quot;);</span>
+<span class="pc bpc" id="L352" title="1 of 2 branches missed.">            if (newChildren[bestIndex] == branch)</span>
+<span class="nc" id="L353">                throw new IllegalStateException(&quot;TupleNode was not modified&quot;);</span>
+<span class="pc bpc" id="L354" title="1 of 2 branches missed.">            if ( _isAllNull(newChildren) )</span>
+<span class="nc" id="L355">                throw new IllegalStateException(&quot;TupleNode is all null&quot;);</span>
             else
-<span class="fc" id="L356">                return new BranchNode(newChildren);</span>
+<span class="fc" id="L357">                return new BranchNode(newChildren);</span>
         }
 
         @Override
         public @Nullable &lt;T&gt; Node setAllAt(int index, int offset, Tuple&lt;T&gt; tuple, Class&lt;T&gt; type, ArrayItemAccess&lt;?, Object&gt; access, boolean allowsNull) {
-<span class="fc" id="L361">            int currentBranchStartIndex = 0;</span>
-<span class="fc" id="L362">            Node @Nullable[] children = _children;</span>
-<span class="fc" id="L363">            Node[] newChildren = children;</span>
-<span class="fc" id="L364">            int endIndex = index + tuple.size();</span>
-<span class="fc bfc" id="L365" title="All 2 branches covered.">            for ( int i = 0; i &lt; children.length; i++ ) {</span>
-<span class="fc" id="L366">                @Nullable Node branch = children[i];</span>
-<span class="fc bfc" id="L367" title="All 2 branches covered.">                if ( branch != null ) {</span>
-<span class="fc" id="L368">                    int nextPosition = currentBranchStartIndex + branch.size();</span>
-<span class="fc bfc" id="L369" title="All 2 branches covered.">                    if ( endIndex &lt;= currentBranchStartIndex )</span>
-<span class="fc" id="L370">                        break;</span>
-<span class="fc bfc" id="L371" title="All 4 branches covered.">                    if (currentBranchStartIndex &lt;= index &amp;&amp; index &lt; nextPosition) {</span>
-<span class="fc" id="L372">                        int childIndex = index - currentBranchStartIndex;</span>
-<span class="pc bpc" id="L373" title="1 of 2 branches missed.">                        if (newChildren == children)</span>
-<span class="fc" id="L374">                            newChildren = children.clone();</span>
-<span class="fc" id="L375">                        newChildren[i] = branch.setAllAt(childIndex, offset, tuple, type, access, allowsNull);</span>
-<span class="pc bpc" id="L376" title="1 of 4 branches missed.">                    } else if (currentBranchStartIndex &lt;= endIndex &amp;&amp; endIndex &lt; nextPosition) {</span>
-<span class="fc" id="L377">                        int childIndex = 0;</span>
-<span class="fc" id="L378">                        int additionalOffset = offset + (currentBranchStartIndex - index);</span>
-<span class="pc bpc" id="L379" title="1 of 2 branches missed.">                        if (newChildren == children)</span>
-<span class="nc" id="L380">                            newChildren = children.clone();</span>
-<span class="fc" id="L381">                        newChildren[i] = branch.setAllAt(childIndex, additionalOffset, tuple, type, access, allowsNull);</span>
-<span class="pc bpc" id="L382" title="1 of 4 branches missed.">                    } else if (index &lt;= currentBranchStartIndex &amp;&amp; nextPosition &lt;= endIndex ) {</span>
-<span class="fc" id="L383">                        int childIndex = 0;</span>
-<span class="fc" id="L384">                        int additionalOffset = offset + (currentBranchStartIndex - index);</span>
-<span class="pc bpc" id="L385" title="1 of 2 branches missed.">                        if (newChildren == children)</span>
-<span class="nc" id="L386">                            newChildren = children.clone();</span>
-<span class="fc" id="L387">                        newChildren[i] = branch.setAllAt(childIndex, additionalOffset, tuple, type, access, allowsNull);</span>
+<span class="fc" id="L362">            int currentBranchStartIndex = 0;</span>
+<span class="fc" id="L363">            Node @Nullable[] children = _children;</span>
+<span class="fc" id="L364">            Node[] newChildren = children;</span>
+<span class="fc" id="L365">            int endIndex = index + tuple.size();</span>
+<span class="fc bfc" id="L366" title="All 2 branches covered.">            for ( int i = 0; i &lt; children.length; i++ ) {</span>
+<span class="fc" id="L367">                @Nullable Node branch = children[i];</span>
+<span class="fc bfc" id="L368" title="All 2 branches covered.">                if ( branch != null ) {</span>
+<span class="fc" id="L369">                    int nextPosition = currentBranchStartIndex + branch.size();</span>
+<span class="fc bfc" id="L370" title="All 2 branches covered.">                    if ( endIndex &lt;= currentBranchStartIndex )</span>
+<span class="fc" id="L371">                        break;</span>
+<span class="fc bfc" id="L372" title="All 4 branches covered.">                    if (currentBranchStartIndex &lt;= index &amp;&amp; index &lt; nextPosition) {</span>
+<span class="fc" id="L373">                        int childIndex = index - currentBranchStartIndex;</span>
+<span class="pc bpc" id="L374" title="1 of 2 branches missed.">                        if (newChildren == children)</span>
+<span class="fc" id="L375">                            newChildren = children.clone();</span>
+<span class="fc" id="L376">                        newChildren[i] = branch.setAllAt(childIndex, offset, tuple, type, access, allowsNull);</span>
+<span class="pc bpc" id="L377" title="1 of 4 branches missed.">                    } else if (currentBranchStartIndex &lt;= endIndex &amp;&amp; endIndex &lt; nextPosition) {</span>
+<span class="fc" id="L378">                        int childIndex = 0;</span>
+<span class="fc" id="L379">                        int additionalOffset = offset + (currentBranchStartIndex - index);</span>
+<span class="pc bpc" id="L380" title="1 of 2 branches missed.">                        if (newChildren == children)</span>
+<span class="nc" id="L381">                            newChildren = children.clone();</span>
+<span class="fc" id="L382">                        newChildren[i] = branch.setAllAt(childIndex, additionalOffset, tuple, type, access, allowsNull);</span>
+<span class="pc bpc" id="L383" title="1 of 4 branches missed.">                    } else if (index &lt;= currentBranchStartIndex &amp;&amp; nextPosition &lt;= endIndex ) {</span>
+<span class="fc" id="L384">                        int childIndex = 0;</span>
+<span class="fc" id="L385">                        int additionalOffset = offset + (currentBranchStartIndex - index);</span>
+<span class="pc bpc" id="L386" title="1 of 2 branches missed.">                        if (newChildren == children)</span>
+<span class="nc" id="L387">                            newChildren = children.clone();</span>
+<span class="fc" id="L388">                        newChildren[i] = branch.setAllAt(childIndex, additionalOffset, tuple, type, access, allowsNull);</span>
                     }
-<span class="fc" id="L389">                    currentBranchStartIndex += branch.size();</span>
+<span class="fc" id="L390">                    currentBranchStartIndex += branch.size();</span>
                 }
             }
-<span class="pc bpc" id="L392" title="1 of 2 branches missed.">            if ( newChildren == children )</span>
-<span class="nc" id="L393">                return this; // this was not affected</span>
-<span class="pc bpc" id="L394" title="1 of 2 branches missed.">            else if ( _isAllNull(newChildren) )</span>
-<span class="nc" id="L395">                return null;</span>
+<span class="pc bpc" id="L393" title="1 of 2 branches missed.">            if ( newChildren == children )</span>
+<span class="nc" id="L394">                return this; // this was not affected</span>
+<span class="pc bpc" id="L395" title="1 of 2 branches missed.">            else if ( _isAllNull(newChildren) )</span>
+<span class="nc" id="L396">                return null;</span>
             else
-<span class="fc" id="L397">                return new BranchNode(newChildren);</span>
+<span class="fc" id="L398">                return new BranchNode(newChildren);</span>
         }
 
         @Override
         public &lt;T&gt; void forEach(ArrayItemAccess&lt;T, Object&gt; access, Consumer&lt;T&gt; consumer) {
-<span class="nc bnc" id="L402" title="All 2 branches missed.">            for (Node branch : _children) {</span>
-<span class="nc bnc" id="L403" title="All 2 branches missed.">                if (branch != null)</span>
-<span class="nc" id="L404">                    branch.forEach(access, consumer);</span>
+<span class="nc bnc" id="L403" title="All 2 branches missed.">            for (Node branch : _children) {</span>
+<span class="nc bnc" id="L404" title="All 2 branches missed.">                if (branch != null)</span>
+<span class="nc" id="L405">                    branch.forEach(access, consumer);</span>
             }
-<span class="nc" id="L406">        }</span>
+<span class="nc" id="L407">        }</span>
     }
 
     private final int _size;
@@ -411,6 +412,7 @@ final class TupleTree&lt;T extends @Nullable Object&gt; implements Tuple&lt;T&gt
     private final Class&lt;T&gt; _type;
     private final ArrayItemAccess&lt;T, Object&gt; _itemGetter;
     private final Node _root;
+<span class="fc" id="L415">    private final AtomicReference&lt;@Nullable Integer&gt; _cachedHashCode = new AtomicReference&lt;&gt;(null);</span>
 
     /**
      * Creates a new {@link TupleTree} with the given list of items.
@@ -429,11 +431,11 @@ final class TupleTree&lt;T extends @Nullable Object&gt; implements Tuple&lt;T&gt
         Class&lt;T&gt; type,
         List&lt;T&gt; items
     ) {
-<span class="fc" id="L432">        return new TupleTree(</span>
-<span class="fc" id="L433">                items.size(),</span>
+<span class="fc" id="L434">        return new TupleTree(</span>
+<span class="fc" id="L435">                items.size(),</span>
                 allowsNull,
                 type,
-<span class="fc" id="L436">                _createInitialRootFromList(type, allowsNull, items)</span>
+<span class="fc" id="L438">                _createInitialRootFromList(type, allowsNull, items)</span>
             );
     }
 
@@ -453,7 +455,7 @@ final class TupleTree&lt;T extends @Nullable Object&gt; implements Tuple&lt;T&gt
         Class&lt;T&gt; type,
         @Nullable T... items
     ) {
-<span class="fc" id="L456">        return ofAnyArray(allowsNull, type, items);</span>
+<span class="fc" id="L458">        return ofAnyArray(allowsNull, type, items);</span>
     }
 
     static &lt;T&gt; TupleTree&lt;T&gt; ofAnyArray(
@@ -461,8 +463,8 @@ final class TupleTree&lt;T extends @Nullable Object&gt; implements Tuple&lt;T&gt
             Class&lt;T&gt; type,
             @Nullable Object array
     ) {
-<span class="fc" id="L464">        Node node = _createInitialRootFromArray(type, allowsNull, array);</span>
-<span class="fc" id="L465">        return new TupleTree(node.size(), allowsNull, type, node);</span>
+<span class="fc" id="L466">        Node node = _createInitialRootFromArray(type, allowsNull, array);</span>
+<span class="fc" id="L467">        return new TupleTree(node.size(), allowsNull, type, node);</span>
     }
 
     static &lt;T&gt; TupleTree&lt;T&gt; ofRaw(
@@ -470,9 +472,9 @@ final class TupleTree&lt;T extends @Nullable Object&gt; implements Tuple&lt;T&gt
             Class&lt;T&gt; type,
             Object data
     ) {
-<span class="fc" id="L473">        LeafNode leaf = new LeafNode(data);</span>
-<span class="fc" id="L474">        return new TupleTree(</span>
-<span class="fc" id="L475">                leaf.size(),</span>
+<span class="fc" id="L475">        LeafNode leaf = new LeafNode(data);</span>
+<span class="fc" id="L476">        return new TupleTree(</span>
+<span class="fc" id="L477">                leaf.size(),</span>
                 allowsNull,
                 type,
                 leaf
@@ -485,270 +487,270 @@ final class TupleTree&lt;T extends @Nullable Object&gt; implements Tuple&lt;T&gt
             boolean allowsNull,
             Class&lt;T&gt; type,
             @Nullable Node root
-<span class="fc" id="L488">    ) {</span>
-<span class="fc" id="L489">        Objects.requireNonNull(type);</span>
-<span class="fc" id="L490">        _size = size;</span>
-<span class="fc" id="L491">        _allowsNull = allowsNull;</span>
-<span class="fc" id="L492">        _type = type;</span>
-<span class="fc" id="L493">        _itemGetter = ArrayItemAccess.of(type, _allowsNull);</span>
-<span class="fc bfc" id="L494" title="All 2 branches covered.">        _root = root == null ? new LeafNode(_createArray(type, allowsNull, size)) : root;</span>
-<span class="fc" id="L495">    }</span>
+<span class="fc" id="L490">    ) {</span>
+<span class="fc" id="L491">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L492">        _size = size;</span>
+<span class="fc" id="L493">        _allowsNull = allowsNull;</span>
+<span class="fc" id="L494">        _type = type;</span>
+<span class="fc" id="L495">        _itemGetter = ArrayItemAccess.of(type, _allowsNull);</span>
+<span class="fc bfc" id="L496" title="All 2 branches covered.">        _root = root == null ? new LeafNode(_createArray(type, allowsNull, size)) : root;</span>
+<span class="fc" id="L497">    }</span>
 
     private static Node _createInitialRootFromList(Class&lt;?&gt; type, boolean allowsNull, List&lt;?&gt; items) {
-<span class="fc" id="L498">        return new LeafNode(_createArrayFromList(type, allowsNull, items));</span>
+<span class="fc" id="L500">        return new LeafNode(_createArrayFromList(type, allowsNull, items));</span>
     }
 
     private static Node _createInitialRootFromArray(Class&lt;?&gt; type, boolean allowsNull, @Nullable Object arrayFromOutside) {
-<span class="fc bfc" id="L502" title="All 2 branches covered.">        if ( arrayFromOutside == null ) {</span>
-<span class="pc bpc" id="L503" title="1 of 2 branches missed.">            if ( allowsNull )</span>
-<span class="fc" id="L504">                return new LeafNode(_createArray(type, true, 1));</span>
+<span class="fc bfc" id="L504" title="All 2 branches covered.">        if ( arrayFromOutside == null ) {</span>
+<span class="pc bpc" id="L505" title="1 of 2 branches missed.">            if ( allowsNull )</span>
+<span class="fc" id="L506">                return new LeafNode(_createArray(type, true, 1));</span>
             else
-<span class="nc" id="L506">                throw new NullPointerException(&quot;Cannot create a TupleHamt with null items when allowsNull is false&quot;);</span>
+<span class="nc" id="L508">                throw new NullPointerException(&quot;Cannot create a TupleHamt with null items when allowsNull is false&quot;);</span>
         }
-<span class="fc" id="L508">        return new LeafNode(_createArrayFromArray(type, allowsNull, arrayFromOutside));</span>
+<span class="fc" id="L510">        return new LeafNode(_createArrayFromArray(type, allowsNull, arrayFromOutside));</span>
     }
 
     private static Node _createRootFromList(Class&lt;?&gt; type, boolean allowsNull, List&lt;?&gt; items) {
-<span class="fc bfc" id="L512" title="All 4 branches covered.">        if ( items.isEmpty() || items.size() &lt; IDEAL_LEAF_NODE_SIZE)</span>
-<span class="fc" id="L513">            return new LeafNode(_createArrayFromList(type, allowsNull, items));</span>
-<span class="fc" id="L514">        Node[] branches = new Node[BRANCHING_FACTOR];</span>
-<span class="fc" id="L515">        int stepSize = items.size() / branches.length;</span>
-<span class="fc bfc" id="L516" title="All 2 branches covered.">        for (int i = 0; i &lt; branches.length; i++) {</span>
-<span class="fc" id="L517">            int start = i * stepSize;</span>
-<span class="fc" id="L518">            int end = (i + 1) * stepSize;</span>
-<span class="fc bfc" id="L519" title="All 2 branches covered.">            if (i == branches.length - 1) {</span>
-<span class="fc" id="L520">                end = items.size();</span>
+<span class="fc bfc" id="L514" title="All 4 branches covered.">        if ( items.isEmpty() || items.size() &lt; IDEAL_LEAF_NODE_SIZE)</span>
+<span class="fc" id="L515">            return new LeafNode(_createArrayFromList(type, allowsNull, items));</span>
+<span class="fc" id="L516">        Node[] branches = new Node[BRANCHING_FACTOR];</span>
+<span class="fc" id="L517">        int stepSize = items.size() / branches.length;</span>
+<span class="fc bfc" id="L518" title="All 2 branches covered.">        for (int i = 0; i &lt; branches.length; i++) {</span>
+<span class="fc" id="L519">            int start = i * stepSize;</span>
+<span class="fc" id="L520">            int end = (i + 1) * stepSize;</span>
+<span class="fc bfc" id="L521" title="All 2 branches covered.">            if (i == branches.length - 1) {</span>
+<span class="fc" id="L522">                end = items.size();</span>
             }
-<span class="fc" id="L522">            List&lt;?&gt; subList = items.subList(start, end);</span>
-<span class="fc" id="L523">            branches[i] = _createRootFromList(type, allowsNull, subList);</span>
+<span class="fc" id="L524">            List&lt;?&gt; subList = items.subList(start, end);</span>
+<span class="fc" id="L525">            branches[i] = _createRootFromList(type, allowsNull, subList);</span>
         }
-<span class="fc" id="L525">        return new BranchNode(branches);</span>
+<span class="fc" id="L527">        return new BranchNode(branches);</span>
     }
 
 
     @Override
     public Class&lt;T&gt; type() {
-<span class="fc" id="L531">        return _type;</span>
+<span class="fc" id="L533">        return _type;</span>
     }
 
     @Override
     public int size() {
-<span class="fc" id="L536">        return _size;</span>
+<span class="fc" id="L538">        return _size;</span>
     }
 
     @Override
     @SuppressWarnings(&quot;NullAway&quot;)
     public T get(int index) {
-<span class="pc bpc" id="L542" title="2 of 4 branches missed.">        if (index &lt; 0 || index &gt;= _size) {</span>
-<span class="nc" id="L543">            throw new IndexOutOfBoundsException(&quot;Index: &quot; + index + &quot;, Size: &quot; + _size);</span>
+<span class="pc bpc" id="L544" title="2 of 4 branches missed.">        if (index &lt; 0 || index &gt;= _size) {</span>
+<span class="nc" id="L545">            throw new IndexOutOfBoundsException(&quot;Index: &quot; + index + &quot;, Size: &quot; + _size);</span>
         }
-<span class="fc" id="L545">        return _root.getAt(index, _itemGetter);</span>
+<span class="fc" id="L547">        return _root.getAt(index, _itemGetter);</span>
     }
 
     @Override
     public boolean allowsNull() {
-<span class="fc" id="L550">        return _allowsNull;</span>
+<span class="fc" id="L552">        return _allowsNull;</span>
     }
 
     @Override
     public TupleTree&lt;T&gt; slice(int from, int to) {
-<span class="pc bpc" id="L555" title="3 of 6 branches missed.">        if (from &lt; 0 || to &gt; _size || from &gt; to) {</span>
-<span class="nc" id="L556">            throw new IndexOutOfBoundsException(&quot;Index: &quot; + from + &quot;, Size: &quot; + _size);</span>
+<span class="pc bpc" id="L557" title="3 of 6 branches missed.">        if (from &lt; 0 || to &gt; _size || from &gt; to) {</span>
+<span class="nc" id="L558">            throw new IndexOutOfBoundsException(&quot;Index: &quot; + from + &quot;, Size: &quot; + _size);</span>
         }
-<span class="pc bpc" id="L558" title="1 of 2 branches missed.">        if ( from &gt; to )</span>
-<span class="nc" id="L559">            throw new IllegalArgumentException();</span>
+<span class="pc bpc" id="L560" title="1 of 2 branches missed.">        if ( from &gt; to )</span>
+<span class="nc" id="L561">            throw new IllegalArgumentException();</span>
 
-<span class="fc" id="L561">        int newSize = (to - from);</span>
-<span class="pc bpc" id="L562" title="1 of 2 branches missed.">        if ( newSize == this.size() )</span>
-<span class="nc" id="L563">            return this;</span>
+<span class="fc" id="L563">        int newSize = (to - from);</span>
+<span class="pc bpc" id="L564" title="1 of 2 branches missed.">        if ( newSize == this.size() )</span>
+<span class="nc" id="L565">            return this;</span>
 
-<span class="pc bpc" id="L565" title="1 of 2 branches missed.">        if ( newSize == 0 ) {</span>
-<span class="nc" id="L566">            Node newRoot = _createRootFromList(_type, _allowsNull, Collections.emptyList());</span>
-<span class="nc" id="L567">            return new TupleTree&lt;&gt;(0, _allowsNull, _type, newRoot);</span>
+<span class="pc bpc" id="L567" title="1 of 2 branches missed.">        if ( newSize == 0 ) {</span>
+<span class="nc" id="L568">            Node newRoot = _createRootFromList(_type, _allowsNull, Collections.emptyList());</span>
+<span class="nc" id="L569">            return new TupleTree&lt;&gt;(0, _allowsNull, _type, newRoot);</span>
         }
-<span class="fc" id="L569">        Node newRoot = _root.slice(from, to, _type, _allowsNull);</span>
-<span class="pc bpc" id="L570" title="1 of 2 branches missed.">        if ( newRoot == _root )</span>
-<span class="nc" id="L571">            return this;</span>
-<span class="fc" id="L572">        return new TupleTree&lt;&gt;(newSize, _allowsNull, _type, newRoot);</span>
+<span class="fc" id="L571">        Node newRoot = _root.slice(from, to, _type, _allowsNull);</span>
+<span class="pc bpc" id="L572" title="1 of 2 branches missed.">        if ( newRoot == _root )</span>
+<span class="nc" id="L573">            return this;</span>
+<span class="fc" id="L574">        return new TupleTree&lt;&gt;(newSize, _allowsNull, _type, newRoot);</span>
     }
 
     @Override
     public TupleTree&lt;T&gt; removeRange(int from, int to) {
-<span class="pc bpc" id="L577" title="2 of 4 branches missed.">        if ( from &lt; 0 || to &gt; _size )</span>
-<span class="nc" id="L578">            throw new IndexOutOfBoundsException(&quot;Index: &quot; + from + &quot;, Size: &quot; + _size);</span>
-<span class="pc bpc" id="L579" title="1 of 2 branches missed.">        if ( from &gt; to )</span>
-<span class="nc" id="L580">            throw new IllegalArgumentException();</span>
-<span class="fc" id="L581">        int numberOfItemsToRemove = to - from;</span>
-<span class="pc bpc" id="L582" title="1 of 2 branches missed.">        if ( numberOfItemsToRemove == 0 )</span>
-<span class="nc" id="L583">            return this;</span>
-<span class="pc bpc" id="L584" title="1 of 2 branches missed.">        if ( numberOfItemsToRemove == this.size() ) {</span>
-<span class="nc" id="L585">            return new TupleTree&lt;&gt;(0, _allowsNull, _type, null);</span>
+<span class="pc bpc" id="L579" title="2 of 4 branches missed.">        if ( from &lt; 0 || to &gt; _size )</span>
+<span class="nc" id="L580">            throw new IndexOutOfBoundsException(&quot;Index: &quot; + from + &quot;, Size: &quot; + _size);</span>
+<span class="pc bpc" id="L581" title="1 of 2 branches missed.">        if ( from &gt; to )</span>
+<span class="nc" id="L582">            throw new IllegalArgumentException();</span>
+<span class="fc" id="L583">        int numberOfItemsToRemove = to - from;</span>
+<span class="pc bpc" id="L584" title="1 of 2 branches missed.">        if ( numberOfItemsToRemove == 0 )</span>
+<span class="nc" id="L585">            return this;</span>
+<span class="pc bpc" id="L586" title="1 of 2 branches missed.">        if ( numberOfItemsToRemove == this.size() ) {</span>
+<span class="nc" id="L587">            return new TupleTree&lt;&gt;(0, _allowsNull, _type, null);</span>
         }
-<span class="fc" id="L587">        Node newRoot = _root.removeRange(from, to, _type, _itemGetter, _allowsNull);</span>
-<span class="pc bpc" id="L588" title="1 of 2 branches missed.">        if ( newRoot == _root )</span>
-<span class="nc" id="L589">            return this;</span>
-<span class="fc" id="L590">        return new TupleTree&lt;&gt;(_size - numberOfItemsToRemove, _allowsNull, _type, newRoot);</span>
+<span class="fc" id="L589">        Node newRoot = _root.removeRange(from, to, _type, _itemGetter, _allowsNull);</span>
+<span class="pc bpc" id="L590" title="1 of 2 branches missed.">        if ( newRoot == _root )</span>
+<span class="nc" id="L591">            return this;</span>
+<span class="fc" id="L592">        return new TupleTree&lt;&gt;(_size - numberOfItemsToRemove, _allowsNull, _type, newRoot);</span>
     }
 
     @Override
     public Tuple&lt;T&gt; removeIf( Predicate&lt;T&gt; predicate ) {
-<span class="nc" id="L595">        List&lt;T&gt; itemsToKeep = new ArrayList&lt;&gt;();</span>
-<span class="nc bnc" id="L596" title="All 2 branches missed.">        for ( int i = 0; i &lt; size(); i++ ) {</span>
-<span class="nc" id="L597">            T item = get(i);</span>
-<span class="nc bnc" id="L598" title="All 2 branches missed.">            if ( !predicate.test(item) ) {</span>
-<span class="nc" id="L599">                itemsToKeep.add(item);</span>
+<span class="nc" id="L597">        List&lt;T&gt; itemsToKeep = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L598" title="All 2 branches missed.">        for ( int i = 0; i &lt; size(); i++ ) {</span>
+<span class="nc" id="L599">            T item = get(i);</span>
+<span class="nc bnc" id="L600" title="All 2 branches missed.">            if ( !predicate.test(item) ) {</span>
+<span class="nc" id="L601">                itemsToKeep.add(item);</span>
             }
         }
-<span class="nc bnc" id="L602" title="All 2 branches missed.">        if ( itemsToKeep.size() == this.size() )</span>
-<span class="nc" id="L603">            return this;</span>
-<span class="nc" id="L604">        T[] newItems = (T[]) Array.newInstance(type(), itemsToKeep.size());</span>
-<span class="nc" id="L605">        itemsToKeep.toArray(newItems);</span>
-<span class="nc" id="L606">        return TupleTree.of( allowsNull(), type(), newItems);</span>
+<span class="nc bnc" id="L604" title="All 2 branches missed.">        if ( itemsToKeep.size() == this.size() )</span>
+<span class="nc" id="L605">            return this;</span>
+<span class="nc" id="L606">        T[] newItems = (T[]) Array.newInstance(type(), itemsToKeep.size());</span>
+<span class="nc" id="L607">        itemsToKeep.toArray(newItems);</span>
+<span class="nc" id="L608">        return TupleTree.of( allowsNull(), type(), newItems);</span>
     }
 
     @Override
     public Tuple&lt;T&gt; retainIf( Predicate&lt;T&gt; predicate ) {
-<span class="nc" id="L611">        List&lt;T&gt; filteredItems = new ArrayList&lt;&gt;();</span>
-<span class="nc bnc" id="L612" title="All 2 branches missed.">        for ( int i = 0; i &lt; size(); i++ ) {</span>
-<span class="nc" id="L613">            T item = get(i);</span>
-<span class="nc bnc" id="L614" title="All 2 branches missed.">            if ( predicate.test(item) ) {</span>
-<span class="nc" id="L615">                filteredItems.add(item);</span>
+<span class="nc" id="L613">        List&lt;T&gt; filteredItems = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L614" title="All 2 branches missed.">        for ( int i = 0; i &lt; size(); i++ ) {</span>
+<span class="nc" id="L615">            T item = get(i);</span>
+<span class="nc bnc" id="L616" title="All 2 branches missed.">            if ( predicate.test(item) ) {</span>
+<span class="nc" id="L617">                filteredItems.add(item);</span>
             }
         }
-<span class="nc bnc" id="L618" title="All 2 branches missed.">        if ( filteredItems.size() == this.size() )</span>
-<span class="nc" id="L619">            return this;</span>
-<span class="nc" id="L620">        return TupleTree.of(allowsNull(), type(), filteredItems);</span>
+<span class="nc bnc" id="L620" title="All 2 branches missed.">        if ( filteredItems.size() == this.size() )</span>
+<span class="nc" id="L621">            return this;</span>
+<span class="nc" id="L622">        return TupleTree.of(allowsNull(), type(), filteredItems);</span>
     }
 
     @Override
     public TupleTree&lt;T&gt; removeAll(Tuple&lt;T&gt; properties) {
-<span class="fc bfc" id="L625" title="All 2 branches covered.">        if (properties.size() == 0) {</span>
-<span class="fc" id="L626">            return this;</span>
+<span class="fc bfc" id="L627" title="All 2 branches covered.">        if (properties.size() == 0) {</span>
+<span class="fc" id="L628">            return this;</span>
         }
-<span class="fc" id="L628">        List&lt;T&gt; newItems = new ArrayList&lt;&gt;(_size);</span>
-<span class="fc" id="L629">        Set&lt;T&gt; toRemove = properties.toSet();</span>
-<span class="fc bfc" id="L630" title="All 2 branches covered.">        for (int i = 0; i &lt; _size; i++) {</span>
-<span class="fc" id="L631">            T item = get(i);</span>
-<span class="fc bfc" id="L632" title="All 2 branches covered.">            if (!toRemove.contains(item)) {</span>
-<span class="fc" id="L633">                newItems.add(item);</span>
+<span class="fc" id="L630">        List&lt;T&gt; newItems = new ArrayList&lt;&gt;(_size);</span>
+<span class="fc" id="L631">        Set&lt;T&gt; toRemove = properties.toSet();</span>
+<span class="fc bfc" id="L632" title="All 2 branches covered.">        for (int i = 0; i &lt; _size; i++) {</span>
+<span class="fc" id="L633">            T item = get(i);</span>
+<span class="fc bfc" id="L634" title="All 2 branches covered.">            if (!toRemove.contains(item)) {</span>
+<span class="fc" id="L635">                newItems.add(item);</span>
             }
         }
-<span class="fc bfc" id="L636" title="All 2 branches covered.">        if (newItems.size() == _size) {</span>
-<span class="fc" id="L637">            return this;</span>
+<span class="fc bfc" id="L638" title="All 2 branches covered.">        if (newItems.size() == _size) {</span>
+<span class="fc" id="L639">            return this;</span>
         }
-<span class="fc" id="L639">        return new TupleTree&lt;&gt;(newItems.size(), _allowsNull, _type, _createRootFromList(_type, _allowsNull, newItems));</span>
+<span class="fc" id="L641">        return new TupleTree&lt;&gt;(newItems.size(), _allowsNull, _type, _createRootFromList(_type, _allowsNull, newItems));</span>
     }
 
     @Override
     public TupleTree&lt;T&gt; addAt(int index, T item) {
-<span class="fc bfc" id="L644" title="All 4 branches covered.">        if ( !this.allowsNull() &amp;&amp; item == null )</span>
-<span class="fc" id="L645">            throw new NullPointerException();</span>
-<span class="pc bpc" id="L646" title="2 of 4 branches missed.">        if ( index &lt; 0 || index &gt; _size )</span>
-<span class="nc" id="L647">            throw new IndexOutOfBoundsException(&quot;Index: &quot; + index + &quot;, Size: &quot; + _size);</span>
+<span class="fc bfc" id="L646" title="All 4 branches covered.">        if ( !this.allowsNull() &amp;&amp; item == null )</span>
+<span class="fc" id="L647">            throw new NullPointerException();</span>
+<span class="pc bpc" id="L648" title="2 of 4 branches missed.">        if ( index &lt; 0 || index &gt; _size )</span>
+<span class="nc" id="L649">            throw new IndexOutOfBoundsException(&quot;Index: &quot; + index + &quot;, Size: &quot; + _size);</span>
 
-<span class="fc bfc" id="L649" title="All 2 branches covered.">        Tuple&lt;T&gt; singleton = _allowsNull ? Tuple.ofNullable(type(), item) : Tuple.of(item);</span>
-<span class="fc" id="L650">        Node newRoot = _root.addAllAt(index, singleton, _type, _itemGetter, _allowsNull);</span>
-<span class="pc bpc" id="L651" title="1 of 2 branches missed.">        if ( newRoot == _root )</span>
-<span class="nc" id="L652">            return this;</span>
-<span class="fc" id="L653">        return new TupleTree&lt;&gt;(_size+1, _allowsNull, _type, newRoot);</span>
+<span class="fc bfc" id="L651" title="All 2 branches covered.">        Tuple&lt;T&gt; singleton = _allowsNull ? Tuple.ofNullable(type(), item) : Tuple.of(item);</span>
+<span class="fc" id="L652">        Node newRoot = _root.addAllAt(index, singleton, _type, _itemGetter, _allowsNull);</span>
+<span class="pc bpc" id="L653" title="1 of 2 branches missed.">        if ( newRoot == _root )</span>
+<span class="nc" id="L654">            return this;</span>
+<span class="fc" id="L655">        return new TupleTree&lt;&gt;(_size+1, _allowsNull, _type, newRoot);</span>
     }
 
     @Override
     public TupleTree&lt;T&gt; setAt(int index, T item) {
-<span class="fc bfc" id="L658" title="All 4 branches covered.">        if ( index &lt; 0 || index &gt;= _size )</span>
-<span class="fc" id="L659">            throw new IndexOutOfBoundsException(&quot;Index: &quot; + index + &quot;, Size: &quot; + _size);</span>
-<span class="pc bpc" id="L660" title="1 of 4 branches missed.">        if ( !this.allowsNull() &amp;&amp; item == null )</span>
-<span class="fc" id="L661">            throw new NullPointerException();</span>
-<span class="pc bpc" id="L662" title="1 of 2 branches missed.">        return setAllAt(index, _allowsNull ? Tuple.ofNullable(type(), item) : Tuple.of(item));</span>
+<span class="fc bfc" id="L660" title="All 4 branches covered.">        if ( index &lt; 0 || index &gt;= _size )</span>
+<span class="fc" id="L661">            throw new IndexOutOfBoundsException(&quot;Index: &quot; + index + &quot;, Size: &quot; + _size);</span>
+<span class="pc bpc" id="L662" title="1 of 4 branches missed.">        if ( !this.allowsNull() &amp;&amp; item == null )</span>
+<span class="fc" id="L663">            throw new NullPointerException();</span>
+<span class="pc bpc" id="L664" title="1 of 2 branches missed.">        return setAllAt(index, _allowsNull ? Tuple.ofNullable(type(), item) : Tuple.of(item));</span>
     }
 
     @Override
     public TupleTree&lt;T&gt; addAllAt(int index, Tuple&lt;T&gt; tuple) {
-<span class="fc" id="L667">        Objects.requireNonNull(tuple);</span>
-<span class="fc bfc" id="L668" title="All 2 branches covered.">        if ( tuple.isEmpty() )</span>
-<span class="fc" id="L669">            return this; // nothing to do</span>
-<span class="fc bfc" id="L670" title="All 4 branches covered.">        if ( !this.allowsNull() &amp;&amp; tuple.allowsNull() )</span>
-<span class="fc" id="L671">            throw new NullPointerException();</span>
-<span class="fc bfc" id="L672" title="All 4 branches covered.">        if ( index &lt; 0 || index &gt; _size )</span>
-<span class="fc" id="L673">            throw new IndexOutOfBoundsException(&quot;Index: &quot; + index + &quot;, Size: &quot; + _size);</span>
-<span class="fc" id="L674">        Node newRoot = _root.addAllAt(index, tuple, _type, _itemGetter, _allowsNull);</span>
-<span class="pc bpc" id="L675" title="1 of 2 branches missed.">        if ( newRoot == _root )</span>
-<span class="nc" id="L676">            return this;</span>
-<span class="fc" id="L677">        return new TupleTree&lt;&gt;(_size+tuple.size(), _allowsNull, _type, newRoot);</span>
+<span class="fc" id="L669">        Objects.requireNonNull(tuple);</span>
+<span class="fc bfc" id="L670" title="All 2 branches covered.">        if ( tuple.isEmpty() )</span>
+<span class="fc" id="L671">            return this; // nothing to do</span>
+<span class="fc bfc" id="L672" title="All 4 branches covered.">        if ( !this.allowsNull() &amp;&amp; tuple.allowsNull() )</span>
+<span class="fc" id="L673">            throw new NullPointerException();</span>
+<span class="fc bfc" id="L674" title="All 4 branches covered.">        if ( index &lt; 0 || index &gt; _size )</span>
+<span class="fc" id="L675">            throw new IndexOutOfBoundsException(&quot;Index: &quot; + index + &quot;, Size: &quot; + _size);</span>
+<span class="fc" id="L676">        Node newRoot = _root.addAllAt(index, tuple, _type, _itemGetter, _allowsNull);</span>
+<span class="pc bpc" id="L677" title="1 of 2 branches missed.">        if ( newRoot == _root )</span>
+<span class="nc" id="L678">            return this;</span>
+<span class="fc" id="L679">        return new TupleTree&lt;&gt;(_size+tuple.size(), _allowsNull, _type, newRoot);</span>
     }
 
     @Override
     public TupleTree&lt;T&gt; setAllAt(int index, Tuple&lt;T&gt; tuple) {
-<span class="fc" id="L682">        Objects.requireNonNull(tuple);</span>
-<span class="pc bpc" id="L683" title="1 of 4 branches missed.">        if ( !this.allowsNull() &amp;&amp; tuple.allowsNull() )</span>
-<span class="fc" id="L684">            throw new NullPointerException();</span>
-<span class="fc bfc" id="L685" title="All 4 branches covered.">        if ( index &lt; 0 || index + tuple.size() &gt; size() )</span>
-<span class="fc" id="L686">            throw new IndexOutOfBoundsException(&quot;Index: &quot; + index + &quot;, Size: &quot; + _size);</span>
-<span class="fc" id="L687">        Node newRoot = _root.setAllAt(index, 0, tuple, _type, _itemGetter, _allowsNull);</span>
-<span class="fc bfc" id="L688" title="All 2 branches covered.">        if ( newRoot == _root )</span>
-<span class="fc" id="L689">            return this;</span>
-<span class="fc" id="L690">        return new TupleTree&lt;&gt;(_size, _allowsNull, _type, newRoot);</span>
+<span class="fc" id="L684">        Objects.requireNonNull(tuple);</span>
+<span class="pc bpc" id="L685" title="1 of 4 branches missed.">        if ( !this.allowsNull() &amp;&amp; tuple.allowsNull() )</span>
+<span class="fc" id="L686">            throw new NullPointerException();</span>
+<span class="fc bfc" id="L687" title="All 4 branches covered.">        if ( index &lt; 0 || index + tuple.size() &gt; size() )</span>
+<span class="fc" id="L688">            throw new IndexOutOfBoundsException(&quot;Index: &quot; + index + &quot;, Size: &quot; + _size);</span>
+<span class="fc" id="L689">        Node newRoot = _root.setAllAt(index, 0, tuple, _type, _itemGetter, _allowsNull);</span>
+<span class="fc bfc" id="L690" title="All 2 branches covered.">        if ( newRoot == _root )</span>
+<span class="fc" id="L691">            return this;</span>
+<span class="fc" id="L692">        return new TupleTree&lt;&gt;(_size, _allowsNull, _type, newRoot);</span>
     }
 
     @Override
     public Tuple&lt;T&gt; retainAll(Tuple&lt;T&gt; tuple) {
-<span class="nc" id="L695">        Objects.requireNonNull(tuple);</span>
-<span class="nc bnc" id="L696" title="All 2 branches missed.">        if ( tuple.isEmpty() ) {</span>
-<span class="nc" id="L697">            Node newRoot = _createRootFromList(_type, _allowsNull, Collections.emptyList());</span>
-<span class="nc" id="L698">            return new TupleTree&lt;&gt;(0, _allowsNull, _type, newRoot);</span>
+<span class="nc" id="L697">        Objects.requireNonNull(tuple);</span>
+<span class="nc bnc" id="L698" title="All 2 branches missed.">        if ( tuple.isEmpty() ) {</span>
+<span class="nc" id="L699">            Node newRoot = _createRootFromList(_type, _allowsNull, Collections.emptyList());</span>
+<span class="nc" id="L700">            return new TupleTree&lt;&gt;(0, _allowsNull, _type, newRoot);</span>
         }
-<span class="nc" id="L700">        int[] indicesOfThingsToKeep = new int[this.size()];</span>
-<span class="nc" id="L701">        int newSize = 0;</span>
-<span class="nc bnc" id="L702" title="All 2 branches missed.">        int singleSequenceIndex = size() &gt; 0 ? -2 : -1;</span>
-<span class="nc" id="L703">        int retainSequenceSize = 0;</span>
-<span class="nc bnc" id="L704" title="All 2 branches missed.">        for ( int i = 0; i &lt; this.size(); i++ ) {</span>
-<span class="nc" id="L705">            int index = tuple.firstIndexOf( get(i) );</span>
-<span class="nc bnc" id="L706" title="All 2 branches missed.">            if ( index != -1 ) {</span>
-<span class="nc" id="L707">                indicesOfThingsToKeep[newSize] = i;</span>
-<span class="nc" id="L708">                newSize++;</span>
-<span class="nc bnc" id="L709" title="All 2 branches missed.">                if ( singleSequenceIndex != -1 ) {</span>
-<span class="nc bnc" id="L710" title="All 2 branches missed.">                    if ( singleSequenceIndex == -2 )</span>
-<span class="nc" id="L711">                        singleSequenceIndex = i;</span>
-<span class="nc bnc" id="L712" title="All 2 branches missed.">                    else if ( i &gt; singleSequenceIndex + retainSequenceSize )</span>
-<span class="nc" id="L713">                        singleSequenceIndex = -1;</span>
+<span class="nc" id="L702">        int[] indicesOfThingsToKeep = new int[this.size()];</span>
+<span class="nc" id="L703">        int newSize = 0;</span>
+<span class="nc bnc" id="L704" title="All 2 branches missed.">        int singleSequenceIndex = size() &gt; 0 ? -2 : -1;</span>
+<span class="nc" id="L705">        int retainSequenceSize = 0;</span>
+<span class="nc bnc" id="L706" title="All 2 branches missed.">        for ( int i = 0; i &lt; this.size(); i++ ) {</span>
+<span class="nc" id="L707">            int index = tuple.firstIndexOf( get(i) );</span>
+<span class="nc bnc" id="L708" title="All 2 branches missed.">            if ( index != -1 ) {</span>
+<span class="nc" id="L709">                indicesOfThingsToKeep[newSize] = i;</span>
+<span class="nc" id="L710">                newSize++;</span>
+<span class="nc bnc" id="L711" title="All 2 branches missed.">                if ( singleSequenceIndex != -1 ) {</span>
+<span class="nc bnc" id="L712" title="All 2 branches missed.">                    if ( singleSequenceIndex == -2 )</span>
+<span class="nc" id="L713">                        singleSequenceIndex = i;</span>
+<span class="nc bnc" id="L714" title="All 2 branches missed.">                    else if ( i &gt; singleSequenceIndex + retainSequenceSize )</span>
+<span class="nc" id="L715">                        singleSequenceIndex = -1;</span>
                 }
-<span class="nc bnc" id="L715" title="All 2 branches missed.">                if ( singleSequenceIndex &gt;= 0 )</span>
-<span class="nc" id="L716">                    retainSequenceSize++;</span>
+<span class="nc bnc" id="L717" title="All 2 branches missed.">                if ( singleSequenceIndex &gt;= 0 )</span>
+<span class="nc" id="L718">                    retainSequenceSize++;</span>
             } else {
-<span class="nc" id="L718">                indicesOfThingsToKeep[newSize] = -1;</span>
+<span class="nc" id="L720">                indicesOfThingsToKeep[newSize] = -1;</span>
             }
         }
-<span class="nc" id="L721">        return _retainAll(singleSequenceIndex, newSize, indicesOfThingsToKeep);</span>
+<span class="nc" id="L723">        return _retainAll(singleSequenceIndex, newSize, indicesOfThingsToKeep);</span>
     }
 
     TupleTree&lt;T&gt; _retainAll(int singleSequenceIndex, int newSize, int[] indicesOfThingsToKeep) {
-<span class="fc bfc" id="L725" title="All 2 branches covered.">        if ( newSize == this.size() )</span>
-<span class="fc" id="L726">            return this;</span>
-<span class="fc" id="L727">        List&lt;T&gt; newItems = new ArrayList&lt;&gt;(newSize);</span>
-<span class="fc bfc" id="L728" title="All 2 branches covered.">        for ( int i = 0; i &lt; newSize; i++ ) {</span>
-<span class="fc" id="L729">            int index = indicesOfThingsToKeep[i];</span>
-<span class="pc bpc" id="L730" title="1 of 2 branches missed.">            if ( index != -1 )</span>
-<span class="fc" id="L731">                newItems.add(get(index));</span>
+<span class="fc bfc" id="L727" title="All 2 branches covered.">        if ( newSize == this.size() )</span>
+<span class="fc" id="L728">            return this;</span>
+<span class="fc" id="L729">        List&lt;T&gt; newItems = new ArrayList&lt;&gt;(newSize);</span>
+<span class="fc bfc" id="L730" title="All 2 branches covered.">        for ( int i = 0; i &lt; newSize; i++ ) {</span>
+<span class="fc" id="L731">            int index = indicesOfThingsToKeep[i];</span>
+<span class="pc bpc" id="L732" title="1 of 2 branches missed.">            if ( index != -1 )</span>
+<span class="fc" id="L733">                newItems.add(get(index));</span>
         }
-<span class="fc" id="L733">        Node newRoot = _createRootFromList(_type, _allowsNull, newItems);</span>
-<span class="fc" id="L734">        return new TupleTree&lt;&gt;(newItems.size(), _allowsNull, _type, newRoot);</span>
+<span class="fc" id="L735">        Node newRoot = _createRootFromList(_type, _allowsNull, newItems);</span>
+<span class="fc" id="L736">        return new TupleTree&lt;&gt;(newItems.size(), _allowsNull, _type, newRoot);</span>
     }
 
     @Override
     public TupleTree&lt;T&gt; clear() {
-<span class="fc" id="L739">        return new TupleTree&lt;&gt;(0, _allowsNull, _type, null);</span>
+<span class="fc" id="L741">        return new TupleTree&lt;&gt;(0, _allowsNull, _type, null);</span>
     }
 
     @Override
     public Tuple&lt;T&gt; map( Function&lt;T,T&gt; mapper ) {
-<span class="fc" id="L744">        Objects.requireNonNull(mapper);</span>
+<span class="fc" id="L746">        Objects.requireNonNull(mapper);</span>
         @SuppressWarnings(&quot;unchecked&quot;)
-<span class="fc" id="L746">        T[] mappedItems = (T[]) Array.newInstance(type(), size());</span>
-<span class="fc" id="L747">        int i = 0;</span>
-<span class="fc bfc" id="L748" title="All 2 branches covered.">        for ( T v : this ) {</span>
-<span class="fc" id="L749">            mappedItems[i++] = mapper.apply( v );</span>
-<span class="fc" id="L750">        }</span>
-<span class="fc" id="L751">        return TupleTree.of( allowsNull(), type(), mappedItems);</span>
+<span class="fc" id="L748">        T[] mappedItems = (T[]) Array.newInstance(type(), size());</span>
+<span class="fc" id="L749">        int i = 0;</span>
+<span class="fc bfc" id="L750" title="All 2 branches covered.">        for ( T v : this ) {</span>
+<span class="fc" id="L751">            mappedItems[i++] = mapper.apply( v );</span>
+<span class="fc" id="L752">        }</span>
+<span class="fc" id="L753">        return TupleTree.of( allowsNull(), type(), mappedItems);</span>
     }
 
     @Override
@@ -756,208 +758,253 @@ final class TupleTree&lt;T extends @Nullable Object&gt; implements Tuple&lt;T&gt
         Class&lt;U&gt;      type,
         Function&lt;T,U&gt; mapper
     ) {
-<span class="fc" id="L759">        Objects.requireNonNull(type);</span>
-<span class="fc" id="L760">        Objects.requireNonNull(mapper);</span>
-<span class="fc" id="L761">        U[] array = (U[]) Array.newInstance(type, size());</span>
-<span class="fc" id="L762">        int i = 0;</span>
-<span class="fc bfc" id="L763" title="All 2 branches covered.">        for ( T v : this ) {</span>
-<span class="fc" id="L764">            U m = mapper.apply( v );</span>
-<span class="fc" id="L765">            array[i++] = m;</span>
-<span class="fc" id="L766">        }</span>
-<span class="fc" id="L767">        return TupleTree.of( allowsNull(), type, array );</span>
+<span class="fc" id="L761">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L762">        Objects.requireNonNull(mapper);</span>
+<span class="fc" id="L763">        U[] array = (U[]) Array.newInstance(type, size());</span>
+<span class="fc" id="L764">        int i = 0;</span>
+<span class="fc bfc" id="L765" title="All 2 branches covered.">        for ( T v : this ) {</span>
+<span class="fc" id="L766">            U m = mapper.apply( v );</span>
+<span class="fc" id="L767">            array[i++] = m;</span>
+<span class="fc" id="L768">        }</span>
+<span class="fc" id="L769">        return TupleTree.of( allowsNull(), type, array );</span>
     }
 
     @Override
     public TupleTree&lt;T&gt; sort(Comparator&lt;T&gt; comparator) {
-<span class="fc" id="L772">        List&lt;T&gt; sortedList = new ArrayList&lt;&gt;(_size);</span>
-<span class="fc bfc" id="L773" title="All 2 branches covered.">        for (int i = 0; i &lt; _size; i++) {</span>
-<span class="fc" id="L774">            sortedList.add(get(i));</span>
+<span class="fc" id="L774">        List&lt;T&gt; sortedList = new ArrayList&lt;&gt;(_size);</span>
+<span class="fc bfc" id="L775" title="All 2 branches covered.">        for (int i = 0; i &lt; _size; i++) {</span>
+<span class="fc" id="L776">            sortedList.add(get(i));</span>
         }
-<span class="fc" id="L776">        sortedList.sort(comparator);</span>
-<span class="fc" id="L777">        return new TupleTree&lt;&gt;(sortedList.size(), _allowsNull, _type, _createRootFromList(_type, _allowsNull, sortedList));</span>
+<span class="fc" id="L778">        sortedList.sort(comparator);</span>
+<span class="fc" id="L779">        return new TupleTree&lt;&gt;(sortedList.size(), _allowsNull, _type, _createRootFromList(_type, _allowsNull, sortedList));</span>
     }
 
     @Override
     public TupleTree&lt;T&gt; makeDistinct() {
-<span class="fc" id="L782">        Set&lt;T&gt; distinctSet = new LinkedHashSet&lt;&gt;();</span>
-<span class="fc bfc" id="L783" title="All 2 branches covered.">        for (int i = 0; i &lt; _size; i++) {</span>
-<span class="fc" id="L784">            distinctSet.add(get(i));</span>
+<span class="fc" id="L784">        Set&lt;T&gt; distinctSet = new LinkedHashSet&lt;&gt;();</span>
+<span class="fc bfc" id="L785" title="All 2 branches covered.">        for (int i = 0; i &lt; _size; i++) {</span>
+<span class="fc" id="L786">            distinctSet.add(get(i));</span>
         }
-<span class="fc" id="L786">        List&lt;T&gt; distinctList = new ArrayList&lt;&gt;(distinctSet);</span>
-<span class="fc" id="L787">        return new TupleTree&lt;&gt;(distinctList.size(), _allowsNull, _type, _createRootFromList(_type, _allowsNull, distinctList));</span>
+<span class="fc" id="L788">        List&lt;T&gt; distinctList = new ArrayList&lt;&gt;(distinctSet);</span>
+<span class="fc" id="L789">        return new TupleTree&lt;&gt;(distinctList.size(), _allowsNull, _type, _createRootFromList(_type, _allowsNull, distinctList));</span>
     }
 
     @Override
     public TupleTree&lt;T&gt; reversed() {
-<span class="fc" id="L792">        List&lt;T&gt; reversedList = new ArrayList&lt;&gt;(_size);</span>
-<span class="fc bfc" id="L793" title="All 2 branches covered.">        for (int i = _size - 1; i &gt;= 0; i--) {</span>
-<span class="fc" id="L794">            reversedList.add(get(i));</span>
+<span class="fc" id="L794">        List&lt;T&gt; reversedList = new ArrayList&lt;&gt;(_size);</span>
+<span class="fc bfc" id="L795" title="All 2 branches covered.">        for (int i = _size - 1; i &gt;= 0; i--) {</span>
+<span class="fc" id="L796">            reversedList.add(get(i));</span>
         }
-<span class="fc" id="L796">        return new TupleTree&lt;&gt;(reversedList.size(), _allowsNull, _type, _createRootFromList(_type, _allowsNull, reversedList));</span>
+<span class="fc" id="L798">        return new TupleTree&lt;&gt;(reversedList.size(), _allowsNull, _type, _createRootFromList(_type, _allowsNull, reversedList));</span>
     }
 
     private static final class IteratorFrame {
         final Node node;
         final int end;
-<span class="fc" id="L802">        int index = 0;</span>
+<span class="fc" id="L804">        int index = 0;</span>
         @Nullable IteratorFrame parent;
 
-<span class="fc" id="L805">        IteratorFrame(Node n, @Nullable IteratorFrame parent) {</span>
-<span class="fc" id="L806">            this.node = n;</span>
-<span class="fc" id="L807">            this.parent = parent;</span>
-<span class="fc bfc" id="L808" title="All 2 branches covered.">            if ( n instanceof LeafNode ) {</span>
-<span class="fc" id="L809">                end = n.size();</span>
-<span class="pc bpc" id="L810" title="1 of 2 branches missed.">            } else if ( n instanceof BranchNode ) {</span>
-<span class="fc" id="L811">                end = ((BranchNode) n)._children.length;</span>
+<span class="fc" id="L807">        IteratorFrame(Node n, @Nullable IteratorFrame parent) {</span>
+<span class="fc" id="L808">            this.node = n;</span>
+<span class="fc" id="L809">            this.parent = parent;</span>
+<span class="fc bfc" id="L810" title="All 2 branches covered.">            if ( n instanceof LeafNode ) {</span>
+<span class="fc" id="L811">                end = n.size();</span>
+<span class="pc bpc" id="L812" title="1 of 2 branches missed.">            } else if ( n instanceof BranchNode ) {</span>
+<span class="fc" id="L813">                end = ((BranchNode) n)._children.length;</span>
             }
-<span class="nc" id="L813">            else throw new IllegalArgumentException();</span>
-<span class="fc" id="L814">        }</span>
+<span class="nc" id="L815">            else throw new IllegalArgumentException();</span>
+<span class="fc" id="L816">        }</span>
     }
 
     @Override
     public Iterator&lt;T&gt; iterator() {
-<span class="fc" id="L819">        return new TupleIterator&lt;&gt;(this, ArrayItemAccess.of(_type, _allowsNull));</span>
+<span class="fc" id="L821">        return new TupleIterator&lt;&gt;(this, ArrayItemAccess.of(_type, _allowsNull));</span>
     }
 
     @Override
     public Spliterator&lt;T&gt; spliterator() {
-<span class="fc" id="L824">        return _createFastSpliteratorFor(_root, _type, _itemGetter, _allowsNull, 0, _size);</span>
+<span class="fc" id="L826">        return _createFastSpliteratorFor(_root, _type, _itemGetter, _allowsNull, 0, _size);</span>
     }
 
     private static &lt;T&gt; Spliterator&lt;T&gt; _createFastSpliteratorFor(
             TupleTree.Node node, Class&lt;T&gt; type, ArrayItemAccess&lt;T, Object&gt; itemGetter, boolean allowsNull, int start, int end
     ) {
-<span class="fc bfc" id="L830" title="All 2 branches covered.">        if ( node instanceof LeafNode ) {</span>
-<span class="fc" id="L831">            LeafNode leafNode = (LeafNode) node;</span>
-<span class="fc bfc" id="L832" title="All 2 branches covered.">            if ( allowsNull )</span>
-<span class="fc" id="L833">                return Spliterators.spliterator((T[])leafNode._data, 0, end, _spliteratorCharacteristics(allowsNull));</span>
-<span class="pc bpc" id="L834" title="1 of 4 branches missed.">            else if ( type == Integer.class || type == int.class )</span>
-<span class="fc" id="L835">                return (Spliterator&lt;T&gt;) Spliterators.spliterator((int[])leafNode._data, start, end, _spliteratorCharacteristics(allowsNull));</span>
-<span class="pc bpc" id="L836" title="1 of 4 branches missed.">            else if ( type == Long.class || type == long.class )</span>
-<span class="fc" id="L837">                return (Spliterator&lt;T&gt;) Spliterators.spliterator((long[])leafNode._data, start, end, _spliteratorCharacteristics(allowsNull));</span>
-<span class="pc bpc" id="L838" title="1 of 4 branches missed.">            else if ( type == Double.class || type == double.class )</span>
-<span class="fc" id="L839">                return (Spliterator&lt;T&gt;) Spliterators.spliterator((double[])leafNode._data, start, end, _spliteratorCharacteristics(allowsNull));</span>
+<span class="fc bfc" id="L832" title="All 2 branches covered.">        if ( node instanceof LeafNode ) {</span>
+<span class="fc" id="L833">            LeafNode leafNode = (LeafNode) node;</span>
+<span class="fc bfc" id="L834" title="All 2 branches covered.">            if ( allowsNull )</span>
+<span class="fc" id="L835">                return Spliterators.spliterator((T[])leafNode._data, 0, end, _spliteratorCharacteristics(allowsNull));</span>
+<span class="pc bpc" id="L836" title="1 of 4 branches missed.">            else if ( type == Integer.class || type == int.class )</span>
+<span class="fc" id="L837">                return (Spliterator&lt;T&gt;) Spliterators.spliterator((int[])leafNode._data, start, end, _spliteratorCharacteristics(allowsNull));</span>
+<span class="pc bpc" id="L838" title="1 of 4 branches missed.">            else if ( type == Long.class || type == long.class )</span>
+<span class="fc" id="L839">                return (Spliterator&lt;T&gt;) Spliterators.spliterator((long[])leafNode._data, start, end, _spliteratorCharacteristics(allowsNull));</span>
+<span class="pc bpc" id="L840" title="1 of 4 branches missed.">            else if ( type == Double.class || type == double.class )</span>
+<span class="fc" id="L841">                return (Spliterator&lt;T&gt;) Spliterators.spliterator((double[])leafNode._data, start, end, _spliteratorCharacteristics(allowsNull));</span>
         }
-<span class="fc" id="L841">        return new TupleSpliterator&lt;&gt;(start, end, type, itemGetter, allowsNull, node);</span>
+<span class="fc" id="L843">        return new TupleSpliterator&lt;&gt;(start, end, type, itemGetter, allowsNull, node);</span>
     }
 
     private static int _spliteratorCharacteristics(boolean allowsNull) {
-<span class="fc" id="L845">        int characteristics = Spliterator.ORDERED | Spliterator.SIZED | Spliterator.SUBSIZED | Spliterator.IMMUTABLE;</span>
-<span class="fc bfc" id="L846" title="All 2 branches covered.">        if (!allowsNull)</span>
-<span class="fc" id="L847">            characteristics |= Spliterator.NONNULL;</span>
-<span class="fc" id="L848">        return characteristics;</span>
+<span class="fc" id="L847">        int characteristics = Spliterator.ORDERED | Spliterator.SIZED | Spliterator.SUBSIZED | Spliterator.IMMUTABLE;</span>
+<span class="fc bfc" id="L848" title="All 2 branches covered.">        if (!allowsNull)</span>
+<span class="fc" id="L849">            characteristics |= Spliterator.NONNULL;</span>
+<span class="fc" id="L850">        return characteristics;</span>
     }
 
     @Override
     public String toString() {
-<span class="fc" id="L853">        StringBuilder sb = new StringBuilder();</span>
-<span class="fc" id="L854">        sb.append(&quot;Tuple&lt;&quot;);</span>
-<span class="fc" id="L855">        sb.append(_type.getSimpleName());</span>
-<span class="fc bfc" id="L856" title="All 2 branches covered.">        if (allowsNull())</span>
-<span class="fc" id="L857">            sb.append(&quot;?&quot;);</span>
-<span class="fc" id="L858">        sb.append(&quot;&gt;[&quot;);</span>
-<span class="fc" id="L859">        final int howMany = Math.min(_size, 10);</span>
-<span class="fc" id="L860">        int numberOfElementsLeft = _size - howMany;</span>
-<span class="fc bfc" id="L861" title="All 2 branches covered.">        for (int i = 0; i &lt; howMany; i++) {</span>
-<span class="fc" id="L862">            sb.append(get(i));</span>
-<span class="fc bfc" id="L863" title="All 2 branches covered.">            if (i &lt; _size - 1)</span>
-<span class="fc" id="L864">                sb.append(&quot;, &quot;);</span>
+<span class="fc" id="L855">        StringBuilder sb = new StringBuilder();</span>
+<span class="fc" id="L856">        sb.append(&quot;Tuple&lt;&quot;);</span>
+<span class="fc" id="L857">        sb.append(_type.getSimpleName());</span>
+<span class="fc bfc" id="L858" title="All 2 branches covered.">        if (allowsNull())</span>
+<span class="fc" id="L859">            sb.append(&quot;?&quot;);</span>
+<span class="fc" id="L860">        sb.append(&quot;&gt;[&quot;);</span>
+<span class="fc" id="L861">        final int howMany = Math.min(_size, 10);</span>
+<span class="fc" id="L862">        int numberOfElementsLeft = _size - howMany;</span>
+<span class="fc bfc" id="L863" title="All 2 branches covered.">        for (int i = 0; i &lt; howMany; i++) {</span>
+<span class="fc" id="L864">            sb.append(get(i));</span>
+<span class="fc bfc" id="L865" title="All 2 branches covered.">            if (i &lt; _size - 1)</span>
+<span class="fc" id="L866">                sb.append(&quot;, &quot;);</span>
         }
-<span class="fc bfc" id="L866" title="All 2 branches covered.">        if (numberOfElementsLeft &gt; 0) {</span>
-<span class="fc" id="L867">            sb.append(&quot;... &quot;).append(numberOfElementsLeft).append(&quot; items left&quot;);</span>
+<span class="fc bfc" id="L868" title="All 2 branches covered.">        if (numberOfElementsLeft &gt; 0) {</span>
+<span class="fc" id="L869">            sb.append(&quot;... &quot;).append(numberOfElementsLeft).append(&quot; items left&quot;);</span>
         }
-<span class="fc" id="L869">        sb.append(&quot;]&quot;);</span>
-<span class="fc" id="L870">        return sb.toString();</span>
+<span class="fc" id="L871">        sb.append(&quot;]&quot;);</span>
+<span class="fc" id="L872">        return sb.toString();</span>
     }
 
     @Override
     public boolean equals(Object obj) {
-<span class="pc bpc" id="L875" title="1 of 2 branches missed.">        if (obj == this)</span>
-<span class="nc" id="L876">            return true;</span>
-<span class="pc bpc" id="L877" title="1 of 2 branches missed.">        if (!(obj instanceof Tuple))</span>
-<span class="nc" id="L878">            return false;</span>
-<span class="fc" id="L879">        Tuple&lt;?&gt; other = (Tuple&lt;?&gt;) obj;</span>
-<span class="fc bfc" id="L880" title="All 2 branches covered.">        if (other.allowsNull() != this.allowsNull())</span>
-<span class="fc" id="L881">            return false;</span>
-<span class="fc bfc" id="L882" title="All 2 branches covered.">        if (other.size() != this.size())</span>
+<span class="pc bpc" id="L877" title="1 of 2 branches missed.">        if (obj == this)</span>
+<span class="nc" id="L878">            return true;</span>
+<span class="pc bpc" id="L879" title="1 of 2 branches missed.">        if (!(obj instanceof Tuple))</span>
+<span class="nc" id="L880">            return false;</span>
+<span class="fc" id="L881">        Tuple&lt;?&gt; other = (Tuple&lt;?&gt;) obj;</span>
+<span class="fc bfc" id="L882" title="All 2 branches covered.">        if (other.allowsNull() != this.allowsNull())</span>
 <span class="fc" id="L883">            return false;</span>
-<span class="pc bpc" id="L884" title="1 of 2 branches missed.">        if (!other.type().equals(_type))</span>
-<span class="nc" id="L885">            return false;</span>
-<span class="fc bfc" id="L886" title="All 2 branches covered.">        if ( this._root instanceof LeafNode ) {</span>
-<span class="fc" id="L887">            TupleTree&lt;?&gt; otherHamt = null;</span>
-<span class="pc bpc" id="L888" title="1 of 2 branches missed.">             if ( other instanceof TupleTree) {</span>
-<span class="nc" id="L889">                 otherHamt = (TupleTree&lt;?&gt;) other;</span>
-<span class="pc bpc" id="L890" title="1 of 2 branches missed.">             } else if ( other instanceof TupleWithDiff&lt;?&gt;) {</span>
-<span class="fc" id="L891">                 TupleWithDiff&lt;?&gt; otherDiff = (TupleWithDiff&lt;?&gt;) other;</span>
-<span class="fc" id="L892">                 otherHamt = otherDiff.getData();</span>
-             }
-<span class="pc bpc" id="L894" title="2 of 4 branches missed.">            if ( otherHamt != null &amp;&amp; otherHamt._root instanceof LeafNode ) {</span>
-<span class="fc" id="L895">                LeafNode thisLeaf = (LeafNode) this._root;</span>
-<span class="fc" id="L896">                LeafNode otherLeaf = (LeafNode) otherHamt._root;</span>
-<span class="fc" id="L897">                return Val.equals(thisLeaf._data, otherLeaf._data);</span>
+<span class="fc bfc" id="L884" title="All 2 branches covered.">        if (other.size() != this.size())</span>
+<span class="fc" id="L885">            return false;</span>
+<span class="pc bpc" id="L886" title="1 of 2 branches missed.">        if (!other.type().equals(_type))</span>
+<span class="nc" id="L887">            return false;</span>
+<span class="pc bpc" id="L888" title="1 of 2 branches missed.">        if ( other instanceof TupleWithDiff ) {</span>
+<span class="fc" id="L889">            other = ((TupleWithDiff)other).getData();</span>
+        }
+<span class="fc" id="L891">        TupleTree&lt;?&gt; otherHamt = null;</span>
+<span class="pc bpc" id="L892" title="1 of 2 branches missed.">        if ( other instanceof TupleTree ) {</span>
+<span class="fc" id="L893">            otherHamt = (TupleTree&lt;?&gt;) other;</span>
+        }
+<span class="pc bpc" id="L895" title="1 of 2 branches missed.">        if ( otherHamt != null ) {</span>
+<span class="fc" id="L896">            return _recursiveEquals(this._root, otherHamt._root, allowsNull(), type());</span>
+        }
+<span class="nc" id="L898">        return _exhaustiveEquals(this, (Tuple&lt;T&gt;)other);</span>
+    }
+
+
+    private static &lt;E&gt; boolean _exhaustiveEquals(Tuple&lt;E&gt; tuple1, Tuple&lt;E&gt; tuple2) {
+<span class="pc bpc" id="L903" title="1 of 2 branches missed.">        if ( tuple2.size() != tuple1.size() ) {</span>
+<span class="nc" id="L904">            return false;</span>
+        }
+<span class="fc bfc" id="L906" title="All 2 branches covered.">        for (int i = 0; i &lt; tuple1.size(); i++) {</span>
+<span class="pc bpc" id="L907" title="1 of 2 branches missed.">            if (!Objects.equals(tuple1.get(i), tuple2.get(i)))</span>
+<span class="nc" id="L908">                return false;</span>
+        }
+<span class="fc" id="L910">        return true;</span>
+    }
+
+    private static &lt;E&gt; boolean _recursiveEquals(@Nullable Node node1, @Nullable Node node2, boolean allowsNull, Class&lt;E&gt; type) {
+<span class="fc bfc" id="L914" title="All 2 branches covered.">        if ( node1 == node2 ) {</span>
+<span class="fc" id="L915">            return true;</span>
+        }
+<span class="pc bpc" id="L917" title="2 of 4 branches missed.">        if ( node1 == null || node2 == null ) {</span>
+<span class="nc" id="L918">            return false;</span>
+        }
+<span class="fc" id="L920">        boolean firstIsLeaf = node1 instanceof LeafNode;</span>
+<span class="fc" id="L921">        boolean secondIsLeaf = node2 instanceof LeafNode;</span>
+<span class="pc bpc" id="L922" title="1 of 4 branches missed.">        if ( firstIsLeaf &amp;&amp; secondIsLeaf ) {</span>
+<span class="fc" id="L923">            LeafNode thisLeaf = (LeafNode) node1;</span>
+<span class="fc" id="L924">            LeafNode otherLeaf = (LeafNode) node2;</span>
+<span class="fc" id="L925">            return Val.equals(thisLeaf._data, otherLeaf._data);</span>
+<span class="pc bpc" id="L926" title="1 of 4 branches missed.">        } else if ( !firstIsLeaf &amp;&amp; !secondIsLeaf ) {</span>
+<span class="fc" id="L927">            BranchNode branchNode1 = (BranchNode) node1;</span>
+<span class="fc" id="L928">            BranchNode branchNode2 = (BranchNode) node2;</span>
+            // same type
+<span class="fc" id="L930">            if (</span>
+<span class="pc bpc" id="L931" title="1 of 2 branches missed.">                branchNode1.size() == branchNode2.size() &amp;&amp;</span>
+<span class="pc bpc" id="L932" title="1 of 2 branches missed.">                branchNode1._children != branchNode2._children // The only difference is somewhere deep down!</span>
+            ) {
+<span class="fc bfc" id="L934" title="All 2 branches covered.">                for ( int i = 0; i &lt; branchNode1._children.length; i++ ) {</span>
+<span class="fc bfc" id="L935" title="All 2 branches covered.">                    if ( !_recursiveEquals(branchNode1._children[i], branchNode2._children[i], allowsNull, type) ) {</span>
+<span class="fc" id="L936">                        return false;</span>
+                    }
+                }
+<span class="fc" id="L939">                return true;</span>
             }
         }
-<span class="fc bfc" id="L900" title="All 2 branches covered.">        for (int i = 0; i &lt; this.size(); i++) {</span>
-<span class="pc bpc" id="L901" title="1 of 2 branches missed.">            if (!Objects.equals(this.get(i), other.get(i)))</span>
-<span class="nc" id="L902">                return false;</span>
-        }
-<span class="fc" id="L904">        return true;</span>
+<span class="fc" id="L942">        return _exhaustiveEquals(</span>
+<span class="fc" id="L943">                new TupleTree&lt;&gt;(node1.size(), allowsNull, type, node1),</span>
+<span class="fc" id="L944">                new TupleTree&lt;&gt;(node2.size(), allowsNull, type, node2)</span>
+        );
     }
+
 
     @Override
     public int hashCode() {
-<span class="fc" id="L909">        int hash = _type.hashCode() ^ _size;</span>
-<span class="fc bfc" id="L910" title="All 2 branches covered.">        for (int i = 0; i &lt; _size; i++) {</span>
-<span class="fc" id="L911">            T item = get(i);</span>
-<span class="pc bpc" id="L912" title="1 of 2 branches missed.">            hash = 31 * hash + (item == null ? 0 : item.hashCode());</span>
+<span class="fc" id="L951">        Integer cached = _cachedHashCode.get();</span>
+<span class="fc bfc" id="L952" title="All 2 branches covered.">        if ( cached != null )</span>
+<span class="fc" id="L953">            return cached;</span>
+<span class="fc" id="L954">        int hash = _type.hashCode() ^ _size;</span>
+<span class="fc bfc" id="L955" title="All 2 branches covered.">        for (int i = 0; i &lt; _size; i++) {</span>
+<span class="fc" id="L956">            T item = get(i);</span>
+<span class="pc bpc" id="L957" title="1 of 2 branches missed.">            hash = 31 * hash + (item == null ? 0 : item.hashCode());</span>
         }
-<span class="fc bfc" id="L914" title="All 2 branches covered.">        return hash ^ (_allowsNull ? 1 : 0);</span>
+<span class="fc bfc" id="L959" title="All 2 branches covered.">        int result = hash ^ (_allowsNull ? 1 : 0);</span>
+<span class="fc" id="L960">        _cachedHashCode.set(result);</span>
+<span class="fc" id="L961">        return result;</span>
     }
 
     private static final class TupleIterator&lt;T&gt; implements Iterator&lt;T&gt;
     {
         private final ArrayItemAccess&lt;T, Object&gt; itemGetter;
-<span class="fc" id="L920">        private @Nullable IteratorFrame currentFrame = null;</span>
+<span class="fc" id="L967">        private @Nullable IteratorFrame currentFrame = null;</span>
 
-<span class="fc" id="L922">        TupleIterator(TupleTree&lt;T&gt; tree, ArrayItemAccess&lt;T, Object&gt; itemGetter) {</span>
-<span class="fc" id="L923">            this.itemGetter = itemGetter;</span>
-<span class="fc bfc" id="L924" title="All 2 branches covered.">            if (tree._size &gt; 0)</span>
-<span class="fc" id="L925">                currentFrame = new IteratorFrame(tree._root, null);</span>
-<span class="fc" id="L926">        }</span>
+<span class="fc" id="L969">        TupleIterator(TupleTree&lt;T&gt; tree, ArrayItemAccess&lt;T, Object&gt; itemGetter) {</span>
+<span class="fc" id="L970">            this.itemGetter = itemGetter;</span>
+<span class="fc bfc" id="L971" title="All 2 branches covered.">            if (tree._size &gt; 0)</span>
+<span class="fc" id="L972">                currentFrame = new IteratorFrame(tree._root, null);</span>
+<span class="fc" id="L973">        }</span>
 
         @Override
         public boolean hasNext() {
-<span class="fc bfc" id="L930" title="All 2 branches covered.">            while ( currentFrame != null ) {</span>
-<span class="fc bfc" id="L931" title="All 2 branches covered.">                if ( currentFrame.index &gt;= currentFrame.end ) {</span>
-<span class="fc" id="L932">                    currentFrame = currentFrame.parent;</span>
+<span class="fc bfc" id="L977" title="All 2 branches covered.">            while ( currentFrame != null ) {</span>
+<span class="fc bfc" id="L978" title="All 2 branches covered.">                if ( currentFrame.index &gt;= currentFrame.end ) {</span>
+<span class="fc" id="L979">                    currentFrame = currentFrame.parent;</span>
                 } else {
-<span class="fc bfc" id="L934" title="All 2 branches covered.">                    if (currentFrame.node instanceof LeafNode) {</span>
-<span class="fc" id="L935">                        return true;</span>
+<span class="fc bfc" id="L981" title="All 2 branches covered.">                    if (currentFrame.node instanceof LeafNode) {</span>
+<span class="fc" id="L982">                        return true;</span>
                     } else {
-<span class="fc" id="L937">                        BranchNode bn = (BranchNode) currentFrame.node;</span>
-<span class="fc" id="L938">                        Node[] children = bn._children;</span>
-<span class="fc" id="L939">                        Node child = children[currentFrame.index++];</span>
-<span class="fc bfc" id="L940" title="All 2 branches covered.">                        if (child != null)</span>
-<span class="fc" id="L941">                            currentFrame = new IteratorFrame(child, currentFrame);</span>
-<span class="fc" id="L942">                    }</span>
+<span class="fc" id="L984">                        BranchNode bn = (BranchNode) currentFrame.node;</span>
+<span class="fc" id="L985">                        Node[] children = bn._children;</span>
+<span class="fc" id="L986">                        Node child = children[currentFrame.index++];</span>
+<span class="fc bfc" id="L987" title="All 2 branches covered.">                        if (child != null)</span>
+<span class="fc" id="L988">                            currentFrame = new IteratorFrame(child, currentFrame);</span>
+<span class="fc" id="L989">                    }</span>
                 }
             }
-<span class="fc" id="L945">            return false;</span>
+<span class="fc" id="L992">            return false;</span>
         }
 
         @Override
         @SuppressWarnings(&quot;unchecked&quot;)
         public T next() {
-<span class="pc bpc" id="L951" title="2 of 4 branches missed.">            if ( !hasNext() || currentFrame == null )</span>
-<span class="nc" id="L952">                throw new NoSuchElementException();</span>
+<span class="pc bpc" id="L998" title="2 of 4 branches missed.">            if ( !hasNext() || currentFrame == null )</span>
+<span class="nc" id="L999">                throw new NoSuchElementException();</span>
 
-<span class="pc bpc" id="L954" title="1 of 2 branches missed.">            if ( currentFrame.node instanceof LeafNode ) {</span>
-<span class="fc" id="L955">                LeafNode leaf = (LeafNode) currentFrame.node;</span>
-<span class="fc" id="L956">                T item = itemGetter.get(currentFrame.index, leaf.data());</span>
-<span class="fc" id="L957">                currentFrame.index++;</span>
-<span class="fc" id="L958">                return item;</span>
+<span class="pc bpc" id="L1001" title="1 of 2 branches missed.">            if ( currentFrame.node instanceof LeafNode ) {</span>
+<span class="fc" id="L1002">                LeafNode leaf = (LeafNode) currentFrame.node;</span>
+<span class="fc" id="L1003">                T item = itemGetter.get(currentFrame.index, leaf.data());</span>
+<span class="fc" id="L1004">                currentFrame.index++;</span>
+<span class="fc" id="L1005">                return item;</span>
             } else {
-<span class="nc" id="L960">                return next();</span>
+<span class="nc" id="L1007">                return next();</span>
             }
         }
     }
@@ -977,62 +1024,62 @@ final class TupleTree&lt;T extends @Nullable Object&gt; implements Tuple&lt;T&gt
             ArrayItemAccess&lt;T, Object&gt; itemGetter,
             boolean allowsNull,
             TupleTree.Node root
-<span class="fc" id="L980">        ) {</span>
-<span class="fc" id="L981">            this.index = start;</span>
-<span class="fc" id="L982">            this.fence = end;</span>
-<span class="fc" id="L983">            this.type = type;</span>
-<span class="fc" id="L984">            this.itemGetter = itemGetter;</span>
-<span class="fc" id="L985">            this.allowsNull = allowsNull;</span>
-<span class="fc" id="L986">            this.root = root;</span>
-<span class="fc" id="L987">        }</span>
+<span class="fc" id="L1027">        ) {</span>
+<span class="fc" id="L1028">            this.index = start;</span>
+<span class="fc" id="L1029">            this.fence = end;</span>
+<span class="fc" id="L1030">            this.type = type;</span>
+<span class="fc" id="L1031">            this.itemGetter = itemGetter;</span>
+<span class="fc" id="L1032">            this.allowsNull = allowsNull;</span>
+<span class="fc" id="L1033">            this.root = root;</span>
+<span class="fc" id="L1034">        }</span>
 
         @Override
         public @Nullable Spliterator&lt;T&gt; trySplit() {
-<span class="fc" id="L991">            int lo = index;</span>
-<span class="fc" id="L992">            int mid = (lo + fence) &gt;&gt;&gt; 1;</span>
-<span class="pc bpc" id="L993" title="1 of 2 branches missed.">            if (mid &lt;= lo)</span>
-<span class="nc" id="L994">                return null;</span>
+<span class="fc" id="L1038">            int lo = index;</span>
+<span class="fc" id="L1039">            int mid = (lo + fence) &gt;&gt;&gt; 1;</span>
+<span class="pc bpc" id="L1040" title="1 of 2 branches missed.">            if (mid &lt;= lo)</span>
+<span class="nc" id="L1041">                return null;</span>
             // left half will handle [lo, mid), this spliterator becomes [mid, fence)
-<span class="fc" id="L996">            Spliterator&lt;T&gt; prefix = _createFastSpliteratorFor(root, type, itemGetter, allowsNull, lo, mid);</span>
-<span class="fc" id="L997">            this.index = mid;</span>
-<span class="fc" id="L998">            return prefix;</span>
+<span class="fc" id="L1043">            Spliterator&lt;T&gt; prefix = _createFastSpliteratorFor(root, type, itemGetter, allowsNull, lo, mid);</span>
+<span class="fc" id="L1044">            this.index = mid;</span>
+<span class="fc" id="L1045">            return prefix;</span>
         }
 
         @Override
         public boolean tryAdvance(Consumer&lt;? super T&gt; action) {
-<span class="fc bfc" id="L1003" title="All 2 branches covered.">            if (index &lt; fence) {</span>
-<span class="fc" id="L1004">                T item = root.getAt(index, itemGetter);</span>
-<span class="fc" id="L1005">                index++;</span>
-<span class="fc" id="L1006">                action.accept(item);</span>
-<span class="fc" id="L1007">                return true;</span>
+<span class="fc bfc" id="L1050" title="All 2 branches covered.">            if (index &lt; fence) {</span>
+<span class="fc" id="L1051">                T item = root.getAt(index, itemGetter);</span>
+<span class="fc" id="L1052">                index++;</span>
+<span class="fc" id="L1053">                action.accept(item);</span>
+<span class="fc" id="L1054">                return true;</span>
             }
-<span class="fc" id="L1009">            return false;</span>
+<span class="fc" id="L1056">            return false;</span>
         }
 
         @Override
         public void forEachRemaining(Consumer&lt;? super T&gt; action) {
-<span class="fc bfc" id="L1014" title="All 2 branches covered.">            while (index &lt; fence) {</span>
-<span class="fc" id="L1015">                T item = root.getAt(index, itemGetter);</span>
-<span class="fc" id="L1016">                index++;</span>
-<span class="fc" id="L1017">                action.accept(item);</span>
-<span class="fc" id="L1018">            }</span>
-<span class="fc" id="L1019">        }</span>
+<span class="fc bfc" id="L1061" title="All 2 branches covered.">            while (index &lt; fence) {</span>
+<span class="fc" id="L1062">                T item = root.getAt(index, itemGetter);</span>
+<span class="fc" id="L1063">                index++;</span>
+<span class="fc" id="L1064">                action.accept(item);</span>
+<span class="fc" id="L1065">            }</span>
+<span class="fc" id="L1066">        }</span>
 
         @Override
         public long estimateSize() {
-<span class="fc" id="L1023">            return (long) fence - index;</span>
+<span class="fc" id="L1070">            return (long) fence - index;</span>
         }
 
         @Override
         public int characteristics() {
-<span class="fc" id="L1028">            return _spliteratorCharacteristics(allowsNull);</span>
+<span class="fc" id="L1075">            return _spliteratorCharacteristics(allowsNull);</span>
         }
 
         @Override
         @SuppressWarnings(&quot;unchecked&quot;)
         public Comparator&lt;? super T&gt; getComparator() {
             // we don't have a comparator; streams will only call this if SORTED characteristic is set
-<span class="nc" id="L1035">            throw new IllegalStateException(TupleTree.class.getName()+&quot; spliterator is not SORTED&quot;);</span>
+<span class="nc" id="L1082">            throw new IllegalStateException(TupleTree.class.getName()+&quot; spliterator is not SORTED&quot;);</span>
         }
     }
 }

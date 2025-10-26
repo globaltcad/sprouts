@@ -231,112 +231,113 @@ public final class Problem
             else
 <span class="fc" id="L232">                logger.accept(titleAndDescription, new Throwable());</span>
 <span class="nc" id="L233">        } catch (Exception e) {</span>
-<span class="nc" id="L234">            _logError(&quot;Failed to log problem: '{}'&quot;, titleAndDescription, e);</span>
+<span class="nc" id="L234">            Util.sneakyThrowExceptionIfFatal(e);</span>
+<span class="nc" id="L235">            _logError(&quot;Failed to log problem: '{}'&quot;, titleAndDescription, e);</span>
             // Oh boy, how bad can a user's logging be if it throws an exception? Well, we got you covered!
-<span class="fc" id="L236">        }</span>
-<span class="fc" id="L237">    }</span>
+<span class="fc" id="L237">        }</span>
+<span class="fc" id="L238">    }</span>
     
     /**
      *  Logs the problem as a {@link Logger#error} message to the default logger of the implementing class.
      *  If a SLF4J backend is not available, it will log to the standard error stream {@code System.err}.
      */
     public void logAsError() {
-<span class="pc bpc" id="L244" title="1 of 2 branches missed.">        if ( HAS_SLF4J_IMPLEMENTATION )</span>
-<span class="nc" id="L245">            logTo(log::error);</span>
+<span class="pc bpc" id="L245" title="1 of 2 branches missed.">        if ( HAS_SLF4J_IMPLEMENTATION )</span>
+<span class="nc" id="L246">            logTo(log::error);</span>
         else
-<span class="fc" id="L247">            logTo((msg, t) -&gt; {</span>
-<span class="fc" id="L248">                System.err.println(&quot;[ERROR] &quot; + msg );</span>
-<span class="pc bpc" id="L249" title="1 of 2 branches missed.">                if ( t != null ) {</span>
-<span class="fc" id="L250">                    t.printStackTrace(System.err);</span>
+<span class="fc" id="L248">            logTo((msg, t) -&gt; {</span>
+<span class="fc" id="L249">                System.err.println(&quot;[ERROR] &quot; + msg );</span>
+<span class="pc bpc" id="L250" title="1 of 2 branches missed.">                if ( t != null ) {</span>
+<span class="fc" id="L251">                    t.printStackTrace(System.err);</span>
                 }
-<span class="fc" id="L252">            });</span>
-<span class="fc" id="L253">    }</span>
+<span class="fc" id="L253">            });</span>
+<span class="fc" id="L254">    }</span>
     
     /**
      *  Logs the problem as a {@link Logger#warn} message to the default logger of the implementing class.
      *  If a SLF4J backend is not available, it will log to the standard error stream {@code System.err}.
      */
     public void logAsWarning() {
-<span class="pc bpc" id="L260" title="1 of 2 branches missed.">        if ( HAS_SLF4J_IMPLEMENTATION )</span>
-<span class="nc" id="L261">            logTo(log::warn);</span>
+<span class="pc bpc" id="L261" title="1 of 2 branches missed.">        if ( HAS_SLF4J_IMPLEMENTATION )</span>
+<span class="nc" id="L262">            logTo(log::warn);</span>
         else
-<span class="fc" id="L263">            logTo((msg, t) -&gt; {</span>
-<span class="fc" id="L264">                System.err.println(&quot;[WARN] &quot; + msg );</span>
-<span class="pc bpc" id="L265" title="1 of 2 branches missed.">                if ( t != null ) {</span>
-<span class="fc" id="L266">                    t.printStackTrace(System.err);</span>
+<span class="fc" id="L264">            logTo((msg, t) -&gt; {</span>
+<span class="fc" id="L265">                System.err.println(&quot;[WARN] &quot; + msg );</span>
+<span class="pc bpc" id="L266" title="1 of 2 branches missed.">                if ( t != null ) {</span>
+<span class="fc" id="L267">                    t.printStackTrace(System.err);</span>
                 }
-<span class="fc" id="L268">            });</span>
-<span class="fc" id="L269">    }</span>
+<span class="fc" id="L269">            });</span>
+<span class="fc" id="L270">    }</span>
     
     /**
      *  Logs the problem as a {@link Logger#info} message to the default logger of the implementing class.
      *  If a SLF4J backend is not available, it will log to the standard output stream {@code System.out}.
      */
     public void logAsInfo() {
-<span class="pc bpc" id="L276" title="1 of 2 branches missed.">        if ( HAS_SLF4J_IMPLEMENTATION )</span>
-<span class="nc" id="L277">            logTo(log::info);</span>
+<span class="pc bpc" id="L277" title="1 of 2 branches missed.">        if ( HAS_SLF4J_IMPLEMENTATION )</span>
+<span class="nc" id="L278">            logTo(log::info);</span>
         else
-<span class="fc" id="L279">            logTo((msg, t) -&gt; {</span>
-<span class="fc" id="L280">                System.out.println(&quot;[INFO] &quot; + msg );</span>
-<span class="pc bpc" id="L281" title="1 of 2 branches missed.">                if ( t != null ) {</span>
-<span class="fc" id="L282">                    t.printStackTrace(System.out);</span>
+<span class="fc" id="L280">            logTo((msg, t) -&gt; {</span>
+<span class="fc" id="L281">                System.out.println(&quot;[INFO] &quot; + msg );</span>
+<span class="pc bpc" id="L282" title="1 of 2 branches missed.">                if ( t != null ) {</span>
+<span class="fc" id="L283">                    t.printStackTrace(System.out);</span>
                 }
-<span class="fc" id="L284">            });</span>
-<span class="fc" id="L285">    }</span>
+<span class="fc" id="L285">            });</span>
+<span class="fc" id="L286">    }</span>
     
     /**
      *  Logs the problem as a {@link Logger#debug} message to the default logger of the implementing class.
      *  If a SLF4J backend is not available, it will log to the standard output stream {@code System.out}.
      */
     public void logAsDebug() {
-<span class="pc bpc" id="L292" title="1 of 2 branches missed.">        if ( HAS_SLF4J_IMPLEMENTATION )</span>
-<span class="nc" id="L293">            logTo(log::debug);</span>
+<span class="pc bpc" id="L293" title="1 of 2 branches missed.">        if ( HAS_SLF4J_IMPLEMENTATION )</span>
+<span class="nc" id="L294">            logTo(log::debug);</span>
         else
-<span class="fc" id="L295">            logTo((msg, t) -&gt; {</span>
-<span class="fc" id="L296">                System.out.println(&quot;[DEBUG] &quot; + msg );</span>
-<span class="pc bpc" id="L297" title="1 of 2 branches missed.">                if ( t != null ) {</span>
-<span class="fc" id="L298">                    t.printStackTrace(System.out);</span>
+<span class="fc" id="L296">            logTo((msg, t) -&gt; {</span>
+<span class="fc" id="L297">                System.out.println(&quot;[DEBUG] &quot; + msg );</span>
+<span class="pc bpc" id="L298" title="1 of 2 branches missed.">                if ( t != null ) {</span>
+<span class="fc" id="L299">                    t.printStackTrace(System.out);</span>
                 }
-<span class="fc" id="L300">            });</span>
-<span class="fc" id="L301">    }</span>
+<span class="fc" id="L301">            });</span>
+<span class="fc" id="L302">    }</span>
     
     /**
      *  Logs the problem as a {@link Logger#trace} message to the default logger of the implementing class.
      *  If a SLF4J backend is not available, it will log to the standard output stream {@code System.out}.
      */
     public void logAsTrace() {
-<span class="pc bpc" id="L308" title="1 of 2 branches missed.">        if ( HAS_SLF4J_IMPLEMENTATION )</span>
-<span class="nc" id="L309">            logTo(log::trace);</span>
+<span class="pc bpc" id="L309" title="1 of 2 branches missed.">        if ( HAS_SLF4J_IMPLEMENTATION )</span>
+<span class="nc" id="L310">            logTo(log::trace);</span>
         else
-<span class="fc" id="L311">            logTo((msg, t) -&gt; {</span>
-<span class="fc" id="L312">                System.out.println(&quot;[TRACE] &quot; + msg );</span>
-<span class="pc bpc" id="L313" title="1 of 2 branches missed.">                if ( t != null ) {</span>
-<span class="fc" id="L314">                    t.printStackTrace(System.out);</span>
+<span class="fc" id="L312">            logTo((msg, t) -&gt; {</span>
+<span class="fc" id="L313">                System.out.println(&quot;[TRACE] &quot; + msg );</span>
+<span class="pc bpc" id="L314" title="1 of 2 branches missed.">                if ( t != null ) {</span>
+<span class="fc" id="L315">                    t.printStackTrace(System.out);</span>
                 }
-<span class="fc" id="L316">            });</span>
-<span class="fc" id="L317">    }</span>
+<span class="fc" id="L317">            });</span>
+<span class="fc" id="L318">    }</span>
 
     @Override public String toString() { 
-<span class="nc" id="L320">        return String.format(&quot;%s:\n%s&quot;, title(), description()); </span>
+<span class="nc" id="L321">        return String.format(&quot;%s:\n%s&quot;, title(), description()); </span>
     }
 
     @Override public boolean equals( Object obj ) {
-<span class="pc bpc" id="L324" title="1 of 2 branches missed.">        if ( this == obj ) return true;</span>
-<span class="pc bpc" id="L325" title="1 of 2 branches missed.">        if ( !(obj instanceof Problem) ) return false;</span>
-<span class="fc" id="L326">        Problem other = (Problem) obj;</span>
-<span class="pc bpc" id="L327" title="1 of 2 branches missed.">        return _title.equals(other._title) &amp;&amp;</span>
-<span class="nc bnc" id="L328" title="All 2 branches missed.">               _description.equals(other._description) &amp;&amp;</span>
-<span class="nc bnc" id="L329" title="All 2 branches missed.">               Objects.equals(_exception, other._exception) &amp;&amp;</span>
-<span class="pc bnc" id="L330" title="All 2 branches missed.">               Objects.equals(_reporter, other._reporter);</span>
+<span class="pc bpc" id="L325" title="1 of 2 branches missed.">        if ( this == obj ) return true;</span>
+<span class="pc bpc" id="L326" title="1 of 2 branches missed.">        if ( !(obj instanceof Problem) ) return false;</span>
+<span class="fc" id="L327">        Problem other = (Problem) obj;</span>
+<span class="pc bpc" id="L328" title="1 of 2 branches missed.">        return _title.equals(other._title) &amp;&amp;</span>
+<span class="nc bnc" id="L329" title="All 2 branches missed.">               _description.equals(other._description) &amp;&amp;</span>
+<span class="nc bnc" id="L330" title="All 2 branches missed.">               Objects.equals(_exception, other._exception) &amp;&amp;</span>
+<span class="pc bnc" id="L331" title="All 2 branches missed.">               Objects.equals(_reporter, other._reporter);</span>
     }
 
     @Override public int hashCode() {
-<span class="nc" id="L334">        return Objects.hash(_title, _description, _exception, _reporter);</span>
+<span class="nc" id="L335">        return Objects.hash(_title, _description, _exception, _reporter);</span>
     }
 
     private static void _logError(String message, @Nullable Object... args) {
-<span class="nc" id="L338">        Util._logError(log, message, args);</span>
-<span class="nc" id="L339">    }</span>
+<span class="nc" id="L339">        Util._logError(log, message, args);</span>
+<span class="nc" id="L340">    }</span>
 
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

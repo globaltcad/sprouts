@@ -44,47 +44,48 @@ final class EventImpl implements Observable, Event {
 <span class="fc bfc" id="L44" title="All 2 branches covered.">            for (Observer observer : _getObservers()) {</span>
                 try {
 <span class="fc" id="L46">                    observer.invoke();</span>
-<span class="nc" id="L47">                } catch (Exception e) {</span>
-<span class="nc" id="L48">                    _logError(&quot;Error invoking observer!&quot;, e);</span>
-<span class="fc" id="L49">                }</span>
-<span class="fc" id="L50">            }</span>
-<span class="fc bfc" id="L51" title="All 2 branches covered.">            for (WeakReference&lt;EventImpl&gt; vessel : _getVessels()) {</span>
-<span class="fc" id="L52">                EventImpl event = vessel.get();</span>
-<span class="fc bfc" id="L53" title="All 2 branches covered.">                if (event != null)</span>
-<span class="fc" id="L54">                    event.fire();</span>
-<span class="fc" id="L55">            }</span>
-<span class="fc bfc" id="L56" title="All 2 branches covered.">            _setVessels(_getVessels().removeIf(vessel -&gt; vessel.get() == null));</span>
-<span class="fc" id="L57">        });</span>
-<span class="fc" id="L58">    }</span>
+<span class="fc" id="L47">                } catch (Exception e) {</span>
+<span class="fc" id="L48">                    Util.sneakyThrowExceptionIfFatal(e);</span>
+<span class="fc" id="L49">                    _logError(&quot;Error invoking observer!&quot;, e);</span>
+<span class="fc" id="L50">                }</span>
+<span class="fc" id="L51">            }</span>
+<span class="fc bfc" id="L52" title="All 2 branches covered.">            for (WeakReference&lt;EventImpl&gt; vessel : _getVessels()) {</span>
+<span class="fc" id="L53">                EventImpl event = vessel.get();</span>
+<span class="fc bfc" id="L54" title="All 2 branches covered.">                if (event != null)</span>
+<span class="fc" id="L55">                    event.fire();</span>
+<span class="fc" id="L56">            }</span>
+<span class="fc bfc" id="L57" title="All 2 branches covered.">            _setVessels(_getVessels().removeIf(vessel -&gt; vessel.get() == null));</span>
+<span class="fc" id="L58">        });</span>
+<span class="fc" id="L59">    }</span>
 
     @Override
     public Observable observable() {
-<span class="fc" id="L62">        EventImpl vessel = new EventImpl(executor);</span>
-<span class="fc" id="L63">        _setVessels(_getVessels().add(new WeakReference&lt;&gt;(vessel)));</span>
-<span class="fc" id="L64">        return vessel;</span>
+<span class="fc" id="L63">        EventImpl vessel = new EventImpl(executor);</span>
+<span class="fc" id="L64">        _setVessels(_getVessels().add(new WeakReference&lt;&gt;(vessel)));</span>
+<span class="fc" id="L65">        return vessel;</span>
     }
 
     @Override
     public Observable subscribe(Observer observer) {
-<span class="fc" id="L69">        _setObservers(_getObservers().add(observer));</span>
-<span class="fc" id="L70">        return this;</span>
+<span class="fc" id="L70">        _setObservers(_getObservers().add(observer));</span>
+<span class="fc" id="L71">        return this;</span>
     }
 
     @Override
     public Observable unsubscribe(Subscriber subscriber) {
-<span class="pc bpc" id="L75" title="1 of 2 branches missed.">        if (subscriber instanceof Observer)</span>
-<span class="fc" id="L76">            _setObservers(_getObservers().remove((Observer) subscriber));</span>
-<span class="fc" id="L77">        return this;</span>
+<span class="pc bpc" id="L76" title="1 of 2 branches missed.">        if (subscriber instanceof Observer)</span>
+<span class="fc" id="L77">            _setObservers(_getObservers().remove((Observer) subscriber));</span>
+<span class="fc" id="L78">        return this;</span>
     }
 
     @Override
     public void unsubscribeAll() {
-<span class="fc" id="L82">        _setObservers(_getObservers().clear());</span>
-<span class="fc" id="L83">    }</span>
+<span class="fc" id="L83">        _setObservers(_getObservers().clear());</span>
+<span class="fc" id="L84">    }</span>
 
     private static void _logError(String message, @Nullable Object... args) {
-<span class="nc" id="L86">        Util._logError(log, message, args);</span>
-<span class="nc" id="L87">    }</span>
+<span class="fc" id="L87">        Util._logError(log, message, args);</span>
+<span class="fc" id="L88">    }</span>
 
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

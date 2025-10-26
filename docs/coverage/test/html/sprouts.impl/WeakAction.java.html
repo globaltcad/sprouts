@@ -60,10 +60,10 @@ final class WeakAction&lt;O, D&gt; implements Action&lt;D&gt;
 
 <span class="fc" id="L61">        O owner = _owner.get();</span>
 
-<span class="fc bfc" id="L63" title="All 2 branches covered.">        if ( owner != null )</span>
+<span class="pc bpc" id="L63" title="1 of 2 branches missed.">        if ( owner != null )</span>
 <span class="fc" id="L64">            _action.accept(owner, delegate);</span>
         else
-<span class="fc" id="L66">            _action = null;</span>
+<span class="nc" id="L66">            _action = null;</span>
 <span class="fc" id="L67">    }</span>
 
     /**

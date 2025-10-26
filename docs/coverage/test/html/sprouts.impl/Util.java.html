@@ -7,65 +7,111 @@ import org.slf4j.helpers.MessageFormatter;
 import org.slf4j.helpers.NOPLogger;
 import sprouts.From;
 
+import java.lang.reflect.UndeclaredThrowableException;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 final class Util {
 
-<span class="fc" id="L14">    public static From VIEW_CHANNEL = From.ALL;</span>
+<span class="fc" id="L16">    public static From VIEW_CHANNEL = From.ALL;</span>
 
     private Util() {}
 
-    static void _logError(Logger log, String message, @Nullable Object... args) {
-<span class="pc bpc" id="L19" title="1 of 2 branches missed.">        if ( log instanceof NOPLogger) {</span>
-<span class="fc" id="L20">            Exception lastArgException = null;</span>
-<span class="pc bpc" id="L21" title="2 of 6 branches missed.">            if ( args != null &amp;&amp; args.length &gt; 0 &amp;&amp; args[args.length - 1] instanceof Exception ) {</span>
-<span class="fc" id="L22">                lastArgException = (Exception) args[args.length - 1];</span>
-<span class="fc" id="L23">                args = java.util.Arrays.copyOf(args, args.length - 1);</span>
-            }
-<span class="fc" id="L25">            String loggingMarker = Sprouts.factory().loggingMarker().toString().trim();</span>
-<span class="pc bpc" id="L26" title="5 of 6 branches missed.">            if ( !loggingMarker.isEmpty() &amp;&amp; !loggingMarker.startsWith(&quot;[&quot;) &amp;&amp; !loggingMarker.endsWith(&quot;]&quot;) ) {</span>
-<span class="nc" id="L27">                loggingMarker = &quot;[&quot; + loggingMarker + &quot;]&quot;;</span>
-            }
-<span class="fc" id="L29">            System.err.println(</span>
-<span class="fc" id="L30">                MessageFormatter.arrayFormat(&quot;[ERROR]&quot;+loggingMarker+&quot; &quot; + message, args)</span>
-<span class="fc" id="L31">                .getMessage()</span>
-            );
-<span class="fc bfc" id="L33" title="All 2 branches covered.">            if ( lastArgException != null ) {</span>
-<span class="fc" id="L34">                lastArgException.printStackTrace();</span>
-            }
-<span class="fc" id="L36">        } else {</span>
-<span class="nc" id="L37">            log.error(Sprouts.factory().loggingMarker(), message, args);</span>
+    static void sneakyThrowExceptionIfFatal(Throwable throwable) {
+<span class="pc bpc" id="L21" title="1 of 2 branches missed.">        if (</span>
+            throwable instanceof UndeclaredThrowableException &amp;&amp;
+<span class="nc bnc" id="L23" title="All 2 branches missed.">            throwable.getCause() instanceof InterruptedException</span>
+        ) {
+<span class="nc" id="L25">            throwable = throwable.getCause();</span>
         }
-<span class="fc" id="L39">    }</span>
+<span class="fc bfc" id="L27" title="All 2 branches covered.">        if (isFatal(throwable)) {</span>
+<span class="pc bpc" id="L28" title="1 of 2 branches missed.">            if (throwable instanceof InterruptedException) {</span>
+<span class="fc" id="L29">                Thread.currentThread().interrupt();</span>
+            }
+<span class="nc" id="L31">            sneakyThrow(throwable);</span>
+        }
+<span class="fc" id="L33">    }</span>
+
+    static boolean isFatal(Throwable throwable) {
+<span class="pc bpc" id="L36" title="1 of 4 branches missed.">        return throwable instanceof InterruptedException</span>
+                || throwable instanceof LinkageError
+<span class="pc bpc" id="L38" title="2 of 4 branches missed.">                || ThreadDeathResolver.isThreadDeath(throwable)</span>
+                || throwable instanceof VirtualMachineError;
+    }
+
+    private static class ThreadDeathResolver {
+<span class="fc" id="L43">        static final @Nullable Class&lt;?&gt; THREAD_DEATH_CLASS = resolve();</span>
+
+        static boolean isThreadDeath(Throwable throwable) {
+<span class="pc bpc" id="L46" title="2 of 4 branches missed.">            return THREAD_DEATH_CLASS != null &amp;&amp; THREAD_DEATH_CLASS.isInstance(throwable);</span>
+        }
+
+        private static @Nullable Class&lt;?&gt; resolve() {
+            try {
+<span class="fc" id="L51">                return Class.forName(&quot;java.lang.ThreadDeath&quot;);</span>
+<span class="nc" id="L52">            } catch (ClassNotFoundException e) {</span>
+<span class="nc" id="L53">                return null;</span>
+            }
+        }
+    }
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    static &lt;E extends Throwable, R&gt; R sneakyThrow(Throwable e) throws E {
+<span class="fc" id="L60">        throw (E) e; // throw the returned thing and the compiler believes this is unchecked</span>
+    }
+
+    static void _logError(Logger log, String message, @Nullable Object... args) {
+<span class="pc bpc" id="L64" title="1 of 2 branches missed.">        if ( log instanceof NOPLogger) {</span>
+<span class="fc" id="L65">            Exception lastArgException = null;</span>
+<span class="pc bpc" id="L66" title="2 of 6 branches missed.">            if ( args != null &amp;&amp; args.length &gt; 0 &amp;&amp; args[args.length - 1] instanceof Exception ) {</span>
+<span class="fc" id="L67">                lastArgException = (Exception) args[args.length - 1];</span>
+<span class="fc" id="L68">                args = java.util.Arrays.copyOf(args, args.length - 1);</span>
+            }
+<span class="fc" id="L70">            String loggingMarker = Sprouts.factory().loggingMarker().toString().trim();</span>
+<span class="pc bpc" id="L71" title="5 of 6 branches missed.">            if ( !loggingMarker.isEmpty() &amp;&amp; !loggingMarker.startsWith(&quot;[&quot;) &amp;&amp; !loggingMarker.endsWith(&quot;]&quot;) ) {</span>
+<span class="nc" id="L72">                loggingMarker = &quot;[&quot; + loggingMarker + &quot;]&quot;;</span>
+            }
+<span class="fc" id="L74">            System.err.println(</span>
+<span class="fc" id="L75">                MessageFormatter.arrayFormat(&quot;[ERROR]&quot;+loggingMarker+&quot; &quot; + message, args)</span>
+<span class="fc" id="L76">                .getMessage()</span>
+            );
+<span class="fc bfc" id="L78" title="All 2 branches covered.">            if ( lastArgException != null ) {</span>
+<span class="fc" id="L79">                lastArgException.printStackTrace();</span>
+            }
+<span class="fc" id="L81">        } else {</span>
+<span class="nc" id="L82">            log.error(Sprouts.factory().loggingMarker(), message, args);</span>
+        }
+<span class="fc" id="L84">    }</span>
 
     static String _toString( @Nullable Object singleItem, Class&lt;?&gt; type ) {
-<span class="pc bpc" id="L42" title="1 of 2 branches missed.">        if ( singleItem == null ) {</span>
-<span class="nc" id="L43">            return &quot;null&quot;;</span>
-<span class="fc bfc" id="L44" title="All 2 branches covered.">        } else if ( type == String.class ) {</span>
-<span class="fc" id="L45">            return &quot;\&quot;&quot; + singleItem + &quot;\&quot;&quot;;</span>
-<span class="fc bfc" id="L46" title="All 2 branches covered.">        } else if ( type == Character.class ) {</span>
-<span class="fc" id="L47">            return &quot;'&quot; + singleItem + &quot;'&quot;;</span>
-<span class="pc bpc" id="L48" title="1 of 2 branches missed.">        } else if ( type == Boolean.class ) {</span>
-<span class="nc" id="L49">            return singleItem.toString();</span>
+<span class="pc bpc" id="L87" title="1 of 2 branches missed.">        if ( singleItem == null ) {</span>
+<span class="nc" id="L88">            return &quot;null&quot;;</span>
+<span class="fc bfc" id="L89" title="All 2 branches covered.">        } else if ( type == String.class ) {</span>
+<span class="fc" id="L90">            return &quot;\&quot;&quot; + singleItem + &quot;\&quot;&quot;;</span>
+<span class="fc bfc" id="L91" title="All 2 branches covered.">        } else if ( type == Character.class ) {</span>
+<span class="fc" id="L92">            return &quot;'&quot; + singleItem + &quot;'&quot;;</span>
+<span class="pc bpc" id="L93" title="1 of 2 branches missed.">        } else if ( type == Boolean.class ) {</span>
+<span class="nc" id="L94">            return singleItem.toString();</span>
         } else {
-<span class="fc" id="L51">            return singleItem.toString();</span>
+<span class="fc" id="L96">            return singleItem.toString();</span>
         }
     }
 
     @SuppressWarnings(&quot;ReferenceEquality&quot;)
     static boolean refEquals(@Nullable Object a, @Nullable Object b) {
         // We use == here to compare references, not .equals()!
-<span class="fc bfc" id="L58" title="All 2 branches covered.">        return a == b;</span>
+<span class="fc bfc" id="L103" title="All 2 branches covered.">        return a == b;</span>
     }
 
     static &lt;T extends @Nullable Object, R&gt; Function&lt;T, R&gt; nonNullMapper(Logger log, R nullObject, R errorObject, Function&lt;T, @Nullable R&gt; mapper) {
-<span class="fc" id="L62">        return t -&gt; {</span>
+<span class="fc" id="L107">        return t -&gt; {</span>
             try {
-<span class="fc" id="L64">                @Nullable R r = mapper.apply(t);</span>
-<span class="fc bfc" id="L65" title="All 2 branches covered.">                return r == null ? nullObject : r;</span>
-<span class="fc" id="L66">            } catch (Exception e) {</span>
-<span class="fc" id="L67">                _logError(log, &quot;An error occurred while mapping item '{}'.&quot;, t, e);</span>
-<span class="fc" id="L68">                return errorObject;</span>
+<span class="fc" id="L109">                @Nullable R r = mapper.apply(t);</span>
+<span class="fc bfc" id="L110" title="All 2 branches covered.">                return r == null ? nullObject : r;</span>
+<span class="fc" id="L111">            } catch (Exception e) {</span>
+<span class="fc" id="L112">                Util.sneakyThrowExceptionIfFatal(e);</span>
+<span class="fc" id="L113">                _logError(log, &quot;An error occurred while mapping item '{}'.&quot;, t, e);</span>
+<span class="fc" id="L114">                return errorObject;</span>
             }
         };
     }
@@ -80,9 +126,9 @@ final class Util {
      * @param &lt;T&gt; The type of the item.
      */
     static &lt;T&gt; Class&lt;T&gt; expectedClassFromItem( @NonNull T item ) {
-<span class="fc" id="L83">        Class&lt;?&gt; itemType = item.getClass();</span>
+<span class="fc" id="L129">        Class&lt;?&gt; itemType = item.getClass();</span>
         // We check if it is an enum:
-<span class="fc bfc" id="L85" title="All 2 branches covered.">        if ( Enum.class.isAssignableFrom(itemType) ) {</span>
+<span class="fc bfc" id="L131" title="All 2 branches covered.">        if ( Enum.class.isAssignableFrom(itemType) ) {</span>
             /*
                 When it comes to enums, there is a pitfall we might
                 fall into if just return the Class instance right away!
@@ -110,13 +156,13 @@ final class Util {
                 Food.class != Food.TOFU.getClass()
             */
             // Let's check for that:
-<span class="fc" id="L113">            Class&lt;?&gt; superClass = itemType.getSuperclass();</span>
-<span class="pc bpc" id="L114" title="1 of 4 branches missed.">            if ( superClass != null &amp;&amp; !superClass.equals(Enum.class) ) {</span>
+<span class="fc" id="L159">            Class&lt;?&gt; superClass = itemType.getSuperclass();</span>
+<span class="pc bpc" id="L160" title="1 of 4 branches missed.">            if ( superClass != null &amp;&amp; !superClass.equals(Enum.class) ) {</span>
                 // We are good to go, it is an enum!
-<span class="fc" id="L116">                return (Class&lt;T&gt;) superClass;</span>
+<span class="fc" id="L162">                return (Class&lt;T&gt;) superClass;</span>
             }
         }
-<span class="fc" id="L119">        return (Class&lt;T&gt;) itemType;</span>
+<span class="fc" id="L165">        return (Class&lt;T&gt;) itemType;</span>
     }
 
     /**
@@ -132,7 +178,7 @@ final class Util {
      */
     @SuppressWarnings(&quot;NullAway&quot;)
     static &lt;T&gt; T fakeNonNull( @Nullable T var ) {
-<span class="fc" id="L135">        return var;</span>
+<span class="fc" id="L181">        return var;</span>
     }
 
 }
