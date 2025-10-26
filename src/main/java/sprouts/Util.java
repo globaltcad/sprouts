@@ -6,6 +6,7 @@ import org.slf4j.helpers.MessageFormatter;
 import org.slf4j.helpers.NOPLogger;
 import sprouts.impl.Sprouts;
 
+import java.lang.reflect.UndeclaredThrowableException;
 import java.util.function.Supplier;
 
 final class Util {
@@ -13,6 +14,12 @@ final class Util {
     private Util() {}
 
     static void sneakyThrowExceptionIfFatal(Throwable throwable) {
+        if (
+            throwable instanceof UndeclaredThrowableException &&
+            throwable.getCause() instanceof InterruptedException
+        ) {
+            throwable = throwable.getCause();
+        }
         if (isFatal(throwable)) {
             if (throwable instanceof InterruptedException) {
                 Thread.currentThread().interrupt();
