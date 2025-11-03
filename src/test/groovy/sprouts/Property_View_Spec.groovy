@@ -918,6 +918,117 @@ class Property_View_Spec extends Specification
             trace == ["Listener 1: Hello Sprouts", "Listener 2: Hello Sprouts"]
     }
 
+    def 'When a source property changes, then its views only fire a change event if their items change as well!'()
+    {
+        reportInfo """
+            Views derive their state from source properties.
+            Although a state change in a source property leads to a change event
+            and consequently an update in the view, the view may not necessarily 
+            experience a state change and change event itself. If the new item in
+            an updated view is equal to the previous one, then it will not
+            propagate the change event from the source.
+        """
+        given :
+            var greeting = Var.of("Hello Earthling!")
+            var month = Var.of(Month.JUNE)
+        and :
+            var spacesInGreeting= greeting.viewAsInt(it->it.split(" ").length-1)
+            var monthAsString   = month.viewAsString()
+            var lettersInMonth  = monthAsString.viewAsInt(it->it.length())
+            var mixedMessaging  = Viewable.of(monthAsString, greeting, (m,g)->m+g.substring(m.length()))
+            var lettersInMixed = mixedMessaging.viewAsInt(it->it.length())
+        and :
+            var trace = [
+                    spacesInGreeting : [],
+                    monthAsString    : [],
+                    lettersInMonth   : [],
+                    mixedMessaging   : [],
+                    lettersInMixed   : []
+                ]
+        and :
+            spacesInGreeting.onChange(From.ALL, {trace.spacesInGreeting       .add(it.currentValue().orElseThrow())})
+            monthAsString   .onChange(From.ALL, {trace.monthAsString          .add(it.currentValue().orElseThrow())})
+            lettersInMonth  .onChange(From.ALL, {trace.lettersInMonth         .add(it.currentValue().orElseThrow())})
+            mixedMessaging  .onChange(From.ALL, {trace.mixedMessaging         .add(it.currentValue().orElseThrow())})
+            lettersInMixed  .onChange(From.ALL, {trace.lettersInMixed.add(it.currentValue().orElseThrow())})
+
+        when : 'We change the first source property to something which should not lead to state changes in any of its views...'
+            greeting.set("Bello Earthling!")
+        then : 'Indeed, the trace is still completely empty. The views did not report changes.'
+            trace == [
+                    spacesInGreeting : [],
+                    monthAsString    : [],
+                    lettersInMonth   : [],
+                    mixedMessaging   : [],
+                    lettersInMixed   : []
+                ]
+
+        when : 'We perform a more substantial change to the string based source property...'
+            greeting.set("Hello World!")
+        then : 'We notice that some of the views report a change event, but not all!'
+            trace == [
+                    spacesInGreeting : [],
+                    monthAsString    : [],
+                    lettersInMonth   : [],
+                    mixedMessaging   : ["JUNEo World!"],
+                    lettersInMixed   : [12]
+                ]
+
+        when : 'We now mutate the month property to a very similar month...'
+            month.set(Month.JULY)
+        then : 'The string representation of the month reports a change, but nothing more!'
+            trace == [
+                    spacesInGreeting : [],
+                    monthAsString    : ["JULY"],
+                    lettersInMonth   : [],
+                    mixedMessaging   : ["JUNEo World!", "JULYo World!"],
+                    lettersInMixed   : [12]
+                ]
+
+        when : 'We do more changes to the greeting...'
+            greeting.set("In no World!")
+        then : 'The spaces view reports a change!'
+            trace == [
+                    spacesInGreeting : [2],
+                    monthAsString    : ["JULY"],
+                    lettersInMonth   : [],
+                    mixedMessaging   : ["JUNEo World!", "JULYo World!"],
+                    lettersInMixed   : [12]
+                ]
+
+        when : 'We change the month again, now with a longer month...'
+            month.set(Month.APRIL)
+        then : 'We suddenly have much more changes...'
+            trace == [
+                    spacesInGreeting : [2],
+                    monthAsString    : ["JULY", "APRIL"],
+                    lettersInMonth   : [5],
+                    mixedMessaging   : ["JUNEo World!", "JULYo World!", "APRIL World!"],
+                    lettersInMixed   : [12]
+                ]
+
+        when : "We force a change event for the first source property..."
+            greeting.fireChange(From.ALL)
+        then : "The properties dependant on the 'greeting' propagate the forced event!"
+            trace == [
+                    spacesInGreeting : [2, 2],
+                    monthAsString    : ["JULY", "APRIL"],
+                    lettersInMonth   : [5],
+                    mixedMessaging   : ["JUNEo World!", "JULYo World!", "APRIL World!", "APRIL World!"],
+                    lettersInMixed   : [12, 12]
+                ]
+        when : "We force a change event for the second source property..."
+            month.fireChange(From.ALL)
+        then : "The properties dependant on the 'month' propagate the forced event!"
+            trace == [
+                    spacesInGreeting : [2, 2],
+                    monthAsString    : ["JULY", "APRIL", "APRIL"],
+                    lettersInMonth   : [5, 5],
+                    mixedMessaging   : ["JUNEo World!", "JULYo World!", "APRIL World!", "APRIL World!", "APRIL World!"],
+                    lettersInMixed   : [12, 12, 12]
+                ]
+    }
+
     /**
      * This method guarantees that garbage collection is
      * done unlike <code>{@link System#gc()}</code>
