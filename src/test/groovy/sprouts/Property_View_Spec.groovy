@@ -1176,7 +1176,7 @@ class Property_View_Spec extends Specification
 
         when : 'We change to another value that causes an error!'
             numberSource.set(null) // Source is null, mapping returns null
-        then : 'The view does NOT fire (same null object state)'
+        then : 'The view DOES fire (different error state)'
             trace == ["20", "NULL", "ERROR"]
 
         when : 'We change to a problematic value (if our mapping was more complex)'
