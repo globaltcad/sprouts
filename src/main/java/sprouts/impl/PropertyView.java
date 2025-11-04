@@ -48,7 +48,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 		final PropertyView<@Nullable U> viewProperty = PropertyView._ofNullable(type, initialItem, source);
 		Viewable.cast(source).onChange(Util.VIEW_CHANNEL, WeakAction.of( viewProperty, (innerViewProperty, v) -> {
 			ItemPair<U> pair = innerViewProperty._setInternal(mapper.apply(v.currentValue().orElseNull()));
-			innerViewProperty.fireIfOnlySomethingChanged(v.channel(), pair, v.change());
+			innerViewProperty.fireOnlyIfChangedOrParentForcedChange(v.channel(), pair, v.change());
 		}));
 		return viewProperty;
 	}
@@ -72,7 +72,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 				return;
 			final U value = nonNullMapper.apply(innerSource.orElseNull());
 			ItemPair<U> pair = innerViewProperty._setInternal(value);
-			innerViewProperty.fireIfOnlySomethingChanged(v.channel(), pair, v.change());
+			innerViewProperty.fireOnlyIfChangedOrParentForcedChange(v.channel(), pair, v.change());
 		}));
 		return viewProperty;
 	}
@@ -97,7 +97,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 				return;
 
 			ItemPair<T> pair = innerViewProperty._setInternal(v.currentValue().orElseNull());
-			innerViewProperty.fireIfOnlySomethingChanged(v.channel(), pair, v.change());
+			innerViewProperty.fireOnlyIfChangedOrParentForcedChange(v.channel(), pair, v.change());
 		}));
 		return viewProperty;
 	}
@@ -110,7 +110,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 			Viewable.cast(source).onChange(From.ALL, WeakAction.of(view, (innerViewProperty, v) -> {
 				T newItem = mapper.apply(v.currentValue().orElseNull());
 				ItemPair<T> pair = innerViewProperty._setInternal(newItem);
-				innerViewProperty.fireIfOnlySomethingChanged(v.channel(), pair, v.change());
+				innerViewProperty.fireOnlyIfChangedOrParentForcedChange(v.channel(), pair, v.change());
 			}));
 			return view;
 		}
@@ -166,7 +166,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 				);
 			else {
 				ItemPair<T> pair = innerResult._setInternal(newItem);
-				innerResult.fireIfOnlySomethingChanged(From.ALL, pair, v.change());
+				innerResult.fireOnlyIfChangedOrParentForcedChange(From.ALL, pair, v.change());
 			}
 		};
 		BiConsumer<PropertyView<T>,ValDelegate<U>> secondListener = (innerResult,v) -> {
@@ -180,7 +180,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 				);
 			else {
 				ItemPair<T> pair = innerResult._setInternal(newItem);
-				innerResult.fireIfOnlySomethingChanged(From.ALL, pair, v.change());
+				innerResult.fireOnlyIfChangedOrParentForcedChange(From.ALL, pair, v.change());
 			}
 		};
 
@@ -225,13 +225,13 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 			Viewable.cast(first).onChange(From.ALL, WeakAction.of(result, (innerResult, v) -> {
 				Val<U> innerSecond = innerResult._getSource(1);
 				ItemPair<T> pair = innerResult._setInternal(fullCombiner.apply(v.currentValue(), innerSecond));
-				innerResult.fireIfOnlySomethingChanged(v.channel(), pair, v.change());
+				innerResult.fireOnlyIfChangedOrParentForcedChange(v.channel(), pair, v.change());
 			}));
 		if ( !secondIsImmutable )
 			Viewable.cast(second).onChange(From.ALL, WeakAction.of(result, (innerResult, v) -> {
 				Val<T> innerFirst = innerResult._getSource(0);
 				ItemPair<T> pair = innerResult._setInternal(fullCombiner.apply(innerFirst, v.currentValue()));
-				innerResult.fireIfOnlySomethingChanged(v.channel(), pair, v.change());
+				innerResult.fireOnlyIfChangedOrParentForcedChange(v.channel(), pair, v.change());
 			}));
 		return result;
 	}
@@ -273,7 +273,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 				);
 			else {
 				ItemPair<R> pair = innerResult._setInternal(newItem);
-				innerResult.fireIfOnlySomethingChanged(v.channel(), pair, v.change());
+				innerResult.fireOnlyIfChangedOrParentForcedChange(v.channel(), pair, v.change());
 			}
 		}));
 		Viewable.cast(second).onChange(From.ALL, WeakAction.of(result, (innerResult, v) -> {
@@ -288,7 +288,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 				);
 			else {
 				ItemPair<R> pair = innerResult._setInternal(newItem);
-				innerResult.fireIfOnlySomethingChanged(v.channel(), pair, v.change());
+				innerResult.fireOnlyIfChangedOrParentForcedChange(v.channel(), pair, v.change());
 			}
 		}));
 		return result;
@@ -316,12 +316,12 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 		Viewable.cast(first).onChange(From.ALL, WeakAction.of(result, (innerResult, v) -> {
 			Val<U> innerSecond = innerResult._getSource(1);
 			ItemPair<R> pair = innerResult._setInternal(fullCombiner.apply(v.currentValue(), innerSecond));
-			innerResult.fireIfOnlySomethingChanged(v.channel(), pair, v.change());
+			innerResult.fireOnlyIfChangedOrParentForcedChange(v.channel(), pair, v.change());
 		}));
 		Viewable.cast(second).onChange(From.ALL, WeakAction.of(result, (innerResult, v) -> {
 			Val<T> innerFirst = innerResult._getSource(0);
 			ItemPair<R> pair = innerResult._setInternal(fullCombiner.apply(innerFirst, v.currentValue()));
-			innerResult.fireIfOnlySomethingChanged(v.channel(), pair, v.change());
+			innerResult.fireOnlyIfChangedOrParentForcedChange(v.channel(), pair, v.change());
 		}));
 		return result;
 	}
@@ -412,7 +412,24 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 		return this;
 	}
 
-    void fireIfOnlySomethingChanged( Channel channel, ItemPair<T> pair, @Nullable SingleChange parentChange ) {
+    /**
+     *  This method fires a change event only if the item actually changed according to the given {@link ItemPair},
+     *  or if the source of the change (the parent/source property) forced a change event. This "forced change"
+     *  is indicated by the {@code parentChange} parameter being {@link SingleChange#NONE}.
+     *  <b>
+     *      This seems counter-intuitive, but it is based on the fact that a parent/source property
+     *      will only ever fire a change event with {@link SingleChange#NONE} if it is forced to do so,
+     *      through a direct call to its {@code fireChange(...)} method.
+     *  </b>
+     * @param channel The channel on which the change event should be fired.
+     * @param pair The item pair representing the old and new items.
+     * @param parentChange The change type of the parent/source property that triggered this change.
+     */
+    private void fireOnlyIfChangedOrParentForcedChange(
+        Channel channel,
+        ItemPair<T> pair,
+        @Nullable SingleChange parentChange
+    ) {
         if ( pair.change() != SingleChange.NONE || parentChange == SingleChange.NONE )
             fireChange(channel, pair);
     }
@@ -436,7 +453,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 	public Var<T> set( Channel channel, T newItem ) {
 		Objects.requireNonNull(channel);
 		ItemPair<T> pair = _setInternal(newItem);
-		this.fireIfOnlySomethingChanged(channel, pair, null);
+		this.fireOnlyIfChangedOrParentForcedChange(channel, pair, null);
 		return this;
 	}
 
