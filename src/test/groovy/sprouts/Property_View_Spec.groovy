@@ -1128,7 +1128,7 @@ class Property_View_Spec extends Specification
         when : 'We change to another value that also maps to null objects for some views'
             source.set("") // Empty string - first char mapping would return null, uses fallback
         then : 'Only views with actual protected state changes fire events'
-            traceLength == [0] // Stays 0, no change? Yes, from 0 to 0 is the same value!
+            traceLength == [0] // Stays 0 (empty string length equals null length fallback), no change event fired
             traceUpper == ["WORLD!", "UNKNOWN", ""] // Changed from "UNKNOWN" to ""
             traceFirstChar == ['w' as char, '?' as char] // Stays '?', no change event
 
