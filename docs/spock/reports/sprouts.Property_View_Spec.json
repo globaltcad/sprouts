@@ -4,7 +4,7 @@
   "narrative":"Properties are designed to be observable, which means that you can \"react\"\n    to their items being replaced by new items. This sort of \"reaction\"\n    to changes is typically done through the \"observer pattern\", where you\n    register change listeners on a property that are invoked whenever the\n    property item changes...\n\n    Contrary to what you might might expect, you cannot register change listeners\n    on properties directly!\n    This is to prevent you from creating memory leaks, which happen very often\n    due to change listeners not being unregistered when they are no longer needed.\n    To fix this, Sprouts provides the concept of a \"property view\" in\n    the form of instances of the `Viewable` type,\n    which is a weakly referenced live property onto which you can safely register\n    your change listeners.\n    And when you no longer use the view (by holding a reference to it),\n    it will be garbage collected along with all of the change listeners\n    that were registered on it.\n\n    But if you keep a reference to the view and a change occurs on the source property,\n    then the view will be updated and all of the change listeners will be notified\n    of the change.",
   "subjects":["sprouts.Viewable","sprouts.Var","sprouts.Val","sprouts.Vars","sprouts.Vals"],
   "statistics":{
-    "runs":"30",
+    "runs":"37",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -755,6 +755,257 @@
         {"kind":"when","text":"We change the value of the property again.","code":["property.set(\"Hello again\")"]},
 
         {"kind":"then","text":"The change listeners are not called anymore, because they were unsubscribed.","code":["trace == [\"Listener 1: Hello Sprouts\", \"Listener 2: Hello Sprouts\"]"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"When a source property changes, then its views only fire a change event if their items change as well!",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Views derive their state from source properties.\n            Although a state change in a source property leads to a change event\n            and consequently an update in the view, the view may not necessarily \n            experience a state change and change event itself. If the new item in\n            an updated view is equal to the previous one, then it will not\n            propagate the change event from the source.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var greeting = Var.of(\"Hello Earthling!\")","var month = Var.of(Month.JUNE)"]},
+
+        {"kind":"and","text":"","code":["var spacesInGreeting= greeting.viewAsInt(it->it.split(\" \").length-1)","var monthAsString   = month.viewAsString()","var lettersInMonth  = monthAsString.viewAsInt(it->it.length())","var mixedMessaging  = Viewable.of(monthAsString, greeting, (m,g)->m+g.substring(m.length()))","var lettersInMixed = mixedMessaging.viewAsInt(it->it.length())"]},
+
+        {"kind":"and","text":"","code":["var trace = [","        spacesInGreeting : [],","        monthAsString    : [],","        lettersInMonth   : [],","        mixedMessaging   : [],","        lettersInMixed   : []","    ]"]},
+
+        {"kind":"and","text":"","code":["spacesInGreeting.onChange(From.ALL, {trace.spacesInGreeting       .add(it.currentValue().orElseThrow())})","monthAsString   .onChange(From.ALL, {trace.monthAsString          .add(it.currentValue().orElseThrow())})","lettersInMonth  .onChange(From.ALL, {trace.lettersInMonth         .add(it.currentValue().orElseThrow())})","mixedMessaging  .onChange(From.ALL, {trace.mixedMessaging         .add(it.currentValue().orElseThrow())})","lettersInMixed  .onChange(From.ALL, {trace.lettersInMixed.add(it.currentValue().orElseThrow())})"]},
+
+        {"kind":"when","text":"We change the first source property to something which should not lead to state changes in any of its views...","code":["greeting.set(\"Bello Earthling!\")"]},
+
+        {"kind":"then","text":"Indeed, the trace is still completely empty. The views did not report changes.","code":["trace == [","        spacesInGreeting : [],","        monthAsString    : [],","        lettersInMonth   : [],","        mixedMessaging   : [],","        lettersInMixed   : []","    ]"]},
+
+        {"kind":"when","text":"We perform a more substantial change to the string based source property...","code":["greeting.set(\"Hello World!\")"]},
+
+        {"kind":"then","text":"We notice that some of the views report a change event, but not all!","code":["trace == [","        spacesInGreeting : [],","        monthAsString    : [],","        lettersInMonth   : [],","        mixedMessaging   : [\"JUNEo World!\"],","        lettersInMixed   : [12]","    ]"]},
+
+        {"kind":"when","text":"We now mutate the month property to a very similar month...","code":["month.set(Month.JULY)"]},
+
+        {"kind":"then","text":"The string representation of the month reports a change, but nothing more!","code":["trace == [","        spacesInGreeting : [],","        monthAsString    : [\"JULY\"],","        lettersInMonth   : [],","        mixedMessaging   : [\"JUNEo World!\", \"JULYo World!\"],","        lettersInMixed   : [12]","    ]"]},
+
+        {"kind":"when","text":"We do more changes to the greeting...","code":["greeting.set(\"In no World!\")"]},
+
+        {"kind":"then","text":"The spaces view reports a change!","code":["trace == [","        spacesInGreeting : [2],","        monthAsString    : [\"JULY\"],","        lettersInMonth   : [],","        mixedMessaging   : [\"JUNEo World!\", \"JULYo World!\"],","        lettersInMixed   : [12]","    ]"]},
+
+        {"kind":"when","text":"We change the month again, now with a longer month...","code":["month.set(Month.APRIL)"]},
+
+        {"kind":"then","text":"We suddenly have much more changes...","code":["trace == [","        spacesInGreeting : [2],","        monthAsString    : [\"JULY\", \"APRIL\"],","        lettersInMonth   : [5],","        mixedMessaging   : [\"JUNEo World!\", \"JULYo World!\", \"APRIL World!\"],","        lettersInMixed   : [12]","    ]"]},
+
+        {"kind":"when","text":"We force a change event for the first source property...","code":["greeting.fireChange(From.ALL)"]},
+
+        {"kind":"then","text":"The properties dependant on the 'greeting' propagate the forced event!","code":["trace == [","        spacesInGreeting : [2, 2],","        monthAsString    : [\"JULY\", \"APRIL\"],","        lettersInMonth   : [5],","        mixedMessaging   : [\"JUNEo World!\", \"JULYo World!\", \"APRIL World!\", \"APRIL World!\"],","        lettersInMixed   : [12, 12]","    ]"]},
+
+        {"kind":"when","text":"We force a change event for the second source property...","code":["month.fireChange(From.ALL)"]},
+
+        {"kind":"then","text":"The properties dependant on the 'month' propagate the forced event!","code":["trace == [","        spacesInGreeting : [2, 2],","        monthAsString    : [\"JULY\", \"APRIL\", \"APRIL\"],","        lettersInMonth   : [5, 5],","        mixedMessaging   : [\"JUNEo World!\", \"JULYo World!\", \"APRIL World!\", \"APRIL World!\", \"APRIL World!\"],","        lettersInMixed   : [12, 12, 12]","    ]"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Nullable property views only fire change events when their actual nullable state changes!",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Views created from nullable properties using methods like `viewAsNullable` should only\n            fire change events when the actual nullable state of the view changes.\n            This means that if the source property changes but the mapping function returns\n            the same nullable value (either both null or both non-null with equal values),\n            then the view should not propagate the change event.\n\n            This behavior is crucial for performance and preventing unnecessary UI updates\n            when the derived nullable state remains unchanged.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A nullable source property and various nullable views","code":["var nullableSource = Var.ofNullable(String, \"initial!!\")","var nullableLength = nullableSource.viewAsNullable(Integer, s -> s?.length())","var nullableUpper = nullableSource.viewAsNullable(String, s -> s?.toUpperCase())","var nullableFirstChar = nullableSource.viewAsNullable(Character, s -> s?.length() == 0 ? null : s?.charAt(0))"]},
+
+        {"kind":"and","text":"Trace lists to record actual change events","code":["var traceLength = []","var traceUpper = []","var traceFirstChar = []"]},
+
+        {"kind":"and","text":"Change listeners that record the actual values when changes occur","code":["nullableLength.onChange(From.ALL, { traceLength.add(it.currentValue().orElseNull()) })","nullableUpper.onChange(From.ALL, { traceUpper.add(it.currentValue().orElseNull()) })","nullableFirstChar.onChange(From.ALL, { traceFirstChar.add(it.currentValue().orElseNull()) })"]},
+
+        {"kind":"when","text":"We change the source to a different value that maps to the same nullable length","code":["nullableSource.set(\"different\") // Still length 9"]},
+
+        {"kind":"then","text":"The length view does NOT fire a change event (same length)","code":["traceLength == []"]},
+
+        {"kind":"and","text":"But the other views DO fire change events (different derived values)","code":["traceUpper == [\"DIFFERENT\"]","traceFirstChar == ['d']"]},
+
+        {"kind":"when","text":"We change the source to null","code":["nullableSource.set(null)"]},
+
+        {"kind":"then","text":"All views fire change events as they transition to null","code":["traceLength == [null]","traceUpper == [\"DIFFERENT\", null]","traceFirstChar == ['d', null]"]},
+
+        {"kind":"when","text":"We change the source to another value that also maps to null in some views","code":["nullableSource.set(\"\") // Empty string - first char mapping returns null"]},
+
+        {"kind":"then","text":"Only the views that actually change their nullable state fire events","code":["traceLength == [null, 0] // Changed from null to 0","traceUpper == [\"DIFFERENT\", null, \"\"] // Changed from null to \"\"","traceFirstChar == ['d', null] // Stays null, no change event"]},
+
+        {"kind":"when","text":"We force a change event on the source property","code":["nullableSource.fireChange(From.ALL)"]},
+
+        {"kind":"then","text":"All views propagate the forced change event regardless of state changes","code":["traceLength == [null, 0, 0]","traceUpper == [\"DIFFERENT\", null, \"\", \"\"]","traceFirstChar == ['d', null, null]"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Views with null objects only fire change events when their fallback-protected state changes!",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Views created with null object fallbacks (using methods like `view(String, Function)`)\n            should only fire change events when the protected state actually changes.\n            The null object serves as a fallback when the mapping function returns null,\n            ensuring the view never contains null itself.\n\n            This test verifies that change events are only fired when the non-null\n            protected state changes, even when the source property's nullable state fluctuates.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A nullable source property and views with null object fallbacks","code":["var source = Var.ofNullable(String, \"hello!\")","var lengthProtected = source.view(0, s -> s?.length()) // Fallback to 0 for null","var upperProtected = source.view(\"UNKNOWN\", s -> s?.toUpperCase()) // Fallback to \"UNKNOWN\"","var firstCharProtected = source.view('?' as char, s -> s.isEmpty() ? '?' as char : s?.charAt(0)) // Fallback to '?'"]},
+
+        {"kind":"and","text":"Trace lists to record state changes","code":["var traceLength = []","var traceUpper = []","var traceFirstChar = []"]},
+
+        {"kind":"and","text":"Change listeners recording the protected values","code":["lengthProtected.onChange(From.ALL, { traceLength.add(it.currentValue().orElseThrow()) })","upperProtected.onChange(From.ALL, { traceUpper.add(it.currentValue().orElseThrow()) })","firstCharProtected.onChange(From.ALL, { traceFirstChar.add(it.currentValue().orElseThrow()) })"]},
+
+        {"kind":"when","text":"We change to a different string with same length","code":["source.set(\"world!\") // Different string but same length 6"]},
+
+        {"kind":"then","text":"Length view does NOT fire (same protected value)","code":["traceLength == []"]},
+
+        {"kind":"and","text":"Other views DO fire (different protected values)","code":["traceUpper == [\"WORLD!\"]","traceFirstChar == ['w' as char]"]},
+
+        {"kind":"when","text":"We change to null (all views use their null objects)","code":["source.set(null)"]},
+
+        {"kind":"then","text":"All views fire change events as they transition to null objects","code":["traceLength == [0]","traceUpper == [\"WORLD!\", \"UNKNOWN\"]","traceFirstChar == ['w' as char, '?' as char]"]},
+
+        {"kind":"when","text":"We change to another value that also maps to null objects for some views","code":["source.set(\"\") // Empty string - first char mapping would return null, uses fallback"]},
+
+        {"kind":"then","text":"Only views with actual protected state changes fire events","code":["traceLength == [0] // Stays 0 (empty string length equals null length fallback), no change event fired","traceUpper == [\"WORLD!\", \"UNKNOWN\", \"\"] // Changed from \"UNKNOWN\" to \"\"","traceFirstChar == ['w' as char, '?' as char] // Stays '?', no change event"]},
+
+        {"kind":"when","text":"We change to a value that moves away from null object usage","code":["source.set(\"test\")"]},
+
+        {"kind":"then","text":"All views fire as they transition from null objects to actual values","code":["traceLength == [0, 4]","traceUpper == [\"WORLD!\", \"UNKNOWN\", \"\", \"TEST\"]","traceFirstChar == ['w' as char, '?' as char, 't' as char]"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Views with error objects only fire change events when their error-protected state changes!",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Views created with both null objects and error objects provide robust fallback mechanisms\n            for handling both null mappings and exceptional cases. These views should only fire\n            change events when their error-protected state actually changes, regardless of whether\n            the source change resulted in normal values, null mappings, or exceptions.\n\n            This ensures that UI components are only updated when the displayed value actually changes,\n            providing optimal performance and preventing visual flicker.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A numeric source property and a view with comprehensive error handling","code":["var numberSource = Var.ofNullable(Integer, 10)","var inverseView = numberSource.view(","    \"NULL\",      // null object for when mapping returns null","    \"ERROR\",     // error object for when mapping throws exception","    (Integer n) -> n == 0 ? null : String.valueOf(100 / n)   // Returns null for zero, throws for other issues?",")"]},
+
+        {"kind":"and","text":"A trace to record the protected state changes","code":["var trace = []","inverseView.onChange(From.ALL, { trace.add(it.currentValue().orElseThrow()) })"]},
+
+        {"kind":"when","text":"We change to a value that gives same result","code":["numberSource.set(5) // 100/5 = 20, different from previous 100/10 = 10"]},
+
+        {"kind":"then","text":"The view fires a change event (different protected value)","code":["trace == [\"20\"]"]},
+
+        {"kind":"when","text":"We change to zero multiple times (mapping returns null, uses null object)","code":["numberSource.set(0)","numberSource.set(0)","numberSource.set(0)"]},
+
+        {"kind":"then","text":"The view fires a change event only once (transition to null object)","code":["trace == [\"20\", \"NULL\"]"]},
+
+        {"kind":"when","text":"We change to another value that causes an error!","code":["numberSource.set(null) // Source is null, mapping returns null"]},
+
+        {"kind":"then","text":"The view DOES fire (different error state)","code":["trace == [\"20\", \"NULL\", \"ERROR\"]"]},
+
+        {"kind":"when","text":"We change to a problematic value (if our mapping was more complex)","code":["numberSource.set(3) // Valid again!","var parsingView = numberSource.view(","    0, -1, n -> Integer.parseInt(n.toString() + \"00\") // This may throw NumberFormatException",")","var parsingTrace = []","parsingView.onChange(From.ALL, { parsingTrace.add(it.currentValue().orElseThrow()) })","numberSource.set(null) // This will cause parsing to throw"]},
+
+        {"kind":"then","text":"The view fires and uses the error object","code":["parsingTrace == [-1]"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Composite nullable views only fire change events when their combined nullable state changes!",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Composite views created using `Viewable.ofNullable` combine multiple source properties\n            into a single nullable view. These composite views should only fire change events when\n            the combined result actually changes its nullable state.\n\n            This behavior is essential for preventing cascade updates in complex view hierarchies\n            where multiple source properties might change but the derived composite result remains\n            functionally the same from the perspective of the observer.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two nullable source properties","code":["var first = Var.ofNullable(String, \"hello\")","var second = Var.ofNullable(String, \"world\")"]},
+
+        {"kind":"and","text":"A composite nullable view that combines them","code":["var composite = Viewable.ofNullable(String, first, second,","    (a, b) -> a && b ? a + \" \" + b : null",")"]},
+
+        {"kind":"and","text":"A trace to record composite state changes","code":["var trace = []","composite.onChange(From.ALL, { trace.add(it.currentValue().orElseNull()) })"]},
+
+        {"kind":"when","text":"We change first property to a different non-null value","code":["first.set(\"greetings\") // Combined result changes from \"hello world\" to \"greetings world\""]},
+
+        {"kind":"then","text":"The composite view fires a change event","code":["trace == [\"greetings world\"]"]},
+
+        {"kind":"when","text":"We change second property to null","code":["second.set(null) // Combined result becomes null (one operand is null)"]},
+
+        {"kind":"then","text":"The composite view fires a change event (transition to null)","code":["trace == [\"greetings world\", null]"]},
+
+        {"kind":"when","text":"We change first property while second remains null","code":["first.set(\"salutations\") // Combined result stays null (second is still null)"]},
+
+        {"kind":"then","text":"The composite view does NOT fire (remains null)","code":["trace == [\"greetings world\", null]"]},
+
+        {"kind":"when","text":"We change second property back to non-null","code":["second.set(\"earth\") // Combined result becomes non-null again"]},
+
+        {"kind":"then","text":"The composite view fires a change event (transition from null)","code":["trace == [\"greetings world\", null, \"salutations earth\"]"]},
+
+        {"kind":"when","text":"We change both properties but get the same combined result","code":["first.set(\"hello\")","second.set(\"world\") // Back to original combination"]},
+
+        {"kind":"then","text":"The composite view fires two events for each modification:","code":["trace == [\"greetings world\", null, \"salutations earth\", \"hello earth\", \"hello world\"]"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Complex view chains with nullable intermediates only propagate changes when final state changes!",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            In real-world applications, views are often chained together where one view\n            depends on another view. When nullable properties are involved in these chains,\n            it's crucial that change events only propagate through the chain when the\n            final observable state actually changes.\n\n            This test verifies that complex view chains with nullable intermediates\n            correctly suppress unnecessary change propagation, ensuring optimal performance\n            in sophisticated UI architectures.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A nullable source property and a chain of derived views","code":["var source = Var.ofNullable(Integer, 25)","var isEven = source.viewAsNullable(Boolean, n -> n == null ? null : n % 2 == 0 )","var evenDescription = isEven.viewAsNullable(String,","    even -> even == null ? \"unknown\" : even ? \"even\" : \"odd\"",")","var formattedOutput = evenDescription.view(\"N/A\",","    desc -> desc == null ? null : \"Number is: $desc\"",")"]},
+
+        {"kind":"and","text":"Trace lists for each level of the chain","code":["var traceSource = []","var traceEven = []","var traceDescription = []","var traceOutput = []"]},
+
+        {"kind":"and","text":"Change listeners at each level","code":["source.view().onChange(From.ALL, { traceSource.add(it.currentValue().orElseNull()) })","isEven.onChange(From.ALL, { traceEven.add(it.currentValue().orElseNull()) })","evenDescription.onChange(From.ALL, { traceDescription.add(it.currentValue().orElseNull()) })","formattedOutput.onChange(From.ALL, { traceOutput.add(it.currentValue().orElseThrow()) })"]},
+
+        {"kind":"when","text":"We change from 25 to 30 (evenness changes from false to true)","code":["source.set(30)"]},
+
+        {"kind":"then","text":"The change propagates through the entire chain","code":["traceSource == [30]","traceEven == [true]","traceDescription == [\"even\"]","traceOutput == [\"Number is: even\"]"]},
+
+        {"kind":"when","text":"We change from 30 to 32 (evenness stays true)","code":["source.set(32)"]},
+
+        {"kind":"then","text":"No change events in the chain (final output unchanged)","code":["traceSource == [30, 32]","traceEven == [true]","traceDescription == [\"even\"]","traceOutput == [\"Number is: even\"]"]},
+
+        {"kind":"when","text":"We change to null","code":["source.set(null)"]},
+
+        {"kind":"then","text":"Change propagates through nullable layers, final output uses fallback","code":["traceSource == [30, 32, null]","traceEven == [true, null]","traceDescription == [\"even\", \"unknown\"]","traceOutput == [\"Number is: even\", \"Number is: unknown\"]"]},
+
+        {"kind":"when","text":"We change to another null (same nullable state)","code":["source.set(null) // Explicitly setting to same null value"]},
+
+        {"kind":"then","text":"No change events in any layer","code":["traceSource == [30, 32, null]","traceEven == [true, null]","traceDescription == [\"even\", \"unknown\"]","traceOutput == [\"Number is: even\", \"Number is: unknown\"]"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Viewable.ofNullable composite views handle partial null states efficiently!",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Composite views created with `Viewable.ofNullable` often handle scenarios where\n            some source properties are null while others are not. These views should\n            intelligently determine when the combined result actually changes, avoiding\n            unnecessary change events when null/non-null transitions don't affect the\n            final computed result.\n\n            This is particularly important for forms and complex UI state where individual\n            fields might become temporarily null during user interaction without affecting\n            the overall form validity or computed state.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Multiple nullable source properties","code":["var firstName = Var.ofNullable(String, \"John\")","var lastName = Var.ofNullable(String, \"Doe\")","var title = Var.ofNullable(String, \"Mr.\")"]},
+
+        {"kind":"and","text":"A composite view that builds a full name","code":["var fullName = Viewable.ofNullable(String, firstName, lastName,","    (first, last) -> first && last ? first + \" \" + last : null",")","var formalName = Viewable.ofNullable(String, title, fullName,","    (t, name) -> t && name ? t + \" \" + name : name",")"]},
+
+        {"kind":"and","text":"Traces to monitor change propagation","code":["var traceFullName = []","var traceFormalName = []","fullName.onChange(From.ALL, { traceFullName.add(it.currentValue().orElseNull()) })","formalName.onChange(From.ALL, { traceFormalName.add(it.currentValue().orElseNull()) })"]},
+
+        {"kind":"when","text":"We change the title while full name remains null-compatible","code":["title.set(\"Dr.\")"]},
+
+        {"kind":"then","text":"Formal name changes (different title with same full name)","code":["traceFullName == []","traceFormalName == [\"Dr. John Doe\"]"]},
+
+        {"kind":"when","text":"We make last name null","code":["lastName.set(null)"]},
+
+        {"kind":"then","text":"Both composite views change (full name becomes null)","code":["traceFullName == [null]","traceFormalName == [\"Dr. John Doe\", null]"]},
+
+        {"kind":"when","text":"We change title while full name remains null","code":["title.set(\"Prof.\")"]},
+
+        {"kind":"then","text":"Formal name stays null (cannot format without full name)","code":["traceFullName == [null]","traceFormalName == [\"Dr. John Doe\", null]"]},
+
+        {"kind":"when","text":"We restore last name","code":["lastName.set(\"Smith\") // Different last name than original"]},
+
+        {"kind":"then","text":"Both composite views update","code":["traceFullName == [null, \"John Smith\"]","traceFormalName == [\"Dr. John Doe\", null, \"Prof. John Smith\"]"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }
