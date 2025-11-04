@@ -1330,7 +1330,7 @@ class Property_View_Spec extends Specification
                 (first, last) -> first && last ? first + " " + last : null
             )
             var formalName = Viewable.ofNullable(String, title, fullName,
-                (t, name) -> t && name ? t  + " " +  name : name
+                (t, name) -> t && name ? t + " " + name : name
             )
         and : 'Traces to monitor change propagation'
             var traceFullName = []
