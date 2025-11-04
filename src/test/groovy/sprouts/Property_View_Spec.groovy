@@ -1029,6 +1029,340 @@ class Property_View_Spec extends Specification
                 ]
     }
 
+    def 'Nullable property views only fire change events when their actual nullable state changes!'()
+    {
+        reportInfo """
+            Views created from nullable properties using methods like `viewAsNullable` should only
+            fire change events when the actual nullable state of the view changes.
+            This means that if the source property changes but the mapping function returns
+            the same nullable value (either both null or both non-null with equal values),
+            then the view should not propagate the change event.
+            
+            This behavior is crucial for performance and preventing unnecessary UI updates
+            when the derived nullable state remains unchanged.
+        """
+        given : 'A nullable source property and various nullable views'
+            var nullableSource = Var.ofNullable(String, "initial!!")
+            var nullableLength = nullableSource.viewAsNullable(Integer, s -> s?.length())
+            var nullableUpper = nullableSource.viewAsNullable(String, s -> s?.toUpperCase())
+            var nullableFirstChar = nullableSource.viewAsNullable(Character, s -> s?.length() == 0 ? null : s?.charAt(0))
+        and : 'Trace lists to record actual change events'
+            var traceLength = []
+            var traceUpper = []
+            var traceFirstChar = []
+        and : 'Change listeners that record the actual values when changes occur'
+            nullableLength.onChange(From.ALL, { traceLength.add(it.currentValue().orElseNull()) })
+            nullableUpper.onChange(From.ALL, { traceUpper.add(it.currentValue().orElseNull()) })
+            nullableFirstChar.onChange(From.ALL, { traceFirstChar.add(it.currentValue().orElseNull()) })
+
+        when : 'We change the source to a different value that maps to the same nullable length'
+            nullableSource.set("different") // Still length 9
+        then : 'The length view does NOT fire a change event (same length)'
+            traceLength == []
+        and : 'But the other views DO fire change events (different derived values)'
+            traceUpper == ["DIFFERENT"]
+            traceFirstChar == ['d']
+
+        when : 'We change the source to null'
+            nullableSource.set(null)
+        then : 'All views fire change events as they transition to null'
+            traceLength == [null]
+            traceUpper == ["DIFFERENT", null]
+            traceFirstChar == ['d', null]
+
+        when : 'We change the source to another value that also maps to null in some views'
+            nullableSource.set("") // Empty string - first char mapping returns null
+        then : 'Only the views that actually change their nullable state fire events'
+            traceLength == [null, 0] // Changed from null to 0
+            traceUpper == ["DIFFERENT", null, ""] // Changed from null to ""
+            traceFirstChar == ['d', null] // Stays null, no change event
+
+        when : 'We force a change event on the source property'
+            nullableSource.fireChange(From.ALL)
+        then : 'All views propagate the forced change event regardless of state changes'
+            traceLength == [null, 0, 0]
+            traceUpper == ["DIFFERENT", null, "", ""]
+            traceFirstChar == ['d', null, null]
+    }
+
+    def 'Views with null objects only fire change events when their fallback-protected state changes!'()
+    {
+        reportInfo """
+            Views created with null object fallbacks (using methods like `view(String, Function)`)
+            should only fire change events when the protected state actually changes.
+            The null object serves as a fallback when the mapping function returns null,
+            ensuring the view never contains null itself.
+            
+            This test verifies that change events are only fired when the non-null
+            protected state changes, even when the source property's nullable state fluctuates.
+        """
+        given : 'A nullable source property and views with null object fallbacks'
+            var source = Var.ofNullable(String, "hello!")
+            var lengthProtected = source.view(0, s -> s?.length()) // Fallback to 0 for null
+            var upperProtected = source.view("UNKNOWN", s -> s?.toUpperCase()) // Fallback to "UNKNOWN"
+            var firstCharProtected = source.view('?' as char, s -> s.isEmpty() ? '?' as char : s?.charAt(0)) // Fallback to '?'
+        and : 'Trace lists to record state changes'
+            var traceLength = []
+            var traceUpper = []
+            var traceFirstChar = []
+        and : 'Change listeners recording the protected values'
+            lengthProtected.onChange(From.ALL, { traceLength.add(it.currentValue().orElseThrow()) })
+            upperProtected.onChange(From.ALL, { traceUpper.add(it.currentValue().orElseThrow()) })
+            firstCharProtected.onChange(From.ALL, { traceFirstChar.add(it.currentValue().orElseThrow()) })
+
+        when : 'We change to a different string with same length'
+            source.set("world!") // Different string but same length 6
+        then : 'Length view does NOT fire (same protected value)'
+            traceLength == []
+        and : 'Other views DO fire (different protected values)'
+            traceUpper == ["WORLD!"]
+            traceFirstChar == ['w' as char]
+
+        when : 'We change to null (all views use their null objects)'
+            source.set(null)
+        then : 'All views fire change events as they transition to null objects'
+            traceLength == [0]
+            traceUpper == ["WORLD!", "UNKNOWN"]
+            traceFirstChar == ['w' as char, '?' as char]
+
+        when : 'We change to another value that also maps to null objects for some views'
+            source.set("") // Empty string - first char mapping would return null, uses fallback
+        then : 'Only views with actual protected state changes fire events'
+            traceLength == [0] // Stays 0, no change? Yes, from 0 to 0 is the same value!
+            traceUpper == ["WORLD!", "UNKNOWN", ""] // Changed from "UNKNOWN" to ""
+            traceFirstChar == ['w' as char, '?' as char] // Stays '?', no change event
+
+        when : 'We change to a value that moves away from null object usage'
+            source.set("test")
+        then : 'All views fire as they transition from null objects to actual values'
+            traceLength == [0, 4]
+            traceUpper == ["WORLD!", "UNKNOWN", "", "TEST"]
+            traceFirstChar == ['w' as char, '?' as char, 't' as char]
+    }
+
+    def 'Views with error objects only fire change events when their error-protected state changes!'()
+    {
+        reportInfo """
+            Views created with both null objects and error objects provide robust fallback mechanisms
+            for handling both null mappings and exceptional cases. These views should only fire
+            change events when their error-protected state actually changes, regardless of whether
+            the source change resulted in normal values, null mappings, or exceptions.
+            
+            This ensures that UI components are only updated when the displayed value actually changes,
+            providing optimal performance and preventing visual flicker.
+        """
+        given : 'A numeric source property and a view with comprehensive error handling'
+            var numberSource = Var.ofNullable(Integer, 10)
+            var inverseView = numberSource.view(
+                "NULL",      // null object for when mapping returns null
+                "ERROR",     // error object for when mapping throws exception
+                (Integer n) -> n == 0 ? null : String.valueOf(100 / n)   // Returns null for zero, throws for other issues?
+            )
+        and : 'A trace to record the protected state changes'
+            var trace = []
+            inverseView.onChange(From.ALL, { trace.add(it.currentValue().orElseThrow()) })
+
+        when : 'We change to a value that gives same result'
+            numberSource.set(5) // 100/5 = 20, different from previous 100/10 = 10
+        then : 'The view fires a change event (different protected value)'
+            trace == ["20"]
+
+        when : 'We change to zero multiple times (mapping returns null, uses null object)'
+            numberSource.set(0)
+            numberSource.set(0)
+            numberSource.set(0)
+        then : 'The view fires a change event only once (transition to null object)'
+            trace == ["20", "NULL"]
+
+        when : 'We change to another value that an error!'
+            numberSource.set(null) // Source is null, mapping returns null
+        then : 'The view does NOT fire (same null object state)'
+            trace == ["20", "NULL", "ERROR"]
+
+        when : 'We change to a problematic value (if our mapping was more complex)'
+            numberSource.set(3) // Valid again!
+            // Note: Our current mapping doesn't throw for non-zero, non-null values
+            // Let's use a different mapping that can throw
+            var parsingView = numberSource.view(
+                0, -1, n -> Integer.parseInt(n.toString() + "00") // This may throw NumberFormatException
+            )
+            var parsingTrace = []
+            parsingView.onChange(From.ALL, { parsingTrace.add(it.currentValue().orElseThrow()) })
+
+            numberSource.set(null) // This will cause parsing to throw
+        then : 'The view fires and uses the error object'
+            parsingTrace == [-1]
+    }
+
+    def 'Composite nullable views only fire change events when their combined nullable state changes!'()
+    {
+        reportInfo """
+            Composite views created using `Viewable.ofNullable` combine multiple source properties
+            into a single nullable view. These composite views should only fire change events when
+            the combined result actually changes its nullable state.
+            
+            This behavior is essential for preventing cascade updates in complex view hierarchies
+            where multiple source properties might change but the derived composite result remains
+            functionally the same from the perspective of the observer.
+        """
+        given : 'Two nullable source properties'
+            var first = Var.ofNullable(String, "hello")
+            var second = Var.ofNullable(String, "world")
+        and : 'A composite nullable view that combines them'
+            var composite = Viewable.ofNullable(String, first, second,
+                (a, b) -> a && b ? a + " " + b : null
+            )
+        and : 'A trace to record composite state changes'
+            var trace = []
+            composite.onChange(From.ALL, { trace.add(it.currentValue().orElseNull()) })
+
+        when : 'We change first property to a different non-null value'
+            first.set("greetings") // Combined result changes from "hello world" to "greetings world"
+        then : 'The composite view fires a change event'
+            trace == ["greetings world"]
+
+        when : 'We change second property to null'
+            second.set(null) // Combined result becomes null (one operand is null)
+        then : 'The composite view fires a change event (transition to null)'
+            trace == ["greetings world", null]
+
+        when : 'We change first property while second remains null'
+            first.set("salutations") // Combined result stays null (second is still null)
+        then : 'The composite view does NOT fire (remains null)'
+            trace == ["greetings world", null]
+
+        when : 'We change second property back to non-null'
+            second.set("earth") // Combined result becomes non-null again
+        then : 'The composite view fires a change event (transition from null)'
+            trace == ["greetings world", null, "salutations earth"]
+
+        when : 'We change both properties but get the same combined result'
+            first.set("hello")
+            second.set("world") // Back to original combination
+        then : 'The composite view fires two events for each modification:'
+            trace == ["greetings world", null, "salutations earth", "hello earth", "hello world"]
+    }
+
+    def 'Complex view chains with nullable intermediates only propagate changes when final state changes!'()
+    {
+        reportInfo """
+            In real-world applications, views are often chained together where one view
+            depends on another view. When nullable properties are involved in these chains,
+            it's crucial that change events only propagate through the chain when the
+            final observable state actually changes.
+            
+            This test verifies that complex view chains with nullable intermediates
+            correctly suppress unnecessary change propagation, ensuring optimal performance
+            in sophisticated UI architectures.
+        """
+        given : 'A nullable source property and a chain of derived views'
+            var source = Var.ofNullable(Integer, 25)
+            var isEven = source.viewAsNullable(Boolean, n -> n == null ? null : n % 2 == 0 )
+            var evenDescription = isEven.viewAsNullable(String,
+                even -> even == null ? "unknown" : even ? "even" : "odd"
+            )
+            var formattedOutput = evenDescription.view("N/A",
+                desc -> desc == null ? null : "Number is: $desc"
+            )
+        and : 'Trace lists for each level of the chain'
+            var traceSource = []
+            var traceEven = []
+            var traceDescription = []
+            var traceOutput = []
+        and : 'Change listeners at each level'
+            source.view().onChange(From.ALL, { traceSource.add(it.currentValue().orElseNull()) })
+            isEven.onChange(From.ALL, { traceEven.add(it.currentValue().orElseNull()) })
+            evenDescription.onChange(From.ALL, { traceDescription.add(it.currentValue().orElseNull()) })
+            formattedOutput.onChange(From.ALL, { traceOutput.add(it.currentValue().orElseThrow()) })
+
+        when : 'We change from 25 to 30 (evenness changes from false to true)'
+            source.set(30)
+        then : 'The change propagates through the entire chain'
+            traceSource == [30]
+            traceEven == [true]
+            traceDescription == ["even"]
+            traceOutput == ["Number is: even"]
+
+        when : 'We change from 30 to 32 (evenness stays true)'
+            source.set(32)
+        then : 'No change events in the chain (final output unchanged)'
+            traceSource == [30, 32]
+            traceEven == [true]
+            traceDescription == ["even"]
+            traceOutput == ["Number is: even"]
+
+        when : 'We change to null'
+            source.set(null)
+        then : 'Change propagates through nullable layers, final output uses fallback'
+            traceSource == [30, 32, null]
+            traceEven == [true, null]
+            traceDescription == ["even", "unknown"]
+            traceOutput == ["Number is: even", "Number is: unknown"]
+
+        when : 'We change to another null (same nullable state)'
+            source.set(null) // Explicitly setting to same null value
+        then : 'No change events in any layer'
+            traceSource == [30, 32, null]
+            traceEven == [true, null]
+            traceDescription == ["even", "unknown"]
+            traceOutput == ["Number is: even", "Number is: unknown"]
+    }
+
+    def 'Viewable.ofNullable composite views handle partial null states efficiently!'()
+    {
+        reportInfo """
+            Composite views created with `Viewable.ofNullable` often handle scenarios where
+            some source properties are null while others are not. These views should
+            intelligently determine when the combined result actually changes, avoiding
+            unnecessary change events when null/non-null transitions don't affect the
+            final computed result.
+            
+            This is particularly important for forms and complex UI state where individual
+            fields might become temporarily null during user interaction without affecting
+            the overall form validity or computed state.
+        """
+        given : 'Multiple nullable source properties'
+            var firstName = Var.ofNullable(String, "John")
+            var lastName = Var.ofNullable(String, "Doe")
+            var title = Var.ofNullable(String, "Mr.")
+        and : 'A composite view that builds a full name'
+            var fullName = Viewable.ofNullable(String, firstName, lastName,
+                (first, last) -> first && last ? first + " " + last : null
+            )
+            var formalName = Viewable.ofNullable(String, title, fullName,
+                (t, name) -> t && name ? t  + " " +  name : name
+            )
+        and : 'Traces to monitor change propagation'
+            var traceFullName = []
+            var traceFormalName = []
+            fullName.onChange(From.ALL, { traceFullName.add(it.currentValue().orElseNull()) })
+            formalName.onChange(From.ALL, { traceFormalName.add(it.currentValue().orElseNull()) })
+
+        when : 'We change the title while full name remains null-compatible'
+            title.set("Dr.")
+        then : 'Formal name changes (different title with same full name)'
+            traceFullName == []
+            traceFormalName == ["Dr. John Doe"]
+
+        when : 'We make last name null'
+            lastName.set(null)
+        then : 'Both composite views change (full name becomes null)'
+            traceFullName == [null]
+            traceFormalName == ["Dr. John Doe", null]
+
+        when : 'We change title while full name remains null'
+            title.set("Prof.")
+        then : 'Formal name stays null (cannot format without full name)'
+            traceFullName == [null]
+            traceFormalName == ["Dr. John Doe", null]
+
+        when : 'We restore last name'
+            lastName.set("Smith") // Different last name than original
+        then : 'Both composite views update'
+            traceFullName == [null, "John Smith"]
+            traceFormalName == ["Dr. John Doe", null, "Prof. John Smith"]
+    }
+
     /**
      * This method guarantees that garbage collection is
      * done unlike <code>{@link System#gc()}</code>
