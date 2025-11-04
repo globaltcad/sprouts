@@ -1636,6 +1636,51 @@ class Property_Lenses_Spec extends Specification
             trace == ["Listened to: Smith", "Also listened to: Smith"]
     }
 
+    def 'You can force a change event from a source property all of its lens properties and sub-lens properties.'()
+    {
+        reportInfo """
+            When changing the item of a regular property, then this only triggers change events
+            in its views and lens properties if the value actually changed.
+            However, sometimes you may want to force a change event to be fired,
+            even if the value did not change, in which case the event will propagate
+            to all lens properties and sub-lens properties.
+            
+            This can be done using the `Var::fireChange(Channel)` method.
+            This method will trigger a change event on the property,
+            which will then propagate to all its lens properties and sub-lens properties
+            even if the value did not change.
+        """
+        given : 'A mutable property with an initial value and a lens on it.'
+            var author = new Author("John", "Doe", LocalDate.of(1829, 8, 12), ["Book1", "Book2"])
+            var authorProperty = Var.of(author)
+            var firstNameLens = authorProperty.zoomTo(Author::firstName, Author::withFirstName)
+            var dateLens = authorProperty.zoomTo(Author::birthDate, Author::withBirthDate)
+            var yearLens = dateLens.zoomTo(LocalDate::getYear, (d, y) -> LocalDate.of(y, d.getMonth(), d.getDayOfMonth()))
+        and : 'We create views for each lens to observe the change events.'
+            var firstNameView = firstNameLens.view()
+            var dateView = dateLens.view()
+            var yearView = yearLens.view()
+        and : 'A trace list to record the side effects.'
+            var trace = []
+            firstNameView.onChange(From.ALL, it -> trace << "First name changed to: " + it.currentValue().orElseThrow())
+            dateView.onChange(From.ALL, it -> trace << "Birth date changed to: " + it.currentValue().orElseThrow())
+            yearView.onChange(From.ALL, it -> trace << "Birth year changed to: " + it.currentValue().orElseThrow())
+
+        when : 'We change a meaningless property in the author property.'
+            authorProperty.set(authorProperty.get().withBooks(["Book1", "Book2"])) // No actual change
+        then : 'No change events are fired.'
+            trace.isEmpty()
+
+        when : 'We now force a change event from the source property.'
+            authorProperty.fireChange(From.ALL)
+        then : 'Change events are fired for all lens properties and sub-lens properties.'
+            trace == [
+                    "First name changed to: John",
+                    "Birth year changed to: 1829",
+                    "Birth date changed to: 1829-08-12"
+                ]
+    }
+
     /**
      * This method guarantees that garbage collection is
      * done unlike <code>{@link System#gc()}</code>
