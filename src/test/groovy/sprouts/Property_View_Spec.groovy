@@ -1174,7 +1174,7 @@ class Property_View_Spec extends Specification
         then : 'The view fires a change event only once (transition to null object)'
             trace == ["20", "NULL"]
 
-        when : 'We change to another value that an error!'
+        when : 'We change to another value that causes an error!'
             numberSource.set(null) // Source is null, mapping returns null
         then : 'The view does NOT fire (same null object state)'
             trace == ["20", "NULL", "ERROR"]
