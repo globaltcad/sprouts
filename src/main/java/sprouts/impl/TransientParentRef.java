@@ -6,22 +6,22 @@ import sprouts.Val;
 import java.lang.ref.WeakReference;
 import java.util.Objects;
 
-final class TransientParentRef<V extends Val<?>> implements ParentRef<V>
-{
-    private final WeakReference<V> _ref;
-    private final Class<?>         _lastType;
-    private final @Nullable Object _lastItem;
+record TransientParentRef<V extends Val<?>>(
+    WeakReference<V> _ref,
+    Class<?> _lastType,
+    @Nullable Object _lastItem
+) implements ParentRef<V> {
 
-    public TransientParentRef( WeakReference<V> ref, Class<?> lastType, @Nullable Object item ) {
-        _ref      = Objects.requireNonNull(ref);
-        _lastType = Objects.requireNonNull(lastType);
-        _lastItem = item;
+    TransientParentRef(WeakReference<V> _ref, Class<?> _lastType, @Nullable Object _lastItem) {
+        this._ref = Objects.requireNonNull(_ref);
+        this._lastType = Objects.requireNonNull(_lastType);
+        this._lastItem = _lastItem;
     }
 
     @Override
     public V get() {
         @Nullable V current = _ref.get();
-        if ( current == null )
+        if (current == null)
             return (V) Property.ofNullable(false, (Class) _lastType, _lastItem);
         return current;
     }

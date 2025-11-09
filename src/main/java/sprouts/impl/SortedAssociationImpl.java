@@ -8,76 +8,78 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static sprouts.impl.ArrayUtil.*;
 
-final class SortedAssociationImpl<K, V> implements Association<K, V> {
+record SortedAssociationImpl<K, V>(
+    Class<K> _keyType,
+    Class<V> _valueType,
+    ArrayItemAccess<K, Object> _keyGetter,
+    ArrayItemAccess<V, Object> _valueGetter,
+    Comparator<K> _keyComparator,
+    Node _root,
+    AtomicReference<@Nullable Integer> _cachedHashCode
+) implements Association<K, V> {
 
     private static final boolean ALLOWS_NULL = false;
     private static final Node NULL_NODE = new Node(
             _createArray(Object.class, ALLOWS_NULL, 0),
             _createArray(Object.class, ALLOWS_NULL, 0)
-        );
+    );
 
-    private static int BASE_ENTRIES_PER_NODE(int depth) { return Math.max( 1, depth * depth / 2 ); }
-
-
-    private final Class<K> _keyType;
-    private final Class<V> _valueType;
-    private final ArrayItemAccess<K, Object> _keyGetter;
-    private final ArrayItemAccess<V, Object> _valueGetter;
-    private final Comparator<K> _keyComparator;
-    private final Node _root;
-    private final AtomicReference<@Nullable Integer> _cachedHashCode = new AtomicReference<>(null);
+    private static int BASE_ENTRIES_PER_NODE(int depth) {
+        return Math.max(1, depth * depth / 2);
+    }
 
 
-    static class Node {
-        private final int _size;
-        private final Object _keysArray;
-        private final Object _valuesArray;
-        private final @Nullable Node _left;
-        private final @Nullable Node _right;
-
+    record Node(
+        int _size,
+        Object _keysArray,
+        Object _valuesArray,
+        @Nullable Node _left,
+        @Nullable Node _right
+    ) {
         Node(Object keysArray, Object valuesArray) {
             this(_length(keysArray), keysArray, valuesArray, null, null);
         }
 
         Node(Object keysArray, Object valuesArray, @Nullable Node left, @Nullable Node right) {
-            _size = _length(keysArray) + (left == null ? 0 : left.size()) + (right == null ? 0 : right.size());
-            _keysArray = keysArray;
-            _valuesArray = valuesArray;
-            _left = left;
-            _right = right;
-        }
-
-        Node(int size, Object keysArray, Object valuesArray, @Nullable Node left, @Nullable Node right) {
-            _size = size;
-            _keysArray = keysArray;
-            _valuesArray = valuesArray;
-            _left = left;
-            _right = right;
+            this(
+                _length(keysArray) + (left == null ? 0 : left.size()) + (right == null ? 0 : right.size()),
+                keysArray,
+                valuesArray,
+                left,
+                right
+            );
         }
 
         public Object keysArray() {
             return _keysArray;
         }
+
         public Object valuesArray() {
             return _valuesArray;
         }
+
         public @Nullable Node left() {
             return _left;
         }
+
         public @Nullable Node right() {
             return _right;
         }
+
         public int size() {
             return _size;
         }
+
         public Node withNewArrays(Object newKeysArray, Object newValuesArray) {
             int newSize = _computeSize(newKeysArray, _left, _right);
             return new Node(newSize, newKeysArray, newValuesArray, _left, _right);
         }
+
         public Node withNewLeft(@Nullable Node left) {
             int newSize = _computeSize(_keysArray, left, _right);
             return new Node(newSize, _keysArray, _valuesArray, left, _right);
         }
+
         public Node withNewRight(@Nullable Node right) {
             int newSize = _computeSize(_keysArray, _left, right);
             return new Node(newSize, _keysArray, _valuesArray, _left, right);
@@ -89,6 +91,7 @@ final class SortedAssociationImpl<K, V> implements Association<K, V> {
             int valuesHash = Val.hashCode(_valuesArray);
             return Objects.hash(_size, keysHash, valuesHash, _left, _right);
         }
+
         @Override
         public boolean equals(@Nullable Object obj) {
             if (this == obj) {
@@ -140,12 +143,15 @@ final class SortedAssociationImpl<K, V> implements Association<K, V> {
         final Comparator<K> keyComparator,
         final Node root
     ) {
-        _keyType = keyType;
-        _valueType = valueType;
-        _keyGetter = ArrayItemAccess.of(keyType, false);
-        _valueGetter = ArrayItemAccess.of(valueType, false);
-        _keyComparator = keyComparator;
-        _root = root;
+        this(
+                keyType,
+                valueType,
+                ArrayItemAccess.of(keyType, false),
+                ArrayItemAccess.of(valueType, false),
+                keyComparator,
+                root,
+                new AtomicReference<>(null)
+        );
     }
 
     private SortedAssociationImpl<K,V> withNewRoot(Node newRoot) {
@@ -353,7 +359,7 @@ final class SortedAssociationImpl<K, V> implements Association<K, V> {
                         Node newLeft;
                         if ( node.left() != null ) {
                             // Re-add the popped key and value to the left node
-                            newLeft = _balance(_updateValueOfKey(node.left(), keyType, valueType, keyGetter, valueGetter, keyComparator, key, value, putIfAbsent, depth+1));
+                            newLeft = _balance(_updateValueOfKey(node.left(), keyType, valueType, keyGetter, valueGetter, keyComparator, key, value, putIfAbsent, depth + 1));
                         } else {
                             newLeft = _createSingleEntryNode(keyType, valueType, key, value);
                         }
@@ -364,7 +370,7 @@ final class SortedAssociationImpl<K, V> implements Association<K, V> {
                     Node newLeft;
                     if ( node.left() != null ) {
                         // Re-add the popped key and value to the left node
-                        newLeft = _balance(_updateValueOfKey(node.left(), keyType, valueType, keyGetter, valueGetter, keyComparator, poppedOffKey, poppedOffValue, putIfAbsent, depth+1));
+                        newLeft = _balance(_updateValueOfKey(node.left(), keyType, valueType, keyGetter, valueGetter, keyComparator, poppedOffKey, poppedOffValue, putIfAbsent, depth + 1));
                     } else {
                         newLeft = _createSingleEntryNode(keyType, valueType, poppedOffKey, poppedOffValue);
                     }
@@ -375,11 +381,11 @@ final class SortedAssociationImpl<K, V> implements Association<K, V> {
                         _setAt(0, value, newValuesArray);
                     } else {
                         // First, insert the key and value at the index (adjust for the popped key)
-                        _setAt(index-1, key, newKeysArray);
-                        _setAt(index-1, value, newValuesArray);
+                        _setAt(index - 1, key, newKeysArray);
+                        _setAt(index - 1, value, newValuesArray);
                         // Then, copy up to the index
-                        System.arraycopy(node.keysArray(), 1, newKeysArray, 0, index-1);
-                        System.arraycopy(node.valuesArray(), 1, newValuesArray, 0, index-1);
+                        System.arraycopy(node.keysArray(), 1, newKeysArray, 0, index - 1);
+                        System.arraycopy(node.valuesArray(), 1, newValuesArray, 0, index - 1);
                         // Finally, copy the rest of the keys and values
                         System.arraycopy(node.keysArray(), index, newKeysArray, index, numberOfKeys - index);
                         System.arraycopy(node.valuesArray(), index, newValuesArray, index, numberOfKeys - index);
@@ -397,12 +403,12 @@ final class SortedAssociationImpl<K, V> implements Association<K, V> {
                         }
                         return node.withNewRight(newRight);
                     }
-                    K poppedOffKey = _getNonNullAt(numberOfKeys-1, node.keysArray(), keyType);
-                    V poppedOffValue = _getNonNullAt(numberOfKeys-1, node.valuesArray(), valueType);
+                    K poppedOffKey = _getNonNullAt(numberOfKeys - 1, node.keysArray(), keyType);
+                    V poppedOffValue = _getNonNullAt(numberOfKeys - 1, node.valuesArray(), valueType);
                     Node newRight;
                     if ( node.right() != null ) {
                         // Re-add the popped key and value to the right node
-                        newRight = _balance(_updateValueOfKey(node.right(), keyType, valueType, keyGetter, valueGetter, keyComparator, poppedOffKey, poppedOffValue, putIfAbsent, depth+1));
+                        newRight = _balance(_updateValueOfKey(node.right(), keyType, valueType, keyGetter, valueGetter, keyComparator, poppedOffKey, poppedOffValue, putIfAbsent, depth + 1));
                     } else {
                         newRight = _createSingleEntryNode(keyType, valueType, poppedOffKey, poppedOffValue);
                     }
@@ -419,8 +425,8 @@ final class SortedAssociationImpl<K, V> implements Association<K, V> {
                         System.arraycopy(node.keysArray(), 0, newKeysArray, 0, index);
                         System.arraycopy(node.valuesArray(), 0, newValuesArray, 0, index);
                         // Finally, copy the rest of the keys and values
-                        System.arraycopy(node.keysArray(), index, newKeysArray, index+1, numberOfKeys - index - 1);
-                        System.arraycopy(node.valuesArray(), index, newValuesArray, index+1, numberOfKeys - index - 1);
+                        System.arraycopy(node.keysArray(), index, newKeysArray, index + 1, numberOfKeys - index - 1);
+                        System.arraycopy(node.valuesArray(), index, newValuesArray, index + 1, numberOfKeys - index - 1);
                     }
                     return new Node(newKeysArray, newValuesArray, node.left(), newRight);
                 }
@@ -443,7 +449,7 @@ final class SortedAssociationImpl<K, V> implements Association<K, V> {
         return node.withNewArrays(node.keysArray(), newValuesArray);
     }
 
-    private static @Nullable Node _balanceNullable(@Nullable Node node){
+    private static @Nullable Node _balanceNullable(@Nullable Node node) {
         if (node == null)
             return null;
         return _balance(node);
@@ -724,6 +730,61 @@ final class SortedAssociationImpl<K, V> implements Association<K, V> {
     }
 
     @Override
+    public Map<K, V> toMap() {
+        return new AbstractMap<K, V>() {
+            @Override
+            public V get(Object key) {
+                if (key == null) {
+                    throw new NullPointerException("Null key");
+                }
+                if (!keyType().isAssignableFrom(key.getClass())) {
+                    throw new ClassCastException("Key type mismatch");
+                }
+                return SortedAssociationImpl.this.get((K) key).orElseThrow(
+                                () -> new NoSuchElementException("Key not found")
+                            );
+            }
+            @Override
+            public boolean containsKey(Object key) {
+                if (key == null) {
+                    throw new NullPointerException("Null key");
+                }
+                if (!keyType().isAssignableFrom(key.getClass())) {
+                    throw new ClassCastException("Key type mismatch");
+                }
+                return SortedAssociationImpl.this.containsKey((K) key);
+            }
+            @Override
+            public Set<Entry<K, V>> entrySet() {
+                return new AbstractSet<Entry<K, V>>() {
+                    @Override
+                    public Iterator<Entry<K, V>> iterator() {
+                        return new Iterator<Entry<K, V>>() {
+                            private final Iterator<Pair<K, V>> _iterator = SortedAssociationImpl.this.iterator();
+
+                            @Override
+                            public boolean hasNext() {
+                                return _iterator.hasNext();
+                            }
+
+                            @Override
+                            public Entry<K, V> next() {
+                                Pair<K, V> pair = _iterator.next();
+                                return new SimpleEntry<>(pair.first(), pair.second());
+                            }
+                        };
+                    }
+
+                    @Override
+                    public int size() {
+                        return SortedAssociationImpl.this.size();
+                    }
+                };
+            }
+        };
+    }
+
+    @Override
     public Spliterator<Pair<K, V>> spliterator() {
         return Spliterators.spliterator(iterator(), _root.size(),
                 Spliterator.SORTED   |
@@ -741,6 +802,7 @@ final class SortedAssociationImpl<K, V> implements Association<K, V> {
         final Node node;
         byte stage = 0;  // 0=left, 1=values, 2=right, 3=done
         int index = 0;
+
         IteratorFrame(@Nullable IteratorFrame parent, Node n) {
             this.parent = parent;
             this.node = n;
