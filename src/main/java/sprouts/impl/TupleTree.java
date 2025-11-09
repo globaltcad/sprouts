@@ -71,13 +71,38 @@ import static sprouts.impl.ArrayUtil.*;
  * @see sprouts.Tuple
  * @see sprouts.Pair
  */
-final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
+record TupleTree<T extends @Nullable Object>(
+    int _size,
+    boolean _allowsNull,
+    Class<T> _type,
+    ArrayItemAccess<T, Object> _itemGetter,
+    Node _root,
+    AtomicReference<@Nullable Integer> _cachedHashCode
+) implements Tuple<T> {
+
+    @SuppressWarnings("NullAway")
+    private TupleTree(
+            int size,
+            boolean allowsNull,
+            Class<T> type,
+            @Nullable Node root
+    ) {
+        this(
+            size,
+            allowsNull,
+            Objects.requireNonNull(type),
+            ArrayItemAccess.of(type, allowsNull),
+            root == null ? new LeafNode(_createArray(type, allowsNull, size)) : root,
+            new AtomicReference<>(null)
+        );
+    }
+
 
     private static final int BRANCHING_FACTOR = 32;
     private static final int IDEAL_LEAF_NODE_SIZE = 512;
 
 
-    interface Node {
+    sealed interface Node permits BranchNode, LeafNode {
         int size();
 
         <T> T getAt(int index, ArrayItemAccess<T, Object> access);
@@ -95,15 +120,10 @@ final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
         <T> void forEach(ArrayItemAccess<T, Object> access, Consumer<T> consumer);
     }
 
-    static final class LeafNode implements Node {
-        private final Object _data;
-
-        LeafNode(Object data) {
-            _data = data;
-        }
+    record LeafNode(Object _data) implements Node {
 
         public Object data() {
-            return  _data;
+            return _data;
         }
 
         @Override
@@ -118,7 +138,7 @@ final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
 
         @Override
         public @Nullable Node slice(int from, int to, Class<?> type, boolean allowsNull) {
-            if ( from == 0 && to == _length(_data) )
+            if (from == 0 && to == _length(_data))
                 return this;
             else {
                 int newSize = (to - from);
@@ -130,26 +150,27 @@ final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
 
         @Override
         public @Nullable Node removeRange(int from, int to, Class<?> type, ArrayItemAccess<?, Object> access, boolean allowsNull) {
-            if ( from < 0 || to > _length(_data) )
+            if (from < 0 || to > _length(_data))
                 return this;
-            if ( from > to )
+            if (from > to)
                 return this;
             int numberOfItemsToRemove = to - from;
-            if ( numberOfItemsToRemove == 0 )
+            if (numberOfItemsToRemove == 0)
                 return this;
-            if ( numberOfItemsToRemove == this.size() )
+            if (numberOfItemsToRemove == this.size())
                 return null;
             else {
                 int newSize = _length(_data) - numberOfItemsToRemove;
-                if ( newSize > IDEAL_LEAF_NODE_SIZE) {
+                if (newSize > IDEAL_LEAF_NODE_SIZE) {
                     return _createRootFromList(type, allowsNull, new AbstractList() {
                         @Override
                         public int size() {
                             return newSize;
                         }
+
                         @Override
                         public @Nullable Object get(int fetchIndex) {
-                            if ( fetchIndex >= from ) {
+                            if (fetchIndex >= from) {
                                 fetchIndex = fetchIndex + numberOfItemsToRemove;
                             }
                             return access.get(fetchIndex, _data);
@@ -164,19 +185,20 @@ final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
         public @Nullable <T> Node addAllAt(int index, Tuple<T> tuple, Class<T> type, ArrayItemAccess<?, Object> access, boolean allowsNull) {
             int currentSize = _length(_data);
             int newSize = (currentSize + tuple.size());
-            if ( newSize > IDEAL_LEAF_NODE_SIZE) {
+            if (newSize > IDEAL_LEAF_NODE_SIZE) {
                 return _createRootFromList(type, allowsNull, new AbstractList<T>() {
                     @Override
                     public int size() {
                         return newSize;
                     }
+
                     @Override
                     @SuppressWarnings("unchecked")
                     public @Nullable T get(int fetchIndex) {
-                        if ( fetchIndex < index ) {
+                        if (fetchIndex < index) {
                             return (T) access.get(fetchIndex, _data);
                         }
-                        if ( fetchIndex < (index + tuple.size()) ) {
+                        if (fetchIndex < (index + tuple.size())) {
                             return tuple.get(fetchIndex - index);
                         }
                         return (T) access.get(fetchIndex - tuple.size(), _data);
@@ -190,18 +212,18 @@ final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
         @Override
         public @Nullable <T> Node setAllAt(int index, int offset, Tuple<T> tuple, Class<T> type, ArrayItemAccess<?, Object> access, boolean allowsNull) {
             int currentSize = _length(_data);
-            int offsetInTuple = Math.abs(Math.min(0, index))+offset;
+            int offsetInTuple = Math.abs(Math.min(0, index)) + offset;
             int startIndex = Math.max(0, index);
             boolean isAlreadyTheSame = true;
             Object newItems = _clone(_data, type, allowsNull);
-            int numberToSet = Math.min(tuple.size()-offsetInTuple, currentSize - startIndex);
+            int numberToSet = Math.min(tuple.size() - offsetInTuple, currentSize - startIndex);
             for (int i = 0; i < numberToSet; i++) {
-                Object itemToSet = tuple.get(offsetInTuple+i);
+                Object itemToSet = tuple.get(offsetInTuple + i);
                 _setAt(startIndex + i, itemToSet, newItems);
-                if ( !Objects.equals(itemToSet, access.get(startIndex+i, _data)) )
+                if (!Objects.equals(itemToSet, access.get(startIndex + i, _data)))
                     isAlreadyTheSame = false;
             }
-            if ( isAlreadyTheSame )
+            if (isAlreadyTheSame)
                 return this;
             return new LeafNode(newItems);
         }
@@ -212,18 +234,15 @@ final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
         }
     }
 
-    static final class BranchNode implements Node {
-        private final Node[] _children;
-        private final int _size;
+    record BranchNode(Node[] _children, int _size) implements Node {
 
-        BranchNode(Node[] children) {
-            _children = children;
+        static BranchNode of(Node[] children) {
             int sum = 0;
             for (Node child : children) {
                 if ( child != null )
                     sum += child.size();
             }
-            _size = sum;
+            return new BranchNode(children, sum);
         }
 
         @Override
@@ -282,7 +301,7 @@ final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
             else if ( _isAllNull(newChildren) )
                 return null;
             else
-                return new BranchNode(newChildren);
+                return BranchNode.of(newChildren);
         }
 
         @Override
@@ -319,7 +338,7 @@ final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
             else if ( _isAllNull(newChildren) )
                 return null;
             else
-                return new BranchNode(newChildren);
+                return BranchNode.of(newChildren);
         }
 
         @Override
@@ -354,7 +373,7 @@ final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
             if ( _isAllNull(newChildren) )
                 throw new IllegalStateException("TupleNode is all null");
             else
-                return new BranchNode(newChildren);
+                return BranchNode.of(newChildren);
         }
 
         @Override
@@ -395,7 +414,7 @@ final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
             else if ( _isAllNull(newChildren) )
                 return null;
             else
-                return new BranchNode(newChildren);
+                return BranchNode.of(newChildren);
         }
 
         @Override
@@ -406,13 +425,6 @@ final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
             }
         }
     }
-
-    private final int _size;
-    private final boolean _allowsNull;
-    private final Class<T> _type;
-    private final ArrayItemAccess<T, Object> _itemGetter;
-    private final Node _root;
-    private final AtomicReference<@Nullable Integer> _cachedHashCode = new AtomicReference<>(null);
 
     /**
      * Creates a new {@link TupleTree} with the given list of items.
@@ -481,21 +493,6 @@ final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
         );
     }
 
-    @SuppressWarnings("NullAway")
-    private TupleTree(
-            int size,
-            boolean allowsNull,
-            Class<T> type,
-            @Nullable Node root
-    ) {
-        Objects.requireNonNull(type);
-        _size = size;
-        _allowsNull = allowsNull;
-        _type = type;
-        _itemGetter = ArrayItemAccess.of(type, _allowsNull);
-        _root = root == null ? new LeafNode(_createArray(type, allowsNull, size)) : root;
-    }
-
     private static Node _createInitialRootFromList(Class<?> type, boolean allowsNull, List<?> items) {
         return new LeafNode(_createArrayFromList(type, allowsNull, items));
     }
@@ -524,7 +521,7 @@ final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
             List<?> subList = items.subList(start, end);
             branches[i] = _createRootFromList(type, allowsNull, subList);
         }
-        return new BranchNode(branches);
+        return BranchNode.of(branches);
     }
 
 
