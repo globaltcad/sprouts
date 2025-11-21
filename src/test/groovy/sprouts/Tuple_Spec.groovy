@@ -1732,11 +1732,11 @@ class Tuple_Spec extends Specification
 
         where:
             baseType | items                                        | typeToRemove | expected
-            Object   | generateMixedTypeList(100)                   | String       | Tuple.of(Object, generateMixedTypeList(100).findAll { it == null || !(it instanceof String) })
-            Object   | generateMixedTypeList(500)                   | Integer      | Tuple.of(Object, generateMixedTypeList(500).findAll { it == null || !(it instanceof Integer) })
-            Object   | generateMixedTypeList(1000)                  | Number       | Tuple.of(Object, generateMixedTypeList(1000).findAll { it == null || !(it instanceof Number) })
+            Object   | generateMixedTypeList(100)                   | String       | Tuple.ofNullable(Object, generateMixedTypeList(100).findAll { it == null || !(it instanceof String) })
+            Object   | generateMixedTypeList(500)                   | Integer      | Tuple.ofNullable(Object, generateMixedTypeList(500).findAll { it == null || !(it instanceof Integer) })
+            Object   | generateMixedTypeList(1000)                  | Number       | Tuple.ofNullable(Object, generateMixedTypeList(1000).findAll { it == null || !(it instanceof Number) })
             Object   | [null, "text", 42, null, 3.14, "more", null] | String       | Tuple.ofNullable(Object, null, 42, null, 3.14, null)
-            Object   | ["keep", 100, "remove", 200, "also remove"]  | String       | Tuple.of(Object, 100, 200)
+            Object   | ["keep", 100, "remove", 200, "also remove"]  | String       | Tuple.ofNullable(Object, 100, 200)
             Number   | [1, 2.5, 3, 4.7, 5]                          | Integer      | Tuple.of(Number, 2.5, 4.7)
     }
 
