@@ -878,7 +878,7 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
     default Association<K, V> update( K key, Function<V, V> updater ) {
         Objects.requireNonNull(key);
         Objects.requireNonNull(updater);
-        return get(key).map(v->put(key, updater.apply(v))).orElse(this);
+        return get(key).map(v -> put(key, updater.apply(v))).orElse(this);
     }
 
     /**
