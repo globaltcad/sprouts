@@ -1667,4 +1667,339 @@ class Sorted_Association_Spec extends Specification
             Integer  | Integer     |  (0..10_000).collect(it -> Pair.of(it, -it)).toList()
             String   | Double      |  (0..10_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()
     }
+
+
+    def 'The `update` method transforms existing values using a function while preserving the sorted association structure.'() {
+        reportInfo """
+            The `update` method provides a safe way to modify existing values in an association
+            without having to manually check for key existence. It only applies the transformation
+            to keys that actually exist in the association, making it ideal for selective updates.
+            
+            This method is particularly useful when you want to apply business logic transformations
+            to specific entries without affecting the overall structure of the association.
+        """
+
+        given: 'A sorted association representing product inventory with initial quantities'
+            var inventory = Association.betweenSorted(String, Integer).putAll(
+                Pair.of("apples", 10),
+                Pair.of("oranges", 15),
+                Pair.of("bananas", 20),
+                Pair.of("grapes", 8)
+            )
+
+        when: 'We update quantities for specific products that exist'
+            var updatedInventory = inventory
+                .update("apples") { quantity -> quantity + 5 }      // Restock apples
+                .update("grapes") { quantity -> quantity - 2 }      // Sell some grapes
+                .update("mangoes") { quantity -> quantity * 2 }     // Non-existent key - no change
+
+        then: 'Only existing entries are updated as expected'
+            updatedInventory.size() == 4
+            updatedInventory.get("apples").get() == 15      // 10 + 5
+            updatedInventory.get("oranges").get() == 15     // unchanged
+            updatedInventory.get("bananas").get() == 20     // unchanged
+            updatedInventory.get("grapes").get() == 6       // 8 - 2
+            !updatedInventory.containsKey("mangoes")        // still doesn't exist
+
+        and: 'The original association remains unchanged (immutability)'
+            inventory.get("apples").get() == 10
+            inventory.get("grapes").get() == 8
+    }
+
+    def 'The `update` method handles edge cases and exceptions appropriately for sorted associations.'() {
+        given: 'A sorted association with various value types'
+            var assoc = Association.betweenSorted(String, Object).putAll(
+                Pair.of("number", 42),
+                Pair.of("text", "hello"),
+                Pair.of("list", [1, 2, 3])
+            )
+
+        when: 'Updating with a function that returns null'
+            var result = assoc.update("number") { null }
+
+        then: 'Null values are rejected with NullPointerException'
+            thrown(NullPointerException)
+
+        when: 'Updating with null key'
+            assoc.update(null) { it }
+
+        then: 'Null keys are rejected'
+            thrown(NullPointerException)
+
+        when: 'Updating with null function'
+            assoc.update("number", null)
+
+        then: 'Null functions are rejected'
+            thrown(NullPointerException)
+    }
+
+    def 'Use `updateAll` with a Tuple of keys to batch-update multiple values efficiently on sorted associations.'() {
+        reportInfo """
+            The `updateAll(Tuple, Function)` method allows you to apply the same transformation
+            to multiple keys in a single operation. This is more efficient than calling `update`
+            multiple times and provides cleaner code when you need to apply uniform changes
+            to a predefined set of entries.
+            
+            This method silently ignores keys that don't exist in the association, making it
+            safe to use with dynamic key lists.
+        """
+
+        given: 'A sorted association representing student grades'
+            var grades = Association.betweenSorted(String, Integer).putAll(
+                Pair.of("Alice", 85),
+                Pair.of("Bob", 72),
+                Pair.of("Charlie", 90),
+                Pair.of("Diana", 68),
+                Pair.of("Eve", 95)
+            )
+
+        when: 'We apply a curve to specific students using a Tuple of keys'
+            var curvedGrades = grades.updateAll(
+                Tuple.of("Bob", "Diana", "Frank"),  // Frank doesn't exist - ignored
+                { grade -> Math.min(grade + 5, 100) }  // Add 5 points, cap at 100
+            )
+
+        then: 'Only the specified existing students receive the curve'
+            curvedGrades.size() == 5
+            curvedGrades.get("Alice").get() == 85     // unchanged
+            curvedGrades.get("Bob").get() == 77       // 72 + 5
+            curvedGrades.get("Charlie").get() == 90   // unchanged
+            curvedGrades.get("Diana").get() == 73     // 68 + 5
+            curvedGrades.get("Eve").get() == 95       // unchanged
+    }
+
+    def 'Use `updateAll` with a ValueSet of keys for type-safe batch updates on sorted associations.'() {
+        reportInfo """
+            When you already have a ValueSet of keys (perhaps from filtering or other operations),
+            the `updateAll(ValueSet, Function)` method provides a type-safe way to apply
+            transformations to all matching entries.
+            
+            ValueSets maintain their own ordering and uniqueness guarantees, making this method
+            particularly useful in data processing pipelines.
+        """
+
+        given: 'A sorted association of product prices and a ValueSet of products on sale'
+            var prices = Association.betweenSorted(String, Double).putAll(
+                Pair.of("laptop", 999.99d),
+                Pair.of("mouse", 25.50d),
+                Pair.of("keyboard", 75.00d),
+                Pair.of("monitor", 299.99d),
+                Pair.of("headphones", 149.99d)
+            )
+
+            var saleProducts = prices.keySet()
+                .stream()
+                .filter { key -> key in ["mouse", "keyboard", "headphones"] }
+                .collect(ValueSet.collectorOf(String))
+
+        when: 'We apply a discount to all sale products'
+            var salePrices = prices.updateAll(saleProducts) { price -> price * 0.85 }  // 15% discount
+
+        then: 'Only sale products receive the discount'
+            salePrices.size() == 5
+            salePrices.get("laptop").get() == 999.99      // unchanged
+            salePrices.get("monitor").get() == 299.99     // unchanged
+            salePrices.get("mouse").get() == 21.675       // 25.50 * 0.85
+            salePrices.get("keyboard").get() == 63.75     // 75.00 * 0.85
+            salePrices.get("headphones").get() == 127.4915 // 149.99 * 0.85
+    }
+
+    def 'Use `updateAll` with a Collection of keys for flexible batch updates on sorted associations.'() {
+        reportInfo """
+            The `updateAll(Collection, Function)` method accepts any Collection implementation,
+            making it the most flexible option for batch updates. This is ideal when integrating
+            with existing Java code that uses Lists, Sets, or other collection types.
+            
+            Like the other updateAll variants, it safely ignores keys that don't exist in
+            the association.
+        """
+
+        given: 'An association of website traffic statistics'
+            var traffic = Association.betweenSorted(String, Integer).putAll(
+                Pair.of("/home", 1500),
+                Pair.of("/about", 800),
+                Pair.of("/products", 1200),
+                Pair.of("/contact", 300),
+                Pair.of("/blog", 950)
+            )
+
+            var highTrafficPages = ["/home", "/products", "/blog", "/nonexistent"] as List
+
+        when: 'We add bonus traffic to high-performing pages'
+            var updatedTraffic = traffic.updateAll(highTrafficPages) { views -> views + 100 }
+
+        then: 'Only existing high-traffic pages receive the bonus'
+            updatedTraffic.size() == 5
+            updatedTraffic.get("/home").get() == 1600     // 1500 + 100
+            updatedTraffic.get("/about").get() == 800     // unchanged
+            updatedTraffic.get("/products").get() == 1300 // 1200 + 100
+            updatedTraffic.get("/contact").get() == 300   // unchanged
+            updatedTraffic.get("/blog").get() == 1050     // 950 + 100
+    }
+
+    def 'Use `updateAll` with a Stream of keys for efficient pipeline processing for sorted associations.'() {
+        reportInfo """
+            The `updateAll(Stream, Function)` method is designed for stream processing scenarios.
+            When you have a stream of keys (perhaps from filtering, mapping, or other stream
+            operations), this method allows you to efficiently apply transformations without
+            intermediate collection steps.
+            
+            This is particularly useful in data processing pipelines where you want to maintain
+            the lazy evaluation benefits of streams.
+        """
+
+        given: 'An association of employee data'
+            var employees = Association.betweenSorted(String, Map).putAll(
+                Pair.of("alice", [department: "Engineering", salary: 80000, level: "Senior"]),
+                Pair.of("bob", [department: "Marketing", salary: 65000, level: "Mid"]),
+                Pair.of("charlie", [department: "Engineering", salary: 75000, level: "Mid"]),
+                Pair.of("diana", [department: "HR", salary: 60000, level: "Junior"])
+            )
+
+        when: 'We give raises to engineering employees using a filtered stream'
+            var updatedEmployees = employees.updateAll(
+                employees.entrySet().stream()
+                    .filter { entry -> entry.second().department == "Engineering" }
+                    .map { entry -> entry.first() },
+                { employeeData ->
+                    def updated = new HashMap(employeeData)
+                    updated.salary = employeeData.salary * 1.10  // 10% raise
+                    updated
+                }
+            )
+
+        then: 'Only engineering employees receive raises'
+            updatedEmployees.size() == 4
+            updatedEmployees.get("alice").get().salary == 88000      // 80000 * 1.10
+            updatedEmployees.get("bob").get().salary == 65000        // unchanged
+            updatedEmployees.get("charlie").get().salary == 82500    // 75000 * 1.10
+            updatedEmployees.get("diana").get().salary == 60000      // unchanged
+    }
+
+    def 'The update methods work correctly with large datasets and maintain performance.'(int size) {
+        given: 'A large sorted association and a subset of keys to update'
+            var largeAssoc = Association.betweenSorted(Integer, Integer)
+            (0..<size).each { i -> largeAssoc = largeAssoc.put(i, i * 10) }
+
+            var keysToUpdate = (0..<size).findAll { it % 3 == 0 }  // Update every 3rd key
+
+        when: 'We update values for the selected keys'
+            var updatedAssoc = largeAssoc.updateAll(keysToUpdate) { value -> value + 1000 }
+
+        then: 'All specified keys are updated correctly'
+            keysToUpdate.every { key ->
+                updatedAssoc.get(key).get() == (key * 10) + 1000
+            }
+
+            (0..<size).findAll { it % 3 != 0 }.every { key ->
+                updatedAssoc.get(key).get() == key * 10  // Unchanged keys
+            }
+
+        and: 'The association size remains the same'
+            updatedAssoc.size() == size
+
+        where:
+            size << [100, 1000, 5000]
+    }
+
+    def 'Update methods can be chained for complex transformation pipelines on sorted associations.'() {
+        reportInfo """
+            Since all update methods return new Association instances, they can be chained
+            together to create complex transformation pipelines. This functional style
+            makes it easy to express multi-step data transformations in a readable way.
+        """
+
+        given: 'An association representing a shopping cart'
+            var cart = Association.betweenSorted(String, Map).putAll(
+                Pair.of("item1", [name: "Book", price: 29.99, quantity: 2, category: "education"]),
+                Pair.of("item2", [name: "Pen", price: 2.99, quantity: 5, category: "office"]),
+                Pair.of("item3", [name: "Notebook", price: 4.99, quantity: 3, category: "office"])
+            )
+
+        when: 'We apply a series of transformations in a pipeline'
+            var processedCart = cart
+                // Apply 10% discount to education items
+                .update("item1") { item ->
+                    def updated = new HashMap(item)
+                    updated.price = item.price * 0.90
+                    updated
+                }
+                // Apply bulk discount for office supplies with quantity > 3
+                .updateAll(["item2", "item3"] as Set) { item ->
+                    if (item.quantity > 3) {
+                        def updated = new HashMap(item)
+                        updated.price = item.price * 0.95  // 5% bulk discount
+                        updated
+                    } else {
+                        item
+                    }
+                }
+                // Calculate total for each item
+                .updateAll(cart.keySet().stream()) { item ->
+                    def updated = new HashMap(item)
+                    updated.total = item.price * item.quantity
+                    updated
+                }
+
+        then: 'All transformations are applied correctly'
+            processedCart.get("item1").get().price == 26.991  // 29.99 * 0.90
+            processedCart.get("item1").get().total == 53.982  // 26.991 * 2
+
+            processedCart.get("item2").get().price == 2.8405  // 2.99 * 0.95 (bulk discount)
+            processedCart.get("item2").get().total == 14.2025 // 2.8405 * 5
+
+            processedCart.get("item3").get().price == 4.99    // no bulk discount (quantity <= 3)
+            processedCart.get("item3").get().total == 14.97   // 4.99 * 3
+    }
+
+    def 'Update methods preserve sorted association characteristics.'() {
+        given: 'A sorted association'
+            var sortedAssoc = Association.betweenSorted(String, Integer)
+                .put("Charlie", 30)
+                .put("Alice", 25)
+                .put("Bob", 28)
+
+        when: 'We update values in the sorted association'
+            var updatedSorted = sortedAssoc.update("Alice") { age -> age + 1 }
+
+        then: 'The sorted characteristic is preserved'
+            updatedSorted.isSorted()
+            updatedSorted.keySet().toList() == ["Alice", "Bob", "Charlie"]  // Still sorted
+    }
+
+    def 'Update methods handle complex value types and nested structures.'() {
+        given: 'A sorted association with complex nested values'
+            var complexData = Association.betweenSorted(String, Map).putAll(
+                Pair.of("user1", [
+                    profile: [name: "Alice", age: 30],
+                    preferences: [theme: "dark", notifications: true],
+                    stats: [logins: 150, lastActive: "2024-01-15"]
+                ]),
+                Pair.of("user2", [
+                    profile: [name: "Bob", age: 25],
+                    preferences: [theme: "light", notifications: false],
+                    stats: [logins: 75, lastActive: "2024-01-10"]
+                ])
+            )
+
+        when: 'We update nested structures within the values'
+            var updatedData = complexData.updateAll(["user1", "user2"] as Set) { userData ->
+                def updated = new HashMap(userData)
+                // Increment login count and update last active
+                updated.stats = new HashMap(userData.stats)
+                updated.stats.logins = userData.stats.logins + 1
+                updated.stats.lastActive = "2024-01-20"
+                updated
+            }
+
+        then: 'Nested structures are updated correctly'
+            updatedData.get("user1").get().stats.logins == 151
+            updatedData.get("user1").get().stats.lastActive == "2024-01-20"
+            updatedData.get("user2").get().stats.logins == 76
+            updatedData.get("user2").get().stats.lastActive == "2024-01-20"
+
+            // Other fields remain unchanged
+            updatedData.get("user1").get().profile.name == "Alice"
+            updatedData.get("user2").get().preferences.theme == "light"
+    }
 }

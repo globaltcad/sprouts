@@ -3,6 +3,7 @@ package sprouts;
 import sprouts.impl.Sprouts;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
@@ -838,6 +839,212 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
                 (acc,
                  entry) -> acc.putIfAbsent(entry.first(), entry.second()),
                 (a, b) -> a);
+    }
+
+    /**
+     *  Returns a new association where the value associated with the given key
+     *  is transformed using the provided update function, but only if the key
+     *  exists in this association. If the key is not present, this association
+     *  is returned unchanged.<br>
+     *  <br>
+     *  This method provides a safe and convenient way to modify existing values
+     *  without having to manually check for key existence or handle {@link Optional}
+     *  values.<br>
+     *  <br>
+     *  Example usage:
+     *  <pre>{@code
+     *    var ages = Association.of("Haruka", 24)
+     *                            .put("Josh", 28)
+     *                            .put("Tom", 20);
+     *
+     *    var updatedAges = ages.update("Haruka", age -> age + 5)
+     *                          .update("Tom", age -> age * 2);
+     *
+     *    // The result: Haruka=29, Josh=28, Tom=40
+     *  }</pre>
+     *
+     * @param key The key whose associated value should be updated. It must not be {@code null}.
+     * @param updater A function that takes the current value and returns a new value.
+     *               The function will only be called if the key exists. Must not be {@code null}.
+     * @return A new association with the updated value if the key existed,
+     *         or this association unchanged if the key was not found.
+     * @throws NullPointerException if either the key or updater function is {@code null}.
+     * @throws NullPointerException if the updater function returns {@code null} (associations cannot contain null values).
+     *
+     * @see #put(Object, Object) For adding or replacing values regardless of existence
+     * @see #replace(Object, Object) For replacing existing values only
+     * @see #putIfAbsent(Object, Object) For adding values only when the key is absent
+     */
+    default Association<K, V> update( K key, Function<V, V> updater ) {
+        Objects.requireNonNull(key);
+        Objects.requireNonNull(updater);
+        return get(key).map(v->put(key, updater.apply(v))).orElse(this);
+    }
+
+    /**
+     * Returns a new association where the values associated with all the given keys
+     * are transformed using the provided update function, but only for keys that
+     * exist in this association. Keys that are not present in the association
+     * are silently ignored.<br>
+     * <br>
+     * This method provides a convenient way to batch-update multiple values
+     * in a single operation, making it ideal for scenarios where you need to
+     * apply the same transformation to multiple existing entries.<br>
+     * <br>
+     * Example usage:
+     * <pre>{@code
+     *   var inventory = Association.of("apples", 10)
+     *                              .put("oranges", 15)
+     *                              .put("bananas", 20)
+     *                              .put("grapes", 8);
+     *
+     *   // A user bought 2 oranges and grapes each.
+     *   var inventory = inventory.updateAll(
+     *                     Tuple.of("oranges", "grapes"),
+     *                     quantity -> quantity - 2
+     *                   );
+     *
+     *   // The result: apples=10, oranges=13, bananas=20, grapes=6
+     * }</pre>
+     *
+     * @param keys A tuple of keys whose associated values should be updated.
+     * @param updater A function that takes the current value and returns a new value.
+     *               The function will only be called for keys that exist. Must not be {@code null}.
+     * @return A new association with the updated values for all existing keys in the provided tuple,
+     *         or this association unchanged if none of the keys were found.
+     * @throws NullPointerException if either the keys tuple or updater function is {@code null}.
+     * @throws NullPointerException if the updater function returns {@code null} for any value.
+     *
+     * @see #update(Object, Function) For updating a single value
+     * @see #updateAll(ValueSet, Function) For updating values using a ValueSet of keys
+     * @see #updateAll(Collection, Function) For updating values using any collection of keys
+     */
+    default Association<K, V> updateAll( Tuple<K> keys, Function<V, V> updater ) {
+        Objects.requireNonNull(keys);
+        Objects.requireNonNull(updater);
+        return updateAll(keys.toValueSet(), updater);
+    }
+
+    /**
+     * Returns a new association where the values associated with all the given keys
+     * in the supplied {@link ValueSet} are transformed using an update function,
+     * but only for keys that exist in this association. Keys that are not present
+     * in the association are silently ignored.<br>
+     * <br>
+     * This method is particularly useful when you already have a {@link ValueSet}
+     * of keys and want to apply a uniform transformation to their corresponding values.<br>
+     *
+     * @param keys A ValueSet of keys whose associated values should be updated.
+     * @param updater A function that takes the current value and returns a new value.
+     *               The function will only be called for keys that exist. Must not be {@code null}.
+     * @return A new association with the updated values for all existing keys in the provided ValueSet,
+     *         or this association unchanged if none of the keys were found.
+     * @throws NullPointerException if either the keys ValueSet or updater function is {@code null}.
+     * @throws NullPointerException if the updater function returns {@code null} for any value.
+     *
+     * @see #update(Object, Function) For updating a single value
+     * @see #updateAll(Tuple, Function) For updating values using a Tuple of keys
+     * @see #updateAll(Collection, Function) For updating values using any collection of keys
+     */
+    default Association<K, V> updateAll( ValueSet<K> keys, Function<V, V> updater ) {
+        Objects.requireNonNull(keys);
+        Objects.requireNonNull(updater);
+        return updateAll(keys.stream(), updater);
+    }
+
+    /**
+     * Returns a new association where the values associated with all the keys
+     * in the supplied collection are transformed using the update function,
+     * but only for keys that exist in this association. Keys that are not present
+     * in the association are silently ignored.<br>
+     * <br>
+     * This method offers the most flexibility as it accepts any {@link Collection}
+     * implementation, making it easy to integrate with existing Java collections.<br>
+     * <br>
+     * Example usage:
+     * <pre>{@code
+     *   var productPrices = Association.of("laptop", 999.99)
+     *                                  .put("mouse", 25.50)
+     *                                  .put("keyboard", 75.00)
+     *                                  .put("monitor", 299.99);
+     *
+     *   // List of products going on sale
+     *   var saleProducts = List.of("mouse", "keyboard", "headphones");
+     *
+     *   // Apply 15% discount to sale products
+     *   var salePrices = productPrices.updateAll(
+     *       saleProducts,
+     *       price -> price * 0.85  // 15% discount
+     *   );
+     *
+     *   // The result: laptop=999.99, mouse=21.675, keyboard=63.75, monitor=299.99
+     *   // Note: "headphones" was ignored since it wasn't in the original association
+     * }</pre>
+     *
+     * @param keys A collection of keys whose associated values should be updated.
+     * @param updater A function that takes the current value and returns a new value.
+     *               The function will only be called for keys that exist. Must not be {@code null}.
+     * @return A new association with the updated values for all existing keys in the provided collection,
+     *         or this association unchanged if none of the keys were found.
+     * @throws NullPointerException if either the keys collection or updater function is {@code null}.
+     * @throws NullPointerException if the updater function returns {@code null} for any value.
+     *
+     * @see #update(Object, Function) For updating a single value
+     * @see #updateAll(Tuple, Function) For updating values using a Tuple of keys
+     * @see #updateAll(ValueSet, Function) For updating values using a ValueSet of keys
+     */
+    default Association<K, V> updateAll( Collection<? extends K> keys, Function<V, V> updater ) {
+        Objects.requireNonNull(keys);
+        Objects.requireNonNull(updater);
+        return updateAll(keys.stream(), updater);
+    }
+
+    /**
+     * Returns a new association where the values associated with the keys
+     * from the supplied stream are transformed using the update function,
+     * but only for keys that exist in this association. Keys that are not present
+     * in the association are silently ignored.<br>
+     * <br>
+     * This method is ideal for scenarios where you have a stream of keys,
+     * such as when filtering or processing keys from another data source,
+     * and want to efficiently apply updates to the corresponding values.<br>
+     * <br>
+     * Example usage:
+     * <pre>{@code
+     *   var websiteStats = Association.of("/home", 1500)
+     *                                 .put("/about", 800)
+     *                                 .put("/contact", 300)
+     *                                 .put("/products", 1200)
+     *                                 .put("/blog", 950);
+     *
+     *   // Update page views for high-traffic pages (over 1000 views)
+     *   var updatedStats = websiteStats.updateAll(
+     *       websiteStats.entrySet().stream()
+     *                   .filter(entry -> entry.second() > 1000)
+     *                   .map(Pair::first),  // Stream of high-traffic page keys
+     *       views -> views + 100  // Add 100 bonus views for high performers
+     *   );
+     *
+     *   // The result: /home=1600, /about=800, /contact=300, /products=1300, /blog=950
+     * }</pre>
+     *
+     * @param keys A stream of keys whose associated values should be updated.
+     * @param updater A function that takes the current value and returns a new value.
+     *               The function will only be called for keys that exist. Must not be {@code null}.
+     * @return A new association with the updated values for all existing keys in the provided stream,
+     *         or this association unchanged if none of the keys were found.
+     * @throws NullPointerException if either the keys stream or updater function is {@code null}.
+     * @throws NullPointerException if the updater function returns {@code null} for any value.
+     *
+     * @see #update(Object, Function) For updating a single value
+     * @see #updateAll(Tuple, Function) For updating values using a Tuple of keys
+     * @see #updateAll(ValueSet, Function) For updating values using a ValueSet of keys
+     * @see #updateAll(Collection, Function) For updating values using any collection of keys
+     */
+    default Association<K, V> updateAll( Stream<? extends K> keys, Function<V, V> updater ) {
+        Objects.requireNonNull(keys);
+        Objects.requireNonNull(updater);
+        return keys.reduce(this, (acc, key) -> acc.update(key, updater), (a, b) -> a);
     }
 
     /**
