@@ -898,12 +898,12 @@ class ValueSet_Spec extends Specification {
 
         where:
             baseType | items                                        | typeToRemove | expected
-            Object   | generateMixedTypeList(100)                   | String       | ValueSet.of(Object, generateMixedTypeList(100).findAll { !(it instanceof String) }.toSet())
-            Object   | generateMixedTypeList(500)                   | Integer      | ValueSet.of(Object, generateMixedTypeList(500).findAll { !(it instanceof Integer) }.toSet())
-            Object   | generateMixedTypeList(1000)                  | Number       | ValueSet.of(Object, generateMixedTypeList(1000).findAll { !(it instanceof Number) }.toSet())
-            Object   | ["text", 42, 3.14, "more", 100]              | String       | ValueSet.of(Object, 42, 3.14, 100)
-            Object   | ["keep", 100, "remove", 200, "also remove"]  | String       | ValueSet.of(Object, 100, 200)
-            Number   | [1, 2.5, 3, 4.7, 5]                          | Integer      | ValueSet.of(Number, 2.5, 4.7)
+            Object   | generateMixedTypeList(100)                   | String       | ValueSet.of(Object).addAll(generateMixedTypeList(100).findAll { !(it instanceof String) }.toSet())
+            Object   | generateMixedTypeList(500)                   | Integer      | ValueSet.of(Object).addAll(generateMixedTypeList(500).findAll { !(it instanceof Integer) }.toSet())
+            Object   | generateMixedTypeList(1000)                  | Number       | ValueSet.of(Object).addAll(generateMixedTypeList(1000).findAll { !(it instanceof Number) }.toSet())
+            Object   | ["text", 42, 3.14, "more", 100]              | String       | ValueSet.of(Object).addAll(42, 3.14, 100)
+            Object   | ["keep", 100, "remove", 200, "also remove"]  | String       | ValueSet.of(Object).addAll(100, 200)
+            Number   | [1, 2.5, 3, 4.7, 5]                          | Integer      | ValueSet.of(Number).addAll(2.5, 4.7)
     }
 
     def 'The `retainIf(Class)` method efficiently extracts typed subsets from large heterogeneous collections.'(
@@ -933,12 +933,12 @@ class ValueSet_Spec extends Specification {
 
         where:
             baseType | items                                             | typeToRetain | expected
-            Object   | generateMixedTypeList(100)                        | String       | ValueSet.of(String, generateMixedTypeList(100).findAll { it instanceof String }.toSet())
-            Object   | generateMixedTypeList(500)                        | Integer      | ValueSet.of(Integer, generateMixedTypeList(500).findAll { it instanceof Integer }.toSet())
-            Object   | generateMixedTypeList(1000)                       | Number       | ValueSet.of(Number, generateMixedTypeList(1000).findAll { it instanceof Number }.toSet())
+            Object   | generateMixedTypeList(100)                        | String       | ValueSet.of(String).addAll(generateMixedTypeList(100).findAll { it instanceof String }.toSet())
+            Object   | generateMixedTypeList(500)                        | Integer      | ValueSet.of(Integer).addAll(generateMixedTypeList(500).findAll { it instanceof Integer }.toSet())
+            Object   | generateMixedTypeList(1000)                       | Number       | ValueSet.of(Number).addAll(generateMixedTypeList(1000).findAll { it instanceof Number }.toSet())
             Object   | ["text", 42, 3.14, "more text", 100]              | String       | ValueSet.of("text", "more text")
             Object   | ["keep", 100, "also keep", 200, "and this"]       | String       | ValueSet.of("keep", "also keep", "and this")
-            Object   | [1, "text", 2.5, "more", 3, 4.7]                  | Number       | ValueSet.of(Number, 1, 2.5, 3, 4.7)
+            Object   | [1, "text", 2.5, "more", 3, 4.7]                  | Number       | ValueSet.of(Number).addAll(1, 2.5, 3, 4.7)
     }
 
     def 'Edge cases for `removeIf(Class)` and `retainIf(Class)` methods are handled correctly.'() {
