@@ -1995,7 +1995,7 @@ class Association_Spec extends Specification
                 .put("b", 25)
                 .put("c", 28)
 
-        when: 'We update values in the linked association'
+        when: 'We update values in the association'
             var updated = association.update("b") { value -> value * 2 }
 
         then: 'The regular (non-linked, non-sorted) characteristic is preserved'
