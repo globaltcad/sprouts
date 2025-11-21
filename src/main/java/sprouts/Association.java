@@ -460,6 +460,15 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
                 return Association.this.retainAll(elements.stream().map(Pair::first).collect(Collectors.toSet()))
                         .entrySet();
             }
+
+            @Override
+            public <T extends Pair<K, V>> ValueSet<T> retainIf(Class<T> type) {
+                if ( !Objects.equals(type,Pair.class) ) {
+                    throw new IllegalArgumentException("Parameter may only be of type Pair!");
+                } else
+                    return (ValueSet<T>) this;
+            }
+
             @Override
             public ValueSet<Pair<K, V>> clear() {
                 return Sprouts.factory().valueSetOf(this.type());

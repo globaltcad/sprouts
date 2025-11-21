@@ -793,4 +793,216 @@ class ValueSet_Spec extends Specification {
             Integer  | (0..10_000).collect(it -> it).toList()
             String   | (0..10_000).collect(it -> String.valueOf(it)).toList()
     }
+
+    def 'The `removeIf(Class)` method filters out items of the specified type while preserving the value set characteristics.'() {
+        reportInfo """
+            The `removeIf(Class)` method creates a new value set containing only items that are NOT 
+            instances of the specified type. This is useful for filtering out specific types from 
+            a heterogeneous value set.
+            
+            Important behavior:
+            - The returned value set has the same ordering characteristics (linked/sorted) as the original
+            - Items that are instances of the specified type (including subclasses) are removed
+            - The element type of the returned value set remains the same as the original
+        """
+        given: 'A value set with mixed types'
+            var mixed = ValueSet.of(Object).addAll("hello", 42, "world", 3.14, "!", 100, "test")
+
+        when: 'We remove all String instances'
+            var withoutStrings = mixed.removeIf(String)
+
+        then: 'Only non-String items remain'
+            withoutStrings == ValueSet.of(Object).addAll(42, 3.14, 100)
+            withoutStrings.type() == Object
+            !withoutStrings.isLinked()
+            !withoutStrings.isSorted()
+
+        when: 'We remove all Integer instances'
+            var withoutIntegers = mixed.removeIf(Integer)
+
+        then: 'Only non-Integer items remain'
+            withoutIntegers == ValueSet.of(Object).addAll("hello", "world", 3.14, "!", "test")
+            withoutIntegers.type() == Object
+
+        when: 'We remove all Number instances (including Integer and Double)'
+            var withoutNumbers = mixed.removeIf(Number)
+
+        then: 'Only non-Number items remain'
+            withoutNumbers == ValueSet.of(Object).addAll("hello", "world", "!", "test")
+            withoutNumbers.type() == Object
+    }
+
+    def 'The `retainIf(Class)` method keeps only items of the specified type and returns a properly typed value set.'() {
+        reportInfo """
+            The `retainIf(Class)` method creates a new value set containing only items that ARE 
+            instances of the specified type. This is useful for extracting specific types from 
+            a heterogeneous value set.
+            
+            Important behavior:
+            - Only items that are instances of the specified type (including subclasses) are retained
+            - The returned value set is properly typed as ValueSet<V> where V is the specified type
+            - The ordering characteristics (linked/sorted) are preserved in the result
+        """
+        given: 'A value set with mixed types'
+            var mixed = ValueSet.of(Object).addAll("hello", 42, "world", 3.14, "!", 100, "test")
+
+        when: 'We retain only String instances'
+            var onlyStrings = mixed.retainIf(String)
+
+        then: 'Only String items remain and result is properly typed'
+            onlyStrings == ValueSet.of("hello", "world", "!", "test")
+            onlyStrings.type() == String
+            !onlyStrings.isLinked()
+            !onlyStrings.isSorted()
+
+        when: 'We retain only Integer instances'
+            var onlyIntegers = mixed.retainIf(Integer)
+
+        then: 'Only Integer items remain and result is properly typed'
+            onlyIntegers == ValueSet.of(42, 100)
+            onlyIntegers.type() == Integer
+
+        when: 'We retain only Number instances (including both Integer and Double)'
+            var onlyNumbers = mixed.retainIf(Number)
+
+        then: 'All Number items remain and result is properly typed'
+            onlyNumbers == ValueSet.of(Number).addAll(42, 3.14, 100)
+            onlyNumbers.type() == Number
+    }
+
+    def 'The `removeIf(Class)` method efficiently filters large heterogeneous collections while preserving set characteristics.'(
+        Class<?> baseType, List<Object> items, Class<?> typeToRemove, ValueSet<Object> expected
+    ) {
+        reportInfo """
+            The `removeIf(Class)` method should efficiently handle large collections while 
+            maintaining the original value set's characteristics. This test verifies that:
+            
+            - Large datasets are processed correctly
+            - The operation maintains performance characteristics
+            - The result has the same ordering characteristics as the input
+            
+            This is particularly important for data processing pipelines where value sets 
+            might contain thousands of heterogeneous elements.
+        """
+        given: 'A value set with a large collection of mixed-type items'
+            var valueSet = ValueSet.of(baseType).addAll(items)
+
+        when: 'We remove all instances of the specified type'
+            var result = valueSet.removeIf(typeToRemove)
+
+        then: 'The result contains only non-matching items with preserved characteristics'
+            result == expected
+            result.type() == baseType
+            result.isLinked() == valueSet.isLinked()
+            result.isSorted() == valueSet.isSorted()
+
+        where:
+            baseType | items                                        | typeToRemove | expected
+            Object   | generateMixedTypeList(100)                   | String       | ValueSet.of(Object, generateMixedTypeList(100).findAll { !(it instanceof String) }.toSet())
+            Object   | generateMixedTypeList(500)                   | Integer      | ValueSet.of(Object, generateMixedTypeList(500).findAll { !(it instanceof Integer) }.toSet())
+            Object   | generateMixedTypeList(1000)                  | Number       | ValueSet.of(Object, generateMixedTypeList(1000).findAll { !(it instanceof Number) }.toSet())
+            Object   | ["text", 42, 3.14, "more", 100]              | String       | ValueSet.of(Object, 42, 3.14, 100)
+            Object   | ["keep", 100, "remove", 200, "also remove"]  | String       | ValueSet.of(Object, 100, 200)
+            Number   | [1, 2.5, 3, 4.7, 5]                          | Integer      | ValueSet.of(Number, 2.5, 4.7)
+    }
+
+    def 'The `retainIf(Class)` method efficiently extracts typed subsets from large heterogeneous collections.'(
+        Class<?> baseType, List<Object> items, Class<?> typeToRetain, ValueSet<Object> expected
+    ) {
+        reportInfo """
+            The `retainIf(Class)` method should efficiently extract homogeneous subsets 
+            from large heterogeneous collections. This test verifies that:
+            
+            - Large datasets are processed correctly with proper type filtering
+            - The returned value set is properly typed
+            - Type safety is maintained throughout the operation
+            - Ordering characteristics are preserved when applicable
+            
+            This is crucial for type-safe data extraction in data processing scenarios 
+            where you need to work with specific subtypes from mixed collections.
+        """
+        given: 'A value set with a large collection of mixed-type items'
+            var valueSet = ValueSet.of(baseType, items)
+
+        when: 'We retain only instances of the specified type'
+            var result = valueSet.retainIf(typeToRetain)
+
+        then: 'The result contains only matching items and is properly typed'
+            result == expected
+            result.type() == typeToRetain
+
+        where:
+            baseType | items                                             | typeToRetain | expected
+            Object   | generateMixedTypeList(100)                        | String       | ValueSet.of(String, generateMixedTypeList(100).findAll { it instanceof String }.toSet())
+            Object   | generateMixedTypeList(500)                        | Integer      | ValueSet.of(Integer, generateMixedTypeList(500).findAll { it instanceof Integer }.toSet())
+            Object   | generateMixedTypeList(1000)                       | Number       | ValueSet.of(Number, generateMixedTypeList(1000).findAll { it instanceof Number }.toSet())
+            Object   | ["text", 42, 3.14, "more text", 100]              | String       | ValueSet.of("text", "more text")
+            Object   | ["keep", 100, "also keep", 200, "and this"]       | String       | ValueSet.of("keep", "also keep", "and this")
+            Object   | [1, "text", 2.5, "more", 3, 4.7]                  | Number       | ValueSet.of(Number, 1, 2.5, 3, 4.7)
+    }
+
+    def 'Edge cases for `removeIf(Class)` and `retainIf(Class)` methods are handled correctly.'() {
+        given: 'An empty value set'
+            var empty = ValueSet.of(String)
+
+        when: 'We try to remove items from an empty set'
+            var result1 = empty.removeIf(String)
+        then: 'The empty set is returned unchanged'
+            result1.isEmpty()
+            result1.is(empty)
+
+        when: 'We try to retain items in an empty set'
+            var result2 = empty.retainIf(String)
+        then: 'The empty set is returned unchanged'
+            result2.isEmpty()
+            result2.type() == String
+
+        when: 'A value set where no items match the filter criteria for removal'
+            var numbers = ValueSet.of(Integer).addAll(1, 2, 3, 4, 5)
+        and: 'We try to remove String instances from an Integer set'
+            var result3 = numbers.removeIf(String)
+        then: 'The set is returned unchanged'
+            result3 == numbers
+            result3.is(numbers)
+
+        when: 'We try to retain String instances from an Integer set'
+            var result4 = numbers.retainIf(String)
+        then: 'An empty String set is returned'
+            result4.isEmpty()
+            result4.type() == String
+
+        when: 'A value set where all items match the filter criteria for retention'
+            var strings = ValueSet.of(String).addAll("a", "b", "c")
+        and: 'We retain String instances from a String set'
+            var result5 = strings.retainIf(String)
+        then: 'The set is returned unchanged (but may be a new instance)'
+            result5 == strings
+            result5.type() == String
+
+        when: 'We remove Object instances from a String set (all items are instances)'
+            var result6 = strings.removeIf(Object)
+        then: 'An empty set is returned'
+            result6.isEmpty()
+            result6.type() == String
+    }
+
+    // Helper method to generate mixed-type lists for data-driven testing
+    private List<Object> generateMixedTypeList(int size) {
+        def random = new Random(42) // Fixed seed for reproducible tests
+        def types = [String, Integer, Double, Boolean]
+        def stringValues = ["apple", "banana", "cherry", "date", "elderberry"]
+        def numberValues = [1, 2, 3, 4, 5, 1.5, 2.5, 3.5, 4.5, 5.5]
+        def booleanValues = [true, false]
+
+        return (0..<size).collect { index ->
+            def type = types[random.nextInt(types.size())]
+            switch (type) {
+                case String: return stringValues[random.nextInt(stringValues.size())] + "-$index"
+                case Integer: return numberValues[random.nextInt(5)] * (index + 1)
+                case Double: return numberValues[random.nextInt(5) + 5] * (index + 1) / 2.0
+                case Boolean: return booleanValues[random.nextInt(booleanValues.size())]
+                default: return "unknown-$index"
+            }
+        }.unique() // Ensure uniqueness for value set
+    }
 }

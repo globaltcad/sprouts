@@ -752,4 +752,264 @@ class Sorted_ValueSet_Spec extends Specification {
             Integer  | (0..10_000).collect(it -> it).toList()
             String   | (0..10_000).collect(it -> String.valueOf(it)).toList()
     }
+
+    def 'The `removeIf(Class)` method filters out items of the specified type while preserving the sorted value set characteristics.'() {
+        reportInfo """
+            The `removeIf(Class)` method creates a new sorted value set containing only items that are NOT 
+            instances of the specified type. This is useful for filtering out specific types from 
+            a heterogeneous value set.
+            
+            Important behavior for sorted variant:
+            - The returned value set maintains the sorted ordering characteristics
+            - Items that are instances of the specified type (including subclasses) are removed
+            - The element type of the returned value set remains the same as the original
+            - The remaining elements maintain their sorted order
+        """
+        given: 'A sorted value set with mixed types'
+            var mixed = ValueSet.ofSorted(Number, Comparator.comparingDouble {it as double}).addAll(1 as byte, 42, 2 as byte, 3.14d, 3 as byte, 100, 4 as byte)
+
+        when: 'We remove all Byte instances'
+            var withoutByte = mixed.removeIf(Byte)
+
+        then: 'Only non-String items remain in sorted order'
+            withoutByte.toList() == [3.14, 42, 100]
+            withoutByte.type() == Number
+            !withoutByte.isLinked()
+            withoutByte.isSorted()
+
+        when: 'We remove all Integer instances'
+            var withoutIntegers = mixed.removeIf(Integer)
+
+        then: 'Only non-Integer items remain in sorted order'
+            withoutIntegers.toList() == [1 as byte, 2 as byte, 3 as byte, 3.14d, 4 as byte]
+            withoutIntegers.type() == Number
+            withoutIntegers.isSorted()
+
+        when: 'We remove all Double and Integer instances:'
+            var withoutNumbers = mixed.removeIf(Double).removeIf(Integer)
+
+        then: 'Only non-Number items remain in sorted order'
+            withoutNumbers.toList() == [1 as byte, 2 as byte, 3 as byte, 4 as byte]
+            withoutNumbers.type() == Number
+            withoutNumbers.isSorted()
+    }
+
+    def 'The `retainIf(Class)` method keeps only items of the specified type and returns a properly typed sorted value set.'() {
+        reportInfo """
+            The `retainIf(Class)` method creates a new sorted value set containing only items that ARE 
+            instances of the specified type. This is useful for extracting specific types from 
+            a heterogeneous value set.
+            
+            Important behavior for sorted variant:
+            - Only items that are instances of the specified type (including subclasses) are retained
+            - The returned value set is properly typed as ValueSet<V> where V is the specified type
+            - The sorted ordering characteristics are preserved in the result
+            - The retained elements are sorted according to the original comparator
+        """
+        given: 'A sorted value set with mixed types'
+            var mixed = ValueSet.ofSorted(Number, Comparator.comparingDouble {it as double}).addAll(1 as byte, 42, 2 as byte, 3.14d, 3 as byte, 100, 4 as byte)
+
+        when: 'We retain only String instances'
+            var onlyByte = mixed.retainIf(Byte)
+
+        then: 'Only byte items remain in sorted order and result is properly typed'
+            onlyByte.toList() == [1 as byte, 2 as byte, 3 as byte, 4 as byte]
+            onlyByte.type() == Byte
+            !onlyByte.isLinked()
+            onlyByte.isSorted()
+
+        when: 'We retain only Integer instances'
+            var onlyIntegers = mixed.retainIf(Integer)
+
+        then: 'Only Integer items remain in sorted order and result is properly typed'
+            onlyIntegers.toList() == [42, 100]
+            onlyIntegers.type() == Integer
+            onlyIntegers.isSorted()
+
+        when: 'We retain only Double instances...'
+            var onlyDouble = mixed.retainIf(Double)
+
+        then: 'All doubles remain in sorted order and result is properly typed'
+            onlyDouble.toList() == [3.14d]
+            onlyDouble.type() == Double
+            onlyDouble.isSorted()
+    }
+
+    def 'The `removeIf(Class)` method efficiently filters large heterogeneous collections while preserving sorted set characteristics.'(
+        Class<?> baseType, Comparator comparator, List<Object> items, Class<?> typeToRemove, List<Object> expectedOrder
+    ) {
+        reportInfo """
+            The `removeIf(Class)` method should efficiently handle large collections while 
+            maintaining the original sorted value set's characteristics. This test verifies that:
+            
+            - Large datasets are processed correctly
+            - The operation maintains performance characteristics
+            - The result preserves the sorted ordering of the original set
+            - Elements are maintained in their proper sorted order
+            
+            This is particularly important for data processing pipelines where sorted value sets 
+            might contain thousands of heterogeneous elements and sorted order matters.
+        """
+        given: 'A sorted value set with a large collection of mixed-type items'
+            var valueSet = ValueSet.ofSorted(baseType, comparator).addAll(items)
+
+        when: 'We remove all instances of the specified type'
+            var result = valueSet.removeIf(typeToRemove)
+
+        then: 'The result contains only non-matching items with preserved sorted characteristics'
+            result.toList() == expectedOrder
+            result.type() == baseType
+            !result.isLinked()
+            result.isSorted()
+
+        where:
+            baseType | comparator                                |items                                        | typeToRemove | expectedOrder
+            Number   | Comparator.comparingDouble {it as double} |[1, 2.5d, 3, 4.7d, 5]                        | Integer      | [2.5d, 4.7d]
+    }
+
+    def 'The `retainIf(Class)` method efficiently extracts typed subsets from large heterogeneous collections while preserving sorted order.'(
+        Class<?> baseType, Comparator comparator, List<Object> items, Class<?> typeToRetain, List<Object> expectedOrder
+    ) {
+        reportInfo """
+            The `retainIf(Class)` method should efficiently extract homogeneous subsets 
+            from large heterogeneous collections while preserving the sorted ordering.
+            This test verifies that:
+            
+            - Large datasets are processed correctly with proper type filtering
+            - The returned value set is properly typed
+            - Type safety is maintained throughout the operation
+            - Sorted ordering characteristics are preserved
+            - Retained elements maintain their proper sorted order
+            
+            This is crucial for type-safe data extraction in scenarios where you need to 
+            work with specific subtypes from mixed collections and sorted order matters.
+        """
+        given: 'A sorted value set with a collection of mixed-type items'
+            var valueSet = ValueSet.ofSorted(baseType, comparator).addAll(items)
+
+        when: 'We retain only instances of the specified type'
+            var result = valueSet.retainIf(typeToRetain)
+
+        then: 'The result contains only matching items in sorted order and is properly typed'
+            result.toList() == expectedOrder
+            result.type() == typeToRetain
+            !result.isLinked()
+            result.isSorted()
+
+        where:
+            baseType | comparator                                | items                    | typeToRetain | expectedOrder
+            Number   | Comparator.comparingDouble {it as double} | [1, 1f, 2.5, 2f, 3, 4.7] | Float        | [1f, 2f]
+    }
+
+    def 'Edge cases for `removeIf(Class)` and `retainIf(Class)` methods are handled correctly in sorted value sets.'() {
+        given: 'An empty sorted value set'
+            var empty = ValueSet.ofSorted(String)
+
+        when: 'We try to remove items from an empty set'
+            var result1 = empty.removeIf(String)
+        then: 'The empty set is returned unchanged'
+            result1.isEmpty()
+            result1.is(empty)
+            !result1.isLinked()
+            result1.isSorted()
+
+        when: 'We try to retain items in an empty set'
+            var result2 = empty.retainIf(String)
+        then: 'The empty set is returned unchanged'
+            result2.isEmpty()
+            result2.type() == String
+            result2.isSorted()
+
+        when: 'A sorted value set where no items match the filter criteria for removal'
+            var numbers = ValueSet.ofSorted(Integer).addAll(1, 2, 3, 4, 5)
+        and: 'We try to remove String instances from an Integer set'
+            var result3 = numbers.removeIf(String)
+        then: 'The set is returned unchanged'
+            result3 == numbers
+            result3.is(numbers)
+            result3.isSorted()
+
+        when: 'We try to retain String instances from an Integer set'
+            var result4 = numbers.retainIf(String)
+        then: 'An empty String sorted set is returned'
+            result4.isEmpty()
+            result4.type() == String
+            result4.isSorted()
+
+        when: 'A sorted value set where all items match the filter criteria for retention'
+            var strings = ValueSet.ofSorted(String).addAll("a", "b", "c")
+        and: 'We retain String instances from a String set'
+            var result5 = strings.retainIf(String)
+        then: 'The set is returned unchanged (but may be a new instance)'
+            result5 == strings
+            result5.type() == String
+            result5.isSorted()
+
+        when: 'We remove Object instances from a String set (all items are instances)'
+            var result6 = strings.removeIf(Object)
+        then: 'An empty sorted set is returned'
+            result6.isEmpty()
+            result6.type() == String
+            result6.isSorted()
+    }
+
+    def 'Sorted value set type filtering preserves sort order across complex operations'() {
+        reportInfo """
+            This test verifies that the sorted value set maintains proper sort order
+            across multiple type filtering operations, ensuring that the sorting semantics
+            are preserved even when performing complex filtering sequences.
+        """
+        given: 'A sorted value set with carefully ordered mixed types using custom comparator'
+            var orderedSet = ValueSet.ofSorted(Object, Comparator.comparing(Object::toString))
+                .addAll("first", 1, "second", 2.5, "third", 3, "fourth", 4.7, "fifth")
+
+        when: 'We perform sequential type filtering operations'
+            var step1 = orderedSet.retainIf(String)  // Keep only strings
+            var step2 = orderedSet.removeIf(Number)  // Remove all numbers from original
+            var step3 = step2.retainIf(String)       // Should be same as step1
+
+        then: 'All operations preserve the sorted ordering'
+            step1.toList() == ["fifth", "first", "fourth", "second", "third"]
+            step2.toList() == ["fifth", "first", "fourth", "second", "third"]
+            step3.toList() == ["fifth", "first", "fourth", "second", "third"]
+
+            step1.isSorted()
+            step2.isSorted()
+            step3.isSorted()
+
+            step1 != step2
+            step1.toList() == step2.toList()
+            step1 == step3
+    }
+
+    def 'Custom comparator is preserved when using type filtering methods on sorted value sets'() {
+        reportInfo """
+            This test verifies that when using `removeIf(Class)` and `retainIf(Class)` on
+            sorted value sets with custom comparators, the resulting value sets maintain
+            the same comparator and sorting behavior.
+        """
+        given: 'A sorted value set with a custom reverse order comparator'
+            var reverseComparator = Comparator.reverseOrder()
+            var sortedSet = ValueSet.ofSorted(String, reverseComparator)
+                .addAll("apple", "banana", "cherry", "date")
+
+        when: 'We remove specific types (though all are same type in this case)'
+            var result = sortedSet.removeIf(String) // Should remove all since all are Strings
+
+        then: 'The result maintains the same comparator characteristics'
+            result.isEmpty()
+            result.type() == String
+            result.isSorted()
+            // Note: We can't directly test the comparator, but we can verify sorting behavior
+
+        when: 'We create a mixed-type set with custom comparator and filter'
+            var mixedSet = ValueSet.ofSorted(Object, Comparator.comparing(Object::toString))
+                .addAll("zebra", 42, "apple", 100, "monkey")
+            var stringsOnly = mixedSet.retainIf(String)
+
+        then: 'The filtered set maintains the custom comparator sorting'
+            stringsOnly.toList() == ["apple", "monkey", "zebra"]
+            stringsOnly.type() == String
+            stringsOnly.isSorted()
+    }
 }

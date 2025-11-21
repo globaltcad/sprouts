@@ -509,6 +509,15 @@ final class ValueSetImpl<E> implements ValueSet<E> {
     }
 
     @Override
+    public <V extends E> ValueSet<V> retainIf(Class<V> type) {
+        Objects.requireNonNull(type, "The provided type cannot be null.");
+        return stream()
+                .filter(e -> type.isAssignableFrom(e.getClass()))
+                .map(type::cast)
+                .reduce(ValueSet.of(type), ValueSet::add, (a, b) -> a);
+    }
+
+    @Override
     public ValueSet<E> clear() {
         return Sprouts.factory().valueSetOf(this.type());
     }
