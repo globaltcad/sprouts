@@ -1998,7 +1998,7 @@ class Association_Spec extends Specification
         when: 'We update values in the linked association'
             var updated = association.update("b") { value -> value * 2 }
 
-        then: 'The linked characteristic is preserved'
+        then: 'The regular (non-linked, non-sorted) characteristic is preserved'
             !updated.isLinked()
             !updated.isSorted()
             updated.keySet().toSet() == ["a", "b", "c"] as Set
