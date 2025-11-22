@@ -449,6 +449,15 @@ final class SortedValueSetImpl<E> implements ValueSet<E> {
         return result;
     }
 
+    @Override
+    public <V extends E> ValueSet<V> retainIf(Class<V> type)  {
+        Objects.requireNonNull(type, "The provided type cannot be null.");
+        return stream()
+                .filter(e -> type.isAssignableFrom(e.getClass()))
+                .map(type::cast)
+                .reduce(ValueSet.ofSorted(type, (Comparator<V>) _comparator), ValueSet::add, (a, b) -> a);
+    }
+
     private static <E> @Nullable Node _removeElement(
             Node node,
             Class<E> keyType,
