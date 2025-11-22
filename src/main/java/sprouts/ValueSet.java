@@ -8,6 +8,7 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -1281,13 +1282,58 @@ public interface ValueSet<E> extends Iterable<E> {
     }
 
     /**
-     * Compares the specified object with this set for equality.
-     * Returns {@code true} if the specified object is also a value set,
-     * and the two sets have the same size, and every member of the specified
-     * set is contained in this set (or equivalently, every member of this set is
-     * contained in the specified set). This definition ensures that the
-     * equals method works properly across different implementations of the
-     * set interface.
+     *  Returns a string consisting of the string representations of all elements
+     *  in this value set, concatenated with the specified delimiter.
+     *  The elements are converted to strings using {@link String#valueOf(Object)}
+     *  and joined in the iteration order of this value set.
+     *  <p>
+     *  <b>Examples:</b>
+     *  <pre>{@code
+     *  var fruits = ValueSet.of("apple", "banana", "orange");
+     *  String result1 = fruits.join(", ");
+     *  // Returns "apple, banana, orange"
+     *
+     *  ValueSet<Integer> numbers = ValueSet.of(1, 2, 3);
+     *  String result2 = numbers.join("-"); // Returns "1-2-3"
+     *  }</pre>
+     *  </p>
+     *  <p>
+     *  <b>Order Considerations:</b>
+     *  <ul>
+     *    <li>For regular value sets, the order is undefined but consistent</li>
+     *    <li>For linked value sets, elements are joined in insertion order</li>
+     *    <li>For sorted value sets, elements are joined in sorted order</li>
+     *  </ul>
+     *  </p>
+     *  <p>
+     *  <b>Empty Set:</b>
+     *  If this value set is empty, an empty string is returned.
+     *  </p>
+     *  <p>
+     *  <b>Single Element:</b>
+     *  If this value set contains only one element, that element's string
+     *  representation is returned without any delimiter.
+     *  </p>
+     *
+     * @param delimiter The delimiter to be used between each element.
+     *                 Must not be null, but can be an empty string.
+     * @return A string representation of this value set's elements
+     *         joined by the specified delimiter.
+     * @throws NullPointerException if the provided delimiter is {@code null}.
+     */
+    default String join( String delimiter ) {
+        return this.stream().map(String::valueOf).collect(Collectors.joining(delimiter));
+    }
+
+    /**
+     * Compares the specified object with this set for value equality.
+     * Returns {@code true} if the specified object is also a value set with the
+     * same {@link #size()}, {@link #type()}, and where every member of the specified
+     * set is contained in this set (or equivalently, every member of this set is contained in the specified set).
+     * Additionally, two sets must also report the same values for {@link #isLinked()} and {@link #isSorted()}.
+     * So an unordered set is never equal to a sorted set, a linked set is never equal to a sorted set, etc...<br>
+     * This definition ensures that the equals method works properly across
+     * different implementations of the set interface.<br>
      *
      * @param o object to be compared for equality with this set
      * @return {@code true} if the specified object is equal to this set

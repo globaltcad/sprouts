@@ -986,6 +986,43 @@ class ValueSet_Spec extends Specification {
             result6.type() == String
     }
 
+    def 'The `join(String)` method handles all kinds of value sets correctly.'(ValueSet<?> valueSet, String delimiter) {
+        reportInfo """
+            The `join(String)` method creates a string representation of the value set's elements
+            by concatenating them with the specified delimiter. The order of elements depends on
+            the value set type:
+            - Regular value sets: undefined but consistent order
+            - Linked value sets: insertion order
+            - Sorted value sets: sorted order
+            
+            Since value sets cannot contain null elements (as specified in the class documentation),
+            null handling is not a concern for this method.
+        """
+        when: 'We join the elements'
+            var result = valueSet.join(delimiter)
+        then: 'The result matches the expected joined string you would get from a tuple (ordered).'
+            result == valueSet.toTuple().join(delimiter)
+
+        where:
+            valueSet                                                                    | delimiter
+            ValueSet.of("a", "b", "c")                                                  | ", "
+            ValueSet.of("a", "b", "c")                                                  | "-"
+            ValueSet.of("a", "b", "c")                                                  | ""
+            ValueSet.of("a", "b", "c")                                                  | " -> "
+            ValueSet.of(Integer).addAll(1, 2, 3)                                        | ", "
+            ValueSet.of(Double).addAll(1.5d, 2.7d, 3.9d)                                | " | "
+            ValueSet.of(Boolean).addAll(true, false, true)                              | " & "
+            ValueSet.of(Integer)                                                        | ", "
+            ValueSet.of(String).add("single")                                           | " - "
+            ValueSet.of(Double).add(3.14d)                                              | "..."
+            ValueSet.ofLinked("c", "a", "b")                                            | ", "
+            ValueSet.ofLinked(Integer).addAll(3, 1, 2)                                  | "-"
+            ValueSet.ofSorted("c", "a", "b")                                            | ", "
+            ValueSet.ofSorted(Integer).addAll(3, 1, 2)                                  | "-"
+            ValueSet.ofSorted(String, Comparator.reverseOrder()).addAll( "a", "c", "b") | ", "
+    }
+
+
     // Helper method to generate mixed-type lists for data-driven testing
     private List<Object> generateMixedTypeList(int size) {
         def random = new Random(42) // Fixed seed for reproducible tests

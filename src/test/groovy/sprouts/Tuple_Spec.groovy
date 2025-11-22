@@ -1778,6 +1778,53 @@ class Tuple_Spec extends Specification
             Object   | [1, "text", 2.5, "more", 3, 4.7]                  | Number       | Tuple.of(Number, 1, 2.5, 3, 4.7)
     }
 
+    def 'The `join(String)` method handles all kinds of tuples correctly.'(Tuple<?> tuple, String delimiter, String expected) {
+        reportInfo """
+            When joining nullable tuples for example, null elements are converted to the string "null"
+            in the resulting joined string. This behavior is consistent with String.valueOf(null).
+        """
+        when: 'We join the elements'
+            var result = tuple.join(delimiter)
+        then: 'Null elements are represented as "null" in the output'
+            result == expected
+
+        where:
+            tuple                                                       | delimiter | expected
+            Tuple.of(String, "a", "b", "c")                             | ", "      | "a, b, c"
+            Tuple.of(String, "a", "b", "c")                             | "-"       | "a-b-c"
+            Tuple.of(String, "a", "b", "c")                             | ""        | "abc"
+            Tuple.of(String, "a", "b", "c")                             | " -> "    | "a -> b -> c"
+            Tuple.of(Integer, 1, 2, 3)                                  | ", "      | "1, 2, 3"
+            Tuple.of(Double, 1.5d, 2.7d, 3.9d)                          | " | "     | "1.5 | 2.7 | 3.9"
+            Tuple.of(Boolean, true, false, true)                        | " & "     | "true & false & true"
+            Tuple.ofNullable(String, null, "b", null)                   | ", "      | "null, b, null"
+            Tuple.ofNullable(Integer, 1, null, 3)                       | " - "     | "1 - null - 3"
+            Tuple.ofNullable(Boolean, null, false, null)                | " | "     | "null | false | null"
+            Tuple.of(Integer)                                           | ", "      | ""
+            Tuple.of(String, "single")                                  | " - "     | "single"
+            Tuple.ofNullable(Integer).add(null)                         | " | "     | "null"
+            Tuple.of(Double, 3.14d)                                     | "..."     | "3.14"
+    }
+
+    def 'The `join(String)` method throws NullPointerException for null delimiter.'() {
+        given: 'A non-empty tuple'
+            var tuple = Tuple.of(String, "a", "b", "c")
+        when: 'We try to join with a null delimiter'
+            tuple.join(null)
+        then: 'A NullPointerException is thrown'
+            thrown(NullPointerException)
+
+        when: 'We try with an empty tuple and null delimiter'
+            Tuple.of(String).join(null)
+        then: 'A NullPointerException is still thrown'
+            thrown(NullPointerException)
+
+        when: 'We try with a nullable tuple and null delimiter'
+            Tuple.ofNullable(String, "x", null, "y").join(null)
+        then: 'A NullPointerException is still thrown'
+            thrown(NullPointerException)
+    }
+
     // Helper method to generate mixed-type lists for data-driven testing
     private List<Object> generateMixedTypeList(int size) {
         def random = new Random(42) // Fixed seed for reproducible tests

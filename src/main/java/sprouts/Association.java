@@ -1487,4 +1487,36 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
         return this.entrySet().stream().noneMatch( predicate );
     }
 
+    /**
+     * Compares the specified object with this association for value equality.
+     * Returns {@code true} only if the specified object is also an association with the same {@link #size()},
+     * {@link #keyType()}, {@link #valueType()}, and where every key value pair in the specified
+     * association is contained in this association
+     * (or equivalently, every member of this association is contained in the specified association).
+     * <b>Additionally, two associations must also report the same values for {@link #isLinked()} and {@link #isSorted()}.</b>
+     * This definition ensures that the equals method works properly across different
+     * implementations of the association interface.
+     *
+     * @param o object to be compared for equality with this association
+     * @return {@code true} if the specified object is equal to this association in terms of value semantic.
+     */
+    @Override
+    boolean equals( Object o );
+
+    /**
+     * Returns the hash code value for this association. The hash code of an association is
+     * defined to be the sum of the hash codes of the pairs in the association.
+     * This ensures that {@code a1.equals(a2)} implies that
+     * {@code a1.hashCode()==a2.hashCode()} for any two associations {@code a1}
+     * and {@code a2}, as required by the general contract of
+     * {@link Object#hashCode}.
+     *
+     * @return The hash code value for this association as a 32-bit integer,
+     *         based on the sum of the hash codes of all pairs in this association.
+     * @see Object#equals(Object)
+     * @see Map#equals(Object)
+     */
+    @Override
+    int hashCode();
+
 }

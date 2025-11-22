@@ -1666,4 +1666,62 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
         };
     }
 
+    /**
+     * Joins all items in this tuple into a single string using the specified delimiter.
+     * Each item is converted to a string using {@link String#valueOf(Object)}.
+     * <p>
+     * <b>Example:</b>
+     * <pre>{@code
+     * Tuple<String> tuple = Tuple.of(String.class, "a", "b", "c");
+     * String result = tuple.join(", "); // Returns "a, b, c"
+     *
+     * Tuple<Integer> numbers = Tuple.of(Integer.class, 1, 2, 3);
+     * String numbered = numbers.join("-"); // Returns "1-2-3"
+     * }</pre>
+     * </p>
+     * <p>
+     * <b>Null handling:</b>
+     * <ul>
+     *   <li>If this tuple contains null items and allows null values ({@link #allowsNull()} returns {@code true}),
+     *       the string "null" will be used for null items.</li>
+     *   <li>If the tuple is empty, an empty string is returned.</li>
+     * </ul>
+     * </p>
+     *
+     * @param delimiter the delimiter to place between each item in the resulting string
+     * @return a string containing all tuple items joined by the delimiter
+     * @throws NullPointerException if the {@code delimiter} is {@code null}
+     */
+    default String join( String delimiter ) {
+        Objects.requireNonNull(delimiter);
+        return this.stream().map(String::valueOf).collect(Collectors.joining(delimiter));
+    }
+
+    /**
+     * Compares the specified object with this tuple for value equality.
+     * Returns {@code true} only if the specified object is also a tuple with the same {@link #size()}, {@link #type()},
+     * and where every member of the specified tuple is contained in this tuple <b>in the exact same order</b>.
+     * This definition ensures that the equals method works properly across different
+     * implementations of the tuple interface.
+     *
+     * @param o object to be compared for equality with this tuple
+     * @return {@code true} if the specified object is equal to this tuple in terms of value semantic.
+     */
+    @Override
+    boolean equals( Object o );
+
+    /**
+     * Returns the hash code value for this tuple. The hash code of a tuple is sensitive
+     * to both what items exist in the tuple <b>and in which order they are stored.</b>
+     * This ensures that {@code t1.equals(t2)} implies that
+     * {@code t1.hashCode()==t2.hashCode()} for any two tuples {@code t1}
+     * and {@code t2}, as required by the general contract of {@link Object#hashCode}.
+     *
+     * @return The hash code value for this tuple as a 32-bit integer,
+     *         based on the sum of the hash codes of all elements in this tuple.
+     * @see Object#equals(Object)
+     */
+    @Override
+    int hashCode();
+
 }
