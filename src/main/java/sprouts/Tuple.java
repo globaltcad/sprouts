@@ -1025,7 +1025,6 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      */
     default <V extends T> Tuple<V> retainIf( Class<V> type ) {
         Objects.requireNonNull(type);
-        Objects.requireNonNull(type);
         if ( Objects.equals(this.type(), type) ) {
             return (Tuple<V>) this.clear();
         }

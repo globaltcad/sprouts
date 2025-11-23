@@ -812,7 +812,7 @@ class Sorted_ValueSet_Spec extends Specification {
         when: 'We retain only String instances'
             var onlyByte = mixed.retainIf(Byte)
 
-        then: 'Only byte items remain in sorted order and result is properly typed'
+        then: 'Only Byte items remain in sorted order and result is properly typed'
             onlyByte.toList() == [1 as byte, 2 as byte, 3 as byte, 4 as byte]
             onlyByte.type() == Byte
             !onlyByte.isLinked()
