@@ -1718,9 +1718,9 @@ class Tuple_Spec extends Specification
             might contain thousands of heterogeneous elements.
         """
         given: 'A tuple with a large collection of mixed-type items'
-            var tuple = baseType == Object ?
-                Tuple.ofNullable(baseType, items) :
-                Tuple.of(baseType, items)
+            var tuple = items.contains(null) ?
+                                          Tuple.ofNullable(baseType, items) :
+                                          Tuple.of(baseType, items)
 
         when: 'We remove all instances of the specified type'
             var result = tuple.removeIf(typeToRemove)
@@ -1736,8 +1736,10 @@ class Tuple_Spec extends Specification
             Object   | generateMixedTypeList(500)                   | Integer      | Tuple.ofNullable(Object, generateMixedTypeList(500).findAll { it == null || !(it instanceof Integer) })
             Object   | generateMixedTypeList(1000)                  | Number       | Tuple.ofNullable(Object, generateMixedTypeList(1000).findAll { it == null || !(it instanceof Number) })
             Object   | [null, "text", 42, null, 3.14, "more", null] | String       | Tuple.ofNullable(Object, null, 42, null, 3.14, null)
-            Object   | ["keep", 100, "remove", 200, "also remove"]  | String       | Tuple.ofNullable(Object, 100, 200)
+            Object   | ["keep", 100, "remove", 200, "also remove"]  | String       | Tuple.of(Object, 100, 200)
             Number   | [1, 2.5, 3, 4.7, 5]                          | Integer      | Tuple.of(Number, 2.5, 4.7)
+            String   | [null, "text", "abc", null, "more", "null"]  | String       | Tuple.ofNullable(String).addAll(null, null)
+            Float    | [2.5f, null, null, null, Float.NaN]          | Float        | Tuple.ofNullable(Float).addAll(null, null, null)
     }
 
     def 'The `retainIf(Class)` method efficiently extracts typed subsets from large heterogeneous collections.'(
@@ -1756,9 +1758,9 @@ class Tuple_Spec extends Specification
             where you need to work with specific subtypes from mixed collections.
         """
         given: 'A tuple with a large collection of mixed-type items'
-            var tuple = baseType == Object ?
-                Tuple.ofNullable(baseType, items) :
-                Tuple.of(baseType, items)
+            var tuple = items.contains(null) ?
+                                        Tuple.ofNullable(baseType, items) :
+                                        Tuple.of(baseType, items)
 
         when: 'We retain only instances of the specified type'
             var result = tuple.retainIf(typeToRetain)
@@ -1776,6 +1778,9 @@ class Tuple_Spec extends Specification
             Object   | [null, "text", 42, null, 3.14, "more text", null] | String       | Tuple.of("text", "more text")
             Object   | ["keep", 100, "also keep", 200, "and this"]       | String       | Tuple.of("keep", "also keep", "and this")
             Object   | [1, "text", 2.5, "more", 3, 4.7]                  | Number       | Tuple.of(Number, 1, 2.5, 3, 4.7)
+            Number   | [1, 2.5, 3, 4.7, 5]                               | Integer      | Tuple.of(Integer, 1, 3, 5)
+            String   | [null, "text", "abc", null, "more", "null"]       | String       | Tuple.of(String).addAll("text", "abc", "more", "null")
+            Float    | [2.5f, null, null, null, Float.NaN]               | Float        | Tuple.of(Float).addAll(2.5f, Float.NaN)
     }
 
     def 'The `join(String)` method handles all kinds of tuples correctly.'(Tuple<?> tuple, String delimiter, String expected) {

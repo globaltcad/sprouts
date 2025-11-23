@@ -904,6 +904,8 @@ class ValueSet_Spec extends Specification {
             Object   | ["text", 42, 3.14, "more", 100]              | String       | ValueSet.of(Object).addAll(42, 3.14, 100)
             Object   | ["keep", 100, "remove", 200, "also remove"]  | String       | ValueSet.of(Object).addAll(100, 200)
             Number   | [1, 2.5, 3, 4.7, 5]                          | Integer      | ValueSet.of(Number).addAll(2.5, 4.7)
+            Number   | [1, 2.5, 3, 4.7, 5]                          | Number       | ValueSet.of(Number)
+            Integer  | [1, 2, 3, 4, 5, 6, 7]                        | Integer      | ValueSet.of(Integer)
     }
 
     def 'The `retainIf(Class)` method efficiently extracts typed subsets from large heterogeneous collections.'(
@@ -939,6 +941,9 @@ class ValueSet_Spec extends Specification {
             Object   | ["text", 42, 3.14, "more text", 100]              | String       | ValueSet.of("text", "more text")
             Object   | ["keep", 100, "also keep", 200, "and this"]       | String       | ValueSet.of("keep", "also keep", "and this")
             Object   | [1, "text", 2.5, "more", 3, 4.7]                  | Number       | ValueSet.of(Number).addAll(1, 2.5, 3, 4.7)
+            Number   | [1, 2.5, 3, 4.7, 5]                               | Integer      | ValueSet.of(Integer).addAll(1, 3, 5)
+            Number   | [1, 2.5, 3, 4.7, 5]                               | Number       | ValueSet.of(Number).addAll(1, 2.5, 3, 4.7, 5)
+            Integer  | [1, 2, 3, 4, 5, 6, 7]                             | Integer      | ValueSet.of(Integer).addAll(1, 2, 3, 4, 5, 6, 7)
     }
 
     def 'Edge cases for `removeIf(Class)` and `retainIf(Class)` methods are handled correctly.'() {

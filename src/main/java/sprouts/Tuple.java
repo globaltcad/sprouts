@@ -964,7 +964,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      */
     default <V extends T> Tuple<T> removeIf( Class<V> type ) {
         Objects.requireNonNull(type);
-        if ( Objects.equals(this.type(), type) ) {
+        if ( !this.allowsNull() && Objects.equals(this.type(), type) ) {
             return this.clear();
         }
         Collector<T, ?, Tuple<T>> collector = allowsNull() ? Tuple.collectorOfNullable(type()) : Tuple.collectorOf(type());
@@ -1025,8 +1025,9 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      */
     default <V extends T> Tuple<V> retainIf( Class<V> type ) {
         Objects.requireNonNull(type);
-        if ( Objects.equals(this.type(), type) ) {
-            return (Tuple<V>) this.clear();
+        Objects.requireNonNull(type);
+        if ( !this.allowsNull() && Objects.equals(this.type(), type) ) {
+            return (Tuple<V>) this;
         }
         return stream()
                 .filter(e -> e != null && type.isAssignableFrom(e.getClass()))
