@@ -463,7 +463,7 @@ public interface Association<K, V> extends Iterable<Pair<K, V>> {
 
             @Override
             public <T extends Pair<K, V>> ValueSet<T> retainIf(Class<T> type) {
-                if ( !Objects.equals(type,Pair.class) ) {
+                if ( !Objects.equals(type, Pair.class) ) {
                     throw new IllegalArgumentException("Parameter may only be of type Pair!");
                 } else
                     return (ValueSet<T>) this;
