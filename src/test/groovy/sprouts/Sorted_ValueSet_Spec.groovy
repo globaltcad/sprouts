@@ -809,7 +809,7 @@ class Sorted_ValueSet_Spec extends Specification {
         given: 'A sorted value set with mixed types'
             var mixed = ValueSet.ofSorted(Number, Comparator.comparingDouble {it as double}).addAll(1 as byte, 42, 2 as byte, 3.14d, 3 as byte, 100, 4 as byte)
 
-        when: 'We retain only String instances'
+        when: 'We retain only Byte instances'
             var onlyByte = mixed.retainIf(Byte)
 
         then: 'Only Byte items remain in sorted order and result is properly typed'
