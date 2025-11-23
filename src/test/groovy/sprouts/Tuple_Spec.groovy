@@ -1608,4 +1608,246 @@ class Tuple_Spec extends Specification
             Integer  | (0..10_000).collect(it -> it).toList()
             String   | (0..10_000).collect(it -> String.valueOf(it)).toList()
     }
+
+    def 'The `removeIf(Class)` method filters out items of the specified type while preserving nullability.'() {
+        reportInfo """
+            The `removeIf(Class)` method creates a new tuple containing only items that are NOT 
+            instances of the specified type. This is useful for filtering out specific types from 
+            a heterogeneous tuple while maintaining the original nullability policy.
+            
+            Important behavior:
+            - Null items are preserved if the original tuple allows nulls
+            - The returned tuple has the same nullability as the original
+            - Items that are instances of the specified type (including subclasses) are removed
+        """
+        given: 'A tuple with mixed types including nulls'
+            var mixed = Tuple.ofNullable(Object, "hello", 42, null, "world", 3.14, "!", null, 100)
+
+        when: 'We remove all String instances'
+            var withoutStrings = mixed.removeIf(String)
+
+        then: 'Only non-String items remain, and nulls are preserved'
+            withoutStrings == Tuple.ofNullable(Object, 42, null, 3.14, null, 100)
+            withoutStrings.allowsNull() == true
+
+        when: 'We remove all Integer instances'
+            var withoutIntegers = mixed.removeIf(Integer)
+
+        then: 'Only non-Integer items remain, and nulls are preserved'
+            withoutIntegers == Tuple.ofNullable(Object, "hello", null, "world", 3.14, "!", null)
+            withoutIntegers.allowsNull() == true
+
+        when: 'We remove all Number instances (including Integer and Double)'
+            var withoutNumbers = mixed.removeIf(Number)
+
+        then: 'Only non-Number items remain, and nulls are preserved'
+            withoutNumbers == Tuple.ofNullable(Object, "hello", null, "world", "!", null)
+            withoutNumbers.allowsNull() == true
+
+        when: 'We use a non-nullable tuple with mixed types'
+            var nonNullableMixed = Tuple.of(Object, "hello", 42, "world", 3.14, "!")
+            var result = nonNullableMixed.removeIf(String)
+
+        then: 'String items are removed and the result remains non-nullable'
+            result == Tuple.of(Object, 42, 3.14)
+            result.allowsNull() == false
+    }
+
+    def 'The `retainIf(Class)` method keeps only items of the specified type and makes the result non-nullable.'() {
+        reportInfo """
+            The `retainIf(Class)` method creates a new tuple containing only items that ARE 
+            instances of the specified type. This is useful for extracting specific types from 
+            a heterogeneous tuple.
+            
+            Important behavior:
+            - Null items are always excluded (since null cannot be an instance of any class)
+            - The returned tuple is always non-nullable
+            - Only items that are instances of the specified type (including subclasses) are retained
+            - The returned tuple is properly typed as Tuple<V> where V is the specified type
+        """
+        given: 'A tuple with mixed types including nulls'
+            var mixed = Tuple.ofNullable(Object, "hello", 42, null, "world", 3.14, "!", null, 100)
+
+        when: 'We retain only String instances'
+            var onlyStrings = mixed.retainIf(String)
+
+        then: 'Only String items remain, nulls are excluded, and result is non-nullable'
+            onlyStrings == Tuple.of("hello", "world", "!")
+            onlyStrings.allowsNull() == false
+            onlyStrings.type() == String
+
+        when: 'We retain only Integer instances'
+            var onlyIntegers = mixed.retainIf(Integer)
+
+        then: 'Only Integer items remain, nulls are excluded, and result is non-nullable'
+            onlyIntegers == Tuple.of(42, 100)
+            onlyIntegers.allowsNull() == false
+            onlyIntegers.type() == Integer
+
+        when: 'We retain only Number instances (including both Integer and Double)'
+            var onlyNumbers = mixed.retainIf(Number)
+
+        then: 'All Number items remain, nulls are excluded, and result is non-nullable'
+            onlyNumbers == Tuple.of(Number, 42, 3.14, 100)
+            onlyNumbers.allowsNull() == false
+            onlyNumbers.type() == Number
+
+        when: 'We use a non-nullable tuple with mixed types'
+            var nonNullableMixed = Tuple.of(Object, "hello", 42, "world", 3.14, "!")
+            var result = nonNullableMixed.retainIf(String)
+
+        then: 'Only String items remain and the result is non-nullable'
+            result == Tuple.of("hello", "world", "!")
+            result.allowsNull() == false
+            result.type() == String
+    }
+
+    def 'The `removeIf(Class)` method efficiently filters large heterogeneous collections while preserving structure.'(
+        Class<?> baseType, List<Object> items, Class<?> typeToRemove, Tuple<Object> expected
+    ) {
+        reportInfo """
+            The `removeIf(Class)` method should efficiently handle large collections while 
+            maintaining the original tuple's nullability policy. This test verifies that:
+            
+            - Large datasets are processed correctly
+            - Null items are preserved when allowed
+            - The operation maintains performance characteristics
+            - The result has the same nullability as the input
+            
+            This is particularly important for data processing pipelines where tuples 
+            might contain thousands of heterogeneous elements.
+        """
+        given: 'A tuple with a large collection of mixed-type items'
+            var tuple = items.contains(null) ?
+                                          Tuple.ofNullable(baseType, items) :
+                                          Tuple.of(baseType, items)
+
+        when: 'We remove all instances of the specified type'
+            var result = tuple.removeIf(typeToRemove)
+
+        then: 'The result contains only non-matching items with preserved nullability'
+            result == expected
+            result.allowsNull() == tuple.allowsNull()
+            result.type() == tuple.type()
+
+        where:
+            baseType | items                                        | typeToRemove | expected
+            Object   | generateMixedTypeList(100)                   | String       | Tuple.ofNullable(Object, generateMixedTypeList(100).findAll { it == null || !(it instanceof String) })
+            Object   | generateMixedTypeList(500)                   | Integer      | Tuple.ofNullable(Object, generateMixedTypeList(500).findAll { it == null || !(it instanceof Integer) })
+            Object   | generateMixedTypeList(1000)                  | Number       | Tuple.ofNullable(Object, generateMixedTypeList(1000).findAll { it == null || !(it instanceof Number) })
+            Object   | [null, "text", 42, null, 3.14, "more", null] | String       | Tuple.ofNullable(Object, null, 42, null, 3.14, null)
+            Object   | ["keep", 100, "remove", 200, "also remove"]  | String       | Tuple.of(Object, 100, 200)
+            Number   | [1, 2.5, 3, 4.7, 5]                          | Integer      | Tuple.of(Number, 2.5, 4.7)
+            String   | [null, "text", "abc", null, "more", "null"]  | String       | Tuple.ofNullable(String).addAll(null, null)
+            Float    | [2.5f, null, null, null, Float.NaN]          | Float        | Tuple.ofNullable(Float).addAll(null, null, null)
+    }
+
+    def 'The `retainIf(Class)` method efficiently extracts typed subsets from large heterogeneous collections.'(
+        Class<?> baseType, List<Object> items, Class<?> typeToRetain, Tuple<Object> expected
+    ) {
+        reportInfo """
+            The `retainIf(Class)` method should efficiently extract homogeneous subsets 
+            from large heterogeneous collections. This test verifies that:
+            
+            - Large datasets are processed correctly with proper type filtering
+            - Null items are always excluded from the result
+            - The returned tuple is always non-nullable and properly typed
+            - Type safety is maintained throughout the operation
+            
+            This is crucial for type-safe data extraction in data processing scenarios 
+            where you need to work with specific subtypes from mixed collections.
+        """
+        given: 'A tuple with a large collection of mixed-type items'
+            var tuple = items.contains(null) ?
+                                        Tuple.ofNullable(baseType, items) :
+                                        Tuple.of(baseType, items)
+
+        when: 'We retain only instances of the specified type'
+            var result = tuple.retainIf(typeToRetain)
+
+        then: 'The result contains only matching non-null items and is non-nullable'
+            result == expected
+            result.allowsNull() == false
+            result.type() == typeToRetain
+
+        where:
+            baseType | items                                             | typeToRetain | expected
+            Object   | generateMixedTypeList(100)                        | String       | Tuple.of(String, generateMixedTypeList(100).findAll { it instanceof String })
+            Object   | generateMixedTypeList(500)                        | Integer      | Tuple.of(Integer, generateMixedTypeList(500).findAll { it instanceof Integer })
+            Object   | generateMixedTypeList(1000)                       | Number       | Tuple.of(Number, generateMixedTypeList(1000).findAll { it instanceof Number })
+            Object   | [null, "text", 42, null, 3.14, "more text", null] | String       | Tuple.of("text", "more text")
+            Object   | ["keep", 100, "also keep", 200, "and this"]       | String       | Tuple.of("keep", "also keep", "and this")
+            Object   | [1, "text", 2.5, "more", 3, 4.7]                  | Number       | Tuple.of(Number, 1, 2.5, 3, 4.7)
+            Number   | [1, 2.5, 3, 4.7, 5]                               | Integer      | Tuple.of(Integer, 1, 3, 5)
+            String   | [null, "text", "abc", null, "more", "null"]       | String       | Tuple.of(String).addAll("text", "abc", "more", "null")
+            Float    | [2.5f, null, null, null, Float.NaN]               | Float        | Tuple.of(Float).addAll(2.5f, Float.NaN)
+    }
+
+    def 'The `join(String)` method handles all kinds of tuples correctly.'(Tuple<?> tuple, String delimiter, String expected) {
+        reportInfo """
+            When joining nullable tuples for example, null elements are converted to the string "null"
+            in the resulting joined string. This behavior is consistent with String.valueOf(null).
+        """
+        when: 'We join the elements'
+            var result = tuple.join(delimiter)
+        then: 'Null elements are represented as "null" in the output'
+            result == expected
+
+        where:
+            tuple                                                       | delimiter | expected
+            Tuple.of(String, "a", "b", "c")                             | ", "      | "a, b, c"
+            Tuple.of(String, "a", "b", "c")                             | "-"       | "a-b-c"
+            Tuple.of(String, "a", "b", "c")                             | ""        | "abc"
+            Tuple.of(String, "a", "b", "c")                             | " -> "    | "a -> b -> c"
+            Tuple.of(Integer, 1, 2, 3)                                  | ", "      | "1, 2, 3"
+            Tuple.of(Double, 1.5d, 2.7d, 3.9d)                          | " | "     | "1.5 | 2.7 | 3.9"
+            Tuple.of(Boolean, true, false, true)                        | " & "     | "true & false & true"
+            Tuple.ofNullable(String, null, "b", null)                   | ", "      | "null, b, null"
+            Tuple.ofNullable(Integer, 1, null, 3)                       | " - "     | "1 - null - 3"
+            Tuple.ofNullable(Boolean, null, false, null)                | " | "     | "null | false | null"
+            Tuple.of(Integer)                                           | ", "      | ""
+            Tuple.of(String, "single")                                  | " - "     | "single"
+            Tuple.ofNullable(Integer).add(null)                         | " | "     | "null"
+            Tuple.of(Double, 3.14d)                                     | "..."     | "3.14"
+    }
+
+    def 'The `join(String)` method throws NullPointerException for null delimiter.'() {
+        given: 'A non-empty tuple'
+            var tuple = Tuple.of(String, "a", "b", "c")
+        when: 'We try to join with a null delimiter'
+            tuple.join(null)
+        then: 'A NullPointerException is thrown'
+            thrown(NullPointerException)
+
+        when: 'We try with an empty tuple and null delimiter'
+            Tuple.of(String).join(null)
+        then: 'A NullPointerException is still thrown'
+            thrown(NullPointerException)
+
+        when: 'We try with a nullable tuple and null delimiter'
+            Tuple.ofNullable(String, "x", null, "y").join(null)
+        then: 'A NullPointerException is still thrown'
+            thrown(NullPointerException)
+    }
+
+    // Helper method to generate mixed-type lists for data-driven testing
+    private List<Object> generateMixedTypeList(int size) {
+        def random = new Random(42) // Fixed seed for reproducible tests
+        def types = [String, Integer, Double, Boolean, null]
+        def stringValues = ["apple", "banana", "cherry", "date", "elderberry"]
+        def numberValues = [1, 2, 3, 4, 5, 1.5, 2.5, 3.5, 4.5, 5.5]
+        def booleanValues = [true, false]
+
+        return (0..<size).collect { index ->
+            def type = types[random.nextInt(types.size())]
+            switch (type) {
+                case String: return stringValues[random.nextInt(stringValues.size())] + "-$index"
+                case Integer: return numberValues[random.nextInt(5)] * (index + 1)
+                case Double: return numberValues[random.nextInt(5) + 5] * (index + 1) / 2.0
+                case Boolean: return booleanValues[random.nextInt(booleanValues.size())]
+                case null: return null
+                default: return "unknown-$index"
+            }
+        }
+    }
 }
