@@ -715,4 +715,244 @@ class Linked_ValueSet_Spec extends Specification {
             Integer  | (0..10_000).collect(it -> it).toList()
             String   | (0..10_000).collect(it -> String.valueOf(it)).toList()
     }
+
+    def 'The `removeIf(Class)` method filters out items of the specified type while preserving the linked value set characteristics.'() {
+        reportInfo """
+            The `removeIf(Class)` method creates a new linked value set containing only items that are NOT 
+            instances of the specified type. This is useful for filtering out specific types from 
+            a heterogeneous value set.
+            
+            Important behavior for linked variant:
+            - The returned value set maintains the linked ordering characteristics
+            - Items that are instances of the specified type (including subclasses) are removed
+            - The element type of the returned value set remains the same as the original
+            - The insertion order is preserved for remaining elements
+        """
+        given: 'A linked value set with mixed types'
+            var mixed = ValueSet.ofLinked(Object).addAll("hello", 42, "world", 3.14, "!", 100, "test")
+
+        when: 'We remove all String instances'
+            var withoutStrings = mixed.removeIf(String)
+
+        then: 'Only non-String items remain in original insertion order'
+            withoutStrings.toList() == [42, 3.14, 100]
+            withoutStrings.type() == Object
+            withoutStrings.isLinked()
+            !withoutStrings.isSorted()
+
+        when: 'We remove all Integer instances'
+            var withoutIntegers = mixed.removeIf(Integer)
+
+        then: 'Only non-Integer items remain in original insertion order'
+            withoutIntegers.toList() == ["hello", "world", 3.14, "!", "test"]
+            withoutIntegers.type() == Object
+            withoutIntegers.isLinked()
+
+        when: 'We remove all Number instances (including Integer and Double)'
+            var withoutNumbers = mixed.removeIf(Number)
+
+        then: 'Only non-Number items remain in original insertion order'
+            withoutNumbers.toList() == ["hello", "world", "!", "test"]
+            withoutNumbers.type() == Object
+            withoutNumbers.isLinked()
+    }
+
+    def 'The `retainIf(Class)` method keeps only items of the specified type and returns a properly typed linked value set.'() {
+        reportInfo """
+            The `retainIf(Class)` method creates a new linked value set containing only items that ARE 
+            instances of the specified type. This is useful for extracting specific types from 
+            a heterogeneous value set.
+            
+            Important behavior for linked variant:
+            - Only items that are instances of the specified type (including subclasses) are retained
+            - The returned value set is properly typed as ValueSet<V> where V is the specified type
+            - The linked ordering characteristics are preserved in the result
+            - The insertion order of retained elements is maintained
+        """
+        given: 'A linked value set with mixed types'
+            var mixed = ValueSet.ofLinked(Object).addAll("hello", 42, "world", 3.14, "!", 100, "test")
+
+        when: 'We retain only String instances'
+            var onlyStrings = mixed.retainIf(String)
+
+        then: 'Only String items remain in original insertion order and result is properly typed'
+            onlyStrings.toList() == ["hello", "world", "!", "test"]
+            onlyStrings.type() == String
+            onlyStrings.isLinked()
+            !onlyStrings.isSorted()
+
+        when: 'We retain only Integer instances'
+            var onlyIntegers = mixed.retainIf(Integer)
+
+        then: 'Only Integer items remain in original insertion order and result is properly typed'
+            onlyIntegers.toList() == [42, 100]
+            onlyIntegers.type() == Integer
+            onlyIntegers.isLinked()
+
+        when: 'We retain only Number instances (including both Integer and Double)'
+            var onlyNumbers = mixed.retainIf(Number)
+
+        then: 'All Number items remain in original insertion order and result is properly typed'
+            onlyNumbers.toList() == [42, 3.14, 100]
+            onlyNumbers.type() == Number
+            onlyNumbers.isLinked()
+    }
+
+    def 'The `removeIf(Class)` method efficiently filters large heterogeneous collections while preserving linked set characteristics.'(
+        Class<?> baseType, List<Object> items, Class<?> typeToRemove, List<Object> expectedOrder
+    ) {
+        reportInfo """
+            The `removeIf(Class)` method should efficiently handle large collections while 
+            maintaining the original linked value set's characteristics. This test verifies that:
+            
+            - Large datasets are processed correctly
+            - The operation maintains performance characteristics
+            - The result preserves the linked ordering of the original set
+            - Insertion order is maintained for remaining elements
+            
+            This is particularly important for data processing pipelines where linked value sets 
+            might contain thousands of heterogeneous elements and order matters.
+        """
+        given: 'A linked value set with a large collection of mixed-type items'
+            var valueSet = ValueSet.ofLinked(baseType).addAll(items)
+
+        when: 'We remove all instances of the specified type'
+            var result = valueSet.removeIf(typeToRemove)
+
+        then: 'The result contains only non-matching items with preserved linked characteristics'
+            result.toList() == expectedOrder
+            result.type() == baseType
+            result.isLinked()
+            !result.isSorted()
+
+        where:
+            baseType | items                                        | typeToRemove | expectedOrder
+            Object   | ["text", 42, 3.14, "more", 100]              | String       | [42, 3.14, 100]
+            Object   | ["keep", 100, "remove", 200, "also remove"]  | String       | [100, 200]
+            Number   | [1, 2.5, 3, 4.7, 5]                          | Integer      | [2.5, 4.7]
+            Number   | [1, 2.5, 3, 4.7, 5]                          | BigDecimal   | [1, 3, 5]
+            Number   | [100L, 0.345f, 12.345d, 200 as byte]         | Number       | []
+            Number   | [100L, 0.345f, 12.345d, 200 as byte]         | Byte         | [100L, 0.345f, 12.345d]
+    }
+
+    def 'The `retainIf(Class)` method efficiently extracts typed subsets from large heterogeneous collections while preserving order.'(
+        Class<?> baseType, List<Object> items, Class<?> typeToRetain, List<Object> expectedOrder
+    ) {
+        reportInfo """
+            The `retainIf(Class)` method should efficiently extract homogeneous subsets 
+            from large heterogeneous collections while preserving the linked ordering.
+            This test verifies that:
+            
+            - Large datasets are processed correctly with proper type filtering
+            - The returned value set is properly typed
+            - Type safety is maintained throughout the operation
+            - Linked ordering characteristics are preserved
+            - Insertion order of retained elements is maintained
+            
+            This is crucial for type-safe data extraction in scenarios where you need to 
+            work with specific subtypes from mixed collections and order matters.
+        """
+        given: 'A linked value set with a collection of mixed-type items'
+            var valueSet = ValueSet.ofLinked(baseType, items)
+
+        when: 'We retain only instances of the specified type'
+            var result = valueSet.retainIf(typeToRetain)
+
+        then: 'The result contains only matching items in original order and is properly typed'
+            result.toList() == expectedOrder
+            result.type() == typeToRetain
+            result.isLinked()
+            !result.isSorted()
+
+        where:
+            baseType | items                                             | typeToRetain | expectedOrder
+            Object   | ["text", 42, 3.14, "more text", 100]              | String       | ["text", "more text"]
+            Object   | ["keep", 100, "also keep", 200, "and this"]       | String       | ["keep", "also keep", "and this"]
+            Object   | [1, "text", 2.5, "more", 3, 4.7]                  | Number       | [1, 2.5, 3, 4.7]
+            Number   | [100L, 0.345f, 12.345d, 12 as short, 200 as byte] | Number       | [100L, 0.345f, 12.345d, 12 as short, 200 as byte]
+            Number   | [100L, 0.345f, 12.345d, 12 as short, 200 as byte] | Byte         | [200 as byte]
+            Number   | [100L, 0.345f, 12.345d, 12 as short, 200 as byte] | Long         | [100L]
+            Number   | [100L, 0.345f, 12.345d, 12 as short, 200 as byte] | Double       | [12.345d]
+    }
+
+    def 'Edge cases for `removeIf(Class)` and `retainIf(Class)` methods are handled correctly in linked value sets.'() {
+        given: 'An empty linked value set'
+            var empty = ValueSet.ofLinked(String)
+
+        when: 'We try to remove items from an empty set'
+            var result1 = empty.removeIf(String)
+        then: 'The empty set is returned unchanged'
+            result1.isEmpty()
+            result1.is(empty)
+            result1.isLinked()
+
+        when: 'We try to retain items in an empty set'
+            var result2 = empty.retainIf(String)
+        then: 'The empty set is returned unchanged'
+            result2.isEmpty()
+            result2.type() == String
+            result2.isLinked()
+
+        when: 'A linked value set where no items match the filter criteria for removal'
+            var numbers = ValueSet.ofLinked(Integer).addAll(1, 2, 3, 4, 5)
+        and: 'We try to remove String instances from an Integer set'
+            var result3 = numbers.removeIf(String)
+        then: 'The set is returned unchanged'
+            result3 == numbers
+            result3.is(numbers)
+            result3.isLinked()
+
+        when: 'We try to retain String instances from an Integer set'
+            var result4 = numbers.retainIf(String)
+        then: 'An empty String linked set is returned'
+            result4.isEmpty()
+            result4.type() == String
+            result4.isLinked()
+
+        when: 'A linked value set where all items match the filter criteria for retention'
+            var strings = ValueSet.ofLinked(String).addAll("a", "b", "c")
+        and: 'We retain String instances from a String set'
+            var result5 = strings.retainIf(String)
+        then: 'The set is returned unchanged (but may be a new instance)'
+            result5 == strings
+            result5.type() == String
+            result5.isLinked()
+
+        when: 'We remove Object instances from a String set (all items are instances)'
+            var result6 = strings.removeIf(Object)
+        then: 'An empty linked set is returned'
+            result6.isEmpty()
+            result6.type() == String
+            result6.isLinked()
+    }
+
+    def 'Linked value set type filtering preserves insertion order across complex operations'() {
+        reportInfo """
+            This test verifies that the linked value set maintains proper insertion order
+            across multiple type filtering operations, ensuring that the order semantics
+            are preserved even when performing complex filtering sequences.
+        """
+        given: 'A linked value set with carefully ordered mixed types'
+            var orderedSet = ValueSet.ofLinked(Object).addAll(
+                "first", 1, "second", 2.5, "third", 3, "fourth", 4.7, "fifth"
+            )
+
+        when: 'We perform sequential type filtering operations'
+            var step1 = orderedSet.retainIf(String)  // Keep only strings
+            var step2 = orderedSet.removeIf(Number)  // Remove all numbers from original
+            var step3 = step2.retainIf(String)       // Should be same as step1
+
+        then: 'All operations preserve the logical ordering'
+            step1.toList() == ["first", "second", "third", "fourth", "fifth"]
+            step2.toList() == ["first", "second", "third", "fourth", "fifth"]
+            step3.toList() == ["first", "second", "third", "fourth", "fifth"]
+
+            step1.isLinked()
+            step2.isLinked()
+            step3.isLinked()
+
+            step1 != step2
+            step1.toList() == step2.toList()
+            step1 == step3
+    }
 }

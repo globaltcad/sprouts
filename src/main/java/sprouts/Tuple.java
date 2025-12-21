@@ -1,5 +1,6 @@
 package sprouts;
 
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import sprouts.impl.Sprouts;
 
@@ -924,6 +925,117 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
     Tuple<T> retainIf( Predicate<T> predicate );
 
     /**
+     * Creates a new tuple containing only the items that are NOT instances of the specified type.
+     * This method filters out all items that are assignable to the given class,
+     * effectively retaining entries that do not match the specified type criteria.
+     * <p>
+     * <b>Example:</b>
+     * <pre>{@code
+     * // Given a tuple with mixed types:
+     * var mixed = Tuple.of(Object.class, 1, "x", 2.5, "z", 3);
+     *
+     * // Remove all String instances
+     * Tuple<Object> withoutStrings = mixed.removeIf(String.class);
+     * // Result: [1, 2.5, 3]
+     * }</pre>
+     * </p>
+     * <p>
+     * <b>Null handling:</b>
+     * <ul>
+     *   <li>
+     *       If this tuple allows null values ({@link #allowsNull()} returns {@code true}),
+     *       then null items will NOT be removed in the result since they cannot be instances of a class.</li>
+     *   <li>
+     *       So the returned tuple will always have the same nullability policy as this instance!
+     *   </li>
+     *   <li>
+     *       If this tuple doesn't allow null values, null items cannot exist and so the result will
+     *      also report {@code false} when invoking {@link #allowsNull()}
+     *   </li>
+     * </ul>
+     * </p>
+     *
+     * @param type The class type to filter out from the tuple. Items that are instances of this type
+     *             (including subclasses) will be removed from the result.
+     * @param <V> The type to filter out, must be a subtype of the tuple's item type {@code T}.
+     * @return A new tuple containing only items that are not instances of the specified type
+     *         (and possibly null entries if the original tuple also allowed nulls).
+     * @throws NullPointerException if the provided {@code type} parameter is {@code null}.
+     */
+    default <V extends T> Tuple<T> removeIf( Class<V> type ) {
+        Objects.requireNonNull(type);
+        if ( !this.allowsNull() && Objects.equals(this.type(), type) ) {
+            return this.clear();
+        }
+        Collector<T, ?, Tuple<T>> collector = allowsNull() ? Tuple.collectorOfNullable(type()) : Tuple.collectorOf(type());
+        return stream()
+                .filter(e -> e == null || !type.isAssignableFrom(e.getClass()))
+                .collect(collector);
+    }
+
+    /**
+     * Creates a new tuple containing only the items that are instances of the specified type.
+     * This method filters the tuple to retain all items that are assignable to the given class,
+     * effectively keeping entries that match the specified type criteria while removing all others.
+     * <p>
+     * <b>Example:</b>
+     * <pre>{@code
+     * // Given a tuple with mixed types:
+     * var mixed = Tuple.of(Object.class, 1, "x", 2.5, "z", 3);
+     *
+     * // Keep only String instances
+     * Tuple<String> onlyStrings = mixed.retainIf(String.class);
+     * // Result: ["x", "z"]
+     * }</pre>
+     * </p>
+     * <p>
+     * <b>Type Safety:</b>
+     * The returned tuple is explicitly typed with the specified class type {@code V},
+     * allowing for type-safe operations on the filtered results without the need for explicit casting.
+     * </p>
+     * <p>
+     * <b>Null handling:</b>
+     * <ul>
+     *   <li>
+     *       Null items are always excluded from the result, regardless of this tuple's nullability policy,
+     *       since {@code null} cannot be an instance of any class type.
+     *   </li>
+     *   <li>
+     *       The returned tuple will have non-nullable items ({@link #allowsNull()} returns {@code false}),
+     *       as it only contains valid instances of the specified type.
+     *   </li>
+     *   <li>
+     *       If this tuple contains null values but the specified type is not compatible with null,
+     *       those null items will be filtered out in the result.
+     *   </li>
+     * </ul>
+     * </p>
+     * <p>
+     * <b>Empty Result:</b>
+     * If no items in this tuple match the specified type (including the case where all items are null),
+     * an empty tuple of type {@code V} will be returned.
+     * </p>
+     *
+     * @param type The class type to filter by. Only items that are instances of this type
+     *             (including subclasses) will be retained in the result.
+     * @param <V> The type to filter by, must be a subtype of the tuple's item type {@code T}.
+     * @return A new tuple containing only items that are instances of the specified type,
+     *         with no null items, typed as {@code Tuple<V>}.
+     * @throws NullPointerException if the provided {@code type} parameter is {@code null}.
+     */
+    default <V extends T> Tuple<V> retainIf( Class<V> type ) {
+        Objects.requireNonNull(type);
+        Objects.requireNonNull(type);
+        if ( !this.allowsNull() && Objects.equals(this.type(), type) ) {
+            return (Tuple<V>) this;
+        }
+        return stream()
+                .filter(e -> e != null && type.isAssignableFrom(e.getClass()))
+                .map(type::cast)
+                .collect(Tuple.collectorOf(type));
+    }
+
+    /**
      * Creates a new tuple of items without the items of the provided
      * tuple of items. This is also true for duplicate items.
      *
@@ -1553,5 +1665,63 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
             }
         };
     }
+
+    /**
+     * Joins all items in this tuple into a single string using the specified delimiter.
+     * Each item is converted to a string using {@link String#valueOf(Object)}.
+     * <p>
+     * <b>Example:</b>
+     * <pre>{@code
+     * Tuple<String> tuple = Tuple.of(String.class, "a", "b", "c");
+     * String result = tuple.join(", "); // Returns "a, b, c"
+     *
+     * Tuple<Integer> numbers = Tuple.of(Integer.class, 1, 2, 3);
+     * String numbered = numbers.join("-"); // Returns "1-2-3"
+     * }</pre>
+     * </p>
+     * <p>
+     * <b>Null handling:</b>
+     * <ul>
+     *   <li>If this tuple contains null items and allows null values ({@link #allowsNull()} returns {@code true}),
+     *       the string "null" will be used for null items.</li>
+     *   <li>If the tuple is empty, an empty string is returned.</li>
+     * </ul>
+     * </p>
+     *
+     * @param delimiter the delimiter to place between each item in the resulting string
+     * @return a string containing all tuple items joined by the delimiter
+     * @throws NullPointerException if the {@code delimiter} is {@code null}
+     */
+    default String join( String delimiter ) {
+        Objects.requireNonNull(delimiter);
+        return this.stream().map(String::valueOf).collect(Collectors.joining(delimiter));
+    }
+
+    /**
+     * Compares the specified object with this tuple for value equality.
+     * Returns {@code true} only if the specified object is also a tuple with the same {@link #size()}, {@link #type()},
+     * and where every member of the specified tuple is contained in this tuple <b>in the exact same order</b>.
+     * This definition ensures that the equals method works properly across different
+     * implementations of the tuple interface.
+     *
+     * @param o object to be compared for equality with this tuple
+     * @return {@code true} if the specified object is equal to this tuple in terms of value semantic.
+     */
+    @Override
+    boolean equals( Object o );
+
+    /**
+     * Returns the hash code value for this tuple. The hash code of a tuple is sensitive
+     * to both what items exist in the tuple <b>and in which order they are stored.</b>
+     * This ensures that {@code t1.equals(t2)} implies that
+     * {@code t1.hashCode()==t2.hashCode()} for any two tuples {@code t1}
+     * and {@code t2}, as required by the general contract of {@link Object#hashCode}.
+     *
+     * @return The hash code value for this tuple as a 32-bit integer,
+     *         based on the sum of the hash codes of all elements in this tuple.
+     * @see Object#equals(Object)
+     */
+    @Override
+    int hashCode();
 
 }

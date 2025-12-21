@@ -214,6 +214,15 @@ final class LinkedValueSet<E> implements ValueSet<E> {
     }
 
     @Override
+    public <V extends E> ValueSet<V> retainIf(Class<V> type) {
+        Objects.requireNonNull(type, "The provided type cannot be null.");
+        return stream()
+                .filter(e -> type.isAssignableFrom(e.getClass()))
+                .map(type::cast)
+                .reduce(ValueSet.ofLinked(type), ValueSet::add, (a, b) -> a);
+    }
+
+    @Override
     public ValueSet<E> clear() {
         if (_entries.isEmpty()) {
             return this; // Already empty, return unchanged set
