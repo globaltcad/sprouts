@@ -1,9 +1,7 @@
 package sprouts.impl;
 
-import org.jspecify.annotations.Nullable;
 import sprouts.Val;
 
-import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 
 /**
