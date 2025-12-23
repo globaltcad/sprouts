@@ -47,7 +47,7 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher' // Required for test execution
 
     testImplementation group: 'com.athaydes', name: 'spock-reports', version: '2.5.1-groovy-4.0'
-    testImplementation group: 'org.spockframework', name: 'spock-core', version: '2.3-groovy-4.0'
+    testImplementation group: 'org.spockframework', name: 'spock-core', version: '2.4-groovy-4.0'
 
     // if you don't already have slf4j-api and an implementation of it in the classpath, add this! (needed for reports)
     testImplementation 'org.slf4j:slf4j-api:1.7.30'
