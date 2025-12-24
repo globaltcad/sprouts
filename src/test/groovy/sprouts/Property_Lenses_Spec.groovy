@@ -1686,7 +1686,7 @@ class Property_Lenses_Spec extends Specification
             var member = new Member("24", "Eddie", "England", MembershipLevel.BASIC, LocalDate.of(2013, 2, 19), null)
             var memberProperty = Var.ofNullable(Member.class, member)
             var level = memberProperty.zoomTo(Member::membershipLevel, Member::withMembershipLevel)
-            var date = memberProperty.zoomToNullable(Date.class, Member::joinDate, Member::withJoinDate)
+            var date = memberProperty.zoomToNullable(LocalDate.class, Member::joinDate, Member::withJoinDate)
             var name = memberProperty.zoomTo("", Member::firstName, Member::withFirstName)
         expect :
             level.get() == MembershipLevel.BASIC
