@@ -1165,8 +1165,7 @@ class Property_Projection_Lenses_Spec extends Specification {
 
         expect: 'Functions are inverses'
             isReversible(source.get(), projection.get())
-
-        when: 'We test injectivity (one-to-one)'
+        and: 'We test injectivity (one-to-one)'
             // For reversal, different strings give different reversed strings
             var testPairs = [["ab", "ba"], ["abc", "cba"], ["a", "a"]]
             for (pair in testPairs) {
@@ -1174,27 +1173,19 @@ class Property_Projection_Lenses_Spec extends Specification {
                 assert projection.get() == pair[1]
                 assert source.get() == pair[0]  // Can recover original
             }
-
-        then: 'Projection is injective'
-            true  // Verified above
-
-        when: 'We test surjectivity (onto)'
+        and: 'We test surjectivity (onto)'
             // For reversal, every string has a reverse
-            def testValues = ["", "x", "123", "hello world"]
+            var testValues = ["", "x", "123", "hello world"]
             for (value in testValues) {
                 projection.set(value)
                 assert source.get() == value.reverse()
                 assert projection.get() == value  // Can reach any value
             }
-
-        then: 'Projection is surjective'
-            true  // Verified above
-
         and: 'Round-trip property holds'
-            def testStrings = ["", "a", "ab", "abc", "test", "123!@#"]
+            var testStrings = ["", "a", "ab", "abc", "test", "123!@#"]
             for (testStr in testStrings) {
                 source.set(testStr)
-                def throughProjection = projection.get()
+                var throughProjection = projection.get()
                 projection.set(throughProjection)
                 assert source.get() == testStr  // Perfect round-trip
             }
