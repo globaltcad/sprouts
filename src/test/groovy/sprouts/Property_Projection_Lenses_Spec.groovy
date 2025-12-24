@@ -243,24 +243,25 @@ class Property_Projection_Lenses_Spec extends Specification {
         when: 'We perform round-trip updates'
             // Test string reversal
             original.set("Sprouts")
-            then: reversed.get() == "stuorpS"
+        then:
+            reversed.get() == "stuorpS"
 
-            when: reversed.set("desreveR")
-            then: original.get() == "Reversed"
+        when: reversed.set("desreveR")
+        then: original.get() == "Reversed"
 
-            // Test unit conversion
-            when: meters.set(new Length.Meter(1.0))
-            then: millimeters.get().value() == 1000.0
+        // Test unit conversion
+        when: meters.set(new Length.Meter(1.0))
+        then: millimeters.get().value() == 1000.0
 
-            when: millimeters.set(new Length.Millimeter(500.0))
-            then: meters.get().value() == 0.5
+        when: millimeters.set(new Length.Millimeter(500.0))
+        then: meters.get().value() == 0.5
 
-            // Test boolean inversion
-            when: flag.set(false)
-            then: inverted.get() == true
+        // Test boolean inversion
+        when: flag.set(false)
+        then: inverted.get() == true
 
-            when: inverted.set(false)  // false inverted is true
-            then: flag.get() == true
+        when: inverted.set(false)  // false inverted is true
+        then: flag.get() == true
 
         and: 'Multiple updates maintain consistency'
             // Verify no information loss after multiple transformations
@@ -378,7 +379,7 @@ class Property_Projection_Lenses_Spec extends Specification {
 
         and: 'Multiple operations maintain consistency'
             // Cycle through various states
-            def testProducts = [
+            var testProducts = [
                 null,
                 new Product("A", 100),
                 new Product("B", 200),
@@ -457,7 +458,6 @@ class Property_Projection_Lenses_Spec extends Specification {
             nullableString.orElseNull() == null
             nullableList.orElseNull() == null
             nullableProduct.orElseNull() == null
-
         and:
             safeList.get() == safeList.get()
             safeProduct.get() == sentinel
@@ -967,10 +967,10 @@ class Property_Projection_Lenses_Spec extends Specification {
             plain.get() == "Read Sample"  // Each char - 3
 
         and: 'Round-trip conversion is lossless'
-            def testMessages = ["Hello", "World", "123!@#", "", "Multi\nLine"]
+            var testMessages = ["Hello", "World", "123!@#", "", "Multi\nLine"]
             for (testMsg in testMessages) {
                 plain.set(testMsg)
-                def encryptedMsg = encrypted.get()
+                var encryptedMsg = encrypted.get()
                 encrypted.set("different")  // Break symmetry
                 encrypted.set(encryptedMsg)  // Restore
                 assert plain.get() == testMsg  // Perfect recovery
@@ -1111,7 +1111,7 @@ class Property_Projection_Lenses_Spec extends Specification {
             )
 
             var changeCount = 0
-            projection.onChange(From.ALL) { changeCount++ }
+            Viewable.cast(projection).onChange(From.ALL) { changeCount++ }
 
         when: 'We rapidly toggle between states'
             for (i in 1..100) {
@@ -1132,7 +1132,7 @@ class Property_Projection_Lenses_Spec extends Specification {
             source.orElseNull() == null
 
         and: 'Null object reference is stable'
-            def firstRef = projection.get()
+            var firstRef = projection.get()
             for (i in 1..10) {
                 source.set("test"+i)
                 source.set(null)
@@ -1168,7 +1168,7 @@ class Property_Projection_Lenses_Spec extends Specification {
 
         when: 'We test injectivity (one-to-one)'
             // For reversal, different strings give different reversed strings
-            def testPairs = [["ab", "ba"], ["abc", "cba"], ["a", "a"]]
+            var testPairs = [["ab", "ba"], ["abc", "cba"], ["a", "a"]]
             for (pair in testPairs) {
                 source.set(pair[0])
                 assert projection.get() == pair[1]
@@ -1241,17 +1241,17 @@ class Property_Projection_Lenses_Spec extends Specification {
 
         and: 'Mathematical composition property holds'
             // Test that (g∘f)⁻¹ = f⁻¹∘g⁻¹
-            def testValues = ["a", "ab", "abc", "test", "123"]
+            var testValues = ["a", "ab", "abc", "test", "123"]
             for (value in testValues) {
                 lower.set(value)
-                def viaChain = reversed.get()
+                var viaChain = reversed.get()
                 reversed.set(viaChain)
-                def recoveredViaChain = lower.get()
+                var recoveredViaChain = lower.get()
 
                 lower.set(value)
-                def viaDirect = direct.get()
+                var viaDirect = direct.get()
                 direct.set(viaDirect)
-                def recoveredViaDirect = lower.get()
+                var recoveredViaDirect = lower.get()
 
                 assert recoveredViaChain == recoveredViaDirect
             }
