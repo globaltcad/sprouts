@@ -612,6 +612,8 @@ class Property_Projection_Lenses_Spec extends Specification {
                 { s -> s.toUpperCase() },
                 { u -> u.toLowerCase() }
             )
+        and:
+            waitForGarbageCollection()
 
         expect: 'Source has change listeners for the projection'
             source.numberOfChangeListeners() == 1
@@ -626,17 +628,20 @@ class Property_Projection_Lenses_Spec extends Specification {
         and: 'We release the strong reference and force GC'
             weakProjection = null
             waitForGarbageCollection()
+            waitForGarbageCollection()
 
         then: 'Weak projection is collected'
             weakRef.get() == null
 
         when :
             waitForGarbageCollection()
+            waitForGarbageCollection()
         then: 'Source listener count decreases'
             source.numberOfChangeListeners() == 1  // Only strong projection remains
 
         when: 'We also release the strong projection'
             strongProjection = null
+            waitForGarbageCollection()
             waitForGarbageCollection()
 
         then: 'All projections are collected'
