@@ -452,6 +452,231 @@ public interface SproutsFactory
      * @param <B> The type of the field in the source property value {@code T}, which can be nullable.
      */
     <T extends @Nullable Object, B extends @Nullable Object> Var<B> lensOfNullable( Class<B> type, Var<T> source, Lens<T, B> lens );
+    /**
+     *  Creates a projected {@link Lens} based {@link Var} property that establishes a
+     *  bidirectional mapping between the source property's item type {@code T} and
+     *  a nullable target type {@code B} using conversion functions.
+     *  Unlike a regular lens that focuses on a field within a data structure,
+     *  a projection lens creates a new representation of the same logical data
+     *  through functional transformation.
+     *  <p>
+     *  The projection consists of:
+     *  <ul>
+     *    <li>A "getter" function that transforms {@code T} to {@code B}</li>
+     *    <li>A "setter" function that transforms {@code B} back to {@code T}</li>
+     *  </ul>
+     *  <p>
+     *  Changes to either property automatically propagate to the other through
+     *  these transformation functions. This is particularly useful for:
+     *  <ul>
+     *    <li>Unit conversions (e.g., meters ↔ feet)</li>
+     *    <li>Format conversions (e.g., raw data ↔ formatted strings)</li>
+     *    <li>Domain transformations (e.g., business objects ↔ UI models)</li>
+     *    <li>Validation boundaries (e.g., raw input ↔ validated objects)</li>
+     *  </ul>
+     *  <p>
+     *  The nullable nature of this projection allows {@code null} values to flow
+     *  through the transformation chain. When the source is {@code null}, the
+     *  projection will typically also be {@code null}, unless the getter function
+     *  defines alternative behavior.
+     *  <p>
+     *  <b>Example - Date Formatting:</b>
+     *  <pre>{@code
+     *    Var<LocalDate> date = Var.of(LocalDate.now());
+     *    Var<String> formatted = factory.projLensOfNullable(
+     *        String.class,
+     *        date,
+     *        d -> d.format(DateTimeFormatter.ISO_DATE),
+     *        s -> s == null ? null : LocalDate.parse(s)
+     *    );
+     *  }</pre>
+     *
+     * @param type   The class type of the nullable target type {@code B}.
+     *               Required for runtime type information and nullability support.
+     * @param source The source {@link Var} property to project from.
+     * @param getter Function that converts from {@code T} to {@code B}.
+     *               May return {@code null} to indicate no valid conversion.
+     * @param setter Function that converts from {@code B} back to {@code T}.
+     *               Must handle {@code null} input appropriately.
+     * @return A {@link Var} instance that maintains a bi-directional projection
+     *         to/from the source property, allowing nullable values.
+     * @param <T> The type of the source property item, which can be nullable.
+     * @param <B> The nullable type of the projected property item.
+     * @throws NullPointerException if {@code type}, {@code source}, {@code getter},
+     *         or {@code setter} is {@code null}.
+     */
+    <T extends @Nullable Object, B extends @Nullable Object> Var<B> projLensOfNullable( Class<B> type, Var<T> source, Function<T,B> getter, Function<B,T> setter );
+
+    /**
+     *  Creates a projected {@link Lens} based {@link Var} property that establishes a
+     *  bidirectional mapping between the source property's item type {@code T} and
+     *  a non-nullable target type {@code B} using conversion functions,
+     *  with a guaranteed fallback value for null source items.
+     *  <p>
+     *  This method is similar to {@link #projLensOfNullable(Class, Var, Function, Function)}
+     *  but guarantees that the resulting property will never contain {@code null} values.
+     *  When the source property's item is {@code null}, the projection will use the
+     *  provided {@code nullObject} as its value.
+     *  <p>
+     *  The projection consists of:
+     *  <ul>
+     *    <li>A "getter" function that transforms {@code T} to {@code B}</li>
+     *    <li>A "setter" function that transforms {@code B} back to {@code T}</li>
+     *    <li>A non-null fallback object for when the source is {@code null}</li>
+     *  </ul>
+     *  <p>
+     *  This method is particularly useful when you need a projection that:
+     *  <ul>
+     *    <li>Must never expose {@code null} values to downstream consumers</li>
+     *    <li>Needs to provide a meaningful default representation for missing data</li>
+     *    <li>Should maintain type safety by eliminating null checks</li>
+     *    <li>Requires stable, predictable behavior even with null source values</li>
+     *  </ul>
+     *  <p>
+     *  <b>Example - Currency Display with Fallback:</b>
+     *  <pre>{@code
+     *    // Price in cents, but price might be unknown initially
+     *    Var<Integer> priceCents = Var.ofNullable(Integer.class, null);
+     *
+     *    // Create a formatted display projection with fallback
+     *    Var<String> displayPrice = factory.projLensOf(
+     *        priceCents,
+     *        "Price not set",  // nullObject - shown when price is unknown
+     *        cents -> String.format("$%.2f", cents / 100.0),  // getter
+     *        display -> {                                      // setter
+     *            // Parse display string back to cents
+     *            if (display.startsWith("$")) {
+     *                return (int)(Double.parseDouble(display.substring(1)) * 100);
+     *            }
+     *            return 0;  // Default if parsing fails
+     *        }
+     *    );
+     *
+     *    // Initially shows fallback
+     *    displayPrice.get();  // "Price not set"
+     *
+     *    // When price is set
+     *    priceCents.set(1999);
+     *    displayPrice.get();  // "$19.99"
+     *
+     *    // User edits in UI
+     *    displayPrice.set("$24.99");
+     *    priceCents.get();    // 2499
+     *  }</pre>
+     *  <p>
+     *  <b>Mathematical Considerations:</b>
+     *  For predictable behavior, the functions should form a partial isomorphism:
+     *  <ul>
+     *    <li>For non-null {@code t}: {@code setter.apply(getter.apply(t)).equals(t)} should hold</li>
+     *    <li>For all {@code b}: {@code getter.apply(setter.apply(b)).equals(b)} should hold</li>
+     *    <li>The {@code nullObject} serves as the image of {@code null} under the mapping</li>
+     *  </ul>
+     *  When the source is {@code null}, the projection behaves as if the source value
+     *  maps to the {@code nullObject} through the getter function.
+     *
+     * @param source    The source {@link Var} property to project from.
+     * @param nullObject The guaranteed non-null fallback value to use when the
+     *                   source property's item is {@code null}. This value must
+     *                   not be {@code null} itself and will be returned by the
+     *                   projection whenever the source is {@code null}.
+     * @param getter    Function that converts from {@code T} to {@code B} for
+     *                  non-null source items. Will not be called when source is {@code null}.
+     * @param setter    Function that converts from {@code B} back to {@code T}.
+     *                  Must handle all possible {@code B} values, including
+     *                  the {@code nullObject}.
+     * @return A {@link Var} instance that maintains a bi-directional projection
+     *         to/from the source property, with guaranteed non-null values.
+     * @param <T> The type of the source property item, which can be nullable.
+     * @param <B> The non-nullable type of the projected property item.
+     * @throws NullPointerException if {@code source}, {@code nullObject},
+     *         {@code getter}, or {@code setter} is {@code null}.
+     */
+    <T extends @Nullable Object, B extends @NonNull Object> Var<B> projLensOf( Var<T> source, B nullObject, Function<T,B> getter, Function<B,T> setter);
+
+    /**
+     *  Creates a projected {@link Lens} based {@link Var} property that establishes a
+     *  bidirectional mapping between the source property's item type {@code T} and
+     *  a non-nullable target type {@code B} using conversion functions.
+     *  <p>
+     *  This is the simplest form of projection, assuming that:
+     *  <ol>
+     *    <li>The source property never contains {@code null} values</li>
+     *    <li>The conversion functions form a perfect isomorphism</li>
+     *    <li>No fallback handling is needed for null values</li>
+     *  </ol>
+     *  <p>
+     *  The projection creates a two-way street between representations where:
+     *  <ul>
+     *    <li>Changes to the source automatically propagate to the projection</li>
+     *    <li>Changes to the projection automatically propagate back to the source</li>
+     *    <li>Both properties remain perfectly synchronized</li>
+     *  </ul>
+     *  <p>
+     *  This method is ideal for:
+     *  <ul>
+     *    <li>Unit conversions where both representations are always valid</li>
+     *    <li>Format transformations with perfect round-trip capability</li>
+     *    <li>View model adaptations where null is not a valid state</li>
+     *    <li>Encryption/decryption boundaries with guaranteed validity</li>
+     *  </ul>
+     *  <p>
+     *  <b>Example - Temperature Conversion:</b>
+     *  <pre>{@code
+     *    record Celsius(double value) {
+     *        Fahrenheit toFahrenheit() { return new Fahrenheit(value * 9/5 + 32); }
+     *    }
+     *    record Fahrenheit(double value) {
+     *        Celsius toCelsius() { return new Celsius((value - 32) * 5/9); }
+     *    }
+     *
+     *    // Always starts with a valid temperature
+     *    Var<Celsius> celsius = Var.of(new Celsius(100.0));
+     *
+     *    // Create a Fahrenheit projection
+     *    Var<Fahrenheit> fahrenheit = factory.projLensOf(
+     *        celsius,
+     *        Celsius::toFahrenheit,    // getter: C → F
+     *        Fahrenheit::toCelsius     // setter: F → C
+     *    );
+     *
+     *    // Initial conversion
+     *    fahrenheit.get().value();  // 212.0
+     *
+     *    // Update through source
+     *    celsius.set(new Celsius(0.0));
+     *    fahrenheit.get().value();  // 32.0
+     *
+     *    // Update through projection (user input in Fahrenheit)
+     *    fahrenheit.set(new Fahrenheit(77.0));
+     *    celsius.get().value();     // 25.0
+     *  }</pre>
+     *  <p>
+     *  <b>Mathematical Requirements:</b>
+     *  For correct behavior, the functions should form a perfect isomorphism:
+     *  <ul>
+     *    <li><b>Totality:</b> Both functions must be defined for all inputs</li>
+     *    <li><b>Injectivity:</b> Different inputs must produce different outputs</li>
+     *    <li><b>Surjectivity:</b> Every possible output must be reachable</li>
+     *    <li><b>Inverse property:</b> {@code setter.apply(getter.apply(t)).equals(t)}</li>
+     *    <li><b>Inverse property:</b> {@code getter.apply(setter.apply(b)).equals(b)}</li>
+     *  </ul>
+     *  Violating these requirements may lead to data loss, inconsistent states,
+     *  or unexpected behavior.
+     *
+     * @param source The source {@link Var} property to project from.
+     *               This property should not contain {@code null} values.
+     * @param getter Function that converts from {@code T} to {@code B}.
+     *               Must be defined for all possible {@code T} values.
+     * @param setter Function that converts from {@code B} back to {@code T}.
+     *               Must be defined for all possible {@code B} values.
+     * @return A {@link Var} instance that maintains a bi-directional projection
+     *         to/from the source property.
+     * @param <T> The non-nullable type of the source property item.
+     * @param <B> The non-nullable type of the projected property item.
+     * @throws NullPointerException if {@code source}, {@code getter},
+     *         or {@code setter} is {@code null}.
+     */
+    <T extends @Nullable Object, B extends @NonNull Object> Var<B> projLensOf( Var<T> source, Function<T,B> getter, Function<B,T> setter );
 
     /**
      * Creates a {@link Var} property instance from a given non-null {@link Class} of a nullable type and

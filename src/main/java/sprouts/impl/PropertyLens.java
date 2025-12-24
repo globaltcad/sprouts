@@ -45,26 +45,9 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
         Objects.requireNonNull(nullObject, "Null object must not be null");
         Objects.requireNonNull(lens, "Lens must not be null");
         Class<B> itemType = Util.expectedClassFromItem(nullObject);
-        Lens<T, B> nullSafeLens = new Lens<T, B>() {
-            @Override
-            public B getter(T parentValue) throws Exception {
-                if ( parentValue == null )
-                    return nullObject;
-
-                return lens.getter(parentValue);
-            }
-
-            @Override
-            public T wither(T parentValue, B newValue) throws Exception {
-                if ( parentValue == null )
-                    return Util.fakeNonNull(null);
-
-                return lens.wither(parentValue, newValue);
-            }
-        };
         B initialValue;
         try {
-            initialValue = nullSafeLens.getter(Util.fakeNonNull(source.orElseNull()));
+            initialValue = lens.getter(Util.fakeNonNull(source.orElseNull()));
         } catch ( Exception e ) {
             Util.sneakyThrowExceptionIfFatal(e);
             throw new IllegalArgumentException(
@@ -79,7 +62,7 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
                 false,//does not allow null
                 initialValue, //may NOT be null
                 source,
-                nullSafeLens,
+                lens,
                 null
         );
     }
@@ -87,26 +70,9 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
     public static <T, B> Var<B> ofNullable(Class<B> type, Var<T> source, Lens<T, B> lens) {
         Objects.requireNonNull(type, "Type must not be null");
         Objects.requireNonNull(lens, "Lens must not be null");
-        Lens<T, B> nullSafeLens = new Lens<T, B>() {
-            @Override
-            public B getter(T parentValue) throws Exception {
-                if ( parentValue == null )
-                    return Util.fakeNonNull(null);
-
-                return lens.getter(parentValue);
-            }
-
-            @Override
-            public T wither(T parentValue, B newValue) throws Exception {
-                if ( parentValue == null )
-                    return Util.fakeNonNull(null);
-
-                return lens.wither(parentValue, newValue);
-            }
-        };
         B initialValue;
         try {
-            initialValue = nullSafeLens.getter(Util.fakeNonNull(source.orElseNull()));
+            initialValue = lens.getter(Util.fakeNonNull(source.orElseNull()));
         } catch ( Exception e ) {
             Util.sneakyThrowExceptionIfFatal(e);
             throw new IllegalArgumentException(
@@ -121,7 +87,7 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
                 true,//allows null
                 initialValue, //may be null
                 source,
-                nullSafeLens,
+                lens,
                 null
         );
     }
@@ -207,11 +173,13 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
     private @Nullable T _item() {
         @Nullable T currentItem = _fetchItemFromParent();
         if ( currentItem != null ) {
+            Class<?> type = currentItem.getClass();
             // We check if the type is correct
-            if ( !_type.isAssignableFrom(currentItem.getClass()) )
+            if ( !_type.isAssignableFrom(type) )
                 throw new IllegalArgumentException(
-                        "The provided type of the initial value is not compatible with the actual type of the variable"
-                );
+                        "The provided type '"+type+"' of the initial value is not compatible " +
+                        "with the actual type '"+_type+"' of the variable"
+                    );
         }
         return currentItem;
     }
