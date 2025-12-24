@@ -321,7 +321,7 @@ class Property_Projection_Lenses_Spec extends Specification {
             )
 
             // Add a guard to prevent infinite loops
-            source.onChange(From.ALL) { counter++ }
+            Viewable.cast(source).onChange(From.ALL) { counter++ }
 
         then: 'Single update causes expected propagation'
             dangerous.set(5)
@@ -829,10 +829,10 @@ class Property_Projection_Lenses_Spec extends Specification {
             var celsiusTrace = []
             var fahrenheitTrace = []
 
-            celsius.onChange(From.VIEW_MODEL) { celsiusTrace << "VIEW_MODEL:${it.currentValue().orElseThrow().value()}" }
-            celsius.onChange(From.VIEW) { celsiusTrace << "VIEW:${it.currentValue().orElseThrow().value()}" }
-            fahrenheit.onChange(From.VIEW_MODEL) { fahrenheitTrace << "VIEW_MODEL:${it.currentValue().orElseThrow().value()}" }
-            fahrenheit.onChange(From.VIEW) { fahrenheitTrace << "VIEW:${it.currentValue().orElseThrow().value()}" }
+            Viewable.cast(celsius).onChange(From.VIEW_MODEL) { celsiusTrace << "VIEW_MODEL:${it.currentValue().orElseThrow().value()}" }
+            Viewable.cast(celsius).onChange(From.VIEW) { celsiusTrace << "VIEW:${it.currentValue().orElseThrow().value()}" }
+            Viewable.cast(fahrenheit).onChange(From.VIEW_MODEL) { fahrenheitTrace << "VIEW_MODEL:${it.currentValue().orElseThrow().value()}" }
+            Viewable.cast(fahrenheit).onChange(From.VIEW) { fahrenheitTrace << "VIEW:${it.currentValue().orElseThrow().value()}" }
 
         when: 'Celsius is updated from VIEW_MODEL'
             celsius.set(From.VIEW_MODEL, new Celsius(25.0))
@@ -878,7 +878,7 @@ class Property_Projection_Lenses_Spec extends Specification {
 
         and: 'UI simulation with trace'
             var uiUpdates = []
-            formattedPrice.onChange(From.VIEW_MODEL) {
+            Viewable.cast(formattedPrice).onChange(From.VIEW_MODEL) {
                 uiUpdates << "UI shows: ${it.currentValue().orElseThrow()}"
             }
 
