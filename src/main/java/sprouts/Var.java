@@ -636,7 +636,7 @@ public interface Var<T extends @Nullable Object> extends Val<T>
     }
 
     /**
-     * Creates a projected property (Var) that bi-directionally maps between the item type {@code T}
+     * Creates a projected lens property (Var) that bi-directionally maps between the item type {@code T}
      * of this property and a target type {@code B} using a pair of conversion functions.
      * The projection establishes a two-way relationship where changes in either property
      * are automatically reflected in the other, provided the conversion functions form
@@ -743,7 +743,7 @@ public interface Var<T extends @Nullable Object> extends Val<T>
     }
 
     /**
-     * Creates a projected property (Var) that bi-directionally maps between the item type {@code T}
+     * Creates a projected lens property (Var) that bi-directionally maps between the item type {@code T}
      * of this property and a target type {@code B} using conversion functions, with a guaranteed
      * non-null fallback value for when this property's item is null.
      * <p>
@@ -806,7 +806,7 @@ public interface Var<T extends @Nullable Object> extends Val<T>
     }
 
     /**
-     * Creates a projected property (Var) that bi-directionally maps between the item type {@code T}
+     * Creates a projected lens property (Var) that bi-directionally maps between the item type {@code T}
      * of this property and a nullable target item type {@code B} using conversion functions.
      * This method allows the projected property to hold null values, which is useful when
      * the conversion between types is partial or may fail.
