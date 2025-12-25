@@ -65,15 +65,29 @@ class Property_View_Memory_Safety_Spec extends Specification
             timeUnitProperty.numberOfChangeListeners() == 4
 
         when : 'We create four more views which we do not reference strongly.'
-            timeUnitProperty.viewAsInt(TimeUnit::ordinal)
-            timeUnitProperty.viewAsString(TimeUnit::name)
-            timeUnitProperty.viewAsNullable(Long, u -> u.ordinal() == 0 ? null : u.toMillis(1))
-            timeUnitProperty.viewAs(Long, u -> u.toMillis(1))
+            var a = timeUnitProperty.viewAsInt(TimeUnit::ordinal)
+            var b = timeUnitProperty.viewAsString(TimeUnit::name)
+            var c = timeUnitProperty.viewAsNullable(Long, u -> u.ordinal() == 0 ? null : u.toMillis(1))
+            var d = timeUnitProperty.viewAs(Long, u -> u.toMillis(1))
         and : 'We wait for the garbage collector to run.'
             waitForGarbageCollection()
             Thread.sleep(500)
+            waitForGarbageCollection()
 
-        then : 'The enum property still has 2 change listeners registered.'
+        then : 'The enum property has 8 change listeners registered.'
+            timeUnitProperty.numberOfChangeListeners() == 8
+
+        when : 'We cut the references to the views...'
+            a = null
+            b = null
+            c = null
+            d = null
+        and : 'We wait for the garbage collector to run.'
+            waitForGarbageCollection()
+            Thread.sleep(500)
+            waitForGarbageCollection()
+
+        then : 'The enum property has 4 change listeners again.'
             timeUnitProperty.numberOfChangeListeners() == 4
     }
 
