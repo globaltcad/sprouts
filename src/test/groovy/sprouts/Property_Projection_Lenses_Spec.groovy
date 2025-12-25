@@ -614,6 +614,7 @@ class Property_Projection_Lenses_Spec extends Specification {
             )
         and:
             waitForGarbageCollection()
+            waitForGarbageCollection()
 
         expect: 'Source has change listeners for the projection'
             source.numberOfChangeListeners() == 1
