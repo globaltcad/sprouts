@@ -173,13 +173,13 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
     private @Nullable T _item() {
         @Nullable T currentItem = _fetchItemFromParent();
         if ( currentItem != null ) {
-            Class<?> type = currentItem.getClass();
+            Class<?> currentType = currentItem.getClass();
             // We check if the type is correct
-            if ( !_type.isAssignableFrom(type) )
-                throw new IllegalArgumentException(
-                        "The provided type '"+type+"' of the initial value is not compatible " +
-                        "with the actual type '"+_type+"' of the variable"
-                    );
+            if ( !_type.isAssignableFrom(currentType) )
+                throw new IllegalArgumentException(String.format(
+                            "The provided type '%s' of the initial value is not compatible " +
+                            "with the actual type '%s' of the variable", currentType, _type
+                        ));
         }
         return currentItem;
     }
@@ -281,10 +281,10 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
         if ( pair.change() != SingleChange.NONE ) {
             // First we check if the value is compatible with the type
             if ( newValue != null && !_type.isAssignableFrom(newValue.getClass()) )
-                throw new IllegalArgumentException(
-                        "The provided type '"+newValue.getClass()+"' of the new value is not compatible " +
-                                "with the expected item type '"+_type+"' of this property lens."
-                );
+                throw new IllegalArgumentException(String.format(
+                        "The provided type '%s' of the new value is not compatible " +
+                        "with the expected item type '%s' of this property lens.", newValue.getClass(), _type
+                ));
 
             _setInParentAndInternally(channel, newValue);
         }
