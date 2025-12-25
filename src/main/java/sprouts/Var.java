@@ -737,8 +737,8 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      * @see #projectToNullable(Class, Function, Function) for nullable projections.
      */
     default <B> Var<B> projectTo( Function<T,B> getter, Function<B,T> setter ) {
-        Objects.requireNonNull(getter);
-        Objects.requireNonNull(setter);
+        Objects.requireNonNull(getter, "getter must not be null");
+        Objects.requireNonNull(setter, "setter must not be null");
         return Sprouts.factory().projLensOf( this, getter, setter );
     }
 
@@ -800,14 +800,14 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      */
     default <B extends @NonNull Object> Var<B> projectTo( B nullObject, Function<T,B> getter, Function<B,T> setter ) {
         Objects.requireNonNull(nullObject);
-        Objects.requireNonNull(getter);
-        Objects.requireNonNull(setter);
+        Objects.requireNonNull(getter, "getter must not be null");
+        Objects.requireNonNull(setter, "setter must not be null");
         return Sprouts.factory().projLensOf( this, nullObject, getter, setter );
     }
 
     /**
      * Creates a projected property (Var) that bi-directionally maps between the item type {@code T}
-     * of this property and a nullable target type {@code B} using conversion functions.
+     * of this property and a nullable target item type {@code B} using conversion functions.
      * This method allows the projected property to hold null values, which is useful when
      * the conversion between types is partial or may fail.
      * <p>
@@ -874,8 +874,8 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      */
     default <B extends @Nullable Object> Var<B> projectToNullable( Class<B> type, Function<T,B> getter, Function<B,T> setter ) {
         Objects.requireNonNull(type);
-        Objects.requireNonNull(getter);
-        Objects.requireNonNull(setter);
+        Objects.requireNonNull(getter, "getter must not be null");
+        Objects.requireNonNull(setter, "setter must not be null");
         return Sprouts.factory().projLensOfNullable(type, this, getter, setter);
     }
 }

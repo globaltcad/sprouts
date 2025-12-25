@@ -455,7 +455,7 @@ public interface SproutsFactory
     /**
      *  Creates a projected {@link Lens} based {@link Var} property that establishes a
      *  bidirectional mapping between the source property's item type {@code T} and
-     *  a nullable target type {@code B} using conversion functions.
+     *  a nullable target item type {@code B} using conversion functions.
      *  Unlike a regular lens that focuses on a field within a data structure,
      *  a projection lens creates a new representation of the same logical data
      *  through functional transformation.

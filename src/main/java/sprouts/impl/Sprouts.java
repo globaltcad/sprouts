@@ -259,7 +259,7 @@ public final class Sprouts implements SproutsFactory
     @Override
     public <T, B> Var<B> lensOfNullable(Class<B> type, Var<T> source, Lens<T, B> lens) {
         Objects.requireNonNull(type, "Type must not be null");
-        Objects.requireNonNull(lens, "letter must not be null");
+        Objects.requireNonNull(lens, "lens must not be null");
         return PropertyLens.ofNullable(type, source, new Lens<T, B>() {
             @Override
             public B getter(T parentValue) throws Exception {
@@ -279,8 +279,8 @@ public final class Sprouts implements SproutsFactory
 
     @Override
     public <T, B> Var<B> projLensOf(Var<T> source, Function<T,B> getter, Function<B,T> setter) {
-        Objects.requireNonNull(getter);
-        Objects.requireNonNull(setter);
+        Objects.requireNonNull(getter, "getter must not be null");
+        Objects.requireNonNull(setter, "setter must not be null");
         Lens<T,B> lens = Lens.of(getter, (a,b)->setter.apply(b));
         B initialValue;
         try {
@@ -304,8 +304,8 @@ public final class Sprouts implements SproutsFactory
     @Override
     public <T, B> Var<B> projLensOf(Var<T> source, B nullObject, Function<T,B> getter, Function<B,T> setter) {
         Objects.requireNonNull(nullObject, "Null object must not be null");
-        Objects.requireNonNull(getter);
-        Objects.requireNonNull(setter);
+        Objects.requireNonNull(getter, "getter must not be null");
+        Objects.requireNonNull(setter, "setter must not be null");
         Lens<T,B> lens = Lens.of(getter, (a,b)->setter.apply(b));
         return PropertyLens.of(source, nullObject, lens);
     }
@@ -313,8 +313,8 @@ public final class Sprouts implements SproutsFactory
     @Override
     public <T, B> Var<B> projLensOfNullable(Class<B> type, Var<T> source, Function<T,B> getter, Function<B,T> setter) {
         Objects.requireNonNull(type, "Type must not be null");
-        Objects.requireNonNull(getter);
-        Objects.requireNonNull(setter);
+        Objects.requireNonNull(getter, "getter must not be null");
+        Objects.requireNonNull(setter, "setter must not be null");
         Lens<T,B> lens = Lens.of(getter, (a,b)->setter.apply(b));
         return PropertyLens.ofNullable(type, source, lens);
     }
