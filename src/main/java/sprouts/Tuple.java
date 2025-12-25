@@ -937,9 +937,8 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * // Remove all String instances
      * Tuple<Object> withoutStrings = mixed.removeIf(String.class);
      * // Result: [1, 2.5, 3]
-     * }</pre>
-     * </p>
-     * <p>
+     * }</pre><br>
+     *
      * <b>Null handling:</b>
      * <ul>
      *   <li>
@@ -953,7 +952,6 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      *      also report {@code false} when invoking {@link #allowsNull()}
      *   </li>
      * </ul>
-     * </p>
      *
      * @param type The class type to filter out from the tuple. Items that are instances of this type
      *             (including subclasses) will be removed from the result.
@@ -986,14 +984,12 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * // Keep only String instances
      * Tuple<String> onlyStrings = mixed.retainIf(String.class);
      * // Result: ["x", "z"]
-     * }</pre>
-     * </p>
-     * <p>
+     * }</pre><br>
+     *
      * <b>Type Safety:</b>
      * The returned tuple is explicitly typed with the specified class type {@code V},
-     * allowing for type-safe operations on the filtered results without the need for explicit casting.
-     * </p>
-     * <p>
+     * allowing for type-safe operations on the filtered results without the need for explicit casting.<br>
+     * <br>
      * <b>Null handling:</b>
      * <ul>
      *   <li>
@@ -1008,13 +1004,11 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      *       If this tuple contains null values but the specified type is not compatible with null,
      *       those null items will be filtered out in the result.
      *   </li>
-     * </ul>
-     * </p>
-     * <p>
+     * </ul><br>
+     *
      * <b>Empty Result:</b>
      * If no items in this tuple match the specified type (including the case where all items are null),
      * an empty tuple of type {@code V} will be returned.
-     * </p>
      *
      * @param type The class type to filter by. Only items that are instances of this type
      *             (including subclasses) will be retained in the result.
@@ -1668,8 +1662,8 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
 
     /**
      * Joins all items in this tuple into a single string using the specified delimiter.
-     * Each item is converted to a string using {@link String#valueOf(Object)}.
-     * <p>
+     * Each item is converted to a string using {@link String#valueOf(Object)}.<br>
+     * <br>
      * <b>Example:</b>
      * <pre>{@code
      * Tuple<String> tuple = Tuple.of(String.class, "a", "b", "c");
@@ -1677,16 +1671,14 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      *
      * Tuple<Integer> numbers = Tuple.of(Integer.class, 1, 2, 3);
      * String numbered = numbers.join("-"); // Returns "1-2-3"
-     * }</pre>
-     * </p>
-     * <p>
+     * }</pre><br>
+     *
      * <b>Null handling:</b>
      * <ul>
      *   <li>If this tuple contains null items and allows null values ({@link #allowsNull()} returns {@code true}),
      *       the string "null" will be used for null items.</li>
      *   <li>If the tuple is empty, an empty string is returned.</li>
      * </ul>
-     * </p>
      *
      * @param delimiter the delimiter to place between each item in the resulting string
      * @return a string containing all tuple items joined by the delimiter

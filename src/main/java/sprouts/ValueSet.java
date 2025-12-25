@@ -1074,8 +1074,8 @@ public interface ValueSet<E> extends Iterable<E> {
     /**
      *  Creates a new value set containing only the elements that are NOT instances of the specified type.
      *  This method filters out all elements that are assignable to the given class,
-     *  effectively retaining entries that do not match the specified type criteria.
-     *  <p>
+     *  effectively retaining entries that do not match the specified type criteria.<br>
+     *  <br>
      *  <b>Example:</b>
      *  <pre>{@code
      *  // Given a value set with mixed types:
@@ -1084,22 +1084,18 @@ public interface ValueSet<E> extends Iterable<E> {
      *  // Remove all String instances
      *  ValueSet<Object> withoutStrings = mixed.removeIf(String.class);
      *  // Result: [1, 2.5, 3]
-     *  }</pre>
-     *  </p>
-     *  <p>
+     *  }</pre><br>
+     *
      *  <b>Type Safety:</b>
      *  The returned value set maintains the same element type {@code E} as this value set,
-     *  as the operation only removes elements but doesn't change the type of remaining elements.
-     *  </p>
-     *  <p>
+     *  as the operation only removes elements but doesn't change the type of remaining elements.<br>
+     *  <br>
      *  <b>Null handling:</b>
      *  Since value sets cannot contain null elements (as specified in the class documentation),
-     *  null elements are never present and thus never need to be considered in the filtering process.
-     *  </p>
-     *  <p>
+     *  null elements are never present and thus never need to be considered in the filtering process.<br>
+     *  <br>
      *  <b>Empty Result:</b>
      *  If no elements in this value set match the specified type, this value set is returned unchanged.
-     *  </p>
      *
      * @param type The class type to filter out from the value set. Elements that are instances of this type
      *             (including subclasses) will be removed from the result.
@@ -1121,8 +1117,8 @@ public interface ValueSet<E> extends Iterable<E> {
     /**
      *  Creates a new value set containing only the elements that are instances of the specified type.
      *  This method filters the value set to retain all elements that are assignable to the given class,
-     *  effectively keeping entries that match the specified type criteria while removing all others.
-     *  <p>
+     *  effectively keeping entries that match the specified type criteria while removing all others.<br>
+     *  <br>
      *  <b>Example:</b>
      *  <pre>{@code
      *  // Given a value set with mixed types:
@@ -1131,18 +1127,15 @@ public interface ValueSet<E> extends Iterable<E> {
      *  // Keep only String instances
      *  ValueSet<String> onlyStrings = mixed.retainIf(String.class);
      *  // Result: ["x", "z"]
-     *  }</pre>
-     *  </p>
-     *  <p>
+     *  }</pre><br>
+     *
      *  <b>Type Safety:</b>
      *  The returned value set is explicitly typed with the specified class type {@code V},
-     *  allowing for type-safe operations on the filtered results without the need for explicit casting.
-     *  </p>
-     *  <p>
+     *  allowing for type-safe operations on the filtered results without the need for explicit casting.<br>
+     *  <br>
      *  <b>Null handling:</b>
      *  Since value sets cannot contain null elements (as specified in the class documentation),
      *  null elements are never present and thus never need to be considered in the filtering process.
-     *  </p>
      *
      * @param type The class type to filter by. Only elements that are instances of this type
      *             (including subclasses) will be retained in the result.
@@ -1285,8 +1278,8 @@ public interface ValueSet<E> extends Iterable<E> {
      *  Returns a string consisting of the string representations of all elements
      *  in this value set, concatenated with the specified delimiter.
      *  The elements are converted to strings using {@link String#valueOf(Object)}
-     *  and joined in the iteration order of this value set.
-     *  <p>
+     *  and joined in the iteration order of this value set.<br>
+     *
      *  <b>Examples:</b>
      *  <pre>{@code
      *  var fruits = ValueSet.of("apple", "banana", "orange");
@@ -1295,25 +1288,21 @@ public interface ValueSet<E> extends Iterable<E> {
      *
      *  ValueSet<Integer> numbers = ValueSet.of(1, 2, 3);
      *  String result2 = numbers.join("-"); // Returns "1-2-3"
-     *  }</pre>
-     *  </p>
-     *  <p>
+     *  }</pre><br>
+     *
      *  <b>Order Considerations:</b>
      *  <ul>
      *    <li>For regular value sets, the order is undefined but consistent</li>
      *    <li>For linked value sets, elements are joined in insertion order</li>
      *    <li>For sorted value sets, elements are joined in sorted order</li>
-     *  </ul>
-     *  </p>
-     *  <p>
+     *  </ul><br>
+     *
      *  <b>Empty Set:</b>
-     *  If this value set is empty, an empty string is returned.
-     *  </p>
-     *  <p>
+     *  If this value set is empty, an empty string is returned.<br>
+     *  <br>
      *  <b>Single Element:</b>
      *  If this value set contains only one element, that element's string
      *  representation is returned without any delimiter.
-     *  </p>
      *
      * @param delimiter The delimiter to be used between each element.
      *                 Must not be null, but can be an empty string.
