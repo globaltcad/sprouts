@@ -303,6 +303,7 @@ public final class Sprouts implements SproutsFactory
 
     @Override
     public <T, B> Var<B> projLensOf(Var<T> source, B nullObject, Function<T,B> getter, Function<B,T> setter) {
+        Objects.requireNonNull(source, "Source property must not be null!");
         Objects.requireNonNull(nullObject, "Null object must not be null");
         Objects.requireNonNull(getter, "getter must not be null");
         Objects.requireNonNull(setter, "setter must not be null");
@@ -320,6 +321,7 @@ public final class Sprouts implements SproutsFactory
     }
 
     @Override public <T> Var<T> varOfNullable(Class<T> type, @Nullable T item ) {
+        Objects.requireNonNull(type, "Type must not be null");
         return Property.ofNullable( false, type, item );
     }
 
