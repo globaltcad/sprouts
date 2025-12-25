@@ -1069,7 +1069,7 @@ class Property_Lenses_Spec extends Specification
             lens.numberOfChangeListeners() == 0
 
         when : 'We subscribe the listener to the lens.'
-            lens.subscribe(observer)
+            Viewable.cast(lens).subscribe(observer)
         then : 'The listener is not immediately notified, but the lens has one change listener.'
             trace.isEmpty()
             lens.numberOfChangeListeners() == 1
@@ -1082,7 +1082,7 @@ class Property_Lenses_Spec extends Specification
             trace == ["Smith", "Mayer"]
 
         when : 'We unsubscribe the listener from the lens.'
-            lens.unsubscribe(observer)
+            Viewable.cast(lens).unsubscribe(observer)
         and : 'We change the value of the source property as well as the lens directly.'
             authorProperty.set(author.withLastName("Johnson"))
             authorProperty.set(authorProperty.get().withFirstName("Raffaela"))
@@ -1189,9 +1189,9 @@ class Property_Lenses_Spec extends Specification
             var titleTrace = []
             var authorTrace = []
             var genreTrace = []
-            titleLens.onChange(From.ALL, it -> titleTrace << it.channel() )
-            authorLens.onChange(From.VIEW, it -> authorTrace << it.channel() )
-            genreLens.onChange(From.VIEW_MODEL, it -> genreTrace << it.channel() )
+            Viewable.cast(titleLens).onChange(From.ALL, it -> titleTrace << it.channel() )
+            Viewable.cast(authorLens).onChange(From.VIEW, it -> authorTrace << it.channel() )
+            Viewable.cast(genreLens).onChange(From.VIEW_MODEL, it -> genreTrace << it.channel() )
         expect : 'Initially, the traces are all empty.'
             titleTrace.isEmpty()
             authorTrace.isEmpty()
@@ -1267,7 +1267,7 @@ class Property_Lenses_Spec extends Specification
         and : 'An observer which records if the change event was triggered.'
             Observer observer = { trace << "!" }
         and : 'We subscribe the observer.'
-            authorProperty.subscribe(observer)
+            Viewable.cast(authorProperty).subscribe(observer)
 
         when : 'We change three different fields on three different channels, with one no-change.'
             authorProperty.set(From.ALL, author.withFirstName("Lilo"))
@@ -1278,7 +1278,7 @@ class Property_Lenses_Spec extends Specification
             trace == ["!", "!", "!"]
 
         when : 'We unsubscribe the observer.'
-            authorProperty.unsubscribe(observer)
+            Viewable.cast(authorProperty).unsubscribe(observer)
         and : 'Then again change three different fields on three different channels.'
             authorProperty.set(From.ALL, author.withFirstName("Jane"))
             authorProperty.set(From.ALL, author.withFirstName("Jane")) // No change
@@ -1679,6 +1679,26 @@ class Property_Lenses_Spec extends Specification
                     "Birth year changed to: 1829",
                     "Birth date changed to: 1829-08-12"
                 ]
+    }
+
+    def 'The nullable lens of a nullable property handles `null` values gracefully.'() {
+        given :
+            var member = new Member("24", "Eddie", "England", MembershipLevel.BASIC, LocalDate.of(2013, 2, 19), null)
+            var memberProperty = Var.ofNullable(Member.class, member)
+            var level = memberProperty.zoomTo(Member::membershipLevel, Member::withMembershipLevel)
+            var date = memberProperty.zoomToNullable(LocalDate.class, Member::joinDate, Member::withJoinDate)
+            var name = memberProperty.zoomTo("", Member::firstName, Member::withFirstName)
+        expect :
+            level.get() == MembershipLevel.BASIC
+            date.get() == LocalDate.of(2013, 2, 19)
+            name.get() == "Eddie"
+
+        when :
+            memberProperty.set(null)
+        then :
+            level.orElseNull() == null
+            date.orElseNull() == null
+            name.get() == ""
     }
 
     /**
