@@ -4,7 +4,7 @@
   "narrative":"Sprouts is a property library with a heavy focus on bridging the\n    gap between classical place oriented programming and modern\n    data oriented programming.\n    This is why sprouts has both the `Tuple` and `Association` classes.\n    The `Association` class is a value object that represents a set of\n    key-value pairs. You can think of it as an immutable map, but with\n    an API that is designed around transforming the data in the map\n    rather than mutating it.",
   "subjects":["sprouts.Association"],
   "statistics":{
-    "runs":"139",
+    "runs":"152",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -3790,6 +3790,253 @@
         {"kind":"then","text":"","code":["associationModified1.size() == associationModified2.size()","associationModified1 != associationModified2"]},
 
         {"kind":"where","text":"We use the following entry data source:","code":{"keyType":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"valueType":["Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double","Boolean","Byte","Integer","Double"],"entries":["(0..24).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..24).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..24).collect(it -> Pair.of(it, -it)).toList()","(0..24).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..128).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..128).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..128).collect(it -> Pair.of(it, -it)).toList()","(0..128).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..1_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..1_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..1_000).collect(it -> Pair.of(it, -it)).toList()","(0..1_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()","(0..10_000).collect(it -> Pair.of(it as Long, it%2==0)).toList()","(0..10_000).collect(it -> Pair.of(it as Short, (it*73) as Byte)).toList()","(0..10_000).collect(it -> Pair.of(it, -it)).toList()","(0..10_000).collect(it -> Pair.of(String.valueOf(it), -it * 1234e-5 as double)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `update` method transforms existing values using a function while preserving the association structure.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `update` method provides a safe way to modify existing values in an association\n            without having to manually check for key existence. It only applies the transformation\n            to keys that actually exist in the association, making it ideal for selective updates.\n\n            This method is particularly useful when you want to apply business logic transformations\n            to specific entries without affecting the overall structure of the association.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"An association representing product inventory with initial quantities","code":["var inventory = Association.between(String, Integer).putAll(","    Pair.of(\"apples\", 10),","    Pair.of(\"oranges\", 15),","    Pair.of(\"bananas\", 20),","    Pair.of(\"grapes\", 8)",")"]},
+
+        {"kind":"when","text":"We update quantities for specific products that exist","code":["var updatedInventory = inventory","    .update(\"apples\") { quantity -> quantity + 5 }      // Restock apples","    .update(\"grapes\") { quantity -> quantity - 2 }      // Sell some grapes","    .update(\"mangoes\") { quantity -> quantity * 2 }     // Non-existent key - no change"]},
+
+        {"kind":"then","text":"Only existing entries are updated as expected","code":["updatedInventory.size() == 4","updatedInventory.get(\"apples\").get() == 15      // 10 + 5","updatedInventory.get(\"oranges\").get() == 15     // unchanged","updatedInventory.get(\"bananas\").get() == 20     // unchanged","updatedInventory.get(\"grapes\").get() == 6       // 8 - 2","!updatedInventory.containsKey(\"mangoes\")        // still doesn't exist"]},
+
+        {"kind":"and","text":"The original association remains unchanged (immutability)","code":["inventory.get(\"apples\").get() == 10","inventory.get(\"grapes\").get() == 8"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `update` method handles edge cases and exceptions appropriately.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"An association with various value types","code":["var assoc = Association.between(String, Object).putAll(","    Pair.of(\"number\", 42),","    Pair.of(\"text\", \"hello\"),","    Pair.of(\"list\", [1, 2, 3])",")"]},
+
+        {"kind":"when","text":"Updating with a function that returns null","code":["var result = assoc.update(\"number\") { null }"]},
+
+        {"kind":"then","text":"Null values are rejected with NullPointerException","code":["thrown(NullPointerException)"]},
+
+        {"kind":"when","text":"Updating with null key","code":["assoc.update(null) { it }"]},
+
+        {"kind":"then","text":"Null keys are rejected","code":["thrown(NullPointerException)"]},
+
+        {"kind":"when","text":"Updating with null function","code":["assoc.update(\"number\", null)"]},
+
+        {"kind":"then","text":"Null functions are rejected","code":["thrown(NullPointerException)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use `updateAll` with a Tuple of keys to batch-update multiple values efficiently.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `updateAll(Tuple, Function)` method allows you to apply the same transformation\n            to multiple keys in a single operation. This is more efficient than calling `update`\n            multiple times and provides cleaner code when you need to apply uniform changes\n            to a predefined set of entries.\n\n            This method silently ignores keys that don't exist in the association, making it\n            safe to use with dynamic key lists.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"An association representing student grades","code":["var grades = Association.between(String, Integer).putAll(","    Pair.of(\"Alice\", 85),","    Pair.of(\"Bob\", 72),","    Pair.of(\"Charlie\", 90),","    Pair.of(\"Diana\", 68),","    Pair.of(\"Eve\", 95)",")"]},
+
+        {"kind":"when","text":"We apply a curve to specific students using a Tuple of keys","code":["var curvedGrades = grades.updateAll(","    Tuple.of(\"Bob\", \"Diana\", \"Frank\"),  // Frank doesn't exist - ignored","    { grade -> Math.min(grade + 5, 100) }  // Add 5 points, cap at 100",")"]},
+
+        {"kind":"then","text":"Only the specified existing students receive the curve","code":["curvedGrades.size() == 5","curvedGrades.get(\"Alice\").get() == 85     // unchanged","curvedGrades.get(\"Bob\").get() == 77       // 72 + 5","curvedGrades.get(\"Charlie\").get() == 90   // unchanged","curvedGrades.get(\"Diana\").get() == 73     // 68 + 5","curvedGrades.get(\"Eve\").get() == 95       // unchanged"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use `updateAll` with a ValueSet of keys for type-safe batch updates.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            When you already have a ValueSet of keys (perhaps from filtering or other operations),\n            the `updateAll(ValueSet, Function)` method provides a type-safe way to apply\n            transformations to all matching entries.\n\n            ValueSets maintain their own ordering and uniqueness guarantees, making this method\n            particularly useful in data processing pipelines.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"An association of product prices and a ValueSet of products on sale","code":["var prices = Association.between(String, Double).putAll(","    Pair.of(\"laptop\", 999.99d),","    Pair.of(\"mouse\", 25.50d),","    Pair.of(\"keyboard\", 75.00d),","    Pair.of(\"monitor\", 299.99d),","    Pair.of(\"headphones\", 149.99d)",")","var saleProducts = prices.keySet()","    .stream()","    .filter { key -> key in [\"mouse\", \"keyboard\", \"headphones\"] }","    .collect(ValueSet.collectorOf(String))"]},
+
+        {"kind":"when","text":"We apply a discount to all sale products","code":["var salePrices = prices.updateAll(saleProducts) { price -> price * 0.85 }  // 15% discount"]},
+
+        {"kind":"then","text":"Only sale products receive the discount","code":["salePrices.size() == 5","salePrices.get(\"laptop\").get() == 999.99      // unchanged","salePrices.get(\"monitor\").get() == 299.99     // unchanged","salePrices.get(\"mouse\").get() == 21.675       // 25.50 * 0.85","salePrices.get(\"keyboard\").get() == 63.75     // 75.00 * 0.85","salePrices.get(\"headphones\").get() == 127.4915 // 149.99 * 0.85"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use `updateAll` with a Collection of keys for flexible batch updates.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `updateAll(Collection, Function)` method accepts any Collection implementation,\n            making it the most flexible option for batch updates. This is ideal when integrating\n            with existing Java code that uses Lists, Sets, or other collection types.\n\n            Like the other updateAll variants, it safely ignores keys that don't exist in\n            the association.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"An association of website traffic statistics","code":["var traffic = Association.between(String, Integer).putAll(","    Pair.of(\"/home\", 1500),","    Pair.of(\"/about\", 800),","    Pair.of(\"/products\", 1200),","    Pair.of(\"/contact\", 300),","    Pair.of(\"/blog\", 950)",")","var highTrafficPages = [\"/home\", \"/products\", \"/blog\", \"/nonexistent\"] as List"]},
+
+        {"kind":"when","text":"We add bonus traffic to high-performing pages","code":["var updatedTraffic = traffic.updateAll(highTrafficPages) { views -> views + 100 }"]},
+
+        {"kind":"then","text":"Only existing high-traffic pages receive the bonus","code":["updatedTraffic.size() == 5","updatedTraffic.get(\"/home\").get() == 1600     // 1500 + 100","updatedTraffic.get(\"/about\").get() == 800     // unchanged","updatedTraffic.get(\"/products\").get() == 1300 // 1200 + 100","updatedTraffic.get(\"/contact\").get() == 300   // unchanged","updatedTraffic.get(\"/blog\").get() == 1050     // 950 + 100"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use `updateAll` with a Stream of keys for efficient pipeline processing.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `updateAll(Stream, Function)` method is designed for stream processing scenarios.\n            When you have a stream of keys (perhaps from filtering, mapping, or other stream\n            operations), this method allows you to efficiently apply transformations without\n            intermediate collection steps.\n\n            This is particularly useful in data processing pipelines where you want to maintain\n            the lazy evaluation benefits of streams.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"An association of employee data","code":["var employees = Association.between(String, Map).putAll(","    Pair.of(\"alice\", [department: \"Engineering\", salary: 80000, level: \"Senior\"]),","    Pair.of(\"bob\", [department: \"Marketing\", salary: 65000, level: \"Mid\"]),","    Pair.of(\"charlie\", [department: \"Engineering\", salary: 75000, level: \"Mid\"]),","    Pair.of(\"diana\", [department: \"HR\", salary: 60000, level: \"Junior\"])",")"]},
+
+        {"kind":"when","text":"We give raises to engineering employees using a filtered stream","code":["var updatedEmployees = employees.updateAll(","    employees.entrySet().stream()","        .filter { entry -> entry.second().department == \"Engineering\" }","        .map { entry -> entry.first() },","    { employeeData ->","        def updated = new HashMap(employeeData)","        updated.salary = employeeData.salary * 1.10  // 10% raise","        updated","    }",")"]},
+
+        {"kind":"then","text":"Only engineering employees receive raises","code":["updatedEmployees.size() == 4","updatedEmployees.get(\"alice\").get().salary == 88000      // 80000 * 1.10","updatedEmployees.get(\"bob\").get().salary == 65000        // unchanged","updatedEmployees.get(\"charlie\").get().salary == 82500    // 75000 * 1.10","updatedEmployees.get(\"diana\").get().salary == 60000      // unchanged"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The update methods work correctly with large datasets and maintain performance. [0]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"A large association and a subset of keys to update","code":["var largeAssoc = Association.between(Integer, Integer)","(0..<size).each { i -> largeAssoc = largeAssoc.put(i, i * 10) }","var keysToUpdate = (0..<size).findAll { it % 3 == 0 }  // Update every 3rd key"]},
+
+        {"kind":"when","text":"We update values for the selected keys","code":["var updatedAssoc = largeAssoc.updateAll(keysToUpdate) { value -> value + 1000 }"]},
+
+        {"kind":"then","text":"All specified keys are updated correctly","code":["keysToUpdate.every { key ->","    updatedAssoc.get(key).get() == (key * 10) + 1000","}","(0..<size).findAll { it % 3 != 0 }.every { key ->","    updatedAssoc.get(key).get() == key * 10  // Unchanged keys","}"]},
+
+        {"kind":"and","text":"The association size remains the same","code":["updatedAssoc.size() == size"]},
+
+        {"kind":"where","text":"","code":{"size":["100","1000","5000","10_000"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The update methods work correctly with large datasets and maintain performance. [1]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"A large association and a subset of keys to update","code":["var largeAssoc = Association.between(Integer, Integer)","(0..<size).each { i -> largeAssoc = largeAssoc.put(i, i * 10) }","var keysToUpdate = (0..<size).findAll { it % 3 == 0 }  // Update every 3rd key"]},
+
+        {"kind":"when","text":"We update values for the selected keys","code":["var updatedAssoc = largeAssoc.updateAll(keysToUpdate) { value -> value + 1000 }"]},
+
+        {"kind":"then","text":"All specified keys are updated correctly","code":["keysToUpdate.every { key ->","    updatedAssoc.get(key).get() == (key * 10) + 1000","}","(0..<size).findAll { it % 3 != 0 }.every { key ->","    updatedAssoc.get(key).get() == key * 10  // Unchanged keys","}"]},
+
+        {"kind":"and","text":"The association size remains the same","code":["updatedAssoc.size() == size"]},
+
+        {"kind":"where","text":"","code":{"size":["100","1000","5000","10_000"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The update methods work correctly with large datasets and maintain performance. [2]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"A large association and a subset of keys to update","code":["var largeAssoc = Association.between(Integer, Integer)","(0..<size).each { i -> largeAssoc = largeAssoc.put(i, i * 10) }","var keysToUpdate = (0..<size).findAll { it % 3 == 0 }  // Update every 3rd key"]},
+
+        {"kind":"when","text":"We update values for the selected keys","code":["var updatedAssoc = largeAssoc.updateAll(keysToUpdate) { value -> value + 1000 }"]},
+
+        {"kind":"then","text":"All specified keys are updated correctly","code":["keysToUpdate.every { key ->","    updatedAssoc.get(key).get() == (key * 10) + 1000","}","(0..<size).findAll { it % 3 != 0 }.every { key ->","    updatedAssoc.get(key).get() == key * 10  // Unchanged keys","}"]},
+
+        {"kind":"and","text":"The association size remains the same","code":["updatedAssoc.size() == size"]},
+
+        {"kind":"where","text":"","code":{"size":["100","1000","5000","10_000"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The update methods work correctly with large datasets and maintain performance. [3]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"A large association and a subset of keys to update","code":["var largeAssoc = Association.between(Integer, Integer)","(0..<size).each { i -> largeAssoc = largeAssoc.put(i, i * 10) }","var keysToUpdate = (0..<size).findAll { it % 3 == 0 }  // Update every 3rd key"]},
+
+        {"kind":"when","text":"We update values for the selected keys","code":["var updatedAssoc = largeAssoc.updateAll(keysToUpdate) { value -> value + 1000 }"]},
+
+        {"kind":"then","text":"All specified keys are updated correctly","code":["keysToUpdate.every { key ->","    updatedAssoc.get(key).get() == (key * 10) + 1000","}","(0..<size).findAll { it % 3 != 0 }.every { key ->","    updatedAssoc.get(key).get() == key * 10  // Unchanged keys","}"]},
+
+        {"kind":"and","text":"The association size remains the same","code":["updatedAssoc.size() == size"]},
+
+        {"kind":"where","text":"","code":{"size":["100","1000","5000","10_000"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Update methods can be chained for complex transformation pipelines.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Since all update methods return new Association instances, they can be chained\n            together to create complex transformation pipelines. This functional style\n            makes it easy to express multi-step data transformations in a readable way.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"An association representing a shopping cart","code":["var cart = Association.between(String, Map).putAll(","    Pair.of(\"item1\", [name: \"Book\", price: 29.99, quantity: 2, category: \"education\"]),","    Pair.of(\"item2\", [name: \"Pen\", price: 2.99, quantity: 5, category: \"office\"]),","    Pair.of(\"item3\", [name: \"Notebook\", price: 4.99, quantity: 3, category: \"office\"])",")"]},
+
+        {"kind":"when","text":"We apply a series of transformations in a pipeline","code":["var processedCart = cart","    // Apply 10% discount to education items","    .update(\"item1\") { item ->","        def updated = new HashMap(item)","        updated.price = item.price * 0.90","        updated","    }","    // Apply bulk discount for office supplies with quantity > 3","    .updateAll([\"item2\", \"item3\"] as Set) { item ->","        if (item.quantity > 3) {","            def updated = new HashMap(item)","            updated.price = item.price * 0.95  // 5% bulk discount","            updated","        } else {","            item","        }","    }","    // Calculate total for each item","    .updateAll(cart.keySet().stream()) { item ->","        def updated = new HashMap(item)","        updated.total = item.price * item.quantity","        updated","    }"]},
+
+        {"kind":"then","text":"All transformations are applied correctly","code":["processedCart.get(\"item1\").get().price == 26.991  // 29.99 * 0.90","processedCart.get(\"item1\").get().total == 53.982  // 26.991 * 2","processedCart.get(\"item2\").get().price == 2.8405  // 2.99 * 0.95 (bulk discount)","processedCart.get(\"item2\").get().total == 14.2025 // 2.8405 * 5","processedCart.get(\"item3\").get().price == 4.99    // no bulk discount (quantity <= 3)","processedCart.get(\"item3\").get().total == 14.97   // 4.99 * 3"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Update methods preserve association characteristics.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"A regular association","code":["var association = Association.between(String, Integer)","    .put(\"a\", 30)","    .put(\"b\", 25)","    .put(\"c\", 28)"]},
+
+        {"kind":"when","text":"We update values in the association","code":["var updated = association.update(\"b\") { value -> value * 2 }"]},
+
+        {"kind":"then","text":"The regular (non-linked, non-sorted) characteristic is preserved","code":["!updated.isLinked()","!updated.isSorted()","updated.keySet().toSet() == [\"a\", \"b\", \"c\"] as Set"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Update methods handle complex value types and nested structures.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"An association with complex nested values","code":["var complexData = Association.between(String, Map).putAll(","    Pair.of(\"user1\", [","        profile: [name: \"Alice\", age: 30],","        preferences: [theme: \"dark\", notifications: true],","        stats: [logins: 150, lastActive: \"2024-01-15\"]","    ]),","    Pair.of(\"user2\", [","        profile: [name: \"Bob\", age: 25],","        preferences: [theme: \"light\", notifications: false],","        stats: [logins: 75, lastActive: \"2024-01-10\"]","    ])",")"]},
+
+        {"kind":"when","text":"We update nested structures within the values","code":["var updatedData = complexData.updateAll([\"user1\", \"user2\"] as Set) { userData ->","    def updated = new HashMap(userData)","    // Increment login count and update last active","    updated.stats = new HashMap(userData.stats)","    updated.stats.logins = userData.stats.logins + 1","    updated.stats.lastActive = \"2024-01-20\"","    updated","}"]},
+
+        {"kind":"then","text":"Nested structures are updated correctly","code":["updatedData.get(\"user1\").get().stats.logins == 151","updatedData.get(\"user1\").get().stats.lastActive == \"2024-01-20\"","updatedData.get(\"user2\").get().stats.logins == 76","updatedData.get(\"user2\").get().stats.lastActive == \"2024-01-20\"","updatedData.get(\"user1\").get().profile.name == \"Alice\"","updatedData.get(\"user2\").get().preferences.theme == \"light\""]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }

@@ -29,11 +29,17 @@
 
         {"kind":"then","text":"The enum property has 4 change listeners registered.","code":["timeUnitProperty.numberOfChangeListeners() == 4"]},
 
-        {"kind":"when","text":"We create four more views which we do not reference strongly.","code":["timeUnitProperty.viewAsInt(TimeUnit::ordinal)","timeUnitProperty.viewAsString(TimeUnit::name)","timeUnitProperty.viewAsNullable(Long, u -> u.ordinal() == 0 ? null : u.toMillis(1))","timeUnitProperty.viewAs(Long, u -> u.toMillis(1))"]},
+        {"kind":"when","text":"We create four more views which we do not reference strongly.","code":["var a = timeUnitProperty.viewAsInt(TimeUnit::ordinal)","var b = timeUnitProperty.viewAsString(TimeUnit::name)","var c = timeUnitProperty.viewAsNullable(Long, u -> u.ordinal() == 0 ? null : u.toMillis(1))","var d = timeUnitProperty.viewAs(Long, u -> u.toMillis(1))"]},
 
-        {"kind":"and","text":"We wait for the garbage collector to run.","code":["waitForGarbageCollection()","Thread.sleep(500)"]},
+        {"kind":"and","text":"We wait for the garbage collector to run.","code":["waitForGarbageCollection()","Thread.sleep(500)","waitForGarbageCollection()"]},
 
-        {"kind":"then","text":"The enum property still has 2 change listeners registered.","code":["timeUnitProperty.numberOfChangeListeners() == 4"]}
+        {"kind":"then","text":"The enum property has 8 change listeners registered.","code":["timeUnitProperty.numberOfChangeListeners() == 8"]},
+
+        {"kind":"when","text":"We cut the references to the views...","code":["a = null","b = null","c = null","d = null"]},
+
+        {"kind":"and","text":"We wait for the garbage collector to run.","code":["waitForGarbageCollection()","Thread.sleep(500)","waitForGarbageCollection()"]},
+
+        {"kind":"then","text":"The enum property has 4 change listeners again.","code":["timeUnitProperty.numberOfChangeListeners() == 4"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },

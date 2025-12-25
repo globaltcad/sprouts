@@ -452,6 +452,231 @@ public interface SproutsFactory
      * @param &lt;B&gt; The type of the field in the source property value {@code T}, which can be nullable.
      */
     &lt;T extends @Nullable Object, B extends @Nullable Object&gt; Var&lt;B&gt; lensOfNullable( Class&lt;B&gt; type, Var&lt;T&gt; source, Lens&lt;T, B&gt; lens );
+    /**
+     *  Creates a projected {@link Lens} based {@link Var} property that establishes a
+     *  bidirectional mapping between the source property's item type {@code T} and
+     *  a nullable target item type {@code B} using conversion functions.
+     *  Unlike a regular lens that focuses on a field within a data structure,
+     *  a projection lens creates a new representation of the same logical data
+     *  through functional transformation.
+     *  &lt;p&gt;
+     *  The projection consists of:
+     *  &lt;ul&gt;
+     *    &lt;li&gt;A &quot;getter&quot; function that transforms {@code T} to {@code B}&lt;/li&gt;
+     *    &lt;li&gt;A &quot;setter&quot; function that transforms {@code B} back to {@code T}&lt;/li&gt;
+     *  &lt;/ul&gt;
+     *  &lt;p&gt;
+     *  Changes to either property automatically propagate to the other through
+     *  these transformation functions. This is particularly useful for:
+     *  &lt;ul&gt;
+     *    &lt;li&gt;Unit conversions (e.g., meters ↔ feet)&lt;/li&gt;
+     *    &lt;li&gt;Format conversions (e.g., raw data ↔ formatted strings)&lt;/li&gt;
+     *    &lt;li&gt;Domain transformations (e.g., business objects ↔ UI models)&lt;/li&gt;
+     *    &lt;li&gt;Validation boundaries (e.g., raw input ↔ validated objects)&lt;/li&gt;
+     *  &lt;/ul&gt;
+     *  &lt;p&gt;
+     *  The nullable nature of this projection allows {@code null} values to flow
+     *  through the transformation chain. When the source is {@code null}, the
+     *  projection will typically also be {@code null}, unless the getter function
+     *  defines alternative behavior.
+     *  &lt;p&gt;
+     *  &lt;b&gt;Example - Date Formatting:&lt;/b&gt;
+     *  &lt;pre&gt;{@code
+     *    Var&lt;LocalDate&gt; date = Var.of(LocalDate.now());
+     *    Var&lt;String&gt; formatted = factory.projLensOfNullable(
+     *        String.class,
+     *        date,
+     *        d -&gt; d.format(DateTimeFormatter.ISO_DATE),
+     *        s -&gt; s == null ? null : LocalDate.parse(s)
+     *    );
+     *  }&lt;/pre&gt;
+     *
+     * @param type   The class type of the nullable target type {@code B}.
+     *               Required for runtime type information and nullability support.
+     * @param source The source {@link Var} property to project from.
+     * @param getter Function that converts from {@code T} to {@code B}.
+     *               May return {@code null} to indicate no valid conversion.
+     * @param setter Function that converts from {@code B} back to {@code T}.
+     *               Must handle {@code null} input appropriately.
+     * @return A {@link Var} instance that maintains a bi-directional projection
+     *         to/from the source property, allowing nullable values.
+     * @param &lt;T&gt; The type of the source property item, which can be nullable.
+     * @param &lt;B&gt; The nullable type of the projected property item.
+     * @throws NullPointerException if {@code type}, {@code source}, {@code getter},
+     *         or {@code setter} is {@code null}.
+     */
+    &lt;T extends @Nullable Object, B extends @Nullable Object&gt; Var&lt;B&gt; projLensOfNullable( Class&lt;B&gt; type, Var&lt;T&gt; source, Function&lt;T,B&gt; getter, Function&lt;B,T&gt; setter );
+
+    /**
+     *  Creates a projected {@link Lens} based {@link Var} property that establishes a
+     *  bidirectional mapping between the source property's item type {@code T} and
+     *  a non-nullable target type {@code B} using conversion functions,
+     *  with a guaranteed fallback value for null source items.
+     *  &lt;p&gt;
+     *  This method is similar to {@link #projLensOfNullable(Class, Var, Function, Function)}
+     *  but guarantees that the resulting property will never contain {@code null} values.
+     *  When the source property's item is {@code null}, the projection will use the
+     *  provided {@code nullObject} as its value.
+     *  &lt;p&gt;
+     *  The projection consists of:
+     *  &lt;ul&gt;
+     *    &lt;li&gt;A &quot;getter&quot; function that transforms {@code T} to {@code B}&lt;/li&gt;
+     *    &lt;li&gt;A &quot;setter&quot; function that transforms {@code B} back to {@code T}&lt;/li&gt;
+     *    &lt;li&gt;A non-null fallback object for when the source is {@code null}&lt;/li&gt;
+     *  &lt;/ul&gt;
+     *  &lt;p&gt;
+     *  This method is particularly useful when you need a projection that:
+     *  &lt;ul&gt;
+     *    &lt;li&gt;Must never expose {@code null} values to downstream consumers&lt;/li&gt;
+     *    &lt;li&gt;Needs to provide a meaningful default representation for missing data&lt;/li&gt;
+     *    &lt;li&gt;Should maintain type safety by eliminating null checks&lt;/li&gt;
+     *    &lt;li&gt;Requires stable, predictable behavior even with null source values&lt;/li&gt;
+     *  &lt;/ul&gt;
+     *  &lt;p&gt;
+     *  &lt;b&gt;Example - Currency Display with Fallback:&lt;/b&gt;
+     *  &lt;pre&gt;{@code
+     *    // Price in cents, but price might be unknown initially
+     *    Var&lt;Integer&gt; priceCents = Var.ofNullable(Integer.class, null);
+     *
+     *    // Create a formatted display projection with fallback
+     *    Var&lt;String&gt; displayPrice = factory.projLensOf(
+     *        priceCents,
+     *        &quot;Price not set&quot;,  // nullObject - shown when price is unknown
+     *        cents -&gt; String.format(&quot;$%.2f&quot;, cents / 100.0),  // getter
+     *        display -&gt; {                                      // setter
+     *            // Parse display string back to cents
+     *            if (display.startsWith(&quot;$&quot;)) {
+     *                return (int)(Double.parseDouble(display.substring(1)) * 100);
+     *            }
+     *            return 0;  // Default if parsing fails
+     *        }
+     *    );
+     *
+     *    // Initially shows fallback
+     *    displayPrice.get();  // &quot;Price not set&quot;
+     *
+     *    // When price is set
+     *    priceCents.set(1999);
+     *    displayPrice.get();  // &quot;$19.99&quot;
+     *
+     *    // User edits in UI
+     *    displayPrice.set(&quot;$24.99&quot;);
+     *    priceCents.get();    // 2499
+     *  }&lt;/pre&gt;
+     *  &lt;p&gt;
+     *  &lt;b&gt;Mathematical Considerations:&lt;/b&gt;
+     *  For predictable behavior, the functions should form a partial isomorphism:
+     *  &lt;ul&gt;
+     *    &lt;li&gt;For non-null {@code t}: {@code setter.apply(getter.apply(t)).equals(t)} should hold&lt;/li&gt;
+     *    &lt;li&gt;For all {@code b}: {@code getter.apply(setter.apply(b)).equals(b)} should hold&lt;/li&gt;
+     *    &lt;li&gt;The {@code nullObject} serves as the image of {@code null} under the mapping&lt;/li&gt;
+     *  &lt;/ul&gt;
+     *  When the source is {@code null}, the projection behaves as if the source value
+     *  maps to the {@code nullObject} through the getter function.
+     *
+     * @param source    The source {@link Var} property to project from.
+     * @param nullObject The guaranteed non-null fallback value to use when the
+     *                   source property's item is {@code null}. This value must
+     *                   not be {@code null} itself and will be returned by the
+     *                   projection whenever the source is {@code null}.
+     * @param getter    Function that converts from {@code T} to {@code B} for
+     *                  non-null source items. Will not be called when source is {@code null}.
+     * @param setter    Function that converts from {@code B} back to {@code T}.
+     *                  Must handle all possible {@code B} values, including
+     *                  the {@code nullObject}.
+     * @return A {@link Var} instance that maintains a bi-directional projection
+     *         to/from the source property, with guaranteed non-null values.
+     * @param &lt;T&gt; The type of the source property item, which can be nullable.
+     * @param &lt;B&gt; The non-nullable type of the projected property item.
+     * @throws NullPointerException if {@code source}, {@code nullObject},
+     *         {@code getter}, or {@code setter} is {@code null}.
+     */
+    &lt;T extends @Nullable Object, B extends @NonNull Object&gt; Var&lt;B&gt; projLensOf( Var&lt;T&gt; source, B nullObject, Function&lt;T,B&gt; getter, Function&lt;B,T&gt; setter);
+
+    /**
+     *  Creates a projected {@link Lens} based {@link Var} property that establishes a
+     *  bidirectional mapping between the source property's item type {@code T} and
+     *  a non-nullable target type {@code B} using conversion functions.
+     *  &lt;p&gt;
+     *  This is the simplest form of projection, assuming that:
+     *  &lt;ol&gt;
+     *    &lt;li&gt;The source property never contains {@code null} values&lt;/li&gt;
+     *    &lt;li&gt;The conversion functions form a perfect isomorphism&lt;/li&gt;
+     *    &lt;li&gt;No fallback handling is needed for null values&lt;/li&gt;
+     *  &lt;/ol&gt;
+     *  &lt;p&gt;
+     *  The projection creates a two-way street between representations where:
+     *  &lt;ul&gt;
+     *    &lt;li&gt;Changes to the source automatically propagate to the projection&lt;/li&gt;
+     *    &lt;li&gt;Changes to the projection automatically propagate back to the source&lt;/li&gt;
+     *    &lt;li&gt;Both properties remain perfectly synchronized&lt;/li&gt;
+     *  &lt;/ul&gt;
+     *  &lt;p&gt;
+     *  This method is ideal for:
+     *  &lt;ul&gt;
+     *    &lt;li&gt;Unit conversions where both representations are always valid&lt;/li&gt;
+     *    &lt;li&gt;Format transformations with perfect round-trip capability&lt;/li&gt;
+     *    &lt;li&gt;View model adaptations where null is not a valid state&lt;/li&gt;
+     *    &lt;li&gt;Encryption/decryption boundaries with guaranteed validity&lt;/li&gt;
+     *  &lt;/ul&gt;
+     *  &lt;p&gt;
+     *  &lt;b&gt;Example - Temperature Conversion:&lt;/b&gt;
+     *  &lt;pre&gt;{@code
+     *    record Celsius(double value) {
+     *        Fahrenheit toFahrenheit() { return new Fahrenheit(value * 9/5 + 32); }
+     *    }
+     *    record Fahrenheit(double value) {
+     *        Celsius toCelsius() { return new Celsius((value - 32) * 5/9); }
+     *    }
+     *
+     *    // Always starts with a valid temperature
+     *    Var&lt;Celsius&gt; celsius = Var.of(new Celsius(100.0));
+     *
+     *    // Create a Fahrenheit projection
+     *    Var&lt;Fahrenheit&gt; fahrenheit = factory.projLensOf(
+     *        celsius,
+     *        Celsius::toFahrenheit,    // getter: C → F
+     *        Fahrenheit::toCelsius     // setter: F → C
+     *    );
+     *
+     *    // Initial conversion
+     *    fahrenheit.get().value();  // 212.0
+     *
+     *    // Update through source
+     *    celsius.set(new Celsius(0.0));
+     *    fahrenheit.get().value();  // 32.0
+     *
+     *    // Update through projection (user input in Fahrenheit)
+     *    fahrenheit.set(new Fahrenheit(77.0));
+     *    celsius.get().value();     // 25.0
+     *  }&lt;/pre&gt;
+     *  &lt;p&gt;
+     *  &lt;b&gt;Mathematical Requirements:&lt;/b&gt;
+     *  For correct behavior, the functions should form a perfect isomorphism:
+     *  &lt;ul&gt;
+     *    &lt;li&gt;&lt;b&gt;Totality:&lt;/b&gt; Both functions must be defined for all inputs&lt;/li&gt;
+     *    &lt;li&gt;&lt;b&gt;Injectivity:&lt;/b&gt; Different inputs must produce different outputs&lt;/li&gt;
+     *    &lt;li&gt;&lt;b&gt;Surjectivity:&lt;/b&gt; Every possible output must be reachable&lt;/li&gt;
+     *    &lt;li&gt;&lt;b&gt;Inverse property:&lt;/b&gt; {@code setter.apply(getter.apply(t)).equals(t)}&lt;/li&gt;
+     *    &lt;li&gt;&lt;b&gt;Inverse property:&lt;/b&gt; {@code getter.apply(setter.apply(b)).equals(b)}&lt;/li&gt;
+     *  &lt;/ul&gt;
+     *  Violating these requirements may lead to data loss, inconsistent states,
+     *  or unexpected behavior.
+     *
+     * @param source The source {@link Var} property to project from.
+     *               This property should not contain {@code null} values.
+     * @param getter Function that converts from {@code T} to {@code B}.
+     *               Must be defined for all possible {@code T} values.
+     * @param setter Function that converts from {@code B} back to {@code T}.
+     *               Must be defined for all possible {@code B} values.
+     * @return A {@link Var} instance that maintains a bi-directional projection
+     *         to/from the source property.
+     * @param &lt;T&gt; The non-nullable type of the source property item.
+     * @param &lt;B&gt; The non-nullable type of the projected property item.
+     * @throws NullPointerException if {@code source}, {@code getter},
+     *         or {@code setter} is {@code null}.
+     */
+    &lt;T extends @Nullable Object, B extends @NonNull Object&gt; Var&lt;B&gt; projLensOf( Var&lt;T&gt; source, Function&lt;T,B&gt; getter, Function&lt;B,T&gt; setter );
 
     /**
      * Creates a {@link Var} property instance from a given non-null {@link Class} of a nullable type and
@@ -882,12 +1107,12 @@ public interface SproutsFactory
      */
     @SuppressWarnings(&quot;unchecked&quot;)
     default &lt;T&gt; Tuple&lt;T&gt; tupleOf( Maybe&lt;T&gt; first, Maybe&lt;T&gt;... rest )  {
-<span class="nc" id="L885">        T[] items = (T[]) new Object[rest.length + 1];</span>
-<span class="nc" id="L886">        items[0] = first.orElseNull();</span>
-<span class="nc bnc" id="L887" title="All 2 branches missed.">        for (int i = 0; i &lt; rest.length; i++) {</span>
-<span class="nc" id="L888">            items[i + 1] = rest[i].orElseNull();</span>
+<span class="nc" id="L1110">        T[] items = (T[]) new Object[rest.length + 1];</span>
+<span class="nc" id="L1111">        items[0] = first.orElseNull();</span>
+<span class="nc bnc" id="L1112" title="All 2 branches missed.">        for (int i = 0; i &lt; rest.length; i++) {</span>
+<span class="nc" id="L1113">            items[i + 1] = rest[i].orElseNull();</span>
         }
-<span class="nc" id="L890">        return tupleOf(Util.expectedClassFromItem(first.orElseThrowUnchecked()), items);</span>
+<span class="nc" id="L1115">        return tupleOf(Util.expectedClassFromItem(first.orElseThrowUnchecked()), items);</span>
     }
 
     /**
@@ -1009,11 +1234,11 @@ public interface SproutsFactory
      */
     @SuppressWarnings(&quot;unchecked&quot;)
     default &lt;T&gt; Tuple&lt;@Nullable T&gt; tupleOfNullable( Class&lt;T&gt; type, Maybe&lt;@Nullable T&gt;... maybes ) {
-<span class="nc" id="L1012">        T[] items = (T[]) new Object[maybes.length];</span>
-<span class="nc bnc" id="L1013" title="All 2 branches missed.">        for (int i = 0; i &lt; maybes.length; i++) {</span>
-<span class="nc" id="L1014">            items[i] = maybes[i].orElseNull();</span>
+<span class="nc" id="L1237">        T[] items = (T[]) new Object[maybes.length];</span>
+<span class="nc bnc" id="L1238" title="All 2 branches missed.">        for (int i = 0; i &lt; maybes.length; i++) {</span>
+<span class="nc" id="L1239">            items[i] = maybes[i].orElseNull();</span>
         }
-<span class="nc" id="L1016">        return tupleOfNullable(type, items);</span>
+<span class="nc" id="L1241">        return tupleOfNullable(type, items);</span>
     }
 
     /**
@@ -1053,12 +1278,12 @@ public interface SproutsFactory
      */
     @SuppressWarnings(&quot;unchecked&quot;)
     default &lt;T&gt; Tuple&lt;@Nullable T&gt; tupleOfNullable( Maybe&lt;@Nullable T&gt; first, Maybe&lt;@Nullable T&gt;... rest ) {
-<span class="nc" id="L1056">        T[] items = (T[]) new Object[rest.length + 1];</span>
-<span class="nc" id="L1057">        items[0] = first.orElseNull();</span>
-<span class="nc bnc" id="L1058" title="All 2 branches missed.">        for (int i = 0; i &lt; rest.length; i++) {</span>
-<span class="nc" id="L1059">            items[i + 1] = rest[i].orElseNull();</span>
+<span class="nc" id="L1281">        T[] items = (T[]) new Object[rest.length + 1];</span>
+<span class="nc" id="L1282">        items[0] = first.orElseNull();</span>
+<span class="nc bnc" id="L1283" title="All 2 branches missed.">        for (int i = 0; i &lt; rest.length; i++) {</span>
+<span class="nc" id="L1284">            items[i + 1] = rest[i].orElseNull();</span>
         }
-<span class="nc" id="L1061">        return tupleOfNullable(first.type(), items);</span>
+<span class="nc" id="L1286">        return tupleOfNullable(first.type(), items);</span>
     }
 
     /**

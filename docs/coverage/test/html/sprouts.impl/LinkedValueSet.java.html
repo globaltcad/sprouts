@@ -214,16 +214,25 @@ final class LinkedValueSet&lt;E&gt; implements ValueSet&lt;E&gt; {
     }
 
     @Override
+    public &lt;V extends E&gt; ValueSet&lt;V&gt; retainIf(Class&lt;V&gt; type) {
+<span class="fc" id="L218">        Objects.requireNonNull(type, &quot;The provided type cannot be null.&quot;);</span>
+<span class="fc" id="L219">        return stream()</span>
+<span class="fc" id="L220">                .filter(e -&gt; type.isAssignableFrom(e.getClass()))</span>
+<span class="fc" id="L221">                .map(type::cast)</span>
+<span class="pc" id="L222">                .reduce(ValueSet.ofLinked(type), ValueSet::add, (a, b) -&gt; a);</span>
+    }
+
+    @Override
     public ValueSet&lt;E&gt; clear() {
-<span class="fc bfc" id="L218" title="All 2 branches covered.">        if (_entries.isEmpty()) {</span>
-<span class="fc" id="L219">            return this; // Already empty, return unchanged set</span>
+<span class="fc bfc" id="L227" title="All 2 branches covered.">        if (_entries.isEmpty()) {</span>
+<span class="fc" id="L228">            return this; // Already empty, return unchanged set</span>
         }
-<span class="fc" id="L221">        return new LinkedValueSet&lt;&gt;((AssociationImpl) new AssociationImpl&lt;&gt;(type(), LinkedEntry.class), null, null);</span>
+<span class="fc" id="L230">        return new LinkedValueSet&lt;&gt;((AssociationImpl) new AssociationImpl&lt;&gt;(type(), LinkedEntry.class), null, null);</span>
     }
 
     @Override
     public Spliterator&lt;E&gt; spliterator() {
-<span class="fc" id="L226">        return Spliterators.spliterator(iterator(), _entries.size(),</span>
+<span class="fc" id="L235">        return Spliterators.spliterator(iterator(), _entries.size(),</span>
                 Spliterator.ORDERED |
                         Spliterator.DISTINCT |
                         Spliterator.SIZED |
@@ -235,94 +244,94 @@ final class LinkedValueSet&lt;E&gt; implements ValueSet&lt;E&gt; {
 
     @Override
     public Iterator&lt;E&gt; iterator() {
-<span class="fc" id="L238">        return new Iterator&lt;E&gt;() {</span>
-<span class="fc" id="L239">            private @Nullable E current = _firstInsertedKey;</span>
+<span class="fc" id="L247">        return new Iterator&lt;E&gt;() {</span>
+<span class="fc" id="L248">            private @Nullable E current = _firstInsertedKey;</span>
 
             @Override
             public boolean hasNext() {
-<span class="fc bfc" id="L243" title="All 2 branches covered.">                return current != null;</span>
+<span class="fc bfc" id="L252" title="All 2 branches covered.">                return current != null;</span>
             }
 
             @Override
             public E next() {
-<span class="pc bpc" id="L248" title="1 of 2 branches missed.">                if (current == null) {</span>
-<span class="nc" id="L249">                    throw new java.util.NoSuchElementException(&quot;No more elements in the set&quot;);</span>
+<span class="pc bpc" id="L257" title="1 of 2 branches missed.">                if (current == null) {</span>
+<span class="nc" id="L258">                    throw new java.util.NoSuchElementException(&quot;No more elements in the set&quot;);</span>
                 }
-<span class="fc" id="L251">                E nextElement = current;</span>
-<span class="fc" id="L252">                LinkedEntry&lt;E&gt; entry = _entries.get(current).orElse(null);</span>
-<span class="pc bpc" id="L253" title="1 of 2 branches missed.">                if (entry != null) {</span>
-<span class="fc" id="L254">                    current = entry.nextElement();</span>
+<span class="fc" id="L260">                E nextElement = current;</span>
+<span class="fc" id="L261">                LinkedEntry&lt;E&gt; entry = _entries.get(current).orElse(null);</span>
+<span class="pc bpc" id="L262" title="1 of 2 branches missed.">                if (entry != null) {</span>
+<span class="fc" id="L263">                    current = entry.nextElement();</span>
                 } else {
-<span class="nc" id="L256">                    current = null; // No next element</span>
+<span class="nc" id="L265">                    current = null; // No next element</span>
                 }
-<span class="fc" id="L258">                return nextElement;</span>
+<span class="fc" id="L267">                return nextElement;</span>
             }
         };
     }
 
     @Override
     public String toString() {
-<span class="fc" id="L265">        StringBuilder sb = new StringBuilder();</span>
-<span class="fc" id="L266">        sb.append(&quot;LinkedValueSet&lt;&quot;).append(type().getSimpleName()).append(&quot;&gt;[&quot;);</span>
-<span class="fc" id="L267">        final int howMany = 8;</span>
-<span class="fc" id="L268">        sb = _appendRecursivelyUpTo(sb, howMany);</span>
-<span class="fc" id="L269">        int numberOfElementsLeft = size() - howMany;</span>
-<span class="fc bfc" id="L270" title="All 2 branches covered.">        if ( numberOfElementsLeft &gt; 0 ) {</span>
-<span class="fc" id="L271">            sb.append(&quot;, ... &quot;).append(numberOfElementsLeft).append(&quot; items left&quot;);</span>
+<span class="fc" id="L274">        StringBuilder sb = new StringBuilder();</span>
+<span class="fc" id="L275">        sb.append(&quot;LinkedValueSet&lt;&quot;).append(type().getSimpleName()).append(&quot;&gt;[&quot;);</span>
+<span class="fc" id="L276">        final int howMany = 8;</span>
+<span class="fc" id="L277">        sb = _appendRecursivelyUpTo(sb, howMany);</span>
+<span class="fc" id="L278">        int numberOfElementsLeft = size() - howMany;</span>
+<span class="fc bfc" id="L279" title="All 2 branches covered.">        if ( numberOfElementsLeft &gt; 0 ) {</span>
+<span class="fc" id="L280">            sb.append(&quot;, ... &quot;).append(numberOfElementsLeft).append(&quot; items left&quot;);</span>
         }
-<span class="fc" id="L273">        sb.append(&quot;]&quot;);</span>
-<span class="fc" id="L274">        return sb.toString();</span>
+<span class="fc" id="L282">        sb.append(&quot;]&quot;);</span>
+<span class="fc" id="L283">        return sb.toString();</span>
     }
 
     private StringBuilder _appendRecursivelyUpTo(StringBuilder sb, int howMany) {
-<span class="pc bpc" id="L278" title="1 of 2 branches missed.">        if (howMany &lt;= 0) {</span>
-<span class="nc" id="L279">            return sb;</span>
+<span class="pc bpc" id="L287" title="1 of 2 branches missed.">        if (howMany &lt;= 0) {</span>
+<span class="nc" id="L288">            return sb;</span>
         }
-<span class="fc" id="L281">        Iterator&lt;E&gt; it = iterator();</span>
-<span class="fc" id="L282">        int count = 0;</span>
-<span class="fc bfc" id="L283" title="All 4 branches covered.">        while (it.hasNext() &amp;&amp; count &lt; howMany) {</span>
-<span class="fc" id="L284">            E element = it.next();</span>
-<span class="fc" id="L285">            sb.append(Util._toString(element, type()));</span>
-<span class="fc bfc" id="L286" title="All 2 branches covered.">            if (it.hasNext()) {</span>
-<span class="fc" id="L287">                sb.append(&quot;, &quot;);</span>
+<span class="fc" id="L290">        Iterator&lt;E&gt; it = iterator();</span>
+<span class="fc" id="L291">        int count = 0;</span>
+<span class="fc bfc" id="L292" title="All 4 branches covered.">        while (it.hasNext() &amp;&amp; count &lt; howMany) {</span>
+<span class="fc" id="L293">            E element = it.next();</span>
+<span class="fc" id="L294">            sb.append(Util._toString(element, type()));</span>
+<span class="fc bfc" id="L295" title="All 2 branches covered.">            if (it.hasNext()) {</span>
+<span class="fc" id="L296">                sb.append(&quot;, &quot;);</span>
             }
-<span class="fc" id="L289">            count++;</span>
-<span class="fc" id="L290">        }</span>
-<span class="fc" id="L291">        return sb;</span>
+<span class="fc" id="L298">            count++;</span>
+<span class="fc" id="L299">        }</span>
+<span class="fc" id="L300">        return sb;</span>
     }
 
     @Override
     public boolean equals(Object o) {
-<span class="pc bpc" id="L296" title="1 of 2 branches missed.">        if (this == o) return true;</span>
-<span class="pc bpc" id="L297" title="1 of 2 branches missed.">        if (!(o instanceof LinkedValueSet))</span>
-<span class="nc" id="L298">            return false;</span>
-<span class="fc" id="L299">        LinkedValueSet&lt;E&gt; other = (LinkedValueSet) o;</span>
-<span class="pc bpc" id="L300" title="1 of 2 branches missed.">        if ( !_entries.keyType().equals(other._entries.keyType()) )</span>
-<span class="nc" id="L301">            return false;</span>
-<span class="fc bfc" id="L302" title="All 2 branches covered.">        if ( _entries.size() != other._entries.size() )</span>
-<span class="fc" id="L303">            return false;</span>
+<span class="pc bpc" id="L305" title="1 of 2 branches missed.">        if (this == o) return true;</span>
+<span class="pc bpc" id="L306" title="1 of 2 branches missed.">        if (!(o instanceof LinkedValueSet))</span>
+<span class="nc" id="L307">            return false;</span>
+<span class="fc" id="L308">        LinkedValueSet&lt;E&gt; other = (LinkedValueSet) o;</span>
+<span class="fc bfc" id="L309" title="All 2 branches covered.">        if ( !_entries.keyType().equals(other._entries.keyType()) )</span>
+<span class="fc" id="L310">            return false;</span>
+<span class="fc bfc" id="L311" title="All 2 branches covered.">        if ( _entries.size() != other._entries.size() )</span>
+<span class="fc" id="L312">            return false;</span>
 
-<span class="fc" id="L305">        return _recursiveEquals(this._entries._root, other._entries._root, this.type());</span>
+<span class="fc" id="L314">        return _recursiveEquals(this._entries._root, other._entries._root, this.type());</span>
     }
 
     private static &lt;K&gt; boolean _exhaustiveEquals(
             AssociationImpl&lt;K,LinkedEntry&lt;K&gt;&gt; assoc1, AssociationImpl&lt;K,LinkedEntry&lt;K&gt;&gt; assoc2
     ) {
-<span class="fc bfc" id="L311" title="All 2 branches covered.">        if ( assoc2.size() != assoc1.size() ) {</span>
-<span class="fc" id="L312">            return false;</span>
+<span class="fc bfc" id="L320" title="All 2 branches covered.">        if ( assoc2.size() != assoc1.size() ) {</span>
+<span class="fc" id="L321">            return false;</span>
         }
-<span class="fc bfc" id="L314" title="All 2 branches covered.">        for ( K key : assoc1.keySet() ) {</span>
-<span class="fc" id="L315">            int keyHash = key.hashCode();</span>
-<span class="fc" id="L316">            LinkedEntry&lt;K&gt; firstEntry = AssociationImpl._get(assoc1._root, assoc1._keyGetter, assoc1._valueGetter, key, keyHash);</span>
-<span class="pc bpc" id="L317" title="1 of 2 branches missed.">            if ( firstEntry == null ) {</span>
-<span class="nc" id="L318">                return false;</span>
+<span class="fc bfc" id="L323" title="All 2 branches covered.">        for ( K key : assoc1.keySet() ) {</span>
+<span class="fc" id="L324">            int keyHash = key.hashCode();</span>
+<span class="fc" id="L325">            LinkedEntry&lt;K&gt; firstEntry = AssociationImpl._get(assoc1._root, assoc1._keyGetter, assoc1._valueGetter, key, keyHash);</span>
+<span class="pc bpc" id="L326" title="1 of 2 branches missed.">            if ( firstEntry == null ) {</span>
+<span class="nc" id="L327">                return false;</span>
             }
-<span class="fc" id="L320">            LinkedEntry&lt;K&gt; otherEntry = AssociationImpl._get(assoc2._root, assoc2._keyGetter, assoc2._valueGetter, key, keyHash);</span>
-<span class="fc bfc" id="L321" title="All 2 branches covered.">            if ( otherEntry == null ) {</span>
-<span class="fc" id="L322">                return false;</span>
+<span class="fc" id="L329">            LinkedEntry&lt;K&gt; otherEntry = AssociationImpl._get(assoc2._root, assoc2._keyGetter, assoc2._valueGetter, key, keyHash);</span>
+<span class="fc bfc" id="L330" title="All 2 branches covered.">            if ( otherEntry == null ) {</span>
+<span class="fc" id="L331">                return false;</span>
             }
-<span class="fc" id="L324">        }</span>
-<span class="fc" id="L325">        return true;</span>
+<span class="fc" id="L333">        }</span>
+<span class="fc" id="L334">        return true;</span>
     }
 
     private static &lt;K&gt; boolean _recursiveEquals(
@@ -330,13 +339,13 @@ final class LinkedValueSet&lt;E&gt; implements ValueSet&lt;E&gt; {
             AssociationImpl.@Nullable Node&lt;K,LinkedEntry&lt;K&gt;&gt; node2,
             Class&lt;K&gt; keyType
     ) {
-<span class="fc bfc" id="L333" title="All 2 branches covered.">        if ( node1 == node2 ) {</span>
-<span class="fc" id="L334">            return true;</span>
+<span class="fc bfc" id="L342" title="All 2 branches covered.">        if ( node1 == node2 ) {</span>
+<span class="fc" id="L343">            return true;</span>
         } else {
-<span class="fc bfc" id="L336" title="All 4 branches covered.">            if ( node1 == null || node2 == null ) {</span>
-<span class="fc" id="L337">                return false;</span>
+<span class="fc bfc" id="L345" title="All 4 branches covered.">            if ( node1 == null || node2 == null ) {</span>
+<span class="fc" id="L346">                return false;</span>
             }
-<span class="pc bpc" id="L339" title="3 of 12 branches missed.">            if (</span>
+<span class="pc bpc" id="L348" title="3 of 12 branches missed.">            if (</span>
                 node1._size == node2._size &amp;&amp;
                 node1._keysArray == node2._keysArray &amp;&amp;
                 node1._valuesArray == node2._valuesArray &amp;&amp;
@@ -344,14 +353,14 @@ final class LinkedValueSet&lt;E&gt; implements ValueSet&lt;E&gt; {
                 node1._branches.length == node2._branches.length &amp;&amp;
                 node1._branches != node2._branches // The only difference is somewhere deep down!
             ) {
-<span class="fc bfc" id="L347" title="All 2 branches covered.">                for ( int i = 0; i &lt; node1._branches.length; i++ ) {</span>
-<span class="fc bfc" id="L348" title="All 2 branches covered.">                    if ( !_recursiveEquals(node1._branches[i], node2._branches[i], keyType) ) {</span>
-<span class="fc" id="L349">                        return false;</span>
+<span class="fc bfc" id="L356" title="All 2 branches covered.">                for ( int i = 0; i &lt; node1._branches.length; i++ ) {</span>
+<span class="fc bfc" id="L357" title="All 2 branches covered.">                    if ( !_recursiveEquals(node1._branches[i], node2._branches[i], keyType) ) {</span>
+<span class="fc" id="L358">                        return false;</span>
                     }
                 }
-<span class="fc" id="L352">                return true;</span>
+<span class="fc" id="L361">                return true;</span>
             } else {
-<span class="fc" id="L354">                return _exhaustiveEquals(</span>
+<span class="fc" id="L363">                return _exhaustiveEquals(</span>
                         new AssociationImpl(keyType, LinkedEntry.class, node1),
                         new AssociationImpl(keyType, LinkedEntry.class, node2)
                 );
@@ -361,19 +370,19 @@ final class LinkedValueSet&lt;E&gt; implements ValueSet&lt;E&gt; {
 
     @Override
     public int hashCode() {
-<span class="fc" id="L364">        Integer cached = _cachedHashCode.get();</span>
-<span class="fc bfc" id="L365" title="All 2 branches covered.">        if ( cached != null ) {</span>
-<span class="fc" id="L366">            return cached;</span>
+<span class="fc" id="L373">        Integer cached = _cachedHashCode.get();</span>
+<span class="fc bfc" id="L374" title="All 2 branches covered.">        if ( cached != null ) {</span>
+<span class="fc" id="L375">            return cached;</span>
         }
-<span class="fc" id="L368">        int hash = 7;</span>
-<span class="fc" id="L369">        hash = 31 * hash + Objects.hashCode(_entries.keyType());</span>
-<span class="fc" id="L370">        int elementsHash = 0;</span>
-<span class="fc bfc" id="L371" title="All 2 branches covered.">        for ( E element : this ) {</span>
-<span class="fc" id="L372">            elementsHash += Objects.hashCode(element);</span>
-<span class="fc" id="L373">        }</span>
-<span class="fc" id="L374">        hash = 31 * hash + elementsHash;</span>
-<span class="fc" id="L375">        _cachedHashCode.set(hash);</span>
-<span class="fc" id="L376">        return hash;</span>
+<span class="fc" id="L377">        int hash = 7;</span>
+<span class="fc" id="L378">        hash = 31 * hash + Objects.hashCode(_entries.keyType());</span>
+<span class="fc" id="L379">        int elementsHash = 0;</span>
+<span class="fc bfc" id="L380" title="All 2 branches covered.">        for ( E element : this ) {</span>
+<span class="fc" id="L381">            elementsHash += Objects.hashCode(element);</span>
+<span class="fc" id="L382">        }</span>
+<span class="fc" id="L383">        hash = 31 * hash + elementsHash;</span>
+<span class="fc" id="L384">        _cachedHashCode.set(hash);</span>
+<span class="fc" id="L385">        return hash;</span>
     }
 
 

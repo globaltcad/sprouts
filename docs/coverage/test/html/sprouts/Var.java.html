@@ -356,7 +356,7 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
 <span class="nc" id="L356">            return Var.ofNull( type() );</span>
 
 <span class="nc" id="L358">        T newValue = mapper.apply( get() );</span>
-<span class="nc bnc" id="L359" title="All 2 branches missed.">        return allowsNull() ? Var.ofNullable( type(), newValue ) : Var.of( newValue );</span>
+<span class="nc bnc" id="L359" title="All 2 branches missed.">        return allowsNull() ? Var.ofNullable( type(), newValue ) : Var.of( Objects.requireNonNull(newValue) );</span>
     }
 
     /**
@@ -635,5 +635,248 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
 <span class="fc" id="L635">        return Sprouts.factory().lensOfNullable(type, this, lens);</span>
     }
 
+    /**
+     * Creates a projected lens property (Var) that bi-directionally maps between the item type {@code T}
+     * of this property and a target type {@code B} using a pair of conversion functions.
+     * The projection establishes a two-way relationship where changes in either property
+     * are automatically reflected in the other, provided the conversion functions form
+     * an isomorphism (a perfect reversible mapping).
+     * &lt;p&gt;
+     * This method is particularly useful when you need to work with different
+     * representations of the same logical data. For example, converting between
+     * measurement units, currency values, or different string encodings while
+     * maintaining synchronization between the representations.
+     * &lt;p&gt;
+     * &lt;b&gt;Mathematical Foundation:&lt;/b&gt;&lt;br&gt;
+     * For the projection to behave predictably, the functions should ideally form
+     * an isomorphism: {@code getter} and {@code setter} must be inverse functions
+     * of each other. Formally, for all {@code t} of type {@code T}:
+     * {@code setter.apply(getter.apply(t)).equals(t)} should hold true,
+     * and for all {@code b} of type {@code B}:
+     * {@code getter.apply(setter.apply(b)).equals(b)} should hold true.&lt;br&gt;
+     * &lt;p&gt;
+     * &lt;b&gt;Important Considerations:&lt;/b&gt;
+     *  &lt;ul&gt;
+     *    &lt;li&gt;&lt;b&gt;Non-isomorphic functions may cause unexpected behavior:&lt;/b&gt; If the functions
+     *        are not perfect inverses, updates may not round-trip correctly, leading to
+     *        data corruption or infinite update loops.
+     *    &lt;/li&gt;
+     *    &lt;li&gt;&lt;b&gt;Injectivity is required for writes:&lt;/b&gt; The {@code setter} function should
+     *        be injective (one-to-one) to ensure that different {@code B} values map to
+     *        distinct {@code T} values, preventing ambiguous updates.
+     *    &lt;/li&gt;
+     *    &lt;li&gt;&lt;b&gt;Surjectivity is required for coverage:&lt;/b&gt; The {@code getter} should be
+     *        surjective (onto) to ensure all possible {@code B} values can be represented
+     *        in the {@code T} domain.&lt;/li&gt;
+     *  &lt;/ul&gt;
+     * &lt;p&gt;
+     * &lt;b&gt;Example - Unit Conversion:&lt;/b&gt;
+     * &lt;pre&gt;{@code
+     * sealed interface Quant {
+     *   record MilliMeter(double val) implements Quant {}
+     *   record Meter(double val) implements Quant {}
+     *   record KiloMeter(double val) implements Quant {}
+     *
+     *   default MilliMeter toMM() {
+     *     return switch (this) {
+     *       case MilliMeter mm -&gt; mm;
+     *       case Meter m -&gt; new MilliMeter(m.val * 1_000d);
+     *       case KiloMeter km -&gt; new MilliMeter(km.val * 1_000_000d);
+     *     };
+     *   }
+     *
+     *   default Meter toM() {
+     *     return switch (this) {
+     *       case MilliMeter mm -&gt; new Meter(mm.val / 1_000d);
+     *       case Meter m -&gt; m;
+     *       case KiloMeter km -&gt; new Meter(km.val * 1_000d);
+     *     };
+     *   }
+     *
+     *   default KiloMeter toKM() {
+     *     return switch (this) {
+     *       case MilliMeter mm -&gt; new KiloMeter(mm.val / 1_000_000d);
+     *       case Meter m -&gt; new KiloMeter(m.val / 1_000d);
+     *       case KiloMeter km -&gt; km;
+     *     };
+     *   }
+     * }
+     *
+     * void example() {
+     *   var mmRaw = new Quant.MilliMeter(6_200d);
+     *   Var&lt;Quant.MilliMeter&gt; mm = Var.of(mmRaw);
+     *   Var&lt;Quant.Meter&gt; m = mm.projectTo(Quant::toM, Quant::toMM);
+     *   Var&lt;Quant.KiloMeter&gt; km = m.projectTo(Quant::toKM, Quant::toM);
+     *
+     *   // Initial state:
+     *   // mm.get().val() == 6_200d
+     *   // m.get().val() == 6.2d
+     *   // km.get().val() == 0.0062d
+     *
+     *   m.set(new Quant.Meter(13.4));
+     *
+     *   // After update:
+     *   // mm.get().val() == 13_400d
+     *   // m.get().val() == 13.4d
+     *   // km.get().val() == 0.0134d
+     * }
+     * }&lt;/pre&gt;
+     * In this example, the conversion functions between metric units form a perfect
+     * isomorphism (linear scaling), ensuring that updates propagate correctly
+     * in both directions without loss of precision.
+     *
+     * @param &lt;B&gt;    The target type of the projected property.
+     * @param getter {@link Function} that converts from {@code T} to {@code B}.
+     *               Must be surjective to cover all possible {@code B} values.
+     * @param setter {@link Function} that converts from {@code B} back to {@code T}.
+     *               Must be injective to ensure unambiguous updates.
+     * @return A new Var that maintains a bidirectional projection to/from
+     *         this property's item type.
+     * @throws NullPointerException if either function is null.
+     * @see #projectTo(Object, Function, Function) for a version with null safety.
+     * @see #projectToNullable(Class, Function, Function) for nullable projections.
+     */
+    default &lt;B&gt; Var&lt;B&gt; projectTo( Function&lt;T,B&gt; getter, Function&lt;B,T&gt; setter ) {
+<span class="fc" id="L740">        Objects.requireNonNull(getter, &quot;getter must not be null&quot;);</span>
+<span class="fc" id="L741">        Objects.requireNonNull(setter, &quot;setter must not be null&quot;);</span>
+<span class="fc" id="L742">        return Sprouts.factory().projLensOf( this, getter, setter );</span>
+    }
+
+    /**
+     * Creates a projected lens property (Var) that bi-directionally maps between the item type {@code T}
+     * of this property and a target type {@code B} using conversion functions, with a guaranteed
+     * non-null fallback value for when this property's item is null.
+     * &lt;p&gt;
+     * This method is similar to {@link #projectTo(Function, Function)} but provides null safety
+     * by ensuring the projected property never contains null. When this property's item is null,
+     * the projected property will use the provided {@code nullObject} as its value.
+     * &lt;p&gt;
+     * &lt;b&gt;Mathematical Foundation:&lt;/b&gt;&lt;br&gt;
+     * The functions should form a partial isomorphism on the non-null subset of {@code T}.
+     *  &lt;ul&gt;
+     *    &lt;li&gt;For non-null {@code t}: {@code setter.apply(getter.apply(t)).equals(t)} should hold,&lt;/li&gt;
+     *    &lt;li&gt;and for all {@code b}: {@code getter.apply(setter.apply(b)).equals(b)} should hold.&lt;/li&gt;
+     *  &lt;/ul&gt;
+     * The {@code nullObject} serves as the image of {@code null} under the mapping.&lt;br&gt;
+     * &lt;p&gt;
+     * &lt;b&gt;Important Considerations:&lt;/b&gt;
+     *  &lt;ul&gt;
+     *    &lt;li&gt;&lt;b&gt;Non-isomorphic functions may cause data loss:&lt;/b&gt; As with {@code projectTo},
+     *        imperfectly reversible functions can lead to inconsistent states.
+     *    &lt;/li&gt;
+     *    &lt;li&gt;&lt;b&gt;Null handling is explicit:&lt;/b&gt; The {@code nullObject} is used whenever this
+     *        property contains null, providing a deterministic fallback.
+     *    &lt;/li&gt;
+     *    &lt;li&gt;&lt;b&gt;The nullObject should be semantically meaningful:&lt;/b&gt; Choose a value that
+     *        makes sense as a default representation of &quot;empty&quot; or &quot;uninitialized&quot; state.
+     *    &lt;/li&gt;
+     *  &lt;/ul&gt;&lt;br&gt;
+     * &lt;b&gt;Example - Encryption with Null Safety:&lt;/b&gt;
+     * &lt;pre&gt;{@code
+     *    var key = createEncryptionKey();
+     *    Var&lt;String&gt; plain = Var.ofNullable(String.class, &quot;message&quot;);
+     *    Var&lt;String&gt; secret = plain.projectTo(&quot;&quot;, key::encrypt, key::decrypt);
+     *
+     *    // Initial: plain.get() = &quot;message&quot;, secret.get() = &quot;encrypted_message&quot;
+     *
+     *    plain.set(null);
+     *    // Now: plain.get() = null, secret.get() = &quot;&quot; (the nullObject)
+     *
+     *    secret.set(&quot;different_encrypted&quot;);
+     *    // Now: plain.get() = &quot;different_decrypted&quot;, secret.get() = &quot;different_encrypted&quot;
+     * }&lt;/pre&gt;
+     * In this example, empty string serves as the encrypted representation of null.
+     * The encryption/decryption functions should be isomorphic for non-null strings
+     * to ensure perfect round-trip conversion.
+     *
+     * @param &lt;B&gt;        The target type of the projected property (non-nullable).
+     * @param nullObject The fallback value to use when this property's item is null.
+     *                   This object must not be null.
+     * @param getter     {@link Function} that converts from {@code T} to {@code B} for non-null items.
+     * @param setter     {@link Function} that converts from {@code B} back to {@code T}.
+     * @return A new Var that maintains a bidirectional projection with guaranteed
+     *         non-null values, using {@code nullObject} as fallback.
+     * @throws NullPointerException if {@code nullObject} or either function is null.
+     */
+    default &lt;B extends @NonNull Object&gt; Var&lt;B&gt; projectTo( B nullObject, Function&lt;T,B&gt; getter, Function&lt;B,T&gt; setter ) {
+<span class="fc" id="L802">        Objects.requireNonNull(nullObject);</span>
+<span class="fc" id="L803">        Objects.requireNonNull(getter, &quot;getter must not be null&quot;);</span>
+<span class="fc" id="L804">        Objects.requireNonNull(setter, &quot;setter must not be null&quot;);</span>
+<span class="fc" id="L805">        return Sprouts.factory().projLensOf( this, nullObject, getter, setter );</span>
+    }
+
+    /**
+     * Creates a projected lens property (Var) that bi-directionally maps between the item type {@code T}
+     * of this property and a nullable target item type {@code B} using conversion functions.
+     * This method allows the projected property to hold null values, which is useful when
+     * the conversion between types is partial or may fail.
+     * &lt;p&gt;
+     * &lt;b&gt;Mathematical Foundation:&lt;/b&gt;&lt;br&gt;
+     * The functions define a partial bijection between subsets of {@code T} and {@code B}.&lt;br&gt;
+     * For the subset where conversion is defined:
+     *  &lt;ul&gt;
+     *    &lt;li&gt;{@code setter.apply(getter.apply(t)).equals(t)} should hold&lt;/li&gt;
+     *    &lt;li&gt;{@code getter.apply(setter.apply(b)).equals(b)} should hold&lt;/li&gt;
+     *  &lt;/ul&gt;
+     * Outside this subset, null serves as an explicit representation of &quot;no valid conversion&quot;.&lt;br&gt;
+     * &lt;p&gt;
+     * &lt;b&gt;Important Considerations:&lt;/b&gt;
+     *  &lt;ul&gt;
+     *    &lt;li&gt;&lt;b&gt;Partial functions require careful handling:&lt;/b&gt; When {@code getter} returns null
+     *        (indicating no valid conversion), {@code setter} should handle null appropriately,
+     *        typically by returning a sensible default or sentinel value.
+     *    &lt;/li&gt;
+     *    &lt;li&gt;&lt;b&gt;Non-isomorphic behavior is expected:&lt;/b&gt; Unlike {@code projectTo}, this method
+     *        explicitly accommodates non-isomorphic conversions by allowing null as a valid state.
+     *    &lt;/li&gt;
+     *    &lt;li&gt;&lt;b&gt;Null propagation:&lt;/b&gt; If this property's item is null, the projected property
+     *         will also be null, unless {@code getter} handles null explicitly.
+     *    &lt;/li&gt;
+     *  &lt;/ul&gt;&lt;br&gt;
+     * &lt;p&gt;
+     * &lt;b&gt;Example - String to Double Parsing with Error Handling:&lt;/b&gt;
+     * &lt;pre&gt;{@code
+     *    Var&lt;String&gt; text = Var.of(&quot;1ooo&quot;); // Note: contains 'o' instead of '0'
+     *    Var&lt;Double&gt; num = text.projectToNullable(
+     *        Double.class,
+     *        s -&gt; {
+     *            try {
+     *                return Double.parseDouble(s);
+     *            } catch (Exception e) {
+     *                return null; // Conversion failed
+     *            }
+     *        },
+     *        d -&gt; d == null ? &quot;&quot; : d.toString()
+     *    );
+     *
+     *    // Initial: text.get() = &quot;1ooo&quot;, num.get() = null (parsing failed)
+     *
+     *    text.set(&quot;3.14&quot;);
+     *    // Now: text.get() = &quot;3.14&quot;, num.get() = 3.14
+     *
+     *    num.set(null);
+     *    // Now: text.get() = &quot;&quot;, num.get() = null
+     * }&lt;/pre&gt;
+     * This example demonstrates graceful handling of conversion failures through null.
+     * The projection maintains synchronization for valid conversions while using null
+     * to represent unconvertible states.
+     *
+     * @param &lt;B&gt;    The nullable target type of the projected property.
+     * @param type   The class object representing type {@code B}, required for
+     *               runtime type information and nullability support.
+     * @param getter {@link Function} that converts from {@code T} to {@code B}, returning
+     *               null when conversion is not possible or meaningful.
+     * @param setter {@link Function} that converts from {@code B} back to {@code T},
+     *               handling null input appropriately.
+     * @return A new Var that maintains a bidirectional projection allowing
+     *         null values in both directions.
+     * @throws NullPointerException if {@code type} or either function is null.
+     */
+    default &lt;B extends @Nullable Object&gt; Var&lt;B&gt; projectToNullable( Class&lt;B&gt; type, Function&lt;T,B&gt; getter, Function&lt;B,T&gt; setter ) {
+<span class="fc" id="L876">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L877">        Objects.requireNonNull(getter, &quot;getter must not be null&quot;);</span>
+<span class="fc" id="L878">        Objects.requireNonNull(setter, &quot;setter must not be null&quot;);</span>
+<span class="fc" id="L879">        return Sprouts.factory().projLensOfNullable(type, this, getter, setter);</span>
+    }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

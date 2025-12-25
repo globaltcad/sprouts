@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Tuple.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sprouts</a> &gt; <a href="index.source.html" class="el_package">sprouts</a> &gt; <span class="el_source">Tuple.java</span></div><h1>Tuple.java</h1><pre class="source lang-java linenums">package sprouts;
 
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import sprouts.impl.Sprouts;
 
@@ -46,8 +47,8 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      */
     @SuppressWarnings(&quot;unchecked&quot;)
     static &lt;T&gt; Class&lt;Tuple&lt;T&gt;&gt; classTyped(Class&lt;T&gt; itemType) {
-<span class="fc" id="L49">        Objects.requireNonNull(itemType);</span>
-<span class="fc" id="L50">        return (Class) Tuple.class;</span>
+<span class="fc" id="L50">        Objects.requireNonNull(itemType);</span>
+<span class="fc" id="L51">        return (Class) Tuple.class;</span>
     }
 
     /**
@@ -69,12 +70,12 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @throws NullPointerException If the supplied type is null.
      */
     static &lt;T&gt; Collector&lt;T, ?, Tuple&lt;T&gt;&gt; collectorOf( Class&lt;T&gt; type ) {
-<span class="fc" id="L72">        Objects.requireNonNull(type);</span>
-<span class="fc" id="L73">        return Collector.of(</span>
+<span class="fc" id="L73">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L74">        return Collector.of(</span>
                 (Supplier&lt;List&lt;T&gt;&gt;) ArrayList::new,
                 List::add,
-<span class="fc" id="L76">                (left, right) -&gt; { left.addAll(right); return left; },</span>
-<span class="fc bfc" id="L77" title="All 2 branches covered.">                list -&gt; list.isEmpty() ? Tuple.of(type) : Tuple.of(type, list)</span>
+<span class="fc" id="L77">                (left, right) -&gt; { left.addAll(right); return left; },</span>
+<span class="fc bfc" id="L78" title="All 2 branches covered.">                list -&gt; list.isEmpty() ? Tuple.of(type) : Tuple.of(type, list)</span>
         );
     }
 
@@ -94,11 +95,11 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @param &lt;T&gt; The type of the items in the tuple.
      */
     static &lt;T&gt; Collector&lt;T, ?, Tuple&lt;@Nullable T&gt;&gt; collectorOfNullable( Class&lt;T&gt; type ) {
-<span class="fc" id="L97">        return Collector.of(</span>
+<span class="fc" id="L98">        return Collector.of(</span>
                 (Supplier&lt;List&lt;T&gt;&gt;) ArrayList::new,
                 List::add,
-<span class="nc" id="L100">                (left, right) -&gt; { left.addAll(right); return left; },</span>
-<span class="pc bpc" id="L101" title="1 of 2 branches missed.">                list -&gt; list.isEmpty() ? Tuple.ofNullable(type) : Tuple.ofNullable(type, list)</span>
+<span class="nc" id="L101">                (left, right) -&gt; { left.addAll(right); return left; },</span>
+<span class="pc bpc" id="L102" title="1 of 2 branches missed.">                list -&gt; list.isEmpty() ? Tuple.ofNullable(type) : Tuple.ofNullable(type, list)</span>
         );
     }
 
@@ -116,9 +117,9 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      */
     @SuppressWarnings(&quot;unchecked&quot;)
     static &lt;T&gt; Tuple&lt;T&gt; of( Class&lt;T&gt; type, Maybe&lt;T&gt;... vec ) {
-<span class="fc" id="L119">        Objects.requireNonNull(type);</span>
-<span class="fc" id="L120">        Objects.requireNonNull(vec);</span>
-<span class="fc" id="L121">        return Sprouts.factory().tupleOf( type, vec );</span>
+<span class="fc" id="L120">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L121">        Objects.requireNonNull(vec);</span>
+<span class="fc" id="L122">        return Sprouts.factory().tupleOf( type, vec );</span>
     }
 
     /**
@@ -133,8 +134,8 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @throws NullPointerException if {@code type} is {@code null}.
      */
     static &lt;T&gt; Tuple&lt;T&gt; of( Class&lt;T&gt; type ) {
-<span class="fc" id="L136">        Objects.requireNonNull(type);</span>
-<span class="fc" id="L137">        return Sprouts.factory().tupleOf( type );</span>
+<span class="fc" id="L137">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L138">        return Sprouts.factory().tupleOf( type );</span>
     }
 
     /**
@@ -150,9 +151,9 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      */
     @SuppressWarnings(&quot;unchecked&quot;)
     static &lt;T&gt; Tuple&lt;T&gt; of( Maybe&lt;T&gt; first, Maybe&lt;T&gt;... rest ) {
-<span class="nc" id="L153">        Objects.requireNonNull(first);</span>
-<span class="nc" id="L154">        Objects.requireNonNull(rest);</span>
-<span class="nc" id="L155">        return Sprouts.factory().tupleOf( first, rest );</span>
+<span class="nc" id="L154">        Objects.requireNonNull(first);</span>
+<span class="nc" id="L155">        Objects.requireNonNull(rest);</span>
+<span class="nc" id="L156">        return Sprouts.factory().tupleOf( first, rest );</span>
     }
 
     /**
@@ -168,9 +169,9 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      */
     @SuppressWarnings(&quot;unchecked&quot;)
     static &lt;T&gt; Tuple&lt;T&gt; of( T first, T... rest ) {
-<span class="fc" id="L171">        Objects.requireNonNull(first);</span>
-<span class="fc" id="L172">        Objects.requireNonNull(rest);</span>
-<span class="fc" id="L173">        return Sprouts.factory().tupleOf( first, rest );</span>
+<span class="fc" id="L172">        Objects.requireNonNull(first);</span>
+<span class="fc" id="L173">        Objects.requireNonNull(rest);</span>
+<span class="fc" id="L174">        return Sprouts.factory().tupleOf( first, rest );</span>
     }
 
     /**
@@ -187,9 +188,9 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      */
     @SuppressWarnings(&quot;unchecked&quot;)
     static &lt;T&gt; Tuple&lt;T&gt; of( Class&lt;T&gt; type, T... items ) {
-<span class="fc" id="L190">        Objects.requireNonNull(type);</span>
-<span class="fc" id="L191">        Objects.requireNonNull(items);</span>
-<span class="fc" id="L192">        return Sprouts.factory().tupleOf( type, items );</span>
+<span class="fc" id="L191">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L192">        Objects.requireNonNull(items);</span>
+<span class="fc" id="L193">        return Sprouts.factory().tupleOf( type, items );</span>
     }
 
     /**
@@ -204,8 +205,8 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @throws NullPointerException if {@code floats} is {@code null}.
      */
     static Tuple&lt;Float&gt; of( float[] floats ) {
-<span class="fc" id="L207">        Objects.requireNonNull(floats);</span>
-<span class="fc" id="L208">        return Sprouts.factory().tupleOf( floats );</span>
+<span class="fc" id="L208">        Objects.requireNonNull(floats);</span>
+<span class="fc" id="L209">        return Sprouts.factory().tupleOf( floats );</span>
     }
 
     /**
@@ -220,8 +221,8 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @throws NullPointerException if {@code doubles} is {@code null}.
      */
     static Tuple&lt;Double&gt; of( double[] doubles ) {
-<span class="fc" id="L223">        Objects.requireNonNull(doubles);</span>
-<span class="fc" id="L224">        return Sprouts.factory().tupleOf( doubles );</span>
+<span class="fc" id="L224">        Objects.requireNonNull(doubles);</span>
+<span class="fc" id="L225">        return Sprouts.factory().tupleOf( doubles );</span>
     }
 
     /**
@@ -235,8 +236,8 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @throws NullPointerException if {@code ints} is {@code null}.
      */
     static Tuple&lt;Integer&gt; of( int[] ints ) {
-<span class="fc" id="L238">        Objects.requireNonNull(ints);</span>
-<span class="fc" id="L239">        return Sprouts.factory().tupleOf( ints );</span>
+<span class="fc" id="L239">        Objects.requireNonNull(ints);</span>
+<span class="fc" id="L240">        return Sprouts.factory().tupleOf( ints );</span>
     }
 
     /**
@@ -250,8 +251,8 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @throws NullPointerException if {@code longs} is {@code null}.
      */
     static Tuple&lt;Long&gt; of( long[] longs ) {
-<span class="fc" id="L253">        Objects.requireNonNull(longs);</span>
-<span class="fc" id="L254">        return Sprouts.factory().tupleOf( longs );</span>
+<span class="fc" id="L254">        Objects.requireNonNull(longs);</span>
+<span class="fc" id="L255">        return Sprouts.factory().tupleOf( longs );</span>
     }
 
     /**
@@ -265,8 +266,8 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @throws NullPointerException if {@code bytes} is {@code null}.
      */
     static Tuple&lt;Byte&gt; of( byte[] bytes ) {
-<span class="fc" id="L268">        Objects.requireNonNull(bytes);</span>
-<span class="fc" id="L269">        return Sprouts.factory().tupleOf( bytes );</span>
+<span class="fc" id="L269">        Objects.requireNonNull(bytes);</span>
+<span class="fc" id="L270">        return Sprouts.factory().tupleOf( bytes );</span>
     }
 
     /**
@@ -282,9 +283,9 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @throws IllegalArgumentException if any {@link Maybe} in {@code vec} allows {@code null}.
      */
     static &lt;T&gt; Tuple&lt;T&gt; of( Class&lt;T&gt; type, Iterable&lt;T&gt; iterable ) {
-<span class="fc" id="L285">        Objects.requireNonNull(type);</span>
-<span class="fc" id="L286">        Objects.requireNonNull(iterable);</span>
-<span class="fc" id="L287">        return Sprouts.factory().tupleOf( type, iterable );</span>
+<span class="fc" id="L286">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L287">        Objects.requireNonNull(iterable);</span>
+<span class="fc" id="L288">        return Sprouts.factory().tupleOf( type, iterable );</span>
     }
 
     /**
@@ -301,9 +302,9 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      */
     @SuppressWarnings(&quot;unchecked&quot;)
     static &lt;T&gt; Tuple&lt;@Nullable T&gt; ofNullable( Class&lt;T&gt; type, Maybe&lt;@Nullable T&gt;... maybeItems ) {
-<span class="nc" id="L304">        Objects.requireNonNull(type);</span>
-<span class="nc" id="L305">        Objects.requireNonNull(maybeItems);</span>
-<span class="nc" id="L306">        return Sprouts.factory().tupleOfNullable( type, maybeItems );</span>
+<span class="nc" id="L305">        Objects.requireNonNull(type);</span>
+<span class="nc" id="L306">        Objects.requireNonNull(maybeItems);</span>
+<span class="nc" id="L307">        return Sprouts.factory().tupleOfNullable( type, maybeItems );</span>
     }
 
     /**
@@ -318,8 +319,8 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @throws NullPointerException if {@code type} is {@code null}.
      */
     static &lt;T&gt; Tuple&lt;@Nullable T&gt; ofNullable( Class&lt;T&gt; type ) {
-<span class="fc" id="L321">        Objects.requireNonNull(type);</span>
-<span class="fc" id="L322">        return Sprouts.factory().tupleOfNullable( type );</span>
+<span class="fc" id="L322">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L323">        return Sprouts.factory().tupleOfNullable( type );</span>
     }
 
     /**
@@ -335,8 +336,8 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      */
     @SuppressWarnings(&quot;unchecked&quot;)
     static &lt;T&gt; Tuple&lt;@Nullable T&gt; ofNullable( Class&lt;T&gt; type, @Nullable T... items ) {
-<span class="fc" id="L338">        Objects.requireNonNull(type);</span>
-<span class="fc" id="L339">        return Sprouts.factory().tupleOfNullable( type, items );</span>
+<span class="fc" id="L339">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L340">        return Sprouts.factory().tupleOfNullable( type, items );</span>
     }
 
     /**
@@ -349,9 +350,9 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      */
     @SuppressWarnings(&quot;unchecked&quot;)
     static &lt;T&gt; Tuple&lt;@Nullable T&gt; ofNullable( Maybe&lt;@Nullable T&gt; first, Maybe&lt;@Nullable T&gt;... rest ) {
-<span class="nc" id="L352">        Objects.requireNonNull(first);</span>
-<span class="nc" id="L353">        Objects.requireNonNull(rest);</span>
-<span class="nc" id="L354">        return Sprouts.factory().tupleOfNullable( first, rest );</span>
+<span class="nc" id="L353">        Objects.requireNonNull(first);</span>
+<span class="nc" id="L354">        Objects.requireNonNull(rest);</span>
+<span class="nc" id="L355">        return Sprouts.factory().tupleOfNullable( first, rest );</span>
     }
 
     /**
@@ -365,9 +366,9 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @return a new {@code Tuple} instance.
      */
     static &lt;T&gt; Tuple&lt;@Nullable T&gt; ofNullable( Class&lt;T&gt; type, Iterable&lt;@Nullable T&gt; iterable ) {
-<span class="fc" id="L368">        Objects.requireNonNull(type);</span>
-<span class="fc" id="L369">        Objects.requireNonNull(iterable);</span>
-<span class="fc" id="L370">        return Sprouts.factory().tupleOfNullable( type, iterable );</span>
+<span class="fc" id="L369">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L370">        Objects.requireNonNull(iterable);</span>
+<span class="fc" id="L371">        return Sprouts.factory().tupleOfNullable( type, iterable );</span>
     }
 
     /**
@@ -384,7 +385,7 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      *
      * @return True if the tuple of items is empty.
      */
-<span class="fc bfc" id="L387" title="All 2 branches covered.">    default boolean isEmpty() { return size() == 0; }</span>
+<span class="fc bfc" id="L388" title="All 2 branches covered.">    default boolean isEmpty() { return size() == 0; }</span>
 
     /**
      *  The boolean flag that indicates if the tuple of items is not empty,
@@ -394,7 +395,7 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      *
      * @return True if the tuple of items is not empty.
      */
-<span class="fc bfc" id="L397" title="All 2 branches covered.">    default boolean isNotEmpty() { return !isEmpty(); }</span>
+<span class="fc bfc" id="L398" title="All 2 branches covered.">    default boolean isNotEmpty() { return !isEmpty(); }</span>
 
     /**
      *  Checks weather the supplied item is in this tuple of items.
@@ -404,7 +405,7 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @return True if any of the items of this tuple wraps the given value.
      */
     default boolean contains( @Nullable T value ) {
-<span class="nc bnc" id="L407" title="All 2 branches missed.">        return firstIndexOf(value) != -1;</span>
+<span class="nc bnc" id="L408" title="All 2 branches missed.">        return firstIndexOf(value) != -1;</span>
     }
 
     /**
@@ -417,7 +418,7 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @return The index of the {@link Maybe} that wraps the given value, or -1 if not found.
      */
     default int firstIndexOf( @Nullable T value ) {
-<span class="fc" id="L420">        return firstIndexStartingFrom(0, value);</span>
+<span class="fc" id="L421">        return firstIndexStartingFrom(0, value);</span>
     }
 
     /**
@@ -431,13 +432,13 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @throws IndexOutOfBoundsException if the index is negative.
      */
     default int firstIndexStartingFrom(int index, @Nullable T value ) {
-<span class="pc bpc" id="L434" title="1 of 2 branches missed.">        if ( index &lt; 0 )</span>
-<span class="nc" id="L435">            throw new IndexOutOfBoundsException(&quot;The index is negative: &quot; + index);</span>
-<span class="fc bfc" id="L436" title="All 2 branches covered.">        for ( int i = index; i &lt; size(); i++ ) {</span>
-<span class="fc bfc" id="L437" title="All 2 branches covered.">            if ( Val.equals(get(i), value) )</span>
-<span class="fc" id="L438">                return i;</span>
+<span class="pc bpc" id="L435" title="1 of 2 branches missed.">        if ( index &lt; 0 )</span>
+<span class="nc" id="L436">            throw new IndexOutOfBoundsException(&quot;The index is negative: &quot; + index);</span>
+<span class="fc bfc" id="L437" title="All 2 branches covered.">        for ( int i = index; i &lt; size(); i++ ) {</span>
+<span class="fc bfc" id="L438" title="All 2 branches covered.">            if ( Val.equals(get(i), value) )</span>
+<span class="fc" id="L439">                return i;</span>
         }
-<span class="fc" id="L440">        return -1;</span>
+<span class="fc" id="L441">        return -1;</span>
     }
 
     /**
@@ -450,7 +451,7 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @return The index of the {@link Maybe} that wraps the given value, or -1 if not found.
      */
     default int lastIndexOf( @Nullable T value ) {
-<span class="fc" id="L453">        return lastIndexBefore(size(), value);</span>
+<span class="fc" id="L454">        return lastIndexBefore(size(), value);</span>
     }
 
     /**
@@ -464,13 +465,13 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @throws IndexOutOfBoundsException if the index is negative.
      */
     default int lastIndexBefore( int index, @Nullable T value ) {
-<span class="pc bpc" id="L467" title="1 of 2 branches missed.">        if ( index &lt; 0 )</span>
-<span class="nc" id="L468">            throw new IndexOutOfBoundsException(&quot;The index is negative: &quot; + index);</span>
-<span class="fc bfc" id="L469" title="All 2 branches covered.">        for ( int i = index - 1; i &gt;= 0; i-- ) {</span>
-<span class="fc bfc" id="L470" title="All 2 branches covered.">            if ( Val.equals(get(i), value) )</span>
-<span class="fc" id="L471">                return i;</span>
+<span class="pc bpc" id="L468" title="1 of 2 branches missed.">        if ( index &lt; 0 )</span>
+<span class="nc" id="L469">            throw new IndexOutOfBoundsException(&quot;The index is negative: &quot; + index);</span>
+<span class="fc bfc" id="L470" title="All 2 branches covered.">        for ( int i = index - 1; i &gt;= 0; i-- ) {</span>
+<span class="fc bfc" id="L471" title="All 2 branches covered.">            if ( Val.equals(get(i), value) )</span>
+<span class="fc" id="L472">                return i;</span>
         }
-<span class="fc" id="L473">        return -1;</span>
+<span class="fc" id="L474">        return -1;</span>
     }
 
     /**
@@ -483,12 +484,12 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @return A tuple of integers representing the indices of the given value in this tuple.
      */
     default Tuple&lt;Integer&gt; indicesOf( T value ) {
-<span class="fc" id="L486">        List&lt;Integer&gt; indices = new ArrayList&lt;&gt;();</span>
-<span class="fc bfc" id="L487" title="All 2 branches covered.">        for ( int i = 0; i &lt; size(); i++ ) {</span>
-<span class="fc bfc" id="L488" title="All 2 branches covered.">            if ( Val.equals(get(i), value) )</span>
-<span class="fc" id="L489">                indices.add(i);</span>
+<span class="fc" id="L487">        List&lt;Integer&gt; indices = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L488" title="All 2 branches covered.">        for ( int i = 0; i &lt; size(); i++ ) {</span>
+<span class="fc bfc" id="L489" title="All 2 branches covered.">            if ( Val.equals(get(i), value) )</span>
+<span class="fc" id="L490">                indices.add(i);</span>
         }
-<span class="fc" id="L491">        return indices.stream().collect(Tuple.collectorOf(Integer.class));</span>
+<span class="fc" id="L492">        return indices.stream().collect(Tuple.collectorOf(Integer.class));</span>
     }
 
     /**
@@ -503,7 +504,7 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @return The index of the given {@link Maybe} in this tuple, or -1 if not found.
      */
     default int firstIndexOf( Maybe&lt;T&gt; value ) {
-<span class="fc" id="L506">        return firstIndexOf(value.orElseNull());</span>
+<span class="fc" id="L507">        return firstIndexOf(value.orElseNull());</span>
     }
 
     /**
@@ -514,7 +515,7 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @return True if the given {@link Maybe} is in this tuple.
      */
     default boolean maybeContains( Maybe&lt;T&gt; value ) {
-<span class="nc" id="L517">        return contains(value.orElseNull());</span>
+<span class="nc" id="L518">        return contains(value.orElseNull());</span>
     }
 
     /**
@@ -539,9 +540,9 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @return The first item in the tuple.
      */
     default T first() {
-<span class="pc bpc" id="L542" title="1 of 2 branches missed.">        if ( this.isEmpty() )</span>
-<span class="nc" id="L543">            throw new NoSuchElementException(&quot;There is no such item in the tuple. The tuple is empty.&quot;);</span>
-<span class="fc" id="L544">        return get(0);</span>
+<span class="pc bpc" id="L543" title="1 of 2 branches missed.">        if ( this.isEmpty() )</span>
+<span class="nc" id="L544">            throw new NoSuchElementException(&quot;There is no such item in the tuple. The tuple is empty.&quot;);</span>
+<span class="fc" id="L545">        return get(0);</span>
     }
 
     /**
@@ -549,9 +550,9 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @return The last item in the tuple.
      */
     default T last() {
-<span class="nc bnc" id="L552" title="All 2 branches missed.">        if ( this.isEmpty() )</span>
-<span class="nc" id="L553">            throw new NoSuchElementException(&quot;There is no such item in the tuple. The tuple is empty.&quot;);</span>
-<span class="nc" id="L554">        return get(size() - 1);</span>
+<span class="nc bnc" id="L553" title="All 2 branches missed.">        if ( this.isEmpty() )</span>
+<span class="nc" id="L554">            throw new NoSuchElementException(&quot;There is no such item in the tuple. The tuple is empty.&quot;);</span>
+<span class="nc" id="L555">        return get(size() - 1);</span>
     }
 
     /**
@@ -561,8 +562,8 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      *  @throws NullPointerException if the predicate is {@code null}.
      */
     default boolean any( Predicate&lt;T&gt; predicate ) {
-<span class="fc" id="L564">        Objects.requireNonNull(predicate);</span>
-<span class="fc" id="L565">        return stream().anyMatch( predicate );</span>
+<span class="fc" id="L565">        Objects.requireNonNull(predicate);</span>
+<span class="fc" id="L566">        return stream().anyMatch( predicate );</span>
     }
 
     /**
@@ -572,8 +573,8 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      *  @throws NullPointerException if the predicate is {@code null}.
      */
     default boolean all( Predicate&lt;T&gt; predicate ) {
-<span class="fc" id="L575">        Objects.requireNonNull(predicate);</span>
-<span class="fc" id="L576">        return stream().allMatch( predicate );</span>
+<span class="fc" id="L576">        Objects.requireNonNull(predicate);</span>
+<span class="fc" id="L577">        return stream().allMatch( predicate );</span>
     }
 
     /**
@@ -583,8 +584,8 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      *  @throws NullPointerException if the predicate is {@code null}.
      */
     default boolean none( Predicate&lt;T&gt; predicate ) {
-<span class="fc" id="L586">        Objects.requireNonNull(predicate);</span>
-<span class="fc" id="L587">        return stream().noneMatch( predicate );</span>
+<span class="fc" id="L587">        Objects.requireNonNull(predicate);</span>
+<span class="fc" id="L588">        return stream().noneMatch( predicate );</span>
     }
 
     /**
@@ -592,7 +593,7 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      *  @return True if any of the items in this tuple of items is null.
      */
     default boolean anyNull() {
-<span class="fc" id="L595">        return any(Objects::isNull);</span>
+<span class="fc" id="L596">        return any(Objects::isNull);</span>
     }
 
     /**
@@ -613,7 +614,7 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @throws NullPointerException if {@code null} is not allowed and the {@code item} is {@code null}.
      */
     default Tuple&lt;T&gt; add( T item ) {
-<span class="fc" id="L616">        return addAt( size(), item );</span>
+<span class="fc" id="L617">        return addAt( size(), item );</span>
     }
 
     /**
@@ -624,7 +625,7 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @return A new tuple of items with the desired change.
      */
     default Tuple&lt;T&gt; addIfNonNull( @Nullable T item ) {
-<span class="fc bfc" id="L627" title="All 2 branches covered.">        return ( item == null ? this : add(item) );</span>
+<span class="fc bfc" id="L628" title="All 2 branches covered.">        return ( item == null ? this : add(item) );</span>
     }
 
     /**
@@ -638,10 +639,10 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @throws NullPointerException     if the {@code var} is {@code null}.
      */
     default Tuple&lt;T&gt; maybeAdd( Maybe&lt;T&gt; item ) {
-<span class="fc" id="L641">        Objects.requireNonNull(item);</span>
-<span class="pc bpc" id="L642" title="1 of 4 branches missed.">        if ( !allowsNull() &amp;&amp; item.isEmpty() )</span>
-<span class="fc" id="L643">            return this;</span>
-<span class="fc" id="L644">        return maybeAddAt( size(), item );</span>
+<span class="fc" id="L642">        Objects.requireNonNull(item);</span>
+<span class="pc bpc" id="L643" title="1 of 4 branches missed.">        if ( !allowsNull() &amp;&amp; item.isEmpty() )</span>
+<span class="fc" id="L644">            return this;</span>
+<span class="fc" id="L645">        return maybeAddAt( size(), item );</span>
     }
 
     /**
@@ -653,7 +654,7 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      *                                   size of this {@code Vec} object.
      */
     default Tuple&lt;T&gt; removeAt( int index ) {
-<span class="fc" id="L656">        return removeRange(index, index + 1);</span>
+<span class="fc" id="L657">        return removeRange(index, index + 1);</span>
     }
 
     /**
@@ -667,7 +668,7 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      *                                   object.
      */
     default Tuple&lt;T&gt; removeAt( int index, int size ) {
-<span class="fc" id="L670">        return removeRange( index, index + size );</span>
+<span class="fc" id="L671">        return removeRange( index, index + size );</span>
     }
 
     /**
@@ -682,7 +683,7 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      *                                   object.
      */
     default Tuple&lt;T&gt; sliceAt( int index, int size ) {
-<span class="fc" id="L685">        return slice( index, index + size );</span>
+<span class="fc" id="L686">        return slice( index, index + size );</span>
     }
 
     /**
@@ -703,13 +704,13 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @return A new tuple of items with the desired change.
      */
     default Tuple&lt;T&gt; remove( T item ) {
-<span class="fc" id="L706">        Tuple&lt;T&gt; result = this;</span>
-<span class="fc" id="L707">        int index = result.firstIndexOf(item);</span>
-<span class="fc bfc" id="L708" title="All 2 branches covered.">        while ( index &gt;= 0 ) {</span>
-<span class="fc" id="L709">            result = result.removeAt(index);</span>
-<span class="fc" id="L710">            index = result.firstIndexOf(item);</span>
+<span class="fc" id="L707">        Tuple&lt;T&gt; result = this;</span>
+<span class="fc" id="L708">        int index = result.firstIndexOf(item);</span>
+<span class="fc bfc" id="L709" title="All 2 branches covered.">        while ( index &gt;= 0 ) {</span>
+<span class="fc" id="L710">            result = result.removeAt(index);</span>
+<span class="fc" id="L711">            index = result.firstIndexOf(item);</span>
         }
-<span class="fc" id="L712">        return result;</span>
+<span class="fc" id="L713">        return result;</span>
     }
 
     /**
@@ -721,7 +722,7 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      *          and if the item is {@code null}, this tuple is returned unchanged.
      */
     default Tuple&lt;T&gt; removeIfNonNull( @Nullable T item ) {
-<span class="fc bfc" id="L724" title="All 2 branches covered.">        return ( item == null ? this : remove(item) );</span>
+<span class="fc bfc" id="L725" title="All 2 branches covered.">        return ( item == null ? this : remove(item) );</span>
     }
 
     /**
@@ -734,15 +735,15 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @return A new tuple of items with the desired change.
      */
     default Tuple&lt;T&gt; maybeRemove( Maybe&lt;T&gt; item ) {
-<span class="pc bpc" id="L737" title="2 of 4 branches missed.">        if ( !this.allowsNull() &amp;&amp; item.isEmpty() )</span>
-<span class="nc" id="L738">            return this;</span>
-<span class="fc" id="L739">        Tuple&lt;T&gt; result = this;</span>
-<span class="fc" id="L740">        int index = result.firstIndexOf(item);</span>
-<span class="fc bfc" id="L741" title="All 2 branches covered.">        while ( index &gt;= 0 ) {</span>
-<span class="fc" id="L742">            result = result.removeAt(index);</span>
-<span class="fc" id="L743">            index = result.firstIndexOf(item);</span>
+<span class="pc bpc" id="L738" title="2 of 4 branches missed.">        if ( !this.allowsNull() &amp;&amp; item.isEmpty() )</span>
+<span class="nc" id="L739">            return this;</span>
+<span class="fc" id="L740">        Tuple&lt;T&gt; result = this;</span>
+<span class="fc" id="L741">        int index = result.firstIndexOf(item);</span>
+<span class="fc bfc" id="L742" title="All 2 branches covered.">        while ( index &gt;= 0 ) {</span>
+<span class="fc" id="L743">            result = result.removeAt(index);</span>
+<span class="fc" id="L744">            index = result.firstIndexOf(item);</span>
         }
-<span class="fc" id="L745">        return result;</span>
+<span class="fc" id="L746">        return result;</span>
     }
 
     /**
@@ -753,8 +754,8 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @return A new tuple of items with the desired change.
      */
     default Tuple&lt;T&gt; removeFirstFound( T item ) {
-<span class="fc" id="L756">        int index = firstIndexOf(item);</span>
-<span class="pc bpc" id="L757" title="1 of 2 branches missed.">        return index &lt; 0 ? this : removeRange( index, index + 1 );</span>
+<span class="fc" id="L757">        int index = firstIndexOf(item);</span>
+<span class="pc bpc" id="L758" title="1 of 2 branches missed.">        return index &lt; 0 ? this : removeRange( index, index + 1 );</span>
     }
     
     /**
@@ -767,7 +768,7 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      *         or the same tuple if the item is {@code null}.
      */
     default Tuple&lt;T&gt; removeFirstFoundIfNonNull( @Nullable T item ) {
-<span class="nc bnc" id="L770" title="All 2 branches missed.">        return ( item == null ? this : removeFirstFound(item) );</span>
+<span class="nc bnc" id="L771" title="All 2 branches missed.">        return ( item == null ? this : removeFirstFound(item) );</span>
     }
 
     /**
@@ -781,11 +782,11 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @throws NullPointerException if the {@code maybeItem} is {@code null}.
      */
     default Tuple&lt;T&gt; maybeRemoveFirstFound( Maybe&lt;T&gt; maybeItem ) {
-<span class="nc" id="L784">        Objects.requireNonNull(maybeItem);</span>
-<span class="nc bnc" id="L785" title="All 4 branches missed.">        if ( !allowsNull() &amp;&amp; maybeItem.isEmpty() )</span>
-<span class="nc" id="L786">            return this;</span>
-<span class="nc" id="L787">        int index = firstIndexOf(maybeItem);</span>
-<span class="nc bnc" id="L788" title="All 2 branches missed.">        return index &lt; 0 ? this : removeRange( index, index + 1 );</span>
+<span class="nc" id="L785">        Objects.requireNonNull(maybeItem);</span>
+<span class="nc bnc" id="L786" title="All 4 branches missed.">        if ( !allowsNull() &amp;&amp; maybeItem.isEmpty() )</span>
+<span class="nc" id="L787">            return this;</span>
+<span class="nc" id="L788">        int index = firstIndexOf(maybeItem);</span>
+<span class="nc bnc" id="L789" title="All 2 branches missed.">        return index &lt; 0 ? this : removeRange( index, index + 1 );</span>
     }
 
     /**
@@ -797,10 +798,10 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @throws NoSuchElementException if the value is not found.
      */
     default Tuple&lt;T&gt; removeFirstFoundOrThrow( T item ) {
-<span class="fc" id="L800">        int index = firstIndexOf(item);</span>
-<span class="fc bfc" id="L801" title="All 2 branches covered.">        if ( index &lt; 0 )</span>
-<span class="fc" id="L802">            throw new NoSuchElementException(&quot;No such element: &quot; + item);</span>
-<span class="fc" id="L803">        return removeRange( index, index + 1 );</span>
+<span class="fc" id="L801">        int index = firstIndexOf(item);</span>
+<span class="fc bfc" id="L802" title="All 2 branches covered.">        if ( index &lt; 0 )</span>
+<span class="fc" id="L803">            throw new NoSuchElementException(&quot;No such element: &quot; + item);</span>
+<span class="fc" id="L804">        return removeRange( index, index + 1 );</span>
     }
 
     /**
@@ -813,11 +814,11 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @throws NullPointerException  if the {@code item} is {@code null}.
      */
     default Tuple&lt;T&gt; maybeRemoveFirstFoundOrThrow( Maybe&lt;T&gt; item ) {
-<span class="fc" id="L816">        Objects.requireNonNull(item);</span>
-<span class="fc" id="L817">        int index = firstIndexOf(item);</span>
-<span class="fc bfc" id="L818" title="All 2 branches covered.">        if ( index &lt; 0 )</span>
-<span class="fc" id="L819">            throw new NoSuchElementException(&quot;No such element: &quot; + item);</span>
-<span class="fc" id="L820">        return removeRange( index, index + 1 );</span>
+<span class="fc" id="L817">        Objects.requireNonNull(item);</span>
+<span class="fc" id="L818">        int index = firstIndexOf(item);</span>
+<span class="fc bfc" id="L819" title="All 2 branches covered.">        if ( index &lt; 0 )</span>
+<span class="fc" id="L820">            throw new NoSuchElementException(&quot;No such element: &quot; + item);</span>
+<span class="fc" id="L821">        return removeRange( index, index + 1 );</span>
     }
 
     /**
@@ -827,7 +828,7 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @return A new tuple of items with the desired change.
      */
     default Tuple&lt;T&gt; removeFirst() {
-<span class="pc bpc" id="L830" title="1 of 2 branches missed.">        return size() &gt; 0 ? removeRange( 0, 1 ) : this;</span>
+<span class="pc bpc" id="L831" title="1 of 2 branches missed.">        return size() &gt; 0 ? removeRange( 0, 1 ) : this;</span>
     }
 
     /**
@@ -837,7 +838,7 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @return A new tuple of items with the desired change.
      */
     default Tuple&lt;T&gt; removeLast() {
-<span class="pc bpc" id="L840" title="1 of 2 branches missed.">        return size() &gt; 0 ? removeRange( size() - 1, size() ) : this;</span>
+<span class="pc bpc" id="L841" title="1 of 2 branches missed.">        return size() &gt; 0 ? removeRange( size() - 1, size() ) : this;</span>
     }
 
     /**
@@ -861,7 +862,7 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      *                                   this {@code Vec} object.
      */
     default Tuple&lt;T&gt; removeLast( int count ) {
-<span class="nc" id="L864">        return removeRange(size() - count, size());</span>
+<span class="nc" id="L865">        return removeRange(size() - count, size());</span>
     }
 
     /**
@@ -874,7 +875,7 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      *                                   this {@code Vec} object.
      */
     default Tuple&lt;T&gt; sliceLast( int count ) {
-<span class="fc" id="L877">        return slice(size() - count, size());</span>
+<span class="fc" id="L878">        return slice(size() - count, size());</span>
     }
 
     /**
@@ -887,7 +888,7 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      *                                   this {@code Vec} object.
      */
     default Tuple&lt;T&gt; removeFirst( int count ) {
-<span class="nc" id="L890">        return removeRange(0, count);</span>
+<span class="nc" id="L891">        return removeRange(0, count);</span>
     }
 
     /**
@@ -900,7 +901,7 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      *                                   this {@code Vec} object.
      */
     default Tuple&lt;T&gt; sliceFirst( int count ) {
-<span class="fc" id="L903">        return slice(0, count);</span>
+<span class="fc" id="L904">        return slice(0, count);</span>
     }
 
     /**
@@ -924,6 +925,111 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
     Tuple&lt;T&gt; retainIf( Predicate&lt;T&gt; predicate );
 
     /**
+     * Creates a new tuple containing only the items that are NOT instances of the specified type.
+     * This method filters out all items that are assignable to the given class,
+     * effectively retaining entries that do not match the specified type criteria.
+     * &lt;p&gt;
+     * &lt;b&gt;Example:&lt;/b&gt;
+     * &lt;pre&gt;{@code
+     * // Given a tuple with mixed types:
+     * var mixed = Tuple.of(Object.class, 1, &quot;x&quot;, 2.5, &quot;z&quot;, 3);
+     *
+     * // Remove all String instances
+     * Tuple&lt;Object&gt; withoutStrings = mixed.removeIf(String.class);
+     * // Result: [1, 2.5, 3]
+     * }&lt;/pre&gt;&lt;br&gt;
+     *
+     * &lt;b&gt;Null handling:&lt;/b&gt;
+     * &lt;ul&gt;
+     *   &lt;li&gt;
+     *       If this tuple allows null values ({@link #allowsNull()} returns {@code true}),
+     *       then null items will NOT be removed in the result since they cannot be instances of a class.&lt;/li&gt;
+     *   &lt;li&gt;
+     *       So the returned tuple will always have the same nullability policy as this instance!
+     *   &lt;/li&gt;
+     *   &lt;li&gt;
+     *       If this tuple doesn't allow null values, null items cannot exist and so the result will
+     *      also report {@code false} when invoking {@link #allowsNull()}
+     *   &lt;/li&gt;
+     * &lt;/ul&gt;
+     *
+     * @param type The class type to filter out from the tuple. Items that are instances of this type
+     *             (including subclasses) will be removed from the result.
+     * @param &lt;V&gt; The type to filter out, must be a subtype of the tuple's item type {@code T}.
+     * @return A new tuple containing only items that are not instances of the specified type
+     *         (and possibly null entries if the original tuple also allowed nulls).
+     * @throws NullPointerException if the provided {@code type} parameter is {@code null}.
+     */
+    default &lt;V extends T&gt; Tuple&lt;T&gt; removeIf( Class&lt;V&gt; type ) {
+<span class="fc" id="L964">        Objects.requireNonNull(type);</span>
+<span class="pc bpc" id="L965" title="1 of 4 branches missed.">        if ( !this.allowsNull() &amp;&amp; Objects.equals(this.type(), type) ) {</span>
+<span class="nc" id="L966">            return this.clear();</span>
+        }
+<span class="fc bfc" id="L968" title="All 2 branches covered.">        Collector&lt;T, ?, Tuple&lt;T&gt;&gt; collector = allowsNull() ? Tuple.collectorOfNullable(type()) : Tuple.collectorOf(type());</span>
+<span class="fc" id="L969">        return stream()</span>
+<span class="fc bfc" id="L970" title="All 4 branches covered.">                .filter(e -&gt; e == null || !type.isAssignableFrom(e.getClass()))</span>
+<span class="fc" id="L971">                .collect(collector);</span>
+    }
+
+    /**
+     * Creates a new tuple containing only the items that are instances of the specified type.
+     * This method filters the tuple to retain all items that are assignable to the given class,
+     * effectively keeping entries that match the specified type criteria while removing all others.
+     * &lt;p&gt;
+     * &lt;b&gt;Example:&lt;/b&gt;
+     * &lt;pre&gt;{@code
+     * // Given a tuple with mixed types:
+     * var mixed = Tuple.of(Object.class, 1, &quot;x&quot;, 2.5, &quot;z&quot;, 3);
+     *
+     * // Keep only String instances
+     * Tuple&lt;String&gt; onlyStrings = mixed.retainIf(String.class);
+     * // Result: [&quot;x&quot;, &quot;z&quot;]
+     * }&lt;/pre&gt;&lt;br&gt;
+     *
+     * &lt;b&gt;Type Safety:&lt;/b&gt;
+     * The returned tuple is explicitly typed with the specified class type {@code V},
+     * allowing for type-safe operations on the filtered results without the need for explicit casting.&lt;br&gt;
+     * &lt;br&gt;
+     * &lt;b&gt;Null handling:&lt;/b&gt;
+     * &lt;ul&gt;
+     *   &lt;li&gt;
+     *       Null items are always excluded from the result, regardless of this tuple's nullability policy,
+     *       since {@code null} cannot be an instance of any class type.
+     *   &lt;/li&gt;
+     *   &lt;li&gt;
+     *       The returned tuple will have non-nullable items ({@link #allowsNull()} returns {@code false}),
+     *       as it only contains valid instances of the specified type.
+     *   &lt;/li&gt;
+     *   &lt;li&gt;
+     *       If this tuple contains null values but the specified type is not compatible with null,
+     *       those null items will be filtered out in the result.
+     *   &lt;/li&gt;
+     * &lt;/ul&gt;&lt;br&gt;
+     *
+     * &lt;b&gt;Empty Result:&lt;/b&gt;
+     * If no items in this tuple match the specified type (including the case where all items are null),
+     * an empty tuple of type {@code V} will be returned.
+     *
+     * @param type The class type to filter by. Only items that are instances of this type
+     *             (including subclasses) will be retained in the result.
+     * @param &lt;V&gt; The type to filter by, must be a subtype of the tuple's item type {@code T}.
+     * @return A new tuple containing only items that are instances of the specified type,
+     *         with no null items, typed as {@code Tuple&lt;V&gt;}.
+     * @throws NullPointerException if the provided {@code type} parameter is {@code null}.
+     */
+    default &lt;V extends T&gt; Tuple&lt;V&gt; retainIf( Class&lt;V&gt; type ) {
+<span class="fc" id="L1021">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L1022">        Objects.requireNonNull(type);</span>
+<span class="pc bpc" id="L1023" title="1 of 4 branches missed.">        if ( !this.allowsNull() &amp;&amp; Objects.equals(this.type(), type) ) {</span>
+<span class="nc" id="L1024">            return (Tuple&lt;V&gt;) this;</span>
+        }
+<span class="fc" id="L1026">        return stream()</span>
+<span class="fc bfc" id="L1027" title="All 4 branches covered.">                .filter(e -&gt; e != null &amp;&amp; type.isAssignableFrom(e.getClass()))</span>
+<span class="fc" id="L1028">                .map(type::cast)</span>
+<span class="fc" id="L1029">                .collect(Tuple.collectorOf(type));</span>
+    }
+
+    /**
      * Creates a new tuple of items without the items of the provided
      * tuple of items. This is also true for duplicate items.
      *
@@ -940,7 +1046,7 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @return A new tuple of items with the desired change.
      */
     default Tuple&lt;T&gt; removeAll( T... items ) {
-<span class="pc bpc" id="L943" title="1 of 2 branches missed.">        return removeAll( allowsNull() ? Tuple.ofNullable(type(), items) : Tuple.of(type(), items) );</span>
+<span class="pc bpc" id="L1049" title="1 of 2 branches missed.">        return removeAll( allowsNull() ? Tuple.ofNullable(type(), items) : Tuple.of(type(), items) );</span>
     }
 
     /**
@@ -951,7 +1057,7 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @return A new tuple of items with the desired change.
      */
     default Tuple&lt;T&gt; removeAll( Iterable&lt;T&gt; items ) {
-<span class="fc" id="L954">        return removeAll( Tuple.of(type(), items) );</span>
+<span class="fc" id="L1060">        return removeAll( Tuple.of(type(), items) );</span>
     }
 
     /**
@@ -974,7 +1080,7 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @return A new tuple of items with the desired change.
      */
     default Tuple&lt;T&gt; addIfNonNullAt( int index, @Nullable T item ) {
-<span class="fc bfc" id="L977" title="All 2 branches covered.">        return ( item == null ? this : addAt(index, item) );</span>
+<span class="fc bfc" id="L1083" title="All 2 branches covered.">        return ( item == null ? this : addAt(index, item) );</span>
     }
 
     /**
@@ -991,12 +1097,12 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @throws IllegalArgumentException if the tuple allows {@code null} and the property does not allow {@code null}.
      */
     default Tuple&lt;T&gt; maybeAddAt( int index, Maybe&lt;T&gt; maybeItem ) {
-<span class="fc" id="L994">        Objects.requireNonNull(maybeItem);</span>
-<span class="pc bpc" id="L995" title="2 of 4 branches missed.">        if ( !allowsNull() &amp;&amp; maybeItem.isEmpty() )</span>
-<span class="nc" id="L996">            return this;</span>
+<span class="fc" id="L1100">        Objects.requireNonNull(maybeItem);</span>
+<span class="pc bpc" id="L1101" title="2 of 4 branches missed.">        if ( !allowsNull() &amp;&amp; maybeItem.isEmpty() )</span>
+<span class="nc" id="L1102">            return this;</span>
 
-<span class="fc" id="L998">        T newItem = Util.fakeNonNull(maybeItem.orElseNull());</span>
-<span class="fc" id="L999">        return addAt(index, newItem);</span>
+<span class="fc" id="L1104">        T newItem = Util.fakeNonNull(maybeItem.orElseNull());</span>
+<span class="fc" id="L1105">        return addAt(index, newItem);</span>
     }
 
     /**
@@ -1027,7 +1133,7 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @throws NullPointerException      if {@code null} is not allowed and the {@code item} is {@code null}.
      */
     default Tuple&lt;T&gt; setAt( int index, int size, T item ) {
-<span class="fc" id="L1030">        return setRange( index, index + size, item );</span>
+<span class="fc" id="L1136">        return setRange( index, index + size, item );</span>
     }
 
     /**
@@ -1046,14 +1152,14 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @throws IllegalArgumentException  if the tuple allows {@code null} and the property does not allow {@code null}.
      */
     default Tuple&lt;T&gt; maybeSetAt( int index, Maybe&lt;T&gt; maybeItem ) {
-<span class="fc" id="L1049">        Objects.requireNonNull(maybeItem);</span>
-<span class="fc bfc" id="L1050" title="All 4 branches covered.">        if ( index &lt; 0 || index &gt;= size() )</span>
-<span class="fc" id="L1051">            throw new IndexOutOfBoundsException(&quot;Index: &quot; + index + &quot;, Size: &quot; + size());</span>
-<span class="pc bpc" id="L1052" title="1 of 4 branches missed.">        if ( !allowsNull() &amp;&amp; maybeItem.isEmpty() )</span>
-<span class="fc" id="L1053">            return this;</span>
+<span class="fc" id="L1155">        Objects.requireNonNull(maybeItem);</span>
+<span class="fc bfc" id="L1156" title="All 4 branches covered.">        if ( index &lt; 0 || index &gt;= size() )</span>
+<span class="fc" id="L1157">            throw new IndexOutOfBoundsException(&quot;Index: &quot; + index + &quot;, Size: &quot; + size());</span>
+<span class="pc bpc" id="L1158" title="1 of 4 branches missed.">        if ( !allowsNull() &amp;&amp; maybeItem.isEmpty() )</span>
+<span class="fc" id="L1159">            return this;</span>
 
-<span class="fc" id="L1055">        T newItem = Util.fakeNonNull(maybeItem.orElseNull());</span>
-<span class="fc" id="L1056">        return setAt(index, newItem);</span>
+<span class="fc" id="L1161">        T newItem = Util.fakeNonNull(maybeItem.orElseNull());</span>
+<span class="fc" id="L1162">        return setAt(index, newItem);</span>
     }
 
     /**
@@ -1073,7 +1179,7 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @throws IllegalArgumentException  if the tuple allows {@code null} and the property does not allow {@code null}.
      */
     default Tuple&lt;T&gt; maybeSetAt( int index, int size, Maybe&lt;T&gt; value ) {
-<span class="fc" id="L1076">        return maybeSetRange(index, index + size, value);</span>
+<span class="fc" id="L1182">        return maybeSetRange(index, index + size, value);</span>
     }
 
     /**
@@ -1089,21 +1195,21 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @throws NullPointerException      if {@code null} is not allowed and the {@code item} is {@code null}.
      */
     default Tuple&lt;T&gt; setRange( int from, int to, T value ) {
-<span class="fc bfc" id="L1092" title="All 6 branches covered.">        if ( from &lt; 0 || to &gt; size() || from &gt; to )</span>
-<span class="fc" id="L1093">            throw new IndexOutOfBoundsException(&quot;From: &quot; + from + &quot;, To: &quot; + to + &quot;, Size: &quot; + size());</span>
+<span class="fc bfc" id="L1198" title="All 6 branches covered.">        if ( from &lt; 0 || to &gt; size() || from &gt; to )</span>
+<span class="fc" id="L1199">            throw new IndexOutOfBoundsException(&quot;From: &quot; + from + &quot;, To: &quot; + to + &quot;, Size: &quot; + size());</span>
 
-<span class="pc bpc" id="L1095" title="1 of 2 branches missed.">        if ( !allowsNull() )</span>
-<span class="fc" id="L1096">            Objects.requireNonNull(value);</span>
+<span class="pc bpc" id="L1201" title="1 of 2 branches missed.">        if ( !allowsNull() )</span>
+<span class="fc" id="L1202">            Objects.requireNonNull(value);</span>
 
-<span class="pc bpc" id="L1098" title="1 of 2 branches missed.">        if ( from == to )</span>
-<span class="nc" id="L1099">            return this;</span>
+<span class="pc bpc" id="L1204" title="1 of 2 branches missed.">        if ( from == to )</span>
+<span class="nc" id="L1205">            return this;</span>
 
-<span class="fc" id="L1101">        T[] toBeSet = (T[]) Array.newInstance(type(), to - from);</span>
-<span class="fc bfc" id="L1102" title="All 2 branches covered.">        for ( int i = from; i &lt; to; i++ ) {</span>
-<span class="fc" id="L1103">            toBeSet[i - from] = value;</span>
+<span class="fc" id="L1207">        T[] toBeSet = (T[]) Array.newInstance(type(), to - from);</span>
+<span class="fc bfc" id="L1208" title="All 2 branches covered.">        for ( int i = from; i &lt; to; i++ ) {</span>
+<span class="fc" id="L1209">            toBeSet[i - from] = value;</span>
         }
 
-<span class="fc" id="L1106">        return setAllAt( from, toBeSet );</span>
+<span class="fc" id="L1212">        return setAllAt( from, toBeSet );</span>
     }
 
     /**
@@ -1122,20 +1228,20 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @throws IllegalArgumentException  if the tuple allows {@code null} and the property does not allow {@code null}.
      */
     default Tuple&lt;T&gt; maybeSetRange( int from, int to, Maybe&lt;T&gt; maybeItem )  {
-<span class="fc bfc" id="L1125" title="All 6 branches covered.">        if ( from &lt; 0 || to &gt; size() || from &gt; to )</span>
-<span class="fc" id="L1126">            throw new IndexOutOfBoundsException(&quot;From: &quot; + from + &quot;, To: &quot; + to + &quot;, Size: &quot; + size());</span>
+<span class="fc bfc" id="L1231" title="All 6 branches covered.">        if ( from &lt; 0 || to &gt; size() || from &gt; to )</span>
+<span class="fc" id="L1232">            throw new IndexOutOfBoundsException(&quot;From: &quot; + from + &quot;, To: &quot; + to + &quot;, Size: &quot; + size());</span>
 
-<span class="pc bpc" id="L1128" title="1 of 2 branches missed.">        if ( from == to )</span>
-<span class="nc" id="L1129">            return this;</span>
+<span class="pc bpc" id="L1234" title="1 of 2 branches missed.">        if ( from == to )</span>
+<span class="nc" id="L1235">            return this;</span>
 
-<span class="pc bpc" id="L1131" title="1 of 4 branches missed.">        if ( !allowsNull() &amp;&amp; maybeItem.isEmpty() )</span>
-<span class="fc" id="L1132">            return this;</span>
+<span class="pc bpc" id="L1237" title="1 of 4 branches missed.">        if ( !allowsNull() &amp;&amp; maybeItem.isEmpty() )</span>
+<span class="fc" id="L1238">            return this;</span>
 
-<span class="fc" id="L1134">        Maybe&lt;T&gt;[] items = new Maybe[to - from];</span>
-<span class="fc" id="L1135">        Arrays.fill(items, maybeItem);</span>
+<span class="fc" id="L1240">        Maybe&lt;T&gt;[] items = new Maybe[to - from];</span>
+<span class="fc" id="L1241">        Arrays.fill(items, maybeItem);</span>
 
-<span class="pc bpc" id="L1137" title="1 of 2 branches missed.">        Tuple&lt;T&gt; toBeSet = (Tuple&lt;T&gt;) (allowsNull() ? Tuple.ofNullable(type(), items) : Tuple.of(type(), items));</span>
-<span class="fc" id="L1138">        return setAllAt(from, toBeSet);</span>
+<span class="pc bpc" id="L1243" title="1 of 2 branches missed.">        Tuple&lt;T&gt; toBeSet = (Tuple&lt;T&gt;) (allowsNull() ? Tuple.ofNullable(type(), items) : Tuple.of(type(), items));</span>
+<span class="fc" id="L1244">        return setAllAt(from, toBeSet);</span>
     }
 
     /**
@@ -1148,7 +1254,7 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      */
     @SuppressWarnings(&quot;unchecked&quot;)
     default Tuple&lt;T&gt; addAll( T... items ) {
-<span class="fc bfc" id="L1151" title="All 2 branches covered.">        return addAll( allowsNull() ? Tuple.ofNullable(type(), items) : Tuple.of(type(), items) );</span>
+<span class="fc bfc" id="L1257" title="All 2 branches covered.">        return addAll( allowsNull() ? Tuple.ofNullable(type(), items) : Tuple.of(type(), items) );</span>
     }
 
     /**
@@ -1163,16 +1269,16 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @throws NullPointerException if the {@code items} is {@code null}.
      */
     default Tuple&lt;T&gt; maybeAddAll( Maybe&lt;T&gt;... items ) {
-<span class="fc" id="L1166">        Objects.requireNonNull(items);</span>
-<span class="pc bpc" id="L1167" title="1 of 2 branches missed.">        if ( !allowsNull() ) {</span>
-<span class="fc" id="L1168">            List&lt;Maybe&lt;T&gt;&gt; onlyPresent = new ArrayList&lt;&gt;();</span>
-<span class="fc bfc" id="L1169" title="All 2 branches covered.">            for ( Maybe&lt;T&gt; item : items ) {</span>
-<span class="fc bfc" id="L1170" title="All 2 branches covered.">                if ( item.isPresent() )</span>
-<span class="fc" id="L1171">                    onlyPresent.add(item);</span>
+<span class="fc" id="L1272">        Objects.requireNonNull(items);</span>
+<span class="pc bpc" id="L1273" title="1 of 2 branches missed.">        if ( !allowsNull() ) {</span>
+<span class="fc" id="L1274">            List&lt;Maybe&lt;T&gt;&gt; onlyPresent = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L1275" title="All 2 branches covered.">            for ( Maybe&lt;T&gt; item : items ) {</span>
+<span class="fc bfc" id="L1276" title="All 2 branches covered.">                if ( item.isPresent() )</span>
+<span class="fc" id="L1277">                    onlyPresent.add(item);</span>
             }
-<span class="fc" id="L1173">            items = onlyPresent.toArray(new Maybe[0]);</span>
+<span class="fc" id="L1279">            items = onlyPresent.toArray(new Maybe[0]);</span>
         }
-<span class="pc bpc" id="L1175" title="1 of 2 branches missed.">        return addAll( allowsNull() ? Tuple.ofNullable(type(), items) : Tuple.of(type(), items) );</span>
+<span class="pc bpc" id="L1281" title="1 of 2 branches missed.">        return addAll( allowsNull() ? Tuple.ofNullable(type(), items) : Tuple.of(type(), items) );</span>
     }
 
     /**
@@ -1185,8 +1291,8 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @throws NullPointerException if {@code null} is not allowed and one of the {@code items} is {@code null}.
      */
     default Tuple&lt;T&gt; addAll( Iterable&lt;T&gt; items ) {
-<span class="fc" id="L1188">        Objects.requireNonNull(items);</span>
-<span class="pc bpc" id="L1189" title="1 of 2 branches missed.">        return addAll( allowsNull() ? Tuple.ofNullable(type(), items) : Tuple.of(type(), items) );</span>
+<span class="fc" id="L1294">        Objects.requireNonNull(items);</span>
+<span class="pc bpc" id="L1295" title="1 of 2 branches missed.">        return addAll( allowsNull() ? Tuple.ofNullable(type(), items) : Tuple.of(type(), items) );</span>
     }
 
     /**
@@ -1202,7 +1308,7 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      *                                  property does not allow {@code null}.
      */
     default Tuple&lt;T&gt; addAll( Tuple&lt;T&gt; tuple ) {
-<span class="fc" id="L1205">        return addAllAt(size(), tuple);</span>
+<span class="fc" id="L1311">        return addAllAt(size(), tuple);</span>
     }
 
     /**
@@ -1216,7 +1322,7 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      */
     @SuppressWarnings(&quot;unchecked&quot;)
     default Tuple&lt;T&gt; addAllAt( int index, T... items ) {
-<span class="pc bpc" id="L1219" title="1 of 2 branches missed.">        return addAllAt( index, allowsNull() ? Tuple.ofNullable(type(), items) : Tuple.of(type(), items) );</span>
+<span class="pc bpc" id="L1325" title="1 of 2 branches missed.">        return addAllAt( index, allowsNull() ? Tuple.ofNullable(type(), items) : Tuple.of(type(), items) );</span>
     }
 
     /**
@@ -1232,18 +1338,18 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @throws NullPointerException if the {@code items} is {@code null}.
      */
     default Tuple&lt;T&gt; maybeAddAllAt( int index, Maybe&lt;T&gt;... items ) {
-<span class="fc" id="L1235">        Objects.requireNonNull(items);</span>
-<span class="fc bfc" id="L1236" title="All 4 branches covered.">        if ( index &lt; 0 || index &gt; size() )</span>
-<span class="fc" id="L1237">            throw new IndexOutOfBoundsException(&quot;Index: &quot; + index + &quot;, Size: &quot; + size());</span>
-<span class="pc bpc" id="L1238" title="1 of 2 branches missed.">        if ( !allowsNull() ) {</span>
-<span class="fc" id="L1239">            List&lt;Maybe&lt;T&gt;&gt; onlyPresent = new ArrayList&lt;&gt;();</span>
-<span class="fc bfc" id="L1240" title="All 2 branches covered.">            for ( Maybe&lt;T&gt; item : items ) {</span>
-<span class="fc bfc" id="L1241" title="All 2 branches covered.">                if ( item.isPresent() )</span>
-<span class="fc" id="L1242">                    onlyPresent.add(item);</span>
+<span class="fc" id="L1341">        Objects.requireNonNull(items);</span>
+<span class="fc bfc" id="L1342" title="All 4 branches covered.">        if ( index &lt; 0 || index &gt; size() )</span>
+<span class="fc" id="L1343">            throw new IndexOutOfBoundsException(&quot;Index: &quot; + index + &quot;, Size: &quot; + size());</span>
+<span class="pc bpc" id="L1344" title="1 of 2 branches missed.">        if ( !allowsNull() ) {</span>
+<span class="fc" id="L1345">            List&lt;Maybe&lt;T&gt;&gt; onlyPresent = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L1346" title="All 2 branches covered.">            for ( Maybe&lt;T&gt; item : items ) {</span>
+<span class="fc bfc" id="L1347" title="All 2 branches covered.">                if ( item.isPresent() )</span>
+<span class="fc" id="L1348">                    onlyPresent.add(item);</span>
             }
-<span class="fc" id="L1244">            items = onlyPresent.toArray(new Maybe[0]);</span>
+<span class="fc" id="L1350">            items = onlyPresent.toArray(new Maybe[0]);</span>
         }
-<span class="pc bpc" id="L1246" title="1 of 2 branches missed.">        return addAllAt(index, allowsNull() ? Tuple.ofNullable(type(), items) : Tuple.of(type(), items));</span>
+<span class="pc bpc" id="L1352" title="1 of 2 branches missed.">        return addAllAt(index, allowsNull() ? Tuple.ofNullable(type(), items) : Tuple.of(type(), items));</span>
     }
 
     /**
@@ -1256,7 +1362,7 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @throws NullPointerException if {@code null} is not allowed and one of the {@code items} is {@code null}.
      */
     default Tuple&lt;T&gt; addAllAt( int index, Iterable&lt;T&gt; items ) {
-<span class="pc bpc" id="L1259" title="1 of 2 branches missed.">        return addAllAt(index, allowsNull() ? Tuple.ofNullable(type(), items) : Tuple.of(type(), items));</span>
+<span class="pc bpc" id="L1365" title="1 of 2 branches missed.">        return addAllAt(index, allowsNull() ? Tuple.ofNullable(type(), items) : Tuple.of(type(), items));</span>
     }
 
     /**
@@ -1286,7 +1392,7 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      */
     @SuppressWarnings(&quot;unchecked&quot;)
     default Tuple&lt;T&gt; setAllAt( int index, T... items ) {
-<span class="pc bpc" id="L1289" title="1 of 2 branches missed.">        return setAllAt(index, allowsNull() ? Tuple.ofNullable(type(), items) : Tuple.of(type(), items));</span>
+<span class="pc bpc" id="L1395" title="1 of 2 branches missed.">        return setAllAt(index, allowsNull() ? Tuple.ofNullable(type(), items) : Tuple.of(type(), items));</span>
     }
 
     /**
@@ -1303,18 +1409,18 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @throws NullPointerException if the {@code items} is {@code null}.
      */
     default Tuple&lt;T&gt; maybeSetAllAt( int index, Maybe&lt;T&gt;... items ) {
-<span class="fc" id="L1306">        Objects.requireNonNull(items);</span>
-<span class="fc bfc" id="L1307" title="All 4 branches covered.">        if ( index &lt; 0 || index &gt;= size() )</span>
-<span class="fc" id="L1308">            throw new IndexOutOfBoundsException(&quot;Index: &quot; + index + &quot;, Size: &quot; + size());</span>
-<span class="pc bpc" id="L1309" title="1 of 2 branches missed.">        if ( !allowsNull() ) {</span>
-<span class="fc" id="L1310">            List&lt;Maybe&lt;T&gt;&gt; onlyPresent = new ArrayList&lt;&gt;();</span>
-<span class="fc bfc" id="L1311" title="All 2 branches covered.">            for ( Maybe&lt;T&gt; item : items ) {</span>
-<span class="fc bfc" id="L1312" title="All 2 branches covered.">                if ( item.isPresent() )</span>
-<span class="fc" id="L1313">                    onlyPresent.add(item);</span>
+<span class="fc" id="L1412">        Objects.requireNonNull(items);</span>
+<span class="fc bfc" id="L1413" title="All 4 branches covered.">        if ( index &lt; 0 || index &gt;= size() )</span>
+<span class="fc" id="L1414">            throw new IndexOutOfBoundsException(&quot;Index: &quot; + index + &quot;, Size: &quot; + size());</span>
+<span class="pc bpc" id="L1415" title="1 of 2 branches missed.">        if ( !allowsNull() ) {</span>
+<span class="fc" id="L1416">            List&lt;Maybe&lt;T&gt;&gt; onlyPresent = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L1417" title="All 2 branches covered.">            for ( Maybe&lt;T&gt; item : items ) {</span>
+<span class="fc bfc" id="L1418" title="All 2 branches covered.">                if ( item.isPresent() )</span>
+<span class="fc" id="L1419">                    onlyPresent.add(item);</span>
             }
-<span class="fc" id="L1315">            items = onlyPresent.toArray(new Maybe[0]);</span>
+<span class="fc" id="L1421">            items = onlyPresent.toArray(new Maybe[0]);</span>
         }
-<span class="pc bpc" id="L1317" title="1 of 2 branches missed.">        return setAllAt(index, allowsNull() ? Tuple.ofNullable(type(), items) : Tuple.of(type(), items));</span>
+<span class="pc bpc" id="L1423" title="1 of 2 branches missed.">        return setAllAt(index, allowsNull() ? Tuple.ofNullable(type(), items) : Tuple.of(type(), items));</span>
     }
 
     /**
@@ -1330,7 +1436,7 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      *                                  size of this {@code Vec} object.
      */
     default Tuple&lt;T&gt; setAllAt( int index, Iterable&lt;T&gt; items ) {
-<span class="pc bpc" id="L1333" title="1 of 2 branches missed.">        return setAllAt(index, allowsNull() ? Tuple.ofNullable(type(), items) : Tuple.of(type(), items));</span>
+<span class="pc bpc" id="L1439" title="1 of 2 branches missed.">        return setAllAt(index, allowsNull() ? Tuple.ofNullable(type(), items) : Tuple.of(type(), items));</span>
     }
 
     /**
@@ -1362,7 +1468,7 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @return A new tuple of items with the desired change.
      */
     default Tuple&lt;T&gt; retainAll( Iterable&lt;T&gt; items ) {
-<span class="pc bpc" id="L1365" title="1 of 2 branches missed.">        return retainAll( allowsNull() ? Tuple.ofNullable(type(), items) : Tuple.of(type(), items) );</span>
+<span class="pc bpc" id="L1471" title="1 of 2 branches missed.">        return retainAll( allowsNull() ? Tuple.ofNullable(type(), items) : Tuple.of(type(), items) );</span>
     }
 
     /**
@@ -1372,7 +1478,7 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @return A new tuple of items with the desired change.
      */
     default Tuple&lt;T&gt; retainAll( T... items ) {
-<span class="pc bpc" id="L1375" title="1 of 2 branches missed.">        return retainAll( allowsNull() ? Tuple.ofNullable(type(), items) : Tuple.of(type(), items) );</span>
+<span class="pc bpc" id="L1481" title="1 of 2 branches missed.">        return retainAll( allowsNull() ? Tuple.ofNullable(type(), items) : Tuple.of(type(), items) );</span>
     }
 
     /**
@@ -1420,24 +1526,24 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @return An immutable {@link List} of items in this {@link Tuple} instance.
      */
     default List&lt;T&gt; toList() {
-<span class="fc" id="L1423">        return new AbstractList&lt;T&gt;() {</span>
+<span class="fc" id="L1529">        return new AbstractList&lt;T&gt;() {</span>
             @Override
             public T get( int index ) {
-<span class="nc" id="L1426">                return Tuple.this.get(index);</span>
+<span class="nc" id="L1532">                return Tuple.this.get(index);</span>
             }
             @Override
             public int size() {
-<span class="fc" id="L1430">                return Tuple.this.size();</span>
+<span class="fc" id="L1536">                return Tuple.this.size();</span>
             }
             @Override
             public Iterator&lt;T&gt; iterator() {
-<span class="fc" id="L1434">                return Tuple.this.iterator();</span>
+<span class="fc" id="L1540">                return Tuple.this.iterator();</span>
             }
             @Override
             public boolean contains( @Nullable Object o ) {
-<span class="nc bnc" id="L1438" title="All 4 branches missed.">                if ( o != null &amp;&amp; !type().isAssignableFrom(o.getClass()) )</span>
-<span class="nc" id="L1439">                    return false;</span>
-<span class="nc" id="L1440">                return Tuple.this.contains(type().cast(o));</span>
+<span class="nc bnc" id="L1544" title="All 4 branches missed.">                if ( o != null &amp;&amp; !type().isAssignableFrom(o.getClass()) )</span>
+<span class="nc" id="L1545">                    return false;</span>
+<span class="nc" id="L1546">                return Tuple.this.contains(type().cast(o));</span>
             }
         };
     }
@@ -1450,7 +1556,7 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @return An immutable {@link Set} of items in this {@link Tuple} instance.
      */
     default Set&lt;T&gt; toSet() {
-<span class="fc" id="L1453">        return Collections.unmodifiableSet(stream().collect(Collectors.toSet()));</span>
+<span class="fc" id="L1559">        return Collections.unmodifiableSet(stream().collect(Collectors.toSet()));</span>
     }
 
     /**
@@ -1461,7 +1567,7 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @return An immutable {@link ValueSet} of items in this {@link Tuple} instance.
      */
     default ValueSet&lt;T&gt; toValueSet() {
-<span class="fc" id="L1464">        return ValueSet.of(this);</span>
+<span class="fc" id="L1570">        return ValueSet.of(this);</span>
     }
 
     /**
@@ -1470,7 +1576,7 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @return An array of items in this {@link Tuple} instance.
      */
     default T[] toArray() {
-<span class="fc" id="L1473">        return stream().toArray(size -&gt; (T[]) Array.newInstance(type(), size));</span>
+<span class="fc" id="L1579">        return stream().toArray(size -&gt; (T[]) Array.newInstance(type(), size));</span>
     }
 
     /**
@@ -1481,7 +1587,7 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @return A stream of the items in this tuple of items.
      */
     default Stream&lt;T&gt; stream() {
-<span class="fc" id="L1484">        return StreamSupport.stream(spliterator(), false);</span>
+<span class="fc" id="L1590">        return StreamSupport.stream(spliterator(), false);</span>
     }
 
     /**
@@ -1491,7 +1597,7 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      * @return A parallel stream of the items in this tuple of items.
      */
     default Stream&lt;T&gt; parallelStream() {
-<span class="fc" id="L1494">        return StreamSupport.stream(spliterator(), true);</span>
+<span class="fc" id="L1600">        return StreamSupport.stream(spliterator(), true);</span>
     }
 
     /**
@@ -1511,12 +1617,12 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
      */
     default Tuple&lt;T&gt; sort() {
         // First we have to check if the type is comparable:
-<span class="pc bpc" id="L1514" title="1 of 2 branches missed.">        if (Comparable.class.isAssignableFrom(type())) {</span>
+<span class="pc bpc" id="L1620" title="1 of 2 branches missed.">        if (Comparable.class.isAssignableFrom(type())) {</span>
             @SuppressWarnings(&quot;unchecked&quot;)
-<span class="fc" id="L1516">            Comparator&lt;T&gt; comparator = (Comparator&lt;T&gt;) Comparator.naturalOrder();</span>
-<span class="fc" id="L1517">            return sort(comparator);</span>
+<span class="fc" id="L1622">            Comparator&lt;T&gt; comparator = (Comparator&lt;T&gt;) Comparator.naturalOrder();</span>
+<span class="fc" id="L1623">            return sort(comparator);</span>
         } else {
-<span class="nc" id="L1519">            throw new UnsupportedOperationException(&quot;Cannot sort an immutable tuple of non-comparable types.&quot;);</span>
+<span class="nc" id="L1625">            throw new UnsupportedOperationException(&quot;Cannot sort an immutable tuple of non-comparable types.&quot;);</span>
         }
     }
 
@@ -1538,21 +1644,77 @@ public interface Tuple&lt;T extends @Nullable Object&gt; extends Iterable&lt;T&g
 
     @Override
     default Iterator&lt;T&gt; iterator() {
-<span class="nc" id="L1541">        return new Iterator&lt;T&gt;() {</span>
-<span class="nc" id="L1542">            private final int _size = size();</span>
-<span class="nc" id="L1543">            private int _index = 0;</span>
+<span class="nc" id="L1647">        return new Iterator&lt;T&gt;() {</span>
+<span class="nc" id="L1648">            private final int _size = size();</span>
+<span class="nc" id="L1649">            private int _index = 0;</span>
 
             @Override
             public boolean hasNext() {
-<span class="nc bnc" id="L1547" title="All 2 branches missed.">                return _index &lt; _size;</span>
+<span class="nc bnc" id="L1653" title="All 2 branches missed.">                return _index &lt; _size;</span>
             }
 
             @Override
             public T next() {
-<span class="nc" id="L1552">                return get(_index++);</span>
+<span class="nc" id="L1658">                return get(_index++);</span>
             }
         };
     }
+
+    /**
+     * Joins all items in this tuple into a single string using the specified delimiter.
+     * Each item is converted to a string using {@link String#valueOf(Object)}.&lt;br&gt;
+     * &lt;br&gt;
+     * &lt;b&gt;Example:&lt;/b&gt;
+     * &lt;pre&gt;{@code
+     * Tuple&lt;String&gt; tuple = Tuple.of(String.class, &quot;a&quot;, &quot;b&quot;, &quot;c&quot;);
+     * String result = tuple.join(&quot;, &quot;); // Returns &quot;a, b, c&quot;
+     *
+     * Tuple&lt;Integer&gt; numbers = Tuple.of(Integer.class, 1, 2, 3);
+     * String numbered = numbers.join(&quot;-&quot;); // Returns &quot;1-2-3&quot;
+     * }&lt;/pre&gt;&lt;br&gt;
+     *
+     * &lt;b&gt;Null handling:&lt;/b&gt;
+     * &lt;ul&gt;
+     *   &lt;li&gt;If this tuple contains null items and allows null values ({@link #allowsNull()} returns {@code true}),
+     *       the string &quot;null&quot; will be used for null items.&lt;/li&gt;
+     *   &lt;li&gt;If the tuple is empty, an empty string is returned.&lt;/li&gt;
+     * &lt;/ul&gt;
+     *
+     * @param delimiter the delimiter to place between each item in the resulting string
+     * @return a string containing all tuple items joined by the delimiter
+     * @throws NullPointerException if the {@code delimiter} is {@code null}
+     */
+    default String join( String delimiter ) {
+<span class="fc" id="L1688">        Objects.requireNonNull(delimiter);</span>
+<span class="fc" id="L1689">        return this.stream().map(String::valueOf).collect(Collectors.joining(delimiter));</span>
+    }
+
+    /**
+     * Compares the specified object with this tuple for value equality.
+     * Returns {@code true} only if the specified object is also a tuple with the same {@link #size()}, {@link #type()},
+     * and where every member of the specified tuple is contained in this tuple &lt;b&gt;in the exact same order&lt;/b&gt;.
+     * This definition ensures that the equals method works properly across different
+     * implementations of the tuple interface.
+     *
+     * @param o object to be compared for equality with this tuple
+     * @return {@code true} if the specified object is equal to this tuple in terms of value semantic.
+     */
+    @Override
+    boolean equals( Object o );
+
+    /**
+     * Returns the hash code value for this tuple. The hash code of a tuple is sensitive
+     * to both what items exist in the tuple &lt;b&gt;and in which order they are stored.&lt;/b&gt;
+     * This ensures that {@code t1.equals(t2)} implies that
+     * {@code t1.hashCode()==t2.hashCode()} for any two tuples {@code t1}
+     * and {@code t2}, as required by the general contract of {@link Object#hashCode}.
+     *
+     * @return The hash code value for this tuple as a 32-bit integer,
+     *         based on the sum of the hash codes of all elements in this tuple.
+     * @see Object#equals(Object)
+     */
+    @Override
+    int hashCode();
 
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

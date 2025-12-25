@@ -4,7 +4,7 @@
   "narrative":"ValueSet is a fundamental building block in sprouts' data-oriented programming model.\n    It represents an immutable collection of unique elements, providing an API focused on\n    deriving new sets from existing ones rather than mutating state. Unlike traditional\n    Java sets, all operations return new `ValueSet` instances, making it ideal for\n    functional-style programming and safe concurrent usage.",
   "subjects":["sprouts.ValueSet"],
   "statistics":{
-    "runs":"97",
+    "runs":"132",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -2468,6 +2468,675 @@
         {"kind":"then","text":"","code":["modifiedSet1.size() == modifiedSet2.size()","modifiedSet1 != modifiedSet2"]},
 
         {"kind":"where","text":"We use the following entry data source:","code":{"type":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"entries":["(0..24).collect(it -> it as Long).toList()","(0..24).collect(it -> it as Short).toList()","(0..24).collect(it -> it).toList()","(0..24).collect(it -> String.valueOf(it)).toList()","(0..128).collect(it -> it as Long).toList()","(0..128).collect(it -> it as Short).toList()","(0..128).collect(it -> it).toList()","(0..128).collect(it -> String.valueOf(it)).toList()","(0..1_000).collect(it -> it as Long).toList()","(0..1_000).collect(it -> it as Short).toList()","(0..1_000).collect(it -> it).toList()","(0..1_000).collect(it -> String.valueOf(it)).toList()","(0..10_000).collect(it -> it as Long).toList()","(0..10_000).collect(it -> it as Short).toList()","(0..10_000).collect(it -> it).toList()","(0..10_000).collect(it -> String.valueOf(it)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `removeIf(Class)` method filters out items of the specified type while preserving the value set characteristics.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `removeIf(Class)` method creates a new value set containing only items that are NOT \n            instances of the specified type. This is useful for filtering out specific types from \n            a heterogeneous value set.\n\n            Important behavior:\n            - The returned value set has the same ordering characteristics (linked/sorted) as the original\n            - Items that are instances of the specified type (including subclasses) are removed\n            - The element type of the returned value set remains the same as the original\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A value set with mixed types","code":["var mixed = ValueSet.of(Object).addAll(\"hello\", 42, \"world\", 3.14, \"!\", 100, \"test\")"]},
+
+        {"kind":"when","text":"We remove all String instances","code":["var withoutStrings = mixed.removeIf(String)"]},
+
+        {"kind":"then","text":"Only non-String items remain","code":["withoutStrings == ValueSet.of(Object).addAll(42, 3.14, 100)","withoutStrings.type() == Object","!withoutStrings.isLinked()","!withoutStrings.isSorted()"]},
+
+        {"kind":"when","text":"We remove all Integer instances","code":["var withoutIntegers = mixed.removeIf(Integer)"]},
+
+        {"kind":"then","text":"Only non-Integer items remain","code":["withoutIntegers == ValueSet.of(Object).addAll(\"hello\", \"world\", 3.14, \"!\", \"test\")","withoutIntegers.type() == Object"]},
+
+        {"kind":"when","text":"We remove all Number instances (including Integer and Double)","code":["var withoutNumbers = mixed.removeIf(Number)"]},
+
+        {"kind":"then","text":"Only non-Number items remain","code":["withoutNumbers == ValueSet.of(Object).addAll(\"hello\", \"world\", \"!\", \"test\")","withoutNumbers.type() == Object"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `retainIf(Class)` method keeps only items of the specified type and returns a properly typed value set.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `retainIf(Class)` method creates a new value set containing only items that ARE \n            instances of the specified type. This is useful for extracting specific types from \n            a heterogeneous value set.\n\n            Important behavior:\n            - Only items that are instances of the specified type (including subclasses) are retained\n            - The returned value set is properly typed as ValueSet<V> where V is the specified type\n            - The ordering characteristics (linked/sorted) are preserved in the result\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A value set with mixed types","code":["var mixed = ValueSet.of(Object).addAll(\"hello\", 42, \"world\", 3.14, \"!\", 100, \"test\")"]},
+
+        {"kind":"when","text":"We retain only String instances","code":["var onlyStrings = mixed.retainIf(String)"]},
+
+        {"kind":"then","text":"Only String items remain and result is properly typed","code":["onlyStrings == ValueSet.of(\"hello\", \"world\", \"!\", \"test\")","onlyStrings.type() == String","!onlyStrings.isLinked()","!onlyStrings.isSorted()"]},
+
+        {"kind":"when","text":"We retain only Integer instances","code":["var onlyIntegers = mixed.retainIf(Integer)"]},
+
+        {"kind":"then","text":"Only Integer items remain and result is properly typed","code":["onlyIntegers == ValueSet.of(42, 100)","onlyIntegers.type() == Integer"]},
+
+        {"kind":"when","text":"We retain only Number instances (including both Integer and Double)","code":["var onlyNumbers = mixed.retainIf(Number)"]},
+
+        {"kind":"then","text":"All Number items remain and result is properly typed","code":["onlyNumbers == ValueSet.of(Number).addAll(42, 3.14, 100)","onlyNumbers.type() == Number"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `removeIf(Class)` method efficiently filters large heterogeneous collections while preserving set characteristics. [0]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `removeIf(Class)` method should efficiently handle large collections while \n            maintaining the original value set's characteristics. This test verifies that:\n\n            - Large datasets are processed correctly\n            - The operation maintains performance characteristics\n            - The result has the same ordering characteristics as the input\n\n            This is particularly important for data processing pipelines where value sets \n            might contain thousands of heterogeneous elements.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A value set with a large collection of mixed-type items","code":["var valueSet = ValueSet.of(baseType).addAll(items)"]},
+
+        {"kind":"when","text":"We remove all instances of the specified type","code":["var result = valueSet.removeIf(typeToRemove)"]},
+
+        {"kind":"then","text":"The result contains only non-matching items with preserved characteristics","code":["result == expected","result.type() == baseType","result.isLinked() == valueSet.isLinked()","result.isSorted() == valueSet.isSorted()"]},
+
+        {"kind":"where","text":"","code":{"baseType":["Object","Object","Object","Object","Object","Number","Number","Integer"],"items":["generateMixedTypeList(100)","generateMixedTypeList(500)","generateMixedTypeList(1000)","[\"text\", 42, 3.14, \"more\", 100]","[\"keep\", 100, \"remove\", 200, \"also remove\"]","[1, 2.5, 3, 4.7, 5]","[1, 2.5, 3, 4.7, 5]","[1, 2, 3, 4, 5, 6, 7]"],"typeToRemove":["String","Integer","Number","String","String","Integer","Number","Integer"],"expected":["ValueSet.of(Object).addAll(generateMixedTypeList(100).findAll { !(it instanceof String) }.toSet())","ValueSet.of(Object).addAll(generateMixedTypeList(500).findAll { !(it instanceof Integer) }.toSet())","ValueSet.of(Object).addAll(generateMixedTypeList(1000).findAll { !(it instanceof Number) }.toSet())","ValueSet.of(Object).addAll(42, 3.14, 100)","ValueSet.of(Object).addAll(100, 200)","ValueSet.of(Number).addAll(2.5, 4.7)","ValueSet.of(Number)","ValueSet.of(Integer)"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `removeIf(Class)` method efficiently filters large heterogeneous collections while preserving set characteristics. [1]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `removeIf(Class)` method should efficiently handle large collections while \n            maintaining the original value set's characteristics. This test verifies that:\n\n            - Large datasets are processed correctly\n            - The operation maintains performance characteristics\n            - The result has the same ordering characteristics as the input\n\n            This is particularly important for data processing pipelines where value sets \n            might contain thousands of heterogeneous elements.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A value set with a large collection of mixed-type items","code":["var valueSet = ValueSet.of(baseType).addAll(items)"]},
+
+        {"kind":"when","text":"We remove all instances of the specified type","code":["var result = valueSet.removeIf(typeToRemove)"]},
+
+        {"kind":"then","text":"The result contains only non-matching items with preserved characteristics","code":["result == expected","result.type() == baseType","result.isLinked() == valueSet.isLinked()","result.isSorted() == valueSet.isSorted()"]},
+
+        {"kind":"where","text":"","code":{"baseType":["Object","Object","Object","Object","Object","Number","Number","Integer"],"items":["generateMixedTypeList(100)","generateMixedTypeList(500)","generateMixedTypeList(1000)","[\"text\", 42, 3.14, \"more\", 100]","[\"keep\", 100, \"remove\", 200, \"also remove\"]","[1, 2.5, 3, 4.7, 5]","[1, 2.5, 3, 4.7, 5]","[1, 2, 3, 4, 5, 6, 7]"],"typeToRemove":["String","Integer","Number","String","String","Integer","Number","Integer"],"expected":["ValueSet.of(Object).addAll(generateMixedTypeList(100).findAll { !(it instanceof String) }.toSet())","ValueSet.of(Object).addAll(generateMixedTypeList(500).findAll { !(it instanceof Integer) }.toSet())","ValueSet.of(Object).addAll(generateMixedTypeList(1000).findAll { !(it instanceof Number) }.toSet())","ValueSet.of(Object).addAll(42, 3.14, 100)","ValueSet.of(Object).addAll(100, 200)","ValueSet.of(Number).addAll(2.5, 4.7)","ValueSet.of(Number)","ValueSet.of(Integer)"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `removeIf(Class)` method efficiently filters large heterogeneous collections while preserving set characteristics. [2]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `removeIf(Class)` method should efficiently handle large collections while \n            maintaining the original value set's characteristics. This test verifies that:\n\n            - Large datasets are processed correctly\n            - The operation maintains performance characteristics\n            - The result has the same ordering characteristics as the input\n\n            This is particularly important for data processing pipelines where value sets \n            might contain thousands of heterogeneous elements.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A value set with a large collection of mixed-type items","code":["var valueSet = ValueSet.of(baseType).addAll(items)"]},
+
+        {"kind":"when","text":"We remove all instances of the specified type","code":["var result = valueSet.removeIf(typeToRemove)"]},
+
+        {"kind":"then","text":"The result contains only non-matching items with preserved characteristics","code":["result == expected","result.type() == baseType","result.isLinked() == valueSet.isLinked()","result.isSorted() == valueSet.isSorted()"]},
+
+        {"kind":"where","text":"","code":{"baseType":["Object","Object","Object","Object","Object","Number","Number","Integer"],"items":["generateMixedTypeList(100)","generateMixedTypeList(500)","generateMixedTypeList(1000)","[\"text\", 42, 3.14, \"more\", 100]","[\"keep\", 100, \"remove\", 200, \"also remove\"]","[1, 2.5, 3, 4.7, 5]","[1, 2.5, 3, 4.7, 5]","[1, 2, 3, 4, 5, 6, 7]"],"typeToRemove":["String","Integer","Number","String","String","Integer","Number","Integer"],"expected":["ValueSet.of(Object).addAll(generateMixedTypeList(100).findAll { !(it instanceof String) }.toSet())","ValueSet.of(Object).addAll(generateMixedTypeList(500).findAll { !(it instanceof Integer) }.toSet())","ValueSet.of(Object).addAll(generateMixedTypeList(1000).findAll { !(it instanceof Number) }.toSet())","ValueSet.of(Object).addAll(42, 3.14, 100)","ValueSet.of(Object).addAll(100, 200)","ValueSet.of(Number).addAll(2.5, 4.7)","ValueSet.of(Number)","ValueSet.of(Integer)"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `removeIf(Class)` method efficiently filters large heterogeneous collections while preserving set characteristics. [3]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `removeIf(Class)` method should efficiently handle large collections while \n            maintaining the original value set's characteristics. This test verifies that:\n\n            - Large datasets are processed correctly\n            - The operation maintains performance characteristics\n            - The result has the same ordering characteristics as the input\n\n            This is particularly important for data processing pipelines where value sets \n            might contain thousands of heterogeneous elements.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A value set with a large collection of mixed-type items","code":["var valueSet = ValueSet.of(baseType).addAll(items)"]},
+
+        {"kind":"when","text":"We remove all instances of the specified type","code":["var result = valueSet.removeIf(typeToRemove)"]},
+
+        {"kind":"then","text":"The result contains only non-matching items with preserved characteristics","code":["result == expected","result.type() == baseType","result.isLinked() == valueSet.isLinked()","result.isSorted() == valueSet.isSorted()"]},
+
+        {"kind":"where","text":"","code":{"baseType":["Object","Object","Object","Object","Object","Number","Number","Integer"],"items":["generateMixedTypeList(100)","generateMixedTypeList(500)","generateMixedTypeList(1000)","[\"text\", 42, 3.14, \"more\", 100]","[\"keep\", 100, \"remove\", 200, \"also remove\"]","[1, 2.5, 3, 4.7, 5]","[1, 2.5, 3, 4.7, 5]","[1, 2, 3, 4, 5, 6, 7]"],"typeToRemove":["String","Integer","Number","String","String","Integer","Number","Integer"],"expected":["ValueSet.of(Object).addAll(generateMixedTypeList(100).findAll { !(it instanceof String) }.toSet())","ValueSet.of(Object).addAll(generateMixedTypeList(500).findAll { !(it instanceof Integer) }.toSet())","ValueSet.of(Object).addAll(generateMixedTypeList(1000).findAll { !(it instanceof Number) }.toSet())","ValueSet.of(Object).addAll(42, 3.14, 100)","ValueSet.of(Object).addAll(100, 200)","ValueSet.of(Number).addAll(2.5, 4.7)","ValueSet.of(Number)","ValueSet.of(Integer)"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `removeIf(Class)` method efficiently filters large heterogeneous collections while preserving set characteristics. [4]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `removeIf(Class)` method should efficiently handle large collections while \n            maintaining the original value set's characteristics. This test verifies that:\n\n            - Large datasets are processed correctly\n            - The operation maintains performance characteristics\n            - The result has the same ordering characteristics as the input\n\n            This is particularly important for data processing pipelines where value sets \n            might contain thousands of heterogeneous elements.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A value set with a large collection of mixed-type items","code":["var valueSet = ValueSet.of(baseType).addAll(items)"]},
+
+        {"kind":"when","text":"We remove all instances of the specified type","code":["var result = valueSet.removeIf(typeToRemove)"]},
+
+        {"kind":"then","text":"The result contains only non-matching items with preserved characteristics","code":["result == expected","result.type() == baseType","result.isLinked() == valueSet.isLinked()","result.isSorted() == valueSet.isSorted()"]},
+
+        {"kind":"where","text":"","code":{"baseType":["Object","Object","Object","Object","Object","Number","Number","Integer"],"items":["generateMixedTypeList(100)","generateMixedTypeList(500)","generateMixedTypeList(1000)","[\"text\", 42, 3.14, \"more\", 100]","[\"keep\", 100, \"remove\", 200, \"also remove\"]","[1, 2.5, 3, 4.7, 5]","[1, 2.5, 3, 4.7, 5]","[1, 2, 3, 4, 5, 6, 7]"],"typeToRemove":["String","Integer","Number","String","String","Integer","Number","Integer"],"expected":["ValueSet.of(Object).addAll(generateMixedTypeList(100).findAll { !(it instanceof String) }.toSet())","ValueSet.of(Object).addAll(generateMixedTypeList(500).findAll { !(it instanceof Integer) }.toSet())","ValueSet.of(Object).addAll(generateMixedTypeList(1000).findAll { !(it instanceof Number) }.toSet())","ValueSet.of(Object).addAll(42, 3.14, 100)","ValueSet.of(Object).addAll(100, 200)","ValueSet.of(Number).addAll(2.5, 4.7)","ValueSet.of(Number)","ValueSet.of(Integer)"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `removeIf(Class)` method efficiently filters large heterogeneous collections while preserving set characteristics. [5]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `removeIf(Class)` method should efficiently handle large collections while \n            maintaining the original value set's characteristics. This test verifies that:\n\n            - Large datasets are processed correctly\n            - The operation maintains performance characteristics\n            - The result has the same ordering characteristics as the input\n\n            This is particularly important for data processing pipelines where value sets \n            might contain thousands of heterogeneous elements.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A value set with a large collection of mixed-type items","code":["var valueSet = ValueSet.of(baseType).addAll(items)"]},
+
+        {"kind":"when","text":"We remove all instances of the specified type","code":["var result = valueSet.removeIf(typeToRemove)"]},
+
+        {"kind":"then","text":"The result contains only non-matching items with preserved characteristics","code":["result == expected","result.type() == baseType","result.isLinked() == valueSet.isLinked()","result.isSorted() == valueSet.isSorted()"]},
+
+        {"kind":"where","text":"","code":{"baseType":["Object","Object","Object","Object","Object","Number","Number","Integer"],"items":["generateMixedTypeList(100)","generateMixedTypeList(500)","generateMixedTypeList(1000)","[\"text\", 42, 3.14, \"more\", 100]","[\"keep\", 100, \"remove\", 200, \"also remove\"]","[1, 2.5, 3, 4.7, 5]","[1, 2.5, 3, 4.7, 5]","[1, 2, 3, 4, 5, 6, 7]"],"typeToRemove":["String","Integer","Number","String","String","Integer","Number","Integer"],"expected":["ValueSet.of(Object).addAll(generateMixedTypeList(100).findAll { !(it instanceof String) }.toSet())","ValueSet.of(Object).addAll(generateMixedTypeList(500).findAll { !(it instanceof Integer) }.toSet())","ValueSet.of(Object).addAll(generateMixedTypeList(1000).findAll { !(it instanceof Number) }.toSet())","ValueSet.of(Object).addAll(42, 3.14, 100)","ValueSet.of(Object).addAll(100, 200)","ValueSet.of(Number).addAll(2.5, 4.7)","ValueSet.of(Number)","ValueSet.of(Integer)"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `removeIf(Class)` method efficiently filters large heterogeneous collections while preserving set characteristics. [6]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `removeIf(Class)` method should efficiently handle large collections while \n            maintaining the original value set's characteristics. This test verifies that:\n\n            - Large datasets are processed correctly\n            - The operation maintains performance characteristics\n            - The result has the same ordering characteristics as the input\n\n            This is particularly important for data processing pipelines where value sets \n            might contain thousands of heterogeneous elements.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A value set with a large collection of mixed-type items","code":["var valueSet = ValueSet.of(baseType).addAll(items)"]},
+
+        {"kind":"when","text":"We remove all instances of the specified type","code":["var result = valueSet.removeIf(typeToRemove)"]},
+
+        {"kind":"then","text":"The result contains only non-matching items with preserved characteristics","code":["result == expected","result.type() == baseType","result.isLinked() == valueSet.isLinked()","result.isSorted() == valueSet.isSorted()"]},
+
+        {"kind":"where","text":"","code":{"baseType":["Object","Object","Object","Object","Object","Number","Number","Integer"],"items":["generateMixedTypeList(100)","generateMixedTypeList(500)","generateMixedTypeList(1000)","[\"text\", 42, 3.14, \"more\", 100]","[\"keep\", 100, \"remove\", 200, \"also remove\"]","[1, 2.5, 3, 4.7, 5]","[1, 2.5, 3, 4.7, 5]","[1, 2, 3, 4, 5, 6, 7]"],"typeToRemove":["String","Integer","Number","String","String","Integer","Number","Integer"],"expected":["ValueSet.of(Object).addAll(generateMixedTypeList(100).findAll { !(it instanceof String) }.toSet())","ValueSet.of(Object).addAll(generateMixedTypeList(500).findAll { !(it instanceof Integer) }.toSet())","ValueSet.of(Object).addAll(generateMixedTypeList(1000).findAll { !(it instanceof Number) }.toSet())","ValueSet.of(Object).addAll(42, 3.14, 100)","ValueSet.of(Object).addAll(100, 200)","ValueSet.of(Number).addAll(2.5, 4.7)","ValueSet.of(Number)","ValueSet.of(Integer)"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `removeIf(Class)` method efficiently filters large heterogeneous collections while preserving set characteristics. [7]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `removeIf(Class)` method should efficiently handle large collections while \n            maintaining the original value set's characteristics. This test verifies that:\n\n            - Large datasets are processed correctly\n            - The operation maintains performance characteristics\n            - The result has the same ordering characteristics as the input\n\n            This is particularly important for data processing pipelines where value sets \n            might contain thousands of heterogeneous elements.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A value set with a large collection of mixed-type items","code":["var valueSet = ValueSet.of(baseType).addAll(items)"]},
+
+        {"kind":"when","text":"We remove all instances of the specified type","code":["var result = valueSet.removeIf(typeToRemove)"]},
+
+        {"kind":"then","text":"The result contains only non-matching items with preserved characteristics","code":["result == expected","result.type() == baseType","result.isLinked() == valueSet.isLinked()","result.isSorted() == valueSet.isSorted()"]},
+
+        {"kind":"where","text":"","code":{"baseType":["Object","Object","Object","Object","Object","Number","Number","Integer"],"items":["generateMixedTypeList(100)","generateMixedTypeList(500)","generateMixedTypeList(1000)","[\"text\", 42, 3.14, \"more\", 100]","[\"keep\", 100, \"remove\", 200, \"also remove\"]","[1, 2.5, 3, 4.7, 5]","[1, 2.5, 3, 4.7, 5]","[1, 2, 3, 4, 5, 6, 7]"],"typeToRemove":["String","Integer","Number","String","String","Integer","Number","Integer"],"expected":["ValueSet.of(Object).addAll(generateMixedTypeList(100).findAll { !(it instanceof String) }.toSet())","ValueSet.of(Object).addAll(generateMixedTypeList(500).findAll { !(it instanceof Integer) }.toSet())","ValueSet.of(Object).addAll(generateMixedTypeList(1000).findAll { !(it instanceof Number) }.toSet())","ValueSet.of(Object).addAll(42, 3.14, 100)","ValueSet.of(Object).addAll(100, 200)","ValueSet.of(Number).addAll(2.5, 4.7)","ValueSet.of(Number)","ValueSet.of(Integer)"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `retainIf(Class)` method efficiently extracts typed subsets from large heterogeneous collections. [0]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `retainIf(Class)` method should efficiently extract homogeneous subsets \n            from large heterogeneous collections. This test verifies that:\n\n            - Large datasets are processed correctly with proper type filtering\n            - The returned value set is properly typed\n            - Type safety is maintained throughout the operation\n            - Ordering characteristics are preserved when applicable\n\n            This is crucial for type-safe data extraction in data processing scenarios \n            where you need to work with specific subtypes from mixed collections.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A value set with a large collection of mixed-type items","code":["var valueSet = ValueSet.of(baseType, items)"]},
+
+        {"kind":"when","text":"We retain only instances of the specified type","code":["var result = valueSet.retainIf(typeToRetain)"]},
+
+        {"kind":"then","text":"The result contains only matching items and is properly typed","code":["result == expected","result.type() == typeToRetain"]},
+
+        {"kind":"where","text":"","code":{"baseType":["Object","Object","Object","Object","Object","Object","Number","Number","Integer"],"items":["generateMixedTypeList(100)","generateMixedTypeList(500)","generateMixedTypeList(1000)","[\"text\", 42, 3.14, \"more text\", 100]","[\"keep\", 100, \"also keep\", 200, \"and this\"]","[1, \"text\", 2.5, \"more\", 3, 4.7]","[1, 2.5, 3, 4.7, 5]","[1, 2.5, 3, 4.7, 5]","[1, 2, 3, 4, 5, 6, 7]"],"typeToRetain":["String","Integer","Number","String","String","Number","Integer","Number","Integer"],"expected":["ValueSet.of(String).addAll(generateMixedTypeList(100).findAll { it instanceof String }.toSet())","ValueSet.of(Integer).addAll(generateMixedTypeList(500).findAll { it instanceof Integer }.toSet())","ValueSet.of(Number).addAll(generateMixedTypeList(1000).findAll { it instanceof Number }.toSet())","ValueSet.of(\"text\", \"more text\")","ValueSet.of(\"keep\", \"also keep\", \"and this\")","ValueSet.of(Number).addAll(1, 2.5, 3, 4.7)","ValueSet.of(Integer).addAll(1, 3, 5)","ValueSet.of(Number).addAll(1, 2.5, 3, 4.7, 5)","ValueSet.of(Integer).addAll(1, 2, 3, 4, 5, 6, 7)"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `retainIf(Class)` method efficiently extracts typed subsets from large heterogeneous collections. [1]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `retainIf(Class)` method should efficiently extract homogeneous subsets \n            from large heterogeneous collections. This test verifies that:\n\n            - Large datasets are processed correctly with proper type filtering\n            - The returned value set is properly typed\n            - Type safety is maintained throughout the operation\n            - Ordering characteristics are preserved when applicable\n\n            This is crucial for type-safe data extraction in data processing scenarios \n            where you need to work with specific subtypes from mixed collections.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A value set with a large collection of mixed-type items","code":["var valueSet = ValueSet.of(baseType, items)"]},
+
+        {"kind":"when","text":"We retain only instances of the specified type","code":["var result = valueSet.retainIf(typeToRetain)"]},
+
+        {"kind":"then","text":"The result contains only matching items and is properly typed","code":["result == expected","result.type() == typeToRetain"]},
+
+        {"kind":"where","text":"","code":{"baseType":["Object","Object","Object","Object","Object","Object","Number","Number","Integer"],"items":["generateMixedTypeList(100)","generateMixedTypeList(500)","generateMixedTypeList(1000)","[\"text\", 42, 3.14, \"more text\", 100]","[\"keep\", 100, \"also keep\", 200, \"and this\"]","[1, \"text\", 2.5, \"more\", 3, 4.7]","[1, 2.5, 3, 4.7, 5]","[1, 2.5, 3, 4.7, 5]","[1, 2, 3, 4, 5, 6, 7]"],"typeToRetain":["String","Integer","Number","String","String","Number","Integer","Number","Integer"],"expected":["ValueSet.of(String).addAll(generateMixedTypeList(100).findAll { it instanceof String }.toSet())","ValueSet.of(Integer).addAll(generateMixedTypeList(500).findAll { it instanceof Integer }.toSet())","ValueSet.of(Number).addAll(generateMixedTypeList(1000).findAll { it instanceof Number }.toSet())","ValueSet.of(\"text\", \"more text\")","ValueSet.of(\"keep\", \"also keep\", \"and this\")","ValueSet.of(Number).addAll(1, 2.5, 3, 4.7)","ValueSet.of(Integer).addAll(1, 3, 5)","ValueSet.of(Number).addAll(1, 2.5, 3, 4.7, 5)","ValueSet.of(Integer).addAll(1, 2, 3, 4, 5, 6, 7)"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `retainIf(Class)` method efficiently extracts typed subsets from large heterogeneous collections. [2]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `retainIf(Class)` method should efficiently extract homogeneous subsets \n            from large heterogeneous collections. This test verifies that:\n\n            - Large datasets are processed correctly with proper type filtering\n            - The returned value set is properly typed\n            - Type safety is maintained throughout the operation\n            - Ordering characteristics are preserved when applicable\n\n            This is crucial for type-safe data extraction in data processing scenarios \n            where you need to work with specific subtypes from mixed collections.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A value set with a large collection of mixed-type items","code":["var valueSet = ValueSet.of(baseType, items)"]},
+
+        {"kind":"when","text":"We retain only instances of the specified type","code":["var result = valueSet.retainIf(typeToRetain)"]},
+
+        {"kind":"then","text":"The result contains only matching items and is properly typed","code":["result == expected","result.type() == typeToRetain"]},
+
+        {"kind":"where","text":"","code":{"baseType":["Object","Object","Object","Object","Object","Object","Number","Number","Integer"],"items":["generateMixedTypeList(100)","generateMixedTypeList(500)","generateMixedTypeList(1000)","[\"text\", 42, 3.14, \"more text\", 100]","[\"keep\", 100, \"also keep\", 200, \"and this\"]","[1, \"text\", 2.5, \"more\", 3, 4.7]","[1, 2.5, 3, 4.7, 5]","[1, 2.5, 3, 4.7, 5]","[1, 2, 3, 4, 5, 6, 7]"],"typeToRetain":["String","Integer","Number","String","String","Number","Integer","Number","Integer"],"expected":["ValueSet.of(String).addAll(generateMixedTypeList(100).findAll { it instanceof String }.toSet())","ValueSet.of(Integer).addAll(generateMixedTypeList(500).findAll { it instanceof Integer }.toSet())","ValueSet.of(Number).addAll(generateMixedTypeList(1000).findAll { it instanceof Number }.toSet())","ValueSet.of(\"text\", \"more text\")","ValueSet.of(\"keep\", \"also keep\", \"and this\")","ValueSet.of(Number).addAll(1, 2.5, 3, 4.7)","ValueSet.of(Integer).addAll(1, 3, 5)","ValueSet.of(Number).addAll(1, 2.5, 3, 4.7, 5)","ValueSet.of(Integer).addAll(1, 2, 3, 4, 5, 6, 7)"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `retainIf(Class)` method efficiently extracts typed subsets from large heterogeneous collections. [3]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `retainIf(Class)` method should efficiently extract homogeneous subsets \n            from large heterogeneous collections. This test verifies that:\n\n            - Large datasets are processed correctly with proper type filtering\n            - The returned value set is properly typed\n            - Type safety is maintained throughout the operation\n            - Ordering characteristics are preserved when applicable\n\n            This is crucial for type-safe data extraction in data processing scenarios \n            where you need to work with specific subtypes from mixed collections.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A value set with a large collection of mixed-type items","code":["var valueSet = ValueSet.of(baseType, items)"]},
+
+        {"kind":"when","text":"We retain only instances of the specified type","code":["var result = valueSet.retainIf(typeToRetain)"]},
+
+        {"kind":"then","text":"The result contains only matching items and is properly typed","code":["result == expected","result.type() == typeToRetain"]},
+
+        {"kind":"where","text":"","code":{"baseType":["Object","Object","Object","Object","Object","Object","Number","Number","Integer"],"items":["generateMixedTypeList(100)","generateMixedTypeList(500)","generateMixedTypeList(1000)","[\"text\", 42, 3.14, \"more text\", 100]","[\"keep\", 100, \"also keep\", 200, \"and this\"]","[1, \"text\", 2.5, \"more\", 3, 4.7]","[1, 2.5, 3, 4.7, 5]","[1, 2.5, 3, 4.7, 5]","[1, 2, 3, 4, 5, 6, 7]"],"typeToRetain":["String","Integer","Number","String","String","Number","Integer","Number","Integer"],"expected":["ValueSet.of(String).addAll(generateMixedTypeList(100).findAll { it instanceof String }.toSet())","ValueSet.of(Integer).addAll(generateMixedTypeList(500).findAll { it instanceof Integer }.toSet())","ValueSet.of(Number).addAll(generateMixedTypeList(1000).findAll { it instanceof Number }.toSet())","ValueSet.of(\"text\", \"more text\")","ValueSet.of(\"keep\", \"also keep\", \"and this\")","ValueSet.of(Number).addAll(1, 2.5, 3, 4.7)","ValueSet.of(Integer).addAll(1, 3, 5)","ValueSet.of(Number).addAll(1, 2.5, 3, 4.7, 5)","ValueSet.of(Integer).addAll(1, 2, 3, 4, 5, 6, 7)"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `retainIf(Class)` method efficiently extracts typed subsets from large heterogeneous collections. [4]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `retainIf(Class)` method should efficiently extract homogeneous subsets \n            from large heterogeneous collections. This test verifies that:\n\n            - Large datasets are processed correctly with proper type filtering\n            - The returned value set is properly typed\n            - Type safety is maintained throughout the operation\n            - Ordering characteristics are preserved when applicable\n\n            This is crucial for type-safe data extraction in data processing scenarios \n            where you need to work with specific subtypes from mixed collections.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A value set with a large collection of mixed-type items","code":["var valueSet = ValueSet.of(baseType, items)"]},
+
+        {"kind":"when","text":"We retain only instances of the specified type","code":["var result = valueSet.retainIf(typeToRetain)"]},
+
+        {"kind":"then","text":"The result contains only matching items and is properly typed","code":["result == expected","result.type() == typeToRetain"]},
+
+        {"kind":"where","text":"","code":{"baseType":["Object","Object","Object","Object","Object","Object","Number","Number","Integer"],"items":["generateMixedTypeList(100)","generateMixedTypeList(500)","generateMixedTypeList(1000)","[\"text\", 42, 3.14, \"more text\", 100]","[\"keep\", 100, \"also keep\", 200, \"and this\"]","[1, \"text\", 2.5, \"more\", 3, 4.7]","[1, 2.5, 3, 4.7, 5]","[1, 2.5, 3, 4.7, 5]","[1, 2, 3, 4, 5, 6, 7]"],"typeToRetain":["String","Integer","Number","String","String","Number","Integer","Number","Integer"],"expected":["ValueSet.of(String).addAll(generateMixedTypeList(100).findAll { it instanceof String }.toSet())","ValueSet.of(Integer).addAll(generateMixedTypeList(500).findAll { it instanceof Integer }.toSet())","ValueSet.of(Number).addAll(generateMixedTypeList(1000).findAll { it instanceof Number }.toSet())","ValueSet.of(\"text\", \"more text\")","ValueSet.of(\"keep\", \"also keep\", \"and this\")","ValueSet.of(Number).addAll(1, 2.5, 3, 4.7)","ValueSet.of(Integer).addAll(1, 3, 5)","ValueSet.of(Number).addAll(1, 2.5, 3, 4.7, 5)","ValueSet.of(Integer).addAll(1, 2, 3, 4, 5, 6, 7)"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `retainIf(Class)` method efficiently extracts typed subsets from large heterogeneous collections. [5]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `retainIf(Class)` method should efficiently extract homogeneous subsets \n            from large heterogeneous collections. This test verifies that:\n\n            - Large datasets are processed correctly with proper type filtering\n            - The returned value set is properly typed\n            - Type safety is maintained throughout the operation\n            - Ordering characteristics are preserved when applicable\n\n            This is crucial for type-safe data extraction in data processing scenarios \n            where you need to work with specific subtypes from mixed collections.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A value set with a large collection of mixed-type items","code":["var valueSet = ValueSet.of(baseType, items)"]},
+
+        {"kind":"when","text":"We retain only instances of the specified type","code":["var result = valueSet.retainIf(typeToRetain)"]},
+
+        {"kind":"then","text":"The result contains only matching items and is properly typed","code":["result == expected","result.type() == typeToRetain"]},
+
+        {"kind":"where","text":"","code":{"baseType":["Object","Object","Object","Object","Object","Object","Number","Number","Integer"],"items":["generateMixedTypeList(100)","generateMixedTypeList(500)","generateMixedTypeList(1000)","[\"text\", 42, 3.14, \"more text\", 100]","[\"keep\", 100, \"also keep\", 200, \"and this\"]","[1, \"text\", 2.5, \"more\", 3, 4.7]","[1, 2.5, 3, 4.7, 5]","[1, 2.5, 3, 4.7, 5]","[1, 2, 3, 4, 5, 6, 7]"],"typeToRetain":["String","Integer","Number","String","String","Number","Integer","Number","Integer"],"expected":["ValueSet.of(String).addAll(generateMixedTypeList(100).findAll { it instanceof String }.toSet())","ValueSet.of(Integer).addAll(generateMixedTypeList(500).findAll { it instanceof Integer }.toSet())","ValueSet.of(Number).addAll(generateMixedTypeList(1000).findAll { it instanceof Number }.toSet())","ValueSet.of(\"text\", \"more text\")","ValueSet.of(\"keep\", \"also keep\", \"and this\")","ValueSet.of(Number).addAll(1, 2.5, 3, 4.7)","ValueSet.of(Integer).addAll(1, 3, 5)","ValueSet.of(Number).addAll(1, 2.5, 3, 4.7, 5)","ValueSet.of(Integer).addAll(1, 2, 3, 4, 5, 6, 7)"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `retainIf(Class)` method efficiently extracts typed subsets from large heterogeneous collections. [6]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `retainIf(Class)` method should efficiently extract homogeneous subsets \n            from large heterogeneous collections. This test verifies that:\n\n            - Large datasets are processed correctly with proper type filtering\n            - The returned value set is properly typed\n            - Type safety is maintained throughout the operation\n            - Ordering characteristics are preserved when applicable\n\n            This is crucial for type-safe data extraction in data processing scenarios \n            where you need to work with specific subtypes from mixed collections.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A value set with a large collection of mixed-type items","code":["var valueSet = ValueSet.of(baseType, items)"]},
+
+        {"kind":"when","text":"We retain only instances of the specified type","code":["var result = valueSet.retainIf(typeToRetain)"]},
+
+        {"kind":"then","text":"The result contains only matching items and is properly typed","code":["result == expected","result.type() == typeToRetain"]},
+
+        {"kind":"where","text":"","code":{"baseType":["Object","Object","Object","Object","Object","Object","Number","Number","Integer"],"items":["generateMixedTypeList(100)","generateMixedTypeList(500)","generateMixedTypeList(1000)","[\"text\", 42, 3.14, \"more text\", 100]","[\"keep\", 100, \"also keep\", 200, \"and this\"]","[1, \"text\", 2.5, \"more\", 3, 4.7]","[1, 2.5, 3, 4.7, 5]","[1, 2.5, 3, 4.7, 5]","[1, 2, 3, 4, 5, 6, 7]"],"typeToRetain":["String","Integer","Number","String","String","Number","Integer","Number","Integer"],"expected":["ValueSet.of(String).addAll(generateMixedTypeList(100).findAll { it instanceof String }.toSet())","ValueSet.of(Integer).addAll(generateMixedTypeList(500).findAll { it instanceof Integer }.toSet())","ValueSet.of(Number).addAll(generateMixedTypeList(1000).findAll { it instanceof Number }.toSet())","ValueSet.of(\"text\", \"more text\")","ValueSet.of(\"keep\", \"also keep\", \"and this\")","ValueSet.of(Number).addAll(1, 2.5, 3, 4.7)","ValueSet.of(Integer).addAll(1, 3, 5)","ValueSet.of(Number).addAll(1, 2.5, 3, 4.7, 5)","ValueSet.of(Integer).addAll(1, 2, 3, 4, 5, 6, 7)"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `retainIf(Class)` method efficiently extracts typed subsets from large heterogeneous collections. [7]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `retainIf(Class)` method should efficiently extract homogeneous subsets \n            from large heterogeneous collections. This test verifies that:\n\n            - Large datasets are processed correctly with proper type filtering\n            - The returned value set is properly typed\n            - Type safety is maintained throughout the operation\n            - Ordering characteristics are preserved when applicable\n\n            This is crucial for type-safe data extraction in data processing scenarios \n            where you need to work with specific subtypes from mixed collections.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A value set with a large collection of mixed-type items","code":["var valueSet = ValueSet.of(baseType, items)"]},
+
+        {"kind":"when","text":"We retain only instances of the specified type","code":["var result = valueSet.retainIf(typeToRetain)"]},
+
+        {"kind":"then","text":"The result contains only matching items and is properly typed","code":["result == expected","result.type() == typeToRetain"]},
+
+        {"kind":"where","text":"","code":{"baseType":["Object","Object","Object","Object","Object","Object","Number","Number","Integer"],"items":["generateMixedTypeList(100)","generateMixedTypeList(500)","generateMixedTypeList(1000)","[\"text\", 42, 3.14, \"more text\", 100]","[\"keep\", 100, \"also keep\", 200, \"and this\"]","[1, \"text\", 2.5, \"more\", 3, 4.7]","[1, 2.5, 3, 4.7, 5]","[1, 2.5, 3, 4.7, 5]","[1, 2, 3, 4, 5, 6, 7]"],"typeToRetain":["String","Integer","Number","String","String","Number","Integer","Number","Integer"],"expected":["ValueSet.of(String).addAll(generateMixedTypeList(100).findAll { it instanceof String }.toSet())","ValueSet.of(Integer).addAll(generateMixedTypeList(500).findAll { it instanceof Integer }.toSet())","ValueSet.of(Number).addAll(generateMixedTypeList(1000).findAll { it instanceof Number }.toSet())","ValueSet.of(\"text\", \"more text\")","ValueSet.of(\"keep\", \"also keep\", \"and this\")","ValueSet.of(Number).addAll(1, 2.5, 3, 4.7)","ValueSet.of(Integer).addAll(1, 3, 5)","ValueSet.of(Number).addAll(1, 2.5, 3, 4.7, 5)","ValueSet.of(Integer).addAll(1, 2, 3, 4, 5, 6, 7)"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `retainIf(Class)` method efficiently extracts typed subsets from large heterogeneous collections. [8]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `retainIf(Class)` method should efficiently extract homogeneous subsets \n            from large heterogeneous collections. This test verifies that:\n\n            - Large datasets are processed correctly with proper type filtering\n            - The returned value set is properly typed\n            - Type safety is maintained throughout the operation\n            - Ordering characteristics are preserved when applicable\n\n            This is crucial for type-safe data extraction in data processing scenarios \n            where you need to work with specific subtypes from mixed collections.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A value set with a large collection of mixed-type items","code":["var valueSet = ValueSet.of(baseType, items)"]},
+
+        {"kind":"when","text":"We retain only instances of the specified type","code":["var result = valueSet.retainIf(typeToRetain)"]},
+
+        {"kind":"then","text":"The result contains only matching items and is properly typed","code":["result == expected","result.type() == typeToRetain"]},
+
+        {"kind":"where","text":"","code":{"baseType":["Object","Object","Object","Object","Object","Object","Number","Number","Integer"],"items":["generateMixedTypeList(100)","generateMixedTypeList(500)","generateMixedTypeList(1000)","[\"text\", 42, 3.14, \"more text\", 100]","[\"keep\", 100, \"also keep\", 200, \"and this\"]","[1, \"text\", 2.5, \"more\", 3, 4.7]","[1, 2.5, 3, 4.7, 5]","[1, 2.5, 3, 4.7, 5]","[1, 2, 3, 4, 5, 6, 7]"],"typeToRetain":["String","Integer","Number","String","String","Number","Integer","Number","Integer"],"expected":["ValueSet.of(String).addAll(generateMixedTypeList(100).findAll { it instanceof String }.toSet())","ValueSet.of(Integer).addAll(generateMixedTypeList(500).findAll { it instanceof Integer }.toSet())","ValueSet.of(Number).addAll(generateMixedTypeList(1000).findAll { it instanceof Number }.toSet())","ValueSet.of(\"text\", \"more text\")","ValueSet.of(\"keep\", \"also keep\", \"and this\")","ValueSet.of(Number).addAll(1, 2.5, 3, 4.7)","ValueSet.of(Integer).addAll(1, 3, 5)","ValueSet.of(Number).addAll(1, 2.5, 3, 4.7, 5)","ValueSet.of(Integer).addAll(1, 2, 3, 4, 5, 6, 7)"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Edge cases for `removeIf(Class)` and `retainIf(Class)` methods are handled correctly.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"An empty value set","code":["var empty = ValueSet.of(String)"]},
+
+        {"kind":"when","text":"We try to remove items from an empty set","code":["var result1 = empty.removeIf(String)"]},
+
+        {"kind":"then","text":"The empty set is returned unchanged","code":["result1.isEmpty()","result1.is(empty)"]},
+
+        {"kind":"when","text":"We try to retain items in an empty set","code":["var result2 = empty.retainIf(String)"]},
+
+        {"kind":"then","text":"The empty set is returned unchanged","code":["result2.isEmpty()","result2.type() == String"]},
+
+        {"kind":"when","text":"A value set where no items match the filter criteria for removal","code":["var numbers = ValueSet.of(Integer).addAll(1, 2, 3, 4, 5)"]},
+
+        {"kind":"and","text":"We try to remove String instances from an Integer set","code":["var result3 = numbers.removeIf(String)"]},
+
+        {"kind":"then","text":"The set is returned unchanged","code":["result3 == numbers","result3.is(numbers)"]},
+
+        {"kind":"when","text":"We try to retain String instances from an Integer set","code":["var result4 = numbers.retainIf(String)"]},
+
+        {"kind":"then","text":"An empty String set is returned","code":["result4.isEmpty()","result4.type() == String"]},
+
+        {"kind":"when","text":"A value set where all items match the filter criteria for retention","code":["var strings = ValueSet.of(String).addAll(\"a\", \"b\", \"c\")"]},
+
+        {"kind":"and","text":"We retain String instances from a String set","code":["var result5 = strings.retainIf(String)"]},
+
+        {"kind":"then","text":"The set is returned unchanged (but may be a new instance)","code":["result5 == strings","result5.type() == String"]},
+
+        {"kind":"when","text":"We remove Object instances from a String set (all items are instances)","code":["var result6 = strings.removeIf(Object)"]},
+
+        {"kind":"then","text":"An empty set is returned","code":["result6.isEmpty()","result6.type() == String"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `join(String)` method handles all kinds of value sets correctly. [0]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `join(String)` method creates a string representation of the value set's elements\n            by concatenating them with the specified delimiter. The order of elements depends on\n            the value set type:\n            - Regular value sets: undefined but consistent order\n            - Linked value sets: insertion order\n            - Sorted value sets: sorted order\n\n            Since value sets cannot contain null elements (as specified in the class documentation),\n            null handling is not a concern for this method.\n        "]
+      },
+      "blocks":[
+        {"kind":"when","text":"We join the elements","code":["var result = valueSet.join(delimiter)"]},
+
+        {"kind":"then","text":"The result matches the expected joined string you would get from a tuple (ordered).","code":["result == valueSet.toTuple().join(delimiter)"]},
+
+        {"kind":"where","text":"","code":{"valueSet":["ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(Integer).addAll(1, 2, 3)","ValueSet.of(Double).addAll(1.5d, 2.7d, 3.9d)","ValueSet.of(Boolean).addAll(true, false, true)","ValueSet.of(Integer)","ValueSet.of(String).add(\"single\")","ValueSet.of(Double).add(3.14d)","ValueSet.ofLinked(\"c\", \"a\", \"b\")","ValueSet.ofLinked(Integer).addAll(3, 1, 2)","ValueSet.ofSorted(\"c\", \"a\", \"b\")","ValueSet.ofSorted(Integer).addAll(3, 1, 2)","ValueSet.ofSorted(String, Comparator.reverseOrder()).addAll( \"a\", \"c\", \"b\")"],"delimiter":["\", \"","\"-\"","\"\"","\" -> \"","\", \"","\"  \"","\" & \"","\", \"","\" - \"","\"...\"","\", \"","\"-\"","\", \"","\"-\"","\", \""]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `join(String)` method handles all kinds of value sets correctly. [1]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `join(String)` method creates a string representation of the value set's elements\n            by concatenating them with the specified delimiter. The order of elements depends on\n            the value set type:\n            - Regular value sets: undefined but consistent order\n            - Linked value sets: insertion order\n            - Sorted value sets: sorted order\n\n            Since value sets cannot contain null elements (as specified in the class documentation),\n            null handling is not a concern for this method.\n        "]
+      },
+      "blocks":[
+        {"kind":"when","text":"We join the elements","code":["var result = valueSet.join(delimiter)"]},
+
+        {"kind":"then","text":"The result matches the expected joined string you would get from a tuple (ordered).","code":["result == valueSet.toTuple().join(delimiter)"]},
+
+        {"kind":"where","text":"","code":{"valueSet":["ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(Integer).addAll(1, 2, 3)","ValueSet.of(Double).addAll(1.5d, 2.7d, 3.9d)","ValueSet.of(Boolean).addAll(true, false, true)","ValueSet.of(Integer)","ValueSet.of(String).add(\"single\")","ValueSet.of(Double).add(3.14d)","ValueSet.ofLinked(\"c\", \"a\", \"b\")","ValueSet.ofLinked(Integer).addAll(3, 1, 2)","ValueSet.ofSorted(\"c\", \"a\", \"b\")","ValueSet.ofSorted(Integer).addAll(3, 1, 2)","ValueSet.ofSorted(String, Comparator.reverseOrder()).addAll( \"a\", \"c\", \"b\")"],"delimiter":["\", \"","\"-\"","\"\"","\" -> \"","\", \"","\"  \"","\" & \"","\", \"","\" - \"","\"...\"","\", \"","\"-\"","\", \"","\"-\"","\", \""]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `join(String)` method handles all kinds of value sets correctly. [2]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `join(String)` method creates a string representation of the value set's elements\n            by concatenating them with the specified delimiter. The order of elements depends on\n            the value set type:\n            - Regular value sets: undefined but consistent order\n            - Linked value sets: insertion order\n            - Sorted value sets: sorted order\n\n            Since value sets cannot contain null elements (as specified in the class documentation),\n            null handling is not a concern for this method.\n        "]
+      },
+      "blocks":[
+        {"kind":"when","text":"We join the elements","code":["var result = valueSet.join(delimiter)"]},
+
+        {"kind":"then","text":"The result matches the expected joined string you would get from a tuple (ordered).","code":["result == valueSet.toTuple().join(delimiter)"]},
+
+        {"kind":"where","text":"","code":{"valueSet":["ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(Integer).addAll(1, 2, 3)","ValueSet.of(Double).addAll(1.5d, 2.7d, 3.9d)","ValueSet.of(Boolean).addAll(true, false, true)","ValueSet.of(Integer)","ValueSet.of(String).add(\"single\")","ValueSet.of(Double).add(3.14d)","ValueSet.ofLinked(\"c\", \"a\", \"b\")","ValueSet.ofLinked(Integer).addAll(3, 1, 2)","ValueSet.ofSorted(\"c\", \"a\", \"b\")","ValueSet.ofSorted(Integer).addAll(3, 1, 2)","ValueSet.ofSorted(String, Comparator.reverseOrder()).addAll( \"a\", \"c\", \"b\")"],"delimiter":["\", \"","\"-\"","\"\"","\" -> \"","\", \"","\"  \"","\" & \"","\", \"","\" - \"","\"...\"","\", \"","\"-\"","\", \"","\"-\"","\", \""]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `join(String)` method handles all kinds of value sets correctly. [3]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `join(String)` method creates a string representation of the value set's elements\n            by concatenating them with the specified delimiter. The order of elements depends on\n            the value set type:\n            - Regular value sets: undefined but consistent order\n            - Linked value sets: insertion order\n            - Sorted value sets: sorted order\n\n            Since value sets cannot contain null elements (as specified in the class documentation),\n            null handling is not a concern for this method.\n        "]
+      },
+      "blocks":[
+        {"kind":"when","text":"We join the elements","code":["var result = valueSet.join(delimiter)"]},
+
+        {"kind":"then","text":"The result matches the expected joined string you would get from a tuple (ordered).","code":["result == valueSet.toTuple().join(delimiter)"]},
+
+        {"kind":"where","text":"","code":{"valueSet":["ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(Integer).addAll(1, 2, 3)","ValueSet.of(Double).addAll(1.5d, 2.7d, 3.9d)","ValueSet.of(Boolean).addAll(true, false, true)","ValueSet.of(Integer)","ValueSet.of(String).add(\"single\")","ValueSet.of(Double).add(3.14d)","ValueSet.ofLinked(\"c\", \"a\", \"b\")","ValueSet.ofLinked(Integer).addAll(3, 1, 2)","ValueSet.ofSorted(\"c\", \"a\", \"b\")","ValueSet.ofSorted(Integer).addAll(3, 1, 2)","ValueSet.ofSorted(String, Comparator.reverseOrder()).addAll( \"a\", \"c\", \"b\")"],"delimiter":["\", \"","\"-\"","\"\"","\" -> \"","\", \"","\"  \"","\" & \"","\", \"","\" - \"","\"...\"","\", \"","\"-\"","\", \"","\"-\"","\", \""]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `join(String)` method handles all kinds of value sets correctly. [4]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `join(String)` method creates a string representation of the value set's elements\n            by concatenating them with the specified delimiter. The order of elements depends on\n            the value set type:\n            - Regular value sets: undefined but consistent order\n            - Linked value sets: insertion order\n            - Sorted value sets: sorted order\n\n            Since value sets cannot contain null elements (as specified in the class documentation),\n            null handling is not a concern for this method.\n        "]
+      },
+      "blocks":[
+        {"kind":"when","text":"We join the elements","code":["var result = valueSet.join(delimiter)"]},
+
+        {"kind":"then","text":"The result matches the expected joined string you would get from a tuple (ordered).","code":["result == valueSet.toTuple().join(delimiter)"]},
+
+        {"kind":"where","text":"","code":{"valueSet":["ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(Integer).addAll(1, 2, 3)","ValueSet.of(Double).addAll(1.5d, 2.7d, 3.9d)","ValueSet.of(Boolean).addAll(true, false, true)","ValueSet.of(Integer)","ValueSet.of(String).add(\"single\")","ValueSet.of(Double).add(3.14d)","ValueSet.ofLinked(\"c\", \"a\", \"b\")","ValueSet.ofLinked(Integer).addAll(3, 1, 2)","ValueSet.ofSorted(\"c\", \"a\", \"b\")","ValueSet.ofSorted(Integer).addAll(3, 1, 2)","ValueSet.ofSorted(String, Comparator.reverseOrder()).addAll( \"a\", \"c\", \"b\")"],"delimiter":["\", \"","\"-\"","\"\"","\" -> \"","\", \"","\"  \"","\" & \"","\", \"","\" - \"","\"...\"","\", \"","\"-\"","\", \"","\"-\"","\", \""]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `join(String)` method handles all kinds of value sets correctly. [5]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `join(String)` method creates a string representation of the value set's elements\n            by concatenating them with the specified delimiter. The order of elements depends on\n            the value set type:\n            - Regular value sets: undefined but consistent order\n            - Linked value sets: insertion order\n            - Sorted value sets: sorted order\n\n            Since value sets cannot contain null elements (as specified in the class documentation),\n            null handling is not a concern for this method.\n        "]
+      },
+      "blocks":[
+        {"kind":"when","text":"We join the elements","code":["var result = valueSet.join(delimiter)"]},
+
+        {"kind":"then","text":"The result matches the expected joined string you would get from a tuple (ordered).","code":["result == valueSet.toTuple().join(delimiter)"]},
+
+        {"kind":"where","text":"","code":{"valueSet":["ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(Integer).addAll(1, 2, 3)","ValueSet.of(Double).addAll(1.5d, 2.7d, 3.9d)","ValueSet.of(Boolean).addAll(true, false, true)","ValueSet.of(Integer)","ValueSet.of(String).add(\"single\")","ValueSet.of(Double).add(3.14d)","ValueSet.ofLinked(\"c\", \"a\", \"b\")","ValueSet.ofLinked(Integer).addAll(3, 1, 2)","ValueSet.ofSorted(\"c\", \"a\", \"b\")","ValueSet.ofSorted(Integer).addAll(3, 1, 2)","ValueSet.ofSorted(String, Comparator.reverseOrder()).addAll( \"a\", \"c\", \"b\")"],"delimiter":["\", \"","\"-\"","\"\"","\" -> \"","\", \"","\"  \"","\" & \"","\", \"","\" - \"","\"...\"","\", \"","\"-\"","\", \"","\"-\"","\", \""]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `join(String)` method handles all kinds of value sets correctly. [6]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `join(String)` method creates a string representation of the value set's elements\n            by concatenating them with the specified delimiter. The order of elements depends on\n            the value set type:\n            - Regular value sets: undefined but consistent order\n            - Linked value sets: insertion order\n            - Sorted value sets: sorted order\n\n            Since value sets cannot contain null elements (as specified in the class documentation),\n            null handling is not a concern for this method.\n        "]
+      },
+      "blocks":[
+        {"kind":"when","text":"We join the elements","code":["var result = valueSet.join(delimiter)"]},
+
+        {"kind":"then","text":"The result matches the expected joined string you would get from a tuple (ordered).","code":["result == valueSet.toTuple().join(delimiter)"]},
+
+        {"kind":"where","text":"","code":{"valueSet":["ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(Integer).addAll(1, 2, 3)","ValueSet.of(Double).addAll(1.5d, 2.7d, 3.9d)","ValueSet.of(Boolean).addAll(true, false, true)","ValueSet.of(Integer)","ValueSet.of(String).add(\"single\")","ValueSet.of(Double).add(3.14d)","ValueSet.ofLinked(\"c\", \"a\", \"b\")","ValueSet.ofLinked(Integer).addAll(3, 1, 2)","ValueSet.ofSorted(\"c\", \"a\", \"b\")","ValueSet.ofSorted(Integer).addAll(3, 1, 2)","ValueSet.ofSorted(String, Comparator.reverseOrder()).addAll( \"a\", \"c\", \"b\")"],"delimiter":["\", \"","\"-\"","\"\"","\" -> \"","\", \"","\"  \"","\" & \"","\", \"","\" - \"","\"...\"","\", \"","\"-\"","\", \"","\"-\"","\", \""]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `join(String)` method handles all kinds of value sets correctly. [7]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `join(String)` method creates a string representation of the value set's elements\n            by concatenating them with the specified delimiter. The order of elements depends on\n            the value set type:\n            - Regular value sets: undefined but consistent order\n            - Linked value sets: insertion order\n            - Sorted value sets: sorted order\n\n            Since value sets cannot contain null elements (as specified in the class documentation),\n            null handling is not a concern for this method.\n        "]
+      },
+      "blocks":[
+        {"kind":"when","text":"We join the elements","code":["var result = valueSet.join(delimiter)"]},
+
+        {"kind":"then","text":"The result matches the expected joined string you would get from a tuple (ordered).","code":["result == valueSet.toTuple().join(delimiter)"]},
+
+        {"kind":"where","text":"","code":{"valueSet":["ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(Integer).addAll(1, 2, 3)","ValueSet.of(Double).addAll(1.5d, 2.7d, 3.9d)","ValueSet.of(Boolean).addAll(true, false, true)","ValueSet.of(Integer)","ValueSet.of(String).add(\"single\")","ValueSet.of(Double).add(3.14d)","ValueSet.ofLinked(\"c\", \"a\", \"b\")","ValueSet.ofLinked(Integer).addAll(3, 1, 2)","ValueSet.ofSorted(\"c\", \"a\", \"b\")","ValueSet.ofSorted(Integer).addAll(3, 1, 2)","ValueSet.ofSorted(String, Comparator.reverseOrder()).addAll( \"a\", \"c\", \"b\")"],"delimiter":["\", \"","\"-\"","\"\"","\" -> \"","\", \"","\"  \"","\" & \"","\", \"","\" - \"","\"...\"","\", \"","\"-\"","\", \"","\"-\"","\", \""]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `join(String)` method handles all kinds of value sets correctly. [8]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `join(String)` method creates a string representation of the value set's elements\n            by concatenating them with the specified delimiter. The order of elements depends on\n            the value set type:\n            - Regular value sets: undefined but consistent order\n            - Linked value sets: insertion order\n            - Sorted value sets: sorted order\n\n            Since value sets cannot contain null elements (as specified in the class documentation),\n            null handling is not a concern for this method.\n        "]
+      },
+      "blocks":[
+        {"kind":"when","text":"We join the elements","code":["var result = valueSet.join(delimiter)"]},
+
+        {"kind":"then","text":"The result matches the expected joined string you would get from a tuple (ordered).","code":["result == valueSet.toTuple().join(delimiter)"]},
+
+        {"kind":"where","text":"","code":{"valueSet":["ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(Integer).addAll(1, 2, 3)","ValueSet.of(Double).addAll(1.5d, 2.7d, 3.9d)","ValueSet.of(Boolean).addAll(true, false, true)","ValueSet.of(Integer)","ValueSet.of(String).add(\"single\")","ValueSet.of(Double).add(3.14d)","ValueSet.ofLinked(\"c\", \"a\", \"b\")","ValueSet.ofLinked(Integer).addAll(3, 1, 2)","ValueSet.ofSorted(\"c\", \"a\", \"b\")","ValueSet.ofSorted(Integer).addAll(3, 1, 2)","ValueSet.ofSorted(String, Comparator.reverseOrder()).addAll( \"a\", \"c\", \"b\")"],"delimiter":["\", \"","\"-\"","\"\"","\" -> \"","\", \"","\"  \"","\" & \"","\", \"","\" - \"","\"...\"","\", \"","\"-\"","\", \"","\"-\"","\", \""]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `join(String)` method handles all kinds of value sets correctly. [9]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `join(String)` method creates a string representation of the value set's elements\n            by concatenating them with the specified delimiter. The order of elements depends on\n            the value set type:\n            - Regular value sets: undefined but consistent order\n            - Linked value sets: insertion order\n            - Sorted value sets: sorted order\n\n            Since value sets cannot contain null elements (as specified in the class documentation),\n            null handling is not a concern for this method.\n        "]
+      },
+      "blocks":[
+        {"kind":"when","text":"We join the elements","code":["var result = valueSet.join(delimiter)"]},
+
+        {"kind":"then","text":"The result matches the expected joined string you would get from a tuple (ordered).","code":["result == valueSet.toTuple().join(delimiter)"]},
+
+        {"kind":"where","text":"","code":{"valueSet":["ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(Integer).addAll(1, 2, 3)","ValueSet.of(Double).addAll(1.5d, 2.7d, 3.9d)","ValueSet.of(Boolean).addAll(true, false, true)","ValueSet.of(Integer)","ValueSet.of(String).add(\"single\")","ValueSet.of(Double).add(3.14d)","ValueSet.ofLinked(\"c\", \"a\", \"b\")","ValueSet.ofLinked(Integer).addAll(3, 1, 2)","ValueSet.ofSorted(\"c\", \"a\", \"b\")","ValueSet.ofSorted(Integer).addAll(3, 1, 2)","ValueSet.ofSorted(String, Comparator.reverseOrder()).addAll( \"a\", \"c\", \"b\")"],"delimiter":["\", \"","\"-\"","\"\"","\" -> \"","\", \"","\"  \"","\" & \"","\", \"","\" - \"","\"...\"","\", \"","\"-\"","\", \"","\"-\"","\", \""]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `join(String)` method handles all kinds of value sets correctly. [10]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `join(String)` method creates a string representation of the value set's elements\n            by concatenating them with the specified delimiter. The order of elements depends on\n            the value set type:\n            - Regular value sets: undefined but consistent order\n            - Linked value sets: insertion order\n            - Sorted value sets: sorted order\n\n            Since value sets cannot contain null elements (as specified in the class documentation),\n            null handling is not a concern for this method.\n        "]
+      },
+      "blocks":[
+        {"kind":"when","text":"We join the elements","code":["var result = valueSet.join(delimiter)"]},
+
+        {"kind":"then","text":"The result matches the expected joined string you would get from a tuple (ordered).","code":["result == valueSet.toTuple().join(delimiter)"]},
+
+        {"kind":"where","text":"","code":{"valueSet":["ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(Integer).addAll(1, 2, 3)","ValueSet.of(Double).addAll(1.5d, 2.7d, 3.9d)","ValueSet.of(Boolean).addAll(true, false, true)","ValueSet.of(Integer)","ValueSet.of(String).add(\"single\")","ValueSet.of(Double).add(3.14d)","ValueSet.ofLinked(\"c\", \"a\", \"b\")","ValueSet.ofLinked(Integer).addAll(3, 1, 2)","ValueSet.ofSorted(\"c\", \"a\", \"b\")","ValueSet.ofSorted(Integer).addAll(3, 1, 2)","ValueSet.ofSorted(String, Comparator.reverseOrder()).addAll( \"a\", \"c\", \"b\")"],"delimiter":["\", \"","\"-\"","\"\"","\" -> \"","\", \"","\"  \"","\" & \"","\", \"","\" - \"","\"...\"","\", \"","\"-\"","\", \"","\"-\"","\", \""]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `join(String)` method handles all kinds of value sets correctly. [11]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `join(String)` method creates a string representation of the value set's elements\n            by concatenating them with the specified delimiter. The order of elements depends on\n            the value set type:\n            - Regular value sets: undefined but consistent order\n            - Linked value sets: insertion order\n            - Sorted value sets: sorted order\n\n            Since value sets cannot contain null elements (as specified in the class documentation),\n            null handling is not a concern for this method.\n        "]
+      },
+      "blocks":[
+        {"kind":"when","text":"We join the elements","code":["var result = valueSet.join(delimiter)"]},
+
+        {"kind":"then","text":"The result matches the expected joined string you would get from a tuple (ordered).","code":["result == valueSet.toTuple().join(delimiter)"]},
+
+        {"kind":"where","text":"","code":{"valueSet":["ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(Integer).addAll(1, 2, 3)","ValueSet.of(Double).addAll(1.5d, 2.7d, 3.9d)","ValueSet.of(Boolean).addAll(true, false, true)","ValueSet.of(Integer)","ValueSet.of(String).add(\"single\")","ValueSet.of(Double).add(3.14d)","ValueSet.ofLinked(\"c\", \"a\", \"b\")","ValueSet.ofLinked(Integer).addAll(3, 1, 2)","ValueSet.ofSorted(\"c\", \"a\", \"b\")","ValueSet.ofSorted(Integer).addAll(3, 1, 2)","ValueSet.ofSorted(String, Comparator.reverseOrder()).addAll( \"a\", \"c\", \"b\")"],"delimiter":["\", \"","\"-\"","\"\"","\" -> \"","\", \"","\"  \"","\" & \"","\", \"","\" - \"","\"...\"","\", \"","\"-\"","\", \"","\"-\"","\", \""]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `join(String)` method handles all kinds of value sets correctly. [12]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `join(String)` method creates a string representation of the value set's elements\n            by concatenating them with the specified delimiter. The order of elements depends on\n            the value set type:\n            - Regular value sets: undefined but consistent order\n            - Linked value sets: insertion order\n            - Sorted value sets: sorted order\n\n            Since value sets cannot contain null elements (as specified in the class documentation),\n            null handling is not a concern for this method.\n        "]
+      },
+      "blocks":[
+        {"kind":"when","text":"We join the elements","code":["var result = valueSet.join(delimiter)"]},
+
+        {"kind":"then","text":"The result matches the expected joined string you would get from a tuple (ordered).","code":["result == valueSet.toTuple().join(delimiter)"]},
+
+        {"kind":"where","text":"","code":{"valueSet":["ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(Integer).addAll(1, 2, 3)","ValueSet.of(Double).addAll(1.5d, 2.7d, 3.9d)","ValueSet.of(Boolean).addAll(true, false, true)","ValueSet.of(Integer)","ValueSet.of(String).add(\"single\")","ValueSet.of(Double).add(3.14d)","ValueSet.ofLinked(\"c\", \"a\", \"b\")","ValueSet.ofLinked(Integer).addAll(3, 1, 2)","ValueSet.ofSorted(\"c\", \"a\", \"b\")","ValueSet.ofSorted(Integer).addAll(3, 1, 2)","ValueSet.ofSorted(String, Comparator.reverseOrder()).addAll( \"a\", \"c\", \"b\")"],"delimiter":["\", \"","\"-\"","\"\"","\" -> \"","\", \"","\"  \"","\" & \"","\", \"","\" - \"","\"...\"","\", \"","\"-\"","\", \"","\"-\"","\", \""]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `join(String)` method handles all kinds of value sets correctly. [13]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `join(String)` method creates a string representation of the value set's elements\n            by concatenating them with the specified delimiter. The order of elements depends on\n            the value set type:\n            - Regular value sets: undefined but consistent order\n            - Linked value sets: insertion order\n            - Sorted value sets: sorted order\n\n            Since value sets cannot contain null elements (as specified in the class documentation),\n            null handling is not a concern for this method.\n        "]
+      },
+      "blocks":[
+        {"kind":"when","text":"We join the elements","code":["var result = valueSet.join(delimiter)"]},
+
+        {"kind":"then","text":"The result matches the expected joined string you would get from a tuple (ordered).","code":["result == valueSet.toTuple().join(delimiter)"]},
+
+        {"kind":"where","text":"","code":{"valueSet":["ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(Integer).addAll(1, 2, 3)","ValueSet.of(Double).addAll(1.5d, 2.7d, 3.9d)","ValueSet.of(Boolean).addAll(true, false, true)","ValueSet.of(Integer)","ValueSet.of(String).add(\"single\")","ValueSet.of(Double).add(3.14d)","ValueSet.ofLinked(\"c\", \"a\", \"b\")","ValueSet.ofLinked(Integer).addAll(3, 1, 2)","ValueSet.ofSorted(\"c\", \"a\", \"b\")","ValueSet.ofSorted(Integer).addAll(3, 1, 2)","ValueSet.ofSorted(String, Comparator.reverseOrder()).addAll( \"a\", \"c\", \"b\")"],"delimiter":["\", \"","\"-\"","\"\"","\" -> \"","\", \"","\"  \"","\" & \"","\", \"","\" - \"","\"...\"","\", \"","\"-\"","\", \"","\"-\"","\", \""]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `join(String)` method handles all kinds of value sets correctly. [14]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `join(String)` method creates a string representation of the value set's elements\n            by concatenating them with the specified delimiter. The order of elements depends on\n            the value set type:\n            - Regular value sets: undefined but consistent order\n            - Linked value sets: insertion order\n            - Sorted value sets: sorted order\n\n            Since value sets cannot contain null elements (as specified in the class documentation),\n            null handling is not a concern for this method.\n        "]
+      },
+      "blocks":[
+        {"kind":"when","text":"We join the elements","code":["var result = valueSet.join(delimiter)"]},
+
+        {"kind":"then","text":"The result matches the expected joined string you would get from a tuple (ordered).","code":["result == valueSet.toTuple().join(delimiter)"]},
+
+        {"kind":"where","text":"","code":{"valueSet":["ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(\"a\", \"b\", \"c\")","ValueSet.of(Integer).addAll(1, 2, 3)","ValueSet.of(Double).addAll(1.5d, 2.7d, 3.9d)","ValueSet.of(Boolean).addAll(true, false, true)","ValueSet.of(Integer)","ValueSet.of(String).add(\"single\")","ValueSet.of(Double).add(3.14d)","ValueSet.ofLinked(\"c\", \"a\", \"b\")","ValueSet.ofLinked(Integer).addAll(3, 1, 2)","ValueSet.ofSorted(\"c\", \"a\", \"b\")","ValueSet.ofSorted(Integer).addAll(3, 1, 2)","ValueSet.ofSorted(String, Comparator.reverseOrder()).addAll( \"a\", \"c\", \"b\")"],"delimiter":["\", \"","\"-\"","\"\"","\" -> \"","\", \"","\"  \"","\" & \"","\", \"","\" - \"","\"...\"","\", \"","\"-\"","\", \"","\"-\"","\", \""]}}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }

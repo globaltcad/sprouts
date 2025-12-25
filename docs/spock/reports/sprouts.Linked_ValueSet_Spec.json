@@ -4,7 +4,7 @@
   "narrative":"A linked `ValueSet` is a fundamental building block in sprouts' data-oriented programming model.\n    It represents an immutable collection of unique and ordered elements, providing an API focused on\n    deriving new sets from existing ones rather than mutating state. Unlike traditional\n    Java sets, all operations return new `ValueSet` instances, making it ideal for\n    functional/data-oriented programming and safe concurrent usage.\n\n    You can create a linked `ValueSet` through various factories, such as `ValueSet.ofLinked(Class<T>)`\n    or `ValueSet.ofLinked(T first, T... rest)`. All operations on a linked `ValueSet` return a new instance,\n    ensuring immutability and thread safety. The linked nature of the set ensures that the order of elements\n    is preserved, which is particularly relevant to make iteration and stream operations more\n    deterministic and easier to reason about.",
   "subjects":["sprouts.ValueSet"],
   "statistics":{
-    "runs":"77",
+    "runs":"94",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -1872,6 +1872,361 @@
         {"kind":"then","text":"","code":["modifiedSet1.size() == modifiedSet2.size()","modifiedSet1 != modifiedSet2"]},
 
         {"kind":"where","text":"We use the following entry data source:","code":{"type":["Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String","Long","Short","Integer","String"],"entries":["(0..24).collect(it -> it as Long).toList()","(0..24).collect(it -> it as Short).toList()","(0..24).collect(it -> it).toList()","(0..24).collect(it -> String.valueOf(it)).toList()","(0..128).collect(it -> it as Long).toList()","(0..128).collect(it -> it as Short).toList()","(0..128).collect(it -> it).toList()","(0..128).collect(it -> String.valueOf(it)).toList()","(0..1_000).collect(it -> it as Long).toList()","(0..1_000).collect(it -> it as Short).toList()","(0..1_000).collect(it -> it).toList()","(0..1_000).collect(it -> String.valueOf(it)).toList()","(0..10_000).collect(it -> it as Long).toList()","(0..10_000).collect(it -> it as Short).toList()","(0..10_000).collect(it -> it).toList()","(0..10_000).collect(it -> String.valueOf(it)).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `removeIf(Class)` method filters out items of the specified type while preserving the linked value set characteristics.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `removeIf(Class)` method creates a new linked value set containing only items that are NOT \n            instances of the specified type. This is useful for filtering out specific types from \n            a heterogeneous value set.\n\n            Important behavior for linked variant:\n            - The returned value set maintains the linked ordering characteristics\n            - Items that are instances of the specified type (including subclasses) are removed\n            - The element type of the returned value set remains the same as the original\n            - The insertion order is preserved for remaining elements\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A linked value set with mixed types","code":["var mixed = ValueSet.ofLinked(Object).addAll(\"hello\", 42, \"world\", 3.14, \"!\", 100, \"test\")"]},
+
+        {"kind":"when","text":"We remove all String instances","code":["var withoutStrings = mixed.removeIf(String)"]},
+
+        {"kind":"then","text":"Only non-String items remain in original insertion order","code":["withoutStrings.toList() == [42, 3.14, 100]","withoutStrings.type() == Object","withoutStrings.isLinked()","!withoutStrings.isSorted()"]},
+
+        {"kind":"when","text":"We remove all Integer instances","code":["var withoutIntegers = mixed.removeIf(Integer)"]},
+
+        {"kind":"then","text":"Only non-Integer items remain in original insertion order","code":["withoutIntegers.toList() == [\"hello\", \"world\", 3.14, \"!\", \"test\"]","withoutIntegers.type() == Object","withoutIntegers.isLinked()"]},
+
+        {"kind":"when","text":"We remove all Number instances (including Integer and Double)","code":["var withoutNumbers = mixed.removeIf(Number)"]},
+
+        {"kind":"then","text":"Only non-Number items remain in original insertion order","code":["withoutNumbers.toList() == [\"hello\", \"world\", \"!\", \"test\"]","withoutNumbers.type() == Object","withoutNumbers.isLinked()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `retainIf(Class)` method keeps only items of the specified type and returns a properly typed linked value set.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `retainIf(Class)` method creates a new linked value set containing only items that ARE \n            instances of the specified type. This is useful for extracting specific types from \n            a heterogeneous value set.\n\n            Important behavior for linked variant:\n            - Only items that are instances of the specified type (including subclasses) are retained\n            - The returned value set is properly typed as ValueSet<V> where V is the specified type\n            - The linked ordering characteristics are preserved in the result\n            - The insertion order of retained elements is maintained\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A linked value set with mixed types","code":["var mixed = ValueSet.ofLinked(Object).addAll(\"hello\", 42, \"world\", 3.14, \"!\", 100, \"test\")"]},
+
+        {"kind":"when","text":"We retain only String instances","code":["var onlyStrings = mixed.retainIf(String)"]},
+
+        {"kind":"then","text":"Only String items remain in original insertion order and result is properly typed","code":["onlyStrings.toList() == [\"hello\", \"world\", \"!\", \"test\"]","onlyStrings.type() == String","onlyStrings.isLinked()","!onlyStrings.isSorted()"]},
+
+        {"kind":"when","text":"We retain only Integer instances","code":["var onlyIntegers = mixed.retainIf(Integer)"]},
+
+        {"kind":"then","text":"Only Integer items remain in original insertion order and result is properly typed","code":["onlyIntegers.toList() == [42, 100]","onlyIntegers.type() == Integer","onlyIntegers.isLinked()"]},
+
+        {"kind":"when","text":"We retain only Number instances (including both Integer and Double)","code":["var onlyNumbers = mixed.retainIf(Number)"]},
+
+        {"kind":"then","text":"All Number items remain in original insertion order and result is properly typed","code":["onlyNumbers.toList() == [42, 3.14, 100]","onlyNumbers.type() == Number","onlyNumbers.isLinked()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `removeIf(Class)` method efficiently filters large heterogeneous collections while preserving linked set characteristics. [0]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `removeIf(Class)` method should efficiently handle large collections while \n            maintaining the original linked value set's characteristics. This test verifies that:\n\n            - Large datasets are processed correctly\n            - The operation maintains performance characteristics\n            - The result preserves the linked ordering of the original set\n            - Insertion order is maintained for remaining elements\n\n            This is particularly important for data processing pipelines where linked value sets \n            might contain thousands of heterogeneous elements and order matters.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A linked value set with a large collection of mixed-type items","code":["var valueSet = ValueSet.ofLinked(baseType).addAll(items)"]},
+
+        {"kind":"when","text":"We remove all instances of the specified type","code":["var result = valueSet.removeIf(typeToRemove)"]},
+
+        {"kind":"then","text":"The result contains only non-matching items with preserved linked characteristics","code":["result.toList() == expectedOrder","result.type() == baseType","result.isLinked()","!result.isSorted()"]},
+
+        {"kind":"where","text":"","code":{"baseType":["Object","Object","Number","Number","Number","Number"],"items":["[\"text\", 42, 3.14, \"more\", 100]","[\"keep\", 100, \"remove\", 200, \"also remove\"]","[1, 2.5, 3, 4.7, 5]","[1, 2.5, 3, 4.7, 5]","[100L, 0.345f, 12.345d, 200 as byte]","[100L, 0.345f, 12.345d, 200 as byte]"],"typeToRemove":["String","String","Integer","BigDecimal","Number","Byte"],"expectedOrder":["[42, 3.14, 100]","[100, 200]","[2.5, 4.7]","[1, 3, 5]","[]","[100L, 0.345f, 12.345d]"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `removeIf(Class)` method efficiently filters large heterogeneous collections while preserving linked set characteristics. [1]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `removeIf(Class)` method should efficiently handle large collections while \n            maintaining the original linked value set's characteristics. This test verifies that:\n\n            - Large datasets are processed correctly\n            - The operation maintains performance characteristics\n            - The result preserves the linked ordering of the original set\n            - Insertion order is maintained for remaining elements\n\n            This is particularly important for data processing pipelines where linked value sets \n            might contain thousands of heterogeneous elements and order matters.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A linked value set with a large collection of mixed-type items","code":["var valueSet = ValueSet.ofLinked(baseType).addAll(items)"]},
+
+        {"kind":"when","text":"We remove all instances of the specified type","code":["var result = valueSet.removeIf(typeToRemove)"]},
+
+        {"kind":"then","text":"The result contains only non-matching items with preserved linked characteristics","code":["result.toList() == expectedOrder","result.type() == baseType","result.isLinked()","!result.isSorted()"]},
+
+        {"kind":"where","text":"","code":{"baseType":["Object","Object","Number","Number","Number","Number"],"items":["[\"text\", 42, 3.14, \"more\", 100]","[\"keep\", 100, \"remove\", 200, \"also remove\"]","[1, 2.5, 3, 4.7, 5]","[1, 2.5, 3, 4.7, 5]","[100L, 0.345f, 12.345d, 200 as byte]","[100L, 0.345f, 12.345d, 200 as byte]"],"typeToRemove":["String","String","Integer","BigDecimal","Number","Byte"],"expectedOrder":["[42, 3.14, 100]","[100, 200]","[2.5, 4.7]","[1, 3, 5]","[]","[100L, 0.345f, 12.345d]"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `removeIf(Class)` method efficiently filters large heterogeneous collections while preserving linked set characteristics. [2]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `removeIf(Class)` method should efficiently handle large collections while \n            maintaining the original linked value set's characteristics. This test verifies that:\n\n            - Large datasets are processed correctly\n            - The operation maintains performance characteristics\n            - The result preserves the linked ordering of the original set\n            - Insertion order is maintained for remaining elements\n\n            This is particularly important for data processing pipelines where linked value sets \n            might contain thousands of heterogeneous elements and order matters.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A linked value set with a large collection of mixed-type items","code":["var valueSet = ValueSet.ofLinked(baseType).addAll(items)"]},
+
+        {"kind":"when","text":"We remove all instances of the specified type","code":["var result = valueSet.removeIf(typeToRemove)"]},
+
+        {"kind":"then","text":"The result contains only non-matching items with preserved linked characteristics","code":["result.toList() == expectedOrder","result.type() == baseType","result.isLinked()","!result.isSorted()"]},
+
+        {"kind":"where","text":"","code":{"baseType":["Object","Object","Number","Number","Number","Number"],"items":["[\"text\", 42, 3.14, \"more\", 100]","[\"keep\", 100, \"remove\", 200, \"also remove\"]","[1, 2.5, 3, 4.7, 5]","[1, 2.5, 3, 4.7, 5]","[100L, 0.345f, 12.345d, 200 as byte]","[100L, 0.345f, 12.345d, 200 as byte]"],"typeToRemove":["String","String","Integer","BigDecimal","Number","Byte"],"expectedOrder":["[42, 3.14, 100]","[100, 200]","[2.5, 4.7]","[1, 3, 5]","[]","[100L, 0.345f, 12.345d]"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `removeIf(Class)` method efficiently filters large heterogeneous collections while preserving linked set characteristics. [3]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `removeIf(Class)` method should efficiently handle large collections while \n            maintaining the original linked value set's characteristics. This test verifies that:\n\n            - Large datasets are processed correctly\n            - The operation maintains performance characteristics\n            - The result preserves the linked ordering of the original set\n            - Insertion order is maintained for remaining elements\n\n            This is particularly important for data processing pipelines where linked value sets \n            might contain thousands of heterogeneous elements and order matters.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A linked value set with a large collection of mixed-type items","code":["var valueSet = ValueSet.ofLinked(baseType).addAll(items)"]},
+
+        {"kind":"when","text":"We remove all instances of the specified type","code":["var result = valueSet.removeIf(typeToRemove)"]},
+
+        {"kind":"then","text":"The result contains only non-matching items with preserved linked characteristics","code":["result.toList() == expectedOrder","result.type() == baseType","result.isLinked()","!result.isSorted()"]},
+
+        {"kind":"where","text":"","code":{"baseType":["Object","Object","Number","Number","Number","Number"],"items":["[\"text\", 42, 3.14, \"more\", 100]","[\"keep\", 100, \"remove\", 200, \"also remove\"]","[1, 2.5, 3, 4.7, 5]","[1, 2.5, 3, 4.7, 5]","[100L, 0.345f, 12.345d, 200 as byte]","[100L, 0.345f, 12.345d, 200 as byte]"],"typeToRemove":["String","String","Integer","BigDecimal","Number","Byte"],"expectedOrder":["[42, 3.14, 100]","[100, 200]","[2.5, 4.7]","[1, 3, 5]","[]","[100L, 0.345f, 12.345d]"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `removeIf(Class)` method efficiently filters large heterogeneous collections while preserving linked set characteristics. [4]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `removeIf(Class)` method should efficiently handle large collections while \n            maintaining the original linked value set's characteristics. This test verifies that:\n\n            - Large datasets are processed correctly\n            - The operation maintains performance characteristics\n            - The result preserves the linked ordering of the original set\n            - Insertion order is maintained for remaining elements\n\n            This is particularly important for data processing pipelines where linked value sets \n            might contain thousands of heterogeneous elements and order matters.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A linked value set with a large collection of mixed-type items","code":["var valueSet = ValueSet.ofLinked(baseType).addAll(items)"]},
+
+        {"kind":"when","text":"We remove all instances of the specified type","code":["var result = valueSet.removeIf(typeToRemove)"]},
+
+        {"kind":"then","text":"The result contains only non-matching items with preserved linked characteristics","code":["result.toList() == expectedOrder","result.type() == baseType","result.isLinked()","!result.isSorted()"]},
+
+        {"kind":"where","text":"","code":{"baseType":["Object","Object","Number","Number","Number","Number"],"items":["[\"text\", 42, 3.14, \"more\", 100]","[\"keep\", 100, \"remove\", 200, \"also remove\"]","[1, 2.5, 3, 4.7, 5]","[1, 2.5, 3, 4.7, 5]","[100L, 0.345f, 12.345d, 200 as byte]","[100L, 0.345f, 12.345d, 200 as byte]"],"typeToRemove":["String","String","Integer","BigDecimal","Number","Byte"],"expectedOrder":["[42, 3.14, 100]","[100, 200]","[2.5, 4.7]","[1, 3, 5]","[]","[100L, 0.345f, 12.345d]"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `removeIf(Class)` method efficiently filters large heterogeneous collections while preserving linked set characteristics. [5]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `removeIf(Class)` method should efficiently handle large collections while \n            maintaining the original linked value set's characteristics. This test verifies that:\n\n            - Large datasets are processed correctly\n            - The operation maintains performance characteristics\n            - The result preserves the linked ordering of the original set\n            - Insertion order is maintained for remaining elements\n\n            This is particularly important for data processing pipelines where linked value sets \n            might contain thousands of heterogeneous elements and order matters.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A linked value set with a large collection of mixed-type items","code":["var valueSet = ValueSet.ofLinked(baseType).addAll(items)"]},
+
+        {"kind":"when","text":"We remove all instances of the specified type","code":["var result = valueSet.removeIf(typeToRemove)"]},
+
+        {"kind":"then","text":"The result contains only non-matching items with preserved linked characteristics","code":["result.toList() == expectedOrder","result.type() == baseType","result.isLinked()","!result.isSorted()"]},
+
+        {"kind":"where","text":"","code":{"baseType":["Object","Object","Number","Number","Number","Number"],"items":["[\"text\", 42, 3.14, \"more\", 100]","[\"keep\", 100, \"remove\", 200, \"also remove\"]","[1, 2.5, 3, 4.7, 5]","[1, 2.5, 3, 4.7, 5]","[100L, 0.345f, 12.345d, 200 as byte]","[100L, 0.345f, 12.345d, 200 as byte]"],"typeToRemove":["String","String","Integer","BigDecimal","Number","Byte"],"expectedOrder":["[42, 3.14, 100]","[100, 200]","[2.5, 4.7]","[1, 3, 5]","[]","[100L, 0.345f, 12.345d]"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `retainIf(Class)` method efficiently extracts typed subsets from large heterogeneous collections while preserving order. [0]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `retainIf(Class)` method should efficiently extract homogeneous subsets \n            from large heterogeneous collections while preserving the linked ordering.\n            This test verifies that:\n\n            - Large datasets are processed correctly with proper type filtering\n            - The returned value set is properly typed\n            - Type safety is maintained throughout the operation\n            - Linked ordering characteristics are preserved\n            - Insertion order of retained elements is maintained\n\n            This is crucial for type-safe data extraction in scenarios where you need to \n            work with specific subtypes from mixed collections and order matters.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A linked value set with a collection of mixed-type items","code":["var valueSet = ValueSet.ofLinked(baseType, items)"]},
+
+        {"kind":"when","text":"We retain only instances of the specified type","code":["var result = valueSet.retainIf(typeToRetain)"]},
+
+        {"kind":"then","text":"The result contains only matching items in original order and is properly typed","code":["result.toList() == expectedOrder","result.type() == typeToRetain","result.isLinked()","!result.isSorted()"]},
+
+        {"kind":"where","text":"","code":{"baseType":["Object","Object","Object","Number","Number","Number","Number"],"items":["[\"text\", 42, 3.14, \"more text\", 100]","[\"keep\", 100, \"also keep\", 200, \"and this\"]","[1, \"text\", 2.5, \"more\", 3, 4.7]","[100L, 0.345f, 12.345d, 12 as short, 200 as byte]","[100L, 0.345f, 12.345d, 12 as short, 200 as byte]","[100L, 0.345f, 12.345d, 12 as short, 200 as byte]","[100L, 0.345f, 12.345d, 12 as short, 200 as byte]"],"typeToRetain":["String","String","Number","Number","Byte","Long","Double"],"expectedOrder":["[\"text\", \"more text\"]","[\"keep\", \"also keep\", \"and this\"]","[1, 2.5, 3, 4.7]","[100L, 0.345f, 12.345d, 12 as short, 200 as byte]","[200 as byte]","[100L]","[12.345d]"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `retainIf(Class)` method efficiently extracts typed subsets from large heterogeneous collections while preserving order. [1]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `retainIf(Class)` method should efficiently extract homogeneous subsets \n            from large heterogeneous collections while preserving the linked ordering.\n            This test verifies that:\n\n            - Large datasets are processed correctly with proper type filtering\n            - The returned value set is properly typed\n            - Type safety is maintained throughout the operation\n            - Linked ordering characteristics are preserved\n            - Insertion order of retained elements is maintained\n\n            This is crucial for type-safe data extraction in scenarios where you need to \n            work with specific subtypes from mixed collections and order matters.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A linked value set with a collection of mixed-type items","code":["var valueSet = ValueSet.ofLinked(baseType, items)"]},
+
+        {"kind":"when","text":"We retain only instances of the specified type","code":["var result = valueSet.retainIf(typeToRetain)"]},
+
+        {"kind":"then","text":"The result contains only matching items in original order and is properly typed","code":["result.toList() == expectedOrder","result.type() == typeToRetain","result.isLinked()","!result.isSorted()"]},
+
+        {"kind":"where","text":"","code":{"baseType":["Object","Object","Object","Number","Number","Number","Number"],"items":["[\"text\", 42, 3.14, \"more text\", 100]","[\"keep\", 100, \"also keep\", 200, \"and this\"]","[1, \"text\", 2.5, \"more\", 3, 4.7]","[100L, 0.345f, 12.345d, 12 as short, 200 as byte]","[100L, 0.345f, 12.345d, 12 as short, 200 as byte]","[100L, 0.345f, 12.345d, 12 as short, 200 as byte]","[100L, 0.345f, 12.345d, 12 as short, 200 as byte]"],"typeToRetain":["String","String","Number","Number","Byte","Long","Double"],"expectedOrder":["[\"text\", \"more text\"]","[\"keep\", \"also keep\", \"and this\"]","[1, 2.5, 3, 4.7]","[100L, 0.345f, 12.345d, 12 as short, 200 as byte]","[200 as byte]","[100L]","[12.345d]"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `retainIf(Class)` method efficiently extracts typed subsets from large heterogeneous collections while preserving order. [2]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `retainIf(Class)` method should efficiently extract homogeneous subsets \n            from large heterogeneous collections while preserving the linked ordering.\n            This test verifies that:\n\n            - Large datasets are processed correctly with proper type filtering\n            - The returned value set is properly typed\n            - Type safety is maintained throughout the operation\n            - Linked ordering characteristics are preserved\n            - Insertion order of retained elements is maintained\n\n            This is crucial for type-safe data extraction in scenarios where you need to \n            work with specific subtypes from mixed collections and order matters.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A linked value set with a collection of mixed-type items","code":["var valueSet = ValueSet.ofLinked(baseType, items)"]},
+
+        {"kind":"when","text":"We retain only instances of the specified type","code":["var result = valueSet.retainIf(typeToRetain)"]},
+
+        {"kind":"then","text":"The result contains only matching items in original order and is properly typed","code":["result.toList() == expectedOrder","result.type() == typeToRetain","result.isLinked()","!result.isSorted()"]},
+
+        {"kind":"where","text":"","code":{"baseType":["Object","Object","Object","Number","Number","Number","Number"],"items":["[\"text\", 42, 3.14, \"more text\", 100]","[\"keep\", 100, \"also keep\", 200, \"and this\"]","[1, \"text\", 2.5, \"more\", 3, 4.7]","[100L, 0.345f, 12.345d, 12 as short, 200 as byte]","[100L, 0.345f, 12.345d, 12 as short, 200 as byte]","[100L, 0.345f, 12.345d, 12 as short, 200 as byte]","[100L, 0.345f, 12.345d, 12 as short, 200 as byte]"],"typeToRetain":["String","String","Number","Number","Byte","Long","Double"],"expectedOrder":["[\"text\", \"more text\"]","[\"keep\", \"also keep\", \"and this\"]","[1, 2.5, 3, 4.7]","[100L, 0.345f, 12.345d, 12 as short, 200 as byte]","[200 as byte]","[100L]","[12.345d]"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `retainIf(Class)` method efficiently extracts typed subsets from large heterogeneous collections while preserving order. [3]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `retainIf(Class)` method should efficiently extract homogeneous subsets \n            from large heterogeneous collections while preserving the linked ordering.\n            This test verifies that:\n\n            - Large datasets are processed correctly with proper type filtering\n            - The returned value set is properly typed\n            - Type safety is maintained throughout the operation\n            - Linked ordering characteristics are preserved\n            - Insertion order of retained elements is maintained\n\n            This is crucial for type-safe data extraction in scenarios where you need to \n            work with specific subtypes from mixed collections and order matters.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A linked value set with a collection of mixed-type items","code":["var valueSet = ValueSet.ofLinked(baseType, items)"]},
+
+        {"kind":"when","text":"We retain only instances of the specified type","code":["var result = valueSet.retainIf(typeToRetain)"]},
+
+        {"kind":"then","text":"The result contains only matching items in original order and is properly typed","code":["result.toList() == expectedOrder","result.type() == typeToRetain","result.isLinked()","!result.isSorted()"]},
+
+        {"kind":"where","text":"","code":{"baseType":["Object","Object","Object","Number","Number","Number","Number"],"items":["[\"text\", 42, 3.14, \"more text\", 100]","[\"keep\", 100, \"also keep\", 200, \"and this\"]","[1, \"text\", 2.5, \"more\", 3, 4.7]","[100L, 0.345f, 12.345d, 12 as short, 200 as byte]","[100L, 0.345f, 12.345d, 12 as short, 200 as byte]","[100L, 0.345f, 12.345d, 12 as short, 200 as byte]","[100L, 0.345f, 12.345d, 12 as short, 200 as byte]"],"typeToRetain":["String","String","Number","Number","Byte","Long","Double"],"expectedOrder":["[\"text\", \"more text\"]","[\"keep\", \"also keep\", \"and this\"]","[1, 2.5, 3, 4.7]","[100L, 0.345f, 12.345d, 12 as short, 200 as byte]","[200 as byte]","[100L]","[12.345d]"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `retainIf(Class)` method efficiently extracts typed subsets from large heterogeneous collections while preserving order. [4]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `retainIf(Class)` method should efficiently extract homogeneous subsets \n            from large heterogeneous collections while preserving the linked ordering.\n            This test verifies that:\n\n            - Large datasets are processed correctly with proper type filtering\n            - The returned value set is properly typed\n            - Type safety is maintained throughout the operation\n            - Linked ordering characteristics are preserved\n            - Insertion order of retained elements is maintained\n\n            This is crucial for type-safe data extraction in scenarios where you need to \n            work with specific subtypes from mixed collections and order matters.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A linked value set with a collection of mixed-type items","code":["var valueSet = ValueSet.ofLinked(baseType, items)"]},
+
+        {"kind":"when","text":"We retain only instances of the specified type","code":["var result = valueSet.retainIf(typeToRetain)"]},
+
+        {"kind":"then","text":"The result contains only matching items in original order and is properly typed","code":["result.toList() == expectedOrder","result.type() == typeToRetain","result.isLinked()","!result.isSorted()"]},
+
+        {"kind":"where","text":"","code":{"baseType":["Object","Object","Object","Number","Number","Number","Number"],"items":["[\"text\", 42, 3.14, \"more text\", 100]","[\"keep\", 100, \"also keep\", 200, \"and this\"]","[1, \"text\", 2.5, \"more\", 3, 4.7]","[100L, 0.345f, 12.345d, 12 as short, 200 as byte]","[100L, 0.345f, 12.345d, 12 as short, 200 as byte]","[100L, 0.345f, 12.345d, 12 as short, 200 as byte]","[100L, 0.345f, 12.345d, 12 as short, 200 as byte]"],"typeToRetain":["String","String","Number","Number","Byte","Long","Double"],"expectedOrder":["[\"text\", \"more text\"]","[\"keep\", \"also keep\", \"and this\"]","[1, 2.5, 3, 4.7]","[100L, 0.345f, 12.345d, 12 as short, 200 as byte]","[200 as byte]","[100L]","[12.345d]"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `retainIf(Class)` method efficiently extracts typed subsets from large heterogeneous collections while preserving order. [5]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `retainIf(Class)` method should efficiently extract homogeneous subsets \n            from large heterogeneous collections while preserving the linked ordering.\n            This test verifies that:\n\n            - Large datasets are processed correctly with proper type filtering\n            - The returned value set is properly typed\n            - Type safety is maintained throughout the operation\n            - Linked ordering characteristics are preserved\n            - Insertion order of retained elements is maintained\n\n            This is crucial for type-safe data extraction in scenarios where you need to \n            work with specific subtypes from mixed collections and order matters.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A linked value set with a collection of mixed-type items","code":["var valueSet = ValueSet.ofLinked(baseType, items)"]},
+
+        {"kind":"when","text":"We retain only instances of the specified type","code":["var result = valueSet.retainIf(typeToRetain)"]},
+
+        {"kind":"then","text":"The result contains only matching items in original order and is properly typed","code":["result.toList() == expectedOrder","result.type() == typeToRetain","result.isLinked()","!result.isSorted()"]},
+
+        {"kind":"where","text":"","code":{"baseType":["Object","Object","Object","Number","Number","Number","Number"],"items":["[\"text\", 42, 3.14, \"more text\", 100]","[\"keep\", 100, \"also keep\", 200, \"and this\"]","[1, \"text\", 2.5, \"more\", 3, 4.7]","[100L, 0.345f, 12.345d, 12 as short, 200 as byte]","[100L, 0.345f, 12.345d, 12 as short, 200 as byte]","[100L, 0.345f, 12.345d, 12 as short, 200 as byte]","[100L, 0.345f, 12.345d, 12 as short, 200 as byte]"],"typeToRetain":["String","String","Number","Number","Byte","Long","Double"],"expectedOrder":["[\"text\", \"more text\"]","[\"keep\", \"also keep\", \"and this\"]","[1, 2.5, 3, 4.7]","[100L, 0.345f, 12.345d, 12 as short, 200 as byte]","[200 as byte]","[100L]","[12.345d]"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `retainIf(Class)` method efficiently extracts typed subsets from large heterogeneous collections while preserving order. [6]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `retainIf(Class)` method should efficiently extract homogeneous subsets \n            from large heterogeneous collections while preserving the linked ordering.\n            This test verifies that:\n\n            - Large datasets are processed correctly with proper type filtering\n            - The returned value set is properly typed\n            - Type safety is maintained throughout the operation\n            - Linked ordering characteristics are preserved\n            - Insertion order of retained elements is maintained\n\n            This is crucial for type-safe data extraction in scenarios where you need to \n            work with specific subtypes from mixed collections and order matters.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A linked value set with a collection of mixed-type items","code":["var valueSet = ValueSet.ofLinked(baseType, items)"]},
+
+        {"kind":"when","text":"We retain only instances of the specified type","code":["var result = valueSet.retainIf(typeToRetain)"]},
+
+        {"kind":"then","text":"The result contains only matching items in original order and is properly typed","code":["result.toList() == expectedOrder","result.type() == typeToRetain","result.isLinked()","!result.isSorted()"]},
+
+        {"kind":"where","text":"","code":{"baseType":["Object","Object","Object","Number","Number","Number","Number"],"items":["[\"text\", 42, 3.14, \"more text\", 100]","[\"keep\", 100, \"also keep\", 200, \"and this\"]","[1, \"text\", 2.5, \"more\", 3, 4.7]","[100L, 0.345f, 12.345d, 12 as short, 200 as byte]","[100L, 0.345f, 12.345d, 12 as short, 200 as byte]","[100L, 0.345f, 12.345d, 12 as short, 200 as byte]","[100L, 0.345f, 12.345d, 12 as short, 200 as byte]"],"typeToRetain":["String","String","Number","Number","Byte","Long","Double"],"expectedOrder":["[\"text\", \"more text\"]","[\"keep\", \"also keep\", \"and this\"]","[1, 2.5, 3, 4.7]","[100L, 0.345f, 12.345d, 12 as short, 200 as byte]","[200 as byte]","[100L]","[12.345d]"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Edge cases for `removeIf(Class)` and `retainIf(Class)` methods are handled correctly in linked value sets.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"An empty linked value set","code":["var empty = ValueSet.ofLinked(String)"]},
+
+        {"kind":"when","text":"We try to remove items from an empty set","code":["var result1 = empty.removeIf(String)"]},
+
+        {"kind":"then","text":"The empty set is returned unchanged","code":["result1.isEmpty()","result1.is(empty)","result1.isLinked()"]},
+
+        {"kind":"when","text":"We try to retain items in an empty set","code":["var result2 = empty.retainIf(String)"]},
+
+        {"kind":"then","text":"The empty set is returned unchanged","code":["result2.isEmpty()","result2.type() == String","result2.isLinked()"]},
+
+        {"kind":"when","text":"A linked value set where no items match the filter criteria for removal","code":["var numbers = ValueSet.ofLinked(Integer).addAll(1, 2, 3, 4, 5)"]},
+
+        {"kind":"and","text":"We try to remove String instances from an Integer set","code":["var result3 = numbers.removeIf(String)"]},
+
+        {"kind":"then","text":"The set is returned unchanged","code":["result3 == numbers","result3.is(numbers)","result3.isLinked()"]},
+
+        {"kind":"when","text":"We try to retain String instances from an Integer set","code":["var result4 = numbers.retainIf(String)"]},
+
+        {"kind":"then","text":"An empty String linked set is returned","code":["result4.isEmpty()","result4.type() == String","result4.isLinked()"]},
+
+        {"kind":"when","text":"A linked value set where all items match the filter criteria for retention","code":["var strings = ValueSet.ofLinked(String).addAll(\"a\", \"b\", \"c\")"]},
+
+        {"kind":"and","text":"We retain String instances from a String set","code":["var result5 = strings.retainIf(String)"]},
+
+        {"kind":"then","text":"The set is returned unchanged (but may be a new instance)","code":["result5 == strings","result5.type() == String","result5.isLinked()"]},
+
+        {"kind":"when","text":"We remove Object instances from a String set (all items are instances)","code":["var result6 = strings.removeIf(Object)"]},
+
+        {"kind":"then","text":"An empty linked set is returned","code":["result6.isEmpty()","result6.type() == String","result6.isLinked()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Linked value set type filtering preserves insertion order across complex operations",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            This test verifies that the linked value set maintains proper insertion order\n            across multiple type filtering operations, ensuring that the order semantics\n            are preserved even when performing complex filtering sequences.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A linked value set with carefully ordered mixed types","code":["var orderedSet = ValueSet.ofLinked(Object).addAll(","    \"first\", 1, \"second\", 2.5, \"third\", 3, \"fourth\", 4.7, \"fifth\"",")"]},
+
+        {"kind":"when","text":"We perform sequential type filtering operations","code":["var step1 = orderedSet.retainIf(String)  // Keep only strings","var step2 = orderedSet.removeIf(Number)  // Remove all numbers from original","var step3 = step2.retainIf(String)       // Should be same as step1"]},
+
+        {"kind":"then","text":"All operations preserve the logical ordering","code":["step1.toList() == [\"first\", \"second\", \"third\", \"fourth\", \"fifth\"]","step2.toList() == [\"first\", \"second\", \"third\", \"fourth\", \"fifth\"]","step3.toList() == [\"first\", \"second\", \"third\", \"fourth\", \"fifth\"]","step1.isLinked()","step2.isLinked()","step3.isLinked()","step1 != step2","step1.toList() == step2.toList()","step1 == step3"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }
