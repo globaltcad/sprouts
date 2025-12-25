@@ -356,7 +356,7 @@ public interface Var<T extends @Nullable Object> extends Val<T>
             return Var.ofNull( type() );
 
         T newValue = mapper.apply( get() );
-        return allowsNull() ? Var.ofNullable( type(), newValue ) : Var.of( newValue );
+        return allowsNull() ? Var.ofNullable( type(), newValue ) : Var.of( Objects.requireNonNull(newValue) );
     }
 
     /**
@@ -726,11 +726,11 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      * in both directions without loss of precision.
      *
      * @param <B>    The target type of the projected property.
-     * @param getter Function that converts from {@code T} to {@code B}.
+     * @param getter {@link Function} that converts from {@code T} to {@code B}.
      *               Must be surjective to cover all possible {@code B} values.
-     * @param setter Function that converts from {@code B} back to {@code T}.
+     * @param setter {@link Function} that converts from {@code B} back to {@code T}.
      *               Must be injective to ensure unambiguous updates.
-     * @return A new Var that maintains a bi-directional projection to/from
+     * @return A new Var that maintains a bidirectional projection to/from
      *         this property's item type.
      * @throws NullPointerException if either function is null.
      * @see #projectTo(Object, Function, Function) for a version with null safety.
@@ -792,9 +792,9 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      * @param <B>        The target type of the projected property (non-nullable).
      * @param nullObject The fallback value to use when this property's item is null.
      *                   This object must not be null.
-     * @param getter     Function that converts from {@code T} to {@code B} for non-null items.
-     * @param setter     Function that converts from {@code B} back to {@code T}.
-     * @return A new Var that maintains a bi-directional projection with guaranteed
+     * @param getter     {@link Function} that converts from {@code T} to {@code B} for non-null items.
+     * @param setter     {@link Function} that converts from {@code B} back to {@code T}.
+     * @return A new Var that maintains a bidirectional projection with guaranteed
      *         non-null values, using {@code nullObject} as fallback.
      * @throws NullPointerException if {@code nullObject} or either function is null.
      */
@@ -864,9 +864,9 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      * @param <B>    The nullable target type of the projected property.
      * @param type   The class object representing type {@code B}, required for
      *               runtime type information and nullability support.
-     * @param getter Function that converts from {@code T} to {@code B}, returning
+     * @param getter {@link Function} that converts from {@code T} to {@code B}, returning
      *               null when conversion is not possible or meaningful.
-     * @param setter Function that converts from {@code B} back to {@code T},
+     * @param setter {@link Function} that converts from {@code B} back to {@code T},
      *               handling null input appropriately.
      * @return A new Var that maintains a bidirectional projection allowing
      *         null values in both directions.
