@@ -1,0 +1,708 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SortedValueSetImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sprouts</a> &gt; <a href="index.source.html" class="el_package">sprouts.impl</a> &gt; <span class="el_source">SortedValueSetImpl.java</span></div><h1>SortedValueSetImpl.java</h1><pre class="source lang-java linenums">package sprouts.impl;
+
+import org.jspecify.annotations.Nullable;
+import sprouts.Val;
+import sprouts.ValueSet;
+
+import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
+
+import static sprouts.impl.ArrayUtil.*;
+
+final class SortedValueSetImpl&lt;E&gt; implements ValueSet&lt;E&gt; {
+
+    private static final boolean ALLOWS_NULL = false;
+<span class="fc" id="L16">    private static final Node NULL_NODE = new Node(</span>
+<span class="fc" id="L17">            _createArray(Object.class, ALLOWS_NULL, 0)</span>
+    );
+
+    private static int BASE_ENTRIES_PER_NODE(int depth) {
+<span class="fc" id="L21">        return Math.max(1, depth * depth / 2);</span>
+    }
+
+    static class Node {
+        private final int _size;
+        private final Object _elementsArray;
+        private final @Nullable Node _left;
+        private final @Nullable Node _right;
+
+        Node(Object elementsArray) {
+<span class="fc" id="L31">            this(elementsArray, null, null);</span>
+<span class="fc" id="L32">        }</span>
+
+<span class="fc" id="L34">        Node(Object elementsArray, @Nullable Node left, @Nullable Node right) {</span>
+<span class="fc" id="L35">            _size = _length(elementsArray) +</span>
+<span class="fc bfc" id="L36" title="All 2 branches covered.">                    (left == null ? 0 : left.size()) +</span>
+<span class="fc bfc" id="L37" title="All 2 branches covered.">                    (right == null ? 0 : right.size());</span>
+<span class="fc" id="L38">            _elementsArray = elementsArray;</span>
+<span class="fc" id="L39">            _left = left;</span>
+<span class="fc" id="L40">            _right = right;</span>
+<span class="fc" id="L41">        }</span>
+
+<span class="fc" id="L43">        Node(int size, Object elementsArray, @Nullable Node left, @Nullable Node right) {</span>
+<span class="fc" id="L44">            _size = size;</span>
+<span class="fc" id="L45">            _elementsArray = elementsArray;</span>
+<span class="fc" id="L46">            _left = left;</span>
+<span class="fc" id="L47">            _right = right;</span>
+<span class="fc" id="L48">        }</span>
+
+        public Object elementsArray() {
+<span class="fc" id="L51">            return _elementsArray;</span>
+        }
+        public @Nullable Node left() {
+<span class="fc" id="L54">            return _left;</span>
+        }
+        public @Nullable Node right() {
+<span class="fc" id="L57">            return _right;</span>
+        }
+        public int size() {
+<span class="fc" id="L60">            return _size;</span>
+        }
+        public Node withNewArrays(Object newElementsArray) {
+<span class="fc" id="L63">            return new Node(newElementsArray, _left, _right);</span>
+        }
+        public Node withNewLeft(@Nullable Node left) {
+<span class="fc" id="L66">            return new Node(_elementsArray, left, _right);</span>
+        }
+        public Node withNewRight(@Nullable Node right) {
+<span class="fc" id="L69">            return new Node(_elementsArray, _left, right);</span>
+        }
+
+        @Override
+        public int hashCode() {
+<span class="nc" id="L74">            int elementsHash = Val.hashCode(_elementsArray);</span>
+<span class="nc" id="L75">            return Objects.hash(_size, elementsHash, _left, _right);</span>
+        }
+
+        @Override
+        public boolean equals(@Nullable Object obj) {
+<span class="nc bnc" id="L80" title="All 2 branches missed.">            if (this == obj) return true;</span>
+<span class="nc bnc" id="L81" title="All 2 branches missed.">            if (!(obj instanceof Node)) return false;</span>
+<span class="nc" id="L82">            Node other = (Node) obj;</span>
+<span class="nc bnc" id="L83" title="All 2 branches missed.">            return _size == other._size &amp;&amp;</span>
+<span class="nc bnc" id="L84" title="All 2 branches missed.">                    Val.equals(_elementsArray, other._elementsArray) &amp;&amp;</span>
+<span class="nc bnc" id="L85" title="All 2 branches missed.">                    Objects.equals(_left, other._left) &amp;&amp;</span>
+<span class="nc bnc" id="L86" title="All 2 branches missed.">                    Objects.equals(_right, other._right);</span>
+        }
+    }
+
+    private final Class&lt;E&gt; _type;
+    private final ArrayItemAccess&lt;E, Object&gt; _itemGetter;
+    private final Comparator&lt;E&gt; _comparator;
+    private final Node _root;
+<span class="fc" id="L94">    private final AtomicReference&lt;@Nullable Integer&gt; _cachedHashCode = new AtomicReference&lt;&gt;(null);</span>
+
+    SortedValueSetImpl(
+            final Class&lt;E&gt; type,
+            final Comparator&lt;E&gt; comparator
+    ) {
+<span class="fc" id="L100">        this(type, comparator, NULL_NODE);</span>
+<span class="fc" id="L101">    }</span>
+
+    private SortedValueSetImpl(
+            final Class&lt;E&gt; type,
+            final Comparator&lt;E&gt; comparator,
+            final Node root
+<span class="fc" id="L107">    ) {</span>
+<span class="fc" id="L108">        _type = type;</span>
+<span class="fc" id="L109">        _itemGetter = ArrayItemAccess.of(_type, false);</span>
+<span class="fc" id="L110">        _comparator = comparator;</span>
+<span class="fc" id="L111">        _root = root;</span>
+<span class="fc" id="L112">    }</span>
+
+    @Override
+    public int size() {
+<span class="fc" id="L116">        return _root.size();</span>
+    }
+
+    @Override
+    public boolean isLinked() {
+<span class="fc" id="L121">        return false;</span>
+    }
+
+    @Override
+    public boolean isSorted() {
+<span class="fc" id="L126">        return true;</span>
+    }
+
+    @Override
+    public Class&lt;E&gt; type() {
+<span class="fc" id="L131">        return _type;</span>
+    }
+
+    @Override
+    public boolean contains(E element) {
+<span class="pc bpc" id="L136" title="1 of 2 branches missed.">        if (element == null) {</span>
+<span class="nc" id="L137">            throw new NullPointerException(&quot;Null element&quot;);</span>
+        }
+<span class="pc bpc" id="L139" title="1 of 2 branches missed.">        if (!_type.isAssignableFrom(element.getClass())) {</span>
+<span class="nc" id="L140">            throw new ClassCastException(&quot;Element type mismatch&quot;);</span>
+        }
+<span class="fc bfc" id="L142" title="All 2 branches covered.">        return _findElement(_root, _itemGetter, _comparator, element) != null;</span>
+    }
+
+    private static &lt;E&gt; @Nullable E _findElement(
+            Node node,
+            ArrayItemAccess&lt;E, Object&gt; itemGetter,
+            Comparator&lt;E&gt; comparator,
+            E element
+    ) {
+<span class="fc" id="L151">        int numberOfElements = _length(node.elementsArray());</span>
+<span class="fc" id="L152">        int index = _binarySearch(node.elementsArray(), itemGetter, comparator, element);</span>
+<span class="fc bfc" id="L153" title="All 2 branches covered.">        if (index &lt; 0) {</span>
+<span class="fc" id="L154">            Node left = node.left();</span>
+<span class="fc bfc" id="L155" title="All 2 branches covered.">            if (left != null) {</span>
+<span class="fc" id="L156">                E value = _findElement(left, itemGetter, comparator, element);</span>
+<span class="fc bfc" id="L157" title="All 2 branches covered.">                if (value != null) return value;</span>
+            }
+        }
+<span class="fc bfc" id="L160" title="All 2 branches covered.">        if (index &gt;= numberOfElements) {</span>
+<span class="fc" id="L161">            Node right = node.right();</span>
+<span class="fc bfc" id="L162" title="All 2 branches covered.">            if (right != null) {</span>
+<span class="fc" id="L163">                E value = _findElement(right, itemGetter, comparator, element);</span>
+<span class="fc bfc" id="L164" title="All 2 branches covered.">                if (value != null) return value;</span>
+            }
+        }
+<span class="fc bfc" id="L167" title="All 4 branches covered.">        if (index &gt;= 0 &amp;&amp; index &lt; numberOfElements) {</span>
+<span class="fc" id="L168">            boolean elementExists = Objects.equals(element, itemGetter.get(index, node.elementsArray()));</span>
+<span class="pc bpc" id="L169" title="1 of 2 branches missed.">            if (elementExists) {</span>
+<span class="fc" id="L170">                return itemGetter.get(index, node.elementsArray());</span>
+            }
+        }
+<span class="fc" id="L173">        return null;</span>
+    }
+
+    @Override
+    public ValueSet&lt;E&gt; add(E element) {
+<span class="fc bfc" id="L178" title="All 2 branches covered.">        if (element == null) {</span>
+<span class="fc" id="L179">            throw new NullPointerException(&quot;Null element&quot;);</span>
+        }
+<span class="pc bpc" id="L181" title="1 of 2 branches missed.">        if (!_type.isAssignableFrom(element.getClass())) {</span>
+<span class="nc" id="L182">            throw new ClassCastException(&quot;Element type mismatch&quot;);</span>
+        }
+<span class="fc" id="L184">        Node newRoot = _balance(_updateElement(_root, _type, _itemGetter, _comparator, element, 0));</span>
+<span class="fc bfc" id="L185" title="All 2 branches covered.">        if (Util.refEquals(newRoot, _root)) {</span>
+<span class="fc" id="L186">            return this;</span>
+        }
+<span class="fc" id="L188">        return new SortedValueSetImpl&lt;&gt;(_type, _comparator, newRoot);</span>
+    }
+
+    @Override
+    public ValueSet&lt;E&gt; addAll(Stream&lt;? extends E&gt; elements) {
+<span class="fc" id="L193">        Objects.requireNonNull(elements);</span>
+        // TODO: implement branching based bulk insert
+<span class="fc" id="L195">        SortedValueSetImpl&lt;E&gt; result = this;</span>
+        // reduce the stream to a single association
+<span class="fc" id="L197">        return elements.reduce(</span>
+                result,
+                (acc,
+<span class="fc" id="L200">                 entry) -&gt; (SortedValueSetImpl&lt;E&gt;) acc.add(entry),</span>
+<span class="nc" id="L201">                (a, b) -&gt; a);</span>
+    }
+
+    private static &lt;E&gt; Node _updateElement(
+            Node node,
+            Class&lt;E&gt; keyType,
+            ArrayItemAccess&lt;E, Object&gt; itemGetter,
+            Comparator&lt;E&gt; keyComparator,
+            E key,
+            int depth
+    ) {
+<span class="fc" id="L212">        int numberOfKeys = _length(node.elementsArray());</span>
+<span class="fc" id="L213">        int index = _binarySearch(node.elementsArray(), itemGetter, keyComparator, key);</span>
+<span class="fc bfc" id="L214" title="All 4 branches covered.">        boolean foundInCurrentNode = index &gt;= 0 &amp;&amp; index &lt; numberOfKeys;</span>
+<span class="fc bfc" id="L215" title="All 4 branches covered.">        boolean leftAndRightAreNull = node.left() == null &amp;&amp; node.right() == null;</span>
+<span class="fc bfc" id="L216" title="All 6 branches covered.">        if ( leftAndRightAreNull &amp;&amp; !foundInCurrentNode &amp;&amp; numberOfKeys &lt; BASE_ENTRIES_PER_NODE(depth) ) {</span>
+            // We add to the left
+<span class="fc" id="L218">            Object newKeysArray = _createArray(keyType, ALLOWS_NULL, numberOfKeys+1);</span>
+            // arraycopy
+<span class="fc bfc" id="L220" title="All 2 branches covered.">            if ( index &lt; 0 ) {</span>
+<span class="fc bfc" id="L221" title="All 2 branches covered.">                if ( numberOfKeys &gt; 0 ) {</span>
+<span class="fc" id="L222">                    System.arraycopy(node.elementsArray(), 0, newKeysArray, 1, numberOfKeys);</span>
+                }
+<span class="fc" id="L224">                _setAt(0, key, newKeysArray);</span>
+            } else {
+<span class="pc bpc" id="L226" title="1 of 2 branches missed.">                if ( numberOfKeys &gt; 0 ) {</span>
+<span class="fc" id="L227">                    System.arraycopy(node.elementsArray(), 0, newKeysArray, 0, numberOfKeys);</span>
+                }
+<span class="fc" id="L229">                _setAt(numberOfKeys, key, newKeysArray);</span>
+            }
+<span class="fc" id="L231">            return node.withNewArrays(newKeysArray);</span>
+        }
+<span class="fc bfc" id="L233" title="All 2 branches covered.">        if ( index &lt; 0 ) {</span>
+<span class="fc" id="L234">            Node left = node.left();</span>
+<span class="fc bfc" id="L235" title="All 2 branches covered.">            if ( left != null ) {</span>
+<span class="fc" id="L236">                Node newLeft = _balance(_updateElement(left, keyType, itemGetter, keyComparator, key, depth+1));</span>
+<span class="fc bfc" id="L237" title="All 2 branches covered.">                if ( Util.refEquals(newLeft, left) ) {</span>
+<span class="fc" id="L238">                    return node; // No change in the left node</span>
+                }
+<span class="fc" id="L240">                return node.withNewLeft(newLeft);</span>
+            } else { // Left is null, we create a new node
+<span class="fc" id="L242">                Object newKeysArray = _createArray(keyType, ALLOWS_NULL, 1);</span>
+<span class="fc" id="L243">                _setAt(0, key, newKeysArray);</span>
+<span class="fc" id="L244">                return node.withNewLeft(new Node(newKeysArray));</span>
+            }
+        }
+<span class="fc bfc" id="L247" title="All 2 branches covered.">        if ( index &gt;= numberOfKeys ) {</span>
+<span class="fc" id="L248">            Node right = node.right();</span>
+<span class="fc bfc" id="L249" title="All 2 branches covered.">            if ( right != null ) {</span>
+<span class="fc" id="L250">                Node newRight = _balance(_updateElement(right, keyType, itemGetter, keyComparator, key, depth+1));</span>
+<span class="fc bfc" id="L251" title="All 2 branches covered.">                if ( Util.refEquals(newRight, right) ) {</span>
+<span class="fc" id="L252">                    return node; // No change in the right node</span>
+                }
+<span class="fc" id="L254">                return node.withNewRight(newRight);</span>
+            } else { // Right is null, we create a new node
+<span class="fc" id="L256">                Object newKeysArray = _createArray(keyType, ALLOWS_NULL, 1);</span>
+<span class="fc" id="L257">                _setAt(0, key, newKeysArray);</span>
+<span class="fc" id="L258">                return node.withNewRight(new Node(newKeysArray));</span>
+            }
+        }
+
+<span class="fc" id="L262">        boolean keyAlreadyExists = Objects.equals(key, itemGetter.get(index, node.elementsArray()));</span>
+<span class="fc bfc" id="L263" title="All 2 branches covered.">        if ( !keyAlreadyExists ) {</span>
+<span class="fc bfc" id="L264" title="All 2 branches covered.">            if ( numberOfKeys &lt; BASE_ENTRIES_PER_NODE(depth) ) {</span>
+                // We need to insert the key in the right place
+<span class="fc" id="L266">                Object newKeysArray = _createArray(keyType, ALLOWS_NULL, numberOfKeys + 1);</span>
+                // arraycopy up to index, item, and then trailing item copy
+                // First keys:
+<span class="fc" id="L269">                System.arraycopy(node.elementsArray(), 0, newKeysArray, 0, index);</span>
+<span class="fc" id="L270">                _setAt(index, key, newKeysArray);</span>
+<span class="fc" id="L271">                System.arraycopy(node.elementsArray(), index, newKeysArray, index + 1, numberOfKeys - index);</span>
+<span class="fc" id="L272">                return node.withNewArrays(newKeysArray);</span>
+            } else {
+                /*
+                    Ok, so this is an interesting case. We have a full node, and we need to INSERT a new key
+                    somewhere in the middle of the node. We do this by popping an excess entry from
+                    one of the sides of the local arrays and then let this popped-off entry trickle down
+                    to the left or right side of the tree.
+                */
+<span class="fc" id="L280">                Object newKeysArray = _createArray(keyType, ALLOWS_NULL, numberOfKeys);</span>
+<span class="fc bfc" id="L281" title="All 2 branches covered.">                int numberOfEntriesLeft = node.left() == null ? 0 : _length(node.left().elementsArray());</span>
+<span class="fc bfc" id="L282" title="All 2 branches covered.">                int numberOfEntriesRight = node.right() == null ? 0 : _length(node.right().elementsArray());</span>
+<span class="fc bfc" id="L283" title="All 2 branches covered.">                if ( numberOfEntriesLeft &lt; numberOfEntriesRight ) {</span>
+<span class="pc bpc" id="L284" title="1 of 2 branches missed.">                    if ( index == 0 ) {</span>
+                        // we just update the left node
+                        Node newLeft;
+<span class="nc bnc" id="L287" title="All 2 branches missed.">                        if ( node.left() != null ) {</span>
+                            // Re-add the popped key and value to the left node
+<span class="nc" id="L289">                            newLeft = _balance(_updateElement(node.left(), keyType, itemGetter, keyComparator, key, depth+1));</span>
+                        } else {
+<span class="nc" id="L291">                            newLeft = _createSingleEntryNode(keyType, key);</span>
+                        }
+<span class="nc" id="L293">                        return node.withNewLeft(newLeft);</span>
+                    }
+<span class="fc" id="L295">                    E poppedOffKey = _getNonNullAt(0, node.elementsArray(), keyType);</span>
+                    Node newLeft;
+<span class="fc bfc" id="L297" title="All 2 branches covered.">                    if ( node.left() != null ) {</span>
+                        // Re-add the popped key and value to the left node
+<span class="fc" id="L299">                        newLeft = _balance(_updateElement(node.left(), keyType, itemGetter, keyComparator, poppedOffKey, depth+1));</span>
+                    } else {
+<span class="fc" id="L301">                        newLeft = _createSingleEntryNode(keyType, poppedOffKey);</span>
+                    }
+                    // We pop from the left
+<span class="pc bpc" id="L304" title="1 of 2 branches missed.">                    if ( numberOfKeys == 1 ) {</span>
+                        // We add the actual key and value to the current node as well as the new left node
+<span class="nc" id="L306">                        _setAt(0, key, newKeysArray);</span>
+                    } else {
+                        // First, insert the key and value at the index (adjust for the popped key)
+<span class="fc" id="L309">                        _setAt(index-1, key, newKeysArray);</span>
+                        // Then, copy up to the index
+<span class="fc" id="L311">                        System.arraycopy(node.elementsArray(), 1, newKeysArray, 0, index-1);</span>
+                        // Finally, copy the rest of the keys and values
+<span class="fc" id="L313">                        System.arraycopy(node.elementsArray(), index, newKeysArray, index, numberOfKeys - index);</span>
+                    }
+<span class="fc" id="L315">                    return new Node(newKeysArray, newLeft, node.right());</span>
+                } else {
+<span class="pc bpc" id="L317" title="1 of 2 branches missed.">                    if ( index == numberOfKeys ) {</span>
+                        // we just update the right node
+                        Node newRight;
+<span class="nc bnc" id="L320" title="All 2 branches missed.">                        if ( node.right() != null ) {</span>
+                            // Re-add the popped key and value to the right node
+<span class="nc" id="L322">                            newRight = _balance(_updateElement(node.right(), keyType, itemGetter, keyComparator, key, depth+1));</span>
+                        } else {
+<span class="nc" id="L324">                            newRight = _createSingleEntryNode(keyType, key);</span>
+                        }
+<span class="nc" id="L326">                        return node.withNewRight(newRight);</span>
+                    }
+<span class="fc" id="L328">                    E poppedOffKey = _getNonNullAt(numberOfKeys-1, node.elementsArray(), keyType);</span>
+                    Node newRight;
+<span class="fc bfc" id="L330" title="All 2 branches covered.">                    if ( node.right() != null ) {</span>
+                        // Re-add the popped key and value to the right node
+<span class="fc" id="L332">                        newRight = _balance(_updateElement(node.right(), keyType, itemGetter, keyComparator, poppedOffKey, depth+1));</span>
+                    } else {
+<span class="fc" id="L334">                        newRight = _createSingleEntryNode(keyType, poppedOffKey);</span>
+                    }
+                    // We pop from the right
+<span class="fc bfc" id="L337" title="All 2 branches covered.">                    if ( numberOfKeys == 1 ) {</span>
+                        // We add the actual key and value to the current node as well as the new right node
+<span class="fc" id="L339">                        _setAt(0, key, newKeysArray);</span>
+                    } else {
+                        // First, insert the key and value at the index (adjust for the popped key)
+<span class="fc" id="L342">                        _setAt(index, key, newKeysArray);</span>
+                        // Then, copy up to the index
+<span class="fc" id="L344">                        System.arraycopy(node.elementsArray(), 0, newKeysArray, 0, index);</span>
+                        // Finally, copy the rest of the keys and values
+<span class="fc" id="L346">                        System.arraycopy(node.elementsArray(), index, newKeysArray, index+1, numberOfKeys - index - 1);</span>
+                    }
+<span class="fc" id="L348">                    return new Node(newKeysArray, node.left(), newRight);</span>
+                }
+            }
+        }
+<span class="fc" id="L352">        return node;</span>
+    }
+
+    private static @Nullable Node _balanceNullable(@Nullable Node node){
+<span class="fc bfc" id="L356" title="All 2 branches covered.">        if (node == null)</span>
+<span class="fc" id="L357">            return null;</span>
+<span class="fc" id="L358">        return _balance(node);</span>
+    }
+
+    private static Node _balance(Node node){
+        
+<span class="fc" id="L363">        final Node right = node.right();</span>
+<span class="fc" id="L364">        final Node left = node.left();</span>
+<span class="fc bfc" id="L365" title="All 2 branches covered.">        final int leftSize = left == null ? 0 : left.size();</span>
+<span class="fc bfc" id="L366" title="All 2 branches covered.">        final int rightSize = right == null ? 0 : right.size();</span>
+<span class="fc bfc" id="L367" title="All 2 branches covered.">        if ( leftSize == rightSize ) {</span>
+<span class="fc" id="L368">            return node;</span>
+        }
+<span class="fc" id="L370">        final int currentNodeArraySize = _length(node.elementsArray());</span>
+<span class="pc bpc" id="L371" title="1 of 4 branches missed.">        if ( leftSize &lt; rightSize &amp;&amp; right != null ) {</span>
+<span class="fc" id="L372">            final int imbalance = rightSize - leftSize;</span>
+<span class="fc" id="L373">            final int rightArraySize = _length(right.elementsArray());</span>
+<span class="fc bfc" id="L374" title="All 2 branches covered.">            final int rightLeftSize = right.left() == null ? 0 : right.left().size();</span>
+<span class="fc" id="L375">            final int newRightSize = rightSize - rightLeftSize - rightArraySize;</span>
+<span class="fc" id="L376">            final int newLeftSize = leftSize + rightLeftSize + currentNodeArraySize;</span>
+<span class="fc" id="L377">            final int newImbalance = Math.abs(newRightSize - newLeftSize);</span>
+<span class="fc bfc" id="L378" title="All 2 branches covered.">            if ( newImbalance &lt; imbalance ) { // We only re-balance if it is worth it!</span>
+<span class="fc" id="L379">                Node newLeft = new Node(newLeftSize, node.elementsArray(), left, right.left());</span>
+<span class="fc" id="L380">                return new Node(</span>
+<span class="fc" id="L381">                        node.size(), right.elementsArray(), newLeft, right.right()</span>
+                    );
+            }
+        }
+<span class="pc bpc" id="L385" title="1 of 4 branches missed.">        if ( rightSize &lt; leftSize &amp;&amp; left != null ) {</span>
+<span class="fc" id="L386">            final int imbalance = leftSize - rightSize;</span>
+<span class="fc" id="L387">            final int leftArraySize = _length(left.elementsArray());</span>
+<span class="fc bfc" id="L388" title="All 2 branches covered.">            final int leftRightSize = left.right() == null ? 0 : left.right().size();</span>
+<span class="fc" id="L389">            final int newLeftSize = leftSize - leftRightSize - leftArraySize;</span>
+<span class="fc" id="L390">            final int newRightSize = rightSize + leftRightSize + currentNodeArraySize;</span>
+<span class="fc" id="L391">            final int newImbalance = Math.abs(newLeftSize - newRightSize);</span>
+<span class="fc bfc" id="L392" title="All 2 branches covered.">            if ( newImbalance &lt; imbalance ) { // We only re-balance if it is worth it!</span>
+<span class="fc" id="L393">                Node newRight = new Node(newRightSize, node.elementsArray(), left.right(), right);</span>
+<span class="fc" id="L394">                return new Node(</span>
+<span class="fc" id="L395">                        node.size(), left.elementsArray(), left.left(), newRight</span>
+                    );
+            }
+        }
+<span class="fc" id="L399">        return node;</span>
+    }
+
+    private static Node _createSingleEntryNode(
+            Class&lt;?&gt; keyType, Object key
+    ) {
+<span class="fc" id="L405">        Object newKeysArray = _createArray(keyType, ALLOWS_NULL, 1);</span>
+<span class="fc" id="L406">        _setAt(0, key, newKeysArray);</span>
+<span class="fc" id="L407">        return new Node(newKeysArray);</span>
+    }
+
+    @Override
+    public ValueSet&lt;E&gt; remove(E element) {
+<span class="fc bfc" id="L412" title="All 2 branches covered.">        if (element == null) {</span>
+<span class="fc" id="L413">            throw new NullPointerException(&quot;Null element&quot;);</span>
+        }
+<span class="pc bpc" id="L415" title="1 of 2 branches missed.">        if (!_type.isAssignableFrom(element.getClass())) {</span>
+<span class="nc" id="L416">            throw new ClassCastException(&quot;Element type mismatch&quot;);</span>
+        }
+<span class="fc" id="L418">        Node newRoot = _balanceNullable(_removeElement(_root, _type, _itemGetter, _comparator, element));</span>
+<span class="fc bfc" id="L419" title="All 2 branches covered.">        newRoot = newRoot == null ? NULL_NODE : newRoot;</span>
+<span class="fc bfc" id="L420" title="All 2 branches covered.">        if ( Util.refEquals(newRoot, _root) ) {</span>
+<span class="fc" id="L421">            return this;</span>
+        }
+<span class="fc" id="L423">        return new SortedValueSetImpl&lt;&gt;(_type, _comparator, newRoot);</span>
+    }
+
+    @Override
+    public ValueSet&lt;E&gt; removeAll(Stream&lt;? extends E&gt; elements) {
+<span class="pc bpc" id="L428" title="1 of 2 branches missed.">        if ( this.isEmpty() )</span>
+<span class="nc" id="L429">            return this;</span>
+<span class="fc" id="L430">        ValueSet&lt;E&gt; result = this;</span>
+<span class="fc" id="L431">        result = elements.reduce(result,</span>
+<span class="fc" id="L432">                (acc, entry) -&gt; (ValueSet&lt;E&gt;) acc.remove(entry),</span>
+<span class="nc" id="L433">                (a, b) -&gt; a);</span>
+<span class="fc" id="L434">        return result;</span>
+    }
+
+    @Override
+    public ValueSet&lt;E&gt; retainAll(Set&lt;? extends E&gt; elements) {
+<span class="pc bpc" id="L439" title="1 of 2 branches missed.">        if ( this.isEmpty() )</span>
+<span class="nc" id="L440">            return this;</span>
+<span class="fc" id="L441">        ValueSet&lt;E&gt; result = this;</span>
+<span class="fc bfc" id="L442" title="All 2 branches covered.">        if ( elements.isEmpty() )</span>
+<span class="fc" id="L443">            return clear();</span>
+<span class="fc bfc" id="L444" title="All 2 branches covered.">        for ( E currentElement : this ) {</span>
+<span class="fc bfc" id="L445" title="All 2 branches covered.">            if ( !elements.contains(currentElement) ) {</span>
+<span class="fc" id="L446">                result = result.remove(currentElement);</span>
+            }
+<span class="fc" id="L448">        }</span>
+<span class="fc" id="L449">        return result;</span>
+    }
+
+    @Override
+    public &lt;V extends E&gt; ValueSet&lt;V&gt; retainIf(Class&lt;V&gt; type)  {
+<span class="fc" id="L454">        Objects.requireNonNull(type, &quot;The provided type cannot be null.&quot;);</span>
+<span class="fc" id="L455">        return stream()</span>
+<span class="fc" id="L456">                .filter(e -&gt; type.isAssignableFrom(e.getClass()))</span>
+<span class="fc" id="L457">                .map(type::cast)</span>
+<span class="pc" id="L458">                .reduce(ValueSet.ofSorted(type, (Comparator&lt;V&gt;) _comparator), ValueSet::add, (a, b) -&gt; a);</span>
+    }
+
+    private static &lt;E&gt; @Nullable Node _removeElement(
+            Node node,
+            Class&lt;E&gt; keyType,
+            ArrayItemAccess&lt;E, Object&gt; itemGetter,
+            Comparator&lt;E&gt; keyComparator,
+            E key
+    ) {
+<span class="fc" id="L468">        int numberOfKeys = _length(node.elementsArray());</span>
+<span class="fc" id="L469">        int index = _binarySearch(node.elementsArray(), keyType, keyComparator, key);</span>
+<span class="fc bfc" id="L470" title="All 2 branches covered.">        if ( index &lt; 0 ) {</span>
+<span class="fc" id="L471">            Node left = node.left();</span>
+<span class="fc bfc" id="L472" title="All 2 branches covered.">            if ( left != null ) {</span>
+<span class="fc" id="L473">                Node newLeft = _balanceNullable(_removeElement(left, keyType, itemGetter, keyComparator, key));</span>
+<span class="fc" id="L474">                return node.withNewLeft(newLeft);</span>
+            }
+<span class="fc" id="L476">            return node; // Key not found</span>
+        }
+<span class="fc bfc" id="L478" title="All 2 branches covered.">        if ( index &gt;= numberOfKeys ) {</span>
+<span class="fc" id="L479">            Node right = node.right();</span>
+<span class="fc bfc" id="L480" title="All 2 branches covered.">            if ( right != null ) {</span>
+<span class="fc" id="L481">                Node newRight = _balanceNullable(_removeElement(right, keyType, itemGetter, keyComparator, key));</span>
+<span class="fc" id="L482">                return node.withNewRight(newRight);</span>
+            }
+<span class="fc" id="L484">            return node; // Key not found</span>
+        }
+<span class="fc" id="L486">        boolean keyAlreadyExists = Objects.equals(key, itemGetter.get(index, node.elementsArray()));</span>
+<span class="fc bfc" id="L487" title="All 2 branches covered.">        if ( keyAlreadyExists ) {</span>
+<span class="fc bfc" id="L488" title="All 2 branches covered.">            if ( numberOfKeys == 1 ) {</span>
+<span class="fc" id="L489">                Node left = node.left();</span>
+<span class="fc" id="L490">                Node right = node.right();</span>
+<span class="fc bfc" id="L491" title="All 4 branches covered.">                if ( left == null || right == null ) {</span>
+<span class="fc bfc" id="L492" title="All 2 branches covered.">                    if ( left != null ) {</span>
+<span class="fc" id="L493">                        return left;</span>
+                    }
+<span class="fc bfc" id="L495" title="All 2 branches covered.">                    if ( right != null ) {</span>
+<span class="fc" id="L496">                        return right;</span>
+                    }
+<span class="fc" id="L498">                    return null;</span>
+                }
+<span class="fc" id="L500">                Object newKeysArray = _createArray(keyType, ALLOWS_NULL, 1);</span>
+<span class="fc" id="L501">                int leftSize = left.size();</span>
+<span class="fc" id="L502">                int rightSize = right.size();</span>
+                // Only the root node is allowed to be empty, so we rebalance here
+<span class="fc bfc" id="L504" title="All 2 branches covered.">                if ( leftSize &gt; rightSize ) {</span>
+<span class="fc" id="L505">                    E rightMostKey = _findRightMostElement(left, keyType);</span>
+<span class="fc" id="L506">                    _setAt(0, rightMostKey, newKeysArray);</span>
+<span class="fc" id="L507">                    left = _balanceNullable(_removeElement(left, keyType, itemGetter, keyComparator, rightMostKey));</span>
+<span class="fc" id="L508">                } else {</span>
+<span class="fc" id="L509">                    E leftMostKey = _findLeftMostElement(right, keyType);</span>
+<span class="fc" id="L510">                    _setAt(0, leftMostKey, newKeysArray);</span>
+<span class="fc" id="L511">                    right = _balanceNullable(_removeElement(right, keyType, itemGetter, keyComparator, leftMostKey));</span>
+                }
+<span class="fc" id="L513">                return new Node(node._size - 1, newKeysArray, left, right);</span>
+            }
+            // We found the key, we need to remove it
+<span class="fc" id="L516">            Object newKeysArray = _createArray(keyType, ALLOWS_NULL, numberOfKeys-1);</span>
+            // arraycopy
+<span class="fc" id="L518">            System.arraycopy(node.elementsArray(), 0, newKeysArray, 0, index);</span>
+<span class="fc" id="L519">            System.arraycopy(node.elementsArray(), index+1, newKeysArray, index, numberOfKeys-index-1);</span>
+<span class="fc" id="L520">            return node.withNewArrays(newKeysArray);</span>
+        }
+<span class="fc" id="L522">        return node;</span>
+    }
+
+    private static &lt;E&gt; E _findRightMostElement(Node node, Class&lt;E&gt; type) {
+<span class="fc bfc" id="L526" title="All 2 branches covered.">        if (node.right() != null) {</span>
+<span class="fc" id="L527">            return _findRightMostElement(node.right(), type);</span>
+        }
+<span class="fc" id="L529">        int numberOfElements = _length(node.elementsArray());</span>
+<span class="fc" id="L530">        return _getNonNullAt(numberOfElements - 1, node.elementsArray(), type);</span>
+    }
+
+    private static &lt;E&gt; E _findLeftMostElement(Node node, Class&lt;E&gt; type) {
+<span class="fc bfc" id="L534" title="All 2 branches covered.">        if (node.left() != null) {</span>
+<span class="fc" id="L535">            return _findLeftMostElement(node.left(), type);</span>
+        }
+<span class="fc" id="L537">        return _getNonNullAt(0, node.elementsArray(), type);</span>
+    }
+
+    @Override
+    public ValueSet&lt;E&gt; clear() {
+<span class="fc" id="L542">        return Sprouts.factory().valueSetOfSorted(this.type(), _comparator);</span>
+    }
+
+    @Override
+    public Spliterator&lt;E&gt; spliterator() {
+<span class="fc" id="L547">        return Spliterators.spliterator(iterator(), _root.size(),</span>
+                Spliterator.SORTED |
+                        Spliterator.ORDERED |
+                        Spliterator.DISTINCT |
+                        Spliterator.SIZED |
+                        Spliterator.SUBSIZED |
+                        Spliterator.NONNULL |
+                        Spliterator.IMMUTABLE
+        );
+    }
+
+    @Override
+    public Iterator&lt;E&gt; iterator() {
+<span class="fc" id="L560">        return new SortedValueSetIterator&lt;&gt;(this);</span>
+    }
+
+    private static final class SortedValueSetIterator&lt;E&gt; implements Iterator&lt;E&gt;
+    {
+        private final ArrayItemAccess&lt;E, Object&gt; elementGetter;
+<span class="fc" id="L566">        private @Nullable IteratorFrame currentFrame = null;</span>
+
+
+<span class="fc" id="L569">        SortedValueSetIterator(SortedValueSetImpl&lt;E&gt; sortedValueSet) {</span>
+<span class="fc" id="L570">            elementGetter = ArrayItemAccess.of(sortedValueSet._type, false);</span>
+<span class="fc bfc" id="L571" title="All 2 branches covered.">            if (sortedValueSet._root.size() &gt; 0)</span>
+<span class="fc" id="L572">                currentFrame = new IteratorFrame(null, sortedValueSet._root);</span>
+<span class="fc" id="L573">        }</span>
+
+        @Override
+        public boolean hasNext() {
+<span class="fc bfc" id="L577" title="All 2 branches covered.">            while (currentFrame != null) {</span>
+<span class="fc bfc" id="L578" title="All 2 branches covered.">                if (currentFrame.stage == 0) {</span>
+<span class="fc" id="L579">                    currentFrame.stage = 1;</span>
+<span class="fc bfc" id="L580" title="All 2 branches covered.">                    if (currentFrame.node.left() != null)</span>
+<span class="fc" id="L581">                        this.currentFrame = new IteratorFrame(currentFrame, currentFrame.node.left());</span>
+<span class="fc bfc" id="L582" title="All 2 branches covered.">                } else if (currentFrame.stage == 1) {</span>
+<span class="fc bfc" id="L583" title="All 2 branches covered.">                    if (currentFrame.index &lt; _length(currentFrame.node.elementsArray())) return true;</span>
+<span class="fc" id="L584">                    currentFrame.stage = 2;</span>
+<span class="fc bfc" id="L585" title="All 2 branches covered.">                } else if (currentFrame.stage == 2) {</span>
+<span class="fc" id="L586">                    currentFrame.stage = 3;</span>
+<span class="fc bfc" id="L587" title="All 2 branches covered.">                    if (currentFrame.node.right() != null)</span>
+<span class="fc" id="L588">                        this.currentFrame = new IteratorFrame(currentFrame, currentFrame.node.right());</span>
+                } else {
+<span class="fc" id="L590">                    this.currentFrame = currentFrame.parent;</span>
+                }
+            }
+<span class="fc" id="L593">            return false;</span>
+        }
+
+        @Override
+        public E next() {
+<span class="pc bpc" id="L598" title="2 of 4 branches missed.">            if (!hasNext() || currentFrame == null)</span>
+<span class="nc" id="L599">                throw new NoSuchElementException();</span>
+<span class="fc" id="L600">            E element = elementGetter.get(currentFrame.index, currentFrame.node.elementsArray());</span>
+<span class="fc" id="L601">            currentFrame.index++;</span>
+<span class="fc" id="L602">            return element;</span>
+        }
+    }
+
+    static class IteratorFrame {
+        final @Nullable IteratorFrame parent;
+        final Node node;
+<span class="fc" id="L609">        byte stage = 0;  // 0=left, 1=elements, 2=right, 3=done</span>
+<span class="fc" id="L610">        int index = 0;</span>
+
+<span class="fc" id="L612">        IteratorFrame(@Nullable IteratorFrame parent, Node n) {</span>
+<span class="fc" id="L613">            this.parent = parent;</span>
+<span class="fc" id="L614">            this.node = n;</span>
+<span class="fc" id="L615">        }</span>
+    }
+
+    @Override
+    public String toString() {
+<span class="fc" id="L620">        final int MAX_ITEMS = 8;</span>
+<span class="fc" id="L621">        StringBuilder sb = new StringBuilder();</span>
+<span class="fc" id="L622">        sb.append(&quot;SortedValueSet&lt;&quot;).append(_type.getSimpleName()).append(&quot;&gt;[&quot;);</span>
+<span class="fc" id="L623">        Iterator&lt;E&gt; iterator = iterator();</span>
+<span class="fc" id="L624">        int count = 0;</span>
+<span class="fc bfc" id="L625" title="All 2 branches covered.">        while (iterator.hasNext()) {</span>
+<span class="fc bfc" id="L626" title="All 2 branches covered.">            if (count &gt;= MAX_ITEMS) {</span>
+<span class="fc" id="L627">                int itemsLeft = _root.size() - count;</span>
+<span class="fc" id="L628">                sb.append(&quot;... &quot;).append(itemsLeft).append(&quot; items left&quot;);</span>
+<span class="fc" id="L629">                break;</span>
+            }
+<span class="fc" id="L631">            E element = iterator.next();</span>
+<span class="fc" id="L632">            sb.append(Util._toString(element, _type));</span>
+<span class="fc bfc" id="L633" title="All 2 branches covered.">            if (iterator.hasNext()) {</span>
+<span class="fc" id="L634">                sb.append(&quot;, &quot;);</span>
+            }
+<span class="fc" id="L636">            count++;</span>
+<span class="fc" id="L637">        }</span>
+<span class="fc" id="L638">        return sb.append(&quot;]&quot;).toString();</span>
+    }
+
+    @Override
+    public boolean equals(@Nullable Object obj) {
+<span class="pc bpc" id="L643" title="1 of 2 branches missed.">        if (this == obj) return true;</span>
+<span class="pc bpc" id="L644" title="2 of 4 branches missed.">        if (obj == null || getClass() != obj.getClass()) return false;</span>
+<span class="fc" id="L645">        SortedValueSetImpl&lt;?&gt; other = (SortedValueSetImpl&lt;?&gt;) obj;</span>
+<span class="fc bfc" id="L646" title="All 4 branches covered.">        boolean headersEqual = Objects.equals(_type, other._type) &amp;&amp; Objects.equals(_comparator, other._comparator);</span>
+<span class="fc bfc" id="L647" title="All 2 branches covered.">        if (!headersEqual)</span>
+<span class="fc" id="L648">            return false;</span>
+<span class="fc bfc" id="L649" title="All 2 branches covered.">        if ( this.size() != other.size() ) {</span>
+<span class="fc" id="L650">            return false;</span>
+        }
+<span class="fc" id="L652">        return _recursiveEquals(this._root, other._root, type(), _comparator);</span>
+    }
+
+    private static &lt;E&gt; boolean _exhaustiveEquals(SortedValueSetImpl&lt;E&gt; set1, SortedValueSetImpl&lt;E&gt; set2) {
+<span class="fc" id="L656">        Iterator&lt;E&gt; thisIterator = set1.iterator();</span>
+<span class="fc" id="L657">        Iterator&lt;E&gt; otherIterator = set2.iterator();</span>
+<span class="pc bpc" id="L658" title="1 of 4 branches missed.">        while (thisIterator.hasNext() &amp;&amp; otherIterator.hasNext()) {</span>
+<span class="fc bfc" id="L659" title="All 2 branches covered.">            if (!Objects.equals(thisIterator.next(), otherIterator.next())) {</span>
+<span class="fc" id="L660">                return false;</span>
+            }
+        }
+<span class="pc bpc" id="L663" title="2 of 4 branches missed.">        return !thisIterator.hasNext() &amp;&amp; !otherIterator.hasNext();</span>
+    }
+
+    private static &lt;E&gt; boolean _recursiveEquals(@Nullable Node node1, @Nullable Node node2, Class&lt;E&gt; type, Comparator&lt;E&gt; comparator) {
+<span class="fc bfc" id="L667" title="All 2 branches covered.">        if ( node1 == node2 ) {</span>
+<span class="fc" id="L668">            return true;</span>
+        }
+<span class="pc bpc" id="L670" title="2 of 4 branches missed.">        if ( node1 == null || node2 == null ) {</span>
+<span class="nc" id="L671">            return false;</span>
+        }
+<span class="fc" id="L673">        if (</span>
+<span class="fc bfc" id="L674" title="All 2 branches covered.">            node1._size == node2._size &amp;&amp;</span>
+<span class="fc bfc" id="L675" title="All 2 branches covered.">            node1._elementsArray == node2._elementsArray &amp;&amp;</span>
+<span class="pc bpc" id="L676" title="3 of 4 branches missed.">            (node1._left != node2._left || node1._right != node2._right)  // The only difference is somewhere deep down!</span>
+        ) {
+<span class="fc bfc" id="L678" title="All 2 branches covered.">            if ( !_recursiveEquals(node1._left, node2._left, type, comparator) ) {</span>
+<span class="fc" id="L679">                return false;</span>
+            }
+<span class="pc bpc" id="L681" title="1 of 2 branches missed.">            if ( !_recursiveEquals(node1._right, node2._right, type, comparator) ) {</span>
+<span class="nc" id="L682">                return false;</span>
+            }
+<span class="fc" id="L684">            return true;</span>
+        } else {
+<span class="fc" id="L686">            return _exhaustiveEquals(</span>
+                    new SortedValueSetImpl&lt;&gt;(type, comparator, node1),
+                    new SortedValueSetImpl&lt;&gt;(type, comparator, node2)
+                );
+        }
+    }
+
+    @Override
+    public int hashCode() {
+<span class="fc" id="L695">        Integer cached = _cachedHashCode.get();</span>
+<span class="fc bfc" id="L696" title="All 2 branches covered.">        if (cached != null)</span>
+<span class="fc" id="L697">            return cached;</span>
+<span class="fc" id="L698">        int headerHash = Objects.hash(_type, _comparator);</span>
+<span class="fc" id="L699">        int contentHash = 31;</span>
+<span class="fc bfc" id="L700" title="All 2 branches covered.">        for (E element : this) {</span>
+<span class="fc" id="L701">            contentHash = 31 * contentHash + Objects.hash(element);</span>
+<span class="fc" id="L702">        }</span>
+<span class="fc" id="L703">        int result = 31 * headerHash + contentHash;</span>
+<span class="fc" id="L704">        _cachedHashCode.set(result);</span>
+<span class="fc" id="L705">        return result;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>
