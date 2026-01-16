@@ -7,72 +7,43 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
-final class LinkedValueSet<E> implements ValueSet<E> {
+record LinkedValueSet<E>(
+    AssociationImpl<E, LinkedEntry<E>> _entries,
+    @Nullable E _firstInsertedKey,
+    @Nullable E _lastInsertedKey,
+    AtomicReference<@Nullable Integer> _cachedHashCode
+) implements ValueSet<E> {
 
-    private static final class LinkedEntry<K> {
-        private final @Nullable K previousElement;
-        private final @Nullable K nextElement;
-
-        LinkedEntry(@Nullable K previousElement, @Nullable K nextElement) {
-            this.previousElement = previousElement;
-            this.nextElement = nextElement;
-        }
-        @Nullable
-        K previousElement() {
-            return this.previousElement;
-        }
-        @Nullable
-        K nextElement() {
-            return this.nextElement;
-        }
+    private record LinkedEntry<K>(
+            @Nullable K previousElement,
+            @Nullable K nextElement
+    ) {
         LinkedEntry<K> withPreviousElement(@Nullable K previousElement) {
             return new LinkedEntry<>(previousElement, this.nextElement);
         }
+
         LinkedEntry<K> withNextElement(@Nullable K nextKey) {
             return new LinkedEntry<>(this.previousElement, nextKey);
         }
-
-        @Override
-        public String toString() {
-            return "LinkedEntry[previousElement=" + previousElement + ", nextElement=" + nextElement + "]";
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (!(o instanceof LinkedEntry)) return false;
-            LinkedEntry<?> entry = (LinkedEntry<?>) o;
-            return Objects.equals(previousElement, entry.previousElement) &&
-                   Objects.equals(nextElement, entry.nextElement);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = previousElement != null ? previousElement.hashCode() : 0;
-            result = 31 * result + (nextElement != null ? nextElement.hashCode() : 0);
-            return result;
-        }
     }
-
-    private final AssociationImpl<E, LinkedEntry<E>> _entries;
-    private final @Nullable E _firstInsertedKey;
-    private final @Nullable E _lastInsertedKey;
-    private final AtomicReference<@Nullable Integer> _cachedHashCode = new AtomicReference<>(null);
 
     LinkedValueSet(
             final Class<E> elementType
     ) {
-        this(new AssociationImpl(elementType, LinkedEntry.class), null, null);
+        this(new AssociationImpl(elementType, LinkedEntry.class), null, null, new AtomicReference<>(null));
     }
 
-    private LinkedValueSet(
+    private static <E> LinkedValueSet<E> of(
             final AssociationImpl<E, LinkedEntry<E>> entries,
             final @Nullable E firstInsertedKey,
             final @Nullable E lastInsertedKey
     ) {
-        _entries = entries;
-        _firstInsertedKey = firstInsertedKey != null ? firstInsertedKey : lastInsertedKey;
-        _lastInsertedKey = lastInsertedKey;
+        return new LinkedValueSet<E>(
+            entries,
+            firstInsertedKey != null ? firstInsertedKey : lastInsertedKey,
+            lastInsertedKey,
+            new AtomicReference<>(null)
+        );
     }
 
 
@@ -122,7 +93,7 @@ final class LinkedValueSet<E> implements ValueSet<E> {
                 newEntries = (AssociationImpl<E, LinkedEntry<E>>) newEntries.put(_lastInsertedKey, previousEntry);
             }
         }
-        return new LinkedValueSet<>(newEntries, _firstInsertedKey, element);
+        return LinkedValueSet.of(newEntries, _firstInsertedKey, element);
     }
 
     @Override
@@ -178,7 +149,7 @@ final class LinkedValueSet<E> implements ValueSet<E> {
                     newEntries = (AssociationImpl<E, LinkedEntry<E>>) newEntries.put(nextKey, nextEntry);
                 }
             }
-            return new LinkedValueSet<>(newEntries, firstInsertedKey, lastInsertedKey);
+            return LinkedValueSet.of(newEntries, firstInsertedKey, lastInsertedKey);
         }
         return this; // If the entry was not found, return unchanged set
     }
@@ -227,7 +198,7 @@ final class LinkedValueSet<E> implements ValueSet<E> {
         if (_entries.isEmpty()) {
             return this; // Already empty, return unchanged set
         }
-        return new LinkedValueSet<>((AssociationImpl) new AssociationImpl<>(type(), LinkedEntry.class), null, null);
+        return LinkedValueSet.of((AssociationImpl) new AssociationImpl<>(type(), LinkedEntry.class), null, null);
     }
 
     @Override
@@ -255,7 +226,7 @@ final class LinkedValueSet<E> implements ValueSet<E> {
             @Override
             public E next() {
                 if (current == null) {
-                    throw new java.util.NoSuchElementException("No more elements in the set");
+                    throw new NoSuchElementException("No more elements in the set");
                 }
                 E nextElement = current;
                 LinkedEntry<E> entry = _entries.get(current).orElse(null);
@@ -311,7 +282,7 @@ final class LinkedValueSet<E> implements ValueSet<E> {
         if ( _entries.size() != other._entries.size() )
             return false;
 
-        return _recursiveEquals(this._entries._root, other._entries._root, this.type());
+        return _recursiveEquals(this._entries._root(), other._entries._root(), this.type());
     }
 
     private static <K> boolean _exhaustiveEquals(
@@ -322,11 +293,11 @@ final class LinkedValueSet<E> implements ValueSet<E> {
         }
         for ( K key : assoc1.keySet() ) {
             int keyHash = key.hashCode();
-            LinkedEntry<K> firstEntry = AssociationImpl._get(assoc1._root, assoc1._keyGetter, assoc1._valueGetter, key, keyHash);
+            LinkedEntry<K> firstEntry = AssociationImpl._get(assoc1._root(), assoc1._keyGetter(), assoc1._valueGetter(), key, keyHash);
             if ( firstEntry == null ) {
                 return false;
             }
-            LinkedEntry<K> otherEntry = AssociationImpl._get(assoc2._root, assoc2._keyGetter, assoc2._valueGetter, key, keyHash);
+            LinkedEntry<K> otherEntry = AssociationImpl._get(assoc2._root(), assoc2._keyGetter(), assoc2._valueGetter(), key, keyHash);
             if ( otherEntry == null ) {
                 return false;
             }
@@ -346,15 +317,15 @@ final class LinkedValueSet<E> implements ValueSet<E> {
                 return false;
             }
             if (
-                node1._size == node2._size &&
-                node1._keysArray == node2._keysArray &&
-                node1._valuesArray == node2._valuesArray &&
-                node1._keyHashes == node2._keyHashes &&
-                node1._branches.length == node2._branches.length &&
-                node1._branches != node2._branches // The only difference is somewhere deep down!
+                node1._size() == node2._size() &&
+                node1._keysArray() == node2._keysArray() &&
+                node1._valuesArray() == node2._valuesArray() &&
+                node1._keyHashes() == node2._keyHashes() &&
+                node1._branches().length == node2._branches().length &&
+                node1._branches() != node2._branches() // The only difference is somewhere deep down!
             ) {
-                for ( int i = 0; i < node1._branches.length; i++ ) {
-                    if ( !_recursiveEquals(node1._branches[i], node2._branches[i], keyType) ) {
+                for (int i = 0; i < node1._branches().length; i++ ) {
+                    if ( !_recursiveEquals(node1._branches()[i], node2._branches()[i], keyType) ) {
                         return false;
                     }
                 }
