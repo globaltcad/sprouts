@@ -1,5 +1,5 @@
 
-# Sprouts :seedling: — [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) ![Java Version](https://img.shields.io/static/v1.svg?label=Java&message=8%2B&color=blue) #
+# Sprouts :seedling: — [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) #
 
 > Immutable Collections and Reactive State Management through Properties
 
@@ -17,6 +17,12 @@ systems using the lens pattern on reactive properties.
 - [Motivation](docs/markdown/Motivation.md)
 - [Usage Guide](docs/markdown/Growing-Sprouts.md)
 
+### Compatibility ###
+
+  |  Versions   |                                   Minimum JDK Version                                    |
+  |:-----------:|:----------------------------------------------------------------------------------------:|
+  | `<= 2.x.y`  | ![Java Version](https://img.shields.io/static/v1.svg?label=Java&message=8%2B&color=blue) |
+  | `>=  3.x.y` |![Java Version](https://img.shields.io/static/v1.svg?label=Java&message=17%2B&color=blue) |
 ---
 ## Getting started with Apache Maven ##
 
