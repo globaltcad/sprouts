@@ -41,10 +41,12 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
 {
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(PropertyLens.class);
 
-    public static <T, B> Var<B> of(Var<T> source, B nullObject, Lens<T, B> lens) {
+    public static <T, B, V extends B> Var<B> of(Var<T> source, @Nullable Class<B> type, V nullObject, Lens<T, B> lens) {
         Objects.requireNonNull(nullObject, "Null object must not be null");
         Objects.requireNonNull(lens, "Lens must not be null");
-        Class<B> itemType = Util.expectedClassFromItem(nullObject);
+        if ( type == null )
+            type = Util.expectedClassFromItem(nullObject);
+
         B initialValue;
         try {
             initialValue = lens.getter(Util.fakeNonNull(source.orElseNull()));
@@ -57,7 +59,7 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
                 );
         }
         return new PropertyLens<>(
-                itemType,
+                type,
                 Sprouts.factory().defaultId(),
                 false,//does not allow null
                 initialValue, //may NOT be null

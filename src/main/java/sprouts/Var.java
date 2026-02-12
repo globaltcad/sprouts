@@ -405,7 +405,17 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      *
      *   // Usage example: Update the first name via the lens
      *   firstNameLens.set("Jane");
-     * }</pre>
+     * }</pre><br>
+     * <p>
+     *     <b>Warning:</b><br>
+     *     The {@link Var#type()} of the property returned by this method will be resolved dynamically from
+     *     from the {@link Object#getClass()} of first value computed by the supplied {@code getter},
+     *     <b>which is always a concrete (sub)type.</b><br>
+     *     This means that if the type system treats {@code B} as a super type of many possible subtypes,
+     *     then you may encounter a mismatch between the implied type {@code Var<B>} and the {@code Class<B>}
+     *     returned by {@link Var#type()}, <b>which leads to type cast exceptions in the property</b>.<br>
+     *     <b>Use {@link #zoomTo(Class, Function, BiFunction)} to avoid this particular issue!</b>
+     * </p>
      *
      * @param <B>     The type of the field that the lens will focus on.
      * @param getter  Function to get the current value of the focused field from the parent object.
@@ -416,6 +426,50 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      */
     default <B> Var<B> zoomTo( Function<T,B> getter, BiFunction<T,B,T> wither ) {
         return zoomTo( Lens.of(getter, wither) );
+    }
+
+    /**
+     * Creates a lens property (Var) that focuses on a specific field of the property item type,
+     * using explicit type information to ensure runtime type safety.
+     * <p>
+     * This method solves a common issue where lenses created with {@link #zoomTo(Function, BiFunction)}
+     * may encounter type cast exceptions when the focused field's runtime type differs from its
+     * declared supertype. By providing explicit type information through the {@code type} parameter,
+     * this method ensures the lens property correctly handles all subtypes of the declared type.
+     * <p>
+     * For example, consider a record {@code Person} with a {@code Number} field:
+     * <pre>{@code
+     * record Person(String name, Number age) {
+     *     public Person withAge(Number age) { return new Person(name, age); }
+     * }
+     *
+     * // Create a person with a Double age
+     * Var<Person> person = Var.of(new Person("Sam", 23.123d));
+     *
+     * // Using the basic zoomTo would cause issues:
+     * // Var<Number> problematicAge = person.zoomTo(Person::age, Person::withAge);
+     * // person.update(p -> p.withAge(25)); // Throws ClassCastException! Integer vs Double
+     *
+     * // Using this method ensures type safety:
+     * Var<Number> safeAge = person.zoomTo(Number.class, Person::age, Person::withAge);
+     * person.update(p -> p.withAge(25)); // Works perfectly! Integer is accepted as Number
+     * }</pre>
+     * <p>
+     * The lens property returned by this method will accept any value that is assignable to
+     * the specified {@code type}, not just the specific runtime type of the initial value.
+     *
+     * @param <B>     The declared type of the field that the lens will focus on.
+     * @param type    The class object representing the declared type {@code B}.
+     *                This ensures runtime type safety and proper handling of subtypes.
+     * @param getter  Function to get the current value of the focused field from the parent object.
+     * @param wither  BiFunction to set or update the value of the focused field and return a new instance
+     *                of the parent object with the updated field.
+     * @return A new Var that acts as a lens focusing on the specified field of the parent object,
+     *         with proper type safety for all subtypes of {@code B}.
+     * @throws NullPointerException If the given type, getter, or wither function is null.
+     */
+    default <B> Var<B> zoomTo( Class<B> type, Function<T,B> getter, BiFunction<T,B,T> wither ) {
+        return zoomTo( type, Lens.of(getter, wither) );
     }
 
     /**
@@ -449,7 +503,17 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      *         return station.withPlatforms(platforms);
      *     }
      *   };
-     * }</pre>
+     * }</pre><br>
+     * <p>
+     *     <b>Warning:</b><br>
+     *     The {@link Var#type()} of the property returned by this method will be resolved dynamically from
+     *     from the {@link Object#getClass()} of first value computed by the supplied {@link Lens#getter(Object)},
+     *     <b>which is always a concrete (sub)type.</b><br>
+     *     This means that if the type system treats {@code B} as a super type of many possible subtypes,
+     *     then you may encounter a mismatch between the implied type {@code Var<B>} and the {@code Class<B>}
+     *     returned by {@link Var#type()}, <b>which leads to type cast exceptions in the property</b>.<br>
+     *     <b>Use {@link #zoomTo(Class, Lens)} to avoid this particular issue!</b>
+     * </p>
      *
      * @param <B>  The type of the field that the lens will focus on.
      * @param lens The {@link Lens} implementation to focus on the specified field of the parent object.
@@ -459,6 +523,53 @@ public interface Var<T extends @Nullable Object> extends Val<T>
     default <B> Var<B> zoomTo( Lens<T,B> lens ) {
         Objects.requireNonNull(lens);
         return Sprouts.factory().lensOf( this, lens );
+    }
+
+    /**
+     * Creates a lens property (Var) that focuses on a specific field of the current property item
+     * using a supplied {@link Lens} implementation, with explicit type information for runtime safety.
+     * <p>
+     * This method addresses the same type safety concerns as {@link #zoomTo(Class, Function, BiFunction)}
+     * but works with pre-existing {@link Lens} instances. It ensures that the lens property
+     * correctly handles the full range of subtypes allowed by the declared type, not just the
+     * specific runtime type of the initial value.
+     * <p>
+     * Example with a polymorphic measurement system:
+     * <pre>{@code
+     * sealed interface Measurement permits Length, Weight, Temperature {
+     *     double value();
+     * }
+     * record Length(double meters) implements Measurement {}
+     * record Weight(double kilograms) implements Measurement {}
+     *
+     * record Product(String name, Measurement size) {
+     *     public Product withSize(Measurement size) { return new Product(name, size); }
+     * }
+     *
+     * // Create a lens that can handle any Measurement subtype
+     * Lens<Product, Measurement> sizeLens = Lens.of(Product::size, Product::withSize);
+     * Var<Product> product = Var.of(new Product("Box", new Length(1.5)));
+     *
+     * // With explicit type information:
+     * Var<Measurement> size = product.zoomTo(Measurement.class, sizeLens);
+     *
+     * // Now we can safely change to different Measurement subtypes:
+     * size.set(new Weight(2.3)); // Works! Weight is a Measurement
+     * size.set(new Length(3.7)); // Also works! Length is a Measurement
+     * }</pre>
+     *
+     * @param <B>  The declared type of the field that the lens will focus on.
+     * @param type The class object representing the declared type {@code B}.
+     *             Provides runtime type information to handle all subtypes correctly.
+     * @param lens The {@link Lens} implementation to focus on the specified field of the parent object.
+     * @return A new Var that acts as a lens focusing on the specified field of the parent object,
+     *         with proper handling of the declared type and all its subtypes.
+     * @throws NullPointerException If the given type or lens is null.
+     */
+    default <B> Var<B> zoomTo( Class<B> type, Lens<T,B> lens ) {
+        Objects.requireNonNull(type);
+        Objects.requireNonNull(lens);
+        return Sprouts.factory().lensOf( this, type, lens );
     }
 
     /**
@@ -494,7 +605,17 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      *   var book = new Book("Some Title", new Publisher("Publisher1"));
      *   bookProperty.set(book);
      *   assert publisherLens.get() == book.publisher();
-     * }</pre>
+     * }</pre><br>
+     * <p>
+     *     <b>Warning:</b><br>
+     *     The {@link Var#type()} of the property returned by this method will be resolved dynamically
+     *     from the {@link Object#getClass()} of the supplied {@code nullObject},
+     *     <b>which is always a concrete (sub)type.</b><br>
+     *     This means that if the type system treats {@code B} as a super type of many possible subtypes,
+     *     then you may encounter a mismatch between the implied type {@code Var<B>} and the {@code Class<B>}
+     *     returned by {@link Var#type()}, <b>which leads to type cast exceptions in the property</b>.<br>
+     *     <b>Use {@link #zoomTo(Class, Object, Function, BiFunction)} to avoid this particular issue!</b>
+     * </p>
      *
      * @param <B>        The type of the field that the lens will focus on, which must not be null.
      * @param nullObject The object to use when the focused field or its parent object is null.
@@ -507,6 +628,62 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      */
     default <B extends @NonNull Object> Var<B> zoomTo( B nullObject, Function<T,B> getter, BiFunction<T,B,T> wither ) {
         return this.zoomTo( nullObject, Lens.of(getter, wither) );
+    }
+
+    /**
+     * Creates a lens property (Var) that focuses on a specific field of the item of this property,
+     * allowing a default value for whenever the item of this property is null, with explicit type safety.
+     * <p>
+     * This method combines the null safety of {@link #zoomTo(Object, Function, BiFunction)} with
+     * the type safety of {@link #zoomTo(Class, Function, BiFunction)}. It ensures the lens property
+     * correctly handles all subtypes of the declared type while providing a fallback for null parent items.
+     * <p>
+     * Example with a polymorphic configuration system:
+     * <pre>{@code
+     * sealed interface Theme permits DarkTheme, LightTheme, HighContrastTheme {
+     *     String primaryColor();
+     * }
+     * record DarkTheme() implements Theme {
+     *     public String primaryColor() { return "#121212"; }
+     * }
+     * record LightTheme() implements Theme {
+     *     public String primaryColor() { return "#FFFFFF"; }
+     * }
+     *
+     * record AppConfig(String name, Theme theme) {
+     *     public AppConfig withTheme(Theme theme) { return new AppConfig(name, theme); }
+     * }
+     *
+     * // Nullable app config with default theme
+     * Var<AppConfig> config = Var.ofNull(AppConfig.class);
+     * Theme defaultTheme = new LightTheme();
+     *
+     * // Create a type-safe null-safe lens
+     * Var<Theme> themeLens = config.zoomTo(Theme.class, defaultTheme,
+     *     AppConfig::theme, AppConfig::withTheme);
+     *
+     * // Initially uses default theme (parent is null)
+     * assert themeLens.get() == defaultTheme;
+     *
+     * // Can set any Theme subtype
+     * config.set(new AppConfig("MyApp", new DarkTheme()));
+     * themeLens.set(new HighContrastTheme()); // Works with any Theme implementation
+     * }</pre>
+     *
+     * @param <B>        The declared type of the field that the lens will focus on, which must not be null.
+     * @param <V>        The specific subtype of {@code B} used for the null object.
+     * @param type       The class object representing the declared type {@code B}.
+     *                   Ensures the lens accepts all subtypes, not just the null object's specific type.
+     * @param nullObject The object to use when the focused field or its parent object is null.
+     * @param getter     Function to get the current value of the focused field from the parent object.
+     * @param wither     BiFunction to set or update the value of the focused field and return a new instance
+     *                   of the parent object with the updated field.
+     * @return A new Var that acts as a lens focusing on the specified field of the parent object,
+     *         using the null object when the parent object is null, with full type safety for {@code B}.
+     * @throws NullPointerException If the given type, null object, getter, or wither function is null.
+     */
+    default <B extends @NonNull Object, V extends B> Var<B> zoomTo( Class<B> type, V nullObject, Function<T,B> getter, BiFunction<T,B,T> wither ) {
+        return this.zoomTo( type, nullObject, Lens.of(getter, wither) );
     }
 
     /**
@@ -544,7 +721,17 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      *   var book = new Book("Some Title", new Publisher("Publisher1"));
      *   bookProperty.set(book);
      *   assert publisherLens.get() == book.publisher();
-     * }</pre>
+     * }</pre><br>
+     * <p>
+     *     <b>Warning:</b><br>
+     *     The {@link Var#type()} of the property returned by this method will be resolved dynamically
+     *     from the {@link Object#getClass()} of the supplied {@code nullObject},
+     *     <b>which is always a concrete (sub)type.</b><br>
+     *     This means that if the type system treats {@code B} as a super type of many possible subtypes,
+     *     then you may encounter a mismatch between the implied type {@code Var<B>} and the {@code Class<B>}
+     *     returned by {@link Var#type()}, <b>which leads to type cast exceptions in the property</b>.<br>
+     *     <b>Use {@link #zoomTo(Class, Object, Lens)} to avoid this particular issue!</b>
+     * </p>
      *
      * @param <B>        The type of the field that the lens will focus on, which must not be null.
      * @param nullObject The object to use when the focused field or its parent object is null.
@@ -557,6 +744,56 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      */
     default <B extends @NonNull Object> Var<B> zoomTo( B nullObject, Lens<T,B> lens ) {
         return Sprouts.factory().lensOf( this, nullObject, lens );
+    }
+
+    /**
+     * Creates a lens property (Var) from the supplied {@link Lens} implementation,
+     * which focuses on a specific field of the potentially nullable item of this property,
+     * with a default non-null value and explicit type safety.
+     * <p>
+     * This method provides the combined benefits of null safety and type safety for pre-existing
+     * {@link Lens} instances. It ensures that the lens property can handle any subtype of the
+     * declared type while providing deterministic behavior for null parent items.
+     * <p>
+     * Example with a polymorphic notification system:
+     * <pre>{@code
+     * sealed interface Notification permits EmailNotification, SmsNotification, PushNotification {
+     *     String content();
+     * }
+     *
+     * record User(String name, Notification preference) {
+     *     public User withPreference(Notification preference) {
+     *         return new User(name, preference);
+     *     }
+     * }
+     *
+     * // Nullable user with default notification preference
+     * Var<User> user = Var.ofNull(User.class);
+     * Notification defaultPref = new EmailNotification("default@example.com");
+     * Lens<User, Notification> prefLens = Lens.of(User::preference, User::withPreference);
+     *
+     * // Type-safe null-safe lens
+     * Var<Notification> preference = user.zoomTo(Notification.class, defaultPref, prefLens);
+     *
+     * // Works with any Notification subtype
+     * user.set(new User("Alice", new SmsNotification("+1234567890")));
+     * preference.set(new PushNotification("app://alert")); // Any Notification works
+     * }</pre>
+     *
+     * @param <B>        The declared type of the field that the lens will focus on, which must not be null.
+     * @param <V>        The specific subtype of {@code B} used for the null object.
+     * @param type       The class object representing the declared type {@code B}.
+     *                   Provides runtime type information to handle all subtypes correctly.
+     * @param nullObject The object to use when the focused field or its parent object is null.
+     *                   This object must not be null.
+     * @param lens       The {@link Lens} implementation to focus on the specified
+     *                   field of the parent object, using the null object when the parent object is null.
+     * @return A new Var that acts as a lens focusing on the specified field of the parent object,
+     *         using the null object when the parent object is null, with proper type safety.
+     * @throws NullPointerException If the supplied type, nullObject, or lens is null.
+     */
+    default <B extends @NonNull Object, V extends B> Var<B> zoomTo( Class<B> type, V nullObject, Lens<T,B> lens ) {
+        return Sprouts.factory().lensOf( this, type, nullObject, lens );
     }
 
     /**
@@ -723,7 +960,17 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      * }</pre>
      * In this example, the conversion functions between metric units form a perfect
      * isomorphism (linear scaling), ensuring that updates propagate correctly
-     * in both directions without loss of precision.
+     * in both directions without loss of precision.<br>
+     * <p>
+     *     <b>Warning:</b><br>
+     *     The {@link Var#type()} of the property returned by this method will be resolved dynamically from
+     *     from the {@link Object#getClass()} of first value computed by the supplied {@code getter},
+     *     <b>which is always a concrete (sub)type.</b><br>
+     *     This means that if the type system treats {@code B} as a super type of many possible subtypes,
+     *     then you may encounter a mismatch between the implied type {@code Var<B>} and the {@code Class<B>}
+     *     returned by {@link Var#type()}, <b>which leads to type cast exceptions in the property</b>.<br>
+     *     <b>Use {@link #projectTo(Class, Function, Function)} to avoid this particular issue!</b>
+     * </p>
      *
      * @param <B>    The target type of the projected property.
      * @param getter {@link Function} that converts from {@code T} to {@code B}.
@@ -740,6 +987,58 @@ public interface Var<T extends @Nullable Object> extends Val<T>
         Objects.requireNonNull(getter, "getter must not be null");
         Objects.requireNonNull(setter, "setter must not be null");
         return Sprouts.factory().projLensOf( this, getter, setter );
+    }
+
+    /**
+     * Creates a projected lens property (Var) that bi-directionally maps between the item type {@code T}
+     * of this property and a target type {@code B} using conversion functions, with explicit type safety.
+     * <p>
+     * This method addresses the same type safety issue as the lens methods, but for projections.
+     * When using {@link #projectTo(Function, Function)}, the runtime type of the projected property
+     * is inferred from the initial converted value, which may be a subtype of the declared type {@code B}.
+     * This method ensures the projection accepts all valid subtypes of {@code B}.
+     * <p>
+     * Example with a polymorphic serialization system:
+     * <pre>{@code
+     * sealed interface DataFormat permits JsonFormat, XmlFormat, YamlFormat {
+     *     String serialize(Object data);
+     *     Object deserialize(String text);
+     * }
+     *
+     * record Document(String title, Object content) {
+     *     public Document withContent(Object content) { return new Document(title, content); }
+     * }
+     *
+     * // Project Document content to various DataFormat representations
+     * Var<Document> doc = Var.of(new Document("Report", Map.of("key", "value")));
+     *
+     * // Without explicit type: limited to the initial format's specific type
+     * // Var<DataFormat> problematic = doc.projectTo(d -> new JsonFormat(d.content()), ...);
+     *
+     * // With explicit type safety: accepts any DataFormat implementation
+     * Var<DataFormat> format = doc.projectTo(DataFormat.class,
+     *     d -> new JsonFormat(d.content()),  // Convert to JsonFormat (a DataFormat)
+     *     f -> new Document("Report", f.deserialize(f.serialize()))
+     * );
+     *
+     * // Can switch between different DataFormat implementations
+     * format.set(new XmlFormat(doc.get().content())); // Works! XmlFormat is a DataFormat
+     * format.set(new YamlFormat(doc.get().content())); // Also works!
+     * }</pre>
+     *
+     * @param <B>    The declared target type of the projected property.
+     * @param type   The class object representing the declared type {@code B}.
+     *               Ensures the projection accepts all subtypes, not just the initial converted type.
+     * @param getter {@link Function} that converts from {@code T} to {@code B}.
+     * @param setter {@link Function} that converts from {@code B} back to {@code T}.
+     * @return A new Var that maintains a bidirectional projection to/from
+     *         this property's item type, with proper handling of all {@code B} subtypes.
+     * @throws NullPointerException if type, getter, or setter is null.
+     */
+    default <B> Var<B> projectTo( Class<B> type, Function<T,B> getter, Function<B,T> setter ) {
+        Objects.requireNonNull(getter, "getter must not be null");
+        Objects.requireNonNull(setter, "setter must not be null");
+        return Sprouts.factory().projLensOf( this, type, getter, setter );
     }
 
     /**
@@ -787,7 +1086,17 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      * }</pre>
      * In this example, empty string serves as the encrypted representation of null.
      * The encryption/decryption functions should be isomorphic for non-null strings
-     * to ensure perfect round-trip conversion.
+     * to ensure perfect round-trip conversion.<br>
+     * <p>
+     *     <b>Warning:</b><br>
+     *     The {@link Var#type()} of the property returned by this method will be resolved dynamically
+     *     from the {@link Object#getClass()} of the supplied {@code nullObject},
+     *     <b>which is always a concrete (sub)type.</b><br>
+     *     This means that if the type system treats {@code B} as a super type of many possible subtypes,
+     *     then you may encounter a mismatch between the implied type {@code Var<B>} and the {@code Class<B>}
+     *     returned by {@link Var#type()}, <b>which leads to type cast exceptions in the property</b>.<br>
+     *     <b>Use {@link #projectTo(Class, Object, Function, Function)} to avoid this particular issue!</b>
+     * </p>
      *
      * @param <B>        The target type of the projected property (non-nullable).
      * @param nullObject The fallback value to use when this property's item is null.
@@ -803,6 +1112,61 @@ public interface Var<T extends @Nullable Object> extends Val<T>
         Objects.requireNonNull(getter, "getter must not be null");
         Objects.requireNonNull(setter, "setter must not be null");
         return Sprouts.factory().projLensOf( this, nullObject, getter, setter );
+    }
+
+    /**
+     * Creates a projected lens property (Var) that bi-directionally maps between the item type {@code T}
+     * of this property and a target type {@code B} using conversion functions, with a guaranteed
+     * non-null fallback value and explicit type safety.
+     * <p>
+     * This method combines null safety with type safety for projections. It ensures the projected
+     * property never contains null while accepting any subtype of the declared type {@code B}.
+     * <p>
+     * Example with a polymorphic UI component system:
+     * <pre>{@code
+     * sealed interface Widget permits Button, TextField, Slider {
+     *     String render();
+     * }
+     *
+     * record UiState(Widget currentWidget) {
+     *     public UiState withWidget(Widget widget) { return new UiState(widget); }
+     * }
+     *
+     * // Nullable UI state with default widget
+     * Var<UiState> ui = Var.ofNull(UiState.class);
+     * Widget defaultWidget = new Button("Click me");
+     *
+     * // Type-safe null-safe projection
+     * Var<Widget> widget = ui.projectTo(Widget.class, defaultWidget,
+     *     UiState::currentWidget,
+     *     UiState::withWidget
+     * );
+     *
+     * // Initially shows default widget (parent is null)
+     * assert widget.get() == defaultWidget;
+     *
+     * // Can set any Widget implementation
+     * ui.set(new UiState(new TextField("Enter text")));
+     * widget.set(new Slider(0, 100, 50)); // Works with any Widget
+     * }</pre>
+     *
+     * @param <B>        The declared target type of the projected property (non-nullable).
+     * @param <V>        The specific subtype of {@code B} used for the null object.
+     * @param type       The class object representing the declared type {@code B}.
+     *                   Ensures the projection accepts all subtypes, not just the null object's type.
+     * @param nullObject The fallback value to use when this property's item is null.
+     *                   This object must not be null.
+     * @param getter     {@link Function} that converts from {@code T} to {@code B} for non-null items.
+     * @param setter     {@link Function} that converts from {@code B} back to {@code T}.
+     * @return A new Var that maintains a bidirectional projection with guaranteed
+     *         non-null values, using {@code nullObject} as fallback, with full type safety for {@code B}.
+     * @throws NullPointerException if {@code type}, {@code nullObject}, getter, or setter is null.
+     */
+    default <B extends @NonNull Object, V extends B> Var<B> projectTo( Class<B> type, V nullObject, Function<T,B> getter, Function<B,T> setter ) {
+        Objects.requireNonNull(nullObject);
+        Objects.requireNonNull(getter, "getter must not be null");
+        Objects.requireNonNull(setter, "setter must not be null");
+        return Sprouts.factory().projLensOf( this, type, nullObject, getter, setter );
     }
 
     /**

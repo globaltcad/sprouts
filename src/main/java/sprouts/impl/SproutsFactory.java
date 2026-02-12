@@ -409,6 +409,55 @@ public interface SproutsFactory
     <T extends @Nullable Object, B extends @NonNull Object> Var<B> lensOf( Var<T> source, Lens<T, B> lens );
 
     /**
+     * Creates a {@link Lens} based {@link Var} property with explicit type information,
+     * ensuring runtime type safety for polymorphic fields.
+     * <p>
+     * This method addresses a critical issue where lenses created without explicit type
+     * information may only accept the specific runtime type of the initial field value,
+     * rather than all valid subtypes of the declared field type. By providing the
+     * {@code type} parameter, this method ensures the lens property correctly handles
+     * the full range of subtypes allowed by the type system.
+     * <p>
+     * <b>Example - Handling polymorphic configuration values:</b>
+     * <pre>{@code
+     * sealed interface ConfigValue permits IntValue, StringValue, BoolValue {
+     *     Object get();
+     * }
+     * record IntValue(int val) implements ConfigValue { public Object get() { return val; } }
+     * record StringValue(String val) implements ConfigValue { public Object get() { return val; } }
+     *
+     * record Setting(String key, ConfigValue value) {
+     *     public Setting withValue(ConfigValue value) { return new Setting(key, value); }
+     * }
+     *
+     * // Create a setting with an IntValue
+     * Var<Setting> setting = Var.of(new Setting("timeout", new IntValue(30)));
+     * Lens<Setting, ConfigValue> valueLens = Lens.of(Setting::value, Setting::withValue);
+     *
+     * // Without explicit type: only accepts IntValue
+     * // Var<ConfigValue> problematic = factory.lensOf(setting, valueLens);
+     * // problematic.set(new StringValue("30s")); // ClassCastException!
+     *
+     * // With explicit type: accepts any ConfigValue implementation
+     * Var<ConfigValue> safeValue = factory.lensOf(ConfigValue.class, setting, valueLens);
+     * safeValue.set(new StringValue("30s")); // Works!
+     * safeValue.set(new BoolValue(true));    // Also works!
+     * }</pre>
+     *
+     * @param source The source {@link Var} from which the lens is created.
+     * @param type   The class object representing the declared type {@code B}.
+     *               This ensures the lens accepts all subtypes of {@code B}, not just
+     *               the specific runtime type of the initial field value.
+     * @param lens   The lens that defines how to access the field of type {@code B}
+     *               in the source property value {@code T}.
+     * @return A {@link Var} instance that represents the field of type {@code B}
+     *         in the source property value {@code T}, with proper type safety.
+     * @param <T> The type of the source property value, which can be nullable.
+     * @param <B> The declared type of the field in the source property value {@code T}.
+     */
+    <T extends @Nullable Object, B extends @NonNull Object> Var<B> lensOf( Var<T> source, Class<B> type, Lens<T, B> lens );
+
+    /**
      *  A factory method for creating a {@link Lens} based {@link Var} property, which is a zoomed in handle
      *  to a field variable of a non-null {@link Class} of a non-nullable type {@code B} that is a member
      *  part of the source property item type {@code T}.<br>
@@ -430,6 +479,61 @@ public interface SproutsFactory
      * @param <B> The type of the field in the source property value {@code T}, which can be nullable.
      */
     <T extends @Nullable Object, B extends @NonNull Object> Var<B> lensOf( Var<T> source, B nullObject, Lens<T, B> lens);
+
+    /**
+     * Creates a {@link Lens} based {@link Var} property with explicit type information
+     * and null safety, ensuring the lens accepts all subtypes of the declared type
+     * while providing a fallback for null source items.
+     * <p>
+     * This method combines the benefits of explicit type safety with null safety.
+     * The {@code type} parameter ensures the lens property handles the full range
+     * of subtypes allowed by the type system, while the {@code nullObject} provides
+     * deterministic behavior when the source property contains null.
+     * <p>
+     * <b>Example - Polymorphic theme system with defaults:</b>
+     * <pre>{@code
+     * sealed interface ColorScheme permits DarkScheme, LightScheme, CustomScheme {
+     *     String backgroundColor();
+     * }
+     *
+     * record AppTheme(String name, ColorScheme scheme) {
+     *     public AppTheme withScheme(ColorScheme scheme) { return new AppTheme(name, scheme); }
+     * }
+     *
+     * // Nullable theme with default scheme
+     * Var<AppTheme> theme = Var.ofNull(AppTheme.class);
+     * ColorScheme defaultScheme = new LightScheme();
+     * Lens<AppTheme, ColorScheme> schemeLens = Lens.of(AppTheme::scheme, AppTheme::withScheme);
+     *
+     * // Type-safe null-safe lens
+     * Var<ColorScheme> scheme = factory.lensOf(
+     *     ColorScheme.class,  // Accepts any ColorScheme implementation
+     *     theme,
+     *     defaultScheme,      // Fallback when theme is null
+     *     schemeLens
+     * );
+     *
+     * // Initially uses default scheme
+     * assert scheme.get() == defaultScheme;
+     *
+     * // Can switch between any ColorScheme implementation
+     * theme.set(new AppTheme("MyApp", new DarkScheme()));
+     * scheme.set(new CustomScheme("#FF0000", "#00FF00")); // Works with any ColorScheme
+     * }</pre>
+     *
+     * @param source    The source {@link Var} from which the lens is created.
+     * @param type      The class object representing the declared type {@code B}.
+     *                  Ensures the lens accepts all subtypes, not just the null object's type.
+     * @param nullObject The default value to use when the source value is null.
+     * @param lens      The lens that defines how to access the field of type {@code B}
+     *                  in the source property value {@code T}.
+     * @return A {@link Var} instance that represents the field of type {@code B}
+     *         in the source property value {@code T}, with null safety and type safety.
+     * @param <T> The type of the source property value, which can be nullable.
+     * @param <B> The declared type of the field in the source property value {@code T}.
+     * @param <V> The specific subtype of {@code B} used for the null object.
+     */
+    <T extends @Nullable Object, B extends @NonNull Object, V extends B> Var<B> lensOf( Var<T> source, Class<B> type, V nullObject, Lens<T, B> lens);
 
     /**
      *  A factory method for creating a {@link Lens} based {@link Var} property, which is a zoomed in handle
@@ -594,6 +698,64 @@ public interface SproutsFactory
     <T extends @Nullable Object, B extends @NonNull Object> Var<B> projLensOf( Var<T> source, B nullObject, Function<T,B> getter, Function<B,T> setter);
 
     /**
+     * Creates a projected {@link Lens} based {@link Var} property with explicit type information
+     * and null safety, ensuring the projection accepts all subtypes of the declared type
+     * while providing a fallback for null source items.
+     * <p>
+     * This method extends {@link #projLensOf(Var, Object, Function, Function)} with explicit
+     * type information to handle polymorphic target types correctly. The {@code type} parameter
+     * ensures the projection property can accept any valid subtype of {@code B}, not just
+     * the specific type produced by the initial conversion.
+     * <p>
+     * <b>Example - Format conversion with multiple output formats:</b>
+     * <pre>{@code
+     * sealed interface Formatted permits HtmlFormat, MarkdownFormat, PlainTextFormat {
+     *     String render();
+     * }
+     *
+     * record Document(String title, String content) {
+     *     public Document withContent(String content) { return new Document(title, content); }
+     * }
+     *
+     * // Nullable document with default format
+     * Var<Document> doc = Var.ofNull(Document.class);
+     * Formatted defaultFormat = new PlainTextFormat("");
+     *
+     * // Type-safe null-safe projection that can output any Formatted subtype
+     * Var<Formatted> formatted = factory.projLensOf(
+     *     Formatted.class,        // Accepts any Formatted implementation
+     *     doc,
+     *     defaultFormat,          // Fallback when document is null
+     *     d -> new HtmlFormat(d.content()),      // Convert to HtmlFormat (a Formatted)
+     *     f -> new Document("", f.render())      // Convert back from any Formatted
+     * );
+     *
+     * // Initially shows default format
+     * assert formatted.get() == defaultFormat;
+     *
+     * // Can switch between different formatted representations
+     * doc.set(new Document("Report", "# Hello World"));
+     * formatted.set(new MarkdownFormat(doc.get().content()));  // MarkdownFormat is a Formatted
+     * formatted.set(new HtmlFormat("<h1>Hello</h1>"));         // HtmlFormat is also a Formatted
+     * }</pre>
+     *
+     * @param source    The source {@link Var} property to project from.
+     * @param type      The class object representing the declared type {@code B}.
+     *                  Ensures the projection accepts all subtypes of {@code B}.
+     * @param nullObject The guaranteed non-null fallback value to use when the
+     *                   source property's item is {@code null}.
+     * @param getter    Function that converts from {@code T} to {@code B} for
+     *                  non-null source items.
+     * @param setter    Function that converts from {@code B} back to {@code T}.
+     * @return A {@link Var} instance that maintains a bi-directional projection
+     *         with guaranteed non-null values and full type safety for {@code B}.
+     * @param <T> The type of the source property item, which can be nullable.
+     * @param <B> The declared non-nullable type of the projected property item.
+     * @param <V> The specific subtype of {@code B} used for the null object.
+     */
+    <T extends @Nullable Object, B extends @NonNull Object, V extends B> Var<B> projLensOf( Var<T> source, Class<B> type, V nullObject, Function<T,B> getter, Function<B,T> setter);
+
+    /**
      *  Creates a projected {@link Lens} based {@link Var} property that establishes a
      *  bidirectional mapping between the source property's item type {@code T} and
      *  a non-nullable target type {@code B} using conversion functions.
@@ -677,6 +839,56 @@ public interface SproutsFactory
      *         or {@code setter} is {@code null}.
      */
     <T extends @Nullable Object, B extends @NonNull Object> Var<B> projLensOf( Var<T> source, Function<T,B> getter, Function<B,T> setter );
+
+    /**
+     * Creates a projected {@link Lens} based {@link Var} property with explicit type information,
+     * ensuring the projection correctly handles all subtypes of the declared target type.
+     * <p>
+     * This method addresses the type safety issue in {@link #projLensOf(Var, Function, Function)}
+     * where the runtime type of the projected property is inferred from the initial converted value.
+     * By providing the {@code type} parameter, this method ensures the projection property
+     * accepts any value that is assignable to the declared type {@code B}, not just values
+     * of the specific runtime type produced by the initial conversion.
+     * <p>
+     * <b>Example - Unit conversion with polymorphic measurement types:</b>
+     * <pre>{@code
+     * sealed interface Quantity permits Length, Mass, Temperature {
+     *     double baseValue();
+     * }
+     * record Length(double meters) implements Quantity {
+     *     public double baseValue() { return meters; }
+     *     public Length toMeters() { return this; }
+     *     public Length toFeet() { return new Length(meters * 3.28084); }
+     * }
+     *
+     * // Project between different Length representations
+     * Var<Length> metric = Var.of(new Length(100.0));
+     *
+     * // Without explicit type: projection might be limited to specific conversion
+     * // Var<Quantity> problematic = factory.projLensOf(metric, Length::toFeet, Length::toMeters);
+     *
+     * // With explicit type: projection accepts any Quantity implementation
+     * Var<Quantity> anyQuantity = factory.projLensOf(
+     *     Quantity.class,          // Accepts any Quantity (Length, Mass, Temperature, etc.)
+     *     metric,
+     *     Length::toFeet,         // Produces a Length (which is a Quantity)
+     *     q -> ((Length)q).toMeters()  // Can convert back from any Quantity that is actually a Length
+     * );
+     *
+     * // Note: The projection is flexible but conversion logic must handle the type correctly
+     * }</pre>
+     *
+     * @param source The source {@link Var} property to project from.
+     * @param type   The class object representing the declared type {@code B}.
+     *               Ensures the projection accepts all subtypes of {@code B}.
+     * @param getter Function that converts from {@code T} to {@code B}.
+     * @param setter Function that converts from {@code B} back to {@code T}.
+     * @return A {@link Var} instance that maintains a bi-directional projection
+     *         with proper type safety for the declared type {@code B}.
+     * @param <T> The type of the source property item, which can be nullable.
+     * @param <B> The declared non-nullable type of the projected property item.
+     */
+    <T extends @Nullable Object, B extends @NonNull Object> Var<B> projLensOf( Var<T> source, Class<B> type, Function<T,B> getter, Function<B,T> setter );
 
     /**
      * Creates a {@link Var} property instance from a given non-null {@link Class} of a nullable type and
