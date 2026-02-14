@@ -420,28 +420,37 @@ public interface SproutsFactory
      * <p>
      * <b>Example - Handling polymorphic configuration values:</b>
      * <pre>{@code
-     * sealed interface ConfigValue permits IntValue, StringValue, BoolValue {
-     *     Object get();
+     * // Holding the polymorphic 'CharSequence':
+     * record Document(
+     *     String title,
+     *     CharSequence content
+     * ) {
+     *     public Document withContent(
+     *       CharSequence content
+     *     ) {
+     *         return new Document(title, content);
+     *     }
      * }
-     * record IntValue(int val) implements ConfigValue { public Object get() { return val; } }
-     * record StringValue(String val) implements ConfigValue { public Object get() { return val; } }
      *
-     * record Setting(String key, ConfigValue value) {
-     *     public Setting withValue(ConfigValue value) { return new Setting(key, value); }
-     * }
+     * // A lens that can handle any CharSequence implementation:
+     * Lens<Document, CharSequence> contentLens = Lens.of(Document::content, Document::withContent);
      *
-     * // Create a setting with an IntValue
-     * Var<Setting> setting = Var.of(new Setting("timeout", new IntValue(30)));
-     * Lens<Setting, ConfigValue> valueLens = Lens.of(Setting::value, Setting::withValue);
+     * Var<Document> doc = Var.of(new Document("Readme", new StringBuilder("Initial content")));
+     * }</pre>
+     * An untyped lens throws an exception, because the type is inferred from the initial value:
+     * <pre>{@code
+     * Var<CharSequence> unsafe = doc.zoomTo(contentLens);
+     * // Would fail when setting String:
+     * unsafe.set("I cause an IllegalArggumentException!!");
+     * }</pre>
+     * With explicit type information the lens accepts any {@link CharSequence}:
+     * <pre>{@code
+     * Var<CharSequence> content = doc.zoomTo(CharSequence.class, contentLens);
      *
-     * // Without explicit type: only accepts IntValue
-     * // Var<ConfigValue> problematic = factory.lensOf(setting, valueLens);
-     * // problematic.set(new StringValue("30s")); // ClassCastException!
-     *
-     * // With explicit type: accepts any ConfigValue implementation
-     * Var<ConfigValue> safeValue = factory.lensOf(ConfigValue.class, setting, valueLens);
-     * safeValue.set(new StringValue("30s")); // Works!
-     * safeValue.set(new BoolValue(true));    // Also works!
+     * // Now we can safely use different CharSequence implementations:
+     * content.set("Plain string works");                    // String implements CharSequence
+     * content.set(new StringBuilder("Builder works too")); // StringBuilder as well
+     * content.set(new StringBuffer("Buffer also works"));  // StringBuffer too
      * }</pre>
      *
      * @param source The source {@link Var} from which the lens is created.
@@ -454,6 +463,8 @@ public interface SproutsFactory
      *         in the source property value {@code T}, with proper type safety.
      * @param <T> The type of the source property value, which can be nullable.
      * @param <B> The declared type of the field in the source property value {@code T}.
+     * @see Var#zoomTo(Class, Lens)
+     * @see Var#zoomTo(Class, Function, BiFunction)
      */
     <T extends @Nullable Object, B extends @NonNull Object> Var<B> lensOf( Var<T> source, Class<B> type, Lens<T, B> lens );
 
