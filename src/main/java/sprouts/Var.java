@@ -408,7 +408,7 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      * }</pre><br>
      * <p>
      *     <b>Warning:</b><br>
-     *     The {@link Var#type()} of the property returned by this method will be resolved dynamically from
+     *     The {@link Var#type()} of the property returned by this method will be resolved dynamically
      *     from the {@link Object#getClass()} of first value computed by the supplied {@code getter},
      *     <b>which is always a concrete (sub)type.</b><br>
      *     This means that if the type system treats {@code B} as a super type of many possible subtypes,
@@ -507,7 +507,7 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      * <p>
      *     <b>Warning:</b><br>
      *     The {@link Var#type()} of the property returned by this method will be resolved dynamically from
-     *     from the {@link Object#getClass()} of first value computed by the supplied {@link Lens#getter(Object)},
+     *     the {@link Object#getClass()} of first value computed by the supplied {@link Lens#getter(Object)},
      *     <b>which is always a concrete (sub)type.</b><br>
      *     This means that if the type system treats {@code B} as a super type of many possible subtypes,
      *     then you may encounter a mismatch between the implied type {@code Var<B>} and the {@code Class<B>}
@@ -963,7 +963,7 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      * in both directions without loss of precision.<br>
      * <p>
      *     <b>Warning:</b><br>
-     *     The {@link Var#type()} of the property returned by this method will be resolved dynamically from
+     *     The {@link Var#type()} of the property returned by this method will be resolved dynamically
      *     from the {@link Object#getClass()} of first value computed by the supplied {@code getter},
      *     <b>which is always a concrete (sub)type.</b><br>
      *     This means that if the type system treats {@code B} as a super type of many possible subtypes,
