@@ -503,7 +503,8 @@ public interface SproutsFactory
      * <p>
      * <b>Example - Polymorphic theme system with defaults:</b>
      * <pre>{@code
-     * sealed interface ColorScheme permits DarkScheme, LightScheme, CustomScheme {
+     * sealed interface ColorScheme
+     * permits DarkScheme, LightScheme, CustomScheme {
      *     String backgroundColor();
      * }
      *
@@ -517,10 +518,9 @@ public interface SproutsFactory
      * Lens<AppTheme, ColorScheme> schemeLens = Lens.of(AppTheme::scheme, AppTheme::withScheme);
      *
      * // Type-safe null-safe lens
-     * Var<ColorScheme> scheme = factory.lensOf(
-     *     ColorScheme.class,  // Accepts any ColorScheme implementation
-     *     theme,
-     *     defaultScheme,      // Fallback when theme is null
+     * Var<ColorScheme> scheme = theme.zoomTo(
+     *     ColorScheme.class, // Accepts any ColorScheme implementation
+     *     defaultScheme,     // Fallback when theme is null
      *     schemeLens
      * );
      *
@@ -543,6 +543,8 @@ public interface SproutsFactory
      * @param <T> The type of the source property value, which can be nullable.
      * @param <B> The declared type of the field in the source property value {@code T}.
      * @param <V> The specific subtype of {@code B} used for the null object.
+     * @see Var#zoomTo(Class, Object, Lens)
+     * @see Var#zoomTo(Class, Object, Function, BiFunction) 
      */
     <T extends @Nullable Object, B extends @NonNull Object, V extends B> Var<B> lensOf( Var<T> source, Class<B> type, V nullObject, Lens<T, B> lens);
 
