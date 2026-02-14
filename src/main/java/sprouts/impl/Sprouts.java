@@ -358,6 +358,7 @@ public final class Sprouts implements SproutsFactory
     @Override
     public <T, B, V extends B> Var<B> projLensOf(Var<T> source, Class<B> type, V nullObject, Function<T, B> getter, Function<B, T> setter) {
         Objects.requireNonNull(source, "Source property must not be null!");
+        Objects.requireNonNull(type, "Type must not be null");
         Objects.requireNonNull(nullObject, "Null object must not be null");
         Objects.requireNonNull(getter, "getter must not be null");
         Objects.requireNonNull(setter, "setter must not be null");
