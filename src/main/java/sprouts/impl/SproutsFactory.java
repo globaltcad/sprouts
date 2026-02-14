@@ -881,9 +881,8 @@ public interface SproutsFactory
      * // Var<Quantity> problematic = factory.projLensOf(metric, Length::toFeet, Length::toMeters);
      *
      * // With explicit type: projection accepts any Quantity implementation
-     * Var<Quantity> anyQuantity = factory.projLensOf(
+     * Var<Quantity> anyQuantity = metric.projectTo(
      *     Quantity.class,          // Accepts any Quantity (Length, Mass, Temperature, etc.)
-     *     metric,
      *     Length::toFeet,         // Produces a Length (which is a Quantity)
      *     q -> ((Length)q).toMeters()  // Can convert back from any Quantity that is actually a Length
      * );
@@ -900,6 +899,7 @@ public interface SproutsFactory
      *         with proper type safety for the declared type {@code B}.
      * @param <T> The type of the source property item, which can be nullable.
      * @param <B> The declared non-nullable type of the projected property item.
+     * @see Var#projectTo(Class, Function, Function)
      */
     <T extends @Nullable Object, B extends @NonNull Object> Var<B> projLensOf( Var<T> source, Class<B> type, Function<T,B> getter, Function<B,T> setter );
 
