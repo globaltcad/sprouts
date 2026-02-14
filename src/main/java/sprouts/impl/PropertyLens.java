@@ -42,6 +42,7 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(PropertyLens.class);
 
     public static <T, B, V extends B> Var<B> of(Var<T> source, @Nullable Class<B> type, V nullObject, Lens<T, B> lens) {
+        Objects.requireNonNull(source, "Source must not be null");
         Objects.requireNonNull(nullObject, "Null object must not be null");
         Objects.requireNonNull(lens, "Lens must not be null");
         if ( type == null )
