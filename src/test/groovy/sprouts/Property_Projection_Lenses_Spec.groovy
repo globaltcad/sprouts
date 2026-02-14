@@ -1,6 +1,7 @@
 package sprouts
 
 import spock.lang.*
+import util.Wait
 
 import java.lang.ref.WeakReference
 import java.time.LocalDate
@@ -701,12 +702,11 @@ class Property_Projection_Lenses_Spec extends Specification {
         when: 'We release all projections'
             reversed = null
             waitForGarbageCollection()
-            waitForGarbageCollection()
 
         then: 'All projections collected, source remains'
-            reversedRef.get() == null
-            sourceRef.get() != null
-            sourceRef.get().numberOfChangeListeners() == 0
+            Wait.until({reversedRef.get() == null}, 4_000)
+            Wait.until({sourceRef.get() != null}, 4_000)
+            Wait.until({sourceRef.get().numberOfChangeListeners() == 0}, 4_000)
         and :
             trace == ["DLROW"]
     }
