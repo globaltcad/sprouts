@@ -441,7 +441,7 @@ public interface SproutsFactory
      * <pre>{@code
      * Var<CharSequence> unsafe = doc.zoomTo(contentLens);
      * // Would fail when setting String:
-     * unsafe.set("I cause an IllegalArggumentException!!");
+     * unsafe.set("I cause an IllegalArgumentException!!");
      * }</pre>
      * With explicit type information the lens accepts any {@link CharSequence}:
      * <pre>{@code
