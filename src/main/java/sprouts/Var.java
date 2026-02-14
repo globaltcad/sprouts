@@ -1171,6 +1171,7 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      * @throws NullPointerException if {@code type}, {@code nullObject}, getter, or setter is null.
      */
     default <B extends @NonNull Object, V extends B> Var<B> projectTo( Class<B> type, V nullObject, Function<T,B> getter, Function<B,T> setter ) {
+        Objects.requireNonNull(type);
         Objects.requireNonNull(nullObject);
         Objects.requireNonNull(getter, "getter must not be null");
         Objects.requireNonNull(setter, "setter must not be null");
