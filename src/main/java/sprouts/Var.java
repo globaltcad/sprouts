@@ -160,6 +160,9 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      *
      * @param newItem The new item which ought to replace the old one.
      * @return This very wrapper instance, in order to enable method chaining.
+     * @throws IllegalArgumentException If the type of the supplied item does not match the {@link #type()} of this
+     *                                  property in terms of being assignable:<br>
+     *                                  {@code var.type().isAssignableFrom(newItem.getClass())}
      */
     default Var<T> set( T newItem ) {
         return this.set(Sprouts.factory().defaultChannel(), newItem);
@@ -174,6 +177,9 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      * @param channel The channel from which the item is set.
      * @param newItem The new item which ought to replace the old one.
      * @return This very wrapper instance, in order to enable method chaining.
+     * @throws IllegalArgumentException If the type of the supplied item does not match the {@link #type()} of this
+     *                                  property in terms of being assignable:<br>
+     *                                  {@code var.type().isAssignableFrom(newItem.getClass())}
      */
     Var<T> set( Channel channel, T newItem );
 
@@ -445,14 +451,16 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      *
      * // Create a person with a Double age
      * Var<Person> person = Var.of(new Person("Sam", 23.123d));
-     *
-     * // Using the basic zoomTo would cause issues:
-     * // Var<Number> problematicAge = person.zoomTo(Person::age, Person::withAge);
-     * // person.update(p -> p.withAge(25)); // Throws ClassCastException! Integer vs Double
-     *
-     * // Using this method ensures type safety:
+     * }</pre>
+     * Using a basic zoomTo may cause issues when setting a different subtype through the lens:
+     * <pre>{@code
+     * Var<Number> problematicAge = person.zoomTo(Person::age, Person::withAge);
+     * problematicAge.set(25); // Throws IllegalArgumentException at runtime! Integer =!= Double
+     * }</pre>
+     * Using <b>this</b> method ensures type safety for lens updates:
+     * <pre>{@code
      * Var<Number> safeAge = person.zoomTo(Number.class, Person::age, Person::withAge);
-     * person.update(p -> p.withAge(25)); // Works perfectly! Integer is accepted as Number
+     * safeAge.set(25); // Works correctly! Integer is accepted as Number
      * }</pre>
      * <p>
      * The lens property returned by this method will accept any value that is assignable to
