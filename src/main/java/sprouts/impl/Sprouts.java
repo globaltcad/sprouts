@@ -211,6 +211,8 @@ public final class Sprouts implements SproutsFactory
     }
 
     private static <T, B> Var<@Nullable B> _lensOf(Var<T> source, @Nullable Class<B> type, Lens<T, B> lens) {
+        Objects.requireNonNull(source);
+        Objects.requireNonNull(lens);
         B initialValue;
         try {
             initialValue = lens.getter(Util.fakeNonNull(source.orElseNull()));
