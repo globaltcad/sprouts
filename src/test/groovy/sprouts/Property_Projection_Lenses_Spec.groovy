@@ -1407,7 +1407,7 @@ class Property_Projection_Lenses_Spec extends Specification {
         and : 'The untyped projection is still fine because it has not yet encountered a type mismatch with the parent!'
             untypedProjection.get().toString() == "€32,50"
 
-        when: 'We set a `StringBuilder` vakue for the untyped projection'
+        when: 'We set a `StringBuilder` value for the untyped projection'
             untypedProjection.set(new StringBuilder("€15,00"))
         then: 'The untyped projection throws an exception due to type mismatch'
             ex = thrown(IllegalArgumentException)
