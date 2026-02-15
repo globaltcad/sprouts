@@ -1,11 +1,13 @@
 package sprouts
 
 import spock.lang.*
+import util.Wait
 
 import java.lang.ref.WeakReference
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
+import java.util.function.Function
 
 @Title("Property Projection Lenses")
 @Narrative('''
@@ -700,12 +702,11 @@ class Property_Projection_Lenses_Spec extends Specification {
         when: 'We release all projections'
             reversed = null
             waitForGarbageCollection()
-            waitForGarbageCollection()
 
         then: 'All projections collected, source remains'
-            reversedRef.get() == null
-            sourceRef.get() != null
-            sourceRef.get().numberOfChangeListeners() == 0
+            Wait.until({reversedRef.get() == null}, 4_000)
+            Wait.until({sourceRef.get() != null}, 4_000)
+            Wait.until({sourceRef.get().numberOfChangeListeners() == 0}, 4_000)
         and :
             trace == ["DLROW"]
     }
@@ -1254,6 +1255,193 @@ class Property_Projection_Lenses_Spec extends Specification {
 
                 assert recoveredViaChain == recoveredViaDirect
             }
+    }
+
+
+    def 'Typed `projectTo` with explicit type information handles polymorphic conversion correctly while untyped version fails.'() {
+        reportInfo """
+            ⚠️  PROBLEM DEMONSTRATION & SOLUTION ⚠️
+            
+            The basic `projectTo(Function, Function)` method determines the runtime type
+            of the projected property from the FIRST value returned by the getter.
+            This causes `IllegalArgumentException` when the conversion produces different
+            subtypes of the declared target type!
+            
+            Consider property which stores `Integer` values and a projection that
+            always divides by 2. If the first value is `6` (an `Integer`), then
+            it will be projected as `3` (also an `Integer`). 
+            If we later try to set a value of `3.5` (a `Double`), the projection will 
+            throw an exception because it expects an `Integer`, not a `Double`.
+            
+            The explicitly typed `projectTo(Class<B>, Function, Function)` solves this by
+            allowing you to specify the declared type. The resulting property correctly
+            accepts any value assignable to that declared type.
+            
+            This test demonstrates both the issue and its solution by having an `Integer` property that
+            is projected to `Number` (the declared type). The untyped projection fails when we try to set a `Double`,
+            while the typed projection works correctly.
+        """
+        given: 'A source property with Integer values'
+            Var<Integer> source = Var.of(6)
+        and: 'The conversion function that divides by 2'
+            var divideByTwo = { Integer n ->
+                var newNum = n.doubleValue() / 2d
+                return ( newNum % 1 == 0 ) ? newNum.intValue() : newNum  // Return Integer if whole, else Double
+            } as Function<Integer, Number>
+            var multiplyByTwo = { Number n -> (n.doubleValue() * 2d) as int } as Function<Number, Integer>
+        and : 'Untyped projection (will infer Integer from first value)'
+            Var<Number> untypedProjection = source.projectTo(divideByTwo, multiplyByTwo)
+        and : 'Typed projection with declared type Number'
+            Var<Number> typedProjection = source.projectTo(Number.class, divideByTwo, multiplyByTwo)
+
+        expect: 'Initial projections work in both cases'
+            untypedProjection.get() == 3
+            typedProjection.get() == 3
+
+        when: 'We try to set a Double value through the untyped projection'
+            untypedProjection.set(3.5)
+        then: 'The untyped projection throws an exception due to type mismatch'
+            thrown(IllegalArgumentException)
+
+        when: 'We set a `Double` value through the typed projection'
+            typedProjection.set(3.5)
+        then: 'The typed projection accepts the Double value without issue'
+            typedProjection.get() == 3.5
+            source.get() == 7  // 3.5 * 2 = 7
+
+        when : 'We modify the source property to an uneven number:'
+            source.set(9)
+        then : 'The typed projection correctly managed to handle the change and reflects the new value:'
+            typedProjection.get() == 4.5  // 9 / 2 = 4.5
+
+        when : 'However, accessing the untyped projection now throws an exception due to the type mismatch:'
+            untypedProjection.get()
+        then : 'The untyped projection fails because it still expects an Integer, but the conversion produced a Double.'
+            thrown(IllegalArgumentException)
+    }
+
+    def 'Typed projection with null object handles polymorphic conversion correctly while untyped version fails.'() {
+        reportInfo """
+            ⚠️  PROBLEM DEMONSTRATION & SOLUTION ⚠️
+            
+            The basic `projectTo(nullObject, getter, setter)` method determines the runtime type
+            of the projected property from the supplied `nullObject`. This causes `IllegalArgumentException`
+            when the conversion produces different subtypes of the declared target type!
+            
+            Consider a property storing `Number` values that we project to formatted currency strings.
+            If we use a `String` null object (e.g., "€0,00"), the untyped projection will assume
+            the target type is exactly `String`. But what if we want the projection to accept any 
+            `CharSequence` (String, StringBuilder, etc.)?
+            
+            The explicitly typed `projectTo(Class<B>, V, Function, Function)` solves this by
+            allowing you to specify the declared type. The resulting property correctly
+            accepts any value assignable to that declared type, not just the exact type of the null object.
+            
+            This test demonstrates both the issue and its solution by having a `Number` property that is
+            projected to `CharSequence` (the declared interface), using a `String` null object.
+            The untyped projection fails when we try to set a `StringBuilder`, while the typed projection
+            works correctly with any `CharSequence` implementation.
+        """
+        given: 'A source property with numeric values representing euro amounts in cents'
+            Var<Number> priceInCents = Var.ofNullable(Number.class, 1999)  // €19,99
+            String defaultFormatted = "€0,00"
+
+        and: 'Conversion functions that can handle any CharSequence input'
+            Function<Number, CharSequence> formatAsEUR = { n ->
+                // Source is never null (Var.of), but guard for completeness
+                if (n == null) return defaultFormatted
+                // Format as euros with 2 decimal places using European format
+                String euroString = String.format("%.2f", n.doubleValue() / 100)
+                "€" + euroString.replace('.', ',')
+            }
+
+            Function<CharSequence, Number> parseEUR = { cs ->
+                if (cs == null) return 0
+                String s = cs.toString().trim()
+                if (!s.startsWith("€")) return 0
+                try {
+                    String numberPart = s.substring(1).replace(',', '.')
+                    Double.parseDouble(numberPart) * 100
+                } catch (NumberFormatException e) {
+                    0
+                }
+            }
+
+        and: 'Untyped projection with null object (infers String from the null object)'
+            Var<CharSequence> untypedProjection = priceInCents.projectTo(
+                defaultFormatted,  // null object is String
+                formatAsEUR,
+                parseEUR
+            )
+
+        and: 'Typed projection with declared type CharSequence and same null object'
+            Var<CharSequence> typedProjection = priceInCents.projectTo(
+                CharSequence.class,  // Explicitly declare the target type
+                defaultFormatted,    // Same String null object
+                formatAsEUR,
+                parseEUR
+            )
+
+        expect: 'Initial projections work in both cases'
+            priceInCents.get() == 1999
+            untypedProjection.get().toString() == "€19,99"
+            typedProjection.get().toString() == "€19,99"
+
+        when: 'We try to set a StringBuilder value through the untyped projection'
+            untypedProjection.set(new StringBuilder("€24,99"))
+        then: 'The untyped projection throws an exception due to type mismatch'
+            var ex = thrown(IllegalArgumentException)
+            ex.message.contains("String") && ex.message.contains("StringBuilder")
+
+        when: 'We set a StringBuilder value through the typed projection'
+            typedProjection.set(new StringBuilder("€24,99"))
+        then: 'The typed projection accepts the StringBuilder without issue'
+            typedProjection.get().toString() == "€24,99"
+            priceInCents.get() == 2499
+
+        when: 'We set a StringBuffer value (another CharSequence implementation)'
+            typedProjection.set(new StringBuffer("€32,50"))
+        then: 'It also works perfectly'
+            typedProjection.get().toString() == "€32,50"
+            priceInCents.get() == 3250
+        and : 'The untyped projection is still fine because it has not yet encountered a type mismatch with the parent!'
+            untypedProjection.get().toString() == "€32,50"
+
+        when: 'We set a `StringBuilder` value for the untyped projection'
+            untypedProjection.set(new StringBuilder("€15,00"))
+        then: 'The untyped projection throws an exception due to type mismatch'
+            ex = thrown(IllegalArgumentException)
+            ex.message.contains("String") && ex.message.contains("StringBuilder")
+
+        when: 'We modify the source property'
+            priceInCents.set(4295)  // €42,95
+        then: 'The typed projection updates normally'
+            typedProjection.get().toString() == "€42,95"
+        and: 'The untyped projection is valid again, as it has received a new value from the parent that matches its expected type (String)'
+            untypedProjection.get().toString() == "€42,95"
+
+        when: 'We set the typed projection with a custom CharSequence implementation'
+            def customCharSeq = new CharSequence() {
+                String data = "€57,25"
+                int length() { data.length() }
+                char charAt(int i) { data.charAt(i) }
+                CharSequence subSequence(int s, int e) { data.subSequence(s, e) }
+                String toString() { data }
+            }
+            typedProjection.set(customCharSeq)
+        then: 'Even custom implementations are accepted'
+            typedProjection.get().toString() == "€57,25"
+            priceInCents.get() == 5725
+
+        when: 'We set the source property to null'
+            priceInCents.set(null)
+        then: 'Both projections resort to the null object value'
+            untypedProjection.get().toString() == "€0,00"
+            typedProjection.get().toString() == "€0,00"
+
+        and: 'The null object itself maintains its original type (String)'
+            untypedProjection.get().class == String
+            typedProjection.get().class == String
     }
 
     /**

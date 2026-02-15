@@ -172,6 +172,9 @@ import java.time.Month
                 return new TrainStation(this.name, this.description, this.foundingDate, books);
             }
         }
+        record Person(String name, Number age) {
+            Person withAge(Number age) { return new Person(name, age); }
+        }
         ```
 ''')
 @Subject([PropertyLens, Var])
@@ -290,6 +293,10 @@ class Property_Lenses_Spec extends Specification
         public TrainStation withBooks(List<String> books) {
             return new TrainStation(this.name, this.description, this.foundingDate, books);
         }
+    }
+
+    public static record Person(String name, Number age) {
+        Person withAge(Number age) { return new Person(name, age); }
     }
 
     def 'Many lens properties can be created from a regular property.'()
@@ -1699,6 +1706,540 @@ class Property_Lenses_Spec extends Specification
             level.orElseNull() == null
             date.orElseNull() == null
             name.get() == ""
+    }
+
+    def 'Untyped zoomTo causes `IllegalArgumentException` when using subtypes of a polymorphic field.'()
+    {
+        reportInfo """
+            ⚠️  PROBLEM DEMONSTRATION ⚠️
+            
+            The basic `zoomTo(Function, BiFunction)` method determines the runtime type
+            of the lens property from the FIRST value it encounters. This causes
+            `IllegalArgumentException` when the field is polymorphic and we later 
+            try to set a different subtype!
+            
+            Here we demonstrate this critical issue with a `Number` field.
+            The initial value is a `Double`, so the lens becomes `Var<Double>` 
+            under the hood, even though we declared it as `Var<Number>`.
+            Trying to set an `Integer` later throws a IllegalArgumentException.
+            
+            In this test we use the following record as test type:
+            ```
+            record Person(String name, Number age) {
+                Person withAge(Number age) { return new Person(name, age); }
+            }
+            ```
+        """
+        given: 'A property containing a Person with a Double age'
+            var person = new Person("Joe", 23.123d)
+            Var<Person> personProperty = Var.of(person)
+
+        when: 'We create a lens using the untyped zoomTo method'
+            Var<Number> ageLens = personProperty.zoomTo(Person::age, Person::withAge)
+
+        then: 'The lens initially works fine with Doubles'
+            ageLens.get() == 23.123d
+
+        when: 'We try to set an Integer value through the lens'
+            ageLens.set(25) // Integer, not Double!
+
+        then: 'A IllegalArgumentException is thrown because the lens expects Double'
+            var exception = thrown(IllegalArgumentException)
+        and: 'The exception message indicates the type mismatch'
+            exception.message.contains(
+                    "The provided type 'class java.lang.Integer' of the new value is " +
+                    "not compatible with the expected item type 'class java.lang.Double' " +
+                    "of this property lens."
+                )
+        and : 'The person has not changed:'
+            personProperty.get() == new Person("Joe", 23.123d)
+
+        when : 'We create another lens property where the correct type information is explicitly provided:'
+            Var<Number> fixedAgeLens = personProperty.zoomTo(Number.class, Person::age, Person::withAge)
+        and : 'We try to set an Integer value through this new lens'
+            fixedAgeLens.set(25) // Integer, not Double!
+        then : 'No exception was thrown:'
+            noExceptionThrown()
+        and : 'The state change worked!'
+            fixedAgeLens.get() == 25
+            personProperty.get() == new Person("Joe", 25)
+    }
+
+    def 'Untyped zoomTo with Lens interface can cause type mismatches with polymorphic fields.'()
+    {
+        reportInfo """
+            ⚠️  PROBLEM DEMONSTRATION ⚠️
+            
+            The same type safety issue exists when using `zoomTo(Lens)` without explicit
+            type information. The lens property's runtime type is determined from the
+            FIRST value encountered, causing problems when the field is polymorphic.
+            
+            In this test we use the following record as test type:
+            ```
+            record Person(String name, Number age) {
+                Person withAge(Number age) { return new Person(name, age); }
+            }
+            ```
+            
+            We focus on the `Person`s a `Number` based age field, through a `Lens` instance 
+            and then pass it to `zoomTo(Lens)`.
+            The initial value is a `Double`, so the lens becomes `Var<Double>` internally,
+            even though we declared it as `Var<Number>`. Setting an `Integer` later fails.
+        """
+        given: 'A property containing a Person with a Double age'
+            var person = new Person("Alice", 42.5d)
+            Var<Person> personProperty = Var.of(person)
+        and: 'A Lens instance focusing on the age field'
+            Lens<Person, Number> ageLens = Lens.of(Person::age, Person::withAge)
+
+        when: 'We create a lens using the untyped zoomTo(Lens) method'
+            Var<Number> ageProperty = personProperty.zoomTo(ageLens)
+
+        then: 'The lens initially works fine with Doubles'
+            ageProperty.get() == 42.5d
+
+        when: 'We try to set an Integer value through the lens'
+            ageProperty.set(30) // Integer, not Double!
+
+        then: 'An IllegalArgumentException is thrown because the lens expects Double'
+            var exception = thrown(IllegalArgumentException)
+        and: 'The exception message indicates the type mismatch'
+            exception.message.contains(
+                    "The provided type 'class java.lang.Integer' of the new value is " +
+                    "not compatible with the expected item type 'class java.lang.Double' " +
+                    "of this property lens."
+                )
+        and: 'The person has not changed'
+            personProperty.get() == new Person("Alice", 42.5d)
+
+        when: 'We create another lens property with explicit type information'
+            Var<Number> fixedAgeProperty = personProperty.zoomTo(Number.class, ageLens)
+        and: 'We try to set an Integer value through this new lens'
+            fixedAgeProperty.set(30)
+
+        then: 'No exception was thrown'
+            noExceptionThrown()
+        and: 'The state change worked correctly'
+            fixedAgeProperty.get() == 30
+            personProperty.get() == new Person("Alice", 30)
+    }
+
+    def 'Typed `zoomTo` with explicit type information handles polymorphic field subtypes correctly.'()
+    {
+        reportInfo """
+            ✅  SOLUTION DEMONSTRATION ✅
+            
+            The explicitly typed `zoomTo(Class<B>, Function, BiFunction)` method
+            solves the type safety issue by allowing you to specify the declared type
+            of the field. The resulting lens property correctly accepts any value
+            assignable to that declared type, not just the specific subtype that
+            was present initially.
+            
+            In this test, we demonstrate switching between different Number subtypes
+            (Double, Integer, Float) without any type cast exceptions.
+            
+            In this test we use the following record as test type:
+            ```
+            record Person(String name, Number age) {
+                Person withAge(Number age) { return new Person(name, age); }
+            }
+            ```
+        """
+        given: 'A property containing a Person with a `Double` based age'
+            var person = new Person("Bob", 25.75d)
+            Var<Person> personProperty = Var.of(person)
+
+        when: 'We create a lens with explicit `Number.class` type information'
+            Var<Number> ageLens = personProperty.zoomTo(Number.class, Person::age, Person::withAge)
+
+        then: 'Initial value is correctly retrieved'
+            ageLens.get() == 25.75d
+
+        when: 'We set an `Integer` value'
+            ageLens.set(30)
+        then: 'The lens and parent property are updated correctly'
+            ageLens.get() == 30
+            personProperty.get().age() == 30
+
+        when: 'We set a Float value'
+            ageLens.set(45.5f)
+        then: 'The lens and parent property are updated correctly'
+            ageLens.get() == 45.5f
+            personProperty.get().age() == 45.5f
+
+        when: 'We set a Long value'
+            ageLens.set(100L)
+        then: 'The lens and parent property are updated correctly'
+            ageLens.get() == 100L
+            personProperty.get().age() == 100L
+
+        and: 'All operations succeeded without any type cast exceptions'
+            noExceptionThrown()
+    }
+
+    def 'Typed `zoomTo` with explicit type information and Lens interface handles polymorphism correctly.'()
+    {
+        reportInfo """
+            ✅  SOLUTION DEMONSTRATION ✅
+            
+            Similarly, the explicitly typed `zoomTo(Class<B>, Lens<T,B>)` method
+            solves the same type safety issue when working with pre-existing Lens instances.
+            
+            Here we demonstrate that a lens created with explicit type information
+            can handle any subtype of the declared type, even when switching between
+            completely different numeric representations.
+            
+            We use the following record as test type:
+            ```
+            record Person(String name, Number age) {
+                Person withAge(Number age) { return new Person(name, age); }
+            }
+            ```
+        """
+        given: 'A property containing a Person with an Integer age'
+            var person = new Person("Carol", 42)
+            Var<Person> personProperty = Var.of(person)
+        and: 'A Lens instance focusing on the age field'
+            Lens<Person, Number> ageLens = Lens.of(Person::age, Person::withAge)
+
+        when: 'We create a lens with explicit Number.class type information'
+            Var<Number> ageProperty = personProperty.zoomTo(Number.class, ageLens)
+
+        then: 'Initial value is correctly retrieved'
+            ageProperty.get() == 42
+
+        when: 'We set a Double value'
+            ageProperty.set(33.33d)
+        then: 'The lens and parent property are updated correctly'
+            ageProperty.get() == 33.33d
+            personProperty.get().age() == 33.33d
+
+        when: 'We set a `Short` value'
+            ageProperty.set((short)18)
+        then: 'The lens and parent property are updated correctly'
+            ageProperty.get() == (short)18
+            personProperty.get().age() == (short)18
+
+        and: 'All operations succeeded without any type cast exceptions'
+            noExceptionThrown()
+    }
+
+    def 'Typed `zoomTo` with explicit type information and null object handles polymorphism in nullable parent.'()
+    {
+        reportInfo """
+            ✅  SOLUTION DEMONSTRATION ✅
+            
+            The `zoomTo(Class<B>, V, Function, BiFunction)` method combines
+            null safety with type safety. It provides a default value for when
+            the parent is null, while also ensuring the lens accepts all subtypes
+            of the declared type.
+            
+            This test demonstrates switching between different `Number` subtypes
+            in a lens created from a nullable parent property, with proper
+            fallback behavior when the parent is null.
+            
+            We use the following record as test type:
+            ```
+            record Person(String name, Number age) {
+                Person withAge(Number age) { return new Person(name, age); }
+            }
+            ```
+        """
+        given: 'A nullable `Person` property initialized to null'
+            Var<Person> personProperty = Var.ofNull(Person.class)
+        and: 'A default age value'
+            Number defaultAge = 0
+
+        when: 'We create a lens with explicit type and null object'
+            Var<Number> ageLens = personProperty.zoomTo(
+                Number.class,
+                defaultAge,
+                Person::age,
+                Person::withAge
+            )
+
+        then: 'The lens returns the default value when parent is null'
+            ageLens.get() == 0
+
+        when: 'We try to set a `Double` value through the lens, despite the parent missing!'
+            ageLens.set(99.99d)
+        then: 'A person cannot be created by the lens and so the lens is still `0`!'
+            personProperty.isEmpty()
+            ageLens.get() == 0
+
+        when: 'We set a valid person in the parent property...'
+            personProperty.set(new Person("Tariq", 35 as int))
+        then: 'The integer was propagated to the lens...'
+            ageLens.get() == 35
+
+        when: 'We set the parent back to null'
+            personProperty.set(null)
+        then: 'The lens returns the default value again'
+            ageLens.get() == 0
+
+        and: 'All operations succeeded without exceptions'
+            noExceptionThrown()
+    }
+
+    def 'Typed `zoomTo` with explicit type, null object and Lens interface handles polymorphism in nullable parent.'()
+    {
+        reportInfo """
+            ✅  SOLUTION DEMONSTRATION ✅
+            
+            The `zoomTo(Class<B>, V, Lens<T,B>)` method provides the same combined
+            null safety and type safety for pre-existing Lens instances.
+            
+            This test demonstrates using a polymorphic Lens with a nullable parent,
+            ensuring the lens correctly handles any Number subtype and provides
+            a deterministic fallback when the parent is null.
+            
+            We use the following record as test type:
+            ```
+            record Person(String name, Number age) {
+                Person withAge(Number age) { return new Person(name, age); }
+            }
+            ```
+        """
+        given: 'A nullable Person property initialized to null'
+            Var<Person> personProperty = Var.ofNull(Person.class)
+        and: 'A Lens instance focusing on the age field'
+            Lens<Person, Number> ageLens = Lens.of(Person::age, Person::withAge)
+        and: 'A default age value'
+            Number defaultAge = -1
+
+        when: 'We create a lens with explicit type, null object and lens'
+            Var<Number> ageProperty = personProperty.zoomTo(
+                Number.class,
+                defaultAge,
+                ageLens
+            )
+
+        then: 'The lens returns the default value when parent is null'
+            ageProperty.get() == -1
+
+        when: 'We set a Float value through the lens'
+            ageProperty.set(3.14f)
+        then: 'The person is still missing and the value could not be set successfully!'
+            personProperty.isEmpty()
+            ageProperty.get() == -1
+
+        when : 'We install a valid person...'
+            personProperty.set(new Person("Lisa", 3.14f))
+        then : 'The age property has the expected age:'
+            ageProperty.get() == 3.14f
+
+        when: 'We set a Long value through the lens'
+            ageProperty.set(1000L)
+        then: 'The Person is updated with the Long age'
+            personProperty.get().age() == 1000L
+            ageProperty.get() == 1000L
+
+        when: 'We set the parent back to null'
+            personProperty.set(null)
+        then: 'The lens returns the default value again'
+            ageProperty.get() == -1
+
+        and: 'All operations succeeded without exceptions'
+            noExceptionThrown()
+    }
+
+    def 'Typed `zoomTo` preserves nullability and mutability characteristics correctly.'()
+    {
+        reportInfo """
+            This test verifies that the explicitly typed zoomTo methods correctly
+            preserve the nullability and mutability characteristics of the resulting
+            lens property based on the method variant used.
+            
+            - `zoomTo(Class, Function, BiFunction)` creates non-nullable lenses
+            - `zoomTo(Class, Object, Function, BiFunction)` creates non-nullable lenses with defaults
+            - `zoomToNullable(Class, Function, BiFunction)` creates nullable lenses
+            
+            We use the following record as test type:
+            ```
+            record Person(String name, Number age) {
+                Person withAge(Number age) { return new Person(name, age); }
+            }
+            ```
+        """
+        given: 'A non-nullable and a nullable parent property'
+            var person = new Person("Dave", 30)
+            Var<Person> nonNullPerson = Var.of(person)
+            Var<Person> nullablePerson = Var.ofNullable(Person.class, person)
+
+        when: 'We create a typed non-nullable lens'
+            Var<Number> nonNullLens = nonNullPerson.zoomTo(Number.class, Person::age, Person::withAge)
+        then: 'It is mutable and does not allow null'
+            nonNullLens.isMutable()
+            !nonNullLens.allowsNull()
+
+        when: 'We create a typed nullable lens'
+            Var<Number> nullableLens = nonNullPerson.zoomToNullable(Number.class, Person::age, Person::withAge)
+        then: 'It is mutable and allows null'
+            nullableLens.isMutable()
+            nullableLens.allowsNull()
+
+        when: 'We create a typed lens with null object from non-nullable parent'
+            Var<Number> defaultLens = nonNullPerson.zoomTo(Number.class, 0, Person::age, Person::withAge)
+        then: 'It is mutable and does not allow null'
+            defaultLens.isMutable()
+            !defaultLens.allowsNull()
+
+        when: 'We create a typed lens with null object from nullable parent'
+            Var<Number> defaultLensFromNullable = nullablePerson.zoomTo(Number.class, 0, Person::age, Person::withAge)
+        then: 'It is mutable and does not allow null (the null object ensures non-nullability)'
+            defaultLensFromNullable.isMutable()
+            !defaultLensFromNullable.allowsNull()
+    }
+
+    def 'Typed `zoomTo` with null object throws `NullPointerException` when null object is null.'()
+    {
+        reportInfo """
+            This test verifies that the typed zoomTo methods with null object
+            correctly reject null as the default value. A non-null default value
+            is required to maintain the guarantee that the lens property never
+            contains null.
+            
+            We use the following record as test type:
+            ```
+            record Person(String name, Number age) {
+                Person withAge(Number age) { return new Person(name, age); }
+            }
+            ```
+        """
+        given: 'A nullable Person property'
+            Var<Person> personProperty = Var.ofNull(Person.class)
+
+        when: 'Attempting to create a typed lens with a null null object'
+            personProperty.zoomTo(Number.class, null, Person::age, Person::withAge)
+
+        then: 'A NullPointerException is thrown'
+            thrown(NullPointerException)
+
+        when: 'Attempting to create a typed lens with a null null object and Lens'
+            personProperty.zoomTo(Number.class, null, Lens.of(Person::age, Person::withAge))
+
+        then: 'A NullPointerException is thrown'
+            thrown(NullPointerException)
+    }
+
+    def 'Typed `zoomTo` with null object correctly handles inheritance hierarchies.'()
+    {
+        reportInfo """
+            This test demonstrates that the typed `zoomTo(..)` methods with null-object
+            correctly handle complex inheritance hierarchies. The declared type
+            can be a supertype, and the null-object can be any subtype.
+            
+            Here we use Number as the declared type with different specific
+            subtypes as null objects, and verify that the lens accepts all
+            `Number` subtypes regardless of which subtype was used as the default.
+            
+            We use the following record as test type:
+            ```
+            record Person(String name, Number age) {
+                Person withAge(Number age) { return new Person(name, age); }
+            }
+            ```
+        """
+        given: 'A nullable Person property'
+            Var<Person> personProperty = Var.ofNull(Person.class)
+
+        when: 'We create lenses with different Number subtypes as null objects'
+            Var<Number> lensWithIntegerDefault = personProperty.zoomTo(
+                Number.class, 0, Person::age, Person::withAge
+            )
+            Var<Number> lensWithDoubleDefault = personProperty.zoomTo(
+                Number.class, 0.0d, Person::age, Person::withAge
+            )
+            Var<Number> lensWithFloatDefault = personProperty.zoomTo(
+                Number.class, 0.0f, Person::age, Person::withAge
+            )
+            Var<Number> lensWithLongDefault = personProperty.zoomTo(
+                Number.class, 0L, Person::age, Person::withAge
+            )
+
+        then: 'All lenses return their respective default values'
+            lensWithIntegerDefault.get() == 0
+            lensWithDoubleDefault.get() == 0.0d
+            lensWithFloatDefault.get() == 0.0f
+            lensWithLongDefault.get() == 0L
+
+        when: 'We set an `Integer` through the Double-default lens'
+            lensWithDoubleDefault.set(42)
+        then : 'Initially, nothing changed, because the parent property value is missing!'
+            personProperty.isEmpty()
+            lensWithDoubleDefault.get() == 0.0
+
+        when : 'We create a valid person to store in the common parent property...'
+            personProperty.set(new Person("", 0))
+        and : 'We set the value again...'
+            lensWithDoubleDefault.set(42)
+        then: 'It works correctly'
+            personProperty.get().age() == 42
+            lensWithDoubleDefault.get() == 42
+
+        when: 'We set a `Float` through the Integer-default lens'
+            lensWithIntegerDefault.set(3.14f)
+        then: 'It works correctly'
+            personProperty.get().age() == 3.14f
+            lensWithIntegerDefault.get() == 3.14f
+
+        and: 'All operations succeeded without type cast exceptions'
+            noExceptionThrown()
+    }
+
+    def 'Typed `zoomTo` maintains change notification across polymorphic type changes.'()
+    {
+        reportInfo """
+            This test verifies that the typed `zoomTo(..)` methods correctly propagate
+            change notifications even when the value changes from one subtype
+            to another. This is a critical behavioral requirement for lenses
+            on polymorphic fields.
+            
+            Here we use the following record as test type for the properties:
+            ```
+            record Person(String name, Number age) {
+                Person withAge(Number age) { return new Person(name, age); }
+            }
+            ```
+            
+        """
+        given: 'A Person property and a typed lens on the age field'
+            var person = new Person("Eve", 25)
+            Var<Person> personProperty = Var.of(person)
+            Var<Number> ageLens = personProperty.zoomTo(Number.class, Person::age, Person::withAge)
+        and: 'A trace list to record change events'
+            var trace = []
+            var ageView = ageLens.view()
+            ageView.onChange(From.ALL, it -> trace << [
+                value: it.currentValue().orElseNull(),
+                type: it.currentValue().orElseNull()?.getClass()?.simpleName
+            ])
+
+        when: 'We change from Integer to Double'
+            ageLens.set(25.5d)
+        then: 'A change event is fired with the new value and type'
+            trace.size() == 1
+            trace[0].value == 25.5d
+            trace[0].type == "Double"
+
+        when: 'We change from Double to Float'
+            ageLens.set(30.75f)
+        then: 'A change event is fired with the new value and type'
+            trace.size() == 2
+            trace[1].value == 30.75f
+            trace[1].type == "Float"
+
+        when: 'We change from Float to Long'
+            ageLens.set(100L)
+        then: 'A change event is fired with the new value and type'
+            trace.size() == 3
+            trace[2].value == 100L
+            trace[2].type == "Long"
+
+        when: 'We change to the same value (no actual change)'
+            ageLens.set(100L)
+        then: 'No additional change event is fired'
+            trace.size() == 3
     }
 
     /**

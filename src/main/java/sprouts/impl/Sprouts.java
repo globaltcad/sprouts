@@ -202,6 +202,17 @@ public final class Sprouts implements SproutsFactory
 
     @Override
     public <T, B> Var<B> lensOf(Var<T> source, Lens<T, B> lens) {
+        return  _lensOf(source, null, lens);
+    }
+
+    @Override
+    public <T, B> Var<B> lensOf(Var<T> source, Class<B> type, Lens<T, B> lens) {
+        return _lensOf(source, type, lens);
+    }
+
+    private static <T, B> Var<@Nullable B> _lensOf(Var<T> source, @Nullable Class<B> type, Lens<T, B> lens) {
+        Objects.requireNonNull(source);
+        Objects.requireNonNull(lens);
         B initialValue;
         try {
             initialValue = lens.getter(Util.fakeNonNull(source.orElseNull()));
@@ -209,12 +220,13 @@ public final class Sprouts implements SproutsFactory
             Util.sneakyThrowExceptionIfFatal(e);
             throw new IllegalArgumentException("Lens getter must not throw an exception", e);
         }
-        Class<B> type = Util.expectedClassFromItem(initialValue);
+        if ( type == null )
+            type = Util.expectedClassFromItem(initialValue);
         return new PropertyLens<>(
                 type,
                 Sprouts.factory().defaultId(),
                 false,//does not allow null
-                initialValue, //may NOT be null
+                initialValue,
                 source,
                 new Lens<T, B>() {
                     @Override
@@ -232,14 +244,38 @@ public final class Sprouts implements SproutsFactory
                     }
                 },
                 null
-            );
+        );
     }
 
     @Override
     public <T, B> Var<B> lensOf(Var<T> source, B nullObject, Lens<T, B> lens) {
+        Objects.requireNonNull(source);
         Objects.requireNonNull(nullObject, "Null object must not be null");
         Objects.requireNonNull(lens, "lens must not be null");
-        return PropertyLens.of(source, nullObject, new Lens<T, B>() {
+        return PropertyLens.of(source, null, nullObject, new Lens<T, B>() {
+            @Override
+            public B getter(T parentValue) throws Exception {
+                if ( parentValue == null )
+                    return nullObject;
+                return lens.getter(parentValue);
+            }
+            @Override
+            public T wither(T parentValue, B newValue) throws Exception {
+                if ( parentValue == null )
+                    return Util.fakeNonNull(null);
+
+                return lens.wither(parentValue, newValue);
+            }
+        });
+    }
+
+    @Override
+    public <T, B, V extends B> Var<B> lensOf(Var<T> source, Class<B> type, V nullObject, Lens<T, B> lens) {
+        Objects.requireNonNull(source);
+        Objects.requireNonNull(nullObject, "Null object must not be null");
+        Objects.requireNonNull(type, "Type class may not be null");
+        Objects.requireNonNull(lens, "lens must not be null");
+        return PropertyLens.of(source, type, nullObject, new Lens<T, B>() {
             @Override
             public B getter(T parentValue) throws Exception {
                 if ( parentValue == null )
@@ -259,6 +295,7 @@ public final class Sprouts implements SproutsFactory
     @Override
     public <T, B> Var<B> lensOfNullable(Class<B> type, Var<T> source, Lens<T, B> lens) {
         Objects.requireNonNull(type, "Type must not be null");
+        Objects.requireNonNull(source);
         Objects.requireNonNull(lens, "lens must not be null");
         return PropertyLens.ofNullable(type, source, new Lens<T, B>() {
             @Override
@@ -281,6 +318,18 @@ public final class Sprouts implements SproutsFactory
     public <T, B> Var<B> projLensOf(Var<T> source, Function<T,B> getter, Function<B,T> setter) {
         Objects.requireNonNull(getter, "getter must not be null");
         Objects.requireNonNull(setter, "setter must not be null");
+        return _projLensOf(source, null, getter, setter);
+    }
+
+    @Override
+    public <T, B> Var<B> projLensOf( Var<T> source, Class<B> type, Function<T, B> getter, Function<B, T> setter ) {
+        Objects.requireNonNull(type, "Type must not be null");
+        Objects.requireNonNull(getter, "getter must not be null");
+        Objects.requireNonNull(setter, "setter must not be null");
+        return _projLensOf(source, type, getter, setter);
+    }
+
+    private static <T, B> Var<B> _projLensOf(Var<T> source, @Nullable Class<B> type, Function<T,B> getter, Function<B,T> setter) {
         Lens<T,B> lens = Lens.of(getter, (a,b)->setter.apply(b));
         B initialValue;
         try {
@@ -289,7 +338,8 @@ public final class Sprouts implements SproutsFactory
             Util.sneakyThrowExceptionIfFatal(e);
             throw new IllegalArgumentException("Lens getter must not throw an exception", e);
         }
-        Class<B> type = Util.expectedClassFromItem(initialValue);
+        if ( type == null )
+            type = Util.expectedClassFromItem(initialValue);
         return new PropertyLens<>(
                 type,
                 Sprouts.factory().defaultId(),
@@ -308,7 +358,18 @@ public final class Sprouts implements SproutsFactory
         Objects.requireNonNull(getter, "getter must not be null");
         Objects.requireNonNull(setter, "setter must not be null");
         Lens<T,B> lens = Lens.of(getter, (a,b)->setter.apply(b));
-        return PropertyLens.of(source, nullObject, lens);
+        return PropertyLens.of(source, null, nullObject, lens);
+    }
+
+    @Override
+    public <T, B, V extends B> Var<B> projLensOf(Var<T> source, Class<B> type, V nullObject, Function<T, B> getter, Function<B, T> setter) {
+        Objects.requireNonNull(source, "Source property must not be null!");
+        Objects.requireNonNull(type, "Type must not be null");
+        Objects.requireNonNull(nullObject, "Null object must not be null");
+        Objects.requireNonNull(getter, "getter must not be null");
+        Objects.requireNonNull(setter, "setter must not be null");
+        Lens<T,B> lens = Lens.of(getter, (a,b)->setter.apply(b));
+        return PropertyLens.of(source, type, nullObject, lens);
     }
 
     @Override
