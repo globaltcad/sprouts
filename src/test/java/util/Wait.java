@@ -3,7 +3,7 @@ package util;
 import java.util.function.Supplier;
 
 /**
- *  A utility class making testing async code
+ *  A utility class for testing async code
  *  easier in Sprouts
  */
 public class Wait {
