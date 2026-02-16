@@ -202,49 +202,17 @@ public final class Sprouts implements SproutsFactory
 
     @Override
     public <T, B> Var<B> lensOf(Var<T> source, Lens<T, B> lens) {
-        return  _lensOf(source, null, lens);
+        Objects.requireNonNull(source);
+        Objects.requireNonNull(lens);
+        return PropertyLens.of(source, null, lens);
     }
 
     @Override
     public <T, B> Var<B> lensOf(Var<T> source, Class<B> type, Lens<T, B> lens) {
-        return _lensOf(source, type, lens);
-    }
-
-    private static <T, B> Var<@Nullable B> _lensOf(Var<T> source, @Nullable Class<B> type, Lens<T, B> lens) {
+        Objects.requireNonNull(type);
         Objects.requireNonNull(source);
         Objects.requireNonNull(lens);
-        B initialValue;
-        try {
-            initialValue = lens.getter(Util.fakeNonNull(source.orElseNull()));
-        } catch (Exception e) {
-            Util.sneakyThrowExceptionIfFatal(e);
-            throw new IllegalArgumentException("Lens getter must not throw an exception", e);
-        }
-        if ( type == null )
-            type = Util.expectedClassFromItem(initialValue);
-        return new PropertyLens<>(
-                type,
-                Sprouts.factory().defaultId(),
-                false,//does not allow null
-                initialValue,
-                source,
-                new Lens<T, B>() {
-                    @Override
-                    public B getter(T parentValue) throws Exception {
-                        if ( parentValue == null )
-                            return Util.fakeNonNull(null);
-                        return lens.getter(parentValue);
-                    }
-                    @Override
-                    public T wither(T parentValue, B newValue) throws Exception {
-                        if ( parentValue == null )
-                            return Util.fakeNonNull(null);
-
-                        return lens.wither(parentValue, newValue);
-                    }
-                },
-                null
-        );
+        return PropertyLens.of(source, type, lens);
     }
 
     @Override
@@ -318,7 +286,7 @@ public final class Sprouts implements SproutsFactory
     public <T, B> Var<B> projLensOf(Var<T> source, Function<T,B> getter, Function<B,T> setter) {
         Objects.requireNonNull(getter, "getter must not be null");
         Objects.requireNonNull(setter, "setter must not be null");
-        return _projLensOf(source, null, getter, setter);
+        return PropertyLens.ofProjection(source, null, getter, setter);
     }
 
     @Override
@@ -326,29 +294,7 @@ public final class Sprouts implements SproutsFactory
         Objects.requireNonNull(type, "Type must not be null");
         Objects.requireNonNull(getter, "getter must not be null");
         Objects.requireNonNull(setter, "setter must not be null");
-        return _projLensOf(source, type, getter, setter);
-    }
-
-    private static <T, B> Var<B> _projLensOf(Var<T> source, @Nullable Class<B> type, Function<T,B> getter, Function<B,T> setter) {
-        Lens<T,B> lens = Lens.of(getter, (a,b)->setter.apply(b));
-        B initialValue;
-        try {
-            initialValue = lens.getter(Util.fakeNonNull(source.orElseNull()));
-        } catch (Exception e) {
-            Util.sneakyThrowExceptionIfFatal(e);
-            throw new IllegalArgumentException("Lens getter must not throw an exception", e);
-        }
-        if ( type == null )
-            type = Util.expectedClassFromItem(initialValue);
-        return new PropertyLens<>(
-                type,
-                Sprouts.factory().defaultId(),
-                false,//does not allow null
-                initialValue, //may NOT be null
-                source,
-                lens,
-                null
-        );
+        return PropertyLens.ofProjection(source, type, getter, setter);
     }
 
     @Override
