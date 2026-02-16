@@ -1,0 +1,991 @@
+{
+  "className":"sprouts.Property_Projection_Lenses_Spec",
+  "title":"Property Projection Lenses",
+  "narrative":"The Sprouts Property Projection Lens is a specialized form of the Lens design pattern\n    that establishes a bi-directional relationship between two representations of the same data.\n    While regular lenses focus on accessing and updating fields within a nested structure,\n    projection lenses focus on converting between different representations of the same logical data.\n\n    A projection lens consists of a pair of functions:\n    - A \"getter\" function that converts from the source type T to target type B\n    - A \"setter\" function that converts from target type B back to source type T\n\n    This creates a two-way street where changes in either property automatically propagate\n    to the other, maintaining synchronization between different representations.\n\n    This is particularly useful for:\n    1. Unit conversions (meters ↔ feet, Celsius ↔ Fahrenheit)\n    2. Format conversions (raw data ↔ formatted strings)\n    3. Encryption/decryption (plain text ↔ encrypted text)\n    4. Validation boundaries (validated objects ↔ raw input)\n    5. View model adaptations (domain objects ↔ UI-friendly representations)\n\n    The projection methods come in three flavors:\n    1. `projectTo(getter, setter)` - Basic bi-directional projection\n    2. `projectTo(nullObject, getter, setter)` - Projection with guaranteed non-null fallback\n    3. `projectToNullable(type, getter, setter)` - Projection allowing null values\n\n    This specification explores all three methods through practical, real-world examples\n    and thoroughly tests edge cases, memory safety, and mathematical properties.",
+  "subjects":["sprouts.Var","sprouts.Val","sprouts.Viewable"],
+  "statistics":{
+    "runs":"33",
+    "successRate":"100.0%",
+    "failures":"0",
+    "errors":"0",
+    "skipped":"0",
+    "duration":"?"
+  },
+  "headers":[],"tags":{},"see":[],
+  "features":[ 
+    {
+      "id":"A basic projection creates a bi-directional mapping between two representations.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The simplest form of projection establishes a perfect isomorphism\n            between two representations of the same data. Changes in either\n            representation automatically propagate to the other.\n\n            This example demonstrates temperature conversion between Celsius and Fahrenheit.\n            The conversion functions form a mathematical isomorphism:\n            - f(c) = c × 9/5 + 32\n            - c(f) = (f - 32) × 5/9\n\n            For all temperatures, f(c(f)) = f and c(f(c)) = c.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A Celsius temperature property","code":["var celsius = Var.of(new Celsius(100.0))"]},
+
+        {"kind":"and","text":"A Fahrenheit projection using isomorphic conversion functions","code":["var fahrenheit = celsius.projectTo(","    Celsius::toFahrenheit,","    Fahrenheit::toCelsius",")"]},
+
+        {"kind":"expect","text":"Initial conversion is correct","code":["celsius.get().value() == 100.0","fahrenheit.get().value() == 212.0  // 100°C = 212°F"]},
+
+        {"kind":"when","text":"Celsius is updated through the source property","code":["celsius.set(new Celsius(0.0))"]},
+
+        {"kind":"then","text":"Fahrenheit updates automatically","code":["celsius.get().value() == 0.0","fahrenheit.get().value() == 32.0  // 0°C = 32°F"]},
+
+        {"kind":"when","text":"Fahrenheit is updated through the projection","code":["fahrenheit.set(new Fahrenheit(77.0))  // 25°C"]},
+
+        {"kind":"then","text":"Celsius updates automatically","code":["celsius.get().value() == 25.0","fahrenheit.get().value() == 77.0"]},
+
+        {"kind":"when","text":"We create a chain of projections","code":["var fahrenheitAsString = fahrenheit.projectTo(","    { f -> String.format(\"%.1f°F\", f.value()) },","    { s -> new Fahrenheit(Double.parseDouble(s.replace(\"°F\", \"\"))) }",")"]},
+
+        {"kind":"then","text":"Changes propagate through the chain","code":["fahrenheitAsString.get() == \"77.0°F\"","celsius.set(new Celsius(100.0))","fahrenheitAsString.get() == \"212.0°F\"","fahrenheitAsString.set(\"32.0°F\")","celsius.get().value() == 0.0"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Projection maintains referential transparency for isomorphic functions.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            For a projection to behave predictably, the conversion functions\n            should ideally form an isomorphism. This means:\n\n            1. For all t: setter.apply(getter.apply(t)).equals(t)\n            2. For all b: getter.apply(setter.apply(b)).equals(b)\n\n            This test verifies that updates round-trip correctly through\n            the projection, maintaining data integrity.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Various isomorphic transformation examples","code":["var original = Var.of(\"Hello World\")","var reversed = original.projectTo(","    { s -> new StringBuilder(s).reverse().toString() },","    { r -> new StringBuilder(r).reverse().toString() }",")","var meters = Var.of(new Length.Meter(2.5))","var millimeters = meters.projectTo(","    Length.Meter::toMillimeter,","    Length.Millimeter::toMeter",")","var flag = Var.of(true)","var inverted = flag.projectTo(","    { b -> !b },","    { b -> !b }",")"]},
+
+        {"kind":"expect","text":"Initial projections are correct","code":["reversed.get() == \"dlroW olleH\"","millimeters.get().value() == 2500.0","inverted.get() == false"]},
+
+        {"kind":"when","text":"We perform round-trip updates","code":["original.set(\"Sprouts\")"]},
+
+        {"kind":"then","text":"","code":["reversed.get() == \"stuorpS\""]},
+
+        {"kind":"when","text":"","code":["when: reversed.set(\"desreveR\")"]},
+
+        {"kind":"then","text":"","code":["then: original.get() == \"Reversed\""]},
+
+        {"kind":"when","text":"","code":["when: meters.set(new Length.Meter(1.0))"]},
+
+        {"kind":"then","text":"","code":["then: millimeters.get().value() == 1000.0"]},
+
+        {"kind":"when","text":"","code":["when: millimeters.set(new Length.Millimeter(500.0))"]},
+
+        {"kind":"then","text":"","code":["then: meters.get().value() == 0.5"]},
+
+        {"kind":"when","text":"","code":["when: flag.set(false)"]},
+
+        {"kind":"then","text":"","code":["then: inverted.get() == true"]},
+
+        {"kind":"when","text":"","code":["when: inverted.set(false)  // false inverted is true"]},
+
+        {"kind":"then","text":"","code":["then: flag.get() == true"]},
+
+        {"kind":"and","text":"Multiple updates maintain consistency","code":["for (i in 1..10) {","    meters.update { m -> new Length.Meter(m.value() + 0.1) }","    assert Math.abs(millimeters.get().value() - meters.get().value() * 1000) < 0.0001","}"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Projection with non-isomorphic functions may cause data loss or unexpected behavior.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            When projection functions are not perfectly isomorphic,\n            updates may not round-trip correctly, leading to:\n            1. Data loss (information discarded during conversion)\n            2. State drift (values diverge from expected)\n            3. Infinite update loops (if not properly guarded)\n\n            This is not necessarily wrong - sometimes we want lossy conversions\n            (e.g., rounding decimals). But we must be aware of the consequences.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A lossy projection (rounding to nearest integer)","code":["var precise = Var.of(3.14159d)","var rounded = precise.projectTo(","    { d -> Math.round(d) },","    { l -> l.toDouble() }",")"]},
+
+        {"kind":"and","text":"A many-to-one projection (absolute value)","code":["var signed = Var.of(-5)","var absolute = signed.projectTo(","    Math::abs,","    { abs -> abs }  // Lossy: can't recover original sign",")"]},
+
+        {"kind":"expect","text":"Initial projections work","code":["rounded.get() == 3L","absolute.get() == 5"]},
+
+        {"kind":"when","text":"We update through lossy projection","code":["rounded.set(4L)"]},
+
+        {"kind":"then","text":"Information is lost (fractional part)","code":["precise.get() == 4.0  // Not 3.14159 anymore"]},
+
+        {"kind":"when","text":"We try to recover original sign through absolute projection","code":["absolute.set(10)"]},
+
+        {"kind":"then","text":"Original could be either 10 or -10","code":["signed.get() == 10  // Lost information about original sign"]},
+
+        {"kind":"when","text":"We create a projection that could cause infinite loops","code":["var counter = 0","var source = Var.of(0)","var dangerous = source.projectTo(","    { n -> n + 1 },  // Always different","    { n -> n - 1 }   // Always different",")","Viewable.cast(source).onChange(From.ALL) { counter++ }"]},
+
+        {"kind":"then","text":"Single update causes expected propagation","code":["dangerous.set(5)","source.get() == 4","counter == 1  // Only one change event"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Projection with null object provides guaranteed non-null values.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `projectTo(nullObject, getter, setter)` method ensures the\n            projected property never contains null. When the source is null,\n            the projection uses the provided nullObject as a fallback.\n\n            This is useful for:\n            1. Providing safe defaults for null source values\n            2. Ensuring downstream code doesn't need null checks\n            3. Creating user-friendly representations of missing data\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A nullable product property","code":["var product = Var.ofNullable(Product.class, null)","var defaultProduct = new Product(\"Unnamed\", 0.0)"]},
+
+        {"kind":"and","text":"A projection with null object fallback","code":["var safeProduct = product.projectTo(","    defaultProduct,","    { p -> p == null ? defaultProduct : p },","    { p -> p == defaultProduct ? null : p }",")"]},
+
+        {"kind":"expect","text":"Null source uses null object","code":["product.orElseNull() == null","safeProduct.get() == defaultProduct"]},
+
+        {"kind":"when","text":"Source is set to a real product","code":["var realProduct = new Product(\"Laptop\", 99999.0)","product.set(realProduct)"]},
+
+        {"kind":"then","text":"Projection shows real product","code":["safeProduct.get() == realProduct"]},
+
+        {"kind":"when","text":"Projection is modified","code":["safeProduct.set(new Product(\"Tablet\", 49999.0))"]},
+
+        {"kind":"then","text":"Source is updated","code":["product.get() == new Product(\"Tablet\", 49999.0)"]},
+
+        {"kind":"when","text":"Projection is set to null object","code":["safeProduct.set(defaultProduct)"]},
+
+        {"kind":"then","text":"Source becomes null","code":["product.orElseNull() == null","safeProduct.get() == defaultProduct"]},
+
+        {"kind":"and","text":"Multiple operations maintain consistency","code":["var testProducts = [","    null,","    new Product(\"A\", 100),","    new Product(\"B\", 200),","    null,","    new Product(\"C\", 300)","]","for (testProd in testProducts) {","    product.set(testProd)","    if (testProd == null) {","        assert safeProduct.get() == defaultProduct","    } else {","        assert safeProduct.get() == testProd","    }","}"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Null object projection handles edge cases gracefully.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The null object in a projection should be semantically meaningful\n            and handle various edge cases properly:\n\n            1. The null object itself should not be null\n            2. The null object should be distinguishable from \"real\" values\n            3. Conversion functions should handle the null object explicitly\n            4. Memory references to the null object should be stable\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Various null object scenarios","code":["var nullableString = Var.ofNullable(String.class, null)","var safeString = nullableString.projectTo(","    \"\",","    { s -> s == null ? \"\" : s },","    { s -> s.isEmpty() ? null : s }",")"]},
+
+        {"kind":"and","text":"","code":["var emptyList = []","var nullableList = Var.ofNullable(List.class, null)","var safeList = nullableList.projectTo(","    emptyList,","    { list -> list == null ? [] : list },","    { list -> list.isEmpty() ? null : list }",")","var sentinel = new Product(\"SENTINEL\", -1.0)","var nullableProduct = Var.ofNullable(Product.class, null)","var safeProduct = nullableProduct.projectTo(","    sentinel,","    { p -> p == null ? sentinel : p },","    { p -> p == sentinel ? null : p }",")"]},
+
+        {"kind":"expect","text":"Initial states use null objects","code":["safeString.get() == \"\"","safeList.get() == []","safeProduct.get() == sentinel"]},
+
+        {"kind":"when","text":"We modify through projections","code":["safeString.set(\"Hello\")","safeList.set([\"a\", \"b\", \"c\"])","safeProduct.set(new Product(\"Real\", 100d))"]},
+
+        {"kind":"then","text":"Sources are updated","code":["nullableString.get() == \"Hello\"","nullableList.get() == [\"a\", \"b\", \"c\"]","nullableProduct.get() == new Product(\"Real\", 100d)"]},
+
+        {"kind":"when","text":"We set projections back to null objects","code":["safeString.set(\"\")","safeList.set([])","safeProduct.set(sentinel)"]},
+
+        {"kind":"then","text":"Sources become null","code":["nullableString.orElseNull() == null","nullableList.orElseNull() == null","nullableProduct.orElseNull() == null"]},
+
+        {"kind":"and","text":"","code":["safeList.get() == safeList.get()","safeProduct.get() == sentinel"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Nullable projection allows null values in both directions.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `projectToNullable(type, getter, setter)` method creates a projection\n            where null is a valid value in both the source and target domains.\n\n            This is useful for:\n            1. Partial functions that may fail to convert\n            2. Optional or missing data representations\n            3. Error states or invalid conversions\n            4. Graceful degradation when conversion isn't possible\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A string property for date parsing","code":["var dateString = Var.ofNullable(String.class, \"2023-12-25\")"]},
+
+        {"kind":"and","text":"A nullable projection to LocalDate","code":["var date = dateString.projectToNullable(","    LocalDate.class,","    { s ->","        try {","            return s == null ? null : LocalDate.parse(s)","        } catch (Exception e) {","            return null  // Parsing failed","        }","    },","    { d -> d == null ? null : d.toString() }",")"]},
+
+        {"kind":"expect","text":"Initial parsing works","code":["date.get() == LocalDate.of(2023, 12, 25)"]},
+
+        {"kind":"when","text":"String is set to invalid date","code":["dateString.set(\"invalid-date\")"]},
+
+        {"kind":"then","text":"Projection becomes null","code":["date.orElseNull() == null"]},
+
+        {"kind":"when","text":"Projection is set to null","code":["date.set(null)"]},
+
+        {"kind":"then","text":"String is still the invalid string because nothing changed!","code":["dateString.orElseNull() == \"invalid-date\""]},
+
+        {"kind":"when","text":"Projection is set to valid date","code":["date.set(LocalDate.of(2024, 1, 1))"]},
+
+        {"kind":"then","text":"The String updates accordingly.","code":["dateString.get() == \"2024-01-01\""]},
+
+        {"kind":"when","text":"Projection is set back to null...","code":["date.set(null)"]},
+
+        {"kind":"then","text":"The String is also set to null!","code":["dateString.orElseNull() == null"]},
+
+        {"kind":"and","text":"Null propagation works in cycles","code":["def testCases = [","    [input: \"2023-01-01\", expected: LocalDate.of(2023, 1, 1)],","    [input: \"not-a-date\", expected: null],","    [input: null, expected: null],","    [input: \"2023-12-31\", expected: LocalDate.of(2023, 12, 31)]","]","for (testCase in testCases) {","    dateString.set(testCase.input)","    assert date.orElseNull() == testCase.expected","}"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Nullable projection handles validation scenarios elegantly.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Nullable projections are perfect for validation boundaries,\n            where invalid input maps to null in the validated domain.\n\n            This creates a clean separation:\n            - Raw domain: Accepts any input (including invalid)\n            - Validated domain: Only contains valid values (or null)\n\n            Changes propagate in both directions, but validation failures\n            result in null in the validated domain.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"User input for email validation","code":["var userInput = Var.of(new UserInput(\"user@example.com\"))","var emptyInput = new UserInput(\"\")"]},
+
+        {"kind":"and","text":"Nullable projection to validated email","code":["var validatedEmail = userInput.projectToNullable(","    ValidatedEmail.class,","    UserInput::toValidatedEmail,","    { it -> it == null ? emptyInput : it.toUserInput() }",")"]},
+
+        {"kind":"expect","text":"Valid email passes through","code":["validatedEmail.get().email() == \"user@example.com\"","validatedEmail.get().isValid()"]},
+
+        {"kind":"when","text":"User enters invalid email","code":["userInput.set(new UserInput(\"not-an-email\"))"]},
+
+        {"kind":"then","text":"Validated email becomes null","code":["validatedEmail.orElseNull() == new ValidatedEmail(null, \"Invalid email format\")"]},
+
+        {"kind":"when","text":"User enters an empty email","code":["userInput.set(new UserInput(\"\"))"]},
+
+        {"kind":"then","text":"Validated email becomes null","code":["validatedEmail.orElseNull() == null"]},
+
+        {"kind":"when","text":"Validated email is set programmatically","code":["validatedEmail.set(new ValidatedEmail(\"admin@example.com\", null))"]},
+
+        {"kind":"then","text":"User input updates","code":["userInput.get().rawInput() == \"admin@example.com\""]},
+
+        {"kind":"when","text":"Validated email is set to null","code":["validatedEmail.set(null)"]},
+
+        {"kind":"then","text":"The user input clears:","code":["userInput.get().rawInput() == \"\""]},
+
+        {"kind":"when","text":"","code":["userInput.set(new UserInput(\"\"))"]},
+
+        {"kind":"then","text":"","code":["validatedEmail.orElseNull() == null"]},
+
+        {"kind":"when","text":"","code":["userInput.set(new UserInput(\"valid@email.com\"))"]},
+
+        {"kind":"then","text":"","code":["validatedEmail.get().isValid()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Projection properties are garbage collected when no longer referenced.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Like all Sprouts properties, projection properties use weak references\n            to avoid memory leaks. When a projection is no longer strongly referenced,\n            it should be garbage collected, and its listeners should be removed\n            from the source property.\n\n            This test verifies proper memory management for projection properties.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A source property and strong projection reference","code":["var source = Var.of(\"Original\")","var strongProjection = source.projectTo(","    { s -> s.toUpperCase() },","    { u -> u.toLowerCase() }",")"]},
+
+        {"kind":"and","text":"","code":["waitForGarbageCollection()","Thread.sleep(250)","waitForGarbageCollection()"]},
+
+        {"kind":"expect","text":"Source has change listeners for the projection","code":["source.numberOfChangeListeners() == 1"]},
+
+        {"kind":"when","text":"We create a weak reference to another projection","code":["var weakProjection = source.projectTo(","    { s -> s + \"!\" },","    { s -> s.substring(0, s.length() - 1) }",")","var weakRef = new WeakReference(weakProjection)"]},
+
+        {"kind":"and","text":"We release the strong reference and force GC","code":["weakProjection = null","waitForGarbageCollection()"]},
+
+        {"kind":"then","text":"Weak projection is collected","code":["weakRef.get() == null"]},
+
+        {"kind":"when","text":"","code":["waitForGarbageCollection()","Thread.sleep(250)","waitForGarbageCollection()"]},
+
+        {"kind":"then","text":"Source listener count decreases","code":["source.numberOfChangeListeners() == 1  // Only strong projection remains"]},
+
+        {"kind":"when","text":"We also release the strong projection","code":["strongProjection = null","waitForGarbageCollection()","Thread.sleep(250)","waitForGarbageCollection()"]},
+
+        {"kind":"then","text":"All projections are collected","code":["source.numberOfChangeListeners() == 0"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Projection chain maintains proper reference relationships.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            When creating chains of projections (A → B → C), the memory references\n            should form a directed graph where:\n\n            1. Each projection weakly references its source\n            2. The source strongly references nothing (except its own state)\n            3. Garbage collection can collect any unreferenced projection\n\n            This prevents memory leaks in complex projection chains.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var trace = []"]},
+
+        {"kind":"and","text":"A chain of projections: string → upper → reversed","code":["var source = Var.of(\"hello\")","var upper = source.projectTo(","    String::toUpperCase,","    String::toLowerCase",")","var reversed = upper.projectTo(","    { s -> new StringBuilder(s).reverse().toString() },","    { r -> new StringBuilder(r).reverse().toString() }",")"]},
+
+        {"kind":"and","text":"","code":["Viewable.cast(reversed).onChange(From.ALL, {","    trace << it.currentValue().orElseNull()","})"]},
+
+        {"kind":"and","text":"Weak references to track garbage collection","code":["var sourceRef = new WeakReference(source)","var upperRef = new WeakReference(upper)","var reversedRef = new WeakReference(reversed)"]},
+
+        {"kind":"when","text":"We release intermediate projection","code":["upper = null","waitForGarbageCollection()"]},
+
+        {"kind":"then","text":"","code":["trace == []"]},
+
+        {"kind":"when","text":"We update source","code":["sourceRef.get().set(\"world\")"]},
+
+        {"kind":"then","text":"Chain still propagates (through weak reference)","code":["trace == [\"DLROW\"]"]},
+
+        {"kind":"when","text":"We release all projections","code":["reversed = null","waitForGarbageCollection()"]},
+
+        {"kind":"then","text":"All projections collected, source remains","code":["Wait.until({reversedRef.get() == null}, 4_000)","Wait.until({sourceRef.get() != null}, 4_000)","Wait.until({sourceRef.get().numberOfChangeListeners() == 0}, 4_000)"]},
+
+        {"kind":"and","text":"","code":["trace == [\"DLROW\"]"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Projection handles exceptions in conversion functions gracefully.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Conversion functions in projections may throw exceptions\n            (e.g., parsing errors, validation failures). The projection\n            should handle these gracefully without crashing the application.\n\n            For nullable projections, exceptions typically result in null.\n            For non-nullable projections, exceptions may need explicit handling.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A projection with potentially throwing functions","code":["var source = Var.of(\"123\")","var parser = source.projectToNullable(","    Integer.class,","    { s ->","        try {","            return Integer.parseInt(s)","        } catch (NumberFormatException e) {","            return null  // Graceful failure","        }","    },","    { i -> i == null ? \"0\" : i.toString() }",")"]},
+
+        {"kind":"and","text":"A projection that throws unconditionally in one direction","code":["var dangerousSource = Var.of(\"test\")","var dangerous = dangerousSource.projectToNullable(","    String.class,","    { s ->","        if ( s == \"test\" )","            return \"initial\"","        else","            throw new RuntimeException(\"Always fails\") },","    { s -> s }  // This direction works",")"]},
+
+        {"kind":"expect","text":"Valid parsing works","code":["parser.get() == 123"]},
+
+        {"kind":"when","text":"Source becomes unparsable","code":["source.set(\"not-a-number\")"]},
+
+        {"kind":"then","text":"Projection becomes null (graceful failure)","code":["parser.orElseNull() == null"]},
+
+        {"kind":"when","text":"We access dangerous projection","code":["var result = dangerous.orElseNull()"]},
+
+        {"kind":"then","text":"Exception in getter results in null (or last known value)","code":["result == \"initial\""]},
+
+        {"kind":"and","text":"Setter direction still works","code":["dangerous.set(\"new value\")","dangerousSource.get() == \"new value\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Projection maintains state when getter fails but setter works.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            In some scenarios, the getter may fail (returning null or throwing)\n            while the setter continues to work. The projection should:\n\n            1. Preserve the last known good value when getter fails\n            2. Allow updates through the setter\n            3. Attempt to recover when getter starts working again\n\n            This provides robustness in the face of transient failures.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A projection with toggleable getter failure","code":["var source = Var.of(\"initial\")","var getterFails = false","var projection = source.projectToNullable(","    String.class,","    { s ->","        if (getterFails) {","            throw new RuntimeException(\"Getter failed!\")","        }","        return s == null ? null : s.toUpperCase()","    },","    { u -> u == null ? null : u.toLowerCase() }",")"]},
+
+        {"kind":"expect","text":"Initial state works","code":["projection.get() == \"INITIAL\""]},
+
+        {"kind":"when","text":"Getter starts failing","code":["getterFails = true"]},
+
+        {"kind":"then","text":"Projection may show last known value or null","code":["noExceptionThrown()"]},
+
+        {"kind":"when","text":"We update through projection (setter still works)","code":["projection.set(\"NEWVALUE\")"]},
+
+        {"kind":"then","text":"Source is updated despite getter failure","code":["source.get() == \"newvalue\""]},
+
+        {"kind":"when","text":"Getter recovers","code":["getterFails = false"]},
+
+        {"kind":"then","text":"Projection shows current state","code":["projection.get() == \"NEWVALUE\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Projection propagates change channels correctly.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            When a source property is updated with a specific channel\n            (VIEW_MODEL, VIEW, or ALL), the projection should propagate\n            that channel to its listeners.\n\n            This allows differentiated handling of changes based on their\n            origin (user input vs programmatic update).\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A temperature projection with channel-aware listeners","code":["var celsius = Var.of(new Celsius(20.0))","var fahrenheit = celsius.projectTo(","    Celsius::toFahrenheit,","    Fahrenheit::toCelsius",")","var celsiusTrace = []","var fahrenheitTrace = []","Viewable.cast(celsius).onChange(From.VIEW_MODEL) { celsiusTrace << \"VIEW_MODEL:${it.currentValue().orElseThrow().value()}\" }","Viewable.cast(celsius).onChange(From.VIEW) { celsiusTrace << \"VIEW:${it.currentValue().orElseThrow().value()}\" }","Viewable.cast(fahrenheit).onChange(From.VIEW_MODEL) { fahrenheitTrace << \"VIEW_MODEL:${it.currentValue().orElseThrow().value()}\" }","Viewable.cast(fahrenheit).onChange(From.VIEW) { fahrenheitTrace << \"VIEW:${it.currentValue().orElseThrow().value()}\" }"]},
+
+        {"kind":"when","text":"Celsius is updated from VIEW_MODEL","code":["celsius.set(From.VIEW_MODEL, new Celsius(25.0))"]},
+
+        {"kind":"then","text":"Both properties notify VIEW_MODEL listeners","code":["celsiusTrace == [\"VIEW_MODEL:25.0\"]","fahrenheitTrace == [\"VIEW_MODEL:77.0\"]  // 25°C = 77°F"]},
+
+        {"kind":"when","text":"Fahrenheit is updated from VIEW (simulating user input)","code":["fahrenheit.set(From.VIEW, new Fahrenheit(32.0))"]},
+
+        {"kind":"then","text":"Both properties notify VIEW listeners","code":["celsiusTrace == [\"VIEW_MODEL:25.0\", \"VIEW:0.0\"]  // 32°F = 0°C","fahrenheitTrace == [\"VIEW_MODEL:77.0\", \"VIEW:32.0\"]"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Projection enables clean MVVM pattern with formatted display values.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A common MVVM pattern uses projections to separate:\n            - Model: Raw data (cents, unformatted dates)\n            - ViewModel: Formatted display values\n\n            The projection automatically keeps them in sync:\n            - User edits formatted value → model updates\n            - Model changes programmatically → display updates\n\n            No manual synchronization code needed!\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Product model with price in cents","code":["var product = Var.of(new Product(\"Widget\", 1999.0))  // $19.99"]},
+
+        {"kind":"and","text":"Formatted price projection for UI display","code":["var formattedPrice = product.projectTo(","    { p -> p.formattedPrice() },","    { formatted -> new Product(","            product.get().name(),","            Product.parseFormattedPrice(formatted)","        )","    }",")"]},
+
+        {"kind":"and","text":"UI simulation with trace","code":["var uiUpdates = []","Viewable.cast(formattedPrice).onChange(From.VIEW_MODEL) {","    uiUpdates << \"UI shows: ${it.currentValue().orElseThrow()}\"","}"]},
+
+        {"kind":"expect","text":"Initial formatting is correct","code":["formattedPrice.get() == \"\\$19.99\""]},
+
+        {"kind":"when","text":"Model updates programmatically (sale price)","code":["product.set(new Product(\"Widget\", 1499.0))  // $14.99"]},
+
+        {"kind":"then","text":"UI updates automatically","code":["formattedPrice.get() == \"\\$14.99\"","uiUpdates == [\"UI shows: \\$14.99\"]"]},
+
+        {"kind":"when","text":"User edits price in UI (with dollar sign)","code":["formattedPrice.set(\"\\$24.99\")"]},
+
+        {"kind":"then","text":"Model updates automatically","code":["product.get().priceInCents() == 2499.0","uiUpdates == [\"UI shows: \\$14.99\", \"UI shows: \\$24.99\"]"]},
+
+        {"kind":"and","text":"Format validation works naturally","code":["var nullableFormatted = product.projectToNullable(","    String.class,","    { p -> p.formattedPrice() },","    { formatted ->","        try {","            new Product(","                product.get().name(),","                Product.parseFormattedPrice(formatted)","            )","        } catch (Exception e) {","            null  // Invalid input","        }","    }",")"]},
+
+        {"kind":"when","text":"","code":["nullableFormatted.set(\"invalid\")"]},
+
+        {"kind":"then","text":"","code":["product.get().priceInCents() == 0.0"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Projection enables two-way data binding for encryption scenarios.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Projections are perfect for encryption/decryption boundaries:\n            - Plain text property (for business logic)\n            - Encrypted text property (for storage/transmission)\n\n            Changes to either automatically encrypt/decrypt to the other.\n            The conversion functions should be isomorphic for perfect\n            round-trip conversion.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Plain text message","code":["var plain = Var.of(\"Secret Message\")"]},
+
+        {"kind":"and","text":"Encrypted projection using simple Caesar cipher","code":["var encrypted = plain.projectTo(","    { text ->","        text.chars()","            .map { c -> c + 3 }","            .collect { (char) it }","            .join()","    },","    { cipher ->","        cipher.chars()","            .map { c -> c - 3 }","            .collect { (char) it }","            .join()","    }",")"]},
+
+        {"kind":"expect","text":"Initial encryption works","code":["plain.get() == \"Secret Message\"","encrypted.get() == \"Vhfuhw#Phvvdjh\"  // Each char + 3"]},
+
+        {"kind":"when","text":"Plain text is updated","code":["plain.set(\"New Secret\")"]},
+
+        {"kind":"then","text":"Encrypted text updates automatically","code":["encrypted.get() == \"Qhz#Vhfuhw\""]},
+
+        {"kind":"when","text":"Encrypted text is updated (simulating receiving encrypted data)","code":["encrypted.set(\"Uhdg#Vdpsoh\")"]},
+
+        {"kind":"then","text":"Plain text is decrypted automatically","code":["plain.get() == \"Read Sample\"  // Each char - 3"]},
+
+        {"kind":"and","text":"Round-trip conversion is lossless","code":["var testMessages = [\"Hello\", \"World\", \"123!@#\", \"\", \"Multi\\nLine\"]","for (testMsg in testMessages) {","    plain.set(testMsg)","    var encryptedMsg = encrypted.get()","    encrypted.set(\"different\")  // Break symmetry","    encrypted.set(encryptedMsg)  // Restore","    assert plain.get() == testMsg  // Perfect recovery","}"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Projection creates type-safe unit conversion systems.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Using sealed interfaces and projections, we can create\n            type-safe unit conversion systems where:\n            - Each unit is a distinct type\n            - Conversions are compile-time checked\n            - Projections handle the conversion automatically\n\n            This eliminates unit confusion bugs and provides\n            automatic conversion between representations.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Length in millimeters","code":["var mm = Var.of(new Length.Millimeter(1500.0))"]},
+
+        {"kind":"and","text":"Projections to other units","code":["var meters = mm.projectTo(","    Length.Millimeter::toMeter,","    Length.Meter::toMillimeter",")","var km = meters.projectTo(","    Length.Meter::toKilometer,","    Length.Kilometer::toMeter",")"]},
+
+        {"kind":"expect","text":"Initial conversions are correct","code":["mm.get().value() == 1500.0","meters.get().value() == 1.5","km.get().value() == 0.0015"]},
+
+        {"kind":"when","text":"Millimeters are updated","code":["mm.set(new Length.Millimeter(3000.0))"]},
+
+        {"kind":"then","text":"All projections update","code":["meters.get().value() == 3.0","km.get().value() == 0.003"]},
+
+        {"kind":"when","text":"Kilometers are updated (e.g., from map scale)","code":["km.set(new Length.Kilometer(2.0))"]},
+
+        {"kind":"then","text":"All units synchronize","code":["meters.get().value() == 2000.0","mm.get().value() == 2_000_000.0"]},
+
+        {"kind":"and","text":"Mathematical consistency is maintained","code":["var directKm = mm.projectTo(","    Length.Millimeter::toKilometer,","    Length.Kilometer::toMillimeter",")","for (testValue in [0.0, 1.0, 1000.0, 1_000_000.0]) {","    mm.set(new Length.Millimeter(testValue))","    assert Math.abs(km.get().value() - directKm.get().value()) < 0.0000001","}"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Projection handles edge cases for type String [0]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Projections should handle various edge cases gracefully:\n            - Empty strings and collections\n            - Boundary values\n            - Special floating point values\n            - Identity projections\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Source property with edge case value","code":["var source = Var.ofNullable(Object.class, testValue)"]},
+
+        {"kind":"and","text":"Identity projection (value unchanged)","code":["var identity = source.projectTo(","    { it -> it },","    { it -> it }",")"]},
+
+        {"kind":"and","text":"Nullable identity projection","code":["var nullableIdentity = source.projectToNullable(","    Object.class,","    { it -> it },","    { it -> it }",")"]},
+
+        {"kind":"expect","text":"Identity projection preserves value","code":["identity.orElseNull() == testValue"]},
+
+        {"kind":"and","text":"Nullable identity projection preserves value","code":["nullableIdentity.orElseNull() == testValue"]},
+
+        {"kind":"when","text":"Source is set to null","code":["source.set(null)"]},
+
+        {"kind":"then","text":"Projections reflect null","code":["identity.orElseNull() == null","nullableIdentity.orElseNull() == null"]},
+
+        {"kind":"where","text":"","code":{"typeName":["'String'","'String'","'String'","'Integer'","'Integer'","'Integer'","'Double'","'Double'","'Double'","'List'","'List'","'Boolean'","'Boolean'"],"nullObject":["\"\"","\"\"","\"\"","0","0","0","0.0","0.0","0.0","[]","[]","false","false"],"testValue":["\"\"","\" \"","\"null\"","0","Integer.MAX_VALUE","Integer.MIN_VALUE","0.0","Double.NaN","Double.POSITIVE_INFINITY","[]","[null]","true","false"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Projection handles edge cases for type String [1]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Projections should handle various edge cases gracefully:\n            - Empty strings and collections\n            - Boundary values\n            - Special floating point values\n            - Identity projections\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Source property with edge case value","code":["var source = Var.ofNullable(Object.class, testValue)"]},
+
+        {"kind":"and","text":"Identity projection (value unchanged)","code":["var identity = source.projectTo(","    { it -> it },","    { it -> it }",")"]},
+
+        {"kind":"and","text":"Nullable identity projection","code":["var nullableIdentity = source.projectToNullable(","    Object.class,","    { it -> it },","    { it -> it }",")"]},
+
+        {"kind":"expect","text":"Identity projection preserves value","code":["identity.orElseNull() == testValue"]},
+
+        {"kind":"and","text":"Nullable identity projection preserves value","code":["nullableIdentity.orElseNull() == testValue"]},
+
+        {"kind":"when","text":"Source is set to null","code":["source.set(null)"]},
+
+        {"kind":"then","text":"Projections reflect null","code":["identity.orElseNull() == null","nullableIdentity.orElseNull() == null"]},
+
+        {"kind":"where","text":"","code":{"typeName":["'String'","'String'","'String'","'Integer'","'Integer'","'Integer'","'Double'","'Double'","'Double'","'List'","'List'","'Boolean'","'Boolean'"],"nullObject":["\"\"","\"\"","\"\"","0","0","0","0.0","0.0","0.0","[]","[]","false","false"],"testValue":["\"\"","\" \"","\"null\"","0","Integer.MAX_VALUE","Integer.MIN_VALUE","0.0","Double.NaN","Double.POSITIVE_INFINITY","[]","[null]","true","false"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Projection handles edge cases for type String [2]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Projections should handle various edge cases gracefully:\n            - Empty strings and collections\n            - Boundary values\n            - Special floating point values\n            - Identity projections\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Source property with edge case value","code":["var source = Var.ofNullable(Object.class, testValue)"]},
+
+        {"kind":"and","text":"Identity projection (value unchanged)","code":["var identity = source.projectTo(","    { it -> it },","    { it -> it }",")"]},
+
+        {"kind":"and","text":"Nullable identity projection","code":["var nullableIdentity = source.projectToNullable(","    Object.class,","    { it -> it },","    { it -> it }",")"]},
+
+        {"kind":"expect","text":"Identity projection preserves value","code":["identity.orElseNull() == testValue"]},
+
+        {"kind":"and","text":"Nullable identity projection preserves value","code":["nullableIdentity.orElseNull() == testValue"]},
+
+        {"kind":"when","text":"Source is set to null","code":["source.set(null)"]},
+
+        {"kind":"then","text":"Projections reflect null","code":["identity.orElseNull() == null","nullableIdentity.orElseNull() == null"]},
+
+        {"kind":"where","text":"","code":{"typeName":["'String'","'String'","'String'","'Integer'","'Integer'","'Integer'","'Double'","'Double'","'Double'","'List'","'List'","'Boolean'","'Boolean'"],"nullObject":["\"\"","\"\"","\"\"","0","0","0","0.0","0.0","0.0","[]","[]","false","false"],"testValue":["\"\"","\" \"","\"null\"","0","Integer.MAX_VALUE","Integer.MIN_VALUE","0.0","Double.NaN","Double.POSITIVE_INFINITY","[]","[null]","true","false"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Projection handles edge cases for type Integer [3]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Projections should handle various edge cases gracefully:\n            - Empty strings and collections\n            - Boundary values\n            - Special floating point values\n            - Identity projections\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Source property with edge case value","code":["var source = Var.ofNullable(Object.class, testValue)"]},
+
+        {"kind":"and","text":"Identity projection (value unchanged)","code":["var identity = source.projectTo(","    { it -> it },","    { it -> it }",")"]},
+
+        {"kind":"and","text":"Nullable identity projection","code":["var nullableIdentity = source.projectToNullable(","    Object.class,","    { it -> it },","    { it -> it }",")"]},
+
+        {"kind":"expect","text":"Identity projection preserves value","code":["identity.orElseNull() == testValue"]},
+
+        {"kind":"and","text":"Nullable identity projection preserves value","code":["nullableIdentity.orElseNull() == testValue"]},
+
+        {"kind":"when","text":"Source is set to null","code":["source.set(null)"]},
+
+        {"kind":"then","text":"Projections reflect null","code":["identity.orElseNull() == null","nullableIdentity.orElseNull() == null"]},
+
+        {"kind":"where","text":"","code":{"typeName":["'String'","'String'","'String'","'Integer'","'Integer'","'Integer'","'Double'","'Double'","'Double'","'List'","'List'","'Boolean'","'Boolean'"],"nullObject":["\"\"","\"\"","\"\"","0","0","0","0.0","0.0","0.0","[]","[]","false","false"],"testValue":["\"\"","\" \"","\"null\"","0","Integer.MAX_VALUE","Integer.MIN_VALUE","0.0","Double.NaN","Double.POSITIVE_INFINITY","[]","[null]","true","false"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Projection handles edge cases for type Integer [4]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Projections should handle various edge cases gracefully:\n            - Empty strings and collections\n            - Boundary values\n            - Special floating point values\n            - Identity projections\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Source property with edge case value","code":["var source = Var.ofNullable(Object.class, testValue)"]},
+
+        {"kind":"and","text":"Identity projection (value unchanged)","code":["var identity = source.projectTo(","    { it -> it },","    { it -> it }",")"]},
+
+        {"kind":"and","text":"Nullable identity projection","code":["var nullableIdentity = source.projectToNullable(","    Object.class,","    { it -> it },","    { it -> it }",")"]},
+
+        {"kind":"expect","text":"Identity projection preserves value","code":["identity.orElseNull() == testValue"]},
+
+        {"kind":"and","text":"Nullable identity projection preserves value","code":["nullableIdentity.orElseNull() == testValue"]},
+
+        {"kind":"when","text":"Source is set to null","code":["source.set(null)"]},
+
+        {"kind":"then","text":"Projections reflect null","code":["identity.orElseNull() == null","nullableIdentity.orElseNull() == null"]},
+
+        {"kind":"where","text":"","code":{"typeName":["'String'","'String'","'String'","'Integer'","'Integer'","'Integer'","'Double'","'Double'","'Double'","'List'","'List'","'Boolean'","'Boolean'"],"nullObject":["\"\"","\"\"","\"\"","0","0","0","0.0","0.0","0.0","[]","[]","false","false"],"testValue":["\"\"","\" \"","\"null\"","0","Integer.MAX_VALUE","Integer.MIN_VALUE","0.0","Double.NaN","Double.POSITIVE_INFINITY","[]","[null]","true","false"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Projection handles edge cases for type Integer [5]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Projections should handle various edge cases gracefully:\n            - Empty strings and collections\n            - Boundary values\n            - Special floating point values\n            - Identity projections\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Source property with edge case value","code":["var source = Var.ofNullable(Object.class, testValue)"]},
+
+        {"kind":"and","text":"Identity projection (value unchanged)","code":["var identity = source.projectTo(","    { it -> it },","    { it -> it }",")"]},
+
+        {"kind":"and","text":"Nullable identity projection","code":["var nullableIdentity = source.projectToNullable(","    Object.class,","    { it -> it },","    { it -> it }",")"]},
+
+        {"kind":"expect","text":"Identity projection preserves value","code":["identity.orElseNull() == testValue"]},
+
+        {"kind":"and","text":"Nullable identity projection preserves value","code":["nullableIdentity.orElseNull() == testValue"]},
+
+        {"kind":"when","text":"Source is set to null","code":["source.set(null)"]},
+
+        {"kind":"then","text":"Projections reflect null","code":["identity.orElseNull() == null","nullableIdentity.orElseNull() == null"]},
+
+        {"kind":"where","text":"","code":{"typeName":["'String'","'String'","'String'","'Integer'","'Integer'","'Integer'","'Double'","'Double'","'Double'","'List'","'List'","'Boolean'","'Boolean'"],"nullObject":["\"\"","\"\"","\"\"","0","0","0","0.0","0.0","0.0","[]","[]","false","false"],"testValue":["\"\"","\" \"","\"null\"","0","Integer.MAX_VALUE","Integer.MIN_VALUE","0.0","Double.NaN","Double.POSITIVE_INFINITY","[]","[null]","true","false"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Projection handles edge cases for type Double [6]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Projections should handle various edge cases gracefully:\n            - Empty strings and collections\n            - Boundary values\n            - Special floating point values\n            - Identity projections\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Source property with edge case value","code":["var source = Var.ofNullable(Object.class, testValue)"]},
+
+        {"kind":"and","text":"Identity projection (value unchanged)","code":["var identity = source.projectTo(","    { it -> it },","    { it -> it }",")"]},
+
+        {"kind":"and","text":"Nullable identity projection","code":["var nullableIdentity = source.projectToNullable(","    Object.class,","    { it -> it },","    { it -> it }",")"]},
+
+        {"kind":"expect","text":"Identity projection preserves value","code":["identity.orElseNull() == testValue"]},
+
+        {"kind":"and","text":"Nullable identity projection preserves value","code":["nullableIdentity.orElseNull() == testValue"]},
+
+        {"kind":"when","text":"Source is set to null","code":["source.set(null)"]},
+
+        {"kind":"then","text":"Projections reflect null","code":["identity.orElseNull() == null","nullableIdentity.orElseNull() == null"]},
+
+        {"kind":"where","text":"","code":{"typeName":["'String'","'String'","'String'","'Integer'","'Integer'","'Integer'","'Double'","'Double'","'Double'","'List'","'List'","'Boolean'","'Boolean'"],"nullObject":["\"\"","\"\"","\"\"","0","0","0","0.0","0.0","0.0","[]","[]","false","false"],"testValue":["\"\"","\" \"","\"null\"","0","Integer.MAX_VALUE","Integer.MIN_VALUE","0.0","Double.NaN","Double.POSITIVE_INFINITY","[]","[null]","true","false"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Projection handles edge cases for type Double [7]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Projections should handle various edge cases gracefully:\n            - Empty strings and collections\n            - Boundary values\n            - Special floating point values\n            - Identity projections\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Source property with edge case value","code":["var source = Var.ofNullable(Object.class, testValue)"]},
+
+        {"kind":"and","text":"Identity projection (value unchanged)","code":["var identity = source.projectTo(","    { it -> it },","    { it -> it }",")"]},
+
+        {"kind":"and","text":"Nullable identity projection","code":["var nullableIdentity = source.projectToNullable(","    Object.class,","    { it -> it },","    { it -> it }",")"]},
+
+        {"kind":"expect","text":"Identity projection preserves value","code":["identity.orElseNull() == testValue"]},
+
+        {"kind":"and","text":"Nullable identity projection preserves value","code":["nullableIdentity.orElseNull() == testValue"]},
+
+        {"kind":"when","text":"Source is set to null","code":["source.set(null)"]},
+
+        {"kind":"then","text":"Projections reflect null","code":["identity.orElseNull() == null","nullableIdentity.orElseNull() == null"]},
+
+        {"kind":"where","text":"","code":{"typeName":["'String'","'String'","'String'","'Integer'","'Integer'","'Integer'","'Double'","'Double'","'Double'","'List'","'List'","'Boolean'","'Boolean'"],"nullObject":["\"\"","\"\"","\"\"","0","0","0","0.0","0.0","0.0","[]","[]","false","false"],"testValue":["\"\"","\" \"","\"null\"","0","Integer.MAX_VALUE","Integer.MIN_VALUE","0.0","Double.NaN","Double.POSITIVE_INFINITY","[]","[null]","true","false"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Projection handles edge cases for type Double [8]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Projections should handle various edge cases gracefully:\n            - Empty strings and collections\n            - Boundary values\n            - Special floating point values\n            - Identity projections\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Source property with edge case value","code":["var source = Var.ofNullable(Object.class, testValue)"]},
+
+        {"kind":"and","text":"Identity projection (value unchanged)","code":["var identity = source.projectTo(","    { it -> it },","    { it -> it }",")"]},
+
+        {"kind":"and","text":"Nullable identity projection","code":["var nullableIdentity = source.projectToNullable(","    Object.class,","    { it -> it },","    { it -> it }",")"]},
+
+        {"kind":"expect","text":"Identity projection preserves value","code":["identity.orElseNull() == testValue"]},
+
+        {"kind":"and","text":"Nullable identity projection preserves value","code":["nullableIdentity.orElseNull() == testValue"]},
+
+        {"kind":"when","text":"Source is set to null","code":["source.set(null)"]},
+
+        {"kind":"then","text":"Projections reflect null","code":["identity.orElseNull() == null","nullableIdentity.orElseNull() == null"]},
+
+        {"kind":"where","text":"","code":{"typeName":["'String'","'String'","'String'","'Integer'","'Integer'","'Integer'","'Double'","'Double'","'Double'","'List'","'List'","'Boolean'","'Boolean'"],"nullObject":["\"\"","\"\"","\"\"","0","0","0","0.0","0.0","0.0","[]","[]","false","false"],"testValue":["\"\"","\" \"","\"null\"","0","Integer.MAX_VALUE","Integer.MIN_VALUE","0.0","Double.NaN","Double.POSITIVE_INFINITY","[]","[null]","true","false"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Projection handles edge cases for type List [9]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Projections should handle various edge cases gracefully:\n            - Empty strings and collections\n            - Boundary values\n            - Special floating point values\n            - Identity projections\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Source property with edge case value","code":["var source = Var.ofNullable(Object.class, testValue)"]},
+
+        {"kind":"and","text":"Identity projection (value unchanged)","code":["var identity = source.projectTo(","    { it -> it },","    { it -> it }",")"]},
+
+        {"kind":"and","text":"Nullable identity projection","code":["var nullableIdentity = source.projectToNullable(","    Object.class,","    { it -> it },","    { it -> it }",")"]},
+
+        {"kind":"expect","text":"Identity projection preserves value","code":["identity.orElseNull() == testValue"]},
+
+        {"kind":"and","text":"Nullable identity projection preserves value","code":["nullableIdentity.orElseNull() == testValue"]},
+
+        {"kind":"when","text":"Source is set to null","code":["source.set(null)"]},
+
+        {"kind":"then","text":"Projections reflect null","code":["identity.orElseNull() == null","nullableIdentity.orElseNull() == null"]},
+
+        {"kind":"where","text":"","code":{"typeName":["'String'","'String'","'String'","'Integer'","'Integer'","'Integer'","'Double'","'Double'","'Double'","'List'","'List'","'Boolean'","'Boolean'"],"nullObject":["\"\"","\"\"","\"\"","0","0","0","0.0","0.0","0.0","[]","[]","false","false"],"testValue":["\"\"","\" \"","\"null\"","0","Integer.MAX_VALUE","Integer.MIN_VALUE","0.0","Double.NaN","Double.POSITIVE_INFINITY","[]","[null]","true","false"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Projection handles edge cases for type List [10]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Projections should handle various edge cases gracefully:\n            - Empty strings and collections\n            - Boundary values\n            - Special floating point values\n            - Identity projections\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Source property with edge case value","code":["var source = Var.ofNullable(Object.class, testValue)"]},
+
+        {"kind":"and","text":"Identity projection (value unchanged)","code":["var identity = source.projectTo(","    { it -> it },","    { it -> it }",")"]},
+
+        {"kind":"and","text":"Nullable identity projection","code":["var nullableIdentity = source.projectToNullable(","    Object.class,","    { it -> it },","    { it -> it }",")"]},
+
+        {"kind":"expect","text":"Identity projection preserves value","code":["identity.orElseNull() == testValue"]},
+
+        {"kind":"and","text":"Nullable identity projection preserves value","code":["nullableIdentity.orElseNull() == testValue"]},
+
+        {"kind":"when","text":"Source is set to null","code":["source.set(null)"]},
+
+        {"kind":"then","text":"Projections reflect null","code":["identity.orElseNull() == null","nullableIdentity.orElseNull() == null"]},
+
+        {"kind":"where","text":"","code":{"typeName":["'String'","'String'","'String'","'Integer'","'Integer'","'Integer'","'Double'","'Double'","'Double'","'List'","'List'","'Boolean'","'Boolean'"],"nullObject":["\"\"","\"\"","\"\"","0","0","0","0.0","0.0","0.0","[]","[]","false","false"],"testValue":["\"\"","\" \"","\"null\"","0","Integer.MAX_VALUE","Integer.MIN_VALUE","0.0","Double.NaN","Double.POSITIVE_INFINITY","[]","[null]","true","false"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Projection handles edge cases for type Boolean [11]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Projections should handle various edge cases gracefully:\n            - Empty strings and collections\n            - Boundary values\n            - Special floating point values\n            - Identity projections\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Source property with edge case value","code":["var source = Var.ofNullable(Object.class, testValue)"]},
+
+        {"kind":"and","text":"Identity projection (value unchanged)","code":["var identity = source.projectTo(","    { it -> it },","    { it -> it }",")"]},
+
+        {"kind":"and","text":"Nullable identity projection","code":["var nullableIdentity = source.projectToNullable(","    Object.class,","    { it -> it },","    { it -> it }",")"]},
+
+        {"kind":"expect","text":"Identity projection preserves value","code":["identity.orElseNull() == testValue"]},
+
+        {"kind":"and","text":"Nullable identity projection preserves value","code":["nullableIdentity.orElseNull() == testValue"]},
+
+        {"kind":"when","text":"Source is set to null","code":["source.set(null)"]},
+
+        {"kind":"then","text":"Projections reflect null","code":["identity.orElseNull() == null","nullableIdentity.orElseNull() == null"]},
+
+        {"kind":"where","text":"","code":{"typeName":["'String'","'String'","'String'","'Integer'","'Integer'","'Integer'","'Double'","'Double'","'Double'","'List'","'List'","'Boolean'","'Boolean'"],"nullObject":["\"\"","\"\"","\"\"","0","0","0","0.0","0.0","0.0","[]","[]","false","false"],"testValue":["\"\"","\" \"","\"null\"","0","Integer.MAX_VALUE","Integer.MIN_VALUE","0.0","Double.NaN","Double.POSITIVE_INFINITY","[]","[null]","true","false"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Projection handles edge cases for type Boolean [12]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Projections should handle various edge cases gracefully:\n            - Empty strings and collections\n            - Boundary values\n            - Special floating point values\n            - Identity projections\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Source property with edge case value","code":["var source = Var.ofNullable(Object.class, testValue)"]},
+
+        {"kind":"and","text":"Identity projection (value unchanged)","code":["var identity = source.projectTo(","    { it -> it },","    { it -> it }",")"]},
+
+        {"kind":"and","text":"Nullable identity projection","code":["var nullableIdentity = source.projectToNullable(","    Object.class,","    { it -> it },","    { it -> it }",")"]},
+
+        {"kind":"expect","text":"Identity projection preserves value","code":["identity.orElseNull() == testValue"]},
+
+        {"kind":"and","text":"Nullable identity projection preserves value","code":["nullableIdentity.orElseNull() == testValue"]},
+
+        {"kind":"when","text":"Source is set to null","code":["source.set(null)"]},
+
+        {"kind":"then","text":"Projections reflect null","code":["identity.orElseNull() == null","nullableIdentity.orElseNull() == null"]},
+
+        {"kind":"where","text":"","code":{"typeName":["'String'","'String'","'String'","'Integer'","'Integer'","'Integer'","'Double'","'Double'","'Double'","'List'","'List'","'Boolean'","'Boolean'"],"nullObject":["\"\"","\"\"","\"\"","0","0","0","0.0","0.0","0.0","[]","[]","false","false"],"testValue":["\"\"","\" \"","\"null\"","0","Integer.MAX_VALUE","Integer.MIN_VALUE","0.0","Double.NaN","Double.POSITIVE_INFINITY","[]","[null]","true","false"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Projection with null object maintains stability under concurrent access patterns.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The null object in a projection should provide stable behavior\n            even under patterns that might cause issues:\n\n            1. Repeated setting to null object\n            2. Rapid toggling between null and non-null\n            3. Concurrent-like access patterns\n            4. Memory reference stability\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Source with null object projection","code":["var source = Var.ofNullable(String.class, \"initial\")","var nullObject = \"[EMPTY]\"","var projection = source.projectTo(","    nullObject,","    { s -> s == null ? nullObject : s },","    { p -> p == nullObject ? null : p }",")","var changeCount = 0","Viewable.cast(projection).onChange(From.ALL) { changeCount++ }"]},
+
+        {"kind":"when","text":"We rapidly toggle between states","code":["for (i in 1..100) {","    source.set(\"value\"+i)","    source.set(null)","}"]},
+
+        {"kind":"then","text":"Projection remains stable","code":["projection.get() == nullObject","changeCount > 0  // Some changes occurred"]},
+
+        {"kind":"when","text":"We set projection repeatedly to null object","code":["for (i in 1..50) {","    projection.set(nullObject)","}"]},
+
+        {"kind":"then","text":"Source remains null, no unnecessary changes","code":["source.orElseNull() == null"]},
+
+        {"kind":"and","text":"Null object reference is stable","code":["var firstRef = projection.get()","for (i in 1..10) {","    source.set(\"test\"+i)","    source.set(null)","    assert projection.get().is(firstRef)  // Same instance","}"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Ideal projection functions form a mathematical isomorphism.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            For perfect round-trip conversion, projection functions should be:\n\n            1. Injective (one-to-one): f(a) = f(b) ⇒ a = b\n            2. Surjective (onto): ∀b∈B, ∃a∈A: f(a) = b\n            3. Total: Defined for all inputs\n\n            This test verifies mathematical properties of ideal projections.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Perfect isomorphism: string reversal","code":["var isReversible = { String a, String b ->","    a.reverse() == b && b.reverse() == a","}","var source = Var.of(\"abcdef\")","var projection = source.projectTo(","    String::reverse,","    String::reverse",")"]},
+
+        {"kind":"expect","text":"Functions are inverses","code":["isReversible(source.get(), projection.get())"]},
+
+        {"kind":"and","text":"We test injectivity (one-to-one)","code":["var testPairs = [[\"ab\", \"ba\"], [\"abc\", \"cba\"], [\"a\", \"a\"]]","for (pair in testPairs) {","    source.set(pair[0])","    assert projection.get() == pair[1]","    assert source.get() == pair[0]  // Can recover original","}"]},
+
+        {"kind":"and","text":"We test surjectivity (onto)","code":["var testValues = [\"\", \"x\", \"123\", \"hello world\"]","for (value in testValues) {","    projection.set(value)","    assert source.get() == value.reverse()","    assert projection.get() == value  // Can reach any value","}"]},
+
+        {"kind":"and","text":"Round-trip property holds","code":["var testStrings = [\"\", \"a\", \"ab\", \"abc\", \"test\", \"123!@#\"]","for (testStr in testStrings) {","    source.set(testStr)","    var throughProjection = projection.get()","    projection.set(throughProjection)","    assert source.get() == testStr  // Perfect round-trip","}"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Projection composition follows mathematical rules.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            When composing projections (A → B → C), the composition\n            should behave predictably according to function composition rules.\n\n            For perfect isomorphisms: (g∘f)⁻¹ = f⁻¹∘g⁻¹\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Chain of isomorphic projections: lower → upper → reversed","code":["var lower = Var.of(\"hello\")","var upper = lower.projectTo(","    String::toUpperCase,","    String::toLowerCase",")","var reversed = upper.projectTo(","    { s -> new StringBuilder(s).reverse().toString() },","    { r -> new StringBuilder(r).reverse().toString() }",")"]},
+
+        {"kind":"and","text":"Direct projection: lower → reversed","code":["var direct = lower.projectTo(","    { s -> new StringBuilder(s.toUpperCase()).reverse().toString() },","    { r -> new StringBuilder(r).reverse().toString().toLowerCase() }",")"]},
+
+        {"kind":"expect","text":"Composition equals direct projection","code":["reversed.get() == direct.get()"]},
+
+        {"kind":"when","text":"We update through chain","code":["lower.set(\"world\")"]},
+
+        {"kind":"then","text":"Both paths give same result","code":["reversed.get() == direct.get()"]},
+
+        {"kind":"when","text":"We update through reversed in chain","code":["reversed.set(\"!DLROW\")"]},
+
+        {"kind":"then","text":"Both paths update source correctly","code":["lower.get() == \"world!\"  // Reversed twice, lowercased"]},
+
+        {"kind":"and","text":"Mathematical composition property holds","code":["var testValues = [\"a\", \"ab\", \"abc\", \"test\", \"123\"]","            for (value in testValues) {","                lower.set(value)","                var viaChain = reversed.get()","                reversed.set(viaChain)","                var recoveredViaChain = lower.get()","","                lower.set(value)","                var viaDirect = direct.get()","                direct.set(viaDirect)","                var recoveredViaDirect = lower.get()","","                assert recoveredViaChain == recoveredViaDirect","            }"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Typed `projectTo` with explicit type information handles polymorphic conversion correctly while untyped version fails.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            ⚠️  PROBLEM DEMONSTRATION & SOLUTION ⚠️\n\n            The basic `projectTo(Function, Function)` method determines the runtime type\n            of the projected property from the FIRST value returned by the getter.\n            This causes `IllegalArgumentException` when the conversion produces different\n            subtypes of the declared target type!\n\n            Consider property which stores `Integer` values and a projection that\n            always divides by 2. If the first value is `6` (an `Integer`), then\n            it will be projected as `3` (also an `Integer`). \n            If we later try to set a value of `3.5` (a `Double`), the projection will \n            throw an exception because it expects an `Integer`, not a `Double`.\n\n            The explicitly typed `projectTo(Class<B>, Function, Function)` solves this by\n            allowing you to specify the declared type. The resulting property correctly\n            accepts any value assignable to that declared type.\n\n            This test demonstrates both the issue and its solution by having an `Integer` property that\n            is projected to `Number` (the declared type). The untyped projection fails when we try to set a `Double`,\n            while the typed projection works correctly.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A source property with Integer values","code":["Var<Integer> source = Var.of(6)"]},
+
+        {"kind":"and","text":"The conversion function that divides by 2","code":["var divideByTwo = { Integer n ->","    var newNum = n.doubleValue() / 2d","    return ( newNum % 1 == 0 ) ? newNum.intValue() : newNum  // Return Integer if whole, else Double","} as Function<Integer, Number>","var multiplyByTwo = { Number n -> (n.doubleValue() * 2d) as int } as Function<Number, Integer>"]},
+
+        {"kind":"and","text":"Untyped projection (will infer Integer from first value)","code":["Var<Number> untypedProjection = source.projectTo(divideByTwo, multiplyByTwo)"]},
+
+        {"kind":"and","text":"Typed projection with declared type Number","code":["Var<Number> typedProjection = source.projectTo(Number.class, divideByTwo, multiplyByTwo)"]},
+
+        {"kind":"expect","text":"Initial projections work in both cases","code":["untypedProjection.get() == 3","typedProjection.get() == 3"]},
+
+        {"kind":"when","text":"We try to set a Double value through the untyped projection","code":["untypedProjection.set(3.5)"]},
+
+        {"kind":"then","text":"The untyped projection throws an exception due to type mismatch","code":["thrown(IllegalArgumentException)"]},
+
+        {"kind":"when","text":"We set a `Double` value through the typed projection","code":["typedProjection.set(3.5)"]},
+
+        {"kind":"then","text":"The typed projection accepts the Double value without issue","code":["typedProjection.get() == 3.5","source.get() == 7  // 3.5 * 2 = 7"]},
+
+        {"kind":"when","text":"We modify the source property to an uneven number:","code":["source.set(9)"]},
+
+        {"kind":"then","text":"The typed projection correctly managed to handle the change and reflects the new value:","code":["typedProjection.get() == 4.5  // 9 / 2 = 4.5"]},
+
+        {"kind":"when","text":"However, accessing the untyped projection now throws an exception due to the type mismatch:","code":["untypedProjection.get()"]},
+
+        {"kind":"then","text":"The untyped projection fails because it still expects an Integer, but the conversion produced a Double.","code":["thrown(IllegalArgumentException)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Typed projection with null object handles polymorphic conversion correctly while untyped version fails.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            ⚠️  PROBLEM DEMONSTRATION & SOLUTION ⚠️\n\n            The basic `projectTo(nullObject, getter, setter)` method determines the runtime type\n            of the projected property from the supplied `nullObject`. This causes `IllegalArgumentException`\n            when the conversion produces different subtypes of the declared target type!\n\n            Consider a property storing `Number` values that we project to formatted currency strings.\n            If we use a `String` null object (e.g., \"€0,00\"), the untyped projection will assume\n            the target type is exactly `String`. But what if we want the projection to accept any \n            `CharSequence` (String, StringBuilder, etc.)?\n\n            The explicitly typed `projectTo(Class<B>, V, Function, Function)` solves this by\n            allowing you to specify the declared type. The resulting property correctly\n            accepts any value assignable to that declared type, not just the exact type of the null object.\n\n            This test demonstrates both the issue and its solution by having a `Number` property that is\n            projected to `CharSequence` (the declared interface), using a `String` null object.\n            The untyped projection fails when we try to set a `StringBuilder`, while the typed projection\n            works correctly with any `CharSequence` implementation.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A source property with numeric values representing euro amounts in cents","code":["Var<Number> priceInCents = Var.ofNullable(Number.class, 1999)  // €19,99","String defaultFormatted = \"€0,00\""]},
+
+        {"kind":"and","text":"Conversion functions that can handle any CharSequence input","code":["Function<Number, CharSequence> formatAsEUR = { n ->","    // Source is never null (Var.of), but guard for completeness","    if (n == null) return defaultFormatted","    // Format as euros with 2 decimal places using European format","    String euroString = String.format(\"%.2f\", n.doubleValue() / 100)","    \"€\" + euroString.replace('.', ',')","}","Function<CharSequence, Number> parseEUR = { cs ->","    if (cs == null) return 0","    String s = cs.toString().trim()","    if (!s.startsWith(\"€\")) return 0","    try {","        String numberPart = s.substring(1).replace(',', '.')","        Double.parseDouble(numberPart) * 100","    } catch (NumberFormatException e) {","        0","    }","}"]},
+
+        {"kind":"and","text":"Untyped projection with null object (infers String from the null object)","code":["Var<CharSequence> untypedProjection = priceInCents.projectTo(","    defaultFormatted,  // null object is String","    formatAsEUR,","    parseEUR",")"]},
+
+        {"kind":"and","text":"Typed projection with declared type CharSequence and same null object","code":["Var<CharSequence> typedProjection = priceInCents.projectTo(","    CharSequence.class,  // Explicitly declare the target type","    defaultFormatted,    // Same String null object","    formatAsEUR,","    parseEUR",")"]},
+
+        {"kind":"expect","text":"Initial projections work in both cases","code":["priceInCents.get() == 1999","untypedProjection.get().toString() == \"€19,99\"","typedProjection.get().toString() == \"€19,99\""]},
+
+        {"kind":"when","text":"We try to set a StringBuilder value through the untyped projection","code":["untypedProjection.set(new StringBuilder(\"€24,99\"))"]},
+
+        {"kind":"then","text":"The untyped projection throws an exception due to type mismatch","code":["var ex = thrown(IllegalArgumentException)","ex.message.contains(\"String\") && ex.message.contains(\"StringBuilder\")"]},
+
+        {"kind":"when","text":"We set a StringBuilder value through the typed projection","code":["typedProjection.set(new StringBuilder(\"€24,99\"))"]},
+
+        {"kind":"then","text":"The typed projection accepts the StringBuilder without issue","code":["typedProjection.get().toString() == \"€24,99\"","priceInCents.get() == 2499"]},
+
+        {"kind":"when","text":"We set a StringBuffer value (another CharSequence implementation)","code":["typedProjection.set(new StringBuffer(\"€32,50\"))"]},
+
+        {"kind":"then","text":"It also works perfectly","code":["typedProjection.get().toString() == \"€32,50\"","priceInCents.get() == 3250"]},
+
+        {"kind":"and","text":"The untyped projection is still fine because it has not yet encountered a type mismatch with the parent!","code":["untypedProjection.get().toString() == \"€32,50\""]},
+
+        {"kind":"when","text":"We set a `StringBuilder` value for the untyped projection","code":["untypedProjection.set(new StringBuilder(\"€15,00\"))"]},
+
+        {"kind":"then","text":"The untyped projection throws an exception due to type mismatch","code":["ex = thrown(IllegalArgumentException)","ex.message.contains(\"String\") && ex.message.contains(\"StringBuilder\")"]},
+
+        {"kind":"when","text":"We modify the source property","code":["priceInCents.set(4295)  // €42,95"]},
+
+        {"kind":"then","text":"The typed projection updates normally","code":["typedProjection.get().toString() == \"€42,95\""]},
+
+        {"kind":"and","text":"The untyped projection is valid again, as it has received a new value from the parent that matches its expected type (String)","code":["untypedProjection.get().toString() == \"€42,95\""]},
+
+        {"kind":"when","text":"We set the typed projection with a custom CharSequence implementation","code":["def customCharSeq = new CharSequence() {","    String data = \"€57,25\"","    int length() { data.length() }","    char charAt(int i) { data.charAt(i) }","    CharSequence subSequence(int s, int e) { data.subSequence(s, e) }","    String toString() { data }","}","typedProjection.set(customCharSeq)"]},
+
+        {"kind":"then","text":"Even custom implementations are accepted","code":["typedProjection.get().toString() == \"€57,25\"","priceInCents.get() == 5725"]},
+
+        {"kind":"when","text":"We set the source property to null","code":["priceInCents.set(null)"]},
+
+        {"kind":"then","text":"Both projections resort to the null object value","code":["untypedProjection.get().toString() == \"€0,00\"","typedProjection.get().toString() == \"€0,00\""]},
+
+        {"kind":"and","text":"The null object itself maintains its original type (String)","code":["untypedProjection.get().class == String","typedProjection.get().class == String"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    }
+  
+  ],
+  "generator":"https://github.com/renatoathaydes/spock-reports"
+}

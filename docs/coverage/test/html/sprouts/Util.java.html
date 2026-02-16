@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Util.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sprouts</a> &gt; <a href="index.source.html" class="el_package">sprouts</a> &gt; <span class="el_source">Util.java</span></div><h1>Util.java</h1><pre class="source lang-java linenums">package sprouts;
+
+import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.helpers.MessageFormatter;
+import org.slf4j.helpers.NOPLogger;
+import sprouts.impl.Sprouts;
+
+import java.lang.reflect.UndeclaredThrowableException;
+import java.util.function.Supplier;
+
+final class Util {
+
+    private Util() {}
+
+    static void sneakyThrowExceptionIfFatal(Throwable throwable) {
+<span class="fc bfc" id="L17" title="All 2 branches covered.">        if (</span>
+            throwable instanceof UndeclaredThrowableException &amp;&amp;
+<span class="pc bpc" id="L19" title="1 of 2 branches missed.">            throwable.getCause() instanceof InterruptedException</span>
+        ) {
+<span class="fc" id="L21">            throwable = throwable.getCause();</span>
+        }
+<span class="fc bfc" id="L23" title="All 2 branches covered.">        if (isFatal(throwable)) {</span>
+<span class="pc bpc" id="L24" title="1 of 2 branches missed.">            if (throwable instanceof InterruptedException) {</span>
+<span class="fc" id="L25">                Thread.currentThread().interrupt();</span>
+            }
+<span class="nc" id="L27">            sneakyThrow(throwable);</span>
+        }
+<span class="fc" id="L29">    }</span>
+
+    static boolean isFatal(Throwable throwable) {
+<span class="pc bpc" id="L32" title="1 of 4 branches missed.">        return throwable instanceof InterruptedException</span>
+                || throwable instanceof LinkageError
+<span class="pc bpc" id="L34" title="2 of 4 branches missed.">                || ThreadDeathResolver.isThreadDeath(throwable)</span>
+                || throwable instanceof VirtualMachineError;
+    }
+
+    @SuppressWarnings({&quot;unchecked&quot;, &quot;TypeParameterUnusedInFormals&quot;})
+    static &lt;E extends Throwable, R&gt; R sneakyThrow(Throwable e) throws E {
+<span class="fc" id="L40">        throw (E) e; // throw the returned thing and the compiler believes this is unchecked</span>
+    }
+
+    private static class ThreadDeathResolver {
+<span class="fc" id="L44">        static final @Nullable Class&lt;?&gt; THREAD_DEATH_CLASS = resolve();</span>
+
+        static boolean isThreadDeath(Throwable throwable) {
+<span class="pc bpc" id="L47" title="2 of 4 branches missed.">            return THREAD_DEATH_CLASS != null &amp;&amp; THREAD_DEATH_CLASS.isInstance(throwable);</span>
+        }
+
+        private static @Nullable Class&lt;?&gt; resolve() {
+            try {
+<span class="fc" id="L52">                return Class.forName(&quot;java.lang.ThreadDeath&quot;);</span>
+<span class="nc" id="L53">            } catch (ClassNotFoundException e) {</span>
+<span class="nc" id="L54">                return null;</span>
+            }
+        }
+    }
+
+    /**
+     *  Unfortunately, NullAway does not support nullability annotations on type parameters.
+     *  It always assumes that type parameters are non-null, irrespective if
+     *  the user provides a nullability annotation or not.
+     *  This is a problem in the sprouts library, which also uses nullability annotations.
+     *  This method is a workaround for this issue.
+     *
+     * @param var The variable to be faked as non-null.
+     * @return The same variable as the input, but with a non-null type.
+     * @param &lt;T&gt; The type of the variable.
+     */
+    @SuppressWarnings(&quot;NullAway&quot;)
+    static &lt;T&gt; T fakeNonNull( @Nullable T var ) {
+<span class="fc" id="L72">        return var;</span>
+    }
+
+    static void _logError(Logger log, String message, @Nullable Object... args) {
+<span class="pc bpc" id="L76" title="1 of 2 branches missed.">        if ( log instanceof NOPLogger) {</span>
+<span class="fc" id="L77">            Exception lastArgException = null;</span>
+<span class="pc bpc" id="L78" title="3 of 6 branches missed.">            if ( args != null &amp;&amp; args.length &gt; 0 &amp;&amp; args[args.length - 1] instanceof Exception ) {</span>
+<span class="fc" id="L79">                lastArgException = (Exception) args[args.length - 1];</span>
+<span class="fc" id="L80">                args = java.util.Arrays.copyOf(args, args.length - 1);</span>
+            }
+<span class="fc" id="L82">            String loggingMarker = Sprouts.factory().loggingMarker().toString().trim();</span>
+<span class="pc bpc" id="L83" title="5 of 6 branches missed.">            if ( !loggingMarker.isEmpty() &amp;&amp; !loggingMarker.startsWith(&quot;[&quot;) &amp;&amp; !loggingMarker.endsWith(&quot;]&quot;) ) {</span>
+<span class="nc" id="L84">                loggingMarker = &quot;[&quot; + loggingMarker + &quot;]&quot;;</span>
+            }
+<span class="fc" id="L86">            System.err.println(</span>
+<span class="fc" id="L87">                MessageFormatter.arrayFormat(&quot;[ERROR]&quot;+loggingMarker+&quot; &quot; + message, args)</span>
+<span class="fc" id="L88">                .getMessage()</span>
+            );
+<span class="pc bpc" id="L90" title="1 of 2 branches missed.">            if ( lastArgException != null ) {</span>
+<span class="fc" id="L91">                lastArgException.printStackTrace();</span>
+            }
+<span class="fc" id="L93">        } else {</span>
+<span class="nc" id="L94">            log.error(Sprouts.factory().loggingMarker(), message, args);</span>
+        }
+<span class="fc" id="L96">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>
