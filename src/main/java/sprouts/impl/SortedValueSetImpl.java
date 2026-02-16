@@ -663,6 +663,7 @@ final class SortedValueSetImpl<E> implements ValueSet<E> {
         return !thisIterator.hasNext() && !otherIterator.hasNext();
     }
 
+    @SuppressWarnings("ReferenceEquality")
     private static <E> boolean _recursiveEquals(@Nullable Node node1, @Nullable Node node2, Class<E> type, Comparator<E> comparator) {
         if ( node1 == node2 ) {
             return true;
