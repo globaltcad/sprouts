@@ -849,30 +849,31 @@ final class SortedAssociationImpl&lt;K, V&gt; implements Association&lt;K, V&gt;
 <span class="pc bpc" id="L849" title="2 of 4 branches missed.">        return !thisIterator.hasNext() &amp;&amp; !otherIterator.hasNext();</span>
     }
 
+    @SuppressWarnings(&quot;ReferenceEquality&quot;)
     private static &lt;K,V&gt; boolean _recursiveEquals(
             @Nullable Node node1, @Nullable Node node2, Class&lt;K&gt; keyType, Class&lt;V&gt; valueType, Comparator&lt;K&gt; comparator
     ) {
-<span class="fc bfc" id="L855" title="All 2 branches covered.">        if ( node1 == node2 ) {</span>
-<span class="fc" id="L856">            return true;</span>
+<span class="fc bfc" id="L856" title="All 2 branches covered.">        if ( node1 == node2 ) {</span>
+<span class="fc" id="L857">            return true;</span>
         }
-<span class="pc bpc" id="L858" title="2 of 4 branches missed.">        if ( node1 == null || node2 == null ) {</span>
-<span class="nc" id="L859">            return false;</span>
+<span class="pc bpc" id="L859" title="2 of 4 branches missed.">        if ( node1 == null || node2 == null ) {</span>
+<span class="nc" id="L860">            return false;</span>
         }
-<span class="fc" id="L861">        if (</span>
-<span class="fc bfc" id="L862" title="All 2 branches covered.">            node1._size == node2._size &amp;&amp;</span>
-<span class="fc bfc" id="L863" title="All 2 branches covered.">            node1._keysArray == node2._keysArray &amp;&amp;</span>
-<span class="pc bpc" id="L864" title="1 of 2 branches missed.">            node1._valuesArray == node2._valuesArray &amp;&amp;</span>
-<span class="pc bpc" id="L865" title="3 of 4 branches missed.">            (node1._left != node2._left || node1._right != node2._right)  // The only difference is somewhere deep down!</span>
+<span class="fc" id="L862">        if (</span>
+<span class="fc bfc" id="L863" title="All 2 branches covered.">            node1._size == node2._size &amp;&amp;</span>
+<span class="fc bfc" id="L864" title="All 2 branches covered.">            node1._keysArray == node2._keysArray &amp;&amp;</span>
+<span class="pc bpc" id="L865" title="1 of 2 branches missed.">            node1._valuesArray == node2._valuesArray &amp;&amp;</span>
+<span class="pc bpc" id="L866" title="3 of 4 branches missed.">            (node1._left != node2._left || node1._right != node2._right)  // The only difference is somewhere deep down!</span>
         ) {
-<span class="pc bpc" id="L867" title="1 of 2 branches missed.">            if ( !_recursiveEquals(node1._left, node2._left, keyType, valueType, comparator) ) {</span>
-<span class="fc" id="L868">                return false;</span>
+<span class="pc bpc" id="L868" title="1 of 2 branches missed.">            if ( !_recursiveEquals(node1._left, node2._left, keyType, valueType, comparator) ) {</span>
+<span class="fc" id="L869">                return false;</span>
             }
-<span class="nc bnc" id="L870" title="All 2 branches missed.">            if ( !_recursiveEquals(node1._right, node2._right, keyType, valueType, comparator) ) {</span>
-<span class="nc" id="L871">                return false;</span>
+<span class="nc bnc" id="L871" title="All 2 branches missed.">            if ( !_recursiveEquals(node1._right, node2._right, keyType, valueType, comparator) ) {</span>
+<span class="nc" id="L872">                return false;</span>
             }
-<span class="nc" id="L873">            return true;</span>
+<span class="nc" id="L874">            return true;</span>
         } else {
-<span class="fc" id="L875">            return _exhaustiveEquals(</span>
+<span class="fc" id="L876">            return _exhaustiveEquals(</span>
                     new SortedAssociationImpl&lt;&gt;(keyType, valueType, comparator, node1),
                     new SortedAssociationImpl&lt;&gt;(keyType, valueType, comparator, node2)
                 );
@@ -881,33 +882,33 @@ final class SortedAssociationImpl&lt;K, V&gt; implements Association&lt;K, V&gt;
 
     @Override
     public String toString() {
-<span class="fc" id="L884">        final int MAX_ITEMS = 8;</span>
-<span class="fc" id="L885">        StringBuilder sb = new StringBuilder();</span>
-<span class="fc" id="L886">        sb.append(&quot;SortedAssociation&quot;);</span>
-<span class="fc" id="L887">        sb.append(&quot;&lt;&quot;);</span>
-<span class="fc" id="L888">        sb.append(_keyType.getSimpleName());</span>
-<span class="fc" id="L889">        sb.append(&quot;,&quot;);</span>
-<span class="fc" id="L890">        sb.append(_valueType.getSimpleName());</span>
-<span class="fc" id="L891">        sb.append(&quot;&gt;&quot;);</span>
-<span class="fc" id="L892">        sb.append(&quot;[&quot;);</span>
-<span class="fc" id="L893">        Iterator&lt;Pair&lt;K, V&gt;&gt; iterator = iterator();</span>
-<span class="fc" id="L894">        int count = 0;</span>
-<span class="fc bfc" id="L895" title="All 2 branches covered.">        while (iterator.hasNext()) {</span>
-<span class="fc bfc" id="L896" title="All 2 branches covered.">            if (count &gt;= MAX_ITEMS) {</span>
-<span class="fc" id="L897">                int itemsLeft = _root.size() - count;</span>
-<span class="fc" id="L898">                sb.append(&quot;... &quot;).append(itemsLeft).append(&quot; items left&quot;);</span>
-<span class="fc" id="L899">                break;</span>
+<span class="fc" id="L885">        final int MAX_ITEMS = 8;</span>
+<span class="fc" id="L886">        StringBuilder sb = new StringBuilder();</span>
+<span class="fc" id="L887">        sb.append(&quot;SortedAssociation&quot;);</span>
+<span class="fc" id="L888">        sb.append(&quot;&lt;&quot;);</span>
+<span class="fc" id="L889">        sb.append(_keyType.getSimpleName());</span>
+<span class="fc" id="L890">        sb.append(&quot;,&quot;);</span>
+<span class="fc" id="L891">        sb.append(_valueType.getSimpleName());</span>
+<span class="fc" id="L892">        sb.append(&quot;&gt;&quot;);</span>
+<span class="fc" id="L893">        sb.append(&quot;[&quot;);</span>
+<span class="fc" id="L894">        Iterator&lt;Pair&lt;K, V&gt;&gt; iterator = iterator();</span>
+<span class="fc" id="L895">        int count = 0;</span>
+<span class="fc bfc" id="L896" title="All 2 branches covered.">        while (iterator.hasNext()) {</span>
+<span class="fc bfc" id="L897" title="All 2 branches covered.">            if (count &gt;= MAX_ITEMS) {</span>
+<span class="fc" id="L898">                int itemsLeft = _root.size() - count;</span>
+<span class="fc" id="L899">                sb.append(&quot;... &quot;).append(itemsLeft).append(&quot; items left&quot;);</span>
+<span class="fc" id="L900">                break;</span>
             }
-<span class="fc" id="L901">            Pair&lt;K, V&gt; pair = iterator.next();</span>
-<span class="fc" id="L902">            sb.append(Util._toString(pair.first(), _keyType));</span>
-<span class="fc" id="L903">            sb.append(&quot; ↦ &quot;);</span>
-<span class="fc" id="L904">            sb.append(Util._toString(pair.second(), _valueType));</span>
-<span class="fc bfc" id="L905" title="All 2 branches covered.">            if (iterator.hasNext()) {</span>
-<span class="fc" id="L906">                sb.append(&quot;, &quot;);</span>
+<span class="fc" id="L902">            Pair&lt;K, V&gt; pair = iterator.next();</span>
+<span class="fc" id="L903">            sb.append(Util._toString(pair.first(), _keyType));</span>
+<span class="fc" id="L904">            sb.append(&quot; ↦ &quot;);</span>
+<span class="fc" id="L905">            sb.append(Util._toString(pair.second(), _valueType));</span>
+<span class="fc bfc" id="L906" title="All 2 branches covered.">            if (iterator.hasNext()) {</span>
+<span class="fc" id="L907">                sb.append(&quot;, &quot;);</span>
             }
-<span class="fc" id="L908">            count++;</span>
-<span class="fc" id="L909">        }</span>
-<span class="fc" id="L910">        return sb.append(&quot;]&quot;).toString();</span>
+<span class="fc" id="L909">            count++;</span>
+<span class="fc" id="L910">        }</span>
+<span class="fc" id="L911">        return sb.append(&quot;]&quot;).toString();</span>
     }
 
 }

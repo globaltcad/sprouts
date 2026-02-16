@@ -55,7 +55,7 @@ final class Util {
         }
     }
 
-    @SuppressWarnings(&quot;unchecked&quot;)
+    @SuppressWarnings({&quot;unchecked&quot;, &quot;TypeParameterUnusedInFormals&quot;})
     static &lt;E extends Throwable, R&gt; R sneakyThrow(Throwable e) throws E {
 <span class="fc" id="L60">        throw (E) e; // throw the returned thing and the compiler believes this is unchecked</span>
     }

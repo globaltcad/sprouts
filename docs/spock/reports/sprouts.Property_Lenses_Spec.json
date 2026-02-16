@@ -1,10 +1,10 @@
 {
   "className":"sprouts.Property_Lenses_Spec",
   "title":"Property Lenses",
-  "narrative":"The Sprouts Property Lens is based on the Lens design pattern.\n    The Lens design pattern is a functional programming\n    technique used to simplify the process of accessing and updating parts of\n    a nested (immutable) data structures into a new instance of the data structure.\n\n    A Lens is essentially a pair of functions:\n    one to get a value from a specific part of a data structure (like a record),\n    and another to set or update that value while producing a new\n    instance of the data structure. This pattern is particularly useful with Java records,\n    which are immutable by design, as it allows for clean and concise manipulation\n    of deeply nested fields without breaking immutability.\n\n    Now what does this have to do with Sprouts properties?\n    After all, the MVVM properties of this library are mutable\n    wrapper types with regular getter and setter methods.\n    Although properties are mutable, their items are expected to\n    be immutable data carriers, such as ints, doubles, strings or records.\n    In case of records (or other custom value oriented data types),\n    there is really no limit to how deeply nested the data structure can be.\n    You may even want to model your entire application state as a single record\n    composed of other records, lists, maps and primitives.\n    This is where the Property Lens comes in:\n\n    You can create a lens property from any regular property\n    holding an immutable data structure, and then use the lens property\n    like a regular property.\n\n    Under the hood the lens property will use the lens pattern to access\n    and update the nested data structure of the original property.\n\n    In this specification we will demonstrate how to create and use\n    lens properties and also explore edge cases and limitations.\n\n    In this Specification we are using the following\n    data structure classes:\n    ````java\n        import java.time.LocalDate;\n        import java.util.List;\n\n        // Enums\n        enum Genre {\n            FICTION, NON_FICTION, SCIENCE, FANTASY, BIOGRAPHY, HISTORY\n        }\n\n        enum MembershipLevel {\n            BASIC, SILVER, GOLD, PLATINUM\n        }\n\n        // Records\n        public record Author(String firstName, String lastName, LocalDate birthDate, List<String> books) {\n            public Author withFirstName(String firstName) {\n                return new Author(firstName, this.lastName, this.birthDate, this.books);\n            }\n\n            public Author withLastName(String lastName) {\n                return new Author(this.firstName, lastName, this.birthDate, this.books);\n            }\n\n            public Author withBirthDate(LocalDate birthDate) {\n                return new Author(this.firstName, this.lastName, birthDate, this.books);\n            }\n\n            public Author withBooks(List<String> books) {\n                return new Author(this.firstName, this.lastName, this.birthDate, books);\n            }\n        }\n\n        public record Book(String title, Author author, Genre genre, LocalDate publicationDate, int pageCount) {\n            public Book withTitle(String title) {\n                return new Book(title, this.author, this.genre, this.publicationDate, this.pageCount);\n            }\n\n            public Book withAuthor(Author author) {\n                return new Book(this.title, author, this.genre, this.publicationDate, this.pageCount);\n            }\n\n            public Book withGenre(Genre genre) {\n                return new Book(this.title, this.author, genre, this.publicationDate, this.pageCount);\n            }\n\n            public Book withPublicationDate(LocalDate publicationDate) {\n                return new Book(this.title, this.author, this.genre, publicationDate, this.pageCount);\n            }\n\n            public Book withPageCount(int pageCount) {\n                return new Book(this.title, this.author, this.genre, this.publicationDate, pageCount);\n            }\n        }\n\n        public record Member(String memberId, String firstName, String lastName, MembershipLevel membershipLevel, LocalDate joinDate, String email) {\n            public Member withMemberId(String memberId) {\n                return new Member(memberId, this.firstName, this.lastName, this.membershipLevel, this.joinDate, this.email);\n            }\n\n            public Member withFirstName(String firstName) {\n                return new Member(this.memberId, firstName, this.lastName, this.membershipLevel, this.joinDate, this.email);\n            }\n\n            public Member withLastName(String lastName) {\n                return new Member(this.memberId, this.firstName, lastName, this.membershipLevel, this.joinDate, this.email);\n            }\n\n            public Member withMembershipLevel(MembershipLevel membershipLevel) {\n                return new Member(this.memberId, this.firstName, this.lastName, membershipLevel, this.joinDate, this.email);\n            }\n\n            public Member withJoinDate(LocalDate joinDate) {\n                return new Member(this.memberId, this.firstName, this.lastName, this.membershipLevel, joinDate, this.email);\n            }\n\n            public Member withEmail(String email) {\n                return new Member(this.memberId, this.firstName, this.lastName, this.membershipLevel, this.joinDate, email);\n            }\n        }\n\n        public record Loan(String loanId, Book book, Member member, LocalDate loanDate, LocalDate returnDate, boolean returned) {\n            public Loan withLoanId(String loanId) {\n                return new Loan(loanId, this.book, this.member, this.loanDate, this.returnDate, this.returned);\n            }\n\n            public Loan withBook(Book book) {\n                return new Loan(this.loanId, book, this.member, this.loanDate, this.returnDate, this.returned);\n            }\n\n            public Loan withMember(Member member) {\n                return new Loan(this.loanId, this.book, member, this.loanDate, this.returnDate, this.returned);\n            }\n\n            public Loan withLoanDate(LocalDate loanDate) {\n                return new Loan(this.loanId, this.book, this.member, loanDate, this.returnDate, this.returned);\n            }\n\n            public Loan withReturnDate(LocalDate returnDate) {\n                return new Loan(this.loanId, this.book, this.member, this.loanDate, returnDate, this.returned);\n            }\n\n            public Loan withReturned(boolean returned) {\n                return new Loan(this.loanId, this.book, this.member, this.loanDate, this.returnDate, returned);\n            }\n        }\n\n        static record TrainStation(String name, String description, LocalDate foundingDate, List<String> trains) {\n            public TrainStation withName(String name) {\n                return new TrainStation(name, this.description, this.foundingDate, this.trains);\n            }\n\n            public TrainStation withDescription(String description) {\n                return new TrainStation(this.name, description, this.foundingDate, this.trains);\n            }\n\n            public TrainStation withBirthDate(LocalDate birthDate) {\n                return new TrainStation(this.name, this.description, birthDate, this.trains);\n            }\n\n            public TrainStation withBooks(List<String> books) {\n                return new TrainStation(this.name, this.description, this.foundingDate, books);\n            }\n        }\n        ```",
+  "narrative":"The Sprouts Property Lens is based on the Lens design pattern.\n    The Lens design pattern is a functional programming\n    technique used to simplify the process of accessing and updating parts of\n    a nested (immutable) data structures into a new instance of the data structure.\n\n    A Lens is essentially a pair of functions:\n    one to get a value from a specific part of a data structure (like a record),\n    and another to set or update that value while producing a new\n    instance of the data structure. This pattern is particularly useful with Java records,\n    which are immutable by design, as it allows for clean and concise manipulation\n    of deeply nested fields without breaking immutability.\n\n    Now what does this have to do with Sprouts properties?\n    After all, the MVVM properties of this library are mutable\n    wrapper types with regular getter and setter methods.\n    Although properties are mutable, their items are expected to\n    be immutable data carriers, such as ints, doubles, strings or records.\n    In case of records (or other custom value oriented data types),\n    there is really no limit to how deeply nested the data structure can be.\n    You may even want to model your entire application state as a single record\n    composed of other records, lists, maps and primitives.\n    This is where the Property Lens comes in:\n\n    You can create a lens property from any regular property\n    holding an immutable data structure, and then use the lens property\n    like a regular property.\n\n    Under the hood the lens property will use the lens pattern to access\n    and update the nested data structure of the original property.\n\n    In this specification we will demonstrate how to create and use\n    lens properties and also explore edge cases and limitations.\n\n    In this Specification we are using the following\n    data structure classes:\n    ````java\n        import java.time.LocalDate;\n        import java.util.List;\n\n        // Enums\n        enum Genre {\n            FICTION, NON_FICTION, SCIENCE, FANTASY, BIOGRAPHY, HISTORY\n        }\n\n        enum MembershipLevel {\n            BASIC, SILVER, GOLD, PLATINUM\n        }\n\n        // Records\n        public record Author(String firstName, String lastName, LocalDate birthDate, List<String> books) {\n            public Author withFirstName(String firstName) {\n                return new Author(firstName, this.lastName, this.birthDate, this.books);\n            }\n\n            public Author withLastName(String lastName) {\n                return new Author(this.firstName, lastName, this.birthDate, this.books);\n            }\n\n            public Author withBirthDate(LocalDate birthDate) {\n                return new Author(this.firstName, this.lastName, birthDate, this.books);\n            }\n\n            public Author withBooks(List<String> books) {\n                return new Author(this.firstName, this.lastName, this.birthDate, books);\n            }\n        }\n\n        public record Book(String title, Author author, Genre genre, LocalDate publicationDate, int pageCount) {\n            public Book withTitle(String title) {\n                return new Book(title, this.author, this.genre, this.publicationDate, this.pageCount);\n            }\n\n            public Book withAuthor(Author author) {\n                return new Book(this.title, author, this.genre, this.publicationDate, this.pageCount);\n            }\n\n            public Book withGenre(Genre genre) {\n                return new Book(this.title, this.author, genre, this.publicationDate, this.pageCount);\n            }\n\n            public Book withPublicationDate(LocalDate publicationDate) {\n                return new Book(this.title, this.author, this.genre, publicationDate, this.pageCount);\n            }\n\n            public Book withPageCount(int pageCount) {\n                return new Book(this.title, this.author, this.genre, this.publicationDate, pageCount);\n            }\n        }\n\n        public record Member(String memberId, String firstName, String lastName, MembershipLevel membershipLevel, LocalDate joinDate, String email) {\n            public Member withMemberId(String memberId) {\n                return new Member(memberId, this.firstName, this.lastName, this.membershipLevel, this.joinDate, this.email);\n            }\n\n            public Member withFirstName(String firstName) {\n                return new Member(this.memberId, firstName, this.lastName, this.membershipLevel, this.joinDate, this.email);\n            }\n\n            public Member withLastName(String lastName) {\n                return new Member(this.memberId, this.firstName, lastName, this.membershipLevel, this.joinDate, this.email);\n            }\n\n            public Member withMembershipLevel(MembershipLevel membershipLevel) {\n                return new Member(this.memberId, this.firstName, this.lastName, membershipLevel, this.joinDate, this.email);\n            }\n\n            public Member withJoinDate(LocalDate joinDate) {\n                return new Member(this.memberId, this.firstName, this.lastName, this.membershipLevel, joinDate, this.email);\n            }\n\n            public Member withEmail(String email) {\n                return new Member(this.memberId, this.firstName, this.lastName, this.membershipLevel, this.joinDate, email);\n            }\n        }\n\n        public record Loan(String loanId, Book book, Member member, LocalDate loanDate, LocalDate returnDate, boolean returned) {\n            public Loan withLoanId(String loanId) {\n                return new Loan(loanId, this.book, this.member, this.loanDate, this.returnDate, this.returned);\n            }\n\n            public Loan withBook(Book book) {\n                return new Loan(this.loanId, book, this.member, this.loanDate, this.returnDate, this.returned);\n            }\n\n            public Loan withMember(Member member) {\n                return new Loan(this.loanId, this.book, member, this.loanDate, this.returnDate, this.returned);\n            }\n\n            public Loan withLoanDate(LocalDate loanDate) {\n                return new Loan(this.loanId, this.book, this.member, loanDate, this.returnDate, this.returned);\n            }\n\n            public Loan withReturnDate(LocalDate returnDate) {\n                return new Loan(this.loanId, this.book, this.member, this.loanDate, returnDate, this.returned);\n            }\n\n            public Loan withReturned(boolean returned) {\n                return new Loan(this.loanId, this.book, this.member, this.loanDate, this.returnDate, returned);\n            }\n        }\n\n        static record TrainStation(String name, String description, LocalDate foundingDate, List<String> trains) {\n            public TrainStation withName(String name) {\n                return new TrainStation(name, this.description, this.foundingDate, this.trains);\n            }\n\n            public TrainStation withDescription(String description) {\n                return new TrainStation(this.name, description, this.foundingDate, this.trains);\n            }\n\n            public TrainStation withBirthDate(LocalDate birthDate) {\n                return new TrainStation(this.name, this.description, birthDate, this.trains);\n            }\n\n            public TrainStation withBooks(List<String> books) {\n                return new TrainStation(this.name, this.description, this.foundingDate, books);\n            }\n        }\n        record Person(String name, Number age) {\n            Person withAge(Number age) { return new Person(name, age); }\n        }\n        ```",
   "subjects":["sprouts.impl.PropertyLens","sprouts.Var"],
   "statistics":{
-    "runs":"33",
+    "runs":"43",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -870,6 +870,320 @@
         {"kind":"when","text":"","code":["memberProperty.set(null)"]},
 
         {"kind":"then","text":"","code":["level.orElseNull() == null","date.orElseNull() == null","name.get() == \"\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Untyped zoomTo causes `IllegalArgumentException` when using subtypes of a polymorphic field.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            ⚠️  PROBLEM DEMONSTRATION ⚠️\n\n            The basic `zoomTo(Function, BiFunction)` method determines the runtime type\n            of the lens property from the FIRST value it encounters. This causes\n            `IllegalArgumentException` when the field is polymorphic and we later \n            try to set a different subtype!\n\n            Here we demonstrate this critical issue with a `Number` field.\n            The initial value is a `Double`, so the lens becomes `Var<Double>` \n            under the hood, even though we declared it as `Var<Number>`.\n            Trying to set an `Integer` later throws a IllegalArgumentException.\n\n            In this test we use the following record as test type:\n            ```\n            record Person(String name, Number age) {\n                Person withAge(Number age) { return new Person(name, age); }\n            }\n            ```\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A property containing a Person with a Double age","code":["var person = new Person(\"Joe\", 23.123d)","Var<Person> personProperty = Var.of(person)"]},
+
+        {"kind":"when","text":"We create a lens using the untyped zoomTo method","code":["Var<Number> ageLens = personProperty.zoomTo(Person::age, Person::withAge)"]},
+
+        {"kind":"then","text":"The lens initially works fine with Doubles","code":["ageLens.get() == 23.123d"]},
+
+        {"kind":"when","text":"We try to set an Integer value through the lens","code":["ageLens.set(25) // Integer, not Double!"]},
+
+        {"kind":"then","text":"A IllegalArgumentException is thrown because the lens expects Double","code":["var exception = thrown(IllegalArgumentException)"]},
+
+        {"kind":"and","text":"The exception message indicates the type mismatch","code":["exception.message.contains(","        \"The provided type 'class java.lang.Integer' of the new value is \" +","        \"not compatible with the expected item type 'class java.lang.Double' \" +","        \"of this property lens.\"","    )"]},
+
+        {"kind":"and","text":"The person has not changed:","code":["personProperty.get() == new Person(\"Joe\", 23.123d)"]},
+
+        {"kind":"when","text":"We create another lens property where the correct type information is explicitly provided:","code":["Var<Number> fixedAgeLens = personProperty.zoomTo(Number.class, Person::age, Person::withAge)"]},
+
+        {"kind":"and","text":"We try to set an Integer value through this new lens","code":["fixedAgeLens.set(25) // Integer, not Double!"]},
+
+        {"kind":"then","text":"No exception was thrown:","code":["noExceptionThrown()"]},
+
+        {"kind":"and","text":"The state change worked!","code":["fixedAgeLens.get() == 25","personProperty.get() == new Person(\"Joe\", 25)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Untyped zoomTo with Lens interface can cause type mismatches with polymorphic fields.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            ⚠️  PROBLEM DEMONSTRATION ⚠️\n\n            The same type safety issue exists when using `zoomTo(Lens)` without explicit\n            type information. The lens property's runtime type is determined from the\n            FIRST value encountered, causing problems when the field is polymorphic.\n\n            In this test we use the following record as test type:\n            ```\n            record Person(String name, Number age) {\n                Person withAge(Number age) { return new Person(name, age); }\n            }\n            ```\n\n            We focus on the `Person`s a `Number` based age field, through a `Lens` instance \n            and then pass it to `zoomTo(Lens)`.\n            The initial value is a `Double`, so the lens becomes `Var<Double>` internally,\n            even though we declared it as `Var<Number>`. Setting an `Integer` later fails.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A property containing a Person with a Double age","code":["var person = new Person(\"Alice\", 42.5d)","Var<Person> personProperty = Var.of(person)"]},
+
+        {"kind":"and","text":"A Lens instance focusing on the age field","code":["Lens<Person, Number> ageLens = Lens.of(Person::age, Person::withAge)"]},
+
+        {"kind":"when","text":"We create a lens using the untyped zoomTo(Lens) method","code":["Var<Number> ageProperty = personProperty.zoomTo(ageLens)"]},
+
+        {"kind":"then","text":"The lens initially works fine with Doubles","code":["ageProperty.get() == 42.5d"]},
+
+        {"kind":"when","text":"We try to set an Integer value through the lens","code":["ageProperty.set(30) // Integer, not Double!"]},
+
+        {"kind":"then","text":"An IllegalArgumentException is thrown because the lens expects Double","code":["var exception = thrown(IllegalArgumentException)"]},
+
+        {"kind":"and","text":"The exception message indicates the type mismatch","code":["exception.message.contains(","        \"The provided type 'class java.lang.Integer' of the new value is \" +","        \"not compatible with the expected item type 'class java.lang.Double' \" +","        \"of this property lens.\"","    )"]},
+
+        {"kind":"and","text":"The person has not changed","code":["personProperty.get() == new Person(\"Alice\", 42.5d)"]},
+
+        {"kind":"when","text":"We create another lens property with explicit type information","code":["Var<Number> fixedAgeProperty = personProperty.zoomTo(Number.class, ageLens)"]},
+
+        {"kind":"and","text":"We try to set an Integer value through this new lens","code":["fixedAgeProperty.set(30)"]},
+
+        {"kind":"then","text":"No exception was thrown","code":["noExceptionThrown()"]},
+
+        {"kind":"and","text":"The state change worked correctly","code":["fixedAgeProperty.get() == 30","personProperty.get() == new Person(\"Alice\", 30)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Typed `zoomTo` with explicit type information handles polymorphic field subtypes correctly.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            ✅  SOLUTION DEMONSTRATION ✅\n\n            The explicitly typed `zoomTo(Class<B>, Function, BiFunction)` method\n            solves the type safety issue by allowing you to specify the declared type\n            of the field. The resulting lens property correctly accepts any value\n            assignable to that declared type, not just the specific subtype that\n            was present initially.\n\n            In this test, we demonstrate switching between different Number subtypes\n            (Double, Integer, Float) without any type cast exceptions.\n\n            In this test we use the following record as test type:\n            ```\n            record Person(String name, Number age) {\n                Person withAge(Number age) { return new Person(name, age); }\n            }\n            ```\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A property containing a Person with a `Double` based age","code":["var person = new Person(\"Bob\", 25.75d)","Var<Person> personProperty = Var.of(person)"]},
+
+        {"kind":"when","text":"We create a lens with explicit `Number.class` type information","code":["Var<Number> ageLens = personProperty.zoomTo(Number.class, Person::age, Person::withAge)"]},
+
+        {"kind":"then","text":"Initial value is correctly retrieved","code":["ageLens.get() == 25.75d"]},
+
+        {"kind":"when","text":"We set an `Integer` value","code":["ageLens.set(30)"]},
+
+        {"kind":"then","text":"The lens and parent property are updated correctly","code":["ageLens.get() == 30","personProperty.get().age() == 30"]},
+
+        {"kind":"when","text":"We set a Float value","code":["ageLens.set(45.5f)"]},
+
+        {"kind":"then","text":"The lens and parent property are updated correctly","code":["ageLens.get() == 45.5f","personProperty.get().age() == 45.5f"]},
+
+        {"kind":"when","text":"We set a Long value","code":["ageLens.set(100L)"]},
+
+        {"kind":"then","text":"The lens and parent property are updated correctly","code":["ageLens.get() == 100L","personProperty.get().age() == 100L"]},
+
+        {"kind":"and","text":"All operations succeeded without any type cast exceptions","code":["noExceptionThrown()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Typed `zoomTo` with explicit type information and Lens interface handles polymorphism correctly.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            ✅  SOLUTION DEMONSTRATION ✅\n\n            Similarly, the explicitly typed `zoomTo(Class<B>, Lens<T,B>)` method\n            solves the same type safety issue when working with pre-existing Lens instances.\n\n            Here we demonstrate that a lens created with explicit type information\n            can handle any subtype of the declared type, even when switching between\n            completely different numeric representations.\n\n            We use the following record as test type:\n            ```\n            record Person(String name, Number age) {\n                Person withAge(Number age) { return new Person(name, age); }\n            }\n            ```\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A property containing a Person with an Integer age","code":["var person = new Person(\"Carol\", 42)","Var<Person> personProperty = Var.of(person)"]},
+
+        {"kind":"and","text":"A Lens instance focusing on the age field","code":["Lens<Person, Number> ageLens = Lens.of(Person::age, Person::withAge)"]},
+
+        {"kind":"when","text":"We create a lens with explicit Number.class type information","code":["Var<Number> ageProperty = personProperty.zoomTo(Number.class, ageLens)"]},
+
+        {"kind":"then","text":"Initial value is correctly retrieved","code":["ageProperty.get() == 42"]},
+
+        {"kind":"when","text":"We set a Double value","code":["ageProperty.set(33.33d)"]},
+
+        {"kind":"then","text":"The lens and parent property are updated correctly","code":["ageProperty.get() == 33.33d","personProperty.get().age() == 33.33d"]},
+
+        {"kind":"when","text":"We set a `Short` value","code":["ageProperty.set((short)18)"]},
+
+        {"kind":"then","text":"The lens and parent property are updated correctly","code":["ageProperty.get() == (short)18","personProperty.get().age() == (short)18"]},
+
+        {"kind":"and","text":"All operations succeeded without any type cast exceptions","code":["noExceptionThrown()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Typed `zoomTo` with explicit type information and null object handles polymorphism in nullable parent.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            ✅  SOLUTION DEMONSTRATION ✅\n\n            The `zoomTo(Class<B>, V, Function, BiFunction)` method combines\n            null safety with type safety. It provides a default value for when\n            the parent is null, while also ensuring the lens accepts all subtypes\n            of the declared type.\n\n            This test demonstrates switching between different `Number` subtypes\n            in a lens created from a nullable parent property, with proper\n            fallback behavior when the parent is null.\n\n            We use the following record as test type:\n            ```\n            record Person(String name, Number age) {\n                Person withAge(Number age) { return new Person(name, age); }\n            }\n            ```\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A nullable `Person` property initialized to null","code":["Var<Person> personProperty = Var.ofNull(Person.class)"]},
+
+        {"kind":"and","text":"A default age value","code":["Number defaultAge = 0"]},
+
+        {"kind":"when","text":"We create a lens with explicit type and null object","code":["Var<Number> ageLens = personProperty.zoomTo(","    Number.class,","    defaultAge,","    Person::age,","    Person::withAge",")"]},
+
+        {"kind":"then","text":"The lens returns the default value when parent is null","code":["ageLens.get() == 0"]},
+
+        {"kind":"when","text":"We try to set a `Double` value through the lens, despite the parent missing!","code":["ageLens.set(99.99d)"]},
+
+        {"kind":"then","text":"A person cannot be created by the lens and so the lens is still `0`!","code":["personProperty.isEmpty()","ageLens.get() == 0"]},
+
+        {"kind":"when","text":"We set a valid person in the parent property...","code":["personProperty.set(new Person(\"Tariq\", 35 as int))"]},
+
+        {"kind":"then","text":"The integer was propagated to the lens...","code":["ageLens.get() == 35"]},
+
+        {"kind":"when","text":"We set the parent back to null","code":["personProperty.set(null)"]},
+
+        {"kind":"then","text":"The lens returns the default value again","code":["ageLens.get() == 0"]},
+
+        {"kind":"and","text":"All operations succeeded without exceptions","code":["noExceptionThrown()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Typed `zoomTo` with explicit type, null object and Lens interface handles polymorphism in nullable parent.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            ✅  SOLUTION DEMONSTRATION ✅\n\n            The `zoomTo(Class<B>, V, Lens<T,B>)` method provides the same combined\n            null safety and type safety for pre-existing Lens instances.\n\n            This test demonstrates using a polymorphic Lens with a nullable parent,\n            ensuring the lens correctly handles any Number subtype and provides\n            a deterministic fallback when the parent is null.\n\n            We use the following record as test type:\n            ```\n            record Person(String name, Number age) {\n                Person withAge(Number age) { return new Person(name, age); }\n            }\n            ```\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A nullable Person property initialized to null","code":["Var<Person> personProperty = Var.ofNull(Person.class)"]},
+
+        {"kind":"and","text":"A Lens instance focusing on the age field","code":["Lens<Person, Number> ageLens = Lens.of(Person::age, Person::withAge)"]},
+
+        {"kind":"and","text":"A default age value","code":["Number defaultAge = -1"]},
+
+        {"kind":"when","text":"We create a lens with explicit type, null object and lens","code":["Var<Number> ageProperty = personProperty.zoomTo(","    Number.class,","    defaultAge,","    ageLens",")"]},
+
+        {"kind":"then","text":"The lens returns the default value when parent is null","code":["ageProperty.get() == -1"]},
+
+        {"kind":"when","text":"We set a Float value through the lens","code":["ageProperty.set(3.14f)"]},
+
+        {"kind":"then","text":"The person is still missing and the value could not be set successfully!","code":["personProperty.isEmpty()","ageProperty.get() == -1"]},
+
+        {"kind":"when","text":"We install a valid person...","code":["personProperty.set(new Person(\"Lisa\", 3.14f))"]},
+
+        {"kind":"then","text":"The age property has the expected age:","code":["ageProperty.get() == 3.14f"]},
+
+        {"kind":"when","text":"We set a Long value through the lens","code":["ageProperty.set(1000L)"]},
+
+        {"kind":"then","text":"The Person is updated with the Long age","code":["personProperty.get().age() == 1000L","ageProperty.get() == 1000L"]},
+
+        {"kind":"when","text":"We set the parent back to null","code":["personProperty.set(null)"]},
+
+        {"kind":"then","text":"The lens returns the default value again","code":["ageProperty.get() == -1"]},
+
+        {"kind":"and","text":"All operations succeeded without exceptions","code":["noExceptionThrown()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Typed `zoomTo` preserves nullability and mutability characteristics correctly.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            This test verifies that the explicitly typed zoomTo methods correctly\n            preserve the nullability and mutability characteristics of the resulting\n            lens property based on the method variant used.\n\n            - `zoomTo(Class, Function, BiFunction)` creates non-nullable lenses\n            - `zoomTo(Class, Object, Function, BiFunction)` creates non-nullable lenses with defaults\n            - `zoomToNullable(Class, Function, BiFunction)` creates nullable lenses\n\n            We use the following record as test type:\n            ```\n            record Person(String name, Number age) {\n                Person withAge(Number age) { return new Person(name, age); }\n            }\n            ```\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A non-nullable and a nullable parent property","code":["var person = new Person(\"Dave\", 30)","Var<Person> nonNullPerson = Var.of(person)","Var<Person> nullablePerson = Var.ofNullable(Person.class, person)"]},
+
+        {"kind":"when","text":"We create a typed non-nullable lens","code":["Var<Number> nonNullLens = nonNullPerson.zoomTo(Number.class, Person::age, Person::withAge)"]},
+
+        {"kind":"then","text":"It is mutable and does not allow null","code":["nonNullLens.isMutable()","!nonNullLens.allowsNull()"]},
+
+        {"kind":"when","text":"We create a typed nullable lens","code":["Var<Number> nullableLens = nonNullPerson.zoomToNullable(Number.class, Person::age, Person::withAge)"]},
+
+        {"kind":"then","text":"It is mutable and allows null","code":["nullableLens.isMutable()","nullableLens.allowsNull()"]},
+
+        {"kind":"when","text":"We create a typed lens with null object from non-nullable parent","code":["Var<Number> defaultLens = nonNullPerson.zoomTo(Number.class, 0, Person::age, Person::withAge)"]},
+
+        {"kind":"then","text":"It is mutable and does not allow null","code":["defaultLens.isMutable()","!defaultLens.allowsNull()"]},
+
+        {"kind":"when","text":"We create a typed lens with null object from nullable parent","code":["Var<Number> defaultLensFromNullable = nullablePerson.zoomTo(Number.class, 0, Person::age, Person::withAge)"]},
+
+        {"kind":"then","text":"It is mutable and does not allow null (the null object ensures non-nullability)","code":["defaultLensFromNullable.isMutable()","!defaultLensFromNullable.allowsNull()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Typed `zoomTo` with null object throws `NullPointerException` when null object is null.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            This test verifies that the typed zoomTo methods with null object\n            correctly reject null as the default value. A non-null default value\n            is required to maintain the guarantee that the lens property never\n            contains null.\n\n            We use the following record as test type:\n            ```\n            record Person(String name, Number age) {\n                Person withAge(Number age) { return new Person(name, age); }\n            }\n            ```\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A nullable Person property","code":["Var<Person> personProperty = Var.ofNull(Person.class)"]},
+
+        {"kind":"when","text":"Attempting to create a typed lens with a null null object","code":["personProperty.zoomTo(Number.class, null, Person::age, Person::withAge)"]},
+
+        {"kind":"then","text":"A NullPointerException is thrown","code":["thrown(NullPointerException)"]},
+
+        {"kind":"when","text":"Attempting to create a typed lens with a null null object and Lens","code":["personProperty.zoomTo(Number.class, null, Lens.of(Person::age, Person::withAge))"]},
+
+        {"kind":"then","text":"A NullPointerException is thrown","code":["thrown(NullPointerException)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Typed `zoomTo` with null object correctly handles inheritance hierarchies.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            This test demonstrates that the typed `zoomTo(..)` methods with null-object\n            correctly handle complex inheritance hierarchies. The declared type\n            can be a supertype, and the null-object can be any subtype.\n\n            Here we use Number as the declared type with different specific\n            subtypes as null objects, and verify that the lens accepts all\n            `Number` subtypes regardless of which subtype was used as the default.\n\n            We use the following record as test type:\n            ```\n            record Person(String name, Number age) {\n                Person withAge(Number age) { return new Person(name, age); }\n            }\n            ```\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A nullable Person property","code":["Var<Person> personProperty = Var.ofNull(Person.class)"]},
+
+        {"kind":"when","text":"We create lenses with different Number subtypes as null objects","code":["Var<Number> lensWithIntegerDefault = personProperty.zoomTo(","    Number.class, 0, Person::age, Person::withAge",")","Var<Number> lensWithDoubleDefault = personProperty.zoomTo(","    Number.class, 0.0d, Person::age, Person::withAge",")","Var<Number> lensWithFloatDefault = personProperty.zoomTo(","    Number.class, 0.0f, Person::age, Person::withAge",")","Var<Number> lensWithLongDefault = personProperty.zoomTo(","    Number.class, 0L, Person::age, Person::withAge",")"]},
+
+        {"kind":"then","text":"All lenses return their respective default values","code":["lensWithIntegerDefault.get() == 0","lensWithDoubleDefault.get() == 0.0d","lensWithFloatDefault.get() == 0.0f","lensWithLongDefault.get() == 0L"]},
+
+        {"kind":"when","text":"We set an `Integer` through the Double-default lens","code":["lensWithDoubleDefault.set(42)"]},
+
+        {"kind":"then","text":"Initially, nothing changed, because the parent property value is missing!","code":["personProperty.isEmpty()","lensWithDoubleDefault.get() == 0.0"]},
+
+        {"kind":"when","text":"We create a valid person to store in the common parent property...","code":["personProperty.set(new Person(\"\", 0))"]},
+
+        {"kind":"and","text":"We set the value again...","code":["lensWithDoubleDefault.set(42)"]},
+
+        {"kind":"then","text":"It works correctly","code":["personProperty.get().age() == 42","lensWithDoubleDefault.get() == 42"]},
+
+        {"kind":"when","text":"We set a `Float` through the Integer-default lens","code":["lensWithIntegerDefault.set(3.14f)"]},
+
+        {"kind":"then","text":"It works correctly","code":["personProperty.get().age() == 3.14f","lensWithIntegerDefault.get() == 3.14f"]},
+
+        {"kind":"and","text":"All operations succeeded without type cast exceptions","code":["noExceptionThrown()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Typed `zoomTo` maintains change notification across polymorphic type changes.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            This test verifies that the typed `zoomTo(..)` methods correctly propagate\n            change notifications even when the value changes from one subtype\n            to another. This is a critical behavioral requirement for lenses\n            on polymorphic fields.\n\n            Here we use the following record as test type for the properties:\n            ```\n            record Person(String name, Number age) {\n                Person withAge(Number age) { return new Person(name, age); }\n            }\n            ```\n\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A Person property and a typed lens on the age field","code":["var person = new Person(\"Eve\", 25)","Var<Person> personProperty = Var.of(person)","Var<Number> ageLens = personProperty.zoomTo(Number.class, Person::age, Person::withAge)"]},
+
+        {"kind":"and","text":"A trace list to record change events","code":["var trace = []","var ageView = ageLens.view()","ageView.onChange(From.ALL, it -> trace << [","    value: it.currentValue().orElseNull(),","    type: it.currentValue().orElseNull()?.getClass()?.simpleName","])"]},
+
+        {"kind":"when","text":"We change from Integer to Double","code":["ageLens.set(25.5d)"]},
+
+        {"kind":"then","text":"A change event is fired with the new value and type","code":["trace.size() == 1","trace[0].value == 25.5d","trace[0].type == \"Double\""]},
+
+        {"kind":"when","text":"We change from Double to Float","code":["ageLens.set(30.75f)"]},
+
+        {"kind":"then","text":"A change event is fired with the new value and type","code":["trace.size() == 2","trace[1].value == 30.75f","trace[1].type == \"Float\""]},
+
+        {"kind":"when","text":"We change from Float to Long","code":["ageLens.set(100L)"]},
+
+        {"kind":"then","text":"A change event is fired with the new value and type","code":["trace.size() == 3","trace[2].value == 100L","trace[2].type == \"Long\""]},
+
+        {"kind":"when","text":"We change to the same value (no actual change)","code":["ageLens.set(100L)"]},
+
+        {"kind":"then","text":"No additional change event is fired","code":["trace.size() == 3"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }

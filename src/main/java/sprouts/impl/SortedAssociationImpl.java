@@ -849,6 +849,7 @@ final class SortedAssociationImpl<K, V> implements Association<K, V> {
         return !thisIterator.hasNext() && !otherIterator.hasNext();
     }
 
+    @SuppressWarnings("ReferenceEquality")
     private static <K,V> boolean _recursiveEquals(
             @Nullable Node node1, @Nullable Node node2, Class<K> keyType, Class<V> valueType, Comparator<K> comparator
     ) {

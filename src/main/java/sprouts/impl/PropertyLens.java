@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import sprouts.*;
 
 import java.util.Objects;
+import java.util.function.Function;
 
 /**
  * The Sprouts Property Lens is based on the Lens design pattern, which is a functional programming
@@ -41,7 +42,44 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
 {
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(PropertyLens.class);
 
-    public static <T, B, V extends B> Var<B> of(Var<T> source, @Nullable Class<B> type, V nullObject, Lens<T, B> lens) {
+    static <T, B> Var<@Nullable B> of(Var<T> source, @Nullable Class<B> type, Lens<T, B> lens) {
+        Objects.requireNonNull(source);
+        Objects.requireNonNull(lens);
+        B initialValue;
+        try {
+            initialValue = lens.getter(Util.fakeNonNull(source.orElseNull()));
+        } catch (Exception e) {
+            Util.sneakyThrowExceptionIfFatal(e);
+            throw new IllegalArgumentException("Lens getter must not throw an exception", e);
+        }
+        if ( type == null )
+            type = Util.expectedClassFromItem(initialValue);
+        return new PropertyLens<>(
+                type,
+                Sprouts.factory().defaultId(),
+                false,//does not allow null
+                initialValue,
+                source,
+                new Lens<T, B>() {
+                    @Override
+                    public B getter(T parentValue) throws Exception {
+                        if ( parentValue == null )
+                            return Util.fakeNonNull(null);
+                        return lens.getter(parentValue);
+                    }
+                    @Override
+                    public T wither(T parentValue, B newValue) throws Exception {
+                        if ( parentValue == null )
+                            return Util.fakeNonNull(null);
+
+                        return lens.wither(parentValue, newValue);
+                    }
+                },
+                null
+        );
+    }
+
+    static <T, B, V extends B> Var<B> of(Var<T> source, @Nullable Class<B> type, V nullObject, Lens<T, B> lens) {
         Objects.requireNonNull(source, "Source must not be null");
         Objects.requireNonNull(nullObject, "Null object must not be null");
         Objects.requireNonNull(lens, "Lens must not be null");
@@ -70,7 +108,7 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
         );
     }
 
-    public static <T, B> Var<B> ofNullable(Class<B> type, Var<T> source, Lens<T, B> lens) {
+    static <T, B> Var<B> ofNullable(Class<B> type, Var<T> source, Lens<T, B> lens) {
         Objects.requireNonNull(type, "Type must not be null");
         Objects.requireNonNull(lens, "Lens must not be null");
         B initialValue;
@@ -95,6 +133,28 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
         );
     }
 
+    static <T, B> Var<B> ofProjection(Var<T> source, @Nullable Class<B> type, Function<T,B> getter, Function<B,T> setter) {
+        Lens<T,B> lens = Lens.of(getter, (a,b)->setter.apply(b));
+        B initialValue;
+        try {
+            initialValue = lens.getter(Util.fakeNonNull(source.orElseNull()));
+        } catch (Exception e) {
+            Util.sneakyThrowExceptionIfFatal(e);
+            throw new IllegalArgumentException("Lens getter must not throw an exception", e);
+        }
+        if ( type == null )
+            type = Util.expectedClassFromItem(initialValue);
+        return new PropertyLens<>(
+                type,
+                Sprouts.factory().defaultId(),
+                false,//does not allow null
+                initialValue, //may NOT be null
+                source,
+                lens,
+                null
+        );
+    }
+
     private final PropertyChangeListeners<T> _changeListeners;
     private final String              _id;
     private final boolean             _nullable;
@@ -105,7 +165,7 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
     private @Nullable T _lastItem;
 
 
-    public PropertyLens(
+    private PropertyLens(
             Class<T>                        type,
             String                          id,
             boolean                         allowsNull,

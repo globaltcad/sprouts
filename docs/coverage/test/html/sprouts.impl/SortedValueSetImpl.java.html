@@ -663,27 +663,28 @@ final class SortedValueSetImpl&lt;E&gt; implements ValueSet&lt;E&gt; {
 <span class="pc bpc" id="L663" title="2 of 4 branches missed.">        return !thisIterator.hasNext() &amp;&amp; !otherIterator.hasNext();</span>
     }
 
+    @SuppressWarnings(&quot;ReferenceEquality&quot;)
     private static &lt;E&gt; boolean _recursiveEquals(@Nullable Node node1, @Nullable Node node2, Class&lt;E&gt; type, Comparator&lt;E&gt; comparator) {
-<span class="fc bfc" id="L667" title="All 2 branches covered.">        if ( node1 == node2 ) {</span>
-<span class="fc" id="L668">            return true;</span>
+<span class="fc bfc" id="L668" title="All 2 branches covered.">        if ( node1 == node2 ) {</span>
+<span class="fc" id="L669">            return true;</span>
         }
-<span class="pc bpc" id="L670" title="2 of 4 branches missed.">        if ( node1 == null || node2 == null ) {</span>
-<span class="nc" id="L671">            return false;</span>
+<span class="pc bpc" id="L671" title="2 of 4 branches missed.">        if ( node1 == null || node2 == null ) {</span>
+<span class="nc" id="L672">            return false;</span>
         }
-<span class="fc" id="L673">        if (</span>
-<span class="fc bfc" id="L674" title="All 2 branches covered.">            node1._size == node2._size &amp;&amp;</span>
-<span class="fc bfc" id="L675" title="All 2 branches covered.">            node1._elementsArray == node2._elementsArray &amp;&amp;</span>
-<span class="pc bpc" id="L676" title="3 of 4 branches missed.">            (node1._left != node2._left || node1._right != node2._right)  // The only difference is somewhere deep down!</span>
+<span class="fc" id="L674">        if (</span>
+<span class="fc bfc" id="L675" title="All 2 branches covered.">            node1._size == node2._size &amp;&amp;</span>
+<span class="fc bfc" id="L676" title="All 2 branches covered.">            node1._elementsArray == node2._elementsArray &amp;&amp;</span>
+<span class="pc bpc" id="L677" title="3 of 4 branches missed.">            (node1._left != node2._left || node1._right != node2._right)  // The only difference is somewhere deep down!</span>
         ) {
-<span class="fc bfc" id="L678" title="All 2 branches covered.">            if ( !_recursiveEquals(node1._left, node2._left, type, comparator) ) {</span>
-<span class="fc" id="L679">                return false;</span>
+<span class="fc bfc" id="L679" title="All 2 branches covered.">            if ( !_recursiveEquals(node1._left, node2._left, type, comparator) ) {</span>
+<span class="fc" id="L680">                return false;</span>
             }
-<span class="pc bpc" id="L681" title="1 of 2 branches missed.">            if ( !_recursiveEquals(node1._right, node2._right, type, comparator) ) {</span>
-<span class="nc" id="L682">                return false;</span>
+<span class="pc bpc" id="L682" title="1 of 2 branches missed.">            if ( !_recursiveEquals(node1._right, node2._right, type, comparator) ) {</span>
+<span class="nc" id="L683">                return false;</span>
             }
-<span class="fc" id="L684">            return true;</span>
+<span class="fc" id="L685">            return true;</span>
         } else {
-<span class="fc" id="L686">            return _exhaustiveEquals(</span>
+<span class="fc" id="L687">            return _exhaustiveEquals(</span>
                     new SortedValueSetImpl&lt;&gt;(type, comparator, node1),
                     new SortedValueSetImpl&lt;&gt;(type, comparator, node2)
                 );
@@ -692,17 +693,17 @@ final class SortedValueSetImpl&lt;E&gt; implements ValueSet&lt;E&gt; {
 
     @Override
     public int hashCode() {
-<span class="fc" id="L695">        Integer cached = _cachedHashCode.get();</span>
-<span class="fc bfc" id="L696" title="All 2 branches covered.">        if (cached != null)</span>
-<span class="fc" id="L697">            return cached;</span>
-<span class="fc" id="L698">        int headerHash = Objects.hash(_type, _comparator);</span>
-<span class="fc" id="L699">        int contentHash = 31;</span>
-<span class="fc bfc" id="L700" title="All 2 branches covered.">        for (E element : this) {</span>
-<span class="fc" id="L701">            contentHash = 31 * contentHash + Objects.hash(element);</span>
-<span class="fc" id="L702">        }</span>
-<span class="fc" id="L703">        int result = 31 * headerHash + contentHash;</span>
-<span class="fc" id="L704">        _cachedHashCode.set(result);</span>
-<span class="fc" id="L705">        return result;</span>
+<span class="fc" id="L696">        Integer cached = _cachedHashCode.get();</span>
+<span class="fc bfc" id="L697" title="All 2 branches covered.">        if (cached != null)</span>
+<span class="fc" id="L698">            return cached;</span>
+<span class="fc" id="L699">        int headerHash = Objects.hash(_type, _comparator);</span>
+<span class="fc" id="L700">        int contentHash = 31;</span>
+<span class="fc bfc" id="L701" title="All 2 branches covered.">        for (E element : this) {</span>
+<span class="fc" id="L702">            contentHash = 31 * contentHash + Objects.hash(element);</span>
+<span class="fc" id="L703">        }</span>
+<span class="fc" id="L704">        int result = 31 * headerHash + contentHash;</span>
+<span class="fc" id="L705">        _cachedHashCode.set(result);</span>
+<span class="fc" id="L706">        return result;</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>
