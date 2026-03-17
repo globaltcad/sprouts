@@ -92,6 +92,13 @@ final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
 
         @Nullable <T> Node setAllAt(int index, int offset, Tuple<T> tuple, Class<T> type, ArrayItemAccess<?, Object> access, boolean allowsNull);
 
+        /**
+         * Removes every element that is a member of {@code toRemove} by traversing
+         * the tree and only copying the paths that actually change.
+         * Returns {@code null} when every element in this node is removed.
+         */
+        @Nullable Node removeAllOf(Set<?> toRemove, Class<?> type, ArrayItemAccess<?, Object> access, boolean allowsNull);
+
         <T> void forEach(ArrayItemAccess<T, Object> access, Consumer<T> consumer);
     }
 
@@ -204,6 +211,34 @@ final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
             if ( isAlreadyTheSame )
                 return this;
             return new LeafNode(newItems);
+        }
+
+        @Override
+        public @Nullable Node removeAllOf(
+                Set<?>                    toRemove,
+                Class<?>                  type,
+                ArrayItemAccess<?, Object> access,
+                boolean                   allowsNull
+        ) {
+            int currentSize = _length(_data);
+            // First pass: count how many items survive.
+            int survivorCount = 0;
+            for (int i = 0; i < currentSize; i++) {
+                if (!toRemove.contains(access.get(i, _data)))
+                    survivorCount++;
+            }
+            if (survivorCount == currentSize) return this; // nothing changed – share this node
+            if (survivorCount == 0)           return null; // everything removed
+
+            // Second pass: copy survivors into a fresh, correctly-typed array.
+            Object newData = _createArray(type, allowsNull, survivorCount);
+            int writeIndex = 0;
+            for (int i = 0; i < currentSize; i++) {
+                Object item = access.get(i, _data);
+                if (!toRemove.contains(item))
+                    _setAt(writeIndex++, item, newData);
+            }
+            return new LeafNode(newData);
         }
 
         @Override
@@ -396,6 +431,30 @@ final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
                 return null;
             else
                 return new BranchNode(newChildren);
+        }
+
+        @Override
+        public @Nullable Node removeAllOf(
+                Set<?>                    toRemove,
+                Class<?>                  type,
+                ArrayItemAccess<?, Object> access,
+                boolean                   allowsNull
+        ) {
+            Node[] children    = _children;
+            Node[] newChildren = children; // start lazy – only clone on first real change
+            for (int i = 0; i < children.length; i++) {
+                Node child = children[i];
+                if (child == null) continue;
+                Node newChild = child.removeAllOf(toRemove, type, access, allowsNull);
+                if (newChild != child) {          // referential change means the subtree was modified
+                    if (newChildren == children)
+                        newChildren = children.clone();
+                    newChildren[i] = newChild;    // null is a valid value (subtree fully removed)
+                }
+            }
+            if (newChildren == children)     return this; // nothing changed – share this node
+            if (_isAllNull(newChildren))     return null; // every child was wiped out
+            return new BranchNode(newChildren);
         }
 
         @Override
@@ -622,23 +681,39 @@ final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
         return TupleTree.of(allowsNull(), type(), filteredItems);
     }
 
+    // ── Internal driver ──────────────────────────────────────────────────────────
+    /**
+     * Removes every element that is a member of {@code toRemove} via a
+     * single tree traversal, sharing all unchanged subtrees (structural sharing).
+     */
+    TupleTree<T> removeAllOf(Set<?> toRemove) {
+        if (toRemove.isEmpty() || _size == 0)
+            return this;
+        Node newRoot = _root.removeAllOf(toRemove, _type, _itemGetter, _allowsNull);
+        if (newRoot == _root)
+            return this;
+        int newSize = (newRoot == null ? 0 : newRoot.size());
+        return new TupleTree<>(newSize, _allowsNull, _type, newRoot);
+    }
+
     @Override
-    public TupleTree<T> removeAll(Tuple<T> properties) {
-        if (properties.size() == 0) {
+    public TupleTree<T> removeAll(Iterable<T> properties) {
+        Tuple<T> asTuple = null;
+        if ( properties instanceof Tuple ) {
+            asTuple = (Tuple<T>) properties;
+        } else {
+            asTuple = allowsNull() ? Tuple.ofNullable(type(), properties) : Tuple.of(type(), properties);
+        }
+        if (asTuple.isEmpty())
             return this;
-        }
-        List<T> newItems = new ArrayList<>(_size);
-        Set<T> toRemove = properties.toSet();
-        for (int i = 0; i < _size; i++) {
-            T item = get(i);
-            if (!toRemove.contains(item)) {
-                newItems.add(item);
-            }
-        }
-        if (newItems.size() == _size) {
-            return this;
-        }
-        return new TupleTree<>(newItems.size(), _allowsNull, _type, _createRootFromList(_type, _allowsNull, newItems));
+        // Build the removal set once, then do a single tree traversal.
+        return removeAllOf(asTuple.toSet());
+    }
+
+    @Override
+    public TupleTree<T> remove(T item) {
+        // Singleton set → same O(log₃₂ n) tree traversal, no repeated indexOf + removeAt.
+        return removeAllOf(Collections.singleton(item));
     }
 
     @Override

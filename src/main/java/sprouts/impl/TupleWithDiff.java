@@ -192,12 +192,29 @@ final class TupleWithDiff<T extends @Nullable Object> implements Tuple<T>, Seque
     }
 
     @Override
-    public Tuple<T> removeAll(Tuple<T> properties) {
+    public Tuple<T> removeAll(Iterable<T> properties) {
         TupleTree<T> withoutItems = _tupleTree.removeAll(properties);
         if ( Util.refEquals(withoutItems, _tupleTree) )
             return this;
         SequenceDiff diff = SequenceDiff.of(this, SequenceChange.REMOVE, -1, this.size() - withoutItems.size());
         return new TupleWithDiff<>(withoutItems, diff);
+    }
+
+    @Override
+    public Tuple<T> remove( T item ) {
+        // Singleton set → same O(log₃₂ n) tree traversal, no repeated indexOf + removeAt.
+        TupleTree<T> withoutItems = _tupleTree.remove(item);
+        if ( Util.refEquals(withoutItems, _tupleTree) )
+            return this;
+        int numberOfItemsRemoved = this.size() - withoutItems.size();
+        if ( numberOfItemsRemoved == 1 ) {
+            int index = this.firstIndexOf(item);
+            SequenceDiff diff = SequenceDiff.of(this, SequenceChange.REMOVE, index, 1);
+            return new TupleWithDiff<>(withoutItems, diff);
+        } else {
+            SequenceDiff diff = SequenceDiff.of(this, SequenceChange.REMOVE, -1, numberOfItemsRemoved);
+            return new TupleWithDiff<>(withoutItems, diff);
+        }
     }
 
     @Override

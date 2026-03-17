@@ -704,13 +704,7 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @return A new tuple of items with the desired change.
      */
     default Tuple<T> remove( T item ) {
-        Tuple<T> result = this;
-        int index = result.firstIndexOf(item);
-        while ( index >= 0 ) {
-            result = result.removeAt(index);
-            index = result.firstIndexOf(item);
-        }
-        return result;
+        return removeAll( item == null ? Tuple.ofNullable( type(), (T) null ) : Tuple.of(item) );
     }
 
     /**
@@ -1036,7 +1030,9 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @param items the tuple of items to have removed in the new tuple.
      * @return A new tuple of items with the desired change.
      */
-    Tuple<T> removeAll( Tuple<T> items );
+    default Tuple<T> removeAll( Tuple<T> items ) {
+        return removeAll((Iterable<T>)  items);
+    }
 
     /**
      *  Removes all the items of the provided array from the tuple.
@@ -1057,7 +1053,11 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @return A new tuple of items with the desired change.
      */
     default Tuple<T> removeAll( Iterable<T> items ) {
-        return removeAll( Tuple.of(type(), items) );
+        Tuple<T> result = this;
+        for ( T item : items ) {
+            result = result.remove( item );
+        }
+        return result;
     }
 
     /**
