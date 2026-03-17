@@ -711,7 +711,7 @@ final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
     }
 
     @Override
-    public Tuple<T> remove(T item) {
+    public TupleTree<T> remove(T item) {
         // Singleton set → same O(log₃₂ n) tree traversal, no repeated indexOf + removeAt.
         return removeAllOf(Collections.singleton(item));
     }

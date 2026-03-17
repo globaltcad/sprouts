@@ -1940,6 +1940,7 @@ class Tuple_Spec extends Specification
     def 'The `remove(T)` result carries the correct sequence-diff metadata'(
         Tuple<Object>  input,
         Object         target,
+        int            index,
         int            expectedRemovedCount
     ) {
         reportInfo """
@@ -1963,18 +1964,19 @@ class Tuple_Spec extends Specification
         then: 'The change type is REMOVE.'
             diff.change() == SequenceChange.REMOVE
         and: 'The index is -1 because the removed elements are not necessarily contiguous.'
-            diff.index().orElse(-1) == -1
+            diff.index().orElse(-1) == index
         and: 'The size reflects how many items were removed.'
             diff.size() == expectedRemovedCount
 
         where:
-            input                              | target | expectedRemovedCount
-            Tuple.of(1, 2, 2, 3, 2, 4)         | 2      | 3
-            Tuple.of(4, 2, 2, 7, 2, 3, 4, 7)   | 2      | 3
-            Tuple.of("a", "b", "a", "c")       | "a"    | 2
-            Tuple.of(42)                       | 42     | 1
-            Tuple.of(1, 2, 3)                  | 1      | 1
-            Tuple.of(1, 2, 3)                  | 3      | 1
+            input                              | target | index | expectedRemovedCount
+            Tuple.of(1, 2, 2, 3, 2, 4)         | 2      |  -1   | 3
+            Tuple.of(4, 2, 2, 7, 2, 3, 4, 7)   | 2      |  -1   | 3
+            Tuple.of("a", "b", "a", "c")       | "a"    |  -1   | 2
+            Tuple.of(42)                       | 42     |   0   | 1
+            Tuple.of(1, 2, 3)                  | 1      |   0   | 1
+            Tuple.of(1, 2, 3)                  | 3      |   2   | 1
+            Tuple.of(Integer, (-40..90))       | 32     |   72  | 1
     }
 
     def 'The `removeAll(Tuple)` method removes every occurrence of every value in the removal set'(
