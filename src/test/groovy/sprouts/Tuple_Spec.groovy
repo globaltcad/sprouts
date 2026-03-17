@@ -27,7 +27,7 @@ import java.util.stream.Stream
     and it is way more efficient than a Java List.
 
 ''')
-@Subject([Tuple])
+@Subject([Tuple, SequenceDiffOwner])
 class Tuple_Spec extends Specification
 {
     enum Operation {
@@ -322,7 +322,7 @@ class Tuple_Spec extends Specification
         when : 'We apply an operation on the input and get a result.'
             var result = operation(input)
         then : 'The result tuple implements an interface for accessing the last operation.'
-            result instanceof SequenceDiffOwner
+            (result instanceof SequenceDiffOwner)
         and : 'The last operation exists, because the result is a product of an operation.'
             (result as SequenceDiffOwner).differenceFromPrevious().isPresent()
 
@@ -1828,6 +1828,300 @@ class Tuple_Spec extends Specification
             Tuple.ofNullable(String, "x", null, "y").join(null)
         then: 'A NullPointerException is still thrown'
             thrown(NullPointerException)
+    }
+
+    def 'The `remove(T)` method erases every occurrence of the target value'(
+        Tuple<Object> input, Object target, Tuple<Object> expected
+    ) {
+        reportInfo """
+            `remove(T)` must eliminate **all** occurrences of the target value, not
+            just the first one.
+ 
+            The implementation achieves this with a single bottom-up tree traversal
+            using a singleton set as the removal predicate. Each leaf node is visited
+            exactly once; only the nodes on the path from the root to a changed leaf
+            are copied — all other subtrees are shared with the original tuple
+            unchanged (structural sharing).
+ 
+            This table exercises the full range of shapes: tuples whose elements
+            live in a single dense leaf (< 512 items), tuples large enough to
+            span multiple branch nodes (≥ 512 items), boundary cases such as an
+            absent target, a fully-matching tuple, a single-element match, and
+            targets that appear only at the very first or very last position.
+        """
+        given: 'A snapshot of the input to verify immutability later.'
+            var snapshot = new ArrayList<>(input.toList())
+
+        when: 'We remove every occurrence of the target.'
+            var result = input.remove(target)
+
+        then: 'The content of the result matches the expected tuple.'
+            result == expected
+        and: 'The type and nullability are preserved.'
+            result.type()       == input.type()
+            result.allowsNull() == input.allowsNull()
+        and: 'The original tuple is completely unchanged (immutability guarantee).'
+            input.toList() == snapshot
+
+        where: 'We try a broad range of input shapes and target positions.'
+            input                                                                | target | expected
+            Tuple.of(1, 2, 2, 3, 2, 4)                                           | 2      | Tuple.of(1, 3, 4)
+            Tuple.of(4, 2, 2, 7, 2, 3, 4, 7)                                     | 2      | Tuple.of(4, 7, 3, 4, 7)
+            Tuple.of("a", "b", "a", "c", "a")                                    | "a"    | Tuple.of("b", "c")
+            Tuple.of("hello", "world", "hello")                                  | "hello"| Tuple.of("world")
+            Tuple.of(9, 1, 2, 3, 4, 5)                                           | 9      | Tuple.of(1, 2, 3, 4, 5)
+            Tuple.of(1, 2, 3, 4, 5, 9)                                           | 9      | Tuple.of(1, 2, 3, 4, 5)
+            Tuple.of(9, 1, 9, 2, 9)                                              | 9      | Tuple.of(1, 2)
+            Tuple.of(42)                                                         | 42     | Tuple.of(Integer)        // single element, fully removed
+            Tuple.of(Integer)                                                    | 0      | Tuple.of(Integer)        // empty input stays empty
+            Tuple.of(1, 2, 3, 4, 5)                                              | 99     | Tuple.of(1, 2, 3, 4, 5) // absent target → unchanged content
+            Tuple.of(Integer, (0..599).collect { it % 2 == 0 ? it : -1 })        | -1     | Tuple.of(Integer, (0..598).findAll { it % 2 == 0 })
+            Tuple.of(Integer, (-800..800).collect { it % 3 == 0 ? 3 : it })      | 3      | Tuple.of(Integer, (-800..800).findAll { it % 3 != 0 })
+            Tuple.of(Integer, (-860..860).collect { Math.floor(it/91)%3==0?3:it})| 3      | Tuple.of(Integer, (-860..860).findAll { Math.floor(it/91) % 3 != 0 })
+            Tuple.of(Integer, (0..699).collect { it < 600 ? it : 42 })           | 42     | Tuple.of(Integer, (0..599).findAll {it!=42})
+    }
+
+    def 'The `remove(T)` method also removes null values from a nullable tuple'() {
+        reportInfo """
+            When a nullable tuple contains null elements, `remove(null)` must
+            eliminate every one of them.
+ 
+            Internally the singleton removal set is `Collections.singleton(null)`,
+            and `Set.contains(null)` returns true for a standard `HashSet` or
+            singleton set, so the null-element path in the leaf traversal is handled
+            correctly without any special-casing.
+        """
+        given: 'A nullable tuple that contains several null slots among real values.'
+            var tuple = Tuple.ofNullable(String, "a", null, "b", null, "c", null)
+
+        when: 'We remove null.'
+            var result = tuple.remove(null)
+
+        then: 'All null slots are gone; the non-null values are preserved in order.'
+            result == Tuple.ofNullable(String, "a", "b", "c")
+        and: 'The result is still a nullable tuple (nullability is never changed by remove).'
+            result.allowsNull()
+        and: 'The original tuple is unchanged.'
+            tuple.size() == 6
+            tuple.toList() == ["a", null, "b", null, "c", null]
+    }
+
+    def 'The `remove(T)` method returns the identical tuple object when the target is absent'() {
+        reportInfo """
+            Structural sharing is the key performance property of the tree-based
+            implementation. When no node in the tree contains the target value,
+            every node's `removeAllOf(...)` call returns `this` (reference identity),
+            which propagates all the way back to the root. Consequently the
+            `TupleTree` itself returns `this`, and `TupleWithDiff` also returns
+            `this` unchanged.
+ 
+            A caller can therefore rely on reference-identity (`is`) to detect that
+            nothing changed, which is exactly what reactive change listeners do to
+            avoid unnecessary updates.
+        """
+        given: 'A small tuple whose elements do not include the target.'
+            var small = Tuple.of("apple", "banana", "cherry")
+
+        when: 'We attempt to remove a value that is simply not there.'
+            var result = small.remove("mango")
+
+        then: 'The returned reference is identical to the original — no allocation happened.'
+            result.is(small)
+
+        when: 'We have a large tuple (spanning branch nodes) that also does not contain the target.'
+            var large = Tuple.of(Integer, 0..999)
+        and: 'We attempt to remove a value that is not in the large tuple.'
+            var largeResult = large.remove(-1)
+
+        then: 'Again the identical object is returned — the entire tree is shared.'
+            largeResult.is(large)
+    }
+
+    def 'The `remove(T)` result carries the correct sequence-diff metadata'(
+        Tuple<Object>  input,
+        Object         target,
+        int            expectedRemovedCount
+    ) {
+        reportInfo """
+            Because `TupleWithDiff.remove(T)` creates a `SequenceDiff` after the
+            tree traversal, listeners can inspect exactly how many items were removed.
+ 
+            The `index` in the diff is always -1 for `remove(T)` because the removed
+            items may be scattered non-contiguously through the tuple (just like
+            `removeAll`). The `change` is always `SequenceChange.REMOVE`.
+        """
+        when: 'We remove the target from the tuple.'
+            var result = input.remove(target)
+
+        then: 'The result exposes a sequence diff.'
+            result instanceof SequenceDiffOwner
+            (result as SequenceDiffOwner).differenceFromPrevious().isPresent()
+
+        when: 'We read the diff.'
+            var diff = (result as SequenceDiffOwner).differenceFromPrevious().get()
+
+        then: 'The change type is REMOVE.'
+            diff.change() == SequenceChange.REMOVE
+        and: 'The index is -1 because the removed elements are not necessarily contiguous.'
+            diff.index().orElse(-1) == -1
+        and: 'The size reflects how many items were removed.'
+            diff.size() == expectedRemovedCount
+
+        where:
+            input                              | target | expectedRemovedCount
+            Tuple.of(1, 2, 2, 3, 2, 4)         | 2      | 3
+            Tuple.of(4, 2, 2, 7, 2, 3, 4, 7)   | 2      | 3
+            Tuple.of("a", "b", "a", "c")       | "a"    | 2
+            Tuple.of(42)                       | 42     | 1
+            Tuple.of(1, 2, 3)                  | 1      | 1
+            Tuple.of(1, 2, 3)                  | 3      | 1
+    }
+
+    def 'The `removeAll(Tuple)` method removes every occurrence of every value in the removal set'(
+        Tuple<Object> input, Tuple<Object> toRemove, Tuple<Object> expected
+    ) {
+        reportInfo """
+            `removeAll(Tuple<T>)` converts the removal argument into a `Set` once,
+            then performs a single tree traversal. This means:
+ 
+              - All occurrences of every value in the removal set are eliminated in
+                one pass, without rebuilding the tuple from scratch.
+              - Values that appear multiple times in the removal tuple are deduplicated
+                by the set, so passing `[2, 2, 2]` as the removal argument is
+                identical to passing `[2]`.
+              - Structural sharing is respected: subtrees that contain none of the
+                removal values are not copied.
+ 
+            The table below covers: multiple distinct removal values, duplicated
+            entries in the removal tuple, values not present in the source, all
+            values removed, and large tuples spanning multiple branch nodes.
+        """
+        given: 'A snapshot of the input to verify immutability.'
+            var snapshot = new ArrayList<>(input.toList())
+
+        when: 'We remove all occurrences of every value in the removal tuple.'
+            var result = input.removeAll(toRemove)
+
+        then: 'The result matches the expected tuple.'
+            result == expected
+        and: 'Type and nullability are unchanged.'
+            result.type()       == input.type()
+            result.allowsNull() == input.allowsNull()
+        and: 'The original tuple is unchanged.'
+            input.toList() == snapshot
+
+        where:
+            input                                                    | toRemove                         | expected
+            Tuple.of(1, 2, 3, 4, 5)                                  | Tuple.of(2, 4)                   | Tuple.of(1, 3, 5)
+            Tuple.of(1, 2, 3, 2, 1)                                  | Tuple.of(1, 2)                   | Tuple.of(3)
+            Tuple.of("a", "b", "c", "b", "a")                        | Tuple.of("a", "c")               | Tuple.of("b", "b")
+            Tuple.of(1, 2, 3, 2, 1)                                  | Tuple.of(2, 2, 2)                | Tuple.of(1, 3, 1)
+            Tuple.of("x", "y", "x", "z", "x")                        | Tuple.of("x", "x")               | Tuple.of("y", "z")
+            Tuple.of(1, 2, 3)                                        | Tuple.of(7, 8, 9)                | Tuple.of(1, 2, 3)
+            Tuple.of(1, 2, 3)                                        | Tuple.of(Integer)                | Tuple.of(1, 2, 3)
+            Tuple.of(1, 2, 3)                                        | Tuple.of(1, 2, 3)                | Tuple.of(Integer)
+            Tuple.of(5, 5, 5)                                        | Tuple.of(5)                      | Tuple.of(Integer)
+            Tuple.of(Integer, (0..699))                              | Tuple.of(Integer, (100..199))    | Tuple.of(Integer, (0..99).plus(200..699))
+            Tuple.of(Integer, (0..599).collect{it%3==0?-1:it})       | Tuple.of(-1)                     | Tuple.of(Integer, (0..599).findAll{it%3!=0})
+    }
+
+    def 'The `removeAll(Tuple)` method returns the identical tuple object when nothing matches'() {
+        reportInfo """
+            Like `remove(T)`, `removeAll(Tuple<T>)` respects structural sharing.
+            When none of the values in the removal set appear in the source tuple,
+            each node's `removeAllOf(...)` call returns `this`, which propagates
+            up so that the same root is reused and ultimately the same `Tuple`
+            object is returned to the caller.
+ 
+            This is important for reactive frameworks that guard downstream work
+            behind a reference-equality check.
+        """
+        given: 'A tuple and a removal tuple whose values do not overlap.'
+            var tuple = Tuple.of("cat", "dog", "fish")
+
+        when: 'We call removeAll with values that are not in the source.'
+            var result = tuple.removeAll(Tuple.of("bird", "hamster"))
+
+        then: 'The returned reference is identical to the original.'
+            result.is(tuple)
+
+        when: 'We have a large tuple and a removal tuple with no overlap.'
+            var large = Tuple.of(Integer, 0..999)
+
+        and: 'We call removeAll on the large tuple with non-overlapping values.'
+            var largeResult = large.removeAll(Tuple.of(-1, -2, -3))
+
+        then: 'The identical large tuple object is returned — the entire tree is shared.'
+            largeResult.is(large)
+    }
+
+    def 'The `removeAll(Tuple)` result carries the correct sequence-diff metadata'(
+        Tuple<Object> input,
+        Tuple<Object> toRemove,
+        int           expectedRemovedCount
+    ) {
+        reportInfo """
+            `TupleWithDiff.removeAll(Tuple<T>)` records a `SequenceDiff` after
+            the traversal, with:
+              - `change = SequenceChange.REMOVE`
+              - `index  = -1` (removed elements are not necessarily contiguous)
+              - `size   = number of items removed from the source tuple`
+ 
+            This metadata is what lets change-listeners update themselves
+            efficiently — they know how many items disappeared without having to
+            diff the full contents themselves.
+        """
+        when: 'We remove all matching items.'
+            var result = input.removeAll(toRemove)
+
+        then: 'The result exposes a sequence diff.'
+            result instanceof SequenceDiffOwner
+            (result as SequenceDiffOwner).differenceFromPrevious().isPresent()
+
+        when: 'We read the diff.'
+            var diff = (result as SequenceDiffOwner).differenceFromPrevious().get()
+
+        then: 'The change type is REMOVE.'
+            diff.change() == SequenceChange.REMOVE
+        and: 'The index is -1 because removals can be non-contiguous.'
+            diff.index().orElse(-1) == -1
+        and: 'The size equals the number of items removed.'
+            diff.size() == expectedRemovedCount
+
+        where:
+            input                             | toRemove           | expectedRemovedCount
+            Tuple.of(1, 2, 3, 4, 5)           | Tuple.of(2, 4)     | 2
+            Tuple.of(1, 2, 3, 2, 1)           | Tuple.of(1, 2)     | 4
+            Tuple.of("a", "b", "a", "c", "a") | Tuple.of("a")      | 3
+            Tuple.of(1, 2, 3)                 | Tuple.of(1, 2, 3)  | 3
+            Tuple.of(5, 5, 5, 5)              | Tuple.of(5, 5)     | 4  // dedup: [5,5] → {5}, removes all 4
+    }
+
+    def 'Both `remove(T)` and `removeAll(Tuple)` are consistent with each other and with `removeIf`'(
+        Tuple<Integer> input, Integer target
+    ) {
+        reportInfo """
+            `remove(T)`, `removeAll(Tuple.of(target))`, and `removeIf { it == target }`
+            must always produce the same result — they are three different spellings
+            of the same semantic operation. This consistency check ensures that the
+            new tree-traversal implementation produces output that is interchangeable
+            with the predicate-based path.
+        """
+        when: 'We apply all three spelling variants.'
+            var viaRemove    = input.remove(target)
+            var viaRemoveAll = input.removeAll(Tuple.of(target))
+            var viaRemoveIf  = input.removeIf { it == target }
+
+        then: 'All three produce the same result.'
+            viaRemove    == viaRemoveAll
+            viaRemoveAll == viaRemoveIf
+
+        where:
+            input                                                | target
+            Tuple.of(1, 2, 2, 3, 2, 4)                           | 2
+            Tuple.of(1, 2, 3, 4, 5)                              | 99    // absent
+            Tuple.of(7, 7, 7)                                    | 7     // all match
+            Tuple.of(Integer, (0..599)).map({it%3==0?-1:it})     | -1    // large tree
     }
 
     // Helper method to generate mixed-type lists for data-driven testing
