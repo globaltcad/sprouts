@@ -1052,7 +1052,13 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @param items the tuple of items to have removed in the new tuple.
      * @return A new tuple of items with the desired change.
      */
-    Tuple<T> removeAll( Iterable<T> items );
+    default Tuple<T> removeAll( Iterable<T> items ) {
+        Tuple<T> result = this;
+        for ( T item : items ) {
+            result = result.remove( item );
+        }
+        return result;
+    }
 
     /**
      *  Creates an updated tuple of items where the supplied
