@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import sprouts.*;
 
 import java.lang.ref.WeakReference;
+import java.util.Collections;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -25,7 +26,7 @@ final class ChangeListeners<D> {
     private final TupleTree<Action<D>> _actions;
 
 
-    ChangeListeners() {this(((TupleWithDiff)Tuple.of(Action.class)).getData());}
+    ChangeListeners() { this((TupleTree)TupleTree.of(false, Action.class, Collections.emptyList())); }
 
     ChangeListeners(TupleTree<Action<D>> newActions) {
         _actions = newActions;
@@ -64,7 +65,7 @@ final class ChangeListeners<D> {
     }
 
     ChangeListeners<D> unsubscribeAll() {
-        return new ChangeListeners<>(((TupleWithDiff) Tuple.of(Action.class)).getData());
+        return ChangeListeners.empty();
     }
 
     long getActions(Consumer<TupleTree<Action<D>>> receiver) {
