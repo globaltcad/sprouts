@@ -152,7 +152,7 @@ final class ChangeListenerCleaner
                 action.run();
             } catch ( Exception e ) {
                 Util.sneakyThrowExceptionIfFatal(e);
-                _logError("Failed to execute cleanup action '" + action + "'.", e);
+                _logError("Failed to execute cleanup action '{}'.", action, e);
             }
             return;
         }
