@@ -157,7 +157,8 @@ final class ChangeListeners<D> {
      *  The {@link ChangeListeners} type is completely immutable,
      *  and so it cannot clean itself up, which is why it needs
      *  the {@link OwnerCallableForCleanup} interface to call back
-     *  to the owner to perform the cleanup.
+     *  to the owner to perform the cleanup.<br>
+     *  <b>Important: implementations of this interface MUST be thread safe!</b>
      *
      * @param <D> The type of the delegate that the change listeners are listening to.
      */
