@@ -17,17 +17,17 @@ final class ChangeListeners<D> {
 
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(ChangeListeners.class);
 
-    private final Tuple<Action<D>> _actions;
+    private final TupleTree<Action<D>> _actions;
 
 
-    ChangeListeners() {this((Tuple)Tuple.of(Action.class));}
+    ChangeListeners() {this(((TupleWithDiff)Tuple.of(Action.class)).getData());}
 
-    ChangeListeners(Tuple<Action<D>> newActions) {
+    ChangeListeners(TupleTree<Action<D>> newActions) {
         _actions = newActions;
     }
 
     @SuppressWarnings("NullAway")
-    private Tuple<Action<D>> _getState() {
+    private TupleTree<Action<D>> _getState() {
         return _actions;
     }
 
@@ -39,16 +39,16 @@ final class ChangeListeners<D> {
                             WeakReference<OwnerCallableForCleanup<ChangeListeners<?>>> weakThis = new WeakReference<>((OwnerCallableForCleanup)ref);
                             AutomaticUnSubscriber cleaner = new AutomaticUnSubscriber(weakThis, channel, wa);
                             ChangeListenerCleaner.getInstance().register(owner, cleaner);
-                            return actions.add(action);
+                            return (TupleTree<Action<D>>) actions.add(action);
                         })
                         .orElse(actions);
             } else
-                return actions.add(action);
+                return (TupleTree<Action<D>>) actions.add(action);
         });
     }
 
     ChangeListeners<D> unsubscribe(Subscriber subscriber) {
-        return updateActions(actions -> actions.removeIf( a -> {
+        return updateActions(actions -> (TupleTree<Action<D>>) actions.removeIf( a -> {
             if ( a instanceof ObserverAsActionImpl) {
                 ObserverAsActionImpl<?> pcl = (ObserverAsActionImpl<?>) a;
                 return pcl.listener() == subscriber;
@@ -59,18 +59,18 @@ final class ChangeListeners<D> {
     }
 
     ChangeListeners<D> unsubscribeAll() {
-        return new ChangeListeners<>((Tuple) Tuple.of(Action.class));
+        return new ChangeListeners<>(((TupleWithDiff) Tuple.of(Action.class)).getData());
     }
 
-    long getActions(Consumer<Tuple<Action<D>>> receiver) {
-        Tuple<Action<D>> actions = _getState();
+    long getActions(Consumer<TupleTree<Action<D>>> receiver) {
+        TupleTree<Action<D>> actions = _getState();
         if ( !actions.isEmpty() )
             receiver.accept(actions);
         return actions.size();
     }
 
-    ChangeListeners<D> updateActions(Function<Tuple<Action<D>>, Tuple<Action<D>>> receiver) {
-        Tuple<Action<D>> actions = _getState();
+    ChangeListeners<D> updateActions(Function<TupleTree<Action<D>>, TupleTree<Action<D>>> receiver) {
+        TupleTree<Action<D>> actions = _getState();
         actions = receiver.apply(actions);
         return new ChangeListeners<>(actions);
     }
