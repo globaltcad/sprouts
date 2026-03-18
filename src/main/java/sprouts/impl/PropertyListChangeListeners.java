@@ -21,8 +21,8 @@ public final class PropertyListChangeListeners<T extends @Nullable Object> imple
     // with the main thread calling onChange(), unsubscribe(), or fireChange().
     // Every mutation must therefore be guarded by this object's monitor.
     private volatile ChangeListeners<ValsDelegate<T>> _changeListeners;
-    // For reading only, no locking is needed since this "volatile"!
-
+    // For simple reads, no additional locking is needed because this field is volatile,
+    // which provides the required visibility; compound updates remain synchronized.
 
     /**
      *  Creates a new instance of {@link PropertyListChangeListeners}, without any listeners.
