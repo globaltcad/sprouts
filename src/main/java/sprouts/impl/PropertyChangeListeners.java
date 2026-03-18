@@ -64,7 +64,7 @@ public final class PropertyChangeListeners<T> implements ChangeListeners.OwnerCa
     @Override
     public synchronized void updateState(@Nullable Channel channel, Function<ChangeListeners<ValDelegate<T>>, ChangeListeners<ValDelegate<T>>> updater) {
         if ( channel != null )
-            _updateActionsFor(channel, it -> updater.apply(_getActionsFor(channel)));
+            _updateActionsFor(channel, updater);
     }
 
     /**
