@@ -2,9 +2,9 @@
   "className":"sprouts.Tuple_Spec",
   "title":"Tuple - a Data Oriented Array",
   "narrative":"Data Oriented programming is a core concept in Sprouts,\n    which is why we provide the `Tuple` type representing\n    an immutable array of elements with proper value semantics.\n    It can also be transformed and filtered in a functional way.\n\n    When modelling value objects, like for example, by declaring\n    records, then we recommend to use the `Tuple` type\n    over of a Java array or a JDK List, because our tuple\n    has better value semantics, immutability guarantees,\n    and it is way more efficient than a Java List.",
-  "subjects":["sprouts.Tuple"],
+  "subjects":["sprouts.Tuple","sprouts.impl.SequenceDiffOwner"],
   "statistics":{
-    "runs":"381",
+    "runs":"425",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -1672,7 +1672,7 @@
       "blocks":[
         {"kind":"when","text":"We apply an operation on the input and get a result.","code":["var result = operation(input)"]},
 
-        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["result instanceof SequenceDiffOwner"]},
+        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["(result instanceof SequenceDiffOwner)"]},
 
         {"kind":"and","text":"The last operation exists, because the result is a product of an operation.","code":["(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
 
@@ -1695,7 +1695,7 @@
       "blocks":[
         {"kind":"when","text":"We apply an operation on the input and get a result.","code":["var result = operation(input)"]},
 
-        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["result instanceof SequenceDiffOwner"]},
+        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["(result instanceof SequenceDiffOwner)"]},
 
         {"kind":"and","text":"The last operation exists, because the result is a product of an operation.","code":["(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
 
@@ -1718,7 +1718,7 @@
       "blocks":[
         {"kind":"when","text":"We apply an operation on the input and get a result.","code":["var result = operation(input)"]},
 
-        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["result instanceof SequenceDiffOwner"]},
+        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["(result instanceof SequenceDiffOwner)"]},
 
         {"kind":"and","text":"The last operation exists, because the result is a product of an operation.","code":["(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
 
@@ -1741,7 +1741,7 @@
       "blocks":[
         {"kind":"when","text":"We apply an operation on the input and get a result.","code":["var result = operation(input)"]},
 
-        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["result instanceof SequenceDiffOwner"]},
+        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["(result instanceof SequenceDiffOwner)"]},
 
         {"kind":"and","text":"The last operation exists, because the result is a product of an operation.","code":["(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
 
@@ -1764,7 +1764,7 @@
       "blocks":[
         {"kind":"when","text":"We apply an operation on the input and get a result.","code":["var result = operation(input)"]},
 
-        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["result instanceof SequenceDiffOwner"]},
+        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["(result instanceof SequenceDiffOwner)"]},
 
         {"kind":"and","text":"The last operation exists, because the result is a product of an operation.","code":["(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
 
@@ -1787,7 +1787,7 @@
       "blocks":[
         {"kind":"when","text":"We apply an operation on the input and get a result.","code":["var result = operation(input)"]},
 
-        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["result instanceof SequenceDiffOwner"]},
+        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["(result instanceof SequenceDiffOwner)"]},
 
         {"kind":"and","text":"The last operation exists, because the result is a product of an operation.","code":["(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
 
@@ -1810,7 +1810,7 @@
       "blocks":[
         {"kind":"when","text":"We apply an operation on the input and get a result.","code":["var result = operation(input)"]},
 
-        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["result instanceof SequenceDiffOwner"]},
+        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["(result instanceof SequenceDiffOwner)"]},
 
         {"kind":"and","text":"The last operation exists, because the result is a product of an operation.","code":["(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
 
@@ -1833,7 +1833,7 @@
       "blocks":[
         {"kind":"when","text":"We apply an operation on the input and get a result.","code":["var result = operation(input)"]},
 
-        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["result instanceof SequenceDiffOwner"]},
+        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["(result instanceof SequenceDiffOwner)"]},
 
         {"kind":"and","text":"The last operation exists, because the result is a product of an operation.","code":["(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
 
@@ -1856,7 +1856,7 @@
       "blocks":[
         {"kind":"when","text":"We apply an operation on the input and get a result.","code":["var result = operation(input)"]},
 
-        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["result instanceof SequenceDiffOwner"]},
+        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["(result instanceof SequenceDiffOwner)"]},
 
         {"kind":"and","text":"The last operation exists, because the result is a product of an operation.","code":["(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
 
@@ -1879,7 +1879,7 @@
       "blocks":[
         {"kind":"when","text":"We apply an operation on the input and get a result.","code":["var result = operation(input)"]},
 
-        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["result instanceof SequenceDiffOwner"]},
+        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["(result instanceof SequenceDiffOwner)"]},
 
         {"kind":"and","text":"The last operation exists, because the result is a product of an operation.","code":["(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
 
@@ -1902,7 +1902,7 @@
       "blocks":[
         {"kind":"when","text":"We apply an operation on the input and get a result.","code":["var result = operation(input)"]},
 
-        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["result instanceof SequenceDiffOwner"]},
+        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["(result instanceof SequenceDiffOwner)"]},
 
         {"kind":"and","text":"The last operation exists, because the result is a product of an operation.","code":["(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
 
@@ -1925,7 +1925,7 @@
       "blocks":[
         {"kind":"when","text":"We apply an operation on the input and get a result.","code":["var result = operation(input)"]},
 
-        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["result instanceof SequenceDiffOwner"]},
+        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["(result instanceof SequenceDiffOwner)"]},
 
         {"kind":"and","text":"The last operation exists, because the result is a product of an operation.","code":["(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
 
@@ -1948,7 +1948,7 @@
       "blocks":[
         {"kind":"when","text":"We apply an operation on the input and get a result.","code":["var result = operation(input)"]},
 
-        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["result instanceof SequenceDiffOwner"]},
+        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["(result instanceof SequenceDiffOwner)"]},
 
         {"kind":"and","text":"The last operation exists, because the result is a product of an operation.","code":["(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
 
@@ -1971,7 +1971,7 @@
       "blocks":[
         {"kind":"when","text":"We apply an operation on the input and get a result.","code":["var result = operation(input)"]},
 
-        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["result instanceof SequenceDiffOwner"]},
+        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["(result instanceof SequenceDiffOwner)"]},
 
         {"kind":"and","text":"The last operation exists, because the result is a product of an operation.","code":["(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
 
@@ -1994,7 +1994,7 @@
       "blocks":[
         {"kind":"when","text":"We apply an operation on the input and get a result.","code":["var result = operation(input)"]},
 
-        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["result instanceof SequenceDiffOwner"]},
+        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["(result instanceof SequenceDiffOwner)"]},
 
         {"kind":"and","text":"The last operation exists, because the result is a product of an operation.","code":["(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
 
@@ -2017,7 +2017,7 @@
       "blocks":[
         {"kind":"when","text":"We apply an operation on the input and get a result.","code":["var result = operation(input)"]},
 
-        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["result instanceof SequenceDiffOwner"]},
+        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["(result instanceof SequenceDiffOwner)"]},
 
         {"kind":"and","text":"The last operation exists, because the result is a product of an operation.","code":["(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
 
@@ -2040,7 +2040,7 @@
       "blocks":[
         {"kind":"when","text":"We apply an operation on the input and get a result.","code":["var result = operation(input)"]},
 
-        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["result instanceof SequenceDiffOwner"]},
+        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["(result instanceof SequenceDiffOwner)"]},
 
         {"kind":"and","text":"The last operation exists, because the result is a product of an operation.","code":["(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
 
@@ -2063,7 +2063,7 @@
       "blocks":[
         {"kind":"when","text":"We apply an operation on the input and get a result.","code":["var result = operation(input)"]},
 
-        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["result instanceof SequenceDiffOwner"]},
+        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["(result instanceof SequenceDiffOwner)"]},
 
         {"kind":"and","text":"The last operation exists, because the result is a product of an operation.","code":["(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
 
@@ -2086,7 +2086,7 @@
       "blocks":[
         {"kind":"when","text":"We apply an operation on the input and get a result.","code":["var result = operation(input)"]},
 
-        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["result instanceof SequenceDiffOwner"]},
+        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["(result instanceof SequenceDiffOwner)"]},
 
         {"kind":"and","text":"The last operation exists, because the result is a product of an operation.","code":["(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
 
@@ -2109,7 +2109,7 @@
       "blocks":[
         {"kind":"when","text":"We apply an operation on the input and get a result.","code":["var result = operation(input)"]},
 
-        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["result instanceof SequenceDiffOwner"]},
+        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["(result instanceof SequenceDiffOwner)"]},
 
         {"kind":"and","text":"The last operation exists, because the result is a product of an operation.","code":["(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
 
@@ -2132,7 +2132,7 @@
       "blocks":[
         {"kind":"when","text":"We apply an operation on the input and get a result.","code":["var result = operation(input)"]},
 
-        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["result instanceof SequenceDiffOwner"]},
+        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["(result instanceof SequenceDiffOwner)"]},
 
         {"kind":"and","text":"The last operation exists, because the result is a product of an operation.","code":["(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
 
@@ -2155,7 +2155,7 @@
       "blocks":[
         {"kind":"when","text":"We apply an operation on the input and get a result.","code":["var result = operation(input)"]},
 
-        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["result instanceof SequenceDiffOwner"]},
+        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["(result instanceof SequenceDiffOwner)"]},
 
         {"kind":"and","text":"The last operation exists, because the result is a product of an operation.","code":["(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
 
@@ -2178,7 +2178,7 @@
       "blocks":[
         {"kind":"when","text":"We apply an operation on the input and get a result.","code":["var result = operation(input)"]},
 
-        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["result instanceof SequenceDiffOwner"]},
+        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["(result instanceof SequenceDiffOwner)"]},
 
         {"kind":"and","text":"The last operation exists, because the result is a product of an operation.","code":["(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
 
@@ -2201,7 +2201,7 @@
       "blocks":[
         {"kind":"when","text":"We apply an operation on the input and get a result.","code":["var result = operation(input)"]},
 
-        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["result instanceof SequenceDiffOwner"]},
+        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["(result instanceof SequenceDiffOwner)"]},
 
         {"kind":"and","text":"The last operation exists, because the result is a product of an operation.","code":["(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
 
@@ -2224,7 +2224,7 @@
       "blocks":[
         {"kind":"when","text":"We apply an operation on the input and get a result.","code":["var result = operation(input)"]},
 
-        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["result instanceof SequenceDiffOwner"]},
+        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["(result instanceof SequenceDiffOwner)"]},
 
         {"kind":"and","text":"The last operation exists, because the result is a product of an operation.","code":["(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
 
@@ -2247,7 +2247,7 @@
       "blocks":[
         {"kind":"when","text":"We apply an operation on the input and get a result.","code":["var result = operation(input)"]},
 
-        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["result instanceof SequenceDiffOwner"]},
+        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["(result instanceof SequenceDiffOwner)"]},
 
         {"kind":"and","text":"The last operation exists, because the result is a product of an operation.","code":["(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
 
@@ -2270,7 +2270,7 @@
       "blocks":[
         {"kind":"when","text":"We apply an operation on the input and get a result.","code":["var result = operation(input)"]},
 
-        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["result instanceof SequenceDiffOwner"]},
+        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["(result instanceof SequenceDiffOwner)"]},
 
         {"kind":"and","text":"The last operation exists, because the result is a product of an operation.","code":["(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
 
@@ -2293,7 +2293,7 @@
       "blocks":[
         {"kind":"when","text":"We apply an operation on the input and get a result.","code":["var result = operation(input)"]},
 
-        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["result instanceof SequenceDiffOwner"]},
+        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["(result instanceof SequenceDiffOwner)"]},
 
         {"kind":"and","text":"The last operation exists, because the result is a product of an operation.","code":["(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
 
@@ -2316,7 +2316,7 @@
       "blocks":[
         {"kind":"when","text":"We apply an operation on the input and get a result.","code":["var result = operation(input)"]},
 
-        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["result instanceof SequenceDiffOwner"]},
+        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["(result instanceof SequenceDiffOwner)"]},
 
         {"kind":"and","text":"The last operation exists, because the result is a product of an operation.","code":["(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
 
@@ -2339,7 +2339,7 @@
       "blocks":[
         {"kind":"when","text":"We apply an operation on the input and get a result.","code":["var result = operation(input)"]},
 
-        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["result instanceof SequenceDiffOwner"]},
+        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["(result instanceof SequenceDiffOwner)"]},
 
         {"kind":"and","text":"The last operation exists, because the result is a product of an operation.","code":["(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
 
@@ -2362,7 +2362,7 @@
       "blocks":[
         {"kind":"when","text":"We apply an operation on the input and get a result.","code":["var result = operation(input)"]},
 
-        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["result instanceof SequenceDiffOwner"]},
+        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["(result instanceof SequenceDiffOwner)"]},
 
         {"kind":"and","text":"The last operation exists, because the result is a product of an operation.","code":["(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
 
@@ -2385,7 +2385,7 @@
       "blocks":[
         {"kind":"when","text":"We apply an operation on the input and get a result.","code":["var result = operation(input)"]},
 
-        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["result instanceof SequenceDiffOwner"]},
+        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["(result instanceof SequenceDiffOwner)"]},
 
         {"kind":"and","text":"The last operation exists, because the result is a product of an operation.","code":["(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
 
@@ -2408,7 +2408,7 @@
       "blocks":[
         {"kind":"when","text":"We apply an operation on the input and get a result.","code":["var result = operation(input)"]},
 
-        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["result instanceof SequenceDiffOwner"]},
+        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["(result instanceof SequenceDiffOwner)"]},
 
         {"kind":"and","text":"The last operation exists, because the result is a product of an operation.","code":["(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
 
@@ -2431,7 +2431,7 @@
       "blocks":[
         {"kind":"when","text":"We apply an operation on the input and get a result.","code":["var result = operation(input)"]},
 
-        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["result instanceof SequenceDiffOwner"]},
+        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["(result instanceof SequenceDiffOwner)"]},
 
         {"kind":"and","text":"The last operation exists, because the result is a product of an operation.","code":["(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
 
@@ -2454,7 +2454,7 @@
       "blocks":[
         {"kind":"when","text":"We apply an operation on the input and get a result.","code":["var result = operation(input)"]},
 
-        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["result instanceof SequenceDiffOwner"]},
+        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["(result instanceof SequenceDiffOwner)"]},
 
         {"kind":"and","text":"The last operation exists, because the result is a product of an operation.","code":["(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
 
@@ -2477,7 +2477,7 @@
       "blocks":[
         {"kind":"when","text":"We apply an operation on the input and get a result.","code":["var result = operation(input)"]},
 
-        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["result instanceof SequenceDiffOwner"]},
+        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["(result instanceof SequenceDiffOwner)"]},
 
         {"kind":"and","text":"The last operation exists, because the result is a product of an operation.","code":["(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
 
@@ -2500,7 +2500,7 @@
       "blocks":[
         {"kind":"when","text":"We apply an operation on the input and get a result.","code":["var result = operation(input)"]},
 
-        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["result instanceof SequenceDiffOwner"]},
+        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["(result instanceof SequenceDiffOwner)"]},
 
         {"kind":"and","text":"The last operation exists, because the result is a product of an operation.","code":["(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
 
@@ -2523,7 +2523,7 @@
       "blocks":[
         {"kind":"when","text":"We apply an operation on the input and get a result.","code":["var result = operation(input)"]},
 
-        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["result instanceof SequenceDiffOwner"]},
+        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["(result instanceof SequenceDiffOwner)"]},
 
         {"kind":"and","text":"The last operation exists, because the result is a product of an operation.","code":["(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
 
@@ -2546,7 +2546,7 @@
       "blocks":[
         {"kind":"when","text":"We apply an operation on the input and get a result.","code":["var result = operation(input)"]},
 
-        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["result instanceof SequenceDiffOwner"]},
+        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["(result instanceof SequenceDiffOwner)"]},
 
         {"kind":"and","text":"The last operation exists, because the result is a product of an operation.","code":["(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
 
@@ -2569,7 +2569,7 @@
       "blocks":[
         {"kind":"when","text":"We apply an operation on the input and get a result.","code":["var result = operation(input)"]},
 
-        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["result instanceof SequenceDiffOwner"]},
+        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["(result instanceof SequenceDiffOwner)"]},
 
         {"kind":"and","text":"The last operation exists, because the result is a product of an operation.","code":["(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
 
@@ -2592,7 +2592,7 @@
       "blocks":[
         {"kind":"when","text":"We apply an operation on the input and get a result.","code":["var result = operation(input)"]},
 
-        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["result instanceof SequenceDiffOwner"]},
+        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["(result instanceof SequenceDiffOwner)"]},
 
         {"kind":"and","text":"The last operation exists, because the result is a product of an operation.","code":["(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
 
@@ -2615,7 +2615,7 @@
       "blocks":[
         {"kind":"when","text":"We apply an operation on the input and get a result.","code":["var result = operation(input)"]},
 
-        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["result instanceof SequenceDiffOwner"]},
+        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["(result instanceof SequenceDiffOwner)"]},
 
         {"kind":"and","text":"The last operation exists, because the result is a product of an operation.","code":["(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
 
@@ -2638,7 +2638,7 @@
       "blocks":[
         {"kind":"when","text":"We apply an operation on the input and get a result.","code":["var result = operation(input)"]},
 
-        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["result instanceof SequenceDiffOwner"]},
+        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["(result instanceof SequenceDiffOwner)"]},
 
         {"kind":"and","text":"The last operation exists, because the result is a product of an operation.","code":["(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
 
@@ -2661,7 +2661,7 @@
       "blocks":[
         {"kind":"when","text":"We apply an operation on the input and get a result.","code":["var result = operation(input)"]},
 
-        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["result instanceof SequenceDiffOwner"]},
+        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["(result instanceof SequenceDiffOwner)"]},
 
         {"kind":"and","text":"The last operation exists, because the result is a product of an operation.","code":["(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
 
@@ -2684,7 +2684,7 @@
       "blocks":[
         {"kind":"when","text":"We apply an operation on the input and get a result.","code":["var result = operation(input)"]},
 
-        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["result instanceof SequenceDiffOwner"]},
+        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["(result instanceof SequenceDiffOwner)"]},
 
         {"kind":"and","text":"The last operation exists, because the result is a product of an operation.","code":["(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
 
@@ -2707,7 +2707,7 @@
       "blocks":[
         {"kind":"when","text":"We apply an operation on the input and get a result.","code":["var result = operation(input)"]},
 
-        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["result instanceof SequenceDiffOwner"]},
+        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["(result instanceof SequenceDiffOwner)"]},
 
         {"kind":"and","text":"The last operation exists, because the result is a product of an operation.","code":["(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
 
@@ -2730,7 +2730,7 @@
       "blocks":[
         {"kind":"when","text":"We apply an operation on the input and get a result.","code":["var result = operation(input)"]},
 
-        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["result instanceof SequenceDiffOwner"]},
+        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["(result instanceof SequenceDiffOwner)"]},
 
         {"kind":"and","text":"The last operation exists, because the result is a product of an operation.","code":["(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
 
@@ -2753,7 +2753,7 @@
       "blocks":[
         {"kind":"when","text":"We apply an operation on the input and get a result.","code":["var result = operation(input)"]},
 
-        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["result instanceof SequenceDiffOwner"]},
+        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["(result instanceof SequenceDiffOwner)"]},
 
         {"kind":"and","text":"The last operation exists, because the result is a product of an operation.","code":["(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
 
@@ -2776,7 +2776,7 @@
       "blocks":[
         {"kind":"when","text":"We apply an operation on the input and get a result.","code":["var result = operation(input)"]},
 
-        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["result instanceof SequenceDiffOwner"]},
+        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["(result instanceof SequenceDiffOwner)"]},
 
         {"kind":"and","text":"The last operation exists, because the result is a product of an operation.","code":["(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
 
@@ -2799,7 +2799,7 @@
       "blocks":[
         {"kind":"when","text":"We apply an operation on the input and get a result.","code":["var result = operation(input)"]},
 
-        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["result instanceof SequenceDiffOwner"]},
+        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["(result instanceof SequenceDiffOwner)"]},
 
         {"kind":"and","text":"The last operation exists, because the result is a product of an operation.","code":["(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
 
@@ -2822,7 +2822,7 @@
       "blocks":[
         {"kind":"when","text":"We apply an operation on the input and get a result.","code":["var result = operation(input)"]},
 
-        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["result instanceof SequenceDiffOwner"]},
+        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["(result instanceof SequenceDiffOwner)"]},
 
         {"kind":"and","text":"The last operation exists, because the result is a product of an operation.","code":["(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
 
@@ -2845,7 +2845,7 @@
       "blocks":[
         {"kind":"when","text":"We apply an operation on the input and get a result.","code":["var result = operation(input)"]},
 
-        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["result instanceof SequenceDiffOwner"]},
+        {"kind":"then","text":"The result tuple implements an interface for accessing the last operation.","code":["(result instanceof SequenceDiffOwner)"]},
 
         {"kind":"and","text":"The last operation exists, because the result is a product of an operation.","code":["(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
 
@@ -8206,6 +8206,1016 @@
         {"kind":"when","text":"We try with a nullable tuple and null delimiter","code":["Tuple.ofNullable(String, \"x\", null, \"y\").join(null)"]},
 
         {"kind":"then","text":"A NullPointerException is still thrown","code":["thrown(NullPointerException)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `remove(T)` method erases every occurrence of the target value [0]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            `remove(T)` must eliminate **all** occurrences of the target value, not\n            just the first one.\n\n            The implementation achieves this with a single bottom-up tree traversal\n            using a singleton set as the removal predicate. Each leaf node is visited\n            exactly once; only the nodes on the path from the root to a changed leaf\n            are copied — all other subtrees are shared with the original tuple\n            unchanged (structural sharing).\n\n            This table exercises the full range of shapes: tuples whose elements\n            live in a single dense leaf (< 512 items), tuples large enough to\n            span multiple branch nodes (≥ 512 items), boundary cases such as an\n            absent target, a fully-matching tuple, a single-element match, and\n            targets that appear only at the very first or very last position.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A snapshot of the input to verify immutability later.","code":["var snapshot = new ArrayList<>(input.toList())"]},
+
+        {"kind":"when","text":"We remove every occurrence of the target.","code":["var result = input.remove(target)"]},
+
+        {"kind":"then","text":"The content of the result matches the expected tuple.","code":["result == expected"]},
+
+        {"kind":"and","text":"The type and nullability are preserved.","code":["result.type()       == input.type()","result.allowsNull() == input.allowsNull()"]},
+
+        {"kind":"and","text":"The original tuple is completely unchanged (immutability guarantee).","code":["input.toList() == snapshot"]},
+
+        {"kind":"where","text":"We try a broad range of input shapes and target positions.","code":{"input":["Tuple.of(1, 2, 2, 3, 2, 4)","Tuple.of(4, 2, 2, 7, 2, 3, 4, 7)","Tuple.of(\"a\", \"b\", \"a\", \"c\", \"a\")","Tuple.of(\"hello\", \"world\", \"hello\")","Tuple.of(9, 1, 2, 3, 4, 5)","Tuple.of(1, 2, 3, 4, 5, 9)","Tuple.of(9, 1, 9, 2, 9)","Tuple.of(42)","Tuple.of(Integer)","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(Integer, (0..599).collect { it % 2 == 0 ? it : -1 })","Tuple.of(Integer, (-800..800).collect { it % 3 == 0 ? 3 : it })","Tuple.of(Integer, (-860..860).collect { Math.floor(it/91)%3==0?3:it})","Tuple.of(Integer, (0..699).collect { it < 600 ? it : 42 })"],"target":["2","2","\"a\"","\"hello\"","9","9","9","42","0","99","-1","3","3","42"],"expected":["Tuple.of(1, 3, 4)","Tuple.of(4, 7, 3, 4, 7)","Tuple.of(\"b\", \"c\")","Tuple.of(\"world\")","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(1, 2)","Tuple.of(Integer)","Tuple.of(Integer)","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(Integer, (0..598).findAll { it % 2 == 0 })","Tuple.of(Integer, (-800..800).findAll { it % 3 != 0 })","Tuple.of(Integer, (-860..860).findAll { Math.floor(it/91) % 3 != 0 })","Tuple.of(Integer, (0..599).findAll {it!=42})"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `remove(T)` method erases every occurrence of the target value [1]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            `remove(T)` must eliminate **all** occurrences of the target value, not\n            just the first one.\n\n            The implementation achieves this with a single bottom-up tree traversal\n            using a singleton set as the removal predicate. Each leaf node is visited\n            exactly once; only the nodes on the path from the root to a changed leaf\n            are copied — all other subtrees are shared with the original tuple\n            unchanged (structural sharing).\n\n            This table exercises the full range of shapes: tuples whose elements\n            live in a single dense leaf (< 512 items), tuples large enough to\n            span multiple branch nodes (≥ 512 items), boundary cases such as an\n            absent target, a fully-matching tuple, a single-element match, and\n            targets that appear only at the very first or very last position.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A snapshot of the input to verify immutability later.","code":["var snapshot = new ArrayList<>(input.toList())"]},
+
+        {"kind":"when","text":"We remove every occurrence of the target.","code":["var result = input.remove(target)"]},
+
+        {"kind":"then","text":"The content of the result matches the expected tuple.","code":["result == expected"]},
+
+        {"kind":"and","text":"The type and nullability are preserved.","code":["result.type()       == input.type()","result.allowsNull() == input.allowsNull()"]},
+
+        {"kind":"and","text":"The original tuple is completely unchanged (immutability guarantee).","code":["input.toList() == snapshot"]},
+
+        {"kind":"where","text":"We try a broad range of input shapes and target positions.","code":{"input":["Tuple.of(1, 2, 2, 3, 2, 4)","Tuple.of(4, 2, 2, 7, 2, 3, 4, 7)","Tuple.of(\"a\", \"b\", \"a\", \"c\", \"a\")","Tuple.of(\"hello\", \"world\", \"hello\")","Tuple.of(9, 1, 2, 3, 4, 5)","Tuple.of(1, 2, 3, 4, 5, 9)","Tuple.of(9, 1, 9, 2, 9)","Tuple.of(42)","Tuple.of(Integer)","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(Integer, (0..599).collect { it % 2 == 0 ? it : -1 })","Tuple.of(Integer, (-800..800).collect { it % 3 == 0 ? 3 : it })","Tuple.of(Integer, (-860..860).collect { Math.floor(it/91)%3==0?3:it})","Tuple.of(Integer, (0..699).collect { it < 600 ? it : 42 })"],"target":["2","2","\"a\"","\"hello\"","9","9","9","42","0","99","-1","3","3","42"],"expected":["Tuple.of(1, 3, 4)","Tuple.of(4, 7, 3, 4, 7)","Tuple.of(\"b\", \"c\")","Tuple.of(\"world\")","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(1, 2)","Tuple.of(Integer)","Tuple.of(Integer)","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(Integer, (0..598).findAll { it % 2 == 0 })","Tuple.of(Integer, (-800..800).findAll { it % 3 != 0 })","Tuple.of(Integer, (-860..860).findAll { Math.floor(it/91) % 3 != 0 })","Tuple.of(Integer, (0..599).findAll {it!=42})"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `remove(T)` method erases every occurrence of the target value [2]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            `remove(T)` must eliminate **all** occurrences of the target value, not\n            just the first one.\n\n            The implementation achieves this with a single bottom-up tree traversal\n            using a singleton set as the removal predicate. Each leaf node is visited\n            exactly once; only the nodes on the path from the root to a changed leaf\n            are copied — all other subtrees are shared with the original tuple\n            unchanged (structural sharing).\n\n            This table exercises the full range of shapes: tuples whose elements\n            live in a single dense leaf (< 512 items), tuples large enough to\n            span multiple branch nodes (≥ 512 items), boundary cases such as an\n            absent target, a fully-matching tuple, a single-element match, and\n            targets that appear only at the very first or very last position.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A snapshot of the input to verify immutability later.","code":["var snapshot = new ArrayList<>(input.toList())"]},
+
+        {"kind":"when","text":"We remove every occurrence of the target.","code":["var result = input.remove(target)"]},
+
+        {"kind":"then","text":"The content of the result matches the expected tuple.","code":["result == expected"]},
+
+        {"kind":"and","text":"The type and nullability are preserved.","code":["result.type()       == input.type()","result.allowsNull() == input.allowsNull()"]},
+
+        {"kind":"and","text":"The original tuple is completely unchanged (immutability guarantee).","code":["input.toList() == snapshot"]},
+
+        {"kind":"where","text":"We try a broad range of input shapes and target positions.","code":{"input":["Tuple.of(1, 2, 2, 3, 2, 4)","Tuple.of(4, 2, 2, 7, 2, 3, 4, 7)","Tuple.of(\"a\", \"b\", \"a\", \"c\", \"a\")","Tuple.of(\"hello\", \"world\", \"hello\")","Tuple.of(9, 1, 2, 3, 4, 5)","Tuple.of(1, 2, 3, 4, 5, 9)","Tuple.of(9, 1, 9, 2, 9)","Tuple.of(42)","Tuple.of(Integer)","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(Integer, (0..599).collect { it % 2 == 0 ? it : -1 })","Tuple.of(Integer, (-800..800).collect { it % 3 == 0 ? 3 : it })","Tuple.of(Integer, (-860..860).collect { Math.floor(it/91)%3==0?3:it})","Tuple.of(Integer, (0..699).collect { it < 600 ? it : 42 })"],"target":["2","2","\"a\"","\"hello\"","9","9","9","42","0","99","-1","3","3","42"],"expected":["Tuple.of(1, 3, 4)","Tuple.of(4, 7, 3, 4, 7)","Tuple.of(\"b\", \"c\")","Tuple.of(\"world\")","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(1, 2)","Tuple.of(Integer)","Tuple.of(Integer)","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(Integer, (0..598).findAll { it % 2 == 0 })","Tuple.of(Integer, (-800..800).findAll { it % 3 != 0 })","Tuple.of(Integer, (-860..860).findAll { Math.floor(it/91) % 3 != 0 })","Tuple.of(Integer, (0..599).findAll {it!=42})"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `remove(T)` method erases every occurrence of the target value [3]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            `remove(T)` must eliminate **all** occurrences of the target value, not\n            just the first one.\n\n            The implementation achieves this with a single bottom-up tree traversal\n            using a singleton set as the removal predicate. Each leaf node is visited\n            exactly once; only the nodes on the path from the root to a changed leaf\n            are copied — all other subtrees are shared with the original tuple\n            unchanged (structural sharing).\n\n            This table exercises the full range of shapes: tuples whose elements\n            live in a single dense leaf (< 512 items), tuples large enough to\n            span multiple branch nodes (≥ 512 items), boundary cases such as an\n            absent target, a fully-matching tuple, a single-element match, and\n            targets that appear only at the very first or very last position.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A snapshot of the input to verify immutability later.","code":["var snapshot = new ArrayList<>(input.toList())"]},
+
+        {"kind":"when","text":"We remove every occurrence of the target.","code":["var result = input.remove(target)"]},
+
+        {"kind":"then","text":"The content of the result matches the expected tuple.","code":["result == expected"]},
+
+        {"kind":"and","text":"The type and nullability are preserved.","code":["result.type()       == input.type()","result.allowsNull() == input.allowsNull()"]},
+
+        {"kind":"and","text":"The original tuple is completely unchanged (immutability guarantee).","code":["input.toList() == snapshot"]},
+
+        {"kind":"where","text":"We try a broad range of input shapes and target positions.","code":{"input":["Tuple.of(1, 2, 2, 3, 2, 4)","Tuple.of(4, 2, 2, 7, 2, 3, 4, 7)","Tuple.of(\"a\", \"b\", \"a\", \"c\", \"a\")","Tuple.of(\"hello\", \"world\", \"hello\")","Tuple.of(9, 1, 2, 3, 4, 5)","Tuple.of(1, 2, 3, 4, 5, 9)","Tuple.of(9, 1, 9, 2, 9)","Tuple.of(42)","Tuple.of(Integer)","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(Integer, (0..599).collect { it % 2 == 0 ? it : -1 })","Tuple.of(Integer, (-800..800).collect { it % 3 == 0 ? 3 : it })","Tuple.of(Integer, (-860..860).collect { Math.floor(it/91)%3==0?3:it})","Tuple.of(Integer, (0..699).collect { it < 600 ? it : 42 })"],"target":["2","2","\"a\"","\"hello\"","9","9","9","42","0","99","-1","3","3","42"],"expected":["Tuple.of(1, 3, 4)","Tuple.of(4, 7, 3, 4, 7)","Tuple.of(\"b\", \"c\")","Tuple.of(\"world\")","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(1, 2)","Tuple.of(Integer)","Tuple.of(Integer)","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(Integer, (0..598).findAll { it % 2 == 0 })","Tuple.of(Integer, (-800..800).findAll { it % 3 != 0 })","Tuple.of(Integer, (-860..860).findAll { Math.floor(it/91) % 3 != 0 })","Tuple.of(Integer, (0..599).findAll {it!=42})"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `remove(T)` method erases every occurrence of the target value [4]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            `remove(T)` must eliminate **all** occurrences of the target value, not\n            just the first one.\n\n            The implementation achieves this with a single bottom-up tree traversal\n            using a singleton set as the removal predicate. Each leaf node is visited\n            exactly once; only the nodes on the path from the root to a changed leaf\n            are copied — all other subtrees are shared with the original tuple\n            unchanged (structural sharing).\n\n            This table exercises the full range of shapes: tuples whose elements\n            live in a single dense leaf (< 512 items), tuples large enough to\n            span multiple branch nodes (≥ 512 items), boundary cases such as an\n            absent target, a fully-matching tuple, a single-element match, and\n            targets that appear only at the very first or very last position.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A snapshot of the input to verify immutability later.","code":["var snapshot = new ArrayList<>(input.toList())"]},
+
+        {"kind":"when","text":"We remove every occurrence of the target.","code":["var result = input.remove(target)"]},
+
+        {"kind":"then","text":"The content of the result matches the expected tuple.","code":["result == expected"]},
+
+        {"kind":"and","text":"The type and nullability are preserved.","code":["result.type()       == input.type()","result.allowsNull() == input.allowsNull()"]},
+
+        {"kind":"and","text":"The original tuple is completely unchanged (immutability guarantee).","code":["input.toList() == snapshot"]},
+
+        {"kind":"where","text":"We try a broad range of input shapes and target positions.","code":{"input":["Tuple.of(1, 2, 2, 3, 2, 4)","Tuple.of(4, 2, 2, 7, 2, 3, 4, 7)","Tuple.of(\"a\", \"b\", \"a\", \"c\", \"a\")","Tuple.of(\"hello\", \"world\", \"hello\")","Tuple.of(9, 1, 2, 3, 4, 5)","Tuple.of(1, 2, 3, 4, 5, 9)","Tuple.of(9, 1, 9, 2, 9)","Tuple.of(42)","Tuple.of(Integer)","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(Integer, (0..599).collect { it % 2 == 0 ? it : -1 })","Tuple.of(Integer, (-800..800).collect { it % 3 == 0 ? 3 : it })","Tuple.of(Integer, (-860..860).collect { Math.floor(it/91)%3==0?3:it})","Tuple.of(Integer, (0..699).collect { it < 600 ? it : 42 })"],"target":["2","2","\"a\"","\"hello\"","9","9","9","42","0","99","-1","3","3","42"],"expected":["Tuple.of(1, 3, 4)","Tuple.of(4, 7, 3, 4, 7)","Tuple.of(\"b\", \"c\")","Tuple.of(\"world\")","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(1, 2)","Tuple.of(Integer)","Tuple.of(Integer)","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(Integer, (0..598).findAll { it % 2 == 0 })","Tuple.of(Integer, (-800..800).findAll { it % 3 != 0 })","Tuple.of(Integer, (-860..860).findAll { Math.floor(it/91) % 3 != 0 })","Tuple.of(Integer, (0..599).findAll {it!=42})"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `remove(T)` method erases every occurrence of the target value [5]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            `remove(T)` must eliminate **all** occurrences of the target value, not\n            just the first one.\n\n            The implementation achieves this with a single bottom-up tree traversal\n            using a singleton set as the removal predicate. Each leaf node is visited\n            exactly once; only the nodes on the path from the root to a changed leaf\n            are copied — all other subtrees are shared with the original tuple\n            unchanged (structural sharing).\n\n            This table exercises the full range of shapes: tuples whose elements\n            live in a single dense leaf (< 512 items), tuples large enough to\n            span multiple branch nodes (≥ 512 items), boundary cases such as an\n            absent target, a fully-matching tuple, a single-element match, and\n            targets that appear only at the very first or very last position.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A snapshot of the input to verify immutability later.","code":["var snapshot = new ArrayList<>(input.toList())"]},
+
+        {"kind":"when","text":"We remove every occurrence of the target.","code":["var result = input.remove(target)"]},
+
+        {"kind":"then","text":"The content of the result matches the expected tuple.","code":["result == expected"]},
+
+        {"kind":"and","text":"The type and nullability are preserved.","code":["result.type()       == input.type()","result.allowsNull() == input.allowsNull()"]},
+
+        {"kind":"and","text":"The original tuple is completely unchanged (immutability guarantee).","code":["input.toList() == snapshot"]},
+
+        {"kind":"where","text":"We try a broad range of input shapes and target positions.","code":{"input":["Tuple.of(1, 2, 2, 3, 2, 4)","Tuple.of(4, 2, 2, 7, 2, 3, 4, 7)","Tuple.of(\"a\", \"b\", \"a\", \"c\", \"a\")","Tuple.of(\"hello\", \"world\", \"hello\")","Tuple.of(9, 1, 2, 3, 4, 5)","Tuple.of(1, 2, 3, 4, 5, 9)","Tuple.of(9, 1, 9, 2, 9)","Tuple.of(42)","Tuple.of(Integer)","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(Integer, (0..599).collect { it % 2 == 0 ? it : -1 })","Tuple.of(Integer, (-800..800).collect { it % 3 == 0 ? 3 : it })","Tuple.of(Integer, (-860..860).collect { Math.floor(it/91)%3==0?3:it})","Tuple.of(Integer, (0..699).collect { it < 600 ? it : 42 })"],"target":["2","2","\"a\"","\"hello\"","9","9","9","42","0","99","-1","3","3","42"],"expected":["Tuple.of(1, 3, 4)","Tuple.of(4, 7, 3, 4, 7)","Tuple.of(\"b\", \"c\")","Tuple.of(\"world\")","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(1, 2)","Tuple.of(Integer)","Tuple.of(Integer)","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(Integer, (0..598).findAll { it % 2 == 0 })","Tuple.of(Integer, (-800..800).findAll { it % 3 != 0 })","Tuple.of(Integer, (-860..860).findAll { Math.floor(it/91) % 3 != 0 })","Tuple.of(Integer, (0..599).findAll {it!=42})"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `remove(T)` method erases every occurrence of the target value [6]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            `remove(T)` must eliminate **all** occurrences of the target value, not\n            just the first one.\n\n            The implementation achieves this with a single bottom-up tree traversal\n            using a singleton set as the removal predicate. Each leaf node is visited\n            exactly once; only the nodes on the path from the root to a changed leaf\n            are copied — all other subtrees are shared with the original tuple\n            unchanged (structural sharing).\n\n            This table exercises the full range of shapes: tuples whose elements\n            live in a single dense leaf (< 512 items), tuples large enough to\n            span multiple branch nodes (≥ 512 items), boundary cases such as an\n            absent target, a fully-matching tuple, a single-element match, and\n            targets that appear only at the very first or very last position.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A snapshot of the input to verify immutability later.","code":["var snapshot = new ArrayList<>(input.toList())"]},
+
+        {"kind":"when","text":"We remove every occurrence of the target.","code":["var result = input.remove(target)"]},
+
+        {"kind":"then","text":"The content of the result matches the expected tuple.","code":["result == expected"]},
+
+        {"kind":"and","text":"The type and nullability are preserved.","code":["result.type()       == input.type()","result.allowsNull() == input.allowsNull()"]},
+
+        {"kind":"and","text":"The original tuple is completely unchanged (immutability guarantee).","code":["input.toList() == snapshot"]},
+
+        {"kind":"where","text":"We try a broad range of input shapes and target positions.","code":{"input":["Tuple.of(1, 2, 2, 3, 2, 4)","Tuple.of(4, 2, 2, 7, 2, 3, 4, 7)","Tuple.of(\"a\", \"b\", \"a\", \"c\", \"a\")","Tuple.of(\"hello\", \"world\", \"hello\")","Tuple.of(9, 1, 2, 3, 4, 5)","Tuple.of(1, 2, 3, 4, 5, 9)","Tuple.of(9, 1, 9, 2, 9)","Tuple.of(42)","Tuple.of(Integer)","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(Integer, (0..599).collect { it % 2 == 0 ? it : -1 })","Tuple.of(Integer, (-800..800).collect { it % 3 == 0 ? 3 : it })","Tuple.of(Integer, (-860..860).collect { Math.floor(it/91)%3==0?3:it})","Tuple.of(Integer, (0..699).collect { it < 600 ? it : 42 })"],"target":["2","2","\"a\"","\"hello\"","9","9","9","42","0","99","-1","3","3","42"],"expected":["Tuple.of(1, 3, 4)","Tuple.of(4, 7, 3, 4, 7)","Tuple.of(\"b\", \"c\")","Tuple.of(\"world\")","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(1, 2)","Tuple.of(Integer)","Tuple.of(Integer)","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(Integer, (0..598).findAll { it % 2 == 0 })","Tuple.of(Integer, (-800..800).findAll { it % 3 != 0 })","Tuple.of(Integer, (-860..860).findAll { Math.floor(it/91) % 3 != 0 })","Tuple.of(Integer, (0..599).findAll {it!=42})"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `remove(T)` method erases every occurrence of the target value [7]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            `remove(T)` must eliminate **all** occurrences of the target value, not\n            just the first one.\n\n            The implementation achieves this with a single bottom-up tree traversal\n            using a singleton set as the removal predicate. Each leaf node is visited\n            exactly once; only the nodes on the path from the root to a changed leaf\n            are copied — all other subtrees are shared with the original tuple\n            unchanged (structural sharing).\n\n            This table exercises the full range of shapes: tuples whose elements\n            live in a single dense leaf (< 512 items), tuples large enough to\n            span multiple branch nodes (≥ 512 items), boundary cases such as an\n            absent target, a fully-matching tuple, a single-element match, and\n            targets that appear only at the very first or very last position.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A snapshot of the input to verify immutability later.","code":["var snapshot = new ArrayList<>(input.toList())"]},
+
+        {"kind":"when","text":"We remove every occurrence of the target.","code":["var result = input.remove(target)"]},
+
+        {"kind":"then","text":"The content of the result matches the expected tuple.","code":["result == expected"]},
+
+        {"kind":"and","text":"The type and nullability are preserved.","code":["result.type()       == input.type()","result.allowsNull() == input.allowsNull()"]},
+
+        {"kind":"and","text":"The original tuple is completely unchanged (immutability guarantee).","code":["input.toList() == snapshot"]},
+
+        {"kind":"where","text":"We try a broad range of input shapes and target positions.","code":{"input":["Tuple.of(1, 2, 2, 3, 2, 4)","Tuple.of(4, 2, 2, 7, 2, 3, 4, 7)","Tuple.of(\"a\", \"b\", \"a\", \"c\", \"a\")","Tuple.of(\"hello\", \"world\", \"hello\")","Tuple.of(9, 1, 2, 3, 4, 5)","Tuple.of(1, 2, 3, 4, 5, 9)","Tuple.of(9, 1, 9, 2, 9)","Tuple.of(42)","Tuple.of(Integer)","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(Integer, (0..599).collect { it % 2 == 0 ? it : -1 })","Tuple.of(Integer, (-800..800).collect { it % 3 == 0 ? 3 : it })","Tuple.of(Integer, (-860..860).collect { Math.floor(it/91)%3==0?3:it})","Tuple.of(Integer, (0..699).collect { it < 600 ? it : 42 })"],"target":["2","2","\"a\"","\"hello\"","9","9","9","42","0","99","-1","3","3","42"],"expected":["Tuple.of(1, 3, 4)","Tuple.of(4, 7, 3, 4, 7)","Tuple.of(\"b\", \"c\")","Tuple.of(\"world\")","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(1, 2)","Tuple.of(Integer)","Tuple.of(Integer)","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(Integer, (0..598).findAll { it % 2 == 0 })","Tuple.of(Integer, (-800..800).findAll { it % 3 != 0 })","Tuple.of(Integer, (-860..860).findAll { Math.floor(it/91) % 3 != 0 })","Tuple.of(Integer, (0..599).findAll {it!=42})"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `remove(T)` method erases every occurrence of the target value [8]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            `remove(T)` must eliminate **all** occurrences of the target value, not\n            just the first one.\n\n            The implementation achieves this with a single bottom-up tree traversal\n            using a singleton set as the removal predicate. Each leaf node is visited\n            exactly once; only the nodes on the path from the root to a changed leaf\n            are copied — all other subtrees are shared with the original tuple\n            unchanged (structural sharing).\n\n            This table exercises the full range of shapes: tuples whose elements\n            live in a single dense leaf (< 512 items), tuples large enough to\n            span multiple branch nodes (≥ 512 items), boundary cases such as an\n            absent target, a fully-matching tuple, a single-element match, and\n            targets that appear only at the very first or very last position.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A snapshot of the input to verify immutability later.","code":["var snapshot = new ArrayList<>(input.toList())"]},
+
+        {"kind":"when","text":"We remove every occurrence of the target.","code":["var result = input.remove(target)"]},
+
+        {"kind":"then","text":"The content of the result matches the expected tuple.","code":["result == expected"]},
+
+        {"kind":"and","text":"The type and nullability are preserved.","code":["result.type()       == input.type()","result.allowsNull() == input.allowsNull()"]},
+
+        {"kind":"and","text":"The original tuple is completely unchanged (immutability guarantee).","code":["input.toList() == snapshot"]},
+
+        {"kind":"where","text":"We try a broad range of input shapes and target positions.","code":{"input":["Tuple.of(1, 2, 2, 3, 2, 4)","Tuple.of(4, 2, 2, 7, 2, 3, 4, 7)","Tuple.of(\"a\", \"b\", \"a\", \"c\", \"a\")","Tuple.of(\"hello\", \"world\", \"hello\")","Tuple.of(9, 1, 2, 3, 4, 5)","Tuple.of(1, 2, 3, 4, 5, 9)","Tuple.of(9, 1, 9, 2, 9)","Tuple.of(42)","Tuple.of(Integer)","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(Integer, (0..599).collect { it % 2 == 0 ? it : -1 })","Tuple.of(Integer, (-800..800).collect { it % 3 == 0 ? 3 : it })","Tuple.of(Integer, (-860..860).collect { Math.floor(it/91)%3==0?3:it})","Tuple.of(Integer, (0..699).collect { it < 600 ? it : 42 })"],"target":["2","2","\"a\"","\"hello\"","9","9","9","42","0","99","-1","3","3","42"],"expected":["Tuple.of(1, 3, 4)","Tuple.of(4, 7, 3, 4, 7)","Tuple.of(\"b\", \"c\")","Tuple.of(\"world\")","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(1, 2)","Tuple.of(Integer)","Tuple.of(Integer)","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(Integer, (0..598).findAll { it % 2 == 0 })","Tuple.of(Integer, (-800..800).findAll { it % 3 != 0 })","Tuple.of(Integer, (-860..860).findAll { Math.floor(it/91) % 3 != 0 })","Tuple.of(Integer, (0..599).findAll {it!=42})"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `remove(T)` method erases every occurrence of the target value [9]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            `remove(T)` must eliminate **all** occurrences of the target value, not\n            just the first one.\n\n            The implementation achieves this with a single bottom-up tree traversal\n            using a singleton set as the removal predicate. Each leaf node is visited\n            exactly once; only the nodes on the path from the root to a changed leaf\n            are copied — all other subtrees are shared with the original tuple\n            unchanged (structural sharing).\n\n            This table exercises the full range of shapes: tuples whose elements\n            live in a single dense leaf (< 512 items), tuples large enough to\n            span multiple branch nodes (≥ 512 items), boundary cases such as an\n            absent target, a fully-matching tuple, a single-element match, and\n            targets that appear only at the very first or very last position.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A snapshot of the input to verify immutability later.","code":["var snapshot = new ArrayList<>(input.toList())"]},
+
+        {"kind":"when","text":"We remove every occurrence of the target.","code":["var result = input.remove(target)"]},
+
+        {"kind":"then","text":"The content of the result matches the expected tuple.","code":["result == expected"]},
+
+        {"kind":"and","text":"The type and nullability are preserved.","code":["result.type()       == input.type()","result.allowsNull() == input.allowsNull()"]},
+
+        {"kind":"and","text":"The original tuple is completely unchanged (immutability guarantee).","code":["input.toList() == snapshot"]},
+
+        {"kind":"where","text":"We try a broad range of input shapes and target positions.","code":{"input":["Tuple.of(1, 2, 2, 3, 2, 4)","Tuple.of(4, 2, 2, 7, 2, 3, 4, 7)","Tuple.of(\"a\", \"b\", \"a\", \"c\", \"a\")","Tuple.of(\"hello\", \"world\", \"hello\")","Tuple.of(9, 1, 2, 3, 4, 5)","Tuple.of(1, 2, 3, 4, 5, 9)","Tuple.of(9, 1, 9, 2, 9)","Tuple.of(42)","Tuple.of(Integer)","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(Integer, (0..599).collect { it % 2 == 0 ? it : -1 })","Tuple.of(Integer, (-800..800).collect { it % 3 == 0 ? 3 : it })","Tuple.of(Integer, (-860..860).collect { Math.floor(it/91)%3==0?3:it})","Tuple.of(Integer, (0..699).collect { it < 600 ? it : 42 })"],"target":["2","2","\"a\"","\"hello\"","9","9","9","42","0","99","-1","3","3","42"],"expected":["Tuple.of(1, 3, 4)","Tuple.of(4, 7, 3, 4, 7)","Tuple.of(\"b\", \"c\")","Tuple.of(\"world\")","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(1, 2)","Tuple.of(Integer)","Tuple.of(Integer)","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(Integer, (0..598).findAll { it % 2 == 0 })","Tuple.of(Integer, (-800..800).findAll { it % 3 != 0 })","Tuple.of(Integer, (-860..860).findAll { Math.floor(it/91) % 3 != 0 })","Tuple.of(Integer, (0..599).findAll {it!=42})"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `remove(T)` method erases every occurrence of the target value [10]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            `remove(T)` must eliminate **all** occurrences of the target value, not\n            just the first one.\n\n            The implementation achieves this with a single bottom-up tree traversal\n            using a singleton set as the removal predicate. Each leaf node is visited\n            exactly once; only the nodes on the path from the root to a changed leaf\n            are copied — all other subtrees are shared with the original tuple\n            unchanged (structural sharing).\n\n            This table exercises the full range of shapes: tuples whose elements\n            live in a single dense leaf (< 512 items), tuples large enough to\n            span multiple branch nodes (≥ 512 items), boundary cases such as an\n            absent target, a fully-matching tuple, a single-element match, and\n            targets that appear only at the very first or very last position.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A snapshot of the input to verify immutability later.","code":["var snapshot = new ArrayList<>(input.toList())"]},
+
+        {"kind":"when","text":"We remove every occurrence of the target.","code":["var result = input.remove(target)"]},
+
+        {"kind":"then","text":"The content of the result matches the expected tuple.","code":["result == expected"]},
+
+        {"kind":"and","text":"The type and nullability are preserved.","code":["result.type()       == input.type()","result.allowsNull() == input.allowsNull()"]},
+
+        {"kind":"and","text":"The original tuple is completely unchanged (immutability guarantee).","code":["input.toList() == snapshot"]},
+
+        {"kind":"where","text":"We try a broad range of input shapes and target positions.","code":{"input":["Tuple.of(1, 2, 2, 3, 2, 4)","Tuple.of(4, 2, 2, 7, 2, 3, 4, 7)","Tuple.of(\"a\", \"b\", \"a\", \"c\", \"a\")","Tuple.of(\"hello\", \"world\", \"hello\")","Tuple.of(9, 1, 2, 3, 4, 5)","Tuple.of(1, 2, 3, 4, 5, 9)","Tuple.of(9, 1, 9, 2, 9)","Tuple.of(42)","Tuple.of(Integer)","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(Integer, (0..599).collect { it % 2 == 0 ? it : -1 })","Tuple.of(Integer, (-800..800).collect { it % 3 == 0 ? 3 : it })","Tuple.of(Integer, (-860..860).collect { Math.floor(it/91)%3==0?3:it})","Tuple.of(Integer, (0..699).collect { it < 600 ? it : 42 })"],"target":["2","2","\"a\"","\"hello\"","9","9","9","42","0","99","-1","3","3","42"],"expected":["Tuple.of(1, 3, 4)","Tuple.of(4, 7, 3, 4, 7)","Tuple.of(\"b\", \"c\")","Tuple.of(\"world\")","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(1, 2)","Tuple.of(Integer)","Tuple.of(Integer)","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(Integer, (0..598).findAll { it % 2 == 0 })","Tuple.of(Integer, (-800..800).findAll { it % 3 != 0 })","Tuple.of(Integer, (-860..860).findAll { Math.floor(it/91) % 3 != 0 })","Tuple.of(Integer, (0..599).findAll {it!=42})"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `remove(T)` method erases every occurrence of the target value [11]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            `remove(T)` must eliminate **all** occurrences of the target value, not\n            just the first one.\n\n            The implementation achieves this with a single bottom-up tree traversal\n            using a singleton set as the removal predicate. Each leaf node is visited\n            exactly once; only the nodes on the path from the root to a changed leaf\n            are copied — all other subtrees are shared with the original tuple\n            unchanged (structural sharing).\n\n            This table exercises the full range of shapes: tuples whose elements\n            live in a single dense leaf (< 512 items), tuples large enough to\n            span multiple branch nodes (≥ 512 items), boundary cases such as an\n            absent target, a fully-matching tuple, a single-element match, and\n            targets that appear only at the very first or very last position.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A snapshot of the input to verify immutability later.","code":["var snapshot = new ArrayList<>(input.toList())"]},
+
+        {"kind":"when","text":"We remove every occurrence of the target.","code":["var result = input.remove(target)"]},
+
+        {"kind":"then","text":"The content of the result matches the expected tuple.","code":["result == expected"]},
+
+        {"kind":"and","text":"The type and nullability are preserved.","code":["result.type()       == input.type()","result.allowsNull() == input.allowsNull()"]},
+
+        {"kind":"and","text":"The original tuple is completely unchanged (immutability guarantee).","code":["input.toList() == snapshot"]},
+
+        {"kind":"where","text":"We try a broad range of input shapes and target positions.","code":{"input":["Tuple.of(1, 2, 2, 3, 2, 4)","Tuple.of(4, 2, 2, 7, 2, 3, 4, 7)","Tuple.of(\"a\", \"b\", \"a\", \"c\", \"a\")","Tuple.of(\"hello\", \"world\", \"hello\")","Tuple.of(9, 1, 2, 3, 4, 5)","Tuple.of(1, 2, 3, 4, 5, 9)","Tuple.of(9, 1, 9, 2, 9)","Tuple.of(42)","Tuple.of(Integer)","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(Integer, (0..599).collect { it % 2 == 0 ? it : -1 })","Tuple.of(Integer, (-800..800).collect { it % 3 == 0 ? 3 : it })","Tuple.of(Integer, (-860..860).collect { Math.floor(it/91)%3==0?3:it})","Tuple.of(Integer, (0..699).collect { it < 600 ? it : 42 })"],"target":["2","2","\"a\"","\"hello\"","9","9","9","42","0","99","-1","3","3","42"],"expected":["Tuple.of(1, 3, 4)","Tuple.of(4, 7, 3, 4, 7)","Tuple.of(\"b\", \"c\")","Tuple.of(\"world\")","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(1, 2)","Tuple.of(Integer)","Tuple.of(Integer)","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(Integer, (0..598).findAll { it % 2 == 0 })","Tuple.of(Integer, (-800..800).findAll { it % 3 != 0 })","Tuple.of(Integer, (-860..860).findAll { Math.floor(it/91) % 3 != 0 })","Tuple.of(Integer, (0..599).findAll {it!=42})"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `remove(T)` method erases every occurrence of the target value [12]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            `remove(T)` must eliminate **all** occurrences of the target value, not\n            just the first one.\n\n            The implementation achieves this with a single bottom-up tree traversal\n            using a singleton set as the removal predicate. Each leaf node is visited\n            exactly once; only the nodes on the path from the root to a changed leaf\n            are copied — all other subtrees are shared with the original tuple\n            unchanged (structural sharing).\n\n            This table exercises the full range of shapes: tuples whose elements\n            live in a single dense leaf (< 512 items), tuples large enough to\n            span multiple branch nodes (≥ 512 items), boundary cases such as an\n            absent target, a fully-matching tuple, a single-element match, and\n            targets that appear only at the very first or very last position.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A snapshot of the input to verify immutability later.","code":["var snapshot = new ArrayList<>(input.toList())"]},
+
+        {"kind":"when","text":"We remove every occurrence of the target.","code":["var result = input.remove(target)"]},
+
+        {"kind":"then","text":"The content of the result matches the expected tuple.","code":["result == expected"]},
+
+        {"kind":"and","text":"The type and nullability are preserved.","code":["result.type()       == input.type()","result.allowsNull() == input.allowsNull()"]},
+
+        {"kind":"and","text":"The original tuple is completely unchanged (immutability guarantee).","code":["input.toList() == snapshot"]},
+
+        {"kind":"where","text":"We try a broad range of input shapes and target positions.","code":{"input":["Tuple.of(1, 2, 2, 3, 2, 4)","Tuple.of(4, 2, 2, 7, 2, 3, 4, 7)","Tuple.of(\"a\", \"b\", \"a\", \"c\", \"a\")","Tuple.of(\"hello\", \"world\", \"hello\")","Tuple.of(9, 1, 2, 3, 4, 5)","Tuple.of(1, 2, 3, 4, 5, 9)","Tuple.of(9, 1, 9, 2, 9)","Tuple.of(42)","Tuple.of(Integer)","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(Integer, (0..599).collect { it % 2 == 0 ? it : -1 })","Tuple.of(Integer, (-800..800).collect { it % 3 == 0 ? 3 : it })","Tuple.of(Integer, (-860..860).collect { Math.floor(it/91)%3==0?3:it})","Tuple.of(Integer, (0..699).collect { it < 600 ? it : 42 })"],"target":["2","2","\"a\"","\"hello\"","9","9","9","42","0","99","-1","3","3","42"],"expected":["Tuple.of(1, 3, 4)","Tuple.of(4, 7, 3, 4, 7)","Tuple.of(\"b\", \"c\")","Tuple.of(\"world\")","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(1, 2)","Tuple.of(Integer)","Tuple.of(Integer)","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(Integer, (0..598).findAll { it % 2 == 0 })","Tuple.of(Integer, (-800..800).findAll { it % 3 != 0 })","Tuple.of(Integer, (-860..860).findAll { Math.floor(it/91) % 3 != 0 })","Tuple.of(Integer, (0..599).findAll {it!=42})"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `remove(T)` method erases every occurrence of the target value [13]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            `remove(T)` must eliminate **all** occurrences of the target value, not\n            just the first one.\n\n            The implementation achieves this with a single bottom-up tree traversal\n            using a singleton set as the removal predicate. Each leaf node is visited\n            exactly once; only the nodes on the path from the root to a changed leaf\n            are copied — all other subtrees are shared with the original tuple\n            unchanged (structural sharing).\n\n            This table exercises the full range of shapes: tuples whose elements\n            live in a single dense leaf (< 512 items), tuples large enough to\n            span multiple branch nodes (≥ 512 items), boundary cases such as an\n            absent target, a fully-matching tuple, a single-element match, and\n            targets that appear only at the very first or very last position.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A snapshot of the input to verify immutability later.","code":["var snapshot = new ArrayList<>(input.toList())"]},
+
+        {"kind":"when","text":"We remove every occurrence of the target.","code":["var result = input.remove(target)"]},
+
+        {"kind":"then","text":"The content of the result matches the expected tuple.","code":["result == expected"]},
+
+        {"kind":"and","text":"The type and nullability are preserved.","code":["result.type()       == input.type()","result.allowsNull() == input.allowsNull()"]},
+
+        {"kind":"and","text":"The original tuple is completely unchanged (immutability guarantee).","code":["input.toList() == snapshot"]},
+
+        {"kind":"where","text":"We try a broad range of input shapes and target positions.","code":{"input":["Tuple.of(1, 2, 2, 3, 2, 4)","Tuple.of(4, 2, 2, 7, 2, 3, 4, 7)","Tuple.of(\"a\", \"b\", \"a\", \"c\", \"a\")","Tuple.of(\"hello\", \"world\", \"hello\")","Tuple.of(9, 1, 2, 3, 4, 5)","Tuple.of(1, 2, 3, 4, 5, 9)","Tuple.of(9, 1, 9, 2, 9)","Tuple.of(42)","Tuple.of(Integer)","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(Integer, (0..599).collect { it % 2 == 0 ? it : -1 })","Tuple.of(Integer, (-800..800).collect { it % 3 == 0 ? 3 : it })","Tuple.of(Integer, (-860..860).collect { Math.floor(it/91)%3==0?3:it})","Tuple.of(Integer, (0..699).collect { it < 600 ? it : 42 })"],"target":["2","2","\"a\"","\"hello\"","9","9","9","42","0","99","-1","3","3","42"],"expected":["Tuple.of(1, 3, 4)","Tuple.of(4, 7, 3, 4, 7)","Tuple.of(\"b\", \"c\")","Tuple.of(\"world\")","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(1, 2)","Tuple.of(Integer)","Tuple.of(Integer)","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(Integer, (0..598).findAll { it % 2 == 0 })","Tuple.of(Integer, (-800..800).findAll { it % 3 != 0 })","Tuple.of(Integer, (-860..860).findAll { Math.floor(it/91) % 3 != 0 })","Tuple.of(Integer, (0..599).findAll {it!=42})"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `remove(T)` method also removes null values from a nullable tuple",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            When a nullable tuple contains null elements, `remove(null)` must\n            eliminate every one of them.\n\n            Internally the singleton removal set is `Collections.singleton(null)`,\n            and `Set.contains(null)` returns true for a standard `HashSet` or\n            singleton set, so the null-element path in the leaf traversal is handled\n            correctly without any special-casing.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A nullable tuple that contains several null slots among real values.","code":["var tuple = Tuple.ofNullable(String, \"a\", null, \"b\", null, \"c\", null)"]},
+
+        {"kind":"when","text":"We remove null.","code":["var result = tuple.remove(null)"]},
+
+        {"kind":"then","text":"All null slots are gone; the non-null values are preserved in order.","code":["result == Tuple.ofNullable(String, \"a\", \"b\", \"c\")"]},
+
+        {"kind":"and","text":"The result is still a nullable tuple (nullability is never changed by remove).","code":["result.allowsNull()"]},
+
+        {"kind":"and","text":"The original tuple is unchanged.","code":["tuple.size() == 6","tuple.toList() == [\"a\", null, \"b\", null, \"c\", null]"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `remove(T)` method returns the identical tuple object when the target is absent",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Structural sharing is the key performance property of the tree-based\n            implementation. When no node in the tree contains the target value,\n            every node's `removeAllOf(...)` call returns `this` (reference identity),\n            which propagates all the way back to the root. Consequently the\n            `TupleTree` itself returns `this`, and `TupleWithDiff` also returns\n            `this` unchanged.\n\n            A caller can therefore rely on reference-identity (`is`) to detect that\n            nothing changed, which is exactly what reactive change listeners do to\n            avoid unnecessary updates.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A small tuple whose elements do not include the target.","code":["var small = Tuple.of(\"apple\", \"banana\", \"cherry\")"]},
+
+        {"kind":"when","text":"We attempt to remove a value that is simply not there.","code":["var result = small.remove(\"mango\")"]},
+
+        {"kind":"then","text":"The returned reference is identical to the original — no allocation happened.","code":["result.is(small)"]},
+
+        {"kind":"when","text":"We have a large tuple (spanning branch nodes) that also does not contain the target.","code":["var large = Tuple.of(Integer, 0..999)"]},
+
+        {"kind":"and","text":"We attempt to remove a value that is not in the large tuple.","code":["var largeResult = large.remove(-1)"]},
+
+        {"kind":"then","text":"Again the identical object is returned — the entire tree is shared.","code":["largeResult.is(large)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `remove(T)` result carries the correct sequence-diff metadata [0]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Because `TupleWithDiff.remove(T)` creates a `SequenceDiff` after the\n            tree traversal, listeners can inspect exactly how many items were removed.\n\n            The `index` in the diff is always -1 for `remove(T)` because the removed\n            items may be scattered non-contiguously through the tuple (just like\n            `removeAll`). The `change` is always `SequenceChange.REMOVE`.\n        "]
+      },
+      "blocks":[
+        {"kind":"when","text":"We remove the target from the tuple.","code":["var result = input.remove(target)"]},
+
+        {"kind":"then","text":"The result exposes a sequence diff.","code":["result instanceof SequenceDiffOwner","(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
+
+        {"kind":"when","text":"We read the diff.","code":["var diff = (result as SequenceDiffOwner).differenceFromPrevious().get()"]},
+
+        {"kind":"then","text":"The change type is REMOVE.","code":["diff.change() == SequenceChange.REMOVE"]},
+
+        {"kind":"and","text":"The index is -1 because the removed elements are not necessarily contiguous.","code":["diff.index().orElse(-1) == index"]},
+
+        {"kind":"and","text":"The size reflects how many items were removed.","code":["diff.size() == expectedRemovedCount"]},
+
+        {"kind":"where","text":"","code":{"input":["Tuple.of(1, 2, 2, 3, 2, 4)","Tuple.of(4, 2, 2, 7, 2, 3, 4, 7)","Tuple.of(\"a\", \"b\", \"a\", \"c\")","Tuple.of(42)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(Integer, (-40..90))"],"target":["2","2","\"a\"","42","1","3","32"],"index":["-1","-1","-1","0","0","2","72"],"expectedRemovedCount":["3","3","2","1","1","1","1"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `remove(T)` result carries the correct sequence-diff metadata [1]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Because `TupleWithDiff.remove(T)` creates a `SequenceDiff` after the\n            tree traversal, listeners can inspect exactly how many items were removed.\n\n            The `index` in the diff is always -1 for `remove(T)` because the removed\n            items may be scattered non-contiguously through the tuple (just like\n            `removeAll`). The `change` is always `SequenceChange.REMOVE`.\n        "]
+      },
+      "blocks":[
+        {"kind":"when","text":"We remove the target from the tuple.","code":["var result = input.remove(target)"]},
+
+        {"kind":"then","text":"The result exposes a sequence diff.","code":["result instanceof SequenceDiffOwner","(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
+
+        {"kind":"when","text":"We read the diff.","code":["var diff = (result as SequenceDiffOwner).differenceFromPrevious().get()"]},
+
+        {"kind":"then","text":"The change type is REMOVE.","code":["diff.change() == SequenceChange.REMOVE"]},
+
+        {"kind":"and","text":"The index is -1 because the removed elements are not necessarily contiguous.","code":["diff.index().orElse(-1) == index"]},
+
+        {"kind":"and","text":"The size reflects how many items were removed.","code":["diff.size() == expectedRemovedCount"]},
+
+        {"kind":"where","text":"","code":{"input":["Tuple.of(1, 2, 2, 3, 2, 4)","Tuple.of(4, 2, 2, 7, 2, 3, 4, 7)","Tuple.of(\"a\", \"b\", \"a\", \"c\")","Tuple.of(42)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(Integer, (-40..90))"],"target":["2","2","\"a\"","42","1","3","32"],"index":["-1","-1","-1","0","0","2","72"],"expectedRemovedCount":["3","3","2","1","1","1","1"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `remove(T)` result carries the correct sequence-diff metadata [2]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Because `TupleWithDiff.remove(T)` creates a `SequenceDiff` after the\n            tree traversal, listeners can inspect exactly how many items were removed.\n\n            The `index` in the diff is always -1 for `remove(T)` because the removed\n            items may be scattered non-contiguously through the tuple (just like\n            `removeAll`). The `change` is always `SequenceChange.REMOVE`.\n        "]
+      },
+      "blocks":[
+        {"kind":"when","text":"We remove the target from the tuple.","code":["var result = input.remove(target)"]},
+
+        {"kind":"then","text":"The result exposes a sequence diff.","code":["result instanceof SequenceDiffOwner","(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
+
+        {"kind":"when","text":"We read the diff.","code":["var diff = (result as SequenceDiffOwner).differenceFromPrevious().get()"]},
+
+        {"kind":"then","text":"The change type is REMOVE.","code":["diff.change() == SequenceChange.REMOVE"]},
+
+        {"kind":"and","text":"The index is -1 because the removed elements are not necessarily contiguous.","code":["diff.index().orElse(-1) == index"]},
+
+        {"kind":"and","text":"The size reflects how many items were removed.","code":["diff.size() == expectedRemovedCount"]},
+
+        {"kind":"where","text":"","code":{"input":["Tuple.of(1, 2, 2, 3, 2, 4)","Tuple.of(4, 2, 2, 7, 2, 3, 4, 7)","Tuple.of(\"a\", \"b\", \"a\", \"c\")","Tuple.of(42)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(Integer, (-40..90))"],"target":["2","2","\"a\"","42","1","3","32"],"index":["-1","-1","-1","0","0","2","72"],"expectedRemovedCount":["3","3","2","1","1","1","1"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `remove(T)` result carries the correct sequence-diff metadata [3]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Because `TupleWithDiff.remove(T)` creates a `SequenceDiff` after the\n            tree traversal, listeners can inspect exactly how many items were removed.\n\n            The `index` in the diff is always -1 for `remove(T)` because the removed\n            items may be scattered non-contiguously through the tuple (just like\n            `removeAll`). The `change` is always `SequenceChange.REMOVE`.\n        "]
+      },
+      "blocks":[
+        {"kind":"when","text":"We remove the target from the tuple.","code":["var result = input.remove(target)"]},
+
+        {"kind":"then","text":"The result exposes a sequence diff.","code":["result instanceof SequenceDiffOwner","(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
+
+        {"kind":"when","text":"We read the diff.","code":["var diff = (result as SequenceDiffOwner).differenceFromPrevious().get()"]},
+
+        {"kind":"then","text":"The change type is REMOVE.","code":["diff.change() == SequenceChange.REMOVE"]},
+
+        {"kind":"and","text":"The index is -1 because the removed elements are not necessarily contiguous.","code":["diff.index().orElse(-1) == index"]},
+
+        {"kind":"and","text":"The size reflects how many items were removed.","code":["diff.size() == expectedRemovedCount"]},
+
+        {"kind":"where","text":"","code":{"input":["Tuple.of(1, 2, 2, 3, 2, 4)","Tuple.of(4, 2, 2, 7, 2, 3, 4, 7)","Tuple.of(\"a\", \"b\", \"a\", \"c\")","Tuple.of(42)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(Integer, (-40..90))"],"target":["2","2","\"a\"","42","1","3","32"],"index":["-1","-1","-1","0","0","2","72"],"expectedRemovedCount":["3","3","2","1","1","1","1"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `remove(T)` result carries the correct sequence-diff metadata [4]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Because `TupleWithDiff.remove(T)` creates a `SequenceDiff` after the\n            tree traversal, listeners can inspect exactly how many items were removed.\n\n            The `index` in the diff is always -1 for `remove(T)` because the removed\n            items may be scattered non-contiguously through the tuple (just like\n            `removeAll`). The `change` is always `SequenceChange.REMOVE`.\n        "]
+      },
+      "blocks":[
+        {"kind":"when","text":"We remove the target from the tuple.","code":["var result = input.remove(target)"]},
+
+        {"kind":"then","text":"The result exposes a sequence diff.","code":["result instanceof SequenceDiffOwner","(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
+
+        {"kind":"when","text":"We read the diff.","code":["var diff = (result as SequenceDiffOwner).differenceFromPrevious().get()"]},
+
+        {"kind":"then","text":"The change type is REMOVE.","code":["diff.change() == SequenceChange.REMOVE"]},
+
+        {"kind":"and","text":"The index is -1 because the removed elements are not necessarily contiguous.","code":["diff.index().orElse(-1) == index"]},
+
+        {"kind":"and","text":"The size reflects how many items were removed.","code":["diff.size() == expectedRemovedCount"]},
+
+        {"kind":"where","text":"","code":{"input":["Tuple.of(1, 2, 2, 3, 2, 4)","Tuple.of(4, 2, 2, 7, 2, 3, 4, 7)","Tuple.of(\"a\", \"b\", \"a\", \"c\")","Tuple.of(42)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(Integer, (-40..90))"],"target":["2","2","\"a\"","42","1","3","32"],"index":["-1","-1","-1","0","0","2","72"],"expectedRemovedCount":["3","3","2","1","1","1","1"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `remove(T)` result carries the correct sequence-diff metadata [5]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Because `TupleWithDiff.remove(T)` creates a `SequenceDiff` after the\n            tree traversal, listeners can inspect exactly how many items were removed.\n\n            The `index` in the diff is always -1 for `remove(T)` because the removed\n            items may be scattered non-contiguously through the tuple (just like\n            `removeAll`). The `change` is always `SequenceChange.REMOVE`.\n        "]
+      },
+      "blocks":[
+        {"kind":"when","text":"We remove the target from the tuple.","code":["var result = input.remove(target)"]},
+
+        {"kind":"then","text":"The result exposes a sequence diff.","code":["result instanceof SequenceDiffOwner","(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
+
+        {"kind":"when","text":"We read the diff.","code":["var diff = (result as SequenceDiffOwner).differenceFromPrevious().get()"]},
+
+        {"kind":"then","text":"The change type is REMOVE.","code":["diff.change() == SequenceChange.REMOVE"]},
+
+        {"kind":"and","text":"The index is -1 because the removed elements are not necessarily contiguous.","code":["diff.index().orElse(-1) == index"]},
+
+        {"kind":"and","text":"The size reflects how many items were removed.","code":["diff.size() == expectedRemovedCount"]},
+
+        {"kind":"where","text":"","code":{"input":["Tuple.of(1, 2, 2, 3, 2, 4)","Tuple.of(4, 2, 2, 7, 2, 3, 4, 7)","Tuple.of(\"a\", \"b\", \"a\", \"c\")","Tuple.of(42)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(Integer, (-40..90))"],"target":["2","2","\"a\"","42","1","3","32"],"index":["-1","-1","-1","0","0","2","72"],"expectedRemovedCount":["3","3","2","1","1","1","1"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `remove(T)` result carries the correct sequence-diff metadata [6]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Because `TupleWithDiff.remove(T)` creates a `SequenceDiff` after the\n            tree traversal, listeners can inspect exactly how many items were removed.\n\n            The `index` in the diff is always -1 for `remove(T)` because the removed\n            items may be scattered non-contiguously through the tuple (just like\n            `removeAll`). The `change` is always `SequenceChange.REMOVE`.\n        "]
+      },
+      "blocks":[
+        {"kind":"when","text":"We remove the target from the tuple.","code":["var result = input.remove(target)"]},
+
+        {"kind":"then","text":"The result exposes a sequence diff.","code":["result instanceof SequenceDiffOwner","(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
+
+        {"kind":"when","text":"We read the diff.","code":["var diff = (result as SequenceDiffOwner).differenceFromPrevious().get()"]},
+
+        {"kind":"then","text":"The change type is REMOVE.","code":["diff.change() == SequenceChange.REMOVE"]},
+
+        {"kind":"and","text":"The index is -1 because the removed elements are not necessarily contiguous.","code":["diff.index().orElse(-1) == index"]},
+
+        {"kind":"and","text":"The size reflects how many items were removed.","code":["diff.size() == expectedRemovedCount"]},
+
+        {"kind":"where","text":"","code":{"input":["Tuple.of(1, 2, 2, 3, 2, 4)","Tuple.of(4, 2, 2, 7, 2, 3, 4, 7)","Tuple.of(\"a\", \"b\", \"a\", \"c\")","Tuple.of(42)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(Integer, (-40..90))"],"target":["2","2","\"a\"","42","1","3","32"],"index":["-1","-1","-1","0","0","2","72"],"expectedRemovedCount":["3","3","2","1","1","1","1"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `removeAll(Tuple)` method removes every occurrence of every value in the removal set [0]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            `removeAll(Tuple<T>)` converts the removal argument into a `Set` once,\n            then performs a single tree traversal. This means:\n\n              - All occurrences of every value in the removal set are eliminated in\n                one pass, without rebuilding the tuple from scratch.\n              - Values that appear multiple times in the removal tuple are deduplicated\n                by the set, so passing `[2, 2, 2]` as the removal argument is\n                identical to passing `[2]`.\n              - Structural sharing is respected: subtrees that contain none of the\n                removal values are not copied.\n\n            The table below covers: multiple distinct removal values, duplicated\n            entries in the removal tuple, values not present in the source, all\n            values removed, and large tuples spanning multiple branch nodes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A snapshot of the input to verify immutability.","code":["var snapshot = new ArrayList<>(input.toList())"]},
+
+        {"kind":"when","text":"We remove all occurrences of every value in the removal tuple.","code":["var result = input.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"The result matches the expected tuple.","code":["result == expected"]},
+
+        {"kind":"and","text":"Type and nullability are unchanged.","code":["result.type()       == input.type()","result.allowsNull() == input.allowsNull()"]},
+
+        {"kind":"and","text":"The original tuple is unchanged.","code":["input.toList() == snapshot"]},
+
+        {"kind":"where","text":"","code":{"input":["Tuple.of(1, 2, 3, 4, 5)","Tuple.of(1, 2, 3, 2, 1)","Tuple.of(\"a\", \"b\", \"c\", \"b\", \"a\")","Tuple.of(1, 2, 3, 2, 1)","Tuple.of(\"x\", \"y\", \"x\", \"z\", \"x\")","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(5, 5, 5)","Tuple.of(Integer, (0..699))","Tuple.of(Integer, (0..599).collect{it%3==0?-1:it})"],"toRemove":["Tuple.of(2, 4)","Tuple.of(1, 2)","Tuple.of(\"a\", \"c\")","Tuple.of(2, 2, 2)","Tuple.of(\"x\", \"x\")","Tuple.of(7, 8, 9)","Tuple.of(Integer)","Tuple.of(1, 2, 3)","Tuple.of(5)","Tuple.of(Integer, (100..199))","Tuple.of(-1)"],"expected":["Tuple.of(1, 3, 5)","Tuple.of(3)","Tuple.of(\"b\", \"b\")","Tuple.of(1, 3, 1)","Tuple.of(\"y\", \"z\")","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(Integer)","Tuple.of(Integer)","Tuple.of(Integer, (0..99).plus(200..699))","Tuple.of(Integer, (0..599).findAll{it%3!=0})"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `removeAll(Tuple)` method removes every occurrence of every value in the removal set [1]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            `removeAll(Tuple<T>)` converts the removal argument into a `Set` once,\n            then performs a single tree traversal. This means:\n\n              - All occurrences of every value in the removal set are eliminated in\n                one pass, without rebuilding the tuple from scratch.\n              - Values that appear multiple times in the removal tuple are deduplicated\n                by the set, so passing `[2, 2, 2]` as the removal argument is\n                identical to passing `[2]`.\n              - Structural sharing is respected: subtrees that contain none of the\n                removal values are not copied.\n\n            The table below covers: multiple distinct removal values, duplicated\n            entries in the removal tuple, values not present in the source, all\n            values removed, and large tuples spanning multiple branch nodes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A snapshot of the input to verify immutability.","code":["var snapshot = new ArrayList<>(input.toList())"]},
+
+        {"kind":"when","text":"We remove all occurrences of every value in the removal tuple.","code":["var result = input.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"The result matches the expected tuple.","code":["result == expected"]},
+
+        {"kind":"and","text":"Type and nullability are unchanged.","code":["result.type()       == input.type()","result.allowsNull() == input.allowsNull()"]},
+
+        {"kind":"and","text":"The original tuple is unchanged.","code":["input.toList() == snapshot"]},
+
+        {"kind":"where","text":"","code":{"input":["Tuple.of(1, 2, 3, 4, 5)","Tuple.of(1, 2, 3, 2, 1)","Tuple.of(\"a\", \"b\", \"c\", \"b\", \"a\")","Tuple.of(1, 2, 3, 2, 1)","Tuple.of(\"x\", \"y\", \"x\", \"z\", \"x\")","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(5, 5, 5)","Tuple.of(Integer, (0..699))","Tuple.of(Integer, (0..599).collect{it%3==0?-1:it})"],"toRemove":["Tuple.of(2, 4)","Tuple.of(1, 2)","Tuple.of(\"a\", \"c\")","Tuple.of(2, 2, 2)","Tuple.of(\"x\", \"x\")","Tuple.of(7, 8, 9)","Tuple.of(Integer)","Tuple.of(1, 2, 3)","Tuple.of(5)","Tuple.of(Integer, (100..199))","Tuple.of(-1)"],"expected":["Tuple.of(1, 3, 5)","Tuple.of(3)","Tuple.of(\"b\", \"b\")","Tuple.of(1, 3, 1)","Tuple.of(\"y\", \"z\")","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(Integer)","Tuple.of(Integer)","Tuple.of(Integer, (0..99).plus(200..699))","Tuple.of(Integer, (0..599).findAll{it%3!=0})"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `removeAll(Tuple)` method removes every occurrence of every value in the removal set [2]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            `removeAll(Tuple<T>)` converts the removal argument into a `Set` once,\n            then performs a single tree traversal. This means:\n\n              - All occurrences of every value in the removal set are eliminated in\n                one pass, without rebuilding the tuple from scratch.\n              - Values that appear multiple times in the removal tuple are deduplicated\n                by the set, so passing `[2, 2, 2]` as the removal argument is\n                identical to passing `[2]`.\n              - Structural sharing is respected: subtrees that contain none of the\n                removal values are not copied.\n\n            The table below covers: multiple distinct removal values, duplicated\n            entries in the removal tuple, values not present in the source, all\n            values removed, and large tuples spanning multiple branch nodes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A snapshot of the input to verify immutability.","code":["var snapshot = new ArrayList<>(input.toList())"]},
+
+        {"kind":"when","text":"We remove all occurrences of every value in the removal tuple.","code":["var result = input.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"The result matches the expected tuple.","code":["result == expected"]},
+
+        {"kind":"and","text":"Type and nullability are unchanged.","code":["result.type()       == input.type()","result.allowsNull() == input.allowsNull()"]},
+
+        {"kind":"and","text":"The original tuple is unchanged.","code":["input.toList() == snapshot"]},
+
+        {"kind":"where","text":"","code":{"input":["Tuple.of(1, 2, 3, 4, 5)","Tuple.of(1, 2, 3, 2, 1)","Tuple.of(\"a\", \"b\", \"c\", \"b\", \"a\")","Tuple.of(1, 2, 3, 2, 1)","Tuple.of(\"x\", \"y\", \"x\", \"z\", \"x\")","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(5, 5, 5)","Tuple.of(Integer, (0..699))","Tuple.of(Integer, (0..599).collect{it%3==0?-1:it})"],"toRemove":["Tuple.of(2, 4)","Tuple.of(1, 2)","Tuple.of(\"a\", \"c\")","Tuple.of(2, 2, 2)","Tuple.of(\"x\", \"x\")","Tuple.of(7, 8, 9)","Tuple.of(Integer)","Tuple.of(1, 2, 3)","Tuple.of(5)","Tuple.of(Integer, (100..199))","Tuple.of(-1)"],"expected":["Tuple.of(1, 3, 5)","Tuple.of(3)","Tuple.of(\"b\", \"b\")","Tuple.of(1, 3, 1)","Tuple.of(\"y\", \"z\")","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(Integer)","Tuple.of(Integer)","Tuple.of(Integer, (0..99).plus(200..699))","Tuple.of(Integer, (0..599).findAll{it%3!=0})"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `removeAll(Tuple)` method removes every occurrence of every value in the removal set [3]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            `removeAll(Tuple<T>)` converts the removal argument into a `Set` once,\n            then performs a single tree traversal. This means:\n\n              - All occurrences of every value in the removal set are eliminated in\n                one pass, without rebuilding the tuple from scratch.\n              - Values that appear multiple times in the removal tuple are deduplicated\n                by the set, so passing `[2, 2, 2]` as the removal argument is\n                identical to passing `[2]`.\n              - Structural sharing is respected: subtrees that contain none of the\n                removal values are not copied.\n\n            The table below covers: multiple distinct removal values, duplicated\n            entries in the removal tuple, values not present in the source, all\n            values removed, and large tuples spanning multiple branch nodes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A snapshot of the input to verify immutability.","code":["var snapshot = new ArrayList<>(input.toList())"]},
+
+        {"kind":"when","text":"We remove all occurrences of every value in the removal tuple.","code":["var result = input.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"The result matches the expected tuple.","code":["result == expected"]},
+
+        {"kind":"and","text":"Type and nullability are unchanged.","code":["result.type()       == input.type()","result.allowsNull() == input.allowsNull()"]},
+
+        {"kind":"and","text":"The original tuple is unchanged.","code":["input.toList() == snapshot"]},
+
+        {"kind":"where","text":"","code":{"input":["Tuple.of(1, 2, 3, 4, 5)","Tuple.of(1, 2, 3, 2, 1)","Tuple.of(\"a\", \"b\", \"c\", \"b\", \"a\")","Tuple.of(1, 2, 3, 2, 1)","Tuple.of(\"x\", \"y\", \"x\", \"z\", \"x\")","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(5, 5, 5)","Tuple.of(Integer, (0..699))","Tuple.of(Integer, (0..599).collect{it%3==0?-1:it})"],"toRemove":["Tuple.of(2, 4)","Tuple.of(1, 2)","Tuple.of(\"a\", \"c\")","Tuple.of(2, 2, 2)","Tuple.of(\"x\", \"x\")","Tuple.of(7, 8, 9)","Tuple.of(Integer)","Tuple.of(1, 2, 3)","Tuple.of(5)","Tuple.of(Integer, (100..199))","Tuple.of(-1)"],"expected":["Tuple.of(1, 3, 5)","Tuple.of(3)","Tuple.of(\"b\", \"b\")","Tuple.of(1, 3, 1)","Tuple.of(\"y\", \"z\")","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(Integer)","Tuple.of(Integer)","Tuple.of(Integer, (0..99).plus(200..699))","Tuple.of(Integer, (0..599).findAll{it%3!=0})"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `removeAll(Tuple)` method removes every occurrence of every value in the removal set [4]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            `removeAll(Tuple<T>)` converts the removal argument into a `Set` once,\n            then performs a single tree traversal. This means:\n\n              - All occurrences of every value in the removal set are eliminated in\n                one pass, without rebuilding the tuple from scratch.\n              - Values that appear multiple times in the removal tuple are deduplicated\n                by the set, so passing `[2, 2, 2]` as the removal argument is\n                identical to passing `[2]`.\n              - Structural sharing is respected: subtrees that contain none of the\n                removal values are not copied.\n\n            The table below covers: multiple distinct removal values, duplicated\n            entries in the removal tuple, values not present in the source, all\n            values removed, and large tuples spanning multiple branch nodes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A snapshot of the input to verify immutability.","code":["var snapshot = new ArrayList<>(input.toList())"]},
+
+        {"kind":"when","text":"We remove all occurrences of every value in the removal tuple.","code":["var result = input.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"The result matches the expected tuple.","code":["result == expected"]},
+
+        {"kind":"and","text":"Type and nullability are unchanged.","code":["result.type()       == input.type()","result.allowsNull() == input.allowsNull()"]},
+
+        {"kind":"and","text":"The original tuple is unchanged.","code":["input.toList() == snapshot"]},
+
+        {"kind":"where","text":"","code":{"input":["Tuple.of(1, 2, 3, 4, 5)","Tuple.of(1, 2, 3, 2, 1)","Tuple.of(\"a\", \"b\", \"c\", \"b\", \"a\")","Tuple.of(1, 2, 3, 2, 1)","Tuple.of(\"x\", \"y\", \"x\", \"z\", \"x\")","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(5, 5, 5)","Tuple.of(Integer, (0..699))","Tuple.of(Integer, (0..599).collect{it%3==0?-1:it})"],"toRemove":["Tuple.of(2, 4)","Tuple.of(1, 2)","Tuple.of(\"a\", \"c\")","Tuple.of(2, 2, 2)","Tuple.of(\"x\", \"x\")","Tuple.of(7, 8, 9)","Tuple.of(Integer)","Tuple.of(1, 2, 3)","Tuple.of(5)","Tuple.of(Integer, (100..199))","Tuple.of(-1)"],"expected":["Tuple.of(1, 3, 5)","Tuple.of(3)","Tuple.of(\"b\", \"b\")","Tuple.of(1, 3, 1)","Tuple.of(\"y\", \"z\")","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(Integer)","Tuple.of(Integer)","Tuple.of(Integer, (0..99).plus(200..699))","Tuple.of(Integer, (0..599).findAll{it%3!=0})"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `removeAll(Tuple)` method removes every occurrence of every value in the removal set [5]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            `removeAll(Tuple<T>)` converts the removal argument into a `Set` once,\n            then performs a single tree traversal. This means:\n\n              - All occurrences of every value in the removal set are eliminated in\n                one pass, without rebuilding the tuple from scratch.\n              - Values that appear multiple times in the removal tuple are deduplicated\n                by the set, so passing `[2, 2, 2]` as the removal argument is\n                identical to passing `[2]`.\n              - Structural sharing is respected: subtrees that contain none of the\n                removal values are not copied.\n\n            The table below covers: multiple distinct removal values, duplicated\n            entries in the removal tuple, values not present in the source, all\n            values removed, and large tuples spanning multiple branch nodes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A snapshot of the input to verify immutability.","code":["var snapshot = new ArrayList<>(input.toList())"]},
+
+        {"kind":"when","text":"We remove all occurrences of every value in the removal tuple.","code":["var result = input.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"The result matches the expected tuple.","code":["result == expected"]},
+
+        {"kind":"and","text":"Type and nullability are unchanged.","code":["result.type()       == input.type()","result.allowsNull() == input.allowsNull()"]},
+
+        {"kind":"and","text":"The original tuple is unchanged.","code":["input.toList() == snapshot"]},
+
+        {"kind":"where","text":"","code":{"input":["Tuple.of(1, 2, 3, 4, 5)","Tuple.of(1, 2, 3, 2, 1)","Tuple.of(\"a\", \"b\", \"c\", \"b\", \"a\")","Tuple.of(1, 2, 3, 2, 1)","Tuple.of(\"x\", \"y\", \"x\", \"z\", \"x\")","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(5, 5, 5)","Tuple.of(Integer, (0..699))","Tuple.of(Integer, (0..599).collect{it%3==0?-1:it})"],"toRemove":["Tuple.of(2, 4)","Tuple.of(1, 2)","Tuple.of(\"a\", \"c\")","Tuple.of(2, 2, 2)","Tuple.of(\"x\", \"x\")","Tuple.of(7, 8, 9)","Tuple.of(Integer)","Tuple.of(1, 2, 3)","Tuple.of(5)","Tuple.of(Integer, (100..199))","Tuple.of(-1)"],"expected":["Tuple.of(1, 3, 5)","Tuple.of(3)","Tuple.of(\"b\", \"b\")","Tuple.of(1, 3, 1)","Tuple.of(\"y\", \"z\")","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(Integer)","Tuple.of(Integer)","Tuple.of(Integer, (0..99).plus(200..699))","Tuple.of(Integer, (0..599).findAll{it%3!=0})"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `removeAll(Tuple)` method removes every occurrence of every value in the removal set [6]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            `removeAll(Tuple<T>)` converts the removal argument into a `Set` once,\n            then performs a single tree traversal. This means:\n\n              - All occurrences of every value in the removal set are eliminated in\n                one pass, without rebuilding the tuple from scratch.\n              - Values that appear multiple times in the removal tuple are deduplicated\n                by the set, so passing `[2, 2, 2]` as the removal argument is\n                identical to passing `[2]`.\n              - Structural sharing is respected: subtrees that contain none of the\n                removal values are not copied.\n\n            The table below covers: multiple distinct removal values, duplicated\n            entries in the removal tuple, values not present in the source, all\n            values removed, and large tuples spanning multiple branch nodes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A snapshot of the input to verify immutability.","code":["var snapshot = new ArrayList<>(input.toList())"]},
+
+        {"kind":"when","text":"We remove all occurrences of every value in the removal tuple.","code":["var result = input.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"The result matches the expected tuple.","code":["result == expected"]},
+
+        {"kind":"and","text":"Type and nullability are unchanged.","code":["result.type()       == input.type()","result.allowsNull() == input.allowsNull()"]},
+
+        {"kind":"and","text":"The original tuple is unchanged.","code":["input.toList() == snapshot"]},
+
+        {"kind":"where","text":"","code":{"input":["Tuple.of(1, 2, 3, 4, 5)","Tuple.of(1, 2, 3, 2, 1)","Tuple.of(\"a\", \"b\", \"c\", \"b\", \"a\")","Tuple.of(1, 2, 3, 2, 1)","Tuple.of(\"x\", \"y\", \"x\", \"z\", \"x\")","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(5, 5, 5)","Tuple.of(Integer, (0..699))","Tuple.of(Integer, (0..599).collect{it%3==0?-1:it})"],"toRemove":["Tuple.of(2, 4)","Tuple.of(1, 2)","Tuple.of(\"a\", \"c\")","Tuple.of(2, 2, 2)","Tuple.of(\"x\", \"x\")","Tuple.of(7, 8, 9)","Tuple.of(Integer)","Tuple.of(1, 2, 3)","Tuple.of(5)","Tuple.of(Integer, (100..199))","Tuple.of(-1)"],"expected":["Tuple.of(1, 3, 5)","Tuple.of(3)","Tuple.of(\"b\", \"b\")","Tuple.of(1, 3, 1)","Tuple.of(\"y\", \"z\")","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(Integer)","Tuple.of(Integer)","Tuple.of(Integer, (0..99).plus(200..699))","Tuple.of(Integer, (0..599).findAll{it%3!=0})"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `removeAll(Tuple)` method removes every occurrence of every value in the removal set [7]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            `removeAll(Tuple<T>)` converts the removal argument into a `Set` once,\n            then performs a single tree traversal. This means:\n\n              - All occurrences of every value in the removal set are eliminated in\n                one pass, without rebuilding the tuple from scratch.\n              - Values that appear multiple times in the removal tuple are deduplicated\n                by the set, so passing `[2, 2, 2]` as the removal argument is\n                identical to passing `[2]`.\n              - Structural sharing is respected: subtrees that contain none of the\n                removal values are not copied.\n\n            The table below covers: multiple distinct removal values, duplicated\n            entries in the removal tuple, values not present in the source, all\n            values removed, and large tuples spanning multiple branch nodes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A snapshot of the input to verify immutability.","code":["var snapshot = new ArrayList<>(input.toList())"]},
+
+        {"kind":"when","text":"We remove all occurrences of every value in the removal tuple.","code":["var result = input.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"The result matches the expected tuple.","code":["result == expected"]},
+
+        {"kind":"and","text":"Type and nullability are unchanged.","code":["result.type()       == input.type()","result.allowsNull() == input.allowsNull()"]},
+
+        {"kind":"and","text":"The original tuple is unchanged.","code":["input.toList() == snapshot"]},
+
+        {"kind":"where","text":"","code":{"input":["Tuple.of(1, 2, 3, 4, 5)","Tuple.of(1, 2, 3, 2, 1)","Tuple.of(\"a\", \"b\", \"c\", \"b\", \"a\")","Tuple.of(1, 2, 3, 2, 1)","Tuple.of(\"x\", \"y\", \"x\", \"z\", \"x\")","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(5, 5, 5)","Tuple.of(Integer, (0..699))","Tuple.of(Integer, (0..599).collect{it%3==0?-1:it})"],"toRemove":["Tuple.of(2, 4)","Tuple.of(1, 2)","Tuple.of(\"a\", \"c\")","Tuple.of(2, 2, 2)","Tuple.of(\"x\", \"x\")","Tuple.of(7, 8, 9)","Tuple.of(Integer)","Tuple.of(1, 2, 3)","Tuple.of(5)","Tuple.of(Integer, (100..199))","Tuple.of(-1)"],"expected":["Tuple.of(1, 3, 5)","Tuple.of(3)","Tuple.of(\"b\", \"b\")","Tuple.of(1, 3, 1)","Tuple.of(\"y\", \"z\")","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(Integer)","Tuple.of(Integer)","Tuple.of(Integer, (0..99).plus(200..699))","Tuple.of(Integer, (0..599).findAll{it%3!=0})"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `removeAll(Tuple)` method removes every occurrence of every value in the removal set [8]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            `removeAll(Tuple<T>)` converts the removal argument into a `Set` once,\n            then performs a single tree traversal. This means:\n\n              - All occurrences of every value in the removal set are eliminated in\n                one pass, without rebuilding the tuple from scratch.\n              - Values that appear multiple times in the removal tuple are deduplicated\n                by the set, so passing `[2, 2, 2]` as the removal argument is\n                identical to passing `[2]`.\n              - Structural sharing is respected: subtrees that contain none of the\n                removal values are not copied.\n\n            The table below covers: multiple distinct removal values, duplicated\n            entries in the removal tuple, values not present in the source, all\n            values removed, and large tuples spanning multiple branch nodes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A snapshot of the input to verify immutability.","code":["var snapshot = new ArrayList<>(input.toList())"]},
+
+        {"kind":"when","text":"We remove all occurrences of every value in the removal tuple.","code":["var result = input.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"The result matches the expected tuple.","code":["result == expected"]},
+
+        {"kind":"and","text":"Type and nullability are unchanged.","code":["result.type()       == input.type()","result.allowsNull() == input.allowsNull()"]},
+
+        {"kind":"and","text":"The original tuple is unchanged.","code":["input.toList() == snapshot"]},
+
+        {"kind":"where","text":"","code":{"input":["Tuple.of(1, 2, 3, 4, 5)","Tuple.of(1, 2, 3, 2, 1)","Tuple.of(\"a\", \"b\", \"c\", \"b\", \"a\")","Tuple.of(1, 2, 3, 2, 1)","Tuple.of(\"x\", \"y\", \"x\", \"z\", \"x\")","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(5, 5, 5)","Tuple.of(Integer, (0..699))","Tuple.of(Integer, (0..599).collect{it%3==0?-1:it})"],"toRemove":["Tuple.of(2, 4)","Tuple.of(1, 2)","Tuple.of(\"a\", \"c\")","Tuple.of(2, 2, 2)","Tuple.of(\"x\", \"x\")","Tuple.of(7, 8, 9)","Tuple.of(Integer)","Tuple.of(1, 2, 3)","Tuple.of(5)","Tuple.of(Integer, (100..199))","Tuple.of(-1)"],"expected":["Tuple.of(1, 3, 5)","Tuple.of(3)","Tuple.of(\"b\", \"b\")","Tuple.of(1, 3, 1)","Tuple.of(\"y\", \"z\")","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(Integer)","Tuple.of(Integer)","Tuple.of(Integer, (0..99).plus(200..699))","Tuple.of(Integer, (0..599).findAll{it%3!=0})"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `removeAll(Tuple)` method removes every occurrence of every value in the removal set [9]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            `removeAll(Tuple<T>)` converts the removal argument into a `Set` once,\n            then performs a single tree traversal. This means:\n\n              - All occurrences of every value in the removal set are eliminated in\n                one pass, without rebuilding the tuple from scratch.\n              - Values that appear multiple times in the removal tuple are deduplicated\n                by the set, so passing `[2, 2, 2]` as the removal argument is\n                identical to passing `[2]`.\n              - Structural sharing is respected: subtrees that contain none of the\n                removal values are not copied.\n\n            The table below covers: multiple distinct removal values, duplicated\n            entries in the removal tuple, values not present in the source, all\n            values removed, and large tuples spanning multiple branch nodes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A snapshot of the input to verify immutability.","code":["var snapshot = new ArrayList<>(input.toList())"]},
+
+        {"kind":"when","text":"We remove all occurrences of every value in the removal tuple.","code":["var result = input.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"The result matches the expected tuple.","code":["result == expected"]},
+
+        {"kind":"and","text":"Type and nullability are unchanged.","code":["result.type()       == input.type()","result.allowsNull() == input.allowsNull()"]},
+
+        {"kind":"and","text":"The original tuple is unchanged.","code":["input.toList() == snapshot"]},
+
+        {"kind":"where","text":"","code":{"input":["Tuple.of(1, 2, 3, 4, 5)","Tuple.of(1, 2, 3, 2, 1)","Tuple.of(\"a\", \"b\", \"c\", \"b\", \"a\")","Tuple.of(1, 2, 3, 2, 1)","Tuple.of(\"x\", \"y\", \"x\", \"z\", \"x\")","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(5, 5, 5)","Tuple.of(Integer, (0..699))","Tuple.of(Integer, (0..599).collect{it%3==0?-1:it})"],"toRemove":["Tuple.of(2, 4)","Tuple.of(1, 2)","Tuple.of(\"a\", \"c\")","Tuple.of(2, 2, 2)","Tuple.of(\"x\", \"x\")","Tuple.of(7, 8, 9)","Tuple.of(Integer)","Tuple.of(1, 2, 3)","Tuple.of(5)","Tuple.of(Integer, (100..199))","Tuple.of(-1)"],"expected":["Tuple.of(1, 3, 5)","Tuple.of(3)","Tuple.of(\"b\", \"b\")","Tuple.of(1, 3, 1)","Tuple.of(\"y\", \"z\")","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(Integer)","Tuple.of(Integer)","Tuple.of(Integer, (0..99).plus(200..699))","Tuple.of(Integer, (0..599).findAll{it%3!=0})"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `removeAll(Tuple)` method removes every occurrence of every value in the removal set [10]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            `removeAll(Tuple<T>)` converts the removal argument into a `Set` once,\n            then performs a single tree traversal. This means:\n\n              - All occurrences of every value in the removal set are eliminated in\n                one pass, without rebuilding the tuple from scratch.\n              - Values that appear multiple times in the removal tuple are deduplicated\n                by the set, so passing `[2, 2, 2]` as the removal argument is\n                identical to passing `[2]`.\n              - Structural sharing is respected: subtrees that contain none of the\n                removal values are not copied.\n\n            The table below covers: multiple distinct removal values, duplicated\n            entries in the removal tuple, values not present in the source, all\n            values removed, and large tuples spanning multiple branch nodes.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A snapshot of the input to verify immutability.","code":["var snapshot = new ArrayList<>(input.toList())"]},
+
+        {"kind":"when","text":"We remove all occurrences of every value in the removal tuple.","code":["var result = input.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"The result matches the expected tuple.","code":["result == expected"]},
+
+        {"kind":"and","text":"Type and nullability are unchanged.","code":["result.type()       == input.type()","result.allowsNull() == input.allowsNull()"]},
+
+        {"kind":"and","text":"The original tuple is unchanged.","code":["input.toList() == snapshot"]},
+
+        {"kind":"where","text":"","code":{"input":["Tuple.of(1, 2, 3, 4, 5)","Tuple.of(1, 2, 3, 2, 1)","Tuple.of(\"a\", \"b\", \"c\", \"b\", \"a\")","Tuple.of(1, 2, 3, 2, 1)","Tuple.of(\"x\", \"y\", \"x\", \"z\", \"x\")","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(5, 5, 5)","Tuple.of(Integer, (0..699))","Tuple.of(Integer, (0..599).collect{it%3==0?-1:it})"],"toRemove":["Tuple.of(2, 4)","Tuple.of(1, 2)","Tuple.of(\"a\", \"c\")","Tuple.of(2, 2, 2)","Tuple.of(\"x\", \"x\")","Tuple.of(7, 8, 9)","Tuple.of(Integer)","Tuple.of(1, 2, 3)","Tuple.of(5)","Tuple.of(Integer, (100..199))","Tuple.of(-1)"],"expected":["Tuple.of(1, 3, 5)","Tuple.of(3)","Tuple.of(\"b\", \"b\")","Tuple.of(1, 3, 1)","Tuple.of(\"y\", \"z\")","Tuple.of(1, 2, 3)","Tuple.of(1, 2, 3)","Tuple.of(Integer)","Tuple.of(Integer)","Tuple.of(Integer, (0..99).plus(200..699))","Tuple.of(Integer, (0..599).findAll{it%3!=0})"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `removeAll(Tuple)` method returns the identical tuple object when nothing matches",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Like `remove(T)`, `removeAll(Tuple<T>)` respects structural sharing.\n            When none of the values in the removal set appear in the source tuple,\n            each node's `removeAllOf(...)` call returns `this`, which propagates\n            up so that the same root is reused and ultimately the same `Tuple`\n            object is returned to the caller.\n\n            This is important for reactive frameworks that guard downstream work\n            behind a reference-equality check.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A tuple and a removal tuple whose values do not overlap.","code":["var tuple = Tuple.of(\"cat\", \"dog\", \"fish\")"]},
+
+        {"kind":"when","text":"We call removeAll with values that are not in the source.","code":["var result = tuple.removeAll(Tuple.of(\"bird\", \"hamster\"))"]},
+
+        {"kind":"then","text":"The returned reference is identical to the original.","code":["result.is(tuple)"]},
+
+        {"kind":"when","text":"We have a large tuple and a removal tuple with no overlap.","code":["var large = Tuple.of(Integer, 0..999)"]},
+
+        {"kind":"and","text":"We call removeAll on the large tuple with non-overlapping values.","code":["var largeResult = large.removeAll(Tuple.of(-1, -2, -3))"]},
+
+        {"kind":"then","text":"The identical large tuple object is returned — the entire tree is shared.","code":["largeResult.is(large)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `removeAll(Tuple)` result carries the correct sequence-diff metadata [0]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            `TupleWithDiff.removeAll(Tuple<T>)` records a `SequenceDiff` after\n            the traversal, with:\n              - `change = SequenceChange.REMOVE`\n              - `index  = -1` (removed elements are not necessarily contiguous)\n              - `size   = number of items removed from the source tuple`\n\n            This metadata is what lets change-listeners update themselves\n            efficiently — they know how many items disappeared without having to\n            diff the full contents themselves.\n        "]
+      },
+      "blocks":[
+        {"kind":"when","text":"We remove all matching items.","code":["var result = input.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"The result exposes a sequence diff.","code":["result instanceof SequenceDiffOwner","(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
+
+        {"kind":"when","text":"We read the diff.","code":["var diff = (result as SequenceDiffOwner).differenceFromPrevious().get()"]},
+
+        {"kind":"then","text":"The change type is REMOVE.","code":["diff.change() == SequenceChange.REMOVE"]},
+
+        {"kind":"and","text":"The index is -1 because removals can be non-contiguous.","code":["diff.index().orElse(-1) == -1"]},
+
+        {"kind":"and","text":"The size equals the number of items removed.","code":["diff.size() == expectedRemovedCount"]},
+
+        {"kind":"where","text":"","code":{"input":["Tuple.of(1, 2, 3, 4, 5)","Tuple.of(1, 2, 3, 2, 1)","Tuple.of(\"a\", \"b\", \"a\", \"c\", \"a\")","Tuple.of(1, 2, 3)","Tuple.of(5, 5, 5, 5)"],"toRemove":["Tuple.of(2, 4)","Tuple.of(1, 2)","Tuple.of(\"a\")","Tuple.of(1, 2, 3)","Tuple.of(5, 5)"],"expectedRemovedCount":["2","4","3","3","4"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `removeAll(Tuple)` result carries the correct sequence-diff metadata [1]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            `TupleWithDiff.removeAll(Tuple<T>)` records a `SequenceDiff` after\n            the traversal, with:\n              - `change = SequenceChange.REMOVE`\n              - `index  = -1` (removed elements are not necessarily contiguous)\n              - `size   = number of items removed from the source tuple`\n\n            This metadata is what lets change-listeners update themselves\n            efficiently — they know how many items disappeared without having to\n            diff the full contents themselves.\n        "]
+      },
+      "blocks":[
+        {"kind":"when","text":"We remove all matching items.","code":["var result = input.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"The result exposes a sequence diff.","code":["result instanceof SequenceDiffOwner","(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
+
+        {"kind":"when","text":"We read the diff.","code":["var diff = (result as SequenceDiffOwner).differenceFromPrevious().get()"]},
+
+        {"kind":"then","text":"The change type is REMOVE.","code":["diff.change() == SequenceChange.REMOVE"]},
+
+        {"kind":"and","text":"The index is -1 because removals can be non-contiguous.","code":["diff.index().orElse(-1) == -1"]},
+
+        {"kind":"and","text":"The size equals the number of items removed.","code":["diff.size() == expectedRemovedCount"]},
+
+        {"kind":"where","text":"","code":{"input":["Tuple.of(1, 2, 3, 4, 5)","Tuple.of(1, 2, 3, 2, 1)","Tuple.of(\"a\", \"b\", \"a\", \"c\", \"a\")","Tuple.of(1, 2, 3)","Tuple.of(5, 5, 5, 5)"],"toRemove":["Tuple.of(2, 4)","Tuple.of(1, 2)","Tuple.of(\"a\")","Tuple.of(1, 2, 3)","Tuple.of(5, 5)"],"expectedRemovedCount":["2","4","3","3","4"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `removeAll(Tuple)` result carries the correct sequence-diff metadata [2]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            `TupleWithDiff.removeAll(Tuple<T>)` records a `SequenceDiff` after\n            the traversal, with:\n              - `change = SequenceChange.REMOVE`\n              - `index  = -1` (removed elements are not necessarily contiguous)\n              - `size   = number of items removed from the source tuple`\n\n            This metadata is what lets change-listeners update themselves\n            efficiently — they know how many items disappeared without having to\n            diff the full contents themselves.\n        "]
+      },
+      "blocks":[
+        {"kind":"when","text":"We remove all matching items.","code":["var result = input.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"The result exposes a sequence diff.","code":["result instanceof SequenceDiffOwner","(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
+
+        {"kind":"when","text":"We read the diff.","code":["var diff = (result as SequenceDiffOwner).differenceFromPrevious().get()"]},
+
+        {"kind":"then","text":"The change type is REMOVE.","code":["diff.change() == SequenceChange.REMOVE"]},
+
+        {"kind":"and","text":"The index is -1 because removals can be non-contiguous.","code":["diff.index().orElse(-1) == -1"]},
+
+        {"kind":"and","text":"The size equals the number of items removed.","code":["diff.size() == expectedRemovedCount"]},
+
+        {"kind":"where","text":"","code":{"input":["Tuple.of(1, 2, 3, 4, 5)","Tuple.of(1, 2, 3, 2, 1)","Tuple.of(\"a\", \"b\", \"a\", \"c\", \"a\")","Tuple.of(1, 2, 3)","Tuple.of(5, 5, 5, 5)"],"toRemove":["Tuple.of(2, 4)","Tuple.of(1, 2)","Tuple.of(\"a\")","Tuple.of(1, 2, 3)","Tuple.of(5, 5)"],"expectedRemovedCount":["2","4","3","3","4"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `removeAll(Tuple)` result carries the correct sequence-diff metadata [3]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            `TupleWithDiff.removeAll(Tuple<T>)` records a `SequenceDiff` after\n            the traversal, with:\n              - `change = SequenceChange.REMOVE`\n              - `index  = -1` (removed elements are not necessarily contiguous)\n              - `size   = number of items removed from the source tuple`\n\n            This metadata is what lets change-listeners update themselves\n            efficiently — they know how many items disappeared without having to\n            diff the full contents themselves.\n        "]
+      },
+      "blocks":[
+        {"kind":"when","text":"We remove all matching items.","code":["var result = input.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"The result exposes a sequence diff.","code":["result instanceof SequenceDiffOwner","(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
+
+        {"kind":"when","text":"We read the diff.","code":["var diff = (result as SequenceDiffOwner).differenceFromPrevious().get()"]},
+
+        {"kind":"then","text":"The change type is REMOVE.","code":["diff.change() == SequenceChange.REMOVE"]},
+
+        {"kind":"and","text":"The index is -1 because removals can be non-contiguous.","code":["diff.index().orElse(-1) == -1"]},
+
+        {"kind":"and","text":"The size equals the number of items removed.","code":["diff.size() == expectedRemovedCount"]},
+
+        {"kind":"where","text":"","code":{"input":["Tuple.of(1, 2, 3, 4, 5)","Tuple.of(1, 2, 3, 2, 1)","Tuple.of(\"a\", \"b\", \"a\", \"c\", \"a\")","Tuple.of(1, 2, 3)","Tuple.of(5, 5, 5, 5)"],"toRemove":["Tuple.of(2, 4)","Tuple.of(1, 2)","Tuple.of(\"a\")","Tuple.of(1, 2, 3)","Tuple.of(5, 5)"],"expectedRemovedCount":["2","4","3","3","4"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `removeAll(Tuple)` result carries the correct sequence-diff metadata [4]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            `TupleWithDiff.removeAll(Tuple<T>)` records a `SequenceDiff` after\n            the traversal, with:\n              - `change = SequenceChange.REMOVE`\n              - `index  = -1` (removed elements are not necessarily contiguous)\n              - `size   = number of items removed from the source tuple`\n\n            This metadata is what lets change-listeners update themselves\n            efficiently — they know how many items disappeared without having to\n            diff the full contents themselves.\n        "]
+      },
+      "blocks":[
+        {"kind":"when","text":"We remove all matching items.","code":["var result = input.removeAll(toRemove)"]},
+
+        {"kind":"then","text":"The result exposes a sequence diff.","code":["result instanceof SequenceDiffOwner","(result as SequenceDiffOwner).differenceFromPrevious().isPresent()"]},
+
+        {"kind":"when","text":"We read the diff.","code":["var diff = (result as SequenceDiffOwner).differenceFromPrevious().get()"]},
+
+        {"kind":"then","text":"The change type is REMOVE.","code":["diff.change() == SequenceChange.REMOVE"]},
+
+        {"kind":"and","text":"The index is -1 because removals can be non-contiguous.","code":["diff.index().orElse(-1) == -1"]},
+
+        {"kind":"and","text":"The size equals the number of items removed.","code":["diff.size() == expectedRemovedCount"]},
+
+        {"kind":"where","text":"","code":{"input":["Tuple.of(1, 2, 3, 4, 5)","Tuple.of(1, 2, 3, 2, 1)","Tuple.of(\"a\", \"b\", \"a\", \"c\", \"a\")","Tuple.of(1, 2, 3)","Tuple.of(5, 5, 5, 5)"],"toRemove":["Tuple.of(2, 4)","Tuple.of(1, 2)","Tuple.of(\"a\")","Tuple.of(1, 2, 3)","Tuple.of(5, 5)"],"expectedRemovedCount":["2","4","3","3","4"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Both `remove(T)` and `removeAll(Tuple)` are consistent with each other and with `removeIf` [0]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            `remove(T)`, `removeAll(Tuple.of(target))`, and `removeIf { it == target }`\n            must always produce the same result — they are three different spellings\n            of the same semantic operation. This consistency check ensures that the\n            new tree-traversal implementation produces output that is interchangeable\n            with the predicate-based path.\n        "]
+      },
+      "blocks":[
+        {"kind":"when","text":"We apply all three spelling variants.","code":["var viaRemove    = input.remove(target)","var viaRemoveAll = input.removeAll(Tuple.of(target))","var viaRemoveIf  = input.removeIf { it == target }"]},
+
+        {"kind":"then","text":"All three produce the same result.","code":["viaRemove    == viaRemoveAll","viaRemoveAll == viaRemoveIf"]},
+
+        {"kind":"where","text":"","code":{"input":["Tuple.of(1, 2, 2, 3, 2, 4)","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(7, 7, 7)","Tuple.of(Integer, (0..599)).map({it%3==0?-1:it})"],"target":["2","99","7","-1"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Both `remove(T)` and `removeAll(Tuple)` are consistent with each other and with `removeIf` [1]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            `remove(T)`, `removeAll(Tuple.of(target))`, and `removeIf { it == target }`\n            must always produce the same result — they are three different spellings\n            of the same semantic operation. This consistency check ensures that the\n            new tree-traversal implementation produces output that is interchangeable\n            with the predicate-based path.\n        "]
+      },
+      "blocks":[
+        {"kind":"when","text":"We apply all three spelling variants.","code":["var viaRemove    = input.remove(target)","var viaRemoveAll = input.removeAll(Tuple.of(target))","var viaRemoveIf  = input.removeIf { it == target }"]},
+
+        {"kind":"then","text":"All three produce the same result.","code":["viaRemove    == viaRemoveAll","viaRemoveAll == viaRemoveIf"]},
+
+        {"kind":"where","text":"","code":{"input":["Tuple.of(1, 2, 2, 3, 2, 4)","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(7, 7, 7)","Tuple.of(Integer, (0..599)).map({it%3==0?-1:it})"],"target":["2","99","7","-1"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Both `remove(T)` and `removeAll(Tuple)` are consistent with each other and with `removeIf` [2]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            `remove(T)`, `removeAll(Tuple.of(target))`, and `removeIf { it == target }`\n            must always produce the same result — they are three different spellings\n            of the same semantic operation. This consistency check ensures that the\n            new tree-traversal implementation produces output that is interchangeable\n            with the predicate-based path.\n        "]
+      },
+      "blocks":[
+        {"kind":"when","text":"We apply all three spelling variants.","code":["var viaRemove    = input.remove(target)","var viaRemoveAll = input.removeAll(Tuple.of(target))","var viaRemoveIf  = input.removeIf { it == target }"]},
+
+        {"kind":"then","text":"All three produce the same result.","code":["viaRemove    == viaRemoveAll","viaRemoveAll == viaRemoveIf"]},
+
+        {"kind":"where","text":"","code":{"input":["Tuple.of(1, 2, 2, 3, 2, 4)","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(7, 7, 7)","Tuple.of(Integer, (0..599)).map({it%3==0?-1:it})"],"target":["2","99","7","-1"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Both `remove(T)` and `removeAll(Tuple)` are consistent with each other and with `removeIf` [3]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            `remove(T)`, `removeAll(Tuple.of(target))`, and `removeIf { it == target }`\n            must always produce the same result — they are three different spellings\n            of the same semantic operation. This consistency check ensures that the\n            new tree-traversal implementation produces output that is interchangeable\n            with the predicate-based path.\n        "]
+      },
+      "blocks":[
+        {"kind":"when","text":"We apply all three spelling variants.","code":["var viaRemove    = input.remove(target)","var viaRemoveAll = input.removeAll(Tuple.of(target))","var viaRemoveIf  = input.removeIf { it == target }"]},
+
+        {"kind":"then","text":"All three produce the same result.","code":["viaRemove    == viaRemoveAll","viaRemoveAll == viaRemoveIf"]},
+
+        {"kind":"where","text":"","code":{"input":["Tuple.of(1, 2, 2, 3, 2, 4)","Tuple.of(1, 2, 3, 4, 5)","Tuple.of(7, 7, 7)","Tuple.of(Integer, (0..599)).map({it%3==0?-1:it})"],"target":["2","99","7","-1"]}}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }
