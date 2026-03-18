@@ -2,12 +2,10 @@ package sprouts.impl;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
-import sprouts.Action;
-import sprouts.Channel;
-import sprouts.Subscriber;
-import sprouts.Tuple;
+import sprouts.*;
 
 import java.lang.ref.WeakReference;
+import java.util.Collections;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -16,18 +14,26 @@ import java.util.function.Supplier;
 final class ChangeListeners<D> {
 
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(ChangeListeners.class);
+    private static final ChangeListeners<?> EMPTY_CHANGE_LISTENERS = new ChangeListeners<>();
 
-    private final Tuple<Action<D>> _actions;
+    // Returns a shared immutable empty ChangeListeners instance. Safe for concurrent access
+    // because the underlying state is created once and never mutated.
+    @SuppressWarnings("unchecked")
+    static <T> ChangeListeners<T> empty() {
+        return (ChangeListeners<T>) EMPTY_CHANGE_LISTENERS;
+    }
+
+    private final TupleTree<Action<D>> _actions;
 
 
-    ChangeListeners() {this((Tuple)Tuple.of(Action.class));}
+    ChangeListeners() { this((TupleTree)TupleTree.of(false, Action.class, Collections.emptyList())); }
 
-    ChangeListeners(Tuple<Action<D>> newActions) {
+    ChangeListeners(TupleTree<Action<D>> newActions) {
         _actions = newActions;
     }
 
     @SuppressWarnings("NullAway")
-    private Tuple<Action<D>> _getState() {
+    private TupleTree<Action<D>> _getState() {
         return _actions;
     }
 
@@ -39,16 +45,16 @@ final class ChangeListeners<D> {
                             WeakReference<OwnerCallableForCleanup<ChangeListeners<?>>> weakThis = new WeakReference<>((OwnerCallableForCleanup)ref);
                             AutomaticUnSubscriber cleaner = new AutomaticUnSubscriber(weakThis, channel, wa);
                             ChangeListenerCleaner.getInstance().register(owner, cleaner);
-                            return actions.add(action);
+                            return (TupleTree<Action<D>>) actions.add(action);
                         })
                         .orElse(actions);
             } else
-                return actions.add(action);
+                return (TupleTree<Action<D>>) actions.add(action);
         });
     }
 
     ChangeListeners<D> unsubscribe(Subscriber subscriber) {
-        return updateActions(actions -> actions.removeIf( a -> {
+        return updateActions(actions -> (TupleTree<Action<D>>) actions.removeIf( a -> {
             if ( a instanceof ObserverAsActionImpl) {
                 ObserverAsActionImpl<?> pcl = (ObserverAsActionImpl<?>) a;
                 return pcl.listener() == subscriber;
@@ -59,20 +65,20 @@ final class ChangeListeners<D> {
     }
 
     ChangeListeners<D> unsubscribeAll() {
-        return new ChangeListeners<>((Tuple) Tuple.of(Action.class));
+        return ChangeListeners.empty();
     }
 
-    long getActions(Consumer<Tuple<Action<D>>> receiver) {
-        Tuple<Action<D>> actions = _getState();
+    long getActions(Consumer<TupleTree<Action<D>>> receiver) {
+        TupleTree<Action<D>> actions = _getState();
         if ( !actions.isEmpty() )
             receiver.accept(actions);
         return actions.size();
     }
 
-    ChangeListeners<D> updateActions(Function<Tuple<Action<D>>, Tuple<Action<D>>> receiver) {
-        Tuple<Action<D>> actions = _getState();
+    ChangeListeners<D> updateActions(Function<TupleTree<Action<D>>, TupleTree<Action<D>>> receiver) {
+        TupleTree<Action<D>> actions = _getState();
         actions = receiver.apply(actions);
-        return new ChangeListeners<>(actions);
+        return actions.isEmpty() ? ChangeListeners.empty() : new ChangeListeners<>(actions);
     }
 
     long numberOfChangeListeners() {
@@ -157,7 +163,8 @@ final class ChangeListeners<D> {
      *  The {@link ChangeListeners} type is completely immutable,
      *  and so it cannot clean itself up, which is why it needs
      *  the {@link OwnerCallableForCleanup} interface to call back
-     *  to the owner to perform the cleanup.
+     *  to the owner to perform the cleanup.<br>
+     *  <b>Important: implementations of this interface MUST be thread safe!</b>
      *
      * @param <D> The type of the delegate that the change listeners are listening to.
      */

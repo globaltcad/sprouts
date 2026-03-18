@@ -18,7 +18,12 @@ public final class PropertyChangeListeners<T> implements ChangeListeners.OwnerCa
 {
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(PropertyChangeListeners.class);
 
-    private Association<Channel, ChangeListeners<ValDelegate<T>>> _channelsToListeners = (Association)Association.betweenLinked(Channel.class, ChangeListeners.class);
+    // All mutations to this field are compound read-modify-write operations, and
+    // the ChangeListenerCleaner background thread may call updateState() concurrently
+    // with the main thread calling onChange(), unsubscribe(), or fireChange().
+    // Every mutation must therefore be guarded by this object's monitor.
+    private volatile Association<Channel, ChangeListeners<ValDelegate<T>>> _channelsToListeners = (Association)Association.betweenLinked(Channel.class, ChangeListeners.class);
+    // For reading only, no locking is needed since this "volatile"!
 
 
     /**
@@ -33,8 +38,10 @@ public final class PropertyChangeListeners<T> implements ChangeListeners.OwnerCa
      * @param other The other instance to copy the listeners from.
      */
     public PropertyChangeListeners( PropertyChangeListeners<T> other ) {
+        // Safe to read directly: _channelsToListeners is volatile and the Association is immutable.
         _channelsToListeners = other._channelsToListeners;
     }
+
 
     /**
      *  Adds a change listener for the given channel.
@@ -43,16 +50,21 @@ public final class PropertyChangeListeners<T> implements ChangeListeners.OwnerCa
      * @param channel The channel on which the change listener will be registered.
      * @param action The action to be performed when the property changes.
      */
-    public void onChange( Channel channel, Action<ValDelegate<T>> action ) {
+    public synchronized void onChange( Channel channel, Action<ValDelegate<T>> action ) {
         Objects.requireNonNull(channel);
         Objects.requireNonNull(action);
         _updateActionsFor(channel, it->it.add(action, channel, this));
     }
 
+    /**
+     *  Called by the {@link ChangeListenerCleaner} background thread to remove a
+     *  garbage-collected weak listener. Must be synchronized because it races with
+     *  the main thread on {@code _channelsToListeners}.
+     */
     @Override
-    public void updateState(@Nullable Channel channel, Function<ChangeListeners<ValDelegate<T>>, ChangeListeners<ValDelegate<T>>> updater) {
+    public synchronized void updateState(@Nullable Channel channel, Function<ChangeListeners<ValDelegate<T>>, ChangeListeners<ValDelegate<T>>> updater) {
         if ( channel != null )
-            _updateActionsFor(channel, it -> updater.apply(_getActionsFor(channel)));
+            _updateActionsFor(channel, updater);
     }
 
     /**
@@ -63,7 +75,7 @@ public final class PropertyChangeListeners<T> implements ChangeListeners.OwnerCa
      *
      * @param observer The observer to be registered as a change listener.
      */
-    public void onChange( Observer observer ) {
+    public synchronized void onChange( Observer observer ) {
         this.onChange(Sprouts.factory().defaultObservableChannel(), new ObserverAsActionImpl<>(observer) );
     }
 
@@ -75,7 +87,7 @@ public final class PropertyChangeListeners<T> implements ChangeListeners.OwnerCa
      *
      * @param subscriber The subscriber to be removed from the change listeners.
      */
-    public void unsubscribe( Subscriber subscriber ) {
+    public synchronized void unsubscribe( Subscriber subscriber ) {
         updateActions( it -> it.unsubscribe(subscriber ) );
     }
 
@@ -84,11 +96,11 @@ public final class PropertyChangeListeners<T> implements ChangeListeners.OwnerCa
      *  This method is used to remove all listeners that were previously registered.
      *  Note that this will remove all listeners, regardless of the channel they were registered on.
      */
-    public void unsubscribeAll() {
+    public synchronized void unsubscribeAll() {
         updateActions(ChangeListeners::unsubscribeAll);
     }
 
-    private void updateActions(Function<ChangeListeners<ValDelegate<T>>, ChangeListeners<ValDelegate<T>>> updater) {
+    private synchronized void updateActions(Function<ChangeListeners<ValDelegate<T>>, ChangeListeners<ValDelegate<T>>> updater) {
         _channelsToListeners = (Association)
                 _channelsToListeners.entrySet()
                 .stream()
@@ -118,7 +130,8 @@ public final class PropertyChangeListeners<T> implements ChangeListeners.OwnerCa
         Channel channel,
         ItemPair<T> pair
     ) {
-        if ( _channelsToListeners.isEmpty() )
+        final Association<Channel, ChangeListeners<ValDelegate<T>>> snapshot = _channelsToListeners;
+        if ( snapshot.isEmpty() )
             return;
         Supplier<ValDelegate<T>> lazilyCreatedDelegate = new Supplier<ValDelegate<T>>() {
             private @Nullable ValDelegate<T> delegate = null;
@@ -131,11 +144,11 @@ public final class PropertyChangeListeners<T> implements ChangeListeners.OwnerCa
         };
         // We clone this property to avoid concurrent modification
         if ( channel == From.ALL)
-            for ( Channel key : _channelsToListeners.keySet() )
-                _getActionsFor(key).fireChange( lazilyCreatedDelegate );
+            for ( Channel key : snapshot.keySet() )
+                _getActionsForSnapshot(snapshot, key).fireChange( lazilyCreatedDelegate );
         else {
-            _getActionsFor(channel).fireChange( lazilyCreatedDelegate );
-            _getActionsFor(From.ALL).fireChange( lazilyCreatedDelegate );
+            _getActionsForSnapshot(snapshot, channel).fireChange( lazilyCreatedDelegate );
+            _getActionsForSnapshot(snapshot, From.ALL).fireChange( lazilyCreatedDelegate );
         }
     }
 
@@ -145,20 +158,32 @@ public final class PropertyChangeListeners<T> implements ChangeListeners.OwnerCa
      *
      * @return The number of change listeners that are currently registered.
      */
-    public long numberOfChangeListeners() {
+    public synchronized long numberOfChangeListeners() {
         return _channelsToListeners.values()
                             .stream()
                             .mapToLong(ChangeListeners::numberOfChangeListeners)
                             .sum();
     }
 
+    // Must only be called while holding this object's monitor.
     private ChangeListeners<ValDelegate<T>> _getActionsFor( Channel channel ) {
         if ( !_channelsToListeners.containsKey(channel) ) {
-            _channelsToListeners = _channelsToListeners.put(channel, new ChangeListeners<>());
+            _channelsToListeners = _channelsToListeners.put(channel, ChangeListeners.empty());
         }
         return _channelsToListeners.get(channel).get();
     }
 
+    // Read-only lookup on an already-snapshotted Association; no lock required.
+    private static <T> ChangeListeners<ValDelegate<T>> _getActionsForSnapshot(
+        Association<Channel, ChangeListeners<ValDelegate<T>>> snapshot,
+        Channel channel
+    ) {
+        return snapshot.containsKey(channel)
+                ? snapshot.get(channel).get()
+                : ChangeListeners.empty();
+    }
+
+    // Must only be called while holding this object's monitor.
     private void _updateActionsFor(Channel channel, Function<ChangeListeners<ValDelegate<T>>, ChangeListeners<ValDelegate<T>>> updater) {
         ChangeListeners<ValDelegate<T>> listeners = _getActionsFor(channel);
         listeners = updater.apply(listeners);
@@ -167,11 +192,12 @@ public final class PropertyChangeListeners<T> implements ChangeListeners.OwnerCa
 
     @Override
     public final String toString() {
+        final Association<Channel, ChangeListeners<ValDelegate<T>>> snapshot = _channelsToListeners;
         StringBuilder sb = new StringBuilder();
         sb.append(this.getClass().getSimpleName()).append("[");
-        for ( Channel key : _channelsToListeners.keySet() ) {
+        for ( Channel key : snapshot.keySet() ) {
             try {
-                sb.append(key).append("->").append(_channelsToListeners.get(key).get()).append(", ");
+                sb.append(key).append("->").append(snapshot.get(key).get()).append(", ");
             } catch ( Exception e ) {
                 Util.sneakyThrowExceptionIfFatal(e);
                 _logError( // We want to prevent user code from breaking toString()

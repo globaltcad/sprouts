@@ -16,7 +16,13 @@ import java.util.function.Function;
  */
 public final class PropertyListChangeListeners<T extends @Nullable Object> implements ChangeListeners.OwnerCallableForCleanup<ValsDelegate<T>>
 {
-    private ChangeListeners<ValsDelegate<T>> _changeListeners;
+    // All mutations to this field are compound read-modify-write operations, and
+    // the ChangeListenerCleaner background thread may call updateState() concurrently
+    // with the main thread calling onChange(), unsubscribe(), or fireChange().
+    // Every mutation must therefore be guarded by this object's monitor.
+    private volatile ChangeListeners<ValsDelegate<T>> _changeListeners;
+    // For simple reads, no additional locking is needed because this field is volatile,
+    // which provides the required visibility; compound updates remain synchronized.
 
     /**
      *  Creates a new instance of {@link PropertyListChangeListeners}, without any listeners.
@@ -24,19 +30,24 @@ public final class PropertyListChangeListeners<T extends @Nullable Object> imple
      */
     public PropertyListChangeListeners() {
         // Default constructor initializes with no listeners.
-        _changeListeners = new ChangeListeners<>();
+        _changeListeners = ChangeListeners.empty();
     }
 
     /**
      *  Registers a change listener for any changes in the property list.
      * @param action The action to be performed when the property list changes.
      */
-    public void onChange( Action<ValsDelegate<T>> action ) {
+    public synchronized void onChange( Action<ValsDelegate<T>> action ) {
         _changeListeners = _changeListeners.add(action, null, this);
     }
 
+    /**
+     *  Called by the {@link ChangeListenerCleaner} background thread to remove a
+     *  garbage-collected weak listener. Must be synchronized because it races with
+     *  the main thread on {@code _changeListeners}.
+     */
     @Override
-    public void updateState(@Nullable Channel channel, Function<ChangeListeners<ValsDelegate<T>>, ChangeListeners<ValsDelegate<T>>> updater) {
+    public synchronized void updateState(@Nullable Channel channel, Function<ChangeListeners<ValsDelegate<T>>, ChangeListeners<ValsDelegate<T>>> updater) {
         _changeListeners = updater.apply(_changeListeners);
     }
 
@@ -47,7 +58,7 @@ public final class PropertyListChangeListeners<T extends @Nullable Object> imple
      *
      * @param observer The observer to be notified when the property list changes.
      */
-    public void onChange( Observer observer ) {
+    public synchronized void onChange( Observer observer ) {
         this.onChange( new ObserverAsActionImpl<>(observer) );
     }
 
@@ -60,7 +71,7 @@ public final class PropertyListChangeListeners<T extends @Nullable Object> imple
      *                   This may be an {@link Action}, {@link Observer}, or any other type that
      *                   implements the {@link Subscriber} marker interface.
      */
-    public void unsubscribe( Subscriber subscriber ) {
+    public synchronized void unsubscribe( Subscriber subscriber ) {
         _changeListeners = _changeListeners.unsubscribe(subscriber);
     }
 
@@ -69,7 +80,7 @@ public final class PropertyListChangeListeners<T extends @Nullable Object> imple
      *  This method is used to remove all listeners that were previously registered
      *  to be notified about changes in the property list.
      */
-    public void unsubscribeAll() {
+    public synchronized void unsubscribeAll() {
         _changeListeners = _changeListeners.unsubscribeAll();
     }
 
@@ -81,6 +92,7 @@ public final class PropertyListChangeListeners<T extends @Nullable Object> imple
      * @return The number of change listeners registered for the property list.
      */
     public int numberOfChangeListeners() {
+        // No locking needed since this is read only. Visibility between threads is ensured by "volatile"!
         return Math.toIntExact(_changeListeners.numberOfChangeListeners());
     }
 
@@ -108,6 +120,7 @@ public final class PropertyListChangeListeners<T extends @Nullable Object> imple
     public void fireChange(
             SequenceChange type, int index, @Nullable Var<T> newVal, @Nullable Var<T> oldVal, Vals<T> source
     ) {
+        // No locking needed since this is read only. Visibility between threads is ensured by "volatile"!
         _changeListeners.fireChange(()->_createDelegate(index, type, newVal, oldVal, source));
     }
 
@@ -124,6 +137,7 @@ public final class PropertyListChangeListeners<T extends @Nullable Object> imple
     public void fireChange(
             SequenceChange type, int index, @Nullable Vals<T> newVals, @Nullable Vals<T> oldVals, Vals<T> source
     ) {
+        // No locking needed since this is read only. Visibility between threads is ensured by "volatile"!
         _changeListeners.fireChange(()->_createDelegate(index, type, newVals, oldVals, source));
     }
 
