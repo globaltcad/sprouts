@@ -7,9 +7,9 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.ref.PhantomReference;
 import java.lang.ref.ReferenceQueue;
-import java.util.HashSet;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.Set;
-import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -28,16 +28,6 @@ final class ChangeListenerCleaner
 
     private static final ChangeListenerCleaner _INSTANCE = new ChangeListenerCleaner();
 
-    /**
-     *  How long (in milliseconds) the cleaner thread blocks on {@link ReferenceQueue#remove(long)}
-     *  during the drain phase while waiting for the GC to enqueue the next collected reference.
-     *  This is purely a safety-net timeout: in normal operation the queue is driven by GC
-     *  enqueueing, not by this deadline.  5 seconds is short enough to keep worst-case stall
-     *  time acceptable, yet long enough to avoid unnecessary CPU wakeups when referents are
-     *  long-lived and none have been collected recently.
-     */
-    private static final long _DRAIN_POLL_TIMEOUT_MS = 5_000;
-
 
     public static ChangeListenerCleaner getInstance() {
         return _INSTANCE;
@@ -48,24 +38,22 @@ final class ChangeListenerCleaner
 
     /**
      *  Guards {@link #_toBeCleaned} and the thread life-cycle.
-     *  Also used as the signalling mechanism via {@link #_workAvailable}
-     *  so that {@link #register} and the cleaner thread can coordinate
-     *  without the missed-wakeup hazard that bare {@code wait}/{@code notify} has.
+     *  Used so that {@link #register} and the cleaner thread can coordinate
+     *  safely when adding or removing tracked references.
      */
     private final ReentrantLock _lock = new ReentrantLock();
-
-    /**
-     *  Signalled every time a new entry is added to {@link #_toBeCleaned},
-     *  waking the cleaner thread if it is currently idle.
-     */
-    private final Condition _workAvailable = _lock.newCondition();
 
     /**
      *  Tracks every live {@link ReferenceWithCleanup} so that the GC-root
      *  keeps the phantom references reachable (which is required for them to
      *  be enqueued) and so we can remove them after cleanup in O(1).
+     *  <p>
+     *  An {@link IdentityHashMap}-backed set is used to make the identity-based
+     *  semantics explicit: {@link ReferenceWithCleanup} deliberately does not
+     *  override {@code equals}/{@code hashCode}, and this set makes that
+     *  contract impossible to break silently in the future.
      */
-    private final Set<ReferenceWithCleanup<Object>> _toBeCleaned = new HashSet<>();
+    private final Set<ReferenceWithCleanup<Object>> _toBeCleaned = Collections.newSetFromMap(new IdentityHashMap<>());
 
     /**
      *  The active cleaner thread.  Non-final so it can be recreated if a previous
@@ -106,7 +94,14 @@ final class ChangeListenerCleaner
 
     static final class ReferenceWithCleanup<T> extends PhantomReference<T>
     {
-        private @Nullable Runnable _action;
+        /**
+         *  Volatile so that the single-execution guarantee in {@link #cleanup()} is
+         *  safe even if a future caller invokes it from a different thread than the
+         *  one that constructed this reference.  In the current design only the
+         *  cleaner thread calls {@code cleanup()}, but the volatile makes the
+         *  contract robust at negligible cost.
+         */
+        private volatile @Nullable Runnable _action;
 
         ReferenceWithCleanup( T referent, Runnable action, ReferenceQueue<T> queue ) {
             super( referent, queue );
@@ -163,10 +158,6 @@ final class ChangeListenerCleaner
             // Start the thread lazily on the first registration, or restart it
             // if a previous instance was interrupted and has since terminated.
             _ensureThreadRunning();
-            // Always signal: the thread may be waiting even when _toBeCleaned was
-            // non-empty before this call (e.g. it drained a previous batch and then
-            // went back to sleep before we arrived here).
-            _workAvailable.signal();
         } finally {
             _lock.unlock();
         }
@@ -175,90 +166,51 @@ final class ChangeListenerCleaner
     /**
      *  Main loop of the cleaner thread.
      *
-     *  <p>The thread waits indefinitely until at least one referent is tracked,
-     *  then polls {@link #_referenceQueue} continuously until the tracked set is
-     *  empty, and then goes back to waiting.  An indefinite {@link Condition#await()}
-     *  is used in the idle phase so the thread does not wake periodically when
-     *  there is no work to do.  The {@link #_workAvailable} condition is signalled
-     *  by {@link #register} on every new registration, so no wakeup is ever missed.
+     *  <p>The thread blocks indefinitely on {@link ReferenceQueue#remove()} until
+     *  the GC enqueues a collected reference, then runs its cleanup action and
+     *  removes it from the tracking set.  This single-phase design avoids the
+     *  periodic wakeups that a timed poll would cause when many long-lived
+     *  referents are registered but none have been collected.
+     *
+     *  <p>Because the thread is a daemon, the JVM will terminate it automatically
+     *  when all non-daemon threads have exited, so there is no need for the thread
+     *  to monitor whether the tracking set is empty and park itself.
      */
     private void _run() {
         while ( !Thread.currentThread().isInterrupted() ) {
-
-            // ── Wait phase ────────────────────────────────────────────────────
-            // Block indefinitely until there is at least one entry to watch, or
-            // until we are interrupted.  The while-loop guard handles spurious
-            // wakeups correctly.  An indefinite await() is used here (not a
-            // timed one) so the idle thread does not wake periodically when
-            // there is no work registered.
-            _lock.lock();
             try {
-                while ( _toBeCleaned.isEmpty() ) {
+                @SuppressWarnings("unchecked")
+                ReferenceWithCleanup<Object> ref =
+                        (ReferenceWithCleanup<Object>) _referenceQueue.remove();
+                // Unbounded remove() never returns null; it blocks until a
+                // reference is enqueued or the thread is interrupted.
+                try {
+                    ref.cleanup();
+                } catch ( Throwable e ) {
+                    Util.sneakyThrowExceptionIfFatal(e);
+                    _logError("Failed to perform cleanup!", e);
+                } finally {
+                    // Remove under the lock so _toBeCleaned stays consistent with
+                    // concurrent register() calls coming from the main thread.
+                    _lock.lock();
                     try {
-                        _workAvailable.await();
-                    } catch ( InterruptedException e ) {
-                        Thread.currentThread().interrupt();
-                        return;
+                        _toBeCleaned.remove(ref);
+                    } finally {
+                        _lock.unlock();
                     }
                 }
-            } finally {
-                _lock.unlock();
-            }
-
-            // ── Drain phase ───────────────────────────────────────────────────
-            // Keep draining the queue for as long as there are tracked referents.
-            // We re-read _toBeCleaned under the lock to get a consistent view.
-            while ( _trackedCount() > 0 && !Thread.currentThread().isInterrupted() ) {
-                _checkCleanup();
-            }
-        }
-    }
-
-    /**
-     *  Attempts to dequeue one garbage-collected reference and run its cleanup action.
-     *
-     *  <p>Blocks for at most {@link #_DRAIN_POLL_TIMEOUT_MS} milliseconds waiting for the
-     *  GC to enqueue a reference.  If none arrives within that window the method returns
-     *  without doing anything, allowing the outer drain loop to re-check whether tracking
-     *  entries are still present.  The timeout is intentionally long (5 s) to avoid
-     *  unnecessary CPU wakeups when registered referents are long-lived; the drain loop
-     *  will still exit promptly once all tracked referents have been collected.
-     */
-    private void _checkCleanup() {
-        try {
-            @SuppressWarnings("unchecked")
-            ReferenceWithCleanup<Object> ref =
-                    (ReferenceWithCleanup<Object>) _referenceQueue.remove(_DRAIN_POLL_TIMEOUT_MS);
-
-            if ( ref == null )
-                return; // timeout — nothing collected yet, try again
-
-            try {
-                ref.cleanup();
+            } catch ( InterruptedException e ) {
+                Thread.currentThread().interrupt();
+                return;
             } catch ( Throwable e ) {
                 Util.sneakyThrowExceptionIfFatal(e);
-                _logError("Failed to perform cleanup!", e);
-            } finally {
-                // Remove under the lock so _toBeCleaned stays consistent with
-                // concurrent register() calls coming from the main thread.
-                _lock.lock();
-                try {
-                    _toBeCleaned.remove(ref); // O(1) on HashSet with identity hash
-                } finally {
-                    _lock.unlock();
-                }
+                _logError("Unexpected error in cleaner loop.", e);
             }
-        } catch ( InterruptedException e ) {
-            Thread.currentThread().interrupt();
-        } catch ( Throwable e ) {
-            Util.sneakyThrowExceptionIfFatal(e);
-            _logError("Failed to call 'remove()' on cleaner internal queue.", e);
         }
     }
 
     /**
      *  Returns the current number of tracked registrations in a thread-safe way.
-     *  Used both by the cleaner loop and by {@link #toString()}.
      */
     private int _trackedCount() {
         _lock.lock();
