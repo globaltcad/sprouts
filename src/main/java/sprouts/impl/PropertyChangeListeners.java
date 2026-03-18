@@ -38,10 +38,10 @@ public final class PropertyChangeListeners<T> implements ChangeListeners.OwnerCa
      * @param other The other instance to copy the listeners from.
      */
     public PropertyChangeListeners( PropertyChangeListeners<T> other ) {
-        synchronized (other) {
-            _channelsToListeners = other._channelsToListeners;
-        }
+        // Safe to read directly: _channelsToListeners is volatile and the Association is immutable.
+        _channelsToListeners = other._channelsToListeners;
     }
+
 
     /**
      *  Adds a change listener for the given channel.
