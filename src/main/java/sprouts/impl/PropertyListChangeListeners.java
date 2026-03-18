@@ -19,7 +19,7 @@ public final class PropertyListChangeListeners<T extends @Nullable Object> imple
     // All mutations to this field are compound read-modify-write operations, and
     // the ChangeListenerCleaner background thread may call updateState() concurrently
     // with the main thread calling onChange(), unsubscribe(), or fireChange().
-    // Every access must therefore be guarded by this object's monitor.
+    // Every mutation must therefore be guarded by this object's monitor.
     private volatile ChangeListeners<ValsDelegate<T>> _changeListeners;
     // For reading only, no locking is needed since this "volatile"!
 

@@ -21,7 +21,7 @@ public final class PropertyChangeListeners<T> implements ChangeListeners.OwnerCa
     // All mutations to this field are compound read-modify-write operations, and
     // the ChangeListenerCleaner background thread may call updateState() concurrently
     // with the main thread calling onChange(), unsubscribe(), or fireChange().
-    // Every access must therefore be guarded by this object's monitor.
+    // Every mutation must therefore be guarded by this object's monitor.
     private volatile Association<Channel, ChangeListeners<ValDelegate<T>>> _channelsToListeners = (Association)Association.betweenLinked(Channel.class, ChangeListeners.class);
     // For reading only, no locking is needed since this "volatile"!
 
