@@ -208,7 +208,7 @@ final class ChangeListenerCleaner
             // ── Drain phase ───────────────────────────────────────────────────
             // Keep draining the queue for as long as there are tracked referents.
             // We re-read _toBeCleaned under the lock to get a consistent view.
-            while ( _trackedCount() > 0 ) {
+            while ( _trackedCount() > 0 && !Thread.currentThread().isInterrupted() ) {
                 _checkCleanup();
             }
         }
