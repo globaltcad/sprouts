@@ -236,6 +236,7 @@ final class ChangeListenerCleaner
             try {
                 ref.cleanup();
             } catch ( Throwable e ) {
+                Util.sneakyThrowExceptionIfFatal(e);
                 _logError("Failed to perform cleanup!", e);
             } finally {
                 // Remove under the lock so _toBeCleaned stays consistent with
@@ -250,6 +251,7 @@ final class ChangeListenerCleaner
         } catch ( InterruptedException e ) {
             Thread.currentThread().interrupt();
         } catch ( Throwable e ) {
+            Util.sneakyThrowExceptionIfFatal(e);
             _logError("Failed to call 'remove()' on cleaner internal queue.", e);
         }
     }
