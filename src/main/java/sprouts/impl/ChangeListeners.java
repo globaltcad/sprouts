@@ -15,7 +15,8 @@ final class ChangeListeners<D> {
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(ChangeListeners.class);
     private static final ChangeListeners<?> EMPTY_CHANGE_LISTENERS = new ChangeListeners<>();
 
-    // Read-only lookup on an already-snapshotted Association; no lock required.
+    // Returns a shared immutable empty ChangeListeners instance. Safe for concurrent access
+    // because the underlying state is created once and never mutated.
     @SuppressWarnings("unchecked")
     static <T> ChangeListeners<T> empty() {
         return (ChangeListeners<T>) EMPTY_CHANGE_LISTENERS;
