@@ -168,7 +168,7 @@ public final class PropertyChangeListeners<T> implements ChangeListeners.OwnerCa
     // Must only be called while holding this object's monitor.
     private ChangeListeners<ValDelegate<T>> _getActionsFor( Channel channel ) {
         if ( !_channelsToListeners.containsKey(channel) ) {
-            _channelsToListeners = _channelsToListeners.put(channel, new ChangeListeners<>());
+            _channelsToListeners = _channelsToListeners.put(channel, ChangeListeners.empty());
         }
         return _channelsToListeners.get(channel).get();
     }
@@ -180,7 +180,7 @@ public final class PropertyChangeListeners<T> implements ChangeListeners.OwnerCa
     ) {
         return snapshot.containsKey(channel)
                 ? snapshot.get(channel).get()
-                : new ChangeListeners<>();
+                : ChangeListeners.empty();
     }
 
     // Must only be called while holding this object's monitor.

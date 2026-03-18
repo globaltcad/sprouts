@@ -30,7 +30,7 @@ public final class PropertyListChangeListeners<T extends @Nullable Object> imple
      */
     public PropertyListChangeListeners() {
         // Default constructor initializes with no listeners.
-        _changeListeners = new ChangeListeners<>();
+        _changeListeners = ChangeListeners.empty();
     }
 
     /**

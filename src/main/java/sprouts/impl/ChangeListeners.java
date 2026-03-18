@@ -2,10 +2,7 @@ package sprouts.impl;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
-import sprouts.Action;
-import sprouts.Channel;
-import sprouts.Subscriber;
-import sprouts.Tuple;
+import sprouts.*;
 
 import java.lang.ref.WeakReference;
 import java.util.Objects;
@@ -16,6 +13,13 @@ import java.util.function.Supplier;
 final class ChangeListeners<D> {
 
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(ChangeListeners.class);
+    private static final ChangeListeners<?> EMPTY_CHANGE_LISTENERS = new ChangeListeners<>();
+
+    // Read-only lookup on an already-snapshotted Association; no lock required.
+    @SuppressWarnings("unchecked")
+    static <T> ChangeListeners<T> empty() {
+        return (ChangeListeners<T>) EMPTY_CHANGE_LISTENERS;
+    }
 
     private final TupleTree<Action<D>> _actions;
 
@@ -72,7 +76,7 @@ final class ChangeListeners<D> {
     ChangeListeners<D> updateActions(Function<TupleTree<Action<D>>, TupleTree<Action<D>>> receiver) {
         TupleTree<Action<D>> actions = _getState();
         actions = receiver.apply(actions);
-        return new ChangeListeners<>(actions);
+        return actions.isEmpty() ? ChangeListeners.empty() : new ChangeListeners<>(actions);
     }
 
     long numberOfChangeListeners() {
