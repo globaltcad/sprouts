@@ -76,6 +76,17 @@ final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
     private static final int BRANCHING_FACTOR = 32;
     private static final int IDEAL_LEAF_NODE_SIZE = 512;
 
+    /**
+     * When a child node's size exceeds this multiple of its nearest sibling's
+     * size, the two siblings are merged and split evenly into two new balanced
+     * subtrees via {@link #_createRootFromList}. This prevents degenerate
+     * right-spine growth from repeated appends while keeping the rebalancing
+     * lazy and local — only two of up to {@value #BRANCHING_FACTOR} children
+     * are rebuilt per operation, preserving structural sharing for
+     * {@link #_recursiveEquals}.
+     */
+    private static final long REBALANCE_FACTOR = 5L; // This is long to avoid overflow when multiplying with large child sizes.
+
 
     interface Node {
         int size();
@@ -386,6 +397,15 @@ final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
 
             if (newChildren[bestIndex] == branch)
                 throw new IllegalStateException("TupleNode was not modified");
+
+            // Local sibling redistribution: if the updated child is
+            // disproportionately larger than its nearest neighbor, merge
+            // both and split evenly into two new balanced subtrees.
+            // Only 2 of up to 32 children are touched per rebalance.
+            int neighborIndex = _findImbalancedNeighbor(newChildren, bestIndex);
+            if (neighborIndex >= 0)
+                _redistributeSiblings(newChildren, bestIndex, neighborIndex, type, allowsNull, access);
+
             if ( _isAllNull(newChildren) )
                 throw new IllegalStateException("TupleNode is all null");
             else
@@ -584,6 +604,85 @@ final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
             branches[i] = _createRootFromList(type, allowsNull, subList);
         }
         return new BranchNode(branches);
+    }
+
+    /**
+     * Checks whether the child at {@code updatedIndex} is disproportionately
+     * larger than its nearest non-null sibling. Returns the index of the
+     * smaller neighbor that should be merged with, or {@code -1} when the
+     * branch is sufficiently balanced.
+     * <p>
+     * Prefers the <em>left</em> neighbor so that the rightmost (append-end)
+     * slot is the one that gets redistributed, keeping subsequent appends
+     * fast on the freshly balanced right half.
+     */
+    private static int _findImbalancedNeighbor(Node[] children, int updatedIndex) {
+        Node updated = children[updatedIndex];
+        if (updated == null)
+            return -1;
+        long updatedSize = updated.size();
+        // Prefer left neighbor (keeps the append-end fluid on the right)
+        for (int i = updatedIndex - 1; i >= 0; i--) {
+            if (children[i] != null) {
+                if (updatedSize > REBALANCE_FACTOR * children[i].size())
+                    return i;
+                break; // only compare with the nearest non-null neighbor
+            }
+        }
+        // Fall back to right neighbor
+        for (int i = updatedIndex + 1; i < children.length; i++) {
+            if (children[i] != null) {
+                if (updatedSize > REBALANCE_FACTOR * children[i].size())
+                    return i;
+                break;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * Merges the elements of two sibling children into a single sequence,
+     * splits them in half, and replaces both slots with new balanced subtrees
+     * built via {@link #_createRootFromList}. All other children in the array
+     * are left untouched, maximizing structural sharing.
+     *
+     * @param children      the (already cloned) children array to mutate in place
+     * @param bigIndex      index of the oversized child
+     * @param smallIndex    index of the smaller neighbor
+     * @param type          element type
+     * @param allowsNull    whether nulls are permitted
+     * @param access        item accessor for reading elements out of leaf arrays
+     */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static void _redistributeSiblings(
+        Node[]                     children,
+        int                        bigIndex,
+        int                        smallIndex,
+        Class<?>                   type,
+        boolean                    allowsNull,
+        ArrayItemAccess<?, Object> access
+    ) {
+        int firstIdx  = Math.min(bigIndex, smallIndex);
+        int secondIdx = Math.max(bigIndex, smallIndex);
+        Node first  = children[firstIdx];
+        Node second = children[secondIdx];
+        int firstSize = first.size();
+        int totalSize = firstSize + second.size();
+
+        // Virtual list that reads elements from both nodes in order,
+        // without materializing an intermediate collection.
+        List<?> combined = new AbstractList() {
+            @Override public int size() { return totalSize; }
+            @Override public Object get(int i) {
+                if (i < firstSize)
+                    return first.getAt(i, (ArrayItemAccess) access);
+                return second.getAt(i - firstSize, (ArrayItemAccess) access);
+            }
+        };
+
+        int half = totalSize / 2;
+        children[firstIdx]  = _createRootFromList(type, allowsNull, combined.subList(0, half));
+        children[secondIdx] = _createRootFromList(type, allowsNull, combined.subList(half, totalSize));
     }
 
 
