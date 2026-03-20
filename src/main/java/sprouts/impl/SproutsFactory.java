@@ -1671,6 +1671,11 @@ public interface SproutsFactory
      *  be syntactically valid variable names in Java or other programming languages,
      *  but this is not a requirement and the actual pattern may differ between implementations.
      *
+     *  @param id The property identifier to validate. This is typically either the value returned by
+     *            {@link #defaultId()} or an application-specific identifier that is expected to match
+     *            the {@link #idPattern()} of this factory. Callers are generally expected to pass
+     *            non-{@code null} ids; implementations may define stricter rules about {@code null}
+     *            or empty values in their documentation.
      *  @return {@code true} if the given id is valid according to the current Sprouts implementation, {@code false} otherwise.
      */
     boolean isValidPropertyId(String id);
