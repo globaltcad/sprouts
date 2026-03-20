@@ -58,6 +58,12 @@ public class ValueCollectionsPerformanceTest {
         testTupleAgainstArrayList(10_000, 70_000);
         testTupleAgainstArrayList(5_000, 70_000);
         testTupleAgainstArrayList(100, 70_000);
+        testTupleAppend(50_000);
+        testTupleAppend(20_000);
+        testTupleAppend(5_000);
+        testTuplePrepend(50_000);
+        testTuplePrepend(20_000);
+        testTuplePrepend(5_000);
     }
 
     private static void testAssociationAgainstHashMap(int numberOfOperations) {
@@ -411,6 +417,48 @@ public class ValueCollectionsPerformanceTest {
                     return map;
                 },
                 (a, b)->a.toSet().equals(b)
+        );
+    }
+
+    private static void testTupleAppend(int numberOfItems) {
+        List<String> items = IntStream.range(0, numberOfItems).mapToObj(String::valueOf).collect(Collectors.toList());
+        test(
+                "Tuple append "+numberOfItems, ()-> Tuple.of(String.class), tuple-> {
+                    Tuple<String> result = tuple;
+                    for (String item : items) {
+                        result = result.add(item); // appends to end
+                    }
+                    return result;
+                },
+                "ArrayList append "+numberOfItems, ()-> new ArrayList<String>(),
+                list-> {
+                    for (String item : items) {
+                        list.add(item);
+                    }
+                    return list;
+                },
+                (a, b) -> a.toList().equals(b)
+        );
+    }
+
+    private static void testTuplePrepend(int numberOfItems) {
+        List<String> items = IntStream.range(0, numberOfItems).mapToObj(String::valueOf).collect(Collectors.toList());
+        test(
+                "Tuple prepend "+numberOfItems, ()-> Tuple.of(String.class), tuple-> {
+                    Tuple<String> result = tuple;
+                    for (String item : items) {
+                        result = result.addAt(0, item); // prepends to start
+                    }
+                    return result;
+                },
+                "ArrayList prepend "+numberOfItems, ()-> new ArrayList<String>(),
+                list-> {
+                    for (String item : items) {
+                        list.add(0, item);
+                    }
+                    return list;
+                },
+                (a, b) -> a.toList().equals(b)
         );
     }
 
