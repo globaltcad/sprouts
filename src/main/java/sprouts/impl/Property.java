@@ -66,7 +66,7 @@ final class Property<T extends @Nullable Object> implements Var<T>, Viewable<T> 
                         "which is not compatible with the type '"+_type+"' of this property."
                     );
         }
-        if ( !Sprouts.factory().idPattern().matcher(_id).matches() )
+        if ( !Sprouts.factory().isValidPropertyId(_id) )
             throw new IllegalArgumentException("The provided id '"+_id+"' is not valid!");
         if ( !allowsNull && iniValue == null )
             throw new IllegalArgumentException("The provided initial value is null, but the property does not allow null values!");

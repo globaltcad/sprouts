@@ -193,7 +193,7 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
             }
         }));
 
-        if ( !Sprouts.factory().idPattern().matcher(_id).matches() )
+        if ( !Sprouts.factory().isValidPropertyId(_id) )
             throw new IllegalArgumentException("The provided id '"+_id+"' is not valid! It must match the pattern '"+Sprouts.factory().idPattern().pattern()+"'");
         if ( !allowsNull && initialItem == null )
             throw new IllegalArgumentException("The provided initial value is null, but the property does not allow null values!");
