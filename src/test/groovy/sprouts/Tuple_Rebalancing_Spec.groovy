@@ -35,7 +35,7 @@ import java.util.function.IntUnaryOperator
     leaf overflow and redistribution.
 
 ''')
-@Subject(Tuple)
+@Subject([Tuple])
 class Tuple_Rebalancing_Spec extends Specification
 {
     def 'A `Tuple` stays invariant with ArrayList when repeatedly inserting at a fixed position.'(
