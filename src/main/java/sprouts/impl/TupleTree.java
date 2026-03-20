@@ -76,6 +76,16 @@ final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
     private static final int BRANCHING_FACTOR = 32;
     private static final int IDEAL_LEAF_NODE_SIZE = 512;
 
+    /**
+     * When a child node's size exceeds this multiple of an adjacent sibling's size,
+     * the branch's children are flattened and redistributed evenly via
+     * {@link #_createRootFromList}. This prevents degenerate right-spine growth
+     * from repeated appends while keeping the rebalancing lazy and local —
+     * only the children of the affected branch are rebuilt per operation,
+     * preserving structural sharing for {@link #_recursiveEquals}.
+     */
+    private static final int REBALANCE_FACTOR = 5;
+
 
     interface Node {
         int size();
@@ -386,6 +396,13 @@ final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
 
             if (newChildren[bestIndex] == branch)
                 throw new IllegalStateException("TupleNode was not modified");
+
+            // Local rebalance: if the updated child is disproportionately larger
+            // than its two neighbors, flatten all children and redistribute evenly.
+            // This keeps the tree roughly balanced where global rebuilds happen rarely.
+            if ( _isLocallyImbalanced(newChildren, bestIndex) )
+                return _createRootFromList(type, allowsNull, new TupleTree<>(_size + tuple.size(), allowsNull, type, new BranchNode(newChildren)).toList());
+
             if ( _isAllNull(newChildren) )
                 throw new IllegalStateException("TupleNode is all null");
             else
@@ -586,6 +603,35 @@ final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
         return new BranchNode(branches);
     }
 
+    /**
+     * Checks whether the child at {@code updatedIndex} is disproportionately
+     * larger than its nearest non-null sibling(s). Returns {@code true} when
+     * the ratio exceeds {@link #REBALANCE_FACTOR}, indicating the branch's
+     * children should be redistributed.
+     */
+    private static boolean _isLocallyImbalanced(Node[] children, int updatedIndex) {
+        Node updated = children[updatedIndex];
+        if ( updated == null )
+            return false;
+        int updatedSize = updated.size();
+        // Compare with previous non-null sibling
+        for ( int i = updatedIndex - 1; i >= 0; i-- ) {
+            if ( children[i] != null ) {
+                if ( updatedSize > REBALANCE_FACTOR * children[i].size() )
+                    return true;
+                break;
+            }
+        }
+        // Compare with next non-null sibling
+        for ( int i = updatedIndex + 1; i < children.length; i++ ) {
+            if ( children[i] != null ) {
+                if ( updatedSize > REBALANCE_FACTOR * children[i].size() )
+                    return true;
+                break;
+            }
+        }
+        return false;
+    }
 
     @Override
     public Class<T> type() {
