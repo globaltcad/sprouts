@@ -111,6 +111,19 @@ final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
         @Nullable Node removeAllOf(Set<?> toRemove, Class<?> type, ArrayItemAccess<?, Object> access, boolean allowsNull);
 
         <T> void forEach(ArrayItemAccess<T, Object> access, Consumer<T> consumer);
+
+        /**
+         * Recursively maps every element in this node using the given mapper,
+         * producing a new tree of the target type without any intermediate
+         * collection or array allocation beyond the final leaf arrays.
+         *
+         * @param targetType  the component type of the mapped elements
+         * @param allowsNull  whether the target tuple permits null elements
+         * @param sourceAccess accessor for reading elements from the source leaf arrays
+         * @param mapper      the mapping function to apply to each element
+         * @return a new {@link Node} mirroring this node's structure with mapped elements
+         */
+        <T, U> Node mapTo(Class<U> targetType, boolean allowsNull, ArrayItemAccess<T, Object> sourceAccess, Function<T, U> mapper);
     }
 
     static final class LeafNode implements Node {
@@ -255,6 +268,19 @@ final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
         @Override
         public <T> void forEach(ArrayItemAccess<T, Object> access, Consumer<T> consumer) {
             _each(_data, access, consumer);
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public <T, U> Node mapTo(Class<U> targetType, boolean allowsNull, ArrayItemAccess<T, Object> sourceAccess, Function<T, U> mapper) {
+            int len = _length(_data);
+            Object newData = _createArray(targetType, allowsNull, len);
+            for (int i = 0; i < len; i++) {
+                T item = sourceAccess.get(i, _data);
+                U mapped = mapper.apply(item);
+                _setAt(i, mapped, newData);
+            }
+            return new LeafNode(newData);
         }
     }
 
@@ -483,6 +509,16 @@ final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
                 if (branch != null)
                     branch.forEach(access, consumer);
             }
+        }
+
+        @Override
+        public <T, U> Node mapTo(Class<U> targetType, boolean allowsNull, ArrayItemAccess<T, Object> sourceAccess, Function<T, U> mapper) {
+            Node[] newChildren = new Node[_children.length];
+            for (int i = 0; i < _children.length; i++) {
+                if (_children[i] != null)
+                    newChildren[i] = _children[i].mapTo(targetType, allowsNull, sourceAccess, mapper);
+            }
+            return new BranchNode(newChildren);
         }
     }
 
@@ -916,31 +952,26 @@ final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
     }
 
     @Override
-    public Tuple<T> map( Function<T,T> mapper ) {
+    public TupleTree<T> map( Function<T,T> mapper ) {
         Objects.requireNonNull(mapper);
-        @SuppressWarnings("unchecked")
-        T[] mappedItems = (T[]) Array.newInstance(type(), size());
-        int i = 0;
-        for ( T v : this ) {
-            mappedItems[i++] = mapper.apply( v );
-        }
-        return TupleTree.of( allowsNull(), type(), mappedItems);
+        if ( _size == 0 )
+            return this;
+        Node newRoot = _root.mapTo(_type, _allowsNull, _itemGetter, mapper);
+        return new TupleTree<>(_size, _allowsNull, _type, newRoot);
     }
 
     @Override
-    public <U extends @Nullable Object> Tuple<U> mapTo(
+    @SuppressWarnings("unchecked")
+    public <U extends @Nullable Object> TupleTree<U> mapTo(
         Class<U>      type,
         Function<T,U> mapper
     ) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(mapper);
-        U[] array = (U[]) Array.newInstance(type, size());
-        int i = 0;
-        for ( T v : this ) {
-            U m = mapper.apply( v );
-            array[i++] = m;
-        }
-        return TupleTree.of( allowsNull(), type, array );
+        if ( _size == 0 )
+            return new TupleTree<>(0, _allowsNull, type, null);
+        Node newRoot = _root.mapTo(type, _allowsNull, _itemGetter, mapper);
+        return new TupleTree<>(_size, _allowsNull, type, newRoot);
     }
 
     @Override

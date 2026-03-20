@@ -67,6 +67,18 @@ public class ValueCollectionsPerformanceTest {
         testTupleCenterInsert(50_000);
         testTupleCenterInsert(20_000);
         testTupleCenterInsert(5_000);
+        testTupleMapDense(100_000);
+        testTupleMapDense(10_000);
+        testTupleMapDense(1_000);
+        testTupleMapToDense(100_000);
+        testTupleMapToDense(10_000);
+        testTupleMapToDense(1_000);
+        testTupleMapBranched(20_000);
+        testTupleMapBranched(5_000);
+        testTupleMapToBranched(20_000);
+        testTupleMapToBranched(5_000);
+        testTupleMapPrimitiveInt(100_000);
+        testTupleMapPrimitiveInt(10_000);
     }
 
     private static void testAssociationAgainstHashMap(int numberOfOperations) {
@@ -607,6 +619,184 @@ public class ValueCollectionsPerformanceTest {
             operations.add(new OperationKeyPair(op, String.valueOf(localHash)));
         }
         return operations;
+    }
+
+    /**
+     *  Benchmarks {@code Tuple.map()} on a dense single-leaf tuple (created from a list)
+     *  against the equivalent {@code ArrayList} stream-map-collect pattern.
+     */
+    private static void testTupleMapDense(int size) {
+        List<Integer> source = IntStream.range(0, size).boxed().collect(Collectors.toList());
+        test(
+                "Tuple map (dense) " + size,
+                () -> Tuple.of(Integer.class, source),
+                tuple -> {
+                    Tuple<Integer> result = tuple;
+                    // Apply map repeatedly to amortize per-call overhead
+                    for (int i = 0; i < 20; i++) {
+                        result = result.map(v -> v + 1);
+                    }
+                    return result;
+                },
+                "ArrayList map (dense) " + size,
+                () -> new ArrayList<>(source),
+                list -> {
+                    for (int i = 0; i < 20; i++) {
+                        list = (ArrayList<Integer>) list.stream().map(v -> v + 1).collect(Collectors.toList());
+                    }
+                    return list;
+                },
+                (a, b) -> a.toList().equals(b)
+        );
+    }
+
+    /**
+     *  Benchmarks {@code Tuple.mapTo()} on a dense single-leaf tuple,
+     *  mapping Integer → String, against the ArrayList stream equivalent.
+     */
+    private static void testTupleMapToDense(int size) {
+        List<Integer> intSource = IntStream.range(0, size).boxed().collect(Collectors.toList());
+        List<String> strSource = intSource.stream().map(String::valueOf).collect(Collectors.toList());
+        test(
+                "Tuple mapTo Int→Str (dense) " + size,
+                () -> Tuple.of(Integer.class, intSource),
+                tuple -> {
+                    // Alternate between Integer→String and String→Integer to get back to the same type
+                    Tuple<Integer> current = tuple;
+                    for (int i = 0; i < 10; i++) {
+                        Tuple<String> asStr = current.mapTo(String.class, v -> v + "_s");
+                        current = asStr.mapTo(Integer.class, v -> v.length());
+                    }
+                    return current;
+                },
+                "ArrayList mapTo Int→Str (dense) " + size,
+                () -> new ArrayList<>(intSource),
+                list -> {
+                    ArrayList<Integer> current = list;
+                    for (int i = 0; i < 10; i++) {
+                        List<String> asStr = current.stream().map(v -> v + "_s").collect(Collectors.toList());
+                        current = (ArrayList<Integer>) asStr.stream().map(v -> v.length()).collect(Collectors.toList());
+                    }
+                    return current;
+                },
+                (a, b) -> a.toList().equals(b)
+        );
+    }
+
+    /**
+     *  Benchmarks {@code Tuple.map()} on a branched tuple that was grown
+     *  through repeated appends (forcing tree splits and rebalancing)
+     *  against the equivalent ArrayList pattern.
+     */
+    private static void testTupleMapBranched(int size) {
+        // Build the tuple by appending one-by-one so the tree develops branches
+        Tuple<String> branchedTuple = Tuple.of(String.class);
+        List<String> referenceList = new ArrayList<>();
+        for (int i = 0; i < size; i++) {
+            String item = "item-" + i;
+            branchedTuple = branchedTuple.add(item);
+            referenceList.add(item);
+        }
+        final Tuple<String> initTuple = branchedTuple;
+        final List<String> initList = new ArrayList<>(referenceList);
+        test(
+                "Tuple map (branched) " + size,
+                () -> initTuple,
+                tuple -> {
+                    Tuple<String> result = tuple;
+                    for (int i = 0; i < 20; i++) {
+                        result = result.map(v -> v.toUpperCase());
+                    }
+                    return result;
+                },
+                "ArrayList map (branched) " + size,
+                () -> new ArrayList<>(initList),
+                list -> {
+                    for (int i = 0; i < 20; i++) {
+                        list = (ArrayList<String>) list.stream().map(v -> v.toUpperCase()).collect(Collectors.toList());
+                    }
+                    return list;
+                },
+                (a, b) -> a.toList().equals(b)
+        );
+    }
+
+    /**
+     *  Benchmarks {@code Tuple.mapTo()} on a branched tuple (String→Integer),
+     *  mapping each string to its length, against the ArrayList stream equivalent.
+     */
+    private static void testTupleMapToBranched(int size) {
+        Tuple<String> branchedTuple = Tuple.of(String.class);
+        List<String> referenceList = new ArrayList<>();
+        for (int i = 0; i < size; i++) {
+            String item = "element-" + (i * 31 % 997);
+            branchedTuple = branchedTuple.add(item);
+            referenceList.add(item);
+        }
+        final Tuple<String> initTuple = branchedTuple;
+        final List<String> initList = new ArrayList<>(referenceList);
+        test(
+                "Tuple mapTo Str→Int (branched) " + size,
+                () -> initTuple,
+                tuple -> {
+                    Tuple<String> current = tuple;
+                    for (int i = 0; i < 10; i++) {
+                        Tuple<Integer> asInt = current.mapTo(Integer.class, String::length);
+                        current = asInt.mapTo(String.class, v -> _repeat("x", v));
+                    }
+                    return current;
+                },
+                "ArrayList mapTo Str→Int (branched) " + size,
+                () -> new ArrayList<>(initList),
+                list -> {
+                    ArrayList<String> current = list;
+                    for (int i = 0; i < 10; i++) {
+                        List<Integer> asInt = current.stream().map(String::length).collect(Collectors.toList());
+                        current = (ArrayList<String>) asInt.stream().map(v -> _repeat("x", v)).collect(Collectors.toList());
+                    }
+                    return current;
+                },
+                (a, b) -> a.toList().equals(b)
+        );
+    }
+
+    private static String _repeat(String s, int count) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < count; i++) {
+            sb.append(s);
+        }
+        return sb.toString();
+    }
+
+    /**
+     *  Benchmarks {@code Tuple.map()} on a tuple backed by a primitive
+     *  {@code int[]} array against an {@code ArrayList<Integer>} doing
+     *  the same arithmetic mapping. This isolates the performance of the
+     *  primitive-array leaf path in the recursive traversal.
+     */
+    private static void testTupleMapPrimitiveInt(int size) {
+        int[] primitiveSource = IntStream.range(0, size).toArray();
+        List<Integer> boxedSource = IntStream.range(0, size).boxed().collect(Collectors.toList());
+        test(
+                "Tuple map (int[]) " + size,
+                () -> Tuple.of(primitiveSource),
+                tuple -> {
+                    Tuple<Integer> result = tuple;
+                    for (int i = 0; i < 20; i++) {
+                        result = result.map(v -> v + 1);
+                    }
+                    return result;
+                },
+                "ArrayList map (Integer) " + size,
+                () -> new ArrayList<>(boxedSource),
+                list -> {
+                    for (int i = 0; i < 20; i++) {
+                        list = (ArrayList<Integer>) list.stream().map(v -> v + 1).collect(Collectors.toList());
+                    }
+                    return list;
+                },
+                (a, b) -> a.toList().equals(b)
+        );
     }
 
     private static <T> Pair<T,Long> run(int count, Supplier<T> init, Function<T,T> ops) {

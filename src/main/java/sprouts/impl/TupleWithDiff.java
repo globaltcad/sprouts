@@ -297,7 +297,7 @@ final class TupleWithDiff<T extends @Nullable Object> implements Tuple<T>, Seque
 
     @Override
     public Tuple<T> map( Function<T,T> mapper ) {
-        return new TupleWithDiff<>((TupleTree<T>) _tupleTree.map(mapper), SequenceDiff.of(this, SequenceChange.SET, 0, size()) );
+        return new TupleWithDiff<>(_tupleTree.map(mapper), SequenceDiff.of(this, SequenceChange.SET, 0, size()) );
     }
 
     @Override
@@ -305,7 +305,7 @@ final class TupleWithDiff<T extends @Nullable Object> implements Tuple<T>, Seque
         Class<U>      type,
         Function<T,U> mapper
     ) {
-        return new TupleWithDiff<>((TupleTree<U>) _tupleTree.mapTo(type, mapper), SequenceDiff.of(this, SequenceChange.SET, 0, size()) );
+        return new TupleWithDiff<>(_tupleTree.mapTo(type, mapper), SequenceDiff.of(this, SequenceChange.SET, 0, size()) );
     }
 
     @Override
