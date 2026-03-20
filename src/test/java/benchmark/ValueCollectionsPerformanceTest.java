@@ -64,6 +64,9 @@ public class ValueCollectionsPerformanceTest {
         testTuplePrepend(50_000);
         testTuplePrepend(20_000);
         testTuplePrepend(5_000);
+        testTupleCenterInsert(50_000);
+        testTupleCenterInsert(20_000);
+        testTupleCenterInsert(5_000);
     }
 
     private static void testAssociationAgainstHashMap(int numberOfOperations) {
@@ -455,6 +458,27 @@ public class ValueCollectionsPerformanceTest {
                 list-> {
                     for (String item : items) {
                         list.add(0, item);
+                    }
+                    return list;
+                },
+                (a, b) -> a.toList().equals(b)
+        );
+    }
+
+    private static void testTupleCenterInsert(int numberOfItems) {
+        List<String> items = IntStream.range(0, numberOfItems).mapToObj(String::valueOf).collect(Collectors.toList());
+        test(
+                "Tuple center insert "+numberOfItems, ()-> Tuple.of(String.class), tuple-> {
+                    Tuple<String> result = tuple;
+                    for (String item : items) {
+                        result = result.addAt(result.size()/2, item); // inserts in the middle
+                    }
+                    return result;
+                },
+                "ArrayList center insert "+numberOfItems, ()-> new ArrayList<String>(),
+                list-> {
+                    for (String item : items) {
+                        list.add(list.size()/2, item);
                     }
                     return list;
                 },
