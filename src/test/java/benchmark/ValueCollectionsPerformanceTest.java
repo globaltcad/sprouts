@@ -586,34 +586,34 @@ public class ValueCollectionsPerformanceTest {
         run(3, ()-> Pair.of(initA.get(), initB.get()), pair-> Pair.of(runA.apply(pair.first()), runB.apply(pair.second())));
 
         long samples = 10;
-        long associationTime = 0;
-        long mapTime = 0;
+        long valueCollectionTime = 0;
+        long mutableCollectionTime = 0;
 
         for (int i = 0; i < samples; i++) {
             // Garbage collect before measurements
             System.gc();
             // Measure Association performance
             Pair<A, Long> currentAAndTime = run(11, initA, runA);
-            associationTime += currentAAndTime.second();
+            valueCollectionTime += currentAAndTime.second();
 
             // Garbage collect before next measurement
             System.gc();
             // Measure Map performance
             Pair<B, Long> currentBAndTime = run(11, initB, runB);
-            mapTime += currentBAndTime.second();
+            mutableCollectionTime += currentBAndTime.second();
 
             if ( !invarianceChecker.test(currentAAndTime.first(), currentBAndTime.first())) {
                 throw new IllegalStateException("Invariance check failed");
             }
         }
-        associationTime /= samples;
-        mapTime /= samples;
-        double associationTimeSeconds = associationTime / 1_000_000_000.0;
-        double mapTimeSeconds = mapTime / 1_000_000_000.0;
+        valueCollectionTime /= samples;
+        mutableCollectionTime /= samples;
+        double valueCollectionTimeSeconds = valueCollectionTime / 1_000_000_000.0;
+        double mutableCollectionTimeSeconds = mutableCollectionTime / 1_000_000_000.0;
 
-        System.out.println(titleA+" total time: " + associationTimeSeconds + " s");
-        System.out.println(titleB+" total time: " + mapTimeSeconds + " s");
-        System.out.println("Factor: " + associationTimeSeconds / mapTimeSeconds + "x\n");
+        System.out.println(titleA+" total time: " + valueCollectionTimeSeconds + " s");
+        System.out.println(titleB+" total time: " + mutableCollectionTimeSeconds + " s");
+        System.out.println("Factor: " + valueCollectionTimeSeconds / mutableCollectionTimeSeconds + "x\n");
     }
 
 
@@ -882,11 +882,7 @@ public class ValueCollectionsPerformanceTest {
                 list -> {
                     List<Integer> result = list;
                     for (int i = 0; i < 20; i++) {
-                        if (i % 2 == 0) {
-                            result = list.stream().filter(v -> v % 3 != 0).collect(Collectors.toList());
-                        } else {
-                            result = list.stream().filter(v -> v % 3 == 0).collect(Collectors.toList());
-                        }
+                        result = list.stream().filter(v -> v % 3 != 0).collect(Collectors.toList());
                     }
                     return (ArrayList<Integer>) result;
                 },
