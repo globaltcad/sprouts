@@ -1665,6 +1665,29 @@ public interface SproutsFactory
     String defaultId();
 
     /**
+     *  Checks if the given id is valid according to the current Sprouts implementation.
+     *  This is typically backed by a regex {@link Pattern} which defines the allowed format for property ids.
+     *  All ids must match the same pattern. A common use case is for the ids to
+     *  be syntactically valid variable names in Java or other programming languages,
+     *  but this is not a requirement and the actual pattern may differ between implementations.
+     *  &lt;p&gt;
+     *  The default implementation delegates to {@link #idPattern()} and returns
+     *  {@code true} if and only if the given id is non-{@code null} and matches that pattern.
+     *  Implementations overriding this method should keep its behavior consistent with
+     *  {@link #idPattern()} unless there is a strong reason to deviate.
+     *
+     *  @param id The property identifier to validate. This is typically either the value returned by
+     *            {@link #defaultId()} or an application-specific identifier that is expected to match
+     *            the {@link #idPattern()} of this factory. Callers are generally expected to pass
+     *            non-{@code null} ids; implementations may define stricter rules about {@code null}
+     *
+     *  @return {@code true} if the given id is valid according to the current Sprouts implementation, {@code false} otherwise.
+     */
+    default boolean isValidPropertyId(String id) {
+<span class="nc bnc" id="L1687" title="All 4 branches missed.">        return id != null &amp;&amp; idPattern().matcher(id).matches();</span>
+    }
+
+    /**
      *  The regex {@link Pattern} used to validate property ids.
      *  All ids must match this pattern.
      *

@@ -569,23 +569,28 @@ public final class Sprouts implements SproutsFactory
     }
 
     @Override
+    public boolean isValidPropertyId(String id) {
+<span class="fc bfc" id="L573" title="All 4 branches covered.">        return id.isEmpty() || DEFAULT_ID_PATTERN.matcher(id).matches();</span>
+    }
+
+    @Override
     public Pattern idPattern() {
-<span class="fc" id="L573">        return DEFAULT_ID_PATTERN;</span>
+<span class="fc" id="L578">        return DEFAULT_ID_PATTERN;</span>
     }
 
     @Override
     public Channel defaultChannel() {
-<span class="fc" id="L578">        return From.VIEW_MODEL;</span>
+<span class="fc" id="L583">        return From.VIEW_MODEL;</span>
     }
 
     @Override
     public Channel defaultObservableChannel() {
-<span class="fc" id="L583">        return From.ALL;</span>
+<span class="fc" id="L588">        return From.ALL;</span>
     }
 
     @Override
     public Marker loggingMarker() {
-<span class="fc" id="L588">        return marker;</span>
+<span class="fc" id="L593">        return marker;</span>
     }
 
     /**
@@ -597,8 +602,8 @@ public final class Sprouts implements SproutsFactory
      *               be used for all logging that occurs in Sprouts.
      */
     public void setLoggingMarker(Marker marker) {
-<span class="nc" id="L600">        this.marker = marker;</span>
-<span class="nc" id="L601">    }</span>
+<span class="nc" id="L605">        this.marker = marker;</span>
+<span class="nc" id="L606">    }</span>
 
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

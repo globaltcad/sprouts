@@ -193,7 +193,7 @@ final class PropertyLens&lt;A extends @Nullable Object, T extends @Nullable Obje
             }
 <span class="fc" id="L194">        }));</span>
 
-<span class="pc bpc" id="L196" title="1 of 2 branches missed.">        if ( !Sprouts.factory().idPattern().matcher(_id).matches() )</span>
+<span class="pc bpc" id="L196" title="1 of 2 branches missed.">        if ( !Sprouts.factory().isValidPropertyId(_id) )</span>
 <span class="nc" id="L197">            throw new IllegalArgumentException(&quot;The provided id '&quot;+_id+&quot;' is not valid! It must match the pattern '&quot;+Sprouts.factory().idPattern().pattern()+&quot;'&quot;);</span>
 <span class="pc bpc" id="L198" title="1 of 4 branches missed.">        if ( !allowsNull &amp;&amp; initialItem == null )</span>
 <span class="nc" id="L199">            throw new IllegalArgumentException(&quot;The provided initial value is null, but the property does not allow null values!&quot;);</span>

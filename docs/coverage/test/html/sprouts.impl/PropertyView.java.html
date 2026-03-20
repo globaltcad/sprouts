@@ -376,7 +376,7 @@ final class PropertyView&lt;T extends @Nullable Object&gt; implements Var&lt;T&g
 						&quot;defined by this property view!&quot;
 				);
 		}
-<span class="fc bfc" id="L379" title="All 2 branches covered.">		if ( !Sprouts.factory().idPattern().matcher(_id).matches() )</span>
+<span class="fc bfc" id="L379" title="All 2 branches covered.">		if ( !Sprouts.factory().isValidPropertyId(_id) )</span>
 <span class="fc" id="L380">			throw new IllegalArgumentException(</span>
 					&quot;The provided id '&quot;+_id+&quot;' is not valid! It must match &quot; +
 <span class="fc" id="L382">							&quot;the pattern '&quot;+Sprouts.factory().idPattern().pattern()+&quot;'.&quot;</span>

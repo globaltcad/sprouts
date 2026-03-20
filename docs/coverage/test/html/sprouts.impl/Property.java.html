@@ -66,7 +66,7 @@ final class Property&lt;T extends @Nullable Object&gt; implements Var&lt;T&gt;, 
                         &quot;which is not compatible with the type '&quot;+_type+&quot;' of this property.&quot;
                     );
         }
-<span class="pc bpc" id="L69" title="1 of 2 branches missed.">        if ( !Sprouts.factory().idPattern().matcher(_id).matches() )</span>
+<span class="pc bpc" id="L69" title="1 of 2 branches missed.">        if ( !Sprouts.factory().isValidPropertyId(_id) )</span>
 <span class="nc" id="L70">            throw new IllegalArgumentException(&quot;The provided id '&quot;+_id+&quot;' is not valid!&quot;);</span>
 <span class="pc bpc" id="L71" title="1 of 4 branches missed.">        if ( !allowsNull &amp;&amp; iniValue == null )</span>
 <span class="nc" id="L72">            throw new IllegalArgumentException(&quot;The provided initial value is null, but the property does not allow null values!&quot;);</span>
