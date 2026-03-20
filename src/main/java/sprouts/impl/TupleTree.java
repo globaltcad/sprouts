@@ -85,7 +85,7 @@ final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
      * are rebuilt per operation, preserving structural sharing for
      * {@link #_recursiveEquals}.
      */
-    private static final int REBALANCE_FACTOR = 5;
+    private static final long REBALANCE_FACTOR = 5L; // This is long to avoid overflow when multiplying with large child sizes.
 
 
     interface Node {
@@ -620,7 +620,7 @@ final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
         Node updated = children[updatedIndex];
         if (updated == null)
             return -1;
-        int updatedSize = updated.size();
+        long updatedSize = updated.size();
         // Prefer left neighbor (keeps the append-end fluid on the right)
         for (int i = updatedIndex - 1; i >= 0; i--) {
             if (children[i] != null) {
