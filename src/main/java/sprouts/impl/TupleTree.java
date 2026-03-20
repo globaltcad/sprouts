@@ -4,7 +4,6 @@ import org.jspecify.annotations.Nullable;
 import sprouts.Tuple;
 import sprouts.Val;
 
-import java.lang.reflect.Array;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -109,6 +108,13 @@ final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
          * Returns {@code null} when every element in this node is removed.
          */
         @Nullable Node removeAllOf(Set<?> toRemove, Class<?> type, ArrayItemAccess<?, Object> access, boolean allowsNull);
+
+        /**
+         * Retains every element for which the predicate returns {@code true},
+         * traversing the tree and only copying the paths that actually change.
+         * Returns {@code null} when no element survives.
+         */
+        @Nullable <T> Node retainIf(Predicate<T> predicate, Class<?> type, ArrayItemAccess<T, Object> access, boolean allowsNull);
 
         <T> void forEach(ArrayItemAccess<T, Object> access, Consumer<T> consumer);
 
@@ -260,6 +266,35 @@ final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
             for (int i = 0; i < currentSize; i++) {
                 Object item = access.get(i, _data);
                 if (!toRemove.contains(item))
+                    _setAt(writeIndex++, item, newData);
+            }
+            return new LeafNode(newData);
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public @Nullable <T> Node retainIf(
+                Predicate<T>              predicate,
+                Class<?>                  type,
+                ArrayItemAccess<T, Object> access,
+                boolean                   allowsNull
+        ) {
+            int currentSize = _length(_data);
+            // First pass: count how many items survive.
+            int survivorCount = 0;
+            for (int i = 0; i < currentSize; i++) {
+                if (predicate.test(access.get(i, _data)))
+                    survivorCount++;
+            }
+            if (survivorCount == currentSize) return this; // nothing changed – share this node
+            if (survivorCount == 0)           return null; // everything removed
+
+            // Second pass: copy survivors into a fresh, correctly-typed array.
+            Object newData = _createArray(type, allowsNull, survivorCount);
+            int writeIndex = 0;
+            for (int i = 0; i < currentSize; i++) {
+                T item = access.get(i, _data);
+                if (predicate.test(item))
                     _setAt(writeIndex++, item, newData);
             }
             return new LeafNode(newData);
@@ -492,6 +527,30 @@ final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
                 Node child = children[i];
                 if (child == null) continue;
                 Node newChild = child.removeAllOf(toRemove, type, access, allowsNull);
+                if (newChild != child) {          // referential change means the subtree was modified
+                    if (newChildren == children)
+                        newChildren = children.clone();
+                    newChildren[i] = newChild;    // null is a valid value (subtree fully removed)
+                }
+            }
+            if (newChildren == children)     return this; // nothing changed – share this node
+            if (_isAllNull(newChildren))     return null; // every child was wiped out
+            return new BranchNode(newChildren);
+        }
+
+        @Override
+        public @Nullable <T> Node retainIf(
+                Predicate<T>              predicate,
+                Class<?>                  type,
+                ArrayItemAccess<T, Object> access,
+                boolean                   allowsNull
+        ) {
+            Node[] children    = _children;
+            Node[] newChildren = children; // start lazy – only clone on first real change
+            for (int i = 0; i < children.length; i++) {
+                Node child = children[i];
+                if (child == null) continue;
+                Node newChild = child.retainIf(predicate, type, access, allowsNull);
                 if (newChild != child) {          // referential change means the subtree was modified
                     if (newChildren == children)
                         newChildren = children.clone();
@@ -786,34 +845,24 @@ final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
         return new TupleTree<>(_size - numberOfItemsToRemove, _allowsNull, _type, newRoot);
     }
 
-    @Override
-    public Tuple<T> removeIf( Predicate<T> predicate ) {
-        List<T> itemsToKeep = new ArrayList<>();
-        for ( int i = 0; i < size(); i++ ) {
-            T item = get(i);
-            if ( !predicate.test(item) ) {
-                itemsToKeep.add(item);
-            }
-        }
-        if ( itemsToKeep.size() == this.size() )
+    TupleTree<T> _retainIf(Predicate<T> predicate) {
+        if (_size == 0)
             return this;
-        T[] newItems = (T[]) Array.newInstance(type(), itemsToKeep.size());
-        itemsToKeep.toArray(newItems);
-        return TupleTree.of( allowsNull(), type(), newItems);
+        Node newRoot = _root.retainIf(predicate, _type, _itemGetter, _allowsNull);
+        if (newRoot == _root)
+            return this;
+        int newSize = (newRoot == null ? 0 : newRoot.size());
+        return new TupleTree<>(newSize, _allowsNull, _type, newRoot);
     }
 
     @Override
-    public Tuple<T> retainIf( Predicate<T> predicate ) {
-        List<T> filteredItems = new ArrayList<>();
-        for ( int i = 0; i < size(); i++ ) {
-            T item = get(i);
-            if ( predicate.test(item) ) {
-                filteredItems.add(item);
-            }
-        }
-        if ( filteredItems.size() == this.size() )
-            return this;
-        return TupleTree.of(allowsNull(), type(), filteredItems);
+    public TupleTree<T> retainIf( Predicate<T> predicate ) {
+        return _retainIf(predicate);
+    }
+
+    @Override
+    public TupleTree<T> removeIf( Predicate<T> predicate ) {
+        return _retainIf(predicate.negate());
     }
 
     // ── Internal driver ──────────────────────────────────────────────────────────

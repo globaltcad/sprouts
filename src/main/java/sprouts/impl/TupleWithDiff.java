@@ -4,7 +4,6 @@ import org.jspecify.annotations.Nullable;
 import sprouts.SequenceChange;
 import sprouts.Tuple;
 
-import java.lang.reflect.Array;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -140,55 +139,52 @@ final class TupleWithDiff<T extends @Nullable Object> implements Tuple<T>, Seque
 
     @Override
     public Tuple<T> removeIf( Predicate<T> predicate ) {
-        List<T> itemsToKeep = new ArrayList<>();
-        int singleSequenceIndex = size() > 0 ? -2 : -1;
-        int removalSequenceSize = 0;
-        for ( int i = 0; i < size(); i++ ) {
-            T item = get(i);
-            if ( !predicate.test(item) ) {
-                itemsToKeep.add(item);
-            } else {
-                if ( singleSequenceIndex != -1 ) {
-                    if ( singleSequenceIndex == -2 )
-                        singleSequenceIndex = i;
-                    else if ( i > singleSequenceIndex + removalSequenceSize )
-                        singleSequenceIndex = -1;
-                }
-                if ( singleSequenceIndex >= 0 )
-                    removalSequenceSize++;
-            }
-        }
-        if ( itemsToKeep.size() == this.size() )
-            return this;
-        T[] newItems = (T[]) Array.newInstance(type(), itemsToKeep.size());
-        itemsToKeep.toArray(newItems);
-        SequenceDiff diff = SequenceDiff.of(this, SequenceChange.REMOVE, singleSequenceIndex, size() - itemsToKeep.size());
-        return new TupleWithDiff<>(TupleTree.of( allowsNull(), type(), newItems), diff);
+        return _filterWith(predicate.negate(), SequenceChange.REMOVE);
     }
 
     @Override
     public Tuple<T> retainIf( Predicate<T> predicate ) {
-        List<T> filteredItems = new ArrayList<>();
+        return _filterWith(predicate, SequenceChange.RETAIN);
+    }
+
+    /**
+     *  Shared implementation for {@link #removeIf} and {@link #retainIf}.
+     *  The actual filtering is delegated to the tree-level {@link TupleTree#_retainIf},
+     *  which traverses the tree with structural sharing and no intermediate collections.
+     *  A single O(n) iterator pass over the original data computes the diff metadata
+     *  for change listeners.
+     *
+     * @param retainPredicate Items matching this predicate are kept.
+     * @param changeType      {@link SequenceChange#REMOVE} or {@link SequenceChange#RETAIN}.
+     */
+    private Tuple<T> _filterWith(Predicate<T> retainPredicate, SequenceChange changeType) {
+        TupleTree<T> filtered = _tupleTree._retainIf(retainPredicate);
+        if ( Util.refEquals(filtered, _tupleTree) )
+            return this;
+
+        // Single O(n) iterator pass to compute the single-sequence index for the diff.
+        boolean trackRetained = (changeType == SequenceChange.RETAIN);
         int singleSequenceIndex = size() > 0 ? -2 : -1;
-        int retainSequenceSize = 0;
-        for ( int i = 0; i < size(); i++ ) {
-            T item = get(i);
-            if ( predicate.test(item) ) {
-                filteredItems.add(item);
+        int sequenceSize = 0;
+        int i = 0;
+        for ( T item : this ) {
+            boolean kept = retainPredicate.test(item);
+            if ( trackRetained ? kept : !kept ) {
                 if ( singleSequenceIndex != -1 ) {
                     if ( singleSequenceIndex == -2 )
                         singleSequenceIndex = i;
-                    else if ( i > singleSequenceIndex + retainSequenceSize )
+                    else if ( i > singleSequenceIndex + sequenceSize )
                         singleSequenceIndex = -1;
                 }
                 if ( singleSequenceIndex >= 0 )
-                    retainSequenceSize++;
+                    sequenceSize++;
             }
+            i++;
         }
-        if ( filteredItems.size() == this.size() )
-            return this;
-        SequenceDiff diff = SequenceDiff.of(this, SequenceChange.RETAIN, singleSequenceIndex, filteredItems.size());
-        return new TupleWithDiff<>(TupleTree.of(allowsNull(), type(), filteredItems), diff);
+
+        int diffSize = trackRetained ? filtered.size() : this.size() - filtered.size();
+        SequenceDiff diff = SequenceDiff.of(this, changeType, singleSequenceIndex, diffSize);
+        return new TupleWithDiff<>(filtered, diff);
     }
 
     @Override
