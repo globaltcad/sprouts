@@ -79,6 +79,13 @@ public class ValueCollectionsPerformanceTest {
         testTupleMapToBranched(5_000);
         testTupleMapPrimitiveInt(100_000);
         testTupleMapPrimitiveInt(10_000);
+        testTupleFilterDense(100_000);
+        testTupleFilterDense(10_000);
+        testTupleFilterDense(1_000);
+        testTupleFilterBranched(20_000);
+        testTupleFilterBranched(5_000);
+        testTupleFilterSparse(100_000);
+        testTupleFilterSparse(10_000);
     }
 
     private static void testAssociationAgainstHashMap(int numberOfOperations) {
@@ -579,34 +586,34 @@ public class ValueCollectionsPerformanceTest {
         run(3, ()-> Pair.of(initA.get(), initB.get()), pair-> Pair.of(runA.apply(pair.first()), runB.apply(pair.second())));
 
         long samples = 10;
-        long associationTime = 0;
-        long mapTime = 0;
+        long valueCollectionTime = 0;
+        long mutableCollectionTime = 0;
 
         for (int i = 0; i < samples; i++) {
             // Garbage collect before measurements
             System.gc();
             // Measure Association performance
             Pair<A, Long> currentAAndTime = run(11, initA, runA);
-            associationTime += currentAAndTime.second();
+            valueCollectionTime += currentAAndTime.second();
 
             // Garbage collect before next measurement
             System.gc();
             // Measure Map performance
             Pair<B, Long> currentBAndTime = run(11, initB, runB);
-            mapTime += currentBAndTime.second();
+            mutableCollectionTime += currentBAndTime.second();
 
             if ( !invarianceChecker.test(currentAAndTime.first(), currentBAndTime.first())) {
                 throw new IllegalStateException("Invariance check failed");
             }
         }
-        associationTime /= samples;
-        mapTime /= samples;
-        double associationTimeSeconds = associationTime / 1_000_000_000.0;
-        double mapTimeSeconds = mapTime / 1_000_000_000.0;
+        valueCollectionTime /= samples;
+        mutableCollectionTime /= samples;
+        double valueCollectionTimeSeconds = valueCollectionTime / 1_000_000_000.0;
+        double mutableCollectionTimeSeconds = mutableCollectionTime / 1_000_000_000.0;
 
-        System.out.println(titleA+" total time: " + associationTimeSeconds + " s");
-        System.out.println(titleB+" total time: " + mapTimeSeconds + " s");
-        System.out.println("Factor: " + associationTimeSeconds / mapTimeSeconds + "x\n");
+        System.out.println(titleA+" total time: " + valueCollectionTimeSeconds + " s");
+        System.out.println(titleB+" total time: " + mutableCollectionTimeSeconds + " s");
+        System.out.println("Factor: " + valueCollectionTimeSeconds / mutableCollectionTimeSeconds + "x\n");
     }
 
 
@@ -794,6 +801,121 @@ public class ValueCollectionsPerformanceTest {
                         list = (ArrayList<Integer>) list.stream().map(v -> v + 1).collect(Collectors.toList());
                     }
                     return list;
+                },
+                (a, b) -> a.toList().equals(b)
+        );
+    }
+
+    /**
+     *  Benchmarks {@code Tuple.retainIf()} and {@code Tuple.removeIf()} on a
+     *  dense single-leaf tuple (created from a list) against the equivalent
+     *  {@code ArrayList} stream-filter-collect pattern.
+     *  The predicate removes roughly half the elements (even numbers),
+     *  so the tree traversal touches every leaf.
+     */
+    private static void testTupleFilterDense(int size) {
+        List<Integer> source = IntStream.range(0, size).boxed().collect(Collectors.toList());
+        test(
+                "Tuple filter (dense) " + size,
+                () -> Tuple.of(Integer.class, source),
+                tuple -> {
+                    Tuple<Integer> result = tuple;
+                    for (int i = 0; i < 20; i++) {
+                        // Alternate retainIf and removeIf so we exercise both paths
+                        // and keep the tuple non-empty across iterations
+                        if (i % 2 == 0) {
+                            result = tuple.retainIf(v -> v % 2 == 0);
+                        } else {
+                            result = tuple.removeIf(v -> v % 2 == 0);
+                        }
+                    }
+                    return result;
+                },
+                "ArrayList filter (dense) " + size,
+                () -> new ArrayList<>(source),
+                list -> {
+                    List<Integer> result = list;
+                    for (int i = 0; i < 20; i++) {
+                        if (i % 2 == 0) {
+                            result = list.stream().filter(v -> v % 2 == 0).collect(Collectors.toList());
+                        } else {
+                            result = list.stream().filter(v -> v % 2 != 0).collect(Collectors.toList());
+                        }
+                    }
+                    return (ArrayList<Integer>) result;
+                },
+                (a, b) -> a.toList().equals(b)
+        );
+    }
+
+    /**
+     *  Benchmarks {@code Tuple.retainIf()} on a branched tuple that was grown
+     *  through repeated appends. This exercises the recursive tree traversal
+     *  with structural sharing on a multi-level tree where many subtrees
+     *  survive unchanged.
+     */
+    private static void testTupleFilterBranched(int size) {
+        Tuple<Integer> branchedTuple = Tuple.of(Integer.class);
+        List<Integer> referenceList = new ArrayList<>();
+        for (int i = 0; i < size; i++) {
+            branchedTuple = branchedTuple.add(i);
+            referenceList.add(i);
+        }
+        final Tuple<Integer> initTuple = branchedTuple;
+        final List<Integer> initList = new ArrayList<>(referenceList);
+        test(
+                "Tuple filter (branched) " + size,
+                () -> initTuple,
+                tuple -> {
+                    Tuple<Integer> result = tuple;
+                    for (int i = 0; i < 20; i++) {
+                        if (i % 2 == 0) {
+                            result = tuple.retainIf(v -> v % 3 != 0);
+                        } else {
+                            result = tuple.removeIf(v -> v % 3 == 0);
+                        }
+                    }
+                    return result;
+                },
+                "ArrayList filter (branched) " + size,
+                () -> new ArrayList<>(initList),
+                list -> {
+                    List<Integer> result = list;
+                    for (int i = 0; i < 20; i++) {
+                        result = list.stream().filter(v -> v % 3 != 0).collect(Collectors.toList());
+                    }
+                    return (ArrayList<Integer>) result;
+                },
+                (a, b) -> a.toList().equals(b)
+        );
+    }
+
+    /**
+     *  Benchmarks {@code Tuple.removeIf()} with a sparse predicate that only
+     *  removes a small fraction of elements (multiples of 100). This is the
+     *  best case for structural sharing: most subtrees are returned as-is,
+     *  and only the paths containing matching elements are rebuilt.
+     */
+    private static void testTupleFilterSparse(int size) {
+        List<Integer> source = IntStream.range(0, size).boxed().collect(Collectors.toList());
+        test(
+                "Tuple filter sparse (dense) " + size,
+                () -> Tuple.of(Integer.class, source),
+                tuple -> {
+                    Tuple<Integer> result = tuple;
+                    for (int i = 0; i < 20; i++) {
+                        result = tuple.removeIf(v -> v % 100 == 0);
+                    }
+                    return result;
+                },
+                "ArrayList filter sparse (dense) " + size,
+                () -> new ArrayList<>(source),
+                list -> {
+                    List<Integer> result = list;
+                    for (int i = 0; i < 20; i++) {
+                        result = list.stream().filter(v -> v % 100 != 0).collect(Collectors.toList());
+                    }
+                    return (ArrayList<Integer>) result;
                 },
                 (a, b) -> a.toList().equals(b)
         );
