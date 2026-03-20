@@ -376,7 +376,7 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 						"defined by this property view!"
 				);
 		}
-		if ( !Sprouts.factory().idPattern().matcher(_id).matches() )
+		if ( !Sprouts.factory().isValidPropertyId(_id) )
 			throw new IllegalArgumentException(
 					"The provided id '"+_id+"' is not valid! It must match " +
 							"the pattern '"+Sprouts.factory().idPattern().pattern()+"'."

@@ -1665,6 +1665,17 @@ public interface SproutsFactory
     String defaultId();
 
     /**
+     *  Checks if the given id is valid according to the current Sprouts implementation.
+     *  This is typically backed by a regex {@link Pattern} which defines the allowed format for property ids.
+     *  All ids must match the same pattern. A common use case is for the ids to
+     *  be syntactically valid variable names in Java or other programming languages,
+     *  but this is not a requirement and the actual pattern may differ between implementations.
+     *
+     *  @return {@code true} if the given id is valid according to the current Sprouts implementation, {@code false} otherwise.
+     */
+    boolean isValidPropertyId(String id);
+
+    /**
      *  The regex {@link Pattern} used to validate property ids.
      *  All ids must match this pattern.
      *

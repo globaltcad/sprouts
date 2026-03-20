@@ -569,6 +569,11 @@ public final class Sprouts implements SproutsFactory
     }
 
     @Override
+    public boolean isValidPropertyId(String id) {
+        return id.isEmpty() || DEFAULT_ID_PATTERN.matcher(id).matches();
+    }
+
+    @Override
     public Pattern idPattern() {
         return DEFAULT_ID_PATTERN;
     }
