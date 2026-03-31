@@ -4,7 +4,7 @@
   "narrative":"The `map` and `mapTo` operations on a `Tuple` allow you to\n    derive a new tuple whose elements are the result of applying\n    a function to every element of the original tuple.\n\n    `map(Function<T,T>)` keeps the same element type, while\n    `mapTo(Class<U>, Function<T,U>)` transforms elements into\n    a different type entirely — for example turning a tuple of\n    integers into a tuple of strings.\n\n    Internally, both operations traverse the persistent tree\n    structure directly, producing the new tree in a single\n    recursive pass without allocating any intermediate arrays\n    or collections. This means that the shape of the tree\n    (branches, leaves, depths) is preserved exactly, and only\n    the leaf-level data arrays are freshly allocated with\n    the mapped values.\n\n    This specification verifies that the mapping operations\n    produce correct results across a wide variety of tuple\n    states: freshly created tuples backed by a single dense\n    leaf, tuples that have been split into deep tree structures\n    through repeated insertions and removals, tuples backed\n    by primitive arrays, nullable tuples containing holes,\n    empty tuples, and tuples of enum values.",
   "subjects":["sprouts.Tuple"],
   "statistics":{
-    "runs":"52",
+    "runs":"57",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -1187,6 +1187,131 @@
         {"kind":"then","text":"The original tuple is completely unaffected.","code":["tuple.toList() == snapshot"]},
 
         {"kind":"and","text":"The mapped results are independent from each other.","code":["upper.toList()    == [\"ALPHA\", \"BETA\", \"GAMMA\", \"DELTA\"]","lengths.toList()  == [5, 4, 5, 5]","reversed.toList() == [\"ahpla\", \"ateb\", \"ammag\", \"atled\"]"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The map operation can map to the exact same tuple instance if the mapper is effectively an identity mapper. [0]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            An important optimization in the world of immutable data structures\n            is to reuse existing parts if they do not need to change.\n            This is also true when mapping a `Tuple`.\n            So if we map to the exact same items, then the same tuple\n            instance should be produced by the operation.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create a tuple of the specified type:","code":["var tuple = Tuple.of(type, data)"]},
+
+        {"kind":"when","text":"We map using the identity mapper...","code":["var mapped = tuple.map(Function.identity())"]},
+
+        {"kind":"then","text":"The new object is the exact same instance as before!","code":["mapped === tuple"]},
+
+        {"kind":"when","text":"We create a function which maps everything to the same thing, except for one:","code":["var counter = 0","var whenToSabotage = (data.size() * 2 / 3) as int","var function = (Function<Object,Object>) { o ->","    if ( whenToSabotage == counter ) {","        counter++","        return data.find( it -> it != o ) // find anything different!","    }","    counter++","    return o // For most cases we map to the same thing.","}"]},
+
+        {"kind":"and","text":"Then we map to a new tuple:","code":["mapped = tuple.map(function)"]},
+
+        {"kind":"then","text":"The tuples are different:","code":["mapped !== tuple","mapped != tuple"]},
+
+        {"kind":"where","text":"We use the following type and data:","code":{"type":["Integer","Long","Character","String","Byte"],"data":["(-123..456).toList()","(-9123..8456).collect({it as long}).toList()","(-789..101).collect( it -> it as char ).toList()","(-121..141).collect( it -> it as char ).collect( it -> String.valueOf(it) ).toList()","(-1234..5678).collect({it as byte}).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The map operation can map to the exact same tuple instance if the mapper is effectively an identity mapper. [1]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            An important optimization in the world of immutable data structures\n            is to reuse existing parts if they do not need to change.\n            This is also true when mapping a `Tuple`.\n            So if we map to the exact same items, then the same tuple\n            instance should be produced by the operation.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create a tuple of the specified type:","code":["var tuple = Tuple.of(type, data)"]},
+
+        {"kind":"when","text":"We map using the identity mapper...","code":["var mapped = tuple.map(Function.identity())"]},
+
+        {"kind":"then","text":"The new object is the exact same instance as before!","code":["mapped === tuple"]},
+
+        {"kind":"when","text":"We create a function which maps everything to the same thing, except for one:","code":["var counter = 0","var whenToSabotage = (data.size() * 2 / 3) as int","var function = (Function<Object,Object>) { o ->","    if ( whenToSabotage == counter ) {","        counter++","        return data.find( it -> it != o ) // find anything different!","    }","    counter++","    return o // For most cases we map to the same thing.","}"]},
+
+        {"kind":"and","text":"Then we map to a new tuple:","code":["mapped = tuple.map(function)"]},
+
+        {"kind":"then","text":"The tuples are different:","code":["mapped !== tuple","mapped != tuple"]},
+
+        {"kind":"where","text":"We use the following type and data:","code":{"type":["Integer","Long","Character","String","Byte"],"data":["(-123..456).toList()","(-9123..8456).collect({it as long}).toList()","(-789..101).collect( it -> it as char ).toList()","(-121..141).collect( it -> it as char ).collect( it -> String.valueOf(it) ).toList()","(-1234..5678).collect({it as byte}).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The map operation can map to the exact same tuple instance if the mapper is effectively an identity mapper. [2]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            An important optimization in the world of immutable data structures\n            is to reuse existing parts if they do not need to change.\n            This is also true when mapping a `Tuple`.\n            So if we map to the exact same items, then the same tuple\n            instance should be produced by the operation.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create a tuple of the specified type:","code":["var tuple = Tuple.of(type, data)"]},
+
+        {"kind":"when","text":"We map using the identity mapper...","code":["var mapped = tuple.map(Function.identity())"]},
+
+        {"kind":"then","text":"The new object is the exact same instance as before!","code":["mapped === tuple"]},
+
+        {"kind":"when","text":"We create a function which maps everything to the same thing, except for one:","code":["var counter = 0","var whenToSabotage = (data.size() * 2 / 3) as int","var function = (Function<Object,Object>) { o ->","    if ( whenToSabotage == counter ) {","        counter++","        return data.find( it -> it != o ) // find anything different!","    }","    counter++","    return o // For most cases we map to the same thing.","}"]},
+
+        {"kind":"and","text":"Then we map to a new tuple:","code":["mapped = tuple.map(function)"]},
+
+        {"kind":"then","text":"The tuples are different:","code":["mapped !== tuple","mapped != tuple"]},
+
+        {"kind":"where","text":"We use the following type and data:","code":{"type":["Integer","Long","Character","String","Byte"],"data":["(-123..456).toList()","(-9123..8456).collect({it as long}).toList()","(-789..101).collect( it -> it as char ).toList()","(-121..141).collect( it -> it as char ).collect( it -> String.valueOf(it) ).toList()","(-1234..5678).collect({it as byte}).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The map operation can map to the exact same tuple instance if the mapper is effectively an identity mapper. [3]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            An important optimization in the world of immutable data structures\n            is to reuse existing parts if they do not need to change.\n            This is also true when mapping a `Tuple`.\n            So if we map to the exact same items, then the same tuple\n            instance should be produced by the operation.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create a tuple of the specified type:","code":["var tuple = Tuple.of(type, data)"]},
+
+        {"kind":"when","text":"We map using the identity mapper...","code":["var mapped = tuple.map(Function.identity())"]},
+
+        {"kind":"then","text":"The new object is the exact same instance as before!","code":["mapped === tuple"]},
+
+        {"kind":"when","text":"We create a function which maps everything to the same thing, except for one:","code":["var counter = 0","var whenToSabotage = (data.size() * 2 / 3) as int","var function = (Function<Object,Object>) { o ->","    if ( whenToSabotage == counter ) {","        counter++","        return data.find( it -> it != o ) // find anything different!","    }","    counter++","    return o // For most cases we map to the same thing.","}"]},
+
+        {"kind":"and","text":"Then we map to a new tuple:","code":["mapped = tuple.map(function)"]},
+
+        {"kind":"then","text":"The tuples are different:","code":["mapped !== tuple","mapped != tuple"]},
+
+        {"kind":"where","text":"We use the following type and data:","code":{"type":["Integer","Long","Character","String","Byte"],"data":["(-123..456).toList()","(-9123..8456).collect({it as long}).toList()","(-789..101).collect( it -> it as char ).toList()","(-121..141).collect( it -> it as char ).collect( it -> String.valueOf(it) ).toList()","(-1234..5678).collect({it as byte}).toList()"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The map operation can map to the exact same tuple instance if the mapper is effectively an identity mapper. [4]",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            An important optimization in the world of immutable data structures\n            is to reuse existing parts if they do not need to change.\n            This is also true when mapping a `Tuple`.\n            So if we map to the exact same items, then the same tuple\n            instance should be produced by the operation.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create a tuple of the specified type:","code":["var tuple = Tuple.of(type, data)"]},
+
+        {"kind":"when","text":"We map using the identity mapper...","code":["var mapped = tuple.map(Function.identity())"]},
+
+        {"kind":"then","text":"The new object is the exact same instance as before!","code":["mapped === tuple"]},
+
+        {"kind":"when","text":"We create a function which maps everything to the same thing, except for one:","code":["var counter = 0","var whenToSabotage = (data.size() * 2 / 3) as int","var function = (Function<Object,Object>) { o ->","    if ( whenToSabotage == counter ) {","        counter++","        return data.find( it -> it != o ) // find anything different!","    }","    counter++","    return o // For most cases we map to the same thing.","}"]},
+
+        {"kind":"and","text":"Then we map to a new tuple:","code":["mapped = tuple.map(function)"]},
+
+        {"kind":"then","text":"The tuples are different:","code":["mapped !== tuple","mapped != tuple"]},
+
+        {"kind":"where","text":"We use the following type and data:","code":{"type":["Integer","Long","Character","String","Byte"],"data":["(-123..456).toList()","(-9123..8456).collect({it as long}).toList()","(-789..101).collect( it -> it as char ).toList()","(-121..141).collect( it -> it as char ).collect( it -> String.valueOf(it) ).toList()","(-1234..5678).collect({it as byte}).toList()"]}}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }

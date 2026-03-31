@@ -288,31 +288,65 @@ final class ArrayUtil {
 <span class="nc" id="L288">        return java.lang.reflect.Array.getLength(array);</span>
     }
 
+    static boolean _isCompatible( Object array, Class&lt;?&gt; targetType, boolean targetTypeIsNullable ) {
+<span class="fc bfc" id="L292" title="All 2 branches covered.">        if ( array instanceof int[] )</span>
+<span class="pc bpc" id="L293" title="2 of 6 branches missed.">            return !targetTypeIsNullable &amp;&amp; (targetType == Integer.class || targetType == int.class);</span>
+<span class="fc bfc" id="L294" title="All 2 branches covered.">        if ( array instanceof double[] )</span>
+<span class="pc bpc" id="L295" title="2 of 6 branches missed.">            return !targetTypeIsNullable &amp;&amp; (targetType == Double.class || targetType == double.class);</span>
+<span class="fc bfc" id="L296" title="All 2 branches covered.">        if ( array instanceof float[] )</span>
+<span class="pc bpc" id="L297" title="2 of 6 branches missed.">            return !targetTypeIsNullable &amp;&amp; (targetType == Float.class || targetType == float.class);</span>
+<span class="fc bfc" id="L298" title="All 2 branches covered.">        if ( array instanceof byte[] )</span>
+<span class="pc bpc" id="L299" title="2 of 6 branches missed.">            return !targetTypeIsNullable &amp;&amp; (targetType == Byte.class || targetType == byte.class);</span>
+<span class="fc bfc" id="L300" title="All 2 branches covered.">        if ( array instanceof long[] )</span>
+<span class="pc bpc" id="L301" title="2 of 6 branches missed.">            return !targetTypeIsNullable &amp;&amp; (targetType == Long.class || targetType == long.class);</span>
+<span class="pc bpc" id="L302" title="1 of 2 branches missed.">        if ( array instanceof short[] )</span>
+<span class="nc bnc" id="L303" title="All 6 branches missed.">            return !targetTypeIsNullable &amp;&amp; (targetType == Short.class || targetType == short.class);</span>
+<span class="fc bfc" id="L304" title="All 2 branches covered.">        if ( array instanceof char[] )</span>
+<span class="pc bpc" id="L305" title="4 of 6 branches missed.">            return !targetTypeIsNullable &amp;&amp; (targetType == Character.class || targetType == char.class);</span>
+<span class="fc bfc" id="L306" title="All 2 branches covered.">        if ( array instanceof boolean[] )</span>
+<span class="pc bpc" id="L307" title="2 of 6 branches missed.">            return !targetTypeIsNullable &amp;&amp; (targetType == Boolean.class || targetType == boolean.class);</span>
+<span class="pc bpc" id="L308" title="1 of 2 branches missed.">        if ( array instanceof Object[] ) {</span>
+<span class="fc bfc" id="L309" title="All 2 branches covered.">            if ( !targetType.equals( ((Object[])array).getClass().getComponentType() ) )</span>
+<span class="fc" id="L310">                return false;</span>
+<span class="pc bpc" id="L311" title="16 of 34 branches missed.">            return targetTypeIsNullable || (</span>
+                   !( targetType == Integer.class   || targetType == int.class     ) &amp;&amp;
+                   !( targetType == Double.class    || targetType == double.class  ) &amp;&amp;
+                   !( targetType == Float.class     || targetType == float.class   ) &amp;&amp;
+                   !( targetType == Byte.class      || targetType == byte.class    ) &amp;&amp;
+                   !( targetType == Long.class      || targetType == long.class    ) &amp;&amp;
+                   !( targetType == Short.class     || targetType == short.class   ) &amp;&amp;
+                   !( targetType == Character.class || targetType == char.class    ) &amp;&amp;
+                   !( targetType == Boolean.class   || targetType == boolean.class )
+            );
+        }
+<span class="nc" id="L322">        return true;</span>
+    }
+
     static Object _clone( Object array, Class&lt;?&gt; type, boolean nullable ) {
-<span class="fc" id="L292">        int length = _length(array);</span>
-<span class="fc" id="L293">        Object clone = _createArray(type, nullable, length);</span>
-<span class="fc" id="L294">        System.arraycopy(array, 0, clone, 0, length);</span>
-<span class="fc" id="L295">        return clone;</span>
+<span class="fc" id="L326">        int length = _length(array);</span>
+<span class="fc" id="L327">        Object clone = _createArray(type, nullable, length);</span>
+<span class="fc" id="L328">        System.arraycopy(array, 0, clone, 0, length);</span>
+<span class="fc" id="L329">        return clone;</span>
     }
 
     static &lt;T&gt; void _each( Object array, Class&lt;T&gt; type, java.util.function.Consumer&lt;T&gt; consumer ) {
-<span class="fc bfc" id="L299" title="All 2 branches covered.">        for ( int i = 0; i &lt; _length(array); i++ ) {</span>
-<span class="fc" id="L300">            consumer.accept(_getAt(i, array, type));</span>
+<span class="fc bfc" id="L333" title="All 2 branches covered.">        for ( int i = 0; i &lt; _length(array); i++ ) {</span>
+<span class="fc" id="L334">            consumer.accept(_getAt(i, array, type));</span>
         }
-<span class="fc" id="L302">    }</span>
+<span class="fc" id="L336">    }</span>
 
     static &lt;T&gt; void _each( Object array, ArrayItemAccess&lt;T, Object&gt; access, java.util.function.Consumer&lt;T&gt; consumer ) {
-<span class="fc bfc" id="L305" title="All 2 branches covered.">        for ( int i = 0; i &lt; _length(array); i++ ) {</span>
-<span class="fc" id="L306">            consumer.accept(access.get(i, array));</span>
+<span class="fc bfc" id="L339" title="All 2 branches covered.">        for ( int i = 0; i &lt; _length(array); i++ ) {</span>
+<span class="fc" id="L340">            consumer.accept(access.get(i, array));</span>
         }
-<span class="fc" id="L308">    }</span>
+<span class="fc" id="L342">    }</span>
 
     static boolean _isAllNull( Object[] array ) {
-<span class="pc bpc" id="L311" title="1 of 2 branches missed.">        for ( Object item : array ) {</span>
-<span class="fc bfc" id="L312" title="All 2 branches covered.">            if ( item != null )</span>
-<span class="fc" id="L313">                return false;</span>
+<span class="pc bpc" id="L345" title="1 of 2 branches missed.">        for ( Object item : array ) {</span>
+<span class="fc bfc" id="L346" title="All 2 branches covered.">            if ( item != null )</span>
+<span class="fc" id="L347">                return false;</span>
         }
-<span class="nc" id="L315">        return true;</span>
+<span class="nc" id="L349">        return true;</span>
     }
 
     /**
@@ -330,28 +364,28 @@ final class ArrayUtil {
             Comparator&lt;K&gt; keyComparator,
             K key
     ) {
-<span class="fc" id="L333">        final int size = _length(keysArray);</span>
-<span class="fc bfc" id="L334" title="All 2 branches covered.">        if (size == 0) {</span>
-<span class="fc" id="L335">            return -1; // Empty array, key is smaller than all keys</span>
+<span class="fc" id="L367">        final int size = _length(keysArray);</span>
+<span class="fc bfc" id="L368" title="All 2 branches covered.">        if (size == 0) {</span>
+<span class="fc" id="L369">            return -1; // Empty array, key is smaller than all keys</span>
         }
-<span class="fc" id="L337">        int min = 0;</span>
-<span class="fc" id="L338">        int max = size;</span>
-<span class="fc bfc" id="L339" title="All 2 branches covered.">        while (min &lt; max ) {</span>
-<span class="fc" id="L340">            int mid = (min + max) / 2;</span>
-<span class="fc" id="L341">            int comparison = _compareAt(mid, keysArray, keyType, keyComparator, key);</span>
-<span class="fc bfc" id="L342" title="All 2 branches covered.">            if (comparison &lt; 0) {</span>
-<span class="fc" id="L343">                max = mid; // Key is smaller than the middle key</span>
-<span class="fc bfc" id="L344" title="All 2 branches covered.">            } else if (comparison &gt; 0) {</span>
-<span class="fc" id="L345">                min = mid + 1; // Key is greater than the middle key</span>
+<span class="fc" id="L371">        int min = 0;</span>
+<span class="fc" id="L372">        int max = size;</span>
+<span class="fc bfc" id="L373" title="All 2 branches covered.">        while (min &lt; max ) {</span>
+<span class="fc" id="L374">            int mid = (min + max) / 2;</span>
+<span class="fc" id="L375">            int comparison = _compareAt(mid, keysArray, keyType, keyComparator, key);</span>
+<span class="fc bfc" id="L376" title="All 2 branches covered.">            if (comparison &lt; 0) {</span>
+<span class="fc" id="L377">                max = mid; // Key is smaller than the middle key</span>
+<span class="fc bfc" id="L378" title="All 2 branches covered.">            } else if (comparison &gt; 0) {</span>
+<span class="fc" id="L379">                min = mid + 1; // Key is greater than the middle key</span>
             } else {
-<span class="fc" id="L347">                return mid; // Key found at index mid</span>
+<span class="fc" id="L381">                return mid; // Key found at index mid</span>
             }
-<span class="fc" id="L349">        }</span>
+<span class="fc" id="L383">        }</span>
         // Key not found, return the index where it would be inserted
-<span class="fc bfc" id="L351" title="All 2 branches covered.">        if (min == 0) {</span>
-<span class="fc" id="L352">            return -1; // Key is smaller than all keys in the array</span>
+<span class="fc bfc" id="L385" title="All 2 branches covered.">        if (min == 0) {</span>
+<span class="fc" id="L386">            return -1; // Key is smaller than all keys in the array</span>
         }
-<span class="fc" id="L354">        return min; // Key would be inserted at index min</span>
+<span class="fc" id="L388">        return min; // Key would be inserted at index min</span>
     }
 
     static &lt;E&gt; int _compareAt(
@@ -361,8 +395,8 @@ final class ArrayUtil {
             Comparator&lt;E&gt; comparator,
             E element
     ) {
-<span class="fc" id="L364">        E existingValue = _getAt(index, elementsArray, type);</span>
-<span class="fc" id="L365">        return comparator.compare(element, existingValue);</span>
+<span class="fc" id="L398">        E existingValue = _getAt(index, elementsArray, type);</span>
+<span class="fc" id="L399">        return comparator.compare(element, existingValue);</span>
     }
 
     /**
@@ -380,28 +414,28 @@ final class ArrayUtil {
         final Comparator&lt;K&gt; keyComparator,
         final K key
     ) {
-<span class="fc" id="L383">        final int size = _length(keysArray);</span>
-<span class="fc bfc" id="L384" title="All 2 branches covered.">        if (size == 0) {</span>
-<span class="fc" id="L385">            return -1; // Empty array, key is smaller than all keys</span>
+<span class="fc" id="L417">        final int size = _length(keysArray);</span>
+<span class="fc bfc" id="L418" title="All 2 branches covered.">        if (size == 0) {</span>
+<span class="fc" id="L419">            return -1; // Empty array, key is smaller than all keys</span>
         }
-<span class="fc" id="L387">        int min = 0;</span>
-<span class="fc" id="L388">        int max = size;</span>
-<span class="fc bfc" id="L389" title="All 2 branches covered.">        while (min &lt; max ) {</span>
-<span class="fc" id="L390">            int mid = (min + max) / 2;</span>
-<span class="fc" id="L391">            int comparison = _compareAt(mid, keysArray, keyGetter, keyComparator, key);</span>
-<span class="fc bfc" id="L392" title="All 2 branches covered.">            if (comparison &lt; 0) {</span>
-<span class="fc" id="L393">                max = mid; // Key is smaller than the middle key</span>
-<span class="fc bfc" id="L394" title="All 2 branches covered.">            } else if (comparison &gt; 0) {</span>
-<span class="fc" id="L395">                min = mid + 1; // Key is greater than the middle key</span>
+<span class="fc" id="L421">        int min = 0;</span>
+<span class="fc" id="L422">        int max = size;</span>
+<span class="fc bfc" id="L423" title="All 2 branches covered.">        while (min &lt; max ) {</span>
+<span class="fc" id="L424">            int mid = (min + max) / 2;</span>
+<span class="fc" id="L425">            int comparison = _compareAt(mid, keysArray, keyGetter, keyComparator, key);</span>
+<span class="fc bfc" id="L426" title="All 2 branches covered.">            if (comparison &lt; 0) {</span>
+<span class="fc" id="L427">                max = mid; // Key is smaller than the middle key</span>
+<span class="fc bfc" id="L428" title="All 2 branches covered.">            } else if (comparison &gt; 0) {</span>
+<span class="fc" id="L429">                min = mid + 1; // Key is greater than the middle key</span>
             } else {
-<span class="fc" id="L397">                return mid; // Key found at index mid</span>
+<span class="fc" id="L431">                return mid; // Key found at index mid</span>
             }
-<span class="fc" id="L399">        }</span>
+<span class="fc" id="L433">        }</span>
         // Key not found, return the index where it would be inserted
-<span class="fc bfc" id="L401" title="All 2 branches covered.">        if (min == 0) {</span>
-<span class="fc" id="L402">            return -1; // Key is smaller than all keys in the array</span>
+<span class="fc bfc" id="L435" title="All 2 branches covered.">        if (min == 0) {</span>
+<span class="fc" id="L436">            return -1; // Key is smaller than all keys in the array</span>
         }
-<span class="fc" id="L404">        return min; // Key would be inserted at index min</span>
+<span class="fc" id="L438">        return min; // Key would be inserted at index min</span>
     }
 
     static &lt;E&gt; int _compareAt(
@@ -411,8 +445,8 @@ final class ArrayUtil {
         final Comparator&lt;E&gt; comparator,
         final E element
     ) {
-<span class="fc" id="L414">        E existingValue = getter.get(index, elementsArray);</span>
-<span class="fc" id="L415">        return comparator.compare(element, existingValue);</span>
+<span class="fc" id="L448">        E existingValue = getter.get(index, elementsArray);</span>
+<span class="fc" id="L449">        return comparator.compare(element, existingValue);</span>
     }
 
 }
