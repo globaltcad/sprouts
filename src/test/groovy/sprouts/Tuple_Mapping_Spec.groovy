@@ -8,6 +8,7 @@ import sprouts.impl.SequenceDiffOwner
 
 import java.time.DayOfWeek
 import java.time.Month
+import java.util.function.Function
 
 @Title("Tuple - Mapping Operations")
 @Narrative('''
@@ -742,5 +743,47 @@ class Tuple_Mapping_Spec extends Specification
             upper.toList()    == ["ALPHA", "BETA", "GAMMA", "DELTA"]
             lengths.toList()  == [5, 4, 5, 5]
             reversed.toList() == ["ahpla", "ateb", "ammag", "atled"]
+    }
+
+    def 'The map operation can map to the exact same tuple instance if the mapper is effectively an identity mapper.'(
+        Class<Object> type, List<Object> data
+    ) {
+        reportInfo """
+            An important optimization in the world of immutable data structures
+            is to reuse existing parts if they do not need to change.
+            This is also true when mapping a `Tuple`.
+            So if we map to the exact same items, then the same tuple
+            instance should be produced by the operation.
+        """
+        given : 'We create a tuple of the specified type:'
+            var tuple = Tuple.of(type, data)
+
+        when : 'We map using the identity mapper...'
+            var mapped = tuple.map(Function.identity())
+        then : 'The new object is the exact same instance as before!'
+            mapped === tuple
+
+        when : 'We create a function which maps everything to the same thing, except for one:'
+            var counter = 0
+            var whenToSabotage = (data.size() * 2 / 3) as int
+            var function = (Function<Object,Object>) { o ->
+                if ( whenToSabotage == counter ) {
+                    counter++
+                    return data.find( it -> it != o ) // find anything different!
+                }
+                counter++
+                return o // For most cases we map to the same thing.
+            }
+        and : 'Then we map to a new tuple:'
+            mapped = tuple.map(function)
+        then : 'The tuples are different:'
+            mapped !== tuple
+            mapped != tuple
+
+        where : 'We use the following type and data:'
+            type      |  data
+            Integer   | (-123..456).toList()
+            //Character | (-789..101).collect( it -> it as char ).toList()
+            //String    | (-121..141).collect( it -> it as char ).collect( it -> String.valueOf(it) ).toList()
     }
 }
