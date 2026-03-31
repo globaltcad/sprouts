@@ -306,7 +306,7 @@ final class ArrayUtil {
         if ( array instanceof boolean[] )
             return !targetTypeIsNullable && (targetType == Boolean.class || targetType == boolean.class);
         if ( array instanceof Object[] ) {
-            if ( !targetType.equals( ((Object[])array).getClass().componentType() ) )
+            if ( !targetType.equals( ((Object[])array).getClass().getComponentType() ) )
                 return false;
             return targetTypeIsNullable || (
                    !( targetType == Integer.class   || targetType == int.class     ) &&
