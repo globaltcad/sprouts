@@ -313,7 +313,7 @@ final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
             for (int i = 0; i < len; i++) {
                 T item = sourceAccess.get(i, _data);
                 U mapped = mapper.apply(item);
-                if ( item != mapped ) {
+                if ( item != mapped || newData != null ) {
                     if ( newData == null )
                         newData = _clone(_data, targetType, allowsNull);
                     _setAt(i, mapped, newData);
@@ -1036,6 +1036,8 @@ final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
         if ( _size == 0 )
             return new TupleTree<>(0, _allowsNull, type, null);
         Node newRoot = _root.mapTo(type, _allowsNull, _itemGetter, mapper);
+        if ( newRoot == _root )
+            return (TupleTree<U>) this;
         return new TupleTree<>(_size, _allowsNull, type, newRoot);
     }
 
