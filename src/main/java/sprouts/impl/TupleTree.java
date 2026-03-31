@@ -309,7 +309,7 @@ final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
         @SuppressWarnings("unchecked")
         public <T, U> Node mapTo(Class<U> targetType, boolean allowsNull, ArrayItemAccess<T, Object> sourceAccess, Function<T, U> mapper) {
             int len = _length(_data);
-            Object newData = null;
+            Object newData = _isCompatible(_data, targetType, allowsNull) ? null : _createArray(targetType, allowsNull, len);
             for (int i = 0; i < len; i++) {
                 T item = sourceAccess.get(i, _data);
                 U mapped = mapper.apply(item);
