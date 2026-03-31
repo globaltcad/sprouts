@@ -783,7 +783,7 @@ class Tuple_Mapping_Spec extends Specification
         where : 'We use the following type and data:'
             type      |  data
             Integer   | (-123..456).toList()
-            //Character | (-789..101).collect( it -> it as char ).toList()
-            //String    | (-121..141).collect( it -> it as char ).collect( it -> String.valueOf(it) ).toList()
+            Character | (-789..101).collect( it -> it as char ).toList()
+            String    | (-121..141).collect( it -> it as char ).collect( it -> String.valueOf(it) ).toList()
     }
 }
