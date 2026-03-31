@@ -1020,7 +1020,7 @@ final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
         if ( _size == 0 )
             return this;
         Node newRoot = _root.mapTo(_type, _allowsNull, _itemGetter, mapper);
-        if ( newRoot == _root )
+        if ( Util.refEquals(newRoot, _root) )
             return this;
         return new TupleTree<>(_size, _allowsNull, _type, newRoot);
     }
@@ -1036,7 +1036,7 @@ final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
         if ( _size == 0 )
             return new TupleTree<>(0, _allowsNull, type, null);
         Node newRoot = _root.mapTo(type, _allowsNull, _itemGetter, mapper);
-        if ( newRoot == _root )
+        if ( Util.refEquals(newRoot, _root) )
             return (TupleTree<U>) this;
         return new TupleTree<>(_size, _allowsNull, type, newRoot);
     }
