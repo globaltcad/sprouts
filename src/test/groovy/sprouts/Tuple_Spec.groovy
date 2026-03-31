@@ -339,9 +339,10 @@ class Tuple_Spec extends Specification
             Tuple.of(1, 2, 3)       | Tuple::reversed                                       || SequenceChange.REVERSE | -1 | 3
             Tuple.of(3, 2, 1, 0)    | Tuple::removeFirst                                    || SequenceChange.REMOVE  |  0 | 1
             Tuple.of(3, 2, 1, 0)    | Tuple::removeLast                                     || SequenceChange.REMOVE  |  3 | 1
-            Tuple.of(1, 2, 3)       | { tuple -> tuple.map { it } }                         || SequenceChange.SET     |  0 | 3
+            Tuple.of(1, 2, 3)       | { tuple -> tuple.map { it } }                         || SequenceChange.NONE    | -1 | 0
             Tuple.of(1, 2, 3)       | { tuple -> tuple.map { it * 2 } }                     || SequenceChange.SET     |  0 | 3
             Tuple.of(3, 6)          | { tuple -> tuple.mapTo(String,{it+" cents"}) }        || SequenceChange.SET     |  0 | 2
+            Tuple.of("3", "6", "7") | { tuple -> tuple.mapTo(Byte,{Byte.valueOf(it)}) }     || SequenceChange.SET     |  0 | 3
             Tuple.of(1, 2, 3)       | { tuple -> tuple.retainIf { it > 1 } }                || SequenceChange.RETAIN  |  1 | 2
             Tuple.of(Integer, 0..6) | { tuple -> tuple.retainIf {it in 2..3||it == 5} }     || SequenceChange.RETAIN  | -1 | 3
             Tuple.of(Integer, 0..7) | { tuple -> tuple.retainIf {it in [2, 5]} }            || SequenceChange.RETAIN  | -1 | 2

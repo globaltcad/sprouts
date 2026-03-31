@@ -288,6 +288,40 @@ final class ArrayUtil {
         return java.lang.reflect.Array.getLength(array);
     }
 
+    static boolean _isCompatible( Object array, Class<?> targetType, boolean targetTypeIsNullable ) {
+        if ( array instanceof int[] )
+            return !targetTypeIsNullable && (targetType == Integer.class || targetType == int.class);
+        if ( array instanceof double[] )
+            return !targetTypeIsNullable && (targetType == Double.class || targetType == double.class);
+        if ( array instanceof float[] )
+            return !targetTypeIsNullable && (targetType == Float.class || targetType == float.class);
+        if ( array instanceof byte[] )
+            return !targetTypeIsNullable && (targetType == Byte.class || targetType == byte.class);
+        if ( array instanceof long[] )
+            return !targetTypeIsNullable && (targetType == Long.class || targetType == long.class);
+        if ( array instanceof short[] )
+            return !targetTypeIsNullable && (targetType == Short.class || targetType == short.class);
+        if ( array instanceof char[] )
+            return !targetTypeIsNullable && (targetType == Character.class || targetType == char.class);
+        if ( array instanceof boolean[] )
+            return !targetTypeIsNullable && (targetType == Boolean.class || targetType == boolean.class);
+        if ( array instanceof Object[] ) {
+            if ( !targetType.equals( ((Object[])array).getClass().getComponentType() ) )
+                return false;
+            return targetTypeIsNullable || (
+                   !( targetType == Integer.class   || targetType == int.class     ) &&
+                   !( targetType == Double.class    || targetType == double.class  ) &&
+                   !( targetType == Float.class     || targetType == float.class   ) &&
+                   !( targetType == Byte.class      || targetType == byte.class    ) &&
+                   !( targetType == Long.class      || targetType == long.class    ) &&
+                   !( targetType == Short.class     || targetType == short.class   ) &&
+                   !( targetType == Character.class || targetType == char.class    ) &&
+                   !( targetType == Boolean.class   || targetType == boolean.class )
+            );
+        }
+        return true;
+    }
+
     static Object _clone( Object array, Class<?> type, boolean nullable ) {
         int length = _length(array);
         Object clone = _createArray(type, nullable, length);

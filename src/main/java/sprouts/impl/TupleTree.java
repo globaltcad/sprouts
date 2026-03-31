@@ -309,12 +309,18 @@ final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
         @SuppressWarnings("unchecked")
         public <T, U> Node mapTo(Class<U> targetType, boolean allowsNull, ArrayItemAccess<T, Object> sourceAccess, Function<T, U> mapper) {
             int len = _length(_data);
-            Object newData = _createArray(targetType, allowsNull, len);
+            Object newData = _isCompatible(_data, targetType, allowsNull) ? null : _createArray(targetType, allowsNull, len);
             for (int i = 0; i < len; i++) {
                 T item = sourceAccess.get(i, _data);
                 U mapped = mapper.apply(item);
-                _setAt(i, mapped, newData);
+                if ( item != mapped || newData != null ) {
+                    if ( newData == null )
+                        newData = _clone(_data, targetType, allowsNull);
+                    _setAt(i, mapped, newData);
+                }
             }
+            if ( newData == null )
+                return this;
             return new LeafNode(newData);
         }
     }
@@ -572,11 +578,19 @@ final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
 
         @Override
         public <T, U> Node mapTo(Class<U> targetType, boolean allowsNull, ArrayItemAccess<T, Object> sourceAccess, Function<T, U> mapper) {
-            Node[] newChildren = new Node[_children.length];
+            Node[] newChildren = null;
             for (int i = 0; i < _children.length; i++) {
-                if (_children[i] != null)
-                    newChildren[i] = _children[i].mapTo(targetType, allowsNull, sourceAccess, mapper);
+                if (_children[i] != null) {
+                    Node newChild = _children[i].mapTo(targetType, allowsNull, sourceAccess, mapper);
+                    if ( newChild != _children[i] ) {
+                        if ( newChildren == null )
+                            newChildren = _children.clone();
+                        newChildren[i] = newChild;
+                    }
+                }
             }
+            if ( newChildren == null )
+                return this;
             return new BranchNode(newChildren);
         }
     }
@@ -1006,6 +1020,8 @@ final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
         if ( _size == 0 )
             return this;
         Node newRoot = _root.mapTo(_type, _allowsNull, _itemGetter, mapper);
+        if ( Util.refEquals(newRoot, _root) )
+            return this;
         return new TupleTree<>(_size, _allowsNull, _type, newRoot);
     }
 
@@ -1020,6 +1036,8 @@ final class TupleTree<T extends @Nullable Object> implements Tuple<T> {
         if ( _size == 0 )
             return new TupleTree<>(0, _allowsNull, type, null);
         Node newRoot = _root.mapTo(type, _allowsNull, _itemGetter, mapper);
+        if ( Util.refEquals(newRoot, _root) )
+            return (TupleTree<U>) this;
         return new TupleTree<>(_size, _allowsNull, type, newRoot);
     }
 
