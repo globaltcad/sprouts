@@ -357,7 +357,7 @@ final class PropertyDualLens<A extends @Nullable Object, B extends @Nullable Obj
         if ( type.equals("Object") ) type = "?";
         if ( type.equals("String") && this.isPresent() ) value = "\"" + value + "\"";
         if ( _nullable ) type = type + "?";
-        String name = "Lens";
+        String name = "DualLens";
         String content = ( id.equals("?") ? value : id + "=" + value );
         return name + "<" + type + ">" + "[" + content + "]";
     }
