@@ -327,6 +327,86 @@ public final class Sprouts implements SproutsFactory
         return PropertyLens.ofNullable(type, source, lens);
     }
 
+    @Override
+    public <A, B, C> Var<C> projLensOf(
+            Class<C> type,
+            Var<A> first,
+            Var<B> second,
+            BiFunction<A, B, C> getter,
+            Function<C, Pair<A, B>> setter
+    ) {
+        Objects.requireNonNull(type, "Type must not be null");
+        Objects.requireNonNull(first, "First source property must not be null");
+        Objects.requireNonNull(second, "Second source property must not be null");
+        Objects.requireNonNull(getter, "Getter function must not be null");
+        Objects.requireNonNull(setter, "Setter function must not be null");
+        return PropertyDualLens.ofProjection(type, first, second, getter, setter);
+    }
+
+    @Override
+    public <A, B, C> Var<C> projLensOf(
+            Var<A> first,
+            Var<B> second,
+            BiFunction<A, B, C> getter,
+            Function<C, Pair<A, B>> setter
+    ) {
+        Objects.requireNonNull(first, "First source property must not be null");
+        Objects.requireNonNull(second, "Second source property must not be null");
+        Objects.requireNonNull(getter, "Getter function must not be null");
+        Objects.requireNonNull(setter, "Setter function must not be null");
+        return PropertyDualLens.ofProjection(null, first, second, getter, setter);
+    }
+
+    @Override
+    public <A, B, C, V extends C> Var<C> projLensOf(
+            Class<C> type,
+            V nullObject,
+            Var<A> first,
+            Var<B> second,
+            BiFunction<A, B, C> getter,
+            Function<C, Pair<A, B>> setter
+    ) {
+        Objects.requireNonNull(type, "Type must not be null");
+        Objects.requireNonNull(nullObject, "Null object must not be null");
+        Objects.requireNonNull(first, "First source property must not be null");
+        Objects.requireNonNull(second, "Second source property must not be null");
+        Objects.requireNonNull(getter, "Getter function must not be null");
+        Objects.requireNonNull(setter, "Setter function must not be null");
+        return PropertyDualLens.ofProjectionWithFallback(type, nullObject, first, second, getter, setter);
+    }
+
+    @Override
+    public <A, B, C> Var<C> projLensOf(
+            C nullObject,
+            Var<A> first,
+            Var<B> second,
+            BiFunction<A, B, C> getter,
+            Function<C, Pair<A, B>> setter
+    ) {
+        Objects.requireNonNull(nullObject, "Null object must not be null");
+        Objects.requireNonNull(first, "First source property must not be null");
+        Objects.requireNonNull(second, "Second source property must not be null");
+        Objects.requireNonNull(getter, "Getter function must not be null");
+        Objects.requireNonNull(setter, "Setter function must not be null");
+        return PropertyDualLens.ofProjectionWithFallback(null, nullObject, first, second, getter, setter);
+    }
+
+    @Override
+    public <A, B, C> Var<C> projLensOfNullable(
+            Class<C> type,
+            Var<A> first,
+            Var<B> second,
+            BiFunction<A, B, C> getter,
+            Function<C, Pair<A, B>> setter
+    ) {
+        Objects.requireNonNull(type, "Type must not be null");
+        Objects.requireNonNull(first, "First source property must not be null");
+        Objects.requireNonNull(second, "Second source property must not be null");
+        Objects.requireNonNull(getter, "Getter function must not be null");
+        Objects.requireNonNull(setter, "Setter function must not be null");
+        return PropertyDualLens.ofProjectionNullable(type, first, second, getter, setter);
+    }
+
     @Override public <T> Var<T> varOfNullable(Class<T> type, @Nullable T item ) {
         Objects.requireNonNull(type, "Type must not be null");
         return Property.ofNullable( false, type, item );

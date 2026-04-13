@@ -1444,6 +1444,356 @@ class Property_Projection_Lenses_Spec extends Specification {
             typedProjection.get().class == String
     }
 
+    // ==================== Dual-Source Projection Tests ====================
+
+    def 'A basic dual-source projection combines two source properties into one target property.'() {
+        reportInfo """
+            The simplest form of dual-source projection combines two source properties into a
+            single combined property using a getter BiFunction and a setter Function that
+            returns a Pair of the two source values.
+
+            Changes in either source property are automatically propagated to the combined property
+            via the getter, and changes made to the combined property are propagated back to both
+            source properties via the setter.
+        """
+        given: 'Two source properties for a person\'s first and last name'
+            var firstName = Var.of("Jane")
+            var lastName  = Var.of("Doe")
+
+        and: 'A dual projection that combines them into a full name'
+            var fullName = Var.of(
+                String.class, firstName, lastName,
+                { f, l -> f + " " + l },
+                { name ->
+                    def parts = name.split(" ", 2)
+                    Pair.of(parts[0], parts.length > 1 ? parts[1] : "")
+                }
+            )
+
+        expect: 'The initial combined value is correct'
+            fullName.get() == "Jane Doe"
+
+        when: 'The first source property is updated'
+            firstName.set("John")
+        then: 'The combined property reflects the change'
+            fullName.get() == "John Doe"
+
+        when: 'The second source property is updated'
+            lastName.set("Smith")
+        then: 'The combined property reflects that change too'
+            fullName.get() == "John Smith"
+
+        when: 'The combined property is set directly'
+            fullName.set("Alice Johnson")
+        then: 'Both source properties are updated via the setter'
+            firstName.get() == "Alice"
+            lastName.get() == "Johnson"
+        and: 'The combined property still reads the correct value'
+            fullName.get() == "Alice Johnson"
+    }
+
+    def 'A dual-source projection with explicit type handles polymorphic targets correctly.'() {
+        reportInfo """
+            When the combined type is polymorphic, passing an explicit Class<C> ensures
+            the property can hold any subtype of C, not just the initial computed subtype.
+        """
+        given: 'Two numeric properties'
+            var x = Var.of(3.0d)
+            var y = Var.of(4.0d)
+
+        and: 'A dual projection that computes the hypotenuse'
+            var hypotenuse = Var.of(
+                Double.class, x, y,
+                { a, b -> Math.sqrt(a * a + b * b) },
+                { h -> Pair.of(h / Math.sqrt(2), h / Math.sqrt(2)) }
+            )
+
+        expect: 'Initial Pythagorean triple: 3, 4, 5'
+            hypotenuse.get() == 5.0d
+
+        when: 'x changes'
+            x.set(5.0d)
+        then: 'Hypotenuse updates: 5² + 4² = 41, √41 ≈ 6.403'
+            Math.abs(hypotenuse.get() - Math.sqrt(41)) < 0.0001
+
+        when: 'The hypotenuse is set directly'
+            hypotenuse.set(Math.sqrt(2))
+        then: 'Both sources are split equally via the setter'
+            Math.abs(x.get() - 1.0) < 0.0001
+            Math.abs(y.get() - 1.0) < 0.0001
+    }
+
+    def 'Change listeners on a dual-source lens fire when either source changes.'() {
+        reportInfo """
+            The combined property fires change events when either of its two source
+            properties changes, just like a regular property that is updated directly.
+        """
+        given: 'Two source properties'
+            var width  = Var.of(10)
+            var height = Var.of(5)
+
+        and: 'A combined area property'
+            var area = Var.of(
+                Integer.class, width, height,
+                { w, h -> w * h },
+                { a -> Pair.of(a, 1) }
+            )
+
+        and: 'A trace list to record change events'
+            var trace = []
+            Viewable.cast(area).onChange(From.VIEW_MODEL, { trace << it.currentValue().orElseNull() })
+
+        when: 'The width changes'
+            width.set(20)
+        then: 'The listener fires with the new area'
+            trace == [100]
+
+        when: 'The height changes'
+            height.set(3)
+        then: 'The listener fires again'
+            trace == [100, 60]
+
+        when: 'The area is set directly'
+            area.set(42)
+        then: 'The listener fires for the direct set too'
+            trace == [100, 60, 42]
+    }
+
+    def 'A dual-source projection with a null-object fallback handles null sources safely.'() {
+        reportInfo """
+            When either source property contains null, the combined property uses the
+            provided null-object as a fallback, ensuring it is always non-null.
+        """
+        given: 'Two nullable source properties, initially null'
+            var firstName = Var.ofNullable(String.class, null)
+            var lastName  = Var.ofNullable(String.class, null)
+
+        and: 'A combined property with a null-object fallback'
+            var fullName = Var.of(
+                String.class, "Unknown Person", firstName, lastName,
+                { f, l -> f + " " + l },
+                { name ->
+                    def parts = name.split(" ", 2)
+                    Pair.of(parts[0], parts.length > 1 ? parts[1] : "")
+                }
+            )
+
+        expect: 'The null-object is returned when both sources are null'
+            fullName.get() == "Unknown Person"
+        and: 'The property type is String'
+            fullName.type() == String.class
+
+        when: 'We set both source properties to real values'
+            firstName.set("Jane")
+            lastName.set("Doe")
+        then: 'The combined property reflects the real values'
+            fullName.get() == "Jane Doe"
+
+        when: 'One source is set back to null'
+            firstName.set(null)
+        then: 'The null-object is returned again'
+            fullName.get() == "Unknown Person"
+    }
+
+    def 'A dual-source projection with inferred type from null-object works correctly.'() {
+        reportInfo """
+            The overload that infers the declared type from the null-object's runtime class
+            is a convenience shorthand when no polymorphism is required.
+        """
+        given: 'Two source integer properties'
+            var a = Var.ofNullable(Integer.class, null)
+            var b = Var.ofNullable(Integer.class, null)
+
+        and: 'A combined sum property, with 0 as the null-object'
+            var sum = Var.of(
+                0,   // null-object: type is inferred as Integer
+                a, b,
+                { x, y -> x + y },
+                { s -> Pair.of(s, 0) }
+            )
+
+        expect: 'The null-object (0) is returned when sources are null'
+            sum.get() == 0
+
+        when: 'Both sources are set'
+            a.set(10)
+            b.set(32)
+        then: 'The sum is correct'
+            sum.get() == 42
+
+        when: 'The combined property is set directly'
+            sum.set(100)
+        then: 'The first source gets 100, the second gets 0 (per the setter)'
+            a.get() == 100
+            b.get() == 0
+    }
+
+    def 'A nullable dual-source projection can return null when the conversion fails.'() {
+        reportInfo """
+            The nullable variant allows the combined property to hold null values, which is
+            useful when the combination is partial or may fail for certain inputs.
+        """
+        given: 'Two string properties where one contains an invalid number'
+            var yearStr  = Var.of("2024")
+            var monthStr = Var.of("13")   // invalid month
+
+        and: 'A nullable combined property that parses them into a LocalDate'
+            var date = Var.ofNullable(
+                java.time.LocalDate.class, yearStr, monthStr,
+                { y, m ->
+                    try { java.time.LocalDate.of(Integer.parseInt(y), Integer.parseInt(m), 1) }
+                    catch (Exception e) { null }
+                },
+                { d ->
+                    d == null
+                        ? Pair.of("", "")
+                        : Pair.of(String.valueOf(d.getYear()), String.valueOf(d.getMonthValue()))
+                }
+            )
+
+        expect: 'The combined property is null for invalid month 13'
+            date.orElseNull() == null
+
+        when: 'The month is corrected'
+            monthStr.set("3")
+        then: 'A valid LocalDate is now returned'
+            date.get() == java.time.LocalDate.of(2024, 3, 1)
+
+        when: 'The combined property is set back to null'
+            date.set(null)
+        then: 'The sources receive empty strings (the setter\'s null handling)'
+            yearStr.get()  == ""
+            monthStr.get() == ""
+
+        when: 'We then set both sources to invalid values'
+            yearStr.set("not-a-year")
+        then: 'The combined property becomes null again'
+            date.orElseNull() == null
+    }
+
+    def 'A dual-source projection correctly handles single change events from both sources.'() {
+        reportInfo """
+            When the combined property is set, both source properties are updated via the setter.
+            This should fire exactly one change event on the combined property per set() call,
+            not two (one for each source update).
+        """
+        given: 'Two source properties'
+            var x = Var.of(1)
+            var y = Var.of(2)
+
+        and: 'A combined property'
+            var combined = Var.of(
+                String.class, x, y,
+                { a, b -> a + "+" + b },
+                { s ->
+                    def parts = s.split("\\+", 2)
+                    Pair.of(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]))
+                }
+            )
+
+        and: 'A counter for change events'
+            var eventCount = 0
+            Viewable.cast(combined).onChange(From.VIEW_MODEL, { eventCount++ })
+
+        when: 'The combined property is set'
+            combined.set("10+20")
+        then: 'Both sources are updated'
+            x.get() == 10
+            y.get() == 20
+        and: 'The combined property reflects the new value'
+            combined.get() == "10+20"
+        and: 'Only one change event was fired on the combined property from the direct set'
+            eventCount == 1
+    }
+
+    def 'A dual-source projection fires separate events when sources change individually.'() {
+        reportInfo """
+            When each source property is updated individually, the combined property fires
+            one change event per source update.
+        """
+        given: 'Two source properties'
+            var x = Var.of(1)
+            var y = Var.of(2)
+
+        and: 'A combined property and an event trace'
+            var combined = Var.of(
+                String.class, x, y,
+                { a, b -> a + "," + b },
+                { s ->
+                    def parts = s.split(",", 2)
+                    Pair.of(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]))
+                }
+            )
+            var trace = []
+            Viewable.cast(combined).onChange(From.ALL, { trace << it.currentValue().orElseNull() })
+
+        when: 'Both sources are updated individually'
+            x.set(10)
+            y.set(20)
+
+        then: 'Two change events were fired, one for each source update'
+            trace == ["10,2", "10,20"]
+    }
+
+    def 'A dual-source projection\'s type() is the declared type, not the concrete type of the value.'() {
+        reportInfo """
+            When an explicit Class<C> is provided to the factory method, the type() of the
+            returned property always reports that declared type, even if the actual value's
+            runtime class is a subtype.
+        """
+        given: 'Two source properties'
+            var a = Var.of("hello")
+            var b = Var.of("world")
+
+        and: 'A combined CharSequence property with explicit type'
+            var seq = Var.of(
+                CharSequence.class, a, b,
+                { x, y -> (CharSequence)(x + " " + y) },
+                { s -> Pair.of(s.toString().split(" ", 2)[0], s.toString().split(" ", 2)[1]) }
+            )
+
+        expect: 'The declared type is CharSequence'
+            seq.type() == CharSequence.class
+        and: 'The runtime value is a String (a subtype)'
+            seq.get() instanceof String
+    }
+
+    def 'Updating the combined property does not fire spurious change events on it from parent listeners.'() {
+        reportInfo """
+            When set() is called on the combined property, it sets both source properties.
+            The internal guard (_settingFromSelf flag) must prevent the parent change listeners
+            from re-firing the combined property's own change event, so callers see exactly
+            one event per set() call on the combined property.
+        """
+        given: 'Two source properties'
+            var red   = Var.of(255)
+            var green = Var.of(128)
+
+        and: 'A combined RGB string property'
+            var rgb = Var.of(
+                String.class, red, green,
+                { r, g -> "rgb($r,$g)" },
+                { s ->
+                    def m = s =~ /rgb\((\d+),(\d+)\)/
+                    m.find()
+                    Pair.of(Integer.parseInt(m.group(1)), Integer.parseInt(m.group(2)))
+                }
+            )
+
+        and: 'An event trace'
+            var trace = []
+            Viewable.cast(rgb).onChange(From.ALL, { trace << it.currentValue().orElseNull() })
+
+        when: 'We set the combined property twice'
+            rgb.set("rgb(0,255)")
+            rgb.set("rgb(100,200)")
+
+        then: 'Exactly two change events were fired (not four)'
+            trace.size() == 2
+            trace[0] == "rgb(0,255)"
+            trace[1] == "rgb(100,200)"
+    }
+
     /**
      * This method guarantees that garbage collection is
      * done unlike <code>{@link System#gc()}</code>

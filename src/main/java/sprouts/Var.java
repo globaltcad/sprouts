@@ -120,6 +120,263 @@ public interface Var<T extends @Nullable Object> extends Val<T>
     }
 
     /**
+     * Creates a non-nullable projected dual-source {@link Var} property that bidirectionally maps the
+     * items of two source properties of types {@code A} and {@code B} into a combined item of type
+     * {@code C}, using a getter {@link BiFunction} and a setter {@link Function}.
+     * <p>
+     * This is the two-source generalization of {@link #projectTo(Function, Function)} — just as that
+     * method is the mutable analogue of {@link Val#view(Function)}, this method is the mutable analogue
+     * of {@link Viewable#of(Class, Val, Val, BiFunction)}.
+     * <p>
+     * The {@code getter} combines the current items of {@code first} and {@code second} into a single
+     * value of type {@code C}. Whenever either source property changes, the combined property is
+     * automatically recomputed via the getter.
+     * <p>
+     * The {@code setter} splits a new combined value back into a {@link Pair} of source values.
+     * When the combined property is set, the {@link Pair#first()} value is written to {@code first}
+     * and the {@link Pair#second()} value is written to {@code second}.
+     * <p>
+     * <b>Mathematical Foundation:</b><br>
+     * For predictable round-trip behaviour the functions should form a partial isomorphism:
+     * <ul>
+     *   <li>For non-null {@code a} and {@code b}:
+     *       {@code setter.apply(getter.apply(a, b)).equals(Pair.of(a, b))} should hold.</li>
+     *   <li>For all {@code c}:
+     *       {@code getter.apply(setter.apply(c).first(), setter.apply(c).second()).equals(c)} should hold.</li>
+     * </ul>
+     * <p>
+     * <b>Example — combining a first and last name into a display name:</b>
+     * <pre>{@code
+     *     Var<String> firstName = Var.of("Jane");
+     *     Var<String> lastName  = Var.of("Doe");
+     *
+     *     Var<String> fullName = Var.of(
+     *         String.class, firstName, lastName,
+     *         (f, l) -> f + " " + l,
+     *         name -> {
+     *             String[] parts = name.split(" ", 2);
+     *             return Pair.of(parts[0], parts.length > 1 ? parts[1] : "");
+     *         }
+     *     );
+     *
+     *     // fullName.get() == "Jane Doe"
+     *
+     *     firstName.set("John");
+     *     // fullName.get() == "John Doe"
+     *
+     *     fullName.set("Alice Smith");
+     *     // firstName.get() == "Alice", lastName.get() == "Smith"
+     * }</pre>
+     *
+     * @param type   The class object representing the declared type {@code C}.
+     *               Ensures the combined property accepts all subtypes of {@code C}.
+     * @param first  The first source {@link Var} property.
+     * @param second The second source {@link Var} property.
+     * @param getter A {@link BiFunction} that combines the items of {@code first} and {@code second}
+     *               into a single non-null value of type {@code C}.
+     *               Must not return {@code null} on the initial call.
+     * @param setter A {@link Function} that splits a {@code C} value back into a {@link Pair}
+     *               of source values. {@link Pair#first()} is written to {@code first} and
+     *               {@link Pair#second()} is written to {@code second}.
+     * @param <A>    The item type of the first source property.
+     * @param <B>    The item type of the second source property.
+     * @param <C>    The non-nullable combined item type of the returned property.
+     * @return A new non-nullable {@link Var} property that maintains a bidirectional dual-source projection.
+     * @throws NullPointerException if any argument is {@code null}, or if the getter returns {@code null}
+     *         on the initial call.
+     */
+    static <A extends @Nullable Object, B extends @Nullable Object, C extends @NonNull Object> Var<C> of(
+            Class<C>                    type,
+            Var<A>                      first,
+            Var<B>                      second,
+            BiFunction<A, B, C>         getter,
+            Function<C, Pair<A, B>>     setter
+    ) {
+        Objects.requireNonNull(type,   "type must not be null");
+        Objects.requireNonNull(first,  "first must not be null");
+        Objects.requireNonNull(second, "second must not be null");
+        Objects.requireNonNull(getter, "getter must not be null");
+        Objects.requireNonNull(setter, "setter must not be null");
+        return Sprouts.factory().projLensOf(type, first, second, getter, setter);
+    }
+
+    /**
+     * Creates a non-nullable projected dual-source {@link Var} property, inferring the combined type
+     * from the initial value returned by the getter.
+     * <p>
+     * This is equivalent to {@link #of(Class, Var, Var, BiFunction, Function)} but derives the
+     * runtime type of the property from the concrete type of the first computed value instead of
+     * requiring an explicit {@link Class} parameter.
+     * <p>
+     * <b>Warning:</b> The {@link Var#type()} of the returned property is always resolved from the
+     * concrete (sub)type of the initial computed value. If {@code C} is a polymorphic interface or
+     * abstract class, you may encounter type cast exceptions when setting a subtype other than the one
+     * first produced by the getter. Prefer {@link #of(Class, Var, Var, BiFunction, Function)} in
+     * those cases.
+     *
+     * @param first  The first source {@link Var} property.
+     * @param second The second source {@link Var} property.
+     * @param getter A {@link BiFunction} that combines the items of {@code first} and {@code second}
+     *               into a single non-null value of type {@code C}.
+     * @param setter A {@link Function} that splits a {@code C} value back into a {@link Pair}
+     *               of source values.
+     * @param <A>    The item type of the first source property.
+     * @param <B>    The item type of the second source property.
+     * @param <C>    The non-nullable combined item type of the returned property.
+     * @return A new non-nullable {@link Var} property that maintains a bidirectional dual-source projection.
+     * @throws NullPointerException if any argument is {@code null}, or if the getter returns {@code null}
+     *         on the initial call.
+     */
+    static <A extends @Nullable Object, B extends @Nullable Object, C extends @NonNull Object> Var<C> of(
+            Var<A>                      first,
+            Var<B>                      second,
+            BiFunction<A, B, C>         getter,
+            Function<C, Pair<A, B>>     setter
+    ) {
+        Objects.requireNonNull(first,  "first must not be null");
+        Objects.requireNonNull(second, "second must not be null");
+        Objects.requireNonNull(getter, "getter must not be null");
+        Objects.requireNonNull(setter, "setter must not be null");
+        return Sprouts.factory().projLensOf(first, second, getter, setter);
+    }
+
+    /**
+     * Creates a non-nullable projected dual-source {@link Var} property with an explicit declared type
+     * and a guaranteed non-null fallback value.
+     * <p>
+     * This is equivalent to {@link #of(Class, Var, Var, BiFunction, Function)} but adds null safety:
+     * whenever either source property's item is {@code null}, or whenever the getter would return
+     * {@code null}, the {@code nullObject} is used as the combined value instead.
+     *
+     * @param type       The class object representing the declared type {@code C}.
+     * @param nullObject The guaranteed non-null fallback value.
+     *                   Used when either source is {@code null} or the getter returns {@code null}.
+     * @param first      The first source {@link Var} property.
+     * @param second     The second source {@link Var} property.
+     * @param getter     A {@link BiFunction} that combines the items of the two source properties.
+     * @param setter     A {@link Function} that splits a {@code C} value back into a {@link Pair}.
+     * @param <A>        The item type of the first source property.
+     * @param <B>        The item type of the second source property.
+     * @param <C>        The non-nullable declared combined item type.
+     * @param <V>        The specific subtype of {@code C} used for the null object.
+     * @return A new non-nullable {@link Var} property with null safety.
+     * @throws NullPointerException if {@code type}, {@code nullObject}, or any other argument is {@code null}.
+     */
+    static <A extends @Nullable Object, B extends @Nullable Object, C extends @NonNull Object, V extends C> Var<C> of(
+            Class<C>                    type,
+            V                           nullObject,
+            Var<A>                      first,
+            Var<B>                      second,
+            BiFunction<A, B, C>         getter,
+            Function<C, Pair<A, B>>     setter
+    ) {
+        Objects.requireNonNull(type,       "type must not be null");
+        Objects.requireNonNull(nullObject, "nullObject must not be null");
+        Objects.requireNonNull(first,      "first must not be null");
+        Objects.requireNonNull(second,     "second must not be null");
+        Objects.requireNonNull(getter,     "getter must not be null");
+        Objects.requireNonNull(setter,     "setter must not be null");
+        return Sprouts.factory().projLensOf(type, nullObject, first, second, getter, setter);
+    }
+
+    /**
+     * Creates a non-nullable projected dual-source {@link Var} property with a guaranteed non-null
+     * fallback value, inferring the declared type from the runtime type of the {@code nullObject}.
+     * <p>
+     * This is equivalent to {@link #of(Class, Object, Var, Var, BiFunction, Function)} but derives the
+     * declared type from the concrete type of {@code nullObject} instead of requiring an explicit
+     * {@link Class} argument.
+     * <p>
+     * <b>Warning:</b> As with the analogous single-source overload, the inferred type is always a
+     * concrete subtype. If {@code C} is polymorphic, prefer
+     * {@link #of(Class, Object, Var, Var, BiFunction, Function)}.
+     *
+     * @param nullObject The guaranteed non-null fallback value. Its runtime type is used as the
+     *                   declared type of the returned property.
+     * @param first      The first source {@link Var} property.
+     * @param second     The second source {@link Var} property.
+     * @param getter     A {@link BiFunction} that combines the items of the two source properties.
+     * @param setter     A {@link Function} that splits a {@code C} value back into a {@link Pair}.
+     * @param <A>        The item type of the first source property.
+     * @param <B>        The item type of the second source property.
+     * @param <C>        The non-nullable combined item type (inferred from {@code nullObject}).
+     * @return A new non-nullable {@link Var} property with null safety.
+     * @throws NullPointerException if {@code nullObject} or any other argument is {@code null}.
+     */
+    static <A extends @Nullable Object, B extends @Nullable Object, C extends @NonNull Object> Var<C> of(
+            C                           nullObject,
+            Var<A>                      first,
+            Var<B>                      second,
+            BiFunction<A, B, C>         getter,
+            Function<C, Pair<A, B>>     setter
+    ) {
+        Objects.requireNonNull(nullObject, "nullObject must not be null");
+        Objects.requireNonNull(first,      "first must not be null");
+        Objects.requireNonNull(second,     "second must not be null");
+        Objects.requireNonNull(getter,     "getter must not be null");
+        Objects.requireNonNull(setter,     "setter must not be null");
+        return Sprouts.factory().projLensOf(nullObject, first, second, getter, setter);
+    }
+
+    /**
+     * Creates a nullable projected dual-source {@link Var} property.
+     * <p>
+     * The combined property may hold {@code null} values, which occurs when the getter cannot produce
+     * a valid combined value (e.g. because one or both source items are {@code null}, or because the
+     * conversion is partial and the getter signals failure by returning {@code null}).
+     * <p>
+     * <b>Example — parsing two strings into a {@link java.time.LocalDate}:</b>
+     * <pre>{@code
+     *     Var<String> year  = Var.of("2024");
+     *     Var<String> month = Var.of("13");   // invalid month
+     *
+     *     Var<java.time.LocalDate> date = Var.ofNullable(
+     *         java.time.LocalDate.class, year, month,
+     *         (y, m) -> {
+     *             try { return java.time.LocalDate.of(Integer.parseInt(y), Integer.parseInt(m), 1); }
+     *             catch (Exception e) { return null; }
+     *         },
+     *         d -> d == null
+     *             ? Pair.of("", "")
+     *             : Pair.of(String.valueOf(d.getYear()), String.valueOf(d.getMonthValue()))
+     *     );
+     *
+     *     // date.get() == null  (month 13 is invalid)
+     *
+     *     month.set("3");
+     *     // date.get() == LocalDate.of(2024, 3, 1)
+     * }</pre>
+     *
+     * @param type   The class object representing the declared type {@code C}.
+     * @param first  The first source {@link Var} property.
+     * @param second The second source {@link Var} property.
+     * @param getter A {@link BiFunction} that combines the items of the two source properties into a
+     *               value of type {@code C}; may return {@code null} to indicate no valid conversion.
+     * @param setter A {@link Function} that splits a {@code C} back into a {@link Pair} of source values;
+     *               must handle {@code null} input appropriately.
+     * @param <A>    The item type of the first source property.
+     * @param <B>    The item type of the second source property.
+     * @param <C>    The nullable combined item type.
+     * @return A new nullable {@link Var} property that maintains a bidirectional dual-source projection.
+     * @throws NullPointerException if {@code type}, {@code first}, {@code second}, {@code getter},
+     *         or {@code setter} is {@code null}.
+     */
+    static <A extends @Nullable Object, B extends @Nullable Object, C extends @Nullable Object> Var<C> ofNullable(
+            Class<C>                    type,
+            Var<A>                      first,
+            Var<B>                      second,
+            BiFunction<A, B, C>         getter,
+            Function<C, Pair<A, B>>     setter
+    ) {
+        Objects.requireNonNull(type,   "type must not be null");
+        Objects.requireNonNull(first,  "first must not be null");
+        Objects.requireNonNull(second, "second must not be null");
+        Objects.requireNonNull(getter, "getter must not be null");
+        Objects.requireNonNull(setter, "setter must not be null");
+        return Sprouts.factory().projLensOfNullable(type, first, second, getter, setter);
+    }
+
+    /**
      *  This factory method returns a {@code Var} describing the given non-{@code null}
      *  item similar to {@link Optional#of(Object)}, but specifically
      *  designed to be used for MVVM. <br>
