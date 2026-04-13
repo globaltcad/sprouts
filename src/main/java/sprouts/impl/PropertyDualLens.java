@@ -218,8 +218,26 @@ final class PropertyDualLens<A extends @Nullable Object, B extends @Nullable Obj
         _lastItem = newItem;
         _settingFromSelf = true;
         try {
-            _firstParent.set(channel, pair.first());
-            _secondParent.set(channel, pair.second());
+            try {
+                _firstParent.set(channel, pair.first());
+            } catch (Exception e) {
+                Util.sneakyThrowExceptionIfFatal(e);
+                _logError(
+                        "Dual property lens '{}' (item type '{}') failed assigned the first split value " +
+                                "into the first source property.",
+                        _id.isEmpty() ? "?" : "'"+_id+"'", _type, e
+                );
+            }
+            try {
+                _secondParent.set(channel, pair.second());
+            } catch (Exception e) {
+                Util.sneakyThrowExceptionIfFatal(e);
+                _logError(
+                        "Dual property lens '{}' (item type '{}') failed assigned the second split value " +
+                                "into the second source property.",
+                        _id.isEmpty() ? "?" : "'"+_id+"'", _type, e
+                );
+            }
         } finally {
             _settingFromSelf = false;
         }
