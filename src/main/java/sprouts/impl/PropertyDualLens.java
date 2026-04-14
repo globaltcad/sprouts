@@ -120,9 +120,33 @@ final class PropertyDualLens<A extends @Nullable Object, B extends @Nullable Obj
     private @Nullable C _lastItem;
 
     /**
-     * Guards against re-entrant updates: when {@code true} we are mid-way through
-     * pushing a new combined value back into the two source properties, so incoming
-     * parent-change notifications should be ignored to avoid double-firing.
+     * Guards against re-entrant change notifications while the dual lens is writing a new
+     * combined value back into its two source properties.
+     * <p>
+     * When {@link #set(Channel, Object)} is invoked on this lens, the {@link #_setter}
+     * produces a {@link Pair} which is then written to {@link #_firstParent} followed by
+     * {@link #_secondParent}. Because this lens is registered as a weak change listener on
+     * <em>both</em> parents, the first parent update would, without this guard, trigger a
+     * re-entrant parent-change callback on this lens which:
+     * <ul>
+     *   <li>reads both parents — observing an <b>inconsistent intermediate state</b>
+     *       where the first parent already holds the new value but the second still holds the old one,</li>
+     *   <li>fires a change event with that garbage intermediate value,</li>
+     *   <li>fires a second event once the second parent is updated.</li>
+     * </ul>
+     * So without the flag, a single {@code set()} call would emit up to three events to
+     * this lens's observers, one of them observing a transient inconsistent combined value.
+     * With the flag, the re-entrant callbacks short-circuit and the {@code set()} method
+     * emits exactly one change event with the correct final value — giving the update
+     * transactional semantics from the perspective of this lens's observers.
+     * <p>
+     * Note that observers subscribed directly to {@link #_firstParent} or {@link #_secondParent}
+     * still see their individual source updates as usual — the guard only suppresses the
+     * <em>dual lens's own</em> re-entrant listener.
+     * <p>
+     * <b>Thread safety:</b> this field is not {@code volatile}. Like the rest of the
+     * Sprouts property system, dual lenses are intended for single-threaded use
+     * (typically the view-model / UI thread).
      */
     private boolean _settingFromSelf = false;
 
@@ -154,6 +178,16 @@ final class PropertyDualLens<A extends @Nullable Object, B extends @Nullable Obj
         _changeListeners = changeListeners == null ? new PropertyChangeListeners<>() : new PropertyChangeListeners<>(changeListeners);
         _lastItem        = initialItem;
 
+        if ( !Sprouts.factory().isValidPropertyId(_id) )
+            throw new IllegalArgumentException(
+                    "The provided id '"+_id+"' is not valid! " +
+                    "It must match the pattern '"+Sprouts.factory().idPattern().pattern()+"'"
+            );
+        if ( !allowsNull && initialItem == null )
+            throw new IllegalArgumentException(
+                    "The provided initial value is null, but the property does not allow null values!"
+            );
+
         Viewable.cast(firstParent).onChange(From.ALL, WeakAction.of(this, (thisLens, v) -> {
             if ( thisLens._settingFromSelf ) return;
             C newValue = thisLens._fetchItemFromParents();
@@ -173,16 +207,6 @@ final class PropertyDualLens<A extends @Nullable Object, B extends @Nullable Obj
                 thisLens.fireChange(v.channel(), pair);
             }
         }));
-
-        if ( !Sprouts.factory().isValidPropertyId(_id) )
-            throw new IllegalArgumentException(
-                    "The provided id '"+_id+"' is not valid! " +
-                    "It must match the pattern '"+Sprouts.factory().idPattern().pattern()+"'"
-            );
-        if ( !allowsNull && initialItem == null )
-            throw new IllegalArgumentException(
-                    "The provided initial value is null, but the property does not allow null values!"
-            );
     }
 
     private @Nullable C _fetchItemFromParents() {

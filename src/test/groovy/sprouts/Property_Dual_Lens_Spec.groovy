@@ -680,6 +680,156 @@ class Property_Dual_Lens_Spec extends Specification
             b.get() == 50
     }
 
+    def 'The re-entrancy guard prevents observers from seeing an inconsistent intermediate state.'()
+    {
+        reportInfo """
+            Without the `_settingFromSelf` guard, a single `set()` on the dual lens would
+            write to the first source, trigger a re-entrant parent-change callback that
+            reads BOTH parents (observing `first = new, second = old` — a garbage
+            intermediate combined value), then write to the second source and trigger yet
+            another event. The guard collapses this back into a single, transactional
+            event with the correct final combined value.
+        """
+        given : 'Two source properties and a dual lens.'
+            var a = Var.of(10)
+            var b = Var.of(20)
+            var combined = Var.of(
+                Integer.class, a, b,
+                (x, y) -> x * 100 + y,
+                (Integer s) -> Pair.of(s.intdiv(100), s % 100)
+            )
+        and : 'An observer recording every combined value it sees.'
+            var seen = []
+            Viewable.cast(combined).onChange(From.ALL, it -> seen << it.currentValue().orElseNull())
+
+        when : 'We update the combined value in one call.'
+            combined.set(4050)
+        then : 'The observer sees exactly one event with the correct final value.'
+            seen == [4050]
+        and : 'Neither parent update exposed a transient "new-first + old-second" value like 4020 or 1050.'
+            !seen.contains(4020)
+            !seen.contains(1050)
+        and : 'Both parents hold the new split values.'
+            a.get() == 40
+            b.get() == 50
+    }
+
+    def 'Observers on the individual source properties still see their own updates during a dual lens set.'()
+    {
+        reportInfo """
+            The `_settingFromSelf` guard only suppresses the dual lens's own re-entrant
+            callback. Observers subscribed directly to the source properties must still
+            receive both of their individual updates — they are not part of the
+            transactional boundary of the dual lens.
+        """
+        given : 'Two source properties with their own direct observers.'
+            var a = Var.of(1)
+            var b = Var.of(2)
+            var aSeen = []
+            var bSeen = []
+            Viewable.cast(a).onChange(From.ALL, it -> aSeen << it.currentValue().orElseNull())
+            Viewable.cast(b).onChange(From.ALL, it -> bSeen << it.currentValue().orElseNull())
+        and : 'A dual lens over the two sources.'
+            var combined = Var.of(
+                Integer.class, a, b,
+                (x, y) -> x + y,
+                (Integer s) -> Pair.of(s.intdiv(2), s - s.intdiv(2))
+            )
+
+        when : 'We set a new combined value.'
+            combined.set(20)
+        then : 'Each direct source observer sees its own update.'
+            aSeen == [10]
+            bSeen == [10]
+    }
+
+    // ==================== Explicit fireChange ====================
+
+    def 'Calling fireChange on a dual lens notifies its observers with the current value.'()
+    {
+        reportInfo """
+            Explicitly invoking `fireChange(channel)` on a dual lens should emit a change
+            event to all subscribed observers, carrying the current combined value.
+        """
+        given : 'A dual lens over two source properties.'
+            var a = Var.of("foo")
+            var b = Var.of("bar")
+            var combined = Var.of(
+                String.class, a, b,
+                (x, y) -> x + y,
+                s -> Pair.of(s, "")
+            )
+        and : 'A trace listener.'
+            var trace = []
+            Viewable.cast(combined).onChange(From.ALL, it -> trace << it.currentValue().orElseNull())
+
+        when : 'We manually fire a change event.'
+            combined.fireChange(From.VIEW_MODEL)
+        then : 'The observer is notified with the current combined value.'
+            trace == ["foobar"]
+    }
+
+    // ==================== Factory null-argument checks ====================
+
+    def 'Dual projection factories reject null arguments.'()
+    {
+        given : 'Two valid source properties.'
+            var a = Var.of(1)
+            var b = Var.of(2)
+
+        when : 'The non-null explicit-type factory is called with a null first source.'
+            Var.of(Integer.class, (Var<Integer>) null, b, (x, y) -> x + y, (Integer s) -> Pair.of(s, 0))
+        then :
+            thrown(NullPointerException)
+
+        when : 'It is called with a null second source.'
+            Var.of(Integer.class, a, (Var<Integer>) null, (x, y) -> x + y, (Integer s) -> Pair.of(s, 0))
+        then :
+            thrown(NullPointerException)
+
+        when : 'It is called with a null getter.'
+            Var.of(Integer.class, a, b, (java.util.function.BiFunction<Integer, Integer, Integer>) null, (Integer s) -> Pair.of(s, 0))
+        then :
+            thrown(NullPointerException)
+
+        when : 'It is called with a null setter.'
+            Var.of(Integer.class, a, b, (x, y) -> x + y, (java.util.function.Function<Integer, Pair<Integer, Integer>>) null)
+        then :
+            thrown(NullPointerException)
+
+        when : 'The nullable factory is called with null sources.'
+            Var.ofNullable(Integer.class, (Var<Integer>) null, b, (x, y) -> x + y, (Integer s) -> Pair.of(s, 0))
+        then :
+            thrown(NullPointerException)
+    }
+
+    // ==================== Constructor validation-ordering ====================
+
+    def 'A dual lens that fails construction due to null initial value does not leak weak listeners onto its sources.'()
+    {
+        reportInfo """
+            The constructor validates the initial value (and the property id) and must
+            do so BEFORE wiring weak change listeners onto the source properties.
+            Otherwise a failed construction would still leave orphan listener slots
+            referencing a soon-to-be-garbage lens instance on both sources.
+        """
+        given : 'Two source properties and a getter that returns null.'
+            var a = Var.of(1)
+            var b = Var.of(2)
+
+        expect : 'Neither source has any change listeners registered.'
+            a.numberOfChangeListeners() == 0
+            b.numberOfChangeListeners() == 0
+
+        when : 'We try to build a non-null dual lens whose getter yields null.'
+            Var.of(Integer.class, a, b, (x, y) -> (Integer) null, (Integer s) -> Pair.of(s, 0))
+        then : 'Construction fails.'
+            thrown(Exception)
+        and : 'No change listeners were left behind on either source.'
+            a.numberOfChangeListeners() == 0
+            b.numberOfChangeListeners() == 0
+    }
+
     // ==================== numberOfChangeListeners ====================
 
     def 'numberOfChangeListeners tracks registered listeners correctly.'()
