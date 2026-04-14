@@ -911,7 +911,7 @@ class Property_Dual_Lens_Spec extends Specification
             waitForGarbageCollection()
             Thread.sleep(500)
             waitForGarbageCollection()
-        then : 'Both lenses are now garbage collected.'
+        then : 'Both lenses are not garbage collected.'
             refs[0].get() != null
             refs[1].get() != null
     }
