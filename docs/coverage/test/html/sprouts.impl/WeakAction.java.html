@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>WeakAction.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sprouts</a> &gt; <a href="index.source.html" class="el_package">sprouts.impl</a> &gt; <span class="el_source">WeakAction.java</span></div><h1>WeakAction.java</h1><pre class="source lang-java linenums">package sprouts.impl;
+
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+import sprouts.Action;
+
+import java.lang.ref.WeakReference;
+import java.util.Optional;
+import java.util.function.BiConsumer;
+
+/**
+ *  A weak action is an extension of the {@link Action} interface
+ *  which defines a method for clearing the action
+ *  and a method for retrieving the owner of the action. &lt;br&gt;
+ *  The owner is weakly referenced and determines the
+ *  lifetime of the action. A library internal cleaner
+ *  is responsible for removing the action when the owner
+ *  is garbage collected.
+ *  &lt;p&gt;
+ *  This class is marked as {@code final} and its constructor is private
+ *  to enforce the use of the static factory method {@link #of(Object, BiConsumer)}.
+ *  The factory method provides a controlled way to create instances
+ *  and encapsulates any additional logic required during instantiation.
+ *  This design ensures consistency and prevents misuse.
+ *  &lt;p&gt;&lt;b&gt;
+ *      Note: This class is designed for internal use within the Sprouts library
+ *      and should not be made public or used directly by external code.
+ *  &lt;/b&gt;&lt;/p&gt;
+ *
+ * @param &lt;O&gt; The type of the owner of this action.
+ * @param &lt;D&gt; The type of the delegate that will be passed to this event handler.
+ */
+final class WeakAction&lt;O, D&gt; implements Action&lt;D&gt;
+{
+    /**
+     *  Creates a new instance of {@link WeakAction} with the given owner and action.
+     *  The owner is weakly referenced, meaning that the action will be cleared
+     *  when the owner is garbage collected.
+     *
+     * @param owner The owner of this action, which will be weakly referenced.
+     * @param action The action to be executed when this event handler is invoked.
+     * @return A new instance of {@link WeakAction}.
+     */
+    static &lt;O, D&gt; WeakAction&lt;O, D&gt; of(@NonNull O owner, @NonNull BiConsumer&lt;O, D&gt; action ) {
+<span class="fc" id="L45">        return new WeakAction&lt;&gt;(owner, action);</span>
+    }
+
+    private @Nullable BiConsumer&lt;O, D&gt; _action;
+    private final WeakReference&lt;O&gt; _owner;
+
+<span class="fc" id="L51">    private WeakAction(@NonNull O owner, @NonNull BiConsumer&lt;O, D&gt; action ) {</span>
+<span class="fc" id="L52">        _owner  = new WeakReference&lt;&gt;(owner);</span>
+<span class="fc" id="L53">        _action = action;</span>
+<span class="fc" id="L54">    }</span>
+
+    @Override
+    public void accept( D delegate ) {
+<span class="fc bfc" id="L58" title="All 2 branches covered.">        if ( _action == null )</span>
+<span class="fc" id="L59">            return;</span>
+
+<span class="fc" id="L61">        O owner = _owner.get();</span>
+
+<span class="fc bfc" id="L63" title="All 2 branches covered.">        if ( owner != null )</span>
+<span class="fc" id="L64">            _action.accept(owner, delegate);</span>
+        else
+<span class="fc" id="L66">            _action = null;</span>
+<span class="fc" id="L67">    }</span>
+
+    /**
+     *  Returns an {@link Optional} containing the owner of this action.
+     *  If the owner is no longer available, then an empty {@link Optional}
+     *  is returned.
+     *
+     * @return An {@link Optional} containing the owner of this action.
+     */
+    public Optional&lt;O&gt; owner() {
+<span class="fc" id="L77">        return Optional.ofNullable(_owner.get());</span>
+    }
+
+    /**
+     *  Clears the action, making it no longer executable.
+     *  This method is called by the library internal cleaner
+     *  when the owner is garbage collected.&lt;br&gt;
+     *  &lt;b&gt;
+     *      It is not advised to call this method manually,
+     *      as it may lead to unexpected behavior.
+     *  &lt;/b&gt;
+     */
+    public void clear() {
+<span class="fc" id="L90">        _action = null;</span>
+<span class="fc" id="L91">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>
