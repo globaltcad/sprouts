@@ -120,6 +120,263 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
     }
 
     /**
+     * Creates a non-nullable projected dual-source {@link Var} property that bidirectionally maps the
+     * items of two source properties of types {@code A} and {@code B} into a combined item of type
+     * {@code C}, using a getter {@link BiFunction} and a setter {@link Function}.
+     * &lt;p&gt;
+     * This is the two-source generalization of {@link #projectTo(Function, Function)} — just as that
+     * method is the mutable analogue of {@link Val#view(Function)}, this method is the mutable analogue
+     * of {@link Viewable#of(Class, Val, Val, BiFunction)}.
+     * &lt;p&gt;
+     * The {@code getter} combines the current items of {@code first} and {@code second} into a single
+     * value of type {@code C}. Whenever either source property changes, the combined property is
+     * automatically recomputed via the getter.
+     * &lt;p&gt;
+     * The {@code setter} splits a new combined value back into a {@link Pair} of source values.
+     * When the combined property is set, the {@link Pair#first()} value is written to {@code first}
+     * and the {@link Pair#second()} value is written to {@code second}.
+     * &lt;p&gt;
+     * &lt;b&gt;Mathematical Foundation:&lt;/b&gt;&lt;br&gt;
+     * For predictable round-trip behaviour the functions should form a partial isomorphism:
+     * &lt;ul&gt;
+     *   &lt;li&gt;For non-null {@code a} and {@code b}:
+     *       {@code setter.apply(getter.apply(a, b)).equals(Pair.of(a, b))} should hold.&lt;/li&gt;
+     *   &lt;li&gt;For all {@code c}:
+     *       {@code getter.apply(setter.apply(c).first(), setter.apply(c).second()).equals(c)} should hold.&lt;/li&gt;
+     * &lt;/ul&gt;
+     * &lt;p&gt;
+     * &lt;b&gt;Example — combining a first and last name into a display name:&lt;/b&gt;
+     * &lt;pre&gt;{@code
+     *     Var&lt;String&gt; firstName = Var.of(&quot;Jane&quot;);
+     *     Var&lt;String&gt; lastName  = Var.of(&quot;Doe&quot;);
+     *
+     *     Var&lt;String&gt; fullName = Var.of(
+     *         String.class, firstName, lastName,
+     *         (f, l) -&gt; f + &quot; &quot; + l,
+     *         name -&gt; {
+     *             String[] parts = name.split(&quot; &quot;, 2);
+     *             return Pair.of(parts[0], parts.length &gt; 1 ? parts[1] : &quot;&quot;);
+     *         }
+     *     );
+     *
+     *     // fullName.get() == &quot;Jane Doe&quot;
+     *
+     *     firstName.set(&quot;John&quot;);
+     *     // fullName.get() == &quot;John Doe&quot;
+     *
+     *     fullName.set(&quot;Alice Smith&quot;);
+     *     // firstName.get() == &quot;Alice&quot;, lastName.get() == &quot;Smith&quot;
+     * }&lt;/pre&gt;
+     *
+     * @param type   The class object representing the declared type {@code C}.
+     *               Ensures the combined property accepts all subtypes of {@code C}.
+     * @param first  The first source {@link Var} property.
+     * @param second The second source {@link Var} property.
+     * @param getter A {@link BiFunction} that combines the items of {@code first} and {@code second}
+     *               into a single non-null value of type {@code C}.
+     *               Must not return {@code null} on the initial call.
+     * @param setter A {@link Function} that splits a {@code C} value back into a {@link Pair}
+     *               of source values. {@link Pair#first()} is written to {@code first} and
+     *               {@link Pair#second()} is written to {@code second}.
+     * @param &lt;A&gt;    The item type of the first source property.
+     * @param &lt;B&gt;    The item type of the second source property.
+     * @param &lt;C&gt;    The non-nullable combined item type of the returned property.
+     * @return A new non-nullable {@link Var} property that maintains a bidirectional dual-source projection.
+     * @throws NullPointerException if any argument is {@code null}, or if the getter returns {@code null}
+     *         on the initial call.
+     */
+    static &lt;A extends @Nullable Object, B extends @Nullable Object, C extends @NonNull Object&gt; Var&lt;C&gt; of(
+            Class&lt;C&gt;                    type,
+            Var&lt;A&gt;                      first,
+            Var&lt;B&gt;                      second,
+            BiFunction&lt;A, B, C&gt;         getter,
+            Function&lt;C, Pair&lt;A, B&gt;&gt;     setter
+    ) {
+<span class="fc" id="L195">        Objects.requireNonNull(type,   &quot;type must not be null&quot;);</span>
+<span class="fc" id="L196">        Objects.requireNonNull(first,  &quot;first must not be null&quot;);</span>
+<span class="fc" id="L197">        Objects.requireNonNull(second, &quot;second must not be null&quot;);</span>
+<span class="fc" id="L198">        Objects.requireNonNull(getter, &quot;getter must not be null&quot;);</span>
+<span class="fc" id="L199">        Objects.requireNonNull(setter, &quot;setter must not be null&quot;);</span>
+<span class="fc" id="L200">        return Sprouts.factory().projLensOf(type, first, second, getter, setter);</span>
+    }
+
+    /**
+     * Creates a non-nullable projected dual-source {@link Var} property, inferring the combined type
+     * from the initial value returned by the getter.
+     * &lt;p&gt;
+     * This is equivalent to {@link #of(Class, Var, Var, BiFunction, Function)} but derives the
+     * runtime type of the property from the concrete type of the first computed value instead of
+     * requiring an explicit {@link Class} parameter.
+     * &lt;p&gt;
+     * &lt;b&gt;Warning:&lt;/b&gt; The {@link Var#type()} of the returned property is always resolved from the
+     * concrete (sub)type of the initial computed value. If {@code C} is a polymorphic interface or
+     * abstract class, you may encounter type cast exceptions when setting a subtype other than the one
+     * first produced by the getter. Prefer {@link #of(Class, Var, Var, BiFunction, Function)} in
+     * those cases.
+     *
+     * @param first  The first source {@link Var} property.
+     * @param second The second source {@link Var} property.
+     * @param getter A {@link BiFunction} that combines the items of {@code first} and {@code second}
+     *               into a single non-null value of type {@code C}.
+     * @param setter A {@link Function} that splits a {@code C} value back into a {@link Pair}
+     *               of source values.
+     * @param &lt;A&gt;    The item type of the first source property.
+     * @param &lt;B&gt;    The item type of the second source property.
+     * @param &lt;C&gt;    The non-nullable combined item type of the returned property.
+     * @return A new non-nullable {@link Var} property that maintains a bidirectional dual-source projection.
+     * @throws NullPointerException if any argument is {@code null}, or if the getter returns {@code null}
+     *         on the initial call.
+     */
+    static &lt;A extends @Nullable Object, B extends @Nullable Object, C extends @NonNull Object&gt; Var&lt;C&gt; of(
+            Var&lt;A&gt;                      first,
+            Var&lt;B&gt;                      second,
+            BiFunction&lt;A, B, C&gt;         getter,
+            Function&lt;C, Pair&lt;A, B&gt;&gt;     setter
+    ) {
+<span class="fc" id="L236">        Objects.requireNonNull(first,  &quot;first must not be null&quot;);</span>
+<span class="fc" id="L237">        Objects.requireNonNull(second, &quot;second must not be null&quot;);</span>
+<span class="fc" id="L238">        Objects.requireNonNull(getter, &quot;getter must not be null&quot;);</span>
+<span class="fc" id="L239">        Objects.requireNonNull(setter, &quot;setter must not be null&quot;);</span>
+<span class="fc" id="L240">        return Sprouts.factory().projLensOf(first, second, getter, setter);</span>
+    }
+
+    /**
+     * Creates a non-nullable projected dual-source {@link Var} property with an explicit declared type
+     * and a guaranteed non-null fallback value.
+     * &lt;p&gt;
+     * This is equivalent to {@link #of(Class, Var, Var, BiFunction, Function)} but adds null safety:
+     * whenever either source property's item is {@code null}, or whenever the getter would return
+     * {@code null}, the {@code nullObject} is used as the combined value instead.
+     *
+     * @param type       The class object representing the declared type {@code C}.
+     * @param nullObject The guaranteed non-null fallback value.
+     *                   Used when either source is {@code null} or the getter returns {@code null}.
+     * @param first      The first source {@link Var} property.
+     * @param second     The second source {@link Var} property.
+     * @param getter     A {@link BiFunction} that combines the items of the two source properties.
+     * @param setter     A {@link Function} that splits a {@code C} value back into a {@link Pair}.
+     * @param &lt;A&gt;        The item type of the first source property.
+     * @param &lt;B&gt;        The item type of the second source property.
+     * @param &lt;C&gt;        The non-nullable declared combined item type.
+     * @param &lt;V&gt;        The specific subtype of {@code C} used for the null object.
+     * @return A new non-nullable {@link Var} property with null safety.
+     * @throws NullPointerException if {@code type}, {@code nullObject}, or any other argument is {@code null}.
+     */
+    static &lt;A extends @Nullable Object, B extends @Nullable Object, C extends @NonNull Object, V extends C&gt; Var&lt;C&gt; of(
+            Class&lt;C&gt;                    type,
+            V                           nullObject,
+            Var&lt;A&gt;                      first,
+            Var&lt;B&gt;                      second,
+            BiFunction&lt;A, B, C&gt;         getter,
+            Function&lt;C, Pair&lt;A, B&gt;&gt;     setter
+    ) {
+<span class="fc" id="L273">        Objects.requireNonNull(type,       &quot;type must not be null&quot;);</span>
+<span class="fc" id="L274">        Objects.requireNonNull(nullObject, &quot;nullObject must not be null&quot;);</span>
+<span class="fc" id="L275">        Objects.requireNonNull(first,      &quot;first must not be null&quot;);</span>
+<span class="fc" id="L276">        Objects.requireNonNull(second,     &quot;second must not be null&quot;);</span>
+<span class="fc" id="L277">        Objects.requireNonNull(getter,     &quot;getter must not be null&quot;);</span>
+<span class="fc" id="L278">        Objects.requireNonNull(setter,     &quot;setter must not be null&quot;);</span>
+<span class="fc" id="L279">        return Sprouts.factory().projLensOf(type, nullObject, first, second, getter, setter);</span>
+    }
+
+    /**
+     * Creates a non-nullable projected dual-source {@link Var} property with a guaranteed non-null
+     * fallback value, inferring the declared type from the runtime type of the {@code nullObject}.
+     * &lt;p&gt;
+     * This is equivalent to {@link #of(Class, Object, Var, Var, BiFunction, Function)} but derives the
+     * declared type from the concrete type of {@code nullObject} instead of requiring an explicit
+     * {@link Class} argument.
+     * &lt;p&gt;
+     * &lt;b&gt;Warning:&lt;/b&gt; As with the analogous single-source overload, the inferred type is always a
+     * concrete subtype. If {@code C} is polymorphic, prefer
+     * {@link #of(Class, Object, Var, Var, BiFunction, Function)}.
+     *
+     * @param nullObject The guaranteed non-null fallback value. Its runtime type is used as the
+     *                   declared type of the returned property.
+     * @param first      The first source {@link Var} property.
+     * @param second     The second source {@link Var} property.
+     * @param getter     A {@link BiFunction} that combines the items of the two source properties.
+     * @param setter     A {@link Function} that splits a {@code C} value back into a {@link Pair}.
+     * @param &lt;A&gt;        The item type of the first source property.
+     * @param &lt;B&gt;        The item type of the second source property.
+     * @param &lt;C&gt;        The non-nullable combined item type (inferred from {@code nullObject}).
+     * @return A new non-nullable {@link Var} property with null safety.
+     * @throws NullPointerException if {@code nullObject} or any other argument is {@code null}.
+     */
+    static &lt;A extends @Nullable Object, B extends @Nullable Object, C extends @NonNull Object&gt; Var&lt;C&gt; of(
+            C                           nullObject,
+            Var&lt;A&gt;                      first,
+            Var&lt;B&gt;                      second,
+            BiFunction&lt;A, B, C&gt;         getter,
+            Function&lt;C, Pair&lt;A, B&gt;&gt;     setter
+    ) {
+<span class="fc" id="L313">        Objects.requireNonNull(nullObject, &quot;nullObject must not be null&quot;);</span>
+<span class="fc" id="L314">        Objects.requireNonNull(first,      &quot;first must not be null&quot;);</span>
+<span class="fc" id="L315">        Objects.requireNonNull(second,     &quot;second must not be null&quot;);</span>
+<span class="fc" id="L316">        Objects.requireNonNull(getter,     &quot;getter must not be null&quot;);</span>
+<span class="fc" id="L317">        Objects.requireNonNull(setter,     &quot;setter must not be null&quot;);</span>
+<span class="fc" id="L318">        return Sprouts.factory().projLensOf(nullObject, first, second, getter, setter);</span>
+    }
+
+    /**
+     * Creates a nullable projected dual-source {@link Var} property.
+     * &lt;p&gt;
+     * The combined property may hold {@code null} values, which occurs when the getter cannot produce
+     * a valid combined value (e.g. because one or both source items are {@code null}, or because the
+     * conversion is partial and the getter signals failure by returning {@code null}).
+     * &lt;p&gt;
+     * &lt;b&gt;Example — parsing two strings into a {@link java.time.LocalDate}:&lt;/b&gt;
+     * &lt;pre&gt;{@code
+     *     Var&lt;String&gt; year  = Var.of(&quot;2024&quot;);
+     *     Var&lt;String&gt; month = Var.of(&quot;13&quot;);   // invalid month
+     *
+     *     Var&lt;java.time.LocalDate&gt; date = Var.ofNullable(
+     *         java.time.LocalDate.class, year, month,
+     *         (y, m) -&gt; {
+     *             try { return java.time.LocalDate.of(Integer.parseInt(y), Integer.parseInt(m), 1); }
+     *             catch (Exception e) { return null; }
+     *         },
+     *         d -&gt; d == null
+     *             ? Pair.of(&quot;&quot;, &quot;&quot;)
+     *             : Pair.of(String.valueOf(d.getYear()), String.valueOf(d.getMonthValue()))
+     *     );
+     *
+     *     // date.get() == null  (month 13 is invalid)
+     *
+     *     month.set(&quot;3&quot;);
+     *     // date.get() == LocalDate.of(2024, 3, 1)
+     * }&lt;/pre&gt;
+     *
+     * @param type   The class object representing the declared type {@code C}.
+     * @param first  The first source {@link Var} property.
+     * @param second The second source {@link Var} property.
+     * @param getter A {@link BiFunction} that combines the items of the two source properties into a
+     *               value of type {@code C}; may return {@code null} to indicate no valid conversion.
+     * @param setter A {@link Function} that splits a {@code C} back into a {@link Pair} of source values;
+     *               must handle {@code null} input appropriately.
+     * @param &lt;A&gt;    The item type of the first source property.
+     * @param &lt;B&gt;    The item type of the second source property.
+     * @param &lt;C&gt;    The nullable combined item type.
+     * @return A new nullable {@link Var} property that maintains a bidirectional dual-source projection.
+     * @throws NullPointerException if {@code type}, {@code first}, {@code second}, {@code getter},
+     *         or {@code setter} is {@code null}.
+     */
+    static &lt;A extends @Nullable Object, B extends @Nullable Object, C extends @Nullable Object&gt; Var&lt;C&gt; ofNullable(
+            Class&lt;C&gt;                    type,
+            Var&lt;A&gt;                      first,
+            Var&lt;B&gt;                      second,
+            BiFunction&lt;A, B, C&gt;         getter,
+            Function&lt;C, Pair&lt;A, B&gt;&gt;     setter
+    ) {
+<span class="fc" id="L371">        Objects.requireNonNull(type,   &quot;type must not be null&quot;);</span>
+<span class="fc" id="L372">        Objects.requireNonNull(first,  &quot;first must not be null&quot;);</span>
+<span class="fc" id="L373">        Objects.requireNonNull(second, &quot;second must not be null&quot;);</span>
+<span class="fc" id="L374">        Objects.requireNonNull(getter, &quot;getter must not be null&quot;);</span>
+<span class="fc" id="L375">        Objects.requireNonNull(setter, &quot;setter must not be null&quot;);</span>
+<span class="fc" id="L376">        return Sprouts.factory().projLensOfNullable(type, first, second, getter, setter);</span>
+    }
+
+    /**
      *  This factory method returns a {@code Var} describing the given non-{@code null}
      *  item similar to {@link Optional#of(Object)}, but specifically
      *  designed to be used for MVVM. &lt;br&gt;
@@ -132,7 +389,7 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
      * @throws IllegalArgumentException If the given item is null.
      */
     static &lt;T&gt; Var&lt;T&gt; of( T item ) {
-<span class="fc" id="L135">        return Sprouts.factory().varOf( item );</span>
+<span class="fc" id="L392">        return Sprouts.factory().varOf( item );</span>
     }
 
     /**
@@ -150,7 +407,7 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
      * @throws IllegalArgumentException If the given item is null.
      */
     static &lt;T, V extends T&gt; Var&lt;T&gt; of( Class&lt;T&gt; type, V item ) {
-<span class="fc" id="L153">        return Sprouts.factory().varOf( type, item );</span>
+<span class="fc" id="L410">        return Sprouts.factory().varOf( type, item );</span>
     }
 
     /**
@@ -165,7 +422,7 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
      *                                  {@code var.type().isAssignableFrom(newItem.getClass())}
      */
     default Var&lt;T&gt; set( T newItem ) {
-<span class="fc" id="L168">        return this.set(Sprouts.factory().defaultChannel(), newItem);</span>
+<span class="fc" id="L425">        return this.set(Sprouts.factory().defaultChannel(), newItem);</span>
     }
 
     /**
@@ -213,7 +470,7 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
      * @throws NullPointerException If the given mapper is null.
      */
     default Var&lt;T&gt; update( Function&lt;T,@Nullable T&gt; mapper ) {
-<span class="fc" id="L216">        return update(Sprouts.factory().defaultChannel(), mapper);</span>
+<span class="fc" id="L473">        return update(Sprouts.factory().defaultChannel(), mapper);</span>
     }
 
     /**
@@ -249,11 +506,11 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
      * @throws NullPointerException If the given mapper is null.
      */
     default Var&lt;T&gt; update( Channel channel, Function&lt;T,@Nullable T&gt; mapper ) {
-<span class="fc" id="L252">        Objects.requireNonNull(channel);</span>
-<span class="fc" id="L253">        Objects.requireNonNull(mapper);</span>
-<span class="fc bfc" id="L254" title="All 2 branches covered.">        if ( this.isEmpty() )</span>
-<span class="fc" id="L255">            return this;</span>
-<span class="fc" id="L256">        return this.set(channel, mapper.apply(this.get()));</span>
+<span class="fc" id="L509">        Objects.requireNonNull(channel);</span>
+<span class="fc" id="L510">        Objects.requireNonNull(mapper);</span>
+<span class="fc bfc" id="L511" title="All 2 branches covered.">        if ( this.isEmpty() )</span>
+<span class="fc" id="L512">            return this;</span>
+<span class="fc" id="L513">        return this.set(channel, mapper.apply(this.get()));</span>
     }
 
     /**
@@ -286,7 +543,7 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
      * @throws NullPointerException If the given mapper is null.
      */
     default Var&lt;T&gt; updateNullable( Function&lt;@Nullable T,@Nullable T&gt; mapper ) {
-<span class="fc" id="L289">        return this.updateNullable(Sprouts.factory().defaultChannel(), mapper);</span>
+<span class="fc" id="L546">        return this.updateNullable(Sprouts.factory().defaultChannel(), mapper);</span>
     }
 
     /**
@@ -321,9 +578,9 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
      * @throws NullPointerException If the given mapper is null.
      */
     default Var&lt;T&gt; updateNullable( Channel channel, Function&lt;@Nullable T,@Nullable T&gt; mapper ) {
-<span class="fc" id="L324">        Objects.requireNonNull(channel);</span>
-<span class="fc" id="L325">        Objects.requireNonNull(mapper);</span>
-<span class="fc" id="L326">        return this.set(channel, mapper.apply(this.orElseNull()));</span>
+<span class="fc" id="L581">        Objects.requireNonNull(channel);</span>
+<span class="fc" id="L582">        Objects.requireNonNull(mapper);</span>
+<span class="fc" id="L583">        return this.set(channel, mapper.apply(this.orElseNull()));</span>
     }
 
     /**
@@ -358,11 +615,11 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
      *         the mapping function to the item of this property.
      */
     @Override default Var&lt;T&gt; map( Function&lt;T, T&gt; mapper ) {
-<span class="nc bnc" id="L361" title="All 2 branches missed.">        if ( !isPresent() )</span>
-<span class="nc" id="L362">            return Var.ofNull( type() );</span>
+<span class="nc bnc" id="L618" title="All 2 branches missed.">        if ( !isPresent() )</span>
+<span class="nc" id="L619">            return Var.ofNull( type() );</span>
 
-<span class="nc" id="L364">        T newValue = mapper.apply( get() );</span>
-<span class="nc bnc" id="L365" title="All 2 branches missed.">        return allowsNull() ? Var.ofNullable( type(), newValue ) : Var.of( Objects.requireNonNull(newValue) );</span>
+<span class="nc" id="L621">        T newValue = mapper.apply( get() );</span>
+<span class="nc bnc" id="L622" title="All 2 branches missed.">        return allowsNull() ? Var.ofNullable( type(), newValue ) : Var.of( Objects.requireNonNull(newValue) );</span>
     }
 
     /**
@@ -386,7 +643,7 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
      * @param &lt;U&gt; The type of the item returned from the mapping function
      */
     default @Override &lt;U extends @Nullable Object&gt; Var&lt;@Nullable U&gt; mapTo( Class&lt;U&gt; type, Function&lt;@NonNull T, U&gt; mapper ) {
-<span class="fc" id="L389">        return (Var&lt;U&gt;) Val.super.mapTo( type, mapper );</span>
+<span class="fc" id="L646">        return (Var&lt;U&gt;) Val.super.mapTo( type, mapper );</span>
     }
 
     /**
@@ -431,7 +688,7 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
      * @throws NullPointerException If the given getter or wither function is null.
      */
     default &lt;B&gt; Var&lt;B&gt; zoomTo( Function&lt;T,B&gt; getter, BiFunction&lt;T,B,T&gt; wither ) {
-<span class="fc" id="L434">        return zoomTo( Lens.of(getter, wither) );</span>
+<span class="fc" id="L691">        return zoomTo( Lens.of(getter, wither) );</span>
     }
 
     /**
@@ -477,7 +734,7 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
      * @throws NullPointerException If the given type, getter, or wither function is null.
      */
     default &lt;B&gt; Var&lt;B&gt; zoomTo( Class&lt;B&gt; type, Function&lt;T,B&gt; getter, BiFunction&lt;T,B,T&gt; wither ) {
-<span class="fc" id="L480">        return zoomTo( type, Lens.of(getter, wither) );</span>
+<span class="fc" id="L737">        return zoomTo( type, Lens.of(getter, wither) );</span>
     }
 
     /**
@@ -529,8 +786,8 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
      * @throws NullPointerException If the given lens is null.
      */
     default &lt;B&gt; Var&lt;B&gt; zoomTo( Lens&lt;T,B&gt; lens ) {
-<span class="fc" id="L532">        Objects.requireNonNull(lens);</span>
-<span class="fc" id="L533">        return Sprouts.factory().lensOf( this, lens );</span>
+<span class="fc" id="L789">        Objects.requireNonNull(lens);</span>
+<span class="fc" id="L790">        return Sprouts.factory().lensOf( this, lens );</span>
     }
 
     /**
@@ -575,9 +832,9 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
      * @throws NullPointerException If the given type or lens is null.
      */
     default &lt;B&gt; Var&lt;B&gt; zoomTo( Class&lt;B&gt; type, Lens&lt;T,B&gt; lens ) {
-<span class="fc" id="L578">        Objects.requireNonNull(type);</span>
-<span class="fc" id="L579">        Objects.requireNonNull(lens);</span>
-<span class="fc" id="L580">        return Sprouts.factory().lensOf( this, type, lens );</span>
+<span class="fc" id="L835">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L836">        Objects.requireNonNull(lens);</span>
+<span class="fc" id="L837">        return Sprouts.factory().lensOf( this, type, lens );</span>
     }
 
     /**
@@ -635,7 +892,7 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
      * @throws NullPointerException If the given getter or wither function is null.
      */
     default &lt;B extends @NonNull Object&gt; Var&lt;B&gt; zoomTo( B nullObject, Function&lt;T,B&gt; getter, BiFunction&lt;T,B,T&gt; wither ) {
-<span class="fc" id="L638">        return this.zoomTo( nullObject, Lens.of(getter, wither) );</span>
+<span class="fc" id="L895">        return this.zoomTo( nullObject, Lens.of(getter, wither) );</span>
     }
 
     /**
@@ -691,7 +948,7 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
      * @throws NullPointerException If the given type, null object, getter, or wither function is null.
      */
     default &lt;B extends @NonNull Object, V extends B&gt; Var&lt;B&gt; zoomTo( Class&lt;B&gt; type, V nullObject, Function&lt;T,B&gt; getter, BiFunction&lt;T,B,T&gt; wither ) {
-<span class="fc" id="L694">        return this.zoomTo( type, nullObject, Lens.of(getter, wither) );</span>
+<span class="fc" id="L951">        return this.zoomTo( type, nullObject, Lens.of(getter, wither) );</span>
     }
 
     /**
@@ -751,7 +1008,7 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
      * @throws NullPointerException If the supplied {@code nullObject} or {@code lens} is null.
      */
     default &lt;B extends @NonNull Object&gt; Var&lt;B&gt; zoomTo( B nullObject, Lens&lt;T,B&gt; lens ) {
-<span class="fc" id="L754">        return Sprouts.factory().lensOf( this, nullObject, lens );</span>
+<span class="fc" id="L1011">        return Sprouts.factory().lensOf( this, nullObject, lens );</span>
     }
 
     /**
@@ -801,7 +1058,7 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
      * @throws NullPointerException If the supplied type, nullObject, or lens is null.
      */
     default &lt;B extends @NonNull Object, V extends B&gt; Var&lt;B&gt; zoomTo( Class&lt;B&gt; type, V nullObject, Lens&lt;T,B&gt; lens ) {
-<span class="fc" id="L804">        return Sprouts.factory().lensOf( this, type, nullObject, lens );</span>
+<span class="fc" id="L1061">        return Sprouts.factory().lensOf( this, type, nullObject, lens );</span>
     }
 
     /**
@@ -832,7 +1089,7 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
      * @return A new Var that acts as a lens focusing on the specified nullable field of the parent object.
      */
     default &lt;B extends @Nullable Object&gt; Var&lt;B&gt; zoomToNullable( Class&lt;B&gt; type, Function&lt;T,B&gt; getter, BiFunction&lt;T,B,T&gt; wither ) {
-<span class="fc" id="L835">        return this.zoomToNullable( type, Lens.of(getter, wither) );</span>
+<span class="fc" id="L1092">        return this.zoomToNullable( type, Lens.of(getter, wither) );</span>
     }
 
     /**
@@ -877,7 +1134,7 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
      * @throws NullPointerException If the type or lens is null.
      */
     default &lt;B extends @Nullable Object&gt; Var&lt;B&gt; zoomToNullable( Class&lt;B&gt; type, Lens&lt;T,B&gt; lens ) {
-<span class="fc" id="L880">        return Sprouts.factory().lensOfNullable(type, this, lens);</span>
+<span class="fc" id="L1137">        return Sprouts.factory().lensOfNullable(type, this, lens);</span>
     }
 
     /**
@@ -992,9 +1249,9 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
      * @see #projectToNullable(Class, Function, Function) for nullable projections.
      */
     default &lt;B&gt; Var&lt;B&gt; projectTo( Function&lt;T,B&gt; getter, Function&lt;B,T&gt; setter ) {
-<span class="fc" id="L995">        Objects.requireNonNull(getter, &quot;getter must not be null&quot;);</span>
-<span class="fc" id="L996">        Objects.requireNonNull(setter, &quot;setter must not be null&quot;);</span>
-<span class="fc" id="L997">        return Sprouts.factory().projLensOf( this, getter, setter );</span>
+<span class="fc" id="L1252">        Objects.requireNonNull(getter, &quot;getter must not be null&quot;);</span>
+<span class="fc" id="L1253">        Objects.requireNonNull(setter, &quot;setter must not be null&quot;);</span>
+<span class="fc" id="L1254">        return Sprouts.factory().projLensOf( this, getter, setter );</span>
     }
 
     /**
@@ -1044,9 +1301,9 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
      * @throws NullPointerException if type, getter, or setter is null.
      */
     default &lt;B&gt; Var&lt;B&gt; projectTo( Class&lt;B&gt; type, Function&lt;T,B&gt; getter, Function&lt;B,T&gt; setter ) {
-<span class="fc" id="L1047">        Objects.requireNonNull(getter, &quot;getter must not be null&quot;);</span>
-<span class="fc" id="L1048">        Objects.requireNonNull(setter, &quot;setter must not be null&quot;);</span>
-<span class="fc" id="L1049">        return Sprouts.factory().projLensOf( this, type, getter, setter );</span>
+<span class="fc" id="L1304">        Objects.requireNonNull(getter, &quot;getter must not be null&quot;);</span>
+<span class="fc" id="L1305">        Objects.requireNonNull(setter, &quot;setter must not be null&quot;);</span>
+<span class="fc" id="L1306">        return Sprouts.factory().projLensOf( this, type, getter, setter );</span>
     }
 
     /**
@@ -1116,10 +1373,10 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
      * @throws NullPointerException if {@code nullObject} or either function is null.
      */
     default &lt;B extends @NonNull Object&gt; Var&lt;B&gt; projectTo( B nullObject, Function&lt;T,B&gt; getter, Function&lt;B,T&gt; setter ) {
-<span class="fc" id="L1119">        Objects.requireNonNull(nullObject);</span>
-<span class="fc" id="L1120">        Objects.requireNonNull(getter, &quot;getter must not be null&quot;);</span>
-<span class="fc" id="L1121">        Objects.requireNonNull(setter, &quot;setter must not be null&quot;);</span>
-<span class="fc" id="L1122">        return Sprouts.factory().projLensOf( this, nullObject, getter, setter );</span>
+<span class="fc" id="L1376">        Objects.requireNonNull(nullObject);</span>
+<span class="fc" id="L1377">        Objects.requireNonNull(getter, &quot;getter must not be null&quot;);</span>
+<span class="fc" id="L1378">        Objects.requireNonNull(setter, &quot;setter must not be null&quot;);</span>
+<span class="fc" id="L1379">        return Sprouts.factory().projLensOf( this, nullObject, getter, setter );</span>
     }
 
     /**
@@ -1171,11 +1428,11 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
      * @throws NullPointerException if {@code type}, {@code nullObject}, getter, or setter is null.
      */
     default &lt;B extends @NonNull Object, V extends B&gt; Var&lt;B&gt; projectTo( Class&lt;B&gt; type, V nullObject, Function&lt;T,B&gt; getter, Function&lt;B,T&gt; setter ) {
-<span class="fc" id="L1174">        Objects.requireNonNull(type);</span>
-<span class="fc" id="L1175">        Objects.requireNonNull(nullObject);</span>
-<span class="fc" id="L1176">        Objects.requireNonNull(getter, &quot;getter must not be null&quot;);</span>
-<span class="fc" id="L1177">        Objects.requireNonNull(setter, &quot;setter must not be null&quot;);</span>
-<span class="fc" id="L1178">        return Sprouts.factory().projLensOf( this, type, nullObject, getter, setter );</span>
+<span class="fc" id="L1431">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L1432">        Objects.requireNonNull(nullObject);</span>
+<span class="fc" id="L1433">        Objects.requireNonNull(getter, &quot;getter must not be null&quot;);</span>
+<span class="fc" id="L1434">        Objects.requireNonNull(setter, &quot;setter must not be null&quot;);</span>
+<span class="fc" id="L1435">        return Sprouts.factory().projLensOf( this, type, nullObject, getter, setter );</span>
     }
 
     /**
@@ -1246,10 +1503,10 @@ public interface Var&lt;T extends @Nullable Object&gt; extends Val&lt;T&gt;
      * @throws NullPointerException if {@code type} or either function is null.
      */
     default &lt;B extends @Nullable Object&gt; Var&lt;B&gt; projectToNullable( Class&lt;B&gt; type, Function&lt;T,B&gt; getter, Function&lt;B,T&gt; setter ) {
-<span class="fc" id="L1249">        Objects.requireNonNull(type);</span>
-<span class="fc" id="L1250">        Objects.requireNonNull(getter, &quot;getter must not be null&quot;);</span>
-<span class="fc" id="L1251">        Objects.requireNonNull(setter, &quot;setter must not be null&quot;);</span>
-<span class="fc" id="L1252">        return Sprouts.factory().projLensOfNullable(type, this, getter, setter);</span>
+<span class="fc" id="L1506">        Objects.requireNonNull(type);</span>
+<span class="fc" id="L1507">        Objects.requireNonNull(getter, &quot;getter must not be null&quot;);</span>
+<span class="fc" id="L1508">        Objects.requireNonNull(setter, &quot;setter must not be null&quot;);</span>
+<span class="fc" id="L1509">        return Sprouts.factory().projLensOfNullable(type, this, getter, setter);</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>
