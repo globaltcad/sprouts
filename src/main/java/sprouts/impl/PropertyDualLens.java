@@ -57,24 +57,28 @@ final class PropertyDualLens<A extends @Nullable Object, B extends @Nullable Obj
      * When either source property's item is {@code null}, the {@code nullObject} is returned.
      */
     static <A, B, C, V extends C> Var<C> ofProjectionWithFallback(
-            @Nullable Class<C>         type,
-            V                          nullObject,
-            Var<A>                     first,
-            Var<B>                     second,
-            BiFunction<A, B, C>        getter,
-            Function<C, Pair<A, B>>    setter
+            @Nullable Class<C>            type,
+            V                             nullObject,
+            Var<A>                        first,
+            Var<B>                        second,
+            BiFunction<A, B, @Nullable C> getter,
+            Function<C, Pair<A, B>>       setter
     ) {
         if ( type == null )
             type = Util.expectedClassFromItem(nullObject);
 
         final C fallback = nullObject;
-        BiFunction<A, B, C> safeGetter = (a, b) -> {
+        BiFunction<@Nullable A, @Nullable B, C> safeGetter = (a, b) -> {
             if ( a == null || b == null ) return fallback;
             C result;
             try {
                 result = getter.apply(a, b);
             } catch ( Exception e ) {
                 Util.sneakyThrowExceptionIfFatal(e);
+                _logError(
+                    "Dual lens failed to fetch value from source properties " +
+                    "using the provided lens getter.", e
+                );
                 return fallback;
             }
             return result != null ? result : fallback;
@@ -88,11 +92,11 @@ final class PropertyDualLens<A extends @Nullable Object, B extends @Nullable Obj
      * Creates a nullable dual projection lens.
      */
     static <A, B, C> Var<C> ofProjectionNullable(
-            Class<C>                   type,
-            Var<A>                     first,
-            Var<B>                     second,
-            BiFunction<A, B, C>        getter,
-            Function<C, Pair<A, B>>    setter
+            Class<C>                       type,
+            Var<A>                         first,
+            Var<B>                         second,
+            BiFunction<A, B, @Nullable C>  getter,
+            Function<C, Pair<A, B>>        setter
     ) {
         C initialValue;
         try {
