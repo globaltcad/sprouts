@@ -647,6 +647,45 @@ class Property_Dual_Lens_Spec extends Specification
             traceAll == [100]
     }
 
+    def 'Changes to a dual lens fires change events in the source properties through the correct channel.'()
+    {
+        given : 'Two source properties and a dual lens.'
+            var a = Var.of('a' as char)
+            var b = Var.of('b' as char)
+            var combined = Var.of(
+                String.class, a, b,
+                (x, y) -> x.toString() + " / " + y.toString(),
+                (String s) -> {
+                    var aStr = s.split(" / ")[0]
+                    var bStr = s.split(" / ")[1]
+                    return Pair.of(aStr as char, bStr as char)
+                }
+            )
+        and : 'A trace for each source.'
+            var traceA  = []
+            var traceB = []
+            Viewable.cast(a).onChange(From.ALL, it -> traceA << Pair.of(it.channel(), it.currentValue().orElseNull()))
+            Viewable.cast(b).onChange(From.ALL, it -> traceB << Pair.of(it.channel(), it.currentValue().orElseNull()))
+
+        when : 'We set the combined property on the `VIEW_MODEL` channel.'
+            combined.set(From.VIEW_MODEL, "a / y")
+        then : 'For this value, only `b` should trigger an event:'
+            traceA  == []
+            traceB == [Pair.of(From.VIEW_MODEL, 'y' as char)]
+
+        when : 'We set the combined property again on the `VIEW` channel.'
+            combined.set(From.VIEW, "x / y")
+        then : 'For this value, only `a` should trigger an event:'
+            traceA  == [Pair.of(From.VIEW, 'x' as char)]
+            traceB == [Pair.of(From.VIEW_MODEL, 'y' as char)]
+
+        when : 'We set the combined property one last time and on the `ALL` channel...'
+            combined.set(From.ALL, "X / Y")
+        then : 'Both source properties should receive the event:'
+            traceA  == [Pair.of(From.VIEW, 'x' as char), Pair.of(From.ALL, 'X' as char)]
+            traceB == [Pair.of(From.VIEW_MODEL, 'y' as char), Pair.of(From.ALL, 'Y' as char)]
+    }
+
     // ==================== Re-entrancy safety ====================
 
     def 'Setting the dual lens does not cause double-firing of change events.'()
