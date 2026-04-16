@@ -994,34 +994,6 @@ public interface SproutsFactory
     );
 
     /**
-     * Creates a non-nullable projected dual-source {@link Lens} based {@link Var} property with a
-     * guaranteed non-null fallback value, inferring the type from the null object.
-     * <p>
-     * When either source property's item is {@code null}, or when the getter would otherwise return
-     * {@code null}, the provided {@code nullObject} is used as the combined value instead.
-     *
-     * @param nullObject The guaranteed non-null fallback value returned when either source is {@code null}.
-     *                   The runtime type of this object is used as the declared type of the property.
-     * @param first      The first source {@link Var} property.
-     * @param second     The second source {@link Var} property.
-     * @param getter     {@link BiFunction} that combines the items of the two source properties into a {@code C}.
-     * @param setter     {@link Function} that splits a {@code C} back into a {@link Pair} of source values.
-     * @return A {@link Var} instance that maintains a bidirectional dual-source projection with null safety.
-     * @param <A> The item type of the first source property.
-     * @param <B> The item type of the second source property.
-     * @param <C> The non-nullable combined item type (inferred from {@code nullObject}).
-     * @throws NullPointerException if {@code nullObject}, {@code first}, {@code second},
-     *         {@code getter}, or {@code setter} is {@code null}.
-     */
-    <A extends @Nullable Object, B extends @Nullable Object, C extends @NonNull Object> Var<C> projLensOf(
-            C nullObject,
-            Var<A> first,
-            Var<B> second,
-            BiFunction<A, B, C> getter,
-            Function<C, Pair<A, B>> setter
-    );
-
-    /**
      * Creates a nullable projected dual-source {@link Lens} based {@link Var} property.
      * <p>
      * The combined property may hold {@code null} values, which is the case when the getter

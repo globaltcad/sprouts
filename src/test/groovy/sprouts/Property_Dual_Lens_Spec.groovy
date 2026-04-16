@@ -23,11 +23,12 @@ import java.time.Month
     which takes a single source property. Just as that method is the mutable analogue
     of `Val.view(Function)`, the dual lens is the mutable analogue of `Viewable.of(a, b, BiFunction)`.
 
-    There are three factory variants for creating a dual projection lens:
+    There are four factory variants for creating a dual projection lens:
 
     1. `Var.of(type, first, second, getter, setter)` — Non-nullable, explicit type
-    2. `Var.of(type, nullObject, first, second, getter, setter)` — Non-nullable with null fallback
-    3. `Var.ofNullable(type, first, second, getter, setter)` — Nullable
+    2. `Var.of(first, second, getter, setter)` — Non-nullable, type inferred from initial getter result
+    3. `Var.of(type, nullObject, first, second, getter, setter)` — Non-nullable with null fallback
+    4. `Var.ofNullable(type, first, second, getter, setter)` — Nullable
 
     This specification thoroughly tests all aspects of this combined property:
     bidirectional change propagation, property identity flags (isMutable, isView, isLens, allowsNull),

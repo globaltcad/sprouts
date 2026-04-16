@@ -376,22 +376,6 @@ public final class Sprouts implements SproutsFactory
     }
 
     @Override
-    public <A, B, C> Var<C> projLensOf(
-            C nullObject,
-            Var<A> first,
-            Var<B> second,
-            BiFunction<A, B, C> getter,
-            Function<C, Pair<A, B>> setter
-    ) {
-        Objects.requireNonNull(nullObject, "Null object must not be null");
-        Objects.requireNonNull(first, "First source property must not be null");
-        Objects.requireNonNull(second, "Second source property must not be null");
-        Objects.requireNonNull(getter, "Getter function must not be null");
-        Objects.requireNonNull(setter, "Setter function must not be null");
-        return PropertyDualLens.ofProjectionWithFallback(null, nullObject, first, second, getter, setter);
-    }
-
-    @Override
     public <A, B, C> Var<C> projLensOfNullable(
             Class<C> type,
             Var<A> first,
