@@ -1595,10 +1595,10 @@ class Property_Projection_Lenses_Spec extends Specification {
             fullName.get() == "Unknown Person"
     }
 
-    def 'A dual-source projection with inferred type from null-object works correctly.'() {
+    def 'A dual-source projection with explicit type and null-object works correctly.'() {
         reportInfo """
-            The overload that infers the declared type from the null-object's runtime class
-            is a convenience shorthand when no polymorphism is required.
+            The overload that takes an explicit Class and a null-object fallback value
+            ensures type safety and provides a default when either source is null.
         """
         given: 'Two source integer properties'
             var a = Var.ofNullable(Integer.class, null)
@@ -1606,7 +1606,7 @@ class Property_Projection_Lenses_Spec extends Specification {
 
         and: 'A combined sum property, with 0 as the null-object'
             var sum = Var.of(
-                0,   // null-object: type is inferred as Integer
+                Integer.class, 0,   // explicit type + null-object
                 a, b,
                 { x, y -> x + y },
                 { s -> Pair.of(s, 0) }
