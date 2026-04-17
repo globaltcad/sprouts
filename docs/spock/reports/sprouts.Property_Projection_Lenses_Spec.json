@@ -1099,16 +1099,16 @@
     },
   
     {
-      "id":"A dual-source projection with inferred type from null-object works correctly.",
+      "id":"A dual-source projection with explicit type and null-object works correctly.",
       "result":"PASS",
       "duration":"?",
       "iterations":{
-      "tags":{},"see":[],"extraInfo":["\n            The overload that infers the declared type from the null-object's runtime class\n            is a convenience shorthand when no polymorphism is required.\n        "]
+      "tags":{},"see":[],"extraInfo":["\n            The overload that takes an explicit Class and a null-object fallback value\n            ensures type safety and provides a default when either source is null.\n        "]
       },
       "blocks":[
         {"kind":"given","text":"Two source integer properties","code":["var a = Var.ofNullable(Integer.class, null)","var b = Var.ofNullable(Integer.class, null)"]},
 
-        {"kind":"and","text":"A combined sum property, with 0 as the null-object","code":["var sum = Var.of(","    0,   // null-object: type is inferred as Integer","    a, b,","    { x, y -> x + y },","    { s -> Pair.of(s, 0) }",")"]},
+        {"kind":"and","text":"A combined sum property, with 0 as the null-object","code":["var sum = Var.of(","    Integer.class, 0,   // explicit type + null-object","    a, b,","    { x, y -> x + y },","    { s -> Pair.of(s, 0) }",")"]},
 
         {"kind":"expect","text":"The null-object (0) is returned when sources are null","code":["sum.get() == 0"]},
 

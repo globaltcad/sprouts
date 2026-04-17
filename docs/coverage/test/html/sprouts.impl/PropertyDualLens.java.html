@@ -64,8 +64,8 @@ final class PropertyDualLens&lt;A extends @Nullable Object, B extends @Nullable 
             BiFunction&lt;A, B, @Nullable C&gt; getter,
             Function&lt;C, Pair&lt;A, B&gt;&gt;       setter
     ) {
-<span class="fc bfc" id="L67" title="All 2 branches covered.">        if ( type == null )</span>
-<span class="fc" id="L68">            type = Util.expectedClassFromItem(nullObject);</span>
+<span class="pc bpc" id="L67" title="1 of 2 branches missed.">        if ( type == null )</span>
+<span class="nc" id="L68">            type = Util.expectedClassFromItem(nullObject);</span>
 
 <span class="fc" id="L70">        final C fallback = nullObject;</span>
 <span class="fc" id="L71">        BiFunction&lt;@Nullable A, @Nullable B, C&gt; safeGetter = (a, b) -&gt; {</span>

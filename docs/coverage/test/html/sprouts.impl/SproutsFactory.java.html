@@ -994,34 +994,6 @@ public interface SproutsFactory
     );
 
     /**
-     * Creates a non-nullable projected dual-source {@link Lens} based {@link Var} property with a
-     * guaranteed non-null fallback value, inferring the type from the null object.
-     * &lt;p&gt;
-     * When either source property's item is {@code null}, or when the getter would otherwise return
-     * {@code null}, the provided {@code nullObject} is used as the combined value instead.
-     *
-     * @param nullObject The guaranteed non-null fallback value returned when either source is {@code null}.
-     *                   The runtime type of this object is used as the declared type of the property.
-     * @param first      The first source {@link Var} property.
-     * @param second     The second source {@link Var} property.
-     * @param getter     {@link BiFunction} that combines the items of the two source properties into a {@code C}.
-     * @param setter     {@link Function} that splits a {@code C} back into a {@link Pair} of source values.
-     * @return A {@link Var} instance that maintains a bidirectional dual-source projection with null safety.
-     * @param &lt;A&gt; The item type of the first source property.
-     * @param &lt;B&gt; The item type of the second source property.
-     * @param &lt;C&gt; The non-nullable combined item type (inferred from {@code nullObject}).
-     * @throws NullPointerException if {@code nullObject}, {@code first}, {@code second},
-     *         {@code getter}, or {@code setter} is {@code null}.
-     */
-    &lt;A extends @Nullable Object, B extends @Nullable Object, C extends @NonNull Object&gt; Var&lt;C&gt; projLensOf(
-            C nullObject,
-            Var&lt;A&gt; first,
-            Var&lt;B&gt; second,
-            BiFunction&lt;A, B, C&gt; getter,
-            Function&lt;C, Pair&lt;A, B&gt;&gt; setter
-    );
-
-    /**
      * Creates a nullable projected dual-source {@link Lens} based {@link Var} property.
      * &lt;p&gt;
      * The combined property may hold {@code null} values, which is the case when the getter
@@ -1479,12 +1451,12 @@ public interface SproutsFactory
      */
     @SuppressWarnings(&quot;unchecked&quot;)
     default &lt;T&gt; Tuple&lt;T&gt; tupleOf( Maybe&lt;T&gt; first, Maybe&lt;T&gt;... rest )  {
-<span class="nc" id="L1482">        T[] items = (T[]) new Object[rest.length + 1];</span>
-<span class="nc" id="L1483">        items[0] = first.orElseNull();</span>
-<span class="nc bnc" id="L1484" title="All 2 branches missed.">        for (int i = 0; i &lt; rest.length; i++) {</span>
-<span class="nc" id="L1485">            items[i + 1] = rest[i].orElseNull();</span>
+<span class="nc" id="L1454">        T[] items = (T[]) new Object[rest.length + 1];</span>
+<span class="nc" id="L1455">        items[0] = first.orElseNull();</span>
+<span class="nc bnc" id="L1456" title="All 2 branches missed.">        for (int i = 0; i &lt; rest.length; i++) {</span>
+<span class="nc" id="L1457">            items[i + 1] = rest[i].orElseNull();</span>
         }
-<span class="nc" id="L1487">        return tupleOf(Util.expectedClassFromItem(first.orElseThrowUnchecked()), items);</span>
+<span class="nc" id="L1459">        return tupleOf(Util.expectedClassFromItem(first.orElseThrowUnchecked()), items);</span>
     }
 
     /**
@@ -1606,11 +1578,11 @@ public interface SproutsFactory
      */
     @SuppressWarnings(&quot;unchecked&quot;)
     default &lt;T&gt; Tuple&lt;@Nullable T&gt; tupleOfNullable( Class&lt;T&gt; type, Maybe&lt;@Nullable T&gt;... maybes ) {
-<span class="nc" id="L1609">        T[] items = (T[]) new Object[maybes.length];</span>
-<span class="nc bnc" id="L1610" title="All 2 branches missed.">        for (int i = 0; i &lt; maybes.length; i++) {</span>
-<span class="nc" id="L1611">            items[i] = maybes[i].orElseNull();</span>
+<span class="nc" id="L1581">        T[] items = (T[]) new Object[maybes.length];</span>
+<span class="nc bnc" id="L1582" title="All 2 branches missed.">        for (int i = 0; i &lt; maybes.length; i++) {</span>
+<span class="nc" id="L1583">            items[i] = maybes[i].orElseNull();</span>
         }
-<span class="nc" id="L1613">        return tupleOfNullable(type, items);</span>
+<span class="nc" id="L1585">        return tupleOfNullable(type, items);</span>
     }
 
     /**
@@ -1650,12 +1622,12 @@ public interface SproutsFactory
      */
     @SuppressWarnings(&quot;unchecked&quot;)
     default &lt;T&gt; Tuple&lt;@Nullable T&gt; tupleOfNullable( Maybe&lt;@Nullable T&gt; first, Maybe&lt;@Nullable T&gt;... rest ) {
-<span class="nc" id="L1653">        T[] items = (T[]) new Object[rest.length + 1];</span>
-<span class="nc" id="L1654">        items[0] = first.orElseNull();</span>
-<span class="nc bnc" id="L1655" title="All 2 branches missed.">        for (int i = 0; i &lt; rest.length; i++) {</span>
-<span class="nc" id="L1656">            items[i + 1] = rest[i].orElseNull();</span>
+<span class="nc" id="L1625">        T[] items = (T[]) new Object[rest.length + 1];</span>
+<span class="nc" id="L1626">        items[0] = first.orElseNull();</span>
+<span class="nc bnc" id="L1627" title="All 2 branches missed.">        for (int i = 0; i &lt; rest.length; i++) {</span>
+<span class="nc" id="L1628">            items[i + 1] = rest[i].orElseNull();</span>
         }
-<span class="nc" id="L1658">        return tupleOfNullable(first.type(), items);</span>
+<span class="nc" id="L1630">        return tupleOfNullable(first.type(), items);</span>
     }
 
     /**
@@ -1831,7 +1803,7 @@ public interface SproutsFactory
      *  @return {@code true} if the given id is valid according to the current Sprouts implementation, {@code false} otherwise.
      */
     default boolean isValidPropertyId(String id) {
-<span class="nc bnc" id="L1834" title="All 4 branches missed.">        return id != null &amp;&amp; idPattern().matcher(id).matches();</span>
+<span class="nc bnc" id="L1806" title="All 4 branches missed.">        return id != null &amp;&amp; idPattern().matcher(id).matches();</span>
     }
 
     /**

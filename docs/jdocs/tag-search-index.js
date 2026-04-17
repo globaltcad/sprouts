@@ -1,1 +1,1 @@
-tagSearchIndex = [{"l":"Serialized Form","h":"","u":"serialized-form.html"}];updateSearchResults();
+tagSearchIndex = [{"l":"Composability:","h":"interface sprouts.Lens","d":"Section","u":"sprouts/Lens.html#composability--heading"},{"l":"Factory Method:","h":"interface sprouts.Lens","d":"Section","u":"sprouts/Lens.html#factory-method--heading"},{"l":"Serialized Form","h":"","u":"serialized-form.html"},{"l":"Usage Example:","h":"interface sprouts.Lens","d":"Section","u":"sprouts/Lens.html#usage-example--heading"}];updateSearchResults();
