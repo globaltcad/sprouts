@@ -340,7 +340,7 @@ public final class Sprouts implements SproutsFactory
         Objects.requireNonNull(second, "Second source property must not be null");
         Objects.requireNonNull(getter, "Getter function must not be null");
         Objects.requireNonNull(setter, "Setter function must not be null");
-        return PropertyDualLens.ofProjection(type, first, second, getter, setter);
+        return PropertyLens.ofDualProjection(type, first, second, getter, setter);
     }
 
     @Override
@@ -354,7 +354,7 @@ public final class Sprouts implements SproutsFactory
         Objects.requireNonNull(second, "Second source property must not be null");
         Objects.requireNonNull(getter, "Getter function must not be null");
         Objects.requireNonNull(setter, "Setter function must not be null");
-        return PropertyDualLens.ofProjection(null, first, second, getter, setter);
+        return PropertyLens.ofDualProjection(null, first, second, getter, setter);
     }
 
     @Override
@@ -372,7 +372,7 @@ public final class Sprouts implements SproutsFactory
         Objects.requireNonNull(second, "Second source property must not be null");
         Objects.requireNonNull(getter, "Getter function must not be null");
         Objects.requireNonNull(setter, "Setter function must not be null");
-        return PropertyDualLens.ofProjectionWithFallback(type, nullObject, first, second, getter, setter);
+        return PropertyLens.ofDualProjectionWithFallback(type, nullObject, first, second, getter, setter);
     }
 
     @Override
@@ -388,7 +388,7 @@ public final class Sprouts implements SproutsFactory
         Objects.requireNonNull(second, "Second source property must not be null");
         Objects.requireNonNull(getter, "Getter function must not be null");
         Objects.requireNonNull(setter, "Setter function must not be null");
-        return PropertyDualLens.ofProjectionNullable(type, first, second, getter, setter);
+        return PropertyLens.ofDualProjectionNullable(type, first, second, getter, setter);
     }
 
     @Override public <T> Var<T> varOfNullable(Class<T> type, @Nullable T item ) {

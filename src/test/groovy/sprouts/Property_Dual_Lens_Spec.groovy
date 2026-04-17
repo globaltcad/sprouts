@@ -4,7 +4,7 @@ import spock.lang.Narrative
 import spock.lang.Specification
 import spock.lang.Subject
 import spock.lang.Title
-import sprouts.impl.PropertyDualLens
+import sprouts.impl.PropertyLens
 
 import java.lang.ref.WeakReference
 import java.time.LocalDate
@@ -35,7 +35,7 @@ import java.time.Month
     string representation, change listener lifecycle, re-entrancy safety, and memory safety.
 
 ''')
-@Subject([PropertyDualLens, Var, Pair])
+@Subject([PropertyLens, Var, Pair])
 class Property_Dual_Lens_Spec extends Specification
 {
 
