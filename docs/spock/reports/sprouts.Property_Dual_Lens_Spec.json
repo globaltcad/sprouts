@@ -1,0 +1,916 @@
+{
+  "className":"sprouts.Property_Dual_Lens_Spec",
+  "title":"Property Dual Lens",
+  "narrative":"A dual projection lens is a special kind of property (a `Var`) that projects\n    two source properties of types A and B into a single combined property of type C.\n    Changes to either source property are automatically propagated to the combined property\n    via a getter BiFunction, and setting a new combined value is propagated back to both\n    source properties via a setter Function that returns a Pair of the two source values.\n\n    This is the two-source generalization of a regular projection lens (`projectTo`),\n    which takes a single source property. Just as that method is the mutable analogue\n    of `Val.view(Function)`, the dual lens is the mutable analogue of `Viewable.of(a, b, BiFunction)`.\n\n    There are four factory variants for creating a dual projection lens:\n\n    1. `Var.of(type, first, second, getter, setter)` — Non-nullable, explicit type\n    2. `Var.of(first, second, getter, setter)` — Non-nullable, type inferred from initial getter result\n    3. `Var.of(type, nullObject, first, second, getter, setter)` — Non-nullable with null fallback\n    4. `Var.ofNullable(type, first, second, getter, setter)` — Nullable\n\n    This specification thoroughly tests all aspects of this combined property:\n    bidirectional change propagation, property identity flags (isMutable, isView, isLens, allowsNull),\n    string representation, change listener lifecycle, re-entrancy safety, and memory safety.",
+  "subjects":["sprouts.impl.PropertyDualLens","sprouts.Var","sprouts.Pair"],
+  "statistics":{
+    "runs":"40",
+    "successRate":"100.0%",
+    "failures":"0",
+    "errors":"0",
+    "skipped":"0",
+    "duration":"?"
+  },
+  "headers":[],"tags":{},"see":[],
+  "features":[ 
+    {
+      "id":"A dual lens combines two source properties into one and propagates changes from both sources.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A dual projection lens observes two source properties and computes its value\n            from them using a getter BiFunction. When either source property changes,\n            the combined value is automatically recomputed.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two source properties for first and last name.","code":["var firstName = Var.of(\"Jane\")","var lastName  = Var.of(\"Doe\")"]},
+
+        {"kind":"and","text":"A dual lens combining them into a full name.","code":["var fullName = Var.of(","    String.class, firstName, lastName,","    (f, l) -> f + \" \" + l,","    name -> {","        def parts = name.split(\" \", 2)","        Pair.of(parts[0], parts.length > 1 ? parts[1] : \"\")","    }",")"]},
+
+        {"kind":"expect","text":"The initial combined value is correct.","code":["fullName.get() == \"Jane Doe\""]},
+
+        {"kind":"when","text":"We change the first source property.","code":["firstName.set(\"John\")"]},
+
+        {"kind":"then","text":"The combined value updates automatically.","code":["fullName.get() == \"John Doe\""]},
+
+        {"kind":"when","text":"We change the second source property.","code":["lastName.set(\"Smith\")"]},
+
+        {"kind":"then","text":"The combined value updates again.","code":["fullName.get() == \"John Smith\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Setting a dual lens writes the new value back to both source properties via the setter.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A dual lens is mutable. When you call `set(newValue)` on the combined property,\n            the setter Function is invoked to split the new value into a Pair of source values,\n            and then both source properties are updated accordingly.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two source properties for first and last name.","code":["var firstName = Var.of(\"Jane\")","var lastName  = Var.of(\"Doe\")"]},
+
+        {"kind":"and","text":"A dual lens combining them.","code":["var fullName = Var.of(","    String.class, firstName, lastName,","    (f, l) -> f + \" \" + l,","    name -> {","        def parts = name.split(\" \", 2)","        Pair.of(parts[0], parts.length > 1 ? parts[1] : \"\")","    }",")"]},
+
+        {"kind":"when","text":"We set the combined property to a new full name.","code":["fullName.set(\"Alice Wonderland\")"]},
+
+        {"kind":"then","text":"Both source properties are updated.","code":["firstName.get() == \"Alice\"","lastName.get() == \"Wonderland\""]},
+
+        {"kind":"and","text":"The combined value reflects the new state.","code":["fullName.get() == \"Alice Wonderland\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Changes to both sources fire change events on the dual lens.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Each time either source property changes, the dual lens fires a change event.\n            This allows observers to react to any state change in either source.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two source properties.","code":["var x = Var.of(3.0d)","var y = Var.of(4.0d)"]},
+
+        {"kind":"and","text":"A dual lens computing the distance from the origin.","code":["var distance = Var.of(","    Double.class, x, y,","    (a, b) -> Math.sqrt(a * a + b * b),","    d -> Pair.of(d / Math.sqrt(2.0), d / Math.sqrt(2.0))",")"]},
+
+        {"kind":"and","text":"A trace list for recording change events.","code":["var trace = []","Viewable.cast(distance).onChange(From.ALL, it -> trace << it.currentValue().orElseNull())"]},
+
+        {"kind":"when","text":"We change x.","code":["x.set(0.0d)"]},
+
+        {"kind":"then","text":"The combined value updates and fires an event.","code":["distance.get() == 4.0d","trace == [4.0d]"]},
+
+        {"kind":"when","text":"We change y.","code":["y.set(0.0d)"]},
+
+        {"kind":"then","text":"Another event fires for the y change.","code":["distance.get() == 0.0d","trace == [4.0d, 0.0d]"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Setting the dual lens directly also fires a change event on the dual lens.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Besides reacting to source property changes, a dual lens also fires a change\n            event when set directly via `set(newValue)`. This keeps observers consistent\n            whether the change originates from a source or from the combined property itself.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two source properties.","code":["var a = Var.of(10)","var b = Var.of(20)"]},
+
+        {"kind":"and","text":"A dual lens computing the sum.","code":["var sum = Var.of(","    Integer.class, a, b,","    (x, y) -> x + y,","    (Integer s) -> Pair.of(s.intdiv(2), s - s.intdiv(2))",")"]},
+
+        {"kind":"and","text":"A trace recording change events.","code":["var trace = []","Viewable.cast(sum).onChange(From.ALL, it -> trace << it.currentValue().orElseNull())"]},
+
+        {"kind":"when","text":"We set the combined property directly.","code":["sum.set(100)"]},
+
+        {"kind":"then","text":"A change event is fired.","code":["trace == [100]","a.get() == 50","b.get() == 50"]},
+
+        {"kind":"when","text":"We change a source.","code":["a.set(0)"]},
+
+        {"kind":"then","text":"Another change event fires.","code":["trace == [100, 50]"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"No change event fires when the combined value does not actually change.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The dual lens follows the same contract as regular properties: change events\n            are only fired when the combined value actually changes. If a source property\n            is updated but the getter still returns the same combined value, no event fires.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A source property used as a selector.","code":["var flag = Var.of(true)","var constant = Var.of(42)"]},
+
+        {"kind":"and","text":"A dual lens that ignores the flag and always returns the constant.","code":["var combined = Var.of(","    Integer.class, flag, constant,","    (f, c) -> c,","    v -> Pair.of(flag.get(), v)",")"]},
+
+        {"kind":"and","text":"A trace recording events.","code":["var trace = []","Viewable.cast(combined).onChange(From.ALL, it -> trace << it.currentValue().orElseNull())"]},
+
+        {"kind":"when","text":"We change the flag, but the combined value (the constant) stays the same.","code":["flag.set(false)"]},
+
+        {"kind":"then","text":"No event fires because the combined value did not change.","code":["trace == []","combined.get() == 42"]},
+
+        {"kind":"when","text":"We change the constant.","code":["constant.set(99)"]},
+
+        {"kind":"then","text":"Now an event fires.","code":["trace == [99]"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The type-inferred Var.of(first, second, getter, setter) variant also works correctly.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            There is an overload of `Var.of` that infers the combined type from the initial\n            value returned by the getter, without requiring an explicit Class argument.\n            This is more concise but requires the initial getter result to be non-null.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two source properties.","code":["var month = Var.of(Month.MARCH)","var day   = Var.of(15)"]},
+
+        {"kind":"and","text":"A dual lens using type inference.","code":["var label = Var.of(","    month, day,","    (m, d) -> m.name() + \"-\" + d,","    s -> {","        def parts = s.split(\"-\")","        Pair.of(Month.valueOf(parts[0]), Integer.parseInt(parts[1]))","    }",")"]},
+
+        {"kind":"expect","text":"The combined value is correctly computed.","code":["label.get() == \"MARCH-15\"","label.type() == String.class"]},
+
+        {"kind":"when","text":"We set the combined property.","code":["label.set(\"JULY-4\")"]},
+
+        {"kind":"then","text":"Both sources are updated.","code":["month.get() == Month.JULY","day.get() == 4"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The nullObject overload returns the fallback when either source is null.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            When either source property holds null, the getter might fail or return null.\n            The nullObject overload of `Var.of` wraps the getter to return the fallback\n            value in that case, ensuring the combined property is always non-null.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two nullable source properties, one initially null.","code":["var first  = Var.ofNull(String.class)","var second = Var.of(\"world\")"]},
+
+        {"kind":"and","text":"A dual lens with a fallback value.","code":["var combined = Var.of(","    String.class, \"(empty)\",","    first, second,","    (a, b) -> a + \" \" + b,","    s -> {","        def parts = s.split(\" \", 2)","        Pair.of(parts[0], parts.length > 1 ? parts[1] : \"\")","    }",")"]},
+
+        {"kind":"expect","text":"The combined value is the fallback because first is null.","code":["combined.get() == \"(empty)\"","combined.allowsNull() == false"]},
+
+        {"kind":"when","text":"We set the first source to a real value.","code":["first.set(\"hello\")"]},
+
+        {"kind":"then","text":"The combined value is now computed normally.","code":["combined.get() == \"hello world\""]},
+
+        {"kind":"when","text":"We null out the first source again.","code":["first.set(null)"]},
+
+        {"kind":"then","text":"The combined value falls back to the fallback value.","code":["combined.get() == \"(empty)\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The Var.ofNullable variant allows the combined property to hold null.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            When a conversion is partial — for example when trying to parse two strings\n            into a LocalDate — the getter may legitimately return null. The `ofNullable`\n            factory creates a dual lens that allows null as its current value.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two string source properties representing year and month.","code":["var year  = Var.of(\"2024\")","var month = Var.of(\"13\")  // invalid month"]},
+
+        {"kind":"and","text":"A nullable dual lens parsing them into a LocalDate.","code":["var date = Var.ofNullable(","    LocalDate.class, year, month,","    (y, m) -> {","        try { return LocalDate.of(Integer.parseInt(y), Integer.parseInt(m), 1) }","        catch (Exception e) { return null }","    },","    d -> d == null","        ? Pair.of(\"\", \"\")","        : Pair.of(String.valueOf(d.getYear()), String.valueOf(d.getMonthValue()))",")"]},
+
+        {"kind":"expect","text":"The combined value is null because month 13 is invalid.","code":["date.orElseNull() == null","date.allowsNull() == true"]},
+
+        {"kind":"when","text":"We fix the month.","code":["month.set(\"3\")"]},
+
+        {"kind":"then","text":"The combined value is now a valid date.","code":["date.get() == LocalDate.of(2024, 3, 1)"]},
+
+        {"kind":"when","text":"We set the combined property to null explicitly.","code":["date.set(null)"]},
+
+        {"kind":"then","text":"Both sources are updated with the null-handling from the setter.","code":["year.get() == \"\"","month.get() == \"\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A dual lens is mutable, a lens, and not a view.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Like a regular property lens (zoomTo/projectTo), a dual lens is mutable\n            and identifies as a lens. It is not a view, because it supports bidirectional\n            data flow — you can both read and write through it.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two source properties.","code":["var a = Var.of(\"hello\")","var b = Var.of(\"world\")"]},
+
+        {"kind":"and","text":"A dual lens, a view of one of the sources, and a regular property.","code":["var dualLens = Var.of(","    String.class, a, b,","    (x, y) -> x + \" \" + y,","    s -> { def p = s.split(\" \"); Pair.of(p[0], p.length > 1 ? p[1] : \"\") }",")","var view           = a.viewAsString { it.toUpperCase() }","var regularVar     = Var.of(\"regular\")","var immutableVal   = Val.of(\"immutable\")"]},
+
+        {"kind":"expect","text":"","code":["dualLens.isMutable() == true","dualLens.isLens()    == true","dualLens.isView()    == false","view.isMutable() == true","view.isLens()    == false","view.isView()    == true","regularVar.isMutable() == true","regularVar.isLens()    == false","regularVar.isView()    == false","immutableVal.isMutable() == false","immutableVal.isLens()    == false","immutableVal.isView()    == false"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A non-nullable dual lens reports allowsNull() == false, a nullable one reports true.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var a = Var.of(1)","var b = Var.of(2)","var nonNull = Var.of(","    Integer.class, a, b,","    (x, y) -> x + y,","    (Integer s) -> Pair.of(s.intdiv(2), s - s.intdiv(2))",")","var nullable = Var.ofNullable(","    Integer.class, a, b,","    (x, y) -> x + y,","    s -> s == null ? Pair.of(0, 0) : Pair.of(s / 2, s - s / 2)",")","var withFallback = Var.of(","    Integer.class, 0,","    a, b,","    (x, y) -> x + y,","    (Integer s) -> Pair.of(s.intdiv(2), s - s.intdiv(2))",")"]},
+
+        {"kind":"expect","text":"","code":["!nonNull.allowsNull()","nullable.allowsNull()","!withFallback.allowsNull()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A dual lens has a recognizable string representation.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A dual lens produces a distinct string representation that starts with \"DualLens\",\n            followed by the type in angle brackets and the current value in square brackets.\n            This makes it easy to identify in logs and debug output.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two integer source properties and a dual lens summing them.","code":["var a = Var.of(10)","var b = Var.of(32)","var sum = Var.of(","    Integer.class, a, b,","    (x, y) -> x + y,","    (Integer s) -> Pair.of(s.intdiv(2), s - s.intdiv(2))",")"]},
+
+        {"kind":"expect","text":"The string representation follows the DualLens<Type>[value] pattern.","code":["sum.toString() == \"DualLens<Integer>[42]\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A dual lens with a custom ID includes that ID in its string representation.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two source properties and a dual lens with a custom ID.","code":["var first  = Var.of(\"Ada\")","var last   = Var.of(\"Lovelace\")","var lens = Var.of(","    String.class, first, last,","    (f, l) -> f + \" \" + l,","    s -> { def p = s.split(\" \"); Pair.of(p[0], p.length > 1 ? p[1] : \"\") }",").withId(\"full_name\")"]},
+
+        {"kind":"expect","text":"The ID appears in the string representation.","code":["lens.toString() == 'DualLens<String>[full_name=\"Ada Lovelace\"]'"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A nullable dual lens has a \"?\" suffix on the type in its string representation.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two source properties and a nullable dual lens.","code":["var a = Var.of(\"2024\")","var b = Var.of(\"99\")","var lens = Var.ofNullable(","    Integer.class, a, b,","    (x, y) -> { try { return Integer.parseInt(x) + Integer.parseInt(y) } catch (e) { return null } },","    v -> v == null ? Pair.of(\"0\", \"0\") : Pair.of(String.valueOf(v / 2), String.valueOf(v - v / 2))",")"]},
+
+        {"kind":"expect","text":"The type has a \"?\" to indicate nullability.","code":["lens.toString() == 'DualLens<Integer?>[2123]'"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A dual lens over String values quotes the value in its toString output.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var a = Var.of(\"hello\")","var b = Var.of(\"world\")","var lens = Var.of(","    String.class, a, b,","    (x, y) -> x + \" \" + y,","    s -> { def p = s.split(\" \"); Pair.of(p[0], p.length > 1 ? p[1] : \"\") }",")"]},
+
+        {"kind":"expect","text":"String values are wrapped in double quotes in the representation.","code":["lens.toString() == 'DualLens<String>[\"hello world\"]'"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"withId() produces a dual lens copy with the new ID while preserving all functionality.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Calling `withId(id)` on a dual lens returns a new dual lens that reports the given ID\n            in its `id()` method and in its `toString()` output. The new lens is still connected\n            to both source properties — changes propagate through it just as before.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two source properties.","code":["var x = Var.of(6)","var y = Var.of(7)"]},
+
+        {"kind":"and","text":"A dual lens and a renamed copy.","code":["var product = Var.of(","    Integer.class, x, y,","    (a, b) -> a * b,","    p -> Pair.of(p, 1)",")","var namedProduct = product.withId(\"the_product\")"]},
+
+        {"kind":"expect","text":"The original has a default ID, the copy has the custom ID.","code":["product.id().isEmpty() || product.id() == \"?\"","namedProduct.id() == \"the_product\"","namedProduct.toString().startsWith(\"DualLens<Integer>[the_product=\")"]},
+
+        {"kind":"when","text":"We change a source property.","code":["x.set(10)"]},
+
+        {"kind":"then","text":"The renamed copy still reflects the updated value.","code":["namedProduct.get() == 70"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Observers registered on a dual lens are notified when either source changes.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            An observer can be attached to a dual lens with `onChange`. It will be notified\n            whenever the combined value changes — regardless of which source triggered the change.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two source properties.","code":["var celsius    = Var.of(0.0d)","var humidity   = Var.of(50.0d)"]},
+
+        {"kind":"and","text":"A dual lens combining them into a comfort-score string.","code":["var label = Var.of(","    String.class, celsius, humidity,","    (c, h) -> String.format(\"%.1f°C / %.0f%%\", c, h),","    s -> Pair.of(celsius.get(), humidity.get())   // simplified setter",")"]},
+
+        {"kind":"and","text":"A trace list.","code":["var trace = []","Viewable.cast(label).onChange(From.ALL, it -> trace << it.currentValue().orElseNull())"]},
+
+        {"kind":"when","text":"We change the celsius source.","code":["celsius.set(20.0d)"]},
+
+        {"kind":"then","text":"","code":["trace == [\"20.0°C / 50%\"]"]},
+
+        {"kind":"when","text":"We change the humidity source.","code":["humidity.set(65.0d)"]},
+
+        {"kind":"then","text":"","code":["trace == [\"20.0°C / 50%\", \"20.0°C / 65%\"]"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Observers can be subscribed and unsubscribed from a dual lens.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Like any property, a dual lens supports subscribe and unsubscribe.\n            Once unsubscribed, the observer must not receive further notifications.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two source properties and a dual lens.","code":["var a = Var.of(1)","var b = Var.of(2)","var combined = Var.of(","    Integer.class, a, b,","    (x, y) -> x + y,","    (Integer s) -> Pair.of(s.intdiv(2), s - s.intdiv(2))",")"]},
+
+        {"kind":"and","text":"A trace and an observer.","code":["var trace = []","Observer observer = { trace << combined.get() }"]},
+
+        {"kind":"when","text":"We subscribe the observer and change a source.","code":["Viewable.cast(combined).subscribe(observer)","a.set(10)"]},
+
+        {"kind":"then","text":"The observer is notified.","code":["trace == [12]"]},
+
+        {"kind":"when","text":"We unsubscribe the observer and change a source.","code":["Viewable.cast(combined).unsubscribe(observer)","a.set(100)"]},
+
+        {"kind":"then","text":"The observer is NOT notified.","code":["trace == [12]"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Action listeners can be subscribed and unsubscribed from a dual lens using onChange.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two source properties and a dual lens.","code":["var a = Var.of(\"foo\")","var b = Var.of(\"bar\")","var combined = Var.of(","    String.class, a, b,","    (x, y) -> x + \"-\" + y,","    s -> { def p = s.split(\"-\"); Pair.of(p[0], p.length > 1 ? p[1] : \"\") }",")"]},
+
+        {"kind":"and","text":"A trace and an action.","code":["var trace = []","Action<ValDelegate<String>> action = { trace << it.currentValue().orElseNull() }"]},
+
+        {"kind":"expect","text":"No change listeners initially.","code":["combined.numberOfChangeListeners() == 0"]},
+
+        {"kind":"when","text":"We subscribe the action.","code":["Viewable.cast(combined).onChange(From.ALL, action)"]},
+
+        {"kind":"then","text":"One change listener is registered.","code":["combined.numberOfChangeListeners() == 1"]},
+
+        {"kind":"when","text":"We change a source.","code":["a.set(\"baz\")"]},
+
+        {"kind":"then","text":"The action is notified.","code":["trace == [\"baz-bar\"]"]},
+
+        {"kind":"when","text":"We unsubscribe the action.","code":["Viewable.cast(combined).unsubscribe(action)","a.set(\"qux\")"]},
+
+        {"kind":"then","text":"The action is not notified and the listener count drops back to 0.","code":["trace == [\"baz-bar\"]","combined.numberOfChangeListeners() == 0"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Change events propagate through the correct channel.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The channel on which a change is fired (VIEW_MODEL, VIEW, ALL) is preserved\n            when the dual lens propagates events to its own listeners.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two source properties.","code":["var a = Var.of(1)","var b = Var.of(2)"]},
+
+        {"kind":"and","text":"A dual lens.","code":["var combined = Var.of(","    Integer.class, a, b,","    (x, y) -> x + y,","    (Integer s) -> Pair.of(s.intdiv(2), s - s.intdiv(2))",")"]},
+
+        {"kind":"and","text":"Traces per channel.","code":["var traceVM  = []","var traceV   = []","var traceAll = []","Viewable.cast(combined).onChange(From.VIEW_MODEL, it -> traceVM  << it.currentValue().orElseNull())","Viewable.cast(combined).onChange(From.VIEW,       it -> traceV   << it.currentValue().orElseNull())","Viewable.cast(combined).onChange(From.ALL,        it -> traceAll << it.currentValue().orElseNull())"]},
+
+        {"kind":"when","text":"We fire a VIEW_MODEL change through source a.","code":["a.set(From.VIEW_MODEL, 10)"]},
+
+        {"kind":"then","text":"","code":["traceVM  == [12]","traceV   == []","traceAll == [12]"]},
+
+        {"kind":"when","text":"We fire a VIEW change through source b.","code":["b.set(From.VIEW, 20)"]},
+
+        {"kind":"then","text":"","code":["traceVM  == [12]","traceV   == [30]","traceAll == [12, 30]"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Setting the dual lens directly fires change events through the correct channel.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two source properties and a dual lens.","code":["var a = Var.of(1)","var b = Var.of(2)","var combined = Var.of(","    Integer.class, a, b,","    (x, y) -> x + y,","    (Integer s) -> Pair.of(s.intdiv(2), s - s.intdiv(2))",")"]},
+
+        {"kind":"and","text":"A channel-specific trace.","code":["var traceVM  = []","var traceAll = []","Viewable.cast(combined).onChange(From.VIEW_MODEL, it -> traceVM  << it.currentValue().orElseNull())","Viewable.cast(combined).onChange(From.ALL,        it -> traceAll << it.currentValue().orElseNull())"]},
+
+        {"kind":"when","text":"We set the combined property on the VIEW_MODEL channel.","code":["combined.set(From.VIEW_MODEL, 100)"]},
+
+        {"kind":"then","text":"","code":["traceVM  == [100]","traceAll == [100]"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Changes to a dual lens fires change events in the source properties through the correct channel.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two source properties and a dual lens.","code":["var a = Var.of('a' as char)","var b = Var.of('b' as char)","var combined = Var.of(","    String.class, a, b,","    (x, y) -> x.toString() + \" / \" + y.toString(),","    (String s) -> {","        var aStr = s.split(\" / \")[0]","        var bStr = s.split(\" / \")[1]","        return Pair.of(aStr as char, bStr as char)","    }",")"]},
+
+        {"kind":"and","text":"A trace for each source.","code":["var traceA  = []","var traceB = []","Viewable.cast(a).onChange(From.ALL, it -> traceA << Pair.of(it.channel(), it.currentValue().orElseNull()))","Viewable.cast(b).onChange(From.ALL, it -> traceB << Pair.of(it.channel(), it.currentValue().orElseNull()))"]},
+
+        {"kind":"when","text":"We set the combined property on the `VIEW_MODEL` channel.","code":["combined.set(From.VIEW_MODEL, \"a / y\")"]},
+
+        {"kind":"then","text":"For this value, only `b` should trigger an event:","code":["traceA  == []","traceB == [Pair.of(From.VIEW_MODEL, 'y' as char)]"]},
+
+        {"kind":"when","text":"We set the combined property again on the `VIEW` channel.","code":["combined.set(From.VIEW, \"x / y\")"]},
+
+        {"kind":"then","text":"For this value, only `a` should trigger an event:","code":["traceA  == [Pair.of(From.VIEW, 'x' as char)]","traceB == [Pair.of(From.VIEW_MODEL, 'y' as char)]"]},
+
+        {"kind":"when","text":"We set the combined property one last time and on the `ALL` channel...","code":["combined.set(From.ALL, \"X / Y\")"]},
+
+        {"kind":"then","text":"Both source properties should receive the event:","code":["traceA  == [Pair.of(From.VIEW, 'x' as char), Pair.of(From.ALL, 'X' as char)]","traceB == [Pair.of(From.VIEW_MODEL, 'y' as char), Pair.of(From.ALL, 'Y' as char)]"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Setting the dual lens does not cause double-firing of change events.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            When the dual lens sets new values on both source properties, the source properties\n            will fire their own change events. This would normally trigger the lens's parent-change\n            listener, causing a second combined-value update.\n\n            The implementation guards against this with a `_settingFromSelf` flag. When the lens\n            is in the process of writing back to the sources, it ignores incoming parent-change\n            notifications so each `set()` call results in exactly one combined change event.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two source properties and a dual lens.","code":["var a = Var.of(10)","var b = Var.of(20)","var combined = Var.of(","    Integer.class, a, b,","    (x, y) -> x + y,","    (Integer s) -> Pair.of(s.intdiv(2), s - s.intdiv(2))",")"]},
+
+        {"kind":"and","text":"A trace counting how many times the event fires.","code":["var fireCount = 0","Viewable.cast(combined).onChange(From.ALL, it -> fireCount++)"]},
+
+        {"kind":"when","text":"We set the combined value once.","code":["combined.set(100)"]},
+
+        {"kind":"then","text":"The change event fires exactly once (not twice, once per source).","code":["fireCount == 1","a.get() == 50","b.get() == 50"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The re-entrancy guard prevents observers from seeing an inconsistent intermediate state.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Without the `_settingFromSelf` guard, a single `set()` on the dual lens would\n            write to the first source, trigger a re-entrant parent-change callback that\n            reads BOTH parents (observing `first = new, second = old` — a garbage\n            intermediate combined value), then write to the second source and trigger yet\n            another event. The guard collapses this back into a single, transactional\n            event with the correct final combined value.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two source properties and a dual lens.","code":["var a = Var.of(10)","var b = Var.of(20)","var combined = Var.of(","    Integer.class, a, b,","    (x, y) -> x * 100 + y,","    (Integer s) -> Pair.of(s.intdiv(100), s % 100)",")"]},
+
+        {"kind":"and","text":"An observer recording every combined value it sees.","code":["var seen = []","Viewable.cast(combined).onChange(From.ALL, it -> seen << it.currentValue().orElseNull())"]},
+
+        {"kind":"when","text":"We update the combined value in one call.","code":["combined.set(4050)"]},
+
+        {"kind":"then","text":"The observer sees exactly one event with the correct final value.","code":["seen == [4050]"]},
+
+        {"kind":"and","text":"Neither parent update exposed a transient \"new-first + old-second\" value like 4020 or 1050.","code":["!seen.contains(4020)","!seen.contains(1050)"]},
+
+        {"kind":"and","text":"Both parents hold the new split values.","code":["a.get() == 40","b.get() == 50"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Observers on the individual source properties still see their own updates during a dual lens set.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `_settingFromSelf` guard only suppresses the dual lens's own re-entrant\n            callback. Observers subscribed directly to the source properties must still\n            receive both of their individual updates — they are not part of the\n            transactional boundary of the dual lens.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two source properties with their own direct observers.","code":["var a = Var.of(1)","var b = Var.of(2)","var aSeen = []","var bSeen = []","Viewable.cast(a).onChange(From.ALL, it -> aSeen << it.currentValue().orElseNull())","Viewable.cast(b).onChange(From.ALL, it -> bSeen << it.currentValue().orElseNull())"]},
+
+        {"kind":"and","text":"A dual lens over the two sources.","code":["var combined = Var.of(","    Integer.class, a, b,","    (x, y) -> x + y,","    (Integer s) -> Pair.of(s.intdiv(2), s - s.intdiv(2))",")"]},
+
+        {"kind":"when","text":"We set a new combined value.","code":["combined.set(20)"]},
+
+        {"kind":"then","text":"Each direct source observer sees its own update.","code":["aSeen == [10]","bSeen == [10]"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Calling fireChange on a dual lens notifies its observers with the current value.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Explicitly invoking `fireChange(channel)` on a dual lens should emit a change\n            event to all subscribed observers, carrying the current combined value.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A dual lens over two source properties.","code":["var a = Var.of(\"foo\")","var b = Var.of(\"bar\")","var combined = Var.of(","    String.class, a, b,","    (x, y) -> x + y,","    s -> Pair.of(s, \"\")",")"]},
+
+        {"kind":"and","text":"A trace listener.","code":["var trace = []","Viewable.cast(combined).onChange(From.ALL, it -> trace << it.currentValue().orElseNull())"]},
+
+        {"kind":"when","text":"We manually fire a change event.","code":["combined.fireChange(From.VIEW_MODEL)"]},
+
+        {"kind":"then","text":"The observer is notified with the current combined value.","code":["trace == [\"foobar\"]"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Dual projection factories reject null arguments.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two valid source properties.","code":["var a = Var.of(1)","var b = Var.of(2)"]},
+
+        {"kind":"when","text":"The non-null explicit-type factory is called with a null first source.","code":["Var.of(Integer.class, (Var<Integer>) null, b, (x, y) -> x + y, (Integer s) -> Pair.of(s, 0))"]},
+
+        {"kind":"then","text":"","code":["thrown(NullPointerException)"]},
+
+        {"kind":"when","text":"It is called with a null second source.","code":["Var.of(Integer.class, a, (Var<Integer>) null, (x, y) -> x + y, (Integer s) -> Pair.of(s, 0))"]},
+
+        {"kind":"then","text":"","code":["thrown(NullPointerException)"]},
+
+        {"kind":"when","text":"It is called with a null getter.","code":["Var.of(Integer.class, a, b, (java.util.function.BiFunction<Integer, Integer, Integer>) null, (Integer s) -> Pair.of(s, 0))"]},
+
+        {"kind":"then","text":"","code":["thrown(NullPointerException)"]},
+
+        {"kind":"when","text":"It is called with a null setter.","code":["Var.of(Integer.class, a, b, (x, y) -> x + y, (java.util.function.Function<Integer, Pair<Integer, Integer>>) null)"]},
+
+        {"kind":"then","text":"","code":["thrown(NullPointerException)"]},
+
+        {"kind":"when","text":"The nullable factory is called with null sources.","code":["Var.ofNullable(Integer.class, (Var<Integer>) null, b, (x, y) -> x + y, (Integer s) -> Pair.of(s, 0))"]},
+
+        {"kind":"then","text":"","code":["thrown(NullPointerException)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A dual lens that fails construction due to null initial value does not leak weak listeners onto its sources.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The constructor validates the initial value (and the property id) and must\n            do so BEFORE wiring weak change listeners onto the source properties.\n            Otherwise a failed construction would still leave orphan listener slots\n            referencing a soon-to-be-garbage lens instance on both sources.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two source properties and a getter that returns null.","code":["var a = Var.of(1)","var b = Var.of(2)"]},
+
+        {"kind":"expect","text":"Neither source has any change listeners registered.","code":["a.numberOfChangeListeners() == 0","b.numberOfChangeListeners() == 0"]},
+
+        {"kind":"when","text":"We try to build a non-null dual lens whose getter yields null.","code":["Var.of(Integer.class, a, b, (x, y) -> (Integer) null, (Integer s) -> Pair.of(s, 0))"]},
+
+        {"kind":"then","text":"Construction fails.","code":["thrown(Exception)"]},
+
+        {"kind":"and","text":"No change listeners were left behind on either source.","code":["a.numberOfChangeListeners() == 0","b.numberOfChangeListeners() == 0"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"numberOfChangeListeners tracks registered listeners correctly.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two source properties and a dual lens.","code":["var a = Var.of(\"A\")","var b = Var.of(\"B\")","var combined = Var.of(","    String.class, a, b,","    (x, y) -> x + y,","    s -> Pair.of(s.substring(0, 1), s.length() > 1 ? s.substring(1) : \"\")",")"]},
+
+        {"kind":"expect","text":"No listeners initially.","code":["combined.numberOfChangeListeners() == 0"]},
+
+        {"kind":"when","text":"We add two listeners.","code":["Viewable.cast(combined).onChange(From.ALL, it -> {})","Viewable.cast(combined).onChange(From.ALL, it -> {})"]},
+
+        {"kind":"then","text":"","code":["combined.numberOfChangeListeners() == 2"]},
+
+        {"kind":"when","text":"We call unsubscribeAll.","code":["combined.unsubscribeAll()"]},
+
+        {"kind":"then","text":"","code":["combined.numberOfChangeListeners() == 0"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A dual lens is garbage collected when no longer referenced, freeing its source listeners.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The dual lens registers itself as a weak listener on both source properties.\n            When the dual lens is no longer strongly referenced from application code,\n            it becomes eligible for garbage collection. Once collected, the weak listener\n            entries are automatically removed from both source properties.\n\n            This means creating a dual lens and then dropping the reference will not\n            cause a permanent memory leak on the source properties.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two source properties.","code":["var a = Var.of(\"hello\")","var b = Var.of(\"world\")"]},
+
+        {"kind":"expect","text":"Initially no change listeners on either source.","code":["a.numberOfChangeListeners() == 0","b.numberOfChangeListeners() == 0"]},
+
+        {"kind":"when","text":"We create a dual lens but hold it only in a local (soon-to-be-dropped) variable.","code":["var lens = Var.of(","    String.class, a, b,","    (x, y) -> x + \" \" + y,","    s -> { def p = s.split(\" \"); Pair.of(p[0], p.length > 1 ? p[1] : \"\") }",")"]},
+
+        {"kind":"then","text":"Each source has one change listener registered for the lens.","code":["a.numberOfChangeListeners() == 1","b.numberOfChangeListeners() == 1"]},
+
+        {"kind":"when","text":"We drop the strong reference to the lens.","code":["var weakLens = new WeakReference(lens)","lens = null"]},
+
+        {"kind":"and","text":"We force garbage collection.","code":["waitForGarbageCollection()","Thread.sleep(500)","waitForGarbageCollection()"]},
+
+        {"kind":"then","text":"The lens is garbage collected.","code":["weakLens.get() == null"]},
+
+        {"kind":"and","text":"Both source properties no longer have change listeners registered.","code":["a.numberOfChangeListeners() == 0","b.numberOfChangeListeners() == 0"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Multiple dual lenses on the same sources are independently garbage collected.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Each dual lens registers its own independent weak listener on each source property.\n            When one lens is dropped and garbage collected, only its listener is removed.\n            Other lenses that are still strongly referenced remain unaffected.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two source properties.","code":["var a = Var.of(1)","var b = Var.of(2)"]},
+
+        {"kind":"when","text":"We create two dual lenses: one we keep, one we drop.","code":["var kept = Var.of(","    Integer.class, a, b,","    (x, y) -> x + y,","    (Integer s) -> Pair.of(s.intdiv(2), s - s.intdiv(2))",")","var dropped = Var.of(","    Integer.class, a, b,","    (x, y) -> x * y,","    s -> Pair.of(s, 1)",")"]},
+
+        {"kind":"then","text":"Each source has 2 change listeners (one per lens).","code":["a.numberOfChangeListeners() == 2","b.numberOfChangeListeners() == 2"]},
+
+        {"kind":"when","text":"We drop one lens and force GC.","code":["var weakDropped = new WeakReference(dropped)","dropped = null","waitForGarbageCollection()","Thread.sleep(500)","waitForGarbageCollection()"]},
+
+        {"kind":"then","text":"The dropped lens is garbage collected.","code":["weakDropped.get() == null"]},
+
+        {"kind":"and","text":"Each source still has exactly one listener for the kept lens.","code":["a.numberOfChangeListeners() == 1","b.numberOfChangeListeners() == 1"]},
+
+        {"kind":"and","text":"The kept lens still functions correctly.","code":["kept.get() == 3"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A dual lens holds strong references to its source properties, preventing their GC.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Unlike a composite view (Viewable.of), which holds only weak references to its\n            sources, a dual lens holds STRONG references to both source properties.\n            This means that as long as you hold a reference to the dual lens, the source\n            properties cannot be garbage collected, even if you release all other references to them.\n\n            This is the correct behaviour for a mutable lens: you need both sources to remain\n            alive so you can write back to them.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two source properties.","code":["Var<String> a = Var.of(\"foo\")","Var<String> b = Var.of(\"bar\")"]},
+
+        {"kind":"and","text":"A dual lens combining them.","code":["var combined = Var.of(","    String.class, a, b,","    (x, y) -> x + \"-\" + y,","    s -> { def p = s.split(\"-\"); Pair.of(p[0], p.length > 1 ? p[1] : \"\") }",")"]},
+
+        {"kind":"and","text":"Weak references to the source properties.","code":["var weakA = new WeakReference(a)","var weakB = new WeakReference(b)"]},
+
+        {"kind":"when","text":"We drop the strong references to the source properties.","code":["a = null","b = null"]},
+
+        {"kind":"and","text":"We force garbage collection.","code":["waitForGarbageCollection()"]},
+
+        {"kind":"then","text":"The sources are NOT garbage collected because the dual lens holds them strongly.","code":["weakA.get() != null","weakB.get() != null"]},
+
+        {"kind":"and","text":"The combined value is still accessible.","code":["combined.get() == \"foo-bar\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A chain of dual lenses is only garbage collected when the leaf is released.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            If you chain dual lenses (a dual lens whose sources are themselves dual lenses),\n            each intermediate lens is strongly referenced by the next lens in the chain.\n            So intermediate lenses cannot be collected independently — the chain must be\n            released from the leaf end.\n\n            This is because each dual lens holds strong references to its source properties.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two original source properties.","code":["var a = Var.of(10)","var b = Var.of(20)"]},
+
+        {"kind":"and","text":"A first dual lens.","code":["var lens1 = Var.of(","    Integer.class, a, b,","    (x, y) -> x + y,","    (Integer s) -> Pair.of(s.intdiv(2), s - s.intdiv(2))",")"]},
+
+        {"kind":"and","text":"A second dual lens that uses lens1 as one of its sources, with c as a plain multiplier.","code":["var c = Var.of(5)","var lens2 = Var.of(","    Integer.class, lens1, c,","    (Integer x, Integer y) -> x * y,","    (Integer s) -> Pair.of(s.intdiv(5), 5)",")"]},
+
+        {"kind":"and","text":"Weak references to all lenses.","code":["var refs = [","    new WeakReference(lens1),","    new WeakReference(lens2)","]"]},
+
+        {"kind":"when","text":"We drop both lens1 and lens2.","code":["lens1 = null","lens2 = null"]},
+
+        {"kind":"and","text":"We run multiple GC cycles to collect the chain.","code":["waitForGarbageCollection()","Thread.sleep(200)","waitForGarbageCollection()"]},
+
+        {"kind":"then","text":"Both lenses are now garbage collected.","code":["refs[0].get() == null","refs[1].get() == null"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A chain of dual lenses is not garbage collected when only an intermediate is released.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            If you chain dual lenses (a dual lens whose sources are themselves dual lenses),\n            each intermediate lens is strongly referenced by the next lens in the chain.\n            So intermediate lenses cannot be collected independently — the chain must be\n            released from the leaf end.\n\n            This is because each dual lens holds strong references to its source properties.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two original source properties.","code":["var a = Var.of(10)","var b = Var.of(20)"]},
+
+        {"kind":"and","text":"A first dual lens.","code":["var lens1 = Var.of(","    Integer.class, a, b,","    (x, y) -> x + y,","    (Integer s) -> Pair.of(s.intdiv(2), s - s.intdiv(2))",")"]},
+
+        {"kind":"and","text":"A second dual lens that uses lens1 as one of its sources, with c as a plain multiplier.","code":["var c = Var.of(5)","var lens2 = Var.of(","    Integer.class, lens1, c,","    (Integer x, Integer y) -> x * y,","    (Integer s) -> Pair.of(s.intdiv(5), 5)",")"]},
+
+        {"kind":"and","text":"Weak references to all lenses.","code":["var refs = [","    new WeakReference(lens1),","    new WeakReference(lens2)","]"]},
+
+        {"kind":"when","text":"We drop only lens1, keeping lens2 alive.","code":["lens1 = null","waitForGarbageCollection()","Thread.sleep(500)","waitForGarbageCollection()"]},
+
+        {"kind":"then","text":"Both lenses are not garbage collected.","code":["refs[0].get() != null","refs[1].get() != null"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Even a dual lens with change listeners is garbage collected if not referenced strongly.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Change listeners registered on a dual lens live inside the lens itself.\n            If the lens becomes eligible for garbage collection (no strong references to it),\n            the lens — together with all of its change listeners — is collected.\n            The weak listener entry on the source property is also cleaned up.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two source properties.","code":["var a = Var.of(\"A\")","var b = Var.of(\"B\")"]},
+
+        {"kind":"and","text":"A dual lens with a change listener and a weak reference to the lens.","code":["var lens = Var.of(","    String.class, a, b,","    (x, y) -> x + y,","    s -> Pair.of(s.substring(0, 1), s.length() > 1 ? s.substring(1) : \"\")",")","var weakLens = new WeakReference(lens)","var trace = []","Viewable.cast(lens).onChange(From.ALL, it -> trace << it.currentValue().orElseNull())"]},
+
+        {"kind":"expect","text":"The lens is alive and has one change listener.","code":["lens.numberOfChangeListeners() == 1","a.numberOfChangeListeners() == 1","b.numberOfChangeListeners() == 1"]},
+
+        {"kind":"when","text":"We drop the strong reference to the lens.","code":["lens = null","waitForGarbageCollection()","Thread.sleep(500)","waitForGarbageCollection()"]},
+
+        {"kind":"then","text":"The lens is garbage collected.","code":["weakLens.get() == null"]},
+
+        {"kind":"and","text":"No listeners remain on the source properties.","code":["a.numberOfChangeListeners() == 0","b.numberOfChangeListeners() == 0"]},
+
+        {"kind":"when","text":"We now change a source — the (collected) lens listener must not be invoked.","code":["a.set(\"X\")"]},
+
+        {"kind":"then","text":"The trace remains empty; the old listener is gone.","code":["trace == []"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A dual lens returns the last known value when the getter throws an exception.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            If the getter throws an exception while recomputing the combined value\n            (for example because of a transient invalid state in a source property),\n            the dual lens silently logs the error and keeps the last successfully\n            computed value. No exception propagates to the caller.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two source properties.","code":["var numerator   = Var.of(10)","var denominator = Var.of(2)"]},
+
+        {"kind":"and","text":"A dual lens that divides — which can throw for denominator == 0.","code":["var shouldFail = false","var combined = Var.of(","    Integer.class, numerator, denominator,","    (n, d) -> {","        if (shouldFail) throw new ArithmeticException(\"Simulated failure\")","        n.intdiv(d)","    },","    (Integer r) -> Pair.of(r * denominator.get(), denominator.get())",")"]},
+
+        {"kind":"expect","text":"The initial combined value is correct.","code":["combined.get() == 5"]},
+
+        {"kind":"when","text":"We make the getter fail and change a source.","code":["shouldFail = true","numerator.set(20)"]},
+
+        {"kind":"then","text":"No exception is thrown to the caller.","code":["noExceptionThrown()"]},
+
+        {"kind":"and","text":"The last known value is returned.","code":["combined.get() == 5"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A dual lens handles a failing setter gracefully without updating the sources.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            If the setter throws an exception when splitting the combined value back into\n            source values, the lens logs the error and leaves both source properties unchanged.\n            No exception propagates to the caller.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two source properties.","code":["var a = Var.of(10)","var b = Var.of(20)"]},
+
+        {"kind":"and","text":"A dual lens whose setter will fail on demand.","code":["var setterFails = false","var combined = Var.of(","    Integer.class, a, b,","    (x, y) -> x + y,","    s -> {","        if (setterFails) throw new RuntimeException(\"Simulated setter failure\")","        Pair.of(s / 2, s - s / 2)","    }",")"]},
+
+        {"kind":"expect","text":"Initial state is correct.","code":["combined.get() == 30","a.get() == 10","b.get() == 20"]},
+
+        {"kind":"when","text":"We make the setter fail and try to set the combined value.","code":["setterFails = true","combined.set(100)"]},
+
+        {"kind":"then","text":"No exception is thrown.","code":["noExceptionThrown()"]},
+
+        {"kind":"and","text":"The source properties remain unchanged.","code":["a.get() == 10","b.get() == 20"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Creating a non-nullable dual lens with a getter that initially returns null throws immediately.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A non-nullable dual lens requires the getter to return a non-null value on construction.\n            If the getter returns null on the first call, an exception is thrown at creation time,\n            not deferred until the first `get()` call.\n        "]
+      },
+      "blocks":[
+        {"kind":"when","text":"We attempt to create a non-nullable dual lens whose getter returns null.","code":["Var.of(","    String.class,","    Var.of(\"a\"),","    Var.of(\"b\"),","    (a, b) -> null,     // always null","    s -> Pair.of(s, s)",")"]},
+
+        {"kind":"then","text":"A NullPointerException is thrown.","code":["thrown(NullPointerException)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Setting null on a non-nullable dual lens throws a NullPointerException.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"A non-nullable dual lens.","code":["var a = Var.of(\"hello\")","var b = Var.of(\"world\")","var combined = Var.of(","    String.class, a, b,","    (x, y) -> x + \" \" + y,","    s -> { def p = s.split(\" \"); Pair.of(p[0], p.length > 1 ? p[1] : \"\") }",")"]},
+
+        {"kind":"when","text":"We try to set null on the non-nullable lens.","code":["combined.set(null)"]},
+
+        {"kind":"then","text":"","code":["thrown(NullPointerException)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A dual lens can model the full name of a person across two separate source properties.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A typical use case for a dual lens is when a view model splits a name into\n            separate first-name and last-name properties but also exposes a combined full-name\n            property for display or single-field editing.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Separate first- and last-name view model properties.","code":["var firstName = Var.of(\"Marie\")","var lastName  = Var.of(\"Curie\")"]},
+
+        {"kind":"and","text":"A dual lens exposing the full name bidirectionally.","code":["var fullName = Var.of(","    String.class, firstName, lastName,","    (f, l) -> f + \" \" + l,","    name -> {","        def parts = name.trim().split(\"\\\\s+\", 2)","        Pair.of(parts[0], parts.length > 1 ? parts[1] : \"\")","    }",")"]},
+
+        {"kind":"and","text":"A trace recording all changes.","code":["var trace = []","Viewable.cast(fullName).onChange(From.ALL, it -> trace << it.currentValue().orElseNull())"]},
+
+        {"kind":"expect","text":"Initial state is correct.","code":["fullName.get() == \"Marie Curie\""]},
+
+        {"kind":"when","text":"The user edits the full name as a single string.","code":["fullName.set(\"Pierre Curie\")"]},
+
+        {"kind":"then","text":"Both source properties are updated.","code":["firstName.get() == \"Pierre\"","lastName.get() == \"Curie\""]},
+
+        {"kind":"and","text":"The change event was recorded.","code":["trace == [\"Pierre Curie\"]"]},
+
+        {"kind":"when","text":"The first name source is updated independently.","code":["firstName.set(\"Irene\")"]},
+
+        {"kind":"then","text":"The combined property reflects the change.","code":["fullName.get() == \"Irene Curie\"","trace == [\"Pierre Curie\", \"Irene Curie\"]"]},
+
+        {"kind":"when","text":"The last name source is updated independently.","code":["lastName.set(\"Joliot-Curie\")"]},
+
+        {"kind":"then","text":"","code":["fullName.get() == \"Irene Joliot-Curie\"","trace == [\"Pierre Curie\", \"Irene Curie\", \"Irene Joliot-Curie\"]"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A dual lens can represent a 2D Point from two separate coordinate properties.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Another natural use case is projecting two independent numeric properties\n            (like x and y coordinates) into a composite record (like a Point), with\n            the setter unpacking the record back into its components.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Separate x and y coordinate properties.","code":["var xProp = Var.of(3.0d)","var yProp = Var.of(4.0d)"]},
+
+        {"kind":"and","text":"A dual lens producing a Point record.","code":["var point = Var.of(","    Point.class, xProp, yProp,","    (x, y) -> new Point(x, y),","    p -> Pair.of(p.x(), p.y())",")"]},
+
+        {"kind":"expect","text":"The point is correct initially.","code":["point.get() == new Point(3.0d, 4.0d)","point.get().distanceFromOrigin() == 5.0d"]},
+
+        {"kind":"when","text":"We set a new point through the lens.","code":["point.set(new Point(0.0d, 0.0d))"]},
+
+        {"kind":"then","text":"Both coordinate sources are updated.","code":["xProp.get() == 0.0d","yProp.get() == 0.0d"]},
+
+        {"kind":"when","text":"We change x directly.","code":["xProp.set(1.0d)"]},
+
+        {"kind":"then","text":"The point updates.","code":["point.get() == new Point(1.0d, 0.0d)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    }
+  
+  ],
+  "generator":"https://github.com/renatoathaydes/spock-reports"
+}
