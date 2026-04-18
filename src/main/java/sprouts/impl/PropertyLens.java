@@ -221,6 +221,96 @@ final class PropertyLens<T extends @Nullable Object> implements Var<T>, Viewable
         return new PropertyLens<>(type, Sprouts.factory().defaultId(), true, initialValue, core, null);
     }
 
+    // ==================== Parameterized projection factory methods ====================
+
+    /**
+     * Creates a non-null parameterized projection lens. The projection depends on a
+     * read-only {@link Val} parameter; writes never modify the parameter, only the source.
+     */
+    static <P, A, B> Var<B> ofParamProjection(
+            @Nullable Class<B>      type,
+            Val<P>                  parameter,
+            Var<A>                  source,
+            BiFunction<P, A, B>     getter,
+            BiFunction<B, P, A>     setter
+    ) {
+        B initialValue;
+        try {
+            initialValue = getter.apply(Util.fakeNonNull(parameter.orElseNull()), Util.fakeNonNull(source.orElseNull()));
+        } catch ( Exception e ) {
+            Util.sneakyThrowExceptionIfFatal(e);
+            throw new IllegalArgumentException("Getter function must not throw an exception on initial call", e);
+        }
+        if ( initialValue == null )
+            throw new NullPointerException(
+                    "The getter function returned null on the initial call, " +
+                    "but the property does not allow null values!"
+            );
+        if ( type == null )
+            type = Util.expectedClassFromItem(initialValue);
+        LensCore<B> core = new ParamLensCore<>(parameter, source, getter, setter);
+        return new PropertyLens<>(type, Sprouts.factory().defaultId(), false, initialValue, core, null);
+    }
+
+    /**
+     * Creates a non-null parameterized projection lens with a null-fallback value.
+     * When the source property's item is {@code null}, or when the getter would otherwise
+     * return {@code null}, the provided {@code nullObject} is used instead.
+     */
+    static <P, A, B, V extends B> Var<B> ofParamProjectionWithFallback(
+            @Nullable Class<B>              type,
+            V                               nullObject,
+            Val<P>                          parameter,
+            Var<A>                          source,
+            BiFunction<P, A, @Nullable B>   getter,
+            BiFunction<B, P, A>             setter
+    ) {
+        if ( type == null )
+            type = Util.expectedClassFromItem(nullObject);
+
+        final B fallback = nullObject;
+        BiFunction<@Nullable P, @Nullable A, B> safeGetter = (p, a) -> {
+            if ( a == null ) return fallback;
+            B result;
+            try {
+                result = getter.apply(p, a);
+            } catch ( Exception e ) {
+                Util.sneakyThrowExceptionIfFatal(e);
+                _logError(
+                    "Parameterized lens failed to fetch value from source property " +
+                    "using the provided getter.", e
+                );
+                return fallback;
+            }
+            return result != null ? result : fallback;
+        };
+
+        B initialValue = safeGetter.apply(Util.fakeNonNull(parameter.orElseNull()), Util.fakeNonNull(source.orElseNull()));
+        LensCore<B> core = new ParamLensCore<>(parameter, source, safeGetter, setter);
+        return new PropertyLens<>(type, Sprouts.factory().defaultId(), false, initialValue, core, null);
+    }
+
+    /**
+     * Creates a nullable parameterized projection lens.
+     */
+    static <P, A, B> Var<B> ofParamProjectionNullable(
+            Class<B>                        type,
+            Val<P>                          parameter,
+            Var<A>                          source,
+            BiFunction<P, A, @Nullable B>   getter,
+            BiFunction<B, P, A>             setter
+    ) {
+        B initialValue;
+        try {
+            initialValue = getter.apply(Util.fakeNonNull(parameter.orElseNull()), Util.fakeNonNull(source.orElseNull()));
+        } catch ( Exception e ) {
+            Util.sneakyThrowExceptionIfFatal(e);
+            initialValue = null;
+        }
+        LensCore<B> core = new ParamLensCore<>(parameter, source, getter, setter);
+        return new PropertyLens<>(type, Sprouts.factory().defaultId(), true, initialValue, core, null);
+    }
+
     // ==================== Instance fields ====================
 
     private final PropertyChangeListeners<T> _changeListeners;
