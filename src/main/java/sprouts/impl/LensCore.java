@@ -44,9 +44,9 @@ interface LensCore<T extends @Nullable Object> {
      * Returns the parent source properties that this core observes.
      * The {@link PropertyLens} subscribes to each of these with weak listeners.
      *
-     * @return An unmodifiable list of parent source properties.
+     * @return An {@link Iterable} over all parent source properties.
      */
-    List<? extends Val<?>> sources();
+    Iterable<? extends Val<?>> sources();
 
     /**
      * Whether a source-change callback should be suppressed.

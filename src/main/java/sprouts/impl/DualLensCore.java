@@ -115,7 +115,7 @@ final class DualLensCore<A extends @Nullable Object, B extends @Nullable Object,
     }
 
     @Override
-    public List<? extends Val<?>> sources() {
+    public Iterable<? extends Val<?>> sources() {
         return Arrays.asList(_firstParent, _secondParent);
     }
 

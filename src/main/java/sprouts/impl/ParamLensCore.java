@@ -99,7 +99,7 @@ final class ParamLensCore<P extends @Nullable Object, A extends @Nullable Object
     }
 
     @Override
-    public List<? extends Val<?>> sources() {
+    public Iterable<? extends Val<?>> sources() {
         return Arrays.asList(_source, _parameter);
     }
 
