@@ -1237,41 +1237,48 @@ public interface Var<T extends @Nullable Object> extends Val<T>
     }
 
     /**
-     * Creates a projected lens property (Var) that bi-directionally maps between the item type {@code T}
-     * of this property and a target type {@code B} using conversion functions, with explicit type safety.
+     * Creates a projected property (Var) that bi-directionally <i>converts</i> between the item type
+     * {@code T} of this property and a target type {@code B}, with explicit type safety.
      * <p>
-     * This method addresses the same type safety issue as the lens methods, but for projections.
-     * When using {@link #projectTo(Function, Function)}, the runtime type of the projected property
-     * is inferred from the initial converted value, which may be a subtype of the declared type {@code B}.
-     * This method ensures the projection accepts all valid subtypes of {@code B}.
+     * As with every projection, the getter and setter describe a whole-value conversion
+     * between {@code T} and {@code B} — not a zoom into a field of {@code T}. Unlike
+     * {@link #projectTo(Function, Function)}, this overload takes an explicit {@code Class<B>}
+     * so the runtime type of the resulting property is fixed to the declared {@code B} rather
+     * than inferred from the concrete class of the first converted value. This matters whenever
+     * {@code B} is polymorphic: without {@code Class<B>}, writing a different subtype back
+     * may produce a type mismatch against the property's {@link Var#type()}.
      * <p>
-     * Example with a polymorphic serialization system:
+     * <b>Example — packed RGB integer projected to a polymorphic Color:</b>
      * <pre>{@code
-     * sealed interface DataFormat permits JsonFormat, XmlFormat, YamlFormat {
-     *     String serialize(Object data);
-     *     Object deserialize(String text);
+     * sealed interface Color permits Rgb, Hsl {
+     *     int toPackedRgb();
+     * }
+     * record Rgb(int r, int g, int b) implements Color {
+     *     public int toPackedRgb() { return (r << 16) | (g << 8) | b; }
+     *     public static Rgb fromPackedRgb(int p) {
+     *         return new Rgb((p >> 16) & 0xFF, (p >> 8) & 0xFF, p & 0xFF);
+     *     }
+     * }
+     * record Hsl(double h, double s, double l) implements Color {
+     *     public int toPackedRgb() { ... }         // HSL -> packed RGB conversion
+     *     public static Hsl fromPackedRgb(int p) { ... } // unused here
      * }
      *
-     * record Document(String title, Object content) {
-     *     public Document withContent(Object content) { return new Document(title, content); }
-     * }
+     * // The source stores colors as packed RGB ints.
+     * Var<Integer> pixel = Var.of(0xFF0000);
      *
-     * // Project Document content to various DataFormat representations
-     * Var<Document> doc = Var.of(new Document("Report", Map.of("key", "value")));
-     *
-     * // Without explicit type: limited to the initial format's specific type
-     * // Var<DataFormat> problematic = doc.projectTo(d -> new JsonFormat(d.content()), ...);
-     *
-     * // With explicit type safety: accepts any DataFormat implementation
-     * Var<DataFormat> format = doc.projectTo(DataFormat.class,
-     *     d -> new JsonFormat(d.content()),  // Convert to JsonFormat (a DataFormat)
-     *     f -> new Document("Report", f.deserialize(f.serialize()))
+     * // Project int <-> polymorphic Color. Passing Color.class ensures the
+     * // projection's type() is Color, so any subtype can be written back.
+     * Var<Color> color = pixel.projectTo(Color.class,
+     *     Rgb::fromPackedRgb,   // forward: int -> Rgb (a Color)
+     *     Color::toPackedRgb    // backward: any Color -> int
      * );
      *
-     * // Can switch between different DataFormat implementations
-     * format.set(new XmlFormat(doc.get().content())); // Works! XmlFormat is a DataFormat
-     * format.set(new YamlFormat(doc.get().content())); // Also works!
+     * color.set(new Hsl(0.0, 1.0, 0.5));  // Hsl is-a Color — accepted
+     * // pixel.get() now holds the packed RGB representation of that Hsl value
      * }</pre>
+     * Without {@code Color.class}, the compiler would infer {@code B} from the first converted
+     * value — {@code Rgb} — and {@code color.set(new Hsl(...))} would fail at runtime.
      *
      * @param <B>    The declared target type of the projected property.
      * @param type   The class object representing the declared type {@code B}.
@@ -1586,15 +1593,47 @@ public interface Var<T extends @Nullable Object> extends Val<T>
 
     /**
      * Creates an explicitly typed <b>parameterized projection</b> of this property —
-     * a bidirectionally bound wrapper whose forward and backward mappings are also
-     * shaped by a read-only {@link Val} parameter.
+     * a bidirectionally bound wrapper whose forward and backward whole-value conversions
+     * are also shaped by a read-only {@link Val} parameter.
      * <p>
+     * This is equivalent to {@link #projectTo(Val, BiFunction, BiFunction)} but fixes the
+     * resulting property's {@link Var#type()} to the declared {@code B}, so <i>any</i> subtype
+     * of {@code B} can be written back. Prefer this overload whenever {@code B} is polymorphic
+     * (a sealed interface, abstract class, etc.), because otherwise the type is inferred from
+     * the concrete runtime type of the first projected value.
      * <p>
-     * This is equivalent to {@link #projectTo(Val, BiFunction, BiFunction)} but ensures
-     * the returned property correctly handles all subtypes of the declared type {@code B}.
+     * <b>Example — a canonical amount stored in USD, displayed as a polymorphic {@code Money}:</b>
+     * <pre>{@code
+     * sealed interface Money permits Dollars, Euros, Yen {
+     *     double amountInUsd();
+     * }
+     * record Dollars(double v) implements Money { public double amountInUsd() { return v; } }
+     * record Euros(double v)   implements Money { public double amountInUsd() { return v * 1.10; } }
+     * record Yen(double v)     implements Money { public double amountInUsd() { return v / 150.0; } }
+     *
+     * enum Currency { USD, EUR, JPY }
+     *
+     * Var<Double>    usdAmount       = Var.of(100.0);              // canonical internal storage
+     * Val<Currency>  displayCurrency = Val.of(Currency.EUR);       // read-only parameter
+     *
+     * // The parameter decides which Money subtype the forward conversion produces;
+     * // the backward conversion simply asks the written Money for its USD equivalent.
+     * Var<Money> money = usdAmount.projectTo(Money.class, displayCurrency,
+     *     (curr, usd) -> switch (curr) {
+     *         case USD -> new Dollars(usd);
+     *         case EUR -> new Euros(usd / 1.10);
+     *         case JPY -> new Yen(usd * 150.0);
+     *     },
+     *     (m, curr) -> m.amountInUsd()
+     * );
+     *
+     * money.set(new Yen(15_000.0));  // Yen is-a Money — accepted
+     * // usdAmount.get() is now ~100.0 (15 000 JPY -> USD)
+     * // displayCurrency is unchanged; only the source is written.
+     * }</pre>
      * <p>
      * <b>Mathematical Foundation:</b><br>
-     * For a given fixed parameter value {@code p}, the getter and setter should form a
+     * For any <i>fixed</i> parameter value {@code p}, the getter and setter should form a
      * <i>lawful lens</i> over the source:
      * <ul>
      *   <li><b>Get-Put:</b> {@code setter.apply(getter.apply(p, s), p).equals(s)} — reading and
@@ -1602,7 +1641,7 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      *   <li><b>Put-Get:</b> {@code getter.apply(p, setter.apply(a, p)).equals(a)} — writing a value
      *       and reading it back yields the same value.</li>
      * </ul>
-     * These laws need only hold for a <i>fixed</i> parameter value; when the parameter changes,
+     * These laws only need to hold for a <i>fixed</i> parameter value; when the parameter changes,
      * the projection is simply recomputed.
      *
      * @param <P>       The type of the read-only parameter.
@@ -1631,15 +1670,46 @@ public interface Var<T extends @Nullable Object> extends Val<T>
 
     /**
      * Creates a <b>parameterized projection</b> of this property —
-     * a bidirectionally bound wrapper whose forward and backward mappings are also
-     * shaped by a read-only {@link Val} parameter.
-     * The projection is guaranteed to always be non-null due to a fallback value.
+     * a bidirectionally bound wrapper whose forward and backward whole-value conversions
+     * are also shaped by a read-only {@link Val} parameter — with a guaranteed non-null
+     * fallback for when this property's item is {@code null}.
      * <p>
-     * When this property's item is {@code null}, the {@code nullObject} is used as the
-     * projected value instead. The parameter is still consulted for the setter inversion.
+     * When the source is {@code null}, the forward {@code getter} is <i>not</i> invoked and
+     * the projected property yields {@code nullObject} instead. Writes always go through the
+     * {@code setter} (consulting the current parameter value) and update this property.
+     * <p>
+     * <b>Example — a nullable Celsius reading displayed in a configurable unit:</b>
+     * <pre>{@code
+     *     enum TempUnit { CELSIUS, FAHRENHEIT, KELVIN }
+     *
+     *     Val<TempUnit> displayUnit = Val.of(TempUnit.FAHRENHEIT);
+     *     Var<Double>   celsius     = Var.ofNullable(Double.class, 20.0);  // may become null
+     *     double        fallback    = 0.0;                                 // shown when null
+     *
+     *     Var<Double> displayed = celsius.projectTo(fallback, displayUnit,
+     *         (unit, c) -> switch (unit) {
+     *             case CELSIUS    -> c;
+     *             case FAHRENHEIT -> c * 9.0/5.0 + 32.0;
+     *             case KELVIN     -> c + 273.15;
+     *         },
+     *         (val, unit) -> switch (unit) {
+     *             case CELSIUS    -> val;
+     *             case FAHRENHEIT -> (val - 32.0) * 5.0/9.0;
+     *             case KELVIN     -> val - 273.15;
+     *         }
+     *     );
+     *
+     *     // displayed.get() == 68.0   (20°C in Fahrenheit)
+     *
+     *     celsius.set(null);
+     *     // displayed.get() == 0.0    (fallback, getter not invoked)
+     *
+     *     displayed.set(32.0);
+     *     // celsius.get() == 0.0      (32°F -> 0°C; source is written even after being null)
+     * }</pre>
      * <p>
      * <b>Mathematical Foundation:</b><br>
-     * For a given fixed parameter value {@code p}, the getter and setter should form a
+     * For any <i>fixed</i> parameter value {@code p}, the getter and setter should form a
      * <i>lawful lens</i> over the source:
      * <ul>
      *   <li><b>Get-Put:</b> {@code setter.apply(getter.apply(p, s), p).equals(s)} — reading and
@@ -1647,7 +1717,7 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      *   <li><b>Put-Get:</b> {@code getter.apply(p, setter.apply(a, p)).equals(a)} — writing a value
      *       and reading it back yields the same value.</li>
      * </ul>
-     * These laws need only hold for a <i>fixed</i> parameter value; when the parameter changes,
+     * These laws only need to hold for a <i>fixed</i> parameter value; when the parameter changes,
      * the projection is simply recomputed.
      *
      * @param <P>        The type of the read-only parameter.
