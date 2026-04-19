@@ -1353,7 +1353,10 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      * @return A new Var that maintains a bidirectional projection with guaranteed
      *         non-null values, using {@code nullObject} as fallback.
      * @throws NullPointerException if {@code nullObject} or either function is null.
+     * @deprecated Because during compilation it is in conflict with {@link #projectTo(Class, Function, Function)}!
+     *             Please use {@link #projectTo(Class, Object, Function, Function)} instead.
      */
+    @Deprecated
     default <B extends @NonNull Object> Var<B> projectTo( B nullObject, Function<T,B> getter, Function<B,T> setter ) {
         Objects.requireNonNull(nullObject);
         Objects.requireNonNull(getter, "getter must not be null");
