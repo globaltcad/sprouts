@@ -134,8 +134,15 @@ final class PropertyLens<T extends @Nullable Object> implements Var<T>, Viewable
             Util.sneakyThrowExceptionIfFatal(e);
             throw new IllegalArgumentException("Lens getter must not throw an exception", e);
         }
-        if ( type == null )
+        if ( type == null ) {
+            if ( initialValue == null ) {
+                throw new NullPointerException(
+                    "Unable to infer lens property type from a null initial value. " +
+                    "Please provide an explicit type or use the overload with a null object."
+                );
+            }
             type = Util.expectedClassFromItem(initialValue);
+        }
         LensCore<B> core = new SingleLensCore<>(source, lens);
         return new PropertyLens<>(type, Sprouts.factory().defaultId(), false, initialValue, core, null);
     }
