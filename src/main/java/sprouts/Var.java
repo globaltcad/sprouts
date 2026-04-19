@@ -1505,8 +1505,8 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      * writes to the resulting property never modify the parameter — only this property
      * (the source) is updated.
      * <p>
-     * This is the instance-method counterpart of the static factory
-     * {@link #of(Class, Val, Var, BiFunction, BiFunction)}, offered for a fluent API style.
+     * This instance method provides the fluent API style for creating such a parameterized
+     * projection from this property.
      * <p>
      * <b>Data flow:</b>
      * <ul>
