@@ -1365,40 +1365,51 @@ public interface Var<T extends @Nullable Object> extends Val<T>
     }
 
     /**
-     * Creates a projected lens property (Var) that bi-directionally maps between the item type {@code T}
-     * of this property and a target type {@code B} using conversion functions, with a guaranteed
-     * non-null fallback value and explicit type safety.
+     * Creates a projected lens property (Var) that bi-directionally <i>converts</i> between the item type
+     * {@code T} of this property and a target type {@code B}, using a guaranteed non-null fallback value
+     * and explicit type safety.
      * <p>
-     * This method combines null safety with type safety for projections. It ensures the projected
-     * property never contains null while accepting any subtype of the declared type {@code B}.
+     * A projection is a pair of conversion functions describing how to translate a whole value from
+     * {@code T} to {@code B} (forward) and from {@code B} back to {@code T} (backward). Unlike a
+     * zoom/lens — which focuses on a field inside a product type and rebuilds the source via a wither —
+     * a projection rewrites the <i>entire</i> source value on every write.
      * <p>
-     * Example with a polymorphic UI component system:
+     * This overload combines null safety with type safety: the projected property never contains null
+     * (the {@code nullObject} is substituted whenever this property's item is null), and the declared
+     * type {@code B} is passed explicitly so the projection accepts <i>any</i> subtype of {@code B},
+     * not just the concrete runtime type of {@code nullObject}.
+     * <p>
+     * <b>Example — storing a temperature in a canonical unit and projecting to a polymorphic representation:</b>
      * <pre>{@code
-     * sealed interface Widget permits Button, TextField, Slider {
-     *     String render();
+     * sealed interface Temperature permits Celsius, Fahrenheit, Kelvin {
+     *     double toCelsius();
      * }
+     * record Celsius(double value)    implements Temperature { public double toCelsius() { return value; } }
+     * record Fahrenheit(double value) implements Temperature { public double toCelsius() { return (value - 32) * 5.0/9.0; } }
+     * record Kelvin(double value)     implements Temperature { public double toCelsius() { return value - 273.15; } }
      *
-     * record UiState(Widget currentWidget) {
-     *     public UiState withWidget(Widget widget) { return new UiState(widget); }
-     * }
+     * // The source always stores a plain Celsius number, and may be null.
+     * Var<Double> celsius = Var.ofNullable(Double.class, 20.0);
+     * Temperature fallback = new Celsius(0.0);
      *
-     * // Nullable UI state with default widget
-     * Var<UiState> ui = Var.ofNull(UiState.class);
-     * Widget defaultWidget = new Button("Click me");
-     *
-     * // Type-safe null-safe projection
-     * Var<Widget> widget = ui.projectTo(Widget.class, defaultWidget,
-     *     UiState::currentWidget,
-     *     UiState::withWidget
+     * // Project the Double <-> a polymorphic Temperature.
+     * // Passing Temperature.class ensures any subtype (Fahrenheit, Kelvin, ...)
+     * // can be written back, not only the concrete type of 'fallback'.
+     * Var<Temperature> temp = celsius.projectTo(Temperature.class, fallback,
+     *     c -> new Celsius(c),   // forward: T -> B, wraps the stored Celsius value
+     *     t -> t.toCelsius()     // backward: B -> T, converts any Temperature back to Celsius
      * );
      *
-     * // Initially shows default widget (parent is null)
-     * assert widget.get() == defaultWidget;
+     * // Writing any subtype of Temperature rewrites the underlying Double:
+     * temp.set(new Fahrenheit(100.0));   // celsius.get() is now ~37.78
+     * temp.set(new Kelvin(300.0));       // celsius.get() is now ~26.85
      *
-     * // Can set any Widget implementation
-     * ui.set(new UiState(new TextField("Enter text")));
-     * widget.set(new Slider(0, 100, 50)); // Works with any Widget
+     * // When the source is null, the projection yields the fallback:
+     * celsius.set(null);
+     * assert temp.get() == fallback;     // Celsius(0.0)
      * }</pre>
+     * Note how the backward function reads the <i>entire</i> projected value and produces a whole new
+     * source value — there is no field being zoomed into.
      *
      * @param <B>        The declared target type of the projected property (non-nullable).
      * @param <V>        The specific subtype of {@code B} used for the null object.
