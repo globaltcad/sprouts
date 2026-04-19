@@ -1120,16 +1120,19 @@ public interface Var<T extends @Nullable Object> extends Val<T>
     }
 
     /**
-     * Creates a projected lens property (Var) that bi-directionally maps between the item type {@code T}
-     * of this property and a target type {@code B} using a pair of conversion functions.
-     * The projection establishes a two-way relationship where changes in either property
-     * are automatically reflected in the other, provided the conversion functions form
-     * an isomorphism (a perfect reversible mapping).
+     * Creates a projected property (Var) that bi-directionally <i>converts</i> between the item type
+     * {@code T} of this property and a target type {@code B} using a pair of conversion functions.
+     * <p>
+     * A projection is a whole-value conversion in both directions — unlike a zoom/lens (see
+     * {@link #zoomTo(Lens)}), which focuses on a field of {@code T} and rebuilds the source via a
+     * wither, a projection rewrites the <i>entire</i> source value on every write. The forward
+     * {@code getter} turns a {@code T} into a {@code B}, and the backward {@code setter} turns a
+     * {@code B} back into a whole new {@code T}.
      * <p>
      * This method is particularly useful when you need to work with different
-     * representations of the same logical data. For example, converting between
+     * representations of the same logical data — for example, converting between
      * measurement units, currency values, or different string encodings while
-     * maintaining synchronization between the representations.
+     * maintaining synchronization between the two sides.
      * <p>
      * <b>Mathematical Foundation:</b><br>
      * For the projection to behave predictably, the functions should ideally form
