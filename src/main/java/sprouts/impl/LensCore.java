@@ -16,6 +16,7 @@ import java.util.List;
  * <ul>
  *   <li>{@link SingleLensCore} &mdash; a single parent property with a {@link sprouts.Lens}</li>
  *   <li>{@link DualLensCore} &mdash; two parent properties with a getter/setter pair</li>
+ *   <li>{@link ParamLensCore} &mdash; a parent property combined with an external parameterized getter/setter pair</li>
  * </ul>
  *
  * @param <T> The item type of the lens property.
