@@ -10,7 +10,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
- *  A mutable wrapper for an item which can also be mapped to a weakly referenced{@link Viewable} to
+ *  A mutable wrapper for an item which can also be mapped to a weakly referenced {@link Viewable} to
  *  be observed for changes using {@link Action}s registered through the {@link Viewable#onChange(Channel, Action)} method,
  *  where the {@link Channel} is used to distinguish between changes from
  *  different sources (usually application layers like the view model or the view).<br>
