@@ -67,8 +67,8 @@ import java.util.function.Function;
  *  as part of a type that is supposed to be used everywhere in your code.<br>
  *
  *  <b>Optics: Lenses, Projections, and Parameterized Projection</b>
- *  This class provides several kinds of bidirectional mappings between properties, all inspired by
- *  the theory of <b>optics</b> from functional programming (which itself derives from category theory).
+ *  This class provides several kinds of bidirectional bindings between properties, all inspired by
+ *  the theory of <b>optics</b> from functional programming.<br>
  *  Understanding the taxonomy helps choose the right method:
  *  <ul>
  *    <li><b>Lens</b> ({@link #zoomTo(Function, BiFunction)}): Focuses on a <i>part</i> of a larger
@@ -79,14 +79,15 @@ import java.util.function.Function;
  *        encoding changes. The getter and setter should ideally form an <i>isomorphism</i>
  *        (perfect inverse pair).</li>
  *    <li><b>Parameterized Projection</b> {@link #projectTo(Val, BiFunction, BiFunction)}):
- *        A bidirectional mapping where one input is a <i>read-only parameter</i> ({@link Val}).
- *        The parameter shapes how the source is viewed and how writes are inverted, but is itself never written to.</li>
+ *        A bidirectional mapping with an additional <i>read-only parameter</i> ({@link Val}).
+ *        The parameter shapes how the source is viewed in the target and how writes are inverted,
+ *        but it is itself never written to.</li>
  *    <li><b>Multi-Projection (dual-source projection)</b> ({@link #of(Class, Var, Var, BiFunction, Function)}):
  *        Combines <i>two mutable</i> sources into a single derived property with full write-back
  *        to both sources. The setter returns a {@link Pair} to distribute the value.</li>
  *  </ul><br>
  *  <p>
- *  <b>Please take a look at the <a href="https://globaltcad.github.io/sprouts/">living sprouts documentation</a>
+ *  <b>Take a look at the <a href="https://globaltcad.github.io/sprouts/">living sprouts documentation</a>
  *  where you can browse a large collection of examples demonstrating how to use the API of this class.</b>
  *
  * @see Val A super type of this class with a read-only API.
@@ -1496,17 +1497,16 @@ public interface Var<T extends @Nullable Object> extends Val<T>
     // -------------------------------------------------------------------
 
     /**
-     * Creates a <b>parameterized projection</b> of this property — a bidirectional view whose
-     * forward mapping is shaped by a read-only {@link Val} parameter.
+     * Creates a <b>parameterized projection</b> of this property — a bidirectionally bound wrapper
+     * whose forward and backward mappings are also shaped by a read-only {@link Val} parameter.
      * <p>
-     * In functional optics terminology, this produces a <b>parameterized lens</b> (also known as
-     * an <i>indexed lens</i> or <i>dependent lens</i>). The parameter {@code P} influences
-     * how this property's item of type {@code T} is projected to a target type {@code B}, but
-     * writes to the resulting property never modify the parameter — only this property
-     * (the source) is updated.
+     * The parameter {@code P} influences how this property's item of type {@code T} is
+     * projected to a target type {@code B}, but writes to the resulting property never
+     * modify the parameter — only this property (the source) is updated.
      * <p>
-     * This instance method provides the fluent API style for creating such a parameterized
-     * projection from this property.
+     * This method allows for the creating of such a parameterized
+     * projection from this property to a target type {@code B} using a pair of conversion
+     * functions that take the parameter into account.
      * <p>
      * <b>Data flow:</b>
      * <ul>
@@ -1571,7 +1571,10 @@ public interface Var<T extends @Nullable Object> extends Val<T>
     }
 
     /**
-     * Creates a <b>parameterized projection</b> of this property with explicit type safety.
+     * Creates an explicitly typed <b>parameterized projection</b> of this property —
+     * a bidirectionally bound wrapper whose forward and backward mappings are also
+     * shaped by a read-only {@link Val} parameter.
+     * <p>
      * <p>
      * This is equivalent to {@link #projectTo(Val, BiFunction, BiFunction)} but ensures
      * the returned property correctly handles all subtypes of the declared type {@code B}.
@@ -1613,8 +1616,10 @@ public interface Var<T extends @Nullable Object> extends Val<T>
     }
 
     /**
-     * Creates a <b>parameterized projection</b> of this property with a guaranteed non-null
-     * fallback value.
+     * Creates a <b>parameterized projection</b> of this property —
+     * a bidirectionally bound wrapper whose forward and backward mappings are also
+     * shaped by a read-only {@link Val} parameter.
+     * The projection is guaranteed to always be non-null due to a fallback value.
      * <p>
      * When this property's item is {@code null}, the {@code nullObject} is used as the
      * projected value instead. The parameter is still consulted for the setter inversion.
