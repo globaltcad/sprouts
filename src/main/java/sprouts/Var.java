@@ -1446,10 +1446,12 @@ public interface Var<T extends @Nullable Object> extends Val<T>
     }
 
     /**
-     * Creates a projected lens property (Var) that bi-directionally maps between the item type {@code T}
-     * of this property and a nullable target item type {@code B} using conversion functions.
-     * This method allows the projected property to hold null values, which is useful when
-     * the conversion between types is partial or may fail.
+     * Creates a projected property (Var) that bi-directionally <i>converts</i> between the item type
+     * {@code T} of this property and a <i>nullable</i> target type {@code B}, using a pair of conversion
+     * functions. The resulting property is allowed to hold {@code null}, which is useful when the
+     * conversion is partial — that is, some source values have no meaningful {@code B} representation
+     * (or vice-versa). As with every projection, each side of the mapping is a whole-value conversion,
+     * not a zoom into a field of {@code T}.
      * <p>
      * <b>Mathematical Foundation:</b><br>
      * The functions define a partial bijection between subsets of {@code T} and {@code B}.<br>
