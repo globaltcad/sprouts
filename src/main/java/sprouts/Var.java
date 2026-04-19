@@ -66,7 +66,7 @@ import java.util.function.Function;
  *  mutable and immutable properties without having to resort to prefixes like "mutable" or "immutable"
  *  as part of a type that is supposed to be used everywhere in your code.<br>
  *
- *  <b>Optics: Lenses, Projections, and Parameterized Projection</h2>
+ *  <b>Optics: Lenses, Projections, and Parameterized Projection</b>
  *  This class provides several kinds of bidirectional mappings between properties, all inspired by
  *  the theory of <b>optics</b> from functional programming (which itself derives from category theory).
  *  Understanding the taxonomy helps choose the right method:
