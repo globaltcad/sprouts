@@ -61,7 +61,7 @@ final class PropertyLens<T extends @Nullable Object> implements Var<T>, Viewable
         }
         if ( type == null ) {
             if ( initialValue == null ) {
-                throw new IllegalArgumentException(
+                throw new NullPointerException(
                     "Unable to infer lens property type from a null initial value. " +
                     "Please provide an explicit type or use the overload with a null object."
                 );
