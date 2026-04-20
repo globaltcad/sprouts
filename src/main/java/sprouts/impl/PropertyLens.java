@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import sprouts.*;
 
 import java.util.Objects;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
@@ -34,15 +35,21 @@ import java.util.function.Function;
  * This lets you interact with an immutable field as if it were mutable.
  * Under the hood the lens property will use the lens pattern to access
  * and update the nested data structure of the original property automatically.
+ * <p>
+ * The source-specific behavior (single parent vs. dual parents) is encapsulated
+ * in a {@link LensCore} implementation, making this class a unified wrapper
+ * for all lens property variants.
  *
- *  @param <T> The type of the value, which is expected to be an immutable data carrier,
- *             such as a record, value object, or a primitive.
+ * @param <T> The type of the value, which is expected to be an immutable data carrier,
+ *            such as a record, value object, or a primitive.
  */
-final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object> implements Var<T>, Viewable<T>
+final class PropertyLens<T extends @Nullable Object> implements Var<T>, Viewable<T>
 {
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(PropertyLens.class);
 
-    static <T, B> Var<@Nullable B> of(Var<T> source, @Nullable Class<B> type, Lens<T, B> lens) {
+    // ==================== Single-source factory methods ====================
+
+    static <A, B> Var<@Nullable B> of(Var<A> source, @Nullable Class<B> type, Lens<A, B> lens) {
         Objects.requireNonNull(source);
         Objects.requireNonNull(lens);
         B initialValue;
@@ -52,40 +59,39 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
             Util.sneakyThrowExceptionIfFatal(e);
             throw new IllegalArgumentException("Lens getter must not throw an exception", e);
         }
-        if ( type == null )
+        if ( type == null ) {
+            if ( initialValue == null ) {
+                throw new NullPointerException(
+                    "Unable to infer lens property type from a null initial value. " +
+                    "Please provide an explicit type or use the overload with a null object."
+                );
+            }
             type = Util.expectedClassFromItem(initialValue);
-        return new PropertyLens<>(
-                type,
-                Sprouts.factory().defaultId(),
-                false,//does not allow null
-                initialValue,
-                source,
-                new Lens<T, B>() {
-                    @Override
-                    public B getter(T parentValue) throws Exception {
-                        if ( parentValue == null )
-                            return Util.fakeNonNull(null);
-                        return lens.getter(parentValue);
-                    }
-                    @Override
-                    public T wither(T parentValue, B newValue) throws Exception {
-                        if ( parentValue == null )
-                            return Util.fakeNonNull(null);
-
-                        return lens.wither(parentValue, newValue);
-                    }
-                },
-                null
-        );
+        }
+        Lens<A, B> safeLens = new Lens<A, B>() {
+            @Override
+            public B getter(A parentValue) throws Exception {
+                if ( parentValue == null )
+                    return Util.fakeNonNull(null);
+                return lens.getter(parentValue);
+            }
+            @Override
+            public A wither(A parentValue, B newValue) throws Exception {
+                if ( parentValue == null )
+                    return Util.fakeNonNull(null);
+                return lens.wither(parentValue, newValue);
+            }
+        };
+        LensCore<B> core = new SingleLensCore<>(source, safeLens);
+        return new PropertyLens<>(type, Sprouts.factory().defaultId(), false, initialValue, core, null);
     }
 
-    static <T, B, V extends B> Var<B> of(Var<T> source, @Nullable Class<B> type, V nullObject, Lens<T, B> lens) {
+    static <A, B, V extends B> Var<B> of(Var<A> source, @Nullable Class<B> type, V nullObject, Lens<A, B> lens) {
         Objects.requireNonNull(source, "Source must not be null");
         Objects.requireNonNull(nullObject, "Null object must not be null");
         Objects.requireNonNull(lens, "Lens must not be null");
         if ( type == null )
             type = Util.expectedClassFromItem(nullObject);
-
         B initialValue;
         try {
             initialValue = lens.getter(Util.fakeNonNull(source.orElseNull()));
@@ -97,18 +103,11 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
                     e
                 );
         }
-        return new PropertyLens<>(
-                type,
-                Sprouts.factory().defaultId(),
-                false,//does not allow null
-                initialValue, //may NOT be null
-                source,
-                lens,
-                null
-        );
+        LensCore<B> core = new SingleLensCore<>(source, lens);
+        return new PropertyLens<>(type, Sprouts.factory().defaultId(), false, initialValue, core, null);
     }
 
-    static <T, B> Var<B> ofNullable(Class<B> type, Var<T> source, Lens<T, B> lens) {
+    static <A, B> Var<B> ofNullable(Class<B> type, Var<A> source, Lens<A, B> lens) {
         Objects.requireNonNull(type, "Type must not be null");
         Objects.requireNonNull(lens, "Lens must not be null");
         B initialValue;
@@ -122,19 +121,12 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
                     e
                 );
         }
-        return new PropertyLens<>(
-                type,
-                Sprouts.factory().defaultId(),
-                true,//allows null
-                initialValue, //may be null
-                source,
-                lens,
-                null
-        );
+        LensCore<B> core = new SingleLensCore<>(source, lens);
+        return new PropertyLens<>(type, Sprouts.factory().defaultId(), true, initialValue, core, null);
     }
 
-    static <T, B> Var<B> ofProjection(Var<T> source, @Nullable Class<B> type, Function<T,B> getter, Function<B,T> setter) {
-        Lens<T,B> lens = Lens.of(getter, (a,b)->setter.apply(b));
+    static <A, B> Var<B> ofProjection(Var<A> source, @Nullable Class<B> type, Function<A,B> getter, Function<B,A> setter) {
+        Lens<A,B> lens = Lens.of(getter, (a,b)->setter.apply(b));
         B initialValue;
         try {
             initialValue = lens.getter(Util.fakeNonNull(source.orElseNull()));
@@ -142,56 +134,238 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
             Util.sneakyThrowExceptionIfFatal(e);
             throw new IllegalArgumentException("Lens getter must not throw an exception", e);
         }
+        if ( type == null ) {
+            if ( initialValue == null ) {
+                throw new NullPointerException(
+                    "Unable to infer lens property type from a null initial value. " +
+                    "Please provide an explicit type or use the overload with a null object."
+                );
+            }
+            type = Util.expectedClassFromItem(initialValue);
+        }
+        LensCore<B> core = new SingleLensCore<>(source, lens);
+        return new PropertyLens<>(type, Sprouts.factory().defaultId(), false, initialValue, core, null);
+    }
+
+    // ==================== Dual-source factory methods ====================
+
+    /**
+     * Creates a non-null dual projection lens with the type inferred from the initial computed value.
+     */
+    static <A, B, C> Var<C> ofDualProjection(
+            @Nullable Class<C>         type,
+            Var<A>                     first,
+            Var<B>                     second,
+            BiFunction<A, B, C>        getter,
+            Function<C, Pair<A, B>>    setter
+    ) {
+        C initialValue;
+        try {
+            initialValue = getter.apply(Util.fakeNonNull(first.orElseNull()), Util.fakeNonNull(second.orElseNull()));
+        } catch ( Exception e ) {
+            Util.sneakyThrowExceptionIfFatal(e);
+            throw new IllegalArgumentException("Getter function must not throw an exception on initial call", e);
+        }
+        if ( initialValue == null )
+            throw new NullPointerException(
+                    "The getter function returned null on the initial call, " +
+                    "but the property does not allow null values!"
+            );
         if ( type == null )
             type = Util.expectedClassFromItem(initialValue);
-        return new PropertyLens<>(
-                type,
-                Sprouts.factory().defaultId(),
-                false,//does not allow null
-                initialValue, //may NOT be null
-                source,
-                lens,
-                null
-        );
+        LensCore<C> core = new DualLensCore<>(first, second, getter, setter);
+        return new PropertyLens<>(type, Sprouts.factory().defaultId(), false, initialValue, core, null);
     }
+
+    /**
+     * Creates a non-null dual projection lens with a null-fallback value.
+     * When either source property's item is {@code null}, the {@code nullObject} is returned.
+     */
+    static <A, B, C, V extends C> Var<C> ofDualProjectionWithFallback(
+            @Nullable Class<C>            type,
+            V                             nullObject,
+            Var<A>                        first,
+            Var<B>                        second,
+            BiFunction<A, B, @Nullable C> getter,
+            Function<C, Pair<A, B>>       setter
+    ) {
+        if ( type == null )
+            type = Util.expectedClassFromItem(nullObject);
+
+        final C fallback = nullObject;
+        BiFunction<@Nullable A, @Nullable B, C> safeGetter = (a, b) -> {
+            if ( a == null || b == null ) return fallback;
+            C result;
+            try {
+                result = getter.apply(a, b);
+            } catch ( Exception e ) {
+                Util.sneakyThrowExceptionIfFatal(e);
+                _logError(
+                    "Dual lens failed to fetch value from source properties " +
+                    "using the provided lens getter.", e
+                );
+                return fallback;
+            }
+            return result != null ? result : fallback;
+        };
+
+        C initialValue = safeGetter.apply(Util.fakeNonNull(first.orElseNull()), Util.fakeNonNull(second.orElseNull()));
+        LensCore<C> core = new DualLensCore<>(first, second, safeGetter, setter);
+        return new PropertyLens<>(type, Sprouts.factory().defaultId(), false, initialValue, core, null);
+    }
+
+    /**
+     * Creates a nullable dual projection lens.
+     */
+    static <A, B, C> Var<C> ofDualProjectionNullable(
+            Class<C>                       type,
+            Var<A>                         first,
+            Var<B>                         second,
+            BiFunction<A, B, @Nullable C>  getter,
+            Function<C, Pair<A, B>>        setter
+    ) {
+        C initialValue;
+        try {
+            initialValue = getter.apply(Util.fakeNonNull(first.orElseNull()), Util.fakeNonNull(second.orElseNull()));
+        } catch ( Exception e ) {
+            Util.sneakyThrowExceptionIfFatal(e);
+            initialValue = null;
+        }
+        LensCore<C> core = new DualLensCore<>(first, second, getter, setter);
+        return new PropertyLens<>(type, Sprouts.factory().defaultId(), true, initialValue, core, null);
+    }
+
+    // ==================== Parameterized projection factory methods ====================
+
+    /**
+     * Creates a non-null parameterized projection lens. The projection depends on a
+     * read-only {@link Val} parameter; writes never modify the parameter, only the source.
+     */
+    static <P, A, B> Var<B> ofParamProjection(
+            @Nullable Class<B>      type,
+            Val<P>                  parameter,
+            Var<A>                  source,
+            BiFunction<P, A, B>     getter,
+            BiFunction<B, P, A>     setter
+    ) {
+        B initialValue;
+        try {
+            initialValue = getter.apply(Util.fakeNonNull(parameter.orElseNull()), Util.fakeNonNull(source.orElseNull()));
+        } catch ( Exception e ) {
+            Util.sneakyThrowExceptionIfFatal(e);
+            throw new IllegalArgumentException("Getter function must not throw an exception on initial call", e);
+        }
+        if ( initialValue == null )
+            throw new NullPointerException(
+                    "The getter function returned null on the initial call, " +
+                    "but the property does not allow null values!"
+            );
+        if ( type == null )
+            type = Util.expectedClassFromItem(initialValue);
+        LensCore<B> core = new ParamLensCore<>(parameter, source, getter, setter);
+        return new PropertyLens<>(type, Sprouts.factory().defaultId(), false, initialValue, core, null);
+    }
+
+    /**
+     * Creates a non-null parameterized projection lens with a null-fallback value.
+     * When the source property's item is {@code null}, or when the getter would otherwise
+     * return {@code null}, the provided {@code nullObject} is used instead.
+     */
+    static <P, A, B, V extends B> Var<B> ofParamProjectionWithFallback(
+            @Nullable Class<B>              type,
+            V                               nullObject,
+            Val<P>                          parameter,
+            Var<A>                          source,
+            BiFunction<P, A, @Nullable B>   getter,
+            BiFunction<B, P, A>             setter
+    ) {
+        if ( type == null )
+            type = Util.expectedClassFromItem(nullObject);
+
+        final B fallback = nullObject;
+        BiFunction<@Nullable P, @Nullable A, B> safeGetter = (p, a) -> {
+            if ( a == null ) return fallback;
+            B result;
+            try {
+                result = getter.apply(p, a);
+            } catch ( Exception e ) {
+                Util.sneakyThrowExceptionIfFatal(e);
+                _logError(
+                    "Parameterized lens failed to fetch value from source property " +
+                    "using the provided getter.", e
+                );
+                return fallback;
+            }
+            return result != null ? result : fallback;
+        };
+
+        B initialValue = safeGetter.apply(Util.fakeNonNull(parameter.orElseNull()), Util.fakeNonNull(source.orElseNull()));
+        LensCore<B> core = new ParamLensCore<>(parameter, source, safeGetter, setter);
+        return new PropertyLens<>(type, Sprouts.factory().defaultId(), false, initialValue, core, null);
+    }
+
+    /**
+     * Creates a nullable parameterized projection lens.
+     */
+    static <P, A, B> Var<B> ofParamProjectionNullable(
+            Class<B>                        type,
+            Val<P>                          parameter,
+            Var<A>                          source,
+            BiFunction<P, A, @Nullable B>   getter,
+            BiFunction<B, P, A>             setter
+    ) {
+        B initialValue;
+        try {
+            initialValue = getter.apply(Util.fakeNonNull(parameter.orElseNull()), Util.fakeNonNull(source.orElseNull()));
+        } catch ( Exception e ) {
+            Util.sneakyThrowExceptionIfFatal(e);
+            initialValue = null;
+        }
+        LensCore<B> core = new ParamLensCore<>(parameter, source, getter, setter);
+        return new PropertyLens<>(type, Sprouts.factory().defaultId(), true, initialValue, core, null);
+    }
+
+    // ==================== Instance fields ====================
 
     private final PropertyChangeListeners<T> _changeListeners;
     private final String              _id;
     private final boolean             _nullable;
     private final Class<T>            _type;
-    private final Var<A>              _parent;
-    private final Lens<@Nullable A,@Nullable T> _lens;
+    private final LensCore<T>         _core;
 
     private @Nullable T _lastItem;
 
+    // ==================== Constructor ====================
 
     private PropertyLens(
             Class<T>                        type,
             String                          id,
             boolean                         allowsNull,
-            @Nullable T                     initialItem, // may be null
-            Var<A>                          parent,
-            Lens<A,@Nullable T>             lens,
+            @Nullable T                     initialItem,
+            LensCore<T>                     core,
             @Nullable PropertyChangeListeners<T> changeListeners
     ) {
         Objects.requireNonNull(id);
         Objects.requireNonNull(type);
+        Objects.requireNonNull(core);
         _type            = type;
         _id              = id;
         _nullable        = allowsNull;
-        _parent          = parent;
-        _lens            = lens;
+        _core            = core;
         _changeListeners = changeListeners == null ? new PropertyChangeListeners<>() : new PropertyChangeListeners<>(changeListeners);
 
         _lastItem = initialItem;
-        Viewable.cast(parent).onChange(From.ALL, WeakAction.of(this, (thisLens, v) -> {
-            T newValue = thisLens._fetchItemFromParent();
-            ItemPair<T> pair = new ItemPair<>(thisLens._type, newValue, thisLens._lastItem);
-            if ( pair.change() != SingleChange.NONE || v.change() == SingleChange.NONE ) {
-                thisLens._lastItem = newValue;
-                thisLens.fireChange(v.channel(), pair);
-            }
-        }));
+        for ( Val<?> source : _core.sources() ) {
+            Viewable.cast(source).onChange(From.ALL, WeakAction.of(this, (thisLens, v) -> {
+                if ( thisLens._core.shouldSuppressSourceCallback() ) return;
+                T newValue = thisLens._core.fetchFromSources(thisLens._lastItem);
+                ItemPair<T> pair = new ItemPair<>(thisLens._type, newValue, thisLens._lastItem);
+                if ( pair.change() != SingleChange.NONE || v.change() == SingleChange.NONE ) {
+                    thisLens._lastItem = newValue;
+                    thisLens.fireChange(v.channel(), pair);
+                }
+            }));
+        }
 
         if ( !Sprouts.factory().isValidPropertyId(_id) )
             throw new IllegalArgumentException("The provided id '"+_id+"' is not valid! It must match the pattern '"+Sprouts.factory().idPattern().pattern()+"'");
@@ -199,45 +373,12 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
             throw new IllegalArgumentException("The provided initial value is null, but the property does not allow null values!");
     }
 
-    private String _idForError(String id) {
-        return id.isEmpty() ? "" : "'"+id+"' ";
-    }
-
-    private @Nullable T _fetchItemFromParent() {
-        T fetchedValue = _lastItem;
-        try {
-            fetchedValue = _lens.getter(Util.fakeNonNull(_parent.orElseNull()));
-        } catch ( Exception e ) {
-            Util.sneakyThrowExceptionIfFatal(e);
-            _logError(
-                    "Failed to fetch item of type '{}' for property lens '{}' from parent " +
-                    "property '{}' (with item type '{}') using the current lens getter.",
-                    _type, _idForError(_id), _idForError(_parent.id()), _parent.type(), e
-                );
-        }
-        return fetchedValue;
-    }
-
-    private void _setInParentAndInternally(Channel channel, @Nullable T newItem) {
-        try {
-            A newParentItem = _lens.wither(Util.fakeNonNull(_parent.orElseNull()), Util.fakeNonNull(newItem));
-            _lastItem = newItem;
-            _parent.set(channel, newParentItem);
-        } catch ( Exception e ) {
-            Util.sneakyThrowExceptionIfFatal(e);
-            _logError(
-                    "Property lens with id '{}' (for item type '{}') failed to update its parent " +
-                    "property '{}' (with item type '{}') using the current setter lambda!",
-                    _idForError(_id), _type, _idForError(_parent.id()), _parent.type(), e
-                );
-        }
-    }
+    // ==================== Var contract ====================
 
     private @Nullable T _item() {
-        @Nullable T currentItem = _fetchItemFromParent();
+        @Nullable T currentItem = _core.fetchFromSources(_lastItem);
         if ( currentItem != null ) {
             Class<?> currentType = currentItem.getClass();
-            // We check if the type is correct
             if ( !_type.isAssignableFrom(currentType) )
                 throw new IllegalArgumentException(String.format(
                             "The provided type '%s' of the initial value is not compatible " +
@@ -294,14 +435,14 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
         if ( type.equals("Object") ) type = "?";
         if ( type.equals("String") && this.isPresent() ) value = "\"" + value + "\"";
         if (_nullable) type = type + "?";
-        String name = "Lens";
+        String name = _core.coreName();
         String content = ( id.equals("?") ? value : id + "=" + value );
         return name + "<" + type + ">" + "[" + content + "]";
     }
 
     /** {@inheritDoc} */
     @Override public final Var<T> withId( String id ) {
-        return new PropertyLens<>(_type, id, _nullable, _item(), _parent, _lens, _changeListeners);
+        return new PropertyLens<>(_type, id, _nullable, _item(), _core.newInstance(), _changeListeners);
     }
 
     @Override
@@ -342,20 +483,20 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
         ItemPair<T> pair = new ItemPair<>(_type, newValue, oldValue);
 
         if ( pair.change() != SingleChange.NONE ) {
-            // First we check if the value is compatible with the type
             if ( newValue != null && !_type.isAssignableFrom(newValue.getClass()) )
                 throw new IllegalArgumentException(String.format(
                         "The provided type '%s' of the new value is not compatible " +
                         "with the expected item type '%s' of this property lens.", newValue.getClass(), _type
                 ));
 
-            _setInParentAndInternally(channel, newValue);
+            _lastItem = newValue;
+            _core.writeToSources(channel, newValue);
         }
         return pair;
     }
 
     @Override
-    public final sprouts.Observable subscribe(Observer observer ) {
+    public final Observable subscribe(Observer observer ) {
         _changeListeners.onChange( observer );
         return this;
     }
@@ -375,9 +516,7 @@ final class PropertyLens<A extends @Nullable Object, T extends @Nullable Object>
         return _changeListeners.numberOfChangeListeners();
     }
 
-
     private static void _logError(String message, @Nullable Object... args) {
         Util._logError(log, message, args);
     }
-
 }

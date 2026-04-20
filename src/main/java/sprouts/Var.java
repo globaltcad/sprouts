@@ -10,9 +10,9 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
- *  A mutable wrapper for an item which can also be mapped to a weakly referenced{@link Viewable} to
- *  be observed for changes using {@link Action}s registered through the {@link Viewable#onChange(Channel, Action)} method,
- *  where the {@link Channel} is used to distinguish between changes from
+ *  A mutable wrapper for an item which can also be mapped to a weakly referenced {@link Viewable} to
+ *  be observed for changes using {@link Action}s registered through the {@link Viewable#onChange(Channel, Action)} method.
+ *  The {@link Channel} marker is used to distinguish between changes from
  *  different sources (usually application layers like the view model or the view).<br>
  *  Use {@link #view()} to access a simple no-op live view of the item of this property
  *  and register change listeners on it to react to state changes.
@@ -64,9 +64,30 @@ import java.util.function.Function;
  *  kind of pattern, like "property", "observable object", "observable value", "observable property", etc.
  *  Using the names {@link Var} and {@link Val} also allows for the distinction between
  *  mutable and immutable properties without having to resort to prefixes like "mutable" or "immutable"
- *  as part of a type that is supposed to be used everywhere in your code.
+ *  as part of a type that is supposed to be used everywhere in your code.<br>
+ *
+ *  <b>Optics: Lenses, Projections, and Parameterized Projection</b>
+ *  This class provides several kinds of bidirectional bindings between properties, all inspired by
+ *  the theory of <b>optics</b> from functional programming.<br>
+ *  Understanding the taxonomy helps choose the right method:
+ *  <ul>
+ *    <li><b>Lens</b> ({@link #zoomTo(Function, BiFunction)}): Focuses on a <i>part</i> of a larger
+ *        immutable data structure. The getter extracts a field; the wither produces a new parent
+ *        with that field replaced. This is the classic lens from the optics literature.</li>
+ *    <li><b>Projection (bidirectional)</b> ({@link #projectTo(Function, Function)}): A two-way
+ *        mapping between two representations of the same logical value, e.g. unit conversions or
+ *        encoding changes. The getter and setter should ideally form an <i>isomorphism</i>
+ *        (perfect inverse pair).</li>
+ *    <li><b>Parameterized Projection</b> {@link #projectTo(Val, BiFunction, BiFunction)}):
+ *        A bidirectional mapping with an additional <i>read-only parameter</i> ({@link Val}).
+ *        The parameter shapes how the source is viewed in the target and how writes are inverted,
+ *        but it is itself never written to.</li>
+ *    <li><b>Multi-Projection (dual-source projection)</b> ({@link #of(Class, Var, Var, BiFunction, Function)}):
+ *        Combines <i>two mutable</i> sources into a single derived property with full write-back
+ *        to both sources. The setter returns a {@link Pair} to distribute the value.</li>
+ *  </ul><br>
  *  <p>
- *  <b>Please take a look at the <a href="https://globaltcad.github.io/sprouts/">living sprouts documentation</a>
+ *  <b>Take a look at the <a href="https://globaltcad.github.io/sprouts/">living sprouts documentation</a>
  *  where you can browse a large collection of examples demonstrating how to use the API of this class.</b>
  *
  * @see Val A super type of this class with a read-only API.
@@ -914,7 +935,7 @@ public interface Var<T extends @Nullable Object> extends Val<T>
 
     /**
      * Creates a lens property (Var) from the supplied {@link Lens} implementation,
-     * which focuses on a specific field of the potentially nullable item of this property, where 
+     * which focuses on a specific field of the potentially nullable item of this property, where
      * a default non-null value is provided for cases when the item of this property is null.
      * The lens property produced by this method will use the supplied {@link Lens} implementation to
      * access and update a specific field in the item of this property.
@@ -1099,16 +1120,19 @@ public interface Var<T extends @Nullable Object> extends Val<T>
     }
 
     /**
-     * Creates a projected lens property (Var) that bi-directionally maps between the item type {@code T}
-     * of this property and a target type {@code B} using a pair of conversion functions.
-     * The projection establishes a two-way relationship where changes in either property
-     * are automatically reflected in the other, provided the conversion functions form
-     * an isomorphism (a perfect reversible mapping).
+     * Creates a projected property (Var) that bi-directionally <i>converts</i> between the item type
+     * {@code T} of this property and a target type {@code B} using a pair of conversion functions.
+     * <p>
+     * A projection is a whole-value conversion in both directions — unlike a zoom/lens (see
+     * {@link #zoomTo(Lens)}), which focuses on a field of {@code T} and rebuilds the source via a
+     * wither, a projection rewrites the <i>entire</i> source value on every write. The forward
+     * {@code getter} turns a {@code T} into a {@code B}, and the backward {@code setter} turns a
+     * {@code B} back into a whole new {@code T}.
      * <p>
      * This method is particularly useful when you need to work with different
-     * representations of the same logical data. For example, converting between
+     * representations of the same logical data — for example, converting between
      * measurement units, currency values, or different string encodings while
-     * maintaining synchronization between the representations.
+     * maintaining synchronization between the two sides.
      * <p>
      * <b>Mathematical Foundation:</b><br>
      * For the projection to behave predictably, the functions should ideally form
@@ -1216,41 +1240,48 @@ public interface Var<T extends @Nullable Object> extends Val<T>
     }
 
     /**
-     * Creates a projected lens property (Var) that bi-directionally maps between the item type {@code T}
-     * of this property and a target type {@code B} using conversion functions, with explicit type safety.
+     * Creates a projected property (Var) that bi-directionally <i>converts</i> between the item type
+     * {@code T} of this property and a target type {@code B}, with explicit type safety.
      * <p>
-     * This method addresses the same type safety issue as the lens methods, but for projections.
-     * When using {@link #projectTo(Function, Function)}, the runtime type of the projected property
-     * is inferred from the initial converted value, which may be a subtype of the declared type {@code B}.
-     * This method ensures the projection accepts all valid subtypes of {@code B}.
+     * As with every projection, the getter and setter describe a whole-value conversion
+     * between {@code T} and {@code B} — not a zoom into a field of {@code T}. Unlike
+     * {@link #projectTo(Function, Function)}, this overload takes an explicit {@code Class<B>}
+     * so the runtime type of the resulting property is fixed to the declared {@code B} rather
+     * than inferred from the concrete class of the first converted value. This matters whenever
+     * {@code B} is polymorphic: without {@code Class<B>}, writing a different subtype back
+     * may produce a type mismatch against the property's {@link Var#type()}.
      * <p>
-     * Example with a polymorphic serialization system:
+     * <b>Example — packed RGB integer projected to a polymorphic Color:</b>
      * <pre>{@code
-     * sealed interface DataFormat permits JsonFormat, XmlFormat, YamlFormat {
-     *     String serialize(Object data);
-     *     Object deserialize(String text);
+     * sealed interface Color permits Rgb, Hsl {
+     *     int toPackedRgb();
+     * }
+     * record Rgb(int r, int g, int b) implements Color {
+     *     public int toPackedRgb() { return (r << 16) | (g << 8) | b; }
+     *     public static Rgb fromPackedRgb(int p) {
+     *         return new Rgb((p >> 16) & 0xFF, (p >> 8) & 0xFF, p & 0xFF);
+     *     }
+     * }
+     * record Hsl(double h, double s, double l) implements Color {
+     *     public int toPackedRgb() { ... }         // HSL -> packed RGB conversion
+     *     public static Hsl fromPackedRgb(int p) { ... } // unused here
      * }
      *
-     * record Document(String title, Object content) {
-     *     public Document withContent(Object content) { return new Document(title, content); }
-     * }
+     * // The source stores colors as packed RGB ints.
+     * Var<Integer> pixel = Var.of(0xFF0000);
      *
-     * // Project Document content to various DataFormat representations
-     * Var<Document> doc = Var.of(new Document("Report", Map.of("key", "value")));
-     *
-     * // Without explicit type: limited to the initial format's specific type
-     * // Var<DataFormat> problematic = doc.projectTo(d -> new JsonFormat(d.content()), ...);
-     *
-     * // With explicit type safety: accepts any DataFormat implementation
-     * Var<DataFormat> format = doc.projectTo(DataFormat.class,
-     *     d -> new JsonFormat(d.content()),  // Convert to JsonFormat (a DataFormat)
-     *     f -> new Document("Report", f.deserialize(f.serialize()))
+     * // Project int <-> polymorphic Color. Passing Color.class ensures the
+     * // projection's type() is Color, so any subtype can be written back.
+     * Var<Color> color = pixel.projectTo(Color.class,
+     *     Rgb::fromPackedRgb,   // forward: int -> Rgb (a Color)
+     *     Color::toPackedRgb    // backward: any Color -> int
      * );
      *
-     * // Can switch between different DataFormat implementations
-     * format.set(new XmlFormat(doc.get().content())); // Works! XmlFormat is a DataFormat
-     * format.set(new YamlFormat(doc.get().content())); // Also works!
+     * color.set(new Hsl(0.0, 1.0, 0.5));  // Hsl is-a Color — accepted
+     * // pixel.get() now holds the packed RGB representation of that Hsl value
      * }</pre>
+     * Without {@code Color.class}, the compiler would infer {@code B} from the first converted
+     * value — {@code Rgb} — and {@code color.set(new Hsl(...))} would fail at runtime.
      *
      * @param <B>    The declared target type of the projected property.
      * @param type   The class object representing the declared type {@code B}.
@@ -1332,7 +1363,14 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      * @return A new Var that maintains a bidirectional projection with guaranteed
      *         non-null values, using {@code nullObject} as fallback.
      * @throws NullPointerException if {@code nullObject} or either function is null.
+     * @deprecated This overload is ambiguous with {@link #projectTo(Class, Function, Function)} at
+     *             the call site: whenever the first argument could plausibly be both a {@code B}
+     *             and a {@code Class<B>} (e.g. a {@code Class} literal), the Java compiler cannot
+     *             decide between the two overloads and reports an ambiguity error. Use
+     *             {@link #projectTo(Class, Object, Function, Function)} instead, which supplies an
+     *             explicit {@code Class<B>} <i>and</i> a null-object and is unambiguous.
      */
+    @Deprecated
     default <B extends @NonNull Object> Var<B> projectTo( B nullObject, Function<T,B> getter, Function<B,T> setter ) {
         Objects.requireNonNull(nullObject);
         Objects.requireNonNull(getter, "getter must not be null");
@@ -1341,40 +1379,51 @@ public interface Var<T extends @Nullable Object> extends Val<T>
     }
 
     /**
-     * Creates a projected lens property (Var) that bi-directionally maps between the item type {@code T}
-     * of this property and a target type {@code B} using conversion functions, with a guaranteed
-     * non-null fallback value and explicit type safety.
+     * Creates a projected lens property (Var) that bi-directionally <i>converts</i> between the item type
+     * {@code T} of this property and a target type {@code B}, using a guaranteed non-null fallback value
+     * and explicit type safety.
      * <p>
-     * This method combines null safety with type safety for projections. It ensures the projected
-     * property never contains null while accepting any subtype of the declared type {@code B}.
+     * A projection is a pair of conversion functions describing how to translate a whole value from
+     * {@code T} to {@code B} (forward) and from {@code B} back to {@code T} (backward). Unlike a
+     * zoom/lens — which focuses on a field inside a product type and rebuilds the source via a wither —
+     * a projection rewrites the <i>entire</i> source value on every write.
      * <p>
-     * Example with a polymorphic UI component system:
+     * This overload combines null safety with type safety: the projected property never contains null
+     * (the {@code nullObject} is substituted whenever this property's item is null), and the declared
+     * type {@code B} is passed explicitly so the projection accepts <i>any</i> subtype of {@code B},
+     * not just the concrete runtime type of {@code nullObject}.
+     * <p>
+     * <b>Example — storing a temperature in a canonical unit and projecting to a polymorphic representation:</b>
      * <pre>{@code
-     * sealed interface Widget permits Button, TextField, Slider {
-     *     String render();
+     * sealed interface Temperature permits Celsius, Fahrenheit, Kelvin {
+     *     double toCelsius();
      * }
+     * record Celsius(double value)    implements Temperature { public double toCelsius() { return value; } }
+     * record Fahrenheit(double value) implements Temperature { public double toCelsius() { return (value - 32) * 5.0/9.0; } }
+     * record Kelvin(double value)     implements Temperature { public double toCelsius() { return value - 273.15; } }
      *
-     * record UiState(Widget currentWidget) {
-     *     public UiState withWidget(Widget widget) { return new UiState(widget); }
-     * }
+     * // The source always stores a plain Celsius number, and may be null.
+     * Var<Double> celsius = Var.ofNullable(Double.class, 20.0);
+     * Temperature fallback = new Celsius(0.0);
      *
-     * // Nullable UI state with default widget
-     * Var<UiState> ui = Var.ofNull(UiState.class);
-     * Widget defaultWidget = new Button("Click me");
-     *
-     * // Type-safe null-safe projection
-     * Var<Widget> widget = ui.projectTo(Widget.class, defaultWidget,
-     *     UiState::currentWidget,
-     *     UiState::withWidget
+     * // Project the Double <-> a polymorphic Temperature.
+     * // Passing Temperature.class ensures any subtype (Fahrenheit, Kelvin, ...)
+     * // can be written back, not only the concrete type of 'fallback'.
+     * Var<Temperature> temp = celsius.projectTo(Temperature.class, fallback,
+     *     c -> new Celsius(c),   // forward: T -> B, wraps the stored Celsius value
+     *     t -> t.toCelsius()     // backward: B -> T, converts any Temperature back to Celsius
      * );
      *
-     * // Initially shows default widget (parent is null)
-     * assert widget.get() == defaultWidget;
+     * // Writing any subtype of Temperature rewrites the underlying Double:
+     * temp.set(new Fahrenheit(100.0));   // celsius.get() is now ~37.78
+     * temp.set(new Kelvin(300.0));       // celsius.get() is now ~26.85
      *
-     * // Can set any Widget implementation
-     * ui.set(new UiState(new TextField("Enter text")));
-     * widget.set(new Slider(0, 100, 50)); // Works with any Widget
+     * // When the source is null, the projection yields the fallback:
+     * celsius.set(null);
+     * assert temp.get() == fallback;     // Celsius(0.0)
      * }</pre>
+     * Note how the backward function reads the <i>entire</i> projected value and produces a whole new
+     * source value — there is no field being zoomed into.
      *
      * @param <B>        The declared target type of the projected property (non-nullable).
      * @param <V>        The specific subtype of {@code B} used for the null object.
@@ -1397,10 +1446,12 @@ public interface Var<T extends @Nullable Object> extends Val<T>
     }
 
     /**
-     * Creates a projected lens property (Var) that bi-directionally maps between the item type {@code T}
-     * of this property and a nullable target item type {@code B} using conversion functions.
-     * This method allows the projected property to hold null values, which is useful when
-     * the conversion between types is partial or may fail.
+     * Creates a projected property (Var) that bi-directionally <i>converts</i> between the item type
+     * {@code T} of this property and a <i>nullable</i> target type {@code B}, using a pair of conversion
+     * functions. The resulting property is allowed to hold {@code null}, which is useful when the
+     * conversion is partial — that is, some source values have no meaningful {@code B} representation
+     * (or vice-versa). As with every projection, each side of the mapping is a whole-value conversion,
+     * not a zoom into a field of {@code T}.
      * <p>
      * <b>Mathematical Foundation:</b><br>
      * The functions define a partial bijection between subsets of {@code T} and {@code B}.<br>
@@ -1468,5 +1519,298 @@ public interface Var<T extends @Nullable Object> extends Val<T>
         Objects.requireNonNull(getter, "getter must not be null");
         Objects.requireNonNull(setter, "setter must not be null");
         return Sprouts.factory().projLensOfNullable(type, this, getter, setter);
+    }
+
+    // -------------------------------------------------------------------
+    //  Parameterized Projection Instance Methods
+    //  (projecting this property through a read-only parameter)
+    // -------------------------------------------------------------------
+
+    /**
+     * Creates a <b>parameterized projection</b> of this property — a bidirectionally bound wrapper
+     * whose forward and backward mappings are also shaped by a read-only {@link Val} parameter.
+     * <p>
+     * The parameter {@code P} influences how this property's item of type {@code T} is
+     * projected to a target type {@code B}, but writes to the resulting property never
+     * modify the parameter — only this property (the source) is updated.
+     * <p>
+     * This method allows for the creating of such a parameterized
+     * projection from this property to a target type {@code B} using a pair of conversion
+     * functions that take the parameter into account.
+     * <p>
+     * <b>Data flow:</b>
+     * <ul>
+     *   <li><b>Forward:</b> {@code getter.apply(parameter.get(), this.get())} → projected value</li>
+     *   <li><b>Backward:</b> {@code setter.apply(newProjectedValue, parameter.get())} → new source value
+     *       written back to this property</li>
+     * </ul>
+     * <p>
+     * <b>Example — temperature conversion with a configurable unit:</b>
+     * <pre>{@code
+     *     enum TempUnit { CELSIUS, FAHRENHEIT, KELVIN }
+     *
+     *     Val<TempUnit> displayUnit = Val.of(TempUnit.FAHRENHEIT);
+     *     Var<Double> celsius = Var.of(100.0);  // always stored in Celsius internally
+     *
+     *     Var<Double> displayed = celsius.projectTo(
+     *         displayUnit,
+     *         (unit, c) -> switch (unit) {
+     *             case CELSIUS    -> c;
+     *             case FAHRENHEIT -> c * 9.0/5.0 + 32.0;
+     *             case KELVIN     -> c + 273.15;
+     *         },
+     *         (val, unit) -> switch (unit) {
+     *             case CELSIUS    -> val;
+     *             case FAHRENHEIT -> (val - 32.0) * 5.0/9.0;
+     *             case KELVIN     -> val - 273.15;
+     *         }
+     *     );
+     *
+     *     // displayed.get() == 212.0  (100°C in Fahrenheit)
+     *
+     *     displayed.set(32.0);
+     *     // celsius.get() == 0.0  (32°F → 0°C)
+     *     // displayUnit is unchanged
+     * }</pre>
+     * <p>
+     * <b>Warning:</b><br>
+     * The {@link Var#type()} of the returned property is resolved dynamically from the
+     * concrete (sub)type of the first computed value. If {@code B} is polymorphic, prefer
+     * {@link #projectTo(Class, Val, BiFunction, BiFunction)} to avoid type cast exceptions.
+     *
+     * @param <P>       The type of the read-only parameter.
+     * @param <B>       The target type of the projected property.
+     * @param parameter A read-only {@link Val} whose item influences the projection but is
+     *                  never modified by writes.
+     * @param getter    A {@link BiFunction} that takes the parameter and this property's item
+     *                  and produces the projected value.
+     * @param setter    A {@link BiFunction} that takes a new projected value and the current
+     *                  parameter value, and produces a new source value for this property.
+     * @return A new {@link Var} that maintains a parameterized bidirectional projection.
+     * @throws NullPointerException if any argument is {@code null}.
+     */
+    default <P extends @Nullable Object, B> Var<B> projectTo(
+            Val<P>                  parameter,
+            BiFunction<P, T, B>     getter,
+            BiFunction<B, P, T>     setter
+    ) {
+        Objects.requireNonNull(parameter, "parameter must not be null");
+        Objects.requireNonNull(getter,    "getter must not be null");
+        Objects.requireNonNull(setter,    "setter must not be null");
+        return Sprouts.factory().paramLensOf(parameter, this, getter, setter);
+    }
+
+    /**
+     * Creates an explicitly typed <b>parameterized projection</b> of this property —
+     * a bidirectionally bound wrapper whose forward and backward whole-value conversions
+     * are also shaped by a read-only {@link Val} parameter.
+     * <p>
+     * This is equivalent to {@link #projectTo(Val, BiFunction, BiFunction)} but fixes the
+     * resulting property's {@link Var#type()} to the declared {@code B}, so <i>any</i> subtype
+     * of {@code B} can be written back. Prefer this overload whenever {@code B} is polymorphic
+     * (a sealed interface, abstract class, etc.), because otherwise the type is inferred from
+     * the concrete runtime type of the first projected value.
+     * <p>
+     * <b>Example — a canonical amount stored in USD, displayed as a polymorphic {@code Money}:</b>
+     * <pre>{@code
+     * sealed interface Money permits Dollars, Euros, Yen {
+     *     double amountInUsd();
+     * }
+     * record Dollars(double v) implements Money { public double amountInUsd() { return v; } }
+     * record Euros(double v)   implements Money { public double amountInUsd() { return v * 1.10; } }
+     * record Yen(double v)     implements Money { public double amountInUsd() { return v / 150.0; } }
+     *
+     * enum Currency { USD, EUR, JPY }
+     *
+     * Var<Double>    usdAmount       = Var.of(100.0);              // canonical internal storage
+     * Val<Currency>  displayCurrency = Val.of(Currency.EUR);       // read-only parameter
+     *
+     * // The parameter decides which Money subtype the forward conversion produces;
+     * // the backward conversion simply asks the written Money for its USD equivalent.
+     * Var<Money> money = usdAmount.projectTo(Money.class, displayCurrency,
+     *     (curr, usd) -> switch (curr) {
+     *         case USD -> new Dollars(usd);
+     *         case EUR -> new Euros(usd / 1.10);
+     *         case JPY -> new Yen(usd * 150.0);
+     *     },
+     *     (m, curr) -> m.amountInUsd()
+     * );
+     *
+     * money.set(new Yen(15_000.0));  // Yen is-a Money — accepted
+     * // usdAmount.get() is now ~100.0 (15 000 JPY -> USD)
+     * // displayCurrency is unchanged; only the source is written.
+     * }</pre>
+     * <p>
+     * <b>Mathematical Foundation:</b><br>
+     * For any <i>fixed</i> parameter value {@code p}, the getter and setter should form a
+     * <i>lawful lens</i> over the source:
+     * <ul>
+     *   <li><b>Get-Put:</b> {@code setter.apply(getter.apply(p, s), p).equals(s)} — reading and
+     *       writing back the same value is a no-op on the source.</li>
+     *   <li><b>Put-Get:</b> {@code getter.apply(p, setter.apply(a, p)).equals(a)} — writing a value
+     *       and reading it back yields the same value.</li>
+     * </ul>
+     * These laws only need to hold for a <i>fixed</i> parameter value; when the parameter changes,
+     * the projection is simply recomputed.
+     *
+     * @param <P>       The type of the read-only parameter.
+     * @param <B>       The declared target type of the projected property.
+     * @param type      The class object representing the declared type {@code B}.
+     * @param parameter A read-only {@link Val} whose item influences the projection.
+     * @param getter    A {@link BiFunction} that takes the parameter and this property's item
+     *                  and produces the projected value.
+     * @param setter    A {@link BiFunction} that takes a new projected value and the current
+     *                  parameter value, and produces a new source value for this property.
+     * @return A new {@link Var} with proper type safety for all subtypes of {@code B}.
+     * @throws NullPointerException if any argument is {@code null}.
+     */
+    default <P extends @Nullable Object, B> Var<B> projectTo(
+            Class<B>                type,
+            Val<P>                  parameter,
+            BiFunction<P, T, B>     getter,
+            BiFunction<B, P, T>     setter
+    ) {
+        Objects.requireNonNull(type,      "type must not be null");
+        Objects.requireNonNull(parameter, "parameter must not be null");
+        Objects.requireNonNull(getter,    "getter must not be null");
+        Objects.requireNonNull(setter,    "setter must not be null");
+        return Sprouts.factory().paramLensOf(type, parameter, this, getter, setter);
+    }
+
+    /**
+     * Creates a <b>parameterized projection</b> of this property —
+     * a bidirectionally bound wrapper whose forward and backward whole-value conversions
+     * are also shaped by a read-only {@link Val} parameter — with a guaranteed non-null
+     * fallback for when this property's item is {@code null}.
+     * <p>
+     * When the source is {@code null}, the forward {@code getter} is <i>not</i> invoked and
+     * the projected property yields {@code nullObject} instead. Writes always go through the
+     * {@code setter} (consulting the current parameter value) and update this property.
+     * <p>
+     * <b>Example — a nullable Celsius reading displayed in a configurable unit:</b>
+     * <pre>{@code
+     *     enum TempUnit { CELSIUS, FAHRENHEIT, KELVIN }
+     *
+     *     Val<TempUnit> displayUnit = Val.of(TempUnit.FAHRENHEIT);
+     *     Var<Double>   celsius     = Var.ofNullable(Double.class, 20.0);  // may become null
+     *     double        fallback    = 0.0;                                 // shown when null
+     *
+     *     Var<Double> displayed = celsius.projectTo(fallback, displayUnit,
+     *         (unit, c) -> switch (unit) {
+     *             case CELSIUS    -> c;
+     *             case FAHRENHEIT -> c * 9.0/5.0 + 32.0;
+     *             case KELVIN     -> c + 273.15;
+     *         },
+     *         (val, unit) -> switch (unit) {
+     *             case CELSIUS    -> val;
+     *             case FAHRENHEIT -> (val - 32.0) * 5.0/9.0;
+     *             case KELVIN     -> val - 273.15;
+     *         }
+     *     );
+     *
+     *     // displayed.get() == 68.0   (20°C in Fahrenheit)
+     *
+     *     celsius.set(null);
+     *     // displayed.get() == 0.0    (fallback, getter not invoked)
+     *
+     *     displayed.set(32.0);
+     *     // celsius.get() == 0.0      (32°F -> 0°C; source is written even after being null)
+     * }</pre>
+     * <p>
+     * <b>Mathematical Foundation:</b><br>
+     * For any <i>fixed</i> parameter value {@code p}, the getter and setter should form a
+     * <i>lawful lens</i> over the source:
+     * <ul>
+     *   <li><b>Get-Put:</b> {@code setter.apply(getter.apply(p, s), p).equals(s)} — reading and
+     *       writing back the same value is a no-op on the source.</li>
+     *   <li><b>Put-Get:</b> {@code getter.apply(p, setter.apply(a, p)).equals(a)} — writing a value
+     *       and reading it back yields the same value.</li>
+     * </ul>
+     * These laws only need to hold for a <i>fixed</i> parameter value; when the parameter changes,
+     * the projection is simply recomputed.
+     *
+     * @param <P>        The type of the read-only parameter.
+     * @param <B>        The target type of the projected property (non-nullable).
+     * @param nullObject The fallback value when this property's item is null.
+     * @param parameter  A read-only {@link Val} whose item influences the projection.
+     * @param getter     A {@link BiFunction} that takes the parameter and this property's item
+     *                   and produces the projected value.
+     * @param setter     A {@link BiFunction} that takes a new projected value and the current
+     *                   parameter value, and produces a new source value for this property.
+     * @return A new non-nullable {@link Var} with a guaranteed fallback.
+     * @throws NullPointerException if any argument is {@code null}.
+     */
+    default <P extends @Nullable Object, B extends @NonNull Object> Var<B> projectTo(
+            B                       nullObject,
+            Val<P>                  parameter,
+            BiFunction<P, T, B>     getter,
+            BiFunction<B, P, T>     setter
+    ) {
+        Objects.requireNonNull(nullObject, "nullObject must not be null");
+        Objects.requireNonNull(parameter,  "parameter must not be null");
+        Objects.requireNonNull(getter,     "getter must not be null");
+        Objects.requireNonNull(setter,     "setter must not be null");
+        return Sprouts.factory().paramLensOf(nullObject, parameter, this, getter, setter);
+    }
+
+    /**
+     * Creates a nullable <b>parameterized projection</b> of this property.
+     * <p>
+     * The resulting property may hold {@code null}, which is useful when the parameterized
+     * conversion is partial and the getter signals failure by returning {@code null}.
+     * <p>
+     * <b>Example — optional formatting with a read-only locale:</b>
+     * <pre>{@code
+     *     Val<Locale> locale = Val.of(Locale.GERMANY);
+     *     Var<Double> amount = Var.of(1234.56);
+     *
+     *     Var<String> formatted = amount.projectToNullable(
+     *         String.class, locale,
+     *         (loc, amt) -> {
+     *             try { return NumberFormat.getCurrencyInstance(loc).format(amt); }
+     *             catch (Exception e) { return null; }
+     *         },
+     *         (str, loc) -> {
+     *             try { return NumberFormat.getCurrencyInstance(loc).parse(str).doubleValue(); }
+     *             catch (Exception e) { return 0.0; }
+     *         }
+     *     );
+     * }</pre>
+     * <p>
+     * <b>Mathematical Foundation:</b><br>
+     * For a given fixed parameter value {@code p}, the getter and setter should form a
+     * <i>lawful lens</i> over the source:
+     * <ul>
+     *   <li><b>Get-Put:</b> {@code setter.apply(getter.apply(p, s), p).equals(s)} — reading and
+     *       writing back the same value is a no-op on the source.</li>
+     *   <li><b>Put-Get:</b> {@code getter.apply(p, setter.apply(a, p)).equals(a)} — writing a value
+     *       and reading it back yields the same value.</li>
+     * </ul>
+     * These laws need only hold for a <i>fixed</i> parameter value; when the parameter changes,
+     * the projection is simply recomputed.
+     *
+     * @param <P>       The type of the read-only parameter.
+     * @param <B>       The nullable target type of the projected property.
+     * @param type      The class object representing type {@code B}.
+     * @param parameter A read-only {@link Val} whose item influences the projection.
+     * @param getter    A {@link BiFunction} that takes the parameter and this property's item;
+     *                  may return {@code null}.
+     * @param setter    A {@link BiFunction} that takes a new projected value and the current
+     *                  parameter; must handle {@code null} input appropriately.
+     * @return A new nullable {@link Var} that maintains a parameterized projection.
+     * @throws NullPointerException if {@code type}, {@code parameter}, {@code getter},
+     *         or {@code setter} is {@code null}.
+     */
+    default <P extends @Nullable Object, B extends @Nullable Object> Var<B> projectToNullable(
+            Class<B>                type,
+            Val<P>                  parameter,
+            BiFunction<P, T, B>     getter,
+            BiFunction<B, P, T>     setter
+    ) {
+        Objects.requireNonNull(type,      "type must not be null");
+        Objects.requireNonNull(parameter, "parameter must not be null");
+        Objects.requireNonNull(getter,    "getter must not be null");
+        Objects.requireNonNull(setter,    "setter must not be null");
+        return Sprouts.factory().paramLensOfNullable(type, parameter, this, getter, setter);
     }
 }

@@ -1023,6 +1023,119 @@ public interface SproutsFactory
     );
 
     /**
+     * Creates a non-nullable <b>parameterized projection</b> {@link Var} property that establishes
+     * a bidirectional mapping between a mutable source property (of type {@code A}) and a target
+     * type {@code B}, where the projection is shaped by a read-only {@link Val} parameter of
+     * type {@code P}. Writes never modify the parameter, only the source.
+     * <p>
+     * The runtime type of the returned property is inferred from the initial value produced
+     * by the getter.
+     *
+     * @param parameter A read-only {@link Val} whose item influences the projection but is
+     *                  never written to.
+     * @param source    The mutable {@link Var} source property.
+     * @param getter    A {@link BiFunction} that takes the parameter and the source's item
+     *                  and produces the projected value.
+     * @param setter    A {@link BiFunction} that takes a new projected value and the current
+     *                  parameter, and produces the new source item.
+     * @return A {@link Var} maintaining a bidirectional parameterized projection.
+     * @param <P> The item type of the read-only parameter.
+     * @param <A> The item type of the mutable source.
+     * @param <B> The item type of the projected property.
+     * @throws NullPointerException if any parameter is {@code null}, or if the getter returns
+     *         {@code null} on the initial call.
+     */
+    <P extends @Nullable Object, A extends @Nullable Object, B extends @NonNull Object> Var<B> paramLensOf(
+            Val<P> parameter,
+            Var<A> source,
+            BiFunction<P, A, B> getter,
+            BiFunction<B, P, A> setter
+    );
+
+    /**
+     * Creates a non-nullable <b>parameterized projection</b> {@link Var} property with an
+     * explicitly declared type. Equivalent to {@link #paramLensOf(Val, Var, BiFunction, BiFunction)}
+     * but with a {@link Class} argument to ensure the returned property correctly handles all
+     * subtypes of {@code B}.
+     *
+     * @param type      The class object representing the declared type {@code B}.
+     * @param parameter A read-only {@link Val} whose item influences the projection.
+     * @param source    The mutable {@link Var} source property.
+     * @param getter    A {@link BiFunction} that takes the parameter and source's item and
+     *                  produces the projected value.
+     * @param setter    A {@link BiFunction} that takes a new projected value and the current
+     *                  parameter, and produces the new source item.
+     * @return A {@link Var} maintaining a bidirectional parameterized projection.
+     * @param <P> The item type of the read-only parameter.
+     * @param <A> The item type of the mutable source.
+     * @param <B> The item type of the projected property.
+     * @throws NullPointerException if any parameter is {@code null}, or if the getter returns
+     *         {@code null} on the initial call.
+     */
+    <P extends @Nullable Object, A extends @Nullable Object, B extends @NonNull Object> Var<B> paramLensOf(
+            Class<B> type,
+            Val<P> parameter,
+            Var<A> source,
+            BiFunction<P, A, B> getter,
+            BiFunction<B, P, A> setter
+    );
+
+    /**
+     * Creates a non-nullable <b>parameterized projection</b> {@link Var} property with a
+     * guaranteed non-null fallback value. When the source's item is {@code null}, or when the
+     * getter would otherwise return {@code null}, the {@code nullObject} is used as the
+     * projected value instead.
+     *
+     * @param nullObject The guaranteed non-null fallback value.
+     * @param parameter  A read-only {@link Val} whose item influences the projection.
+     * @param source     The mutable {@link Var} source property.
+     * @param getter     A {@link BiFunction} that takes the parameter and source's item and
+     *                   produces the projected value (may return {@code null}).
+     * @param setter     A {@link BiFunction} that takes a new projected value and the current
+     *                   parameter, and produces the new source item.
+     * @return A non-nullable {@link Var} maintaining a parameterized projection with null safety.
+     * @param <P> The item type of the read-only parameter.
+     * @param <A> The item type of the mutable source.
+     * @param <B> The item type of the projected property.
+     * @throws NullPointerException if any parameter is {@code null}.
+     */
+    <P extends @Nullable Object, A extends @Nullable Object, B extends @NonNull Object> Var<B> paramLensOf(
+            B nullObject,
+            Val<P> parameter,
+            Var<A> source,
+            BiFunction<P, A, B> getter,
+            BiFunction<B, P, A> setter
+    );
+
+    /**
+     * Creates a nullable <b>parameterized projection</b> {@link Var} property. The resulting
+     * property may hold {@code null}, which is useful when the parameterized conversion is
+     * partial and the getter signals failure by returning {@code null}.
+     *
+     * @param type      The class object representing the declared type {@code B}.
+     * @param parameter A read-only {@link Val} whose item influences the projection.
+     * @param source    The mutable {@link Var} source property.
+     * @param getter    A {@link BiFunction} that takes the parameter and source's item and
+     *                  produces the projected value; may return {@code null}.
+     * @param setter    A {@link BiFunction} that takes a new projected value and the current
+     *                  parameter, and produces the new source item; must handle {@code null}
+     *                  input appropriately.
+     * @return A nullable {@link Var} maintaining a parameterized projection.
+     * @param <P> The item type of the read-only parameter.
+     * @param <A> The item type of the mutable source.
+     * @param <B> The nullable item type of the projected property.
+     * @throws NullPointerException if {@code type}, {@code parameter}, {@code source},
+     *         {@code getter}, or {@code setter} is {@code null}.
+     */
+    <P extends @Nullable Object, A extends @Nullable Object, B extends @Nullable Object> Var<B> paramLensOfNullable(
+            Class<B> type,
+            Val<P> parameter,
+            Var<A> source,
+            BiFunction<P, A, B> getter,
+            BiFunction<B, P, A> setter
+    );
+
+    /**
      * Creates a {@link Var} property instance from a given non-null {@link Class} of a nullable type and
      * as well as an item of that type, which therefore may be {@code null}.
      * The resulting property is nullable, meaning it can hold a value of the given type or be {@code null}.
