@@ -478,7 +478,7 @@ final class PropertyLens<T extends @Nullable Object> implements Var<T>, Viewable
                             "If you want your property to allow null values, use the 'ofNullable(Class, T)' factory method."
             );
 
-        T oldValue = _core.fetchFromSources(_lastItem);
+        T oldValue = _item();
 
         ItemPair<T> pair = new ItemPair<>(_type, newValue, oldValue);
 
