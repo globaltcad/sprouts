@@ -1023,6 +1023,119 @@ public interface SproutsFactory
     );
 
     /**
+     * Creates a non-nullable &lt;b&gt;parameterized projection&lt;/b&gt; {@link Var} property that establishes
+     * a bidirectional mapping between a mutable source property (of type {@code A}) and a target
+     * type {@code B}, where the projection is shaped by a read-only {@link Val} parameter of
+     * type {@code P}. Writes never modify the parameter, only the source.
+     * &lt;p&gt;
+     * The runtime type of the returned property is inferred from the initial value produced
+     * by the getter.
+     *
+     * @param parameter A read-only {@link Val} whose item influences the projection but is
+     *                  never written to.
+     * @param source    The mutable {@link Var} source property.
+     * @param getter    A {@link BiFunction} that takes the parameter and the source's item
+     *                  and produces the projected value.
+     * @param setter    A {@link BiFunction} that takes a new projected value and the current
+     *                  parameter, and produces the new source item.
+     * @return A {@link Var} maintaining a bidirectional parameterized projection.
+     * @param &lt;P&gt; The item type of the read-only parameter.
+     * @param &lt;A&gt; The item type of the mutable source.
+     * @param &lt;B&gt; The item type of the projected property.
+     * @throws NullPointerException if any parameter is {@code null}, or if the getter returns
+     *         {@code null} on the initial call.
+     */
+    &lt;P extends @Nullable Object, A extends @Nullable Object, B extends @NonNull Object&gt; Var&lt;B&gt; paramLensOf(
+            Val&lt;P&gt; parameter,
+            Var&lt;A&gt; source,
+            BiFunction&lt;P, A, B&gt; getter,
+            BiFunction&lt;B, P, A&gt; setter
+    );
+
+    /**
+     * Creates a non-nullable &lt;b&gt;parameterized projection&lt;/b&gt; {@link Var} property with an
+     * explicitly declared type. Equivalent to {@link #paramLensOf(Val, Var, BiFunction, BiFunction)}
+     * but with a {@link Class} argument to ensure the returned property correctly handles all
+     * subtypes of {@code B}.
+     *
+     * @param type      The class object representing the declared type {@code B}.
+     * @param parameter A read-only {@link Val} whose item influences the projection.
+     * @param source    The mutable {@link Var} source property.
+     * @param getter    A {@link BiFunction} that takes the parameter and source's item and
+     *                  produces the projected value.
+     * @param setter    A {@link BiFunction} that takes a new projected value and the current
+     *                  parameter, and produces the new source item.
+     * @return A {@link Var} maintaining a bidirectional parameterized projection.
+     * @param &lt;P&gt; The item type of the read-only parameter.
+     * @param &lt;A&gt; The item type of the mutable source.
+     * @param &lt;B&gt; The item type of the projected property.
+     * @throws NullPointerException if any parameter is {@code null}, or if the getter returns
+     *         {@code null} on the initial call.
+     */
+    &lt;P extends @Nullable Object, A extends @Nullable Object, B extends @NonNull Object&gt; Var&lt;B&gt; paramLensOf(
+            Class&lt;B&gt; type,
+            Val&lt;P&gt; parameter,
+            Var&lt;A&gt; source,
+            BiFunction&lt;P, A, B&gt; getter,
+            BiFunction&lt;B, P, A&gt; setter
+    );
+
+    /**
+     * Creates a non-nullable &lt;b&gt;parameterized projection&lt;/b&gt; {@link Var} property with a
+     * guaranteed non-null fallback value. When the source's item is {@code null}, or when the
+     * getter would otherwise return {@code null}, the {@code nullObject} is used as the
+     * projected value instead.
+     *
+     * @param nullObject The guaranteed non-null fallback value.
+     * @param parameter  A read-only {@link Val} whose item influences the projection.
+     * @param source     The mutable {@link Var} source property.
+     * @param getter     A {@link BiFunction} that takes the parameter and source's item and
+     *                   produces the projected value (may return {@code null}).
+     * @param setter     A {@link BiFunction} that takes a new projected value and the current
+     *                   parameter, and produces the new source item.
+     * @return A non-nullable {@link Var} maintaining a parameterized projection with null safety.
+     * @param &lt;P&gt; The item type of the read-only parameter.
+     * @param &lt;A&gt; The item type of the mutable source.
+     * @param &lt;B&gt; The item type of the projected property.
+     * @throws NullPointerException if any parameter is {@code null}.
+     */
+    &lt;P extends @Nullable Object, A extends @Nullable Object, B extends @NonNull Object&gt; Var&lt;B&gt; paramLensOf(
+            B nullObject,
+            Val&lt;P&gt; parameter,
+            Var&lt;A&gt; source,
+            BiFunction&lt;P, A, B&gt; getter,
+            BiFunction&lt;B, P, A&gt; setter
+    );
+
+    /**
+     * Creates a nullable &lt;b&gt;parameterized projection&lt;/b&gt; {@link Var} property. The resulting
+     * property may hold {@code null}, which is useful when the parameterized conversion is
+     * partial and the getter signals failure by returning {@code null}.
+     *
+     * @param type      The class object representing the declared type {@code B}.
+     * @param parameter A read-only {@link Val} whose item influences the projection.
+     * @param source    The mutable {@link Var} source property.
+     * @param getter    A {@link BiFunction} that takes the parameter and source's item and
+     *                  produces the projected value; may return {@code null}.
+     * @param setter    A {@link BiFunction} that takes a new projected value and the current
+     *                  parameter, and produces the new source item; must handle {@code null}
+     *                  input appropriately.
+     * @return A nullable {@link Var} maintaining a parameterized projection.
+     * @param &lt;P&gt; The item type of the read-only parameter.
+     * @param &lt;A&gt; The item type of the mutable source.
+     * @param &lt;B&gt; The nullable item type of the projected property.
+     * @throws NullPointerException if {@code type}, {@code parameter}, {@code source},
+     *         {@code getter}, or {@code setter} is {@code null}.
+     */
+    &lt;P extends @Nullable Object, A extends @Nullable Object, B extends @Nullable Object&gt; Var&lt;B&gt; paramLensOfNullable(
+            Class&lt;B&gt; type,
+            Val&lt;P&gt; parameter,
+            Var&lt;A&gt; source,
+            BiFunction&lt;P, A, B&gt; getter,
+            BiFunction&lt;B, P, A&gt; setter
+    );
+
+    /**
      * Creates a {@link Var} property instance from a given non-null {@link Class} of a nullable type and
      * as well as an item of that type, which therefore may be {@code null}.
      * The resulting property is nullable, meaning it can hold a value of the given type or be {@code null}.
@@ -1451,12 +1564,12 @@ public interface SproutsFactory
      */
     @SuppressWarnings(&quot;unchecked&quot;)
     default &lt;T&gt; Tuple&lt;T&gt; tupleOf( Maybe&lt;T&gt; first, Maybe&lt;T&gt;... rest )  {
-<span class="nc" id="L1454">        T[] items = (T[]) new Object[rest.length + 1];</span>
-<span class="nc" id="L1455">        items[0] = first.orElseNull();</span>
-<span class="nc bnc" id="L1456" title="All 2 branches missed.">        for (int i = 0; i &lt; rest.length; i++) {</span>
-<span class="nc" id="L1457">            items[i + 1] = rest[i].orElseNull();</span>
+<span class="nc" id="L1567">        T[] items = (T[]) new Object[rest.length + 1];</span>
+<span class="nc" id="L1568">        items[0] = first.orElseNull();</span>
+<span class="nc bnc" id="L1569" title="All 2 branches missed.">        for (int i = 0; i &lt; rest.length; i++) {</span>
+<span class="nc" id="L1570">            items[i + 1] = rest[i].orElseNull();</span>
         }
-<span class="nc" id="L1459">        return tupleOf(Util.expectedClassFromItem(first.orElseThrowUnchecked()), items);</span>
+<span class="nc" id="L1572">        return tupleOf(Util.expectedClassFromItem(first.orElseThrowUnchecked()), items);</span>
     }
 
     /**
@@ -1578,11 +1691,11 @@ public interface SproutsFactory
      */
     @SuppressWarnings(&quot;unchecked&quot;)
     default &lt;T&gt; Tuple&lt;@Nullable T&gt; tupleOfNullable( Class&lt;T&gt; type, Maybe&lt;@Nullable T&gt;... maybes ) {
-<span class="nc" id="L1581">        T[] items = (T[]) new Object[maybes.length];</span>
-<span class="nc bnc" id="L1582" title="All 2 branches missed.">        for (int i = 0; i &lt; maybes.length; i++) {</span>
-<span class="nc" id="L1583">            items[i] = maybes[i].orElseNull();</span>
+<span class="nc" id="L1694">        T[] items = (T[]) new Object[maybes.length];</span>
+<span class="nc bnc" id="L1695" title="All 2 branches missed.">        for (int i = 0; i &lt; maybes.length; i++) {</span>
+<span class="nc" id="L1696">            items[i] = maybes[i].orElseNull();</span>
         }
-<span class="nc" id="L1585">        return tupleOfNullable(type, items);</span>
+<span class="nc" id="L1698">        return tupleOfNullable(type, items);</span>
     }
 
     /**
@@ -1622,12 +1735,12 @@ public interface SproutsFactory
      */
     @SuppressWarnings(&quot;unchecked&quot;)
     default &lt;T&gt; Tuple&lt;@Nullable T&gt; tupleOfNullable( Maybe&lt;@Nullable T&gt; first, Maybe&lt;@Nullable T&gt;... rest ) {
-<span class="nc" id="L1625">        T[] items = (T[]) new Object[rest.length + 1];</span>
-<span class="nc" id="L1626">        items[0] = first.orElseNull();</span>
-<span class="nc bnc" id="L1627" title="All 2 branches missed.">        for (int i = 0; i &lt; rest.length; i++) {</span>
-<span class="nc" id="L1628">            items[i + 1] = rest[i].orElseNull();</span>
+<span class="nc" id="L1738">        T[] items = (T[]) new Object[rest.length + 1];</span>
+<span class="nc" id="L1739">        items[0] = first.orElseNull();</span>
+<span class="nc bnc" id="L1740" title="All 2 branches missed.">        for (int i = 0; i &lt; rest.length; i++) {</span>
+<span class="nc" id="L1741">            items[i + 1] = rest[i].orElseNull();</span>
         }
-<span class="nc" id="L1630">        return tupleOfNullable(first.type(), items);</span>
+<span class="nc" id="L1743">        return tupleOfNullable(first.type(), items);</span>
     }
 
     /**
@@ -1803,7 +1916,7 @@ public interface SproutsFactory
      *  @return {@code true} if the given id is valid according to the current Sprouts implementation, {@code false} otherwise.
      */
     default boolean isValidPropertyId(String id) {
-<span class="nc bnc" id="L1806" title="All 4 branches missed.">        return id != null &amp;&amp; idPattern().matcher(id).matches();</span>
+<span class="nc bnc" id="L1919" title="All 4 branches missed.">        return id != null &amp;&amp; idPattern().matcher(id).matches();</span>
     }
 
     /**

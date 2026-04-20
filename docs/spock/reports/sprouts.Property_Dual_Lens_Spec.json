@@ -2,7 +2,7 @@
   "className":"sprouts.Property_Dual_Lens_Spec",
   "title":"Property Dual Lens",
   "narrative":"A dual projection lens is a special kind of property (a `Var`) that projects\n    two source properties of types A and B into a single combined property of type C.\n    Changes to either source property are automatically propagated to the combined property\n    via a getter BiFunction, and setting a new combined value is propagated back to both\n    source properties via a setter Function that returns a Pair of the two source values.\n\n    This is the two-source generalization of a regular projection lens (`projectTo`),\n    which takes a single source property. Just as that method is the mutable analogue\n    of `Val.view(Function)`, the dual lens is the mutable analogue of `Viewable.of(a, b, BiFunction)`.\n\n    There are four factory variants for creating a dual projection lens:\n\n    1. `Var.of(type, first, second, getter, setter)` — Non-nullable, explicit type\n    2. `Var.of(first, second, getter, setter)` — Non-nullable, type inferred from initial getter result\n    3. `Var.of(type, nullObject, first, second, getter, setter)` — Non-nullable with null fallback\n    4. `Var.ofNullable(type, first, second, getter, setter)` — Nullable\n\n    This specification thoroughly tests all aspects of this combined property:\n    bidirectional change propagation, property identity flags (isMutable, isView, isLens, allowsNull),\n    string representation, change listener lifecycle, re-entrancy safety, and memory safety.",
-  "subjects":["sprouts.impl.PropertyDualLens","sprouts.Var","sprouts.Pair"],
+  "subjects":["sprouts.impl.PropertyLens","sprouts.Var","sprouts.Pair"],
   "statistics":{
     "runs":"40",
     "successRate":"100.0%",

@@ -1225,7 +1225,7 @@
       "blocks":[
         {"kind":"given","text":"Two source properties","code":["var red   = Var.of(255)","var green = Var.of(128)"]},
 
-        {"kind":"and","text":"A combined RGB string property","code":["var rgb = Var.of(","    String.class, red, green,","    { r, g -> \"rgb($r,$g)\" },","    { s ->","        def m = s =~ /rgb\\((\\d+),(\\d+)\\)/","        m.find()","        Pair.of(Integer.parseInt(m.group(1)), Integer.parseInt(m.group(2)))","    }",")"]},
+        {"kind":"and","text":"A combined RGB string property","code":["var rgb = Var.of(","    String.class, red, green,","    { r, g -> \"rgb(\"+r+\",\"+g+\")\" },","    { s ->","        def m = s =~ /rgb\\((\\d+),(\\d+)\\)/","        m.find()","        Pair.of(Integer.parseInt(m.group(1)), Integer.parseInt(m.group(2)))","    }",")"]},
 
         {"kind":"and","text":"An event trace","code":["var trace = []","Viewable.cast(rgb).onChange(From.ALL, { trace << it.currentValue().orElseNull() })"]},
 
