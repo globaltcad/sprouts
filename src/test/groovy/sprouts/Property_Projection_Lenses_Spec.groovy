@@ -1772,7 +1772,7 @@ class Property_Projection_Lenses_Spec extends Specification {
         and: 'A combined RGB string property'
             var rgb = Var.of(
                 String.class, red, green,
-                { r, g -> "rgb($r,$g)" },
+                { r, g -> "rgb("+r+","+g+")" },
                 { s ->
                     def m = s =~ /rgb\((\d+),(\d+)\)/
                     m.find()
