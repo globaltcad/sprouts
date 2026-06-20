@@ -602,8 +602,8 @@ public final class Guarded<V extends @Nullable Object> {
      * property; see the class documentation for the full rationale.
      *
      * <p>This is a convenience overload of {@link #viewOn(Class, Executor)} that derives the property's
-     * type from the current value, and therefore requires a non-null value at the moment of the call.
-     *
+     * type from the current value's <em>runtime class</em>, and therefore requires a non-null value at the moment of the call.
+     * If this {@code Guarded<V>} may later hold different subtypes of {@code V}, prefer {@link #viewOn(Class, Executor)} and pass a stable supertype.
      * <pre>{@code
      * Viewable<Account> view = account.viewOn(uiExecutor);
      * view.onChange(From.ALL, it -> render(it.currentValue().orElseThrow()));
