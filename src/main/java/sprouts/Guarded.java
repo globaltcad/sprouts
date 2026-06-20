@@ -1,5 +1,7 @@
 package sprouts;
 
+import org.jspecify.annotations.Nullable;
+
 import java.time.Duration;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -53,6 +55,16 @@ import java.util.function.UnaryOperator;
  * long balance = account.read(Account::cents);
  *}</pre>
  *
+ * <p>Sprouts' own immutable containers are ideal payloads for this mode: {@link Tuple},
+ * {@link Association} and {@link ValueSet} all return a <em>new</em> instance on every "modification",
+ * so guarding one reduces to swapping the reference under the lock — no copying, no escape hazard.
+ * <pre>{@code
+ * Guarded<Tuple<Order>> orders = Guarded.of(Tuple.of(Order.class));
+ *
+ * orders.update(t -> t.add(newOrder)); // swap in a new tuple, under the lock
+ * int count = orders.read(Tuple::size); // read a snapshot, under the lock
+ *}</pre>
+ *
  * <p><b>2. Guarded-mutable mode.</b> {@code V} is a mutable object (a {@code HashMap}, a builder,
  * a primitive array...) that you never let escape. Touch it only via {@link #mutate(Consumer)} and
  * {@link #read(Function)}, and never store the reference returned by {@link #get()}.
@@ -86,14 +98,21 @@ import java.util.function.UnaryOperator;
  * {@code volatile}. This holds <em>only</em> as long as the "no unguarded access" rule above is
  * respected.
  *
- * <p>{@code null} is a permitted value.
+ * <p>{@code null} is a permitted value, but — like every other container in this {@code @NullMarked}
+ * package — only when you instantiate the type argument as nullable, e.g. {@code Guarded<@Nullable Foo>}.
+ * A plain {@code Guarded<Foo>} is non-null end to end, exactly as a {@link Var} or {@link Tuple} would be.
  *
  * <p>This class is thread-safe. It is intentionally not {@code Serializable} and does not override
  * {@code equals}/{@code hashCode} (it has mutable identity, like {@code AtomicReference}).
  *
- * @param <V> the type of the guarded value; strongly recommended to be immutable
+ * @param <V> the type of the guarded value; strongly recommended to be immutable. Instantiate it as a
+ *            {@code @Nullable} type if the container must be allowed to hold {@code null}.
+ * @see java.util.concurrent.atomic.AtomicReference
+ * @see Tuple
+ * @see Association
+ * @see ValueSet
  */
-public final class Guarded<V> {
+public final class Guarded<V extends @Nullable Object> {
 
     private final ReentrantLock lock;
 
@@ -107,21 +126,34 @@ public final class Guarded<V> {
     /**
      * Creates a {@code Guarded} holding {@code initial}, using a non-fair lock.
      *
-     * @param initial the initial value (may be {@code null})
+     * @param initial the initial value; may be {@code null} when {@code V} is a {@code @Nullable} type
      */
     public Guarded(V initial) {
         this(initial, false);
     }
 
     /**
-     * Creates a {@code Guarded} holding {@code initial}, choosing the lock's fairness policy.
+     * Creates a {@code Guarded} holding {@code initial}, choosing the lock's <em>fairness</em> policy.
      *
-     * <p>A fair lock hands ownership to the longest-waiting thread, which prevents starvation at a
-     * throughput cost. Leave this {@code false} (the default) unless you have measured a starvation
-     * problem.
+     * <p><b>What "fair" means.</b> When several threads are blocked waiting for the lock, a
+     * <em>fair</em> lock grants it to the thread that has waited longest — first-in, first-out. A
+     * <em>non-fair</em> lock makes no such promise: a fresh caller may <em>barge</em> in and seize the
+     * lock the instant it is released, ahead of threads that were already queued. That barging is
+     * precisely what makes the non-fair lock faster (it avoids ping-ponging the CPU between threads),
+     * which is why it is the default.
      *
-     * @param initial the initial value (may be {@code null})
-     * @param fair    {@code true} for a fair lock, {@code false} for the higher-throughput default
+     * <p><b>When you would want {@code fair == true}.</b> Almost never. Reach for it only when
+     * <em>both</em> of the following hold: the lock is under sustained heavy contention (threads are
+     * essentially always queued), <em>and</em> you have measured — or must categorically rule out —
+     * <em>starvation</em>, where one unlucky thread is repeatedly out-barged and waits far longer than
+     * the rest. As a concrete picture: a thread doing short updates in a tight loop can keep barging
+     * ahead of a thread that needs just one update to make progress, stalling it indefinitely; a fair
+     * lock bounds that wait, paying for it in throughput. Absent a measured problem, leave this
+     * {@code false}.
+     *
+     * @param initial the initial value; may be {@code null} when {@code V} is a {@code @Nullable} type
+     * @param fair    {@code true} for a fair (FIFO) lock, {@code false} for the higher-throughput default
+     * @see #fair(Object)
      */
     public Guarded(V initial, boolean fair) {
         this.lock = new ReentrantLock(fair);
@@ -136,23 +168,30 @@ public final class Guarded<V> {
      * var state = Guarded.of(List.<String>of());
      *}</pre>
      *
-     * @param initial the initial value (may be {@code null})
+     * @param initial the initial value; may be {@code null} when {@code V} is a {@code @Nullable} type
      * @param <V>     the value type
      * @return a new {@code Guarded}
+     * @see #fair(Object)
      */
-    public static <V> Guarded<V> of(V initial) {
+    public static <V extends @Nullable Object> Guarded<V> of(V initial) {
         return new Guarded<>(initial, false);
     }
 
     /**
-     * Creates a {@code Guarded} holding {@code initial}, using a <em>fair</em> lock.
+     * Creates a {@code Guarded} holding {@code initial}, backed by a <em>fair</em> (FIFO) lock.
      *
-     * @param initial the initial value (may be {@code null})
+     * <p>A fair lock hands ownership to the longest-waiting thread instead of letting a fresh caller
+     * barge ahead. This is rarely what you want: prefer {@link #of(Object)} unless you have measured a
+     * starvation problem under sustained heavy contention. See {@link #Guarded(Object, boolean)} for a
+     * full explanation of fairness and when it actually pays off.
+     *
+     * @param initial the initial value; may be {@code null} when {@code V} is a {@code @Nullable} type
      * @param <V>     the value type
      * @return a new {@code Guarded} backed by a fair lock
      * @see #Guarded(Object, boolean)
+     * @see #of(Object)
      */
-    public static <V> Guarded<V> fair(V initial) {
+    public static <V extends @Nullable Object> Guarded<V> fair(V initial) {
         return new Guarded<>(initial, true);
     }
 
@@ -167,7 +206,7 @@ public final class Guarded<V> {
      * reference can be touched outside the lock; use {@link #read(Function)} to derive what you need
      * while the lock is held instead.
      *
-     * @return the current value (possibly {@code null})
+     * @return the current value; {@code null} only when {@code V} is a {@code @Nullable} type
      */
     public V get() {
         lock.lock();
@@ -210,7 +249,7 @@ public final class Guarded<V> {
     /**
      * Replaces the value.
      *
-     * @param newValue the new value (may be {@code null})
+     * @param newValue the new value; may be {@code null} when {@code V} is a {@code @Nullable} type
      */
     public void set(V newValue) {
         lock.lock();
@@ -224,7 +263,7 @@ public final class Guarded<V> {
     /**
      * Replaces the value and returns the value that was present beforehand.
      *
-     * @param newValue the new value (may be {@code null})
+     * @param newValue the new value; may be {@code null} when {@code V} is a {@code @Nullable} type
      * @return the previous value
      */
     public V getAndSet(V newValue) {
@@ -246,8 +285,10 @@ public final class Guarded<V> {
      * records and other value types. Because the whole check-and-set happens under the lock, there
      * is no ABA hazard.
      *
-     * @param expectedValue the value the container must currently hold (may be {@code null})
-     * @param newValue      the value to install if the expectation holds (may be {@code null})
+     * @param expectedValue the value the container must currently hold; may be {@code null} when
+     *                      {@code V} is a {@code @Nullable} type
+     * @param newValue      the value to install if the expectation holds; may be {@code null} when
+     *                      {@code V} is a {@code @Nullable} type
      * @return {@code true} if the value was updated
      */
     public boolean compareAndSet(V expectedValue, V newValue) {
