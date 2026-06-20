@@ -1,6 +1,7 @@
 package sprouts;
 
 import org.jspecify.annotations.Nullable;
+import sprouts.impl.Sprouts;
 
 import java.lang.ref.WeakReference;
 import java.time.Duration;
@@ -161,6 +162,8 @@ import java.util.function.UnaryOperator;
  * @see ValueSet
  */
 public final class Guarded<V extends @Nullable Object> {
+
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(Guarded.class);
 
     private final ReentrantLock lock;
 
@@ -754,7 +757,11 @@ public final class Guarded<V extends @Nullable Object> {
                     executor.execute(this::deliver);
                 } catch (RejectedExecutionException rejected) {
                     scheduled.set(false);
-                    return false; // executor is gone; this view can never deliver again
+                    // The executor was shut down while a view was still active. The view can never
+                    // deliver again, so we drop it; this is logged rather than swallowed because it
+                    // usually means the executor outlived its usefulness before the view was released.
+                    log.debug(Sprouts.factory().loggingMarker(), "Dropping a Guarded view: its executor rejected delivery (likely shut down).", rejected);
+                    return false;
                 }
             }
             return true;
@@ -769,7 +776,14 @@ public final class Guarded<V extends @Nullable Object> {
             if (property == null) {
                 return; // view was dropped; it will be pruned on the next signal()
             }
-            property.set(source.get());
+            try {
+                property.set(source.get());
+            } catch (Exception e) {
+                // Listener exceptions are already caught and logged by the property machinery; this
+                // guards the rarer case (e.g. publishing null into a non-null view) so a single bad
+                // delivery cannot tear down the executor's worker thread silently.
+                log.error("Failed to deliver a new value to a Guarded view.", e);
+            }
         }
     }
 
