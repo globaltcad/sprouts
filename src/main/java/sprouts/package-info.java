@@ -75,6 +75,13 @@
  *    }
  *  }</pre>
  *  <p>
+ *  When such immutable, value oriented state has to be <i>shared across threads</i>, Sprouts offers
+ *  the {@link sprouts.Guarded} container: a mutable cell that owns its lock, so the immutable value it
+ *  holds can only be read or swapped through methods that take the lock for you. It is the blocking,
+ *  exactly-once sibling of {@link java.util.concurrent.atomic.AtomicReference}, and pairs naturally
+ *  with the immutable {@link sprouts.Tuple}, {@link sprouts.Association} and {@link sprouts.ValueSet}
+ *  collections. <br>
+ *  <p>
  *  For more usage information <a href="https://globaltcad.github.io/sprouts/">check out this page</a>,
  *  where you can browse the living documentation of the Sprouts API. <br>
  *  Also check out <a href="https://github.com/globaltcad/swing-tree">the SwingTree GUI Framework</a> for more example

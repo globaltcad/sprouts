@@ -407,7 +407,7 @@ Var<PartyPlan> partyPlan = Var.of(
             new Guest("Aragorn", "Ale", ValueSet.of(String.class)),
             new Guest("Legolas", "Spring Water", ValueSet.of(String.class, "Dairy"))
         ),
-        Association.of(String.class, Integer.class)
+        Association.between(String.class, Integer.class)
             .put("Elven Wine", 5)
             .put("Ale", 10)
             .put("Spring Water", 3),
