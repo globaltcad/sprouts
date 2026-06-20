@@ -568,7 +568,7 @@ class Guarded_Spec extends Specification
                     done.countDown()
                 })
             }
-            done.await(20, TimeUnit.SECONDS)
+            assert done.await(20, TimeUnit.SECONDS)
 
         then : 'Both keys reflect every single mutation.'
             guarded.read({ m -> m.get("a") }) == threads * opsPerThread
