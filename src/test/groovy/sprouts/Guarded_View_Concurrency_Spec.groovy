@@ -218,7 +218,7 @@ class Guarded_View_Concurrency_Spec extends Specification
                     done.countDown()
                 })
             }
-            done.await(20, TimeUnit.SECONDS)
+            assert done.await(20, TimeUnit.SECONDS)
             guarded.set(424242)
 
         then : 'All three views converge to the final value.'
