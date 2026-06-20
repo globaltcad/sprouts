@@ -104,9 +104,11 @@ import java.util.function.UnaryOperator;
  * account.update(a -> a.deposit(500)); // the view re-syncs on 'ui', firing the listener there
  *}</pre>
  *
- * <p>{@link #viewOn(Executor)} derives the view's type from the current value; the overloads
- * {@link #viewOn(Class, Executor)} and {@link #viewOnNullable(Class, Executor)} let you state the type
- * explicitly, the latter also permitting {@code null} values.
+ * <p>A single {@link #viewOn(Executor)} method covers every case: the view inherits this container's
+ * {@linkplain #type() type} and {@linkplain #allowsNull() null policy}, so a nullable {@code Guarded}
+ * produces a null-permitting view (viewable even while it currently holds {@code null}) and a non-null
+ * one produces a non-null view. To turn a nullable container into a <em>null-safe</em> view, use
+ * {@link #viewOn(Executor, Object)} with a fallback value that stands in whenever the value is {@code null}.
  *
  * <p>This is the {@code Guarded} analogue of {@code observeOn(scheduler)} in Rx-style libraries, or a
  * conflated {@code StateFlow} in Kotlin. Three rules make it safe — and it is dangerous if you ignore
@@ -149,15 +151,20 @@ import java.util.function.UnaryOperator;
  * {@code volatile}. This holds <em>only</em> as long as the "no unguarded access" rule above is
  * respected.
  *
- * <p>{@code null} is a permitted value, but — like every other container in this {@code @NullMarked}
- * package — only when you instantiate the type argument as nullable, e.g. {@code Guarded<@Nullable Foo>}.
- * A plain {@code Guarded<Foo>} is non-null end to end, exactly as a {@link Var} or {@link Tuple} would be.
+ * <h2>Nullability</h2>
+ * <p>Exactly like {@link Var}, a {@code Guarded} chooses a <em>null policy</em> at construction and
+ * <strong>enforces it at runtime</strong>. A non-null container, created with {@link #of(Object)},
+ * rejects every attempt to store {@code null} with a {@link NullPointerException} and is therefore
+ * guaranteed to never hold {@code null}. A nullable container, created with
+ * {@link #ofNullable(Class, Object)} or {@link #ofNull(Class)}, permits {@code null}. The container
+ * also knows its own {@linkplain #type() type}, again like {@link Var}, and enforces it: any value
+ * whose class is not assignable to {@link #type()} is rejected with an {@link IllegalArgumentException}.
+ * Query the policy with {@link #allowsNull()}.
  *
  * <p>This class is thread-safe. It is intentionally not {@code Serializable} and does not override
  * {@code equals}/{@code hashCode} (it has mutable identity, like {@code AtomicReference}).
  *
- * @param <V> the type of the guarded value; strongly recommended to be immutable. Instantiate it as a
- *            {@code @Nullable} type if the container must be allowed to hold {@code null}.
+ * @param <V> the type of the guarded value; strongly recommended to be immutable
  * @see java.util.concurrent.atomic.AtomicReference
  * @see Tuple
  * @see Association
@@ -168,6 +175,12 @@ public final class Guarded<V extends @Nullable Object> {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(Guarded.class);
 
     private final ReentrantLock lock;
+
+    /** The declared type of the guarded value, mirroring {@link Var#type()}. Never {@code null}. */
+    private final Class<V> type;
+
+    /** Whether {@code null} is a permitted value, mirroring {@link Var#allowsNull()}. Enforced at runtime. */
+    private final boolean nullable;
 
     /** The guarded value. All access is protected by {@link #lock}. */
     private V value;
@@ -183,17 +196,37 @@ public final class Guarded<V extends @Nullable Object> {
     // Construction
     // ---------------------------------------------------------------------
 
-    /**
-     * Creates a {@code Guarded} holding {@code initial}, using a non-fair lock.
-     *
-     * @param initial the initial value; may be {@code null} when {@code V} is a {@code @Nullable} type
-     */
-    public Guarded(V initial) {
-        this(initial, false);
+    private Guarded(Class<V> type, boolean nullable, boolean fair, V initial) {
+        this.type = Objects.requireNonNull(type, "type");
+        this.nullable = nullable;
+        this.lock = new ReentrantLock(fair);
+        this.value = _vet(initial); // enforces both the null policy and type assignability
     }
 
     /**
-     * Creates a {@code Guarded} holding {@code initial}, choosing the lock's <em>fairness</em> policy.
+     * Creates a <b>non-null</b> {@code Guarded} holding {@code item}, with its {@linkplain #type() type}
+     * inferred from the item's runtime class. Like {@link Var#of(Object)}, the resulting container is
+     * guaranteed to never hold {@code null}: every attempt to store {@code null} is rejected at runtime.
+     *
+     * <pre>{@code
+     * Guarded<Account> account = Guarded.of(new Account("Ada", 0));
+     *}</pre>
+     *
+     * @param item the initial value; must not be {@code null}
+     * @param <V>  the value type
+     * @return a new non-null {@code Guarded}
+     * @throws NullPointerException if {@code item} is {@code null}
+     * @see #of(Class, Object)
+     * @see #ofNullable(Class, Object)
+     */
+    public static <V> Guarded<V> of(V item) {
+        Objects.requireNonNull(item, "item");
+        Class<V> type = Sprouts.factory().expectedClassFromItem(item);
+        return new Guarded<>(type, false, false, item);
+    }
+
+    /**
+     * Like {@link #of(Object)}, but lets you choose the lock's <em>fairness</em> policy.
      *
      * <p><b>What "fair" means.</b> When several threads are blocked waiting for the lock, a
      * <em>fair</em> lock grants it to the thread that has waited longest — first-in, first-out. A
@@ -211,48 +244,128 @@ public final class Guarded<V extends @Nullable Object> {
      * lock bounds that wait, paying for it in throughput. Absent a measured problem, leave this
      * {@code false}.
      *
-     * @param initial the initial value; may be {@code null} when {@code V} is a {@code @Nullable} type
-     * @param fair    {@code true} for a fair (FIFO) lock, {@code false} for the higher-throughput default
-     * @see #fair(Object)
+     * @param item the initial value; must not be {@code null}
+     * @param fair {@code true} for a fair (FIFO) lock, {@code false} for the higher-throughput default
+     * @param <V>  the value type
+     * @return a new non-null {@code Guarded}
+     * @throws NullPointerException if {@code item} is {@code null}
      */
-    public Guarded(V initial, boolean fair) {
-        this.lock = new ReentrantLock(fair);
-        this.value = initial;
+    public static <V> Guarded<V> of(V item, boolean fair) {
+        Objects.requireNonNull(item, "item");
+        Class<V> type = Sprouts.factory().expectedClassFromItem(item);
+        return new Guarded<>(type, false, fair, item);
     }
 
     /**
-     * Creates a {@code Guarded} holding {@code initial}, using a non-fair lock.
+     * Creates a <b>non-null</b> {@code Guarded} holding {@code item}, with an explicit
+     * {@linkplain #type() type} — useful when you want the container typed as a supertype of the item.
+     * Mirrors {@link Var#of(Class, Object)}.
      *
-     * <p>Factory equivalent of {@link #Guarded(Object)} that reads well with type inference:
-     * <pre>{@code
-     * var state = Guarded.of(List.<String>of());
-     *}</pre>
-     *
-     * @param initial the initial value; may be {@code null} when {@code V} is a {@code @Nullable} type
-     * @param <V>     the value type
-     * @return a new {@code Guarded}
-     * @see #fair(Object)
+     * @param type the (non-null) declared type of the value
+     * @param item the initial value; must not be {@code null}
+     * @param <V>  the declared value type
+     * @param <U>  the (sub)type of the initial item
+     * @return a new non-null {@code Guarded} of the given {@code type}
+     * @throws NullPointerException if {@code type} or {@code item} is {@code null}
      */
-    public static <V extends @Nullable Object> Guarded<V> of(V initial) {
-        return new Guarded<>(initial, false);
+    public static <V, U extends V> Guarded<V> of(Class<V> type, U item) {
+        Objects.requireNonNull(type, "type");
+        Objects.requireNonNull(item, "item");
+        return new Guarded<>(type, false, false, item);
     }
 
     /**
-     * Creates a {@code Guarded} holding {@code initial}, backed by a <em>fair</em> (FIFO) lock.
+     * Creates a <b>nullable</b> {@code Guarded} of the given {@code type}, holding {@code item} (which
+     * may be {@code null}). Like {@link Var#ofNullable(Class, Object)}, this container permits {@code null}.
      *
-     * <p>A fair lock hands ownership to the longest-waiting thread instead of letting a fresh caller
-     * barge ahead. This is rarely what you want: prefer {@link #of(Object)} unless you have measured a
-     * starvation problem under sustained heavy contention. See {@link #Guarded(Object, boolean)} for a
-     * full explanation of fairness and when it actually pays off.
-     *
-     * @param initial the initial value; may be {@code null} when {@code V} is a {@code @Nullable} type
-     * @param <V>     the value type
-     * @return a new {@code Guarded} backed by a fair lock
-     * @see #Guarded(Object, boolean)
-     * @see #of(Object)
+     * @param type the (non-null) declared type of the value
+     * @param item the initial value, possibly {@code null}
+     * @param <V>  the value type
+     * @return a new null-permitting {@code Guarded}
+     * @throws NullPointerException if {@code type} is {@code null}
+     * @see #ofNull(Class)
      */
-    public static <V extends @Nullable Object> Guarded<V> fair(V initial) {
-        return new Guarded<>(initial, true);
+    public static <V> Guarded<@Nullable V> ofNullable(Class<V> type, @Nullable V item) {
+        Objects.requireNonNull(type, "type");
+        return new Guarded<>(type, true, false, Util.fakeNonNull(item));
+    }
+
+    /**
+     * Like {@link #ofNullable(Class, Object)}, but lets you choose the lock's fairness policy. See
+     * {@link #of(Object, boolean)} for an explanation of fairness and when it is worth it.
+     *
+     * @param type the (non-null) declared type of the value
+     * @param item the initial value, possibly {@code null}
+     * @param fair {@code true} for a fair (FIFO) lock, {@code false} for the higher-throughput default
+     * @param <V>  the value type
+     * @return a new null-permitting {@code Guarded}
+     * @throws NullPointerException if {@code type} is {@code null}
+     */
+    public static <V> Guarded<@Nullable V> ofNullable(Class<V> type, @Nullable V item, boolean fair) {
+        Objects.requireNonNull(type, "type");
+        return new Guarded<>(type, true, fair, Util.fakeNonNull(item));
+    }
+
+    /**
+     * Creates a <b>nullable</b> {@code Guarded} of the given {@code type}, initially holding {@code null}.
+     * A concise equivalent of {@code Guarded.ofNullable(type, null)}, mirroring {@link Var#ofNull(Class)}.
+     *
+     * @param type the (non-null) declared type of the value
+     * @param <V>  the value type
+     * @return a new null-permitting {@code Guarded} holding {@code null}
+     * @throws NullPointerException if {@code type} is {@code null}
+     */
+    public static <V> Guarded<@Nullable V> ofNull(Class<V> type) {
+        return ofNullable(type, null);
+    }
+
+    // ---------------------------------------------------------------------
+    // Type & nullability (mirroring Var/Maybe)
+    // ---------------------------------------------------------------------
+
+    /**
+     * Returns the declared type of the guarded value, like {@link Var#type()}.
+     *
+     * @return the value's declared {@link Class}, never {@code null}
+     */
+    public Class<V> type() {
+        return type;
+    }
+
+    /**
+     * Returns whether this container permits {@code null}, like {@link Var#allowsNull()}. When
+     * {@code false}, every attempt to store {@code null} is rejected at runtime with a
+     * {@link NullPointerException}, so the container is guaranteed to never hold {@code null}.
+     *
+     * @return {@code true} if {@code null} is a permitted value
+     */
+    public boolean allowsNull() {
+        return nullable;
+    }
+
+    /**
+     * Enforces this container's invariants on a value about to be stored, mirroring {@link Var}: the
+     * {@linkplain #allowsNull() null policy}, and that a non-null value's class is assignable to the
+     * declared {@linkplain #type() type}. Returns the value unchanged, or throws.
+     *
+     * @throws NullPointerException     if {@code newValue} is {@code null} and this container is non-null
+     * @throws IllegalArgumentException if {@code newValue} is not assignable to {@link #type()}
+     */
+    private V _vet(V newValue) {
+        if (newValue == null) {
+            if (!nullable) {
+                throw new NullPointerException(
+                    "This Guarded (of type '" + type.getSimpleName() + "') does not permit null values. " +
+                    "Use Guarded.ofNullable(Class, value) or Guarded.ofNull(Class) for a null-permitting container.");
+            }
+            return newValue;
+        }
+        if (!type.isAssignableFrom(newValue.getClass())) {
+            throw new IllegalArgumentException(
+                "The supplied value of type '" + newValue.getClass().getName() + "' is not assignable to the " +
+                "declared type '" + type.getName() + "' of this Guarded.");
+        }
+        return newValue;
     }
 
     // ---------------------------------------------------------------------
@@ -266,7 +379,7 @@ public final class Guarded<V extends @Nullable Object> {
      * reference can be touched outside the lock; use {@link #read(Function)} to derive what you need
      * while the lock is held instead.
      *
-     * @return the current value; {@code null} only when {@code V} is a {@code @Nullable} type
+     * @return the current value; {@code null} only when this container {@link #allowsNull()}
      */
     public V get() {
         lock.lock();
@@ -309,12 +422,13 @@ public final class Guarded<V extends @Nullable Object> {
     /**
      * Replaces the value.
      *
-     * @param newValue the new value; may be {@code null} when {@code V} is a {@code @Nullable} type
+     * @param newValue the new value; may be {@code null} only if this container {@link #allowsNull()}
+     * @throws NullPointerException if {@code newValue} is {@code null} and this container is non-null
      */
     public void set(V newValue) {
         lock.lock();
         try {
-            this.value = newValue;
+            this.value = _vet(newValue);
         } finally {
             lock.unlock();
         }
@@ -324,13 +438,15 @@ public final class Guarded<V extends @Nullable Object> {
     /**
      * Replaces the value and returns the value that was present beforehand.
      *
-     * @param newValue the new value; may be {@code null} when {@code V} is a {@code @Nullable} type
+     * @param newValue the new value; may be {@code null} only if this container {@link #allowsNull()}
      * @return the previous value
+     * @throws NullPointerException if {@code newValue} is {@code null} and this container is non-null
      */
     public V getAndSet(V newValue) {
         V prev;
         lock.lock();
         try {
+            newValue = _vet(newValue);
             prev = this.value;
             this.value = newValue;
         } finally {
@@ -348,16 +464,18 @@ public final class Guarded<V extends @Nullable Object> {
      * records and other value types. Because the whole check-and-set happens under the lock, there
      * is no ABA hazard.
      *
-     * @param expectedValue the value the container must currently hold; may be {@code null} when
-     *                      {@code V} is a {@code @Nullable} type
-     * @param newValue      the value to install if the expectation holds; may be {@code null} when
-     *                      {@code V} is a {@code @Nullable} type
+     * @param expectedValue the value the container must currently hold; may be {@code null} only if
+     *                      this container {@link #allowsNull()}
+     * @param newValue      the value to install if the expectation holds; may be {@code null} only if
+     *                      this container {@link #allowsNull()}
      * @return {@code true} if the value was updated
+     * @throws NullPointerException if {@code newValue} is {@code null} and this container is non-null
      */
     public boolean compareAndSet(V expectedValue, V newValue) {
         boolean changed;
         lock.lock();
         try {
+            newValue = _vet(newValue);
             changed = Objects.equals(this.value, expectedValue);
             if (changed) {
                 this.value = newValue;
@@ -407,7 +525,7 @@ public final class Guarded<V extends @Nullable Object> {
         V next;
         lock.lock();
         try {
-            next = updater.apply(this.value);
+            next = _vet(updater.apply(this.value));
             this.value = next;
         } finally {
             lock.unlock();
@@ -430,7 +548,7 @@ public final class Guarded<V extends @Nullable Object> {
         lock.lock();
         try {
             prev = this.value;
-            this.value = updater.apply(prev);
+            this.value = _vet(updater.apply(prev));
         } finally {
             lock.unlock();
         }
@@ -458,7 +576,7 @@ public final class Guarded<V extends @Nullable Object> {
         V next;
         lock.lock();
         try {
-            next = accumulator.apply(this.value, x);
+            next = _vet(accumulator.apply(this.value, x));
             this.value = next;
         } finally {
             lock.unlock();
@@ -482,7 +600,7 @@ public final class Guarded<V extends @Nullable Object> {
         lock.lock();
         try {
             prev = this.value;
-            this.value = accumulator.apply(prev, x);
+            this.value = _vet(accumulator.apply(prev, x));
         } finally {
             lock.unlock();
         }
@@ -512,7 +630,7 @@ public final class Guarded<V extends @Nullable Object> {
         try {
             applied = condition.test(this.value);
             if (applied) {
-                this.value = updater.apply(this.value);
+                this.value = _vet(updater.apply(this.value));
             }
         } finally {
             lock.unlock();
@@ -584,7 +702,7 @@ public final class Guarded<V extends @Nullable Object> {
             return false;
         }
         try {
-            this.value = updater.apply(this.value);
+            this.value = _vet(updater.apply(this.value));
         } finally {
             lock.unlock();
         }
@@ -603,31 +721,16 @@ public final class Guarded<V extends @Nullable Object> {
      * {@code Guarded}. This is the bridge from many-writer guarded state to a single-owner reactive
      * property; see the class documentation for the full rationale.
      *
-     * <p>This is a convenience overload of {@link #viewOn(Class, Executor)} that derives the property's
-     * type from the current value's <em>runtime class</em>, and therefore requires a non-null value at the moment of the call.
-     * If this {@code Guarded<V>} may later hold different subtypes of {@code V}, prefer {@link #viewOn(Class, Executor)} and pass a stable supertype.
+     * <p>The view inherits this container's {@linkplain #type() type} and {@linkplain #allowsNull()
+     * null policy}: a non-null {@code Guarded} yields a non-null view, a nullable one yields a view that
+     * may publish {@code null}. A single method therefore covers both — there is no separate nullable
+     * variant — and a nullable container can be viewed even while it currently holds {@code null}.
+     *
      * <pre>{@code
      * Viewable<Account> view = account.viewOn(uiExecutor);
      * view.onChange(From.ALL, it -> render(it.currentValue().orElseThrow()));
      * // ...background threads mutate 'account'; 'render' always runs on uiExecutor's thread.
      * }</pre>
-     *
-     * @param executor the (effectively single-threaded) executor on which the view and its listeners run
-     * @return a new read-only {@link Viewable} mirroring this container on {@code executor}'s thread
-     * @throws NullPointerException if {@code executor} is {@code null}, or if the current value is
-     *                              {@code null} (use {@link #viewOnNullable(Class, Executor)} for that)
-     * @see #viewOn(Class, Executor)
-     * @see #viewOnNullable(Class, Executor)
-     */
-    public Viewable<V> viewOn(Executor executor) {
-        Objects.requireNonNull(executor, "executor");
-        return _registerNonNullView(null, executor);
-    }
-
-    /**
-     * Returns a read-only {@link Viewable} of the given {@code type} that mirrors this container's value,
-     * delivering every change through {@code executor}. This is the base view method; see the class
-     * documentation for the full rationale and safety contract.
      *
      * <p><b>Contract — read these, misuse fails silently:</b>
      * <ul>
@@ -640,52 +743,22 @@ public final class Guarded<V extends @Nullable Object> {
      *       values may be skipped and only the most recent is published.</li>
      * </ul>
      *
-     * <p>This overload produces a <b>non-null</b> view and therefore does not permit {@code null}: the
-     * container must hold a non-null value now, and should never be set to {@code null} while the view
-     * is alive. For a value that may be {@code null} use {@link #viewOnNullable(Class, Executor)}.
-     *
      * <p>The returned view is referenced only <em>weakly</em> by this container: once you drop it, it
      * becomes eligible for garbage collection, stops receiving updates, and its registration is pruned
      * automatically — there is nothing to unsubscribe.
      *
-     * @param type     the (non-null) type of the viewed value
      * @param executor the (effectively single-threaded) executor on which the view and its listeners run
      * @return a new read-only {@link Viewable} mirroring this container on {@code executor}'s thread
-     * @throws NullPointerException if {@code type} or {@code executor} is {@code null}, or if the current
-     *                              value is {@code null} (use {@link #viewOnNullable(Class, Executor)})
-     * @see #viewOnNullable(Class, Executor)
+     * @throws NullPointerException if {@code executor} is {@code null}
      */
-    public Viewable<V> viewOn(Class<V> type, Executor executor) {
-        Objects.requireNonNull(type, "type");
+    public Viewable<V> viewOn(Executor executor) {
         Objects.requireNonNull(executor, "executor");
-        return _registerNonNullView(type, executor);
-    }
-
-    /**
-     * Creates and registers a non-null view under a <em>single</em> lock acquisition, so the value is
-     * read exactly once: the type (when {@code explicitType} is {@code null}, derived from that same
-     * value) and the seed value are always a consistent snapshot, immune to a writer changing the value
-     * — or its runtime subtype — between reads.
-     *
-     * @param explicitType the caller-supplied type, or {@code null} to derive it from the current value
-     */
-    private Viewable<V> _registerNonNullView(@Nullable Class<V> explicitType, Executor executor) {
         lock.lock();
         try {
-            V current = this.value;
-            if (current == null) {
-                throw new NullPointerException(
-                    explicitType == null
-                        ? "Cannot derive the view's property type because this 'Guarded' currently holds null. " +
-                          "Use 'viewOn(Class, Executor)' for a non-null value type, or 'viewOnNullable(Class, Executor)' " +
-                          "if the value may be null."
-                        : "This 'viewOn(Class, Executor)' method creates a non-null view and does not permit a null " +
-                          "value; use 'viewOnNullable(Class, Executor)' for a nullable view.");
-            }
-            @SuppressWarnings("unchecked")
-            Class<V> type = explicitType != null ? explicitType : (Class<V>) current.getClass();
-            Var<V> property = Var.of(type, current);
-            views.add(new View<>(this, executor, property));
+            // The type and seed value form one consistent snapshot taken under the lock, immune to a
+            // concurrent writer changing the value between reads.
+            Var<V> property = nullable ? _nullableProperty(type, value) : Var.of(type, Util.fakeNonNull(value));
+            views.add(new View<>(this, executor, null, property));
             return Viewable.cast(property);
         } finally {
             lock.unlock();
@@ -693,26 +766,33 @@ public final class Guarded<V extends @Nullable Object> {
     }
 
     /**
-     * Like {@link #viewOn(Class, Executor)}, but produces a <b>nullable</b> {@link Viewable}: the
-     * container may hold (and the view may publish) {@code null}. Use this when {@code V} is a
-     * {@code @Nullable} type.
+     * Like {@link #viewOn(Executor)}, but the resulting view <b>never publishes {@code null}</b>: whenever
+     * this container holds {@code null}, the view shows {@code fallback} instead. This is the
+     * {@code Guarded} analogue of {@code Val.view(nullObject, ..)} — the way to turn a nullable shared
+     * state into a null-safe reactive property.
      *
-     * <p>The same safety contract applies — an effectively single-threaded {@code executor}, an immutable
-     * {@code V}, and conflated latest-wins delivery — and the view is likewise held only weakly.
+     * <p>The same contract as {@link #viewOn(Executor)} applies (effectively single-threaded executor,
+     * immutable {@code V}, conflated latest-wins delivery, weak retention). The {@code fallback} only
+     * matters for a nullable container; on a non-null one the value is never {@code null}, so it is never
+     * used. Note that, because Java cannot express "the non-null version of {@code V}", the returned type
+     * is still {@code Viewable<V>} — but at runtime it is guaranteed to never hold {@code null}.
      *
-     * @param type     the type of the viewed value (its non-null base type)
      * @param executor the (effectively single-threaded) executor on which the view and its listeners run
-     * @return a new read-only, null-permitting {@link Viewable} mirroring this container
-     * @throws NullPointerException if {@code type} or {@code executor} is {@code null}
-     * @see #viewOn(Class, Executor)
+     * @param fallback the non-null value shown whenever this container holds {@code null}
+     * @return a new read-only {@link Viewable} that never publishes {@code null}
+     * @throws NullPointerException     if {@code executor} or {@code fallback} is {@code null}
+     * @throws IllegalArgumentException if {@code fallback} is not assignable to {@link #type()}
      */
-    public Viewable<V> viewOnNullable(Class<V> type, Executor executor) {
-        Objects.requireNonNull(type, "type");
+    public Viewable<V> viewOn(Executor executor, V fallback) {
         Objects.requireNonNull(executor, "executor");
+        Objects.requireNonNull(fallback, "fallback");
+        _vet(fallback); // the fallback is published, so it must be assignable to type()
         lock.lock();
         try {
-            Var<V> property = _nullableViewProperty(type, this.value);
-            views.add(new View<>(this, executor, property));
+            V current = value;
+            // Always a non-null property: the fallback stands in for null, now and on every delivery.
+            Var<V> property = Var.of(type, Util.fakeNonNull(current != null ? current : fallback));
+            views.add(new View<>(this, executor, fallback, property));
             return Viewable.cast(property);
         } finally {
             lock.unlock();
@@ -720,7 +800,7 @@ public final class Guarded<V extends @Nullable Object> {
     }
 
     @SuppressWarnings("unchecked")
-    private static <V extends @Nullable Object> Var<V> _nullableViewProperty(Class<V> type, V initial) {
+    private static <V extends @Nullable Object> Var<V> _nullableProperty(Class<V> type, V initial) {
         // Var.ofNullable yields a Var<@Nullable V>; the public view type keeps V's own nullness.
         return (Var<V>) Var.ofNullable(type, initial);
     }
@@ -764,13 +844,16 @@ public final class Guarded<V extends @Nullable Object> {
 
         private final Guarded<V> source;
         private final Executor executor;
+        /** Substituted for {@code null} when publishing; {@code null} itself means "no substitution". */
+        private final @Nullable V fallback;
         private final WeakReference<Var<V>> propertyRef;
         /** {@code true} while a delivery is already queued on {@link #executor}; coalesces bursts. */
         private final AtomicBoolean scheduled = new AtomicBoolean(false);
 
-        View(Guarded<V> source, Executor executor, Var<V> property) {
+        View(Guarded<V> source, Executor executor, @Nullable V fallback, Var<V> property) {
             this.source = source;
             this.executor = executor;
+            this.fallback = fallback;
             this.propertyRef = new WeakReference<>(property);
         }
 
@@ -815,7 +898,8 @@ public final class Guarded<V extends @Nullable Object> {
                 return; // view was dropped; it will be pruned on the next signal()
             }
             try {
-                property.set(source.get());
+                V v = source.get();
+                property.set(v != null ? v : Util.fakeNonNull(fallback));
             } catch (Throwable e) {
                 // Interruption and other fatal throwables must propagate (re-interrupting the thread
                 // where appropriate) so cancellation/shutdown stays reliable; this mirrors how the rest

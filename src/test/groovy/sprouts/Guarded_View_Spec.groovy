@@ -250,16 +250,14 @@ class Guarded_View_Spec extends Specification
             executor.close()
     }
 
-    def 'Creating a view requires a non-null current value and a non-null executor.'()
+    def 'Creating a view requires a non-null executor.'()
     {
         reportInfo """
-            The view's property type is derived from the current value, so the container must hold a
-            non-null value at the moment of the call. The executor must of course also be provided. Both
-            are validated eagerly with a `NullPointerException`.
+            A single `viewOn(Executor)` covers every case — the view inherits the container's type and
+            null policy — so the only thing it validates eagerly is the executor.
         """
-        given : 'A normal and a null-holding guarded value, plus an executor.'
+        given : 'A guarded value and an executor.'
             var guarded = Guarded.of("value")
-            var holdingNull = Guarded.of(null)
             var executor = new NamedSingleThreadExecutor("view-thread")
 
         when : 'We pass a null executor.'
@@ -267,68 +265,49 @@ class Guarded_View_Spec extends Specification
         then : 'It is rejected.'
             thrown(NullPointerException)
 
-        when : 'We try to view a container that currently holds null.'
-            holdingNull.viewOn(executor)
-        then : 'It is rejected, because the property type cannot be derived.'
-            thrown(NullPointerException)
-
         cleanup :
             executor.close()
     }
 
     @Timeout(10)
-    def 'The `viewOn(Class, Executor)` overload lets you state the property type explicitly.'()
+    def 'The view inherits the container type, even when it is a declared supertype.'()
     {
         reportInfo """
-            `viewOn(Executor)` is just a convenience that derives the type from the current value. The
-            base method `viewOn(Class, Executor)` takes the type explicitly, which is useful when you
-            want a declared supertype, and is the form `viewOn(Executor)` delegates to.
+            Because the container knows its own type (like `Var`), the view simply inherits it. If you
+            want the view typed as a supertype, declare the container that way with
+            `Guarded.of(SuperType.class, value)`.
         """
-        given : 'A guarded value viewed with an explicit type.'
+        given : 'A guarded value declared as a supertype.'
             var account = Guarded.of(new Account("Ada", 0))
             var executor = new NamedSingleThreadExecutor("view-thread")
-            var view = account.viewOn(Account, executor)
-        expect : 'The view starts in sync.'
+            var view = account.viewOn(executor)
+        expect : 'The view starts in sync and reports the inherited type.'
             view.orElseThrow() == new Account("Ada", 0)
+            view.type() == Account
         when : 'We mutate the guarded value.'
             account.update({ a -> a.deposit(42) })
-        then : 'The explicitly-typed view tracks it.'
+        then : 'The view tracks it.'
             Wait.until({ view.orElseThrow() == new Account("Ada", 42) }, 5_000)
         cleanup :
             executor.close()
     }
 
-    def 'The non-null `viewOn(Class, Executor)` overload rejects a null current value.'()
-    {
-        reportInfo """
-            `viewOn(Class, Executor)` produces a non-null view; if the container currently holds null it
-            is rejected, steering you to `viewOnNullable(..)` instead.
-        """
-        given :
-            var holdingNull = Guarded.of(null)
-            var executor = new NamedSingleThreadExecutor("view-thread")
-        when : 'We request a non-null view of a null-holding container.'
-            holdingNull.viewOn(String, executor)
-        then : 'It is rejected.'
-            thrown(NullPointerException)
-        cleanup :
-            executor.close()
-    }
-
     @Timeout(10)
-    def 'The `viewOnNullable(Class, Executor)` overload supports null values, both initial and later.'()
+    def 'A nullable container yields a null-permitting view, viewable even while it currently holds null.'()
     {
         reportInfo """
-            When the guarded value may be null, `viewOnNullable(Class, Executor)` produces a
-            null-permitting view. It can be created even while the container holds null, and it faithfully
-            publishes both null and non-null values as they come and go.
+            With the redesign there is no separate nullable view method: the nullability flows from the
+            container. A `Guarded.ofNull(..)` / `Guarded.ofNullable(..)` container produces a view that
+            permits null, and — unlike before — it can be viewed even while it currently holds null,
+            faithfully publishing both null and non-null values as they come and go.
         """
-        given : 'A guarded value that starts out null, viewed nullably.'
-            var guarded = Guarded.of(null)
+        given : 'A nullable guarded value that starts out null.'
+            var guarded = Guarded.ofNull(String)
             var executor = new NamedSingleThreadExecutor("view-thread")
-            var view = guarded.viewOnNullable(String, executor)
-        expect : 'The view starts empty (null).'
+            var view = guarded.viewOn(executor)
+        expect : 'The view starts empty (null) and reports itself nullable.'
             view.orElseNull() == null
+            view.allowsNull()
 
         when : 'We publish a non-null value.'
             guarded.set("hello")
@@ -339,6 +318,60 @@ class Guarded_View_Spec extends Specification
             guarded.set(null)
         then : 'The view goes back to null.'
             Wait.until({ view.orElseNull() == null }, 5_000)
+
+        cleanup :
+            executor.close()
+    }
+
+    @Timeout(10)
+    def 'A fallback view of a nullable container is null-safe: it shows the fallback instead of null.'()
+    {
+        reportInfo """
+            `viewOn(Executor, fallback)` turns a nullable container into a null-safe view — the
+            `Guarded` analogue of `Val.view(nullObject, ..)`. Whenever the container holds null, the view
+            publishes the fallback instead, so the view is non-null and never empty.
+        """
+        given : 'A nullable guarded that starts out null, viewed with a fallback.'
+            var guarded = Guarded.ofNull(String)
+            var executor = new NamedSingleThreadExecutor("view-thread")
+            var view = guarded.viewOn(executor, "<none>")
+        expect : 'The view starts on the fallback (not null) and is non-null.'
+            view.orElseThrow() == "<none>"
+            !view.allowsNull()
+
+        when : 'We publish a real value.'
+            guarded.set("hello")
+        then : 'The view shows it.'
+            Wait.until({ view.orElseThrow() == "hello" }, 5_000)
+
+        when : 'We go back to null.'
+            guarded.set(null)
+        then : 'The view falls back again rather than going null.'
+            Wait.until({ view.orElseThrow() == "<none>" }, 5_000)
+
+        cleanup :
+            executor.close()
+    }
+
+    def 'A fallback view validates its fallback eagerly.'()
+    {
+        reportInfo """
+            The fallback is published, so it must be non-null and assignable to the container's type;
+            both are checked eagerly.
+        """
+        given :
+            var guarded = Guarded.ofNull(String)
+            var executor = new NamedSingleThreadExecutor("view-thread")
+
+        when : 'We pass a null fallback.'
+            guarded.viewOn(executor, null)
+        then : 'It is rejected.'
+            thrown(NullPointerException)
+
+        when : 'We pass a fallback that is not assignable to the type (bypassing generics, as raw code can).'
+            guarded.viewOn(executor, new StringBuilder("x"))
+        then : 'It is rejected.'
+            thrown(IllegalArgumentException)
 
         cleanup :
             executor.close()
