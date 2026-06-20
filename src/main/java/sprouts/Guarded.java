@@ -101,6 +101,10 @@ import java.util.function.UnaryOperator;
  * account.update(a -> a.deposit(500)); // the view re-syncs on 'ui', firing the listener there
  *}</pre>
  *
+ * <p>{@link #viewOn(Executor)} derives the view's type from the current value; the overloads
+ * {@link #viewOn(Class, Executor)} and {@link #viewOnNullable(Class, Executor)} let you state the type
+ * explicitly, the latter also permitting {@code null} values.
+ *
  * <p>This is the {@code Guarded} analogue of {@code observeOn(scheduler)} in Rx-style libraries, or a
  * conflated {@code StateFlow} in Kotlin. Three rules make it safe — and it is dangerous if you ignore
  * them, because misuse fails <em>silently</em>:
@@ -594,11 +598,40 @@ public final class Guarded<V extends @Nullable Object> {
      * {@code Guarded}. This is the bridge from many-writer guarded state to a single-owner reactive
      * property; see the class documentation for the full rationale.
      *
+     * <p>This is a convenience overload of {@link #viewOn(Class, Executor)} that derives the property's
+     * type from the current value, and therefore requires a non-null value at the moment of the call.
+     *
      * <pre>{@code
      * Viewable<Account> view = account.viewOn(uiExecutor);
      * view.onChange(From.ALL, it -> render(it.currentValue().orElseThrow()));
      * // ...background threads mutate 'account'; 'render' always runs on uiExecutor's thread.
      * }</pre>
+     *
+     * @param executor the (effectively single-threaded) executor on which the view and its listeners run
+     * @return a new read-only {@link Viewable} mirroring this container on {@code executor}'s thread
+     * @throws NullPointerException if {@code executor} is {@code null}, or if the current value is
+     *                              {@code null} (use {@link #viewOnNullable(Class, Executor)} for that)
+     * @see #viewOn(Class, Executor)
+     * @see #viewOnNullable(Class, Executor)
+     */
+    public Viewable<V> viewOn(Executor executor) {
+        Objects.requireNonNull(executor, "executor");
+        V current = get();
+        if (current == null) {
+            throw new NullPointerException(
+                "Cannot derive the view's property type because this 'Guarded' currently holds null. " +
+                "Use 'viewOn(Class, Executor)' for a non-null value type, or 'viewOnNullable(Class, Executor)' " +
+                "if the value may be null.");
+        }
+        @SuppressWarnings("unchecked")
+        Class<V> type = (Class<V>) current.getClass();
+        return viewOn(type, executor);
+    }
+
+    /**
+     * Returns a read-only {@link Viewable} of the given {@code type} that mirrors this container's value,
+     * delivering every change through {@code executor}. This is the base view method; see the class
+     * documentation for the full rationale and safety contract.
      *
      * <p><b>Contract — read these, misuse fails silently:</b>
      * <ul>
@@ -611,34 +644,71 @@ public final class Guarded<V extends @Nullable Object> {
      *       values may be skipped and only the most recent is published.</li>
      * </ul>
      *
+     * <p>This overload produces a <b>non-null</b> view and therefore does not permit {@code null}: the
+     * container must hold a non-null value now, and should never be set to {@code null} while the view
+     * is alive. For a value that may be {@code null} use {@link #viewOnNullable(Class, Executor)}.
+     *
      * <p>The returned view is referenced only <em>weakly</em> by this container: once you drop it, it
      * becomes eligible for garbage collection, stops receiving updates, and its registration is pruned
-     * automatically — there is nothing to unsubscribe. The view's type is derived from the current
-     * value, so this container must not hold {@code null} at the moment of the call.
+     * automatically — there is nothing to unsubscribe.
      *
+     * @param type     the (non-null) type of the viewed value
      * @param executor the (effectively single-threaded) executor on which the view and its listeners run
      * @return a new read-only {@link Viewable} mirroring this container on {@code executor}'s thread
-     * @throws NullPointerException if {@code executor} is {@code null}, or if the current value is
-     *                              {@code null} (the property's type cannot then be derived)
+     * @throws NullPointerException if {@code type} or {@code executor} is {@code null}, or if the current
+     *                              value is {@code null} (use {@link #viewOnNullable(Class, Executor)})
+     * @see #viewOnNullable(Class, Executor)
      */
-    public Viewable<V> viewOn(Executor executor) {
+    public Viewable<V> viewOn(Class<V> type, Executor executor) {
+        Objects.requireNonNull(type, "type");
         Objects.requireNonNull(executor, "executor");
         lock.lock();
         try {
             V current = this.value;
             if (current == null) {
                 throw new NullPointerException(
-                    "Cannot create a view of a Guarded that currently holds null: the property type is " +
-                    "derived from the current value. Seed the Guarded with a non-null value first.");
+                    "This 'viewOn(Class, Executor)' method creates a non-null view and does not permit a null value; " +
+                    "use 'viewOnNullable(Class, Executor)' for a nullable view.");
             }
-            @SuppressWarnings("unchecked")
-            Class<V> type = (Class<V>) current.getClass();
             Var<V> property = Var.of(type, current);
             views.add(new View<>(this, executor, property));
             return Viewable.cast(property);
         } finally {
             lock.unlock();
         }
+    }
+
+    /**
+     * Like {@link #viewOn(Class, Executor)}, but produces a <b>nullable</b> {@link Viewable}: the
+     * container may hold (and the view may publish) {@code null}. Use this when {@code V} is a
+     * {@code @Nullable} type.
+     *
+     * <p>The same safety contract applies — an effectively single-threaded {@code executor}, an immutable
+     * {@code V}, and conflated latest-wins delivery — and the view is likewise held only weakly.
+     *
+     * @param type     the type of the viewed value (its non-null base type)
+     * @param executor the (effectively single-threaded) executor on which the view and its listeners run
+     * @return a new read-only, null-permitting {@link Viewable} mirroring this container
+     * @throws NullPointerException if {@code type} or {@code executor} is {@code null}
+     * @see #viewOn(Class, Executor)
+     */
+    public Viewable<V> viewOnNullable(Class<V> type, Executor executor) {
+        Objects.requireNonNull(type, "type");
+        Objects.requireNonNull(executor, "executor");
+        lock.lock();
+        try {
+            Var<V> property = _nullableViewProperty(type, this.value);
+            views.add(new View<>(this, executor, property));
+            return Viewable.cast(property);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <V extends @Nullable Object> Var<V> _nullableViewProperty(Class<V> type, V initial) {
+        // Var.ofNullable yields a Var<@Nullable V>; the public view type keeps V's own nullness.
+        return (Var<V>) Var.ofNullable(type, initial);
     }
 
     /**
