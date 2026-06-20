@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -755,10 +756,18 @@ public final class Guarded<V extends @Nullable Object> {
 
         /**
          * Schedules a (conflated) delivery. Returns {@code false} when this view is dead — its target
-         * was collected or its executor rejected the task — telling the caller to prune it.
+         * was collected or its executor has been shut down — telling the caller to prune it.
          */
         boolean signal() {
             if (propertyRef.get() == null) {
+                return false;
+            }
+            if (executor instanceof ExecutorService && ((ExecutorService) executor).isShutdown()) {
+                // A delivery that was already accepted can be silently discarded by shutdownNow()
+                // without ever running, which would leave 'scheduled' stuck true — so the CAS below
+                // could never fire again and the (now undeliverable) view would linger forever. Detect
+                // the dead executor directly so it is pruned even in that case.
+                log.debug(Sprouts.factory().loggingMarker(), "Dropping a Guarded view: its executor has been shut down.");
                 return false;
             }
             if (scheduled.compareAndSet(false, true)) {

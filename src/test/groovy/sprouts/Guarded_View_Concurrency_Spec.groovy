@@ -7,6 +7,7 @@ import spock.lang.Timeout
 import spock.lang.Title
 import util.Wait
 
+import java.lang.ref.WeakReference
 import java.time.Duration
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executor
@@ -409,5 +410,46 @@ class Guarded_View_Concurrency_Spec extends Specification
             view.orElseThrow() == "v2"
         and : 'The view equals what the container actually holds.'
             view.orElseThrow() == guarded.get()
+    }
+
+    @Timeout(20)
+    def 'Regression: a view is pruned even when shutdownNow discards an already-accepted delivery.'()
+    {
+        reportInfo """
+            Edge case (caught in review): `shutdownNow()` can discard a delivery task that was already
+            accepted into the executor's queue, so `deliver()` never runs and never clears the internal
+            conflation flag. If we relied solely on that flag, it would stay armed forever — the view
+            could neither re-schedule nor be pruned, lingering as a dead, undeliverable entry that also
+            pins its executor. We detect a shut-down executor directly, so the next mutation prunes the
+            view.
+
+            We prove the pruning without exposing internals: a pruned view no longer references its
+            executor, so once we drop our own reference the executor becomes garbage-collectable. (A
+            regression would keep the view — and thus the executor — alive, and this would time out.)
+        """
+        given : 'A guarded value viewed on a single-threaded executor we keep only a weak reference to.'
+            var guarded = Guarded.of("init")
+            var executor = Executors.newSingleThreadExecutor()
+            var view = guarded.viewOn(executor)
+            var execRef = new WeakReference(executor)
+            var gate = new CountDownLatch(1)
+        and : 'We occupy the executor thread so the next delivery queues behind a blocking task.'
+            executor.execute({ try { gate.await() } catch (InterruptedException ignored) {} })
+            guarded.set("queued") // schedules a delivery behind the blocker; the conflation flag is now armed
+
+        when : 'We shut the executor down hard — dropping the queued delivery — and release our reference.'
+            executor.shutdownNow()
+            executor.awaitTermination(5, TimeUnit.SECONDS)
+            executor = null
+        and : 'A further mutation occurs, which must notice the dead executor and prune the view.'
+            guarded.set("after")
+
+        then : 'The view is still held by us (so pruning was via the shutdown check, not GC)...'
+            view != null
+        and : '...and, being pruned, it no longer pins the executor, which becomes collectable.'
+            Wait.until({ System.gc(); execRef.get() == null }, 10_000)
+
+        cleanup :
+            gate.countDown()
     }
 }
