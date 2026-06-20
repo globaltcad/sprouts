@@ -35,9 +35,9 @@ import java.util.stream.StreamSupport;
  * <b>
  *     Notice! Instead of this class, we recommend using the {@link Tuple} type inside a single
  *     {@link Var} property declared as {@code Var<Tuple<T>>},
- *     as it more compatible with functional and data-oriented programming.
+ *     as it is more compatible with functional and data-oriented programming.
  *     This is because the {@link Tuple} type is immutable and can be used as part
- *     of record based view models, which are more predictable and easier to reason about.
+ *     of record-based view models, which are more predictable and easier to reason about.
  * </b>
  * <p>
  * <b>You may also want to take a look at the <a href="https://globaltcad.github.io/sprouts/">living sprouts documentation</a>

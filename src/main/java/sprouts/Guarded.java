@@ -734,7 +734,7 @@ public final class Guarded<V extends @Nullable Object> {
         if (views.isEmpty()) {
             return; // fast path: nothing is observing this container
         }
-        // Iterate a CopyOnWriteArrayList snapshot (no lock held, identical behaviour on every JDK from
+        // Iterate a CopyOnWriteArrayList snapshot (no lock held, identical behavior on every JDK from
         // 8 up) and signal each view. We deliberately do NOT use removeIf here: its side-effecting form
         // would run signal() under the list's internal lock on modern JDKs, and on Java 8 it is not even
         // overridden for CopyOnWriteArrayList (it would throw UnsupportedOperationException on removal).

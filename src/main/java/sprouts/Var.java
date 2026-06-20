@@ -158,7 +158,7 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      * and the {@link Pair#second()} value is written to {@code second}.
      * <p>
      * <b>Mathematical Foundation:</b><br>
-     * For predictable round-trip behaviour the functions should form a partial isomorphism:
+     * For predictable round-trip behavior the functions should form a partial isomorphism:
      * <ul>
      *   <li>For non-null {@code a} and {@code b}:
      *       {@code setter.apply(getter.apply(a, b)).equals(Pair.of(a, b))} should hold.</li>

@@ -17,9 +17,9 @@
  *  view models interoperate with your GUI components or other kinds of views. <br>
  *  This is best achieved using the MVI (Model-View-Intent) and MVL (Model-View-Lens) patterns. <br>
  *  <p>
- *  Here an example demonstrating how to create
- *  a set of bindable properties from a basic record based
- *  modelling scenario: <br>
+ *  Here is an example demonstrating how to create
+ *  a set of bindable properties from a basic record-based
+ *  modeling scenario: <br>
  *  <b>View Models:</b>
  *  <pre>{@code
  *    public record Address(
