@@ -446,7 +446,7 @@ public final class Guarded<V extends @Nullable Object> {
         V prev;
         lock.lock();
         try {
-            _vet(newValue);
+            newValue = _vet(newValue);
             prev = this.value;
             this.value = newValue;
         } finally {
