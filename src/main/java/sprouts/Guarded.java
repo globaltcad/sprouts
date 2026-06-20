@@ -475,7 +475,7 @@ public final class Guarded<V extends @Nullable Object> {
         boolean changed;
         lock.lock();
         try {
-            _vet(newValue);
+            newValue = _vet(newValue);
             changed = Objects.equals(this.value, expectedValue);
             if (changed) {
                 this.value = newValue;
