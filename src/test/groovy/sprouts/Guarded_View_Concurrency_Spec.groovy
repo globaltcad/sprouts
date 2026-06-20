@@ -112,7 +112,7 @@ class Guarded_View_Concurrency_Spec extends Specification
                     done.countDown()
                 })
             }
-            done.await(20, TimeUnit.SECONDS)
+            assert done.await(20, TimeUnit.SECONDS)
 
         then : 'Not one increment was lost.'
             counter.get() == threads * incrementsPerThread
