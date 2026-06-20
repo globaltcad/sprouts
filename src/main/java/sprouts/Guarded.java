@@ -281,9 +281,9 @@ public final class Guarded<V extends @Nullable Object> {
      * <p>The safe way to look inside a mutable {@code V}: compute and return a snapshot
      * (a count, a copy, a boolean) rather than exposing the live object.
      *
-     * {@snippet lang = "java":
+     * <pre>{@code
      * boolean empty = locked.read(List::isEmpty);
-     * }
+     * }</pre>
      *
      * @param reader a function applied to the value under the lock; must not let the value escape
      * @param <R>    the result type
@@ -377,9 +377,9 @@ public final class Guarded<V extends @Nullable Object> {
      * Applies {@code updater} to the current value and stores the result. Return value ignored;
      * the readable, fire-and-forget form of {@link #updateAndGet(UnaryOperator)}.
      *
-     * {@snippet lang = "java":
+     * <pre>{@code
      * counter.update(Counter::increment);
-     * }
+     * }</pre>
      *
      * @param updater computes the new value from the current value, run once under the lock
      * @throws NullPointerException if {@code updater} is {@code null}
@@ -442,9 +442,9 @@ public final class Guarded<V extends @Nullable Object> {
      *
      * <p>Mirrors {@link java.util.concurrent.atomic.AtomicReference#accumulateAndGet
      * AtomicReference.accumulateAndGet}; convenient for "merge this delta into the state":
-     * {@snippet lang = "java":
+     * <pre>{@code
      * totals.accumulateAndGet(todaysSales, Totals::plus);
-     * }
+     * }</pre>
      *
      * @param x           the value to combine with the current value
      * @param accumulator a side-effect-free combining function, run once under the lock
@@ -493,9 +493,9 @@ public final class Guarded<V extends @Nullable Object> {
      * with respect to other operations. Both functions run under the lock; {@code updater} runs at
      * most once.
      *
-     * {@snippet lang = "java":
+     * <pre>{@code
      * boolean shipped = order.updateIf(Order::isPaid, Order::markShipped);
-     * }
+     * }</pre>
      *
      * @param condition tested against the current value under the lock
      * @param updater   computes the new value, applied only if {@code condition} holds
@@ -529,9 +529,9 @@ public final class Guarded<V extends @Nullable Object> {
      * Runs {@code mutator} against the current value under the lock, without swapping the
      * reference. The intended door into a deliberately-mutable {@code V} (a map, a builder, ...).
      *
-     * {@snippet lang = "java":
+     * <pre>{@code
      * cache.mutate(m -> m.put(key, value));
-     * }
+     * }</pre>
      *
      * <p><b>Not compatible with {@link #viewOn(Executor)}.</b> A view publishes the value to another
      * thread, which is only safe for immutable {@code V}; mutating in place would let that value escape
@@ -782,7 +782,7 @@ public final class Guarded<V extends @Nullable Object> {
                 // Listener exceptions are already caught and logged by the property machinery; this
                 // guards the rarer case (e.g. publishing null into a non-null view) so a single bad
                 // delivery cannot tear down the executor's worker thread silently.
-                log.error("Failed to deliver a new value to a Guarded view.", e);
+                log.error(Sprouts.factory().loggingMarker(), "Failed to deliver a new value to a Guarded view.", e);
             }
         }
     }
