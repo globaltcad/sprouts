@@ -9,6 +9,7 @@ import util.Wait
 
 import java.time.Duration
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -36,6 +37,20 @@ import java.util.concurrent.atomic.AtomicReference
 @Subject([Guarded, Viewable])
 class Guarded_View_Concurrency_Spec extends Specification
 {
+    /** An executor that queues tasks and runs them only when explicitly drained, so that delivery
+     *  timing becomes fully deterministic. Single-threaded by construction (drained by the caller). */
+    private static final class ManualExecutor implements Executor {
+        private final java.util.ArrayDeque<Runnable> tasks = new java.util.ArrayDeque<>()
+        @Override void execute(Runnable command) { tasks.add(command) }
+        /** Runs every currently-queued task on the calling thread; returns how many ran. */
+        int runAll() {
+            int count = 0
+            Runnable next
+            while ((next = tasks.poll()) != null) { next.run(); count++ }
+            return count
+        }
+    }
+
     @Timeout(30)
     def 'Under a storm of concurrent writers, the view converges to the final value.'()
     {
@@ -351,5 +366,48 @@ class Guarded_View_Concurrency_Spec extends Specification
         cleanup :
             pool.shutdownNow()
             executor.shutdownNow()
+    }
+
+    def 'Regression: a coalesced delivery publishes the value current AT DELIVERY TIME, not the one captured when it was scheduled.'()
+    {
+        reportInfo """
+            This pins down the exact reason `deliver()` re-reads `source.get()` instead of carrying a
+            value captured at write time.
+
+            Imagine an alternative "carry the value" design, where the signal that schedules a delivery
+            also remembers which value to publish. Because notifications run *after* the lock is
+            released, a writer thread can be preempted between its `unlock()` and its notification. So
+            the order in which captured values reach a view need not match the order in which they were
+            committed — and a stale captured value can win the race, leaving the view permanently out of
+            sync with the container. The current design avoids this by reading the authoritative current
+            value (`source.get()`) at delivery time.
+
+            We reproduce the essence deterministically with a hand-pumped executor (no real threads, so
+            no flakiness): schedule a delivery while the value is "v1", then commit "v2" — which conflates
+            into the already-scheduled delivery — then run the delivery. It MUST publish "v2", the value
+            current at delivery time, and must never publish the captured "v1". A regression to carrying
+            the scheduled-time value would surface here as "v1".
+        """
+        given : 'A guarded value and a view on a hand-pumped (manually drained) executor.'
+            var guarded = Guarded.of("v0")
+            var executor = new ManualExecutor()
+            var view = guarded.viewOn(executor)
+        and : 'A listener recording every value actually delivered to the view.'
+            var delivered = []
+            view.onChange(From.ALL, { d -> delivered.add(d.currentValue().orElseThrow()) })
+
+        when : 'We schedule a delivery at "v1", then commit "v2" before that delivery runs.'
+            guarded.set("v1") // schedules exactly one delivery
+            guarded.set("v2") // conflated into the same pending delivery; "v2" is now the current value
+        and : 'Only now do we let the single pending delivery run.'
+            int tasksRun = executor.runAll()
+
+        then : 'Exactly one delivery ran (the burst was conflated)...'
+            tasksRun == 1
+        and : '...and it published the value current at delivery time, "v2" — never the stale "v1".'
+            delivered == ["v2"]
+            view.orElseThrow() == "v2"
+        and : 'The view equals what the container actually holds.'
+            view.orElseThrow() == guarded.get()
     }
 }
