@@ -322,4 +322,58 @@ class Guarded_View_Spec extends Specification
         cleanup :
             executor.close()
     }
+
+    @Timeout(10)
+    def 'A fallback view of a nullable container is null-safe: it shows the fallback instead of null.'()
+    {
+        reportInfo """
+            `viewOn(Executor, fallback)` turns a nullable container into a null-safe view — the
+            `Guarded` analogue of `Val.view(nullObject, ..)`. Whenever the container holds null, the view
+            publishes the fallback instead, so the view is non-null and never empty.
+        """
+        given : 'A nullable guarded that starts out null, viewed with a fallback.'
+            var guarded = Guarded.ofNull(String)
+            var executor = new NamedSingleThreadExecutor("view-thread")
+            var view = guarded.viewOn(executor, "<none>")
+        expect : 'The view starts on the fallback (not null) and is non-null.'
+            view.orElseThrow() == "<none>"
+            !view.allowsNull()
+
+        when : 'We publish a real value.'
+            guarded.set("hello")
+        then : 'The view shows it.'
+            Wait.until({ view.orElseThrow() == "hello" }, 5_000)
+
+        when : 'We go back to null.'
+            guarded.set(null)
+        then : 'The view falls back again rather than going null.'
+            Wait.until({ view.orElseThrow() == "<none>" }, 5_000)
+
+        cleanup :
+            executor.close()
+    }
+
+    def 'A fallback view validates its fallback eagerly.'()
+    {
+        reportInfo """
+            The fallback is published, so it must be non-null and assignable to the container's type;
+            both are checked eagerly.
+        """
+        given :
+            var guarded = Guarded.ofNull(String)
+            var executor = new NamedSingleThreadExecutor("view-thread")
+
+        when : 'We pass a null fallback.'
+            guarded.viewOn(executor, null)
+        then : 'It is rejected.'
+            thrown(NullPointerException)
+
+        when : 'We pass a fallback that is not assignable to the type (bypassing generics, as raw code can).'
+            guarded.viewOn(executor, new StringBuilder("x"))
+        then : 'It is rejected.'
+            thrown(IllegalArgumentException)
+
+        cleanup :
+            executor.close()
+    }
 }

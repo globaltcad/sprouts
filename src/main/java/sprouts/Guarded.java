@@ -107,7 +107,8 @@ import java.util.function.UnaryOperator;
  * <p>A single {@link #viewOn(Executor)} method covers every case: the view inherits this container's
  * {@linkplain #type() type} and {@linkplain #allowsNull() null policy}, so a nullable {@code Guarded}
  * produces a null-permitting view (viewable even while it currently holds {@code null}) and a non-null
- * one produces a non-null view.
+ * one produces a non-null view. To turn a nullable container into a <em>null-safe</em> view, use
+ * {@link #viewOn(Executor, Object)} with a fallback value that stands in whenever the value is {@code null}.
  *
  * <p>This is the {@code Guarded} analogue of {@code observeOn(scheduler)} in Rx-style libraries, or a
  * conflated {@code StateFlow} in Kotlin. Three rules make it safe — and it is dangerous if you ignore
@@ -757,7 +758,41 @@ public final class Guarded<V extends @Nullable Object> {
             // The type and seed value form one consistent snapshot taken under the lock, immune to a
             // concurrent writer changing the value between reads.
             Var<V> property = nullable ? _nullableProperty(type, value) : Var.of(type, Util.fakeNonNull(value));
-            views.add(new View<>(this, executor, property));
+            views.add(new View<>(this, executor, null, property));
+            return Viewable.cast(property);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Like {@link #viewOn(Executor)}, but the resulting view <b>never publishes {@code null}</b>: whenever
+     * this container holds {@code null}, the view shows {@code fallback} instead. This is the
+     * {@code Guarded} analogue of {@code Val.view(nullObject, ..)} — the way to turn a nullable shared
+     * state into a null-safe reactive property.
+     *
+     * <p>The same contract as {@link #viewOn(Executor)} applies (effectively single-threaded executor,
+     * immutable {@code V}, conflated latest-wins delivery, weak retention). The {@code fallback} only
+     * matters for a nullable container; on a non-null one the value is never {@code null}, so it is never
+     * used. Note that, because Java cannot express "the non-null version of {@code V}", the returned type
+     * is still {@code Viewable<V>} — but at runtime it is guaranteed to never hold {@code null}.
+     *
+     * @param executor the (effectively single-threaded) executor on which the view and its listeners run
+     * @param fallback the non-null value shown whenever this container holds {@code null}
+     * @return a new read-only {@link Viewable} that never publishes {@code null}
+     * @throws NullPointerException     if {@code executor} or {@code fallback} is {@code null}
+     * @throws IllegalArgumentException if {@code fallback} is not assignable to {@link #type()}
+     */
+    public Viewable<V> viewOn(Executor executor, V fallback) {
+        Objects.requireNonNull(executor, "executor");
+        Objects.requireNonNull(fallback, "fallback");
+        _vet(fallback); // the fallback is published, so it must be assignable to type()
+        lock.lock();
+        try {
+            V current = value;
+            // Always a non-null property: the fallback stands in for null, now and on every delivery.
+            Var<V> property = Var.of(type, Util.fakeNonNull(current != null ? current : fallback));
+            views.add(new View<>(this, executor, fallback, property));
             return Viewable.cast(property);
         } finally {
             lock.unlock();
@@ -809,13 +844,16 @@ public final class Guarded<V extends @Nullable Object> {
 
         private final Guarded<V> source;
         private final Executor executor;
+        /** Substituted for {@code null} when publishing; {@code null} itself means "no substitution". */
+        private final @Nullable V fallback;
         private final WeakReference<Var<V>> propertyRef;
         /** {@code true} while a delivery is already queued on {@link #executor}; coalesces bursts. */
         private final AtomicBoolean scheduled = new AtomicBoolean(false);
 
-        View(Guarded<V> source, Executor executor, Var<V> property) {
+        View(Guarded<V> source, Executor executor, @Nullable V fallback, Var<V> property) {
             this.source = source;
             this.executor = executor;
+            this.fallback = fallback;
             this.propertyRef = new WeakReference<>(property);
         }
 
@@ -860,7 +898,8 @@ public final class Guarded<V extends @Nullable Object> {
                 return; // view was dropped; it will be pruned on the next signal()
             }
             try {
-                property.set(source.get());
+                V v = source.get();
+                property.set(v != null ? v : Util.fakeNonNull(fallback));
             } catch (Throwable e) {
                 // Interruption and other fatal throwables must propagate (re-interrupting the thread
                 // where appropriate) so cancellation/shutdown stays reliable; this mirrors how the rest
