@@ -619,16 +619,7 @@ public final class Guarded<V extends @Nullable Object> {
      */
     public Viewable<V> viewOn(Executor executor) {
         Objects.requireNonNull(executor, "executor");
-        V current = get();
-        if (current == null) {
-            throw new NullPointerException(
-                "Cannot derive the view's property type because this 'Guarded' currently holds null. " +
-                "Use 'viewOn(Class, Executor)' for a non-null value type, or 'viewOnNullable(Class, Executor)' " +
-                "if the value may be null.");
-        }
-        @SuppressWarnings("unchecked")
-        Class<V> type = (Class<V>) current.getClass();
-        return viewOn(type, executor);
+        return _registerNonNullView(null, executor);
     }
 
     /**
@@ -665,14 +656,32 @@ public final class Guarded<V extends @Nullable Object> {
     public Viewable<V> viewOn(Class<V> type, Executor executor) {
         Objects.requireNonNull(type, "type");
         Objects.requireNonNull(executor, "executor");
+        return _registerNonNullView(type, executor);
+    }
+
+    /**
+     * Creates and registers a non-null view under a <em>single</em> lock acquisition, so the value is
+     * read exactly once: the type (when {@code explicitType} is {@code null}, derived from that same
+     * value) and the seed value are always a consistent snapshot, immune to a writer changing the value
+     * — or its runtime subtype — between reads.
+     *
+     * @param explicitType the caller-supplied type, or {@code null} to derive it from the current value
+     */
+    private Viewable<V> _registerNonNullView(@Nullable Class<V> explicitType, Executor executor) {
         lock.lock();
         try {
             V current = this.value;
             if (current == null) {
                 throw new NullPointerException(
-                    "This 'viewOn(Class, Executor)' method creates a non-null view and does not permit a null value; " +
-                    "use 'viewOnNullable(Class, Executor)' for a nullable view.");
+                    explicitType == null
+                        ? "Cannot derive the view's property type because this 'Guarded' currently holds null. " +
+                          "Use 'viewOn(Class, Executor)' for a non-null value type, or 'viewOnNullable(Class, Executor)' " +
+                          "if the value may be null."
+                        : "This 'viewOn(Class, Executor)' method creates a non-null view and does not permit a null " +
+                          "value; use 'viewOnNullable(Class, Executor)' for a nullable view.");
             }
+            @SuppressWarnings("unchecked")
+            Class<V> type = explicitType != null ? explicitType : (Class<V>) current.getClass();
             Var<V> property = Var.of(type, current);
             views.add(new View<>(this, executor, property));
             return Viewable.cast(property);
@@ -778,10 +787,14 @@ public final class Guarded<V extends @Nullable Object> {
             }
             try {
                 property.set(source.get());
-            } catch (Exception e) {
-                // Listener exceptions are already caught and logged by the property machinery; this
-                // guards the rarer case (e.g. publishing null into a non-null view) so a single bad
-                // delivery cannot tear down the executor's worker thread silently.
+            } catch (Throwable e) {
+                // Interruption and other fatal throwables must propagate (re-interrupting the thread
+                // where appropriate) so cancellation/shutdown stays reliable; this mirrors how the rest
+                // of the library treats interruption. Only non-fatal failures are logged. Ordinary
+                // listener exceptions are already caught and logged by the property machinery — this
+                // merely guards the rarer case (e.g. publishing null into a non-null view) so one bad
+                // delivery cannot silently tear down the executor's worker thread.
+                Util.sneakyThrowExceptionIfFatal(e);
                 log.error(Sprouts.factory().loggingMarker(), "Failed to deliver a new value to a Guarded view.", e);
             }
         }
