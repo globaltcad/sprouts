@@ -156,8 +156,9 @@ import java.util.function.UnaryOperator;
  * rejects every attempt to store {@code null} with a {@link NullPointerException} and is therefore
  * guaranteed to never hold {@code null}. A nullable container, created with
  * {@link #ofNullable(Class, Object)} or {@link #ofNull(Class)}, permits {@code null}. The container
- * also knows its own {@linkplain #type() type}, again like {@link Var}. Query the policy with
- * {@link #allowsNull()}.
+ * also knows its own {@linkplain #type() type}, again like {@link Var}, and enforces it: any value
+ * whose class is not assignable to {@link #type()} is rejected with an {@link IllegalArgumentException}.
+ * Query the policy with {@link #allowsNull()}.
  *
  * <p>This class is thread-safe. It is intentionally not {@code Serializable} and does not override
  * {@code equals}/{@code hashCode} (it has mutable identity, like {@code AtomicReference}).
@@ -198,12 +199,7 @@ public final class Guarded<V extends @Nullable Object> {
         this.type = Objects.requireNonNull(type, "type");
         this.nullable = nullable;
         this.lock = new ReentrantLock(fair);
-        if (!nullable && initial == null) {
-            throw new NullPointerException(
-                "A non-null Guarded cannot be initialized with null. " +
-                "Use Guarded.ofNullable(Class, value) or Guarded.ofNull(Class) for a null-permitting container.");
-        }
-        this.value = initial;
+        this.value = _vet(initial); // enforces both the null policy and type assignability
     }
 
     /**
@@ -348,12 +344,27 @@ public final class Guarded<V extends @Nullable Object> {
         return nullable;
     }
 
-    /** Enforces the null policy: a non-null container rejects a {@code null} value. */
+    /**
+     * Enforces this container's invariants on a value about to be stored, mirroring {@link Var}: the
+     * {@linkplain #allowsNull() null policy}, and that a non-null value's class is assignable to the
+     * declared {@linkplain #type() type}. Returns the value unchanged, or throws.
+     *
+     * @throws NullPointerException     if {@code newValue} is {@code null} and this container is non-null
+     * @throws IllegalArgumentException if {@code newValue} is not assignable to {@link #type()}
+     */
     private V _vet(V newValue) {
-        if (!nullable && newValue == null) {
-            throw new NullPointerException(
-                "This Guarded (of type '" + type.getSimpleName() + "') does not permit null values. " +
-                "Use Guarded.ofNullable(Class, value) for a null-permitting container.");
+        if (newValue == null) {
+            if (!nullable) {
+                throw new NullPointerException(
+                    "This Guarded (of type '" + type.getSimpleName() + "') does not permit null values. " +
+                    "Use Guarded.ofNullable(Class, value) or Guarded.ofNull(Class) for a null-permitting container.");
+            }
+            return newValue;
+        }
+        if (!type.isAssignableFrom(newValue.getClass())) {
+            throw new IllegalArgumentException(
+                "The supplied value of type '" + newValue.getClass().getName() + "' is not assignable to the " +
+                "declared type '" + type.getName() + "' of this Guarded.");
         }
         return newValue;
     }

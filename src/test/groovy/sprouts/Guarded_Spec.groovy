@@ -136,6 +136,26 @@ class Guarded_Spec extends Specification
             guarded.get() == null
     }
 
+    def 'A `Guarded` enforces its declared type at runtime, keeping `type()` a true invariant.'()
+    {
+        reportInfo """
+            Like `Var`, a `Guarded` knows and enforces its `type()`: any value whose class is not
+            assignable to that type is rejected with an `IllegalArgumentException`. This keeps the
+            declared type a genuine invariant — which also guarantees that a view built from the
+            container (which is typed by `type()`) can always accept whatever the container holds.
+        """
+        given : 'A guarded declared with an explicit element type.'
+            var guarded = Guarded.of(String, "hello")
+        expect : 'It reports that type.'
+            guarded.type() == String
+
+        when : 'We try to store a value that is not assignable to it (bypassing generics, as raw code can).'
+            guarded.set(new StringBuilder("nope"))
+        then : 'It is rejected, and the original value is left untouched.'
+            thrown(IllegalArgumentException)
+            guarded.get() == "hello"
+    }
+
     def 'The `read(..)` method exposes the value under the lock and returns a derived snapshot.'()
     {
         reportInfo """
