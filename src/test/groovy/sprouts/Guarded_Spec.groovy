@@ -531,7 +531,7 @@ class Guarded_Spec extends Specification
                 })
             }
             startGun.countDown()
-            done.await(20, TimeUnit.SECONDS)
+            assert done.await(20, TimeUnit.SECONDS)
 
         then : 'Not a single increment was lost.'
             counter.get() == threads * incrementsPerThread
