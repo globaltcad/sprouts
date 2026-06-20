@@ -64,30 +64,64 @@ class Guarded_Spec extends Specification
             account.get() == new Account("Ada", 0)
     }
 
-    def 'The `of`, `fair` factories and the constructors all produce usable containers.'()
+    def 'The factory methods all produce usable containers.'()
     {
         reportInfo """
-            `Guarded` offers two constructors and two static factory methods. The plain
-            forms use a non-fair (higher throughput) lock, while `Guarded.fair(..)` and
-            the two-argument constructor let you opt into a fair lock that hands ownership
-            to the longest-waiting thread. All of them simply wrap the initial value.
+            Mirroring `Var`, `Guarded` is built through static factories rather than public
+            constructors. `Guarded.of(..)` creates a non-null container (type inferred from the
+            value), `Guarded.of(Type.class, ..)` lets you state the type explicitly, and the
+            nullable variants `Guarded.ofNullable(Type.class, ..)` / `Guarded.ofNull(Type.class)`
+            permit `null`. A trailing `boolean fair` opts into a fair lock.
         """
         expect : 'Every construction path exposes the value it was given.'
             Guarded.of("a").get() == "a"
-            Guarded.fair("b").get() == "b"
-            new Guarded<>("c").get() == "c"
-            new Guarded<>("d", true).get() == "d"
+            Guarded.of("b", true).get() == "b"             // fair lock
+            Guarded.of(CharSequence, "c").get() == "c"     // explicit (super)type
+            Guarded.ofNullable(String, "d").get() == "d"
+            Guarded.ofNull(String).get() == null
     }
 
-    def '`null` is a perfectly valid value to guard.'()
+    def 'A non-null `Guarded` enforces its null policy at runtime, just like `Var`.'()
     {
         reportInfo """
-            Unlike many container types, `Guarded` explicitly permits `null` as a value.
-            You can construct, read, set, and swap `null` without any special handling.
+            This is the key coherence with the rest of Sprouts: a non-null container created via
+            `Guarded.of(..)` is guaranteed to never hold `null`. Every attempt to store `null` —
+            at construction or through any mutator — is rejected with a `NullPointerException`.
         """
-        given : 'A guarded that starts out holding null.'
-            var guarded = Guarded.of(null)
-        expect : 'Reading it back yields null.'
+        given : 'A non-null guarded value.'
+            var guarded = Guarded.of("hello")
+        expect : 'It reports itself as non-null and knows its type.'
+            !guarded.allowsNull()
+            guarded.type() == String
+
+        when : 'We try to set null.'
+            guarded.set(null)
+        then : 'It is rejected.'
+            thrown(NullPointerException)
+
+        when : 'We try to update to null.'
+            guarded.update({ it -> null })
+        then : 'That too is rejected, and the value is unchanged.'
+            thrown(NullPointerException)
+            guarded.get() == "hello"
+
+        when : 'We try to construct a non-null container from null.'
+            Guarded.of(null)
+        then : 'Construction itself fails.'
+            thrown(NullPointerException)
+    }
+
+    def 'A nullable `Guarded` permits `null` as a value.'()
+    {
+        reportInfo """
+            When you genuinely need to hold `null`, create the container with `Guarded.ofNullable(..)`
+            or `Guarded.ofNull(..)`. Such a container reports `allowsNull() == true` and lets you
+            construct, read, set, and swap `null` freely.
+        """
+        given : 'A nullable guarded that starts out holding null.'
+            var guarded = Guarded.ofNullable(String, null)
+        expect : 'It reports itself as nullable and reads back null.'
+            guarded.allowsNull()
             guarded.get() == null
 
         when : 'We set a real value and then set null again.'
@@ -169,8 +203,8 @@ class Guarded_Spec extends Specification
 
     def '`compareAndSet(..)` treats `null` as an ordinary, comparable value.'()
     {
-        given : 'A guarded that currently holds null.'
-            var guarded = Guarded.of(null)
+        given : 'A nullable guarded that currently holds null.'
+            var guarded = Guarded.ofNullable(String, null)
         when : 'We compare-and-set from null to a real value.'
             var changed = guarded.compareAndSet(null, "ready")
         then : 'It succeeds.'
@@ -499,7 +533,7 @@ class Guarded_Spec extends Specification
         expect : 'The string form wraps the value.'
             Guarded.of("hi").toString() == "Guarded[hi]"
             Guarded.of(42).toString() == "Guarded[42]"
-            Guarded.of(null).toString() == "Guarded[null]"
+            Guarded.ofNull(Object).toString() == "Guarded[null]"
     }
 
     @Timeout(30)
