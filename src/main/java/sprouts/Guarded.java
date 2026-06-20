@@ -5,6 +5,7 @@ import sprouts.impl.Sprouts;
 
 import java.lang.ref.WeakReference;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -730,9 +731,28 @@ public final class Guarded<V extends @Nullable Object> {
      * has been garbage-collected (or whose executor has been shut down) are pruned here.
      */
     private void _notifyViews() {
-        // Signal every live view; prune the dead ones (collected target or dead executor) in one pass.
-        // removeIf only copies the backing array if something is actually removed.
-        views.removeIf(view -> !view.signal());
+        if (views.isEmpty()) {
+            return; // fast path: nothing is observing this container
+        }
+        // Iterate a CopyOnWriteArrayList snapshot (no lock held, identical behavior on every JDK from
+        // 8 up) and signal each view. We deliberately do NOT use removeIf here: its side-effecting form
+        // would run signal() under the list's internal lock on modern JDKs, and on Java 8 it is not even
+        // overridden for CopyOnWriteArrayList (it would throw UnsupportedOperationException on removal).
+        // Instead we collect the dead views and drop them afterwards with the atomic removeAll, which is
+        // safe under concurrent _notifyViews calls — each removal applies independently, none clobbers
+        // another.
+        List<View<V>> dead = null;
+        for (View<V> view : views) {
+            if (!view.signal()) {
+                if (dead == null) {
+                    dead = new ArrayList<>(1);
+                }
+                dead.add(view);
+            }
+        }
+        if (dead != null) {
+            views.removeAll(dead);
+        }
     }
 
     /**
