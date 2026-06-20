@@ -51,6 +51,13 @@ class Guarded_Spec extends Specification
         Account withdraw(long c) { return new Account(owner, cents - c) }
     }
 
+    // An enum whose constants have bodies — so each constant is an anonymous subclass,
+    // and Food.TOFU.getClass() is NOT Food.class.
+    enum Food {
+        TOFU   { @Override String toString() { return "Tofu" } },
+        TEMPEH { @Override String toString() { return "Tempeh" } }
+    }
+
     def 'A `Guarded` is created around an initial value which you can read back.'()
     {
         reportInfo """
@@ -154,6 +161,25 @@ class Guarded_Spec extends Specification
         then : 'It is rejected, and the original value is left untouched.'
             thrown(IllegalArgumentException)
             guarded.get() == "hello"
+    }
+
+    def 'A `Guarded` infers the right type for enum constants with bodies, just like `Var`.'()
+    {
+        reportInfo """
+            Enum constants that override methods are instances of anonymous subclasses, so
+            `Food.TOFU.getClass()` is not `Food.class`. `Guarded.of(..)` must derive the enum type
+            itself — exactly as `Var.of(..)` does — otherwise reassigning to a different constant (a
+            different synthetic subclass) would be wrongly rejected by the type check.
+        """
+        given : 'A guarded holding an enum constant that has a body.'
+            var food = Guarded.of(Food.TOFU)
+        expect : 'Its declared type is the enum type, not the synthetic subclass.'
+            food.type() == Food
+
+        when : 'We reassign to a different constant (a different synthetic subclass).'
+            food.set(Food.TEMPEH)
+        then : 'It is accepted, because both share the enum type.'
+            food.get() == Food.TEMPEH
     }
 
     def 'The `read(..)` method exposes the value under the lock and returns a derived snapshot.'()

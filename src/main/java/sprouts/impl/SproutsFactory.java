@@ -132,6 +132,20 @@ public interface SproutsFactory
     }
 
     /**
+     *  Derives the most appropriate declared {@link Class} from a non-null item, handling pitfalls such
+     *  as enum constants which are really instances of anonymous subclasses (so {@code Food.TOFU.getClass()}
+     *  is not {@code Food.class}). This is the same derivation {@link Val}/{@link Var} use when inferring a
+     *  type from an item, exposed so that {@link sprouts.Guarded} can stay consistent with them.
+     *
+     * @param item The non-null item to derive the type from.
+     * @param <T>  The type of the item.
+     * @return The expected declared class of the item.
+     */
+    default <T> Class<T> expectedClassFromItem( T item ) {
+        return Util.expectedClassFromItem( item );
+    }
+
+    /**
      *  Creates a non-empty {@link Maybe} copy from the supplied {@link Maybe}.
      *  The supplied {@link Maybe} must not contain a null item.
      *  So if the factory call was successful, then the {@link Maybe#isPresent()} method of the

@@ -220,8 +220,7 @@ public final class Guarded<V extends @Nullable Object> {
      */
     public static <V> Guarded<V> of(V item) {
         Objects.requireNonNull(item, "item");
-        @SuppressWarnings("unchecked")
-        Class<V> type = (Class<V>) item.getClass();
+        Class<V> type = Sprouts.factory().expectedClassFromItem(item);
         return new Guarded<>(type, false, false, item);
     }
 
@@ -252,8 +251,7 @@ public final class Guarded<V extends @Nullable Object> {
      */
     public static <V> Guarded<V> of(V item, boolean fair) {
         Objects.requireNonNull(item, "item");
-        @SuppressWarnings("unchecked")
-        Class<V> type = (Class<V>) item.getClass();
+        Class<V> type = Sprouts.factory().expectedClassFromItem(item);
         return new Guarded<>(type, false, fair, item);
     }
 
