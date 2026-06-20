@@ -142,6 +142,7 @@ public interface SproutsFactory
      * @return The expected declared class of the item.
      */
     default <T> Class<T> expectedClassFromItem( T item ) {
+        Objects.requireNonNull(item, "item");
         return Util.expectedClassFromItem( item );
     }
 
