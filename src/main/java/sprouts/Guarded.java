@@ -2,9 +2,15 @@ package sprouts;
 
 import org.jspecify.annotations.Nullable;
 
+import java.lang.ref.WeakReference;
 import java.time.Duration;
+import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Executor;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
@@ -76,6 +82,44 @@ import java.util.function.UnaryOperator;
  * int hits = counts.read(m -> m.getOrDefault("hits", 0)); // safe: read under the lock
  *}</pre>
  *
+ * <h2>Observing changes from another thread</h2>
+ *
+ * <p>A {@code Guarded} is written by many threads, but a {@link Var}/{@link Val} property is meant to be
+ * <em>owned by one</em>: its change listeners fire synchronously on whatever thread calls
+ * {@code set(..)}. {@link #viewOn(Executor)} bridges the two. It returns a read-only {@link Viewable}
+ * whose value tracks this container, with every update delivered through the {@link Executor} you
+ * supply — so the property and all of its listeners run on <em>that executor's thread</em>:
+ *
+ * <pre>{@code
+ * // 'ui' is a single-threaded executor — e.g. SwingUtilities::invokeLater wrapped as an Executor.
+ * Guarded<Account> account = Guarded.of(new Account("Ada", 0));
+ * Viewable<Account> view = account.viewOn(ui);
+ *
+ * view.onChange(From.ALL, it -> label.setText(it.currentValue().orElseThrow().toString())); // runs on 'ui'
+ *
+ * // ...on any background thread:
+ * account.update(a -> a.deposit(500)); // the view re-syncs on 'ui', firing the listener there
+ *}</pre>
+ *
+ * <p>This is the {@code Guarded} analogue of {@code observeOn(scheduler)} in Rx-style libraries, or a
+ * conflated {@code StateFlow} in Kotlin. Three rules make it safe — and it is dangerous if you ignore
+ * them, because misuse fails <em>silently</em>:
+ * <ul>
+ *   <li><b>The executor must be effectively single-threaded</b> (a single-thread executor, a UI
+ *       dispatch loop, an actor mailbox...). It is what gives the property a well-defined owner thread;
+ *       a multi-threaded pool would fire the property concurrently and reintroduce the very races this
+ *       class exists to prevent. The type system cannot enforce this — it is on you.</li>
+ *   <li><b>{@code V} must be immutable.</b> The view hands the value to another thread, so a mutable
+ *       {@code V} would escape the lock. This is exactly the immutable-swap mode above; do not combine
+ *       {@code viewOn} with {@link #mutate(Consumer)}.</li>
+ *   <li><b>Delivery is conflated (latest-wins).</b> If writes outpace the executor, intermediate values
+ *       may be skipped; the view always converges to the most recent value rather than queuing every
+ *       step. Treat it as a live view of <em>current state</em>, not an event log.</li>
+ * </ul>
+ *
+ * <p>The view is held <em>weakly</em>: drop your reference to it and it (with its listeners) becomes
+ * eligible for collection and quietly stops receiving updates — no {@code unsubscribe} needed.
+ *
  * <h2>Safety contract</h2>
  * <ul>
  *   <li><b>Do not let the value escape unguarded.</b> If {@code V} is mutable, a reference
@@ -118,6 +162,13 @@ public final class Guarded<V extends @Nullable Object> {
 
     /** The guarded value. All access is protected by {@link #lock}. */
     private V value;
+
+    /**
+     * Live views created by {@link #viewOn(Executor)}, signalled after every mutation. Each entry holds
+     * its target property only weakly, so a dropped view self-prunes. Empty for the (common) case of a
+     * {@code Guarded} that is never observed, where iterating it costs nothing.
+     */
+    private final List<View<V>> views = new CopyOnWriteArrayList<>();
 
     // ---------------------------------------------------------------------
     // Construction
@@ -258,6 +309,7 @@ public final class Guarded<V extends @Nullable Object> {
         } finally {
             lock.unlock();
         }
+        _notifyViews();
     }
 
     /**
@@ -267,14 +319,16 @@ public final class Guarded<V extends @Nullable Object> {
      * @return the previous value
      */
     public V getAndSet(V newValue) {
+        V prev;
         lock.lock();
         try {
-            V prev = this.value;
+            prev = this.value;
             this.value = newValue;
-            return prev;
         } finally {
             lock.unlock();
         }
+        _notifyViews();
+        return prev;
     }
 
     /**
@@ -292,16 +346,20 @@ public final class Guarded<V extends @Nullable Object> {
      * @return {@code true} if the value was updated
      */
     public boolean compareAndSet(V expectedValue, V newValue) {
+        boolean changed;
         lock.lock();
         try {
-            if (Objects.equals(this.value, expectedValue)) {
+            changed = Objects.equals(this.value, expectedValue);
+            if (changed) {
                 this.value = newValue;
-                return true;
             }
-            return false;
         } finally {
             lock.unlock();
         }
+        if (changed) {
+            _notifyViews();
+        }
+        return changed;
     }
 
     // ---------------------------------------------------------------------
@@ -337,14 +395,16 @@ public final class Guarded<V extends @Nullable Object> {
      */
     public V updateAndGet(UnaryOperator<V> updater) {
         Objects.requireNonNull(updater, "updater");
+        V next;
         lock.lock();
         try {
-            V next = updater.apply(this.value);
+            next = updater.apply(this.value);
             this.value = next;
-            return next;
         } finally {
             lock.unlock();
         }
+        _notifyViews();
+        return next;
     }
 
     /**
@@ -357,14 +417,16 @@ public final class Guarded<V extends @Nullable Object> {
      */
     public V getAndUpdate(UnaryOperator<V> updater) {
         Objects.requireNonNull(updater, "updater");
+        V prev;
         lock.lock();
         try {
-            V prev = this.value;
+            prev = this.value;
             this.value = updater.apply(prev);
-            return prev;
         } finally {
             lock.unlock();
         }
+        _notifyViews();
+        return prev;
     }
 
     /**
@@ -384,14 +446,16 @@ public final class Guarded<V extends @Nullable Object> {
      */
     public V accumulateAndGet(V x, BinaryOperator<V> accumulator) {
         Objects.requireNonNull(accumulator, "accumulator");
+        V next;
         lock.lock();
         try {
-            V next = accumulator.apply(this.value, x);
+            next = accumulator.apply(this.value, x);
             this.value = next;
-            return next;
         } finally {
             lock.unlock();
         }
+        _notifyViews();
+        return next;
     }
 
     /**
@@ -405,14 +469,16 @@ public final class Guarded<V extends @Nullable Object> {
      */
     public V getAndAccumulate(V x, BinaryOperator<V> accumulator) {
         Objects.requireNonNull(accumulator, "accumulator");
+        V prev;
         lock.lock();
         try {
-            V prev = this.value;
+            prev = this.value;
             this.value = accumulator.apply(prev, x);
-            return prev;
         } finally {
             lock.unlock();
         }
+        _notifyViews();
+        return prev;
     }
 
     /**
@@ -432,16 +498,20 @@ public final class Guarded<V extends @Nullable Object> {
     public boolean updateIf(Predicate<? super V> condition, UnaryOperator<V> updater) {
         Objects.requireNonNull(condition, "condition");
         Objects.requireNonNull(updater, "updater");
+        boolean applied;
         lock.lock();
         try {
-            if (condition.test(this.value)) {
+            applied = condition.test(this.value);
+            if (applied) {
                 this.value = updater.apply(this.value);
-                return true;
             }
-            return false;
         } finally {
             lock.unlock();
         }
+        if (applied) {
+            _notifyViews();
+        }
+        return applied;
     }
 
     // ---------------------------------------------------------------------
@@ -456,6 +526,10 @@ public final class Guarded<V extends @Nullable Object> {
      * cache.mutate(m -> m.put(key, value));
      * }
      *
+     * <p><b>Not compatible with {@link #viewOn(Executor)}.</b> A view publishes the value to another
+     * thread, which is only safe for immutable {@code V}; mutating in place would let that value escape
+     * the lock. Use this method only in the guarded-mutable mode, and only when you are not viewing.
+     *
      * @param mutator a consumer applied to the value under the lock; must not let the value escape
      * @throws NullPointerException if {@code mutator} is {@code null}
      */
@@ -467,6 +541,7 @@ public final class Guarded<V extends @Nullable Object> {
         } finally {
             lock.unlock();
         }
+        _notifyViews();
     }
 
     // ---------------------------------------------------------------------
@@ -501,9 +576,130 @@ public final class Guarded<V extends @Nullable Object> {
         }
         try {
             this.value = updater.apply(this.value);
-            return true;
         } finally {
             lock.unlock();
+        }
+        _notifyViews();
+        return true;
+    }
+
+    // ---------------------------------------------------------------------
+    // Reactive views (bridge guarded state to a thread-confined property)
+    // ---------------------------------------------------------------------
+
+    /**
+     * Returns a read-only {@link Viewable} property that mirrors this container's value, with every
+     * change delivered through {@code executor}. The property — and any {@link Action} listeners you
+     * register on it — therefore run on the executor's thread, no matter which thread mutated this
+     * {@code Guarded}. This is the bridge from many-writer guarded state to a single-owner reactive
+     * property; see the class documentation for the full rationale.
+     *
+     * <pre>{@code
+     * Viewable<Account> view = account.viewOn(uiExecutor);
+     * view.onChange(From.ALL, it -> render(it.currentValue().orElseThrow()));
+     * // ...background threads mutate 'account'; 'render' always runs on uiExecutor's thread.
+     * }</pre>
+     *
+     * <p><b>Contract — read these, misuse fails silently:</b>
+     * <ul>
+     *   <li>{@code executor} <b>must be effectively single-threaded</b> (e.g. a single-thread executor
+     *       or a UI dispatch loop). It defines the property's owner thread; a multi-threaded executor
+     *       would fire the property concurrently and corrupt it.</li>
+     *   <li>{@code V} <b>must be immutable</b> — the value crosses threads, so it must not be mutated
+     *       afterwards. Do not combine this with {@link #mutate(Consumer)}.</li>
+     *   <li>Delivery is <b>conflated (latest-wins)</b>: if writes outpace {@code executor}, intermediate
+     *       values may be skipped and only the most recent is published.</li>
+     * </ul>
+     *
+     * <p>The returned view is referenced only <em>weakly</em> by this container: once you drop it, it
+     * becomes eligible for garbage collection, stops receiving updates, and its registration is pruned
+     * automatically — there is nothing to unsubscribe. The view's type is derived from the current
+     * value, so this container must not hold {@code null} at the moment of the call.
+     *
+     * @param executor the (effectively single-threaded) executor on which the view and its listeners run
+     * @return a new read-only {@link Viewable} mirroring this container on {@code executor}'s thread
+     * @throws NullPointerException if {@code executor} is {@code null}, or if the current value is
+     *                              {@code null} (the property's type cannot then be derived)
+     */
+    public Viewable<V> viewOn(Executor executor) {
+        Objects.requireNonNull(executor, "executor");
+        lock.lock();
+        try {
+            V current = this.value;
+            if (current == null) {
+                throw new NullPointerException(
+                    "Cannot create a view of a Guarded that currently holds null: the property type is " +
+                    "derived from the current value. Seed the Guarded with a non-null value first.");
+            }
+            @SuppressWarnings("unchecked")
+            Class<V> type = (Class<V>) current.getClass();
+            Var<V> property = Var.of(type, current);
+            views.add(new View<>(this, executor, property));
+            return Viewable.cast(property);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Signals every live view that the value changed. Called <em>after</em> the lock is released, so a
+     * view's executor is never scheduled while this thread holds the lock. Views whose target property
+     * has been garbage-collected (or whose executor has been shut down) are pruned here.
+     */
+    private void _notifyViews() {
+        // Signal every live view; prune the dead ones (collected target or dead executor) in one pass.
+        // removeIf only copies the backing array if something is actually removed.
+        views.removeIf(view -> !view.signal());
+    }
+
+    /**
+     * A single {@link #viewOn(Executor)} subscription. Holds its target property only weakly so that a
+     * view the caller has dropped can be collected, and conflates bursts of changes into at most one
+     * pending delivery per executor turn (latest-wins).
+     */
+    private static final class View<V extends @Nullable Object> {
+
+        private final Guarded<V> source;
+        private final Executor executor;
+        private final WeakReference<Var<V>> propertyRef;
+        /** {@code true} while a delivery is already queued on {@link #executor}; coalesces bursts. */
+        private final AtomicBoolean scheduled = new AtomicBoolean(false);
+
+        View(Guarded<V> source, Executor executor, Var<V> property) {
+            this.source = source;
+            this.executor = executor;
+            this.propertyRef = new WeakReference<>(property);
+        }
+
+        /**
+         * Schedules a (conflated) delivery. Returns {@code false} when this view is dead — its target
+         * was collected or its executor rejected the task — telling the caller to prune it.
+         */
+        boolean signal() {
+            if (propertyRef.get() == null) {
+                return false;
+            }
+            if (scheduled.compareAndSet(false, true)) {
+                try {
+                    executor.execute(this::deliver);
+                } catch (RejectedExecutionException rejected) {
+                    scheduled.set(false);
+                    return false; // executor is gone; this view can never deliver again
+                }
+            }
+            return true;
+        }
+
+        /** Runs on {@link #executor}'s thread: publishes the latest value into the property. */
+        private void deliver() {
+            // Clear the flag BEFORE reading, so any write that races us re-arms a fresh delivery
+            // and no update can be lost (only redundantly re-published, which is harmless).
+            scheduled.set(false);
+            Var<V> property = propertyRef.get();
+            if (property == null) {
+                return; // view was dropped; it will be pruned on the next signal()
+            }
+            property.set(source.get());
         }
     }
 
