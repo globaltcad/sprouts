@@ -1,0 +1,525 @@
+{
+  "className":"sprouts.Guarded_Spec",
+  "title":"The Guarded Lock-Owning Container",
+  "narrative":"The `Guarded` class is a mutable container that **owns its lock**: the value it\n    holds can only be read or written through methods that acquire the lock for you,\n    so the lock can never be forgotten, leaked, or left unbalanced.\n\n    It is the *blocking sibling* of `java.util.concurrent.atomic.AtomicReference`.\n    Both wrap a single value and offer functional update methods like `updateAndGet`,\n    but they differ in their concurrency strategy:\n\n    - `AtomicReference` is lock-free and may **re-apply** your update function several\n      times under contention, so that function must be cheap and side-effect-free.\n    - `Guarded` takes a mutual-exclusion lock and runs your update function\n      **exactly once**, while every other writer waits. This is the right trade when\n      the update is expensive or you genuinely want updates serialized.\n\n    `Guarded` is inspired by Rust's `Mutex<T>`, where the lock owns the data rather than\n    sitting beside it.\n\n    There are two intended ways to use it:\n\n    1. **Immutable-swap mode (recommended):** `V` is an immutable type and every update\n       produces a brand new value that replaces the old reference.\n    2. **Guarded-mutable mode:** `V` is a deliberately-mutable object you never let escape,\n       touched only through `read` and `mutate`.\n\n    This specification demonstrates both modes and serves as a living usage guide.",
+  "subjects":["sprouts.Guarded"],
+  "statistics":{
+    "runs":"25",
+    "successRate":"100.0%",
+    "failures":"0",
+    "errors":"0",
+    "skipped":"0",
+    "duration":"?"
+  },
+  "headers":[],"tags":{},"see":[],
+  "features":[ 
+    {
+      "id":"A `Guarded` is created around an initial value which you can read back.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The most direct way to create a `Guarded` is the `Guarded.of(..)` factory\n            method, which reads nicely together with type inference. The value you pass\n            in becomes the initial guarded value, retrievable through `get()`.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create a guarded holding an immutable record.","code":["var account = Guarded.of(new Account(\"Ada\", 0))"]},
+
+        {"kind":"expect","text":"The container hands back exactly the value we put in.","code":["account.get() == new Account(\"Ada\", 0)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The factory methods all produce usable containers.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Mirroring `Var`, `Guarded` is built through static factories rather than public\n            constructors. `Guarded.of(..)` creates a non-null container (type inferred from the\n            value), `Guarded.of(Type.class, ..)` lets you state the type explicitly, and the\n            nullable variants `Guarded.ofNullable(Type.class, ..)` / `Guarded.ofNull(Type.class)`\n            permit `null`. A trailing `boolean fair` opts into a fair lock.\n        "]
+      },
+      "blocks":[
+        {"kind":"expect","text":"Every construction path exposes the value it was given.","code":["Guarded.of(\"a\").get() == \"a\"","Guarded.of(\"b\", true).get() == \"b\"             // fair lock","Guarded.of(CharSequence, \"c\").get() == \"c\"     // explicit (super)type","Guarded.ofNullable(String, \"d\").get() == \"d\"","Guarded.ofNull(String).get() == null"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A non-null `Guarded` enforces its null policy at runtime, just like `Var`.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            This is the key coherence with the rest of Sprouts: a non-null container created via\n            `Guarded.of(..)` is guaranteed to never hold `null`. Every attempt to store `null` —\n            at construction or through any mutator — is rejected with a `NullPointerException`.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A non-null guarded value.","code":["var guarded = Guarded.of(\"hello\")"]},
+
+        {"kind":"expect","text":"It reports itself as non-null and knows its type.","code":["!guarded.allowsNull()","guarded.type() == String"]},
+
+        {"kind":"when","text":"We try to set null.","code":["guarded.set(null)"]},
+
+        {"kind":"then","text":"It is rejected.","code":["thrown(NullPointerException)"]},
+
+        {"kind":"when","text":"We try to update to null.","code":["guarded.update({ it -> null })"]},
+
+        {"kind":"then","text":"That too is rejected, and the value is unchanged.","code":["thrown(NullPointerException)","guarded.get() == \"hello\""]},
+
+        {"kind":"when","text":"We try to construct a non-null container from null.","code":["Guarded.of(null)"]},
+
+        {"kind":"then","text":"Construction itself fails.","code":["thrown(NullPointerException)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A nullable `Guarded` permits `null` as a value.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            When you genuinely need to hold `null`, create the container with `Guarded.ofNullable(..)`\n            or `Guarded.ofNull(..)`. Such a container reports `allowsNull() == true` and lets you\n            construct, read, set, and swap `null` freely.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A nullable guarded that starts out holding null.","code":["var guarded = Guarded.ofNullable(String, null)"]},
+
+        {"kind":"expect","text":"It reports itself as nullable and reads back null.","code":["guarded.allowsNull()","guarded.get() == null"]},
+
+        {"kind":"when","text":"We set a real value and then set null again.","code":["guarded.set(\"hello\")"]},
+
+        {"kind":"then","text":"The real value is visible.","code":["guarded.get() == \"hello\""]},
+
+        {"kind":"when","text":"We swap back to null using getAndSet.","code":["var previous = guarded.getAndSet(null)"]},
+
+        {"kind":"then","text":"The previous value is returned and null is now stored.","code":["previous == \"hello\"","guarded.get() == null"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A `Guarded` enforces its declared type at runtime, keeping `type()` a true invariant.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Like `Var`, a `Guarded` knows and enforces its `type()`: any value whose class is not\n            assignable to that type is rejected with an `IllegalArgumentException`. This keeps the\n            declared type a genuine invariant — which also guarantees that a view built from the\n            container (which is typed by `type()`) can always accept whatever the container holds.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A guarded declared with an explicit element type.","code":["var guarded = Guarded.of(String, \"hello\")"]},
+
+        {"kind":"expect","text":"It reports that type.","code":["guarded.type() == String"]},
+
+        {"kind":"when","text":"We try to store a value that is not assignable to it (bypassing generics, as raw code can).","code":["guarded.set(new StringBuilder(\"nope\"))"]},
+
+        {"kind":"then","text":"It is rejected, and the original value is left untouched.","code":["thrown(IllegalArgumentException)","guarded.get() == \"hello\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A `Guarded` infers the right type for enum constants with bodies, just like `Var`.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Enum constants that override methods are instances of anonymous subclasses, so\n            `Food.TOFU.getClass()` is not `Food.class`. `Guarded.of(..)` must derive the enum type\n            itself — exactly as `Var.of(..)` does — otherwise reassigning to a different constant (a\n            different synthetic subclass) would be wrongly rejected by the type check.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A guarded holding an enum constant that has a body.","code":["var food = Guarded.of(Food.TOFU)"]},
+
+        {"kind":"expect","text":"Its declared type is the enum type, not the synthetic subclass.","code":["food.type() == Food"]},
+
+        {"kind":"when","text":"We reassign to a different constant (a different synthetic subclass).","code":["food.set(Food.TEMPEH)"]},
+
+        {"kind":"then","text":"It is accepted, because both share the enum type.","code":["food.get() == Food.TEMPEH"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `read(..)` method exposes the value under the lock and returns a derived snapshot.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            `read(..)` is the safe way to look inside the guarded value: it applies your\n            function while the lock is held and returns whatever you derive from it\n            (a count, a copy, a boolean...). This keeps a possibly-mutable value from\n            escaping while still letting you observe it.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A guarded list.","code":["var guarded = Guarded.of([\"x\", \"y\", \"z\"])"]},
+
+        {"kind":"when","text":"We derive a snapshot through read.","code":["var size = guarded.read({ list -> list.size() })","var firstIsX = guarded.read({ list -> list.first() == \"x\" })"]},
+
+        {"kind":"then","text":"We get the derived values, not the live object.","code":["size == 3","firstIsX"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Use `set(..)` to replace the value and `getAndSet(..)` to swap it returning the old one.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            `set(..)` unconditionally replaces the stored reference, while `getAndSet(..)`\n            does the same but also returns the value that was present beforehand, all\n            atomically under the lock.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A guarded integer.","code":["var guarded = Guarded.of(1)"]},
+
+        {"kind":"when","text":"We set a new value.","code":["guarded.set(2)"]},
+
+        {"kind":"then","text":"It is stored.","code":["guarded.get() == 2"]},
+
+        {"kind":"when","text":"We swap in a new value, capturing the previous one.","code":["var previous = guarded.getAndSet(3)"]},
+
+        {"kind":"then","text":"The previous value is returned and the new value stored.","code":["previous == 2","guarded.get() == 3"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"`compareAndSet(..)` updates only when the current value matches the expectation.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            `compareAndSet(expected, new)` installs `new` only if the container currently\n            holds `expected`. Crucially, the comparison uses **value equality**\n            (`Objects.equals`), not reference identity as `AtomicReference` does — which\n            is usually what you want for records and other value types. Because the whole\n            check-and-set happens under the lock, there is no ABA hazard.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A guarded holding an immutable record value.","code":["var account = Guarded.of(new Account(\"Ada\", 100))"]},
+
+        {"kind":"when","text":"We compare against an equal-but-distinct instance and set a new value.","code":["var updated = account.compareAndSet(new Account(\"Ada\", 100), new Account(\"Ada\", 200))"]},
+
+        {"kind":"then","text":"Value equality is enough — the update succeeds.","code":["updated","account.get() == new Account(\"Ada\", 200)"]},
+
+        {"kind":"when","text":"We compare against a value that no longer matches.","code":["var updatedAgain = account.compareAndSet(new Account(\"Ada\", 100), new Account(\"Ada\", 0))"]},
+
+        {"kind":"then","text":"The expectation fails, so nothing changes.","code":["!updatedAgain","account.get() == new Account(\"Ada\", 200)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"`compareAndSet(..)` treats `null` as an ordinary, comparable value.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"A nullable guarded that currently holds null.","code":["var guarded = Guarded.ofNullable(String, null)"]},
+
+        {"kind":"when","text":"We compare-and-set from null to a real value.","code":["var changed = guarded.compareAndSet(null, \"ready\")"]},
+
+        {"kind":"then","text":"It succeeds.","code":["changed","guarded.get() == \"ready\""]},
+
+        {"kind":"when","text":"We try to compare-and-set from null again, which no longer holds.","code":["var changedAgain = guarded.compareAndSet(null, \"other\")"]},
+
+        {"kind":"then","text":"It fails, leaving the value untouched.","code":["!changedAgain","guarded.get() == \"ready\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The functional `update(..)` and `updateAndGet(..)` methods transform the value in place.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            This is the heart of immutable-swap mode. `updateAndGet(..)` applies your\n            function to the current value, stores the result, and returns the new value.\n            `update(..)` is the fire-and-forget twin that ignores the return value and\n            reads more cleanly when you do not need it.\n\n            Unlike `AtomicReference.updateAndGet`, the updater here is invoked **exactly\n            once** — never retried — so an expensive computation is perfectly fine.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A guarded account.","code":["var account = Guarded.of(new Account(\"Ada\", 0))"]},
+
+        {"kind":"when","text":"We use the fire-and-forget update form.","code":["account.update({ a -> a.deposit(500) })"]},
+
+        {"kind":"then","text":"The value is transformed.","code":["account.get() == new Account(\"Ada\", 500)"]},
+
+        {"kind":"when","text":"We use updateAndGet, capturing the freshly computed value.","code":["var afterDeposit = account.updateAndGet({ a -> a.deposit(250) })"]},
+
+        {"kind":"then","text":"We receive the new value directly.","code":["afterDeposit == new Account(\"Ada\", 750)","account.get() == new Account(\"Ada\", 750)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"`getAndUpdate(..)` transforms the value but returns the *previous* one.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            `getAndUpdate(..)` is the mirror image of `updateAndGet(..)`: the value is\n            still transformed by your updater, but the method returns the value that was\n            present *before* the update.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A guarded counter.","code":["var counter = Guarded.of(10)"]},
+
+        {"kind":"when","text":"We increment, asking for the old value.","code":["var old = counter.getAndUpdate({ n -> n + 1 })"]},
+
+        {"kind":"then","text":"The pre-update value comes back, while the container moved on.","code":["old == 10","counter.get() == 11"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `accumulate` methods merge an extra argument into the current value.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            `accumulateAndGet(x, accumulator)` combines the current value with an extra\n            argument `x` using a binary operator, then stores and returns the result. It\n            mirrors `AtomicReference.accumulateAndGet` and is convenient for \"merge this\n            delta into the state\". `getAndAccumulate(..)` does the same but returns the\n            previous value instead.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A guarded running total.","code":["var total = Guarded.of(100)"]},
+
+        {"kind":"when","text":"We accumulate a delta, asking for the new total.","code":["var newTotal = total.accumulateAndGet(25, { acc, delta -> acc + delta })"]},
+
+        {"kind":"then","text":"The delta is merged and the new total returned.","code":["newTotal == 125","total.get() == 125"]},
+
+        {"kind":"when","text":"We accumulate again, this time asking for the previous total.","code":["var previous = total.getAndAccumulate(75, { acc, delta -> acc + delta })"]},
+
+        {"kind":"then","text":"The pre-merge total is returned, while the state advanced.","code":["previous == 125","total.get() == 200"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"`updateIf(..)` applies the updater only when a condition holds.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            `updateIf(condition, updater)` tests the current value against a predicate and\n            applies the updater only if it passes — atomically with respect to other\n            operations. It returns whether the update happened. This expresses guarded\n            state transitions like \"ship the order only if it is paid\".\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A guarded account with funds.","code":["var account = Guarded.of(new Account(\"Ada\", 500))"]},
+
+        {"kind":"when","text":"We withdraw only if the balance can cover it.","code":["var didWithdraw = account.updateIf({ a -> a.cents() >= 300 }, { a -> a.withdraw(300) })"]},
+
+        {"kind":"then","text":"The condition holds, so the update is applied.","code":["didWithdraw","account.get() == new Account(\"Ada\", 200)"]},
+
+        {"kind":"when","text":"We attempt another withdrawal the balance cannot cover.","code":["var didWithdrawAgain = account.updateIf({ a -> a.cents() >= 300 }, { a -> a.withdraw(300) })"]},
+
+        {"kind":"then","text":"The condition fails, so nothing changes.","code":["!didWithdrawAgain","account.get() == new Account(\"Ada\", 200)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Guarded-mutable mode: `mutate(..)` is the door into a deliberately-mutable value.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            When `V` is intentionally mutable (a map, a builder, an array), you should\n            never swap the reference. Instead, touch it only through `mutate(..)`, which\n            runs your consumer against the live value under the lock, and `read(..)`,\n            which derives a safe snapshot. As long as the value never escapes, every\n            access stays serialized and visible across threads.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A guarded mutable map.","code":["var counts = Guarded.of(new HashMap<String, Integer>())"]},
+
+        {"kind":"when","text":"We mutate it under the lock.","code":["counts.mutate({ m -> m.merge(\"hits\", 1, Integer::sum) })","counts.mutate({ m -> m.merge(\"hits\", 1, Integer::sum) })","counts.mutate({ m -> m.merge(\"misses\", 1, Integer::sum) })"]},
+
+        {"kind":"then","text":"A read under the lock observes the accumulated state.","code":["counts.read({ m -> m.get(\"hits\") }) == 2","counts.read({ m -> m.get(\"misses\") }) == 1"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The updater of `updateAndGet(..)` is invoked exactly once per call, never retried.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A defining property of `Guarded` versus `AtomicReference`: because it holds a\n            real lock instead of spinning on compare-and-swap, your updater function runs\n            **exactly once** per call. This guarantee is what makes it safe to put an\n            expensive or mildly side-effecting computation inside the updater.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A guarded value and a counter tracking updater invocations.","code":["var guarded = Guarded.of(0)","var invocations = new AtomicInteger(0)"]},
+
+        {"kind":"when","text":"We perform a single update.","code":["guarded.updateAndGet({ v ->","    invocations.incrementAndGet()","    return v + 1","})"]},
+
+        {"kind":"then","text":"The updater ran precisely once.","code":["invocations.get() == 1","guarded.get() == 1"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Passing `null` functions to the lambda-taking methods is rejected with a `NullPointerException`.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Every method that accepts a function or operator validates it eagerly. Passing\n            `null` where a `reader`, `updater`, `accumulator`, `condition`, `mutator`, or\n            `timeout` is expected fails fast with a `NullPointerException` rather than\n            surprising you later.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A guarded value.","code":["var guarded = Guarded.of(\"value\")"]},
+
+        {"kind":"when","text":"read is called with null","code":["guarded.read(null)"]},
+
+        {"kind":"then","text":"it is rejected","code":["thrown(NullPointerException)"]},
+
+        {"kind":"when","text":"update is called with null","code":["guarded.update(null)"]},
+
+        {"kind":"then","text":"","code":["thrown(NullPointerException)"]},
+
+        {"kind":"when","text":"updateAndGet is called with null","code":["guarded.updateAndGet(null)"]},
+
+        {"kind":"then","text":"","code":["thrown(NullPointerException)"]},
+
+        {"kind":"when","text":"getAndUpdate is called with null","code":["guarded.getAndUpdate(null)"]},
+
+        {"kind":"then","text":"","code":["thrown(NullPointerException)"]},
+
+        {"kind":"when","text":"accumulateAndGet is called with a null accumulator","code":["guarded.accumulateAndGet(\"x\", null)"]},
+
+        {"kind":"then","text":"","code":["thrown(NullPointerException)"]},
+
+        {"kind":"when","text":"getAndAccumulate is called with a null accumulator","code":["guarded.getAndAccumulate(\"x\", null)"]},
+
+        {"kind":"then","text":"","code":["thrown(NullPointerException)"]},
+
+        {"kind":"when","text":"updateIf is called with a null condition","code":["guarded.updateIf(null, { it })"]},
+
+        {"kind":"then","text":"","code":["thrown(NullPointerException)"]},
+
+        {"kind":"when","text":"updateIf is called with a null updater","code":["guarded.updateIf({ true }, null)"]},
+
+        {"kind":"then","text":"","code":["thrown(NullPointerException)"]},
+
+        {"kind":"when","text":"mutate is called with null","code":["guarded.mutate(null)"]},
+
+        {"kind":"then","text":"","code":["thrown(NullPointerException)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The underlying lock is reentrant: a guarded operation may re-enter the same instance.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The lock backing a `Guarded` is reentrant, meaning the thread currently\n            holding it may acquire it again. So calling back into the *same* `Guarded`\n            from inside an updater or reader does not deadlock. (Doing so is usually a hint\n            to restructure, but the safety guarantee holds.)\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A guarded value.","code":["var guarded = Guarded.of(1)"]},
+
+        {"kind":"when","text":"Inside an update we re-enter the same instance with a nested read.","code":["var result = guarded.updateAndGet({ outer ->","    var nested = guarded.read({ inner -> inner * 10 })","    return nested + outer","})"]},
+
+        {"kind":"then","text":"No deadlock occurs and both accesses contributed to the result.","code":["result == 11","guarded.get() == 11"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"An exception thrown inside an updater propagates and still releases the lock.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Because every access wraps the lock in a try/finally, an exception thrown from\n            within your updater, reader, or mutator propagates to the caller but never\n            leaves the lock held. The container remains fully usable afterwards.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A guarded value.","code":["var guarded = Guarded.of(42)"]},
+
+        {"kind":"when","text":"An updater throws.","code":["guarded.updateAndGet({ v -> throw new IllegalStateException(\"boom\") })"]},
+
+        {"kind":"then","text":"The exception reaches us.","code":["thrown(IllegalStateException)"]},
+
+        {"kind":"and","text":"The value is unchanged and the lock is free again.","code":["guarded.get() == 42","!guarded.isLocked()"]},
+
+        {"kind":"when","text":"We continue to use the container normally.","code":["guarded.set(7)"]},
+
+        {"kind":"then","text":"It still works.","code":["guarded.get() == 7"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"`tryUpdate(..)` returns false instead of blocking forever when the lock is held.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            For callers that must not block indefinitely, `tryUpdate(updater, timeout)`\n            attempts to acquire the lock within the given `Duration`. If the lock is busy\n            and the timeout elapses, it returns `false` and leaves the value untouched\n            rather than waiting forever.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A guarded value and coordination latches.","code":["var guarded = Guarded.of(0)","var lockHeld = new CountDownLatch(1)","var release = new CountDownLatch(1)"]},
+
+        {"kind":"and","text":"A thread that grabs the lock and holds it until we let go.","code":["var holder = new Thread({","    guarded.mutate({ v ->","        lockHeld.countDown()","        release.await()","    })","})","holder.start()","lockHeld.await() // wait until the lock is definitely held"]},
+
+        {"kind":"when","text":"We try to update with a short timeout while the lock is held.","code":["var acquired = guarded.tryUpdate({ v -> v + 1 }, Duration.ofMillis(50))"]},
+
+        {"kind":"then","text":"We are told we could not acquire it.","code":["!acquired"]},
+
+        {"kind":"when","text":"We release the holder thread and let it finish.","code":["release.countDown()","holder.join()"]},
+
+        {"kind":"then","text":"The timed-out update never touched the value.","code":["guarded.read({ v -> v }) == 0"]},
+
+        {"kind":"cleanup","text":"Ensure the holder thread is not left running on failure.","code":["release.countDown()","holder.join()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"`tryUpdate(..)` succeeds and applies the updater once the lock is available.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            When the lock is free (or becomes free within the timeout), `tryUpdate(..)`\n            acquires it, applies the updater exactly once, stores the result, and returns\n            `true`.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"An uncontended guarded value.","code":["var guarded = Guarded.of(10)"]},
+
+        {"kind":"when","text":"We try to update with an ample timeout.","code":["var acquired = guarded.tryUpdate({ v -> v + 5 }, Duration.ofSeconds(1))"]},
+
+        {"kind":"then","text":"It succeeds and the value is updated.","code":["acquired","guarded.get() == 15"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The monitoring methods report lock state for debugging and instrumentation.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            `isLocked()` and `getQueueLength()` offer a momentary, best-effort glimpse of\n            the lock for logging and debugging. They must never drive control flow, but\n            they are handy for instrumentation. On a quiescent container nothing is locked\n            and nobody is waiting.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A guarded value nobody is currently touching.","code":["var guarded = Guarded.of(\"idle\")"]},
+
+        {"kind":"expect","text":"It reports as unlocked with an empty wait queue.","code":["!guarded.isLocked()","guarded.getQueueLength() == 0"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The `toString()` form reads the value under the lock and wraps it for logging.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            `toString()` renders as `Guarded[<value>]`, reading the value under the lock so\n            it is safe to log even while other threads operate on the container.\n        "]
+      },
+      "blocks":[
+        {"kind":"expect","text":"The string form wraps the value.","code":["Guarded.of(\"hi\").toString() == \"Guarded[hi]\"","Guarded.of(42).toString() == \"Guarded[42]\"","Guarded.ofNull(Object).toString() == \"Guarded[null]\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Mutual exclusion serializes concurrent updates so none are lost.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            This is the whole point of `Guarded`: even under heavy contention, every\n            update runs in isolation under the lock, so concurrent increments never stomp\n            on each other. We launch many threads that each increment a shared counter\n            many times and confirm the final total is exact — a lost-update bug would show\n            up as a smaller number.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A guarded counter and a pool of worker threads.","code":["var counter = Guarded.of(0)","int threads = 16","int incrementsPerThread = 1_000","var pool = Executors.newFixedThreadPool(threads)","var startGun = new CountDownLatch(1)","var done = new CountDownLatch(threads)"]},
+
+        {"kind":"when","text":"Every thread hammers the counter through updateAndGet.","code":["(1..threads).each {","    pool.submit({","        startGun.await()","        incrementsPerThread.times {","            counter.updateAndGet({ n -> n + 1 })","        }","        done.countDown()","    })","}","startGun.countDown()","assert done.await(20, TimeUnit.SECONDS)"]},
+
+        {"kind":"then","text":"Not a single increment was lost.","code":["counter.get() == threads * incrementsPerThread"]},
+
+        {"kind":"cleanup","text":"","code":["pool.shutdownNow()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Guarded-mutable state stays consistent under concurrent mutation.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The same protection extends to guarded-mutable mode. Here many threads\n            concurrently `mutate(..)` a shared map. Because each mutation runs under the\n            lock, the map never sees a torn write and every key ends up with the exact\n            count contributed by the workers.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A guarded mutable map and a worker pool.","code":["var guarded = Guarded.of(new HashMap<String, Integer>())","int threads = 8","int opsPerThread = 1_000","var pool = Executors.newFixedThreadPool(threads)","var done = new CountDownLatch(threads)"]},
+
+        {"kind":"when","text":"Each thread bumps two shared keys repeatedly.","code":["(1..threads).each {","    pool.submit({","        opsPerThread.times {","            guarded.mutate({ m ->","                m.merge(\"a\", 1, Integer::sum)","                m.merge(\"b\", 1, Integer::sum)","            })","        }","        done.countDown()","    })","}","assert done.await(20, TimeUnit.SECONDS)"]},
+
+        {"kind":"then","text":"Both keys reflect every single mutation.","code":["guarded.read({ m -> m.get(\"a\") }) == threads * opsPerThread","guarded.read({ m -> m.get(\"b\") }) == threads * opsPerThread"]},
+
+        {"kind":"cleanup","text":"","code":["pool.shutdownNow()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    }
+  
+  ],
+  "generator":"https://github.com/renatoathaydes/spock-reports"
+}

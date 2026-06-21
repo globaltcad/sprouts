@@ -132,6 +132,21 @@ public interface SproutsFactory
     }
 
     /**
+     *  Derives the most appropriate declared {@link Class} from a non-null item, handling pitfalls such
+     *  as enum constants which are really instances of anonymous subclasses (so {@code Food.TOFU.getClass()}
+     *  is not {@code Food.class}). This is the same derivation {@link Val}/{@link Var} use when inferring a
+     *  type from an item, exposed so that {@link sprouts.Guarded} can stay consistent with them.
+     *
+     * @param item The non-null item to derive the type from.
+     * @param &lt;T&gt;  The type of the item.
+     * @return The expected declared class of the item.
+     */
+    default &lt;T&gt; Class&lt;T&gt; expectedClassFromItem( T item ) {
+<span class="fc" id="L145">        Objects.requireNonNull(item, &quot;item&quot;);</span>
+<span class="fc" id="L146">        return Util.expectedClassFromItem( item );</span>
+    }
+
+    /**
      *  Creates a non-empty {@link Maybe} copy from the supplied {@link Maybe}.
      *  The supplied {@link Maybe} must not contain a null item.
      *  So if the factory call was successful, then the {@link Maybe#isPresent()} method of the
@@ -145,8 +160,8 @@ public interface SproutsFactory
      * @param &lt;T&gt; The type of the item to be wrapped in the {@link Maybe}.
      */
     default &lt;T&gt; Maybe&lt;T&gt; maybeOf( Maybe&lt;T&gt; toBeCopied ) {
-<span class="nc" id="L148">        Objects.requireNonNull(toBeCopied);</span>
-<span class="nc" id="L149">        return valOf( toBeCopied.orElseThrowUnchecked() );</span>
+<span class="nc" id="L163">        Objects.requireNonNull(toBeCopied);</span>
+<span class="nc" id="L164">        return valOf( toBeCopied.orElseThrowUnchecked() );</span>
     }
 
     /**
@@ -162,8 +177,8 @@ public interface SproutsFactory
      *         (However, the item in the supplied {@link Maybe} can be {@code null}.)
      */
     default &lt;T extends @Nullable Object&gt; Maybe&lt;@Nullable T&gt; maybeOfNullable( Maybe&lt;T&gt; toBeCopied ) {
-<span class="nc" id="L165">        Objects.requireNonNull(toBeCopied);</span>
-<span class="nc" id="L166">        return valOfNullable( toBeCopied.type(), toBeCopied.orElseNull() );</span>
+<span class="nc" id="L180">        Objects.requireNonNull(toBeCopied);</span>
+<span class="nc" id="L181">        return valOfNullable( toBeCopied.type(), toBeCopied.orElseNull() );</span>
     }
 
     /**
@@ -1564,12 +1579,12 @@ public interface SproutsFactory
      */
     @SuppressWarnings(&quot;unchecked&quot;)
     default &lt;T&gt; Tuple&lt;T&gt; tupleOf( Maybe&lt;T&gt; first, Maybe&lt;T&gt;... rest )  {
-<span class="nc" id="L1567">        T[] items = (T[]) new Object[rest.length + 1];</span>
-<span class="nc" id="L1568">        items[0] = first.orElseNull();</span>
-<span class="nc bnc" id="L1569" title="All 2 branches missed.">        for (int i = 0; i &lt; rest.length; i++) {</span>
-<span class="nc" id="L1570">            items[i + 1] = rest[i].orElseNull();</span>
+<span class="nc" id="L1582">        T[] items = (T[]) new Object[rest.length + 1];</span>
+<span class="nc" id="L1583">        items[0] = first.orElseNull();</span>
+<span class="nc bnc" id="L1584" title="All 2 branches missed.">        for (int i = 0; i &lt; rest.length; i++) {</span>
+<span class="nc" id="L1585">            items[i + 1] = rest[i].orElseNull();</span>
         }
-<span class="nc" id="L1572">        return tupleOf(Util.expectedClassFromItem(first.orElseThrowUnchecked()), items);</span>
+<span class="nc" id="L1587">        return tupleOf(Util.expectedClassFromItem(first.orElseThrowUnchecked()), items);</span>
     }
 
     /**
@@ -1691,11 +1706,11 @@ public interface SproutsFactory
      */
     @SuppressWarnings(&quot;unchecked&quot;)
     default &lt;T&gt; Tuple&lt;@Nullable T&gt; tupleOfNullable( Class&lt;T&gt; type, Maybe&lt;@Nullable T&gt;... maybes ) {
-<span class="nc" id="L1694">        T[] items = (T[]) new Object[maybes.length];</span>
-<span class="nc bnc" id="L1695" title="All 2 branches missed.">        for (int i = 0; i &lt; maybes.length; i++) {</span>
-<span class="nc" id="L1696">            items[i] = maybes[i].orElseNull();</span>
+<span class="nc" id="L1709">        T[] items = (T[]) new Object[maybes.length];</span>
+<span class="nc bnc" id="L1710" title="All 2 branches missed.">        for (int i = 0; i &lt; maybes.length; i++) {</span>
+<span class="nc" id="L1711">            items[i] = maybes[i].orElseNull();</span>
         }
-<span class="nc" id="L1698">        return tupleOfNullable(type, items);</span>
+<span class="nc" id="L1713">        return tupleOfNullable(type, items);</span>
     }
 
     /**
@@ -1735,12 +1750,12 @@ public interface SproutsFactory
      */
     @SuppressWarnings(&quot;unchecked&quot;)
     default &lt;T&gt; Tuple&lt;@Nullable T&gt; tupleOfNullable( Maybe&lt;@Nullable T&gt; first, Maybe&lt;@Nullable T&gt;... rest ) {
-<span class="nc" id="L1738">        T[] items = (T[]) new Object[rest.length + 1];</span>
-<span class="nc" id="L1739">        items[0] = first.orElseNull();</span>
-<span class="nc bnc" id="L1740" title="All 2 branches missed.">        for (int i = 0; i &lt; rest.length; i++) {</span>
-<span class="nc" id="L1741">            items[i + 1] = rest[i].orElseNull();</span>
+<span class="nc" id="L1753">        T[] items = (T[]) new Object[rest.length + 1];</span>
+<span class="nc" id="L1754">        items[0] = first.orElseNull();</span>
+<span class="nc bnc" id="L1755" title="All 2 branches missed.">        for (int i = 0; i &lt; rest.length; i++) {</span>
+<span class="nc" id="L1756">            items[i + 1] = rest[i].orElseNull();</span>
         }
-<span class="nc" id="L1743">        return tupleOfNullable(first.type(), items);</span>
+<span class="nc" id="L1758">        return tupleOfNullable(first.type(), items);</span>
     }
 
     /**
@@ -1916,7 +1931,7 @@ public interface SproutsFactory
      *  @return {@code true} if the given id is valid according to the current Sprouts implementation, {@code false} otherwise.
      */
     default boolean isValidPropertyId(String id) {
-<span class="nc bnc" id="L1919" title="All 4 branches missed.">        return id != null &amp;&amp; idPattern().matcher(id).matches();</span>
+<span class="nc bnc" id="L1934" title="All 4 branches missed.">        return id != null &amp;&amp; idPattern().matcher(id).matches();</span>
     }
 
     /**

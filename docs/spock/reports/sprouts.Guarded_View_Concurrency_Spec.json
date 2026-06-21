@@ -1,0 +1,263 @@
+{
+  "className":"sprouts.Guarded_View_Concurrency_Spec",
+  "title":"Guarded Views Under Concurrency",
+  "narrative":"`Guarded.viewOn(..)` sits exactly where two hard things meet: multi-threaded\n    mutation and single-threaded reactivity. This specification stress-tests that\n    intersection. It hammers a `Guarded` from many threads while a view observes it,\n    and asserts the two non-negotiable guarantees:\n\n    * **Convergence** — no matter the interleaving, the view always ends up equal to the\n      last value written (latest-wins conflation may *skip* intermediate values, but it\n      must never *lose the final one*).\n    * **Robustness** — a misbehaving or dead view (a shut-down executor, a throwing\n      listener) never corrupts the shared state or the other views.\n\n    These tests are deliberately adversarial; they are the safety net behind the\n    friendlier guide in `Guarded_View_Spec`.",
+  "subjects":["sprouts.Guarded","sprouts.Viewable"],
+  "statistics":{
+    "runs":"11",
+    "successRate":"100.0%",
+    "failures":"0",
+    "errors":"0",
+    "skipped":"0",
+    "duration":"?"
+  },
+  "headers":[],"tags":{},"see":[],
+  "features":[ 
+    {
+      "id":"Under a storm of concurrent writers, the view converges to the final value.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Many threads write to the same `Guarded`; a final, known value is written last. However the\n            updates interleave, the view must settle on exactly that final value.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A guarded integer viewed on a single-threaded executor.","code":["var guarded = Guarded.of(0)","var executor = Executors.newSingleThreadExecutor()","var view = guarded.viewOn(executor)"]},
+
+        {"kind":"and","text":"A pool of writer threads.","code":["int threads = 12","int writesPerThread = 2_000","var pool = Executors.newFixedThreadPool(threads)","var done = new CountDownLatch(threads)"]},
+
+        {"kind":"when","text":"Every thread writes a stream of values...","code":["(1..threads).each { t ->","    pool.submit({","        (1..writesPerThread).each { guarded.set(it) }","        done.countDown()","    })","}","assert done.await(20, TimeUnit.SECONDS)"]},
+
+        {"kind":"and","text":"...and a definitive final value is written after the storm settles.","code":["guarded.set(987654)"]},
+
+        {"kind":"then","text":"The view converges to the final value.","code":["Wait.until({ view.orElseThrow() == 987654 }, 10_000)"]},
+
+        {"kind":"cleanup","text":"","code":["pool.shutdownNow()","executor.shutdownNow()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Concurrent functional updates are never lost, and the view mirrors the exact final count.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            This combines `Guarded`'s mutual-exclusion guarantee with the view's convergence guarantee:\n            many threads each increment a shared counter many times. The final guarded count must be\n            exact (no lost updates), and the view must mirror that exact number.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A guarded counter and its view.","code":["var counter = Guarded.of(0)","var executor = Executors.newSingleThreadExecutor()","var view = counter.viewOn(executor)"]},
+
+        {"kind":"and","text":"A pool of incrementing threads.","code":["int threads = 8","int incrementsPerThread = 5_000","var pool = Executors.newFixedThreadPool(threads)","var done = new CountDownLatch(threads)"]},
+
+        {"kind":"when","text":"Every thread increments through updateAndGet.","code":["(1..threads).each {","    pool.submit({","        incrementsPerThread.times { counter.updateAndGet({ n -> n + 1 }) }","        done.countDown()","    })","}","assert done.await(20, TimeUnit.SECONDS)"]},
+
+        {"kind":"then","text":"Not one increment was lost.","code":["counter.get() == threads * incrementsPerThread"]},
+
+        {"kind":"and","text":"The view mirrors the exact final count.","code":["Wait.until({ view.orElseThrow() == threads * incrementsPerThread }, 10_000)"]},
+
+        {"kind":"cleanup","text":"","code":["pool.shutdownNow()","executor.shutdownNow()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"When writes outpace a slow consumer, deliveries are coalesced yet still converge.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Conflation must protect a slow consumer: a flood of writes against a deliberately slow\n            listener must collapse into far fewer deliveries than writes, while still landing on the\n            final value. We make each delivery sleep, fire thousands of rapid writes, and check both.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A guarded value with a deliberately slow listener.","code":["var guarded = Guarded.of(0)","var executor = Executors.newSingleThreadExecutor()","var view = guarded.viewOn(executor)","var deliveries = new AtomicInteger(0)","view.onChange(From.ALL, { delegate ->","    deliveries.incrementAndGet()","    Thread.sleep(2) // a slow consumer","})"]},
+
+        {"kind":"when","text":"We fire a flood of distinct writes faster than the consumer can keep up.","code":["int writes = 3_000","(1..writes).each { guarded.set(it) }"]},
+
+        {"kind":"then","text":"The view still converges to the final value...","code":["Wait.until({ view.orElseThrow() == writes }, 15_000)"]},
+
+        {"kind":"and","text":"...but far fewer deliveries happened than writes — proving they coalesced.","code":["deliveries.get() >= 1","deliveries.get() < writes"]},
+
+        {"kind":"cleanup","text":"","code":["executor.shutdownNow()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A view created in the middle of a write storm still converges to the final value.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            There must be no startup race: a view registered while writes are already in flight must not\n            miss the final value. We start writing, attach the view mid-flight, stop, and check it lands.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A guarded counter and a background writer that never repeats a value.","code":["var guarded = Guarded.of(0)","var executor = Executors.newSingleThreadExecutor()","var stop = new AtomicBoolean(false)","var lastWritten = new AtomicInteger(0)","var writer = new Thread({","    while (!stop.get()) {","        guarded.set(lastWritten.incrementAndGet())","    }","})"]},
+
+        {"kind":"when","text":"Writing is well under way before we attach the view...","code":["writer.start()","assert Wait.until({ lastWritten.get() > 500 }, 5_000)","var view = guarded.viewOn(executor)"]},
+
+        {"kind":"and","text":"...we let it churn a little longer, then stop the writer.","code":["assert Wait.until({ lastWritten.get() > 2_000 }, 5_000)","stop.set(true)","writer.join()"]},
+
+        {"kind":"then","text":"The view converges to the final written value.","code":["int finalValue = guarded.get()","Wait.until({ view.orElseThrow() == finalValue }, 10_000)"]},
+
+        {"kind":"cleanup","text":"","code":["executor.shutdownNow()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Several views on different threads each converge under concurrent writes.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Fan-out under load: three independent views, each on its own executor thread, must all\n            converge to the same final value while many threads write concurrently.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"One guarded value and three independent views.","code":["var guarded = Guarded.of(0)","var execA = Executors.newSingleThreadExecutor()","var execB = Executors.newSingleThreadExecutor()","var execC = Executors.newSingleThreadExecutor()","var viewA = guarded.viewOn(execA)","var viewB = guarded.viewOn(execB)","var viewC = guarded.viewOn(execC)"]},
+
+        {"kind":"and","text":"A pool of writers.","code":["int threads = 8","var pool = Executors.newFixedThreadPool(threads)","var done = new CountDownLatch(threads)"]},
+
+        {"kind":"when","text":"Writers churn, then a final value is set.","code":["(1..threads).each {","    pool.submit({","        (1..1_000).each { guarded.set(it) }","        done.countDown()","    })","}","assert done.await(20, TimeUnit.SECONDS)","guarded.set(424242)"]},
+
+        {"kind":"then","text":"All three views converge to the final value.","code":["Wait.until({","    viewA.orElseThrow() == 424242 &&","    viewB.orElseThrow() == 424242 &&","    viewC.orElseThrow() == 424242","}, 10_000)"]},
+
+        {"kind":"cleanup","text":"","code":["pool.shutdownNow()","execA.shutdownNow(); execB.shutdownNow(); execC.shutdownNow()","execA.shutdownNow(); execB.shutdownNow(); execC.shutdownNow()","execA.shutdownNow(); execB.shutdownNow(); execC.shutdownNow()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A view whose executor has been shut down is pruned without harming the source or other views.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            If a view's executor is shut down, its delivery is rejected. That dead view must be quietly\n            dropped — never propagating the rejection back to the writer — while the source and any other\n            views keep working normally.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A guarded value with one view on a dead executor and one on a live executor.","code":["var guarded = Guarded.of(\"init\")","var deadExecutor = Executors.newSingleThreadExecutor()","var liveExecutor = Executors.newSingleThreadExecutor()","var deadView = guarded.viewOn(deadExecutor) // kept referenced so we exercise rejection, not GC","var liveView = guarded.viewOn(liveExecutor)"]},
+
+        {"kind":"and","text":"We shut the first executor down.","code":["deadExecutor.shutdownNow()"]},
+
+        {"kind":"when","text":"We mutate the guarded value.","code":["guarded.set(\"changed\")"]},
+
+        {"kind":"then","text":"The writer is unaffected and the live view still updates.","code":["guarded.get() == \"changed\"","Wait.until({ liveView.orElseThrow() == \"changed\" }, 5_000)"]},
+
+        {"kind":"when","text":"We keep mutating.","code":["guarded.set(\"again\")"]},
+
+        {"kind":"then","text":"Everything keeps working; the dead view simply no longer participates.","code":["Wait.until({ liveView.orElseThrow() == \"again\" }, 5_000)","deadView != null // still referencable, just inert"]},
+
+        {"kind":"cleanup","text":"","code":["liveExecutor.shutdownNow()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A listener that throws on one view does not corrupt the source or other views.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A listener throwing on the executor thread is the view's own problem; it must not propagate\n            to the writer (which runs on a different thread) nor stop a sibling view from updating.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A guarded counter with a throwing view and a healthy view.","code":["var guarded = Guarded.of(0)","var badExecutor = Executors.newSingleThreadExecutor()","var goodExecutor = Executors.newSingleThreadExecutor()","var badView = guarded.viewOn(badExecutor)","var goodView = guarded.viewOn(goodExecutor)","badView.onChange(From.ALL, { throw new RuntimeException(\"boom from a listener\") })"]},
+
+        {"kind":"when","text":"We mutate the guarded value several times.","code":["(1..5).each { guarded.set(it) }"]},
+
+        {"kind":"then","text":"The writer side is intact...","code":["guarded.get() == 5"]},
+
+        {"kind":"and","text":"...and the healthy view still converges to the final value.","code":["Wait.until({ goodView.orElseThrow() == 5 }, 5_000)"]},
+
+        {"kind":"cleanup","text":"","code":["badExecutor.shutdownNow()","goodExecutor.shutdownNow()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Every kind of mutating operation notifies the view.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The view must be signalled by *all* mutators, not just `set`. We drive the guarded value\n            through one of each — set, getAndSet, compareAndSet, the update/accumulate family, updateIf\n            and tryUpdate — and confirm the view ends up on the final value.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A guarded counter and its view.","code":["var guarded = Guarded.of(0)","var executor = Executors.newSingleThreadExecutor()","var view = guarded.viewOn(executor)"]},
+
+        {"kind":"when","text":"We exercise every mutator, ending on a known value.","code":["guarded.set(1)","guarded.getAndSet(2)","guarded.compareAndSet(2, 3)","guarded.updateAndGet({ it + 1 })            // 4","guarded.getAndUpdate({ it + 1 })            // 5","guarded.accumulateAndGet(5, { a, b -> a + b })  // 10","guarded.getAndAccumulate(5, { a, b -> a + b })  // 15","guarded.updateIf({ it > 0 }, { it + 5 })    // 20","guarded.tryUpdate({ it + 5 }, Duration.ofSeconds(2)) // 25"]},
+
+        {"kind":"then","text":"The guarded value is exactly as expected...","code":["guarded.get() == 25"]},
+
+        {"kind":"and","text":"...and the view converges to it, proving every mutator signalled.","code":["Wait.until({ view.orElseThrow() == 25 }, 5_000)"]},
+
+        {"kind":"cleanup","text":"","code":["executor.shutdownNow()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Concurrent reads and writes alongside a view neither deadlock nor lose the final value.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A liveness check: readers (`get`/`read`) and writers pound the same `Guarded` while a view\n            observes, all at once. The whole thing must complete without deadlock, and the view must\n            still converge to the final value.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A guarded counter, a view, and mixed reader/writer pools.","code":["var guarded = Guarded.of(0)","var executor = Executors.newSingleThreadExecutor()","var view = guarded.viewOn(executor)","var pool = Executors.newFixedThreadPool(12)","var done = new CountDownLatch(12)","var readsObserved = new AtomicReference<Integer>(0)"]},
+
+        {"kind":"when","text":"Six writers and six readers run concurrently.","code":["(1..6).each {","    pool.submit({","        (1..3_000).each { guarded.updateAndGet({ n -> n + 1 }) }","        done.countDown()","    })","}","(1..6).each {","    pool.submit({","        (1..3_000).each { readsObserved.set(guarded.read({ n -> n })) }","        done.countDown()","    })","}","var finished = done.await(25, TimeUnit.SECONDS)"]},
+
+        {"kind":"then","text":"Everything finished (no deadlock) with the exact final count, mirrored by the view.","code":["finished","guarded.get() == 6 * 3_000","Wait.until({ view.orElseThrow() == 6 * 3_000 }, 10_000)"]},
+
+        {"kind":"cleanup","text":"","code":["pool.shutdownNow()","executor.shutdownNow()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Regression: a coalesced delivery publishes the value current AT DELIVERY TIME, not the one captured when it was scheduled.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            This pins down the exact reason `deliver()` re-reads `source.get()` instead of carrying a\n            value captured at write time.\n\n            Imagine an alternative \"carry the value\" design, where the signal that schedules a delivery\n            also remembers which value to publish. Because notifications run *after* the lock is\n            released, a writer thread can be preempted between its `unlock()` and its notification. So\n            the order in which captured values reach a view need not match the order in which they were\n            committed — and a stale captured value can win the race, leaving the view permanently out of\n            sync with the container. The current design avoids this by reading the authoritative current\n            value (`source.get()`) at delivery time.\n\n            We reproduce the essence deterministically with a hand-pumped executor (no real threads, so\n            no flakiness): schedule a delivery while the value is \"v1\", then commit \"v2\" — which conflates\n            into the already-scheduled delivery — then run the delivery. It MUST publish \"v2\", the value\n            current at delivery time, and must never publish the captured \"v1\". A regression to carrying\n            the scheduled-time value would surface here as \"v1\".\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A guarded value and a view on a hand-pumped (manually drained) executor.","code":["var guarded = Guarded.of(\"v0\")","var executor = new ManualExecutor()","var view = guarded.viewOn(executor)"]},
+
+        {"kind":"and","text":"A listener recording every value actually delivered to the view.","code":["var delivered = []","view.onChange(From.ALL, { d -> delivered.add(d.currentValue().orElseThrow()) })"]},
+
+        {"kind":"when","text":"We schedule a delivery at \"v1\", then commit \"v2\" before that delivery runs.","code":["guarded.set(\"v1\") // schedules exactly one delivery","guarded.set(\"v2\") // conflated into the same pending delivery; \"v2\" is now the current value"]},
+
+        {"kind":"and","text":"Only now do we let the single pending delivery run.","code":["int tasksRun = executor.runAll()"]},
+
+        {"kind":"then","text":"Exactly one delivery ran (the burst was conflated)...","code":["tasksRun == 1"]},
+
+        {"kind":"and","text":"...and it published the value current at delivery time, \"v2\" — never the stale \"v1\".","code":["delivered == [\"v2\"]","view.orElseThrow() == \"v2\""]},
+
+        {"kind":"and","text":"The view equals what the container actually holds.","code":["view.orElseThrow() == guarded.get()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Regression: a view is pruned even when shutdownNow discards an already-accepted delivery.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Edge case (caught in review): `shutdownNow()` can discard a delivery task that was already\n            accepted into the executor's queue, so `deliver()` never runs and never clears the internal\n            conflation flag. If we relied solely on that flag, it would stay armed forever — the view\n            could neither re-schedule nor be pruned, lingering as a dead, undeliverable entry that also\n            pins its executor. We detect a shut-down executor directly, so the next mutation prunes the\n            view.\n\n            We prove the pruning without exposing internals: a pruned view no longer references its\n            executor, so once we drop our own reference the executor becomes garbage-collectable. (A\n            regression would keep the view — and thus the executor — alive, and this would time out.)\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A guarded value viewed on a single-threaded executor we keep only a weak reference to.","code":["var guarded = Guarded.of(\"init\")","var executor = Executors.newSingleThreadExecutor()","var view = guarded.viewOn(executor)","var execRef = new WeakReference(executor)","var gate = new CountDownLatch(1)"]},
+
+        {"kind":"and","text":"We occupy the executor thread so the next delivery queues behind a blocking task.","code":["executor.execute({ try { gate.await() } catch (InterruptedException ignored) {} })","guarded.set(\"queued\") // schedules a delivery behind the blocker; the conflation flag is now armed"]},
+
+        {"kind":"when","text":"We shut the executor down hard — dropping the queued delivery — and release our reference.","code":["executor.shutdownNow()","executor.awaitTermination(5, TimeUnit.SECONDS)","executor = null"]},
+
+        {"kind":"and","text":"A further mutation occurs, which must notice the dead executor and prune the view.","code":["guarded.set(\"after\")"]},
+
+        {"kind":"then","text":"The view is still held by us (so pruning was via the shutdown check, not GC)...","code":["view != null"]},
+
+        {"kind":"and","text":"...and, being pruned, it no longer pins the executor, which becomes collectable.","code":["Wait.until({ System.gc(); execRef.get() == null }, 10_000)"]},
+
+        {"kind":"cleanup","text":"","code":["gate.countDown()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    }
+  
+  ],
+  "generator":"https://github.com/renatoathaydes/spock-reports"
+}
