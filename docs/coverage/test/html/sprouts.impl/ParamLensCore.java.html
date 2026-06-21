@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ParamLensCore.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sprouts</a> &gt; <a href="index.source.html" class="el_package">sprouts.impl</a> &gt; <span class="el_source">ParamLensCore.java</span></div><h1>ParamLensCore.java</h1><pre class="source lang-java linenums">package sprouts.impl;
+
+import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import sprouts.Channel;
+import sprouts.Val;
+import sprouts.Var;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.function.BiFunction;
+
+/**
+ * A {@link LensCore} backed by a mutable {@link Var} source and a read-only
+ * {@link Val} parameter. The parameter shapes the projection but is never
+ * written back to; writes go to the source alone.
+ * &lt;p&gt;
+ * This is the optics-theoretic &lt;i&gt;parameterized lens&lt;/i&gt; (also called an
+ * &lt;i&gt;indexed lens&lt;/i&gt; or &lt;i&gt;dependent lens&lt;/i&gt;): the projection function
+ * depends on an external read-only value.
+ *
+ * @param &lt;P&gt; The type of the read-only parameter.
+ * @param &lt;A&gt; The item type of the mutable source property.
+ * @param &lt;T&gt; The item type of this lens property (the projected value).
+ */
+final class ParamLensCore&lt;P extends @Nullable Object, A extends @Nullable Object, T extends @Nullable Object&gt;
+        implements LensCore&lt;T&gt;
+{
+<span class="fc" id="L29">    private static final Logger log = org.slf4j.LoggerFactory.getLogger(ParamLensCore.class);</span>
+
+    private final Val&lt;P&gt;              _parameter;
+    private final Var&lt;A&gt;              _source;
+    private final BiFunction&lt;P, A, T&gt; _getter;
+    private final BiFunction&lt;T, P, A&gt; _setter;
+
+    ParamLensCore(
+            Val&lt;P&gt;              parameter,
+            Var&lt;A&gt;              source,
+            BiFunction&lt;P, A, T&gt; getter,
+            BiFunction&lt;T, P, A&gt; setter
+<span class="fc" id="L41">    ) {</span>
+<span class="fc" id="L42">        _parameter = parameter;</span>
+<span class="fc" id="L43">        _source    = source;</span>
+<span class="fc" id="L44">        _getter    = getter;</span>
+<span class="fc" id="L45">        _setter    = setter;</span>
+<span class="fc" id="L46">    }</span>
+
+    @Override
+    public @Nullable T fetchFromSources(@Nullable T lastKnownItem) {
+<span class="fc" id="L50">        T fetchedValue = lastKnownItem;</span>
+        try {
+<span class="fc" id="L52">            fetchedValue = _getter.apply(</span>
+<span class="fc" id="L53">                    Util.fakeNonNull(_parameter.orElseNull()),</span>
+<span class="fc" id="L54">                    Util.fakeNonNull(_source.orElseNull())</span>
+            );
+<span class="fc" id="L56">        } catch ( Exception e ) {</span>
+<span class="fc" id="L57">            Util.sneakyThrowExceptionIfFatal(e);</span>
+<span class="fc" id="L58">            Util._logError(log,</span>
+                    &quot;Failed to fetch item for parameterized property lens from source &quot; +
+                    &quot;property {} (with item type '{}') and parameter {} (with item type '{}') &quot; +
+                    &quot;using the current getter function.&quot;,
+<span class="pc bpc" id="L62" title="1 of 2 branches missed.">                    _source.id().isEmpty()    ? &quot;?&quot; : &quot;'&quot; + _source.id()    + &quot;'&quot;,</span>
+<span class="fc" id="L63">                    _source.type(),</span>
+<span class="pc bpc" id="L64" title="1 of 2 branches missed.">                    _parameter.id().isEmpty() ? &quot;?&quot; : &quot;'&quot; + _parameter.id() + &quot;'&quot;,</span>
+<span class="fc" id="L65">                    _parameter.type(),</span>
+                    e
+            );
+<span class="fc" id="L68">        }</span>
+<span class="fc" id="L69">        return fetchedValue;</span>
+    }
+
+    @Override
+    public void writeToSources(Channel channel, @Nullable T newItem) {
+        A newSourceItem;
+        try {
+<span class="fc" id="L76">            newSourceItem = _setter.apply(</span>
+<span class="fc" id="L77">                    Util.fakeNonNull(newItem),</span>
+<span class="fc" id="L78">                    Util.fakeNonNull(_parameter.orElseNull())</span>
+            );
+<span class="fc" id="L80">        } catch ( Exception e ) {</span>
+<span class="fc" id="L81">            Util.sneakyThrowExceptionIfFatal(e);</span>
+<span class="fc" id="L82">            Util._logError(log,</span>
+                    &quot;Parameterized property lens failed to invert the new projected value &quot; +
+                    &quot;back into a source value using the setter function.&quot;, e
+            );
+<span class="fc" id="L86">            return;</span>
+<span class="fc" id="L87">        }</span>
+        try {
+<span class="fc" id="L89">            _source.set(channel, newSourceItem);</span>
+<span class="nc" id="L90">        } catch ( Exception e ) {</span>
+<span class="nc" id="L91">            Util.sneakyThrowExceptionIfFatal(e);</span>
+<span class="nc" id="L92">            Util._logError(log,</span>
+                    &quot;Parameterized property lens failed to write the inverted value into &quot; +
+                    &quot;the source property {} (with item type '{}').&quot;,
+<span class="nc bnc" id="L95" title="All 2 branches missed.">                    _source.id().isEmpty() ? &quot;?&quot; : &quot;'&quot; + _source.id() + &quot;'&quot;,</span>
+<span class="nc" id="L96">                    _source.type(), e</span>
+            );
+<span class="fc" id="L98">        }</span>
+<span class="fc" id="L99">    }</span>
+
+    @Override
+    public Iterable&lt;? extends Val&lt;?&gt;&gt; sources() {
+<span class="fc" id="L103">        return Arrays.asList(_source, _parameter);</span>
+    }
+
+    @Override
+    public boolean shouldSuppressSourceCallback() {
+<span class="fc" id="L108">        return false;</span>
+    }
+
+    @Override
+    public String coreName() {
+<span class="fc" id="L113">        return &quot;ParamLens&quot;;</span>
+    }
+
+    @Override
+    public LensCore&lt;T&gt; newInstance() {
+<span class="fc" id="L118">        return new ParamLensCore&lt;&gt;(_parameter, _source, _getter, _setter);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

@@ -1,0 +1,624 @@
+{
+  "className":"sprouts.Property_Parameterized_Lens_Spec",
+  "title":"Parameterized Property Projection",
+  "narrative":"A **parameterized projection lens** is a bidirectional mapping between a mutable\n    source property of type `A` and a target type `B`, where the projection itself is\n    shaped by a **read-only `Val` parameter** of type `P`. In the optics literature this\n    is also called an *indexed lens* or a *dependent lens*: the \"view\" you get depends\n    on an extra value that travels alongside the lens.\n\n    Think of the parameter as the *perspective* or *context* through which the source\n    is observed. A temperature in Celsius, viewed through the parameter \"Fahrenheit\",\n    becomes a Fahrenheit number. The same temperature, viewed through \"Kelvin\", becomes\n    something else. Writes through the projected view are inverted back to the source,\n    but the parameter itself is **never modified** — it is strictly an input.\n\n    This is different from the dual-source projection (`Var.of(first, second, getter, setter)`)\n    where both sources are mutable and both receive write-back. A parameterized projection\n    has one mutable source and one read-only parameter; writes flow to the source only.\n\n    There are four factory variants for creating a parameterized projection:\n\n    1. `source.projectTo(parameter, getter, setter)` — Non-nullable, type inferred\n    2. `source.projectTo(Class, parameter, getter, setter)` — Non-nullable, explicit type\n    3. `source.projectTo(nullObject, parameter, getter, setter)` — Non-nullable with fallback\n    4. `source.projectToNullable(Class, parameter, getter, setter)` — Nullable\n\n    This specification illustrates the feature through a parade of creative little\n    scenarios — math, geography, ethics, animals — and verifies the full contract:\n    forward and backward propagation, parameter-driven re-projection, identity flags,\n    string representation, listener lifecycle, memory safety, and error handling.",
+  "subjects":["sprouts.impl.PropertyLens","sprouts.Var","sprouts.Val"],
+  "statistics":{
+    "runs":"28",
+    "successRate":"100.0%",
+    "failures":"0",
+    "errors":"0",
+    "skipped":"0",
+    "duration":"?"
+  },
+  "headers":[],"tags":{},"see":[],
+  "features":[ 
+    {
+      "id":"A parameterized projection can round a number to any number of decimal places chosen by a parameter.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A classical parameterized mapping in mathematics is **rounding**. The same raw number\n            looks different depending on how many decimal places you ask for. Here the source\n            holds the raw number, the parameter decides the precision, and the lens serves up\n            a rounded view.\n\n            When you write through the rounded view, the source is replaced by the rounded value\n            (at the same precision) — a perfectly lawful round-trip for a fixed parameter.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A source property holding an unrounded number, and a parameter for the precision.","code":["var raw       = Var.of(3.14159265358979d)","var precision = Var.of(2)"]},
+
+        {"kind":"and","text":"A parameterized projection that rounds the raw number using the precision parameter.","code":["var rounded = raw.projectTo(","    precision,","    (Integer digits, Double x) -> {","        double scale = Math.pow(10, digits)","        return Math.round(x * scale) / scale","    },","    (Double view, Integer digits) -> view",")"]},
+
+        {"kind":"expect","text":"Initially the raw number is projected at two decimal places.","code":["rounded.get() == 3.14d"]},
+
+        {"kind":"when","text":"We change the parameter to show more decimal places.","code":["precision.set(4)"]},
+
+        {"kind":"then","text":"The view updates even though the source has not changed.","code":["rounded.get() == 3.1416d"]},
+
+        {"kind":"when","text":"We write a coarsely-rounded value back through the lens.","code":["rounded.set(2.72d)"]},
+
+        {"kind":"then","text":"The source is replaced with the rounded value, the parameter is untouched.","code":["raw.get() == 2.72d","precision.get() == 4"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"When the parameter changes, the projected value is recomputed and observers are notified.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The whole point of a parameterized projection is that changes to the parameter\n            re-shape the view. Observers subscribed to the lens must see these re-projections\n            as ordinary change events.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A source number and a parameter controlling how we bin it.","code":["var n       = Var.of(17)","var divisor = Var.of(5)"]},
+
+        {"kind":"and","text":"A projection computing \"n mod divisor\".","code":["var remainder = n.projectTo(","    Integer.class, divisor,","    (Integer d, Integer x) -> x % d,","    (Integer r, Integer d) -> r    // writing back just sets the source to `r`",")"]},
+
+        {"kind":"and","text":"A trace of every projected value we see.","code":["var trace = []","Viewable.cast(remainder).onChange(From.ALL, it -> trace << it.currentValue().orElseNull())"]},
+
+        {"kind":"expect","text":"The initial remainder is correct.","code":["remainder.get() == 2"]},
+
+        {"kind":"when","text":"We change the divisor (the parameter).","code":["divisor.set(4)"]},
+
+        {"kind":"then","text":"The remainder is re-projected and an event is fired.","code":["remainder.get() == 1","trace == [1]"]},
+
+        {"kind":"when","text":"We change the source number.","code":["n.set(10)"]},
+
+        {"kind":"then","text":"The remainder updates again because the source changed.","code":["remainder.get() == 2","trace == [1, 2]"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A parameterized lens can convert a Euro amount into a chosen European currency.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A Eurozone shop holds prices in euros but wants to display them in the visitor's\n            preferred currency. The parameter carries the chosen currency (and its rate),\n            the source holds the canonical Euro amount, and the lens produces the converted\n            amount. Changing the currency re-projects the price instantly; entering a price\n            in the foreign currency is inverted back into euros.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A Euro price and a target currency parameter.","code":["var euroPrice     = Var.of(100.00d)","var targetCurrency = Var.of(Currency.EUR)"]},
+
+        {"kind":"and","text":"A parameterized lens converting the price into the target currency.","code":["var displayed = euroPrice.projectTo(","    targetCurrency,","    (Currency c, Double eur) -> eur * RATE_PER_EURO[c],","    (Double displayAmount, Currency c) -> displayAmount / RATE_PER_EURO[c]",")"]},
+
+        {"kind":"expect","text":"In euros the displayed price equals the source.","code":["displayed.get() == 100.00d"]},
+
+        {"kind":"when","text":"We switch the display currency to Pounds.","code":["targetCurrency.set(Currency.GBP)"]},
+
+        {"kind":"then","text":"The displayed amount is converted automatically, the source is untouched.","code":["displayed.get() == 85.0d","euroPrice.get() == 100.00d"]},
+
+        {"kind":"when","text":"A user enters 430 Polish Złoty as the new price.","code":["targetCurrency.set(Currency.PLN)","displayed.set(430.0d)"]},
+
+        {"kind":"then","text":"The source (in euros) is computed by inverting the current rate.","code":["euroPrice.get() == 100.0d"]},
+
+        {"kind":"and","text":"The currency parameter itself is NEVER written to by the lens.","code":["targetCurrency.get() == Currency.PLN"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A timezone-aware clock can be expressed as a parameterized lens over a UTC time.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Stored internally as UTC, displayed in whatever offset the user selected: this\n            everyday UI pattern is, in optics terms, a parameterized lens. The source is the\n            canonical UTC time, the parameter is the chosen zone offset, and the lens yields\n            the local `LocalTime` for that offset. Writes through the lens shift the local\n            time back to UTC using the current offset.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A time stored in UTC and a selected offset (the parameter).","code":["var utc    = Var.of(LocalTime.of(12, 0))","var offset = Var.of(ZoneOffset.UTC)"]},
+
+        {"kind":"and","text":"A parameterized lens yielding the local time for the chosen offset.","code":["var local = utc.projectTo(","    LocalTime.class, offset,","    (ZoneOffset z, LocalTime t) -> t.plusSeconds(z.getTotalSeconds()),","    (LocalTime displayed, ZoneOffset z) -> displayed.minusSeconds(z.getTotalSeconds())",")"]},
+
+        {"kind":"expect","text":"At UTC the local time equals the source.","code":["local.get() == LocalTime.of(12, 0)"]},
+
+        {"kind":"when","text":"We switch to Central European Time (UTC+1).","code":["offset.set(ZoneOffset.ofHours(1))"]},
+
+        {"kind":"then","text":"The local time shifts forward one hour; the UTC source is unchanged.","code":["local.get() == LocalTime.of(13, 0)","utc.get() == LocalTime.of(12, 0)"]},
+
+        {"kind":"when","text":"We write the local time as 16:30 while the offset is still UTC+1.","code":["local.set(LocalTime.of(16, 30))"]},
+
+        {"kind":"then","text":"The UTC source shifts back by one hour.","code":["utc.get() == LocalTime.of(15, 30)","offset.get() == ZoneOffset.ofHours(1)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A parameterized projection can evaluate an act under a chosen ethical framework.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The same act — \"a trolley that saves five people but harms one\" — is judged very\n            differently depending on the moral lens you wear. A utilitarian counts net benefit;\n            a deontologist sees an impermissible act; a virtue ethicist looks at the character\n            of the agent.\n\n            Here the source is the *act* itself (as a record), and the parameter is the moral\n            framework. The lens produces a concise verdict. The inverse is fuzzy — we choose\n            a plausible act that a given framework would label with the same verdict. This is\n            illustrative rather than lawful, and is a good example of where parameterization\n            stops pretending to be a perfect isomorphism and simply becomes a useful view.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"An act, and a framework parameter.","code":["var act       = Var.of(new Act(5, 1))","var framework = Var.of(EthicalFramework.UTILITARIAN)"]},
+
+        {"kind":"and","text":"A parameterized projection rendering a verdict.","code":["var verdict = act.projectTo(","    framework,","    (EthicalFramework f, Act a) -> {","        switch (f) {","            case EthicalFramework.UTILITARIAN:","                return a.peopleHelped() > a.peopleHarmed() ? \"Permissible (net benefit)\" : \"Impermissible (net harm)\"","            case EthicalFramework.DEONTOLOGICAL:","                return a.peopleHarmed() > 0 ? \"Impermissible (harm is used as a means)\" : \"Permissible\"","            case EthicalFramework.VIRTUE:","                return \"Depends on character of the agent\"","            default: return \"Unknown\"","        }","    },","    // Inverse: given a verdict and a framework, fabricate a plausible act.","    // Writes through the lens are coarse — we pick a canonical representative.","    (String v, EthicalFramework f) -> {","        v.startsWith(\"Permissible\") ? new Act(1, 0) : new Act(0, 1)","    }",")"]},
+
+        {"kind":"expect","text":"Under utilitarianism, the act is net-positive.","code":["verdict.get() == \"Permissible (net benefit)\""]},
+
+        {"kind":"when","text":"We switch to a deontological lens.","code":["framework.set(EthicalFramework.DEONTOLOGICAL)"]},
+
+        {"kind":"then","text":"The same act becomes impermissible — the verdict is re-projected.","code":["verdict.get() == \"Impermissible (harm is used as a means)\""]},
+
+        {"kind":"when","text":"The virtue ethicist is consulted.","code":["framework.set(EthicalFramework.VIRTUE)"]},
+
+        {"kind":"then","text":"The verdict shifts to the classical non-committal answer.","code":["verdict.get() == \"Depends on character of the agent\""]},
+
+        {"kind":"when","text":"We write a \"Permissible\" verdict under deontology.","code":["framework.set(EthicalFramework.DEONTOLOGICAL)","verdict.set(\"Permissible\")"]},
+
+        {"kind":"then","text":"The inverse chooses a canonical permissible act.","code":["act.get() == new Act(1, 0)","framework.get() == EthicalFramework.DEONTOLOGICAL"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A parameterized lens can express an animal weight in species-appropriate units.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A zookeeper records the raw mass of every animal in grams, but the display on the\n            enclosure sign should use units appropriate for the species: grams for a mouse,\n            kilograms for a cat or a wolf, pounds for visitors from the US perhaps. A\n            parameterized projection cleanly separates *what the animal actually weighs* (the\n            source) from *how we choose to express it* (the parameter).\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A mass in grams and a chosen display unit.","code":["var grams = Var.of(4500.0d)   // a 4.5-kg cat","var unit  = Var.of(WeightUnit.KILOGRAMS)"]},
+
+        {"kind":"and","text":"A parameterized projection converting grams into the chosen unit.","code":["var display = grams.projectTo(","    unit,","    (WeightUnit u, Double g) -> {","        switch (u) {","            case WeightUnit.GRAMS:     return g","            case WeightUnit.KILOGRAMS: return g / 1000.0d","            case WeightUnit.POUNDS:    return g / 453.59237d","            default:                   return g","        }","    },","    (Double v, WeightUnit u) -> {","        switch (u) {","            case WeightUnit.GRAMS:     return v","            case WeightUnit.KILOGRAMS: return v * 1000.0d","            case WeightUnit.POUNDS:    return v * 453.59237d","            default:                   return v","        }","    }",")"]},
+
+        {"kind":"expect","text":"The cats weight is shown in kilograms.","code":["display.get() == 4.5d"]},
+
+        {"kind":"when","text":"We switch to grams for a mouse-sized creature on another screen.","code":["unit.set(WeightUnit.GRAMS)"]},
+
+        {"kind":"then","text":"The same mass is now shown in grams; the source was never written.","code":["display.get() == 4500.0d","grams.get() == 4500.0d"]},
+
+        {"kind":"when","text":"A visitor types 10 pounds as the new weight.","code":["unit.set(WeightUnit.POUNDS)","display.set(10.0d)"]},
+
+        {"kind":"then","text":"The source stores the equivalent mass in grams, the unit is untouched.","code":["Math.abs(grams.get() - 4535.9237d) < 1e-6","unit.get() == WeightUnit.POUNDS"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The explicit-type variant of projectTo enforces the declared class.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            When the projected type is polymorphic (interface, abstract class) the inferred\n            type would be the concrete (sub)class of the first computed value, which is a trap\n            for later subclasses. The explicit-type overload fixes the declared type up front.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A numeric source and a parameter.","code":["var n      = Var.of(42)","var offset = Var.of(10)"]},
+
+        {"kind":"and","text":"A parameterized projection with an explicit Number type.","code":["Var<Number> projected = n.projectTo(","    Number.class, offset,","    (Integer o, Integer x) -> (Number) (x + o),","    (Number v, Integer o) -> (Integer) (v.intValue() - o)",")"]},
+
+        {"kind":"expect","text":"The declared type is the polymorphic Number class.","code":["projected.type() == Number.class","projected.get() == 52"]},
+
+        {"kind":"when","text":"We write a Double through the view — subtype of Number.","code":["projected.set(Double.valueOf(7.0))"]},
+
+        {"kind":"then","text":"The source accepts the inverted result.","code":["n.get() == -3"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The fallback variant of projectTo returns a configured value when the source is null.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            When the source is nullable and might hold null, the fallback overload wraps the\n            getter so that a null source is safely mapped to a pre-configured \"null object\"\n            value. This keeps the projected property non-nullable and easy to consume.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A nullable source and a parameter controlling the greeting formality.","code":["var name = Var.ofNull(String.class)","var formal = Var.of(true)"]},
+
+        {"kind":"and","text":"A parameterized projection with a fallback greeting.","code":["var greeting = name.projectTo(","    \"Hello, dear stranger.\",","    formal,","    (Boolean f, String n) -> (f ? \"Good day, \" : \"Hey, \") + n + \"!\",","    (String g, Boolean f) -> g.replaceAll('^(Good day, |Hey, )', '').replaceAll('!\\$', '')",")"]},
+
+        {"kind":"expect","text":"When the source is null, the fallback is used.","code":["greeting.get() == \"Hello, dear stranger.\"","greeting.allowsNull() == false"]},
+
+        {"kind":"when","text":"We set the source to an actual name.","code":["name.set(\"Ada\")"]},
+
+        {"kind":"then","text":"The getter runs normally and produces the formal greeting.","code":["greeting.get() == \"Good day, Ada!\""]},
+
+        {"kind":"when","text":"We switch to informal mode.","code":["formal.set(false)"]},
+
+        {"kind":"then","text":"The projection is recomputed, the source stays the same.","code":["greeting.get() == \"Hey, Ada!\"","name.get() == \"Ada\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The nullable variant of projectToNullable allows null to flow through the view.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Sometimes a parameterized conversion is inherently partial: parsing a localized\n            number, looking up a country-specific greeting, etc. The nullable overload makes\n            the resulting property admit null, so that the getter can gracefully signal\n            \"no result\" without throwing.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A source holding a species enum and a parameter deciding whether to label it.","code":["var species = Var.of(Species.WOLF)","var labelMode = Var.of(true)"]},
+
+        {"kind":"and","text":"A nullable projection that returns a label when enabled, null otherwise.","code":["var label = species.projectToNullable(","    String.class, labelMode,","    (Boolean enabled, Species s) -> enabled ? (\"Species: \" + s.name()) : null,","    (String lbl, Boolean enabled) -> {","        if (lbl == null) return Species.MOUSE","        return Species.valueOf(lbl.replace(\"Species: \", \"\"))","    }",")"]},
+
+        {"kind":"expect","text":"Initially a label is produced.","code":["label.get() == \"Species: WOLF\"","label.allowsNull() == true"]},
+
+        {"kind":"when","text":"We disable labeling.","code":["labelMode.set(false)"]},
+
+        {"kind":"then","text":"The view yields null.","code":["label.orElseNull() == null"]},
+
+        {"kind":"when","text":"We assign a concrete label while labeling is on.","code":["labelMode.set(true)","label.set(\"Species: ELEPHANT\")"]},
+
+        {"kind":"then","text":"The source is updated to the parsed species.","code":["species.get() == Species.ELEPHANT"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A parameterized lens reports itself as mutable and a lens, not a view.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A parameterized projection is a **mutable** property — you can write through it —\n            and a **lens**, because it sits over other properties. It is not a view\n            (views are strictly read-only).\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Some trivial parameterized projection.","code":["var src  = Var.of(10)","var par  = Var.of(2)","var lens = src.projectTo(par, (Integer p, Integer x) -> x * p, (Integer v, Integer p) -> v.intdiv(p))"]},
+
+        {"kind":"expect","text":"","code":["lens.isMutable() == true","lens.isLens()    == true","lens.isView()    == false"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Nullability flags match the chosen factory variant.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var src = Var.of(1)","var par = Var.of(1)","var nonNull      = src.projectTo(par, (Integer p, Integer x) -> x + p, (Integer v, Integer p) -> v - p)","var withFallback = src.projectTo(0, par, (Integer p, Integer x) -> x + p, (Integer v, Integer p) -> v - p)","var nullable     = src.projectToNullable(Integer.class, par, (Integer p, Integer x) -> x + p, (Integer v, Integer p) -> v - p)"]},
+
+        {"kind":"expect","text":"","code":["!nonNull.allowsNull()","!withFallback.allowsNull()","nullable.allowsNull()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A parameterized lens has a \"ParamLens\" string representation carrying the type and value.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"An integer source and a parameter controlling how many times to repeat it.","code":["var n     = Var.of(3)","var count = Var.of(4)"]},
+
+        {"kind":"and","text":"A parameterized projection that multiplies n by count.","code":["var product = n.projectTo(","    Integer.class, count,","    (Integer c, Integer x) -> x * c,","    (Integer v, Integer c) -> v.intdiv(c)",")"]},
+
+        {"kind":"expect","text":"The string form identifies the core as a ParamLens.","code":["product.toString() == \"ParamLens<Integer>[12]\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A parameterized lens with a custom id includes the id in its string form.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"A source and a parameter, and a named parameterized lens.","code":["var base = Var.of(2.0d)","var exp  = Var.of(3)","var power = base.projectTo(","    Double.class, exp,","    (Integer e, Double b) -> Math.pow(b, e),","    (Double v, Integer e) -> Math.pow(v, 1.0 / e)",").withId(\"power\")"]},
+
+        {"kind":"expect","text":"","code":["power.id() == \"power\"","power.toString() == \"ParamLens<Double>[power=8.0]\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A nullable parameterized lens uses a \"?\" suffix on its type.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var src = Var.of(\"hello\")","var par = Var.of(true)","var lens = src.projectToNullable(","    String.class, par,","    (Boolean enabled, String s) -> enabled ? s.toUpperCase() : null,","    (String v, Boolean enabled) -> v == null ? \"\" : v.toLowerCase()",")"]},
+
+        {"kind":"expect","text":"","code":["lens.toString() == 'ParamLens<String?>[\"HELLO\"]'"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Observers on a parameterized lens are notified both by source and parameter changes.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A parameterized lens listens on both the source and the parameter, so either one\n            can cause a change event to fire on the lens. Observers see the projected value\n            after each update.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A source, a parameter, and a parameterized lens.","code":["var grams = Var.of(1000.0d)","var unit  = Var.of(WeightUnit.GRAMS)","var view = grams.projectTo(","    Double.class, unit,","    (WeightUnit u, Double g) -> u == WeightUnit.GRAMS ? g : g / 1000.0d,","    (Double v, WeightUnit u) -> u == WeightUnit.GRAMS ? v : v * 1000.0d",")"]},
+
+        {"kind":"and","text":"A trace of all projected values seen.","code":["var trace = []","Viewable.cast(view).onChange(From.ALL, it -> trace << it.currentValue().orElseNull())"]},
+
+        {"kind":"when","text":"We change the parameter.","code":["unit.set(WeightUnit.KILOGRAMS)"]},
+
+        {"kind":"then","text":"An event fires for the re-projection.","code":["trace == [1.0d]"]},
+
+        {"kind":"when","text":"We change the source.","code":["grams.set(2500.0d)"]},
+
+        {"kind":"then","text":"Another event fires.","code":["trace == [1.0d, 2.5d]"]},
+
+        {"kind":"when","text":"We write back through the lens.","code":["view.set(10.0d)"]},
+
+        {"kind":"then","text":"A further event fires with the value we set.","code":["trace == [1.0d, 2.5d, 10.0d]","grams.get() == 10000.0d"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Observers can be unsubscribed from a parameterized lens.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"A parameterized lens and a tracing observer.","code":["var src  = Var.of(5)","var par  = Var.of(2)","var lens = src.projectTo(Integer.class, par, (Integer p, Integer x) -> x + p, (Integer v, Integer p) -> v - p)","var trace = []","Observer observer = { trace << lens.get() }","Viewable.cast(lens).subscribe(observer)"]},
+
+        {"kind":"when","text":"We change the source.","code":["src.set(10)"]},
+
+        {"kind":"then","text":"","code":["trace == [12]"]},
+
+        {"kind":"when","text":"We unsubscribe and change again.","code":["Viewable.cast(lens).unsubscribe(observer)","par.set(100)"]},
+
+        {"kind":"then","text":"No further notifications reach the observer.","code":["trace == [12]"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"numberOfChangeListeners reflects registrations and unsubscribeAll clears them.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var src  = Var.of(1)","var par  = Var.of(1)","var lens = src.projectTo(par, (Integer p, Integer x) -> x + p, (Integer v, Integer p) -> v - p)"]},
+
+        {"kind":"expect","text":"","code":["lens.numberOfChangeListeners() == 0"]},
+
+        {"kind":"when","text":"","code":["Viewable.cast(lens).onChange(From.ALL, it -> {})","Viewable.cast(lens).onChange(From.ALL, it -> {})"]},
+
+        {"kind":"then","text":"","code":["lens.numberOfChangeListeners() == 2"]},
+
+        {"kind":"when","text":"","code":["lens.unsubscribeAll()"]},
+
+        {"kind":"then","text":"","code":["lens.numberOfChangeListeners() == 0"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The channel on which a write happens is preserved through the lens.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Channels (`From.VIEW_MODEL`, `From.VIEW`, `From.ALL`) are threaded through every\n            change event. A change fired on a specific channel should reach only the observers\n            that listen on that channel (plus `From.ALL`).\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A parameterized lens.","code":["var grams = Var.of(2000.0d)","var unit  = Var.of(WeightUnit.KILOGRAMS)","var view  = grams.projectTo(","    Double.class, unit,","    (WeightUnit u, Double g) -> g / 1000.0d,","    (Double v, WeightUnit u) -> v * 1000.0d",")"]},
+
+        {"kind":"and","text":"Traces per channel.","code":["var traceVM  = []","var traceV   = []","var traceAll = []","Viewable.cast(view).onChange(From.VIEW_MODEL, it -> traceVM  << it.currentValue().orElseNull())","Viewable.cast(view).onChange(From.VIEW,       it -> traceV   << it.currentValue().orElseNull())","Viewable.cast(view).onChange(From.ALL,        it -> traceAll << it.currentValue().orElseNull())"]},
+
+        {"kind":"when","text":"The source is updated on the VIEW_MODEL channel.","code":["grams.set(From.VIEW_MODEL, 3000.0d)"]},
+
+        {"kind":"then","text":"","code":["traceVM  == [3.0d]","traceV   == []","traceAll == [3.0d]"]},
+
+        {"kind":"when","text":"The projected property is written on the VIEW channel.","code":["view.set(From.VIEW, 10.0d)"]},
+
+        {"kind":"then","text":"","code":["traceVM  == [3.0d]","traceV   == [10.0d]","traceAll == [3.0d, 10.0d]"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Writes through the lens never modify the parameter, only the source.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            This is the defining property of a parameterized projection: the parameter is a\n            read-only input. No matter how we write through the lens, the parameter retains\n            exactly the value we handed in.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A parameter and a source.","code":["var rate  = Var.of(1.25d)","var euros = Var.of(80.0d)"]},
+
+        {"kind":"and","text":"A parameterized projection computing \"euros * rate\" as the view.","code":["var view = euros.projectTo(","    rate,","    (Double r, Double e) -> e * r,","    (Double v, Double r) -> v / r",")"]},
+
+        {"kind":"and","text":"An observer on the parameter that should never fire as a result of lens writes.","code":["var rateEvents = 0","Viewable.cast(rate).onChange(From.ALL, it -> rateEvents++)"]},
+
+        {"kind":"when","text":"We write through the projected view.","code":["view.set(50.0d)"]},
+
+        {"kind":"then","text":"The source is updated with the inverted value, the parameter is untouched.","code":["euros.get() == 40.0d","rate.get() == 1.25d"]},
+
+        {"kind":"and","text":"No event is fired on the parameter.","code":["rateEvents == 0"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Writing the same projected value does not fire a redundant change event.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var src  = Var.of(5)","var par  = Var.of(3)","var lens = src.projectTo(Integer.class, par, (Integer p, Integer x) -> x + p, (Integer v, Integer p) -> v - p)","var fireCount = 0","Viewable.cast(lens).onChange(From.ALL, it -> fireCount++)"]},
+
+        {"kind":"when","text":"We write the same current value through the lens.","code":["lens.set(lens.get())"]},
+
+        {"kind":"then","text":"No event is fired because the projected value did not change.","code":["fireCount == 0"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A parameterized lens returns the last known value when the getter throws.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            If the getter throws a (non-fatal) exception while recomputing the projected value,\n            the lens logs the failure and falls back to its last successfully computed value\n            rather than propagating the exception.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A source, a parameter, and a flag we can flip to make the getter fail.","code":["var src     = Var.of(10)","var par     = Var.of(2)","var shouldFail = false","var lens = src.projectTo(","    Integer.class, par,","    (Integer p, Integer x) -> {","        if (shouldFail) throw new RuntimeException(\"Boom!\")","        return x * p","    },","    (Integer v, Integer p) -> v.intdiv(p)",")"]},
+
+        {"kind":"expect","text":"The initial value is correct.","code":["lens.get() == 20"]},
+
+        {"kind":"when","text":"We make the getter fail and change the source.","code":["shouldFail = true","src.set(100)"]},
+
+        {"kind":"then","text":"No exception escapes to the caller.","code":["noExceptionThrown()"]},
+
+        {"kind":"and","text":"The lens serves the last known value.","code":["lens.get() == 20"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A parameterized lens handles a failing setter gracefully, leaving the source untouched.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var src = Var.of(10)","var par = Var.of(2)","var setterFails = false","var lens = src.projectTo(","    Integer.class, par,","    (Integer p, Integer x) -> x * p,","    (Integer v, Integer p) -> {","        if (setterFails) throw new RuntimeException(\"Cannot invert\")","        return v.intdiv(p)","    }",")"]},
+
+        {"kind":"when","text":"We flip the fail flag and try to write.","code":["setterFails = true","lens.set(99)"]},
+
+        {"kind":"then","text":"No exception is thrown.","code":["noExceptionThrown()"]},
+
+        {"kind":"and","text":"The source is unchanged.","code":["src.get() == 10"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A non-null parameterized lens whose getter returns null on first call throws immediately.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"when","text":"We try to build a non-nullable parameterized lens whose getter yields null.","code":["var src = Var.of(10)","var par = Var.of(1)","src.projectTo(","    Integer.class, par,","    (Integer p, Integer x) -> (Integer) null,","    (Integer v, Integer p) -> v",")"]},
+
+        {"kind":"then","text":"A NullPointerException is thrown at construction time.","code":["thrown(NullPointerException)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Factories reject null arguments up front.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var src = Var.of(1)","var par = Var.of(1)"]},
+
+        {"kind":"when","text":"null parameter","code":["src.projectTo((Val<Integer>) null, (Integer p, Integer x) -> x, (Integer v, Integer p) -> v)"]},
+
+        {"kind":"then","text":"","code":["thrown(NullPointerException)"]},
+
+        {"kind":"when","text":"null getter","code":["src.projectTo(par, (java.util.function.BiFunction<Integer, Integer, Integer>) null, (Integer v, Integer p) -> v)"]},
+
+        {"kind":"then","text":"","code":["thrown(NullPointerException)"]},
+
+        {"kind":"when","text":"null setter","code":["src.projectTo(par, (Integer p, Integer x) -> x, (java.util.function.BiFunction<Integer, Integer, Integer>) null)"]},
+
+        {"kind":"then","text":"","code":["thrown(NullPointerException)"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"withId produces a copy of the lens that continues to receive source and parameter updates.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":[]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var src  = Var.of(2.0d)","var exp  = Var.of(3)","var power = src.projectTo(","    Double.class, exp,","    (Integer e, Double b) -> Math.pow(b, e),","    (Double v, Integer e) -> Math.pow(v, 1.0 / e)",")","var named = power.withId(\"power_of_2\")"]},
+
+        {"kind":"expect","text":"","code":["named.id() == \"power_of_2\"","named.get() == 8.0d"]},
+
+        {"kind":"when","text":"We change the source through the original property.","code":["src.set(3.0d)"]},
+
+        {"kind":"then","text":"The renamed copy reflects the update too.","code":["named.get() == 27.0d"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A parameterized lens is garbage collected when no longer referenced, freeing listeners on source AND parameter.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The lens registers itself as a weak listener on both the source and the parameter.\n            When the only strong reference to the lens is dropped, the lens becomes eligible\n            for garbage collection and both listener slots are cleaned up automatically.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A source and a parameter.","code":["var src = Var.of(10)","var par = Var.of(2)"]},
+
+        {"kind":"expect","text":"No listeners initially.","code":["src.numberOfChangeListeners() == 0","par.numberOfChangeListeners() == 0"]},
+
+        {"kind":"when","text":"We create a parameterized lens and only hold it locally.","code":["var lens = src.projectTo(Integer.class, par, (Integer p, Integer x) -> x + p, (Integer v, Integer p) -> v - p)"]},
+
+        {"kind":"then","text":"Each of the source and parameter has a single change listener.","code":["src.numberOfChangeListeners() == 1","par.numberOfChangeListeners() == 1"]},
+
+        {"kind":"when","text":"We drop the strong reference and force GC.","code":["var weak = new WeakReference(lens)","lens = null","waitForGarbageCollection()","Thread.sleep(500)","waitForGarbageCollection()"]},
+
+        {"kind":"then","text":"The lens is collected and no listeners remain on either.","code":["weak.get() == null","src.numberOfChangeListeners() == 0","par.numberOfChangeListeners() == 0"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A parameterized lens holds strong references to its source and parameter, preventing their GC.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A parameterized lens must be able to read the source and parameter whenever it is\n            asked for the projected value, so it keeps both alive. Releasing outside references\n            to them does not collect them as long as the lens itself is referenced.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["Var<Integer> src = Var.of(42)","Val<Integer> par = Var.of(7)","var lens = src.projectTo(Integer.class, par, (Integer p, Integer x) -> x + p, (Integer v, Integer p) -> v - p)","var weakSrc = new WeakReference(src)","var weakPar = new WeakReference(par)"]},
+
+        {"kind":"when","text":"We drop outside references to source and parameter.","code":["src = null","par = null","waitForGarbageCollection()"]},
+
+        {"kind":"then","text":"Neither is collected; the lens still works.","code":["weakSrc.get() != null","weakPar.get() != null","lens.get() == 49"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Parameterized lenses compose: a weight in grams can be shown in any unit AND rounded at a chosen precision.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Because a parameterized lens is itself a `Var`, we can stack one on top of another:\n            first convert from grams to a chosen unit, then round the result to a chosen\n            precision. The two parameters together steer a clean, human-readable display.\n            This is the reactive analogue of function composition.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A mass in grams and two parameters — display unit and precision.","code":["var grams     = Var.of(4535.9237d)  // 10 lbs exactly","var unit      = Var.of(WeightUnit.POUNDS)","var precision = Var.of(2)"]},
+
+        {"kind":"and","text":"First projection: grams → unit-of-choice.","code":["var inUnit = grams.projectTo(","    Double.class, unit,","    (WeightUnit u, Double g) -> {","        switch (u) {","            case WeightUnit.GRAMS:     return g","            case WeightUnit.KILOGRAMS: return g / 1000.0d","            case WeightUnit.POUNDS:    return g / 453.59237d","            default:                   return g","        }","    },","    (Double v, WeightUnit u) -> {","        switch (u) {","            case WeightUnit.GRAMS:     return v","            case WeightUnit.KILOGRAMS: return v * 1000.0d","            case WeightUnit.POUNDS:    return v * 453.59237d","            default:                   return v","        }","    }",")"]},
+
+        {"kind":"and","text":"Second projection stacked on top: round to the chosen number of decimal places.","code":["var display = inUnit.projectTo(","    Double.class, precision,","    (Integer d, Double x) -> {","        double scale = Math.pow(10, d)","        return Math.round(x * scale) / scale","    },","    (Double v, Integer d) -> v",")"]},
+
+        {"kind":"expect","text":"10 lbs shown in pounds and rounded to 2 places is exactly 10.00.","code":["display.get() == 10.0d"]},
+
+        {"kind":"when","text":"We change the precision to 4.","code":["precision.set(4)"]},
+
+        {"kind":"then","text":"The display refines, the source is untouched.","code":["display.get() == 10.0d","grams.get() == 4535.9237d"]},
+
+        {"kind":"when","text":"We switch the unit to kilograms.","code":["unit.set(WeightUnit.KILOGRAMS)"]},
+
+        {"kind":"then","text":"The displayed value is recomputed end-to-end.","code":["Math.abs(display.get() - 4.5359d) < 1e-6"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    }
+  
+  ],
+  "generator":"https://github.com/renatoathaydes/spock-reports"
+}
