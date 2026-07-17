@@ -132,7 +132,7 @@ final class PropertyLens<T extends @Nullable Object> implements Var<T>, Viewable
             throw new IllegalArgumentException(
                 "Cannot create a null-safe projection from a nullable source property. " +
                 "Use 'projectToNullable(..)' for a projection that may itself be null, or " +
-                "a projection with a null object to substitute a value while the source is null."
+                "'projectTo(nullObject, ..)' to substitute a value while the source is null."
             );
         Lens<A,B> lens = Lens.of(getter, (a,b)->setter.apply(b));
         B initialValue;
@@ -264,7 +264,7 @@ final class PropertyLens<T extends @Nullable Object> implements Var<T>, Viewable
             throw new IllegalArgumentException(
                 "Cannot create a null-safe parameterized projection from a nullable source property. " +
                 "Use 'projectToNullable(..)' for a projection that may itself be null, or " +
-                "a projection with a null object to substitute a value while the source is null."
+                "'projectTo(nullObject, parameter, ..)' to substitute a value while the source is null."
             );
         B initialValue;
         try {
@@ -376,7 +376,7 @@ final class PropertyLens<T extends @Nullable Object> implements Var<T>, Viewable
         for ( Val<?> source : _core.sources() ) {
             Viewable.cast(source).onChange(From.ALL, WeakAction.of(this, (thisLens, v) -> {
                 if ( thisLens._core.shouldSuppressSourceCallback() ) return;
-                T newValue = thisLens._fetchFromSources();
+                T newValue = thisLens._fetchFromSources(true);
                 ItemPair<T> pair = new ItemPair<>(thisLens._type, newValue, thisLens._lastItem);
                 if ( pair.change() != SingleChange.NONE || v.change() == SingleChange.NONE ) {
                     thisLens._lastItem = newValue;
@@ -401,24 +401,30 @@ final class PropertyLens<T extends @Nullable Object> implements Var<T>, Viewable
      *  This mirrors how {@link SingleLensCore#fetchFromSources(Object)} already keeps
      *  the last item when the lens getter throws, and it guarantees that a
      *  non-nullable lens never violates its own {@code allowsNull() == false} contract.
+     *  <p>
+     *  The {@code logDegradation} flag exists so that only the event-propagation path
+     *  (where the anomaly first occurs) reports it, while ordinary reads
+     *  ({@code get()} / {@code orElseNull()}) stay silent — otherwise a single null
+     *  focused field would spam an error log on every read for as long as it stays null.
      */
-    private @Nullable T _fetchFromSources() {
+    private @Nullable T _fetchFromSources(boolean logDegradation) {
         @Nullable T fetched = _core.fetchFromSources(_lastItem);
         if ( fetched == null && !_nullable ) {
-            _logError(
-                "The lens property '{}' does not allow null items, but its focused source " +
-                "field is currently null. Keeping the last known item '{}' instead. " +
-                "Use a 'zoomTo(nullObject, ...)' or 'zoomToNullable(..)' lens to model a " +
-                "missing field explicitly.",
-                _id, _lastItem
-            );
+            if ( logDegradation )
+                _logError(
+                    "The lens property '{}' does not allow null items, but its focused source " +
+                    "field is currently null. Keeping the last known item '{}' instead. " +
+                    "Use a 'zoomTo(nullObject, ...)' or 'zoomToNullable(..)' lens to model a " +
+                    "missing field explicitly.",
+                    _id, _lastItem
+                );
             return _lastItem;
         }
         return fetched;
     }
 
     private @Nullable T _item() {
-        @Nullable T currentItem = _fetchFromSources();
+        @Nullable T currentItem = _fetchFromSources(false);
         if ( currentItem != null ) {
             Class<?> currentType = currentItem.getClass();
             if ( !_type.isAssignableFrom(currentType) )

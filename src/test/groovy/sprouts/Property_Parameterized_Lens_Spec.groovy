@@ -487,11 +487,20 @@ class Property_Parameterized_Lens_Spec extends Specification
             var nonNullSource  = Var.of(10)
             var nullableSource = Var.ofNullable(Integer.class, 10)
             var parameter      = Var.ofNullable(Integer.class, 2)
-
-        expect : 'A plain projection over the non-nullable source is null-safe, even with a nullable parameter.'
-            !nonNullSource.projectTo(parameter,
+        and : 'A null-safe projection over the non-nullable source, whose getter tolerates a null parameter.'
+            var scaled = nonNullSource.projectTo(parameter,
                     (Integer p, Integer x) -> x * (p == null ? 1 : p),
-                    (Integer v, Integer p) -> v).allowsNull()
+                    (Integer v, Integer p) -> v)
+
+        expect : 'The projection is null-safe and initially applies the parameter.'
+            !scaled.allowsNull()
+            scaled.get() == 20
+
+        when : 'We set the read-only parameter to null...'
+            parameter.set(null)
+        then : '...the projection recomputes through the getter with a null parameter, and remains non-null.'
+            !scaled.allowsNull()
+            scaled.get() == 10
 
         when : 'We derive a plain parameterized projection from the nullable source instead...'
             nullableSource.projectTo(parameter,
