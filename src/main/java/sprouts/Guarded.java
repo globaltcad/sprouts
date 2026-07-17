@@ -49,8 +49,8 @@ import java.util.function.UnaryOperator;
  * <p><b>1. Immutable-swap mode (recommended).</b> {@code V} is an immutable type (a {@code record},
  * {@code String}, immutable collection, etc.). Each update produces a <em>new</em> value that
  * replaces the old reference. Nothing the value exposes can be mutated, so even a reference handed
- * out by {@link #get()} stays safe.
- * <p>
+ * out by {@link #get()} stays safe.<br>
+ *
  * <pre>{@code
  * record Account(String owner, long cents) {
  *     Account deposit(long c) { return new Account(owner, cents + c); }

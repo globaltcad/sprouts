@@ -4,7 +4,7 @@
   "narrative":"The Sprouts Property Lens is based on the Lens design pattern.\n    The Lens design pattern is a functional programming\n    technique used to simplify the process of accessing and updating parts of\n    a nested (immutable) data structures into a new instance of the data structure.\n\n    A Lens is essentially a pair of functions:\n    one to get a value from a specific part of a data structure (like a record),\n    and another to set or update that value while producing a new\n    instance of the data structure. This pattern is particularly useful with Java records,\n    which are immutable by design, as it allows for clean and concise manipulation\n    of deeply nested fields without breaking immutability.\n\n    Now what does this have to do with Sprouts properties?\n    After all, the MVVM properties of this library are mutable\n    wrapper types with regular getter and setter methods.\n    Although properties are mutable, their items are expected to\n    be immutable data carriers, such as ints, doubles, strings or records.\n    In case of records (or other custom value oriented data types),\n    there is really no limit to how deeply nested the data structure can be.\n    You may even want to model your entire application state as a single record\n    composed of other records, lists, maps and primitives.\n    This is where the Property Lens comes in:\n\n    You can create a lens property from any regular property\n    holding an immutable data structure, and then use the lens property\n    like a regular property.\n\n    Under the hood the lens property will use the lens pattern to access\n    and update the nested data structure of the original property.\n\n    In this specification we will demonstrate how to create and use\n    lens properties and also explore edge cases and limitations.\n\n    In this Specification we are using the following\n    data structure classes:\n    ````java\n        import java.time.LocalDate;\n        import java.util.List;\n\n        // Enums\n        enum Genre {\n            FICTION, NON_FICTION, SCIENCE, FANTASY, BIOGRAPHY, HISTORY\n        }\n\n        enum MembershipLevel {\n            BASIC, SILVER, GOLD, PLATINUM\n        }\n\n        // Records\n        public record Author(String firstName, String lastName, LocalDate birthDate, List<String> books) {\n            public Author withFirstName(String firstName) {\n                return new Author(firstName, this.lastName, this.birthDate, this.books);\n            }\n\n            public Author withLastName(String lastName) {\n                return new Author(this.firstName, lastName, this.birthDate, this.books);\n            }\n\n            public Author withBirthDate(LocalDate birthDate) {\n                return new Author(this.firstName, this.lastName, birthDate, this.books);\n            }\n\n            public Author withBooks(List<String> books) {\n                return new Author(this.firstName, this.lastName, this.birthDate, books);\n            }\n        }\n\n        public record Book(String title, Author author, Genre genre, LocalDate publicationDate, int pageCount) {\n            public Book withTitle(String title) {\n                return new Book(title, this.author, this.genre, this.publicationDate, this.pageCount);\n            }\n\n            public Book withAuthor(Author author) {\n                return new Book(this.title, author, this.genre, this.publicationDate, this.pageCount);\n            }\n\n            public Book withGenre(Genre genre) {\n                return new Book(this.title, this.author, genre, this.publicationDate, this.pageCount);\n            }\n\n            public Book withPublicationDate(LocalDate publicationDate) {\n                return new Book(this.title, this.author, this.genre, publicationDate, this.pageCount);\n            }\n\n            public Book withPageCount(int pageCount) {\n                return new Book(this.title, this.author, this.genre, this.publicationDate, pageCount);\n            }\n        }\n\n        public record Member(String memberId, String firstName, String lastName, MembershipLevel membershipLevel, LocalDate joinDate, String email) {\n            public Member withMemberId(String memberId) {\n                return new Member(memberId, this.firstName, this.lastName, this.membershipLevel, this.joinDate, this.email);\n            }\n\n            public Member withFirstName(String firstName) {\n                return new Member(this.memberId, firstName, this.lastName, this.membershipLevel, this.joinDate, this.email);\n            }\n\n            public Member withLastName(String lastName) {\n                return new Member(this.memberId, this.firstName, lastName, this.membershipLevel, this.joinDate, this.email);\n            }\n\n            public Member withMembershipLevel(MembershipLevel membershipLevel) {\n                return new Member(this.memberId, this.firstName, this.lastName, membershipLevel, this.joinDate, this.email);\n            }\n\n            public Member withJoinDate(LocalDate joinDate) {\n                return new Member(this.memberId, this.firstName, this.lastName, this.membershipLevel, joinDate, this.email);\n            }\n\n            public Member withEmail(String email) {\n                return new Member(this.memberId, this.firstName, this.lastName, this.membershipLevel, this.joinDate, email);\n            }\n        }\n\n        public record Loan(String loanId, Book book, Member member, LocalDate loanDate, LocalDate returnDate, boolean returned) {\n            public Loan withLoanId(String loanId) {\n                return new Loan(loanId, this.book, this.member, this.loanDate, this.returnDate, this.returned);\n            }\n\n            public Loan withBook(Book book) {\n                return new Loan(this.loanId, book, this.member, this.loanDate, this.returnDate, this.returned);\n            }\n\n            public Loan withMember(Member member) {\n                return new Loan(this.loanId, this.book, member, this.loanDate, this.returnDate, this.returned);\n            }\n\n            public Loan withLoanDate(LocalDate loanDate) {\n                return new Loan(this.loanId, this.book, this.member, loanDate, this.returnDate, this.returned);\n            }\n\n            public Loan withReturnDate(LocalDate returnDate) {\n                return new Loan(this.loanId, this.book, this.member, this.loanDate, returnDate, this.returned);\n            }\n\n            public Loan withReturned(boolean returned) {\n                return new Loan(this.loanId, this.book, this.member, this.loanDate, this.returnDate, returned);\n            }\n        }\n\n        static record TrainStation(String name, String description, LocalDate foundingDate, List<String> trains) {\n            public TrainStation withName(String name) {\n                return new TrainStation(name, this.description, this.foundingDate, this.trains);\n            }\n\n            public TrainStation withDescription(String description) {\n                return new TrainStation(this.name, description, this.foundingDate, this.trains);\n            }\n\n            public TrainStation withBirthDate(LocalDate birthDate) {\n                return new TrainStation(this.name, this.description, birthDate, this.trains);\n            }\n\n            public TrainStation withBooks(List<String> books) {\n                return new TrainStation(this.name, this.description, this.foundingDate, books);\n            }\n        }\n        record Person(String name, Number age) {\n            Person withAge(Number age) { return new Person(name, age); }\n        }\n        ```",
   "subjects":["sprouts.impl.PropertyLens","sprouts.Var"],
   "statistics":{
-    "runs":"43",
+    "runs":"48",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -342,6 +342,133 @@
         {"kind":"when","text":"The parent is set back to null","code":["authorProperty.set(null)"]},
 
         {"kind":"then","text":"The lens retrieves the default value again","code":["firstNameLens.get() == defaultFirstName"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A plain `zoomTo` lens is null-safe and refuses to be derived from a nullable parent.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The plain `zoomTo` methods (without a null object) create null-safe lenses:\n            the resulting property promises `allowsNull() == false`. A lens cannot keep\n            that promise while its parent is null, because a null parent has no field to\n            focus on. Rather than let null quietly leak into a supposedly non-null\n            property, `zoomTo` fails fast when it is derived from a nullable parent, and\n            it names the two null-aware alternatives in the error message:\n            `zoomToNullable(..)` for a nullable lens, or `zoomTo(nullObject, ..)` for a\n            null object fallback.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A non-nullable as well as a nullable `Member` based property.","code":["var member = new Member(\"1\", \"Marry\", \"Sue\", MembershipLevel.SILVER, LocalDate.of(2021, 3, 4), null)","var plainParent = Var.of(member)","var nullableParent = Var.ofNullable(Member.class, member)"]},
+
+        {"kind":"expect","text":"Lenses derived from the non-nullable parent are themselves null-safe.","code":["!plainParent.zoomTo(Member::firstName, Member::withFirstName).allowsNull()","!plainParent.zoomTo(String.class, Member::firstName, Member::withFirstName).allowsNull()","!plainParent.zoomTo(String.class, Lens.of(Member::firstName, Member::withFirstName)).allowsNull()"]},
+
+        {"kind":"when","text":"We try to derive a plain lens from the nullable parent instead...","code":["nullableParent.zoomTo(Member::firstName, Member::withFirstName)"]},
+
+        {"kind":"then","text":"...it is rejected, pointing us at the null-aware alternatives.","code":["var e = thrown(IllegalArgumentException)","e.message.contains(\"zoomToNullable\")","e.message.contains(\"zoomTo(nullObject\")"]},
+
+        {"kind":"and","text":"The same holds for the typed and `Lens` based plain overloads.","code":["[","    { nullableParent.zoomTo(String.class, Member::firstName, Member::withFirstName) },","    { nullableParent.zoomTo(String.class, Lens.of(Member::firstName, Member::withFirstName)) }","].every { closure ->","    try { closure(); false }","    catch (IllegalArgumentException ignored) { true }","}"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The null-aware alternatives to a plain `zoomTo` lens accept a nullable parent.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Where a plain `zoomTo` lens refuses a nullable parent, the two null-aware\n            alternatives embrace it: `zoomToNullable(..)` yields a lens that is itself\n            nullable, while `zoomTo(nullObject, ..)` yields a null-safe lens that\n            substitutes the null object whenever the parent (or the focused field) is null.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A nullable Author property which is currently empty.","code":["var authorProperty = Var.ofNullable(Author.class, null)"]},
+
+        {"kind":"when","text":"We create a nullable lens and a null-object lens focusing on the first name.","code":["var nullableName = authorProperty.zoomToNullable(String.class, Author::firstName, Author::withFirstName)","var safeName     = authorProperty.zoomTo(\"<unknown>\", Author::firstName, Author::withFirstName)"]},
+
+        {"kind":"then","text":"Both can be created, and each models the missing parent in its own way.","code":["noExceptionThrown()","nullableName.allowsNull()","nullableName.orElseNull() == null","!safeName.allowsNull()","safeName.get() == \"<unknown>\""]},
+
+        {"kind":"when","text":"The parent property receives an actual author.","code":["authorProperty.set(new Author(\"Herman\", \"Melville\", LocalDate.of(1819, 8, 1), [\"Moby-Dick\"]))"]},
+
+        {"kind":"then","text":"Both lenses pick up the first name.","code":["nullableName.get() == \"Herman\"","safeName.get() == \"Herman\""]},
+
+        {"kind":"when","text":"The parent property becomes empty again.","code":["authorProperty.set(null)"]},
+
+        {"kind":"then","text":"The nullable lens goes null, while the null-object lens falls back to its null object.","code":["nullableName.orElseNull() == null","safeName.get() == \"<unknown>\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A non-nullable lens degrades gracefully when the focused field becomes null during event propagation.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Fail-fast on null applies when a property is *derived* from another one.\n            Once the reactive data structure is live and events are propagating through\n            it, however, throwing would only be swallowed by the change-listener dispatch\n            and could leave views permanently stale. So at propagation time the library\n            switches strategy: a non-nullable lens whose focused field becomes null keeps\n            its last known item and logs the anomaly, mirroring the degradation already\n            used for a throwing lens getter. It thereby never exposes an illegal null and\n            never lets its views desynchronize.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A non-nullable Author property, a lens on the first name and a view of the lens.","code":["var author = new Author(\"John\", \"Doe\", LocalDate.of(1829, 8, 12), [\"Book1\", \"Book2\"])","var authorProperty = Var.of(author)","var firstName = authorProperty.zoomTo(Author::firstName, Author::withFirstName)","var view = firstName.view()"]},
+
+        {"kind":"expect","text":"The lens is null-safe, as its parent is.","code":["!firstName.allowsNull()"]},
+
+        {"kind":"when","text":"The focused field becomes null through an update of the parent.","code":["authorProperty.set(author.withFirstName(null))"]},
+
+        {"kind":"then","text":"The lens keeps its last known item instead of exposing an illegal null item.","code":["firstName.orElseNull() == \"John\""]},
+
+        {"kind":"and","text":"The view of the lens stays in sync with the lens and does not go stale.","code":["view.orElseNull() == \"John\""]},
+
+        {"kind":"when","text":"The focused field becomes non-null again.","code":["authorProperty.set(author.withFirstName(\"Jane\"))"]},
+
+        {"kind":"then","text":"The lens and its view recover and are fully functional again.","code":["firstName.get() == \"Jane\"","view.get() == \"Jane\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A lens with a null object uses it when the focused field itself is null, not just the parent.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The null object of a `zoomTo(nullObject, ...)` lens stands in for the focused\n            field whenever no actual field value is available. This is not only the case\n            when the parent property is empty, but also when the parent item exists\n            and its focused field happens to be null.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A Book without an author, held by a non-nullable property.","code":["var book = new Book(\"Dune\", null, Genre.SCIENCE, LocalDate.of(1965, 8, 1), 412)","var bookProperty = Var.of(book)"]},
+
+        {"kind":"and","text":"A placeholder author serving as the null object.","code":["var unknownAuthor = new Author(\"Unknown\", \"Unknown\", LocalDate.of(1970, 1, 1), [])"]},
+
+        {"kind":"when","text":"We create a null object based lens focusing on the author of the book.","code":["var authorLens = bookProperty.zoomTo(unknownAuthor, Book::author, Book::withAuthor)"]},
+
+        {"kind":"then","text":"The lens can be created and presents the null object instead of the missing author.","code":["noExceptionThrown()","!authorLens.allowsNull()","authorLens.get() == unknownAuthor"]},
+
+        {"kind":"when","text":"The book receives an actual author.","code":["var frank = new Author(\"Frank\", \"Herbert\", LocalDate.of(1920, 10, 8), [\"Dune\"])","bookProperty.set(book.withAuthor(frank))"]},
+
+        {"kind":"then","text":"The lens presents the actual author.","code":["authorLens.get() == frank"]},
+
+        {"kind":"when","text":"The author of the book is removed again.","code":["bookProperty.set(book.withAuthor(null))"]},
+
+        {"kind":"then","text":"The lens falls back to the null object instead of exposing an illegal null item.","code":["authorLens.get() == unknownAuthor"]},
+
+        {"kind":"and","text":"The typed variant of the null object lens behaves in the exact same way.","code":["bookProperty.zoomTo(Author.class, unknownAuthor, Lens.of(Book::author, Book::withAuthor)).get() == unknownAuthor"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Lens null handling follows a two-phase contract: fail fast when deriving, degrade when propagating.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Sprouts treats a `null` differently depending on *when* it appears, and this\n            specification captures that principle as a whole so the intent is unmistakable:\n\n            **Phase 1 — deriving a property (building the reactive graph).**\n            When you call `zoomTo(..)` you are wiring up a new node in your reactive data\n            structure. This is the moment to be strict, because getting nullability wrong\n            here poisons everything downstream. A plain `zoomTo(..)` is null-safe, so if it\n            is handed a nullable parent — a situation in which it could not honour that\n            promise — it throws immediately, at the call site, where the mistake is and\n            where the stack trace is useful. You then reach for the tool that matches your\n            intent: `zoomToNullable(..)` or `zoomTo(nullObject, ..)`.\n\n            **Phase 2 — propagating an event (the graph is live).**\n            Once the graph is built and change events are flowing through it, throwing is\n            the wrong move: an exception raised inside a change listener is swallowed by the\n            dispatch machinery and, worse, can leave dependent views frozen on a stale value.\n            So here the library degrades instead: a null-safe lens whose focused field turns\n            null keeps its last known item and logs the anomaly, preserving both its own\n            null contract and the consistency of every view derived from it.\n\n            The two phases below are demonstrated on the very same lens.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A non-nullable parent, a null-safe lens on a field and a view of that lens.","code":["var author = new Author(\"John\", \"Doe\", LocalDate.of(1829, 8, 12), [\"Book1\", \"Book2\"])","var authorProperty = Var.of(author)","var firstName = authorProperty.zoomTo(Author::firstName, Author::withFirstName)","var view = firstName.view()"]},
+
+        {"kind":"expect","text":"Phase 1: the derived lens is null-safe.","code":["!firstName.allowsNull()","!view.allowsNull()"]},
+
+        {"kind":"when","text":"Phase 1: we try to derive a plain lens from a nullable parent.","code":["Var.ofNullable(Author.class, author).zoomTo(Author::firstName, Author::withFirstName)"]},
+
+        {"kind":"then","text":"It fails fast, right where the property is being derived.","code":["thrown(IllegalArgumentException)"]},
+
+        {"kind":"when","text":"Phase 2: an event drives the focused field of the live lens to null.","code":["authorProperty.set(author.withFirstName(null))"]},
+
+        {"kind":"then","text":"The lens does not throw and does not leak null; it keeps its last item, and the view stays in sync.","code":["firstName.orElseNull() == \"John\"","view.orElseNull() == \"John\""]},
+
+        {"kind":"when","text":"Phase 2: a later event supplies a valid value again.","code":["authorProperty.set(author.withFirstName(\"Jane\"))"]},
+
+        {"kind":"then","text":"The lens and its view recover.","code":["firstName.get() == \"Jane\"","view.get() == \"Jane\""]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -856,20 +983,20 @@
     },
   
     {
-      "id":"The nullable lens of a nullable property handles `null` values gracefully.",
+      "id":"The null-aware lenses of a nullable property handle `null` values gracefully.",
       "result":"PASS",
       "duration":"?",
       "iterations":{
-      "tags":{},"see":[],"extraInfo":[]
+      "tags":{},"see":[],"extraInfo":["\n            A nullable parent property may become empty at any time, so a lens focusing\n            into it must be told upfront how to cope with that. There are exactly two\n            null-aware tools for this, and this specification shows both side by side:\n\n            - `zoomToNullable(..)` produces a nullable lens that simply goes null when\n              the parent (or the focused field) is null.\n            - `zoomTo(nullObject, ..)` produces a null-safe lens that substitutes a\n              given null object instead.\n\n            The plain `zoomTo(..)` is deliberately *not* on this list: it is null-safe\n            and refuses a nullable parent outright (see the dedicated specification), so\n            that null can never sneak into a property the caller believes to be non-null.\n        "]
       },
       "blocks":[
-        {"kind":"given","text":"","code":["var member = new Member(\"24\", \"Eddie\", \"England\", MembershipLevel.BASIC, LocalDate.of(2013, 2, 19), null)","var memberProperty = Var.ofNullable(Member.class, member)","var level = memberProperty.zoomTo(Member::membershipLevel, Member::withMembershipLevel)","var date = memberProperty.zoomToNullable(LocalDate.class, Member::joinDate, Member::withJoinDate)","var name = memberProperty.zoomTo(\"\", Member::firstName, Member::withFirstName)"]},
+        {"kind":"given","text":"A nullable `Member` property, plus a nullable lens and a null-object lens into it.","code":["var member = new Member(\"24\", \"Eddie\", \"England\", MembershipLevel.BASIC, LocalDate.of(2013, 2, 19), null)","var memberProperty = Var.ofNullable(Member.class, member)","var level = memberProperty.zoomToNullable(MembershipLevel.class, Member::membershipLevel, Member::withMembershipLevel)","var date  = memberProperty.zoomToNullable(LocalDate.class, Member::joinDate, Member::withJoinDate)","var name  = memberProperty.zoomTo(\"\", Member::firstName, Member::withFirstName)"]},
 
-        {"kind":"expect","text":"","code":["level.get() == MembershipLevel.BASIC","date.get() == LocalDate.of(2013, 2, 19)","name.get() == \"Eddie\""]},
+        {"kind":"expect","text":"While the parent is present, every lens reflects the focused field.","code":["level.get() == MembershipLevel.BASIC","date.get() == LocalDate.of(2013, 2, 19)","name.get() == \"Eddie\""]},
 
-        {"kind":"when","text":"","code":["memberProperty.set(null)"]},
+        {"kind":"when","text":"The parent property becomes empty.","code":["memberProperty.set(null)"]},
 
-        {"kind":"then","text":"","code":["level.orElseNull() == null","date.orElseNull() == null","name.get() == \"\""]}
+        {"kind":"then","text":"The nullable lenses go null, while the null-object lens falls back to its null object.","code":["level.orElseNull() == null","date.orElseNull() == null","name.get() == \"\""]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },

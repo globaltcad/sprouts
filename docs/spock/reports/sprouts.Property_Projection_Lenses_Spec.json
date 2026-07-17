@@ -4,7 +4,7 @@
   "narrative":"The Sprouts Property Projection Lens is a specialized form of the Lens design pattern\n    that establishes a bi-directional relationship between two representations of the same data.\n    While regular lenses focus on accessing and updating fields within a nested structure,\n    projection lenses focus on converting between different representations of the same logical data.\n\n    A projection lens consists of a pair of functions:\n    - A \"getter\" function that converts from the source type T to target type B\n    - A \"setter\" function that converts from target type B back to source type T\n\n    This creates a two-way street where changes in either property automatically propagate\n    to the other, maintaining synchronization between different representations.\n\n    This is particularly useful for:\n    1. Unit conversions (meters ↔ feet, Celsius ↔ Fahrenheit)\n    2. Format conversions (raw data ↔ formatted strings)\n    3. Encryption/decryption (plain text ↔ encrypted text)\n    4. Validation boundaries (validated objects ↔ raw input)\n    5. View model adaptations (domain objects ↔ UI-friendly representations)\n\n    The projection methods come in three flavors:\n    1. `projectTo(getter, setter)` - Basic bi-directional projection\n    2. `projectTo(nullObject, getter, setter)` - Projection with guaranteed non-null fallback\n    3. `projectToNullable(type, getter, setter)` - Projection allowing null values\n\n    This specification explores all three methods through practical, real-world examples\n    and thoroughly tests edge cases, memory safety, and mathematical properties.",
   "subjects":["sprouts.Var","sprouts.Val","sprouts.Viewable"],
   "statistics":{
-    "runs":"43",
+    "runs":"44",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -480,19 +480,17 @@
       "tags":{},"see":[],"extraInfo":["\n            Projections should handle various edge cases gracefully:\n            - Empty strings and collections\n            - Boundary values\n            - Special floating point values\n            - Identity projections\n        "]
       },
       "blocks":[
-        {"kind":"given","text":"Source property with edge case value","code":["var source = Var.ofNullable(Object.class, testValue)"]},
+        {"kind":"given","text":"A non-nullable and a nullable source property, both holding the edge case value","code":["var source         = Var.of(testValue)","var nullableSource = Var.ofNullable(Object.class, testValue)"]},
 
-        {"kind":"and","text":"Identity projection (value unchanged)","code":["var identity = source.projectTo(","    { it -> it },","    { it -> it }",")"]},
+        {"kind":"and","text":"A null-safe identity projection over the non-nullable source","code":["var identity = source.projectTo(","    { it -> it },","    { it -> it }",")"]},
 
-        {"kind":"and","text":"Nullable identity projection","code":["var nullableIdentity = source.projectToNullable(","    Object.class,","    { it -> it },","    { it -> it }",")"]},
+        {"kind":"and","text":"A nullable identity projection over the nullable source","code":["var nullableIdentity = nullableSource.projectToNullable(","    Object.class,","    { it -> it },","    { it -> it }",")"]},
 
-        {"kind":"expect","text":"Identity projection preserves value","code":["identity.orElseNull() == testValue"]},
+        {"kind":"expect","text":"Both projections initially preserve the value","code":["identity.orElseNull() == testValue","nullableIdentity.orElseNull() == testValue"]},
 
-        {"kind":"and","text":"Nullable identity projection preserves value","code":["nullableIdentity.orElseNull() == testValue"]},
+        {"kind":"when","text":"The nullable source is set to null","code":["nullableSource.set(null)"]},
 
-        {"kind":"when","text":"Source is set to null","code":["source.set(null)"]},
-
-        {"kind":"then","text":"Projections reflect null","code":["identity.orElseNull() == null","nullableIdentity.orElseNull() == null"]},
+        {"kind":"then","text":"The nullable projection reflects null","code":["nullableIdentity.orElseNull() == null"]},
 
         {"kind":"where","text":"","code":{"typeName":["'String'","'String'","'String'","'Integer'","'Integer'","'Integer'","'Double'","'Double'","'Double'","'List'","'List'","'Boolean'","'Boolean'"],"nullObject":["\"\"","\"\"","\"\"","0","0","0","0.0","0.0","0.0","[]","[]","false","false"],"testValue":["\"\"","\" \"","\"null\"","0","Integer.MAX_VALUE","Integer.MIN_VALUE","0.0","Double.NaN","Double.POSITIVE_INFINITY","[]","[null]","true","false"]}}
       ],
@@ -507,19 +505,17 @@
       "tags":{},"see":[],"extraInfo":["\n            Projections should handle various edge cases gracefully:\n            - Empty strings and collections\n            - Boundary values\n            - Special floating point values\n            - Identity projections\n        "]
       },
       "blocks":[
-        {"kind":"given","text":"Source property with edge case value","code":["var source = Var.ofNullable(Object.class, testValue)"]},
+        {"kind":"given","text":"A non-nullable and a nullable source property, both holding the edge case value","code":["var source         = Var.of(testValue)","var nullableSource = Var.ofNullable(Object.class, testValue)"]},
 
-        {"kind":"and","text":"Identity projection (value unchanged)","code":["var identity = source.projectTo(","    { it -> it },","    { it -> it }",")"]},
+        {"kind":"and","text":"A null-safe identity projection over the non-nullable source","code":["var identity = source.projectTo(","    { it -> it },","    { it -> it }",")"]},
 
-        {"kind":"and","text":"Nullable identity projection","code":["var nullableIdentity = source.projectToNullable(","    Object.class,","    { it -> it },","    { it -> it }",")"]},
+        {"kind":"and","text":"A nullable identity projection over the nullable source","code":["var nullableIdentity = nullableSource.projectToNullable(","    Object.class,","    { it -> it },","    { it -> it }",")"]},
 
-        {"kind":"expect","text":"Identity projection preserves value","code":["identity.orElseNull() == testValue"]},
+        {"kind":"expect","text":"Both projections initially preserve the value","code":["identity.orElseNull() == testValue","nullableIdentity.orElseNull() == testValue"]},
 
-        {"kind":"and","text":"Nullable identity projection preserves value","code":["nullableIdentity.orElseNull() == testValue"]},
+        {"kind":"when","text":"The nullable source is set to null","code":["nullableSource.set(null)"]},
 
-        {"kind":"when","text":"Source is set to null","code":["source.set(null)"]},
-
-        {"kind":"then","text":"Projections reflect null","code":["identity.orElseNull() == null","nullableIdentity.orElseNull() == null"]},
+        {"kind":"then","text":"The nullable projection reflects null","code":["nullableIdentity.orElseNull() == null"]},
 
         {"kind":"where","text":"","code":{"typeName":["'String'","'String'","'String'","'Integer'","'Integer'","'Integer'","'Double'","'Double'","'Double'","'List'","'List'","'Boolean'","'Boolean'"],"nullObject":["\"\"","\"\"","\"\"","0","0","0","0.0","0.0","0.0","[]","[]","false","false"],"testValue":["\"\"","\" \"","\"null\"","0","Integer.MAX_VALUE","Integer.MIN_VALUE","0.0","Double.NaN","Double.POSITIVE_INFINITY","[]","[null]","true","false"]}}
       ],
@@ -534,19 +530,17 @@
       "tags":{},"see":[],"extraInfo":["\n            Projections should handle various edge cases gracefully:\n            - Empty strings and collections\n            - Boundary values\n            - Special floating point values\n            - Identity projections\n        "]
       },
       "blocks":[
-        {"kind":"given","text":"Source property with edge case value","code":["var source = Var.ofNullable(Object.class, testValue)"]},
+        {"kind":"given","text":"A non-nullable and a nullable source property, both holding the edge case value","code":["var source         = Var.of(testValue)","var nullableSource = Var.ofNullable(Object.class, testValue)"]},
 
-        {"kind":"and","text":"Identity projection (value unchanged)","code":["var identity = source.projectTo(","    { it -> it },","    { it -> it }",")"]},
+        {"kind":"and","text":"A null-safe identity projection over the non-nullable source","code":["var identity = source.projectTo(","    { it -> it },","    { it -> it }",")"]},
 
-        {"kind":"and","text":"Nullable identity projection","code":["var nullableIdentity = source.projectToNullable(","    Object.class,","    { it -> it },","    { it -> it }",")"]},
+        {"kind":"and","text":"A nullable identity projection over the nullable source","code":["var nullableIdentity = nullableSource.projectToNullable(","    Object.class,","    { it -> it },","    { it -> it }",")"]},
 
-        {"kind":"expect","text":"Identity projection preserves value","code":["identity.orElseNull() == testValue"]},
+        {"kind":"expect","text":"Both projections initially preserve the value","code":["identity.orElseNull() == testValue","nullableIdentity.orElseNull() == testValue"]},
 
-        {"kind":"and","text":"Nullable identity projection preserves value","code":["nullableIdentity.orElseNull() == testValue"]},
+        {"kind":"when","text":"The nullable source is set to null","code":["nullableSource.set(null)"]},
 
-        {"kind":"when","text":"Source is set to null","code":["source.set(null)"]},
-
-        {"kind":"then","text":"Projections reflect null","code":["identity.orElseNull() == null","nullableIdentity.orElseNull() == null"]},
+        {"kind":"then","text":"The nullable projection reflects null","code":["nullableIdentity.orElseNull() == null"]},
 
         {"kind":"where","text":"","code":{"typeName":["'String'","'String'","'String'","'Integer'","'Integer'","'Integer'","'Double'","'Double'","'Double'","'List'","'List'","'Boolean'","'Boolean'"],"nullObject":["\"\"","\"\"","\"\"","0","0","0","0.0","0.0","0.0","[]","[]","false","false"],"testValue":["\"\"","\" \"","\"null\"","0","Integer.MAX_VALUE","Integer.MIN_VALUE","0.0","Double.NaN","Double.POSITIVE_INFINITY","[]","[null]","true","false"]}}
       ],
@@ -561,19 +555,17 @@
       "tags":{},"see":[],"extraInfo":["\n            Projections should handle various edge cases gracefully:\n            - Empty strings and collections\n            - Boundary values\n            - Special floating point values\n            - Identity projections\n        "]
       },
       "blocks":[
-        {"kind":"given","text":"Source property with edge case value","code":["var source = Var.ofNullable(Object.class, testValue)"]},
+        {"kind":"given","text":"A non-nullable and a nullable source property, both holding the edge case value","code":["var source         = Var.of(testValue)","var nullableSource = Var.ofNullable(Object.class, testValue)"]},
 
-        {"kind":"and","text":"Identity projection (value unchanged)","code":["var identity = source.projectTo(","    { it -> it },","    { it -> it }",")"]},
+        {"kind":"and","text":"A null-safe identity projection over the non-nullable source","code":["var identity = source.projectTo(","    { it -> it },","    { it -> it }",")"]},
 
-        {"kind":"and","text":"Nullable identity projection","code":["var nullableIdentity = source.projectToNullable(","    Object.class,","    { it -> it },","    { it -> it }",")"]},
+        {"kind":"and","text":"A nullable identity projection over the nullable source","code":["var nullableIdentity = nullableSource.projectToNullable(","    Object.class,","    { it -> it },","    { it -> it }",")"]},
 
-        {"kind":"expect","text":"Identity projection preserves value","code":["identity.orElseNull() == testValue"]},
+        {"kind":"expect","text":"Both projections initially preserve the value","code":["identity.orElseNull() == testValue","nullableIdentity.orElseNull() == testValue"]},
 
-        {"kind":"and","text":"Nullable identity projection preserves value","code":["nullableIdentity.orElseNull() == testValue"]},
+        {"kind":"when","text":"The nullable source is set to null","code":["nullableSource.set(null)"]},
 
-        {"kind":"when","text":"Source is set to null","code":["source.set(null)"]},
-
-        {"kind":"then","text":"Projections reflect null","code":["identity.orElseNull() == null","nullableIdentity.orElseNull() == null"]},
+        {"kind":"then","text":"The nullable projection reflects null","code":["nullableIdentity.orElseNull() == null"]},
 
         {"kind":"where","text":"","code":{"typeName":["'String'","'String'","'String'","'Integer'","'Integer'","'Integer'","'Double'","'Double'","'Double'","'List'","'List'","'Boolean'","'Boolean'"],"nullObject":["\"\"","\"\"","\"\"","0","0","0","0.0","0.0","0.0","[]","[]","false","false"],"testValue":["\"\"","\" \"","\"null\"","0","Integer.MAX_VALUE","Integer.MIN_VALUE","0.0","Double.NaN","Double.POSITIVE_INFINITY","[]","[null]","true","false"]}}
       ],
@@ -588,19 +580,17 @@
       "tags":{},"see":[],"extraInfo":["\n            Projections should handle various edge cases gracefully:\n            - Empty strings and collections\n            - Boundary values\n            - Special floating point values\n            - Identity projections\n        "]
       },
       "blocks":[
-        {"kind":"given","text":"Source property with edge case value","code":["var source = Var.ofNullable(Object.class, testValue)"]},
+        {"kind":"given","text":"A non-nullable and a nullable source property, both holding the edge case value","code":["var source         = Var.of(testValue)","var nullableSource = Var.ofNullable(Object.class, testValue)"]},
 
-        {"kind":"and","text":"Identity projection (value unchanged)","code":["var identity = source.projectTo(","    { it -> it },","    { it -> it }",")"]},
+        {"kind":"and","text":"A null-safe identity projection over the non-nullable source","code":["var identity = source.projectTo(","    { it -> it },","    { it -> it }",")"]},
 
-        {"kind":"and","text":"Nullable identity projection","code":["var nullableIdentity = source.projectToNullable(","    Object.class,","    { it -> it },","    { it -> it }",")"]},
+        {"kind":"and","text":"A nullable identity projection over the nullable source","code":["var nullableIdentity = nullableSource.projectToNullable(","    Object.class,","    { it -> it },","    { it -> it }",")"]},
 
-        {"kind":"expect","text":"Identity projection preserves value","code":["identity.orElseNull() == testValue"]},
+        {"kind":"expect","text":"Both projections initially preserve the value","code":["identity.orElseNull() == testValue","nullableIdentity.orElseNull() == testValue"]},
 
-        {"kind":"and","text":"Nullable identity projection preserves value","code":["nullableIdentity.orElseNull() == testValue"]},
+        {"kind":"when","text":"The nullable source is set to null","code":["nullableSource.set(null)"]},
 
-        {"kind":"when","text":"Source is set to null","code":["source.set(null)"]},
-
-        {"kind":"then","text":"Projections reflect null","code":["identity.orElseNull() == null","nullableIdentity.orElseNull() == null"]},
+        {"kind":"then","text":"The nullable projection reflects null","code":["nullableIdentity.orElseNull() == null"]},
 
         {"kind":"where","text":"","code":{"typeName":["'String'","'String'","'String'","'Integer'","'Integer'","'Integer'","'Double'","'Double'","'Double'","'List'","'List'","'Boolean'","'Boolean'"],"nullObject":["\"\"","\"\"","\"\"","0","0","0","0.0","0.0","0.0","[]","[]","false","false"],"testValue":["\"\"","\" \"","\"null\"","0","Integer.MAX_VALUE","Integer.MIN_VALUE","0.0","Double.NaN","Double.POSITIVE_INFINITY","[]","[null]","true","false"]}}
       ],
@@ -615,19 +605,17 @@
       "tags":{},"see":[],"extraInfo":["\n            Projections should handle various edge cases gracefully:\n            - Empty strings and collections\n            - Boundary values\n            - Special floating point values\n            - Identity projections\n        "]
       },
       "blocks":[
-        {"kind":"given","text":"Source property with edge case value","code":["var source = Var.ofNullable(Object.class, testValue)"]},
+        {"kind":"given","text":"A non-nullable and a nullable source property, both holding the edge case value","code":["var source         = Var.of(testValue)","var nullableSource = Var.ofNullable(Object.class, testValue)"]},
 
-        {"kind":"and","text":"Identity projection (value unchanged)","code":["var identity = source.projectTo(","    { it -> it },","    { it -> it }",")"]},
+        {"kind":"and","text":"A null-safe identity projection over the non-nullable source","code":["var identity = source.projectTo(","    { it -> it },","    { it -> it }",")"]},
 
-        {"kind":"and","text":"Nullable identity projection","code":["var nullableIdentity = source.projectToNullable(","    Object.class,","    { it -> it },","    { it -> it }",")"]},
+        {"kind":"and","text":"A nullable identity projection over the nullable source","code":["var nullableIdentity = nullableSource.projectToNullable(","    Object.class,","    { it -> it },","    { it -> it }",")"]},
 
-        {"kind":"expect","text":"Identity projection preserves value","code":["identity.orElseNull() == testValue"]},
+        {"kind":"expect","text":"Both projections initially preserve the value","code":["identity.orElseNull() == testValue","nullableIdentity.orElseNull() == testValue"]},
 
-        {"kind":"and","text":"Nullable identity projection preserves value","code":["nullableIdentity.orElseNull() == testValue"]},
+        {"kind":"when","text":"The nullable source is set to null","code":["nullableSource.set(null)"]},
 
-        {"kind":"when","text":"Source is set to null","code":["source.set(null)"]},
-
-        {"kind":"then","text":"Projections reflect null","code":["identity.orElseNull() == null","nullableIdentity.orElseNull() == null"]},
+        {"kind":"then","text":"The nullable projection reflects null","code":["nullableIdentity.orElseNull() == null"]},
 
         {"kind":"where","text":"","code":{"typeName":["'String'","'String'","'String'","'Integer'","'Integer'","'Integer'","'Double'","'Double'","'Double'","'List'","'List'","'Boolean'","'Boolean'"],"nullObject":["\"\"","\"\"","\"\"","0","0","0","0.0","0.0","0.0","[]","[]","false","false"],"testValue":["\"\"","\" \"","\"null\"","0","Integer.MAX_VALUE","Integer.MIN_VALUE","0.0","Double.NaN","Double.POSITIVE_INFINITY","[]","[null]","true","false"]}}
       ],
@@ -642,19 +630,17 @@
       "tags":{},"see":[],"extraInfo":["\n            Projections should handle various edge cases gracefully:\n            - Empty strings and collections\n            - Boundary values\n            - Special floating point values\n            - Identity projections\n        "]
       },
       "blocks":[
-        {"kind":"given","text":"Source property with edge case value","code":["var source = Var.ofNullable(Object.class, testValue)"]},
+        {"kind":"given","text":"A non-nullable and a nullable source property, both holding the edge case value","code":["var source         = Var.of(testValue)","var nullableSource = Var.ofNullable(Object.class, testValue)"]},
 
-        {"kind":"and","text":"Identity projection (value unchanged)","code":["var identity = source.projectTo(","    { it -> it },","    { it -> it }",")"]},
+        {"kind":"and","text":"A null-safe identity projection over the non-nullable source","code":["var identity = source.projectTo(","    { it -> it },","    { it -> it }",")"]},
 
-        {"kind":"and","text":"Nullable identity projection","code":["var nullableIdentity = source.projectToNullable(","    Object.class,","    { it -> it },","    { it -> it }",")"]},
+        {"kind":"and","text":"A nullable identity projection over the nullable source","code":["var nullableIdentity = nullableSource.projectToNullable(","    Object.class,","    { it -> it },","    { it -> it }",")"]},
 
-        {"kind":"expect","text":"Identity projection preserves value","code":["identity.orElseNull() == testValue"]},
+        {"kind":"expect","text":"Both projections initially preserve the value","code":["identity.orElseNull() == testValue","nullableIdentity.orElseNull() == testValue"]},
 
-        {"kind":"and","text":"Nullable identity projection preserves value","code":["nullableIdentity.orElseNull() == testValue"]},
+        {"kind":"when","text":"The nullable source is set to null","code":["nullableSource.set(null)"]},
 
-        {"kind":"when","text":"Source is set to null","code":["source.set(null)"]},
-
-        {"kind":"then","text":"Projections reflect null","code":["identity.orElseNull() == null","nullableIdentity.orElseNull() == null"]},
+        {"kind":"then","text":"The nullable projection reflects null","code":["nullableIdentity.orElseNull() == null"]},
 
         {"kind":"where","text":"","code":{"typeName":["'String'","'String'","'String'","'Integer'","'Integer'","'Integer'","'Double'","'Double'","'Double'","'List'","'List'","'Boolean'","'Boolean'"],"nullObject":["\"\"","\"\"","\"\"","0","0","0","0.0","0.0","0.0","[]","[]","false","false"],"testValue":["\"\"","\" \"","\"null\"","0","Integer.MAX_VALUE","Integer.MIN_VALUE","0.0","Double.NaN","Double.POSITIVE_INFINITY","[]","[null]","true","false"]}}
       ],
@@ -669,19 +655,17 @@
       "tags":{},"see":[],"extraInfo":["\n            Projections should handle various edge cases gracefully:\n            - Empty strings and collections\n            - Boundary values\n            - Special floating point values\n            - Identity projections\n        "]
       },
       "blocks":[
-        {"kind":"given","text":"Source property with edge case value","code":["var source = Var.ofNullable(Object.class, testValue)"]},
+        {"kind":"given","text":"A non-nullable and a nullable source property, both holding the edge case value","code":["var source         = Var.of(testValue)","var nullableSource = Var.ofNullable(Object.class, testValue)"]},
 
-        {"kind":"and","text":"Identity projection (value unchanged)","code":["var identity = source.projectTo(","    { it -> it },","    { it -> it }",")"]},
+        {"kind":"and","text":"A null-safe identity projection over the non-nullable source","code":["var identity = source.projectTo(","    { it -> it },","    { it -> it }",")"]},
 
-        {"kind":"and","text":"Nullable identity projection","code":["var nullableIdentity = source.projectToNullable(","    Object.class,","    { it -> it },","    { it -> it }",")"]},
+        {"kind":"and","text":"A nullable identity projection over the nullable source","code":["var nullableIdentity = nullableSource.projectToNullable(","    Object.class,","    { it -> it },","    { it -> it }",")"]},
 
-        {"kind":"expect","text":"Identity projection preserves value","code":["identity.orElseNull() == testValue"]},
+        {"kind":"expect","text":"Both projections initially preserve the value","code":["identity.orElseNull() == testValue","nullableIdentity.orElseNull() == testValue"]},
 
-        {"kind":"and","text":"Nullable identity projection preserves value","code":["nullableIdentity.orElseNull() == testValue"]},
+        {"kind":"when","text":"The nullable source is set to null","code":["nullableSource.set(null)"]},
 
-        {"kind":"when","text":"Source is set to null","code":["source.set(null)"]},
-
-        {"kind":"then","text":"Projections reflect null","code":["identity.orElseNull() == null","nullableIdentity.orElseNull() == null"]},
+        {"kind":"then","text":"The nullable projection reflects null","code":["nullableIdentity.orElseNull() == null"]},
 
         {"kind":"where","text":"","code":{"typeName":["'String'","'String'","'String'","'Integer'","'Integer'","'Integer'","'Double'","'Double'","'Double'","'List'","'List'","'Boolean'","'Boolean'"],"nullObject":["\"\"","\"\"","\"\"","0","0","0","0.0","0.0","0.0","[]","[]","false","false"],"testValue":["\"\"","\" \"","\"null\"","0","Integer.MAX_VALUE","Integer.MIN_VALUE","0.0","Double.NaN","Double.POSITIVE_INFINITY","[]","[null]","true","false"]}}
       ],
@@ -696,19 +680,17 @@
       "tags":{},"see":[],"extraInfo":["\n            Projections should handle various edge cases gracefully:\n            - Empty strings and collections\n            - Boundary values\n            - Special floating point values\n            - Identity projections\n        "]
       },
       "blocks":[
-        {"kind":"given","text":"Source property with edge case value","code":["var source = Var.ofNullable(Object.class, testValue)"]},
+        {"kind":"given","text":"A non-nullable and a nullable source property, both holding the edge case value","code":["var source         = Var.of(testValue)","var nullableSource = Var.ofNullable(Object.class, testValue)"]},
 
-        {"kind":"and","text":"Identity projection (value unchanged)","code":["var identity = source.projectTo(","    { it -> it },","    { it -> it }",")"]},
+        {"kind":"and","text":"A null-safe identity projection over the non-nullable source","code":["var identity = source.projectTo(","    { it -> it },","    { it -> it }",")"]},
 
-        {"kind":"and","text":"Nullable identity projection","code":["var nullableIdentity = source.projectToNullable(","    Object.class,","    { it -> it },","    { it -> it }",")"]},
+        {"kind":"and","text":"A nullable identity projection over the nullable source","code":["var nullableIdentity = nullableSource.projectToNullable(","    Object.class,","    { it -> it },","    { it -> it }",")"]},
 
-        {"kind":"expect","text":"Identity projection preserves value","code":["identity.orElseNull() == testValue"]},
+        {"kind":"expect","text":"Both projections initially preserve the value","code":["identity.orElseNull() == testValue","nullableIdentity.orElseNull() == testValue"]},
 
-        {"kind":"and","text":"Nullable identity projection preserves value","code":["nullableIdentity.orElseNull() == testValue"]},
+        {"kind":"when","text":"The nullable source is set to null","code":["nullableSource.set(null)"]},
 
-        {"kind":"when","text":"Source is set to null","code":["source.set(null)"]},
-
-        {"kind":"then","text":"Projections reflect null","code":["identity.orElseNull() == null","nullableIdentity.orElseNull() == null"]},
+        {"kind":"then","text":"The nullable projection reflects null","code":["nullableIdentity.orElseNull() == null"]},
 
         {"kind":"where","text":"","code":{"typeName":["'String'","'String'","'String'","'Integer'","'Integer'","'Integer'","'Double'","'Double'","'Double'","'List'","'List'","'Boolean'","'Boolean'"],"nullObject":["\"\"","\"\"","\"\"","0","0","0","0.0","0.0","0.0","[]","[]","false","false"],"testValue":["\"\"","\" \"","\"null\"","0","Integer.MAX_VALUE","Integer.MIN_VALUE","0.0","Double.NaN","Double.POSITIVE_INFINITY","[]","[null]","true","false"]}}
       ],
@@ -723,19 +705,17 @@
       "tags":{},"see":[],"extraInfo":["\n            Projections should handle various edge cases gracefully:\n            - Empty strings and collections\n            - Boundary values\n            - Special floating point values\n            - Identity projections\n        "]
       },
       "blocks":[
-        {"kind":"given","text":"Source property with edge case value","code":["var source = Var.ofNullable(Object.class, testValue)"]},
+        {"kind":"given","text":"A non-nullable and a nullable source property, both holding the edge case value","code":["var source         = Var.of(testValue)","var nullableSource = Var.ofNullable(Object.class, testValue)"]},
 
-        {"kind":"and","text":"Identity projection (value unchanged)","code":["var identity = source.projectTo(","    { it -> it },","    { it -> it }",")"]},
+        {"kind":"and","text":"A null-safe identity projection over the non-nullable source","code":["var identity = source.projectTo(","    { it -> it },","    { it -> it }",")"]},
 
-        {"kind":"and","text":"Nullable identity projection","code":["var nullableIdentity = source.projectToNullable(","    Object.class,","    { it -> it },","    { it -> it }",")"]},
+        {"kind":"and","text":"A nullable identity projection over the nullable source","code":["var nullableIdentity = nullableSource.projectToNullable(","    Object.class,","    { it -> it },","    { it -> it }",")"]},
 
-        {"kind":"expect","text":"Identity projection preserves value","code":["identity.orElseNull() == testValue"]},
+        {"kind":"expect","text":"Both projections initially preserve the value","code":["identity.orElseNull() == testValue","nullableIdentity.orElseNull() == testValue"]},
 
-        {"kind":"and","text":"Nullable identity projection preserves value","code":["nullableIdentity.orElseNull() == testValue"]},
+        {"kind":"when","text":"The nullable source is set to null","code":["nullableSource.set(null)"]},
 
-        {"kind":"when","text":"Source is set to null","code":["source.set(null)"]},
-
-        {"kind":"then","text":"Projections reflect null","code":["identity.orElseNull() == null","nullableIdentity.orElseNull() == null"]},
+        {"kind":"then","text":"The nullable projection reflects null","code":["nullableIdentity.orElseNull() == null"]},
 
         {"kind":"where","text":"","code":{"typeName":["'String'","'String'","'String'","'Integer'","'Integer'","'Integer'","'Double'","'Double'","'Double'","'List'","'List'","'Boolean'","'Boolean'"],"nullObject":["\"\"","\"\"","\"\"","0","0","0","0.0","0.0","0.0","[]","[]","false","false"],"testValue":["\"\"","\" \"","\"null\"","0","Integer.MAX_VALUE","Integer.MIN_VALUE","0.0","Double.NaN","Double.POSITIVE_INFINITY","[]","[null]","true","false"]}}
       ],
@@ -750,19 +730,17 @@
       "tags":{},"see":[],"extraInfo":["\n            Projections should handle various edge cases gracefully:\n            - Empty strings and collections\n            - Boundary values\n            - Special floating point values\n            - Identity projections\n        "]
       },
       "blocks":[
-        {"kind":"given","text":"Source property with edge case value","code":["var source = Var.ofNullable(Object.class, testValue)"]},
+        {"kind":"given","text":"A non-nullable and a nullable source property, both holding the edge case value","code":["var source         = Var.of(testValue)","var nullableSource = Var.ofNullable(Object.class, testValue)"]},
 
-        {"kind":"and","text":"Identity projection (value unchanged)","code":["var identity = source.projectTo(","    { it -> it },","    { it -> it }",")"]},
+        {"kind":"and","text":"A null-safe identity projection over the non-nullable source","code":["var identity = source.projectTo(","    { it -> it },","    { it -> it }",")"]},
 
-        {"kind":"and","text":"Nullable identity projection","code":["var nullableIdentity = source.projectToNullable(","    Object.class,","    { it -> it },","    { it -> it }",")"]},
+        {"kind":"and","text":"A nullable identity projection over the nullable source","code":["var nullableIdentity = nullableSource.projectToNullable(","    Object.class,","    { it -> it },","    { it -> it }",")"]},
 
-        {"kind":"expect","text":"Identity projection preserves value","code":["identity.orElseNull() == testValue"]},
+        {"kind":"expect","text":"Both projections initially preserve the value","code":["identity.orElseNull() == testValue","nullableIdentity.orElseNull() == testValue"]},
 
-        {"kind":"and","text":"Nullable identity projection preserves value","code":["nullableIdentity.orElseNull() == testValue"]},
+        {"kind":"when","text":"The nullable source is set to null","code":["nullableSource.set(null)"]},
 
-        {"kind":"when","text":"Source is set to null","code":["source.set(null)"]},
-
-        {"kind":"then","text":"Projections reflect null","code":["identity.orElseNull() == null","nullableIdentity.orElseNull() == null"]},
+        {"kind":"then","text":"The nullable projection reflects null","code":["nullableIdentity.orElseNull() == null"]},
 
         {"kind":"where","text":"","code":{"typeName":["'String'","'String'","'String'","'Integer'","'Integer'","'Integer'","'Double'","'Double'","'Double'","'List'","'List'","'Boolean'","'Boolean'"],"nullObject":["\"\"","\"\"","\"\"","0","0","0","0.0","0.0","0.0","[]","[]","false","false"],"testValue":["\"\"","\" \"","\"null\"","0","Integer.MAX_VALUE","Integer.MIN_VALUE","0.0","Double.NaN","Double.POSITIVE_INFINITY","[]","[null]","true","false"]}}
       ],
@@ -777,19 +755,17 @@
       "tags":{},"see":[],"extraInfo":["\n            Projections should handle various edge cases gracefully:\n            - Empty strings and collections\n            - Boundary values\n            - Special floating point values\n            - Identity projections\n        "]
       },
       "blocks":[
-        {"kind":"given","text":"Source property with edge case value","code":["var source = Var.ofNullable(Object.class, testValue)"]},
+        {"kind":"given","text":"A non-nullable and a nullable source property, both holding the edge case value","code":["var source         = Var.of(testValue)","var nullableSource = Var.ofNullable(Object.class, testValue)"]},
 
-        {"kind":"and","text":"Identity projection (value unchanged)","code":["var identity = source.projectTo(","    { it -> it },","    { it -> it }",")"]},
+        {"kind":"and","text":"A null-safe identity projection over the non-nullable source","code":["var identity = source.projectTo(","    { it -> it },","    { it -> it }",")"]},
 
-        {"kind":"and","text":"Nullable identity projection","code":["var nullableIdentity = source.projectToNullable(","    Object.class,","    { it -> it },","    { it -> it }",")"]},
+        {"kind":"and","text":"A nullable identity projection over the nullable source","code":["var nullableIdentity = nullableSource.projectToNullable(","    Object.class,","    { it -> it },","    { it -> it }",")"]},
 
-        {"kind":"expect","text":"Identity projection preserves value","code":["identity.orElseNull() == testValue"]},
+        {"kind":"expect","text":"Both projections initially preserve the value","code":["identity.orElseNull() == testValue","nullableIdentity.orElseNull() == testValue"]},
 
-        {"kind":"and","text":"Nullable identity projection preserves value","code":["nullableIdentity.orElseNull() == testValue"]},
+        {"kind":"when","text":"The nullable source is set to null","code":["nullableSource.set(null)"]},
 
-        {"kind":"when","text":"Source is set to null","code":["source.set(null)"]},
-
-        {"kind":"then","text":"Projections reflect null","code":["identity.orElseNull() == null","nullableIdentity.orElseNull() == null"]},
+        {"kind":"then","text":"The nullable projection reflects null","code":["nullableIdentity.orElseNull() == null"]},
 
         {"kind":"where","text":"","code":{"typeName":["'String'","'String'","'String'","'Integer'","'Integer'","'Integer'","'Double'","'Double'","'Double'","'List'","'List'","'Boolean'","'Boolean'"],"nullObject":["\"\"","\"\"","\"\"","0","0","0","0.0","0.0","0.0","[]","[]","false","false"],"testValue":["\"\"","\" \"","\"null\"","0","Integer.MAX_VALUE","Integer.MIN_VALUE","0.0","Double.NaN","Double.POSITIVE_INFINITY","[]","[null]","true","false"]}}
       ],
@@ -804,21 +780,38 @@
       "tags":{},"see":[],"extraInfo":["\n            Projections should handle various edge cases gracefully:\n            - Empty strings and collections\n            - Boundary values\n            - Special floating point values\n            - Identity projections\n        "]
       },
       "blocks":[
-        {"kind":"given","text":"Source property with edge case value","code":["var source = Var.ofNullable(Object.class, testValue)"]},
+        {"kind":"given","text":"A non-nullable and a nullable source property, both holding the edge case value","code":["var source         = Var.of(testValue)","var nullableSource = Var.ofNullable(Object.class, testValue)"]},
 
-        {"kind":"and","text":"Identity projection (value unchanged)","code":["var identity = source.projectTo(","    { it -> it },","    { it -> it }",")"]},
+        {"kind":"and","text":"A null-safe identity projection over the non-nullable source","code":["var identity = source.projectTo(","    { it -> it },","    { it -> it }",")"]},
 
-        {"kind":"and","text":"Nullable identity projection","code":["var nullableIdentity = source.projectToNullable(","    Object.class,","    { it -> it },","    { it -> it }",")"]},
+        {"kind":"and","text":"A nullable identity projection over the nullable source","code":["var nullableIdentity = nullableSource.projectToNullable(","    Object.class,","    { it -> it },","    { it -> it }",")"]},
 
-        {"kind":"expect","text":"Identity projection preserves value","code":["identity.orElseNull() == testValue"]},
+        {"kind":"expect","text":"Both projections initially preserve the value","code":["identity.orElseNull() == testValue","nullableIdentity.orElseNull() == testValue"]},
 
-        {"kind":"and","text":"Nullable identity projection preserves value","code":["nullableIdentity.orElseNull() == testValue"]},
+        {"kind":"when","text":"The nullable source is set to null","code":["nullableSource.set(null)"]},
 
-        {"kind":"when","text":"Source is set to null","code":["source.set(null)"]},
-
-        {"kind":"then","text":"Projections reflect null","code":["identity.orElseNull() == null","nullableIdentity.orElseNull() == null"]},
+        {"kind":"then","text":"The nullable projection reflects null","code":["nullableIdentity.orElseNull() == null"]},
 
         {"kind":"where","text":"","code":{"typeName":["'String'","'String'","'String'","'Integer'","'Integer'","'Integer'","'Double'","'Double'","'Double'","'List'","'List'","'Boolean'","'Boolean'"],"nullObject":["\"\"","\"\"","\"\"","0","0","0","0.0","0.0","0.0","[]","[]","false","false"],"testValue":["\"\"","\" \"","\"null\"","0","Integer.MAX_VALUE","Integer.MIN_VALUE","0.0","Double.NaN","Double.POSITIVE_INFINITY","[]","[null]","true","false"]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A plain `projectTo` projection is null-safe and refuses a nullable source property.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Just like a plain `zoomTo` lens, a plain `projectTo` projection is null-safe\n            and therefore refuses to be derived from a nullable source. Use\n            `projectToNullable(..)` for a nullable projection, or a projection with a\n            null object, if the source may be empty.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A non-nullable and a nullable source property","code":["var nonNullSource  = Var.of(\"hi\")","var nullableSource = Var.ofNullable(String.class, \"hi\")"]},
+
+        {"kind":"expect","text":"A plain projection over the non-nullable source is itself null-safe","code":["!nonNullSource.projectTo({ it -> it }, { it -> it }).allowsNull()"]},
+
+        {"kind":"when","text":"We try to derive a plain projection from the nullable source","code":["nullableSource.projectTo({ it -> it }, { it -> it })"]},
+
+        {"kind":"then","text":"The projection is rejected with a message naming the nullable alternative","code":["var e = thrown(IllegalArgumentException)","e.message.contains(\"projectToNullable\")"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },

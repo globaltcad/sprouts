@@ -4,7 +4,7 @@
   "narrative":"A **parameterized projection lens** is a bidirectional mapping between a mutable\n    source property of type `A` and a target type `B`, where the projection itself is\n    shaped by a **read-only `Val` parameter** of type `P`. In the optics literature this\n    is also called an *indexed lens* or a *dependent lens*: the \"view\" you get depends\n    on an extra value that travels alongside the lens.\n\n    Think of the parameter as the *perspective* or *context* through which the source\n    is observed. A temperature in Celsius, viewed through the parameter \"Fahrenheit\",\n    becomes a Fahrenheit number. The same temperature, viewed through \"Kelvin\", becomes\n    something else. Writes through the projected view are inverted back to the source,\n    but the parameter itself is **never modified** — it is strictly an input.\n\n    This is different from the dual-source projection (`Var.of(first, second, getter, setter)`)\n    where both sources are mutable and both receive write-back. A parameterized projection\n    has one mutable source and one read-only parameter; writes flow to the source only.\n\n    There are four factory variants for creating a parameterized projection:\n\n    1. `source.projectTo(parameter, getter, setter)` — Non-nullable, type inferred\n    2. `source.projectTo(Class, parameter, getter, setter)` — Non-nullable, explicit type\n    3. `source.projectTo(nullObject, parameter, getter, setter)` — Non-nullable with fallback\n    4. `source.projectToNullable(Class, parameter, getter, setter)` — Nullable\n\n    This specification illustrates the feature through a parade of creative little\n    scenarios — math, geography, ethics, animals — and verifies the full contract:\n    forward and backward propagation, parameter-driven re-projection, identity flags,\n    string representation, listener lifecycle, memory safety, and error handling.",
   "subjects":["sprouts.impl.PropertyLens","sprouts.Var","sprouts.Val"],
   "statistics":{
-    "runs":"28",
+    "runs":"29",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -268,6 +268,37 @@
         {"kind":"given","text":"","code":["var src = Var.of(1)","var par = Var.of(1)","var nonNull      = src.projectTo(par, (Integer p, Integer x) -> x + p, (Integer v, Integer p) -> v - p)","var withFallback = src.projectTo(0, par, (Integer p, Integer x) -> x + p, (Integer v, Integer p) -> v - p)","var nullable     = src.projectToNullable(Integer.class, par, (Integer p, Integer x) -> x + p, (Integer v, Integer p) -> v - p)"]},
 
         {"kind":"expect","text":"","code":["!nonNull.allowsNull()","!withFallback.allowsNull()","nullable.allowsNull()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A plain parameterized `projectTo` is null-safe and refuses a nullable source property.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A plain parameterized projection (no null object) is null-safe, exactly like a\n            plain `zoomTo` lens or a plain `projectTo` projection. So when it is *derived*\n            from a nullable source it fails fast, naming the null-aware alternatives, rather\n            than letting null quietly leak into a supposedly non-null property later on.\n\n            The read-only *parameter* is not subject to this rule: it may be nullable and is\n            handed straight to the getter, which decides how to treat a null parameter. Only\n            the *source* — the property actually being projected — must be non-nullable.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A non-nullable source, a nullable source and a (here nullable) parameter.","code":["var nonNullSource  = Var.of(10)","var nullableSource = Var.ofNullable(Integer.class, 10)","var parameter      = Var.ofNullable(Integer.class, 2)"]},
+
+        {"kind":"and","text":"A null-safe projection over the non-nullable source, whose getter tolerates a null parameter.","code":["var scaled = nonNullSource.projectTo(parameter,","        (Integer p, Integer x) -> x * (p == null ? 1 : p),","        (Integer v, Integer p) -> v)"]},
+
+        {"kind":"expect","text":"The projection is null-safe and initially applies the parameter.","code":["!scaled.allowsNull()","scaled.get() == 20"]},
+
+        {"kind":"when","text":"We set the read-only parameter to null...","code":["parameter.set(null)"]},
+
+        {"kind":"then","text":"...the projection recomputes through the getter with a null parameter, and remains non-null.","code":["!scaled.allowsNull()","scaled.get() == 10"]},
+
+        {"kind":"when","text":"We derive a plain parameterized projection from the nullable source instead...","code":["nullableSource.projectTo(parameter,","        (Integer p, Integer x) -> x * (p == null ? 1 : p),","        (Integer v, Integer p) -> v)"]},
+
+        {"kind":"then","text":"...it is rejected, pointing at the nullable alternative.","code":["var e = thrown(IllegalArgumentException)","e.message.contains(\"projectToNullable\")"]},
+
+        {"kind":"when","text":"The same is attempted through the explicitly typed overload...","code":["nullableSource.projectTo(Integer.class, parameter,","        (Integer p, Integer x) -> x,","        (Integer v, Integer p) -> v)"]},
+
+        {"kind":"then","text":"...it is rejected in the same way.","code":["thrown(IllegalArgumentException)"]},
+
+        {"kind":"and","text":"The null-object and nullable variants still accept the nullable source.","code":["!nullableSource.projectTo(0, parameter, (Integer p, Integer x) -> x, (Integer v, Integer p) -> v).allowsNull()","nullableSource.projectToNullable(Integer.class, parameter, (Integer p, Integer x) -> x, (Integer v, Integer p) -> v).allowsNull()"]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
