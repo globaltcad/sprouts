@@ -1054,33 +1054,31 @@ class Property_Projection_Lenses_Spec extends Specification {
             - Special floating point values
             - Identity projections
         """
-        given: 'Source property with edge case value'
-            var source = Var.ofNullable(Object.class, testValue)
+        given: 'A non-nullable and a nullable source property, both holding the edge case value'
+            var source         = Var.of(testValue)
+            var nullableSource = Var.ofNullable(Object.class, testValue)
 
-        and: 'Identity projection (value unchanged)'
+        and: 'A null-safe identity projection over the non-nullable source'
             var identity = source.projectTo(
                 { it -> it },
                 { it -> it }
             )
 
-        and: 'Nullable identity projection'
-            var nullableIdentity = source.projectToNullable(
+        and: 'A nullable identity projection over the nullable source'
+            var nullableIdentity = nullableSource.projectToNullable(
                 Object.class,
                 { it -> it },
                 { it -> it }
             )
 
-        expect: 'Identity projection preserves value'
+        expect: 'Both projections initially preserve the value'
             identity.orElseNull() == testValue
-
-        and: 'Nullable identity projection preserves value'
             nullableIdentity.orElseNull() == testValue
 
-        when: 'Source is set to null'
-            source.set(null)
+        when: 'The nullable source is set to null'
+            nullableSource.set(null)
 
-        then: 'Projections reflect null'
-            identity.orElseNull() == null
+        then: 'The nullable projection reflects null'
             nullableIdentity.orElseNull() == null
 
         where:
@@ -1098,6 +1096,27 @@ class Property_Projection_Lenses_Spec extends Specification {
             'List'        | []         | [null]
             'Boolean'     | false      | true
             'Boolean'     | false      | false
+    }
+
+    def 'A plain `projectTo` projection is null-safe and refuses a nullable source property.'() {
+        reportInfo """
+            Just like a plain `zoomTo` lens, a plain `projectTo` projection is null-safe
+            and therefore refuses to be derived from a nullable source. Use
+            `projectToNullable(..)` for a nullable projection, or a projection with a
+            null object, if the source may be empty.
+        """
+        given: 'A non-nullable and a nullable source property'
+            var nonNullSource  = Var.of("hi")
+            var nullableSource = Var.ofNullable(String.class, "hi")
+
+        expect: 'A plain projection over the non-nullable source is itself null-safe'
+            !nonNullSource.projectTo({ it -> it }, { it -> it }).allowsNull()
+
+        when: 'We try to derive a plain projection from the nullable source'
+            nullableSource.projectTo({ it -> it }, { it -> it })
+        then: 'The projection is rejected with a message naming the nullable alternative'
+            var e = thrown(IllegalArgumentException)
+            e.message.contains("projectToNullable")
     }
 
     def 'Projection with null object maintains stability under concurrent access patterns.'() {

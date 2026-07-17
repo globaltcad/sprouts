@@ -875,6 +875,199 @@ class Property_Lenses_Spec extends Specification
             firstNameLens.get() == defaultFirstName
     }
 
+    def 'A plain `zoomTo` lens is null-safe and refuses to be derived from a nullable parent.'()
+    {
+        reportInfo """
+            The plain `zoomTo` methods (without a null object) create null-safe lenses:
+            the resulting property promises `allowsNull() == false`. A lens cannot keep
+            that promise while its parent is null, because a null parent has no field to
+            focus on. Rather than let null quietly leak into a supposedly non-null
+            property, `zoomTo` fails fast when it is derived from a nullable parent, and
+            it names the two null-aware alternatives in the error message:
+            `zoomToNullable(..)` for a nullable lens, or `zoomTo(nullObject, ..)` for a
+            null object fallback.
+        """
+        given : 'A non-nullable as well as a nullable `Member` based property.'
+            var member = new Member("1", "Marry", "Sue", MembershipLevel.SILVER, LocalDate.of(2021, 3, 4), null)
+            var plainParent = Var.of(member)
+            var nullableParent = Var.ofNullable(Member.class, member)
+        expect : 'Lenses derived from the non-nullable parent are themselves null-safe.'
+            !plainParent.zoomTo(Member::firstName, Member::withFirstName).allowsNull()
+            !plainParent.zoomTo(String.class, Member::firstName, Member::withFirstName).allowsNull()
+            !plainParent.zoomTo(String.class, Lens.of(Member::firstName, Member::withFirstName)).allowsNull()
+
+        when : 'We try to derive a plain lens from the nullable parent instead...'
+            nullableParent.zoomTo(Member::firstName, Member::withFirstName)
+        then : '...it is rejected, pointing us at the null-aware alternatives.'
+            var e = thrown(IllegalArgumentException)
+            e.message.contains("zoomToNullable")
+            e.message.contains("zoomTo(nullObject")
+
+        and : 'The same holds for the typed and `Lens` based plain overloads.'
+            [
+                { nullableParent.zoomTo(String.class, Member::firstName, Member::withFirstName) },
+                { nullableParent.zoomTo(String.class, Lens.of(Member::firstName, Member::withFirstName)) }
+            ].every { closure ->
+                try { closure(); false }
+                catch (IllegalArgumentException ignored) { true }
+            }
+    }
+
+    def 'The null-aware alternatives to a plain `zoomTo` lens accept a nullable parent.'()
+    {
+        reportInfo """
+            Where a plain `zoomTo` lens refuses a nullable parent, the two null-aware
+            alternatives embrace it: `zoomToNullable(..)` yields a lens that is itself
+            nullable, while `zoomTo(nullObject, ..)` yields a null-safe lens that
+            substitutes the null object whenever the parent (or the focused field) is null.
+        """
+        given : 'A nullable Author property which is currently empty.'
+            var authorProperty = Var.ofNullable(Author.class, null)
+        when : 'We create a nullable lens and a null-object lens focusing on the first name.'
+            var nullableName = authorProperty.zoomToNullable(String.class, Author::firstName, Author::withFirstName)
+            var safeName     = authorProperty.zoomTo("<unknown>", Author::firstName, Author::withFirstName)
+        then : 'Both can be created, and each models the missing parent in its own way.'
+            noExceptionThrown()
+            nullableName.allowsNull()
+            nullableName.orElseNull() == null
+            !safeName.allowsNull()
+            safeName.get() == "<unknown>"
+
+        when : 'The parent property receives an actual author.'
+            authorProperty.set(new Author("Herman", "Melville", LocalDate.of(1819, 8, 1), ["Moby-Dick"]))
+        then : 'Both lenses pick up the first name.'
+            nullableName.get() == "Herman"
+            safeName.get() == "Herman"
+
+        when : 'The parent property becomes empty again.'
+            authorProperty.set(null)
+        then : 'The nullable lens goes null, while the null-object lens falls back to its null object.'
+            nullableName.orElseNull() == null
+            safeName.get() == "<unknown>"
+    }
+
+    def 'A non-nullable lens degrades gracefully when the focused field becomes null during event propagation.'()
+    {
+        reportInfo """
+            Fail-fast on null applies when a property is *derived* from another one.
+            Once the reactive data structure is live and events are propagating through
+            it, however, throwing would only be swallowed by the change-listener dispatch
+            and could leave views permanently stale. So at propagation time the library
+            switches strategy: a non-nullable lens whose focused field becomes null keeps
+            its last known item and logs the anomaly, mirroring the degradation already
+            used for a throwing lens getter. It thereby never exposes an illegal null and
+            never lets its views desynchronize.
+        """
+        given : 'A non-nullable Author property, a lens on the first name and a view of the lens.'
+            var author = new Author("John", "Doe", LocalDate.of(1829, 8, 12), ["Book1", "Book2"])
+            var authorProperty = Var.of(author)
+            var firstName = authorProperty.zoomTo(Author::firstName, Author::withFirstName)
+            var view = firstName.view()
+        expect : 'The lens is null-safe, as its parent is.'
+            !firstName.allowsNull()
+
+        when : 'The focused field becomes null through an update of the parent.'
+            authorProperty.set(author.withFirstName(null))
+        then : 'The lens keeps its last known item instead of exposing an illegal null item.'
+            firstName.orElseNull() == "John"
+        and : 'The view of the lens stays in sync with the lens and does not go stale.'
+            view.orElseNull() == "John"
+
+        when : 'The focused field becomes non-null again.'
+            authorProperty.set(author.withFirstName("Jane"))
+        then : 'The lens and its view recover and are fully functional again.'
+            firstName.get() == "Jane"
+            view.get() == "Jane"
+    }
+
+    def 'A lens with a null object uses it when the focused field itself is null, not just the parent.'()
+    {
+        reportInfo """
+            The null object of a `zoomTo(nullObject, ...)` lens stands in for the focused
+            field whenever no actual field value is available. This is not only the case
+            when the parent property is empty, but also when the parent item exists
+            and its focused field happens to be null.
+        """
+        given : 'A Book without an author, held by a non-nullable property.'
+            var book = new Book("Dune", null, Genre.SCIENCE, LocalDate.of(1965, 8, 1), 412)
+            var bookProperty = Var.of(book)
+        and : 'A placeholder author serving as the null object.'
+            var unknownAuthor = new Author("Unknown", "Unknown", LocalDate.of(1970, 1, 1), [])
+        when : 'We create a null object based lens focusing on the author of the book.'
+            var authorLens = bookProperty.zoomTo(unknownAuthor, Book::author, Book::withAuthor)
+        then : 'The lens can be created and presents the null object instead of the missing author.'
+            noExceptionThrown()
+            !authorLens.allowsNull()
+            authorLens.get() == unknownAuthor
+
+        when : 'The book receives an actual author.'
+            var frank = new Author("Frank", "Herbert", LocalDate.of(1920, 10, 8), ["Dune"])
+            bookProperty.set(book.withAuthor(frank))
+        then : 'The lens presents the actual author.'
+            authorLens.get() == frank
+
+        when : 'The author of the book is removed again.'
+            bookProperty.set(book.withAuthor(null))
+        then : 'The lens falls back to the null object instead of exposing an illegal null item.'
+            authorLens.get() == unknownAuthor
+
+        and : 'The typed variant of the null object lens behaves in the exact same way.'
+            bookProperty.zoomTo(Author.class, unknownAuthor, Lens.of(Book::author, Book::withAuthor)).get() == unknownAuthor
+    }
+
+    def 'Lens null handling follows a two-phase contract: fail fast when deriving, degrade when propagating.'()
+    {
+        reportInfo """
+            Sprouts treats a `null` differently depending on *when* it appears, and this
+            specification captures that principle as a whole so the intent is unmistakable:
+
+            **Phase 1 — deriving a property (building the reactive graph).**
+            When you call `zoomTo(..)` you are wiring up a new node in your reactive data
+            structure. This is the moment to be strict, because getting nullability wrong
+            here poisons everything downstream. A plain `zoomTo(..)` is null-safe, so if it
+            is handed a nullable parent — a situation in which it could not honour that
+            promise — it throws immediately, at the call site, where the mistake is and
+            where the stack trace is useful. You then reach for the tool that matches your
+            intent: `zoomToNullable(..)` or `zoomTo(nullObject, ..)`.
+
+            **Phase 2 — propagating an event (the graph is live).**
+            Once the graph is built and change events are flowing through it, throwing is
+            the wrong move: an exception raised inside a change listener is swallowed by the
+            dispatch machinery and, worse, can leave dependent views frozen on a stale value.
+            So here the library degrades instead: a null-safe lens whose focused field turns
+            null keeps its last known item and logs the anomaly, preserving both its own
+            null contract and the consistency of every view derived from it.
+
+            The two phases below are demonstrated on the very same lens.
+        """
+        given : 'A non-nullable parent, a null-safe lens on a field and a view of that lens.'
+            var author = new Author("John", "Doe", LocalDate.of(1829, 8, 12), ["Book1", "Book2"])
+            var authorProperty = Var.of(author)
+            var firstName = authorProperty.zoomTo(Author::firstName, Author::withFirstName)
+            var view = firstName.view()
+
+        expect : 'Phase 1: the derived lens is null-safe.'
+            !firstName.allowsNull()
+            !view.allowsNull()
+
+        when : 'Phase 1: we try to derive a plain lens from a nullable parent.'
+            Var.ofNullable(Author.class, author).zoomTo(Author::firstName, Author::withFirstName)
+        then : 'It fails fast, right where the property is being derived.'
+            thrown(IllegalArgumentException)
+
+        when : 'Phase 2: an event drives the focused field of the live lens to null.'
+            authorProperty.set(author.withFirstName(null))
+        then : 'The lens does not throw and does not leak null; it keeps its last item, and the view stays in sync.'
+            firstName.orElseNull() == "John"
+            view.orElseNull() == "John"
+
+        when : 'Phase 2: a later event supplies a valid value again.'
+            authorProperty.set(author.withFirstName("Jane"))
+        then : 'The lens and its view recover.'
+            firstName.get() == "Jane"
+            view.get() == "Jane"
+    }
+
     def 'The lenses of a property are garbage collected when no longer referenced strongly.'()
     {
         reportInfo """
@@ -1688,21 +1881,35 @@ class Property_Lenses_Spec extends Specification
                 ]
     }
 
-    def 'The nullable lens of a nullable property handles `null` values gracefully.'() {
-        given :
+    def 'The null-aware lenses of a nullable property handle `null` values gracefully.'() {
+        reportInfo """
+            A nullable parent property may become empty at any time, so a lens focusing
+            into it must be told upfront how to cope with that. There are exactly two
+            null-aware tools for this, and this specification shows both side by side:
+
+            - `zoomToNullable(..)` produces a nullable lens that simply goes null when
+              the parent (or the focused field) is null.
+            - `zoomTo(nullObject, ..)` produces a null-safe lens that substitutes a
+              given null object instead.
+
+            The plain `zoomTo(..)` is deliberately *not* on this list: it is null-safe
+            and refuses a nullable parent outright (see the dedicated specification), so
+            that null can never sneak into a property the caller believes to be non-null.
+        """
+        given : 'A nullable `Member` property, plus a nullable lens and a null-object lens into it.'
             var member = new Member("24", "Eddie", "England", MembershipLevel.BASIC, LocalDate.of(2013, 2, 19), null)
             var memberProperty = Var.ofNullable(Member.class, member)
-            var level = memberProperty.zoomTo(Member::membershipLevel, Member::withMembershipLevel)
-            var date = memberProperty.zoomToNullable(LocalDate.class, Member::joinDate, Member::withJoinDate)
-            var name = memberProperty.zoomTo("", Member::firstName, Member::withFirstName)
-        expect :
+            var level = memberProperty.zoomToNullable(MembershipLevel.class, Member::membershipLevel, Member::withMembershipLevel)
+            var date  = memberProperty.zoomToNullable(LocalDate.class, Member::joinDate, Member::withJoinDate)
+            var name  = memberProperty.zoomTo("", Member::firstName, Member::withFirstName)
+        expect : 'While the parent is present, every lens reflects the focused field.'
             level.get() == MembershipLevel.BASIC
             date.get() == LocalDate.of(2013, 2, 19)
             name.get() == "Eddie"
 
-        when :
+        when : 'The parent property becomes empty.'
             memberProperty.set(null)
-        then :
+        then : 'The nullable lenses go null, while the null-object lens falls back to its null object.'
             level.orElseNull() == null
             date.orElseNull() == null
             name.get() == ""
