@@ -1,0 +1,118 @@
+{
+  "className":"sprouts.Observable_Properties_and_Events_Spec",
+  "title":"Observable Events and Properties",
+  "narrative":"The `sprouts.Observable` interface defines something that may be observed\n    through the registration of `Observer` implementations\n    which will be invoked by the `Observable` in case specific situations.\n\n    It is the super type of various sprout types, like for example the generic `Event`,\n    defining something that can be triggered so that the `Observer`s may be informed,\n    or the `Val` and `Var` properties, as well as the `Vals` and `Vars`\n    property list types, which also allow for the observation of state changes.\n\n    You can listen to all of these types\n    through the common `Observable` interface, hiding the implementation details\n    of what the exact source of the change was.",
+  "subjects":["sprouts.Val","sprouts.Var","sprouts.Vals","sprouts.Vars","sprouts.Observer","sprouts.Observable"],
+  "statistics":{
+    "runs":"4",
+    "successRate":"100.0%",
+    "failures":"0",
+    "errors":"0",
+    "skipped":"0",
+    "duration":"?"
+  },
+  "headers":[],"tags":{},"see":[],
+  "features":[ 
+    {
+      "id":"You can treat a property as an observable, and register `Observer` on it.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Note that the `Observer` will only be notified that something happened,\n            it will not be given information about what happened.\n            So no state is passed to the observer.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create a simple String property.","code":["var property = Var.of(\"Hello\")"]},
+
+        {"kind":"and","text":"We also view the property as an observable.","code":["Observable observable = property"]},
+
+        {"kind":"and","text":"Finally we make sure that we can track changes to the property.","code":["var observer = Mock(Observer)","observable.subscribe(observer)"]},
+
+        {"kind":"when","text":"We change the property.","code":["property.set(\"World\")"]},
+
+        {"kind":"then","text":"The listener is notified.","code":["1 * observer.invoke()"]},
+
+        {"kind":"when","text":"We unsubscribe the mocked listener from the property...","code":["observable.unsubscribe(observer)"]},
+
+        {"kind":"and","text":"...and change the property again.","code":["property.set(\"!\")"]},
+
+        {"kind":"then","text":"The listener is not notified.","code":["0 * observer.invoke()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Calling `fireChange(From.VIEW_MODEL)` method will also lead to `Observer` instances being notified.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Using the `fireSet` you not only trigger the regular change listeners,\n            but also the `Observer` instances registered through the `Observable` API.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create a simple String property.","code":["var property = Var.of(\"Hello\")"]},
+
+        {"kind":"and","text":"We also view the property as an observable.","code":["Observable observable = property"]},
+
+        {"kind":"and","text":"Finally we make sure that we can track changes to the property.","code":["var observables = Mock(Observer)","observable.subscribe(observables)"]},
+
+        {"kind":"when","text":"We change the property.","code":["property.fireChange(From.VIEW_MODEL)"]},
+
+        {"kind":"then","text":"The listener is notified.","code":["1 * observables.invoke()"]},
+
+        {"kind":"when","text":"We unsubscribe the mocked listener from the property...","code":["observable.unsubscribe(observables)"]},
+
+        {"kind":"and","text":"...and change the property again.","code":["property.fireChange(From.VIEW_MODEL)"]},
+
+        {"kind":"then","text":"The listener is not notified.","code":["0 * observables.invoke()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Mutating a property using `set(From.VIEW,..)` will not trigger `onChange(From.VIEW_MODEL,..)` observer to be called.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The enum instance `From.VIEW` is a `Channel` that is used to distinguish between\n            changes that are triggered by the view, and changes that are triggered by the view model.\n            Mutating a property through the view channel by calling `set(From.VIEW,..)` \n            will mutate the property just like the regular `set` method does,\n            with the only distinction that it triggers all `onChange(From.VIEW, ..)` observers\n            instead of the regular `onChange(From.VIEW_MODEL, ..)` observers.\n            This distinction exists to allow for a clear separation between events dispatched\n            from the UI and events dispatched from the model (the application logic).\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create a simple String property.","code":["var property = Var.of(\"Hello\")"]},
+
+        {"kind":"and","text":"We make sure that we can track changes to the property.","code":["var action = Mock(Action)","property.onChange(From.VIEW_MODEL, action)"]},
+
+        {"kind":"when","text":"We change the property.","code":["property.set(From.VIEW, \"World\")"]},
+
+        {"kind":"then","text":"The observer is not notified.","code":["0 * action.accept(Mock(ValDelegate))"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Property list objects (`Vals` and `Vars`) can also be treated as `Observable`.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `Vals` and `Vars` property list types are also `Observable` types.\n            This means that you can listen to any changes in the list through instances of \n            the `Observer` interface.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"We create a simple String property list.","code":["var list = Vars.of(\"Hello\", \"World\")"]},
+
+        {"kind":"and","text":"We also view the list as an observable.","code":["Observable observable = list"]},
+
+        {"kind":"and","text":"Finally we make sure that we can track changes to the list.","code":["var observer = Mock(Observer)","observable.subscribe(observer)"]},
+
+        {"kind":"when","text":"We change the list.","code":["list.add(\"!\")"]},
+
+        {"kind":"then","text":"The observer is notified.","code":["1 * observer.invoke()"]},
+
+        {"kind":"when","text":"We unsubscribe the mocked observer from the list...","code":["observable.unsubscribe(observer)"]},
+
+        {"kind":"and","text":"...and change the list again.","code":["list.add(\"!!\")"]},
+
+        {"kind":"then","text":"The observer is not notified, because it is no longer subscribed.","code":["0 * observer.invoke()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    }
+  
+  ],
+  "generator":"https://github.com/renatoathaydes/spock-reports"
+}

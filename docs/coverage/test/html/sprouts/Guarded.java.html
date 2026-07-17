@@ -1,0 +1,951 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Guarded.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sprouts</a> &gt; <a href="index.source.html" class="el_package">sprouts</a> &gt; <span class="el_source">Guarded.java</span></div><h1>Guarded.java</h1><pre class="source lang-java linenums">package sprouts;
+
+import org.jspecify.annotations.Nullable;
+import sprouts.impl.Sprouts;
+
+import java.lang.ref.WeakReference;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.BinaryOperator;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
+
+/**
+ * A mutable container that &lt;strong&gt;owns its lock&lt;/strong&gt;: the guarded value can only be
+ * read or written through methods that acquire the lock for you, so the lock can never be
+ * forgotten, leaked, or unbalanced.
+ *
+ * &lt;p&gt;{@code Guarded} is the blocking sibling of {@link java.util.concurrent.atomic.AtomicReference
+ * AtomicReference}. Both wrap a single value and offer functional update methods such as
+ * {@link #updateAndGet(UnaryOperator) updateAndGet}; the difference is the concurrency strategy:
+ *
+ * &lt;ul&gt;
+ *   &lt;li&gt;&lt;b&gt;{@code AtomicReference}&lt;/b&gt; is lock-free. Its update function may be
+ *       &lt;em&gt;re-applied several times&lt;/em&gt; under contention (compare-and-swap retry loop), so that
+ *       function must be cheap and side-effect-free.&lt;/li&gt;
+ *   &lt;li&gt;&lt;b&gt;{@code Guarded}&lt;/b&gt; takes a mutual-exclusion lock. Its update function runs
+ *       &lt;em&gt;exactly once&lt;/em&gt;, while every other writer waits. This is the right trade when the
+ *       update is &lt;em&gt;expensive&lt;/em&gt; (so you cannot afford to recompute it) or when you genuinely
+ *       want updates serialized.&lt;/li&gt;
+ * &lt;/ul&gt;
+ *
+ * &lt;p&gt;Inspired by Rust's {@code Mutex&lt;T&gt;}, where the lock owns the data rather than sitting beside
+ * it. Java cannot enforce that ownership at the type level, so the safety contract below is your
+ * responsibility instead of the compiler's.
+ *
+ * &lt;h2&gt;Two ways to use it&lt;/h2&gt;
+ *
+ * &lt;p&gt;&lt;b&gt;1. Immutable-swap mode (recommended).&lt;/b&gt; {@code V} is an immutable type (a {@code record},
+ * {@code String}, immutable collection, etc.). Each update produces a &lt;em&gt;new&lt;/em&gt; value that
+ * replaces the old reference. Nothing the value exposes can be mutated, so even a reference handed
+ * out by {@link #get()} stays safe.
+ * &lt;p&gt;
+ * &lt;pre&gt;{@code
+ * record Account(String owner, long cents) {
+ *     Account deposit(long c) { return new Account(owner, cents + c); }
+ * }
+ *
+ * Guarded&lt;Account&gt; account = Guarded.of(new Account(&quot;Ada&quot;, 0));
+ *
+ * // Runs exactly once under the lock, even if many threads call deposit concurrently:
+ * account.update(a -&gt; a.deposit(500));
+ *
+ * long balance = account.read(Account::cents);
+ *}&lt;/pre&gt;
+ *
+ * &lt;p&gt;Sprouts' own immutable containers are ideal payloads for this mode: {@link Tuple},
+ * {@link Association} and {@link ValueSet} all return a &lt;em&gt;new&lt;/em&gt; instance on every &quot;modification&quot;,
+ * so guarding one reduces to swapping the reference under the lock — no copying, no escape hazard.
+ * &lt;pre&gt;{@code
+ * Guarded&lt;Tuple&lt;Order&gt;&gt; orders = Guarded.of(Tuple.of(Order.class));
+ *
+ * orders.update(t -&gt; t.add(newOrder)); // swap in a new tuple, under the lock
+ * int count = orders.read(Tuple::size); // read a snapshot, under the lock
+ *}&lt;/pre&gt;
+ *
+ * &lt;p&gt;&lt;b&gt;2. Guarded-mutable mode.&lt;/b&gt; {@code V} is a mutable object (a {@code HashMap}, a builder,
+ * a primitive array...) that you never let escape. Touch it only via {@link #mutate(Consumer)} and
+ * {@link #read(Function)}, and never store the reference returned by {@link #get()}.
+ *
+ * &lt;pre&gt;{@code
+ * Guarded&lt;Map&lt;String, Integer&gt;&gt; counts = Guarded.of(new HashMap&lt;&gt;());
+ *
+ * counts.mutate(m -&gt; m.merge(&quot;hits&quot;, 1, Integer::sum));   // safe: mutated under the lock
+ * int hits = counts.read(m -&gt; m.getOrDefault(&quot;hits&quot;, 0)); // safe: read under the lock
+ *}&lt;/pre&gt;
+ *
+ * &lt;h2&gt;Observing changes from another thread&lt;/h2&gt;
+ *
+ * &lt;p&gt;A {@code Guarded} is written by many threads, but a {@link Var}/{@link Val} property is meant to be
+ * &lt;em&gt;owned by one&lt;/em&gt;: its change listeners fire synchronously on whatever thread calls
+ * {@code set(..)}. {@link #viewOn(Executor)} bridges the two. It returns a read-only {@link Viewable}
+ * whose value tracks this container, with every update delivered through the {@link Executor} you
+ * supply — so the property and all of its listeners run on &lt;em&gt;that executor's thread&lt;/em&gt;:
+ *
+ * &lt;pre&gt;{@code
+ * // 'ui' is a single-threaded executor — e.g. SwingUtilities::invokeLater wrapped as an Executor.
+ * Guarded&lt;Account&gt; account = Guarded.of(new Account(&quot;Ada&quot;, 0));
+ * Viewable&lt;Account&gt; view = account.viewOn(ui);
+ *
+ * view.onChange(From.ALL, it -&gt; label.setText(it.currentValue().orElseThrow().toString())); // runs on 'ui'
+ *
+ * // ...on any background thread:
+ * account.update(a -&gt; a.deposit(500)); // the view re-syncs on 'ui', firing the listener there
+ *}&lt;/pre&gt;
+ *
+ * &lt;p&gt;A single {@link #viewOn(Executor)} method covers every case: the view inherits this container's
+ * {@linkplain #type() type} and {@linkplain #allowsNull() null policy}, so a nullable {@code Guarded}
+ * produces a null-permitting view (viewable even while it currently holds {@code null}) and a non-null
+ * one produces a non-null view. To turn a nullable container into a &lt;em&gt;null-safe&lt;/em&gt; view, use
+ * {@link #viewOn(Executor, Object)} with a fallback value that stands in whenever the value is {@code null}.
+ *
+ * &lt;p&gt;This is the {@code Guarded} analogue of {@code observeOn(scheduler)} in Rx-style libraries, or a
+ * conflated {@code StateFlow} in Kotlin. Three rules make it safe — and it is dangerous if you ignore
+ * them, because misuse fails &lt;em&gt;silently&lt;/em&gt;:
+ * &lt;ul&gt;
+ *   &lt;li&gt;&lt;b&gt;The executor must be effectively single-threaded&lt;/b&gt; (a single-thread executor, a UI
+ *       dispatch loop, an actor mailbox...). It is what gives the property a well-defined owner thread;
+ *       a multi-threaded pool would fire the property concurrently and reintroduce the very races this
+ *       class exists to prevent. The type system cannot enforce this — it is on you.&lt;/li&gt;
+ *   &lt;li&gt;&lt;b&gt;{@code V} must be immutable.&lt;/b&gt; The view hands the value to another thread, so a mutable
+ *       {@code V} would escape the lock. This is exactly the immutable-swap mode above; do not combine
+ *       {@code viewOn} with {@link #mutate(Consumer)}.&lt;/li&gt;
+ *   &lt;li&gt;&lt;b&gt;Delivery is conflated (latest-wins).&lt;/b&gt; If writes outpace the executor, intermediate values
+ *       may be skipped; the view always converges to the most recent value rather than queuing every
+ *       step. Treat it as a live view of &lt;em&gt;current state&lt;/em&gt;, not an event log.&lt;/li&gt;
+ * &lt;/ul&gt;
+ *
+ * &lt;p&gt;The view is held &lt;em&gt;weakly&lt;/em&gt;: drop your reference to it and it (with its listeners) becomes
+ * eligible for collection and quietly stops receiving updates — no {@code unsubscribe} needed.
+ *
+ * &lt;h2&gt;Safety contract&lt;/h2&gt;
+ * &lt;ul&gt;
+ *   &lt;li&gt;&lt;b&gt;Do not let the value escape unguarded.&lt;/b&gt; If {@code V} is mutable, a reference
+ *       returned by {@link #get()} (or captured inside an updater) can be mutated outside the lock,
+ *       which silently defeats all protection. Prefer immutable {@code V}; otherwise treat
+ *       {@link #read(Function)} / {@link #mutate(Consumer)} as the only doors in.&lt;/li&gt;
+ *   &lt;li&gt;&lt;b&gt;Keep update/read/mutate functions self-contained.&lt;/b&gt; They run while the lock is held.
+ *       Calling into &lt;em&gt;another&lt;/em&gt; {@code Guarded} (or any other lock) from inside one
+ *       reintroduces classic lock-ordering deadlock risk. Re-entering &lt;em&gt;this same&lt;/em&gt; instance
+ *       is permitted (the underlying lock is reentrant) but is usually a sign to restructure.&lt;/li&gt;
+ *   &lt;li&gt;&lt;b&gt;Mind the hold time.&lt;/b&gt; The lock is held for the &lt;em&gt;entire duration&lt;/em&gt; of your
+ *       function. That is exactly what you want for one expensive, serialized computation, but
+ *       under heavy contention it serializes throughput. If many threads each need a long update,
+ *       consider funnelling the work onto a single-threaded executor instead.&lt;/li&gt;
+ * &lt;/ul&gt;
+ *
+ * &lt;h2&gt;Memory visibility&lt;/h2&gt;
+ * &lt;p&gt;Because &lt;em&gt;every&lt;/em&gt; access goes through the lock, the lock's happens-before guarantees make
+ * writes visible to subsequent readers automatically. The guarded field therefore needs no
+ * {@code volatile}. This holds &lt;em&gt;only&lt;/em&gt; as long as the &quot;no unguarded access&quot; rule above is
+ * respected.
+ *
+ * &lt;h2&gt;Nullability&lt;/h2&gt;
+ * &lt;p&gt;Exactly like {@link Var}, a {@code Guarded} chooses a &lt;em&gt;null policy&lt;/em&gt; at construction and
+ * &lt;strong&gt;enforces it at runtime&lt;/strong&gt;. A non-null container, created with {@link #of(Object)},
+ * rejects every attempt to store {@code null} with a {@link NullPointerException} and is therefore
+ * guaranteed to never hold {@code null}. A nullable container, created with
+ * {@link #ofNullable(Class, Object)} or {@link #ofNull(Class)}, permits {@code null}. The container
+ * also knows its own {@linkplain #type() type}, again like {@link Var}, and enforces it: any value
+ * whose class is not assignable to {@link #type()} is rejected with an {@link IllegalArgumentException}.
+ * Query the policy with {@link #allowsNull()}.
+ *
+ * &lt;p&gt;This class is thread-safe. It is intentionally not {@code Serializable} and does not override
+ * {@code equals}/{@code hashCode} (it has mutable identity, like {@code AtomicReference}).
+ *
+ * @param &lt;V&gt; the type of the guarded value; strongly recommended to be immutable
+ * @see java.util.concurrent.atomic.AtomicReference
+ * @see Tuple
+ * @see Association
+ * @see ValueSet
+ */
+public final class Guarded&lt;V extends @Nullable Object&gt; {
+
+<span class="fc" id="L175">    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(Guarded.class);</span>
+
+    private final ReentrantLock lock;
+
+    /** The declared type of the guarded value, mirroring {@link Var#type()}. Never {@code null}. */
+    private final Class&lt;V&gt; type;
+
+    /** Whether {@code null} is a permitted value, mirroring {@link Var#allowsNull()}. Enforced at runtime. */
+    private final boolean nullable;
+
+    /** The guarded value. All access is protected by {@link #lock}. */
+    private V value;
+
+    /**
+     * Live views created by {@link #viewOn(Executor)}, signalled after every mutation. Each entry holds
+     * its target property only weakly, so a dropped view self-prunes. Empty for the (common) case of a
+     * {@code Guarded} that is never observed, where iterating it costs nothing.
+     */
+<span class="fc" id="L193">    private final List&lt;View&lt;V&gt;&gt; views = new CopyOnWriteArrayList&lt;&gt;();</span>
+
+    // ---------------------------------------------------------------------
+    // Construction
+    // ---------------------------------------------------------------------
+
+<span class="fc" id="L199">    private Guarded(Class&lt;V&gt; type, boolean nullable, boolean fair, V initial) {</span>
+<span class="fc" id="L200">        this.type = Objects.requireNonNull(type, &quot;type&quot;);</span>
+<span class="fc" id="L201">        this.nullable = nullable;</span>
+<span class="fc" id="L202">        this.lock = new ReentrantLock(fair);</span>
+<span class="fc" id="L203">        this.value = _vet(initial); // enforces both the null policy and type assignability</span>
+<span class="fc" id="L204">    }</span>
+
+    /**
+     * Creates a &lt;b&gt;non-null&lt;/b&gt; {@code Guarded} holding {@code item}, with its {@linkplain #type() type}
+     * inferred from the item's runtime class. Like {@link Var#of(Object)}, the resulting container is
+     * guaranteed to never hold {@code null}: every attempt to store {@code null} is rejected at runtime.
+     *
+     * &lt;pre&gt;{@code
+     * Guarded&lt;Account&gt; account = Guarded.of(new Account(&quot;Ada&quot;, 0));
+     *}&lt;/pre&gt;
+     *
+     * @param item the initial value; must not be {@code null}
+     * @param &lt;V&gt;  the value type
+     * @return a new non-null {@code Guarded}
+     * @throws NullPointerException if {@code item} is {@code null}
+     * @see #of(Class, Object)
+     * @see #ofNullable(Class, Object)
+     */
+    public static &lt;V&gt; Guarded&lt;V&gt; of(V item) {
+<span class="fc" id="L223">        Objects.requireNonNull(item, &quot;item&quot;);</span>
+<span class="fc" id="L224">        Class&lt;V&gt; type = Sprouts.factory().expectedClassFromItem(item);</span>
+<span class="fc" id="L225">        return new Guarded&lt;&gt;(type, false, false, item);</span>
+    }
+
+    /**
+     * Like {@link #of(Object)}, but lets you choose the lock's &lt;em&gt;fairness&lt;/em&gt; policy.
+     *
+     * &lt;p&gt;&lt;b&gt;What &quot;fair&quot; means.&lt;/b&gt; When several threads are blocked waiting for the lock, a
+     * &lt;em&gt;fair&lt;/em&gt; lock grants it to the thread that has waited longest — first-in, first-out. A
+     * &lt;em&gt;non-fair&lt;/em&gt; lock makes no such promise: a fresh caller may &lt;em&gt;barge&lt;/em&gt; in and seize the
+     * lock the instant it is released, ahead of threads that were already queued. That barging is
+     * precisely what makes the non-fair lock faster (it avoids ping-ponging the CPU between threads),
+     * which is why it is the default.
+     *
+     * &lt;p&gt;&lt;b&gt;When you would want {@code fair == true}.&lt;/b&gt; Almost never. Reach for it only when
+     * &lt;em&gt;both&lt;/em&gt; of the following hold: the lock is under sustained heavy contention (threads are
+     * essentially always queued), &lt;em&gt;and&lt;/em&gt; you have measured — or must categorically rule out —
+     * &lt;em&gt;starvation&lt;/em&gt;, where one unlucky thread is repeatedly out-barged and waits far longer than
+     * the rest. As a concrete picture: a thread doing short updates in a tight loop can keep barging
+     * ahead of a thread that needs just one update to make progress, stalling it indefinitely; a fair
+     * lock bounds that wait, paying for it in throughput. Absent a measured problem, leave this
+     * {@code false}.
+     *
+     * @param item the initial value; must not be {@code null}
+     * @param fair {@code true} for a fair (FIFO) lock, {@code false} for the higher-throughput default
+     * @param &lt;V&gt;  the value type
+     * @return a new non-null {@code Guarded}
+     * @throws NullPointerException if {@code item} is {@code null}
+     */
+    public static &lt;V&gt; Guarded&lt;V&gt; of(V item, boolean fair) {
+<span class="fc" id="L254">        Objects.requireNonNull(item, &quot;item&quot;);</span>
+<span class="fc" id="L255">        Class&lt;V&gt; type = Sprouts.factory().expectedClassFromItem(item);</span>
+<span class="fc" id="L256">        return new Guarded&lt;&gt;(type, false, fair, item);</span>
+    }
+
+    /**
+     * Creates a &lt;b&gt;non-null&lt;/b&gt; {@code Guarded} holding {@code item}, with an explicit
+     * {@linkplain #type() type} — useful when you want the container typed as a supertype of the item.
+     * Mirrors {@link Var#of(Class, Object)}.
+     *
+     * @param type the (non-null) declared type of the value
+     * @param item the initial value; must not be {@code null}
+     * @param &lt;V&gt;  the declared value type
+     * @param &lt;U&gt;  the (sub)type of the initial item
+     * @return a new non-null {@code Guarded} of the given {@code type}
+     * @throws NullPointerException if {@code type} or {@code item} is {@code null}
+     */
+    public static &lt;V, U extends V&gt; Guarded&lt;V&gt; of(Class&lt;V&gt; type, U item) {
+<span class="fc" id="L272">        Objects.requireNonNull(type, &quot;type&quot;);</span>
+<span class="fc" id="L273">        Objects.requireNonNull(item, &quot;item&quot;);</span>
+<span class="fc" id="L274">        return new Guarded&lt;&gt;(type, false, false, item);</span>
+    }
+
+    /**
+     * Creates a &lt;b&gt;nullable&lt;/b&gt; {@code Guarded} of the given {@code type}, holding {@code item} (which
+     * may be {@code null}). Like {@link Var#ofNullable(Class, Object)}, this container permits {@code null}.
+     *
+     * @param type the (non-null) declared type of the value
+     * @param item the initial value, possibly {@code null}
+     * @param &lt;V&gt;  the value type
+     * @return a new null-permitting {@code Guarded}
+     * @throws NullPointerException if {@code type} is {@code null}
+     * @see #ofNull(Class)
+     */
+    public static &lt;V&gt; Guarded&lt;@Nullable V&gt; ofNullable(Class&lt;V&gt; type, @Nullable V item) {
+<span class="fc" id="L289">        Objects.requireNonNull(type, &quot;type&quot;);</span>
+<span class="fc" id="L290">        return new Guarded&lt;&gt;(type, true, false, Util.fakeNonNull(item));</span>
+    }
+
+    /**
+     * Like {@link #ofNullable(Class, Object)}, but lets you choose the lock's fairness policy. See
+     * {@link #of(Object, boolean)} for an explanation of fairness and when it is worth it.
+     *
+     * @param type the (non-null) declared type of the value
+     * @param item the initial value, possibly {@code null}
+     * @param fair {@code true} for a fair (FIFO) lock, {@code false} for the higher-throughput default
+     * @param &lt;V&gt;  the value type
+     * @return a new null-permitting {@code Guarded}
+     * @throws NullPointerException if {@code type} is {@code null}
+     */
+    public static &lt;V&gt; Guarded&lt;@Nullable V&gt; ofNullable(Class&lt;V&gt; type, @Nullable V item, boolean fair) {
+<span class="nc" id="L305">        Objects.requireNonNull(type, &quot;type&quot;);</span>
+<span class="nc" id="L306">        return new Guarded&lt;&gt;(type, true, fair, Util.fakeNonNull(item));</span>
+    }
+
+    /**
+     * Creates a &lt;b&gt;nullable&lt;/b&gt; {@code Guarded} of the given {@code type}, initially holding {@code null}.
+     * A concise equivalent of {@code Guarded.ofNullable(type, null)}, mirroring {@link Var#ofNull(Class)}.
+     *
+     * @param type the (non-null) declared type of the value
+     * @param &lt;V&gt;  the value type
+     * @return a new null-permitting {@code Guarded} holding {@code null}
+     * @throws NullPointerException if {@code type} is {@code null}
+     */
+    public static &lt;V&gt; Guarded&lt;@Nullable V&gt; ofNull(Class&lt;V&gt; type) {
+<span class="fc" id="L319">        return ofNullable(type, null);</span>
+    }
+
+    // ---------------------------------------------------------------------
+    // Type &amp; nullability (mirroring Var/Maybe)
+    // ---------------------------------------------------------------------
+
+    /**
+     * Returns the declared type of the guarded value, like {@link Var#type()}.
+     *
+     * @return the value's declared {@link Class}, never {@code null}
+     */
+    public Class&lt;V&gt; type() {
+<span class="fc" id="L332">        return type;</span>
+    }
+
+    /**
+     * Returns whether this container permits {@code null}, like {@link Var#allowsNull()}. When
+     * {@code false}, every attempt to store {@code null} is rejected at runtime with a
+     * {@link NullPointerException}, so the container is guaranteed to never hold {@code null}.
+     *
+     * @return {@code true} if {@code null} is a permitted value
+     */
+    public boolean allowsNull() {
+<span class="fc" id="L343">        return nullable;</span>
+    }
+
+    /**
+     * Enforces this container's invariants on a value about to be stored, mirroring {@link Var}: the
+     * {@linkplain #allowsNull() null policy}, and that a non-null value's class is assignable to the
+     * declared {@linkplain #type() type}. Returns the value unchanged, or throws.
+     *
+     * @throws NullPointerException     if {@code newValue} is {@code null} and this container is non-null
+     * @throws IllegalArgumentException if {@code newValue} is not assignable to {@link #type()}
+     */
+    private V _vet(V newValue) {
+<span class="fc bfc" id="L355" title="All 2 branches covered.">        if (newValue == null) {</span>
+<span class="fc bfc" id="L356" title="All 2 branches covered.">            if (!nullable) {</span>
+<span class="fc" id="L357">                throw new NullPointerException(</span>
+<span class="fc" id="L358">                    &quot;This Guarded (of type '&quot; + type.getSimpleName() + &quot;') does not permit null values. &quot; +</span>
+                    &quot;Use Guarded.ofNullable(Class, value) or Guarded.ofNull(Class) for a null-permitting container.&quot;);
+            }
+<span class="fc" id="L361">            return newValue;</span>
+        }
+<span class="fc bfc" id="L363" title="All 2 branches covered.">        if (!type.isAssignableFrom(newValue.getClass())) {</span>
+<span class="fc" id="L364">            throw new IllegalArgumentException(</span>
+<span class="fc" id="L365">                &quot;The supplied value of type '&quot; + newValue.getClass().getName() + &quot;' is not assignable to the &quot; +</span>
+<span class="fc" id="L366">                &quot;declared type '&quot; + type.getName() + &quot;' of this Guarded.&quot;);</span>
+        }
+<span class="fc" id="L368">        return newValue;</span>
+    }
+
+    // ---------------------------------------------------------------------
+    // Reads
+    // ---------------------------------------------------------------------
+
+    /**
+     * Returns the current value.
+     *
+     * &lt;p&gt;&lt;b&gt;Caution:&lt;/b&gt; only safe if {@code V} is immutable. If {@code V} is mutable, the returned
+     * reference can be touched outside the lock; use {@link #read(Function)} to derive what you need
+     * while the lock is held instead.
+     *
+     * @return the current value; {@code null} only when this container {@link #allowsNull()}
+     */
+    public V get() {
+<span class="fc" id="L385">        lock.lock();</span>
+        try {
+<span class="fc" id="L387">            return value;</span>
+        } finally {
+<span class="fc" id="L389">            lock.unlock();</span>
+        }
+    }
+
+    /**
+     * Applies {@code reader} to the current value while holding the lock and returns its result.
+     *
+     * &lt;p&gt;The safe way to look inside a mutable {@code V}: compute and return a snapshot
+     * (a count, a copy, a boolean) rather than exposing the live object.
+     *
+     * &lt;pre&gt;{@code
+     * boolean empty = locked.read(List::isEmpty);
+     * }&lt;/pre&gt;
+     *
+     * @param reader a function applied to the value under the lock; must not let the value escape
+     * @param &lt;R&gt;    the result type
+     * @return the result of {@code reader}
+     * @throws NullPointerException if {@code reader} is {@code null}
+     */
+    public &lt;R&gt; R read(Function&lt;? super V, ? extends R&gt; reader) {
+<span class="fc" id="L409">        Objects.requireNonNull(reader, &quot;reader&quot;);</span>
+<span class="fc" id="L410">        lock.lock();</span>
+        try {
+<span class="fc" id="L412">            return reader.apply(value);</span>
+        } finally {
+<span class="fc" id="L414">            lock.unlock();</span>
+        }
+    }
+
+    // ---------------------------------------------------------------------
+    // Writes
+    // ---------------------------------------------------------------------
+
+    /**
+     * Replaces the value.
+     *
+     * @param newValue the new value; may be {@code null} only if this container {@link #allowsNull()}
+     * @throws NullPointerException if {@code newValue} is {@code null} and this container is non-null
+     */
+    public void set(V newValue) {
+<span class="fc" id="L429">        lock.lock();</span>
+        try {
+<span class="fc" id="L431">            this.value = _vet(newValue);</span>
+        } finally {
+<span class="fc" id="L433">            lock.unlock();</span>
+        }
+<span class="fc" id="L435">        _notifyViews();</span>
+<span class="fc" id="L436">    }</span>
+
+    /**
+     * Replaces the value and returns the value that was present beforehand.
+     *
+     * @param newValue the new value; may be {@code null} only if this container {@link #allowsNull()}
+     * @return the previous value
+     * @throws NullPointerException if {@code newValue} is {@code null} and this container is non-null
+     */
+    public V getAndSet(V newValue) {
+        V prev;
+<span class="fc" id="L447">        lock.lock();</span>
+        try {
+<span class="fc" id="L449">            newValue = _vet(newValue);</span>
+<span class="fc" id="L450">            prev = this.value;</span>
+<span class="fc" id="L451">            this.value = newValue;</span>
+        } finally {
+<span class="fc" id="L453">            lock.unlock();</span>
+        }
+<span class="fc" id="L455">        _notifyViews();</span>
+<span class="fc" id="L456">        return prev;</span>
+    }
+
+    /**
+     * Sets the value to {@code newValue} if the current value equals {@code expectedValue}.
+     *
+     * &lt;p&gt;Comparison uses {@link Objects#equals(Object, Object)} (value equality), &lt;em&gt;not&lt;/em&gt;
+     * reference identity as {@code AtomicReference} does — which is usually what you want for
+     * records and other value types. Because the whole check-and-set happens under the lock, there
+     * is no ABA hazard.
+     *
+     * @param expectedValue the value the container must currently hold; may be {@code null} only if
+     *                      this container {@link #allowsNull()}
+     * @param newValue      the value to install if the expectation holds; may be {@code null} only if
+     *                      this container {@link #allowsNull()}
+     * @return {@code true} if the value was updated
+     * @throws NullPointerException if {@code newValue} is {@code null} and this container is non-null
+     */
+    public boolean compareAndSet(V expectedValue, V newValue) {
+        boolean changed;
+<span class="fc" id="L476">        lock.lock();</span>
+        try {
+<span class="fc" id="L478">            newValue = _vet(newValue);</span>
+<span class="fc" id="L479">            changed = Objects.equals(this.value, expectedValue);</span>
+<span class="fc bfc" id="L480" title="All 2 branches covered.">            if (changed) {</span>
+<span class="fc" id="L481">                this.value = newValue;</span>
+            }
+        } finally {
+<span class="fc" id="L484">            lock.unlock();</span>
+        }
+<span class="fc bfc" id="L486" title="All 2 branches covered.">        if (changed) {</span>
+<span class="fc" id="L487">            _notifyViews();</span>
+        }
+<span class="fc" id="L489">        return changed;</span>
+    }
+
+    // ---------------------------------------------------------------------
+    // Functional updates (the updater runs exactly once, under the lock)
+    // ---------------------------------------------------------------------
+
+    /**
+     * Applies {@code updater} to the current value and stores the result. Return value ignored;
+     * the readable, fire-and-forget form of {@link #updateAndGet(UnaryOperator)}.
+     *
+     * &lt;pre&gt;{@code
+     * counter.update(Counter::increment);
+     * }&lt;/pre&gt;
+     *
+     * @param updater computes the new value from the current value, run once under the lock
+     * @throws NullPointerException if {@code updater} is {@code null}
+     */
+    public void update(UnaryOperator&lt;V&gt; updater) {
+<span class="fc" id="L508">        updateAndGet(updater);</span>
+<span class="fc" id="L509">    }</span>
+
+    /**
+     * Applies {@code updater} to the current value, stores the result, and returns the new value.
+     *
+     * &lt;p&gt;Unlike {@link java.util.concurrent.atomic.AtomicReference#updateAndGet
+     * AtomicReference.updateAndGet}, {@code updater} is invoked &lt;strong&gt;exactly once&lt;/strong&gt; — it
+     * is never retried — so a long or otherwise expensive computation is fine here. The lock is
+     * held for the whole call.
+     *
+     * @param updater computes the new value from the current value, run once under the lock
+     * @return the new value
+     * @throws NullPointerException if {@code updater} is {@code null}
+     */
+    public V updateAndGet(UnaryOperator&lt;V&gt; updater) {
+<span class="fc" id="L524">        Objects.requireNonNull(updater, &quot;updater&quot;);</span>
+        V next;
+<span class="fc" id="L526">        lock.lock();</span>
+        try {
+<span class="fc" id="L528">            next = _vet(updater.apply(this.value));</span>
+<span class="fc" id="L529">            this.value = next;</span>
+        } finally {
+<span class="fc" id="L531">            lock.unlock();</span>
+        }
+<span class="fc" id="L533">        _notifyViews();</span>
+<span class="fc" id="L534">        return next;</span>
+    }
+
+    /**
+     * Applies {@code updater} to the current value, stores the result, and returns the
+     * &lt;em&gt;previous&lt;/em&gt; value. {@code updater} is invoked exactly once under the lock.
+     *
+     * @param updater computes the new value from the current value, run once under the lock
+     * @return the previous value
+     * @throws NullPointerException if {@code updater} is {@code null}
+     */
+    public V getAndUpdate(UnaryOperator&lt;V&gt; updater) {
+<span class="fc" id="L546">        Objects.requireNonNull(updater, &quot;updater&quot;);</span>
+        V prev;
+<span class="fc" id="L548">        lock.lock();</span>
+        try {
+<span class="fc" id="L550">            prev = this.value;</span>
+<span class="fc" id="L551">            this.value = _vet(updater.apply(prev));</span>
+        } finally {
+<span class="fc" id="L553">            lock.unlock();</span>
+        }
+<span class="fc" id="L555">        _notifyViews();</span>
+<span class="fc" id="L556">        return prev;</span>
+    }
+
+    /**
+     * Combines the current value with {@code x} using {@code accumulator} and stores the result,
+     * returning the new value. Equivalent to {@code updateAndGet(v -&gt; accumulator.apply(v, x))}.
+     *
+     * &lt;p&gt;Mirrors {@link java.util.concurrent.atomic.AtomicReference#accumulateAndGet
+     * AtomicReference.accumulateAndGet}; convenient for &quot;merge this delta into the state&quot;:
+     * &lt;pre&gt;{@code
+     * totals.accumulateAndGet(todaysSales, Totals::plus);
+     * }&lt;/pre&gt;
+     *
+     * @param x           the value to combine with the current value
+     * @param accumulator a side-effect-free combining function, run once under the lock
+     * @return the new value
+     * @throws NullPointerException if {@code accumulator} is {@code null}
+     */
+    public V accumulateAndGet(V x, BinaryOperator&lt;V&gt; accumulator) {
+<span class="fc" id="L575">        Objects.requireNonNull(accumulator, &quot;accumulator&quot;);</span>
+        V next;
+<span class="fc" id="L577">        lock.lock();</span>
+        try {
+<span class="fc" id="L579">            next = _vet(accumulator.apply(this.value, x));</span>
+<span class="fc" id="L580">            this.value = next;</span>
+        } finally {
+<span class="fc" id="L582">            lock.unlock();</span>
+        }
+<span class="fc" id="L584">        _notifyViews();</span>
+<span class="fc" id="L585">        return next;</span>
+    }
+
+    /**
+     * Combines the current value with {@code x} using {@code accumulator} and stores the result,
+     * returning the &lt;em&gt;previous&lt;/em&gt; value.
+     *
+     * @param x           the value to combine with the current value
+     * @param accumulator a side-effect-free combining function, run once under the lock
+     * @return the previous value
+     * @throws NullPointerException if {@code accumulator} is {@code null}
+     */
+    public V getAndAccumulate(V x, BinaryOperator&lt;V&gt; accumulator) {
+<span class="fc" id="L598">        Objects.requireNonNull(accumulator, &quot;accumulator&quot;);</span>
+        V prev;
+<span class="fc" id="L600">        lock.lock();</span>
+        try {
+<span class="fc" id="L602">            prev = this.value;</span>
+<span class="fc" id="L603">            this.value = _vet(accumulator.apply(prev, x));</span>
+        } finally {
+<span class="fc" id="L605">            lock.unlock();</span>
+        }
+<span class="fc" id="L607">        _notifyViews();</span>
+<span class="fc" id="L608">        return prev;</span>
+    }
+
+    /**
+     * Applies {@code updater} only if the current value satisfies {@code condition}, atomically
+     * with respect to other operations. Both functions run under the lock; {@code updater} runs at
+     * most once.
+     *
+     * &lt;pre&gt;{@code
+     * boolean shipped = order.updateIf(Order::isPaid, Order::markShipped);
+     * }&lt;/pre&gt;
+     *
+     * @param condition tested against the current value under the lock
+     * @param updater   computes the new value, applied only if {@code condition} holds
+     * @return {@code true} if the value was updated
+     * @throws NullPointerException if {@code condition} or {@code updater} is {@code null}
+     */
+    public boolean updateIf(Predicate&lt;? super V&gt; condition, UnaryOperator&lt;V&gt; updater) {
+<span class="fc" id="L626">        Objects.requireNonNull(condition, &quot;condition&quot;);</span>
+<span class="fc" id="L627">        Objects.requireNonNull(updater, &quot;updater&quot;);</span>
+        boolean applied;
+<span class="fc" id="L629">        lock.lock();</span>
+        try {
+<span class="fc" id="L631">            applied = condition.test(this.value);</span>
+<span class="fc bfc" id="L632" title="All 2 branches covered.">            if (applied) {</span>
+<span class="fc" id="L633">                this.value = _vet(updater.apply(this.value));</span>
+            }
+        } finally {
+<span class="fc" id="L636">            lock.unlock();</span>
+        }
+<span class="fc bfc" id="L638" title="All 2 branches covered.">        if (applied) {</span>
+<span class="fc" id="L639">            _notifyViews();</span>
+        }
+<span class="fc" id="L641">        return applied;</span>
+    }
+
+    // ---------------------------------------------------------------------
+    // Guarded mutation (for intentionally-mutable V)
+    // ---------------------------------------------------------------------
+
+    /**
+     * Runs {@code mutator} against the current value under the lock, without swapping the
+     * reference. The intended door into a deliberately-mutable {@code V} (a map, a builder, ...).
+     *
+     * &lt;pre&gt;{@code
+     * cache.mutate(m -&gt; m.put(key, value));
+     * }&lt;/pre&gt;
+     *
+     * &lt;p&gt;&lt;b&gt;Not compatible with {@link #viewOn(Executor)}.&lt;/b&gt; A view publishes the value to another
+     * thread, which is only safe for immutable {@code V}; mutating in place would let that value escape
+     * the lock. Use this method only in the guarded-mutable mode, and only when you are not viewing.
+     *
+     * @param mutator a consumer applied to the value under the lock; must not let the value escape
+     * @throws NullPointerException if {@code mutator} is {@code null}
+     */
+    public void mutate(Consumer&lt;? super V&gt; mutator) {
+<span class="fc" id="L664">        Objects.requireNonNull(mutator, &quot;mutator&quot;);</span>
+<span class="fc" id="L665">        lock.lock();</span>
+        try {
+<span class="fc" id="L667">            mutator.accept(this.value);</span>
+        } finally {
+<span class="fc" id="L669">            lock.unlock();</span>
+        }
+<span class="fc" id="L671">        _notifyViews();</span>
+<span class="fc" id="L672">    }</span>
+
+    // ---------------------------------------------------------------------
+    // Timeout / non-blocking variants
+    // ---------------------------------------------------------------------
+
+    /**
+     * Attempts to acquire the lock within {@code timeout} and, if successful, applies
+     * {@code updater} exactly once and stores the result.
+     *
+     * &lt;p&gt;Use when a caller must not block indefinitely. A non-positive {@code timeout} attempts a
+     * single immediate acquisition. The wait is interruptible.
+     *
+     * &lt;pre&gt;{@code
+     * if (!state.tryUpdate(State::advance, Duration.ofMillis(50))) {
+     *     // could not acquire in time — back off, retry, or report busy
+     * }
+     * }&lt;/pre&gt;
+     *
+     * @param updater computes the new value, run once under the lock if it is acquired
+     * @param timeout the maximum time to wait for the lock
+     * @return {@code true} if the lock was acquired and {@code updater} applied; {@code false} on
+     *         timeout (in which case the value is unchanged)
+     * @throws NullPointerException if {@code updater} or {@code timeout} is {@code null}
+     * @throws InterruptedException if the current thread is interrupted while waiting
+     */
+    public boolean tryUpdate(UnaryOperator&lt;V&gt; updater, Duration timeout) throws InterruptedException {
+<span class="fc" id="L699">        Objects.requireNonNull(updater, &quot;updater&quot;);</span>
+<span class="fc" id="L700">        Objects.requireNonNull(timeout, &quot;timeout&quot;);</span>
+<span class="fc bfc" id="L701" title="All 2 branches covered.">        if (!lock.tryLock(timeout.toNanos(), TimeUnit.NANOSECONDS)) {</span>
+<span class="fc" id="L702">            return false;</span>
+        }
+        try {
+<span class="fc" id="L705">            this.value = _vet(updater.apply(this.value));</span>
+        } finally {
+<span class="fc" id="L707">            lock.unlock();</span>
+        }
+<span class="fc" id="L709">        _notifyViews();</span>
+<span class="fc" id="L710">        return true;</span>
+    }
+
+    // ---------------------------------------------------------------------
+    // Reactive views (bridge guarded state to a thread-confined property)
+    // ---------------------------------------------------------------------
+
+    /**
+     * Returns a read-only {@link Viewable} property that mirrors this container's value, with every
+     * change delivered through {@code executor}. The property — and any {@link Action} listeners you
+     * register on it — therefore run on the executor's thread, no matter which thread mutated this
+     * {@code Guarded}. This is the bridge from many-writer guarded state to a single-owner reactive
+     * property; see the class documentation for the full rationale.
+     *
+     * &lt;p&gt;The view inherits this container's {@linkplain #type() type} and {@linkplain #allowsNull()
+     * null policy}: a non-null {@code Guarded} yields a non-null view, a nullable one yields a view that
+     * may publish {@code null}. A single method therefore covers both — there is no separate nullable
+     * variant — and a nullable container can be viewed even while it currently holds {@code null}.
+     *
+     * &lt;pre&gt;{@code
+     * Viewable&lt;Account&gt; view = account.viewOn(uiExecutor);
+     * view.onChange(From.ALL, it -&gt; render(it.currentValue().orElseThrow()));
+     * // ...background threads mutate 'account'; 'render' always runs on uiExecutor's thread.
+     * }&lt;/pre&gt;
+     *
+     * &lt;p&gt;&lt;b&gt;Contract — read these, misuse fails silently:&lt;/b&gt;
+     * &lt;ul&gt;
+     *   &lt;li&gt;{@code executor} &lt;b&gt;must be effectively single-threaded&lt;/b&gt; (e.g. a single-thread executor
+     *       or a UI dispatch loop). It defines the property's owner thread; a multi-threaded executor
+     *       would fire the property concurrently and corrupt it.&lt;/li&gt;
+     *   &lt;li&gt;{@code V} &lt;b&gt;must be immutable&lt;/b&gt; — the value crosses threads, so it must not be mutated
+     *       afterwards. Do not combine this with {@link #mutate(Consumer)}.&lt;/li&gt;
+     *   &lt;li&gt;Delivery is &lt;b&gt;conflated (latest-wins)&lt;/b&gt;: if writes outpace {@code executor}, intermediate
+     *       values may be skipped and only the most recent is published.&lt;/li&gt;
+     * &lt;/ul&gt;
+     *
+     * &lt;p&gt;The returned view is referenced only &lt;em&gt;weakly&lt;/em&gt; by this container: once you drop it, it
+     * becomes eligible for garbage collection, stops receiving updates, and its registration is pruned
+     * automatically — there is nothing to unsubscribe.
+     *
+     * @param executor the (effectively single-threaded) executor on which the view and its listeners run
+     * @return a new read-only {@link Viewable} mirroring this container on {@code executor}'s thread
+     * @throws NullPointerException if {@code executor} is {@code null}
+     */
+    public Viewable&lt;V&gt; viewOn(Executor executor) {
+<span class="fc" id="L755">        Objects.requireNonNull(executor, &quot;executor&quot;);</span>
+<span class="fc" id="L756">        lock.lock();</span>
+        try {
+            // The type and seed value form one consistent snapshot taken under the lock, immune to a
+            // concurrent writer changing the value between reads.
+<span class="fc bfc" id="L760" title="All 2 branches covered.">            Var&lt;V&gt; property = nullable ? _nullableProperty(type, value) : Var.of(type, Util.fakeNonNull(value));</span>
+<span class="fc" id="L761">            views.add(new View&lt;&gt;(this, executor, null, property));</span>
+<span class="fc" id="L762">            return Viewable.cast(property);</span>
+        } finally {
+<span class="fc" id="L764">            lock.unlock();</span>
+        }
+    }
+
+    /**
+     * Like {@link #viewOn(Executor)}, but the resulting view &lt;b&gt;never publishes {@code null}&lt;/b&gt;: whenever
+     * this container holds {@code null}, the view shows {@code fallback} instead. This is the
+     * {@code Guarded} analogue of {@code Val.view(nullObject, ..)} — the way to turn a nullable shared
+     * state into a null-safe reactive property.
+     *
+     * &lt;p&gt;The same contract as {@link #viewOn(Executor)} applies (effectively single-threaded executor,
+     * immutable {@code V}, conflated latest-wins delivery, weak retention). The {@code fallback} only
+     * matters for a nullable container; on a non-null one the value is never {@code null}, so it is never
+     * used. Note that, because Java cannot express &quot;the non-null version of {@code V}&quot;, the returned type
+     * is still {@code Viewable&lt;V&gt;} — but at runtime it is guaranteed to never hold {@code null}.
+     *
+     * @param executor the (effectively single-threaded) executor on which the view and its listeners run
+     * @param fallback the non-null value shown whenever this container holds {@code null}
+     * @return a new read-only {@link Viewable} that never publishes {@code null}
+     * @throws NullPointerException     if {@code executor} or {@code fallback} is {@code null}
+     * @throws IllegalArgumentException if {@code fallback} is not assignable to {@link #type()}
+     */
+    public Viewable&lt;V&gt; viewOn(Executor executor, V fallback) {
+<span class="fc" id="L787">        Objects.requireNonNull(executor, &quot;executor&quot;);</span>
+<span class="fc" id="L788">        Objects.requireNonNull(fallback, &quot;fallback&quot;);</span>
+<span class="fc" id="L789">        _vet(fallback); // the fallback is published, so it must be assignable to type()</span>
+<span class="fc" id="L790">        lock.lock();</span>
+        try {
+<span class="fc" id="L792">            V current = value;</span>
+            // Always a non-null property: the fallback stands in for null, now and on every delivery.
+<span class="pc bpc" id="L794" title="1 of 2 branches missed.">            Var&lt;V&gt; property = Var.of(type, Util.fakeNonNull(current != null ? current : fallback));</span>
+<span class="fc" id="L795">            views.add(new View&lt;&gt;(this, executor, fallback, property));</span>
+<span class="fc" id="L796">            return Viewable.cast(property);</span>
+        } finally {
+<span class="fc" id="L798">            lock.unlock();</span>
+        }
+    }
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    private static &lt;V extends @Nullable Object&gt; Var&lt;V&gt; _nullableProperty(Class&lt;V&gt; type, V initial) {
+        // Var.ofNullable yields a Var&lt;@Nullable V&gt;; the public view type keeps V's own nullness.
+<span class="fc" id="L805">        return (Var&lt;V&gt;) Var.ofNullable(type, initial);</span>
+    }
+
+    /**
+     * Signals every live view that the value changed. Called &lt;em&gt;after&lt;/em&gt; the lock is released, so a
+     * view's executor is never scheduled while this thread holds the lock. Views whose target property
+     * has been garbage-collected (or whose executor has been shut down) are pruned here.
+     */
+    private void _notifyViews() {
+<span class="fc bfc" id="L814" title="All 2 branches covered.">        if (views.isEmpty()) {</span>
+<span class="fc" id="L815">            return; // fast path: nothing is observing this container</span>
+        }
+        // Iterate a CopyOnWriteArrayList snapshot (no lock held, identical behavior on every JDK from
+        // 8 up) and signal each view. We deliberately do NOT use removeIf here: its side-effecting form
+        // would run signal() under the list's internal lock on modern JDKs, and on Java 8 it is not even
+        // overridden for CopyOnWriteArrayList (it would throw UnsupportedOperationException on removal).
+        // Instead we collect the dead views and drop them afterwards with the atomic removeAll, which is
+        // safe under concurrent _notifyViews calls — each removal applies independently, none clobbers
+        // another.
+<span class="fc" id="L824">        List&lt;View&lt;V&gt;&gt; dead = null;</span>
+<span class="fc bfc" id="L825" title="All 2 branches covered.">        for (View&lt;V&gt; view : views) {</span>
+<span class="fc bfc" id="L826" title="All 2 branches covered.">            if (!view.signal()) {</span>
+<span class="pc bpc" id="L827" title="1 of 2 branches missed.">                if (dead == null) {</span>
+<span class="fc" id="L828">                    dead = new ArrayList&lt;&gt;(1);</span>
+                }
+<span class="fc" id="L830">                dead.add(view);</span>
+            }
+<span class="fc" id="L832">        }</span>
+<span class="fc bfc" id="L833" title="All 2 branches covered.">        if (dead != null) {</span>
+<span class="fc" id="L834">            views.removeAll(dead);</span>
+        }
+<span class="fc" id="L836">    }</span>
+
+    /**
+     * A single {@link #viewOn(Executor)} subscription. Holds its target property only weakly so that a
+     * view the caller has dropped can be collected, and conflates bursts of changes into at most one
+     * pending delivery per executor turn (latest-wins).
+     */
+    private static final class View&lt;V extends @Nullable Object&gt; {
+
+        private final Guarded&lt;V&gt; source;
+        private final Executor executor;
+        /** Substituted for {@code null} when publishing; {@code null} itself means &quot;no substitution&quot;. */
+        private final @Nullable V fallback;
+        private final WeakReference&lt;Var&lt;V&gt;&gt; propertyRef;
+        /** {@code true} while a delivery is already queued on {@link #executor}; coalesces bursts. */
+<span class="fc" id="L851">        private final AtomicBoolean scheduled = new AtomicBoolean(false);</span>
+
+<span class="fc" id="L853">        View(Guarded&lt;V&gt; source, Executor executor, @Nullable V fallback, Var&lt;V&gt; property) {</span>
+<span class="fc" id="L854">            this.source = source;</span>
+<span class="fc" id="L855">            this.executor = executor;</span>
+<span class="fc" id="L856">            this.fallback = fallback;</span>
+<span class="fc" id="L857">            this.propertyRef = new WeakReference&lt;&gt;(property);</span>
+<span class="fc" id="L858">        }</span>
+
+        /**
+         * Schedules a (conflated) delivery. Returns {@code false} when this view is dead — its target
+         * was collected or its executor has been shut down — telling the caller to prune it.
+         */
+        boolean signal() {
+<span class="fc bfc" id="L865" title="All 2 branches covered.">            if (propertyRef.get() == null) {</span>
+<span class="fc" id="L866">                return false;</span>
+            }
+<span class="fc bfc" id="L868" title="All 4 branches covered.">            if (executor instanceof ExecutorService &amp;&amp; ((ExecutorService) executor).isShutdown()) {</span>
+                // A delivery that was already accepted can be silently discarded by shutdownNow()
+                // without ever running, which would leave 'scheduled' stuck true — so the CAS below
+                // could never fire again and the (now undeliverable) view would linger forever. Detect
+                // the dead executor directly so it is pruned even in that case.
+<span class="fc" id="L873">                log.debug(Sprouts.factory().loggingMarker(), &quot;Dropping a Guarded view: its executor has been shut down.&quot;);</span>
+<span class="fc" id="L874">                return false;</span>
+            }
+<span class="fc bfc" id="L876" title="All 2 branches covered.">            if (scheduled.compareAndSet(false, true)) {</span>
+                try {
+<span class="fc" id="L878">                    executor.execute(this::deliver);</span>
+<span class="nc" id="L879">                } catch (RejectedExecutionException rejected) {</span>
+<span class="nc" id="L880">                    scheduled.set(false);</span>
+                    // The executor was shut down while a view was still active. The view can never
+                    // deliver again, so we drop it; this is logged rather than swallowed because it
+                    // usually means the executor outlived its usefulness before the view was released.
+<span class="nc" id="L884">                    log.debug(Sprouts.factory().loggingMarker(), &quot;Dropping a Guarded view: its executor rejected delivery (likely shut down).&quot;, rejected);</span>
+<span class="nc" id="L885">                    return false;</span>
+<span class="fc" id="L886">                }</span>
+            }
+<span class="fc" id="L888">            return true;</span>
+        }
+
+        /** Runs on {@link #executor}'s thread: publishes the latest value into the property. */
+        private void deliver() {
+            // Clear the flag BEFORE reading, so any write that races us re-arms a fresh delivery
+            // and no update can be lost (only redundantly re-published, which is harmless).
+<span class="fc" id="L895">            scheduled.set(false);</span>
+<span class="fc" id="L896">            Var&lt;V&gt; property = propertyRef.get();</span>
+<span class="pc bpc" id="L897" title="1 of 2 branches missed.">            if (property == null) {</span>
+<span class="nc" id="L898">                return; // view was dropped; it will be pruned on the next signal()</span>
+            }
+            try {
+<span class="fc" id="L901">                V v = source.get();</span>
+<span class="fc bfc" id="L902" title="All 2 branches covered.">                property.set(v != null ? v : Util.fakeNonNull(fallback));</span>
+<span class="fc" id="L903">            } catch (Throwable e) {</span>
+                // Interruption and other fatal throwables must propagate (re-interrupting the thread
+                // where appropriate) so cancellation/shutdown stays reliable; this mirrors how the rest
+                // of the library treats interruption. Only non-fatal failures are logged. Ordinary
+                // listener exceptions are already caught and logged by the property machinery — this
+                // merely guards the rarer case (e.g. publishing null into a non-null view) so one bad
+                // delivery cannot silently tear down the executor's worker thread.
+<span class="nc" id="L910">                Util.sneakyThrowExceptionIfFatal(e);</span>
+<span class="nc" id="L911">                log.error(Sprouts.factory().loggingMarker(), &quot;Failed to deliver a new value to a Guarded view.&quot;, e);</span>
+<span class="fc" id="L912">            }</span>
+<span class="fc" id="L913">        }</span>
+    }
+
+    // ---------------------------------------------------------------------
+    // Monitoring (best-effort, for debugging and instrumentation)
+    // ---------------------------------------------------------------------
+
+    /**
+     * Returns whether any thread currently holds the lock. Intended for monitoring and debugging;
+     * the result is a momentary snapshot and must not drive control flow.
+     *
+     * @return {@code true} if the lock is held
+     */
+    public boolean isLocked() {
+<span class="fc" id="L927">        return lock.isLocked();</span>
+    }
+
+    /**
+     * Returns an estimate of the number of threads waiting to acquire the lock. Intended for
+     * monitoring and debugging only.
+     *
+     * @return the estimated number of waiting threads
+     */
+    public int getQueueLength() {
+<span class="fc" id="L937">        return lock.getQueueLength();</span>
+    }
+
+    /**
+     * Returns a string form of the current value, read under the lock. Provided for logging and
+     * debugging.
+     *
+     * @return {@code &quot;Guarded[&quot; + value + &quot;]&quot;}
+     */
+    @Override
+    public String toString() {
+<span class="fc" id="L948">        return &quot;Guarded[&quot; + read(String::valueOf) + &quot;]&quot;;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

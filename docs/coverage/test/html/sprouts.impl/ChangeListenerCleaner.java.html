@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ChangeListenerCleaner.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sprouts</a> &gt; <a href="index.source.html" class="el_package">sprouts.impl</a> &gt; <span class="el_source">ChangeListenerCleaner.java</span></div><h1>ChangeListenerCleaner.java</h1><pre class="source lang-java linenums">package sprouts.impl;
+
+
+import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.lang.ref.PhantomReference;
+import java.lang.ref.ReferenceQueue;
+import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.Set;
+import java.util.concurrent.locks.ReentrantLock;
+
+/**
+ *  This class stores actions which are being executed when an associated object is being garbage collected.
+ *  This class is similar to the cleaner class introduced in JDK 11, however the minimal version compatibility target
+ *  for Sprouts is Java 8, which means that this cleaner class introduced in Java 11 is not available here!
+ *  That is why a custom cleaner implementation is needed.&lt;br&gt;
+ *  &lt;br&gt; &lt;br&gt;
+ *  &lt;b&gt;Warning: This is an internal class, meaning it should not be used
+ *  anywhere but within this library. &lt;br&gt;
+ *  This class or its public methods might change or get removed in future versions!&lt;/b&gt;
+ */
+final class ChangeListenerCleaner
+{
+<span class="fc" id="L27">    private static final Logger log = LoggerFactory.getLogger(ChangeListenerCleaner.class);</span>
+
+<span class="fc" id="L29">    private static final ChangeListenerCleaner _INSTANCE = new ChangeListenerCleaner();</span>
+
+
+    public static ChangeListenerCleaner getInstance() {
+<span class="fc" id="L33">        return _INSTANCE;</span>
+    }
+
+
+<span class="fc" id="L37">    private final ReferenceQueue&lt;Object&gt; _referenceQueue = new ReferenceQueue&lt;&gt;();</span>
+
+    /**
+     *  Guards {@link #_toBeCleaned} and the thread life-cycle.
+     *  Used so that {@link #register} and the cleaner thread can coordinate
+     *  safely when adding or removing tracked references.
+     */
+<span class="fc" id="L44">    private final ReentrantLock _lock = new ReentrantLock();</span>
+
+    /**
+     *  Tracks every live {@link ReferenceWithCleanup} so that the GC-root
+     *  keeps the phantom references reachable (which is required for them to
+     *  be enqueued) and so we can remove them after cleanup in O(1).
+     *  &lt;p&gt;
+     *  An {@link IdentityHashMap}-backed set is used to make the identity-based
+     *  semantics explicit: {@link ReferenceWithCleanup} deliberately does not
+     *  override {@code equals}/{@code hashCode}, and this set makes that
+     *  contract impossible to break silently in the future.
+     */
+<span class="fc" id="L56">    private final Set&lt;ReferenceWithCleanup&lt;Object&gt;&gt; _toBeCleaned = Collections.newSetFromMap(new IdentityHashMap&lt;&gt;());</span>
+
+    /**
+     *  The active cleaner thread.  Non-final so it can be recreated if a previous
+     *  instance was interrupted and reached {@link Thread.State#TERMINATED}.
+     *  All reads and writes must be performed while holding {@link #_lock}.
+     */
+    private Thread _thread;
+
+
+<span class="fc" id="L66">    private ChangeListenerCleaner() {</span>
+<span class="fc" id="L67">        _thread = _newCleanerThread();</span>
+<span class="fc" id="L68">    }</span>
+
+    /** Creates a new, not-yet-started daemon thread that runs {@link #_run()}. */
+    private Thread _newCleanerThread() {
+<span class="fc" id="L72">        Thread t = new Thread(this::_run, &quot;Sprouts-Cleaner&quot;);</span>
+        // A background infrastructure thread must be a daemon so it does not
+        // prevent the JVM from exiting once all user threads have finished.
+<span class="fc" id="L75">        t.setDaemon(true);</span>
+<span class="fc" id="L76">        return t;</span>
+    }
+
+    /**
+     *  Ensures the cleaner thread is running.  If the thread has never been started
+     *  ({@link Thread.State#NEW}) it is started directly.  If it previously terminated
+     *  (e.g. because it was interrupted in a test environment) a fresh thread is created
+     *  and started, since a {@link Thread} cannot be restarted once it has terminated.
+     *
+     *  &lt;p&gt;&lt;b&gt;Must be called while holding {@link #_lock}.&lt;/b&gt;
+     */
+    private void _ensureThreadRunning() {
+<span class="pc bpc" id="L88" title="1 of 2 branches missed.">        if ( _thread.getState() == Thread.State.TERMINATED )</span>
+<span class="nc" id="L89">            _thread = _newCleanerThread();</span>
+<span class="fc bfc" id="L90" title="All 2 branches covered.">        if ( _thread.getState() == Thread.State.NEW )</span>
+<span class="fc" id="L91">            _thread.start();</span>
+<span class="fc" id="L92">    }</span>
+
+
+    static final class ReferenceWithCleanup&lt;T&gt; extends PhantomReference&lt;T&gt;
+    {
+        /**
+         *  Volatile so that the single-execution guarantee in {@link #cleanup()} is
+         *  safe even if a future caller invokes it from a different thread than the
+         *  one that constructed this reference.  In the current design only the
+         *  cleaner thread calls {@code cleanup()}, but the volatile makes the
+         *  contract robust at negligible cost.
+         */
+        private volatile @Nullable Runnable _action;
+
+        ReferenceWithCleanup( T referent, Runnable action, ReferenceQueue&lt;T&gt; queue ) {
+<span class="fc" id="L107">            super( referent, queue );</span>
+<span class="fc" id="L108">            _action = action;</span>
+<span class="fc" id="L109">        }</span>
+
+        /**
+         *  Executes the registered cleanup action exactly once.
+         *  Subsequent calls are no-ops.
+         */
+        public void cleanup() {
+<span class="fc" id="L116">            final Runnable action = _action;</span>
+<span class="pc bpc" id="L117" title="1 of 2 branches missed.">            if ( action != null ) {</span>
+<span class="fc" id="L118">                _action = null; // clear before running so re-entrant calls are harmless</span>
+                try {
+<span class="fc" id="L120">                    action.run();</span>
+<span class="nc" id="L121">                } catch ( Exception e ) {</span>
+<span class="nc" id="L122">                    Util.sneakyThrowExceptionIfFatal(e);</span>
+<span class="nc" id="L123">                    _logError(&quot;Failed to execute cleanup action '{}'.&quot;, action, e);</span>
+<span class="fc" id="L124">                }</span>
+            }
+<span class="fc" id="L126">        }</span>
+    }
+
+    /**
+     *  Registers {@code referent} for cleanup: when the GC determines that
+     *  {@code referent} is phantom-reachable, {@code action} will be executed
+     *  on the cleaner thread.
+     *
+     * @param referent The object whose collection should trigger the action.
+     *                 If {@code null}, the {@code action} is executed immediately on the
+     *                 calling thread and an error is logged; no cleanup registration is created.
+     * @param action   The cleanup action to run.  Must not retain a strong
+     *                 reference to {@code referent}, or the object will never
+     *                 be collected.
+     */
+    public void register( @Nullable Object referent, Runnable action ) {
+<span class="pc bpc" id="L142" title="1 of 2 branches missed.">        if ( referent == null ) {</span>
+            // A null referent can never be collected, so fire the action immediately
+            // and log a warning so the caller can diagnose the misconfiguration.
+<span class="nc" id="L145">            _logError(&quot;Attempt to register a null object for cleanup. This is not allowed!&quot;);</span>
+            try {
+<span class="nc" id="L147">                action.run();</span>
+<span class="nc" id="L148">            } catch ( Exception e ) {</span>
+<span class="nc" id="L149">                Util.sneakyThrowExceptionIfFatal(e);</span>
+<span class="nc" id="L150">                _logError(&quot;Failed to execute cleanup action '{}'.&quot;, action, e);</span>
+<span class="nc" id="L151">            }</span>
+<span class="nc" id="L152">            return;</span>
+        }
+
+<span class="fc" id="L155">        _lock.lock();</span>
+        try {
+<span class="fc" id="L157">            _toBeCleaned.add(new ReferenceWithCleanup&lt;&gt;(referent, action, _referenceQueue));</span>
+            // Start the thread lazily on the first registration, or restart it
+            // if a previous instance was interrupted and has since terminated.
+<span class="fc" id="L160">            _ensureThreadRunning();</span>
+        } finally {
+<span class="fc" id="L162">            _lock.unlock();</span>
+        }
+<span class="fc" id="L164">    }</span>
+
+    /**
+     *  Main loop of the cleaner thread.
+     *
+     *  &lt;p&gt;The thread blocks indefinitely on {@link ReferenceQueue#remove()} until
+     *  the GC enqueues a collected reference, then runs its cleanup action and
+     *  removes it from the tracking set.  This single-phase design avoids the
+     *  periodic wakeups that a timed poll would cause when many long-lived
+     *  referents are registered but none have been collected.
+     *
+     *  &lt;p&gt;Because the thread is a daemon, the JVM will terminate it automatically
+     *  when all non-daemon threads have exited, so there is no need for the thread
+     *  to monitor whether the tracking set is empty and park itself.
+     */
+    private void _run() {
+<span class="pc bpc" id="L180" title="1 of 2 branches missed.">        while ( !Thread.currentThread().isInterrupted() ) {</span>
+            try {
+                @SuppressWarnings(&quot;unchecked&quot;)
+<span class="fc" id="L183">                ReferenceWithCleanup&lt;Object&gt; ref =</span>
+<span class="fc" id="L184">                        (ReferenceWithCleanup&lt;Object&gt;) _referenceQueue.remove();</span>
+                // Unbounded remove() never returns null; it blocks until a
+                // reference is enqueued or the thread is interrupted.
+                try {
+<span class="fc" id="L188">                    ref.cleanup();</span>
+<span class="nc" id="L189">                } catch ( Throwable e ) {</span>
+<span class="nc" id="L190">                    Util.sneakyThrowExceptionIfFatal(e);</span>
+<span class="nc" id="L191">                    _logError(&quot;Failed to perform cleanup!&quot;, e);</span>
+                } finally {
+                    // Remove under the lock so _toBeCleaned stays consistent with
+                    // concurrent register() calls coming from the main thread.
+<span class="fc" id="L195">                    _lock.lock();</span>
+                    try {
+<span class="fc" id="L197">                        _toBeCleaned.remove(ref);</span>
+                    } finally {
+<span class="fc" id="L199">                        _lock.unlock();</span>
+                    }
+                }
+<span class="nc" id="L202">            } catch ( InterruptedException e ) {</span>
+<span class="nc" id="L203">                Thread.currentThread().interrupt();</span>
+<span class="nc" id="L204">                return;</span>
+<span class="nc" id="L205">            } catch ( Throwable e ) {</span>
+<span class="nc" id="L206">                Util.sneakyThrowExceptionIfFatal(e);</span>
+<span class="nc" id="L207">                _logError(&quot;Unexpected error in cleaner loop.&quot;, e);</span>
+<span class="pc" id="L208">            }</span>
+        }
+<span class="nc" id="L210">    }</span>
+
+    /**
+     *  Returns the current number of tracked registrations in a thread-safe way.
+     */
+    private int _trackedCount() {
+<span class="nc" id="L216">        _lock.lock();</span>
+        try {
+<span class="nc" id="L218">            return _toBeCleaned.size();</span>
+        } finally {
+<span class="nc" id="L220">            _lock.unlock();</span>
+        }
+    }
+
+    @Override
+    public String toString() {
+<span class="nc" id="L226">        return this.getClass().getSimpleName() + &quot;@&quot; + Integer.toHexString(this.hashCode()) + &quot;[&quot; +</span>
+<span class="nc" id="L227">                    &quot;registered=&quot; + _trackedCount() +</span>
+                &quot;]&quot;;
+    }
+
+
+    private static void _logError(String message, @Nullable Object... args) {
+<span class="nc" id="L233">        Util._logError(log, message, args);</span>
+<span class="nc" id="L234">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>
