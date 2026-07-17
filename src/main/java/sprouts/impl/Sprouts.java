@@ -225,7 +225,8 @@ public final class Sprouts implements SproutsFactory
             public B getter(T parentValue) throws Exception {
                 if ( parentValue == null )
                     return nullObject;
-                return lens.getter(parentValue);
+                B focused = lens.getter(parentValue);
+                return focused == null ? nullObject : focused;
             }
             @Override
             public T wither(T parentValue, B newValue) throws Exception {
@@ -248,7 +249,8 @@ public final class Sprouts implements SproutsFactory
             public B getter(T parentValue) throws Exception {
                 if ( parentValue == null )
                     return nullObject;
-                return lens.getter(parentValue);
+                B focused = lens.getter(parentValue);
+                return focused == null ? nullObject : focused;
             }
             @Override
             public T wither(T parentValue, B newValue) throws Exception {

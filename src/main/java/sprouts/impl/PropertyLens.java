@@ -52,6 +52,19 @@ final class PropertyLens<T extends @Nullable Object> implements Var<T>, Viewable
     static <A, B> Var<@Nullable B> of(Var<A> source, @Nullable Class<B> type, Lens<A, B> lens) {
         Objects.requireNonNull(source);
         Objects.requireNonNull(lens);
+        /*
+            A plain lens is null-safe: it promises 'allowsNull() == false'. It cannot keep
+            that promise over a nullable parent, because a null parent has no field to focus
+            on. So instead of silently letting null leak into a supposedly non-null property,
+            we reject the nullable parent right here, where the lens is being derived, and
+            point the user at the two null-aware alternatives.
+        */
+        if ( source.allowsNull() )
+            throw new IllegalArgumentException(
+                "Cannot create a null-safe lens from a nullable parent property. " +
+                "Use 'zoomToNullable(..)' for a lens that may itself be null, or " +
+                "'zoomTo(nullObject, ..)' to substitute a value while the parent is null."
+            );
         B initialValue;
         try {
             initialValue = lens.getter(Util.fakeNonNull(source.orElseNull()));
@@ -68,21 +81,7 @@ final class PropertyLens<T extends @Nullable Object> implements Var<T>, Viewable
             }
             type = Util.expectedClassFromItem(initialValue);
         }
-        Lens<A, B> safeLens = new Lens<A, B>() {
-            @Override
-            public B getter(A parentValue) throws Exception {
-                if ( parentValue == null )
-                    return Util.fakeNonNull(null);
-                return lens.getter(parentValue);
-            }
-            @Override
-            public A wither(A parentValue, B newValue) throws Exception {
-                if ( parentValue == null )
-                    return Util.fakeNonNull(null);
-                return lens.wither(parentValue, newValue);
-            }
-        };
-        LensCore<B> core = new SingleLensCore<>(source, safeLens);
+        LensCore<B> core = new SingleLensCore<>(source, lens);
         return new PropertyLens<>(type, Sprouts.factory().defaultId(), false, initialValue, core, null);
     }
 
@@ -126,6 +125,15 @@ final class PropertyLens<T extends @Nullable Object> implements Var<T>, Viewable
     }
 
     static <A, B> Var<B> ofProjection(Var<A> source, @Nullable Class<B> type, Function<A,B> getter, Function<B,A> setter) {
+        // A plain projection is null-safe, exactly like a plain lens, and so it likewise
+        // refuses to be derived from a nullable source. Use 'projectToNullable(..)' or a
+        // null object instead.
+        if ( source.allowsNull() )
+            throw new IllegalArgumentException(
+                "Cannot create a null-safe projection from a nullable source property. " +
+                "Use 'projectToNullable(..)' for a projection that may itself be null, or " +
+                "a projection with a null object to substitute a value while the source is null."
+            );
         Lens<A,B> lens = Lens.of(getter, (a,b)->setter.apply(b));
         B initialValue;
         try {
@@ -358,7 +366,7 @@ final class PropertyLens<T extends @Nullable Object> implements Var<T>, Viewable
         for ( Val<?> source : _core.sources() ) {
             Viewable.cast(source).onChange(From.ALL, WeakAction.of(this, (thisLens, v) -> {
                 if ( thisLens._core.shouldSuppressSourceCallback() ) return;
-                T newValue = thisLens._core.fetchFromSources(thisLens._lastItem);
+                T newValue = thisLens._fetchFromSources();
                 ItemPair<T> pair = new ItemPair<>(thisLens._type, newValue, thisLens._lastItem);
                 if ( pair.change() != SingleChange.NONE || v.change() == SingleChange.NONE ) {
                     thisLens._lastItem = newValue;
@@ -375,8 +383,32 @@ final class PropertyLens<T extends @Nullable Object> implements Var<T>, Viewable
 
     // ==================== Var contract ====================
 
+    /**
+     *  Fetches the current item from the lens sources, applying graceful degradation:
+     *  if this lens does not allow null, but the sources currently yield {@code null}
+     *  (e.g. because the focused field became null through an update of the parent),
+     *  then we keep the last known item instead of exposing an illegal null item.
+     *  This mirrors how {@link SingleLensCore#fetchFromSources(Object)} already keeps
+     *  the last item when the lens getter throws, and it guarantees that a
+     *  non-nullable lens never violates its own {@code allowsNull() == false} contract.
+     */
+    private @Nullable T _fetchFromSources() {
+        @Nullable T fetched = _core.fetchFromSources(_lastItem);
+        if ( fetched == null && !_nullable ) {
+            _logError(
+                "The lens property '{}' does not allow null items, but its focused source " +
+                "field is currently null. Keeping the last known item '{}' instead. " +
+                "Use a 'zoomTo(nullObject, ...)' or 'zoomToNullable(..)' lens to model a " +
+                "missing field explicitly.",
+                _id, _lastItem
+            );
+            return _lastItem;
+        }
+        return fetched;
+    }
+
     private @Nullable T _item() {
-        @Nullable T currentItem = _core.fetchFromSources(_lastItem);
+        @Nullable T currentItem = _fetchFromSources();
         if ( currentItem != null ) {
             Class<?> currentType = currentItem.getClass();
             if ( !_type.isAssignableFrom(currentType) )
