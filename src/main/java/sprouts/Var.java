@@ -661,6 +661,13 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      *     returned by {@link Var#type()}, <b>which leads to type cast exceptions in the property</b>.<br>
      *     <b>Use {@link #zoomTo(Class, Function, BiFunction)} to avoid this particular issue!</b>
      * </p>
+     * <p>
+     *     The lens produced by this method is <b>null-safe</b>: it never holds {@code null}.
+     *     Consequently it cannot be created from a <i>nullable</i> parent property, and doing
+     *     so throws an {@link IllegalArgumentException}. If the parent may be null, use
+     *     {@link #zoomToNullable(Class, Function, BiFunction)} for a nullable lens, or
+     *     {@link #zoomTo(Object, Function, BiFunction)} to substitute a null object instead.
+     * </p>
      *
      * @param <B>     The type of the field that the lens will focus on.
      * @param getter  Function to get the current value of the focused field from the parent object.
@@ -668,6 +675,7 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      *                of the parent object with the updated field.
      * @return A new Var that acts as a lens focusing on the specified field of the parent object.
      * @throws NullPointerException If the given getter or wither function is null.
+     * @throws IllegalArgumentException If this (the parent) property is nullable.
      */
     default <B> Var<B> zoomTo( Function<T,B> getter, BiFunction<T,B,T> wither ) {
         return zoomTo( Lens.of(getter, wither) );
@@ -704,6 +712,12 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      * <p>
      * The lens property returned by this method will accept any value that is assignable to
      * the specified {@code type}, not just the specific runtime type of the initial value.
+     * <p>
+     * The lens produced by this method is <b>null-safe</b>: it never holds {@code null} and
+     * therefore cannot be created from a <i>nullable</i> parent property (doing so throws an
+     * {@link IllegalArgumentException}). If the parent may be null, use
+     * {@link #zoomToNullable(Class, Function, BiFunction)} for a nullable lens, or
+     * {@link #zoomTo(Class, Object, Function, BiFunction)} to substitute a null object instead.
      *
      * @param <B>     The declared type of the field that the lens will focus on.
      * @param type    The class object representing the declared type {@code B}.
@@ -714,6 +728,7 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      * @return A new Var that acts as a lens focusing on the specified field of the parent object,
      *         with proper type safety for all subtypes of {@code B}.
      * @throws NullPointerException If the given type, getter, or wither function is null.
+     * @throws IllegalArgumentException If this (the parent) property is nullable.
      */
     default <B> Var<B> zoomTo( Class<B> type, Function<T,B> getter, BiFunction<T,B,T> wither ) {
         return zoomTo( type, Lens.of(getter, wither) );
@@ -761,11 +776,19 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      *     returned by {@link Var#type()}, <b>which leads to type cast exceptions in the property</b>.<br>
      *     <b>Use {@link #zoomTo(Class, Lens)} to avoid this particular issue!</b>
      * </p>
+     * <p>
+     *     The lens produced by this method is <b>null-safe</b>: it never holds {@code null} and
+     *     therefore cannot be created from a <i>nullable</i> parent property (doing so throws an
+     *     {@link IllegalArgumentException}). If the parent may be null, use
+     *     {@link #zoomToNullable(Class, Lens)} for a nullable lens, or
+     *     {@link #zoomTo(Object, Lens)} to substitute a null object instead.
+     * </p>
      *
      * @param <B>  The type of the field that the lens will focus on.
      * @param lens The {@link Lens} implementation to focus on the specified field of the parent object.
      * @return A new Var that acts as a lens focusing on the specified field of the parent object.
      * @throws NullPointerException If the given lens is null.
+     * @throws IllegalArgumentException If this (the parent) property is nullable.
      */
     default <B> Var<B> zoomTo( Lens<T,B> lens ) {
         Objects.requireNonNull(lens);
@@ -805,6 +828,13 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      * size.set(new Length(3.7)); // Also works! Length is a Measurement
      * }</pre>
      *
+     * <p>
+     * The lens produced by this method is <b>null-safe</b>: it never holds {@code null} and
+     * therefore cannot be created from a <i>nullable</i> parent property (doing so throws an
+     * {@link IllegalArgumentException}). If the parent may be null, use
+     * {@link #zoomToNullable(Class, Lens)} for a nullable lens, or
+     * {@link #zoomTo(Class, Object, Lens)} to substitute a null object instead.
+     *
      * @param <B>  The declared type of the field that the lens will focus on.
      * @param type The class object representing the declared type {@code B}.
      *             Provides runtime type information to handle all subtypes correctly.
@@ -812,6 +842,7 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      * @return A new Var that acts as a lens focusing on the specified field of the parent object,
      *         with proper handling of the declared type and all its subtypes.
      * @throws NullPointerException If the given type or lens is null.
+     * @throws IllegalArgumentException If this (the parent) property is nullable.
      */
     default <B> Var<B> zoomTo( Class<B> type, Lens<T,B> lens ) {
         Objects.requireNonNull(type);
@@ -1221,6 +1252,13 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      *     returned by {@link Var#type()}, <b>which leads to type cast exceptions in the property</b>.<br>
      *     <b>Use {@link #projectTo(Class, Function, Function)} to avoid this particular issue!</b>
      * </p>
+     * <p>
+     *     The projection produced by this method is <b>null-safe</b>: it never holds
+     *     {@code null} and therefore cannot be created from a <i>nullable</i> source property
+     *     (doing so throws an {@link IllegalArgumentException}). If the source may be null, use
+     *     {@link #projectToNullable(Class, Function, Function)} for a nullable projection, or
+     *     {@link #projectTo(Object, Function, Function)} to substitute a null object instead.
+     * </p>
      *
      * @param <B>    The target type of the projected property.
      * @param getter {@link Function} that converts from {@code T} to {@code B}.
@@ -1230,6 +1268,7 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      * @return A new Var that maintains a bidirectional projection to/from
      *         this property's item type.
      * @throws NullPointerException if either function is null.
+     * @throws IllegalArgumentException If this (the source) property is nullable.
      * @see #projectTo(Object, Function, Function) for a version with null safety.
      * @see #projectToNullable(Class, Function, Function) for nullable projections.
      */
@@ -1282,6 +1321,12 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      * }</pre>
      * Without {@code Color.class}, the compiler would infer {@code B} from the first converted
      * value — {@code Rgb} — and {@code color.set(new Hsl(...))} would fail at runtime.
+     * <p>
+     * The projection produced by this method is <b>null-safe</b>: it never holds {@code null}
+     * and therefore cannot be created from a <i>nullable</i> source property (doing so throws an
+     * {@link IllegalArgumentException}). If the source may be null, use
+     * {@link #projectToNullable(Class, Function, Function)} for a nullable projection, or
+     * {@link #projectTo(Class, Object, Function, Function)} to substitute a null object instead.
      *
      * @param <B>    The declared target type of the projected property.
      * @param type   The class object representing the declared type {@code B}.
@@ -1291,6 +1336,7 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      * @return A new Var that maintains a bidirectional projection to/from
      *         this property's item type, with proper handling of all {@code B} subtypes.
      * @throws NullPointerException if type, getter, or setter is null.
+     * @throws IllegalArgumentException If this (the source) property is nullable.
      */
     default <B> Var<B> projectTo( Class<B> type, Function<T,B> getter, Function<B,T> setter ) {
         Objects.requireNonNull(getter, "getter must not be null");
@@ -1577,6 +1623,14 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      * The {@link Var#type()} of the returned property is resolved dynamically from the
      * concrete (sub)type of the first computed value. If {@code B} is polymorphic, prefer
      * {@link #projectTo(Class, Val, BiFunction, BiFunction)} to avoid type cast exceptions.
+     * <p>
+     * The projection produced by this method is <b>null-safe</b>: it never holds {@code null}
+     * and therefore cannot be created from a <i>nullable</i> source property (doing so throws
+     * an {@link IllegalArgumentException}). If the source may be null, use
+     * {@link #projectToNullable(Class, Val, BiFunction, BiFunction)} for a nullable projection,
+     * or {@link #projectTo(Object, Val, BiFunction, BiFunction)} to substitute a null object
+     * instead. The read-only {@code parameter} may still be nullable — it is passed straight
+     * to the {@code getter}, which is free to handle a null parameter as it sees fit.
      *
      * @param <P>       The type of the read-only parameter.
      * @param <B>       The target type of the projected property.
@@ -1588,6 +1642,7 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      *                  parameter value, and produces a new source value for this property.
      * @return A new {@link Var} that maintains a parameterized bidirectional projection.
      * @throws NullPointerException if any argument is {@code null}.
+     * @throws IllegalArgumentException if this (the source) property is nullable.
      */
     default <P extends @Nullable Object, B> Var<B> projectTo(
             Val<P>                  parameter,
@@ -1652,6 +1707,14 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      * </ul>
      * These laws only need to hold for a <i>fixed</i> parameter value; when the parameter changes,
      * the projection is simply recomputed.
+     * <p>
+     * The projection produced by this method is <b>null-safe</b>: it never holds {@code null}
+     * and therefore cannot be created from a <i>nullable</i> source property (doing so throws
+     * an {@link IllegalArgumentException}). If the source may be null, use
+     * {@link #projectToNullable(Class, Val, BiFunction, BiFunction)} for a nullable projection,
+     * or {@link #projectTo(Object, Val, BiFunction, BiFunction)} to substitute a null object
+     * instead. The read-only {@code parameter} may still be nullable — it is passed straight
+     * to the {@code getter}, which is free to handle a null parameter as it sees fit.
      *
      * @param <P>       The type of the read-only parameter.
      * @param <B>       The declared target type of the projected property.
@@ -1663,6 +1726,7 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      *                  parameter value, and produces a new source value for this property.
      * @return A new {@link Var} with proper type safety for all subtypes of {@code B}.
      * @throws NullPointerException if any argument is {@code null}.
+     * @throws IllegalArgumentException if this (the source) property is nullable.
      */
     default <P extends @Nullable Object, B> Var<B> projectTo(
             Class<B>                type,
