@@ -1623,6 +1623,14 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      * The {@link Var#type()} of the returned property is resolved dynamically from the
      * concrete (sub)type of the first computed value. If {@code B} is polymorphic, prefer
      * {@link #projectTo(Class, Val, BiFunction, BiFunction)} to avoid type cast exceptions.
+     * <p>
+     * The projection produced by this method is <b>null-safe</b>: it never holds {@code null}
+     * and therefore cannot be created from a <i>nullable</i> source property (doing so throws
+     * an {@link IllegalArgumentException}). If the source may be null, use
+     * {@link #projectToNullable(Class, Val, BiFunction, BiFunction)} for a nullable projection,
+     * or {@link #projectTo(Object, Val, BiFunction, BiFunction)} to substitute a null object
+     * instead. The read-only {@code parameter} may still be nullable — it is passed straight
+     * to the {@code getter}, which is free to handle a null parameter as it sees fit.
      *
      * @param <P>       The type of the read-only parameter.
      * @param <B>       The target type of the projected property.
@@ -1634,6 +1642,7 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      *                  parameter value, and produces a new source value for this property.
      * @return A new {@link Var} that maintains a parameterized bidirectional projection.
      * @throws NullPointerException if any argument is {@code null}.
+     * @throws IllegalArgumentException if this (the source) property is nullable.
      */
     default <P extends @Nullable Object, B> Var<B> projectTo(
             Val<P>                  parameter,
@@ -1698,6 +1707,14 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      * </ul>
      * These laws only need to hold for a <i>fixed</i> parameter value; when the parameter changes,
      * the projection is simply recomputed.
+     * <p>
+     * The projection produced by this method is <b>null-safe</b>: it never holds {@code null}
+     * and therefore cannot be created from a <i>nullable</i> source property (doing so throws
+     * an {@link IllegalArgumentException}). If the source may be null, use
+     * {@link #projectToNullable(Class, Val, BiFunction, BiFunction)} for a nullable projection,
+     * or {@link #projectTo(Object, Val, BiFunction, BiFunction)} to substitute a null object
+     * instead. The read-only {@code parameter} may still be nullable — it is passed straight
+     * to the {@code getter}, which is free to handle a null parameter as it sees fit.
      *
      * @param <P>       The type of the read-only parameter.
      * @param <B>       The declared target type of the projected property.
@@ -1709,6 +1726,7 @@ public interface Var<T extends @Nullable Object> extends Val<T>
      *                  parameter value, and produces a new source value for this property.
      * @return A new {@link Var} with proper type safety for all subtypes of {@code B}.
      * @throws NullPointerException if any argument is {@code null}.
+     * @throws IllegalArgumentException if this (the source) property is nullable.
      */
     default <P extends @Nullable Object, B> Var<B> projectTo(
             Class<B>                type,

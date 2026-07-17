@@ -471,6 +471,48 @@ class Property_Parameterized_Lens_Spec extends Specification
              nullable.allowsNull()
     }
 
+    def 'A plain parameterized `projectTo` is null-safe and refuses a nullable source property.'()
+    {
+        reportInfo """
+            A plain parameterized projection (no null object) is null-safe, exactly like a
+            plain `zoomTo` lens or a plain `projectTo` projection. So when it is *derived*
+            from a nullable source it fails fast, naming the null-aware alternatives, rather
+            than letting null quietly leak into a supposedly non-null property later on.
+
+            The read-only *parameter* is not subject to this rule: it may be nullable and is
+            handed straight to the getter, which decides how to treat a null parameter. Only
+            the *source* — the property actually being projected — must be non-nullable.
+        """
+        given : 'A non-nullable source, a nullable source and a (here nullable) parameter.'
+            var nonNullSource  = Var.of(10)
+            var nullableSource = Var.ofNullable(Integer.class, 10)
+            var parameter      = Var.ofNullable(Integer.class, 2)
+
+        expect : 'A plain projection over the non-nullable source is null-safe, even with a nullable parameter.'
+            !nonNullSource.projectTo(parameter,
+                    (Integer p, Integer x) -> x * (p == null ? 1 : p),
+                    (Integer v, Integer p) -> v).allowsNull()
+
+        when : 'We derive a plain parameterized projection from the nullable source instead...'
+            nullableSource.projectTo(parameter,
+                    (Integer p, Integer x) -> x * (p == null ? 1 : p),
+                    (Integer v, Integer p) -> v)
+        then : '...it is rejected, pointing at the nullable alternative.'
+            var e = thrown(IllegalArgumentException)
+            e.message.contains("projectToNullable")
+
+        when : 'The same is attempted through the explicitly typed overload...'
+            nullableSource.projectTo(Integer.class, parameter,
+                    (Integer p, Integer x) -> x,
+                    (Integer v, Integer p) -> v)
+        then : '...it is rejected in the same way.'
+            thrown(IllegalArgumentException)
+
+        and : 'The null-object and nullable variants still accept the nullable source.'
+            !nullableSource.projectTo(0, parameter, (Integer p, Integer x) -> x, (Integer v, Integer p) -> v).allowsNull()
+            nullableSource.projectToNullable(Integer.class, parameter, (Integer p, Integer x) -> x, (Integer v, Integer p) -> v).allowsNull()
+    }
+
     // ==================== String representation ====================
 
     def 'A parameterized lens has a "ParamLens" string representation carrying the type and value.'()

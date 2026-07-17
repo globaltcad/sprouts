@@ -49,7 +49,7 @@ final class PropertyLens<T extends @Nullable Object> implements Var<T>, Viewable
 
     // ==================== Single-source factory methods ====================
 
-    static <A, B> Var<@Nullable B> of(Var<A> source, @Nullable Class<B> type, Lens<A, B> lens) {
+    static <A, B> Var<B> of(Var<A> source, @Nullable Class<B> type, Lens<A, B> lens) {
         Objects.requireNonNull(source);
         Objects.requireNonNull(lens);
         /*
@@ -256,6 +256,16 @@ final class PropertyLens<T extends @Nullable Object> implements Var<T>, Viewable
             BiFunction<P, A, B>     getter,
             BiFunction<B, P, A>     setter
     ) {
+        // A plain parameterized projection is null-safe, just like a plain lens or
+        // projection, and so it likewise refuses a nullable source. (The read-only
+        // parameter may still be nullable — it is passed through to the getter, which
+        // opts into handling it, exactly as the fallback variant already does.)
+        if ( source.allowsNull() )
+            throw new IllegalArgumentException(
+                "Cannot create a null-safe parameterized projection from a nullable source property. " +
+                "Use 'projectToNullable(..)' for a projection that may itself be null, or " +
+                "a projection with a null object to substitute a value while the source is null."
+            );
         B initialValue;
         try {
             initialValue = getter.apply(Util.fakeNonNull(parameter.orElseNull()), Util.fakeNonNull(source.orElseNull()));
