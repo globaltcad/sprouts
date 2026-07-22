@@ -7,6 +7,7 @@ import sprouts.impl.Sprouts;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 
 /**
  *  A read-only live view on a delegated item derived from a {@link Var} or {@link Val}, which
@@ -227,6 +228,103 @@ public interface Viewable<T> extends Val<T>, Observable {
     }
 
     /**
+     * Creates an observable read-only {@link Viewable} property which is a live view of an arbitrary
+     * number of other properties, merged into a single item of type {@code C}.
+     * <p>
+     * Contrary to the {@link #of(Val, Val, BiFunction)} family of factory methods, which is limited to
+     * exactly two properties, this method scales to any number of properties without nesting.
+     * The supplied {@code configurator} receives a {@link CompositeBuilder} on which every
+     * {@link CompositeBuilder#join(Val, BiFunction)} call contributes one property together with a
+     * "wither" style combiner folding the item of that property into the composite item:
+     * <pre>{@code
+     *   Viewable<Weather> weather = Viewable.of(Weather.blank(), it -> it
+     *           .join(cityProperty,        Weather::withCity)
+     *           .join(temperatureProperty, Weather::withTemperature)
+     *           .join(humidityProperty,    Weather::withHumidity)
+     *       );
+     * }</pre>
+     * The item of the resulting property is always recomputed <b>as a whole</b>: the fold starts at the
+     * supplied {@code seed} and applies every combiner in the order in which the properties were joined,
+     * reading the <b>current</b> item of every joined property. So a part of the seed which no combiner
+     * ever touches simply survives in the composite item, and if two combiners write to the same part,
+     * then the one which was joined last wins.
+     * <p>
+     * Note: The composite view does <b>not</b> allow storing {@code null} references!
+     * If a combiner returns {@code null} or throws an exception when the view is created, then a
+     * {@link NullPointerException} is thrown. If this happens later on, while a change is being
+     * propagated, then the whole recomputation is discarded, a warning is logged, and the view simply
+     * retains its last item, so it is never observed in a half updated state.
+     * <p>
+     * The {@link #type()} of the returned property is the concrete class of the supplied {@code seed}.
+     * If the item type is polymorphic, and your combiners may produce a sibling subtype, then use the
+     * {@link #of(Class, Object, Function)} method instead to pin the type explicitly.
+     * <p>
+     * <b>Warning:</b> Just like every other view, the returned {@link Viewable} is only weakly referenced
+     * by the properties it observes. If you do not keep a strong reference to it, then it will eventually
+     * be garbage collected alongside all of its change listeners.
+     * <p>
+     * A composite view also references the properties it joined the same way any other view references
+     * the property it is derived from: a joined <i>view</i> or <i>lens</i> is referenced strongly, so
+     * you may create intermediate properties inline inside the {@code configurator} without having to
+     * store them yourself, whereas a joined <i>plain property</i> is referenced weakly, so that a view
+     * never keeps your actual state alive. If such a plain property is garbage collected, then the
+     * composite view keeps folding in its last known item instead of breaking.
+     *
+     * @param seed         The initial item at which the fold of the composite item starts.
+     * @param configurator A function declaring the joined properties on the supplied {@link CompositeBuilder}
+     *                     and returning the resulting builder.
+     * @param <C>          The type of the item held by the returned {@link Viewable}.
+     * @return A new {@link Viewable} instance which is a live view of all the joined properties.
+     * @throws NullPointerException If any of the supplied arguments is {@code null}, if the
+     *                              {@code configurator} returns {@code null}, or if the initial fold
+     *                              fails to produce an item.
+     * @throws IllegalArgumentException If the {@code configurator} returns a builder which did not
+     *                                  originate from the one it was supplied with.
+     */
+    static <C> Viewable<C> of( C seed, Function<CompositeBuilder<C>, CompositeBuilder<C>> configurator ) {
+        Objects.requireNonNull(seed);
+        Objects.requireNonNull(configurator);
+        @SuppressWarnings("unchecked")
+        Class<C> type = (Class<C>) seed.getClass();
+        return Sprouts.factory().viewOf( type, seed, configurator );
+    }
+
+    /**
+     * Creates an observable read-only {@link Viewable} property which is a live view of an arbitrary
+     * number of other properties, merged into a single item of the supplied type {@code C}.
+     * <p>
+     * This method behaves exactly like {@link #of(Object, Function)}, except that the {@link #type()} of
+     * the returned property is not inferred from the concrete class of the {@code seed}, but pinned to
+     * the supplied {@code type}. Use this overload whenever {@code C} is polymorphic, because a composite
+     * view whose type was inferred from the seed cannot hold a sibling subtype of it:
+     * <pre>{@code
+     *   Viewable<Shape> shape = Viewable.of(Shape.class, new Rect(1, 1), it -> it
+     *           .join(kindProperty, (s, kind) -> "circle".equals(kind) ? new Circle(1) : new Rect(1, 1))
+     *           .join(sizeProperty, (s, size) -> s instanceof Circle ? new Circle(size) : new Rect(size, size))
+     *       );
+     * }</pre>
+     *
+     * @param type         The type of the item held by the returned {@link Viewable}.
+     * @param seed         The initial item at which the fold of the composite item starts.
+     * @param configurator A function declaring the joined properties on the supplied {@link CompositeBuilder}
+     *                     and returning the resulting builder.
+     * @param <C>          The type of the item held by the returned {@link Viewable}.
+     * @return A new {@link Viewable} instance which is a live view of all the joined properties.
+     * @throws NullPointerException If any of the supplied arguments is {@code null}, if the
+     *                              {@code configurator} returns {@code null}, or if the initial fold
+     *                              fails to produce an item.
+     * @throws IllegalArgumentException If the supplied {@code seed} is not an instance of the supplied
+     *                                  {@code type}, or if the {@code configurator} returns a builder
+     *                                  which did not originate from the one it was supplied with.
+     */
+    static <C> Viewable<C> of( Class<C> type, C seed, Function<CompositeBuilder<C>, CompositeBuilder<C>> configurator ) {
+        Objects.requireNonNull(type);
+        Objects.requireNonNull(seed);
+        Objects.requireNonNull(configurator);
+        return Sprouts.factory().viewOf( type, seed, configurator );
+    }
+
+    /**
      *  Use this to register an observer lambda for a particular {@link Channel},
      *  which will be called whenever the item viewed
      *  by this {@link Viewable} changes through the {@code Var::set(Channel, T)} method.
@@ -250,5 +348,47 @@ public interface Viewable<T> extends Val<T>, Observable {
      * @return The {@link Viewable} instance itself.
      */
     Viewable<T> onChange( Channel channel, Action<ValDelegate<T>> action );
+
+    /**
+     *  An immutable builder used to declare the properties a composite {@link Viewable} is merged from.
+     *  An instance of this is supplied to the {@code configurator} function of the
+     *  {@link Viewable#of(Object, Function)} and {@link Viewable#of(Class, Object, Function)}
+     *  factory methods, where every {@link #join(Val, BiFunction)} call contributes one property
+     *  together with the combiner folding its item into the composite item.
+     *  <p>
+     *  Note that this is a persistent value: {@link #join(Val, BiFunction)} does not modify the builder
+     *  it is called on, but returns a new one. No change listeners are registered before the
+     *  {@code configurator} has returned, which means an instance of this which escapes from the
+     *  {@code configurator} is completely inert.
+     *
+     * @param <C> The type of the item held by the composite {@link Viewable} being built.
+     */
+    interface CompositeBuilder<C>
+    {
+        /**
+         *  Declares that the item of the supplied {@code property} should be folded into the item of
+         *  the composite {@link Viewable} using the supplied {@code combiner}, which receives the
+         *  composite item as folded so far, together with the current item of the property, and
+         *  returns the updated composite item.
+         *  <p>
+         *  The combiners of a composite view are applied in the order in which their properties were
+         *  joined, so if two of them write to the same part of the composite item, then the one which
+         *  was joined last wins. A property may also be joined more than once, in which case every join
+         *  is an independent contribution to the fold, while the property itself is still observed
+         *  only once.
+         *  <p>
+         *  Note that the supplied {@code property} may be nullable, in which case the {@code combiner}
+         *  must be prepared to receive a {@code null} item. The composite item itself may never be
+         *  {@code null}, so a combiner returning {@code null} is treated as a failure.
+         *
+         * @param property The property whose item should be folded into the composite item.
+         * @param combiner A function receiving the composite item folded so far together with the
+         *                 current item of the supplied property, and returning the updated composite item.
+         * @param <V> The type of the item held by the supplied property.
+         * @return A new {@link CompositeBuilder} with the supplied property joined to it.
+         * @throws NullPointerException If any of the supplied arguments is {@code null}.
+         */
+        <V extends @Nullable Object> CompositeBuilder<C> join( Val<V> property, BiFunction<C, V, C> combiner );
+    }
 
 }

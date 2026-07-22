@@ -530,6 +530,92 @@ Viewable<Double> totalPrice = Viewable.of(price, taxRate, (p, tr) -> p * (1 + tr
 // totalPrice automatically updates when either price or taxRate changes
 ```
 
+### Composite Views of Many Properties
+
+The `Viewable.of(Val, Val, BiFunction)` methods shown above merge exactly *two*
+properties. That is enough for a total price, but it does not scale: merging ten
+properties this way means nesting nine views inside each other.
+
+For that case there is a builder based factory method which takes a **seed** item and
+a chain of `join(..)` calls, where every `join` contributes one property together with
+a "wither" style combiner folding the item of that property into the composite item:
+
+```java
+record Weather(String city, double temperature, int humidity, boolean alert) {
+    Weather withCity(String city) { return new Weather(city, temperature, humidity, alert); }
+    Weather withTemperature(double t) { return new Weather(city, t, humidity, alert); }
+    Weather withHumidity(int h) { return new Weather(city, temperature, h, alert); }
+    Weather withAlert(boolean a) { return new Weather(city, temperature, humidity, a); }
+}
+
+Var<String>  city        = Var.of("Vienna");
+Var<Double>  temperature = Var.of(21.5);
+Var<Integer> humidity    = Var.of(55);
+Var<Boolean> alert       = Var.of(false);
+
+Viewable<Weather> weather = Viewable.of(new Weather("", 0, 0, false), it -> it
+        .join(city,        Weather::withCity)
+        .join(temperature, Weather::withTemperature)
+        .join(humidity,    Weather::withHumidity)
+        .join(alert,       Weather::withAlert)
+    );
+
+// weather.get() is now: Weather[city=Vienna, temperature=21.5, humidity=55, alert=false]
+```
+
+This scales to any number of properties without nesting, and because the joins are
+declared through ordinary method calls, you can also build them dynamically in a loop:
+
+```java
+record Tally(int total) {
+    Tally withTotal(int total) { return new Tally(total); }
+}
+
+List<Var<Integer>> numbers = ...;
+
+Viewable<Tally> sum = Viewable.of(new Tally(0), it -> {
+    var builder = it;
+    for ( Var<Integer> number : numbers )
+        builder = builder.join(number, (tally, n) -> tally.withTotal(tally.total() + n));
+    return builder;
+});
+```
+
+A few properties of such a composite view are worth knowing:
+
+- **The item is always recomputed as a whole.** Every recomputation starts at the seed
+  and reads the *current* item of every joined property, so the view can never mix a
+  fresh item of one source with a stale item of another. Parts of the seed which no
+  combiner ever touches simply survive in the composite item, which makes the seed the
+  natural place for constant or default state.
+- **Order matters.** The combiners are applied in the order in which the properties were
+  joined, so if two of them write to the same part, the one joined last wins. A property
+  may also be joined more than once to derive several parts of the composite item from it.
+- **The composite item is never `null`.** If a combiner returns `null` or throws while the
+  view is being *created*, the creation fails with a `NullPointerException`. If it happens
+  later, while a change is being *propagated*, the whole recomputation is discarded, a
+  warning is logged, and the view keeps its last item &mdash; so it is never observed in a
+  half updated state.
+- **It is read-only.** The way to change a composite view is to change one of the
+  properties it was folded from.
+
+The item type of the view is taken from the concrete class of the seed. When your item
+type is polymorphic, pin it explicitly with the `Class` based overload:
+
+```java
+Viewable<Shape> shape = Viewable.of(Shape.class, new Rect(1, 1), it -> it
+        .join(kind, (s, k) -> "circle".equals(k) ? new Circle(1) : new Rect(1, 1))
+    );
+```
+
+> [!TIP]
+> A composite view follows the same referencing policy as every other view: the
+> properties it observes reference it only *weakly*, so keep a strong reference to it
+> for as long as you need it. In the other direction, a joined *view or lens* is
+> referenced strongly &mdash; which is what lets you create intermediate properties
+> inline inside the configurator &mdash; while a joined *plain property* is referenced
+> weakly, so that observing your state never keeps it alive.
+
 ## Conclusion
 
 Sprouts provides a robust foundation for building modern Java applications with:
@@ -537,6 +623,7 @@ Sprouts provides a robust foundation for building modern Java applications with:
 - **Immutable data models** that are safe, fast and predictable
 - **Property lenses** for fine-grained state management
 - **Property views** for viewing and reacting to state changes
+- **Composite views** for merging any number of properties into a single item
 - **Automatic memory management** through weak-referenced views
 - **Type-safe** operations throughout
 

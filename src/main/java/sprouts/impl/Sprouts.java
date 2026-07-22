@@ -161,6 +161,31 @@ public final class Sprouts implements SproutsFactory
     }
 
     @Override
+    public <C> Viewable<C> viewOf(
+        Class<C> type,
+        C seed,
+        Function<Viewable.CompositeBuilder<C>, Viewable.CompositeBuilder<C>> configurator
+    ) {
+        Objects.requireNonNull(type, "The item type of a composite view must not be null.");
+        Objects.requireNonNull(seed, "The seed item of a composite view must not be null.");
+        Objects.requireNonNull(configurator, "The configurator of a composite view must not be null.");
+        if ( !type.isInstance(seed) )
+            throw new IllegalArgumentException(
+                "The seed item of type '"+seed.getClass()+"' does not fit the " +
+                "declared item type '"+type+"' of the composite view."
+            );
+        Viewable.CompositeBuilder<C> configured = configurator.apply(CompositeBuilderImpl.empty());
+        Objects.requireNonNull(configured, "The configurator of a composite view must not return null.");
+        if ( !(configured instanceof CompositeBuilderImpl) )
+            throw new IllegalArgumentException(
+                "The configurator of a composite view returned a foreign builder implementation " +
+                "of type '"+configured.getClass()+"'. Please return the builder produced by the " +
+                "'join(..)' calls on the supplied builder instead."
+            );
+        return PropertyLens.ofComposite(type, seed, ((CompositeBuilderImpl<C>) configured).joins());
+    }
+
+    @Override
     public <T> Viewables<T> viewOf(Vals<T> source) {
         Objects.requireNonNull(source);
         return Viewables.cast(source); // TODO: Implement

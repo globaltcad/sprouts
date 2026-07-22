@@ -31,18 +31,20 @@ final class SingleLensCore<A extends @Nullable Object, T extends @Nullable Objec
     }
 
     @Override
-    public @Nullable T fetchFromSources(@Nullable T lastKnownItem) {
+    public @Nullable T fetchFromSources(@Nullable T lastKnownItem, boolean logDegradation) {
         T fetchedValue = lastKnownItem;
         try {
             fetchedValue = _lens.getter(Util.fakeNonNull(_parent.orElseNull()));
         } catch ( Exception e ) {
             Util.sneakyThrowExceptionIfFatal(e);
-            String parentId = _parent.id().isEmpty() ? "?" : "'" + _parent.id() + "'";
-            Util._logError(log,
-                    "Failed to fetch item for property lens from parent " +
-                    "property {} (with item type '{}') using the current lens getter.",
-                    parentId, _parent.type(), e
-            );
+            if ( logDegradation ) {
+                String parentId = _parent.id().isEmpty() ? "?" : "'" + _parent.id() + "'";
+                Util._logError(log,
+                        "Failed to fetch item for property lens from parent " +
+                        "property {} (with item type '{}') using the current lens getter.",
+                        parentId, _parent.type(), e
+                );
+            }
         }
         return fetchedValue;
     }

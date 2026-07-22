@@ -39,6 +39,15 @@ import java.util.function.Function;
  * The source-specific behavior (single parent vs. dual parents) is encapsulated
  * in a {@link LensCore} implementation, making this class a unified wrapper
  * for all lens property variants.
+ * <p>
+ * <b>Note that this class is not limited to lenses.</b> Everything a lens property needs
+ * beyond the lens pattern itself &mdash; deriving an item from an arbitrary number of source
+ * properties, recomputing it whenever any of them changes, degrading to the last known item
+ * when that recomputation fails, and observing all of the sources through weak listeners
+ * &mdash; is exactly what a composite view needs as well. A {@link CompositeCore} therefore
+ * turns this class into the read-only composite view behind
+ * {@link sprouts.Viewable#of(Object, Function)}, in which case it reports itself as a view
+ * instead of a lens (see {@link LensCore#isView()}).
  *
  * @param <T> The type of the value, which is expected to be an immutable data carrier,
  *            such as a record, value object, or a primitive.
@@ -343,6 +352,45 @@ final class PropertyLens<T extends @Nullable Object> implements Var<T>, Viewable
         return new PropertyLens<>(type, Sprouts.factory().defaultId(), true, initialValue, core, null);
     }
 
+    // ==================== Composite factory method ====================
+
+    /**
+     * Creates a read-only composite view which folds the items of an arbitrary number of
+     * joined properties into a single item, starting at the supplied {@code seed}.
+     * <p>
+     * Deriving a composite view fails fast: if the initial fold cannot produce an item,
+     * because a combiner returned {@code null} or threw an exception, then this method throws
+     * a {@link NullPointerException} instead of handing out a view which cannot honour its
+     * promise of never holding {@code null}. Once the view is live, the very same failures
+     * merely make it retain its last item (see {@link CompositeCore#fetchFromSources(Object, boolean)}).
+     * <p>
+     * If no property is joined at all, or if every joined property is immutable, then the
+     * composite item can never change, and so an immutable property is returned instead of a
+     * live view.
+     */
+    static <C> Viewable<C> ofComposite( Class<C> type, C seed, Tuple<CompositeCore.Join<C, ?>> joins ) {
+        Objects.requireNonNull(type);
+        Objects.requireNonNull(seed);
+        CompositeCore<C> core = new CompositeCore<>(type, seed, joins);
+        /*
+            The initial fold is the one place where we may not degrade to a last known item,
+            simply because there is none yet. So we let the core log whatever went wrong and
+            then reject the null it had to fall back to.
+        */
+        @Nullable C initialItem = core.fetchFromSources(null, true);
+        if ( initialItem == null )
+            throw new NullPointerException(
+                "Failed to compute the initial item of a composite view, because one of its " +
+                "combiners returned null or threw an exception. A composite view does not allow " +
+                "null items, so it cannot be created from a fold which does not produce an item."
+            );
+
+        if ( !core.sources().iterator().hasNext() )
+            return Viewable.cast(Property.of(true, type, initialItem)); // Nothing can ever change it.
+
+        return new PropertyLens<>(type, Sprouts.factory().defaultId(), false, initialItem, core, null);
+    }
+
     // ==================== Instance fields ====================
 
     private final PropertyChangeListeners<T> _changeListeners;
@@ -398,7 +446,7 @@ final class PropertyLens<T extends @Nullable Object> implements Var<T>, Viewable
      *  if this lens does not allow null, but the sources currently yield {@code null}
      *  (e.g. because the focused field became null through an update of the parent),
      *  then we keep the last known item instead of exposing an illegal null item.
-     *  This mirrors how {@link SingleLensCore#fetchFromSources(Object)} already keeps
+     *  This mirrors how {@link SingleLensCore#fetchFromSources(Object, boolean)} already keeps
      *  the last item when the lens getter throws, and it guarantees that a
      *  non-nullable lens never violates its own {@code allowsNull() == false} contract.
      *  <p>
@@ -408,7 +456,7 @@ final class PropertyLens<T extends @Nullable Object> implements Var<T>, Viewable
      *  focused field would spam an error log on every read for as long as it stays null.
      */
     private @Nullable T _fetchFromSources(boolean logDegradation) {
-        @Nullable T fetched = _core.fetchFromSources(_lastItem);
+        @Nullable T fetched = _core.fetchFromSources(_lastItem, logDegradation);
         if ( fetched == null && !_nullable ) {
             if ( logDegradation )
                 _logError(
@@ -456,12 +504,12 @@ final class PropertyLens<T extends @Nullable Object> implements Var<T>, Viewable
 
     @Override
     public boolean isLens() {
-        return true;
+        return !_core.isView();
     }
 
     @Override
     public boolean isView() {
-        return false;
+        return _core.isView();
     }
 
     @Override
@@ -513,6 +561,16 @@ final class PropertyLens<T extends @Nullable Object> implements Var<T>, Viewable
     @Override
     public final Var<T> set( Channel channel, T newItem ) {
         Objects.requireNonNull(channel);
+        /*
+            Rejected up front, and not only down in the core: _setInternal() records the new item
+            as the fallback for failed recomputations before it writes to the sources, so letting
+            a read-only core fail down there would leave an item behind which was never really set.
+        */
+        if ( _core.isView() )
+            throw new UnsupportedOperationException(
+                "The '" + _core.coreName() + "' property is read-only! " +
+                "Change one of the properties it is derived from instead."
+            );
         ItemPair<T> pair = _setInternal(channel, newItem);
         if ( pair.change() != SingleChange.NONE )
             this.fireChange(channel, pair);

@@ -46,7 +46,7 @@ final class ParamLensCore<P extends @Nullable Object, A extends @Nullable Object
     }
 
     @Override
-    public @Nullable T fetchFromSources(@Nullable T lastKnownItem) {
+    public @Nullable T fetchFromSources(@Nullable T lastKnownItem, boolean logDegradation) {
         T fetchedValue = lastKnownItem;
         try {
             fetchedValue = _getter.apply(
@@ -55,16 +55,17 @@ final class ParamLensCore<P extends @Nullable Object, A extends @Nullable Object
             );
         } catch ( Exception e ) {
             Util.sneakyThrowExceptionIfFatal(e);
-            Util._logError(log,
-                    "Failed to fetch item for parameterized property lens from source " +
-                    "property {} (with item type '{}') and parameter {} (with item type '{}') " +
-                    "using the current getter function.",
-                    _source.id().isEmpty()    ? "?" : "'" + _source.id()    + "'",
-                    _source.type(),
-                    _parameter.id().isEmpty() ? "?" : "'" + _parameter.id() + "'",
-                    _parameter.type(),
-                    e
-            );
+            if ( logDegradation )
+                Util._logError(log,
+                        "Failed to fetch item for parameterized property lens from source " +
+                        "property {} (with item type '{}') and parameter {} (with item type '{}') " +
+                        "using the current getter function.",
+                        _source.id().isEmpty()    ? "?" : "'" + _source.id()    + "'",
+                        _source.type(),
+                        _parameter.id().isEmpty() ? "?" : "'" + _parameter.id() + "'",
+                        _parameter.type(),
+                        e
+                );
         }
         return fetchedValue;
     }

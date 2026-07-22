@@ -56,7 +56,7 @@ final class DualLensCore<A extends @Nullable Object, B extends @Nullable Object,
     }
 
     @Override
-    public @Nullable T fetchFromSources(@Nullable T lastKnownItem) {
+    public @Nullable T fetchFromSources(@Nullable T lastKnownItem, boolean logDegradation) {
         T fetchedValue = lastKnownItem;
         try {
             fetchedValue = _getter.apply(
@@ -65,13 +65,14 @@ final class DualLensCore<A extends @Nullable Object, B extends @Nullable Object,
             );
         } catch ( Exception e ) {
             Util.sneakyThrowExceptionIfFatal(e);
-            Util._logError(log,
-                    "Failed to fetch item for dual property lens from source " +
-                    "properties '{}' and '{}' using the current getter function.",
-                    _firstParent.id().isEmpty()  ? "?" : "'" + _firstParent.id()  + "'",
-                    _secondParent.id().isEmpty() ? "?" : "'" + _secondParent.id() + "'",
-                    e
-            );
+            if ( logDegradation )
+                Util._logError(log,
+                        "Failed to fetch item for dual property lens from source " +
+                        "properties '{}' and '{}' using the current getter function.",
+                        _firstParent.id().isEmpty()  ? "?" : "'" + _firstParent.id()  + "'",
+                        _secondParent.id().isEmpty() ? "?" : "'" + _secondParent.id() + "'",
+                        e
+                );
         }
         return fetchedValue;
     }
