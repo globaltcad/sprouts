@@ -213,6 +213,10 @@ class Composite_View_Building_Spec extends Specification
             A property is not required to be joined only once. Every `join` call is an
             independent contribution to the fold, which means you can derive several
             parts of the composite item from a single property.
+
+            The property itself is still observed only once though: the fold reads the
+            current item of every join anyway, so a second listener on the same property
+            would merely recompute the very same item a second time.
         """
         given : 'A single property...'
             var city = Var.of("Vienna")
@@ -222,16 +226,26 @@ class Composite_View_Building_Spec extends Specification
                     .join(city, (w, c) -> w.withHumidity(c.length()))
                     .join(city, (w, c) -> w.withAlert(c.startsWith("V")))
                 )
+        and : 'A trace of the change events fired by the composite view.'
+            var trace = []
+            weather.onChange(From.ALL, { trace << it.currentValue().orElseNull() })
 
         expect : 'All three combiners contributed to the composite item.'
             weather.get() == new Weather("Vienna", 0d, 6, true, "")
-        and : 'Each join registered its own change listener on the property.'
-            city.numberOfChangeListeners() == 3
+        and : 'The property joined three times is still observed by a single listener.'
+            city.numberOfChangeListeners() == 1
 
         when : 'We change the property.'
             city.set("Graz")
-        then : 'All three parts of the composite item are updated.'
+        then : 'All three parts of the composite item are updated...'
             weather.get() == new Weather("Graz", 0d, 4, false, "")
+        and : '...through exactly one change event, and not one per join.'
+            trace == [new Weather("Graz", 0d, 4, false, "")]
+
+        when : 'We force a change event on the property, without actually changing it.'
+            city.fireChange(From.ALL)
+        then : 'The composite view also propagates that one exactly once.'
+            trace == [new Weather("Graz", 0d, 4, false, ""), new Weather("Graz", 0d, 4, false, "")]
     }
 
     def 'A composite view without any joins is an immutable property holding the seed.'()

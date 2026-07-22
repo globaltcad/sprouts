@@ -278,6 +278,8 @@ public interface Viewable<T> extends Val<T>, Observable {
      * @throws NullPointerException If any of the supplied arguments is {@code null}, if the
      *                              {@code configurator} returns {@code null}, or if the initial fold
      *                              fails to produce an item.
+     * @throws IllegalArgumentException If the {@code configurator} returns a builder which did not
+     *                                  originate from the one it was supplied with.
      */
     static <C> Viewable<C> of( C seed, Function<CompositeBuilder<C>, CompositeBuilder<C>> configurator ) {
         Objects.requireNonNull(seed);
@@ -311,6 +313,9 @@ public interface Viewable<T> extends Val<T>, Observable {
      * @throws NullPointerException If any of the supplied arguments is {@code null}, if the
      *                              {@code configurator} returns {@code null}, or if the initial fold
      *                              fails to produce an item.
+     * @throws IllegalArgumentException If the supplied {@code seed} is not an instance of the supplied
+     *                                  {@code type}, or if the {@code configurator} returns a builder
+     *                                  which did not originate from the one it was supplied with.
      */
     static <C> Viewable<C> of( Class<C> type, C seed, Function<CompositeBuilder<C>, CompositeBuilder<C>> configurator ) {
         Objects.requireNonNull(type);
@@ -369,7 +374,8 @@ public interface Viewable<T> extends Val<T>, Observable {
          *  The combiners of a composite view are applied in the order in which their properties were
          *  joined, so if two of them write to the same part of the composite item, then the one which
          *  was joined last wins. A property may also be joined more than once, in which case every join
-         *  is an independent contribution to the fold.
+         *  is an independent contribution to the fold, while the property itself is still observed
+         *  only once.
          *  <p>
          *  Note that the supplied {@code property} may be nullable, in which case the {@code combiner}
          *  must be prepared to receive a {@code null} item. The composite item itself may never be

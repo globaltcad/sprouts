@@ -336,6 +336,9 @@ public interface SproutsFactory
      * @throws NullPointerException if any of the supplied parameters are {@code null}, or if the
      *                              supplied {@code configurator} returns {@code null}, or if the
      *                              initial fold does not produce an item.
+     * @throws IllegalArgumentException if the supplied {@code seed} is not an instance of the supplied
+     *                                  {@code type}, or if the supplied {@code configurator} returns a
+     *                                  builder which did not originate from the one it was supplied with.
      */
     <C> Viewable<C> viewOf(
         Class<C> type,

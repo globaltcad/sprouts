@@ -142,16 +142,29 @@ final class CompositeCore<C> implements LensCore<C> {
      *  Immutable properties are left out, because their item can never change, so observing
      *  them would only produce listeners which are never called. They are still folded into
      *  the composite item, they are just not listened to.
+     *  <p>
+     *  A property which was joined more than once is reported only once, because the fold reads
+     *  the current item of every join anyway, so a second listener on the same property would
+     *  only recompute the very same item again. Worse, a forced change event, which is
+     *  propagated even when the item did not change, would then be multiplied by the number
+     *  of times the property was joined.
      */
     @Override
     public List<? extends Val<?>> sources() {
         List<Val<?>> observed = new ArrayList<>(_joins.size());
         for ( Join<C, ?> join : _joins ) {
             Val<?> property = join.property();
-            if ( property.isMutable() )
+            if ( property.isMutable() && !_containsIdentical(observed, property) )
                 observed.add(property);
         }
         return observed;
+    }
+
+    private static boolean _containsIdentical( List<Val<?>> properties, Val<?> property ) {
+        for ( int i = 0; i < properties.size(); i++ )
+            if ( properties.get(i) == property )
+                return true;
+        return false;
     }
 
     @Override

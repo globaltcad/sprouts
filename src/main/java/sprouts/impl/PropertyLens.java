@@ -447,7 +447,7 @@ final class PropertyLens<T extends @Nullable Object> implements Var<T>, Viewable
      *  if this lens does not allow null, but the sources currently yield {@code null}
      *  (e.g. because the focused field became null through an update of the parent),
      *  then we keep the last known item instead of exposing an illegal null item.
-     *  This mirrors how {@link SingleLensCore#fetchFromSources(Object)} already keeps
+     *  This mirrors how {@link SingleLensCore#fetchFromSources(Object, boolean)} already keeps
      *  the last item when the lens getter throws, and it guarantees that a
      *  non-nullable lens never violates its own {@code allowsNull() == false} contract.
      *  <p>
