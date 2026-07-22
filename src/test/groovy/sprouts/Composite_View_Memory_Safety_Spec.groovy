@@ -155,6 +155,168 @@ class Composite_View_Memory_Safety_Spec extends Specification
             weather.get() == new Weather("Vienna", 0d, 80, false, "")
     }
 
+    def 'A collected property leaves behind the last item it held, not the one it was joined with.'()
+    {
+        reportInfo """
+            The "last known item" of a collected property really is the *last* one, and not
+            the one it happened to hold when it was joined. Anything else would make the
+            composite item travel backwards in time the moment a joined property is
+            collected, silently undoing changes which were already observed.
+        """
+        given : 'Two plain properties, one of which we will drop later.'
+            Var<String>  city     = Var.of("Vienna")
+            Var<Integer> humidity = Var.of(55)
+        and : 'A composite view of the two of them.'
+            Viewable<Weather> weather = Viewable.of(Weather.blank(), it -> it
+                    .join(city,     Weather::withCity)
+                    .join(humidity, Weather::withHumidity)
+                )
+        expect : 'It starts out with the items the properties were joined with.'
+            weather.get() == new Weather("Vienna", 0d, 55, false, "")
+
+        when : 'We change the first property several times *after* it was joined...'
+            city.set("Graz")
+            city.set("Linz")
+        then : 'The composite view follows along.'
+            weather.get() == new Weather("Linz", 0d, 55, false, "")
+
+        when : 'We now drop the property and await garbage collection.'
+            var cityRef = new WeakReference(city)
+            city = null
+            waitForGarbageCollection()
+        then : 'It was collected.'
+            cityRef.get() == null
+
+        when : 'We trigger a recomputation through the property which is still alive.'
+            humidity.set(80)
+        then : 'The fold contributed "Linz", the last item the collected property held.'
+            weather.get() == new Weather("Linz", 0d, 80, false, "")
+    }
+
+    def 'A property collected without the composite view ever being read leaves its last item behind.'()
+    {
+        reportInfo """
+            A composite view learns what its joined properties hold in two ways: by reading
+            them whenever its own item is computed, and by being notified when one of them
+            changes. The second one is what covers this scenario, where nobody ever reads
+            the composite view between the change and the garbage collection.
+        """
+        given : 'Two plain properties and a composite view of them, which we never read.'
+            Var<String>  city     = Var.of("Vienna")
+            Var<Integer> humidity = Var.of(55)
+            Viewable<Weather> weather = Viewable.of(Weather.blank(), it -> it
+                    .join(city,     Weather::withCity)
+                    .join(humidity, Weather::withHumidity)
+                )
+
+        when : 'We change the first property, without ever reading the composite view.'
+            city.set("Graz")
+        and : 'We drop the property and await garbage collection.'
+            var cityRef = new WeakReference(city)
+            city = null
+            waitForGarbageCollection()
+        then : 'It was collected.'
+            cityRef.get() == null
+
+        when : 'We read the composite view for the very first time.'
+            var folded = weather.get()
+        then : 'It knows about the change it was notified of, even though nobody read it.'
+            folded == new Weather("Graz", 0d, 55, false, "")
+    }
+
+    def 'A property joined several times contributes its last item to every one of its combiners.'()
+    {
+        reportInfo """
+            Joining a property more than once does not change any of this: after the property
+            is collected, every one of its combiners folds in the same last known item.
+        """
+        given : 'A property joined twice, and a second one to trigger recomputations with.'
+            Var<String>  city     = Var.of("Vienna")
+            Var<Integer> humidity = Var.of(0)
+            Viewable<Weather> weather = Viewable.of(Weather.blank(), it -> it
+                    .join(city,     Weather::withCity)
+                    .join(city,     (w, c) -> w.withSource("station-" + c))
+                    .join(humidity, Weather::withHumidity)
+                )
+        expect : 'Both combiners contributed.'
+            weather.get() == new Weather("Vienna", 0d, 0, false, "station-Vienna")
+
+        when : 'We change the doubly joined property and then drop it.'
+            city.set("Graz")
+            var cityRef = new WeakReference(city)
+            city = null
+            waitForGarbageCollection()
+        then : 'It was collected.'
+            cityRef.get() == null
+
+        when : 'We trigger a recomputation.'
+            humidity.set(80)
+        then : 'Both combiners folded in the last item, and neither of them fell back to "Vienna".'
+            weather.get() == new Weather("Graz", 0d, 80, false, "station-Graz")
+    }
+
+    def 'A nullable property which was emptied before being collected leaves `null` behind.'()
+    {
+        reportInfo """
+            The last known item of a collected property may very well be `null`, if that is
+            what the property held when it was last seen. A combiner joined to a nullable
+            property has to be prepared for `null` anyway, so this changes nothing for it.
+        """
+        given : 'A nullable property, a plain one, and a composite view of both.'
+            Var<String>  city     = Var.ofNullable(String, "Vienna")
+            Var<Integer> humidity = Var.of(55)
+            Viewable<Weather> weather = Viewable.of(Weather.blank(), it -> it
+                    .join(city,     (w, c) -> w.withCity(c == null ? "<unknown>" : c))
+                    .join(humidity, Weather::withHumidity)
+                )
+        expect : 'The composite view folded the item of the nullable property in.'
+            weather.get().city() == "Vienna"
+
+        when : 'We empty the nullable property and then drop it.'
+            city.set(null)
+            var cityRef = new WeakReference(city)
+            city = null
+            waitForGarbageCollection()
+        then : 'It was collected.'
+            cityRef.get() == null
+
+        when : 'We trigger a recomputation.'
+            humidity.set(80)
+        then : 'The combiner received the `null` the property was last holding.'
+            weather.get() == new Weather("<unknown>", 0d, 80, false, "")
+    }
+
+    def 'A composite view whose joined properties were all collected freezes on its last item.'()
+    {
+        reportInfo """
+            Once every joined property is gone, there is nothing left which could ever change
+            the composite item. The view then simply keeps reporting the item it folded from
+            everything it last knew, instead of breaking or reverting.
+        """
+        given : 'Two plain properties and a composite view of them.'
+            Var<String>  city     = Var.of("Vienna")
+            Var<Integer> humidity = Var.of(55)
+            Viewable<Weather> weather = Viewable.of(Weather.blank(), it -> it
+                    .join(city,     Weather::withCity)
+                    .join(humidity, Weather::withHumidity)
+                )
+
+        when : 'We change both of them and then drop both of them.'
+            city.set("Graz")
+            humidity.set(80)
+            var refs = [new WeakReference(city), new WeakReference(humidity)]
+            city = null
+            humidity = null
+            waitForGarbageCollection()
+        then : 'Both were collected.'
+            refs.every( it -> it.get() == null )
+
+        and : 'The composite view still reports what it last folded together.'
+            weather.get() == new Weather("Graz", 0d, 80, false, "")
+        and : 'And it keeps doing so, no matter how often it is read.'
+            weather.get() == new Weather("Graz", 0d, 80, false, "")
+    }
+
     def 'A composite view keeps the views and lenses it joined alive.'()
     {
         reportInfo """
