@@ -161,6 +161,18 @@ public final class Sprouts implements SproutsFactory
     }
 
     @Override
+    public <C> Viewable<C> viewOf(
+        Class<C> type,
+        C seed,
+        Function<Viewable.CompositeBuilder<C>, Viewable.CompositeBuilder<C>> configurator
+    ) {
+        Objects.requireNonNull(type);
+        Objects.requireNonNull(seed);
+        Objects.requireNonNull(configurator);
+        throw new UnsupportedOperationException("Composite view building is not implemented yet!");
+    }
+
+    @Override
     public <T> Viewables<T> viewOf(Vals<T> source) {
         Objects.requireNonNull(source);
         return Viewables.cast(source); // TODO: Implement

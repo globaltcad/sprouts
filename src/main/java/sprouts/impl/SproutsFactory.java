@@ -321,6 +321,29 @@ public interface SproutsFactory
     <T extends @Nullable Object, U extends @Nullable Object, R> Viewable<@Nullable R> viewOfNullable(Class<R> type, Val<T> first, Val<U> second, BiFunction<T, U, @Nullable R> combiner);
 
     /**
+     *  Creates a non-nullable {@link Viewable} instance which is a composite of an arbitrary number
+     *  of {@link Val} instances, which are supplied to the {@link Viewable.CompositeBuilder} handed
+     *  to the given {@code configurator} function. The item of the resulting {@link Viewable} is
+     *  folded together, starting at the supplied {@code seed} and then applying the combiner of every
+     *  join in the order in which they were declared.
+     *
+     * @param type The type of the resulting {@link Viewable}.
+     * @param seed The initial item the fold of the composite starts at.
+     * @param configurator A function which declares the joined properties on the supplied builder
+     *                     and returns the resulting builder.
+     * @return A {@link Viewable} instance which is a live composite of the joined properties.
+     * @param <C> The type of the resulting {@link Viewable}.
+     * @throws NullPointerException if any of the supplied parameters are {@code null}, or if the
+     *                              supplied {@code configurator} returns {@code null}, or if the
+     *                              initial fold does not produce an item.
+     */
+    <C> Viewable<C> viewOf(
+        Class<C> type,
+        C seed,
+        Function<Viewable.CompositeBuilder<C>, Viewable.CompositeBuilder<C>> configurator
+    );
+
+    /**
      *  Creates a {@link Viewables} instance of the given {@link Vals}.
      *  You can register observers on the returned {@link Viewables} to receive updates
      *  when the items in the {@link Vals} change.
