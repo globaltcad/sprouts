@@ -411,6 +411,34 @@ class Composite_View_Building_Spec extends Specification
             !weather.isEmpty()
     }
 
+    def 'A composite view is read-only.'()
+    {
+        reportInfo """
+            A composite view is a `Viewable`, which is a read-only property type, so there is no
+            way to set its item through the API you are handed. Its item is defined entirely by
+            the seed and the properties it was folded from, and the way to change it is to change
+            one of those properties.
+
+            Should you circumvent the type system to set it anyway, then this is rejected
+            explicitly instead of silently corrupting the composite item.
+        """
+        given : 'A property and a composite view built from it.'
+            Var<String> city = Var.of("Vienna")
+            Viewable<Weather> weather = Viewable.of(Weather.blank(), it -> it.join(city, Weather::withCity))
+
+        when : 'We try to set the item of the composite view directly.'
+            (weather as Var<Weather>).set(new Weather("Graz", 1d, 2, true, "manual"))
+        then : 'The attempt is rejected.'
+            thrown(UnsupportedOperationException)
+        and : 'The composite view still holds the item it folded together.'
+            weather.get() == new Weather("Vienna", 0d, 0, false, "")
+
+        when : 'We change the property it was folded from instead.'
+            city.set("Graz")
+        then : 'The composite item is updated as expected.'
+            weather.get() == new Weather("Graz", 0d, 0, false, "")
+    }
+
     def 'Joined properties may be nullable, in which case the combiners receive `null`.'()
     {
         reportInfo """
@@ -922,20 +950,17 @@ class Composite_View_Building_Spec extends Specification
             strongly.get().city() == "Graz"
     }
 
-    def 'A composite view keeps the views it joined alive.'()
+    def 'A composite view keeps the properties it joined alive.'()
     {
         reportInfo """
             A property only holds a weak reference to the views derived from it, which is
             what makes views memory leak safe. But that also means somebody has to keep
             an intermediate view alive for as long as it is needed.
 
-            A composite view does exactly that: it holds a *strong* reference to every
-            joined property which is itself a view or a lens, so that you may create
-            them inline inside the configurator without having to store them yourself.
-
-            Note that this does **not** apply to regular properties: a plain `Var` is only
-            weakly referenced by the composite view, so you still have to keep your
-            actual state alive yourself.
+            A composite view does exactly that: the reference from a property to the
+            composite view observing it is weak, but the reference from a composite view to
+            the properties it joined is *strong*. So you may create views and lenses inline
+            inside the configurator without having to store them yourself.
         """
         given : 'A regular property which we reference strongly.'
             var city = Var.of("Vienna")

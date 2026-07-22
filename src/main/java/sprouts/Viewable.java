@@ -261,9 +261,9 @@ public interface Viewable<T> extends Val<T>, Observable {
      * <p>
      * <b>Warning:</b> Just like every other view, the returned {@link Viewable} is only weakly referenced
      * by the properties it observes. If you do not keep a strong reference to it, then it will eventually
-     * be garbage collected alongside all of its change listeners. Note that a composite view does keep a
-     * strong reference to every joined property which is itself a view or a lens, so you may create those
-     * inline inside the {@code configurator}.
+     * be garbage collected alongside all of its change listeners. Note that the opposite direction is a
+     * strong reference: a composite view keeps every property it joined alive, so you may create views
+     * and lenses inline inside the {@code configurator} without having to store them yourself.
      *
      * @param seed         The initial item at which the fold of the composite item starts.
      * @param configurator A function declaring the joined properties on the supplied {@link CompositeBuilder}
