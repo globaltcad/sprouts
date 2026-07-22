@@ -37,43 +37,37 @@ final class CompositeCore<C> implements LensCore<C> {
     /**
      *  A single contribution to the fold of a composite view, which is one joined
      *  property together with the combiner folding its item into the composite item.
+     *  <p>
+     *  Note that the joined property is held through a {@link ParentRef}, which is how
+     *  a composite view follows the same referencing policy as any other view: a joined
+     *  view or lens is referenced strongly, so that intermediate properties created inline
+     *  inside a configurator stay alive, whereas a plain property is referenced weakly, so
+     *  that observing your state never keeps it alive.
      */
     static final class Join<C, V extends @Nullable Object> {
-        private final Val<V>               _property;
+        private final ParentRef<Val<V>>    _property;
         private final BiFunction<C, V, C>  _combiner;
 
         Join( Val<V> property, BiFunction<C, V, C> combiner ) {
-            _property = property; // Vetted by CompositeBuilderImpl, the only place creating these.
+            _property = ParentRef.of(property); // Vetted by CompositeBuilderImpl, the only place creating these.
             _combiner = combiner;
         }
 
-        Val<V> property() { return _property; }
+        Val<V> property() { return _property.get(); }
 
         C applyTo( C item ) {
-            return _combiner.apply(item, _property.orElseNull());
+            return _combiner.apply(item, _property.get().orElseNull());
         }
     }
 
-    private final Class<C>            _type;
-    private final C                   _seed;
-    private final List<Join<C, ?>>    _joins;
-    private final List<Val<?>>        _observedSources;
+    private final Class<C>         _type;
+    private final C                _seed;
+    private final List<Join<C, ?>> _joins;
 
     CompositeCore( Class<C> type, C seed, List<Join<C, ?>> joins ) {
         _type  = Objects.requireNonNull(type);
         _seed  = Objects.requireNonNull(seed);
         _joins = Collections.unmodifiableList(new ArrayList<>(joins));
-        /*
-            An immutable property can never change its item, so observing it would only
-            produce a change listener which is never called. We still fold its item into
-            the composite item, we just do not listen to it.
-        */
-        List<Val<?>> observed = new ArrayList<>(_joins.size());
-        for ( Join<C, ?> join : _joins ) {
-            if ( join.property().isMutable() )
-                observed.add(join.property());
-        }
-        _observedSources = Collections.unmodifiableList(observed);
     }
 
     /**
@@ -137,9 +131,27 @@ final class CompositeCore<C> implements LensCore<C> {
         );
     }
 
+    /**
+     *  {@inheritDoc}
+     *  <p>
+     *  The returned list is computed on demand and deliberately <b>not</b> retained in a field:
+     *  holding it would be a strong reference to every joined property, which would defeat the
+     *  weak {@link ParentRef}s the joins are based on. The {@link PropertyLens} only consumes
+     *  this once, when it registers its weak listeners.
+     *  <p>
+     *  Immutable properties are left out, because their item can never change, so observing
+     *  them would only produce listeners which are never called. They are still folded into
+     *  the composite item, they are just not listened to.
+     */
     @Override
     public List<? extends Val<?>> sources() {
-        return _observedSources;
+        List<Val<?>> observed = new ArrayList<>(_joins.size());
+        for ( Join<C, ?> join : _joins ) {
+            Val<?> property = join.property();
+            if ( property.isMutable() )
+                observed.add(property);
+        }
+        return observed;
     }
 
     @Override

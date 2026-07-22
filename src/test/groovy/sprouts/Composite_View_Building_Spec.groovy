@@ -950,17 +950,20 @@ class Composite_View_Building_Spec extends Specification
             strongly.get().city() == "Graz"
     }
 
-    def 'A composite view keeps the properties it joined alive.'()
+    def 'A composite view keeps the views it joined alive.'()
     {
         reportInfo """
             A property only holds a weak reference to the views derived from it, which is
             what makes views memory leak safe. But that also means somebody has to keep
             an intermediate view alive for as long as it is needed.
 
-            A composite view does exactly that: the reference from a property to the
-            composite view observing it is weak, but the reference from a composite view to
-            the properties it joined is *strong*. So you may create views and lenses inline
-            inside the configurator without having to store them yourself.
+            A composite view does exactly that: it references a joined view or lens
+            *strongly*, so that you may create intermediate properties inline inside the
+            configurator without having to store them yourself.
+
+            Note that this does **not** apply to plain properties, which a composite view
+            references weakly, exactly like every other view does. Have a look at the
+            "Composite View Memory Safety" specification for the full picture.
         """
         given : 'A regular property which we reference strongly.'
             var city = Var.of("Vienna")
@@ -1020,6 +1023,253 @@ class Composite_View_Building_Spec extends Specification
             temperature.set(30d)
         then : 'The composite view does not notice at all.'
             weather.get() == new Weather("Vienna", 0d, 0, false, "")
+    }
+
+    def 'Give a composite view an id using the `withId(..)` method.'()
+    {
+        reportInfo """
+            A composite view has no id by default, but just like any other property you can
+            derive a named copy of it through the `withId(..)` method. The named copy folds
+            the very same properties, which means it is a live view in its own right.
+        """
+        given : 'A property and a composite view built from it.'
+            var city = Var.of("Vienna")
+            var weather = Viewable.of(Weather.blank(), it -> it.join(city, Weather::withCity))
+        and : 'A named copy of the composite view.'
+            var named = weather.withId("weather")
+
+        expect : 'The copy carries the id, while the original still has none.'
+            named.id() == "weather"
+            weather.id() == ""
+        and : 'Both of them hold the same item.'
+            named.get() == weather.get()
+
+        when : 'We change the joined property.'
+            city.set("Graz")
+        then : 'Both the original and the named copy are updated.'
+            weather.get().city() == "Graz"
+            named.get().city() == "Graz"
+    }
+
+    def 'A composite view has a descriptive string representation.'()
+    {
+        reportInfo """
+            The `toString()` method of a composite view tells you that you are looking at a
+            view, together with the item type and the current item. If the view has an id,
+            then that is part of the string representation as well.
+        """
+        given : 'A property and a composite view built from it.'
+            var city = Var.of("Vienna")
+            var weather = Viewable.of(Weather.blank(), it -> it.join(city, Weather::withCity))
+
+        expect : 'The composite view presents itself as a view of the seed type.'
+            weather.toString().startsWith("View<Weather>[")
+            weather.toString().contains("city=Vienna")
+        and : 'A named composite view mentions its id as well.'
+            weather.withId("weather").toString().startsWith("View<Weather>[weather=")
+
+        when : 'We change the joined property.'
+            city.set("Graz")
+        then : 'The string representation reflects the new item.'
+            weather.toString().contains("city=Graz")
+    }
+
+    def 'You can fire a change event on a composite view manually.'()
+    {
+        reportInfo """
+            Sometimes you want to notify the observers of a composite view even though nothing
+            changed, which is what the `fireChange(Channel)` method inherited from `Val` is for.
+        """
+        given : 'A property and a composite view built from it.'
+            Var<String> city = Var.of("Vienna")
+            Viewable<Weather> weather = Viewable.of(Weather.blank(), it -> it.join(city, Weather::withCity))
+        and : 'A trace of all the change events of the composite view.'
+            var trace = []
+            weather.onChange(From.ALL, { trace << it.change() })
+
+        when : 'We fire a change event on the composite view itself.'
+            weather.fireChange(From.ALL)
+        then : 'The observers were notified, even though nothing changed.'
+            trace == [SingleChange.NONE]
+        and : 'The item of the composite view is of course unchanged.'
+            weather.get() == new Weather("Vienna", 0d, 0, false, "")
+    }
+
+    def 'You can unsubscribe the observers of a composite view.'()
+    {
+        reportInfo """
+            The observers of a composite view can be removed individually through
+            `unsubscribe(Subscriber)`, or all at once through `unsubscribeAll()`,
+            exactly like on any other `Viewable`.
+        """
+        given : 'A property and a composite view built from it.'
+            var city = Var.of("Vienna")
+            var weather = Viewable.of(Weather.blank(), it -> it.join(city, Weather::withCity))
+        and : 'Two observers writing into their own trace.'
+            var traceA = []
+            var traceB = []
+            Action<ValDelegate<Weather>> observerA = { traceA << it.currentValue().orElseNull().city() }
+            Action<ValDelegate<Weather>> observerB = { traceB << it.currentValue().orElseNull().city() }
+            weather.onChange(From.ALL, observerA)
+            weather.onChange(From.ALL, observerB)
+        expect : 'The composite view has two observers.'
+            weather.numberOfChangeListeners() == 2
+
+        when : 'We change the joined property.'
+            city.set("Graz")
+        then : 'Both observers were notified.'
+            traceA == ["Graz"]
+            traceB == ["Graz"]
+
+        when : 'We unsubscribe the first observer and change the property again.'
+            weather.unsubscribe(observerA)
+            city.set("Linz")
+        then : 'Only the second observer was notified.'
+            weather.numberOfChangeListeners() == 1
+            traceA == ["Graz"]
+            traceB == ["Graz", "Linz"]
+
+        when : 'We unsubscribe everything and change the property one last time.'
+            weather.unsubscribeAll()
+            city.set("Salzburg")
+        then : 'Nothing is notified anymore.'
+            weather.numberOfChangeListeners() == 0
+            traceA == ["Graz"]
+            traceB == ["Graz", "Linz"]
+    }
+
+    def 'A composite view can be observed through a simple `Observer`.'()
+    {
+        reportInfo """
+            Besides the `onChange(Channel, Action)` method, a composite view is also a plain
+            `Observable`, which means you can subscribe an `Observer` to it if you are only
+            interested in the fact that something changed, and not in what exactly.
+        """
+        given : 'A property and a composite view built from it.'
+            var city = Var.of("Vienna")
+            var weather = Viewable.of(Weather.blank(), it -> it.join(city, Weather::withCity))
+        and : 'An observer counting how often the composite view changed.'
+            var count = 0
+            weather.subscribe({ count++ } as Observer)
+
+        when : 'We change the joined property twice.'
+            city.set("Graz")
+            city.set("Linz")
+        then : 'The observer was notified twice.'
+            count == 2
+
+        when : 'We set the property to the item it already holds.'
+            city.set("Linz")
+        then : 'Nothing happened, because the composite item did not change.'
+            count == 2
+    }
+
+    def 'You can create ordinary property views from a composite view.'()
+    {
+        reportInfo """
+            A composite view is an ordinary `Viewable`, so all the usual view methods work on
+            it as well. This is how you narrow a large composite item back down to the single
+            value some part of your user interface actually needs.
+        """
+        given : 'Two properties merged into a composite view.'
+            Var<String>  city     = Var.of("Vienna")
+            Var<Integer> humidity = Var.of(55)
+            Viewable<Weather> weather = Viewable.of(Weather.blank(), it -> it
+                    .join(city,     Weather::withCity)
+                    .join(humidity, Weather::withHumidity)
+                )
+        and : 'A couple of ordinary views derived from the composite view.'
+            Viewable<String>  summary = weather.viewAsString( w -> w.city() + " @ " + w.humidity() + "%" )
+            Viewable<Boolean> humid   = weather.viewAs( Boolean.class, w -> w.humidity() > 50 )
+
+        expect : 'The derived views hold what the composite item says.'
+            summary.get() == "Vienna @ 55%"
+            humid.get() == true
+
+        when : 'We change one of the properties the composite view was folded from.'
+            humidity.set(30)
+        then : 'The change propagates through the composite view into the derived views.'
+            summary.get() == "Vienna @ 30%"
+            humid.get() == false
+    }
+
+    def 'A composite view tolerates changes made from within its own observers.'()
+    {
+        reportInfo """
+            An observer of a composite view may very well change one of the properties that
+            same composite view was folded from. Such a re-entrant change simply triggers
+            another recomputation, and as long as your observer eventually stops changing
+            things, the composite view settles on a consistent item.
+        """
+        given : 'Two properties merged into a composite view.'
+            Var<String>  city     = Var.of("Vienna")
+            Var<Integer> humidity = Var.of(0)
+            Viewable<Weather> weather = Viewable.of(Weather.blank(), it -> it
+                    .join(city,     Weather::withCity)
+                    .join(humidity, Weather::withHumidity)
+                )
+        and : 'An observer which keeps raising the humidity until it reaches 3.'
+            weather.onChange(From.ALL, {
+                if ( it.currentValue().orElseNull().humidity() < 3 )
+                    humidity.set(humidity.get() + 1)
+            })
+
+        when : 'We change the other property, which sets the whole cascade in motion.'
+            city.set("Graz")
+        then : 'No exception escaped, and the recursion terminated.'
+            noExceptionThrown()
+        and : 'The composite view settled on a consistent item.'
+            weather.get() == new Weather("Graz", 0d, 3, false, "")
+        and : 'The properties it was folded from agree with it.'
+            city.get() == "Graz"
+            humidity.get() == 3
+    }
+
+    def 'An immutable composite view built with an explicit type keeps that type.'()
+    {
+        reportInfo """
+            The collapse of a composite view into an immutable property does not lose the
+            type you declared: an immutable composite view built through the `Class` based
+            factory method reports the declared type, and not the concrete type of the seed.
+        """
+        given : 'A composite view of a polymorphic type which joins nothing at all.'
+            Viewable<Shape> shape = Viewable.of(Shape.class, new Rect(1d, 1d), it -> it)
+
+        expect : 'It collapsed into an immutable property...'
+            shape.isImmutable()
+        and : '...which nevertheless reports the declared supertype.'
+            shape.type() == Shape
+            shape.get() == new Rect(1d, 1d)
+    }
+
+    def 'A seed which does not fit the declared type is rejected.'()
+    {
+        reportInfo """
+            The `Class` based factory method declares the item type of the composite view,
+            so a seed which is not an instance of that type could never be folded into a
+            valid item and is rejected right away.
+        """
+        when : 'We try to build a composite view whose seed does not fit the declared type.'
+            Viewable.of(Shape.class, "I am not a shape", it -> it)
+        then : 'The attempt is rejected.'
+            var exception = thrown(IllegalArgumentException)
+        and : 'The error message explains the mismatch.'
+            exception.message.contains("Shape")
+    }
+
+    def 'The configurator has to return the builder it was given.'()
+    {
+        reportInfo """
+            The `Viewable.CompositeBuilder` handed to your configurator is the only builder a
+            composite view can be built from, because it is the one collecting your joins.
+            Returning some other implementation of the interface is therefore rejected.
+        """
+        when : 'We return a foreign builder implementation from the configurator.'
+            Viewable.of(Weather.blank(), it -> ({ property, combiner -> null } as Viewable.CompositeBuilder))
+        then : 'The attempt is rejected.'
+            var exception = thrown(IllegalArgumentException)
+        and : 'The error message tells us what to do instead.'
+            exception.message.contains("join")
     }
 
     /**
