@@ -4,7 +4,6 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import sprouts.*;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -369,7 +368,7 @@ final class PropertyLens<T extends @Nullable Object> implements Var<T>, Viewable
      * composite item can never change, and so an immutable property is returned instead of a
      * live view.
      */
-    static <C> Viewable<C> ofComposite( Class<C> type, C seed, List<CompositeCore.Join<C, ?>> joins ) {
+    static <C> Viewable<C> ofComposite( Class<C> type, C seed, Tuple<CompositeCore.Join<C, ?>> joins ) {
         Objects.requireNonNull(type);
         Objects.requireNonNull(seed);
         CompositeCore<C> core = new CompositeCore<>(type, seed, joins);

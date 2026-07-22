@@ -6,8 +6,9 @@ import sprouts.Channel;
 import sprouts.Val;
 import sprouts.Viewable;
 
+import sprouts.Tuple;
+
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.BiFunction;
@@ -60,14 +61,14 @@ final class CompositeCore<C> implements LensCore<C> {
         }
     }
 
-    private final Class<C>         _type;
-    private final C                _seed;
-    private final List<Join<C, ?>> _joins;
+    private final Class<C>          _type;
+    private final C                 _seed;
+    private final Tuple<Join<C, ?>> _joins;
 
-    CompositeCore( Class<C> type, C seed, List<Join<C, ?>> joins ) {
+    CompositeCore( Class<C> type, C seed, Tuple<Join<C, ?>> joins ) {
         _type  = Objects.requireNonNull(type);
         _seed  = Objects.requireNonNull(seed);
-        _joins = Collections.unmodifiableList(new ArrayList<>(joins));
+        _joins = Objects.requireNonNull(joins); // A tuple is immutable, so there is nothing to defend against here.
     }
 
     /**

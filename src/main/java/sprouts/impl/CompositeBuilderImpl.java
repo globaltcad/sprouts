@@ -1,12 +1,10 @@
 package sprouts.impl;
 
 import org.jspecify.annotations.Nullable;
+import sprouts.Tuple;
 import sprouts.Val;
 import sprouts.Viewable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.Objects;
 import java.util.function.BiFunction;
 
@@ -16,6 +14,9 @@ import java.util.function.BiFunction;
  *  <p>
  *  This is a persistent value: {@link #join(Val, BiFunction)} does not modify the builder it is
  *  called on, but returns a new one carrying one additional {@link CompositeCore.Join}.
+ *  The joins are collected in a {@link Tuple}, whose structural sharing is what keeps a chain of
+ *  {@code join(..)} calls from copying everything which was already declared, over and over again.
+ *  <p>
  *  Nothing is registered on the joined properties here, which is what makes an instance of this
  *  inert once it escapes the configurator function it was handed to.
  *
@@ -23,16 +24,27 @@ import java.util.function.BiFunction;
  */
 final class CompositeBuilderImpl<C> implements Viewable.CompositeBuilder<C> {
 
-    private static final CompositeBuilderImpl<?> EMPTY = new CompositeBuilderImpl<>(Collections.emptyList());
+    private static final CompositeBuilderImpl<?> EMPTY = new CompositeBuilderImpl<>(_noJoins());
 
     @SuppressWarnings("unchecked")
     static <C> CompositeBuilderImpl<C> empty() {
         return (CompositeBuilderImpl<C>) EMPTY;
     }
 
-    private final List<CompositeCore.Join<C, ?>> _joins;
+    /**
+     *  The item type of the tuple of joins is generic, which a {@link Class} can never express,
+     *  so the raw {@link CompositeCore.Join} class is the most precise type we can hand to the
+     *  tuple. It only ever uses it to type check the items it is given, and every join is an
+     *  instance of that raw type, no matter its type arguments.
+     */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static <C> Tuple<CompositeCore.Join<C, ?>> _noJoins() {
+        return (Tuple) Tuple.of(CompositeCore.Join.class);
+    }
 
-    private CompositeBuilderImpl( List<CompositeCore.Join<C, ?>> joins ) {
+    private final Tuple<CompositeCore.Join<C, ?>> _joins;
+
+    private CompositeBuilderImpl( Tuple<CompositeCore.Join<C, ?>> joins ) {
         _joins = joins;
     }
 
@@ -43,13 +55,10 @@ final class CompositeBuilderImpl<C> implements Viewable.CompositeBuilder<C> {
     ) {
         Objects.requireNonNull(property, "The property to join must not be null.");
         Objects.requireNonNull(combiner, "The combiner of a joined property must not be null.");
-        List<CompositeCore.Join<C, ?>> joins = new ArrayList<>(_joins.size() + 1);
-        joins.addAll(_joins);
-        joins.add(new CompositeCore.Join<>(property, combiner));
-        return new CompositeBuilderImpl<>(Collections.unmodifiableList(joins));
+        return new CompositeBuilderImpl<>(_joins.add(new CompositeCore.Join<>(property, combiner)));
     }
 
-    List<CompositeCore.Join<C, ?>> joins() {
+    Tuple<CompositeCore.Join<C, ?>> joins() {
         return _joins;
     }
 }
