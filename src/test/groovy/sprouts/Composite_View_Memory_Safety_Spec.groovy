@@ -24,8 +24,9 @@ import java.lang.ref.WeakReference
       properties created inline inside the configurator stay alive for as long as they
       are needed.
     * A composite view references a joined **plain property weakly**, so that observing
-      your state never keeps that state alive. Should such a property be collected, the
-      composite view keeps folding in its last known item instead of breaking.
+      your state never keeps that state alive. When such a property is garbage collected,
+      the composite view does not break: it keeps folding in the newest item it saw that
+      property holding, which is the item it held just before it was collected.
 
     This specification pins down all of these cases by checking which properties actually
     survive garbage collection, and which do not.
@@ -125,7 +126,7 @@ class Composite_View_Memory_Safety_Spec extends Specification
             still holding on to the composite view.
 
             The composite view does not break when that happens: it keeps folding in the
-            last known item of the collected property.
+            newest item it saw that property holding before it was garbage collected.
         """
         given : 'Two plain properties which we will dereference later.'
             Var<String>  city     = Var.of("Vienna")
@@ -155,15 +156,21 @@ class Composite_View_Memory_Safety_Spec extends Specification
             weather.get() == new Weather("Vienna", 0d, 80, false, "")
     }
 
-    def 'A collected property leaves behind the last item it held, not the one it was joined with.'()
+    def 'A garbage collected property contributes its newest item, and not the one it was joined with.'()
     {
         reportInfo """
-            The "last known item" of a collected property really is the *last* one, and not
-            the one it happened to hold when it was joined. Anything else would make the
-            composite item travel backwards in time the moment a joined property is
-            collected, silently undoing changes which were already observed.
+            A composite view only references a joined plain property weakly, which means the
+            property can be garbage collected while the view lives on. From that point on the
+            view has nothing left to read, so it keeps using the item it saw the property
+            holding the last time it looked at it.
+
+            The important word here is *last*. It must not be the item the property held back
+            when it was joined, because between the join and the garbage collection the
+            property may have changed many times, and the view already showed those changes.
+            Falling back to the item from join time would undo all of them at once, and the
+            composite item would jump back to a state which is already out of date.
         """
-        given : 'Two plain properties, one of which we will drop later.'
+        given : 'Two properties, one of which we will let the garbage collector take later on.'
             Var<String>  city     = Var.of("Vienna")
             Var<Integer> humidity = Var.of(55)
         and : 'A composite view of the two of them.'
@@ -171,37 +178,41 @@ class Composite_View_Memory_Safety_Spec extends Specification
                     .join(city,     Weather::withCity)
                     .join(humidity, Weather::withHumidity)
                 )
-        expect : 'It starts out with the items the properties were joined with.'
+        expect : 'The view starts out with the items the two properties were joined with.'
             weather.get() == new Weather("Vienna", 0d, 55, false, "")
 
-        when : 'We change the first property several times *after* it was joined...'
+        when : 'We change the city twice, long after it was joined.'
             city.set("Graz")
             city.set("Linz")
-        then : 'The composite view follows along.'
+        then : 'The view shows the newest city, so "Linz" is what it last saw.'
             weather.get() == new Weather("Linz", 0d, 55, false, "")
 
-        when : 'We now drop the property and await garbage collection.'
+        when : 'We now drop our only reference to the city property...'
             var cityRef = new WeakReference(city)
             city = null
+        and : 'We wait for the garbage collector to do its job.'
             waitForGarbageCollection()
-        then : 'It was collected.'
+        then : 'The city property is gone.'
             cityRef.get() == null
 
-        when : 'We trigger a recomputation through the property which is still alive.'
+        when : 'We change the humidity, which makes the view recompute its item.'
             humidity.set(80)
-        then : 'The fold contributed "Linz", the last item the collected property held.'
+        then : 'The view uses "Linz", the newest city, and does not fall back to "Vienna".'
             weather.get() == new Weather("Linz", 0d, 80, false, "")
     }
 
-    def 'A property collected without the composite view ever being read leaves its last item behind.'()
+    def 'A change is remembered even if nobody reads the composite view before the garbage collection.'()
     {
         reportInfo """
-            A composite view learns what its joined properties hold in two ways: by reading
-            them whenever its own item is computed, and by being notified when one of them
-            changes. The second one is what covers this scenario, where nobody ever reads
-            the composite view between the change and the garbage collection.
+            There are two moments at which a composite view can notice what a joined property
+            holds: when the view computes its own item, and when the property notifies the view
+            that it changed.
+
+            This scenario takes the first moment away completely, because the view is never
+            read between the change and the garbage collection. The notification alone has to
+            be enough for the view to remember the new item.
         """
-        given : 'Two plain properties and a composite view of them, which we never read.'
+        given : 'Two properties and a composite view of them, which we deliberately never read.'
             Var<String>  city     = Var.of("Vienna")
             Var<Integer> humidity = Var.of(55)
             Viewable<Weather> weather = Viewable.of(Weather.blank(), it -> it
@@ -209,28 +220,29 @@ class Composite_View_Memory_Safety_Spec extends Specification
                     .join(humidity, Weather::withHumidity)
                 )
 
-        when : 'We change the first property, without ever reading the composite view.'
+        when : 'We change the city, without ever reading the composite view.'
             city.set("Graz")
-        and : 'We drop the property and await garbage collection.'
+        and : 'We drop our only reference to the city property and wait for the garbage collector.'
             var cityRef = new WeakReference(city)
             city = null
             waitForGarbageCollection()
-        then : 'It was collected.'
+        then : 'The city property is gone.'
             cityRef.get() == null
 
-        when : 'We read the composite view for the very first time.'
+        when : 'We now read the composite view for the very first time.'
             var folded = weather.get()
-        then : 'It knows about the change it was notified of, even though nobody read it.'
+        then : 'It knows about the change it was notified of, even though nobody ever read it.'
             folded == new Weather("Graz", 0d, 55, false, "")
     }
 
-    def 'A property joined several times contributes its last item to every one of its combiners.'()
+    def 'Every combiner of a property joined several times gets its newest item after garbage collection.'()
     {
         reportInfo """
-            Joining a property more than once does not change any of this: after the property
-            is collected, every one of its combiners folds in the same last known item.
+            Joining the same property several times changes nothing about any of this.
+            Once the property is garbage collected, every single one of its combiners
+            keeps receiving the same newest item.
         """
-        given : 'A property joined twice, and a second one to trigger recomputations with.'
+        given : 'One property which we join twice, and a second one to recompute the view with.'
             Var<String>  city     = Var.of("Vienna")
             Var<Integer> humidity = Var.of(0)
             Viewable<Weather> weather = Viewable.of(Weather.blank(), it -> it
@@ -238,62 +250,67 @@ class Composite_View_Memory_Safety_Spec extends Specification
                     .join(city,     (w, c) -> w.withSource("station-" + c))
                     .join(humidity, Weather::withHumidity)
                 )
-        expect : 'Both combiners contributed.'
+        expect : 'Both of the combiners of the city property contributed to the item.'
             weather.get() == new Weather("Vienna", 0d, 0, false, "station-Vienna")
 
-        when : 'We change the doubly joined property and then drop it.'
+        when : 'We change the city, drop our only reference to it, and wait for the garbage collector.'
             city.set("Graz")
             var cityRef = new WeakReference(city)
             city = null
             waitForGarbageCollection()
-        then : 'It was collected.'
+        then : 'The city property is gone.'
             cityRef.get() == null
 
-        when : 'We trigger a recomputation.'
+        when : 'We change the humidity, which makes the view recompute its item.'
             humidity.set(80)
-        then : 'Both combiners folded in the last item, and neither of them fell back to "Vienna".'
+        then : 'Both combiners used "Graz", and neither of them fell back to "Vienna".'
             weather.get() == new Weather("Graz", 0d, 80, false, "station-Graz")
     }
 
-    def 'A nullable property which was emptied before being collected leaves `null` behind.'()
+    def 'A nullable property emptied before the garbage collection contributes `null` afterwards.'()
     {
         reportInfo """
-            The last known item of a collected property may very well be `null`, if that is
-            what the property held when it was last seen. A combiner joined to a nullable
-            property has to be prepared for `null` anyway, so this changes nothing for it.
+            The newest item of a joined property may well be `null`, if `null` is what the
+            property held when the view last looked at it. Combiners joined to a nullable
+            property have to handle `null` anyway, so they simply keep receiving it after
+            the property was garbage collected.
         """
-        given : 'A nullable property, a plain one, and a composite view of both.'
+        given : 'A nullable property, a second property, and a composite view of both.'
             Var<String>  city     = Var.ofNullable(String, "Vienna")
             Var<Integer> humidity = Var.of(55)
             Viewable<Weather> weather = Viewable.of(Weather.blank(), it -> it
                     .join(city,     (w, c) -> w.withCity(c == null ? "<unknown>" : c))
                     .join(humidity, Weather::withHumidity)
                 )
-        expect : 'The composite view folded the item of the nullable property in.'
+        expect : 'The view folded the item of the nullable property into its own item.'
             weather.get().city() == "Vienna"
 
-        when : 'We empty the nullable property and then drop it.'
+        when : 'We empty the nullable property, drop it, and wait for the garbage collector.'
             city.set(null)
             var cityRef = new WeakReference(city)
             city = null
             waitForGarbageCollection()
-        then : 'It was collected.'
+        then : 'The city property is gone.'
             cityRef.get() == null
 
-        when : 'We trigger a recomputation.'
+        when : 'We change the humidity, which makes the view recompute its item.'
             humidity.set(80)
-        then : 'The combiner received the `null` the property was last holding.'
+        then : 'The combiner received the `null` the property held last, and not "Vienna".'
             weather.get() == new Weather("<unknown>", 0d, 80, false, "")
     }
 
-    def 'A composite view whose joined properties were all collected freezes on its last item.'()
+    def 'A composite view keeps its item after all of its joined properties were garbage collected.'()
     {
         reportInfo """
-            Once every joined property is gone, there is nothing left which could ever change
-            the composite item. The view then simply keeps reporting the item it folded from
-            everything it last knew, instead of breaking or reverting.
+            Once every joined property has been garbage collected, there is nothing left which
+            could ever change the composite item again. The view then simply keeps reporting
+            the item it folded from the newest items it saw, and it keeps reporting that same
+            item no matter how often you read it.
+
+            In particular it does not break, it does not fall back to its seed, and it does not
+            jump back to the items its properties were joined with.
         """
-        given : 'Two plain properties and a composite view of them.'
+        given : 'Two properties and a composite view of them.'
             Var<String>  city     = Var.of("Vienna")
             Var<Integer> humidity = Var.of(55)
             Viewable<Weather> weather = Viewable.of(Weather.blank(), it -> it
@@ -301,19 +318,19 @@ class Composite_View_Memory_Safety_Spec extends Specification
                     .join(humidity, Weather::withHumidity)
                 )
 
-        when : 'We change both of them and then drop both of them.'
+        when : 'We change both properties, drop both of them, and wait for the garbage collector.'
             city.set("Graz")
             humidity.set(80)
             var refs = [new WeakReference(city), new WeakReference(humidity)]
             city = null
             humidity = null
             waitForGarbageCollection()
-        then : 'Both were collected.'
+        then : 'Both properties are gone.'
             refs.every( it -> it.get() == null )
 
-        and : 'The composite view still reports what it last folded together.'
+        and : 'The view still reports the item it folded from their newest items.'
             weather.get() == new Weather("Graz", 0d, 80, false, "")
-        and : 'And it keeps doing so, no matter how often it is read.'
+        and : 'And it keeps reporting that same item, no matter how often we read it.'
             weather.get() == new Weather("Graz", 0d, 80, false, "")
     }
 
