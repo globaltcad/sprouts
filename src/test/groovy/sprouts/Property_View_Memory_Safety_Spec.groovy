@@ -294,6 +294,10 @@ class Property_View_Memory_Safety_Spec extends Specification
             var weakA = new WeakReference(a)
         expect :
             c.get() == "AB"
+        when : 'We change the first property, so the item it was created with is no longer its newest item.'
+            a.set("a")
+        then : 'The view reflects that change.'
+            c.get() == "aB"
         when : 'We get rid of the only strong reference to the first property.'
             a = null
         and : 'We wait for the garbage collector to do its job.'
@@ -304,9 +308,10 @@ class Property_View_Memory_Safety_Spec extends Specification
             b.set("b")
         then : """
             Despite the fact that the first property `a` was garbage collected,
-            the composite property `c` is still updated based on the last known value of `a`.
+            the composite property `c` is still updated based on the last known value of `a`,
+            which is the lower case "a" it last held, and not the upper case "A" from creation time.
         """
-            c.get() == "Ab"
+            c.get() == "ab"
     }
 
     def 'A composite view of 2 properties will not break if the second observed property is garbage collected.'()
@@ -325,6 +330,10 @@ class Property_View_Memory_Safety_Spec extends Specification
             var weakB = new WeakReference(b)
         expect :
             c.get() == "AB"
+        when : 'We change the second property, so the item it was created with is no longer its newest item.'
+            b.set("b")
+        then : 'The view reflects that change.'
+            c.get() == "Ab"
         when : 'We get rid of the only strong reference to the second property.'
             b = null
         and : 'We wait for the garbage collector to do its job.'
@@ -335,9 +344,10 @@ class Property_View_Memory_Safety_Spec extends Specification
             a.set("a")
         then : """
             Despite the fact that the second property `b` was garbage collected before,
-            the composite property `c` is still updated based on the last known value of `b`.
+            the composite property `c` is still updated based on the last known value of `b`,
+            which is the lower case "b" it last held, and not the upper case "B" from creation time.
         """
-            c.get() == "aB"
+            c.get() == "ab"
     }
 
     def 'Even if property views have change listeners, they will be garbage collected if you do not reference them.'(
@@ -461,6 +471,210 @@ class Property_View_Memory_Safety_Spec extends Specification
                 { Var.ofNull(Integer).view( DayOfWeek.MONDAY, i -> DayOfWeek.of(i % 7) ) },
                 { Vars.of('a', 'b', 'c').viewSize() },
             ]
+    }
+
+    def 'A composite view of two properties uses the newest item of a garbage collected source.'()
+    {
+        reportInfo """
+            A composite view of two properties references both of them weakly, so either of
+            them may be garbage collected while the view lives on. When that happens, the view
+            keeps using the item it saw that property holding the last time it looked at it.
+
+            The important word here is *newest*. It must not be the item the property held back
+            when the view was created, because in between the property may have changed many
+            times, and the view already showed those changes to its listeners. Falling back to
+            the item from creation time would undo all of them at once.
+        """
+        given : 'Two properties, of which we will let the garbage collector take the first.'
+            Var<String> a = Var.of("A")
+            Var<String> b = Var.of("B")
+        and : 'A composite view merging the two of them.'
+            Val<String> c = Viewable.of(a, b, (x, y) -> x + y)
+        expect : 'The view starts out with the items the two properties were created with.'
+            c.get() == "AB"
+
+        when : 'We change the first property, long after the view was created.'
+            a.set("a")
+        then : 'The view shows the change, so the lower case "a" is what it last saw.'
+            c.get() == "aB"
+
+        when : 'We drop our only reference to the first property...'
+            var aRef = new WeakReference(a)
+            a = null
+        and : 'We wait for the garbage collector to do its job.'
+            waitForGarbageCollection()
+        then : 'The first property is gone.'
+            aRef.get() == null
+
+        when : 'We change the second property, which makes the view recompute its item.'
+            b.set("b")
+        then : 'The view uses the lower case "a", and does not fall back to the upper case "A".'
+            c.get() == "ab"
+    }
+
+    def 'A change is remembered even if nobody reads the composite view before the garbage collection.'()
+    {
+        reportInfo """
+            There are two moments at which a composite view can notice what one of its source
+            properties holds: when the view computes its own item, and when the property
+            notifies the view that it changed.
+
+            This scenario takes the first moment away completely, because the view is never
+            read between the change and the garbage collection. The notification alone has to
+            be enough for the view to remember the new item.
+        """
+        given : 'Two properties and a composite view of them, which we deliberately never read.'
+            Var<String> a = Var.of("A")
+            Var<String> b = Var.of("B")
+            Val<String> c = Viewable.of(a, b, (x, y) -> x + y)
+
+        when : 'We change the first property, without ever reading the composite view.'
+            a.set("a")
+        and : 'We drop our only reference to it and wait for the garbage collector.'
+            var aRef = new WeakReference(a)
+            a = null
+            waitForGarbageCollection()
+        then : 'The first property is gone.'
+            aRef.get() == null
+
+        when : 'We change the second property and then read the view for the very first time.'
+            b.set("b")
+            var merged = c.get()
+        then : 'It knows about the change it was notified of, even though nobody ever read it.'
+            merged == "ab"
+    }
+
+    def 'A nullable source emptied before the garbage collection contributes `null` afterwards.'()
+    {
+        reportInfo """
+            The newest item of a source property may well be `null`, if `null` is what the
+            property held when the view last looked at it. The combiner of a nullable source
+            has to handle `null` anyway, so it simply keeps receiving it after the property
+            was garbage collected.
+        """
+        given : 'A nullable property, a second property, and a composite view of both.'
+            Var<String> a = Var.ofNullable(String, "A")
+            Var<String> b = Var.of("B")
+            Val<String> c = Viewable.of(a, b, (x, y) -> (x == null ? "?" : x) + y)
+        expect : 'The view merged the item of the nullable property into its own item.'
+            c.get() == "AB"
+
+        when : 'We empty the nullable property, drop it, and wait for the garbage collector.'
+            a.set(null)
+            var aRef = new WeakReference(a)
+            a = null
+            waitForGarbageCollection()
+        then : 'The nullable property is gone.'
+            aRef.get() == null
+
+        when : 'We change the second property, which makes the view recompute its item.'
+            b.set("b")
+        then : 'The combiner received the `null` the property held last, and not the "A".'
+            c.get() == "?b"
+    }
+
+    def 'A composite view built with an explicit type has the same guarantee.'()
+    {
+        reportInfo """
+            Sprouts offers four ways to build a composite view of two properties, and all of
+            them observe their sources in the same way. This covers the variant which is given
+            an explicit item type, so that the guarantee is not accidentally pinned for one
+            factory method only.
+        """
+        given : 'Two properties of different types and a composite view merging them into a third type.'
+            Var<String>  a = Var.of("A")
+            Var<Integer> b = Var.of(1)
+            Val<String>  c = Viewable.of(String, a, b, (x, y) -> x + y)
+        expect : 'The view merged both of them.'
+            c.get() == "A1"
+
+        when : 'We change the first property, so the view sees a newer item.'
+            a.set("a")
+        then : 'The view shows it.'
+            c.get() == "a1"
+
+        when : 'We drop our only reference to the first property and wait for the garbage collector.'
+            var aRef = new WeakReference(a)
+            a = null
+            waitForGarbageCollection()
+        then : 'The first property is gone.'
+            aRef.get() == null
+
+        when : 'We change the second property, which makes the view recompute its item.'
+            b.set(2)
+        then : 'The view uses the lower case "a", and does not fall back to the upper case "A".'
+            c.get() == "a2"
+    }
+
+    def 'A nullable composite view also uses the newest item of a garbage collected source.'()
+    {
+        reportInfo """
+            A composite view can be built in four ways, and the guarantee that a garbage
+            collected source contributes its *newest* item, and not a stale one from the past,
+            has to hold for every single one of them. The features above pin it for the two
+            non-null flavours. This one pins it for a *nullable* composite view, so that a
+            reader can trust the promise no matter which factory method they reached for, and
+            so that a future change cannot quietly weaken one flavour while the others keep
+            looking fine.
+        """
+        given : 'A nullable composite view merging two properties.'
+            Var<String> a = Var.of("A")
+            Var<String> b = Var.of("B")
+            Val<String> c = Viewable.ofNullable(a, b, (x, y) -> x + y)
+        expect : 'It starts out with the items the two properties were created with.'
+            c.get() == "AB"
+
+        when : 'We change the first property, long after the view was created.'
+            a.set("a")
+        then : 'The view shows the change, so the lower case "a" is the newest item it saw.'
+            c.get() == "aB"
+
+        when : 'We drop our only reference to the first property...'
+            var aRef = new WeakReference(a)
+            a = null
+        and : 'We wait for the garbage collector to do its job.'
+            waitForGarbageCollection()
+        then : 'The first property is gone.'
+            aRef.get() == null
+
+        when : 'We change the surviving property, which makes the view recompute its item.'
+            b.set("b")
+        then : 'The view still uses the newest "a", and does not rewind to the "A" from creation time.'
+            c.get() == "ab"
+    }
+
+    def 'A nullable composite view built with an explicit type has the same guarantee.'()
+    {
+        reportInfo """
+            This is the fourth and last of the four ways to build a composite view: a nullable
+            one that is handed an explicit item type. It is here so that the newest-item
+            guarantee is pinned for all four of them, leaving no factory method behind whose
+            listeners could start rewinding a garbage collected source again unnoticed.
+        """
+        given : 'Two properties of different types and a nullable composite view merging them.'
+            Var<String>  a = Var.of("A")
+            Var<Integer> b = Var.of(1)
+            Val<String>  c = Viewable.ofNullable(String, a, b, (x, y) -> x + y)
+        expect : 'The view merged both of them.'
+            c.get() == "A1"
+
+        when : 'We change the first property, so the view sees a newer item.'
+            a.set("a")
+        then : 'The view shows it.'
+            c.get() == "a1"
+
+        when : 'We drop our only reference to the first property...'
+            var aRef = new WeakReference(a)
+            a = null
+        and : 'We wait for the garbage collector to do its job.'
+            waitForGarbageCollection()
+        then : 'The first property is gone.'
+            aRef.get() == null
+
+        when : 'We change the second property, which makes the view recompute its item.'
+            b.set(2)
+        then : 'The view uses the lower case "a", and does not fall back to the upper case "A".'
+            c.get() == "a2"
     }
 
     /**
