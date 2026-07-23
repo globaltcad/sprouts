@@ -4,7 +4,7 @@
   "narrative":"Both the read only `Val` and the mutable `Var` are designed to be\n    used as part of a view model in a Model-View-ViewModel (MVVM) architecture\n    or Model-View-Intent (MVI) architecture.\n    As a consequence, they need to be observable in some way.\n    This is done by registering change listeners on\n    the \"views\" of properties, which are weakly referenced\n    live views of the original property which gets updated\n    automatically when the original property changes.\n    You can then subscribe to these views to get notified\n    of changes to the original property.\n\n    This is especially useful when you want to observe a property\n    of one type as a property of another type, or when you want to\n    observe a property with some transformation applied to it.\n\n    This specification shows how to create views from both nullable and non-nullable properties,\n    and it demonstrates how they may be garbage collected when they are no longer referenced.",
   "subjects":["sprouts.Val","sprouts.Var","sprouts.Viewable"],
   "statistics":{
-    "runs":"68",
+    "runs":"74",
     "successRate":"100.0%",
     "failures":"0",
     "errors":"0",
@@ -211,6 +211,10 @@
 
         {"kind":"expect","text":"","code":["c.get() == \"AB\""]},
 
+        {"kind":"when","text":"We change the first property, so the item it was created with is no longer its newest item.","code":["a.set(\"a\")"]},
+
+        {"kind":"then","text":"The view reflects that change.","code":["c.get() == \"aB\""]},
+
         {"kind":"when","text":"We get rid of the only strong reference to the first property.","code":["a = null"]},
 
         {"kind":"and","text":"We wait for the garbage collector to do its job.","code":["waitForGarbageCollection()"]},
@@ -219,7 +223,7 @@
 
         {"kind":"when","text":"We then change the value of the second property.","code":["b.set(\"b\")"]},
 
-        {"kind":"then","text":"\n            Despite the fact that the first property `a` was garbage collected,\n            the composite property `c` is still updated based on the last known value of `a`.\n        ","code":["c.get() == \"Ab\""]}
+        {"kind":"then","text":"\n            Despite the fact that the first property `a` was garbage collected,\n            the composite property `c` is still updated based on the last known value of `a`,\n            which is the lower case \"a\" it last held, and not the upper case \"A\" from creation time.\n        ","code":["c.get() == \"ab\""]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -236,6 +240,10 @@
 
         {"kind":"expect","text":"","code":["c.get() == \"AB\""]},
 
+        {"kind":"when","text":"We change the second property, so the item it was created with is no longer its newest item.","code":["b.set(\"b\")"]},
+
+        {"kind":"then","text":"The view reflects that change.","code":["c.get() == \"Ab\""]},
+
         {"kind":"when","text":"We get rid of the only strong reference to the second property.","code":["b = null"]},
 
         {"kind":"and","text":"We wait for the garbage collector to do its job.","code":["waitForGarbageCollection()"]},
@@ -244,7 +252,7 @@
 
         {"kind":"when","text":"We change the value of the first property...","code":["a.set(\"a\")"]},
 
-        {"kind":"then","text":"\n            Despite the fact that the second property `b` was garbage collected before,\n            the composite property `c` is still updated based on the last known value of `b`.\n        ","code":["c.get() == \"aB\""]}
+        {"kind":"then","text":"\n            Despite the fact that the second property `b` was garbage collected before,\n            the composite property `c` is still updated based on the last known value of `b`,\n            which is the lower case \"b\" it last held, and not the upper case \"B\" from creation time.\n        ","code":["c.get() == \"ab\""]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     },
@@ -2345,6 +2353,168 @@
         {"kind":"then","text":"The trace shows that no observer was triggered.","code":["trace[From.VIEW_MODEL] == []","trace[From.VIEW] == []","trace[From.ALL] == []"]},
 
         {"kind":"where","text":"","code":{"propertySupplier":["{ Var.of(42) }","{ Var.of(\"Hello\") }","{ Var.of(DayOfWeek.MONDAY) }","{ Var.of(Month.JANUARY) }","{ Var.ofNull(Integer) }","{ Var.ofNull(String) }","{ Var.ofNull(DayOfWeek) }","{ Var.ofNull(Month) }","{ Vars.of(1, 2, 3).viewSize() }","{ Var.of(LocalDateTime.now()).zoomTo(LocalDateTime::getMinute, LocalDateTime::withMinute) }","{ Var.of(42).view() }","{ Var.of(\"Hello\").view() }","{ Var.of(DayOfWeek.MONDAY).view() }","{ Var.of(Month.JANUARY).view() }","{ Var.ofNull(Integer).view() }","{ Var.ofNull(String).view() }","{ Var.ofNull(DayOfWeek).view() }","{ Var.ofNull(Month).view() }","{ Vars.of(1, 2, 3).viewSize().view() }","{ Var.of(LocalDateTime.now()).zoomTo(LocalDateTime::getMinute, LocalDateTime::withMinute).view() }","{ Var.of(42).viewAsString() }","{ Var.of(\"Hello\").viewAsString() }","{ Var.of(DayOfWeek.MONDAY).viewAsString() }","{ Var.of(Month.JANUARY).viewAsString() }","{ Var.ofNull(Integer).viewAsString() }","{ Var.ofNull(String).viewAsString() }","{ Var.ofNull(DayOfWeek).viewAsString() }","{ Var.ofNull(Month).viewAsString() }","{ Vars.of(1, 2, 3).viewSize().viewAsString() }","{ Var.of(LocalDateTime.now()).zoomTo(LocalDateTime::getMinute, LocalDateTime::withMinute).viewAsString() }","{ Var.of(42).viewIsPresent() }","{ Var.of(\"Hello\").viewIsPresent() }","{ Var.of(DayOfWeek.MONDAY).viewIsPresent() }","{ Var.of(Month.JANUARY).viewIsPresent() }","{ Var.ofNull(Integer).viewIsPresent() }","{ Var.ofNull(String).viewIsPresent() }","{ Var.ofNull(DayOfWeek).viewIsPresent() }","{ Var.ofNull(Month).viewIsPresent() }","{ Vars.of(1, 2, 3).viewSize().viewIsPresent() }","{ Var.of(LocalDateTime.now()).zoomTo(LocalDateTime::getMinute, LocalDateTime::withMinute).viewIsPresent() }","{ Var.of(42).viewIsEmpty() }","{ Var.of(\"Hello\").viewIsEmpty() }","{ Var.of(DayOfWeek.MONDAY).viewIsEmpty() }","{ Var.of(Month.JANUARY).viewIsEmpty() }","{ Var.ofNull(Integer).viewIsEmpty() }","{ Var.ofNull(String).viewIsEmpty() }","{ Var.ofNull(DayOfWeek).viewIsEmpty() }","{ Var.ofNull(Month).viewIsEmpty() }","{ Vars.of(1, 2, 3).viewSize().viewIsEmpty() }","{ Var.of(LocalDateTime.now()).zoomTo(LocalDateTime::getMinute, LocalDateTime::withMinute).viewIsEmpty() }","{ Var.of(\"Hello\").viewAsInt( s -> s.length() ) }","{ Var.of(\"World\").viewAsDouble( s -> s.length() / 1.5 ) }","{ Var.of(42).viewAsNullable( MonthDay, i -> i < 0 ? null : MonthDay.of(1, i % 28) ) }","{ Var.of(42).viewAs( MonthDay, i -> MonthDay.of(1, i % 28) ) }","{ Var.of(64).viewAs( DayOfWeek, i -> DayOfWeek.of(i % 7) ) }","{ Var.ofNull(String).viewAsInt( s -> s.length() ) }","{ Var.ofNull(String).viewAsDouble( s -> s.length() / 1.5 ) }","{ Var.ofNull(Integer).viewAsNullable( DayOfWeek, i -> i < 0 ? null : i ) }","{ Var.ofNull(Integer).view( DayOfWeek.MONDAY, i -> DayOfWeek.of(i % 7) ) }","{ Vars.of('a', 'b', 'c').viewSize() }",""]}}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A composite view of two properties uses the newest item of a garbage collected source.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A composite view of two properties references both of them weakly, so either of\n            them may be garbage collected while the view lives on. When that happens, the view\n            keeps using the item it saw that property holding the last time it looked at it.\n\n            The important word here is *newest*. It must not be the item the property held back\n            when the view was created, because in between the property may have changed many\n            times, and the view already showed those changes to its listeners. Falling back to\n            the item from creation time would undo all of them at once.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two properties, of which we will let the garbage collector take the first.","code":["Var<String> a = Var.of(\"A\")","Var<String> b = Var.of(\"B\")"]},
+
+        {"kind":"and","text":"A composite view merging the two of them.","code":["Val<String> c = Viewable.of(a, b, (x, y) -> x + y)"]},
+
+        {"kind":"expect","text":"The view starts out with the items the two properties were created with.","code":["c.get() == \"AB\""]},
+
+        {"kind":"when","text":"We change the first property, long after the view was created.","code":["a.set(\"a\")"]},
+
+        {"kind":"then","text":"The view shows the change, so the lower case \"a\" is what it last saw.","code":["c.get() == \"aB\""]},
+
+        {"kind":"when","text":"We drop our only reference to the first property...","code":["var aRef = new WeakReference(a)","a = null"]},
+
+        {"kind":"and","text":"We wait for the garbage collector to do its job.","code":["waitForGarbageCollection()"]},
+
+        {"kind":"then","text":"The first property is gone.","code":["aRef.get() == null"]},
+
+        {"kind":"when","text":"We change the second property, which makes the view recompute its item.","code":["b.set(\"b\")"]},
+
+        {"kind":"then","text":"The view uses the lower case \"a\", and does not fall back to the upper case \"A\".","code":["c.get() == \"ab\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A change is remembered even if nobody reads the composite view before the garbage collection.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            There are two moments at which a composite view can notice what one of its source\n            properties holds: when the view computes its own item, and when the property\n            notifies the view that it changed.\n\n            This scenario takes the first moment away completely, because the view is never\n            read between the change and the garbage collection. The notification alone has to\n            be enough for the view to remember the new item.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two properties and a composite view of them, which we deliberately never read.","code":["Var<String> a = Var.of(\"A\")","Var<String> b = Var.of(\"B\")","Val<String> c = Viewable.of(a, b, (x, y) -> x + y)"]},
+
+        {"kind":"when","text":"We change the first property, without ever reading the composite view.","code":["a.set(\"a\")"]},
+
+        {"kind":"and","text":"We drop our only reference to it and wait for the garbage collector.","code":["var aRef = new WeakReference(a)","a = null","waitForGarbageCollection()"]},
+
+        {"kind":"then","text":"The first property is gone.","code":["aRef.get() == null"]},
+
+        {"kind":"when","text":"We change the second property and then read the view for the very first time.","code":["b.set(\"b\")","var merged = c.get()"]},
+
+        {"kind":"then","text":"It knows about the change it was notified of, even though nobody ever read it.","code":["merged == \"ab\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A nullable source emptied before the garbage collection contributes `null` afterwards.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The newest item of a source property may well be `null`, if `null` is what the\n            property held when the view last looked at it. The combiner of a nullable source\n            has to handle `null` anyway, so it simply keeps receiving it after the property\n            was garbage collected.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A nullable property, a second property, and a composite view of both.","code":["Var<String> a = Var.ofNullable(String, \"A\")","Var<String> b = Var.of(\"B\")","Val<String> c = Viewable.of(a, b, (x, y) -> (x == null ? \"?\" : x) + y)"]},
+
+        {"kind":"expect","text":"The view merged the item of the nullable property into its own item.","code":["c.get() == \"AB\""]},
+
+        {"kind":"when","text":"We empty the nullable property, drop it, and wait for the garbage collector.","code":["a.set(null)","var aRef = new WeakReference(a)","a = null","waitForGarbageCollection()"]},
+
+        {"kind":"then","text":"The nullable property is gone.","code":["aRef.get() == null"]},
+
+        {"kind":"when","text":"We change the second property, which makes the view recompute its item.","code":["b.set(\"b\")"]},
+
+        {"kind":"then","text":"The combiner received the `null` the property held last, and not the \"A\".","code":["c.get() == \"?b\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A composite view built with an explicit type has the same guarantee.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Sprouts offers four ways to build a composite view of two properties, and all of\n            them observe their sources in the same way. This covers the variant which is given\n            an explicit item type, so that the guarantee is not accidentally pinned for one\n            factory method only.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two properties of different types and a composite view merging them into a third type.","code":["Var<String>  a = Var.of(\"A\")","Var<Integer> b = Var.of(1)","Val<String>  c = Viewable.of(String, a, b, (x, y) -> x + y)"]},
+
+        {"kind":"expect","text":"The view merged both of them.","code":["c.get() == \"A1\""]},
+
+        {"kind":"when","text":"We change the first property, so the view sees a newer item.","code":["a.set(\"a\")"]},
+
+        {"kind":"then","text":"The view shows it.","code":["c.get() == \"a1\""]},
+
+        {"kind":"when","text":"We drop our only reference to the first property and wait for the garbage collector.","code":["var aRef = new WeakReference(a)","a = null","waitForGarbageCollection()"]},
+
+        {"kind":"then","text":"The first property is gone.","code":["aRef.get() == null"]},
+
+        {"kind":"when","text":"We change the second property, which makes the view recompute its item.","code":["b.set(2)"]},
+
+        {"kind":"then","text":"The view uses the lower case \"a\", and does not fall back to the upper case \"A\".","code":["c.get() == \"a2\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A nullable composite view also uses the newest item of a garbage collected source.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A composite view can be built in four ways, and the guarantee that a garbage\n            collected source contributes its *newest* item, and not a stale one from the past,\n            has to hold for every single one of them. The features above pin it for the two\n            non-null flavours. This one pins it for a *nullable* composite view, so that a\n            reader can trust the promise no matter which factory method they reached for, and\n            so that a future change cannot quietly weaken one flavour while the others keep\n            looking fine.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A nullable composite view merging two properties.","code":["Var<String> a = Var.of(\"A\")","Var<String> b = Var.of(\"B\")","Val<String> c = Viewable.ofNullable(a, b, (x, y) -> x + y)"]},
+
+        {"kind":"expect","text":"It starts out with the items the two properties were created with.","code":["c.get() == \"AB\""]},
+
+        {"kind":"when","text":"We change the first property, long after the view was created.","code":["a.set(\"a\")"]},
+
+        {"kind":"then","text":"The view shows the change, so the lower case \"a\" is the newest item it saw.","code":["c.get() == \"aB\""]},
+
+        {"kind":"when","text":"We drop our only reference to the first property...","code":["var aRef = new WeakReference(a)","a = null"]},
+
+        {"kind":"and","text":"We wait for the garbage collector to do its job.","code":["waitForGarbageCollection()"]},
+
+        {"kind":"then","text":"The first property is gone.","code":["aRef.get() == null"]},
+
+        {"kind":"when","text":"We change the surviving property, which makes the view recompute its item.","code":["b.set(\"b\")"]},
+
+        {"kind":"then","text":"The view still uses the newest \"a\", and does not rewind to the \"A\" from creation time.","code":["c.get() == \"ab\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A nullable composite view built with an explicit type has the same guarantee.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            This is the fourth and last of the four ways to build a composite view: a nullable\n            one that is handed an explicit item type. It is here so that the newest-item\n            guarantee is pinned for all four of them, leaving no factory method behind whose\n            listeners could start rewinding a garbage collected source again unnoticed.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two properties of different types and a nullable composite view merging them.","code":["Var<String>  a = Var.of(\"A\")","Var<Integer> b = Var.of(1)","Val<String>  c = Viewable.ofNullable(String, a, b, (x, y) -> x + y)"]},
+
+        {"kind":"expect","text":"The view merged both of them.","code":["c.get() == \"A1\""]},
+
+        {"kind":"when","text":"We change the first property, so the view sees a newer item.","code":["a.set(\"a\")"]},
+
+        {"kind":"then","text":"The view shows it.","code":["c.get() == \"a1\""]},
+
+        {"kind":"when","text":"We drop our only reference to the first property...","code":["var aRef = new WeakReference(a)","a = null"]},
+
+        {"kind":"and","text":"We wait for the garbage collector to do its job.","code":["waitForGarbageCollection()"]},
+
+        {"kind":"then","text":"The first property is gone.","code":["aRef.get() == null"]},
+
+        {"kind":"when","text":"We change the second property, which makes the view recompute its item.","code":["b.set(2)"]},
+
+        {"kind":"then","text":"The view uses the lower case \"a\", and does not fall back to the upper case \"A\".","code":["c.get() == \"a2\""]}
       ],
       "problems":{"dataValues":[], "errors":[]}
     }

@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CompositeCore.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sprouts</a> &gt; <a href="index.source.html" class="el_package">sprouts.impl</a> &gt; <span class="el_source">CompositeCore.java</span></div><h1>CompositeCore.java</h1><pre class="source lang-java linenums">package sprouts.impl;
+
+import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import sprouts.Channel;
+import sprouts.Val;
+import sprouts.Viewable;
+
+import sprouts.Tuple;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.BiFunction;
+
+/**
+ *  A read-only {@link LensCore} which folds the items of an arbitrary number of joined
+ *  properties into a single composite item, starting at a seed item.
+ *  It is the engine behind {@link Viewable#of(Object, java.util.function.Function)} and
+ *  {@link Viewable#of(Class, Object, java.util.function.Function)}.
+ *  &lt;p&gt;
+ *  Contrary to the lens cores, this one derives its item from &lt;b&gt;all&lt;/b&gt; of its sources at once,
+ *  which is what makes a composite view free of intermediate items: every recomputation reads
+ *  the current item of every joined property instead of remembering what it was told, so it
+ *  cannot mix a fresh item of one source with a stale item of another.
+ *  &lt;p&gt;
+ *  The fold is applied atomically: should any of the combiners fail, produce {@code null} or
+ *  produce an item which does not fit the item type of the composite, then the &lt;b&gt;whole&lt;/b&gt;
+ *  recomputation is discarded in favour of the last known item, so that a composite view is
+ *  never observed in a half updated state.
+ *
+ * @param &lt;C&gt; The item type of the composite property.
+ */
+final class CompositeCore&lt;C&gt; implements LensCore&lt;C&gt; {
+
+<span class="fc" id="L36">    private static final Logger log = org.slf4j.LoggerFactory.getLogger(CompositeCore.class);</span>
+
+    /**
+     *  A single contribution to the fold of a composite view, which is one joined
+     *  property together with the combiner folding its item into the composite item.
+     *  &lt;p&gt;
+     *  Note that the joined property is held through a {@link ParentRef}, which is how
+     *  a composite view follows the same referencing policy as any other view: a joined
+     *  view or lens is referenced strongly, so that intermediate properties created inline
+     *  inside a configurator stay alive, whereas a plain property is referenced weakly, so
+     *  that observing your state never keeps it alive.
+     */
+    static final class Join&lt;C, V extends @Nullable Object&gt; {
+        private final ParentRef&lt;Val&lt;V&gt;&gt;    _property;
+        private final BiFunction&lt;C, V, C&gt;  _combiner;
+
+<span class="fc" id="L52">        Join( Val&lt;V&gt; property, BiFunction&lt;C, V, C&gt; combiner ) {</span>
+<span class="fc" id="L53">            _property = ParentRef.of(property); // Vetted by CompositeBuilderImpl, the only place creating these.</span>
+<span class="fc" id="L54">            _combiner = combiner;</span>
+<span class="fc" id="L55">        }</span>
+
+<span class="fc" id="L57">        Val&lt;V&gt; property() { return _property.get(); }</span>
+
+        C applyTo( C item ) {
+<span class="fc" id="L60">            return _combiner.apply(item, _property.get().orElseNull());</span>
+        }
+    }
+
+    private final Class&lt;C&gt;          _type;
+    private final C                 _seed;
+    private final Tuple&lt;Join&lt;C, ?&gt;&gt; _joins;
+
+<span class="fc" id="L68">    CompositeCore( Class&lt;C&gt; type, C seed, Tuple&lt;Join&lt;C, ?&gt;&gt; joins ) {</span>
+<span class="fc" id="L69">        _type  = Objects.requireNonNull(type);</span>
+<span class="fc" id="L70">        _seed  = Objects.requireNonNull(seed);</span>
+<span class="fc" id="L71">        _joins = Objects.requireNonNull(joins); // A tuple is immutable, so there is nothing to defend against here.</span>
+<span class="fc" id="L72">    }</span>
+
+    /**
+     *  Folds the items of all joined properties into a single composite item,
+     *  starting at the seed and applying every combiner in join order.
+     *
+     * @param lastKnownItem The item to fall back to if the fold fails, which may be
+     *                      {@code null} while the composite view is still being derived.
+     * @param logDegradation Whether falling back to {@code lastKnownItem} should be logged.
+     * @return The folded item, or {@code lastKnownItem} if the fold failed.
+     */
+    @Override
+    public @Nullable C fetchFromSources( @Nullable C lastKnownItem, boolean logDegradation ) {
+<span class="fc" id="L85">        C folded = _seed;</span>
+<span class="fc bfc" id="L86" title="All 2 branches covered.">        for ( int i = 0; i &lt; _joins.size(); i++ ) {</span>
+<span class="fc" id="L87">            Join&lt;C, ?&gt; join = _joins.get(i);</span>
+            try {
+<span class="fc" id="L89">                folded = join.applyTo(folded);</span>
+<span class="fc" id="L90">            } catch ( Exception e ) {</span>
+<span class="fc" id="L91">                Util.sneakyThrowExceptionIfFatal(e);</span>
+<span class="fc bfc" id="L92" title="All 2 branches covered.">                if ( logDegradation )</span>
+<span class="fc" id="L93">                    _logError(</span>
+                        &quot;The combiner joined to property {} (at index {}) of a composite view &quot; +
+                        &quot;threw an exception. The whole recomputation is discarded and the &quot; +
+                        &quot;composite view retains its last item '{}'.&quot;,
+<span class="fc" id="L97">                        _describe(join.property()), i, lastKnownItem, e</span>
+                    );
+<span class="fc" id="L99">                return lastKnownItem;</span>
+<span class="fc" id="L100">            }</span>
+<span class="fc bfc" id="L101" title="All 2 branches covered.">            if ( folded == null ) {</span>
+<span class="fc bfc" id="L102" title="All 2 branches covered.">                if ( logDegradation )</span>
+<span class="fc" id="L103">                    _logError(</span>
+                        &quot;The combiner joined to property {} (at index {}) of a composite view &quot; +
+                        &quot;returned null, but a composite view does not allow null items. &quot; +
+                        &quot;The whole recomputation is discarded and the composite view retains &quot; +
+                        &quot;its last item '{}'.&quot;,
+<span class="fc" id="L108">                        _describe(join.property()), i, lastKnownItem</span>
+                    );
+<span class="fc" id="L110">                return lastKnownItem;</span>
+            }
+        }
+<span class="fc bfc" id="L113" title="All 2 branches covered.">        if ( !_type.isInstance(folded) ) {</span>
+<span class="fc bfc" id="L114" title="All 2 branches covered.">            if ( logDegradation )</span>
+<span class="fc" id="L115">                _logError(</span>
+                    &quot;The combiners of a composite view produced an item of type '{}', which does &quot; +
+                    &quot;not fit the item type '{}' of the view. The whole recomputation is discarded &quot; +
+                    &quot;and the composite view retains its last item '{}'. Use the &quot; +
+                    &quot;'Viewable.of(Class, Object, Function)' factory method to declare a common &quot; +
+                    &quot;supertype explicitly.&quot;,
+<span class="fc" id="L121">                    folded.getClass(), _type, lastKnownItem</span>
+                );
+<span class="fc" id="L123">            return lastKnownItem;</span>
+        }
+<span class="fc" id="L125">        return folded;</span>
+    }
+
+    @Override
+    public void writeToSources( Channel channel, @Nullable C newItem ) {
+<span class="nc" id="L130">        throw new UnsupportedOperationException(</span>
+            &quot;A composite view is read-only! Change one of the properties it is composed of instead.&quot;
+        );
+    }
+
+    /**
+     *  {@inheritDoc}
+     *  &lt;p&gt;
+     *  The returned list is computed on demand and deliberately &lt;b&gt;not&lt;/b&gt; retained in a field:
+     *  holding it would be a strong reference to every joined property, which would defeat the
+     *  weak {@link ParentRef}s the joins are based on. The {@link PropertyLens} only consumes
+     *  this once, when it registers its weak listeners.
+     *  &lt;p&gt;
+     *  Immutable properties are left out, because their item can never change, so observing
+     *  them would only produce listeners which are never called. They are still folded into
+     *  the composite item, they are just not listened to.
+     *  &lt;p&gt;
+     *  A property which was joined more than once is reported only once, because the fold reads
+     *  the current item of every join anyway, so a second listener on the same property would
+     *  only recompute the very same item again. Worse, a forced change event, which is
+     *  propagated even when the item did not change, would then be multiplied by the number
+     *  of times the property was joined.
+     */
+    @Override
+    public List&lt;? extends Val&lt;?&gt;&gt; sources() {
+<span class="fc" id="L155">        List&lt;Val&lt;?&gt;&gt; observed = new ArrayList&lt;&gt;(_joins.size());</span>
+<span class="fc bfc" id="L156" title="All 2 branches covered.">        for ( Join&lt;C, ?&gt; join : _joins ) {</span>
+<span class="fc" id="L157">            Val&lt;?&gt; property = join.property();</span>
+<span class="fc bfc" id="L158" title="All 4 branches covered.">            if ( property.isMutable() &amp;&amp; !_containsIdentical(observed, property) )</span>
+<span class="fc" id="L159">                observed.add(property);</span>
+<span class="fc" id="L160">        }</span>
+<span class="fc" id="L161">        return observed;</span>
+    }
+
+    private static boolean _containsIdentical( List&lt;Val&lt;?&gt;&gt; properties, Val&lt;?&gt; property ) {
+<span class="fc bfc" id="L165" title="All 2 branches covered.">        for ( int i = 0; i &lt; properties.size(); i++ )</span>
+<span class="fc bfc" id="L166" title="All 2 branches covered.">            if ( properties.get(i) == property )</span>
+<span class="fc" id="L167">                return true;</span>
+<span class="fc" id="L168">        return false;</span>
+    }
+
+    @Override
+    public boolean isView() {
+<span class="fc" id="L173">        return true;</span>
+    }
+
+    @Override
+    public boolean shouldSuppressSourceCallback() {
+<span class="fc" id="L178">        return false;</span>
+    }
+
+    @Override
+    public String coreName() {
+<span class="fc" id="L183">        return &quot;View&quot;;</span>
+    }
+
+    @Override
+    public LensCore&lt;C&gt; newInstance() {
+<span class="fc" id="L188">        return this; // no mutable state — safe to share</span>
+    }
+
+    private static String _describe( Val&lt;?&gt; property ) {
+<span class="pc bpc" id="L192" title="1 of 2 branches missed.">        return property.id().isEmpty() ? &quot;of type '&quot; + property.type() + &quot;'&quot; : &quot;'&quot; + property.id() + &quot;'&quot;;</span>
+    }
+
+    private static void _logError( String message, @Nullable Object... args ) {
+<span class="fc" id="L196">        Util._logError(log, message, args);</span>
+<span class="fc" id="L197">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

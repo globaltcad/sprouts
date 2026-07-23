@@ -321,6 +321,32 @@ public interface SproutsFactory
     &lt;T extends @Nullable Object, U extends @Nullable Object, R&gt; Viewable&lt;@Nullable R&gt; viewOfNullable(Class&lt;R&gt; type, Val&lt;T&gt; first, Val&lt;U&gt; second, BiFunction&lt;T, U, @Nullable R&gt; combiner);
 
     /**
+     *  Creates a non-nullable {@link Viewable} instance which is a composite of an arbitrary number
+     *  of {@link Val} instances, which are supplied to the {@link Viewable.CompositeBuilder} handed
+     *  to the given {@code configurator} function. The item of the resulting {@link Viewable} is
+     *  folded together, starting at the supplied {@code seed} and then applying the combiner of every
+     *  join in the order in which they were declared.
+     *
+     * @param type The type of the resulting {@link Viewable}.
+     * @param seed The initial item the fold of the composite starts at.
+     * @param configurator A function which declares the joined properties on the supplied builder
+     *                     and returns the resulting builder.
+     * @return A {@link Viewable} instance which is a live composite of the joined properties.
+     * @param &lt;C&gt; The type of the resulting {@link Viewable}.
+     * @throws NullPointerException if any of the supplied parameters are {@code null}, or if the
+     *                              supplied {@code configurator} returns {@code null}, or if the
+     *                              initial fold does not produce an item.
+     * @throws IllegalArgumentException if the supplied {@code seed} is not an instance of the supplied
+     *                                  {@code type}, or if the supplied {@code configurator} returns a
+     *                                  builder which did not originate from the one it was supplied with.
+     */
+    &lt;C&gt; Viewable&lt;C&gt; viewOf(
+        Class&lt;C&gt; type,
+        C seed,
+        Function&lt;Viewable.CompositeBuilder&lt;C&gt;, Viewable.CompositeBuilder&lt;C&gt;&gt; configurator
+    );
+
+    /**
      *  Creates a {@link Viewables} instance of the given {@link Vals}.
      *  You can register observers on the returned {@link Viewables} to receive updates
      *  when the items in the {@link Vals} change.
@@ -1579,12 +1605,12 @@ public interface SproutsFactory
      */
     @SuppressWarnings(&quot;unchecked&quot;)
     default &lt;T&gt; Tuple&lt;T&gt; tupleOf( Maybe&lt;T&gt; first, Maybe&lt;T&gt;... rest )  {
-<span class="nc" id="L1582">        T[] items = (T[]) new Object[rest.length + 1];</span>
-<span class="nc" id="L1583">        items[0] = first.orElseNull();</span>
-<span class="nc bnc" id="L1584" title="All 2 branches missed.">        for (int i = 0; i &lt; rest.length; i++) {</span>
-<span class="nc" id="L1585">            items[i + 1] = rest[i].orElseNull();</span>
+<span class="nc" id="L1608">        T[] items = (T[]) new Object[rest.length + 1];</span>
+<span class="nc" id="L1609">        items[0] = first.orElseNull();</span>
+<span class="nc bnc" id="L1610" title="All 2 branches missed.">        for (int i = 0; i &lt; rest.length; i++) {</span>
+<span class="nc" id="L1611">            items[i + 1] = rest[i].orElseNull();</span>
         }
-<span class="nc" id="L1587">        return tupleOf(Util.expectedClassFromItem(first.orElseThrowUnchecked()), items);</span>
+<span class="nc" id="L1613">        return tupleOf(Util.expectedClassFromItem(first.orElseThrowUnchecked()), items);</span>
     }
 
     /**
@@ -1706,11 +1732,11 @@ public interface SproutsFactory
      */
     @SuppressWarnings(&quot;unchecked&quot;)
     default &lt;T&gt; Tuple&lt;@Nullable T&gt; tupleOfNullable( Class&lt;T&gt; type, Maybe&lt;@Nullable T&gt;... maybes ) {
-<span class="nc" id="L1709">        T[] items = (T[]) new Object[maybes.length];</span>
-<span class="nc bnc" id="L1710" title="All 2 branches missed.">        for (int i = 0; i &lt; maybes.length; i++) {</span>
-<span class="nc" id="L1711">            items[i] = maybes[i].orElseNull();</span>
+<span class="nc" id="L1735">        T[] items = (T[]) new Object[maybes.length];</span>
+<span class="nc bnc" id="L1736" title="All 2 branches missed.">        for (int i = 0; i &lt; maybes.length; i++) {</span>
+<span class="nc" id="L1737">            items[i] = maybes[i].orElseNull();</span>
         }
-<span class="nc" id="L1713">        return tupleOfNullable(type, items);</span>
+<span class="nc" id="L1739">        return tupleOfNullable(type, items);</span>
     }
 
     /**
@@ -1750,12 +1776,12 @@ public interface SproutsFactory
      */
     @SuppressWarnings(&quot;unchecked&quot;)
     default &lt;T&gt; Tuple&lt;@Nullable T&gt; tupleOfNullable( Maybe&lt;@Nullable T&gt; first, Maybe&lt;@Nullable T&gt;... rest ) {
-<span class="nc" id="L1753">        T[] items = (T[]) new Object[rest.length + 1];</span>
-<span class="nc" id="L1754">        items[0] = first.orElseNull();</span>
-<span class="nc bnc" id="L1755" title="All 2 branches missed.">        for (int i = 0; i &lt; rest.length; i++) {</span>
-<span class="nc" id="L1756">            items[i + 1] = rest[i].orElseNull();</span>
+<span class="nc" id="L1779">        T[] items = (T[]) new Object[rest.length + 1];</span>
+<span class="nc" id="L1780">        items[0] = first.orElseNull();</span>
+<span class="nc bnc" id="L1781" title="All 2 branches missed.">        for (int i = 0; i &lt; rest.length; i++) {</span>
+<span class="nc" id="L1782">            items[i + 1] = rest[i].orElseNull();</span>
         }
-<span class="nc" id="L1758">        return tupleOfNullable(first.type(), items);</span>
+<span class="nc" id="L1784">        return tupleOfNullable(first.type(), items);</span>
     }
 
     /**
@@ -1931,7 +1957,7 @@ public interface SproutsFactory
      *  @return {@code true} if the given id is valid according to the current Sprouts implementation, {@code false} otherwise.
      */
     default boolean isValidPropertyId(String id) {
-<span class="nc bnc" id="L1934" title="All 4 branches missed.">        return id != null &amp;&amp; idPattern().matcher(id).matches();</span>
+<span class="nc bnc" id="L1960" title="All 4 branches missed.">        return id != null &amp;&amp; idPattern().matcher(id).matches();</span>
     }
 
     /**
