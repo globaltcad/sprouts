@@ -156,8 +156,6 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 		BiConsumer<PropertyView<T>,ValDelegate<T>> firstListener = (innerResult,v) -> {
 			Val<T> innerFirst  = innerResult._getSource(0);
 			Val<U> innerSecond = innerResult._getSource(1);
-			if (innerSecond == null)
-				return;
 			T newItem = fullCombiner.apply(innerFirst, innerSecond);
 			if (newItem == null)
 				_logError(
@@ -173,8 +171,6 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 		BiConsumer<PropertyView<T>,ValDelegate<U>> secondListener = (innerResult,v) -> {
 			Val<T> innerFirst  = innerResult._getSource(0);
 			Val<U> innerSecond = innerResult._getSource(1);
-			if (innerSecond == null)
-				return;
 			T newItem = fullCombiner.apply(innerFirst, innerSecond);
 			if (newItem == null)
 				_logError(
