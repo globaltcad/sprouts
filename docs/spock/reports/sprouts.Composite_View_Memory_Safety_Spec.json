@@ -1,0 +1,417 @@
+{
+  "className":"sprouts.Composite_View_Memory_Safety_Spec",
+  "title":"Composite View Memory Safety",
+  "narrative":"A composite view, created through `Viewable.of(seed, configurator)`, observes every\n    property it was folded from. Sprouts has a firm opinion about which of the references\n    involved in such an observation may be strong and which must be weak, because getting\n    this wrong is the classic source of memory leaks in observer based designs.\n\n    A composite view follows exactly the same policy as any other view:\n\n    * A property references a composite view observing it only **weakly**, so dropping the\n      composite view lets it be collected together with all of the change listeners\n      registered on it.\n    * A composite view references a joined **view or lens strongly**, so that intermediate\n      properties created inline inside the configurator stay alive for as long as they\n      are needed.\n    * A composite view references a joined **plain property weakly**, so that observing\n      your state never keeps that state alive. When such a property is garbage collected,\n      the composite view does not break: it keeps folding in the newest item it saw that\n      property holding, which is the item it held just before it was collected.\n\n    This specification pins down all of these cases by checking which properties actually\n    survive garbage collection, and which do not.",
+  "subjects":["sprouts.Viewable","sprouts.Viewable$CompositeBuilder","sprouts.Val","sprouts.Var"],
+  "statistics":{
+    "runs":"15",
+    "successRate":"100.0%",
+    "failures":"0",
+    "errors":"0",
+    "skipped":"0",
+    "duration":"?"
+  },
+  "headers":[],"tags":{},"see":[],
+  "features":[ 
+    {
+      "id":"A composite view is garbage collected when it is no longer referenced strongly.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The properties a composite view is folded from observe it through weak listeners\n            only. So as soon as you stop referencing a composite view, it becomes eligible\n            for garbage collection, and the change listeners it had registered on its joined\n            properties disappear with it.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two properties we keep referenced.","code":["var city     = Var.of(\"Vienna\")","var humidity = Var.of(55)"]},
+
+        {"kind":"and","text":"A composite view of the two, which we reference weakly as well.","code":["var composite = Viewable.of(Weather.blank(), it -> it","        .join(city,     Weather::withCity)","        .join(humidity, Weather::withHumidity)","    )","var compositeRef = new WeakReference(composite)"]},
+
+        {"kind":"expect","text":"The composite view is alive and observing both properties.","code":["city.numberOfChangeListeners() == 1","humidity.numberOfChangeListeners() == 1"]},
+
+        {"kind":"when","text":"We drop the only strong reference to the composite view.","code":["composite = null"]},
+
+        {"kind":"and","text":"We wait for the garbage collector to do its job.","code":["waitForGarbageCollection()","Thread.sleep(500)","waitForGarbageCollection()"]},
+
+        {"kind":"then","text":"The composite view is gone...","code":["compositeRef.get() == null"]},
+
+        {"kind":"and","text":"...and so are the change listeners it had registered on the two properties.","code":["city.numberOfChangeListeners() == 0","humidity.numberOfChangeListeners() == 0"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The change listeners of a composite view die together with the view.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            This is the whole point of a view being weakly referenced: the change listeners\n            you register on a composite view are kept alive by that view and by nothing else.\n            So when you stop referencing the view, your listeners stop being called, even\n            though the properties they ultimately depend on are still very much alive.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A property we keep referenced.","code":["var city = Var.of(\"Vienna\")"]},
+
+        {"kind":"and","text":"A composite view with a change listener writing into a trace.","code":["var trace = []","var composite = Viewable.of(Weather.blank(), it -> it.join(city, Weather::withCity))","composite.onChange(From.ALL, { trace << it.currentValue().orElseNull().city() })"]},
+
+        {"kind":"when","text":"We change the joined property while the composite view is alive.","code":["city.set(\"Graz\")"]},
+
+        {"kind":"then","text":"The listener was called.","code":["trace == [\"Graz\"]"]},
+
+        {"kind":"when","text":"We drop the composite view and wait for the garbage collector.","code":["composite = null","waitForGarbageCollection()","Thread.sleep(500)","waitForGarbageCollection()"]},
+
+        {"kind":"and","text":"We change the joined property again.","code":["city.set(\"Linz\")"]},
+
+        {"kind":"then","text":"The listener is not called anymore, because it died with the view.","code":["trace == [\"Graz\"]"]},
+
+        {"kind":"and","text":"The property has no change listeners left at all.","code":["city.numberOfChangeListeners() == 0"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The plain properties a composite view was folded from can be garbage collected.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A composite view is a view, and a view never keeps your actual state alive.\n            So the plain properties you joined may be garbage collected even while you are\n            still holding on to the composite view.\n\n            The composite view does not break when that happens: it keeps folding in the\n            newest item it saw that property holding before it was garbage collected.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two plain properties which we will dereference later.","code":["Var<String>  city     = Var.of(\"Vienna\")","Var<Integer> humidity = Var.of(55)"]},
+
+        {"kind":"and","text":"A composite view of the two of them.","code":["Viewable<Weather> weather = Viewable.of(Weather.blank(), it -> it","        .join(city,     Weather::withCity)","        .join(humidity, Weather::withHumidity)","    )"]},
+
+        {"kind":"expect","text":"The composite view holds the merged item.","code":["weather.get() == new Weather(\"Vienna\", 0d, 55, false, \"\")"]},
+
+        {"kind":"when","text":"We weakly reference the first property and then drop our strong reference to it.","code":["var cityRef = new WeakReference(city)","city = null"]},
+
+        {"kind":"and","text":"We wait for the garbage collector to do its job.","code":["waitForGarbageCollection()"]},
+
+        {"kind":"then","text":"The property was indeed collected, even though the composite view observes it.","code":["cityRef.get() == null"]},
+
+        {"kind":"when","text":"We change the property which is still alive.","code":["humidity.set(80)"]},
+
+        {"kind":"then","text":"\n            The composite view still works. It folded in the new humidity, and for the city\n            it used the last item it knew about before the property was collected.\n        ","code":["weather.get() == new Weather(\"Vienna\", 0d, 80, false, \"\")"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A garbage collected property contributes its newest item, and not the one it was joined with.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A composite view only references a joined plain property weakly, which means the\n            property can be garbage collected while the view lives on. From that point on the\n            view has nothing left to read, so it keeps using the item it saw the property\n            holding the last time it looked at it.\n\n            The important word here is *last*. It must not be the item the property held back\n            when it was joined, because between the join and the garbage collection the\n            property may have changed many times, and the view already showed those changes.\n            Falling back to the item from join time would undo all of them at once, and the\n            composite item would jump back to a state which is already out of date.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two properties, one of which we will let the garbage collector take later on.","code":["Var<String>  city     = Var.of(\"Vienna\")","Var<Integer> humidity = Var.of(55)"]},
+
+        {"kind":"and","text":"A composite view of the two of them.","code":["Viewable<Weather> weather = Viewable.of(Weather.blank(), it -> it","        .join(city,     Weather::withCity)","        .join(humidity, Weather::withHumidity)","    )"]},
+
+        {"kind":"expect","text":"The view starts out with the items the two properties were joined with.","code":["weather.get() == new Weather(\"Vienna\", 0d, 55, false, \"\")"]},
+
+        {"kind":"when","text":"We change the city twice, long after it was joined.","code":["city.set(\"Graz\")","city.set(\"Linz\")"]},
+
+        {"kind":"then","text":"The view shows the newest city, so \"Linz\" is what it last saw.","code":["weather.get() == new Weather(\"Linz\", 0d, 55, false, \"\")"]},
+
+        {"kind":"when","text":"We now drop our only reference to the city property...","code":["var cityRef = new WeakReference(city)","city = null"]},
+
+        {"kind":"and","text":"We wait for the garbage collector to do its job.","code":["waitForGarbageCollection()"]},
+
+        {"kind":"then","text":"The city property is gone.","code":["cityRef.get() == null"]},
+
+        {"kind":"when","text":"We change the humidity, which makes the view recompute its item.","code":["humidity.set(80)"]},
+
+        {"kind":"then","text":"The view uses \"Linz\", the newest city, and does not fall back to \"Vienna\".","code":["weather.get() == new Weather(\"Linz\", 0d, 80, false, \"\")"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A change is remembered even if nobody reads the composite view before the garbage collection.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            There are two moments at which a composite view can notice what a joined property\n            holds: when the view computes its own item, and when the property notifies the view\n            that it changed.\n\n            This scenario takes the first moment away completely, because the view is never\n            read between the change and the garbage collection. The notification alone has to\n            be enough for the view to remember the new item.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two properties and a composite view of them, which we deliberately never read.","code":["Var<String>  city     = Var.of(\"Vienna\")","Var<Integer> humidity = Var.of(55)","Viewable<Weather> weather = Viewable.of(Weather.blank(), it -> it","        .join(city,     Weather::withCity)","        .join(humidity, Weather::withHumidity)","    )"]},
+
+        {"kind":"when","text":"We change the city, without ever reading the composite view.","code":["city.set(\"Graz\")"]},
+
+        {"kind":"and","text":"We drop our only reference to the city property and wait for the garbage collector.","code":["var cityRef = new WeakReference(city)","city = null","waitForGarbageCollection()"]},
+
+        {"kind":"then","text":"The city property is gone.","code":["cityRef.get() == null"]},
+
+        {"kind":"when","text":"We now read the composite view for the very first time.","code":["var folded = weather.get()"]},
+
+        {"kind":"then","text":"It knows about the change it was notified of, even though nobody ever read it.","code":["folded == new Weather(\"Graz\", 0d, 55, false, \"\")"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Every combiner of a property joined several times gets its newest item after garbage collection.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Joining the same property several times changes nothing about any of this.\n            Once the property is garbage collected, every single one of its combiners\n            keeps receiving the same newest item.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"One property which we join twice, and a second one to recompute the view with.","code":["Var<String>  city     = Var.of(\"Vienna\")","Var<Integer> humidity = Var.of(0)","Viewable<Weather> weather = Viewable.of(Weather.blank(), it -> it","        .join(city,     Weather::withCity)","        .join(city,     (w, c) -> w.withSource(\"station-\" + c))","        .join(humidity, Weather::withHumidity)","    )"]},
+
+        {"kind":"expect","text":"Both of the combiners of the city property contributed to the item.","code":["weather.get() == new Weather(\"Vienna\", 0d, 0, false, \"station-Vienna\")"]},
+
+        {"kind":"when","text":"We change the city, drop our only reference to it, and wait for the garbage collector.","code":["city.set(\"Graz\")","var cityRef = new WeakReference(city)","city = null","waitForGarbageCollection()"]},
+
+        {"kind":"then","text":"The city property is gone.","code":["cityRef.get() == null"]},
+
+        {"kind":"when","text":"We change the humidity, which makes the view recompute its item.","code":["humidity.set(80)"]},
+
+        {"kind":"then","text":"Both combiners used \"Graz\", and neither of them fell back to \"Vienna\".","code":["weather.get() == new Weather(\"Graz\", 0d, 80, false, \"station-Graz\")"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A nullable property emptied before the garbage collection contributes `null` afterwards.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The newest item of a joined property may well be `null`, if `null` is what the\n            property held when the view last looked at it. Combiners joined to a nullable\n            property have to handle `null` anyway, so they simply keep receiving it after\n            the property was garbage collected.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A nullable property, a second property, and a composite view of both.","code":["Var<String>  city     = Var.ofNullable(String, \"Vienna\")","Var<Integer> humidity = Var.of(55)","Viewable<Weather> weather = Viewable.of(Weather.blank(), it -> it","        .join(city,     (w, c) -> w.withCity(c == null ? \"<unknown>\" : c))","        .join(humidity, Weather::withHumidity)","    )"]},
+
+        {"kind":"expect","text":"The view folded the item of the nullable property into its own item.","code":["weather.get().city() == \"Vienna\""]},
+
+        {"kind":"when","text":"We empty the nullable property, drop it, and wait for the garbage collector.","code":["city.set(null)","var cityRef = new WeakReference(city)","city = null","waitForGarbageCollection()"]},
+
+        {"kind":"then","text":"The city property is gone.","code":["cityRef.get() == null"]},
+
+        {"kind":"when","text":"We change the humidity, which makes the view recompute its item.","code":["humidity.set(80)"]},
+
+        {"kind":"then","text":"The combiner received the `null` the property held last, and not \"Vienna\".","code":["weather.get() == new Weather(\"<unknown>\", 0d, 80, false, \"\")"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A composite view keeps its item after all of its joined properties were garbage collected.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Once every joined property has been garbage collected, there is nothing left which\n            could ever change the composite item again. The view then simply keeps reporting\n            the item it folded from the newest items it saw, and it keeps reporting that same\n            item no matter how often you read it.\n\n            In particular it does not break, it does not fall back to its seed, and it does not\n            jump back to the items its properties were joined with.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two properties and a composite view of them.","code":["Var<String>  city     = Var.of(\"Vienna\")","Var<Integer> humidity = Var.of(55)","Viewable<Weather> weather = Viewable.of(Weather.blank(), it -> it","        .join(city,     Weather::withCity)","        .join(humidity, Weather::withHumidity)","    )"]},
+
+        {"kind":"when","text":"We change both properties, drop both of them, and wait for the garbage collector.","code":["city.set(\"Graz\")","humidity.set(80)","var refs = [new WeakReference(city), new WeakReference(humidity)]","city = null","humidity = null","waitForGarbageCollection()"]},
+
+        {"kind":"then","text":"Both properties are gone.","code":["refs.every( it -> it.get() == null )"]},
+
+        {"kind":"and","text":"The view still reports the item it folded from their newest items.","code":["weather.get() == new Weather(\"Graz\", 0d, 80, false, \"\")"]},
+
+        {"kind":"and","text":"And it keeps reporting that same item, no matter how often we read it.","code":["weather.get() == new Weather(\"Graz\", 0d, 80, false, \"\")"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A composite view keeps the views and lenses it joined alive.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The one kind of joined property a composite view *does* reference strongly is a\n            view or a lens. Those are derived properties which nobody else is going to keep\n            alive for you, which is what lets you create them inline inside the configurator.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A plain property, and a record property to zoom into.","code":["var city    = Var.of(\"Vienna\")","var weather = Var.of(Weather.blank())"]},
+
+        {"kind":"and","text":"A composite view joining a view and a lens which are both created inline.","code":["var nameLength = city.viewAsInt( c -> c.length() )","var alertLens  = weather.zoomTo(Weather::alert, Weather::withAlert)","var lengthRef = new WeakReference(nameLength)","var lensRef   = new WeakReference(alertLens)","var composite = Viewable.of(Weather.blank(), it -> it","        .join(nameLength, Weather::withHumidity)","        .join(alertLens,  Weather::withAlert)","    )"]},
+
+        {"kind":"expect","text":"The composite view folded both of them in.","code":["composite.get() == new Weather(\"\", 0d, 6, false, \"\")"]},
+
+        {"kind":"when","text":"We drop our own references to the intermediate view and lens.","code":["nameLength = null","alertLens = null"]},
+
+        {"kind":"and","text":"We wait for the garbage collector to do its job.","code":["waitForGarbageCollection()","Thread.sleep(500)","waitForGarbageCollection()"]},
+
+        {"kind":"then","text":"Both of them are still alive, because the composite view keeps them alive.","code":["lengthRef.get() != null","lensRef.get() != null"]},
+
+        {"kind":"when","text":"We change the properties they are derived from.","code":["city.set(\"Sankt Poelten\")","weather.set(Weather.blank().withAlert(true))"]},
+
+        {"kind":"then","text":"The changes still propagate through the intermediate properties into the composite.","code":["composite.get() == new Weather(\"\", 0d, 13, true, \"\")"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A composite view does not keep the source of a joined view alive.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A composite view keeps a joined *view* alive, but that view in turn references\n            the plain property it is derived from only weakly. So joining a view does not\n            keep your state alive through the back door.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A plain property which we will dereference later.","code":["Var<String> city = Var.of(\"Vienna\")"]},
+
+        {"kind":"and","text":"A composite view joining a view derived from that property.","code":["var nameLength = city.viewAsInt( c -> c.length() )","var composite = Viewable.of(Weather.blank(), it -> it.join(nameLength, Weather::withHumidity))"]},
+
+        {"kind":"expect","text":"The composite view folded the length of the city name in.","code":["composite.get().humidity() == 6"]},
+
+        {"kind":"when","text":"We weakly reference the plain property and drop our strong reference to it.","code":["var cityRef = new WeakReference(city)","city = null"]},
+
+        {"kind":"and","text":"We wait for the garbage collector to do its job.","code":["waitForGarbageCollection()"]},
+
+        {"kind":"then","text":"The plain property was collected, even though a joined view was derived from it.","code":["cityRef.get() == null"]},
+
+        {"kind":"and","text":"The intermediate view and the composite view are still alive and consistent.","code":["nameLength.get() == 6","composite.get().humidity() == 6"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A composite view built exclusively from immutable properties does not reference them at all.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            When every joined property is immutable, then the composite item can never change,\n            and so an immutable property is returned instead of a live view. Such a property\n            has no reason to remember where its item came from, which means the joined\n            properties are not referenced at all and may be collected right away.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two immutable properties.","code":["Val<String>  city     = Val.of(\"Vienna\")","Val<Integer> humidity = Val.of(55)"]},
+
+        {"kind":"and","text":"A composite view of the two of them.","code":["Viewable<Weather> weather = Viewable.of(Weather.blank(), it -> it","        .join(city,     Weather::withCity)","        .join(humidity, Weather::withHumidity)","    )"]},
+
+        {"kind":"expect","text":"The composite is immutable and holds the merged item.","code":["weather.isImmutable()","weather.get() == new Weather(\"Vienna\", 0d, 55, false, \"\")"]},
+
+        {"kind":"when","text":"We weakly reference both immutable properties and drop our strong references.","code":["var cityRef     = new WeakReference(city)","var humidityRef = new WeakReference(humidity)","city = null","humidity = null"]},
+
+        {"kind":"and","text":"We wait for the garbage collector to do its job.","code":["waitForGarbageCollection()"]},
+
+        {"kind":"then","text":"Both of them were collected.","code":["cityRef.get() == null","humidityRef.get() == null"]},
+
+        {"kind":"and","text":"The composite still holds the item it computed from them.","code":["weather.get() == new Weather(\"Vienna\", 0d, 55, false, \"\")"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A composite view keeps another composite view it was joined to alive.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A composite view is a view, so joining one composite view into another one follows\n            the very same rule: the outer composite view references the inner one strongly.\n            This lets you assemble a larger model out of smaller composites which are created\n            inline, without having to store every intermediate step.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two plain properties we keep referenced.","code":["var city     = Var.of(\"Vienna\")","var humidity = Var.of(55)"]},
+
+        {"kind":"and","text":"An outer composite view joining an inner composite view created inline.","code":["var inner = Viewable.of(Weather.blank(), it -> it","        .join(city,     Weather::withCity)","        .join(humidity, Weather::withHumidity)","    )","var innerRef = new WeakReference(inner)","var outer = Viewable.of(Weather.blank(), it -> it","        .join(inner, (w, i) -> w.withCity(i.city()).withHumidity(i.humidity()))","    )"]},
+
+        {"kind":"expect","text":"The outer composite view merged everything.","code":["outer.get() == new Weather(\"Vienna\", 0d, 55, false, \"\")"]},
+
+        {"kind":"when","text":"We drop our own reference to the inner composite view and await garbage collection.","code":["inner = null","waitForGarbageCollection()","Thread.sleep(500)","waitForGarbageCollection()"]},
+
+        {"kind":"and","text":"We then change one of the plain properties.","code":["city.set(\"Graz\")","var propagated = outer.get()"]},
+
+        {"kind":"then","text":"The inner composite view is still alive, because the outer one keeps it alive.","code":["[innerRef].every( it -> it.get() != null )"]},
+
+        {"kind":"and","text":"So the change propagated through the inner composite view into the outer one.","code":["propagated == new Weather(\"Graz\", 0d, 55, false, \"\")"]},
+
+        {"kind":"when","text":"We now also drop the outer composite view and await garbage collection.","code":["outer = null","waitForGarbageCollection()","Thread.sleep(500)","waitForGarbageCollection()"]},
+
+        {"kind":"then","text":"Both composite views are gone...","code":["innerRef.get() == null"]},
+
+        {"kind":"and","text":"...and the plain properties are not observed by anything anymore.","code":["city.numberOfChangeListeners() == 0","humidity.numberOfChangeListeners() == 0"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The builder of a composite view is not retained by the view it built.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The `Viewable.CompositeBuilder` handed to your configurator is a purely temporary\n            value: the composite view copies what it needs out of it and then forgets about it.\n            So a builder which escapes from the configurator does not linger in memory either.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A property we keep referenced.","code":["var city = Var.of(\"Vienna\")"]},
+
+        {"kind":"and","text":"A composite view whose configurator lets the builder escape.","code":["var escaped = null","var composite = Viewable.of(Weather.blank(), { builder ->","        var joined = builder.join(city, Weather::withCity)","        escaped = joined","        return joined","    })","var builderRef = new WeakReference(escaped)"]},
+
+        {"kind":"expect","text":"The composite view works as expected, and the builder is still around.","code":["composite.get().city() == \"Vienna\"","[builderRef].every( it -> it.get() != null )"]},
+
+        {"kind":"when","text":"We drop our reference to the escaped builder and await garbage collection.","code":["escaped = null","waitForGarbageCollection()","Thread.sleep(500)","waitForGarbageCollection()"]},
+
+        {"kind":"then","text":"The builder was collected, even though the composite view it built is still alive.","code":["builderRef.get() == null"]},
+
+        {"kind":"and","text":"The composite view is unaffected.","code":["composite.get().city() == \"Vienna\""]},
+
+        {"kind":"when","text":"We change the joined property.","code":["city.set(\"Graz\")"]},
+
+        {"kind":"then","text":"The composite view is still perfectly alive.","code":["composite.get().city() == \"Graz\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Many composite views on the same properties are collected independently of each other.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Every composite view registers its own set of weak change listeners on the\n            properties it joined. So composite views built from the same properties do not\n            interfere with each other, and dropping one of them has no effect on the others.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A property without any listeners.","code":["var city = Var.of(\"Vienna\")"]},
+
+        {"kind":"expect","text":"Initially nothing observes it.","code":["city.numberOfChangeListeners() == 0"]},
+
+        {"kind":"when","text":"We create three composite views, of which we keep only one referenced.","code":["var kept = Viewable.of(Weather.blank(), it -> it.join(city, Weather::withCity))","var droppedA = Viewable.of(Weather.blank(), it -> it.join(city, Weather::withCity))","var droppedB = Viewable.of(Weather.blank(), it -> it.join(city, Weather::withCity))","var keptRef = new WeakReference(kept)","var refA = new WeakReference(droppedA)","var refB = new WeakReference(droppedB)"]},
+
+        {"kind":"then","text":"All three of them observe the property.","code":["city.numberOfChangeListeners() == 3"]},
+
+        {"kind":"when","text":"We drop two of them and await garbage collection.","code":["droppedA = null","droppedB = null","waitForGarbageCollection()","Thread.sleep(500)","waitForGarbageCollection()"]},
+
+        {"kind":"then","text":"Exactly the two dropped composite views were collected.","code":["refA.get() == null","refB.get() == null","keptRef.get() != null"]},
+
+        {"kind":"and","text":"Only the listener of the surviving composite view is left.","code":["city.numberOfChangeListeners() == 1"]},
+
+        {"kind":"when","text":"We change the property.","code":["city.set(\"Graz\")"]},
+
+        {"kind":"then","text":"The surviving composite view is updated.","code":["kept.get().city() == \"Graz\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A chain of composite views is collected from the outside in.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Because every composite view keeps the composite views it joined alive, a chain\n            of them can only be collected starting at its outermost end. This mirrors how a\n            chain of ordinary property views behaves.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A plain property at the root of the chain.","code":["var city = Var.of(\"Vienna\")"]},
+
+        {"kind":"and","text":"A chain of three composite views built on top of each other.","code":["var first  = Viewable.of(Weather.blank(), it -> it.join(city, Weather::withCity))","var second = Viewable.of(Weather.blank(), it -> it.join(first, (w, f) -> w.withCity(f.city() + \"!\")))","var third  = Viewable.of(Weather.blank(), it -> it.join(second, (w, s) -> w.withCity(s.city() + \"?\")))"]},
+
+        {"kind":"and","text":"We weakly reference every link of the chain.","code":["var refs = [new WeakReference(first), new WeakReference(second), new WeakReference(third)]"]},
+
+        {"kind":"expect","text":"The chain produces the expected item.","code":["third.get().city() == \"Vienna!?\""]},
+
+        {"kind":"and","text":"Every link of the chain is alive.","code":["refs.every( it -> it.get() != null )"]},
+
+        {"kind":"when","text":"We drop the two inner links of the chain and await garbage collection.","code":["first = null","second = null","waitForGarbageCollection()","Thread.sleep(500)","waitForGarbageCollection()"]},
+
+        {"kind":"and","text":"We read the item of the outermost link of the chain.","code":["var stillFolding = third.get().city()"]},
+
+        {"kind":"then","text":"Every link is still alive, because the outermost one keeps the chain alive.","code":["refs.every( it -> it.get() != null )"]},
+
+        {"kind":"and","text":"So the chain still works.","code":["stillFolding == \"Vienna!?\""]},
+
+        {"kind":"when","text":"We now also drop the outermost link and await garbage collection.","code":["third = null","waitForGarbageCollection()","Thread.sleep(500)","waitForGarbageCollection()"]},
+
+        {"kind":"then","text":"The whole chain was collected.","code":["refs.every( it -> it.get() == null )"]},
+
+        {"kind":"and","text":"The plain property at the root is not observed anymore.","code":["city.numberOfChangeListeners() == 0"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    }
+  
+  ],
+  "generator":"https://github.com/renatoathaydes/spock-reports"
+}
