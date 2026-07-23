@@ -1,7 +1,6 @@
 package sprouts
 
 import spock.lang.Narrative
-import spock.lang.PendingFeature
 import spock.lang.Specification
 import spock.lang.Subject
 import spock.lang.Title
@@ -113,14 +112,6 @@ class Property_View_Re_Entrancy_Spec extends Specification
             c.get() == a.get() + b.get()
     }
 
-    @PendingFeature(reason = """
-        Known bug. A composite view of two properties does not read the property which
-        changed, it is handed the new item by the change event instead. The outer, older
-        event therefore overwrites the item computed for the inner, newer one, and the view
-        is left showing an item which does not match its properties anymore.
-        See BUG-two-way-composite-view-rewinds-collected-source.md, which is about the same
-        root cause: the view does not look at the property which changed.
-    """)
     def 'A composite view agrees with its properties even when one of them changes twice in a row.'()
     {
         reportInfo """
@@ -163,6 +154,52 @@ class Property_View_Re_Entrancy_Spec extends Specification
             c.get() == a.get() + b.get()
         and : 'The last thing the observers of the view heard is that same truth.'
             trace.last() == "yB"
+    }
+
+    def 'A composite view agrees with its properties even when the *second* one changes twice in a row.'()
+    {
+        reportInfo """
+            This is the mirror image of the scenario above, and it earns its place because a
+            composite view watches *both* of its properties, through two separate pieces of
+            machinery. Knowing that the first property is handled correctly when it changes
+            during its own notification tells us nothing about the second one, which is wired
+            up by its own listener. A bug could easily live in one and not the other.
+
+            So this time the troublesome listener sits on the *second* property and changes it
+            a second time, which means the view is told about that property's two changes in
+            the wrong order. The rule at the end is the same as always: once the dust settles,
+            the view has to show what the two properties actually hold, and not the item of the
+            change which merely happened to arrive first.
+        """
+        given : 'Two properties.'
+            Var<String> a = Var.of("A")
+            Var<String> b = Var.of("B")
+        and : 'A listener on the second property which changes it a second time. It is registered first!'
+            Viewable.cast(b).onChange(From.ALL, {
+                if ( b.get() == "x" )
+                    b.set("y")
+            })
+        and : 'A composite view of the two properties, registered second.'
+            Val<String> c = Viewable.of(a, b, (x, y) -> x + y)
+        and : 'A trace of everything the view tells its own observers.'
+            var trace = []
+            Viewable.cast(c).onChange(From.ALL, { trace << it.currentValue().orElseNull() })
+
+        when : 'We change the second property, which is immediately changed again by the listener above.'
+            b.set("x")
+
+        then : 'The properties hold the item of the second change.'
+            a.get() == "A"
+            b.get() == "y"
+        and : """
+            And so does the view. It was told about the two changes in the wrong order, but the
+            last thing it tells the world has to be the truth, and not the item of the change
+            which happened first.
+        """
+            c.get() == "Ay"
+            c.get() == a.get() + b.get()
+        and : 'The last thing the observers of the view heard is that same truth.'
+            trace.last() == "Ay"
     }
 
     def 'A composite view built with the composite builder agrees with its properties in the same situation.'()

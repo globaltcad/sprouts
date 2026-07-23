@@ -154,15 +154,16 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 		T initial = fullCombiner.apply(first, second);
 		Objects.requireNonNull(initial,"The result of the combiner function is null, but the property does not allow null items!");
 		BiConsumer<PropertyView<T>,ValDelegate<T>> firstListener = (innerResult,v) -> {
+			Val<T> innerFirst  = innerResult._getSource(0);
 			Val<U> innerSecond = innerResult._getSource(1);
 			if (innerSecond == null)
 				return;
-			T newItem = fullCombiner.apply(v.currentValue(), innerSecond);
+			T newItem = fullCombiner.apply(innerFirst, innerSecond);
 			if (newItem == null)
 				_logError(
 					"Invalid combiner result! The combination of the first item '{}' (changed) and the second " +
 					"item '{}' was null and null is not allowed! The old item '{}' is retained!",
-					v.currentValue().orElseNull(), innerSecond.orElseNull(), innerResult.orElseNull()
+					innerFirst.orElseNull(), innerSecond.orElseNull(), innerResult.orElseNull()
 				);
 			else {
 				ItemPair<T> pair = innerResult._setInternal(newItem);
@@ -170,13 +171,16 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 			}
 		};
 		BiConsumer<PropertyView<T>,ValDelegate<U>> secondListener = (innerResult,v) -> {
-			Val<T> innerFirst = innerResult._getSource(0);
-			T newItem = fullCombiner.apply(innerFirst, v.currentValue());
+			Val<T> innerFirst  = innerResult._getSource(0);
+			Val<U> innerSecond = innerResult._getSource(1);
+			if (innerSecond == null)
+				return;
+			T newItem = fullCombiner.apply(innerFirst, innerSecond);
 			if (newItem == null)
 				_logError(
 					"Invalid combiner result! The combination of the first item '{}' and the second " +
 					"item '{}' (changed) was null and null is not allowed! The old item '{}' is retained!",
-					innerFirst.orElseNull(), v.currentValue().orElseNull(), innerResult.orElseNull()
+					innerFirst.orElseNull(), innerSecond.orElseNull(), innerResult.orElseNull()
 				);
 			else {
 				ItemPair<T> pair = innerResult._setInternal(newItem);
@@ -223,14 +227,16 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 		PropertyView<@Nullable T> result = PropertyView._ofNullable( first.type(), initial, first, second ).withId(id);
 		if ( !firstIsImmutable )
 			Viewable.cast(first).onChange(From.ALL, WeakAction.of(result, (innerResult, v) -> {
+				Val<T> innerFirst  = innerResult._getSource(0);
 				Val<U> innerSecond = innerResult._getSource(1);
-				ItemPair<T> pair = innerResult._setInternal(fullCombiner.apply(v.currentValue(), innerSecond));
+				ItemPair<T> pair = innerResult._setInternal(fullCombiner.apply(innerFirst, innerSecond));
 				innerResult.fireOnlyIfChangedOrParentForcedChange(v.channel(), pair, v.change());
 			}));
 		if ( !secondIsImmutable )
 			Viewable.cast(second).onChange(From.ALL, WeakAction.of(result, (innerResult, v) -> {
-				Val<T> innerFirst = innerResult._getSource(0);
-				ItemPair<T> pair = innerResult._setInternal(fullCombiner.apply(innerFirst, v.currentValue()));
+				Val<T> innerFirst  = innerResult._getSource(0);
+				Val<U> innerSecond = innerResult._getSource(1);
+				ItemPair<T> pair = innerResult._setInternal(fullCombiner.apply(innerFirst, innerSecond));
 				innerResult.fireOnlyIfChangedOrParentForcedChange(v.channel(), pair, v.change());
 			}));
 		return result;
@@ -262,14 +268,15 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 		PropertyView<R> result = PropertyView._of(type, initial, first, second ).withId(id);
 
 		Viewable.cast(first).onChange(From.ALL, WeakAction.of(result, (innerResult, v) -> {
+			Val<T> innerFirst  = innerResult._getSource(0);
 			Val<U> innerSecond = innerResult._getSource(1);
-			@Nullable R newItem = fullCombiner.apply(v.currentValue(), innerSecond);
+			@Nullable R newItem = fullCombiner.apply(innerFirst, innerSecond);
 			if (newItem == null)
 				_logError(
 					"Invalid combiner result! The combination of the first item '{}' (changed) " +
 					"and the second item '{}' was null and null is not allowed! " +
 					"The old item '{}' is retained!",
-					v.currentValue().orElseNull(), innerSecond.orElseNull(), innerResult.orElseNull()
+					innerFirst.orElseNull(), innerSecond.orElseNull(), innerResult.orElseNull()
 				);
 			else {
 				ItemPair<R> pair = innerResult._setInternal(newItem);
@@ -277,14 +284,15 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 			}
 		}));
 		Viewable.cast(second).onChange(From.ALL, WeakAction.of(result, (innerResult, v) -> {
-			Val<T> innerFirst = innerResult._getSource(0);
-			@Nullable R newItem = fullCombiner.apply(innerFirst, v.currentValue());
+			Val<T> innerFirst  = innerResult._getSource(0);
+			Val<U> innerSecond = innerResult._getSource(1);
+			@Nullable R newItem = fullCombiner.apply(innerFirst, innerSecond);
 			if (newItem == null)
 				_logError(
 					"Invalid combiner result! The combination of the first item '{}' and the second " +
 					"item '{}' (changed) was null and null is not allowed! " +
 					"The old item '{}' is retained!",
-					innerFirst.orElseNull(), v.currentValue().orElseNull(), innerResult.orElseNull()
+					innerFirst.orElseNull(), innerSecond.orElseNull(), innerResult.orElseNull()
 				);
 			else {
 				ItemPair<R> pair = innerResult._setInternal(newItem);
@@ -314,13 +322,15 @@ final class PropertyView<T extends @Nullable Object> implements Var<T>, Viewable
 
 		PropertyView<@Nullable R> result =  PropertyView._ofNullable( type, fullCombiner.apply(first, second), first, second ).withId(id);
 		Viewable.cast(first).onChange(From.ALL, WeakAction.of(result, (innerResult, v) -> {
+			Val<T> innerFirst  = innerResult._getSource(0);
 			Val<U> innerSecond = innerResult._getSource(1);
-			ItemPair<R> pair = innerResult._setInternal(fullCombiner.apply(v.currentValue(), innerSecond));
+			ItemPair<R> pair = innerResult._setInternal(fullCombiner.apply(innerFirst, innerSecond));
 			innerResult.fireOnlyIfChangedOrParentForcedChange(v.channel(), pair, v.change());
 		}));
 		Viewable.cast(second).onChange(From.ALL, WeakAction.of(result, (innerResult, v) -> {
-			Val<T> innerFirst = innerResult._getSource(0);
-			ItemPair<R> pair = innerResult._setInternal(fullCombiner.apply(innerFirst, v.currentValue()));
+			Val<T> innerFirst  = innerResult._getSource(0);
+			Val<U> innerSecond = innerResult._getSource(1);
+			ItemPair<R> pair = innerResult._setInternal(fullCombiner.apply(innerFirst, innerSecond));
 			innerResult.fireOnlyIfChangedOrParentForcedChange(v.channel(), pair, v.change());
 		}));
 		return result;
