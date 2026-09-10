@@ -7,11 +7,58 @@ import org.slf4j.helpers.NOPLogger;
 import sprouts.impl.Sprouts;
 
 import java.lang.reflect.UndeclaredThrowableException;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 final class Util {
 
     private Util() {}
+
+    /**
+     *  Populates the supplied (empty) association with key-value pairs derived from
+     *  the items of the supplied tuple through the two supplied mapper functions.<br>
+     *  This is the shared workhorse behind the {@code Tuple::to*Association} conversion
+     *  methods, which all differ only in the kind of empty association they start out with.
+     *  It lives here, outside the {@link Tuple} interface, because Java 8, the compilation
+     *  target of this library, does not support private interface methods.
+     *
+     * @param tuple The tuple whose items are turned into key-value pairs.
+     * @param target The empty association to populate, which determines
+     *               the kind of association that is returned.
+     * @param keyMapper The function deriving a key from an item of the tuple.
+     * @param valueMapper The function deriving a value from an item of the tuple.
+     * @return An association holding one entry for every distinct key
+     *         produced by the supplied {@code keyMapper}.
+     * @param <T> The type of the items in the supplied tuple.
+     * @param <K> The type of the keys in the returned association.
+     * @param <V> The type of the values in the returned association.
+     */
+    static <T extends @Nullable Object, K, V> Association<K,V> fillAssociation(
+        Tuple<T>         tuple,
+        Association<K,V> target,
+        Function<T,K>    keyMapper,
+        Function<T,V>    valueMapper
+    ) {
+        Association<K,V> result = target;
+        int index = 0;
+        for ( T item : tuple ) {
+            K key = keyMapper.apply(item);
+            if ( key == null )
+                throw new NullPointerException(
+                        "The supplied key mapper produced null for the item '" + item + "' at index " +
+                        index + " of the tuple, but an association cannot hold null keys."
+                    );
+            V value = valueMapper.apply(item);
+            if ( value == null )
+                throw new NullPointerException(
+                        "The supplied value mapper produced null for the item '" + item + "' at index " +
+                        index + " of the tuple, but an association cannot hold null values."
+                    );
+            result = result.put(key, value);
+            index++;
+        }
+        return result;
+    }
 
     static void sneakyThrowExceptionIfFatal(Throwable throwable) {
         if (

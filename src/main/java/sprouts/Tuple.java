@@ -1,6 +1,5 @@
 package sprouts;
 
-import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import sprouts.impl.Sprouts;
 
@@ -1568,6 +1567,249 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      */
     default ValueSet<T> toValueSet() {
         return ValueSet.of(this);
+    }
+
+    /**
+     *  Converts this tuple of items into an {@link Association} between keys and values,
+     *  where both the keys and the values are derived from the items of this tuple
+     *  using the two supplied mapper functions.<br>
+     *  Each mapper is preceded by the type of the objects it produces, because an
+     *  association always tracks the types of its keys and values
+     *  (see {@link Association#keyType()} and {@link Association#valueType()}).<br>
+     *  Here is an example demonstrating how this method may be used:<br>
+     *  <pre>{@code
+     *    var agesByName = people.toAssociation(
+     *                          String.class,  Person::name,
+     *                          Integer.class, Person::age
+     *                      );
+     *  }</pre>
+     *  The returned association has no particular order, which means that both
+     *  {@link Association#isLinked()} and {@link Association#isSorted()} yield {@code false}.
+     *  Use {@link #toLinkedAssociation(Class, Function, Class, Function)} if the order of
+     *  this tuple should be preserved, or
+     *  {@link #toSortedAssociation(Class, Function, Class, Function, Comparator)} if the
+     *  keys should be sorted.<br>
+     *  <p>
+     *  The items of this tuple are processed in order, from the first item to the last,
+     *  and each of the two mappers is applied exactly once per item. If two items produce
+     *  the same key, then the last one wins, because this method is exactly equivalent to
+     *  putting all derived key-value pairs into an initially empty association, one after
+     *  another (see {@link Association#put(Object, Object)}).
+     *
+     * @param keyType The type of the keys in the returned association,
+     *                which is also the type produced by the supplied {@code keyMapper}.
+     * @param keyMapper A function turning an item of this tuple into a key of the returned association.
+     * @param valueType The type of the values in the returned association,
+     *                  which is also the type produced by the supplied {@code valueMapper}.
+     * @param valueMapper A function turning an item of this tuple into a value of the returned association.
+     * @param <K> The type of the keys in the returned association, which must be immutable.
+     * @param <V> The type of the values in the returned association, which should be immutable.
+     * @return An unordered {@link Association} holding one entry for every distinct
+     *         key produced by the supplied {@code keyMapper}.
+     * @throws NullPointerException If any of the supplied arguments is {@code null}, or if one
+     *                              of the two mappers produces {@code null} for an item of this
+     *                              tuple, because an association cannot hold null keys or values.
+     * @see #toLinkedAssociation(Class, Function, Class, Function)
+     * @see #toSortedAssociation(Class, Function, Class, Function, Comparator)
+     * @see Association#between(Class, Class)
+     */
+    default <K, V> Association<K,V> toAssociation(
+        Class<K>      keyType,
+        Function<T,K> keyMapper,
+        Class<V>      valueType,
+        Function<T,V> valueMapper
+    ) {
+        Objects.requireNonNull(keyType, "The provided key type cannot be null.");
+        Objects.requireNonNull(keyMapper, "The provided key mapper cannot be null.");
+        Objects.requireNonNull(valueType, "The provided value type cannot be null.");
+        Objects.requireNonNull(valueMapper, "The provided value mapper cannot be null.");
+        return Util.fillAssociation(
+                    this, Association.between(keyType, valueType), keyMapper, valueMapper
+                );
+    }
+
+    /**
+     *  Converts this tuple of items into a linked {@link Association} between keys and values,
+     *  where both the keys and the values are derived from the items of this tuple
+     *  using the two supplied mapper functions, and where the order of this tuple
+     *  is preserved in the returned association.<br>
+     *  Each mapper is preceded by the type of the objects it produces, because an
+     *  association always tracks the types of its keys and values
+     *  (see {@link Association#keyType()} and {@link Association#valueType()}).<br>
+     *  Here is an example demonstrating how this method may be used:<br>
+     *  <pre>{@code
+     *    var agesByName = people.toLinkedAssociation(
+     *                          String.class,  Person::name,
+     *                          Integer.class, Person::age
+     *                      );
+     *  }</pre>
+     *  Iterating over the returned association yields the key-value pairs in the
+     *  same order as the items they were derived from appear in this tuple, which
+     *  is why {@link Association#isLinked()} yields {@code true} for it.<br>
+     *  <p>
+     *  The items of this tuple are processed in order, from the first item to the last,
+     *  and each of the two mappers is applied exactly once per item. If two items produce
+     *  the same key, then the entry keeps the position of the <b>first</b> of the two items,
+     *  but holds the value derived from the <b>last</b> of them. This mirrors the behaviour
+     *  of a {@link java.util.LinkedHashMap}, because this method is exactly equivalent to
+     *  putting all derived key-value pairs into an initially empty linked association,
+     *  one after another (see {@link Association#put(Object, Object)}).
+     *
+     * @param keyType The type of the keys in the returned association,
+     *                which is also the type produced by the supplied {@code keyMapper}.
+     * @param keyMapper A function turning an item of this tuple into a key of the returned association.
+     * @param valueType The type of the values in the returned association,
+     *                  which is also the type produced by the supplied {@code valueMapper}.
+     * @param valueMapper A function turning an item of this tuple into a value of the returned association.
+     * @param <K> The type of the keys in the returned association, which must be immutable.
+     * @param <V> The type of the values in the returned association, which should be immutable.
+     * @return A linked {@link Association} holding one entry for every distinct key produced
+     *         by the supplied {@code keyMapper}, in the order of the items of this tuple.
+     * @throws NullPointerException If any of the supplied arguments is {@code null}, or if one
+     *                              of the two mappers produces {@code null} for an item of this
+     *                              tuple, because an association cannot hold null keys or values.
+     * @see #toAssociation(Class, Function, Class, Function)
+     * @see #toSortedAssociation(Class, Function, Class, Function, Comparator)
+     * @see Association#betweenLinked(Class, Class)
+     */
+    default <K, V> Association<K,V> toLinkedAssociation(
+        Class<K>      keyType,
+        Function<T,K> keyMapper,
+        Class<V>      valueType,
+        Function<T,V> valueMapper
+    ) {
+        Objects.requireNonNull(keyType, "The provided key type cannot be null.");
+        Objects.requireNonNull(keyMapper, "The provided key mapper cannot be null.");
+        Objects.requireNonNull(valueType, "The provided value type cannot be null.");
+        Objects.requireNonNull(valueMapper, "The provided value mapper cannot be null.");
+        return Util.fillAssociation(
+                    this, Association.betweenLinked(keyType, valueType), keyMapper, valueMapper
+                );
+    }
+
+    /**
+     *  Converts this tuple of items into a sorted {@link Association} between keys and values,
+     *  where both the keys and the values are derived from the items of this tuple
+     *  using the two supplied mapper functions, and where the key-value pairs are
+     *  ordered by their keys according to the supplied {@link Comparator}.<br>
+     *  Each mapper is preceded by the type of the objects it produces, because an
+     *  association always tracks the types of its keys and values
+     *  (see {@link Association#keyType()} and {@link Association#valueType()}).<br>
+     *  Here is an example demonstrating how this method may be used:<br>
+     *  <pre>{@code
+     *    var agesByName = people.toSortedAssociation(
+     *                          String.class,  Person::name,
+     *                          Integer.class, Person::age,
+     *                          Comparator.reverseOrder()
+     *                      );
+     *  }</pre>
+     *  Iterating over the returned association yields the key-value pairs ordered by
+     *  their keys, irrespective of the order of this tuple, which is why
+     *  {@link Association#isSorted()} yields {@code true} for it.<br>
+     *  <p>
+     *  The items of this tuple are processed in order, from the first item to the last,
+     *  and each of the two mappers is applied exactly once per item. If two items produce
+     *  the same key, then the last one wins, because this method is exactly equivalent to
+     *  putting all derived key-value pairs into an initially empty sorted association,
+     *  one after another (see {@link Association#put(Object, Object)}). Just like for a
+     *  {@link java.util.SortedMap}, the supplied comparator should be consistent with
+     *  {@link Object#equals(Object)}, because the returned association tells its keys
+     *  apart through their equality, while it positions them through the comparator.
+     *
+     * @param keyType The type of the keys in the returned association,
+     *                which is also the type produced by the supplied {@code keyMapper}.
+     * @param keyMapper A function turning an item of this tuple into a key of the returned association.
+     * @param valueType The type of the values in the returned association,
+     *                  which is also the type produced by the supplied {@code valueMapper}.
+     * @param valueMapper A function turning an item of this tuple into a value of the returned association.
+     * @param comparator The comparator used for sorting the keys of the returned association.
+     * @param <K> The type of the keys in the returned association, which must be immutable.
+     * @param <V> The type of the values in the returned association, which should be immutable.
+     * @return A sorted {@link Association} holding one entry for every distinct key produced
+     *         by the supplied {@code keyMapper}, ordered by the supplied comparator.
+     * @throws NullPointerException If any of the supplied arguments is {@code null}, or if one
+     *                              of the two mappers produces {@code null} for an item of this
+     *                              tuple, because an association cannot hold null keys or values.
+     * @see #toSortedAssociation(Class, Function, Class, Function)
+     * @see #toAssociation(Class, Function, Class, Function)
+     * @see #toLinkedAssociation(Class, Function, Class, Function)
+     * @see Association#betweenSorted(Class, Class, Comparator)
+     */
+    default <K, V> Association<K,V> toSortedAssociation(
+        Class<K>      keyType,
+        Function<T,K> keyMapper,
+        Class<V>      valueType,
+        Function<T,V> valueMapper,
+        Comparator<K> comparator
+    ) {
+        Objects.requireNonNull(keyType, "The provided key type cannot be null.");
+        Objects.requireNonNull(keyMapper, "The provided key mapper cannot be null.");
+        Objects.requireNonNull(valueType, "The provided value type cannot be null.");
+        Objects.requireNonNull(valueMapper, "The provided value mapper cannot be null.");
+        Objects.requireNonNull(comparator, "The provided comparator cannot be null.");
+        return Util.fillAssociation(
+                    this, Association.betweenSorted(keyType, valueType, comparator), keyMapper, valueMapper
+                );
+    }
+
+    /**
+     *  Converts this tuple of items into a sorted {@link Association} between keys and values,
+     *  where both the keys and the values are derived from the items of this tuple
+     *  using the two supplied mapper functions, and where the key-value pairs are
+     *  ordered by their keys in their natural order.<br>
+     *  This is a convenient shortcut for
+     *  {@link #toSortedAssociation(Class, Function, Class, Function, Comparator)} with
+     *  {@link Comparator#naturalOrder()}, which is why the key type is required to
+     *  implement {@link Comparable}.<br>
+     *  Here is an example demonstrating how this method may be used:<br>
+     *  <pre>{@code
+     *    var agesByName = people.toSortedAssociation(
+     *                          String.class,  Person::name,
+     *                          Integer.class, Person::age
+     *                      );
+     *  }</pre>
+     *  Iterating over the returned association yields the key-value pairs ordered by
+     *  their keys, irrespective of the order of this tuple, which is why
+     *  {@link Association#isSorted()} yields {@code true} for it.<br>
+     *  <p>
+     *  The items of this tuple are processed in order, from the first item to the last,
+     *  and each of the two mappers is applied exactly once per item. If two items produce
+     *  the same key, then the last one wins, because this method is exactly equivalent to
+     *  putting all derived key-value pairs into an initially empty sorted association,
+     *  one after another (see {@link Association#put(Object, Object)}).
+     *
+     * @param keyType The type of the keys in the returned association,
+     *                which is also the type produced by the supplied {@code keyMapper}.
+     * @param keyMapper A function turning an item of this tuple into a key of the returned association.
+     * @param valueType The type of the values in the returned association,
+     *                  which is also the type produced by the supplied {@code valueMapper}.
+     * @param valueMapper A function turning an item of this tuple into a value of the returned association.
+     * @param <K> The type of the keys in the returned association, which must be
+     *            immutable and implement {@link Comparable}.
+     * @param <V> The type of the values in the returned association, which should be immutable.
+     * @return A sorted {@link Association} holding one entry for every distinct key produced
+     *         by the supplied {@code keyMapper}, ordered by the natural order of the keys.
+     * @throws NullPointerException If any of the supplied arguments is {@code null}, or if one
+     *                              of the two mappers produces {@code null} for an item of this
+     *                              tuple, because an association cannot hold null keys or values.
+     * @see #toSortedAssociation(Class, Function, Class, Function, Comparator)
+     * @see #toAssociation(Class, Function, Class, Function)
+     * @see #toLinkedAssociation(Class, Function, Class, Function)
+     * @see Association#betweenSorted(Class, Class)
+     */
+    default <K extends Comparable<K>, V> Association<K,V> toSortedAssociation(
+        Class<K>      keyType,
+        Function<T,K> keyMapper,
+        Class<V>      valueType,
+        Function<T,V> valueMapper
+    ) {
+        Objects.requireNonNull(keyType, "The provided key type cannot be null.");
+        Objects.requireNonNull(keyMapper, "The provided key mapper cannot be null.");
+        Objects.requireNonNull(valueType, "The provided value type cannot be null.");
+        Objects.requireNonNull(valueMapper, "The provided value mapper cannot be null.");
+        return Util.fillAssociation(
+                    this, Association.betweenSorted(keyType, valueType), keyMapper, valueMapper
+                );
     }
 
     /**

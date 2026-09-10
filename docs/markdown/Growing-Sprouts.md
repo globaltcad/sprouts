@@ -305,6 +305,50 @@ Associations are ideal for untyped and dynamic input data, fast lookup tables, o
 you need flexible key-value mappings. If you want to maintain insertion order, consider
 creating them using `Association.ofLinked(...)`.
 
+### From Tuples to Associations
+
+One of the most common things to do with a `Tuple` of value objects is to turn it into
+a lookup table keyed by one of their fields. There is a conversion method for every
+kind of association:
+
+```java
+record Creature(String name, String snack, int hunger) {}
+
+Tuple<Creature> creatures = Tuple.of(
+                                new Creature("Dragon", "Roasted Knight", 9),
+                                new Creature("Unicorn", "Sparkling Berries", 3),
+                                new Creature("Goblin", "Shiny Trinkets", 5)
+                            );
+
+// An unordered lookup table, the fastest of the three:
+Association<String, String> snacks = creatures.toAssociation(
+                                        String.class, Creature::name,
+                                        String.class, Creature::snack
+                                    );
+
+// The same, but keeping the order of the tuple:
+Association<String, Integer> hunger = creatures.toLinkedAssociation(
+                                        String.class,  Creature::name,
+                                        Integer.class, Creature::hunger
+                                    );
+
+// And one whose entries are ordered by their keys:
+Association<Integer, String> hungriestFirst = creatures.toSortedAssociation(
+                                                Integer.class, Creature::hunger,
+                                                String.class,  Creature::name,
+                                                Comparator.reverseOrder()
+                                            );
+```
+
+Note how every mapper function is preceded by the type of the objects it produces.
+This is because an association always tracks the types of its keys and values, and a
+lambda, unlike a tuple, cannot tell us what it produces. If your keys implement
+`Comparable`, then you may omit the comparator to have them sorted naturally.
+
+These conversions are exact shorthands for putting all of the derived key-value pairs
+into an initially empty association, one after another. So when two items produce the
+same key, then the last one wins, and neither the keys nor the values may be `null`.
+
 ### ValueSet
 
 A `ValueSet<E>` is an immutable set implementation that guarantees 
