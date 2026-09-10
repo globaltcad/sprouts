@@ -326,7 +326,7 @@ Association<String, String> snacks = creatures.toAssociation(
                                         String.class, Creature::snack
                                     );
 
-// The same, but keeping the order of the tuple:
+// The same kind of table, but keeping the order of the tuple:
 Association<String, Integer> hunger = creatures.toLinkedAssociation(
                                         String.class,  Creature::name,
                                         Integer.class, Creature::hunger
@@ -371,8 +371,8 @@ respectively.
 
 The one thing to keep in mind is that the type paired with the value mapper is the type
 of the items *inside* the value tuples. The association itself holds tuples, so its
-`valueType()` is `Tuple.class`.
-
+`valueType()` is `Tuple.class`. Being a tuple item type, it may also be a primitive type
+like `int.class`, giving you groups which store their items in a dense primitive array.
 
 ### ValueSet
 

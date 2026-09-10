@@ -946,7 +946,7 @@ class Tuple_To_Association_Spec extends Specification
             grouped.get('b' as Character).get() == Tuple.of("bee")
     }
 
-    def 'A mapper producing null is an error when grouping as well.'(
+    def 'A grouping conversion fails when one of its mappers produces null.'(
         String description, Closure<Association> conversion, String expectedFragment
     ) {
         reportInfo """
@@ -975,11 +975,11 @@ class Tuple_To_Association_Spec extends Specification
             'grouped natural sorted, value'      | { Tuple.of("a","bb").toGroupedSortedAssociation(String, { it }, Integer, { it == "bb" ? null : it.length() }) }                            || "null items"
     }
 
-    def 'Passing null instead of a type, a mapper or a comparator throws when grouping too.'(
+    def 'A grouping conversion throws when passed null instead of a type, a mapper or a comparator.'(
         String description, Closure conversion
     ) {
         reportInfo """
-            None of the parameters of the grouping conversions is optional either,
+            None of the parameters of the grouping conversions is optional,
             so passing null for any of them fails immediately.
         """
         when : 'We call a grouping method with a null argument.'
@@ -1086,5 +1086,143 @@ class Tuple_To_Association_Spec extends Specification
             buckets.values().toList().collectMany { it.toList() }.toSorted() == (0..999).toList()
         and : 'And within every bucket, the numbers follow the order of the tuple.'
             buckets.get(7).get().toList() == reference.findAll { it % 10 == 7 }
+    }
+
+    def 'A grouping conversion rejects a key or a group member of the wrong type.'()
+    {
+        reportInfo """
+            A grouping conversion tracks a key type and the item type of the groups, and
+            it rejects a mapper which does not honour them. The key is checked by the
+            association, whereas the members of a group are checked against the item
+            type of the tuples the groups are made of.
+
+            Because the conversion knows which item it is busy with when a group member
+            turns out to be of the wrong type, it can tell you exactly where to look.
+            (In statically typed Java code the compiler catches all of this for you,
+            here we have to sneak past it using dynamic Groovy.)
+        """
+        when : 'We claim to produce integer keys, but produce strings.'
+            Tuple.of("seed", "tree").toGroupedAssociation(
+                Integer.class, { it },
+                String.class,  { it }
+            )
+        then : 'The association rejects the key.'
+            var keyException = thrown(IllegalArgumentException)
+            keyException.message.contains("Integer")
+
+        when : 'We claim to produce integer group members, but produce a string for the second item.'
+            Tuple.of("seed", "tree").toGroupedAssociation(
+                String.class,  { it },
+                Integer.class, { it == "tree" ? it : it.length() }
+            )
+        then : 'The group rejects the value...'
+            var valueException = thrown(IllegalArgumentException)
+            valueException.message.contains("Integer")
+        and : '...naming the offending item, its index and the type it actually produced.'
+            valueException.message.contains("'tree'")
+            valueException.message.contains("at index 1")
+            valueException.message.contains("String")
+
+        when : 'We do the very same thing, but declare the group members as a primitive type.'
+            Tuple.of("seed", "tree").toGroupedAssociation(
+                String.class, { it },
+                Integer.TYPE, { it == "tree" ? it : it.length() }
+            )
+        then : 'The group rejects the value just as decisively, naming the primitive type.'
+            var primitiveException = thrown(IllegalArgumentException)
+            primitiveException.message.contains("expected type 'int'")
+        and : 'And it points at the offending item in exactly the same way.'
+            primitiveException.message.contains("'tree'")
+            primitiveException.message.contains("at index 1")
+            primitiveException.message.contains("String")
+    }
+
+    def 'A group declared on a supertype accepts the subtypes of that type.'()
+    {
+        reportInfo """
+            The item type of a group is a bound, not an exact match: a group of `Number`
+            holds an `Integer` like any other number, exactly like a `Tuple<Number>` does.
+
+            This is worth pinning, because the check which rejects a group member of the
+            wrong type has to tell a subtype apart from an unrelated type. A check which
+            merely compared the two types for equality would pass every specification
+            above and still turn a perfectly good `Integer` away here.
+        """
+        given : 'A tuple of words we want to group by themselves.'
+            var words = Tuple.of("seed", "tree")
+
+        when : 'We collect their lengths into groups declared to hold any kind of number.'
+            var grouped = words.toGroupedAssociation(
+                                String.class, { it },
+                                Number.class, { it.length() }
+                            )
+        then : 'The integers were accepted into the groups of numbers.'
+            grouped.get("seed").get() == Tuple.of(Number, 4)
+            grouped.get("tree").get() == Tuple.of(Number, 4)
+        and : 'And the groups report the supertype we declared as their item type.'
+            grouped.values().toList().every { it.type() == Number }
+
+        when : 'We hand the very same groups a value which is no number at all.'
+            words.toGroupedAssociation(
+                String.class, { it },
+                Number.class, { it }
+            )
+        then : 'That one is turned away, naming the type it expected.'
+            var exception = thrown(IllegalArgumentException)
+            exception.message.contains("expected type 'Number'")
+    }
+
+    def 'A group can be a tuple of primitive values.'()
+    {
+        reportInfo """
+            The type paired with the value mapper is the item type of the value tuples,
+            and a `Tuple` may be declared on a primitive item type, storing its items
+            in a dense array. The conversion hands that type to the groups exactly as
+            you declare it.
+
+            Do keep in mind that a tuple tracks its item type, which means that a group
+            of primitives is *not* equal to a group of the very same values boxed.
+            Pick one of the two and stick with it.
+
+            (Below we write `Integer.TYPE`, which is the very same class object as the
+            `int.class` you would write in Java.)
+        """
+        given : 'A tuple of words we want to group by their first character.'
+            var words = Tuple.of("seed", "sprout", "tree")
+
+        when : 'We group their lengths, declaring the item type of the groups as primitive.'
+            var lengths = words.toGroupedLinkedAssociation(
+                                Character.class, { it.charAt(0) },
+                                Integer.TYPE,    { it.length() }
+                            )
+        then : 'The groups came out as expected.'
+            lengths.keySet().toList() == ['s' as Character, 't' as Character]
+            lengths.get('s' as Character).get().toList() == [4, 6]
+            lengths.get('t' as Character).get().toList() == [4]
+        and : 'And they really are backed by primitives...'
+            lengths.get('s' as Character).get().type() == Integer.TYPE
+            lengths.get('s' as Character).get() == Tuple.of(Integer.TYPE, 4, 6)
+        and : '...which is why they differ from the groups of boxed values.'
+            lengths.get('s' as Character).get() != Tuple.of(4, 6)
+    }
+
+    def 'An exception thrown by a mapper of a grouping conversion reaches the caller unchanged.'()
+    {
+        reportInfo """
+            The mapper functions of a grouping conversion are your code, so if one of
+            them fails, then the grouping fails with it. Nothing is swallowed, and no
+            half-built association is handed back to you.
+        """
+        given : 'A tuple of words and a mapper which trips over the second one.'
+            var words = Tuple.of("seed", "boom", "tree")
+
+        when : 'We group the tuple with that failing mapper.'
+            words.toGroupedAssociation(
+                Character.class, { it == "boom" ? { throw new IllegalStateException("Boom!") }() : it.charAt(0) },
+                String.class,    { it }
+            )
+        then : 'The exception of the mapper reaches us unchanged.'
+            var exception = thrown(IllegalStateException)
+            exception.message == "Boom!"
     }
 }

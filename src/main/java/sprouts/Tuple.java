@@ -1595,6 +1595,9 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      *  the same key, then the last one wins, because this method is exactly equivalent to
      *  putting all derived key-value pairs into an initially empty association, one after
      *  another (see {@link Association#put(Object, Object)}).
+     *  If you would rather keep the values of all the colliding items, then reach for
+     *  {@link #toGroupedAssociation(Class, Function, Class, Function)}, which collects
+     *  them into a {@link Tuple} for every key instead of keeping only the last of them.
      *
      * @param keyType The type of the keys in the returned association,
      *                which is also the type produced by the supplied {@code keyMapper}.
@@ -1609,15 +1612,18 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @throws NullPointerException If any of the supplied arguments is {@code null}, or if one
      *                              of the two mappers produces {@code null} for an item of this
      *                              tuple, because an association cannot hold null keys or values.
+     * @throws IllegalArgumentException If one of the two mappers produces an object which
+     *                                  does not fit the type it was paired with.
      * @see #toLinkedAssociation(Class, Function, Class, Function)
      * @see #toSortedAssociation(Class, Function, Class, Function, Comparator)
+     * @see #toGroupedAssociation(Class, Function, Class, Function)
      * @see Association#between(Class, Class)
      */
     default <K, V> Association<K,V> toAssociation(
-        Class<K>      keyType,
-        Function<T,K> keyMapper,
-        Class<V>      valueType,
-        Function<T,V> valueMapper
+        Class<K>                         keyType,
+        Function<? super T, ? extends K> keyMapper,
+        Class<V>                         valueType,
+        Function<? super T, ? extends V> valueMapper
     ) {
         Objects.requireNonNull(keyType, "The provided key type cannot be null.");
         Objects.requireNonNull(keyMapper, "The provided key mapper cannot be null.");
@@ -1654,6 +1660,9 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      *  of a {@link java.util.LinkedHashMap}, because this method is exactly equivalent to
      *  putting all derived key-value pairs into an initially empty linked association,
      *  one after another (see {@link Association#put(Object, Object)}).
+     *  If you would rather keep the values of all the colliding items, then reach for
+     *  {@link #toGroupedLinkedAssociation(Class, Function, Class, Function)}, which
+     *  collects them into a {@link Tuple} for every key instead of keeping only the last.
      *
      * @param keyType The type of the keys in the returned association,
      *                which is also the type produced by the supplied {@code keyMapper}.
@@ -1668,15 +1677,18 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @throws NullPointerException If any of the supplied arguments is {@code null}, or if one
      *                              of the two mappers produces {@code null} for an item of this
      *                              tuple, because an association cannot hold null keys or values.
+     * @throws IllegalArgumentException If one of the two mappers produces an object which
+     *                                  does not fit the type it was paired with.
      * @see #toAssociation(Class, Function, Class, Function)
      * @see #toSortedAssociation(Class, Function, Class, Function, Comparator)
+     * @see #toGroupedLinkedAssociation(Class, Function, Class, Function)
      * @see Association#betweenLinked(Class, Class)
      */
     default <K, V> Association<K,V> toLinkedAssociation(
-        Class<K>      keyType,
-        Function<T,K> keyMapper,
-        Class<V>      valueType,
-        Function<T,V> valueMapper
+        Class<K>                         keyType,
+        Function<? super T, ? extends K> keyMapper,
+        Class<V>                         valueType,
+        Function<? super T, ? extends V> valueMapper
     ) {
         Objects.requireNonNull(keyType, "The provided key type cannot be null.");
         Objects.requireNonNull(keyMapper, "The provided key mapper cannot be null.");
@@ -1714,7 +1726,10 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      *  one after another (see {@link Association#put(Object, Object)}). Just like for a
      *  {@link java.util.SortedMap}, the supplied comparator should be consistent with
      *  {@link Object#equals(Object)}, because the returned association tells its keys
-     *  apart through their equality, while it positions them through the comparator.
+     *  apart through their equality, while it positions them through the comparator.<br>
+     *  If you would rather keep the values of all the colliding items, then reach for
+     *  {@link #toGroupedSortedAssociation(Class, Function, Class, Function, Comparator)},
+     *  which collects them into a {@link Tuple} for every key.
      *
      * @param keyType The type of the keys in the returned association,
      *                which is also the type produced by the supplied {@code keyMapper}.
@@ -1730,17 +1745,20 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @throws NullPointerException If any of the supplied arguments is {@code null}, or if one
      *                              of the two mappers produces {@code null} for an item of this
      *                              tuple, because an association cannot hold null keys or values.
+     * @throws IllegalArgumentException If one of the two mappers produces an object which
+     *                                  does not fit the type it was paired with.
      * @see #toSortedAssociation(Class, Function, Class, Function)
      * @see #toAssociation(Class, Function, Class, Function)
      * @see #toLinkedAssociation(Class, Function, Class, Function)
+     * @see #toGroupedSortedAssociation(Class, Function, Class, Function, Comparator)
      * @see Association#betweenSorted(Class, Class, Comparator)
      */
     default <K, V> Association<K,V> toSortedAssociation(
-        Class<K>      keyType,
-        Function<T,K> keyMapper,
-        Class<V>      valueType,
-        Function<T,V> valueMapper,
-        Comparator<K> comparator
+        Class<K>                         keyType,
+        Function<? super T, ? extends K> keyMapper,
+        Class<V>                         valueType,
+        Function<? super T, ? extends V> valueMapper,
+        Comparator<K>                    comparator
     ) {
         Objects.requireNonNull(keyType, "The provided key type cannot be null.");
         Objects.requireNonNull(keyMapper, "The provided key mapper cannot be null.");
@@ -1777,6 +1795,9 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      *  the same key, then the last one wins, because this method is exactly equivalent to
      *  putting all derived key-value pairs into an initially empty sorted association,
      *  one after another (see {@link Association#put(Object, Object)}).
+     *  If you would rather keep the values of all the colliding items, then reach for
+     *  {@link #toGroupedSortedAssociation(Class, Function, Class, Function)}, which
+     *  collects them into a {@link Tuple} for every key instead of keeping only the last.
      *
      * @param keyType The type of the keys in the returned association,
      *                which is also the type produced by the supplied {@code keyMapper}.
@@ -1792,16 +1813,19 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      * @throws NullPointerException If any of the supplied arguments is {@code null}, or if one
      *                              of the two mappers produces {@code null} for an item of this
      *                              tuple, because an association cannot hold null keys or values.
+     * @throws IllegalArgumentException If one of the two mappers produces an object which
+     *                                  does not fit the type it was paired with.
      * @see #toSortedAssociation(Class, Function, Class, Function, Comparator)
      * @see #toAssociation(Class, Function, Class, Function)
      * @see #toLinkedAssociation(Class, Function, Class, Function)
+     * @see #toGroupedSortedAssociation(Class, Function, Class, Function)
      * @see Association#betweenSorted(Class, Class)
      */
     default <K extends Comparable<K>, V> Association<K,V> toSortedAssociation(
-        Class<K>      keyType,
-        Function<T,K> keyMapper,
-        Class<V>      valueType,
-        Function<T,V> valueMapper
+        Class<K>                         keyType,
+        Function<? super T, ? extends K> keyMapper,
+        Class<V>                         valueType,
+        Function<? super T, ? extends V> valueMapper
     ) {
         Objects.requireNonNull(keyType, "The provided key type cannot be null.");
         Objects.requireNonNull(keyMapper, "The provided key mapper cannot be null.");
@@ -1830,6 +1854,10 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      *  {@link Association#valueType()} is {@code Tuple.class} (see {@link #classTyped(Class)}),
      *  whereas the supplied {@code valueItemType} is the type of the items <b>inside</b>
      *  those tuples.<br>
+     *  Both of these types are handed to the association and the groups exactly as you
+     *  declare them. Since a tuple tracks its item type, a {@code valueItemType} of
+     *  {@code int.class} yields groups which are not equal to groups of
+     *  {@code Integer.class}, even though both store their items as primitives.<br>
      *  The returned association has no particular order, which means that both
      *  {@link Association#isLinked()} and {@link Association#isSorted()} yield {@code false}.
      *  Use {@link #toGroupedLinkedAssociation(Class, Function, Class, Function)} if the order
@@ -1857,15 +1885,17 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      *                              of the two mappers produces {@code null} for an item of this
      *                              tuple, because neither the keys of an association nor the
      *                              items of a tuple of values may be null.
+     * @throws IllegalArgumentException If one of the two mappers produces an object which
+     *                                  does not fit the type it was paired with.
      * @see #toAssociation(Class, Function, Class, Function)
      * @see #toGroupedLinkedAssociation(Class, Function, Class, Function)
      * @see #toGroupedSortedAssociation(Class, Function, Class, Function, Comparator)
      */
     default <K, V> Association<K,Tuple<V>> toGroupedAssociation(
-        Class<K>      keyType,
-        Function<T,K> keyMapper,
-        Class<V>      valueItemType,
-        Function<T,V> valueMapper
+        Class<K>                         keyType,
+        Function<? super T, ? extends K> keyMapper,
+        Class<V>                         valueItemType,
+        Function<? super T, ? extends V> valueMapper
     ) {
         Objects.requireNonNull(keyType, "The provided key type cannot be null.");
         Objects.requireNonNull(keyMapper, "The provided key mapper cannot be null.");
@@ -1896,6 +1926,10 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      *  {@link Association#valueType()} is {@code Tuple.class} (see {@link #classTyped(Class)}),
      *  whereas the supplied {@code valueItemType} is the type of the items <b>inside</b>
      *  those tuples.<br>
+     *  Both of these types are handed to the association and the groups exactly as you
+     *  declare them. Since a tuple tracks its item type, a {@code valueItemType} of
+     *  {@code int.class} yields groups which are not equal to groups of
+     *  {@code Integer.class}, even though both store their items as primitives.<br>
      *  Iterating over the returned association yields the groups in the order in which
      *  their keys first occur in this tuple, which is why {@link Association#isLinked()}
      *  yields {@code true} for it.<br>
@@ -1921,15 +1955,17 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      *                              of the two mappers produces {@code null} for an item of this
      *                              tuple, because neither the keys of an association nor the
      *                              items of a tuple of values may be null.
+     * @throws IllegalArgumentException If one of the two mappers produces an object which
+     *                                  does not fit the type it was paired with.
      * @see #toLinkedAssociation(Class, Function, Class, Function)
      * @see #toGroupedAssociation(Class, Function, Class, Function)
      * @see #toGroupedSortedAssociation(Class, Function, Class, Function, Comparator)
      */
     default <K, V> Association<K,Tuple<V>> toGroupedLinkedAssociation(
-        Class<K>      keyType,
-        Function<T,K> keyMapper,
-        Class<V>      valueItemType,
-        Function<T,V> valueMapper
+        Class<K>                         keyType,
+        Function<? super T, ? extends K> keyMapper,
+        Class<V>                         valueItemType,
+        Function<? super T, ? extends V> valueMapper
     ) {
         Objects.requireNonNull(keyType, "The provided key type cannot be null.");
         Objects.requireNonNull(keyMapper, "The provided key mapper cannot be null.");
@@ -1961,6 +1997,10 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      *  {@link Association#valueType()} is {@code Tuple.class} (see {@link #classTyped(Class)}),
      *  whereas the supplied {@code valueItemType} is the type of the items <b>inside</b>
      *  those tuples.<br>
+     *  Both of these types are handed to the association and the groups exactly as you
+     *  declare them. Since a tuple tracks its item type, a {@code valueItemType} of
+     *  {@code int.class} yields groups which are not equal to groups of
+     *  {@code Integer.class}, even though both store their items as primitives.<br>
      *  Iterating over the returned association yields the groups ordered by their keys,
      *  irrespective of the order of this tuple, which is why {@link Association#isSorted()}
      *  yields {@code true} for it.<br>
@@ -1991,16 +2031,18 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      *                              of the two mappers produces {@code null} for an item of this
      *                              tuple, because neither the keys of an association nor the
      *                              items of a tuple of values may be null.
+     * @throws IllegalArgumentException If one of the two mappers produces an object which
+     *                                  does not fit the type it was paired with.
      * @see #toGroupedSortedAssociation(Class, Function, Class, Function)
      * @see #toSortedAssociation(Class, Function, Class, Function, Comparator)
      * @see #toGroupedAssociation(Class, Function, Class, Function)
      */
     default <K, V> Association<K,Tuple<V>> toGroupedSortedAssociation(
-        Class<K>      keyType,
-        Function<T,K> keyMapper,
-        Class<V>      valueItemType,
-        Function<T,V> valueMapper,
-        Comparator<K> comparator
+        Class<K>                         keyType,
+        Function<? super T, ? extends K> keyMapper,
+        Class<V>                         valueItemType,
+        Function<? super T, ? extends V> valueMapper,
+        Comparator<K>                    comparator
     ) {
         Objects.requireNonNull(keyType, "The provided key type cannot be null.");
         Objects.requireNonNull(keyMapper, "The provided key mapper cannot be null.");
@@ -2033,6 +2075,10 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      *  {@link Association#valueType()} is {@code Tuple.class} (see {@link #classTyped(Class)}),
      *  whereas the supplied {@code valueItemType} is the type of the items <b>inside</b>
      *  those tuples.<br>
+     *  Both of these types are handed to the association and the groups exactly as you
+     *  declare them. Since a tuple tracks its item type, a {@code valueItemType} of
+     *  {@code int.class} yields groups which are not equal to groups of
+     *  {@code Integer.class}, even though both store their items as primitives.<br>
      *  Iterating over the returned association yields the groups ordered by their keys,
      *  irrespective of the order of this tuple, which is why {@link Association#isSorted()}
      *  yields {@code true} for it.<br>
@@ -2059,15 +2105,17 @@ public interface Tuple<T extends @Nullable Object> extends Iterable<T>
      *                              of the two mappers produces {@code null} for an item of this
      *                              tuple, because neither the keys of an association nor the
      *                              items of a tuple of values may be null.
+     * @throws IllegalArgumentException If one of the two mappers produces an object which
+     *                                  does not fit the type it was paired with.
      * @see #toGroupedSortedAssociation(Class, Function, Class, Function, Comparator)
      * @see #toSortedAssociation(Class, Function, Class, Function)
      * @see #toGroupedAssociation(Class, Function, Class, Function)
      */
     default <K extends Comparable<K>, V> Association<K,Tuple<V>> toGroupedSortedAssociation(
-        Class<K>      keyType,
-        Function<T,K> keyMapper,
-        Class<V>      valueItemType,
-        Function<T,V> valueMapper
+        Class<K>                         keyType,
+        Function<? super T, ? extends K> keyMapper,
+        Class<V>                         valueItemType,
+        Function<? super T, ? extends V> valueMapper
     ) {
         Objects.requireNonNull(keyType, "The provided key type cannot be null.");
         Objects.requireNonNull(keyMapper, "The provided key mapper cannot be null.");
