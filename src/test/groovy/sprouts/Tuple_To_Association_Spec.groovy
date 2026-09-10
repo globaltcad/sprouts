@@ -35,6 +35,17 @@ import spock.lang.Title
     one after another. So if two items produce the same key,
     then the last one wins.
 
+    When you do not want to lose the other ones, then reach for the
+    grouping conversions instead, which exist in the same three
+    flavours and collect all the values of a key into a `Tuple`:
+
+    - `toGroupedAssociation(Class, Function, Class, Function)`
+    - `toGroupedLinkedAssociation(Class, Function, Class, Function)`
+    - `toGroupedSortedAssociation(Class, Function, Class, Function, Comparator)`
+
+    These are lossless: every single item of the tuple ends up in
+    exactly one of the groups of the resulting association.
+
 ''')
 @Subject([Tuple, Association])
 class Tuple_To_Association_Spec extends Specification
@@ -47,21 +58,24 @@ class Tuple_To_Association_Spec extends Specification
     static class Documentary {
         final String title
         final int minutes
-        Documentary( String title, int minutes ) {
+        final String topic
+        Documentary( String title, int minutes, String topic ) {
             this.title = title
             this.minutes = minutes
+            this.topic = topic
         }
         String title() { return this.title }
         int minutes() { return this.minutes }
+        String topic() { return this.topic }
         @Override String toString() { return this.title + "(" + this.minutes + "min)" }
     }
 
     private static Tuple<Documentary> documentaries() {
         return Tuple.of(Documentary, [
-                    new Documentary("Dominion", 125),
-                    new Documentary("Earthlings", 95),
-                    new Documentary("Cowspiracy", 91),
-                    new Documentary("Forks over Knives", 96),
+                    new Documentary("Dominion", 125, "animals"),
+                    new Documentary("Earthlings", 95, "animals"),
+                    new Documentary("Cowspiracy", 91, "environment"),
+                    new Documentary("Forks over Knives", 96, "health"),
                 ])
     }
 
@@ -627,5 +641,450 @@ class Tuple_To_Association_Spec extends Specification
         then : 'The exception of the mapper reaches us unchanged.'
             var exception = thrown(IllegalStateException)
             exception.message == "Boom!"
+    }
+
+    def 'A tuple of value objects can be grouped into an association of tuples.'()
+    {
+        reportInfo """
+            Where `toAssociation` builds a lookup table with a single value per key,
+            `toGroupedAssociation` builds one with a whole `Tuple` of values per key.
+            Every item of the tuple ends up in exactly one of those groups.
+            
+            The two mapper functions play the same roles as before, except that the
+            second one no longer produces the value of an entry, but a single member
+            of a group.
+        """
+        given : 'A tuple of documentaries, some of which share their topic.'
+            var docs = documentaries()
+
+        when : 'We group the titles of the documentaries by their topic.'
+            var titlesByTopic = docs.toGroupedAssociation(
+                                    String.class, { it.topic() },
+                                    String.class, { it.title() }
+                                )
+        then : 'Every topic is associated with a tuple of all the titles which share it.'
+            titlesByTopic.get("animals").get()     == Tuple.of("Dominion", "Earthlings")
+            titlesByTopic.get("environment").get() == Tuple.of("Cowspiracy")
+            titlesByTopic.get("health").get()      == Tuple.of("Forks over Knives")
+        and : 'There is one entry per distinct topic, not one per documentary.'
+            titlesByTopic.size() == 3
+        and : 'The association knows the type of its keys, and that its values are tuples.'
+            titlesByTopic.keyType() == String
+            titlesByTopic.valueType() == Tuple
+        and : 'Being a plain association, it is neither linked nor sorted.'
+            !titlesByTopic.isLinked()
+            !titlesByTopic.isSorted()
+    }
+
+    def 'Grouping is lossless, whereas the plain conversion keeps only the last value.'()
+    {
+        reportInfo """
+            This is the whole point of the grouping conversions. An `Association` cannot
+            hold two values under one key, so `toAssociation` has to drop all but the last
+            of them. `toGroupedAssociation` instead widens the values into tuples, which
+            means that nothing of the original tuple is lost.
+        """
+        given : 'A tuple of words, several of which start with the same letter.'
+            var words = Tuple.of("apple", "avocado", "banana", "blueberry", "cherry")
+
+        when : 'We convert it in both ways, using the very same two mappers.'
+            var collapsed = words.toAssociation(
+                                Character.class, { it.charAt(0) },
+                                String.class,    { it }
+                            )
+            var grouped = words.toGroupedAssociation(
+                                Character.class, { it.charAt(0) },
+                                String.class,    { it }
+                            )
+        then : 'Both associations have one entry per distinct first character.'
+            collapsed.size() == 3
+            grouped.size() == 3
+        and : 'The collapsed one silently forgot "apple" and "banana".'
+            collapsed.get('a' as Character).get() == "avocado"
+            collapsed.get('b' as Character).get() == "blueberry"
+        and : 'The grouped one kept every single word.'
+            grouped.get('a' as Character).get() == Tuple.of("apple", "avocado")
+            grouped.get('b' as Character).get() == Tuple.of("banana", "blueberry")
+            grouped.get('c' as Character).get() == Tuple.of("cherry")
+        and : 'Which we can also confirm by counting all the grouped words.'
+            grouped.values().toList().sum({ it.size() }) == words.size()
+    }
+
+    def 'The three kinds of grouped conversion produce the three kinds of association.'()
+    {
+        reportInfo """
+            Just like the plain conversions, the grouping conversions come in three
+            flavours, one for every kind of `Association` in Sprouts.
+        """
+        given : 'A tuple of words we want to group by their length.'
+            var words = Tuple.of("seed", "tree", "sprout", "branch", "leaf")
+
+        when : 'We group the tuple in all three ways.'
+            var plain  = words.toGroupedAssociation(       Integer.class, { it.length() }, String.class, { it })
+            var linked = words.toGroupedLinkedAssociation( Integer.class, { it.length() }, String.class, { it })
+            var sorted = words.toGroupedSortedAssociation( Integer.class, { it.length() }, String.class, { it }, Comparator.naturalOrder())
+
+        then : 'Each of them reports the kind of association it is.'
+            !plain.isLinked()  && !plain.isSorted()
+            linked.isLinked()  && !linked.isSorted()
+            !sorted.isLinked() && sorted.isSorted()
+        and : 'They all hold the same groups, they merely differ in their order.'
+            [plain, linked, sorted].every {
+                it.get(4).get() == Tuple.of("seed", "tree", "leaf") &&
+                it.get(6).get() == Tuple.of("sprout", "branch")
+            }
+    }
+
+    def 'A grouped linked association keeps the order in which the keys first occur.'()
+    {
+        reportInfo """
+            A group takes its position from the first item which produced its key,
+            because that is when the key entered the association. The items which
+            join the group later do not move it.
+        """
+        given : 'A tuple of documentaries whose topics are interleaved.'
+            var docs = Tuple.of(Documentary, [
+                            new Documentary("Cowspiracy", 91, "environment"),
+                            new Documentary("Dominion", 125, "animals"),
+                            new Documentary("Seaspiracy", 89, "environment"),
+                            new Documentary("Earthlings", 95, "animals"),
+                        ])
+
+        when : 'We group the titles by their topic, preserving the order.'
+            var titlesByTopic = docs.toGroupedLinkedAssociation(
+                                    String.class, { it.topic() },
+                                    String.class, { it.title() }
+                                )
+        then : 'The groups appear in the order in which their topics first occur.'
+            titlesByTopic.keySet().toList() == ["environment", "animals"]
+        and : 'And within every group, the titles appear in the order of the tuple.'
+            titlesByTopic.get("environment").get() == Tuple.of("Cowspiracy", "Seaspiracy")
+            titlesByTopic.get("animals").get()     == Tuple.of("Dominion", "Earthlings")
+    }
+
+    def 'A grouped sorted association orders its groups by their keys.'()
+    {
+        reportInfo """
+            The `toGroupedSortedAssociation` method takes a `Comparator` as its last
+            parameter, which orders the groups by their keys. The order of the tuple
+            still decides the order of the values inside every group.
+        """
+        given : 'A tuple of documentaries whose topics are interleaved.'
+            var docs = Tuple.of(Documentary, [
+                            new Documentary("Cowspiracy", 91, "environment"),
+                            new Documentary("Dominion", 125, "animals"),
+                            new Documentary("Seaspiracy", 89, "environment"),
+                            new Documentary("Earthlings", 95, "animals"),
+                        ])
+
+        when : 'We group the titles by topic, sorted alphabetically.'
+            var alphabetical = docs.toGroupedSortedAssociation(
+                                    String.class, { it.topic() },
+                                    String.class, { it.title() },
+                                    Comparator.naturalOrder()
+                                )
+        then : 'The groups are ordered by their topics, irrespective of the tuple.'
+            alphabetical.keySet().toList() == ["animals", "environment"]
+        and : 'But the titles inside the groups still follow the order of the tuple.'
+            alphabetical.get("environment").get() == Tuple.of("Cowspiracy", "Seaspiracy")
+
+        when : 'We do the same, but with a reversed comparator.'
+            var reversed = docs.toGroupedSortedAssociation(
+                                String.class, { it.topic() },
+                                String.class, { it.title() },
+                                Comparator.reverseOrder()
+                            )
+        then : 'The groups are ordered the other way around.'
+            reversed.keySet().toList() == ["environment", "animals"]
+        and : 'While the contents of the groups are untouched.'
+            reversed.get("environment").get() == Tuple.of("Cowspiracy", "Seaspiracy")
+    }
+
+    def 'The natural order variant of `toGroupedSortedAssociation` needs no comparator.'()
+    {
+        reportInfo """
+            Just like for the plain conversions, sorting the groups by the natural
+            order of their keys does not require you to pass a comparator, as long
+            as the key type implements `Comparable`.
+        """
+        given : 'A tuple of documentaries.'
+            var docs = documentaries()
+
+        when : 'We group them without supplying a comparator...'
+            var natural = docs.toGroupedSortedAssociation(
+                                String.class, { it.topic() },
+                                String.class, { it.title() }
+                            )
+        and : '...and once more, with the natural order comparator.'
+            var explicit = docs.toGroupedSortedAssociation(
+                                String.class, { it.topic() },
+                                String.class, { it.title() },
+                                Comparator.naturalOrder()
+                            )
+        then : 'Both produce the very same sorted association of groups.'
+            natural == explicit
+            natural.hashCode() == explicit.hashCode()
+            natural.keySet().toList() == ["animals", "environment", "health"]
+    }
+
+    def 'The values of a grouped association are tuples, which is what its value type says.'()
+    {
+        reportInfo """
+            This is the one thing to keep in mind about the grouping conversions:
+            the type you pair with the value mapper is the type of the items
+            **inside** the value tuples, not the value type of the association.
+            The association itself holds tuples, and says so.
+        """
+        given : 'A tuple of words.'
+            var words = Tuple.of("seed", "tree", "leaf")
+
+        when : 'We group the words by their length, declaring `String` as the value item type.'
+            var grouped = words.toGroupedAssociation(
+                                Integer.class, { it.length() },
+                                String.class,  { it }
+                            )
+        then : 'The value type of the association is `Tuple`, not `String`.'
+            grouped.valueType() == Tuple
+            grouped.valueType() != String
+        and : 'And the tuples it holds are tuples of strings.'
+            grouped.get(4).get().type() == String
+            grouped.get(4).get() == Tuple.of("seed", "tree", "leaf")
+        and : 'Those tuples do not allow null items.'
+            !grouped.get(4).get().allowsNull()
+    }
+
+    def 'A key produced by a single item is associated with a group of size one.'()
+    {
+        reportInfo """
+            There is no special case for keys which only a single item produced.
+            They are associated with a tuple like every other key, one holding
+            exactly one value. This keeps the shape of the result predictable.
+        """
+        given : 'A tuple of words which all have a different first character.'
+            var words = Tuple.of("seed", "tree", "leaf")
+
+        when : 'We group them by their first character.'
+            var grouped = words.toGroupedAssociation(
+                                Character.class, { it.charAt(0) },
+                                String.class,    { it }
+                            )
+        then : 'Every group is a tuple of exactly one word.'
+            grouped.size() == 3
+            grouped.values().toList().every { it.size() == 1 }
+            grouped.get('s' as Character).get() == Tuple.of("seed")
+    }
+
+    def 'Equal values within a group are kept rather than merged.'()
+    {
+        reportInfo """
+            A group is a `Tuple`, not a `ValueSet`, which means that it holds
+            duplicates. So if two items of the tuple produce both the same key
+            and the same value, then that value appears twice in the group.
+        """
+        given : 'A tuple in which one word occurs twice.'
+            var words = Tuple.of("seed", "seed", "sprout")
+
+        when : 'We group the words by their first character.'
+            var grouped = words.toGroupedAssociation(
+                                Character.class, { it.charAt(0) },
+                                String.class,    { it }
+                            )
+        then : 'Both occurrences of the repeated word are in the group.'
+            grouped.get('s' as Character).get() == Tuple.of("seed", "seed", "sprout")
+            grouped.get('s' as Character).get().size() == 3
+    }
+
+    def 'Grouping an empty tuple yields an empty association of the declared types.'()
+    {
+        reportInfo """
+            An empty tuple has no items to group, so the result is an empty
+            association. It still knows its key type, and that its values
+            would be tuples.
+        """
+        given : 'An empty tuple of documentaries.'
+            var empty = Tuple.of(Documentary)
+
+        when : 'We group it in all four ways.'
+            var plain   = empty.toGroupedAssociation(       String.class, { it.topic() }, String.class, { it.title() })
+            var linked  = empty.toGroupedLinkedAssociation( String.class, { it.topic() }, String.class, { it.title() })
+            var sorted  = empty.toGroupedSortedAssociation( String.class, { it.topic() }, String.class, { it.title() }, Comparator.naturalOrder())
+            var natural = empty.toGroupedSortedAssociation( String.class, { it.topic() }, String.class, { it.title() })
+
+        then : 'All of them are empty.'
+            plain.isEmpty() && linked.isEmpty() && sorted.isEmpty() && natural.isEmpty()
+        and : 'All of them know their types.'
+            [plain, linked, sorted, natural].every { it.keyType() == String && it.valueType() == Tuple }
+        and : 'And all of them are of the kind we asked for.'
+            !plain.isLinked()   && !plain.isSorted()
+            linked.isLinked()   && !linked.isSorted()
+            !sorted.isLinked()  && sorted.isSorted()
+            !natural.isLinked() && natural.isSorted()
+    }
+
+    def 'Both mappers are applied exactly once per item when grouping.'()
+    {
+        reportInfo """
+            Grouping visits every item of the tuple exactly once, and hands each
+            of them to both mappers, in the order of the tuple. Items which join
+            an existing group are no exception.
+        """
+        given : 'A tuple whose items mostly share a key, and two recording mappers.'
+            var words = Tuple.of("ant", "ape", "bee")
+            var keysSeen = []
+            var valuesSeen = []
+
+        when : 'We group the tuple by the first character of its items.'
+            var grouped = words.toGroupedAssociation(
+                                Character.class, { keysSeen << it; it.charAt(0) },
+                                String.class,    { valuesSeen << it; it }
+                            )
+        then : 'Every item was passed to both mappers exactly once, in the order of the tuple.'
+            keysSeen == ["ant", "ape", "bee"]
+            valuesSeen == ["ant", "ape", "bee"]
+        and : 'And the groups came out as expected.'
+            grouped.get('a' as Character).get() == Tuple.of("ant", "ape")
+            grouped.get('b' as Character).get() == Tuple.of("bee")
+    }
+
+    def 'A mapper producing null is an error when grouping as well.'(
+        String description, Closure<Association> conversion, String expectedFragment
+    ) {
+        reportInfo """
+            Neither the keys of an association nor the items of a tuple of values
+            may be null, so a mapper producing one fails the conversion, naming
+            the item which is to blame.
+        """
+        when : 'We perform a grouping whose mapper produces a null.'
+            conversion()
+        then : 'A null pointer exception is thrown...'
+            var exception = thrown(NullPointerException)
+        and : '...naming the offending item, its index and what went wrong.'
+            exception.message.contains("at index 1")
+            exception.message.contains("'bb'")
+            exception.message.contains(expectedFragment)
+
+        where : 'We check this for the key mapper and the value mapper of every grouping.'
+            description                          | conversion                                                                                                                                 || expectedFragment
+            'grouped, key'                       | { Tuple.of("a","bb").toGroupedAssociation(String, { it == "bb" ? null : it }, Integer, { it.length() }) }                                   || "null keys"
+            'grouped, value'                     | { Tuple.of("a","bb").toGroupedAssociation(String, { it }, Integer, { it == "bb" ? null : it.length() }) }                                  || "null items"
+            'grouped linked, key'                | { Tuple.of("a","bb").toGroupedLinkedAssociation(String, { it == "bb" ? null : it }, Integer, { it.length() }) }                             || "null keys"
+            'grouped linked, value'              | { Tuple.of("a","bb").toGroupedLinkedAssociation(String, { it }, Integer, { it == "bb" ? null : it.length() }) }                            || "null items"
+            'grouped sorted, key'                | { Tuple.of("a","bb").toGroupedSortedAssociation(String, { it == "bb" ? null : it }, Integer, { it.length() }, Comparator.naturalOrder()) }  || "null keys"
+            'grouped sorted, value'              | { Tuple.of("a","bb").toGroupedSortedAssociation(String, { it }, Integer, { it == "bb" ? null : it.length() }, Comparator.naturalOrder()) } || "null items"
+            'grouped natural sorted, key'        | { Tuple.of("a","bb").toGroupedSortedAssociation(String, { it == "bb" ? null : it }, Integer, { it.length() }) }                             || "null keys"
+            'grouped natural sorted, value'      | { Tuple.of("a","bb").toGroupedSortedAssociation(String, { it }, Integer, { it == "bb" ? null : it.length() }) }                            || "null items"
+    }
+
+    def 'Passing null instead of a type, a mapper or a comparator throws when grouping too.'(
+        String description, Closure conversion
+    ) {
+        reportInfo """
+            None of the parameters of the grouping conversions is optional either,
+            so passing null for any of them fails immediately.
+        """
+        when : 'We call a grouping method with a null argument.'
+            conversion()
+        then : 'A null pointer exception is thrown.'
+            thrown(NullPointerException)
+
+        where : 'We try this for every parameter of every grouping method.'
+            description                            | conversion
+            'grouped, key type'                    | { Tuple.of("a").toGroupedAssociation(null, { it }, Integer, { it.length() }) }
+            'grouped, key mapper'                  | { Tuple.of("a").toGroupedAssociation(String, null, Integer, { it.length() }) }
+            'grouped, value item type'             | { Tuple.of("a").toGroupedAssociation(String, { it }, null, { it.length() }) }
+            'grouped, value mapper'                | { Tuple.of("a").toGroupedAssociation(String, { it }, Integer, null) }
+            'grouped linked, key type'             | { Tuple.of("a").toGroupedLinkedAssociation(null, { it }, Integer, { it.length() }) }
+            'grouped linked, key mapper'           | { Tuple.of("a").toGroupedLinkedAssociation(String, null, Integer, { it.length() }) }
+            'grouped linked, value item type'      | { Tuple.of("a").toGroupedLinkedAssociation(String, { it }, null, { it.length() }) }
+            'grouped linked, value mapper'         | { Tuple.of("a").toGroupedLinkedAssociation(String, { it }, Integer, null) }
+            'grouped sorted, key type'             | { Tuple.of("a").toGroupedSortedAssociation(null, { it }, Integer, { it.length() }, Comparator.naturalOrder()) }
+            'grouped sorted, key mapper'           | { Tuple.of("a").toGroupedSortedAssociation(String, null, Integer, { it.length() }, Comparator.naturalOrder()) }
+            'grouped sorted, value item type'      | { Tuple.of("a").toGroupedSortedAssociation(String, { it }, null, { it.length() }, Comparator.naturalOrder()) }
+            'grouped sorted, value mapper'         | { Tuple.of("a").toGroupedSortedAssociation(String, { it }, Integer, null, Comparator.naturalOrder()) }
+            'grouped sorted, comparator'           | { Tuple.of("a").toGroupedSortedAssociation(String, { it }, Integer, { it.length() }, null) }
+            'grouped natural sorted, key type'     | { Tuple.of("a").toGroupedSortedAssociation(null, { it }, Integer, { it.length() }) }
+            'grouped natural sorted, key mapper'   | { Tuple.of("a").toGroupedSortedAssociation(String, null, Integer, { it.length() }) }
+            'grouped natural sorted, value type'   | { Tuple.of("a").toGroupedSortedAssociation(String, { it }, null, { it.length() }) }
+            'grouped natural sorted, value mapper' | { Tuple.of("a").toGroupedSortedAssociation(String, { it }, Integer, null) }
+    }
+
+    def 'A tuple of nullable items can be grouped, as long as the mappers cope with the nulls.'()
+    {
+        reportInfo """
+            A tuple which allows null items hands those nulls to the mappers when
+            grouping, just like it does for the plain conversions. The groups
+            themselves never allow nulls.
+        """
+        given : 'A nullable tuple with a hole in the middle of it.'
+            var words = Tuple.ofNullable(String, "seed", null, "sprout")
+
+        when : 'We group it with mappers which handle the null item.'
+            var grouped = words.toGroupedLinkedAssociation(
+                                Character.class, { it == null ? ('?' as Character) : it.charAt(0) },
+                                String.class,    { it == null ? "<unknown>" : it }
+                            )
+        then : 'The null item became a group of its own.'
+            grouped.keySet().toList() == ['s' as Character, '?' as Character]
+            grouped.get('s' as Character).get() == Tuple.of("seed", "sprout")
+            grouped.get('?' as Character).get() == Tuple.of("<unknown>")
+        and : 'And none of the groups allows null items.'
+            grouped.values().toList().every { !it.allowsNull() }
+    }
+
+    def 'Grouping a tuple never modifies the tuple itself.'()
+    {
+        reportInfo """
+            Just like every other operation on a `Tuple`, grouping is a pure
+            read of its items.
+        """
+        given : 'A tuple and a snapshot of its contents.'
+            var docs = documentaries()
+            var snapshot = docs.toList().collect { it }
+
+        when : 'We group the tuple in all four ways.'
+            docs.toGroupedAssociation(       String.class, { it.topic() }, String.class, { it.title() })
+            docs.toGroupedLinkedAssociation( String.class, { it.topic() }, String.class, { it.title() })
+            docs.toGroupedSortedAssociation( String.class, { it.topic() }, String.class, { it.title() }, Comparator.naturalOrder())
+            docs.toGroupedSortedAssociation( String.class, { it.topic() }, String.class, { it.title() })
+
+        then : 'The tuple is completely unaffected.'
+            docs.toList() == snapshot
+            docs.size() == 4
+            docs.type() == Documentary
+    }
+
+    def 'A large tuple is grouped into buckets which hold every single item.'()
+    {
+        reportInfo """
+            This specification grows a large tuple through many insertions at random
+            positions, so that the tree behind it is deep and irregular, and then
+            groups it into buckets. Not a single item may go missing on the way.
+        """
+        given : 'A large tuple, grown through insertions at random positions.'
+            var random = new Random(1997)
+            var tuple = Tuple.of(Integer)
+            var reference = new ArrayList<Integer>()
+            1000.times { number ->
+                var index = random.nextInt(tuple.size() + 1)
+                tuple = tuple.addAt(index, number)
+                reference.add(index, number)
+            }
+
+        when : 'We group the numbers into ten buckets, by their last digit.'
+            var buckets = tuple.toGroupedSortedAssociation(
+                                Integer.class, { it % 10 },
+                                Integer.class, { it }
+                            )
+        then : 'There are ten buckets, sorted by their digit.'
+            buckets.size() == 10
+            buckets.keySet().toList() == (0..9).toList()
+        and : 'Every bucket holds a hundred numbers, all of them ending in its digit.'
+            buckets.values().toList().every { it.size() == 100 }
+            buckets.entrySet().stream().allMatch { pair -> pair.second().all { it % 10 == pair.first() } }
+        and : 'Taken together, the buckets hold every single number of the tuple.'
+            buckets.values().toList().sum({ it.size() }) == 1000
+            buckets.values().toList().collectMany { it.toList() }.toSorted() == (0..999).toList()
+        and : 'And within every bucket, the numbers follow the order of the tuple.'
+            buckets.get(7).get().toList() == reference.findAll { it % 10 == 7 }
     }
 }

@@ -349,6 +349,31 @@ These conversions are exact shorthands for putting all of the derived key-value 
 into an initially empty association, one after another. So when two items produce the
 same key, then the last one wins, and neither the keys nor the values may be `null`.
 
+When you do not want to lose the values which did not win, then reach for the grouping
+conversions instead. They exist in the same three flavours and collect all the values
+of a key into a `Tuple`:
+
+```java
+// Which creatures are ravenous, and which are merely peckish?
+Association<Boolean, Tuple<String>> byAppetite = creatures.toGroupedAssociation(
+                                                    Boolean.class, c -> c.hunger() > 5,
+                                                    String.class,  Creature::name
+                                                );
+
+// byAppetite = [false ↦ Tuple<String>[Unicorn, Goblin], true ↦ Tuple<String>[Dragon]]
+```
+
+These are lossless: every item of the tuple ends up in exactly one group, the values
+inside a group keep the order of the tuple, and a key which only a single item produced
+simply gets a group of size one. There is a `toGroupedLinkedAssociation` and a
+`toGroupedSortedAssociation` too, ordering the groups by first occurrence and by key
+respectively.
+
+The one thing to keep in mind is that the type paired with the value mapper is the type
+of the items *inside* the value tuples. The association itself holds tuples, so its
+`valueType()` is `Tuple.class`.
+
+
 ### ValueSet
 
 A `ValueSet<E>` is an immutable set implementation that guarantees 

@@ -60,6 +60,56 @@ final class Util {
         return result;
     }
 
+    /**
+     *  Populates the supplied (empty) association with groups of values, where every
+     *  group is a {@link Tuple} holding the values derived from all the items of the
+     *  supplied tuple which share the same derived key.<br>
+     *  This is the shared workhorse behind the {@code Tuple::toGrouped*Association}
+     *  conversion methods, which all differ only in the kind of empty association they
+     *  start out with. It lives here, outside the {@link Tuple} interface, because Java 8,
+     *  the compilation target of this library, does not support private interface methods.
+     *
+     * @param tuple The tuple whose items are grouped into key-value pairs.
+     * @param target The empty association to populate, which determines
+     *               the kind of association that is returned.
+     * @param valueItemType The type of the items in the value tuples of the returned association.
+     * @param keyMapper The function deriving a key from an item of the tuple.
+     * @param valueMapper The function deriving a group member from an item of the tuple.
+     * @return An association holding one non-empty group for every distinct key
+     *         produced by the supplied {@code keyMapper}.
+     * @param <T> The type of the items in the supplied tuple.
+     * @param <K> The type of the keys in the returned association.
+     * @param <V> The type of the items in the value tuples of the returned association.
+     */
+    static <T extends @Nullable Object, K, V> Association<K,Tuple<V>> fillGroupedAssociation(
+        Tuple<T>                tuple,
+        Association<K,Tuple<V>> target,
+        Class<V>                valueItemType,
+        Function<T,K>           keyMapper,
+        Function<T,V>           valueMapper
+    ) {
+        Association<K,Tuple<V>> result = target;
+        Tuple<V> emptyGroup = Tuple.of(valueItemType);
+        int index = 0;
+        for ( T item : tuple ) {
+            K key = keyMapper.apply(item);
+            if ( key == null )
+                throw new NullPointerException(
+                        "The supplied key mapper produced null for the item '" + item + "' at index " +
+                        index + " of the tuple, but an association cannot hold null keys."
+                    );
+            V value = valueMapper.apply(item);
+            if ( value == null )
+                throw new NullPointerException(
+                        "The supplied value mapper produced null for the item '" + item + "' at index " +
+                        index + " of the tuple, but the value tuples of an association cannot hold null items."
+                    );
+            result = result.put(key, result.get(key).orElse(emptyGroup).add(value));
+            index++;
+        }
+        return result;
+    }
+
     static void sneakyThrowExceptionIfFatal(Throwable throwable) {
         if (
             throwable instanceof UndeclaredThrowableException &&
