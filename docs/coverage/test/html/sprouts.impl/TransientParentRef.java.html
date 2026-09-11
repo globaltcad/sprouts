@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TransientParentRef.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sprouts</a> &gt; <a href="index.source.html" class="el_package">sprouts.impl</a> &gt; <span class="el_source">TransientParentRef.java</span></div><h1>TransientParentRef.java</h1><pre class="source lang-java linenums">package sprouts.impl;
+
+import org.jspecify.annotations.Nullable;
+import sprouts.Val;
+
+import java.lang.ref.WeakReference;
+import java.util.Objects;
+
+/**
+ *  A {@link ParentRef} which holds its parent property weakly, so that observing a property
+ *  never keeps it alive, together with the last item that parent was seen holding.
+ *  &lt;p&gt;
+ *  Once the parent is garbage collected, a frozen stand-in property carrying that last item
+ *  is handed out in its place, which is what lets a view or lens keep deriving its own item
+ *  instead of breaking.
+ */
+final class TransientParentRef&lt;V extends Val&lt;?&gt;&gt; implements ParentRef&lt;V&gt;
+{
+    private final WeakReference&lt;V&gt; _ref;
+    private final Class&lt;?&gt;         _lastType;
+
+    /*
+        Deliberately mutable: this is the item the frozen stand-in above will carry, and it
+        has to keep up with the parent for as long as the parent is still alive. Freezing the
+        item captured when the parent was first referenced would make a collected parent
+        contribute the item it held back then, which means the item derived from it would
+        silently travel backwards in time the moment the parent is collected.
+     */
+    private @Nullable Object _lastItem;
+
+<span class="fc" id="L31">    public TransientParentRef( WeakReference&lt;V&gt; ref, Class&lt;?&gt; lastType, @Nullable Object item ) {</span>
+<span class="fc" id="L32">        _ref      = Objects.requireNonNull(ref);</span>
+<span class="fc" id="L33">        _lastType = Objects.requireNonNull(lastType);</span>
+<span class="fc" id="L34">        _lastItem = item;</span>
+<span class="fc" id="L35">    }</span>
+
+    @Override
+    public V get() {
+<span class="fc" id="L39">        @Nullable V current = _ref.get();</span>
+<span class="fc bfc" id="L40" title="All 2 branches covered.">        if ( current == null )</span>
+<span class="fc" id="L41">            return (V) Property.ofNullable(false, (Class) _lastType, _lastItem);</span>
+        /*
+            Every look at a live parent doubles as a chance to memorize what it holds.
+            This is what keeps the fallback current, and it is why this has to happen here,
+            in the one place every consumer of a weakly referenced parent has to go through.
+         */
+<span class="fc" id="L47">        _lastItem = current.orElseNull();</span>
+<span class="fc" id="L48">        return current;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

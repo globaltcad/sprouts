@@ -1,0 +1,149 @@
+{
+  "className":"sprouts.Property_View_Re_Entrancy_Spec",
+  "title":"Composite Property Views and Changes Made During Changes",
+  "narrative":"A composite view merges two properties into one. Whenever one of the two changes,\n    the view recomputes its own item and then tells its own observers about it.\n\n    This specification is about what happens when something changes *while* such a change\n    is still being processed. That is not an exotic situation: an observer is just a piece\n    of your code, and your code is allowed to change properties. So the moment you have\n    one property reacting to another, changes start to overlap.\n\n    Three shapes of this are covered here:\n\n    * an observer of the view changes the very property whose change woke it up,\n    * an observer of the view changes the *other* property of the view,\n    * a property is changed a second time by a listener which was registered on it\n      *before* the view was, so that listener runs first and the view is told about\n      both changes, in the wrong order.\n\n    In all three cases the same simple rule should hold at the end:\n    **once everything has settled, the item of the view must agree with the items of the\n    two properties it was merged from.** Anything else means the view is showing something\n    which is not true anymore.",
+  "subjects":["sprouts.Viewable","sprouts.Val","sprouts.Var"],
+  "statistics":{
+    "runs":"5",
+    "successRate":"100.0%",
+    "failures":"0",
+    "errors":"0",
+    "skipped":"0",
+    "duration":"?"
+  },
+  "headers":[],"tags":{},"see":[],
+  "features":[ 
+    {
+      "id":"An observer of a composite view may change the property which triggered it.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Here an observer of the view reacts to a change by changing the very same\n            property which caused that change. Every such change wakes the observer up\n            again, so this is a loop which only stops because the observer eventually\n            decides to stop appending.\n\n            What we want to see is that the loop runs to its end without an error, and\n            that the view agrees with the property once it is over.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two properties and a composite view which glues their items together.","code":["Var<String> a = Var.of(\"A\")","Var<String> b = Var.of(\"B\")","Val<String> c = Viewable.of(a, b, (x, y) -> x + y)"]},
+
+        {"kind":"and","text":"An observer which keeps appending to the first property until it is long enough.","code":["var trace = []","Viewable.cast(c).onChange(From.ALL, {","    trace << it.currentValue().orElseNull()","    if ( a.get().length() < 3 )","        a.set(a.get() + \"!\")","})"]},
+
+        {"kind":"when","text":"We change the first property, which starts the whole cascade.","code":["a.set(\"a\")"]},
+
+        {"kind":"then","text":"Nothing blew up.","code":["noExceptionThrown()"]},
+
+        {"kind":"and","text":"The observer saw one item per round of the cascade.","code":["trace == [\"aB\", \"a!B\", \"a!!B\"]"]},
+
+        {"kind":"and","text":"The property stopped where the observer wanted it to stop.","code":["a.get() == \"a!!\""]},
+
+        {"kind":"and","text":"And the view agrees with both properties it was merged from.","code":["c.get() == \"a!!B\"","c.get() == a.get() + b.get()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"An observer of a composite view may change the other property of that view.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            This is the same idea as above, except that the observer does not change the\n            property which woke it up, but the second property of the view. The cascade\n            therefore bounces between the two properties instead of hitting the same one\n            over and over again.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two properties and a composite view which glues their items together.","code":["Var<String> a = Var.of(\"A\")","Var<String> b = Var.of(\"B\")","Val<String> c = Viewable.of(a, b, (x, y) -> x + y)"]},
+
+        {"kind":"and","text":"An observer which keeps appending to the *second* property.","code":["var trace = []","Viewable.cast(c).onChange(From.ALL, {","    trace << it.currentValue().orElseNull()","    if ( b.get().length() < 3 )","        b.set(b.get() + \"?\")","})"]},
+
+        {"kind":"when","text":"We change the first property, which starts the whole cascade.","code":["a.set(\"a\")"]},
+
+        {"kind":"then","text":"Nothing blew up.","code":["noExceptionThrown()"]},
+
+        {"kind":"and","text":"The observer saw one item per round of the cascade.","code":["trace == [\"aB\", \"aB?\", \"aB??\"]"]},
+
+        {"kind":"and","text":"Both properties ended up where the cascade left them.","code":["a.get() == \"a\"","b.get() == \"B??\""]},
+
+        {"kind":"and","text":"And the view agrees with both properties it was merged from.","code":["c.get() == \"aB??\"","c.get() == a.get() + b.get()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A composite view agrees with its properties even when one of them changes twice in a row.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            This scenario has one extra ingredient: a listener which sits on the first\n            property and was registered there *before* the view was created. Listeners are\n            called in the order they were registered, so this one runs first, and it changes\n            the property a second time before the view has even heard about the first change.\n\n            The view is therefore told about the second change first, and about the first\n            change afterwards. The order in which it is told must not matter: once the dust\n            has settled, the view has to show what the properties actually hold, which is\n            the item of the *second* change.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two properties.","code":["Var<String> a = Var.of(\"A\")","Var<String> b = Var.of(\"B\")"]},
+
+        {"kind":"and","text":"A listener on the first property which changes it a second time. It is registered first!","code":["Viewable.cast(a).onChange(From.ALL, {","    if ( a.get() == \"x\" )","        a.set(\"y\")","})"]},
+
+        {"kind":"and","text":"A composite view of the two properties, registered second.","code":["Val<String> c = Viewable.of(a, b, (x, y) -> x + y)"]},
+
+        {"kind":"and","text":"A trace of everything the view tells its own observers.","code":["var trace = []","Viewable.cast(c).onChange(From.ALL, { trace << it.currentValue().orElseNull() })"]},
+
+        {"kind":"when","text":"We change the first property, which is immediately changed again by the listener above.","code":["a.set(\"x\")"]},
+
+        {"kind":"then","text":"The properties hold the item of the second change.","code":["a.get() == \"y\"","b.get() == \"B\""]},
+
+        {"kind":"and","text":"\n            And so does the view. This is the whole point: the view was told about the two\n            changes in the wrong order, but the last thing it tells the world has to be the\n            truth, and not the item of the change which happened first.\n        ","code":["c.get() == \"yB\"","c.get() == a.get() + b.get()"]},
+
+        {"kind":"and","text":"The last thing the observers of the view heard is that same truth.","code":["trace.last() == \"yB\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A composite view agrees with its properties even when the *second* one changes twice in a row.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            This is the mirror image of the scenario above, and it earns its place because a\n            composite view watches *both* of its properties, through two separate pieces of\n            machinery. Knowing that the first property is handled correctly when it changes\n            during its own notification tells us nothing about the second one, which is wired\n            up by its own listener. A bug could easily live in one and not the other.\n\n            So this time the troublesome listener sits on the *second* property and changes it\n            a second time, which means the view is told about that property's two changes in\n            the wrong order. The rule at the end is the same as always: once the dust settles,\n            the view has to show what the two properties actually hold, and not the item of the\n            change which merely happened to arrive first.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two properties.","code":["Var<String> a = Var.of(\"A\")","Var<String> b = Var.of(\"B\")"]},
+
+        {"kind":"and","text":"A listener on the second property which changes it a second time. It is registered first!","code":["Viewable.cast(b).onChange(From.ALL, {","    if ( b.get() == \"x\" )","        b.set(\"y\")","})"]},
+
+        {"kind":"and","text":"A composite view of the two properties, registered second.","code":["Val<String> c = Viewable.of(a, b, (x, y) -> x + y)"]},
+
+        {"kind":"and","text":"A trace of everything the view tells its own observers.","code":["var trace = []","Viewable.cast(c).onChange(From.ALL, { trace << it.currentValue().orElseNull() })"]},
+
+        {"kind":"when","text":"We change the second property, which is immediately changed again by the listener above.","code":["b.set(\"x\")"]},
+
+        {"kind":"then","text":"The properties hold the item of the second change.","code":["a.get() == \"A\"","b.get() == \"y\""]},
+
+        {"kind":"and","text":"\n            And so does the view. It was told about the two changes in the wrong order, but the\n            last thing it tells the world has to be the truth, and not the item of the change\n            which happened first.\n        ","code":["c.get() == \"Ay\"","c.get() == a.get() + b.get()"]},
+
+        {"kind":"and","text":"The last thing the observers of the view heard is that same truth.","code":["trace.last() == \"Ay\""]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A composite view built with the composite builder agrees with its properties in the same situation.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            This is the exact same scenario as the one above, built with the composite builder\n            instead of the two property factory method. It passes, because a builder based\n            composite view never trusts what a change event tells it: it reads the current\n            item of every property it was built from, every single time it recomputes.\n\n            It is here to show what the expected behaviour looks like, and that it is\n            reachable, while the feature above is still failing.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"Two properties.","code":["Var<String> a = Var.of(\"A\")","Var<String> b = Var.of(\"B\")"]},
+
+        {"kind":"and","text":"The very same listener which changes the first property a second time.","code":["Viewable.cast(a).onChange(From.ALL, {","    if ( a.get() == \"x\" )","        a.set(\"y\")","})"]},
+
+        {"kind":"and","text":"A composite view of the two properties, built through the composite builder.","code":["Viewable<Merged> c = Viewable.of(Merged.blank(), it -> it","        .join(a, Merged::withA)","        .join(b, Merged::withB)","    )"]},
+
+        {"kind":"and","text":"A trace of everything the view tells its own observers.","code":["var trace = []","c.onChange(From.ALL, { trace << it.currentValue().orElseNull() })"]},
+
+        {"kind":"when","text":"We change the first property, which is immediately changed again by the listener above.","code":["a.set(\"x\")"]},
+
+        {"kind":"then","text":"The properties hold the item of the second change.","code":["a.get() == \"y\"","b.get() == \"B\""]},
+
+        {"kind":"and","text":"And so does the view.","code":["c.get() == new Merged(\"y\", \"B\")"]},
+
+        {"kind":"and","text":"\n            The view told its observers about the change exactly once, and what it told them\n            was the truth. It never reported the item of the change which happened first.\n        ","code":["trace == [new Merged(\"y\", \"B\")]"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    }
+  
+  ],
+  "generator":"https://github.com/renatoathaydes/spock-reports"
+}

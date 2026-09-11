@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Util.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sprouts</a> &gt; <a href="index.source.html" class="el_package">sprouts</a> &gt; <span class="el_source">Util.java</span></div><h1>Util.java</h1><pre class="source lang-java linenums">package sprouts;
+
+import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.helpers.MessageFormatter;
+import org.slf4j.helpers.NOPLogger;
+import sprouts.impl.Sprouts;
+
+import java.lang.reflect.UndeclaredThrowableException;
+import java.util.function.Function;
+import java.util.function.Supplier;
+
+final class Util {
+
+    private Util() {}
+
+    /**
+     *  Populates the supplied (empty) association with key-value pairs derived from
+     *  the items of the supplied tuple through the two supplied mapper functions.&lt;br&gt;
+     *  This is the shared workhorse behind the {@code Tuple::to*Association} conversion
+     *  methods, which all differ only in the kind of empty association they start out with.
+     *  It lives here, outside the {@link Tuple} interface, because Java 8, the compilation
+     *  target of this library, does not support private interface methods.
+     *
+     * @param tuple The tuple whose items are turned into key-value pairs.
+     * @param target The empty association to populate, which determines
+     *               the kind of association that is returned.
+     * @param keyMapper The function deriving a key from an item of the tuple.
+     * @param valueMapper The function deriving a value from an item of the tuple.
+     * @return An association holding one entry for every distinct key
+     *         produced by the supplied {@code keyMapper}.
+     * @throws NullPointerException If one of the two mappers produces {@code null}.
+     * @throws IllegalArgumentException If one of the two mappers produces an object which
+     *                                  does not fit the type it was paired with.
+     * @param &lt;T&gt; The type of the items in the supplied tuple.
+     * @param &lt;K&gt; The type of the keys in the returned association.
+     * @param &lt;V&gt; The type of the values in the returned association.
+     */
+    static &lt;T extends @Nullable Object, K, V&gt; Association&lt;K,V&gt; fillAssociation(
+        Tuple&lt;T&gt;                         tuple,
+        Association&lt;K,V&gt;                 target,
+        Function&lt;? super T, ? extends K&gt; keyMapper,
+        Function&lt;? super T, ? extends V&gt; valueMapper
+    ) {
+<span class="fc" id="L45">        Association&lt;K,V&gt; result = target;</span>
+<span class="fc" id="L46">        int index = 0;</span>
+<span class="fc bfc" id="L47" title="All 2 branches covered.">        for ( T item : tuple ) {</span>
+<span class="fc" id="L48">            K key = keyMapper.apply(item);</span>
+<span class="fc bfc" id="L49" title="All 2 branches covered.">            if ( key == null )</span>
+<span class="fc" id="L50">                throw new NullPointerException(</span>
+                        &quot;The supplied key mapper produced null for the item '&quot; + item + &quot;' at index &quot; +
+                        index + &quot; of the tuple, but an association cannot hold null keys.&quot;
+                    );
+<span class="fc" id="L54">            V value = valueMapper.apply(item);</span>
+<span class="fc bfc" id="L55" title="All 2 branches covered.">            if ( value == null )</span>
+<span class="fc" id="L56">                throw new NullPointerException(</span>
+                        &quot;The supplied value mapper produced null for the item '&quot; + item + &quot;' at index &quot; +
+                        index + &quot; of the tuple, but an association cannot hold null values.&quot;
+                    );
+<span class="fc" id="L60">            result = result.put(key, value);</span>
+<span class="fc" id="L61">            index++;</span>
+<span class="fc" id="L62">        }</span>
+<span class="fc" id="L63">        return result;</span>
+    }
+
+    /**
+     *  Populates the supplied (empty) association with groups of values, where every
+     *  group is a {@link Tuple} holding the values derived from all the items of the
+     *  supplied tuple which share the same derived key.&lt;br&gt;
+     *  This is the shared workhorse behind the {@code Tuple::toGrouped*Association}
+     *  conversion methods, which all differ only in the kind of empty association they
+     *  start out with. It lives here, outside the {@link Tuple} interface, because Java 8,
+     *  the compilation target of this library, does not support private interface methods.
+     *
+     * @param tuple The tuple whose items are grouped into key-value pairs.
+     * @param target The empty association to populate, which determines
+     *               the kind of association that is returned.
+     * @param valueItemType The type of the items in the value tuples of the returned
+     *                      association, which is kept exactly as it is declared, because
+     *                      a tuple tracks its item type and a {@code Tuple&lt;int&gt;} is not
+     *                      equal to a {@code Tuple&lt;Integer&gt;}.
+     * @param keyMapper The function deriving a key from an item of the tuple.
+     * @param valueMapper The function deriving a group member from an item of the tuple.
+     * @return An association holding one non-empty group for every distinct key
+     *         produced by the supplied {@code keyMapper}.
+     * @throws NullPointerException If one of the two mappers produces {@code null}.
+     * @throws IllegalArgumentException If one of the two mappers produces an object which
+     *                                  does not fit the type it was paired with.
+     * @param &lt;T&gt; The type of the items in the supplied tuple.
+     * @param &lt;K&gt; The type of the keys in the returned association.
+     * @param &lt;V&gt; The type of the items in the value tuples of the returned association.
+     */
+    static &lt;T extends @Nullable Object, K, V&gt; Association&lt;K,Tuple&lt;V&gt;&gt; fillGroupedAssociation(
+        Tuple&lt;T&gt;                         tuple,
+        Association&lt;K,Tuple&lt;V&gt;&gt;          target,
+        Class&lt;V&gt;                         valueItemType,
+        Function&lt;? super T, ? extends K&gt; keyMapper,
+        Function&lt;? super T, ? extends V&gt; valueMapper
+    ) {
+<span class="fc" id="L100">        Association&lt;K,Tuple&lt;V&gt;&gt; result = target;</span>
+<span class="fc" id="L101">        Tuple&lt;V&gt; emptyGroup = Tuple.of(valueItemType);</span>
+<span class="fc" id="L102">        Class&lt;?&gt; expectedValueType = boxedTypeOf(valueItemType);</span>
+<span class="fc" id="L103">        int index = 0;</span>
+<span class="fc bfc" id="L104" title="All 2 branches covered.">        for ( T item : tuple ) {</span>
+<span class="fc" id="L105">            K key = keyMapper.apply(item);</span>
+<span class="fc bfc" id="L106" title="All 2 branches covered.">            if ( key == null )</span>
+<span class="fc" id="L107">                throw new NullPointerException(</span>
+                        &quot;The supplied key mapper produced null for the item '&quot; + item + &quot;' at index &quot; +
+                        index + &quot; of the tuple, but an association cannot hold null keys.&quot;
+                    );
+<span class="fc" id="L111">            V value = valueMapper.apply(item);</span>
+<span class="fc bfc" id="L112" title="All 2 branches covered.">            if ( value == null )</span>
+<span class="fc" id="L113">                throw new NullPointerException(</span>
+                        &quot;The supplied value mapper produced null for the item '&quot; + item + &quot;' at index &quot; +
+                        index + &quot; of the tuple, but the value tuples of an association cannot hold null items.&quot;
+                    );
+<span class="fc bfc" id="L117" title="All 2 branches covered.">            if ( !expectedValueType.isInstance(value) )</span>
+<span class="fc" id="L118">                throw new IllegalArgumentException(</span>
+                        &quot;The supplied value mapper produced the value '&quot; + value + &quot;' of type '&quot; +
+<span class="fc" id="L120">                        value.getClass().getSimpleName() + &quot;' for the item '&quot; + item + &quot;' at index &quot; +</span>
+                        index + &quot; of the tuple, instead of the expected type '&quot; +
+<span class="fc" id="L122">                        valueItemType.getSimpleName() + &quot;'.&quot;</span>
+                    );
+<span class="fc" id="L124">            result = result.put(key, result.get(key).orElse(emptyGroup).add(value));</span>
+<span class="fc" id="L125">            index++;</span>
+<span class="fc" id="L126">        }</span>
+<span class="fc" id="L127">        return result;</span>
+    }
+
+    /**
+     *  Returns the wrapper type of the supplied primitive type, or the supplied type
+     *  itself if it is not a primitive type.&lt;br&gt;
+     *  This is needed to check what a mapper function produced against the item type of
+     *  the groups it is destined for: a {@link Tuple} may well be declared on a primitive
+     *  item type like {@code int.class} (and then stores its items in an {@code int[]}),
+     *  whereas a mapper function can only ever hand us a boxed {@code Integer}.
+     *  Java lets these two meet silently, because {@code int.class} is itself of type
+     *  {@code Class&lt;Integer&gt;}.
+     *
+     * @param type The type to box, which may or may not be a primitive type.
+     * @return The wrapper type of the supplied type, or the supplied type itself.
+     * @param &lt;T&gt; The type in question, which is unaffected by the boxing, because
+     *            {@code int.class} and {@code Integer.class} are both a {@code Class&lt;Integer&gt;}.
+     */
+    @SuppressWarnings(&quot;unchecked&quot;)
+    static &lt;T&gt; Class&lt;T&gt; boxedTypeOf( Class&lt;T&gt; type ) {
+<span class="fc bfc" id="L147" title="All 2 branches covered.">        if ( !type.isPrimitive() )</span>
+<span class="fc" id="L148">            return type;</span>
+<span class="pc bpc" id="L149" title="1 of 2 branches missed.">        if ( type == boolean.class ) return (Class&lt;T&gt;) Boolean.class;</span>
+<span class="pc bpc" id="L150" title="1 of 2 branches missed.">        if ( type == byte.class    ) return (Class&lt;T&gt;) Byte.class;</span>
+<span class="pc bpc" id="L151" title="1 of 2 branches missed.">        if ( type == char.class    ) return (Class&lt;T&gt;) Character.class;</span>
+<span class="pc bpc" id="L152" title="1 of 2 branches missed.">        if ( type == short.class   ) return (Class&lt;T&gt;) Short.class;</span>
+<span class="pc bpc" id="L153" title="1 of 2 branches missed.">        if ( type == int.class     ) return (Class&lt;T&gt;) Integer.class;</span>
+<span class="nc bnc" id="L154" title="All 2 branches missed.">        if ( type == long.class    ) return (Class&lt;T&gt;) Long.class;</span>
+<span class="nc bnc" id="L155" title="All 2 branches missed.">        if ( type == float.class   ) return (Class&lt;T&gt;) Float.class;</span>
+<span class="nc bnc" id="L156" title="All 2 branches missed.">        if ( type == double.class  ) return (Class&lt;T&gt;) Double.class;</span>
+<span class="nc" id="L157">        return type; // Only 'void.class' can reach this, which no mapper can produce.</span>
+    }
+
+    static void sneakyThrowExceptionIfFatal(Throwable throwable) {
+<span class="fc bfc" id="L161" title="All 2 branches covered.">        if (</span>
+            throwable instanceof UndeclaredThrowableException &amp;&amp;
+<span class="pc bpc" id="L163" title="1 of 2 branches missed.">            throwable.getCause() instanceof InterruptedException</span>
+        ) {
+<span class="fc" id="L165">            throwable = throwable.getCause();</span>
+        }
+<span class="fc bfc" id="L167" title="All 2 branches covered.">        if (isFatal(throwable)) {</span>
+<span class="pc bpc" id="L168" title="1 of 2 branches missed.">            if (throwable instanceof InterruptedException) {</span>
+<span class="fc" id="L169">                Thread.currentThread().interrupt();</span>
+            }
+<span class="nc" id="L171">            sneakyThrow(throwable);</span>
+        }
+<span class="fc" id="L173">    }</span>
+
+    static boolean isFatal(Throwable throwable) {
+<span class="pc bpc" id="L176" title="1 of 4 branches missed.">        return throwable instanceof InterruptedException</span>
+                || throwable instanceof LinkageError
+<span class="pc bpc" id="L178" title="2 of 4 branches missed.">                || ThreadDeathResolver.isThreadDeath(throwable)</span>
+                || throwable instanceof VirtualMachineError;
+    }
+
+    @SuppressWarnings({&quot;unchecked&quot;, &quot;TypeParameterUnusedInFormals&quot;})
+    static &lt;E extends Throwable, R&gt; R sneakyThrow(Throwable e) throws E {
+<span class="fc" id="L184">        throw (E) e; // throw the returned thing and the compiler believes this is unchecked</span>
+    }
+
+    private static class ThreadDeathResolver {
+<span class="fc" id="L188">        static final @Nullable Class&lt;?&gt; THREAD_DEATH_CLASS = resolve();</span>
+
+        static boolean isThreadDeath(Throwable throwable) {
+<span class="pc bpc" id="L191" title="2 of 4 branches missed.">            return THREAD_DEATH_CLASS != null &amp;&amp; THREAD_DEATH_CLASS.isInstance(throwable);</span>
+        }
+
+        private static @Nullable Class&lt;?&gt; resolve() {
+            try {
+<span class="fc" id="L196">                return Class.forName(&quot;java.lang.ThreadDeath&quot;);</span>
+<span class="nc" id="L197">            } catch (ClassNotFoundException e) {</span>
+<span class="nc" id="L198">                return null;</span>
+            }
+        }
+    }
+
+    /**
+     *  Unfortunately, NullAway does not support nullability annotations on type parameters.
+     *  It always assumes that type parameters are non-null, irrespective if
+     *  the user provides a nullability annotation or not.
+     *  This is a problem in the sprouts library, which also uses nullability annotations.
+     *  This method is a workaround for this issue.
+     *
+     * @param var The variable to be faked as non-null.
+     * @return The same variable as the input, but with a non-null type.
+     * @param &lt;T&gt; The type of the variable.
+     */
+    @SuppressWarnings(&quot;NullAway&quot;)
+    static &lt;T&gt; T fakeNonNull( @Nullable T var ) {
+<span class="fc" id="L216">        return var;</span>
+    }
+
+    static void _logError(Logger log, String message, @Nullable Object... args) {
+<span class="pc bpc" id="L220" title="1 of 2 branches missed.">        if ( log instanceof NOPLogger) {</span>
+<span class="fc" id="L221">            Exception lastArgException = null;</span>
+<span class="pc bpc" id="L222" title="3 of 6 branches missed.">            if ( args != null &amp;&amp; args.length &gt; 0 &amp;&amp; args[args.length - 1] instanceof Exception ) {</span>
+<span class="fc" id="L223">                lastArgException = (Exception) args[args.length - 1];</span>
+<span class="fc" id="L224">                args = java.util.Arrays.copyOf(args, args.length - 1);</span>
+            }
+<span class="fc" id="L226">            String loggingMarker = Sprouts.factory().loggingMarker().toString().trim();</span>
+<span class="pc bpc" id="L227" title="5 of 6 branches missed.">            if ( !loggingMarker.isEmpty() &amp;&amp; !loggingMarker.startsWith(&quot;[&quot;) &amp;&amp; !loggingMarker.endsWith(&quot;]&quot;) ) {</span>
+<span class="nc" id="L228">                loggingMarker = &quot;[&quot; + loggingMarker + &quot;]&quot;;</span>
+            }
+<span class="fc" id="L230">            System.err.println(</span>
+<span class="fc" id="L231">                MessageFormatter.arrayFormat(&quot;[ERROR]&quot;+loggingMarker+&quot; &quot; + message, args)</span>
+<span class="fc" id="L232">                .getMessage()</span>
+            );
+<span class="pc bpc" id="L234" title="1 of 2 branches missed.">            if ( lastArgException != null ) {</span>
+<span class="fc" id="L235">                lastArgException.printStackTrace();</span>
+            }
+<span class="fc" id="L237">        } else {</span>
+<span class="nc" id="L238">            log.error(Sprouts.factory().loggingMarker(), message, args);</span>
+        }
+<span class="fc" id="L240">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

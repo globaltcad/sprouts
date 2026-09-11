@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CompositeBuilderImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">sprouts</a> &gt; <a href="index.source.html" class="el_package">sprouts.impl</a> &gt; <span class="el_source">CompositeBuilderImpl.java</span></div><h1>CompositeBuilderImpl.java</h1><pre class="source lang-java linenums">package sprouts.impl;
+
+import org.jspecify.annotations.Nullable;
+import sprouts.Tuple;
+import sprouts.Val;
+import sprouts.Viewable;
+
+import java.util.Objects;
+import java.util.function.BiFunction;
+
+/**
+ *  The implementation of the {@link Viewable.CompositeBuilder} interface, which collects the
+ *  properties a composite view is folded from, together with their combiners.
+ *  &lt;p&gt;
+ *  This is a persistent value: {@link #join(Val, BiFunction)} does not modify the builder it is
+ *  called on, but returns a new one carrying one additional {@link CompositeCore.Join}.
+ *  The joins are collected in a {@link Tuple}, whose structural sharing is what keeps a chain of
+ *  {@code join(..)} calls from copying everything which was already declared, over and over again.
+ *  &lt;p&gt;
+ *  Nothing is registered on the joined properties here, which is what makes an instance of this
+ *  inert once it escapes the configurator function it was handed to.
+ *
+ * @param &lt;C&gt; The item type of the composite view being built.
+ */
+final class CompositeBuilderImpl&lt;C&gt; implements Viewable.CompositeBuilder&lt;C&gt; {
+
+<span class="fc" id="L27">    private static final CompositeBuilderImpl&lt;?&gt; EMPTY = new CompositeBuilderImpl&lt;&gt;(_noJoins());</span>
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    static &lt;C&gt; CompositeBuilderImpl&lt;C&gt; empty() {
+<span class="fc" id="L31">        return (CompositeBuilderImpl&lt;C&gt;) EMPTY;</span>
+    }
+
+    /**
+     *  The item type of the tuple of joins is generic, which a {@link Class} can never express,
+     *  so the raw {@link CompositeCore.Join} class is the most precise type we can hand to the
+     *  tuple. It only ever uses it to type check the items it is given, and every join is an
+     *  instance of that raw type, no matter its type arguments.
+     */
+    @SuppressWarnings({&quot;unchecked&quot;, &quot;rawtypes&quot;})
+    private static &lt;C&gt; Tuple&lt;CompositeCore.Join&lt;C, ?&gt;&gt; _noJoins() {
+<span class="fc" id="L42">        return (Tuple) Tuple.of(CompositeCore.Join.class);</span>
+    }
+
+    private final Tuple&lt;CompositeCore.Join&lt;C, ?&gt;&gt; _joins;
+
+<span class="fc" id="L47">    private CompositeBuilderImpl( Tuple&lt;CompositeCore.Join&lt;C, ?&gt;&gt; joins ) {</span>
+<span class="fc" id="L48">        _joins = joins;</span>
+<span class="fc" id="L49">    }</span>
+
+    @Override
+    public &lt;V extends @Nullable Object&gt; Viewable.CompositeBuilder&lt;C&gt; join(
+        Val&lt;V&gt;              property,
+        BiFunction&lt;C, V, C&gt; combiner
+    ) {
+<span class="fc" id="L56">        Objects.requireNonNull(property, &quot;The property to join must not be null.&quot;);</span>
+<span class="fc" id="L57">        Objects.requireNonNull(combiner, &quot;The combiner of a joined property must not be null.&quot;);</span>
+<span class="fc" id="L58">        return new CompositeBuilderImpl&lt;&gt;(_joins.add(new CompositeCore.Join&lt;&gt;(property, combiner)));</span>
+    }
+
+    Tuple&lt;CompositeCore.Join&lt;C, ?&gt;&gt; joins() {
+<span class="fc" id="L62">        return _joins;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

@@ -1,0 +1,295 @@
+{
+  "className":"sprouts.Guarded_View_Spec",
+  "title":"Bridging Guarded State to a Reactive Property",
+  "narrative":"A `Guarded` is designed to be *written by many threads*. A Sprouts property\n    (`Var` / `Val` / `Viewable`), on the other hand, is designed to be *owned by a\n    single thread*: its change listeners fire synchronously on whatever thread calls\n    `set(..)`. Naively sharing a property across threads is therefore unsafe.\n\n    The `Guarded.viewOn(Executor)` method bridges the two worlds. It returns a\n    read-only `Viewable` whose value mirrors the guarded container, but with every\n    update delivered through an `Executor` you provide. As long as that executor is\n    *effectively single-threaded*, the property and all of its listeners run on that\n    one owner thread — no matter which background thread mutated the `Guarded`.\n\n    This is the `Guarded` analogue of `observeOn(scheduler)` in Rx-style libraries, or\n    a conflated `StateFlow` in Kotlin: a safe, latest-wins, thread-confined live view\n    of shared state. It is the idiomatic way to feed background state into a UI thread\n    (e.g. the Swing EDT).\n\n    Three rules keep it safe, and this specification both verifies them and serves as a\n    usage guide:\n\n    1. The executor must be effectively single-threaded — it defines the owner thread.\n    2. The guarded value must be immutable — it crosses threads.\n    3. Delivery is conflated (latest-wins) — bursts collapse to the most recent value.",
+  "subjects":["sprouts.Guarded","sprouts.Viewable"],
+  "statistics":{
+    "runs":"13",
+    "successRate":"100.0%",
+    "failures":"0",
+    "errors":"0",
+    "skipped":"0",
+    "duration":"?"
+  },
+  "headers":[],"tags":{},"see":[],
+  "features":[ 
+    {
+      "id":"A view starts out mirroring the current value of the Guarded.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            `viewOn(..)` returns a `Viewable` seeded with the container's current value. The view is a\n            read-only `Val`, so you can read it directly — no waiting required for the initial value.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A guarded immutable value and a single-threaded executor.","code":["var account = Guarded.of(new Account(\"Ada\", 100))","var executor = new NamedSingleThreadExecutor(\"view-thread\")"]},
+
+        {"kind":"when","text":"We create a view of the guarded state.","code":["var view = account.viewOn(executor)"]},
+
+        {"kind":"then","text":"It immediately reflects the current value.","code":["view.orElseThrow() == new Account(\"Ada\", 100)"]},
+
+        {"kind":"cleanup","text":"","code":["executor.close()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A change to the Guarded is propagated to the view.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            When the guarded value changes — from any thread — the view re-synchronises asynchronously\n            through its executor. Here we mutate on the test thread and wait for the value to arrive.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A guarded account viewed on a single-threaded executor.","code":["var account = Guarded.of(new Account(\"Ada\", 0))","var executor = new NamedSingleThreadExecutor(\"view-thread\")","var view = account.viewOn(executor)"]},
+
+        {"kind":"when","text":"We update the guarded value.","code":["account.update({ a -> a.deposit(500) })"]},
+
+        {"kind":"then","text":"The view eventually reflects the new value.","code":["Wait.until({ view.orElseThrow() == new Account(\"Ada\", 500) }, 5_000)"]},
+
+        {"kind":"cleanup","text":"","code":["executor.close()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The view and its listeners run on the executor thread, not the writer thread.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            This is the whole point of `viewOn(..)`: confinement. A listener registered on the view is\n            invoked on the executor's thread, even though the mutation happened on a completely\n            different thread. That is what makes it safe to touch single-threaded resources (like a GUI\n            toolkit) from inside the listener.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A guarded value, a named single-threaded executor, and a view.","code":["var guarded = Guarded.of(\"start\")","var executor = new NamedSingleThreadExecutor(\"owner-thread\")","var view = guarded.viewOn(executor)"]},
+
+        {"kind":"and","text":"A listener that records which thread it was called on.","code":["var listenerThread = new AtomicReference<String>(null)","view.onChange(From.ALL, { delegate -> listenerThread.set(Thread.currentThread().name) })"]},
+
+        {"kind":"when","text":"We mutate the guarded value from the test thread.","code":["guarded.set(\"changed\")"]},
+
+        {"kind":"then","text":"The listener eventually runs — and it ran on the executor thread.","code":["Wait.until({ listenerThread.get() != null }, 5_000)","listenerThread.get() == \"owner-thread\"","listenerThread.get() != Thread.currentThread().name"]},
+
+        {"kind":"cleanup","text":"","code":["executor.close()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Delivery is conflated: a burst of updates collapses to the latest value.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            If writes outpace the executor, intermediate values are skipped — the view always converges\n            to the *most recent* value rather than queuing every step. We prove this deterministically by\n            first blocking the executor's only thread, firing many updates while it is blocked, and then\n            releasing it: exactly one delivery happens, carrying the final value.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A guarded counter viewed on a single-threaded executor.","code":["var counter = Guarded.of(0)","var executor = new NamedSingleThreadExecutor(\"view-thread\")","var view = counter.viewOn(executor)"]},
+
+        {"kind":"and","text":"A listener counting how many deliveries actually occur.","code":["var deliveries = new AtomicInteger(0)","var lastSeen = new AtomicReference<Integer>(null)","view.onChange(From.ALL, { delegate ->","    deliveries.incrementAndGet()","    lastSeen.set(delegate.currentValue().orElseThrow())","})"]},
+
+        {"kind":"and","text":"We occupy the executor thread with a blocking task before any update is scheduled.","code":["var gate = new CountDownLatch(1)","executor.execute({ gate.await() })"]},
+
+        {"kind":"when","text":"We fire a whole burst of updates while the executor is blocked...","code":["(1..100).each { counter.set(it) }"]},
+
+        {"kind":"and","text":"...and only then release the executor.","code":["gate.countDown()"]},
+
+        {"kind":"then","text":"Exactly one delivery happens, and it carries the final value of the burst.","code":["Wait.until({ lastSeen.get() == 100 }, 5_000)","deliveries.get() == 1"]},
+
+        {"kind":"cleanup","text":"","code":["executor.close()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The latest value is never lost, even when updates race the delivery.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Conflation must never *lose* the final value: whatever the interleaving, the view must end up\n            equal to the last value written. We hammer the guarded value from several threads and then\n            assert the view converges to the final state.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A guarded counter and a view.","code":["var counter = Guarded.of(0)","var executor = new NamedSingleThreadExecutor(\"view-thread\")","var view = counter.viewOn(executor)"]},
+
+        {"kind":"when","text":"Many updates are applied, ending on a known final value.","code":["(1..1_000).each { counter.set(it) }","counter.set(424242) // the definitive last write"]},
+
+        {"kind":"then","text":"The view converges to exactly the final value.","code":["Wait.until({ view.orElseThrow() == 424242 }, 5_000)"]},
+
+        {"kind":"cleanup","text":"","code":["executor.close()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A single Guarded can feed several independent views on different threads.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Shared state often has more than one consumer. Each `viewOn(..)` call creates an independent,\n            self-contained view; a change is fanned out to all of them, each on its own executor thread.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"One guarded value observed by two views on two different executors.","code":["var guarded = Guarded.of(\"a\")","var executorA = new NamedSingleThreadExecutor(\"view-A\")","var executorB = new NamedSingleThreadExecutor(\"view-B\")","var viewA = guarded.viewOn(executorA)","var viewB = guarded.viewOn(executorB)"]},
+
+        {"kind":"when","text":"We change the guarded value once.","code":["guarded.set(\"b\")"]},
+
+        {"kind":"then","text":"Both views eventually observe the change.","code":["Wait.until({ viewA.orElseThrow() == \"b\" && viewB.orElseThrow() == \"b\" }, 5_000)"]},
+
+        {"kind":"cleanup","text":"","code":["executorA.close()","executorB.close()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Dropping a view lets it be garbage collected: the Guarded only references it weakly.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            There is no `unsubscribe` to remember. The container references each view only *weakly*, so\n            once you drop your reference, the view (with its listeners) becomes eligible for collection\n            and quietly stops receiving updates. This prevents the classic listener leak.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A guarded value and a view, of which we keep only a weak reference.","code":["var guarded = Guarded.of(\"init\")","var executor = new NamedSingleThreadExecutor(\"view-thread\")","var view = guarded.viewOn(executor)","var weakView = new WeakReference(view)"]},
+
+        {"kind":"when","text":"We drop the strong reference to the view and coax the garbage collector.","code":["view = null","var collected = Wait.until({ System.gc(); weakView.get() == null }, 5_000)"]},
+
+        {"kind":"then","text":"The view was reclaimed — the Guarded did not keep it alive.","code":["collected"]},
+
+        {"kind":"and","text":"The Guarded remains perfectly usable afterwards.","code":["guarded.set(\"still works\")","guarded.get() == \"still works\""]},
+
+        {"kind":"cleanup","text":"","code":["executor.close()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"After a view is collected, further mutations are harmless and self-prune the dead view.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Once a view has been collected, the next mutation notices its dead subscription and removes it.\n            The mutation itself must never fail because a view disappeared.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A guarded value with a view we immediately drop.","code":["var guarded = Guarded.of(0)","var executor = new NamedSingleThreadExecutor(\"view-thread\")","var weakView = new WeakReference(guarded.viewOn(executor))"]},
+
+        {"kind":"and","text":"We make sure it is actually collected.","code":["assert Wait.until({ System.gc(); weakView.get() == null }, 5_000)"]},
+
+        {"kind":"when","text":"We keep mutating the guarded value.","code":["(1..10).each { guarded.set(it) }"]},
+
+        {"kind":"then","text":"Nothing throws and the value is correct.","code":["guarded.get() == 10"]},
+
+        {"kind":"cleanup","text":"","code":["executor.close()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"Creating a view requires a non-null executor.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            A single `viewOn(Executor)` covers every case — the view inherits the container's type and\n            null policy — so the only thing it validates eagerly is the executor.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A guarded value and an executor.","code":["var guarded = Guarded.of(\"value\")","var executor = new NamedSingleThreadExecutor(\"view-thread\")"]},
+
+        {"kind":"when","text":"We pass a null executor.","code":["guarded.viewOn(null)"]},
+
+        {"kind":"then","text":"It is rejected.","code":["thrown(NullPointerException)"]},
+
+        {"kind":"cleanup","text":"","code":["executor.close()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"The view inherits the container type, even when it is a declared supertype.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            Because the container knows its own type (like `Var`), the view simply inherits it. If you\n            want the view typed as a supertype, declare the container that way with\n            `Guarded.of(SuperType.class, value)`.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A guarded value declared as a supertype.","code":["var account = Guarded.of(new Account(\"Ada\", 0))","var executor = new NamedSingleThreadExecutor(\"view-thread\")","var view = account.viewOn(executor)"]},
+
+        {"kind":"expect","text":"The view starts in sync and reports the inherited type.","code":["view.orElseThrow() == new Account(\"Ada\", 0)","view.type() == Account"]},
+
+        {"kind":"when","text":"We mutate the guarded value.","code":["account.update({ a -> a.deposit(42) })"]},
+
+        {"kind":"then","text":"The view tracks it.","code":["Wait.until({ view.orElseThrow() == new Account(\"Ada\", 42) }, 5_000)"]},
+
+        {"kind":"cleanup","text":"","code":["executor.close()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A nullable container yields a null-permitting view, viewable even while it currently holds null.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            With the redesign there is no separate nullable view method: the nullability flows from the\n            container. A `Guarded.ofNull(..)` / `Guarded.ofNullable(..)` container produces a view that\n            permits null, and — unlike before — it can be viewed even while it currently holds null,\n            faithfully publishing both null and non-null values as they come and go.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A nullable guarded value that starts out null.","code":["var guarded = Guarded.ofNull(String)","var executor = new NamedSingleThreadExecutor(\"view-thread\")","var view = guarded.viewOn(executor)"]},
+
+        {"kind":"expect","text":"The view starts empty (null) and reports itself nullable.","code":["view.orElseNull() == null","view.allowsNull()"]},
+
+        {"kind":"when","text":"We publish a non-null value.","code":["guarded.set(\"hello\")"]},
+
+        {"kind":"then","text":"The view reflects it.","code":["Wait.until({ view.orElseNull() == \"hello\" }, 5_000)"]},
+
+        {"kind":"when","text":"We then publish null again.","code":["guarded.set(null)"]},
+
+        {"kind":"then","text":"The view goes back to null.","code":["Wait.until({ view.orElseNull() == null }, 5_000)"]},
+
+        {"kind":"cleanup","text":"","code":["executor.close()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A fallback view of a nullable container is null-safe: it shows the fallback instead of null.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            `viewOn(Executor, fallback)` turns a nullable container into a null-safe view — the\n            `Guarded` analogue of `Val.view(nullObject, ..)`. Whenever the container holds null, the view\n            publishes the fallback instead, so the view is non-null and never empty.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"A nullable guarded that starts out null, viewed with a fallback.","code":["var guarded = Guarded.ofNull(String)","var executor = new NamedSingleThreadExecutor(\"view-thread\")","var view = guarded.viewOn(executor, \"<none>\")"]},
+
+        {"kind":"expect","text":"The view starts on the fallback (not null) and is non-null.","code":["view.orElseThrow() == \"<none>\"","!view.allowsNull()"]},
+
+        {"kind":"when","text":"We publish a real value.","code":["guarded.set(\"hello\")"]},
+
+        {"kind":"then","text":"The view shows it.","code":["Wait.until({ view.orElseThrow() == \"hello\" }, 5_000)"]},
+
+        {"kind":"when","text":"We go back to null.","code":["guarded.set(null)"]},
+
+        {"kind":"then","text":"The view falls back again rather than going null.","code":["Wait.until({ view.orElseThrow() == \"<none>\" }, 5_000)"]},
+
+        {"kind":"cleanup","text":"","code":["executor.close()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    },
+  
+    {
+      "id":"A fallback view validates its fallback eagerly.",
+      "result":"PASS",
+      "duration":"?",
+      "iterations":{
+      "tags":{},"see":[],"extraInfo":["\n            The fallback is published, so it must be non-null and assignable to the container's type;\n            both are checked eagerly.\n        "]
+      },
+      "blocks":[
+        {"kind":"given","text":"","code":["var guarded = Guarded.ofNull(String)","var executor = new NamedSingleThreadExecutor(\"view-thread\")"]},
+
+        {"kind":"when","text":"We pass a null fallback.","code":["guarded.viewOn(executor, null)"]},
+
+        {"kind":"then","text":"It is rejected.","code":["thrown(NullPointerException)"]},
+
+        {"kind":"when","text":"We pass a fallback that is not assignable to the type (bypassing generics, as raw code can).","code":["guarded.viewOn(executor, new StringBuilder(\"x\"))"]},
+
+        {"kind":"then","text":"It is rejected.","code":["thrown(IllegalArgumentException)"]},
+
+        {"kind":"cleanup","text":"","code":["executor.close()"]}
+      ],
+      "problems":{"dataValues":[], "errors":[]}
+    }
+  
+  ],
+  "generator":"https://github.com/renatoathaydes/spock-reports"
+}
