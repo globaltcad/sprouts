@@ -305,6 +305,75 @@ Associations are ideal for untyped and dynamic input data, fast lookup tables, o
 you need flexible key-value mappings. If you want to maintain insertion order, consider
 creating them using `Association.ofLinked(...)`.
 
+### From Tuples to Associations
+
+One of the most common things to do with a `Tuple` of value objects is to turn it into
+a lookup table keyed by one of their fields. There is a conversion method for every
+kind of association:
+
+```java
+record Creature(String name, String snack, int hunger) {}
+
+Tuple<Creature> creatures = Tuple.of(
+                                new Creature("Dragon", "Roasted Knight", 9),
+                                new Creature("Unicorn", "Sparkling Berries", 3),
+                                new Creature("Goblin", "Shiny Trinkets", 5)
+                            );
+
+// An unordered lookup table, the fastest of the three:
+Association<String, String> snacks = creatures.toAssociation(
+                                        String.class, Creature::name,
+                                        String.class, Creature::snack
+                                    );
+
+// The same kind of table, but keeping the order of the tuple:
+Association<String, Integer> hunger = creatures.toLinkedAssociation(
+                                        String.class,  Creature::name,
+                                        Integer.class, Creature::hunger
+                                    );
+
+// And one whose entries are ordered by their keys:
+Association<Integer, String> hungriestFirst = creatures.toSortedAssociation(
+                                                Integer.class, Creature::hunger,
+                                                String.class,  Creature::name,
+                                                Comparator.reverseOrder()
+                                            );
+```
+
+Note how every mapper function is preceded by the type of the objects it produces.
+This is because an association always tracks the types of its keys and values, and a
+lambda, unlike a tuple, cannot tell us what it produces. If your keys implement
+`Comparable`, then you may omit the comparator to have them sorted naturally.
+
+These conversions are exact shorthands for putting all of the derived key-value pairs
+into an initially empty association, one after another. So when two items produce the
+same key, then the last one wins, and neither the keys nor the values may be `null`.
+
+When you do not want to lose the values which did not win, then reach for the grouping
+conversions instead. They exist in the same three flavours and collect all the values
+of a key into a `Tuple`:
+
+```java
+// Which creatures are ravenous, and which are merely peckish?
+Association<Boolean, Tuple<String>> byAppetite = creatures.toGroupedAssociation(
+                                                    Boolean.class, c -> c.hunger() > 5,
+                                                    String.class,  Creature::name
+                                                );
+
+// byAppetite = [false ↦ Tuple<String>[Unicorn, Goblin], true ↦ Tuple<String>[Dragon]]
+```
+
+These are lossless: every item of the tuple ends up in exactly one group, the values
+inside a group keep the order of the tuple, and a key which only a single item produced
+simply gets a group of size one. There is a `toGroupedLinkedAssociation` and a
+`toGroupedSortedAssociation` too, ordering the groups by first occurrence and by key
+respectively.
+
+The one thing to keep in mind is that the type paired with the value mapper is the type
+of the items *inside* the value tuples. The association itself holds tuples, so its
+`valueType()` is `Tuple.class`. Being a tuple item type, it may also be a primitive type
+like `int.class`, giving you groups which store their items in a dense primitive array.
+
 ### ValueSet
 
 A `ValueSet<E>` is an immutable set implementation that guarantees 
