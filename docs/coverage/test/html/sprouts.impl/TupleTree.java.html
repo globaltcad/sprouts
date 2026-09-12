@@ -1155,8 +1155,8 @@ final class TupleTree&lt;T extends @Nullable Object&gt; implements Tuple&lt;T&gt
 <span class="fc" id="L1155">            return false;</span>
 <span class="fc bfc" id="L1156" title="All 2 branches covered.">        if (other.size() != this.size())</span>
 <span class="fc" id="L1157">            return false;</span>
-<span class="pc bpc" id="L1158" title="1 of 2 branches missed.">        if (!other.type().equals(_type))</span>
-<span class="nc" id="L1159">            return false;</span>
+<span class="fc bfc" id="L1158" title="All 2 branches covered.">        if (!other.type().equals(_type))</span>
+<span class="fc" id="L1159">            return false;</span>
 <span class="pc bpc" id="L1160" title="1 of 2 branches missed.">        if ( other instanceof TupleWithDiff ) {</span>
 <span class="fc" id="L1161">            other = ((TupleWithDiff)other).getData();</span>
         }

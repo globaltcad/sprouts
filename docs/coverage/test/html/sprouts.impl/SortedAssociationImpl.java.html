@@ -407,10 +407,10 @@ final class SortedAssociationImpl&lt;K, V&gt; implements Association&lt;K, V&gt;
 <span class="fc" id="L407">                        newRight = _createSingleEntryNode(keyType, valueType, poppedOffKey, poppedOffValue);</span>
                     }
                     // We pop from the right
-<span class="pc bpc" id="L410" title="1 of 2 branches missed.">                    if ( numberOfKeys == 1 ) {</span>
+<span class="fc bfc" id="L410" title="All 2 branches covered.">                    if ( numberOfKeys == 1 ) {</span>
                         // We add the actual key and value to the current node as well as the new right node
-<span class="nc" id="L412">                        _setAt(0, key, newKeysArray);</span>
-<span class="nc" id="L413">                        _setAt(0, value, newValuesArray);</span>
+<span class="fc" id="L412">                        _setAt(0, key, newKeysArray);</span>
+<span class="fc" id="L413">                        _setAt(0, value, newValuesArray);</span>
                     } else {
                         // First, insert the key and value at the index (adjust for the popped key)
 <span class="fc" id="L416">                        _setAt(index, key, newKeysArray);</span>

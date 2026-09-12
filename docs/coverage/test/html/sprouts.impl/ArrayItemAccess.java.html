@@ -5,7 +5,7 @@ interface ArrayItemAccess&lt;R, A&gt; {
     @SuppressWarnings(&quot;unchecked&quot;)
     static &lt;R, A&gt; ArrayItemAccess&lt;R,A&gt; of(Class&lt;R&gt; type, boolean allowsNull) {
 <span class="fc bfc" id="L7" title="All 2 branches covered.">        if ( !allowsNull ) {</span>
-<span class="pc bpc" id="L8" title="1 of 4 branches missed.">            if (type == Integer.class || type == int.class)</span>
+<span class="fc bfc" id="L8" title="All 4 branches covered.">            if (type == Integer.class || type == int.class)</span>
 <span class="fc" id="L9">                return (ArrayItemAccess&lt;R, A&gt;) FOR_INTEGER;</span>
 <span class="pc bpc" id="L10" title="1 of 4 branches missed.">            if (type == Short.class || type == short.class)</span>
 <span class="fc" id="L11">                return (ArrayItemAccess&lt;R, A&gt;) FOR_SHORT;</span>
